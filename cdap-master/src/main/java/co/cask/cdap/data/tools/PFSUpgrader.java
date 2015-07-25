@@ -50,6 +50,7 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedMap;
 
 /**
  * Migrates all dataset specifications that are for PartitionedFileSet or have an embedded PartitionedFileSet,
@@ -248,7 +249,11 @@ public class PFSUpgrader {
         return dsSpec;
       }
       DatasetSpecification convertedSpec = convertSpec(dsName, dsSpec);
-      addTo.put(namespaceId, convertedSpec);
+      // the pfs spec that is passed to the PartitionedFileSetTableMigrator must have a name that is namespaced by its
+      // embedding dsSpec (if any) in order to accurately match the hbase table. However, the convertedSpec that is
+      // returned simply has the short name (not namespaced by embedding spec) because it is yet to be used in a
+      // DatasetSpecification#Builder
+      addTo.put(namespaceId, changeName(convertedSpec, dsSpec.getName()));
       return convertedSpec;
     }
 
@@ -260,6 +265,18 @@ public class PFSUpgrader {
     DatasetSpecification.Builder builder = DatasetSpecification.builder(dsName, dsSpec.getType());
     builder.properties(dsSpec.getProperties());
     builder.datasets(newSpecs);
+    return builder.build();
+  }
+
+  // modifies the name of a dataset, while propogating this name change to the embedded datasets.
+  @VisibleForTesting
+  DatasetSpecification changeName(DatasetSpecification dsSpec, String newName) {
+    DatasetSpecification.Builder builder = DatasetSpecification.builder(newName, dsSpec.getType());
+    builder.properties(dsSpec.getProperties());
+    SortedMap<String, DatasetSpecification> specifications = dsSpec.getSpecifications();
+    for (Map.Entry<String, DatasetSpecification> entry : specifications.entrySet()) {
+      builder.datasets(changeName(entry.getValue(), entry.getKey()));
+    }
     return builder.build();
   }
 

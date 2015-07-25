@@ -39,6 +39,7 @@ import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
@@ -203,4 +204,20 @@ public class PFSUpgraderTest {
     return pfsBuilder.build();
   }
 
+
+  @Test
+  public void testSpecRename() {
+    DatasetSpecification outerSpec = constructOldPfsSpec("myDs", ImmutableMap.<String, String>of(),
+                                                         "partitionedFileSet");
+    DatasetSpecification embeddedSpec1 = outerSpec.getSpecification(PartitionedFileSetDefinition.FILESET_NAME);
+    DatasetSpecification embeddedSpec2 = outerSpec.getSpecification(PartitionedFileSetDefinition.PARTITION_TABLE_NAME);
+    Assert.assertEquals("myDs.files", embeddedSpec1.getName());
+    Assert.assertEquals("myDs.partitions", embeddedSpec2.getName());
+
+    DatasetSpecification renamedSpec = pfsUpgrader.changeName(outerSpec, "yourDs");
+    embeddedSpec1 = renamedSpec.getSpecification(PartitionedFileSetDefinition.FILESET_NAME);
+    embeddedSpec2 = renamedSpec.getSpecification(PartitionedFileSetDefinition.PARTITION_TABLE_NAME);
+    Assert.assertEquals("yourDs.files", embeddedSpec1.getName());
+    Assert.assertEquals("yourDs.partitions", embeddedSpec2.getName());
+  }
 }
