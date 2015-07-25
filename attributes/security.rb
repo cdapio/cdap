@@ -26,7 +26,8 @@ default['cdap']['cdap_site']['security.auth.server.address'] = node['fqdn']
 # node['cdap']['cdap_site']['security.authentication.handlerClassName'] must equal 'security.authentication.basic.realmfile'
 # node['cdap']['cdap_site']['security.authentication.basic.realmfile'] must define the realmfile location
 default['cdap']['security']['manage_realmfile'] = false
-default['cdap']['security']['realmfile']['users'] = [{ 'id' => 'cdap', 'password' => 'cdap' }]
+# realmfile username/passwords
+default['cdap']['security']['realmfile']['cdap'] = 'cdap'
 
 # web ui
 default['cdap']['cdap_site']['dashboard.ssl.key'] = "/etc/cdap/#{node['cdap']['conf_dir']}/webapp.key"

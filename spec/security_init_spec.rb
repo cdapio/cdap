@@ -21,7 +21,7 @@ describe 'cdap::security_init' do
         node.override['cdap']['security']['manage_realmfile'] = true
         node.override['cdap']['cdap_site']['security.authentication.handlerClassName'] = 'co.cask.cdap.security.server.BasicAuthenticationHandler'
         node.override['cdap']['cdap_site']['security.authentication.basic.realmfile'] = '/test/tmp/testrealm'
-        node.override['cdap']['security']['realmfile']['users'] = [{ 'id' => 'testuser', 'password' => 'testpass' }]
+        node.override['cdap']['security']['realmfile']['testuser'] = 'testpass'
       end.converge(described_recipe)
     end
 

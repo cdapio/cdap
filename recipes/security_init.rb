@@ -55,15 +55,12 @@ if node['cdap']['security']['manage_realmfile'].to_s == 'true' &&
   end
 
   # Create the realmfile
-  my_vars = { :options => node['cdap']['security']['realmfile']['users'] }
-
   template realmfile do
-    source 'realmfile.erb'
+    source 'generic-kv-colon.erb'
     mode 0644
     owner 'cdap'
     group 'cdap'
-    variables my_vars
+    variables options: node['cdap']['security']['realmfile']
     action :create
   end
-
 end
