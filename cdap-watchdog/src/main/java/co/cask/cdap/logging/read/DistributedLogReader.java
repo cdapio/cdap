@@ -69,6 +69,15 @@ public final class DistributedLogReader implements LogReader {
     }
 
     kafkaLogReader.getLogNext(loggingContext, readRange, maxEvents, filter, callback);
+    LOG.trace("Got {} log entries from kafka", callback.getCount());
+
+    // No logs in Kafka. This can happen for the latest run of a program, where the logs have been saved and
+    // are expired in Kafka, but the checkpoint time is less than run end time - as this is the latest run.
+    // In this case, return whatever you can find in saved logs.
+    if (callback.getCount() == 0) {
+      fileLogReader.getLogNext(loggingContext, readRange, maxEvents, filter, callback);
+      LOG.trace("Got {} log entries from file", callback.getCount());
+    }
   }
 
   @Override
@@ -86,6 +95,15 @@ public final class DistributedLogReader implements LogReader {
     }
 
     kafkaLogReader.getLogPrev(loggingContext, readRange, maxEvents, filter, callback);
+    LOG.trace("Got {} log entries from kafka", callback.getCount());
+
+    // No logs in Kafka. This can happen for the latest run of a program, where the logs have been saved and
+    // are expired in Kafka, but the checkpoint time is less than run end time - as this is the latest run.
+    // In this case, return whatever you can find in saved logs.
+    if (callback.getCount() == 0) {
+      fileLogReader.getLogPrev(loggingContext, readRange, maxEvents, filter, callback);
+      LOG.trace("Got {} log entries from file", callback.getCount());
+    }
   }
 
   @Override
