@@ -14,6 +14,3 @@ Transformations
     Script <script>
     ScriptFilter <scriptfilter>
     StructuredRecordToGenericRecord <structuredrecordtogenericrecord>
-
-
-.. rubric:: Introduction

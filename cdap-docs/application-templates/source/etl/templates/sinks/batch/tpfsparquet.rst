@@ -8,8 +8,6 @@ Sinks: Batch: TPFSParquet
 
 .. rubric:: Description: Parquet Sink with Time Partitioned File Dataset
 
-**Schema:** The schema of the record.
-
 **Schema:** The Parquet schema of the record being written to the Sink as a JSON Object.
 
 **TPFS Name:** Name of the Time Partitioned FileSet Dataset to which the records have to

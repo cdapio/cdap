@@ -7,3 +7,5 @@ Transformations: StructuredRecordToGenericRecord
 =================================================
 
 .. rubric:: Description: Transforms a StructuredRecord into an Avro GenericRecord
+
+As the description says, it turns a StructuredRecord into an Avro GenericRecord.

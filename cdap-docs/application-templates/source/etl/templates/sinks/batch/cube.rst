@@ -2,12 +2,11 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2015 Cask Data, Inc.
 
-===============================
+==================
 Sinks: Batch: Cube 
-===============================
+==================
 
 .. rubric:: Description: Batch Sink that writes to a Cube dataset
-
 
 This BatchCubeSink takes a StructuredRecord in, maps it to a CubeFact, and writes it to
 the Cube dataset identified by the name property.
