@@ -118,6 +118,10 @@ angular.module(PKG.name + '.services')
       delete this.nodes[nodeId];
     };
 
+    this.setIsDisabled = function(isDisabled) {
+      this.isDisabled = isDisabled;
+    };
+
     function fetchBackendProperties(plugin, scope) {
       var defer = $q.defer();
 
@@ -168,10 +172,10 @@ angular.module(PKG.name + '.services')
           modalInstance = $bootstrapModal.open({
             keyboard: false,
             templateUrl: '/assets/features/adapters/templates/tabs/runs/tabs/properties/properties.html',
-            controller: ['$scope', 'AdapterModel', 'type', 'inputSchema', function ($scope, AdapterModel, type, inputSchema){
+            controller: ['$scope', 'AdapterModel', 'type', 'inputSchema', 'isDisabled', function ($scope, AdapterModel, type, inputSchema, isDisabled){
               $scope.plugin = AdapterModel;
               $scope.type = type;
-              $scope.isDisabled = false;
+              $scope.isDisabled = isDisabled;
               var input;
               try {
                 input = JSON.parse(inputSchema);
@@ -222,7 +226,10 @@ angular.module(PKG.name + '.services')
               }.bind(this),
               inputSchema: function () {
                 return sourceSchema;
-              }
+              },
+              isDisabled: function() {
+                return this.isDisabled;
+              }.bind(this)
             }
           });
 

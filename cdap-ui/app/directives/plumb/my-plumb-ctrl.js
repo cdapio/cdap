@@ -2,7 +2,7 @@ angular.module(PKG.name + '.commons')
   .controller('MyPlumbController', function MyPlumbController(jsPlumb, $scope, $timeout, MyPlumbService, myHelpers, MyPlumbFactory, $window) {
     this.plugins = $scope.config || [];
     this.isDisabled = $scope.isDisabled;
-    MyPlumbService.setIsDiabled(this.isDisabled);
+    MyPlumbService.setIsDisabled(this.isDisabled);
 
     this.instance = null;
 
