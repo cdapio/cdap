@@ -27,6 +27,7 @@
           tooltip="{{ group.error }}"
           tooltip-placement="right"
           tooltip-append-to-body="true"
+          tooltip-enable="MySidePanel.isExpanded === false || group.name.length > 9"
           ng-class="{source: group.name === 'source', transform: group.name === 'transform', sink: group.name === 'sink', 'item-open': MySidePanel.openedGroup === group.name, 'error': group.error }">
         <span class="{{group.icon}}"></span>
         <span class="name">{{group.name | caskCapitalizeFilter}}</span>
@@ -43,9 +44,10 @@
             tooltip="{{plugin.name}}"
             tooltip-placement="right"
             tooltip-append-to-body="true"
+            tooltip-enable="MySidePanel.isExpanded === false || plugin.name.length > 9"
             ng-click="MySidePanel.onItemClicked($event, plugin)">
         <span class="fa {{plugin.icon}}"></span>
-        <span class="name">{{plugin.name}}</span>
+        <span class="name">{{plugin.name | myEllipsis: 10}}</span>
       </div>
     </div>
 
