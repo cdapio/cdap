@@ -32,11 +32,14 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import co.cask.cdap.data2.dataset2.lib.partitioned.PartitionedFileSetDefinition;
 import co.cask.cdap.data2.dataset2.lib.partitioned.PartitionedFileSetTableMigrator;
+import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
@@ -46,6 +49,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 
@@ -147,6 +151,27 @@ public class PFSUpgraderTest {
     assertIsNewPartitionsTable(newPartitionsSpec);
   }
 
+  @Test
+  public void testModuleUpgrade() throws Exception {
+    DatasetModuleMeta oldModuleMetaNotNeedingUpgrade =
+      new DatasetModuleMeta("myModule", "co.cask.cdap.examples.helloworld.MyModule",
+                            null, ImmutableList.of("myType"), ImmutableList.of("cube"));
+
+    Assert.assertFalse(pfsUpgrader.needsConverting(oldModuleMetaNotNeedingUpgrade));
+
+
+    DatasetModuleMeta oldModuleMeta =
+      new DatasetModuleMeta("myOtherModule", "co.cask.cdap.examples.helloworld.MyOtherModule",
+                            null, ImmutableList.of("myType"), ImmutableList.of("partitionedFileSet"));
+    Assert.assertTrue(pfsUpgrader.needsConverting(oldModuleMeta));
+    DatasetModuleMeta newModuleMeta = pfsUpgrader.migrateDatasetModuleMeta(oldModuleMeta);
+
+    List<String> usesModules = newModuleMeta.getUsesModules();
+    Assert.assertTrue(usesModules.contains("orderedTable-hbase"));
+    Assert.assertTrue(usesModules.contains("core"));
+    Assert.assertTrue(usesModules.indexOf("orderedTable-hbase") < usesModules.indexOf("core"));
+  }
+
   private void assertIsNewPartitionsTable(DatasetSpecification dsSpec) {
     // the new partitions should be an IndexedTable and should be set to index appropriately
     Assert.assertEquals(IndexedTable.class.getName(), dsSpec.getType());
@@ -179,4 +204,20 @@ public class PFSUpgraderTest {
     return pfsBuilder.build();
   }
 
+
+  @Test
+  public void testSpecRename() {
+    DatasetSpecification outerSpec = constructOldPfsSpec("myDs", ImmutableMap.<String, String>of(),
+                                                         "partitionedFileSet");
+    DatasetSpecification embeddedSpec1 = outerSpec.getSpecification(PartitionedFileSetDefinition.FILESET_NAME);
+    DatasetSpecification embeddedSpec2 = outerSpec.getSpecification(PartitionedFileSetDefinition.PARTITION_TABLE_NAME);
+    Assert.assertEquals("myDs.files", embeddedSpec1.getName());
+    Assert.assertEquals("myDs.partitions", embeddedSpec2.getName());
+
+    DatasetSpecification renamedSpec = pfsUpgrader.changeName(outerSpec, "yourDs");
+    embeddedSpec1 = renamedSpec.getSpecification(PartitionedFileSetDefinition.FILESET_NAME);
+    embeddedSpec2 = renamedSpec.getSpecification(PartitionedFileSetDefinition.PARTITION_TABLE_NAME);
+    Assert.assertEquals("yourDs.files", embeddedSpec1.getName());
+    Assert.assertEquals("yourDs.partitions", embeddedSpec2.getName());
+  }
 }
