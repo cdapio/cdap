@@ -157,7 +157,6 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
           @Override
           public void completed() {
             if (liveComponents.decrementAndGet()  == 0) {
-              LOG.info("Program stopped: {}", spec.getName());
               complete();
             }
           }
