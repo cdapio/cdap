@@ -21,6 +21,7 @@ import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.AbstractWorkflowAction;
+import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.api.workflow.WorkflowContext;
 
 import javax.annotation.Nullable;
@@ -34,7 +35,10 @@ public class GoodWorkflowApp extends AbstractApplication {
   public void configure() {
     setName("GoodWorkflowApp");
     setDescription("WorkflowApp with multiple forks inside it");
-    addMapReduce(new DummyMR());
+    for (int i = 1; i <= 7; i++) {
+      addMapReduce(new DummyMR("MR" + String.valueOf(i)));
+    }
+
     addWorkflow(new GoodWorkflow());
     addWorkflow(new AnotherGoodWorkflow());
   }
@@ -49,52 +53,73 @@ public class GoodWorkflowApp extends AbstractApplication {
       setName("GoodWorkflow");
       setDescription("GoodWorkflow description");
 
-      addAction(new DummyAction());
+      addAction(new DummyAction("DA1"));
 
       // complex fork
       fork()
-        .addMapReduce("DummyMR")
+        .addMapReduce("MR1")
         .fork()
-          .addAction(new DummyAction())
+          .addAction(new DummyAction("DA2"))
           .fork()
             .fork()
-              .addMapReduce("DummyMR")
-              .addAction(new DummyAction())
+              .addMapReduce("MR2")
+              .addAction(new DummyAction("DA3"))
             .also()
-              .addMapReduce("DummyMR")
+              .addMapReduce("MR3")
             .join()
-            .addMapReduce("DummyMR")
+            .addMapReduce("MR4")
           .also()
-            .addMapReduce("DummyMR")
+            .addMapReduce("MR5")
           .join()
         .also()
-          .addAction(new DummyAction())
+          .addAction(new DummyAction("DA4"))
         .join()
       .also()
-        .addAction(new DummyAction())
+        .addAction(new DummyAction("DA5"))
       .join();
 
-      addMapReduce("DummyMR");
+      addMapReduce("MR6");
 
       // simple fork
       fork()
-        .addAction(new DummyAction())
+        .addAction(new DummyAction("DA6"))
       .also()
-        .addMapReduce("DummyMR")
+        .addMapReduce("MR7")
       .join();
     }
   }
 
   /**
-   *
+   * Dummy MapReduce program
    */
   public class DummyMR extends AbstractMapReduce {
+    private final String name;
+    public DummyMR(String name) {
+      this.name = name;
+    }
+
+    @Override
+    protected void configure() {
+      setName(name);
+    }
   }
 
   /**
    * DummyAction
    */
   public class DummyAction extends AbstractWorkflowAction {
+    private final String name;
+    public DummyAction(String name) {
+      this.name = name;
+    }
+
+    @Override
+    public WorkflowActionSpecification configure() {
+      return WorkflowActionSpecification.Builder.with()
+        .setName(name)
+        .setDescription(getDescription())
+        .build();
+    }
 
     @Override
     public void run() {
@@ -121,7 +146,7 @@ public class GoodWorkflowApp extends AbstractApplication {
         .addMapReduce("MR8")
       .join();
 
-     condition(new MyVerificationPredicate())
+     condition(new AnotherVerificationPredicate())
        .addSpark("SP1")
        .addSpark("SP2")
      .otherwise()
@@ -139,6 +164,14 @@ public class GoodWorkflowApp extends AbstractApplication {
   }
 
   public static final class MyVerificationPredicate implements Predicate<WorkflowContext> {
+
+    @Override
+    public boolean apply(@Nullable WorkflowContext input) {
+      return false;
+    }
+  }
+
+  public static final class AnotherVerificationPredicate implements Predicate<WorkflowContext> {
 
     @Override
     public boolean apply(@Nullable WorkflowContext input) {

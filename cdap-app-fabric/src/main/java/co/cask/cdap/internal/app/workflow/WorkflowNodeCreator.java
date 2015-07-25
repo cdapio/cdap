@@ -49,13 +49,13 @@ final class WorkflowNodeCreator {
         break;
     }
 
-    return new WorkflowActionNode(programName, new ScheduleProgramInfo(programType, programName));
+    return new WorkflowActionNode(programName, new ScheduleProgramInfo(programType, programName), null);
   }
 
   static WorkflowNode createWorkflowCustomActionNode(WorkflowAction action) {
     Preconditions.checkArgument(action != null, "WorkflowAction is null.");
     WorkflowActionSpecification spec = new DefaultWorkflowActionSpecification(action);
-    return new WorkflowActionNode(spec.getName(), spec);
+    return new WorkflowActionNode(spec.getName(), spec, null);
   }
 
 }

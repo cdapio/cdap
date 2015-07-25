@@ -54,7 +54,6 @@ import co.cask.cdap.internal.workflow.DefaultWorkflowActionSpecification;
 import co.cask.cdap.internal.workflow.ProgramWorkflowAction;
 import co.cask.cdap.logging.context.WorkflowLoggingContext;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.templates.AdapterDefinition;
 import co.cask.http.NettyHttpService;
 import co.cask.tephra.TransactionAware;
@@ -79,10 +78,13 @@ import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.ConcurrentHashMap;
@@ -375,8 +377,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
           Future<Map.Entry<String, WorkflowToken>> f = completionService.take();
           Map.Entry<String, WorkflowToken> retValue = f.get();
           String branchInfo = retValue.getKey();
-          WorkflowToken branchToken = retValue.getValue();
-          ((BasicWorkflowToken) token).mergeToken((BasicWorkflowToken) branchToken);
+          // WorkflowToken branchToken = retValue.getValue();
+          // ((BasicWorkflowToken) token).mergeToken((BasicWorkflowToken) branchToken);
           LOG.info("Execution of branch {} for fork {} completed", branchInfo, fork);
         } catch (Throwable t) {
           Throwable rootCause = Throwables.getRootCause(t);
@@ -398,10 +400,30 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     }
   }
 
+  private List<String> getNodeFilterList(WorkflowNode node) {
+    if (node.getType() == WorkflowNodeType.FORK) {
+      return Lists.newArrayList();
+    }
+    List<String> filterList = new ArrayList<>();
+    Queue<String> nodeQueueToProcess = new LinkedList<>();
+    nodeQueueToProcess.add(node.getNodeId());
+    while (!nodeQueueToProcess.isEmpty()) {
+      String queueNode = nodeQueueToProcess.poll();
+      filterList.add(queueNode);
+      for (String nodeIdInParentSet : workflowSpec.getNodeIdMap().get(queueNode).getParentNodeIds()) {
+        if (!nodeQueueToProcess.contains(nodeIdInParentSet)) {
+          nodeQueueToProcess.add(nodeIdInParentSet);
+        }
+      }
+    }
+    return filterList;
+  }
+
   private void executeNode(ApplicationSpecification appSpec, WorkflowNode node, InstantiatorFactory instantiator,
                            ClassLoader classLoader, WorkflowToken token) throws Exception {
     WorkflowNodeType nodeType = node.getType();
-    ((BasicWorkflowToken) token).setCurrentNode(node.getNodeId());
+    ((BasicWorkflowToken) token).setCurrentNode(node.getNodeId(), getNodeFilterList(node));
+
     switch (nodeType) {
       case ACTION:
         executeAction(appSpec, (WorkflowActionNode) node, instantiator, classLoader, token);

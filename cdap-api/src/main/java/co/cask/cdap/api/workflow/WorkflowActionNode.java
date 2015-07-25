@@ -18,6 +18,7 @@ package co.cask.cdap.api.workflow;
 
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -27,14 +28,14 @@ public class WorkflowActionNode extends WorkflowNode {
   private final ScheduleProgramInfo program;
   private final WorkflowActionSpecification actionSpecification;
 
-  public WorkflowActionNode(String nodeId, ScheduleProgramInfo program) {
-    super(nodeId, WorkflowNodeType.ACTION);
+  public WorkflowActionNode(String nodeId, ScheduleProgramInfo program, Set<String> parentNodeIds) {
+    super(nodeId, WorkflowNodeType.ACTION, parentNodeIds);
     this.program = program;
     this.actionSpecification = null;
   }
 
-  public WorkflowActionNode(String nodeId, WorkflowActionSpecification actionSpecification) {
-    super(nodeId, WorkflowNodeType.ACTION);
+  public WorkflowActionNode(String nodeId, WorkflowActionSpecification actionSpecification, Set<String> parentNodeIds) {
+    super(nodeId, WorkflowNodeType.ACTION, parentNodeIds);
     this.program = new ScheduleProgramInfo(SchedulableProgramType.CUSTOM_ACTION, actionSpecification.getName());
     this.actionSpecification = actionSpecification;
   }
