@@ -4,25 +4,34 @@ angular.module(PKG.name + '.commons')
       Connector : [ 'Flowchart' ],
       ConnectionsDetachable: true
     };
+    var connectorStyle = {
+      strokeStyle: 'black',
+      fillStyle: '#666',
+      radius: 7,
+      lineWidth: 3
+    };
+
     var commonSettings = {
       endpoint:'Dot',
       maxConnections: -1,
       paintStyle: {
-          strokeStyle: 'white',
-          fillStyle: '#666',
-          radius: 7,
-          lineWidth: 3
+        strokeStyle: 'white',
+        fillStyle: '#666',
+        radius: 7,
+        lineWidth: 2
       },
-      connectorOverlays: [ [ 'Arrow', { location:1, width: 10, height: 10 } ] ],
+      connectorOverlays: [ [ 'Arrow', { location:1, width: 20, height: 20 } ] ],
       anchors: [ 'Perimeter', {shape: 'Circle'}]
     };
     var sourceSettings = angular.extend({
       isSource: true,
-      anchor: 'Right'
+      anchor: 'Right',
+      connectorStyle: connectorStyle
     }, commonSettings);
     var sinkSettings = angular.extend({
       isTarget: true,
-      anchor: 'Left'
+      anchor: 'Left',
+      connectorStyle: connectorStyle
     }, commonSettings);
 
     function getSettings() {
