@@ -171,6 +171,7 @@ angular.module(PKG.name + '.services')
         .then(function(plugin) {
           modalInstance = $bootstrapModal.open({
             keyboard: false,
+            backdrop: 'static',
             templateUrl: '/assets/features/adapters/templates/tabs/runs/tabs/properties/properties.html',
             controller: ['$scope', 'AdapterModel', 'type', 'inputSchema', 'isDisabled', function ($scope, AdapterModel, type, inputSchema, isDisabled){
               $scope.plugin = AdapterModel;
