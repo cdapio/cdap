@@ -2,7 +2,7 @@
 
 <div class="row">
   <div class="col-xs-6">
-    <h2 class="pull-left"> All Adapters </h2>
+    <h2 class="pull-left"> All Drafts </h2>
   </div>
   <div class="col-xs-6 text-right">
     <div class="btn-group dropdown-right h2" dropdown>
@@ -22,10 +22,10 @@
 </div>
 
 <br/>
-<div class="row" adapters-list>
-  <div ng-model="adapters">
+<div class="row" apps-drafts-list>
+  <div ng-model="drafts" class="drafts-list-container">
     <div class="col-lg-2 col-md-3 col-sm-3 col-xs-6"
-         ng-repeat="app in adapters">
+         ng-repeat="app in drafts">
       <div>
         <div class="label etlappcontainer">
           Draft
@@ -59,6 +59,11 @@
             </div>
           </div>
         </div>
+      </div>
+    </div>
+    <div class="col-xs-12" ng-if='drafts.length === 0'>
+      <div class="well well-lg text-center">
+        <h3>No Application Drafts. Create one now.</h3>
       </div>
     </div>
   </div>
