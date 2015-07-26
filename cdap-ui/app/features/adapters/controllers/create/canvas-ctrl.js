@@ -76,6 +76,21 @@ angular.module(PKG.name + '.feature.adapters')
               }.bind(this)
             );
           break;
+        case 'Settings':
+          $bootstrapModal.open({
+            templateUrl: '/assets/features/adapters/templates/create/settings.html',
+            size: 'md',
+            keyboard: true,
+            controller: ['$scope', 'metadata', function($scope, metadata) {
+              $scope.metadata = metadata
+            }],
+            resolve: {
+              'metadata': function() {
+                return MyPlumbService.metadata;
+              }
+            }
+          });
+          break;
         case 'Save Draft':
           MyPlumbService
             .saveAsDraft()

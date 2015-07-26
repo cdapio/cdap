@@ -34,7 +34,7 @@ angular.module(PKG.name + '.feature.adapters')
 
       modalInstance = $bootstrapModal.open({
         templateUrl: '/assets/features/adapters/templates/create/metadata.html',
-        size: 'lg',
+        size: 'md',
         keyboard: true,
         controller: ['$scope', function($scope) {
           $scope.metadata = this.metadata;
