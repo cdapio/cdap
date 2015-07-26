@@ -12,6 +12,7 @@ angular.module(PKG.name + '.commons')
         element: '<input/>',
         attributes: {
           'class': 'form-control',
+          'data-ng-trim': 'false',
           'ng-model': 'model',
           placeholder: '{{myconfig.properties.default || ""}}'
         }
@@ -20,6 +21,7 @@ angular.module(PKG.name + '.commons')
         element: '<input/>',
         attributes: {
           'class': 'form-control',
+          'data-ng-trim': 'false',
           'ng-model': 'model',
           type: 'password'
         }
