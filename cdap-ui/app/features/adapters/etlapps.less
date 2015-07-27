@@ -120,11 +120,13 @@ body.theme-cdap.state-adapters-create {
     &.in {
       overflow-y: hidden;
     }
-    .modal-dialog {
-      @media (min-width: @screen-lg-min) {
-        margin-top: 115px;
-      }
+  }
+  .modal-dialog {
+    @media (min-width: @screen-lg-min) {
+      margin-top: 115px;
     }
+  }
+  .modal-lg {
     .modal-header {
       background-color: @body-bg;
       border-bottom: 1px solid @modal-table-border-color;
@@ -227,11 +229,11 @@ body.theme-cdap.state-adapters-create {
         height: auto;
       }
       @media (max-width: @screen-md-max) {
-        height: 65vh;
+        height: 60vh;
         overflow-y: scroll;
       }
       @media (min-width: @screen-lg-min) {
-        height: 70vh;
+        height: 50vh;
 
         .padding-offset-right {
           padding-right: 1px;
@@ -246,14 +248,14 @@ body.theme-cdap.state-adapters-create {
       }
       > fieldset {
         textarea.form-control {
-          height: 60vh;
+          height: 45vh;
         }
       }
       .modal-content-scroll {
         padding-top: 20px;
 
         @media (min-width: @screen-lg-min) {
-          height: 70vh;
+          height: 50vh;
           overflow: scroll;
         }
       }
@@ -450,7 +452,6 @@ body.theme-cdap.state-adapters-create {
       }
     }
   }
-
 }
 body.theme-cdap.state-adapters-detail {
   my-plumb {
