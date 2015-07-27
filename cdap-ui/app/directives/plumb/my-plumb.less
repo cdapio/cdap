@@ -10,6 +10,7 @@ my-plumb {
     height: inherit;
     background-image: url('../img/grid.png');
     border: 0.5px solid #c5c7d3;
+    margin-top: -1px;
 
     &.disabled {
       background-image: none;
@@ -30,16 +31,20 @@ my-plumb {
       overflow: hidden;
 
       div.icon {
-        font-size: 300%;
+        font-size: 200%;
+        margin-bottom: 10px;
       }
-      .icon.fa, .fa.fa-close {
+      .icon, .icon.fa, .fa.fa-close {
         cursor: pointer;
       }
-
+      .fa.fa-close {
+        font-size: 11px;
+      }
       .plugin-name {
-        font-size: 15px;
+        font-size: 13px;
         overflow: hidden;
         text-overflow: ellipsis;
+        margin-bottom: 10px;
       }
 
       &.source {

@@ -1,16 +1,27 @@
-<h1 class="adapter-name"
-    ng-class="{ 'name-error': AdapterCreateController.metadata.error }"
-    tooltip="{{ AdapterCreateController.metadata.error }}"
-    tooltip-placement="right">
-  <a ng-if="AdapterCreateController.metadata.name.length > 0"
-      ng-click="AdapterCreateController.showMetadataModal()">
-    {{AdapterCreateController.metadata.name}}
-  </a>
-  <a ng-if="AdapterCreateController.metadata.name.length === 0"
-      ng-click="AdapterCreateController.showMetadataModal()">
-    [Adapter Name]
-  </a>
-</h1>
+<div class="adapter-name"
+  tooltip="{{ AdapterCreateController.metadata.error }}"
+  tooltip-placement="right"
+  tooltip-toggle="AdapterCreateController.metadata.error"
+  tooltip-append-to-body="true"
+  tooltip-class="tooltip-error"
+>
+  <div class="clearfix">
+    <h1 class="pull-left">
+      <a ng-if="AdapterCreateController.metadata.name.length > 0"
+          ng-click="AdapterCreateController.showMetadataModal()">
+        {{AdapterCreateController.metadata.name}}
+      </a>
+      <a ng-if="AdapterCreateController.metadata.name.length === 0"
+          ng-click="AdapterCreateController.showMetadataModal()">
+        [Adapter Name]
+      </a>
+    </h1>
+    <a class="pull-right fa fa-pencil" ng-click="AdapterCreateController.showMetadataModal()"></a>
+    <p ng-if="AdapterCreateController.metadata.description.length > 0">
+      {{AdapterCreateController.metadata.description | myEllipsis: 150 }}
+    </p>
+  </div>
+</div>
 
 <div ng-controller="CanvasController as PlumbController">
   <div ng-include="'/assets/features/adapters/templates/create/canvas.html'"></div>

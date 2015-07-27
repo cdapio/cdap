@@ -5,18 +5,19 @@
 my-side-panel {
   .side-panel {
     position: fixed;
-    top: 85px;
+    top: 95px;
     z-index: 1025;
-    width: 40px;
+    width: 70px;
     background-color: white;
     .transition(all 0.2s ease);
     .item-heading {
       span:first-child {
-        font-size: 20px;
+        font-size: 18px;
+        vertical-align: middle;
       }
     }
     &.left {
-      left: 10px;
+      left: 20px;
       .btn.btn-info.btn-block {
         text-align: left;
       }
@@ -28,12 +29,20 @@ my-side-panel {
     }
 
     &.right {
-      right: 10px;
+      right: 20px;
       .btn.btn-info.btn-block {
         text-align: right;
       }
       span.fa-sliders {
         .rotate(90deg);
+      }
+      .item .item-heading {
+        line-height: 70px;
+        height: 70px;
+        width: 70px;
+        span:last-child {
+          display: none;
+        }
       }
     }
 
@@ -41,6 +50,7 @@ my-side-panel {
       background-color: white;
       border-bottom: 1px solid #DDD;
       color: @cdap-header;
+      height: 30px;
       padding: 5px 10px;
       .border-radius(0);
       .fa {
@@ -52,22 +62,47 @@ my-side-panel {
     }
 
     &.expanded {
-      width: 100px;
+      width: 120px;
 
       .item {
         .item-body, .item-heading {
           .name, .description {
             display: inline-block;
             vertical-align: top;
-            max-width: 60px;
+            max-width: 70px;
             overflow-x: hidden;
             text-overflow: ellipsis;
+            white-space: nowrap;
           }
         }
         .item-heading {
-          padding: 0 8px;
-          span:first-child {
-            font-size: 15px;
+          padding: 0 10px;
+          height: 50px;
+          line-height: 50px;
+          width: 120px;
+          span {
+            &:first-child {
+              font-size: 14px;
+              vertical-align: top;
+              width: 14px;
+              text-align: center;
+            }
+            &.name {
+              font-size: 13px;
+            }
+          }
+        }
+        .item-body {
+          padding: 10px;
+          .plugin-item {
+            width: 100px;
+            padding-left: 5px;
+            > .fa {
+              font-size: 14px;
+            }
+            .name {
+              font-size: 13px;
+            }
           }
         }
       }
@@ -85,7 +120,7 @@ my-side-panel {
         span {
           line-height: inherit;
           &.name {
-            padding-left: 3px;
+            padding-left: 5px;
           }
           &:last-child {
             font-size: 8px;
@@ -115,32 +150,28 @@ my-side-panel {
           display: none;
         }
 
-        &.error {
-          background-color: @brand-danger;
-          color: white;
-        }
       }
 
       .item-body {
-        padding: 5px;
+        padding: 15px;
         background-color: #9A9EAA;
 
         .plugin-item {
           background-color: white;
-          margin: 5px 0 10px;
-          padding: 5px 5px;
-          font-size: 11px;
+          margin: 0 auto 10px;
+          line-height: 40px;
+          height: 40px;
+          width: 40px;
           .border-radius(4px);
-          &:first-child {
-            margin-top: 4px;
-          }
           &:last-child {
             margin-bottom: 4px;
           }
           > .fa {
-            margin-right: 3px;
+            font-size: 18px;
             text-align: center;
-            width: 12px;
+            height: 18px;
+            width: 18px;
+            vertical-align: middle;
           }
         }
         .name, .description {
@@ -148,9 +179,18 @@ my-side-panel {
         }
       }
     }
+  }
+}
 
-    .tooltip.tooltip-red .tooltip-inner {
-      background-color: @brand-danger;
-    }
+.tooltip-error {
+  z-index: 1020; // lower z-index than modal
+
+  .tooltip-inner {
+    background-color: @brand-danger;
+    color: white;
+  }
+
+  &.tooltip.right .tooltip-arrow {
+    border-right-color: @brand-danger;
   }
 }
