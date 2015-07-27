@@ -146,29 +146,29 @@ Hadoop/HBase Environment
 
 For a distributed enterprise, you must install these Hadoop components:
 
-+---------------+-------------------+--------------------------------------------------+
-| Component     | Source            | Required Version                                 |
-+===============+===================+==================================================+
-| **HDFS**      | Apache Hadoop     | 2.0.2-alpha through 2.5.0                        |
-+               +-------------------+--------------------------------------------------+
-|               | CDH or HDP        | (CDH) 4.2.x through 5.3.3 or (HDP) 2.0 or 2.1    |
-+---------------+-------------------+--------------------------------------------------+
-| **YARN**      | Apache Hadoop     | 2.0.2-alpha through 2.5.0                        |
-+               +-------------------+--------------------------------------------------+
-|               | CDH or HDP        | (CDH) 4.2.x through 5.3.3 or (HDP) 2.0 or 2.1    |
-+---------------+-------------------+--------------------------------------------------+
-| **HBase**     | Apache            | 0.94.2+, 0.96.x, and 0.98.x                      |
-+               +-------------------+--------------------------------------------------+
-|               | CDH or HDP        | (CDH) 4.2.x through 5.3.3 or (HDP) 2.0 or 2.1    |
-+---------------+-------------------+--------------------------------------------------+
-| **Zookeeper** | Apache            | Version 3.4.3 through 3.4.5                      |
-+               +-------------------+--------------------------------------------------+
-|               | CDH or HDP        | (CDH) 4.2.x through 5.3.3 or (HDP) 2.0 or 2.1    |
-+---------------+-------------------+--------------------------------------------------+
-| **Hive**      | Apache            | Version 0.12.0 through 0.13.1                    |
-+               +-------------------+--------------------------------------------------+
-|               | CDH or HDP        | (CDH) 4.3.x through 5.3.3 or (HDP) 2.0 or 2.1    |
-+---------------+-------------------+--------------------------------------------------+
++---------------+-------------------+-----------------------------------------------------+
+| Component     | Source            | Required Version                                    |
++===============+===================+=====================================================+
+| **HDFS**      | Apache Hadoop     | 2.0.2-alpha through 2.5.0                           |
++               +-------------------+-----------------------------------------------------+
+|               | CDH or HDP        | (CDH) 5.0.0 through 5.4.4 or (HDP) 2.0, 2.1, or 2.2 |
++---------------+-------------------+-----------------------------------------------------+
+| **YARN**      | Apache Hadoop     | 2.0.2-alpha through 2.5.0                           |
++               +-------------------+-----------------------------------------------------+
+|               | CDH or HDP        | (CDH) 5.0.0 through 5.4.4 or (HDP) 2.0, 2.1, or 2.2 |
++---------------+-------------------+-----------------------------------------------------+
+| **HBase**     | Apache            | 0.96.x, 0.98.x, and 1.0.x                           |
++               +-------------------+-----------------------------------------------------+
+|               | CDH or HDP        | (CDH) 5.0.0 through 5.4.4 or (HDP) 2.0, 2.1, or 2.2 |
++---------------+-------------------+-----------------------------------------------------+
+| **Zookeeper** | Apache            | Version 3.4.3 through 3.4.5                         |
++               +-------------------+-----------------------------------------------------+
+|               | CDH or HDP        | (CDH) 5.0.0 through 5.4.4 or (HDP) 2.0, 2.1, or 2.2 |
++---------------+-------------------+-----------------------------------------------------+
+| **Hive**      | Apache            | Version 0.12.0 through 0.13.1                       |
++               +-------------------+-----------------------------------------------------+
+|               | CDH or HDP        | (CDH) 5.0.0 through 5.4.4 or (HDP) 2.0, 2.1, or 2.2 |
++---------------+-------------------+-----------------------------------------------------+
 
 **Note:** Components versions shown in this table are those that we have tested and are
 confident of their suitability and compatibility. Later versions of components may work,
@@ -677,13 +677,15 @@ recompiled and re-deployed.)
    - Using Yum (on one line)::
 
        $ sudo yum install cdap cdap-gateway \
-             cdap-hbase-compat-0.94 cdap-hbase-compat-0.96 cdap-hbase-compat-0.98 \
+             cdap-hbase-compat-0.96 cdap-hbase-compat-0.98 \
+             cdap-hbase-compat-1.0 cdap-hbase-compat-1.0-cdh \
              cdap-kafka cdap-master cdap-security cdap-ui
 
    - Using APT (on one line)::
 
        $ sudo apt-get install cdap cdap-gateway \
-             cdap-hbase-compat-0.94 cdap-hbase-compat-0.96 cdap-hbase-compat-0.98 \
+             cdap-hbase-compat-0.96 cdap-hbase-compat-0.98 \
+             cdap-hbase-compat-1.0 cdap-hbase-compat-1.0-cdh \
              cdap-kafka cdap-master cdap-security cdap-ui
 
    **Note:** We have deprecated the cdap-web-app package in favor of cdap-ui package 
