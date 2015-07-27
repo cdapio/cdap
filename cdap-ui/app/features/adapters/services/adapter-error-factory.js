@@ -6,8 +6,7 @@ angular.module(PKG.name + '.feature.adapters')
         hasExactlyOneSourceAndSink,
         hasNameAndTemplateType,
         checkForRequiredField,
-        checkForUnconnectedNodes,
-        checkForParallelDAGs
+        checkForUnconnectedNodes
       ];
       var errors = {};
       validationRules.forEach(function(rule) {
@@ -92,7 +91,7 @@ angular.module(PKG.name + '.feature.adapters')
       }
       config.transforms.forEach(function(transform) {
         if (transform.name && !isValidPlugin(transform)) {
-          errors[transform.id] = 'Adapter\'s transforms is missing required fields';
+          errors[transform.id] = 'Adapter\'s transform is missing required fields';
         }
       });
 
@@ -115,41 +114,93 @@ angular.module(PKG.name + '.feature.adapters')
       return plugin.valid;
     }
 
+
+    /*
+      This checks for unconnected nodes and for parallel connections.
+      1. It will traverse the graph starting with the source, and should end in a sink.
+      2. If it does start with source && end with sink, check that all connections were traversed
+    */
     function checkForUnconnectedNodes(nodes, connections, metadata, config, errors) {
 
       var nodesCopy = angular.copy(nodes);
 
-      angular.forEach(connections, function (conn) {
-        nodesCopy[conn.source].visited = true;
-        nodesCopy[conn.target].visited = true;
-      });
+      // at this point in the checking, I can assume that there is only 1 source and 1 sink
+      var source,
+          sink,
+          transforms = [];
 
-      var unattached = [];
-
-      angular.forEach(nodesCopy, function (value, key) {
-        if (!value.visited) {
-          unattached.push(key);
-          errors[key] = 'Node is not connected to any other node';
+      angular.forEach(nodes, function (value, key) {
+        switch (value.type) {
+          case 'source':
+            source = key;
+            break;
+          case 'sink':
+            sink = key;
+            break;
+          case 'transform':
+            transforms.push(key);
+            break;
         }
       });
 
-    }
+      if (!source || !sink) {
+        return;
+      }
 
-    function checkForParallelDAGs(nodes, connections, metadata, config, errors) {
-      // FIXME: This is a faulty logic. We have to find
-      // parallel DAGs in a graph in a different way.
-      
-      // var i,
-      //     currConn,
-      //     nextConn;
-      // for(i=0; i<connections.length-1; i++) {
-      //   currConn = connections[i];
-      //   nextConn = connections[i+1];
-      //   if (currConn.target !== nextConn.source) {
-      //     addCanvasError('There are parallel connections inside this adapter', errors);
-      //     break;
-      //   }
-      // }
+      var connectionHash = {};
+      var branch = false;
+
+      angular.forEach(connections, function (conn) {
+        nodesCopy[conn.source].visited = true;
+        nodesCopy[conn.target].visited = true;
+
+        if (!connectionHash[conn.source]) {
+          connectionHash[conn.source] = {
+            target: conn.target,
+            visited: false
+          };
+        } else {
+          branch = true;
+        }
+      });
+
+      if (branch) {
+        addCanvasError('Branching in this application is not supported', errors);
+      }
+
+
+      var unattached = [];
+      angular.forEach(nodesCopy, function (value, key) {
+        if (!value.visited) {
+          unattached.push(key);
+          errors[key] = value.name + ' ' + value.type + ' is not connected to any other node';
+        }
+      });
+
+      if (unattached.length > 0) {
+        addCanvasError('There are unconnected nodes in this application', errors);
+        return;
+      }
+
+      var currNode = source;
+      while (currNode !== sink) {
+        if (connectionHash[currNode]) {
+          connectionHash[currNode].visited = true;
+          currNode = connectionHash[currNode].target;
+        } else {
+          addCanvasError('This application connections do not end in a sink', errors);
+          return;
+        }
+      }
+
+      var connKeys = Object.keys(connectionHash);
+      for (var i = 0; i < connKeys.length; i++) {
+        if (!connectionHash[connKeys[i]].visited) {
+          addCanvasError('There are parallel connections inside this application', errors);
+          break;
+        }
+      }
+
     }
 
     return {
