@@ -32,7 +32,6 @@ import org.apache.twill.api.TwillRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.util.Map;
 
 /**
@@ -49,7 +48,8 @@ public final class DistributedWebappProgramRunner extends AbstractDistributedPro
 
   @Override
   protected ProgramController launch(Program program, ProgramOptions options,
-                                     Map<String, File> localizeFiles, ApplicationLauncher launcher) {
+                                     Map<String, LocalizeResource> localizeResources,
+                                     ApplicationLauncher launcher) {
     // Extract and verify parameters
     ApplicationSpecification appSpec = program.getApplicationSpecification();
     Preconditions.checkNotNull(appSpec, "Missing application specification.");
@@ -59,7 +59,7 @@ public final class DistributedWebappProgramRunner extends AbstractDistributedPro
     Preconditions.checkArgument(processorType == ProgramType.WEBAPP, "Only WEBAPP process type is supported.");
 
     LOG.info("Launching distributed webapp: " + program.getName());
-    TwillController controller = launcher.launch(new WebappTwillApplication(program, localizeFiles, eventHandler));
+    TwillController controller = launcher.launch(new WebappTwillApplication(program, localizeResources, eventHandler));
     RunId runId = RunIds.fromString(options.getArguments().getOption(ProgramOptionConstants.RUN_ID));
     return new WebappTwillProgramController(program.getName(), controller, runId).startListen();
   }

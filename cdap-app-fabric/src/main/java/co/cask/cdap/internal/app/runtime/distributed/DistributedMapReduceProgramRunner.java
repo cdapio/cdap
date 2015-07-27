@@ -23,6 +23,7 @@ import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerHelper;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
@@ -33,7 +34,7 @@ import org.apache.twill.api.TwillRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -50,7 +51,8 @@ public final class DistributedMapReduceProgramRunner extends AbstractDistributed
 
   @Override
   protected ProgramController launch(Program program, ProgramOptions options,
-                                     Map<String, File> localizeFiles, ApplicationLauncher launcher) {
+                                     Map<String, LocalizeResource> localizeResources,
+                                     ApplicationLauncher launcher) {
     // Extract and verify parameters
     ApplicationSpecification appSpec = program.getApplicationSpecification();
     Preconditions.checkNotNull(appSpec, "Missing application specification.");
@@ -62,9 +64,11 @@ public final class DistributedMapReduceProgramRunner extends AbstractDistributed
     MapReduceSpecification spec = appSpec.getMapReduce().get(program.getName());
     Preconditions.checkNotNull(spec, "Missing MapReduceSpecification for %s", program.getName());
 
+    List<String> extraClassPaths = MapReduceContainerHelper.localizeFramework(hConf, localizeResources);
     LOG.info("Launching MapReduce program: " + program.getName() + ":" + spec.getName());
-    TwillController controller = launcher.launch(new MapReduceTwillApplication(program, spec,
-                                                                               localizeFiles, eventHandler));
+    TwillController controller = launcher.launch(
+      new MapReduceTwillApplication(program, spec, localizeResources, eventHandler),
+      extraClassPaths);
 
     RunId runId = RunIds.fromString(options.getArguments().getOption(ProgramOptionConstants.RUN_ID));
     return new MapReduceTwillProgramController(program.getName(), controller, runId).startListen();

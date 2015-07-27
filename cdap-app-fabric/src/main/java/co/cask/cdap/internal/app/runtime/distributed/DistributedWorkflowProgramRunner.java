@@ -33,6 +33,7 @@ import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerHelper;
 import co.cask.cdap.internal.app.runtime.spark.SparkContextConfig;
 import co.cask.cdap.internal.app.runtime.spark.SparkUtils;
 import co.cask.cdap.proto.ProgramType;
@@ -60,7 +61,6 @@ import javax.annotation.Nullable;
 public final class DistributedWorkflowProgramRunner extends AbstractDistributedProgramRunner {
 
   private static final Logger LOG = LoggerFactory.getLogger(DistributedWorkflowProgramRunner.class);
-  private static final int WORKFLOW_MEMORY_MB = 512;
 
   @Inject
   public DistributedWorkflowProgramRunner(TwillRunner twillRunner, Configuration hConf, CConfiguration cConf) {
@@ -69,7 +69,8 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
 
   @Override
   protected ProgramController launch(Program program, ProgramOptions options,
-                                     Map<String, File> localizeFiles, ApplicationLauncher launcher) {
+                                     Map<String, LocalizeResource> localizeResources,
+                                     ApplicationLauncher launcher) {
     // Extract and verify parameters
     ApplicationSpecification appSpec = program.getApplicationSpecification();
     Preconditions.checkNotNull(appSpec, "Missing application specification.");
@@ -82,12 +83,15 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
     Preconditions.checkNotNull(workflowSpec, "Missing WorkflowSpecification for %s", program.getName());
 
     // It the workflow has Spark, localize the spark-assembly jar
-    List<String> extraClassPaths = new ArrayList<>();
+    List<String> extraClassPaths = new ArrayList<>(
+      MapReduceContainerHelper.localizeFramework(hConf, localizeResources));
+
+    // See if the Workflow has Spark in it
     Resources resources = findSparkDriverResources(program.getApplicationSpecification().getSpark(), workflowSpec);
     if (resources != null) {
       // Has Spark
       File sparkAssemblyJar = SparkUtils.locateSparkAssemblyJar();
-      localizeFiles.put(sparkAssemblyJar.getName(), sparkAssemblyJar);
+      localizeResources.put(sparkAssemblyJar.getName(), new LocalizeResource(sparkAssemblyJar));
       extraClassPaths.add(sparkAssemblyJar.getName());
     } else {
       // No Spark
@@ -96,7 +100,7 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
 
     LOG.info("Launching distributed workflow: " + program.getName() + ":" + workflowSpec.getName());
     TwillController controller = launcher.launch(
-      new WorkflowTwillApplication(program, workflowSpec, localizeFiles, eventHandler, resources),
+      new WorkflowTwillApplication(program, workflowSpec, localizeResources, eventHandler, resources),
       extraClassPaths
     );
     RunId runId = RunIds.fromString(options.getArguments().getOption(ProgramOptionConstants.RUN_ID));

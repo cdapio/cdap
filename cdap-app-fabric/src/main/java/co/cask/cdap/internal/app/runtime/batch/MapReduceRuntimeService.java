@@ -51,6 +51,7 @@ import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetInputFormat;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetOutputFormat;
 import co.cask.cdap.internal.app.runtime.batch.distributed.ContainerLauncherGenerator;
+import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerHelper;
 import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerLauncher;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
@@ -97,6 +98,7 @@ import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.net.URI;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -245,16 +247,25 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         programJar = copyProgramJar(tempLocation);
         job.addCacheFile(programJar.toURI());
 
-        // Generate and localize the launcher jar to control the classloader of MapReduce processes
-        String yarnAppClassPath = "job.jar/lib/*,job.jar/classes," +
-          mapredConf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH,
-                         Joiner.on(',').join(YarnConfiguration.DEFAULT_YARN_APPLICATION_CLASSPATH));
-        Location launcherJar = createLauncherJar(yarnAppClassPath, tempLocation);
+        // Generate and localize the launcher jar to control the classloader of MapReduce containers processes
+        List<String> paths = new ArrayList<>();
+        paths.add("job.jar/lib/*");
+        paths.add("job.jar/classes");
+        Location launcherJar = createLauncherJar(
+          Joiner.on(",").join(MapReduceContainerHelper.getMapReduceClassPath(mapredConf, paths)), tempLocation);
         job.addCacheFile(launcherJar.toURI());
 
         // The only thing in the container classpath is the launcher.jar
         // The MapReduceContainerLauncher inside the launcher.jar will creates a MapReduceClassLoader and launch
         // the actual MapReduce AM/Task from that
+        // We explicitly localize the mr-framwork, but not use it with the classpath
+        URI frameworkURI = MapReduceContainerHelper.getFrameworkURI(mapredConf);
+        if (frameworkURI != null) {
+          job.addCacheArchive(frameworkURI);
+        }
+
+        mapredConf.unset(MRJobConfig.MAPREDUCE_APPLICATION_FRAMEWORK_PATH);
+        mapredConf.set(MRJobConfig.MAPREDUCE_APPLICATION_CLASSPATH, launcherJar.getName());
         mapredConf.set(YarnConfiguration.YARN_APPLICATION_CLASSPATH, launcherJar.getName());
       }
 
