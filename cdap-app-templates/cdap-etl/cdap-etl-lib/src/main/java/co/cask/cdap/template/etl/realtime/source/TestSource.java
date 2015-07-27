@@ -78,12 +78,12 @@ public class TestSource extends RealtimeSource<StructuredRecord> {
     }
 
     LOG.info("Emitting data! {}", prevCount);
-    if (config.type == null) {
-      writeDefaultRecords(writer);
-    } else if (STREAM_TYPE.equals(config.type)) {
+    if (STREAM_TYPE.equalsIgnoreCase(config.type)) {
       writeRecordsForStreamConsumption(writer);
-    } else if (TABLE_TYPE.equals(config.type)) {
+    } else if (TABLE_TYPE.equalsIgnoreCase(config.type)) {
       writeRecordsForTableConsumption(writer);
+    } else {
+      writeDefaultRecords(writer);
     }
     return currentState;
   }
