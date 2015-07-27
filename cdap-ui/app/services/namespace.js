@@ -14,7 +14,6 @@ angular.module(PKG.name + '.services')
       }
 
       if (!queryInProgress) {
-
         prom = $q.defer();
         queryInProgress = true;
         data.request(
@@ -33,6 +32,7 @@ angular.module(PKG.name + '.services')
                 }
 
                 this.namespaceList = res;
+                EventPipe.emit('namespace.update');
                 prom.resolve(res);
                 queryInProgress = null;
               }).bind(this),
