@@ -5,10 +5,10 @@ angular.module(PKG.name + '.commons')
       ConnectionsDetachable: true
     };
     var connectorStyle = {
-      strokeStyle: 'black',
-      fillStyle: '#666',
+      strokeStyle: "#666e82",
+      fillStyle: '#666e82',
       radius: 7,
-      lineWidth: 3
+      lineWidth: 2
     };
 
     var commonSettings = {
@@ -16,11 +16,11 @@ angular.module(PKG.name + '.commons')
       maxConnections: -1,
       paintStyle: {
         strokeStyle: 'white',
-        fillStyle: '#666',
+        fillStyle: '#666e82',
         radius: 7,
-        lineWidth: 2
+        lineWidth: 3
       },
-      connectorOverlays: [ [ 'Arrow', { location:1, width: 20, height: 20 } ] ],
+      connectorOverlays: [ [ 'Arrow', { location:0.925, length: 12, width: 12, height: 10, foldback: 1 } ] ],
       anchors: [ 'Perimeter', {shape: 'Circle'}]
     };
     var sourceSettings = angular.extend({
