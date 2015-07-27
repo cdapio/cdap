@@ -36,7 +36,7 @@ angular.module(PKG.name + '.feature.adapters')
       },
       {
         name: 'Settings',
-        icon: 'fa fa-cogs'
+        icon: 'fa fa-sliders'
       }
     ];
 
