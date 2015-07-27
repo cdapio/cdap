@@ -2,9 +2,15 @@
 @import "../../styles/themes/cdap/mixins.less";
 body.theme-cdap {
   &.state-adapters-list {
-    [class*="col-"] {
-      padding-left: 5px;
-      padding-right: 5px;
+    [apps-drafts-list] {
+      [class*="col-"] {
+        padding-left: 5px;
+        padding-right: 5px;
+      }
+      .drafts-list-container {
+        margin-left: 10px;
+        margin-right: 10px;
+      }
     }
   }
   &.state-adapters {

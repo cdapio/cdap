@@ -2,7 +2,7 @@ angular.module(PKG.name + '.feature.adapters')
   .config(function($stateProvider, $urlRouterProvider, MYAUTH_ROLE) {
     $stateProvider
       .state('adapters', {
-        url: '/adapters',
+        url: '',
         abstract: true,
         parent: 'apps',
         data: {
@@ -13,11 +13,11 @@ angular.module(PKG.name + '.feature.adapters')
       })
 
         .state('adapters.list', {
-          url: '',
+          url: '/drafts',
           templateUrl: '/assets/features/adapters/templates/list.html',
           controller: 'AdapterListController',
           ncyBreadcrumb: {
-            label: 'Adapters',
+            label: 'All Drafts',
             parent: 'overview'
           }
         })
