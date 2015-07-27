@@ -46,6 +46,10 @@ angular.module(PKG.name + '.commons')
 
     MyPlumbService.errorCallback(errorNotification.bind(this));
 
+    this.closeCanvasError = function () {
+      this.canvasError = [];
+    };
+
     this.drawGraph = function() {
       var graph = MyPlumbFactory.getGraph(this.plugins);
       var nodes = graph.nodes()
