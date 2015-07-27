@@ -34,7 +34,8 @@
         <span class="{{group.icon}}"
           tooltip="{{ group.name }}"
           tooltip-placement="{{ MySidePanel.placement === 'left' ? 'right' : 'left' }}"
-          tooltip-enable="MySidePanel.isExpanded === false"
+          tooltip-enable="MySidePanel.isExpanded === false && !group.error"
+
         ></span>
         <span class="name">{{group.name | caskCapitalizeFilter}}</span>
         <span ng-if="MySidePanel.isExpanded === true"
