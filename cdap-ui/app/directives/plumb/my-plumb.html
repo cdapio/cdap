@@ -1,4 +1,4 @@
-<div class="my-js-plumb">
+<div class="my-js-plumb" ng-class="{'disabled': MyPlumbController.isDisabled }">
   <div id="plumb-container">
     <div ng-repeat="plugin in MyPlumbController.plugins"
           class="box {{plugin.type}}"

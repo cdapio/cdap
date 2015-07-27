@@ -1,23 +1,8 @@
 angular.module(PKG.name + '.feature.adapters')
   // TODO: We should use rAdapterDetail here since this data is already resolved at adapter.detail state
-  .controller('AdapterRunDetailStatusController', function($scope, $state, myAdapterApi, $bootstrapModal) {
+  .controller('AdapterRunDetailStatusController', function($scope, $state, myAdapterApi, $bootstrapModal, CanvasFactory, MyPlumbService) {
 
-    $scope.transforms = [{
-      name: '',
-      properties: {},
-      type: ''
-    }];
-    $scope.source = {
-      name: '',
-      properties: {},
-      type: ''
-    };
-    $scope.sink = {
-      name: '',
-      properties: {},
-      type: ''
-    };
-
+    $scope.nodes = [];
     var params = {
       namespace: $state.params.namespace,
       adapter: $state.params.adapterId,
@@ -31,92 +16,20 @@ angular.module(PKG.name + '.feature.adapters')
       .then(function(res) {
         $scope.source = res.config.source;
         $scope.sink = res.config.sink;
-        $scope.transforms = res.config.transforms || [];
-        template = res.template;
-
-        initializeProperties();
-
-      });
-
-    // Getting _backendProperties for Sink, Source, and Transforms
-    function initializeProperties() {
-      myAdapterApi
-        .fetchSourceProperties({
-          scope: $scope,
-          adapterType: template,
-          source: $scope.source.name
-        })
-        .$promise
-        .then(function(res) {
-          var pluginProperties = (res.length? res[0].properties: {});
-          $scope.source._backendProperties = pluginProperties;
-          $scope.source.type = 'source';
+        $scope.transforms = res.config.transforms;
+        $scope.nodes = CanvasFactory.getNodes(res.config);
+        $scope.nodes.forEach(function(node) {
+          MyPlumbService.addNodes(node, node.type);
         });
 
+        MyPlumbService.connections = CanvasFactory.getConnectionsBasedOnNodes($scope.nodes);
 
-      angular.forEach($scope.transforms, function(transform) {
-        myAdapterApi
-          .fetchTransformProperties({
-            scope: $scope,
-            adapterType: template,
-            transform: transform.name
-          })
-          .$promise
-          .then(function(res) {
-            var pluginProperties = (res.length? res[0].properties : {});
-            transform._backendProperties = pluginProperties;
-            transform.type = 'transform';
-          });
-      });
-
-
-      myAdapterApi
-        .fetchSinkProperties({
-          scope: $scope,
-          adapterType: template,
-          sink: $scope.sink.name
-        })
-        .$promise
-        .then(function(res) {
-          var pluginProperties = (res.length? res[0].properties : {});
-          $scope.sink._backendProperties = pluginProperties;
-          $scope.sink.type = 'sink';
-        });
-    }
-
-    $scope.openProperties = function (plugin) {
-      $bootstrapModal.open({
-        animation: false,
-        templateUrl: '/assets/features/adapters/templates/tabs/runs/tabs/properties/properties.html',
-        controller: 'modalController',
-        size: 'lg',
-        resolve: {
-          AdapterModel: function () {
-            return plugin;
-          },
-          type: function () {
-            return template;
-          }
+        MyPlumbService.metadata.name = res.name;
+        MyPlumbService.metadata.description = res.description;
+        MyPlumbService.metadata.template.type = res.template;
+        if (res.template === 'ETLBatch') {
+          MyPlumbService.metadata.template.instances = res.instances;
         }
+
       });
-    };
-
-  })
-  .controller('modalController', function ($scope, $modalInstance, AdapterModel, type){
-    $scope.plugin = AdapterModel;
-    $scope.type = type;
-    $scope.isDisabled = true;
-
-    $scope.plugin.outputSchema = $scope.plugin.properties.schema;
-
-    if (AdapterModel.type === 'source') {
-      $scope.isSource = true;
-    }
-
-    if (AdapterModel.type === 'sink') {
-      $scope.isSink = true;
-    }
-    if (AdapterModel.type === 'transform') {
-      $scope.isTransform = true;
-    }
   });

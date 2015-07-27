@@ -45,13 +45,6 @@
                "width": "medium"
              }
           },
-	  "schema" : {
-             "widget": "schema",
-             "label" : "Schema",
-             "schema-types" : [ "boolean", "int", "long", "float", "double", "bytes", "string" ],
-             "schema-default-type" : "string"
-          },
-
           "kafka.default.offset" : {
              "widget": "number",
              "label": "Start Offset",

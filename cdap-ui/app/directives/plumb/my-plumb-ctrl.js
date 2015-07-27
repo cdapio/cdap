@@ -1,6 +1,9 @@
 angular.module(PKG.name + '.commons')
   .controller('MyPlumbController', function MyPlumbController(jsPlumb, $scope, $timeout, MyPlumbService, myHelpers, MyPlumbFactory, $window) {
     this.plugins = $scope.config || [];
+    this.isDisabled = $scope.isDisabled;
+    MyPlumbService.setIsDisabled(this.isDisabled);
+
     this.instance = null;
 
     this.addPlugin = function addPlugin(config, type) {
@@ -50,10 +53,15 @@ angular.module(PKG.name + '.commons')
           return graph.node(node);
         });
 
-      var marginLeft = $scope.getGraphMargins(this.plugins);
+      if (this.isDisabled) {
+        var margins = $scope.getGraphMargins(this.plugins);
+        var marginLeft = margins.left;
+      }
+
       this.plugins.forEach(function(plugin) {
         plugin.icon = MyPlumbFactory.getIcon(plugin.name);
-        plugin.style = plugin.style || MyPlumbFactory.generateStyles(plugin.id, nodes, 200, marginLeft);
+        plugin.style = plugin.style ||
+        ( this.isDisabled? MyPlumbFactory.generateStyles(plugin.id, nodes, 0, marginLeft): '');
         drawNode.call(this, plugin.id, plugin.type);
       }.bind(this));
 
@@ -83,9 +91,11 @@ angular.module(PKG.name + '.commons')
           this.instance.addEndpoint(id, sinkSettings, {uuid: 'Right' + id});
           break;
       }
-      this.instance.draggable(id, {
-        drag: function (evt) { return dragnode.call(this, evt); }.bind(this)
-      });
+      if (!this.isDisabled) {
+        this.instance.draggable(id, {
+          drag: function (evt) { return dragnode.call(this, evt); }.bind(this)
+        });
+      }
       // Super hacky way of restricting user to not scroll beyond certain top and left.
       function dragnode(e) {
         var returnResult = true;
