@@ -31,6 +31,7 @@ angular.module(PKG.name + '.commons')
     };
 
     function errorNotification(errObj) {
+      this.canvasError = [];
       if (errObj.canvas) {
         this.canvasError = errObj.canvas;
       }
