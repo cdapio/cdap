@@ -54,6 +54,8 @@ import co.cask.cdap.internal.workflow.DefaultWorkflowActionSpecification;
 import co.cask.cdap.internal.workflow.ProgramWorkflowAction;
 import co.cask.cdap.logging.context.WorkflowLoggingContext;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.templates.AdapterDefinition;
 import co.cask.http.NettyHttpService;
 import co.cask.tephra.TransactionAware;
@@ -125,6 +127,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private final TransactionSystemClient txClient;
   private final Store store;
   private final Id.Workflow workflowId;
+  private final String adapterName;
 
   WorkflowDriver(Program program, ProgramOptions options, InetAddress hostname,
                  WorkflowSpecification workflowSpec, ProgramRunnerFactory programRunnerFactory,
@@ -143,9 +146,10 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     this.lock = new ReentrantLock();
     this.condition = lock.newCondition();
     String adapterSpec = arguments.getOption(ProgramOptionConstants.ADAPTER_SPEC);
-    String adapterName = null;
     if (adapterSpec != null) {
       adapterName = GSON.fromJson(adapterSpec, AdapterDefinition.class).getName();
+    } else {
+      adapterName = null;
     }
     this.loggingContext = new WorkflowLoggingContext(program.getNamespaceId(), program.getApplicationId(),
                                                      program.getName(),
@@ -417,7 +421,31 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     switch (nodeType) {
       case ACTION:
         ((BasicWorkflowToken) token).setCurrentNodeInfo(node.getNodeId(), getNodeFilterList(node));
-        executeAction(appSpec, (WorkflowActionNode) node, instantiator, classLoader, token);
+        WorkflowActionNode actionNode = (WorkflowActionNode) node;
+        if (actionNode.getProgram().getProgramType() == SchedulableProgramType.CUSTOM_ACTION) {
+          String customActionName = actionNode.getProgram().getProgramName();
+          RunId customActionRunId = RunIds.generate();
+          long startTimeInSeconds = RunIds.getTime(customActionRunId, TimeUnit.SECONDS);
+          Id.Program customActionId = Id.Program.from(workflowId.getApplication(), ProgramType.CUSTOM_ACTION,
+                                                      customActionName);
+
+          store.setWorkflowProgramStart(customActionId, customActionRunId.getId(), workflowId.getId(), runId.getId(),
+                                        node.getNodeId(), startTimeInSeconds, adapterName, null);
+          boolean bException = false;
+          try {
+            executeAction(appSpec, (WorkflowActionNode) node, instantiator, classLoader, token);
+          } catch (Throwable t) {
+            bException = true;
+            Throwables.propagateIfPossible(t, Exception.class);
+            throw Throwables.propagate(t);
+          } finally {
+            ProgramRunStatus runStatus = bException ? ProgramRunStatus.FAILED : ProgramRunStatus.COMPLETED;
+            store.setStop(customActionId, customActionRunId.getId(),
+                          TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()), runStatus);
+          }
+        } else {
+          executeAction(appSpec, (WorkflowActionNode) node, instantiator, classLoader, token);
+        }
         break;
       case FORK:
         executeFork(appSpec, (WorkflowForkNode) node, instantiator, classLoader, token);

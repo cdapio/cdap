@@ -1134,6 +1134,9 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     workflowTokenNodeDetail = getWorkflowToken(workflowId, runId, "anotherAction", null, null);
     Assert.assertEquals(1, workflowTokenNodeDetail.getTokenDataAtNode().size());
     Assert.assertEquals("some.value", workflowTokenNodeDetail.getTokenDataAtNode().get("some.key"));
+
+    Assert.assertNotNull(runRecord.getProperties().get("oneAction"));
+    Assert.assertNotNull(runRecord.getProperties().get("anotherAction"));
   }
 
   @Test
