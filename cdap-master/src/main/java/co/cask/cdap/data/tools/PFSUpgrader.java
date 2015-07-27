@@ -25,11 +25,13 @@ import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.data2.datafabric.dataset.DatasetMetaTableUtil;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.DatasetInstanceMDS;
+import co.cask.cdap.data2.datafabric.dataset.service.mds.DatasetTypeMDS;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.partitioned.PartitionedFileSetDefinition;
 import co.cask.cdap.data2.dataset2.lib.partitioned.PartitionedFileSetTableMigrator;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
@@ -45,8 +47,10 @@ import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedMap;
 
 /**
  * Migrates all dataset specifications that are for PartitionedFileSet or have an embedded PartitionedFileSet,
@@ -72,6 +76,7 @@ public class PFSUpgrader {
   public void upgrade() throws Exception {
     LOG.info("Begin upgrade of PartitionedFileSets.");
     upgradePartitionedFileSets();
+    upgradeModulesDependingOnPfs();
     LOG.info("Completed upgrade of PartitionedFileSets.");
   }
 
@@ -149,8 +154,71 @@ public class PFSUpgrader {
         }
       }
     });
+  }
 
+  // need to add 'orderedTable-hbase' and 'core' as module dependencies for any modules that currently depend on
+  // partitionedFileSet or timePartitionedFileSet as a resolution to: https://issues.cask.co/browse/CDAP-3030
+  private void upgradeModulesDependingOnPfs() throws Exception {
+    final DatasetTypeMDS dsTypeMDS;
+    try {
+      dsTypeMDS = new DatasetMetaTableUtil(dsFramework).getTypeMetaTable();
+    } catch (Exception e) {
+      LOG.error("Failed to access Datasets types meta table.");
+      throw e;
+    }
 
+    TransactionExecutor executor = executorFactory.createExecutor(ImmutableList.of((TransactionAware) dsTypeMDS));
+    executor.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        MDSKey key = new MDSKey.Builder().add(DatasetTypeMDS.MODULES_PREFIX).build();
+        Map<MDSKey, DatasetModuleMeta> dsSpecs = dsTypeMDS.listKV(key, DatasetModuleMeta.class);
+
+        for (Map.Entry<MDSKey, DatasetModuleMeta> entry : dsSpecs.entrySet()) {
+          DatasetModuleMeta moduleMeta = entry.getValue();
+          if (!needsConverting(moduleMeta)) {
+            continue;
+          }
+          LOG.info("Migrating dataset module meta: {}", moduleMeta);
+          DatasetModuleMeta migratedModuleMeta = migrateDatasetModuleMeta(moduleMeta);
+          dsTypeMDS.write(entry.getKey(), migratedModuleMeta);
+        }
+      }
+    });
+  }
+
+  @VisibleForTesting
+  boolean needsConverting(DatasetModuleMeta moduleMeta) {
+    // if 'orderedTable-hbase' and 'core' are already declared dependencies, no need to upgrade the module meta
+    List<String> usesModules = moduleMeta.getUsesModules();
+    if (usesModules.contains("orderedTable-hbase") && usesModules.contains("core")) {
+      return false;
+    }
+    return usesModules.contains("partitionedFileSet") || usesModules.contains("timePartitionedFileSet");
+  }
+
+  @VisibleForTesting
+  DatasetModuleMeta migrateDatasetModuleMeta(DatasetModuleMeta moduleMeta) {
+    List<String> newUsesModules = new ArrayList<>();
+    // ordering of the usesModules is important. They are loaded in order of the elements' indices
+    // add the following two modules as the first two dependencies, and then simply exclude them from the existing
+    // declared dependencies to avoid duplicate declared dependencies.
+    newUsesModules.add("orderedTable-hbase");
+    newUsesModules.add("core");
+    for (String usesModule : moduleMeta.getUsesModules()) {
+      if (!"orderedTable-hbase".equals(usesModule) && !"core".equals(usesModule)) {
+        newUsesModules.add(usesModule);
+      }
+    }
+    DatasetModuleMeta migratedModuleMeta = new DatasetModuleMeta(moduleMeta.getName(),
+                                                                 moduleMeta.getClassName(),
+                                                                 moduleMeta.getJarLocation(),
+                                                                 moduleMeta.getTypes(),
+                                                                 newUsesModules);
+    for (String usedByModule : moduleMeta.getUsedByModules()) {
+      migratedModuleMeta.addUsedByModule(usedByModule);
+    }
+    return migratedModuleMeta;
   }
 
   @VisibleForTesting
@@ -181,7 +249,11 @@ public class PFSUpgrader {
         return dsSpec;
       }
       DatasetSpecification convertedSpec = convertSpec(dsName, dsSpec);
-      addTo.put(namespaceId, convertedSpec);
+      // the pfs spec that is passed to the PartitionedFileSetTableMigrator must have a name that is namespaced by its
+      // embedding dsSpec (if any) in order to accurately match the hbase table. However, the convertedSpec that is
+      // returned simply has the short name (not namespaced by embedding spec) because it is yet to be used in a
+      // DatasetSpecification#Builder
+      addTo.put(namespaceId, changeName(convertedSpec, dsSpec.getName()));
       return convertedSpec;
     }
 
@@ -193,6 +265,18 @@ public class PFSUpgrader {
     DatasetSpecification.Builder builder = DatasetSpecification.builder(dsName, dsSpec.getType());
     builder.properties(dsSpec.getProperties());
     builder.datasets(newSpecs);
+    return builder.build();
+  }
+
+  // modifies the name of a dataset, while propogating this name change to the embedded datasets.
+  @VisibleForTesting
+  DatasetSpecification changeName(DatasetSpecification dsSpec, String newName) {
+    DatasetSpecification.Builder builder = DatasetSpecification.builder(newName, dsSpec.getType());
+    builder.properties(dsSpec.getProperties());
+    SortedMap<String, DatasetSpecification> specifications = dsSpec.getSpecifications();
+    for (Map.Entry<String, DatasetSpecification> entry : specifications.entrySet()) {
+      builder.datasets(changeName(entry.getValue(), entry.getKey()));
+    }
     return builder.build();
   }
 
