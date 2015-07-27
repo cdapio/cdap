@@ -43,10 +43,12 @@ public class WorkflowVerificationTest {
     ApplicationSpecification appSpec = Specifications.from(new GoodWorkflowApp());
     verifyGoodWorkflowSpecifications(appSpec);
     verifyAnotherGoodWorkflowSpecification(appSpec);
+    verifyWorkflowWithForkInConditionSpecification(appSpec);
     ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
     ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(appSpec));
     verifyGoodWorkflowSpecifications(newSpec);
     verifyAnotherGoodWorkflowSpecification(appSpec);
+    verifyWorkflowWithForkInConditionSpecification(appSpec);
   }
 
   private void verifyAnotherGoodWorkflowSpecification(ApplicationSpecification appSpec) {
@@ -360,5 +362,45 @@ public class WorkflowVerificationTest {
     Assert.assertTrue(actionNode.getProgram().equals(new ScheduleProgramInfo(SchedulableProgramType.MAPREDUCE,
                                                                              "MR7")));
     Assert.assertNull(actionNode.getActionSpecification());
+  }
+
+  private void verifyWorkflowWithForkInConditionSpecification(ApplicationSpecification appSpec) {
+    WorkflowSpecification spec = appSpec.getWorkflows().get("WorkflowWithForkInCondition");
+    List<WorkflowNode> nodes = spec.getNodes();
+    Assert.assertTrue(nodes.size() == 2);
+
+    WorkflowNode node = spec.getNodeIdMap().get("MyVerificationPredicate");
+    Assert.assertTrue(node.getType() == WorkflowNodeType.CONDITION);
+    Assert.assertEquals(0, node.getParentNodeIds().size());
+    WorkflowConditionNode conditionNode  = (WorkflowConditionNode) node;
+    Assert.assertTrue(conditionNode.getNodeId().equals("MyVerificationPredicate"));
+    Assert.assertTrue(conditionNode.getPredicateClassName().contains("MyVerificationPredicate"));
+
+    node = spec.getNodeIdMap().get("MR1");
+    Assert.assertEquals(1, node.getParentNodeIds().size());
+    Assert.assertEquals("MyVerificationPredicate", node.getParentNodeIds().iterator().next());
+
+    node = spec.getNodeIdMap().get("MR2");
+    Assert.assertEquals(1, node.getParentNodeIds().size());
+    Assert.assertEquals("MR1", node.getParentNodeIds().iterator().next());
+
+    node = spec.getNodeIdMap().get("MR3");
+    Assert.assertEquals(1, node.getParentNodeIds().size());
+    Assert.assertEquals("MyVerificationPredicate", node.getParentNodeIds().iterator().next());
+
+    node = spec.getNodeIdMap().get("SP1");
+    Assert.assertEquals(1, node.getParentNodeIds().size());
+    Assert.assertEquals("MyVerificationPredicate", node.getParentNodeIds().iterator().next());
+
+    node = spec.getNodeIdMap().get("SP2");
+    Assert.assertEquals(1, node.getParentNodeIds().size());
+    Assert.assertEquals("MyVerificationPredicate", node.getParentNodeIds().iterator().next());
+
+    node = spec.getNodeIdMap().get("MR4");
+    Assert.assertEquals(4, node.getParentNodeIds().size());
+    Assert.assertTrue(node.getParentNodeIds().contains("MR2"));
+    Assert.assertTrue(node.getParentNodeIds().contains("MR3"));
+    Assert.assertTrue(node.getParentNodeIds().contains("SP2"));
+    Assert.assertTrue(node.getParentNodeIds().contains("SP2"));
   }
 }

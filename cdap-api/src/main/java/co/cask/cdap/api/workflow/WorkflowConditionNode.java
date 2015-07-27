@@ -28,6 +28,11 @@ public class WorkflowConditionNode extends WorkflowNode {
   private final String predicateClassName;
 
   public WorkflowConditionNode(String nodeId, String predicateClassName, List<WorkflowNode> ifBranch,
+                               List<WorkflowNode> elseBranch) {
+    this(nodeId, predicateClassName, ifBranch, elseBranch, null);
+  }
+
+  public WorkflowConditionNode(String nodeId, String predicateClassName, List<WorkflowNode> ifBranch,
                                List<WorkflowNode> elseBranch, Set<String> parentNodeIds) {
     super(nodeId, WorkflowNodeType.CONDITION, parentNodeIds);
     this.ifBranch = ifBranch;

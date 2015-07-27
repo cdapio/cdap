@@ -18,7 +18,6 @@ package co.cask.cdap;
 
 import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.AbstractWorkflowAction;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
@@ -27,7 +26,7 @@ import co.cask.cdap.api.workflow.WorkflowContext;
 import javax.annotation.Nullable;
 
 /**
- *
+ * Workflow app to verify the workflow specifications.
  */
 public class GoodWorkflowApp extends AbstractApplication {
 
@@ -35,16 +34,13 @@ public class GoodWorkflowApp extends AbstractApplication {
   public void configure() {
     setName("GoodWorkflowApp");
     setDescription("WorkflowApp with multiple forks inside it");
-    for (int i = 1; i <= 7; i++) {
-      addMapReduce(new DummyMR("MR" + String.valueOf(i)));
-    }
-
     addWorkflow(new GoodWorkflow());
     addWorkflow(new AnotherGoodWorkflow());
+    addWorkflow(new WorkflowWithForkInCondition());
   }
 
   /**
-   *
+   * Complex workflow to test the workflow specifications.
    */
   public class GoodWorkflow extends AbstractWorkflow {
 
@@ -90,22 +86,7 @@ public class GoodWorkflowApp extends AbstractApplication {
   }
 
   /**
-   * Dummy MapReduce program
-   */
-  public class DummyMR extends AbstractMapReduce {
-    private final String name;
-    public DummyMR(String name) {
-      this.name = name;
-    }
-
-    @Override
-    protected void configure() {
-      setName(name);
-    }
-  }
-
-  /**
-   * DummyAction
+   * Dummy Action.
    */
   public class DummyAction extends AbstractWorkflowAction {
     private final String name;
@@ -126,6 +107,9 @@ public class GoodWorkflowApp extends AbstractApplication {
     }
   }
 
+  /**
+   * Another complex workflow to test the workflow specifications.
+   */
   public class AnotherGoodWorkflow extends AbstractWorkflow {
 
     @Override
@@ -163,6 +147,9 @@ public class GoodWorkflowApp extends AbstractApplication {
     }
   }
 
+  /**
+   * Test predicate used to verify the app.
+   */
   public static final class MyVerificationPredicate implements Predicate<WorkflowContext> {
 
     @Override
@@ -171,11 +158,41 @@ public class GoodWorkflowApp extends AbstractApplication {
     }
   }
 
+  /**
+   * Test predicate used to verify the app.
+   */
   public static final class AnotherVerificationPredicate implements Predicate<WorkflowContext> {
 
     @Override
     public boolean apply(@Nullable WorkflowContext input) {
       return false;
+    }
+  }
+
+  public class WorkflowWithForkInCondition extends AbstractWorkflow {
+
+    @Override
+    protected void configure() {
+      condition(new MyVerificationPredicate())
+        .fork()
+          .fork()
+            .fork()
+              .addMapReduce("MR1")
+              .addMapReduce("MR2")
+            .also()
+              .addMapReduce("MR3")
+            .join()
+          .join()
+        .join()
+      .otherwise()
+        .fork()
+          .addSpark("SP1")
+        .also()
+          .addSpark("SP2")
+        .join()
+       .end();
+
+       addMapReduce("MR4");
     }
   }
 }

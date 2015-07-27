@@ -28,10 +28,18 @@ public class WorkflowActionNode extends WorkflowNode {
   private final ScheduleProgramInfo program;
   private final WorkflowActionSpecification actionSpecification;
 
+  public WorkflowActionNode(String nodeId, ScheduleProgramInfo program) {
+    this(nodeId, program, null);
+  }
+
   public WorkflowActionNode(String nodeId, ScheduleProgramInfo program, Set<String> parentNodeIds) {
     super(nodeId, WorkflowNodeType.ACTION, parentNodeIds);
     this.program = program;
     this.actionSpecification = null;
+  }
+
+  public WorkflowActionNode(String nodeId, WorkflowActionSpecification actionSpecification) {
+    this(nodeId, actionSpecification, null);
   }
 
   public WorkflowActionNode(String nodeId, WorkflowActionSpecification actionSpecification, Set<String> parentNodeIds) {

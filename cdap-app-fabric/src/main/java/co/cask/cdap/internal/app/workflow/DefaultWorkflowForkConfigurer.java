@@ -100,6 +100,6 @@ public class DefaultWorkflowForkConfigurer<T extends WorkflowForkJoiner & Workfl
   @Override
   public void addWorkflowConditionNode(String conditionNodeName, String predicateClassName, List<WorkflowNode> ifBranch,
                                        List<WorkflowNode> elseBranch) {
-    currentBranch.add(new WorkflowConditionNode(conditionNodeName, predicateClassName, ifBranch, elseBranch, null));
+    currentBranch.add(new WorkflowConditionNode(conditionNodeName, predicateClassName, ifBranch, elseBranch));
   }
 }

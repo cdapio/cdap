@@ -28,7 +28,7 @@ import java.util.Queue;
 
 
 /**
- * Specification for a {@link Workflow}
+ * Specification for a {@link Workflow}.
  */
 public final class WorkflowSpecification implements ProgramSpecification, PropertyProvider {
   private final String className;
@@ -36,7 +36,7 @@ public final class WorkflowSpecification implements ProgramSpecification, Proper
   private final String description;
   private final Map<String, String> properties;
   private final List<WorkflowNode> nodes;
-  private final Map<String, WorkflowNode> nodeIdMap;
+  private final transient Map<String, WorkflowNode> nodeIdMap;
 
   public WorkflowSpecification(String className, String name, String description,
                                       Map<String, String> properties, List<WorkflowNode> nodes) {
@@ -49,9 +49,13 @@ public final class WorkflowSpecification implements ProgramSpecification, Proper
     this.nodeIdMap = Collections.unmodifiableMap(generateNodeIdMap());
   }
 
+  /**
+   * Visit all the nodes in the {@link Workflow} and generate the map of node id to
+   * the {@link WorkflowNode}. Returned map does not contain any mapping for the FORK node,
+   * however contains the ACTION and CONDITION nodes within the FORK node itself.
+   */
   private Map<String, WorkflowNode> generateNodeIdMap() {
     Map<String, WorkflowNode> nodeIdMap = new HashMap<>();
-    // Visit all nodes in the Workflow to generate the Map of node id to the WorkflowNode.
     Queue<WorkflowNode> nodes = new LinkedList<>(this.nodes);
     while (!nodes.isEmpty()) {
       WorkflowNode node = nodes.poll();
