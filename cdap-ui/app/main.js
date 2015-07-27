@@ -46,7 +46,7 @@ angular
       'mgcrea.ngStrap.timepicker',
 
       'mgcrea.ngStrap.alert',
-      'mgcrea.ngStrap.tooltip',
+
       'mgcrea.ngStrap.popover',
       'mgcrea.ngStrap.dropdown',
       'mgcrea.ngStrap.typeahead',
@@ -160,6 +160,12 @@ angular
       animation: 'am-fade-and-scale',
       container: '#alerts > .container',
       duration: 5
+    });
+  })
+
+  .config(function ($bootstrapTooltipProvider) {
+    $bootstrapTooltipProvider.setTriggers({
+      'customShow': 'customHide'
     });
   })
 

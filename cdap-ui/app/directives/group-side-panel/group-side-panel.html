@@ -21,14 +21,22 @@
   <div class="item"
         ng-repeat="group in MySidePanel.groups"
         ng-class="{'text-left': MySidePanel.isExpanded === true}"
-        ng-click="MySidePanel.openGroup(group)">
+        ng-click="MySidePanel.openGroup(group)"
+        >
 
     <div class="item-heading"
-          tooltip="{{ group.error }}"
+          tooltip="{{group.error}}"
           tooltip-placement="right"
           tooltip-append-to-body="true"
-          ng-class="{source: group.name === 'source', transform: group.name === 'transform', sink: group.name === 'sink', 'item-open': MySidePanel.openedGroup === group.name, 'error': group.error }">
-        <span class="{{group.icon}}"></span>
+          tooltip-toggle="group.error"
+          tooltip-class="tooltip-error"
+          ng-class="{source: group.name === 'source', transform: group.name === 'transform', sink: group.name === 'sink', 'item-open': MySidePanel.openedGroup === group.name }">
+        <span class="{{group.icon}}"
+          tooltip="{{ group.name }}"
+          tooltip-placement="{{ MySidePanel.placement === 'left' ? 'right' : 'left' }}"
+          tooltip-enable="MySidePanel.isExpanded === false && !group.error"
+
+        ></span>
         <span class="name">{{group.name | caskCapitalizeFilter}}</span>
         <span ng-if="MySidePanel.isExpanded === true"
               ng-class="{'fa-chevron-right': MySidePanel.openedGroup !== group.name, 'fa-chevron-down': MySidePanel.openedGroup === group.name}"
@@ -40,12 +48,14 @@
           ng-if="MySidePanel.isSubMenu === true && MySidePanel.openedGroup === group.name">
       <div ng-repeat="plugin in MySidePanel.panel.items"
             class="plugin-item"
-            tooltip="{{plugin.name}}"
-            tooltip-placement="right"
-            tooltip-append-to-body="true"
+            popover="{{plugin.description}}"
+            popover-title="{{plugin.name}}"
+            popover-placement="right"
+            popover-append-to-body="true"
+            popover-trigger="mouseenter"
             ng-click="MySidePanel.onItemClicked($event, plugin)">
         <span class="fa {{plugin.icon}}"></span>
-        <span class="name">{{plugin.name}}</span>
+        <span class="name">{{plugin.name | myEllipsis: 10}}</span>
       </div>
     </div>
 
