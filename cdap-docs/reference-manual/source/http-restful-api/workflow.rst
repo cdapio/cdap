@@ -108,31 +108,25 @@ Examples
    * - HTTP Response
      - ``{"key1":[{"nodeName": "node1", "value":"1"}]}``
    * - Description
-     - Retrieves the token for a specific run of *PurchaseHistoryWorkflow* 
-
-   * - 
-     - 
+     - | Retrieves the token for a specific run of *PurchaseHistoryWorkflow* 
+       |
 
    * - HTTP Request
      - ``GET <base-url>/namespaces/default/apps/Purchase/workflows/PurchaseHistoryWorkflow/runs/57c...75e2/token?scope=system``
    * - HTTP Response
      - ``{"key1":[{"nodeName": "node1", "value":"1"}]}``
    * - Description
-     - Retrieves the token in the scope *System* for a specific run of *PurchaseHistoryWorkflow*
-
-   * - 
-     - 
+     - | Retrieves the token in the scope *System* for a specific run of *PurchaseHistoryWorkflow*
+       |
 
    * - HTTP Request
      - ``GET <base-url>/namespaces/default/apps/Purchase/workflows/MyWorkflow/runs/57c...75e2/token?key=key1``
    * - HTTP Response
      - ``{"key1":[{"nodeName": "node1", "value":"1"}]}``
    * - Description
-     - Retrieves the values for the key "key1" from the token in the scope *User* for a specific run of *MyWorkflow*
-
-   * - 
-     - 
-
+     - | Retrieves the values for the key "key1" from the token in the scope *User* for a specific run of *MyWorkflow*
+       |
+       
    * - HTTP Request
      - ``GET <base-url>/namespaces/default/apps/Purchase/workflows/MyWorkflow/runs/57c...75e2/nodes/MyExitNode/token?key=key1``
    * - HTTP Response

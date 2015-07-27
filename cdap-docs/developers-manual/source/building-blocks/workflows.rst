@@ -94,6 +94,77 @@ implement the ``run()`` method::
 The custom action then can be added to the workflow using the ``addAction()`` method as
 shown above.
 
+.. _workflow-unique-names:
+
+Assigning Unique Names
+----------------------
+It's important to assign unique names to each component of the workflow, especially when you
+use  multiple instances of the same program in the same workflow.
+
+These unique names can be set when the Workflow is first configured, passed to the instance of the
+program, and then be used when the program performs its own configuration. An example
+of this is the :ref:`Wikipedia Pipeline<wikipedia-data-pipeline>` example, and its use of the
+*StreamToDataset* MapReduce program multiple times::
+
+  public class StreamToDataset extends AbstractMapReduce {
+    private static final Logger LOG = LoggerFactory.getLogger(StreamToDataset.class);
+  
+    private final String name;
+  
+    public StreamToDataset(String name) {
+      this.name = name;
+    }
+  
+    @Override
+    public void configure() {
+      setName(name);
+      ...
+    }
+
+In its declaration of the application, the example specifies the unique names for each instance::
+
+  public class WikipediaPipelineApp extends AbstractApplication {
+    ...
+    static final String LIKES_TO_DATASET_MR_NAME = "likesToDataset";
+    static final String WIKIPEDIA_TO_DATASET_MR_NAME = "wikiDataToDataset";
+
+    @Override
+    public void configure() {
+      ...
+      addMapReduce(new StreamToDataset(LIKES_TO_DATASET_MR_NAME));
+      addMapReduce(new StreamToDataset(WIKIPEDIA_TO_DATASET_MR_NAME));
+      ...
+      addWorkflow(new WikipediaPipelineWorkflow());
+    }
+  }
+
+The workflow itself uses the same names in its configuration::
+
+  public class WikipediaPipelineWorkflow extends AbstractWorkflow {
+
+    public static final String NAME = WikipediaPipelineWorkflow.class.getSimpleName();
+
+    @Override
+    protected void configure() {
+      setName(NAME);
+      setDescription("A workflow that demonstrates a typical data pipeline to process Wikipedia data.");
+      addMapReduce(WikipediaPipelineApp.LIKES_TO_DATASET_MR_NAME);
+      condition(new EnoughDataToProceed())
+        .condition(new IsWikipediaSourceOnline())
+          .addAction(new DownloadWikiDataAction())
+        .otherwise()
+          .addMapReduce(WikipediaPipelineApp.WIKIPEDIA_TO_DATASET_MR_NAME)
+        .end()
+        .addMapReduce(WikiContentValidatorAndNormalizer.NAME)
+        .fork()
+          .addSpark(SparkWikipediaAnalyzer.NAME)
+        .also()
+          .addMapReduce(TopNMapReduce.NAME)
+        .join()
+      .otherwise()
+      .end();
+    }
+
 .. _workflow-concurrent:
 
 Concurrent Workflows
@@ -112,14 +183,14 @@ In addition to passing the control flow from one node to the next, a **workflow 
 passed, available to each of the programs in the workflow. This allows programs to:
 
 - pass custom data (such as metrics, a status, or an error code) from one program in the 
-  workflow to the next subsequent programs; 
+  workflow to subsequent programs;
 - query and set the data in the token;
 - fetch the data from the token which was set by a specific node; and
-- determine the name of the node which most recently set the token value for a specific key;
-  e.g., the node who last set the ERROR flag in the token.
+- alter the job configuration based on a key in the token; for example, set a different
+  mapper/reducer class or a different input/output dataset for a Spark or MapReduce program.
   
-The last example is intended to allow appropriate action to be taken in response, such as
-logging, modifying the conditional execution, or terminating the execution of workflow.
+The API is intended to allow appropriate action to be taken in response to the token:
+logging, modifying the conditional execution, or terminating the execution of the workflow.
 
 Execution in the workflow can be made conditional, based on the information contained in
 the token. Execution can be terminated if a node in the workflow produces unexpected
@@ -132,8 +203,8 @@ that were added by a specific node in the workflow to debug the flow of executio
 Scope
 -----
 Two scopes |---| *System* and *User* |---| are provided for workflow keys. CDAP adds keys
-(such as MapReduce counters) under the *System* scope. User programs add their keys under
-the *User* scope.
+(such as MapReduce counters) under the *System* scope. User programs have their keys
+stored under the *User* scope.
 
 Putting and Getting Token Values
 --------------------------------
@@ -160,6 +231,10 @@ then set a value for a specific key, as shown in this example from a MapReduce m
     }
   }
 
+**Note:** The test of ``workflowToken != null`` is only required because this Mapper could
+be used outside of a workflow. When run from within a workflow, the token is guaranteed to
+be non-null.
+
 The `WorkflowToken Java API 
 <../../reference-manual/javadocs/co/cask/cdap/api/workflow/WorkflowToken.html)>`__
 includes methods for getting values for different keys, scopes, and nodes. The same
@@ -167,11 +242,17 @@ key can be added to the workflow by different nodes, and there are methods to re
 key-value pairs. Convenience methods allow the putting and getting of non-string values
 through the use of the class Value.
 
+Spark Accumulators and Workflow Tokens
+--------------------------------------
+`Spark Accumulators <https://spark.apache.org/docs/latest/programming-guide.html#accumulators-a-nameaccumlinka>`__ 
+can be accessed through the SparkContext, and used with workflow tokens. This allows the 
+values in the accumulators to be accessed through workflow tokens and vice-versa.
+
 Persisting the WorkflowToken
 ----------------------------
 
 The RunRecord for the workflow contains the WorkflowToken as a property. This token
-is persisted after each action completes in a Workflow. 
+is persisted after each action completes in a workflow. 
 
 Examples
 --------
@@ -201,6 +282,23 @@ In this code sample, we show how to update the WorkflowToken in a MapReduce prog
     }
     ...
   }
+
+**A token can only be updated** in:
+
+- ``beforeSubmit`` and ``onFinish`` methods of a MapReduce program;
+- Driver of a Spark program;
+- ``initialize`` and ``destroy`` methods of a custom action; and 
+- predicates of condition nodes.
+
+**You will get an exception** if you try to update the workflow token in:
+
+- map or reduce methods;
+- Executors in Spark programs;
+- ``run`` method in A custom actions.
+
+You can always read the workflow token in any of the above situations. The :ref:`Wikipedia
+Pipeline example <examples-wikipedia-data-pipeline>` demonstrates some of these techniques.
+
 
 .. _workflow_parallel:
 
@@ -390,7 +488,7 @@ Workflow Token with Forks and Joins
 For workflows that involve forks and joins, a single instance of the workflow token is
 shared by all branches of the fork. Updates to the singleton are made thread-safe through
 synchronized updates, guaranteeing that value you obtain from reading the token is the
-last value written.
+last value written at runtime. This is a time-based guarantee.
 
 Example
 -------
@@ -489,3 +587,4 @@ Example of Using a Workflow
 
 - For an example of the use of **a workflow,** see the :ref:`Purchase
   <examples-purchase>` example.
+- The :ref:`Wikipedia Pipeline<wikipedia-data-pipeline>` example is another workflow example.

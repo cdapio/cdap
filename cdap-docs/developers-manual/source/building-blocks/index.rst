@@ -19,11 +19,11 @@ Building Blocks
     Datasets <datasets/index>
     Flows and Flowlets <flows-flowlets/index>
     MapReduce Programs<mapreduce-programs>
-    Workflows <workflows>
     Schedules <schedules>
+    Services <services>
     Spark Programs <spark-programs>
     Workers <workers>
-    Services <services>
+    Workflows <workflows>
     Namespaces <namespaces>
     Transaction System <transaction-system>
 
@@ -42,11 +42,11 @@ write data through the data abstraction layer in CDAP.
 
 - :doc:`Flows (and flowlets) <flows-flowlets/index>`
 - :doc:`MapReduce Programs <mapreduce-programs>`
-- :doc:`Workflows <workflows>`
 - :doc:`Schedules <schedules>`
+- :doc:`Services <services>`
 - :doc:`Spark Programs <spark-programs>`
 - :doc:`Workers <workers>`
-- :doc:`Services <services>`
+- :doc:`Workflows <workflows>`
 
 A :doc:`Namespace <namespaces>` is a physical grouping of application and data in CDAP.
 Conceptually, namespaces can be thought of as a partitioning of a CDAP instance.
