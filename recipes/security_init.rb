@@ -39,3 +39,28 @@ execute 'create-security-server-ssl-keystore' do
   not_if { File.exist?(path) }
   only_if { ssl_enabled }
 end
+
+# Manage Authentication realmfile
+if node['cdap']['security']['manage_realmfile'].to_s == 'true' &&
+   node.key?('cdap') && node['cdap'].key?('cdap_site') && node['cdap']['cdap_site'].key?('security.authentication.handlerClassName') &&
+   node['cdap']['cdap_site']['security.authentication.handlerClassName'] == 'co.cask.cdap.security.server.BasicAuthenticationHandler' &&
+   node['cdap']['cdap_site'].key?('security.authentication.basic.realmfile')
+  realmfile = node['cdap']['cdap_site']['security.authentication.basic.realmfile']
+  realmdir = ::File.dirname(realmfile)
+
+  # Ensure parent directory exists
+  directory realmdir do
+    action :create
+    recursive true
+  end
+
+  # Create the realmfile
+  template realmfile do
+    source 'generic-kv-colon.erb'
+    mode 0644
+    owner 'cdap'
+    group 'cdap'
+    variables options: node['cdap']['security']['realmfile']
+    action :create
+  end
+end
