@@ -84,24 +84,24 @@ my-plumb {
       }
     }
 
-  .error-container {
-    position: fixed;
-    bottom: 50px;
-    left: 0;
-    right: 0;
-    width: 75%;
-    margin: 0 auto;
+    .error-container {
+      position: fixed;
+      bottom: 50px;
+      left: 0;
+      right: 0;
+      width: 75%;
+      margin: 0 auto;
 
-    .error-close-icon {
-      cursor: pointer;
+      .error-close-icon {
+        cursor: pointer;
+      }
+
+      &.well {
+        background-color: @brand-danger;
+        border-radius: 8px;
+        color: white;
+      }
     }
-
-    &.well {
-      background-color: @brand-danger;
-      border-radius: 8px;
-      color: white;
-    }
-
     #plumb-container {
       height: 100%;
       width: inherit;
