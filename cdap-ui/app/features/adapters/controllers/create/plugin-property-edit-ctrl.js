@@ -1,6 +1,6 @@
 angular.module(PKG.name + '.feature.adapters')
   .controller('PluginEditController', function($scope, PluginConfigFactory, myHelpers, EventPipe, $timeout) {
-    var pluginCopy = angular.copy($scope.plugin);
+    var pluginCopy;
 
     var propertiesFromBackend = Object.keys($scope.plugin._backendProperties);
     // Make a local copy that is a mix of properties from backend + config from nodejs
@@ -67,6 +67,7 @@ angular.module(PKG.name + '.feature.adapters')
 
             // TODO: Hacky. Need to fix this for am-fade-top animation for modals.
             $timeout(function() {
+              pluginCopy = angular.copy($scope.plugin);
               // Mark the configfetched to show that configurations have been received.
               this.configfetched = true;
               this.config = res;
@@ -76,6 +77,7 @@ angular.module(PKG.name + '.feature.adapters')
           function error() {
             // TODO: Hacky. Need to fix this for am-fade-top animation for modals.
             $timeout(function() {
+              pluginCopy = angular.copy($scope.plugin);
               // Didn't receive a configuration from the backend. Fallback to all textboxes.
               this.noconfig = true;
               this.configfetched = true;
@@ -138,7 +140,7 @@ angular.module(PKG.name + '.feature.adapters')
     }
 
     this.reset = function () {
-      $scope.plugin = angular.copy(pluginCopy);
+      $scope.plugin.properties = angular.copy(pluginCopy.properties);
       EventPipe.emit('plugin.reset');
     };
 

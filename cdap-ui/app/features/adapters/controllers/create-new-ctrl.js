@@ -1,6 +1,5 @@
 angular.module(PKG.name + '.feature.adapters')
-  .controller('_AdapterCreateController', function(MyPlumbService, myAdapterApi, $bootstrapModal, $scope, rConfig, $stateParams, $alert) {
-    var modalInstance;
+  .controller('_AdapterCreateController', function(MyPlumbService, myAdapterApi, $bootstrapModal, $scope, rConfig, $stateParams, $alert, $modalStack) {
     this.metadata = MyPlumbService.metadata;
     if (rConfig) {
       this.data =  rConfig;
@@ -32,19 +31,22 @@ angular.module(PKG.name + '.feature.adapters')
         delete this.metadata.error;
       }
 
-      modalInstance = $bootstrapModal.open({
+      $bootstrapModal.open({
         templateUrl: '/assets/features/adapters/templates/create/metadata.html',
         size: 'lg',
         keyboard: true,
         controller: ['$scope', function($scope) {
+          $scope.modelCopy = angular.copy(this.metadata);
           $scope.metadata = this.metadata;
+          $scope.reset = function () {
+            this.metadata.name = $scope.modelCopy.name;
+            this.metadata.description = $scope.modelCopy.description;
+          }.bind(this);
         }.bind(this)]
       });
     };
 
     $scope.$on('$destroy', function() {
-      if (modalInstance) {
-        modalInstance.close();
-      }
+      $modalStack.dismissAll();
     });
   });

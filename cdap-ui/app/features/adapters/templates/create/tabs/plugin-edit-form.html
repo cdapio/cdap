@@ -74,7 +74,7 @@
                 <tbody>
                   <tr ng-repeat="schema in inputSchema" ng-keypress="enter($event, $last)">
                     <td class="name" ng-if="!schema.empty"> {{schema.name}} </td>
-                    <td class="type" ng-if="!schema.empty"> ({{schema.type}} </td>
+                    <td class="type" ng-if="!schema.empty"> {{schema.type}} </td>
 
                     <td class="name" ng-if="property.empty"></td>
                     <td class="type" ng-if="property.empty"></td>
@@ -296,10 +296,10 @@
     </div>
     </div>
     <div ng-if="!PluginEditController.configfetched">
-      <h1>
+      <h3>
         <span class="fa fa-spinner fa-spin"></span>
         <span>Loading...</span>
-      </h1>
+      </h3>
     </div>
 
     <div ng-if="PluginEditController.noproperty === 0">

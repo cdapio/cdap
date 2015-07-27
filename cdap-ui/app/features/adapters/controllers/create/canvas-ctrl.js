@@ -1,6 +1,5 @@
 angular.module(PKG.name + '.feature.adapters')
-  .controller('CanvasController', function (myAdapterApi, MyPlumbService, $bootstrapModal, $state, $scope, $alert, myHelpers, CanvasFactory, MyPlumbFactory) {
-    var modalInstance;
+  .controller('CanvasController', function (myAdapterApi, MyPlumbService, $bootstrapModal, $state, $scope, $alert, myHelpers, CanvasFactory, MyPlumbFactory, $modalStack) {
     this.nodes = [];
 
     if ($scope.AdapterCreateController.data) {
@@ -75,6 +74,27 @@ angular.module(PKG.name + '.feature.adapters')
                 console.error('ERROR!: ', errorObj);
               }.bind(this)
             );
+          break;
+        case 'Settings':
+          $bootstrapModal.open({
+            templateUrl: '/assets/features/adapters/templates/create/settings.html',
+            size: 'lg',
+            keyboard: true,
+            controller: ['$scope', 'metadata', 'EventPipe', function($scope, metadata, EventPipe) {
+              $scope.metadata = metadata
+              var metadataCopy = angular.copy(metadata);
+              $scope.reset = function() {
+                $scope.metadata.template.schedule.cron = metadataCopy.template.schedule.cron;
+                $scope.metadata.template.instance = metadataCopy.template.instance;
+                EventPipe.emit('plugin.reset');
+              };
+            }],
+            resolve: {
+              'metadata': function() {
+                return MyPlumbService.metadata;
+              }
+            }
+          });
           break;
         case 'Save Draft':
           MyPlumbService
@@ -192,9 +212,7 @@ angular.module(PKG.name + '.feature.adapters')
     }
 
     $scope.$on('$destroy', function() {
-      if (modalInstance) {
-        modalInstance.close();
-      }
+      $modalStack.dismissAll();
     });
 
   });
