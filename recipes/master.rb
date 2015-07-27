@@ -41,12 +41,12 @@ end
 if node['hadoop'].key?('core_site') && node['hadoop']['core_site'].key?('hadoop.security.authentication') &&
    node['hadoop']['core_site']['hadoop.security.authentication'] == 'kerberos'
 
-  if node['cdap'].key?('security') && node['cdap']['security'].key?('cdap_keytab') &&
-     node['cdap']['security'].key?('cdap_principal') &&
+  if node['cdap'].key?('kerberos') && node['cdap']['kerberos'].key?('cdap_keytab') &&
+     node['cdap']['kerberos'].key?('cdap_principal') &&
      node['cdap'].key?('cdap_site') && node['cdap']['cdap_site'].key?('kerberos.auth.enabled') &&
      node['cdap']['cdap_site']['kerberos.auth.enabled'].to_s == 'true'
 
-    my_vars = { :options => node['cdap']['security'] }
+    my_vars = { :options => node['cdap']['kerberos'] }
 
     directory '/etc/default' do
       owner 'root'
