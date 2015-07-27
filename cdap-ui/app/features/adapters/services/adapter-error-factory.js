@@ -91,7 +91,7 @@ angular.module(PKG.name + '.feature.adapters')
       }
       config.transforms.forEach(function(transform) {
         if (transform.name && !isValidPlugin(transform)) {
-          errors[transform.id] = 'Adapter\'s transforms is missing required fields';
+          errors[transform.id] = 'Adapter\'s transform is missing required fields';
         }
       });
 
