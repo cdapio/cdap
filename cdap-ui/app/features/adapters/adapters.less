@@ -24,28 +24,31 @@ body.theme-cdap {
         background-color: white;
         cursor: pointer;
         margin-top: 20px;
+        min-width: 300px;
         max-width: 450px;
         padding: 10px 15px;
+        position: relative;
         .box-shadow(0px 6px 17px -6px rgba(0,0,0,0.75));
       }
       h1 {
         display: inline-block;
         font-size: 20px;
         margin-top: 0;
+        margin-right: 10px;
       }
       a, p {
         color: @cdap-header;
       }
       a {
-        line-height: 20px;
         text-decoration: none;
-        vertical-align: top;
         &.fa-pencil {
-          margin-left: 10px;
+          position: absolute;
+          top: 10px;
+          right: 10px;
         }
       }
       p {
-        clear: both;
+        word-wrap: break-word;
       }
     }
     fieldset.view-plugin-json {
