@@ -189,12 +189,8 @@ passed, available to each of the programs in the workflow. This allows programs 
 - alter the job configuration based on a key in the token; for example, set a different
   mapper/reducer class or a different input/output dataset for a Spark or MapReduce program.
   
-The API is intended to allow appropriate action to be taken in response to the token:
-logging, modifying the conditional execution, or terminating the execution of the workflow.
-
-Execution in the workflow can be made conditional, based on the information contained in
-the token. Execution can be terminated if a node in the workflow produces unexpected
-results.
+The API is intended to allow appropriate action to be taken in response to the token, including
+logging and modifying the conditional execution of the workflow based on the token.
 
 Once a run is completed, you can query the tokens from past workflow runs for analyses that
 determine which node was executed more frequently and when. You can retrieve the token values
@@ -203,7 +199,7 @@ that were added by a specific node in the workflow to debug the flow of executio
 Scope
 -----
 Two scopes |---| *System* and *User* |---| are provided for workflow keys. CDAP adds keys
-(such as MapReduce counters) under the *System* scope. User programs have their keys
+(such as MapReduce counters) under the *System* scope. Keys added by user programs are
 stored under the *User* scope.
 
 Putting and Getting Token Values
@@ -212,7 +208,7 @@ When a value is put into a token, it is stored under a specific key. Both keys a
 corresponding values must be non-null. The token stores additional information about the 
 context in which the key is being set, such as the unique name of the workflow node. 
 
-To put a value to a token, first obtain access to the token from the workflow context, and
+To put a value into a token, first obtain access to the token from the workflow context, and
 then set a value for a specific key, as shown in this example from a MapReduce mapper::
 
   public static class MyVerifier extends Mapper<LongWritable, Text, Text, NullWritable> {
@@ -250,9 +246,7 @@ values in the accumulators to be accessed through workflow tokens and vice-versa
 
 Persisting the WorkflowToken
 ----------------------------
-
-The RunRecord for the workflow contains the WorkflowToken as a property. This token
-is persisted after each action completes in a workflow. 
+The ``WorkflowToken`` is persisted after each action in the workflow has completed.
 
 Examples
 --------
@@ -265,9 +259,9 @@ In this code sample, we show how to update the WorkflowToken in a MapReduce prog
     WorkflowToken workflowToken = context.getWorkflowToken();
     if (workflowToken != null) {
       // Put the action type in the WorkflowToken
-      workflowToken.put("action_type", "MAPREDUCE");
+      workflowToken.put("action.type", "MAPREDUCE");
       // Put the start time for the action
-      workflowToken.put("startTime", String.valueOf(System.currentTimeMillis()));
+      workflowToken.put("start.time", String.valueOf(System.currentTimeMillis()));
     }
     ...
   }
@@ -278,7 +272,7 @@ In this code sample, we show how to update the WorkflowToken in a MapReduce prog
     WorkflowToken workflowToken = context.getWorkflowToken();
     if (workflowToken != null) {
       // Put the end time for the action
-      workflowToken.put("endTime", String.valueOf(System.currentTimeMillis()));
+      workflowToken.put("end.time", String.valueOf(System.currentTimeMillis()));
     }
     ...
   }
@@ -502,7 +496,7 @@ and from within a workflow with a predicate, fork and joins::
     WorkflowToken token = getContext().getToken();
     
     // Set the type of action of the current node:
-    token.put("action_type", "CUSTOM_ACTION");
+    token.put("action.type", "CUSTOM_ACTION");
  
     // Assume that we have the following Workflow: 
     //                                              |--> PurchaseByCustomer -->|
@@ -532,10 +526,10 @@ and from within a workflow with a predicate, fork and joins::
     // structure, in the "StatusReporter", you may want to know how many actions were
     // executed as a part of a run. If the number of nodes executed were below a certain
     // threshold, send an alert. Assuming that every node in the Workflow adds the key
-    // "action_type" with the value as action type for that node in the WorkflowToken,
+    // "action.type" with the value as action type for that node in the WorkflowToken,
     // you can determine the breakdown by action type in a particular Workflow run:
     
-    List<NodeValueEntry> nodeValues = token.getAll("action_type");
+    List<NodeValueEntry> nodeValues = token.getAll("action.type");
     int totalNodeExecuted = nodeValues.size();
     int mapReduceNodes = 0;
     int sparkNodes = 0;
@@ -565,7 +559,7 @@ and from within a workflow with a predicate, fork and joins::
  
     // To get the start time of the MapReduce program with unique name "PurchaseHistoryBuilder":
     
-    String startTime = token.get("startTime", "PurchaseHistoryBuilder");
+    String startTime = token.get("start.time", "PurchaseHistoryBuilder");
  
     // To get the most recent value of counter with group name
     // 'org.apache.hadoop.mapreduce.TaskCounter' and counter name 'MAP_INPUT_RECORDS':
