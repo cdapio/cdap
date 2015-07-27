@@ -4,9 +4,9 @@
           class="box {{plugin.type}}"
           ng-style="plugin.style"
           data-type="{{plugin.type}}"
-          id="{{plugin.id}}">
-      <div ng-click="MyPlumbController.onPluginClick(plugin)"
-            class="icon fa {{plugin.icon}}"></div>
+          id="{{plugin.id}}"
+          ng-dblclick="MyPlumbController.onPluginClick(plugin)">
+      <div class="icon fa {{plugin.icon}}"></div>
       <div class="plugin-name">{{plugin.name}}</div>
       <div class="fa fa-close" ng-click="MyPlumbController.removePlugin($index, plugin.id)"></div>
 
@@ -23,6 +23,9 @@
   </div>
 
   <div class="error-container well" ng-if="MyPlumbController.canvasError.length > 0">
+    <div class="text-right">
+      <span class="fa fa-times error-close-icon" ng-click="MyPlumbController.closeCanvasError()"></span>
+    </div>
     <ul>
       <li ng-repeat="error in MyPlumbController.canvasError">
         <span>{{ error }}</span>

@@ -1,6 +1,6 @@
 angular.module(PKG.name + '.feature.adapters')
   .controller('CanvasController', function (myAdapterApi, MyPlumbService, $bootstrapModal, $state, $scope, $alert, myHelpers, CanvasFactory, MyPlumbFactory) {
-
+    var modalInstance;
     this.nodes = [];
 
     if ($scope.AdapterCreateController.data) {
@@ -46,7 +46,7 @@ angular.module(PKG.name + '.feature.adapters')
       switch(group.name) {
         case 'Config':
           config = angular.copy(MyPlumbService.getConfigForBackend());
-          $bootstrapModal.open({
+          modalInstance = $bootstrapModal.open({
             templateUrl: '/assets/features/adapters/templates/create/viewconfig.html',
             size: 'lg',
             keyboard: true,
@@ -190,5 +190,11 @@ angular.module(PKG.name + '.feature.adapters')
       MyPlumbService.metadata.description = config.description;
       MyPlumbService.metadata.template = config.template;
     }
+
+    $scope.$on('$destroy', function() {
+      if (modalInstance) {
+        modalInstance.close();
+      }
+    });
 
   });
