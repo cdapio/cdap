@@ -25,6 +25,7 @@ import co.cask.cdap.PauseResumeWorklowApp;
 import co.cask.cdap.WorkflowAppWithErrorRuns;
 import co.cask.cdap.WorkflowAppWithFork;
 import co.cask.cdap.WorkflowAppWithScopedParameters;
+import co.cask.cdap.WorkflowTokenPersistenceTestApp;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.workflow.WorkflowActionNode;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
@@ -1110,6 +1111,29 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     Assert.assertEquals(2, workflowHistoryRuns.size());
     Assert.assertEquals(2, recordVerifierRuns.size());
     Assert.assertEquals(1, wordCountRuns.size());
+  }
+
+  @Test
+  public void testWorkflowPersistenceAfterFork() throws Exception {
+    Assert.assertEquals(200, deploy(WorkflowTokenPersistenceTestApp.class).getStatusLine().getStatusCode());
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, WorkflowTokenPersistenceTestApp.NAME);
+    Id.Workflow workflowId = Id.Workflow.from(appId, WorkflowTokenPersistenceTestApp.TokenPersistenceWorkflow.NAME);
+
+    startProgram(workflowId);
+    waitState(workflowId, ProgramRunStatus.RUNNING.name());
+    waitState(workflowId, "STOPPED");
+
+    List<RunRecord> programRuns = getProgramRuns(workflowId, ProgramRunStatus.COMPLETED.name());
+    Assert.assertEquals(1, programRuns.size());
+    RunRecord runRecord = programRuns.get(0);
+    String runId = runRecord.getPid();
+
+    WorkflowTokenNodeDetail workflowTokenNodeDetail = getWorkflowToken(workflowId, runId, "oneAction", null, null);
+    Assert.assertEquals(1, workflowTokenNodeDetail.getTokenDataAtNode().size());
+    Assert.assertEquals("some.value", workflowTokenNodeDetail.getTokenDataAtNode().get("some.key"));
+    workflowTokenNodeDetail = getWorkflowToken(workflowId, runId, "anotherAction", null, null);
+    Assert.assertEquals(1, workflowTokenNodeDetail.getTokenDataAtNode().size());
+    Assert.assertEquals("some.value", workflowTokenNodeDetail.getTokenDataAtNode().get("some.key"));
   }
 
   @Test
