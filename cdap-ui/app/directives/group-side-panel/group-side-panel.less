@@ -147,10 +147,6 @@ my-side-panel {
           display: none;
         }
 
-        &.error {
-          background-color: @brand-danger;
-          color: white;
-        }
       }
 
       .item-body {
@@ -180,9 +176,18 @@ my-side-panel {
         }
       }
     }
+  }
+}
 
-    .tooltip.tooltip-red .tooltip-inner {
-      background-color: @brand-danger;
-    }
+.tooltip-error {
+  z-index: 1040; // lower z-index than modal
+
+  .tooltip-inner {
+    background-color: @brand-danger;
+    color: white;
+  }
+
+  &.tooltip.right .tooltip-arrow {
+    border-right-color: @brand-danger;
   }
 }
