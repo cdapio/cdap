@@ -1,6 +1,5 @@
 angular.module(PKG.name + '.feature.adapters')
-  .controller('CanvasController', function (myAdapterApi, MyPlumbService, $bootstrapModal, $state, $scope, $alert, myHelpers, CanvasFactory, MyPlumbFactory) {
-    var modalInstance;
+  .controller('CanvasController', function (myAdapterApi, MyPlumbService, $bootstrapModal, $state, $scope, $alert, myHelpers, CanvasFactory, MyPlumbFactory, $modalStack) {
     this.nodes = [];
 
     if ($scope.AdapterCreateController.data) {
@@ -213,9 +212,7 @@ angular.module(PKG.name + '.feature.adapters')
     }
 
     $scope.$on('$destroy', function() {
-      if (modalInstance) {
-        modalInstance.close();
-      }
+      $modalStack.dismissAll();
     });
 
   });
