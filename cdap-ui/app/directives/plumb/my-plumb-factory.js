@@ -46,6 +46,7 @@ angular.module(PKG.name + '.commons')
     function getIcon(plugin) {
       var iconMap = {
         'script': 'fa-code',
+        'scriptfilter': 'fa-code',
         'twitter': 'fa-twitter',
         'cube': 'fa-cubes',
         'data': 'fa-database',
@@ -53,8 +54,9 @@ angular.module(PKG.name + '.commons')
         'table': 'fa-table',
         'kafka': 'icon-kafka',
         'stream': 'icon-plugin-stream',
-        'avro': 'icon-avro',
-        'jms': 'icon-jms'
+        'tpfsavro': 'icon-avro',
+        'jms': 'icon-jms',
+        'projection': 'icon-projection'
       };
 
       var pluginName = plugin.toLowerCase();
