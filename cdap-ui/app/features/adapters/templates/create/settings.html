@@ -1,11 +1,21 @@
 <div class="modal-header">
-  <div class="col-xs-10">
-    <h3 class="modal-title"> Edit Settings </h3>
+  <div class="col-xs-6 col-md-9">
+    <h3 class="modal-title"> Edit Settings</p>
   </div>
-  <div class="col-xs-2">
-    <div class="modal-btns">
-      <div class="pull-right">
-        <a class="btn" ng-click="$close()">
+  <div class="col-xs-6 col-md-3">
+    <div class="btn-group modal-btns">
+      <div>
+        <a class="btn" ng-click="reset()">
+          <span class="fa fa-refresh"></span>
+        </a>
+      </div>
+      <div>
+        <a class="btn" ng-click="$close('save')">
+          <span class="fa fa-folder"></span>
+        </a>
+      </div>
+      <div>
+        <a class="btn" ng-click="$close('cancel')">
           <span class="fa fa-remove"></span>
           <span class="sr-only"> Close </span>
         </a>
@@ -36,6 +46,6 @@
                ng-model="metadata.template.instance" class="form-control" min="1">
       </div>
     </div>
-        
+
   </form>
 </div>

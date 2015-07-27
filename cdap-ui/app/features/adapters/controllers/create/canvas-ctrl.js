@@ -79,10 +79,16 @@ angular.module(PKG.name + '.feature.adapters')
         case 'Settings':
           $bootstrapModal.open({
             templateUrl: '/assets/features/adapters/templates/create/settings.html',
-            size: 'md',
+            size: 'lg',
             keyboard: true,
-            controller: ['$scope', 'metadata', function($scope, metadata) {
+            controller: ['$scope', 'metadata', 'EventPipe', function($scope, metadata, EventPipe) {
               $scope.metadata = metadata
+              var metadataCopy = angular.copy(metadata);
+              $scope.reset = function() {
+                $scope.metadata.template.schedule.cron = metadataCopy.template.schedule.cron;
+                $scope.metadata.template.instance = metadataCopy.template.instance;
+                EventPipe.emit('plugin.reset');
+              };
             }],
             resolve: {
               'metadata': function() {
