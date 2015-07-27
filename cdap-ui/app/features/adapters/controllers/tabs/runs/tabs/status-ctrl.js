@@ -30,6 +30,5 @@ angular.module(PKG.name + '.feature.adapters')
         if (res.template === 'ETLBatch') {
           MyPlumbService.metadata.template.instances = res.instances;
         }
-
       });
   });

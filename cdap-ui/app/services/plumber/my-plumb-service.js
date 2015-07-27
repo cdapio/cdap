@@ -240,6 +240,13 @@ angular.module(PKG.name + '.services')
             }
           }.bind(this));
 
+          // destroy modal when user clicks back button or navigate out of this view
+          scope.$on('$destroy', function () {
+            if (modalInstance) {
+              modalInstance.close();
+            }
+          });
+
         }.bind(this));
 
 
