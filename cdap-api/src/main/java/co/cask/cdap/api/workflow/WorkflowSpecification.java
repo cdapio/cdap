@@ -46,22 +46,22 @@ public final class WorkflowSpecification implements ProgramSpecification, Proper
     this.properties = properties == null ? Collections.<String, String>emptyMap() :
                                            Collections.unmodifiableMap(new HashMap<>(properties));
     this.nodes = Collections.unmodifiableList(new ArrayList<>(nodes));
-    this.nodeIdMap = Collections.unmodifiableMap(generateNodeIdMap());
+    this.nodeIdMap = Collections.unmodifiableMap(generateNodeIdMap(nodes));
   }
 
   /**
    * Visit all the nodes in the {@link Workflow} and generate the map of node id to
-   * the {@link WorkflowNode}. Returned map does not contain any mapping for the FORK node,
-   * however contains the ACTION and CONDITION nodes within the FORK node itself.
+   * the {@link WorkflowNode}.
    */
-  private Map<String, WorkflowNode> generateNodeIdMap() {
+  private Map<String, WorkflowNode> generateNodeIdMap(List<WorkflowNode> nodesInWorkflow) {
     Map<String, WorkflowNode> nodeIdMap = new HashMap<>();
-    Queue<WorkflowNode> nodes = new LinkedList<>(this.nodes);
+    Queue<WorkflowNode> nodes = new LinkedList<>(nodesInWorkflow);
     while (!nodes.isEmpty()) {
       WorkflowNode node = nodes.poll();
+      nodeIdMap.put(node.getNodeId(), node);
       switch (node.getType()) {
         case ACTION: {
-          nodeIdMap.put(node.getNodeId(), node);
+          // do nothing. node already added to the nodeIdMap
           break;
         }
         case FORK: {
@@ -72,7 +72,6 @@ public final class WorkflowSpecification implements ProgramSpecification, Proper
           break;
         }
         case CONDITION: {
-          nodeIdMap.put(node.getNodeId(), node);
           WorkflowConditionNode conditionNode = (WorkflowConditionNode) node;
           nodes.addAll(conditionNode.getIfBranch());
           nodes.addAll(conditionNode.getElseBranch());
