@@ -33,6 +33,7 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -46,7 +47,7 @@ public class BasicWorkflowToken implements WorkflowToken, Serializable {
   private Map<String, Map<String, Long>> mapReduceCounters;
   private final Map<Scope, Map<String, List<NodeValue>>> tokenValueMap = new EnumMap<>(Scope.class);
   private String nodeName;
-  private List<String> nodeFilterList;
+  private Set<String> nodeFilterSet;
 
   public BasicWorkflowToken() {
     for (Scope scope : Scope.values()) {
@@ -66,9 +67,9 @@ public class BasicWorkflowToken implements WorkflowToken, Serializable {
     }
   }
 
-  void setCurrentNodeInfo(String nodeName, List<String> nodeFilterList) {
+  void setCurrentNodeInfo(String nodeName, Set<String> nodeFilterList) {
     this.nodeName = nodeName;
-    this.nodeFilterList = nodeFilterList;
+    this.nodeFilterSet = nodeFilterList;
   }
 
   /**
@@ -170,7 +171,7 @@ public class BasicWorkflowToken implements WorkflowToken, Serializable {
       Iterable<NodeValue> filteredNodeValueListIterable = Iterables.filter(nodeValueList, new Predicate<NodeValue>() {
         @Override
         public boolean apply(NodeValue input) {
-          return nodeFilterList.contains(input.getNodeName());
+          return nodeFilterSet.contains(input.getNodeName());
         }
       });
 

@@ -79,11 +79,13 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.ConcurrentHashMap;
@@ -395,20 +397,20 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     }
   }
 
-  private List<String> getNodeFilterList(WorkflowNode node) {
-    List<String> filterList = new ArrayList<>();
+  private Set<String> getNodeFilterSet(WorkflowNode node) {
+    Set<String> nodeFilterSet = new HashSet<>();
     Queue<String> nodeQueueToProcess = new LinkedList<>();
     nodeQueueToProcess.add(node.getNodeId());
     while (!nodeQueueToProcess.isEmpty()) {
       String queueNode = nodeQueueToProcess.poll();
-      filterList.add(queueNode);
+      nodeFilterSet.add(queueNode);
       for (String nodeIdInParentSet : workflowSpec.getNodeIdMap().get(queueNode).getParentNodeIds()) {
         if (!nodeQueueToProcess.contains(nodeIdInParentSet)) {
           nodeQueueToProcess.add(nodeIdInParentSet);
         }
       }
     }
-    return filterList;
+    return nodeFilterSet;
   }
 
   private void executeNode(ApplicationSpecification appSpec, WorkflowNode node, InstantiatorFactory instantiator,
@@ -416,14 +418,14 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     WorkflowNodeType nodeType = node.getType();
     switch (nodeType) {
       case ACTION:
-        ((BasicWorkflowToken) token).setCurrentNodeInfo(node.getNodeId(), getNodeFilterList(node));
+        ((BasicWorkflowToken) token).setCurrentNodeInfo(node.getNodeId(), getNodeFilterSet(node));
         executeAction(appSpec, (WorkflowActionNode) node, instantiator, classLoader, token);
         break;
       case FORK:
         executeFork(appSpec, (WorkflowForkNode) node, instantiator, classLoader, token);
         break;
       case CONDITION:
-        ((BasicWorkflowToken) token).setCurrentNodeInfo(node.getNodeId(), getNodeFilterList(node));
+        ((BasicWorkflowToken) token).setCurrentNodeInfo(node.getNodeId(), getNodeFilterSet(node));
         executeCondition(appSpec, (WorkflowConditionNode) node, instantiator, classLoader, token);
         break;
       default:
