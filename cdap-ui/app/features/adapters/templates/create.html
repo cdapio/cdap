@@ -17,7 +17,9 @@
       </a>
     </h1>
     <a class="pull-right fa fa-pencil" ng-click="AdapterCreateController.showMetadataModal()"></a>
-    <p ng-if="AdapterCreateController.metadata.description.length > 0"></p>
+    <p ng-if="AdapterCreateController.metadata.description.length > 0">
+      {{AdapterCreateController.metadata.description | myEllipsis: 150 }}
+    </p>
   </div>
 </div>
 
