@@ -107,19 +107,16 @@ fi
 NODE_INSTALL_STATUS=$(program_is_installed node)
 if [ "x$NODE_INSTALL_STATUS" == "x1" ]; then
   die "Node.js is not installed
-Please install Node.js - the minimum version supported v0.8.16."
+Please install Node.js - the minimum version supported v0.10.0."
 fi
 
 # Check Node.js version
 NODE_VERSION=`node -v 2>&1`
 NODE_VERSION_MAJOR=`echo $NODE_VERSION | awk -F '.' ' { print $2 } '`
 NODE_VERSION_MINOR=`echo $NODE_VERSION | awk -F '.' ' { print $3 } '`
-if [ $NODE_VERSION_MAJOR -lt 8 ]; then
+if [ $NODE_VERSION_MAJOR -lt 10 ]; then
   die "ERROR: Node.js version is not supported
-The minimum version supported is v0.8.16."
-elif [ $NODE_VERSION_MAJOR -eq 8 ] && [ $NODE_VERSION_MINOR -lt 16 ]; then
-  die "ERROR: Node.js version is not supported
-The minimum version supported is v0.8.16."
+The minimum version supported is v0.10.0."
 fi
 
 

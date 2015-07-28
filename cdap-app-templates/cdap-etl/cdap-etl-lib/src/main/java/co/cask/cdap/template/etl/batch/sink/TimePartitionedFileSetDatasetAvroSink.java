@@ -48,15 +48,16 @@ import javax.annotation.Nullable;
  */
 @Plugin(type = "sink")
 @Name("TPFSAvro")
-@Description("AVRO Sink with Time Partitioned File Dataset")
+@Description("Avro Sink with Time Partitioned File Dataset")
 public class TimePartitionedFileSetDatasetAvroSink extends
   BatchSink<StructuredRecord, AvroKey<GenericRecord>, NullWritable> {
 
-  private static final String SCHEMA_DESC = "The avro schema of the record being written to the Sink as a JSON Object";
+  private static final String SCHEMA_DESC = "The Avro schema of the record being written to the Sink as a JSON " +
+    "Object.";
   private static final String TPFS_NAME_DESC = "Name of the Time Partitioned FileSet Dataset to which the records " +
-    "have to be written. If it doesn't exist, it will be created";
-  private static final String BASE_PATH_DESC = "Base path for the time partitioned fileset. Defaults to the " +
-    "name of the dataset";
+    "have to be written. If it doesn't exist, it will be created.";
+  private static final String BASE_PATH_DESC = "Base path for the Time Partitioned FileSet. Defaults to the " +
+    "name of the dataset.";
   private final StructuredToAvroTransformer recordTransformer = new StructuredToAvroTransformer();
 
   /**

@@ -54,7 +54,6 @@ public class StreamWriterTestRun extends GatewayTestBase {
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
 
     waitState("flows", AppWritingtoStream.APPNAME, AppWritingtoStream.FLOW, "RUNNING");
-    waitState("workers", AppWritingtoStream.APPNAME, AppWritingtoStream.WORKER, "RUNNING");
     waitState("services", AppWritingtoStream.APPNAME, AppWritingtoStream.SERVICE, "RUNNING");
 
     checkCount(AppWritingtoStream.VALUE);
@@ -64,11 +63,16 @@ public class StreamWriterTestRun extends GatewayTestBase {
                                                           AppWritingtoStream.APPNAME,
                                                           AppWritingtoStream.FLOW), null);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+
     //Stop Worker
-    response = GatewayFastTestsSuite.doPost(String.format("/v3/namespaces/default/apps/%s/workers/%s/stop",
-                                                          AppWritingtoStream.APPNAME,
-                                                          AppWritingtoStream.WORKER), null);
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    String workerState = getState("workers", AppWritingtoStream.APPNAME, AppWritingtoStream.WORKER);
+    if (workerState != null && workerState.equals("RUNNING")) {
+      response = GatewayFastTestsSuite.doPost(String.format("/v3/namespaces/default/apps/%s/workers/%s/stop",
+                                                            AppWritingtoStream.APPNAME,
+                                                            AppWritingtoStream.WORKER), null);
+      Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    }
+
     //Stop Service
     response = GatewayFastTestsSuite.doPost(String.format("/v3/namespaces/default/apps/%s/services/%s/stop",
                                                           AppWritingtoStream.APPNAME,

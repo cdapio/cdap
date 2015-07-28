@@ -463,7 +463,7 @@ In order to configure CDAP Master for Kerberos authentication:
     CDAP_PRINCIPAL="<cdap-principal>@EXAMPLE.REALM.COM"
 
 - Edit ``/etc/cdap/conf/cdap-site.xml``, substituting the Kerberos principal for
-  ``<cdap-principal>`` when adding these two properties:
+  ``CDAP_PRINCIPAL``, and your domain for ``EXAMPLE.COM``, when adding these two properties:
   
   .. highlight:: xml
 
@@ -477,7 +477,7 @@ In order to configure CDAP Master for Kerberos authentication:
     </property>
     <property>
       <name>cdap.master.kerberos.principal</name>
-      <value><cdap-principal>/_HOST@EXAMPLE.COM</value>
+      <value>CDAP_PRINCIPAL/_HOST@EXAMPLE.COM</value>
       <description>The Kerberos principal name that should be used to login the CDAP Master
       process. The string "_HOST" will be substituted with the local hostname.</description>
     </property>

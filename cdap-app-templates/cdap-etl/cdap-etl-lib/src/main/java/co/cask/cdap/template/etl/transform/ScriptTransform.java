@@ -45,7 +45,7 @@ import javax.script.ScriptException;
  */
 @Plugin(type = "transform")
 @Name("Script")
-@Description("Executes user provided Javascript in order to transform one record into another")
+@Description("Executes user-provided Javascript in order to transform one record into another.")
 public class ScriptTransform extends Transform<StructuredRecord, StructuredRecord> {
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(StructuredRecord.class, new StructuredRecordSerializer())
@@ -62,9 +62,9 @@ public class ScriptTransform extends Transform<StructuredRecord, StructuredRecor
    */
   public static class Config extends PluginConfig {
     @Description("Javascript defining how to transform one record into another. The script must implement a function " +
-      "called 'transform', which take as input a Json object that represents the input record, and returns " +
-      "a Json object that respresents the transformed input. " +
-      "For example, 'function transform(input) { input.count = input.count * 1024; return input; }' " +
+      "called 'transform', which take as input a JSON object that represents the input record, and returns " +
+      "a JSON object that respresents the transformed input. " +
+      "For example: 'function transform(input) { input.count = input.count * 1024; return input; }' " +
       "will scale the 'count' field by 1024.")
     private final String script;
 

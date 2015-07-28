@@ -44,16 +44,16 @@ import javax.jms.TextMessage;
  * TODO: CDAP-2978: Extend JMS source so this class can be deleted.
  */
 @Plugin(type = "source")
-@Name("Sqs")
-@Description("Sqs Realtime Source - Emits a record with a field 'body' of string type")
+@Name("AmazonSQS")
+@Description("Amazon Simple Queue Service Realtime Source: Emits a record with a field 'body' of type String.")
 public class SqsSource extends RealtimeSource<StructuredRecord> {
   private static final Logger LOG = LoggerFactory.getLogger(SqsSource.class);
   private static final String REGION_DESCRIPTION = "Region where the queue is located.";
-  private static final String ACCESSKEY_DESCRIPTION = "Access Key of the AWS account to use.";
-  private static final String ACCESSID_DESCRIPTION = "Access ID of the AWS account to use.";
+  private static final String ACCESSKEY_DESCRIPTION = "Access Key of the AWS (Amazon Web Services) account to use.";
+  private static final String ACCESSID_DESCRIPTION = "Access ID of the AWS (Amazon Web Services) account to use.";
   private static final String QUEUENAME_DESCRIPTION = "Name of the queue.";
   private static final String ENDPOINT_DESCRIPTION = "Endpoint of the SQS server to connect to. Omit this field to" +
-    "connect to AWS.";
+    "connect to AWS (Amazon Web Services).";
   private static final Schema DEFAULT_SCHEMA = Schema.recordOf(
     "event",
     Schema.Field.of("body", Schema.of(Schema.Type.STRING))

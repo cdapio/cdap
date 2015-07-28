@@ -44,8 +44,8 @@ import javax.annotation.Nullable;
  */
 @Plugin(type = "transform")
 @Name("LogParser")
-@Description("Parses logs from any input source for relevant information such as URI, IP, Browser, Device, and " +
-  "Timestamp.")
+@Description("Parses logs from any input source for relevant information such as URI, IP, Browser, Device, " +
+  "HTTP status code and Timestamp.")
 public class LogParserTransform extends Transform<StructuredRecord, StructuredRecord> {
   private static final Schema LOG_SCHEMA = Schema.recordOf(
     "event",
@@ -53,12 +53,13 @@ public class LogParserTransform extends Transform<StructuredRecord, StructuredRe
     Schema.Field.of("ip", Schema.of(Schema.Type.STRING)),
     Schema.Field.of("browser", Schema.of(Schema.Type.STRING)),
     Schema.Field.of("device", Schema.of(Schema.Type.STRING)),
+    Schema.Field.of("httpStatus", Schema.of(Schema.Type.INT)),
     Schema.Field.of("ts", Schema.of(Schema.Type.LONG))
   );
   private static final String LOG_FORMAT_DESCRIPTION = "Log format to parse. Currently supports S3, " +
     "CLF, and Cloudfront formats.";
   private static final String INPUT_NAME_DESCRIPTION = "Name of the field in the input schema which encodes the " +
-    "log information. The given field must be of type String or Bytes";
+    "log information. The given field must be of type String or Bytes.";
   private static final Logger LOG = LoggerFactory.getLogger(LogParserTransform.class);
   //Regex used to parse a CLF log, each field is commented above
   private static final Pattern CLF_LOG_PATTERN = Pattern.compile(
@@ -74,10 +75,10 @@ public class LogParserTransform extends Transform<StructuredRecord, StructuredRe
       "(\\p{Print}+)");
   //Regex used to parse the request field for the URI
   private static final Pattern REQUEST_PAGE_PATTERN = Pattern.compile("(\\S+)\\s(\\S+).*");
-  //Indices of which group request, time, ip, and user agent are in the S3 regex
-  private static final int[] S3_INDICES = {9, 3, 4, 17};
-  //Indices of which group request, time, ip, and user agent are in the CLF regex
-  private static final int[] CLF_INDICES = {5, 4, 1, 9};
+  //Indices of which group request, time, ip, user agent and HTTP status code are in the S3 regex
+  private static final int[] S3_INDICES = {9, 3, 4, 17, 10};
+  //Indices of which group request, time, ip, user agent and HTTP status code are in the CLF regex
+  private static final int[] CLF_INDICES = {5, 4, 1, 9, 6};
   //Number of groups matched in the S3 regex
   private static final int S3_REGEX_LENGTH = 18;
   //Number of groups matched in the CLF regex
@@ -139,12 +140,14 @@ public class LogParserTransform extends Transform<StructuredRecord, StructuredRe
       ReadableUserAgent userAgent = parser.parse(fields[10]);
       String browser = userAgent.getFamily().getName();
       String device = userAgent.getDeviceCategory().getCategory().getName();
+      int httpStatus = Integer.parseInt(fields[8]);
 
       output = StructuredRecord.builder(LOG_SCHEMA)
         .set("uri", uri)
         .set("ip", ip)
         .set("browser", browser)
         .set("device", device)
+        .set("httpStatus", httpStatus)
         .set("ts", ts)
         .build();
     }
@@ -198,7 +201,7 @@ public class LogParserTransform extends Transform<StructuredRecord, StructuredRe
    * Parses a request for the URI, IP, Browser, Device, and Time
    * @param logMatcher the regex matcher to use
    * @param indices array of indices that define what position in the regex the fields are,
-   *                 in the order of Request, Time, IP, and User Agent
+   *                 in the order of Request, Time, IP, User Agent and HTTP status code.
    */
   @Nullable
   private StructuredRecord parseRequest(Matcher logMatcher, int[] indices) {
@@ -223,12 +226,14 @@ public class LogParserTransform extends Transform<StructuredRecord, StructuredRe
     ReadableUserAgent userAgent = parser.parse(logMatcher.group(indices[3]));
     String browser = userAgent.getFamily().getName();
     String device = userAgent.getDeviceCategory().getCategory().getName();
+    int httpStatus = Integer.parseInt(logMatcher.group(indices[4]));
 
     return StructuredRecord.builder(LOG_SCHEMA)
       .set("uri", uri)
       .set("ip", ip)
       .set("browser", browser)
       .set("device", device)
+      .set("httpStatus", httpStatus)
       .set("ts", ts)
       .build();
   }
