@@ -207,25 +207,23 @@ Putting and Getting Token Values
 When a value is put into a token, it is stored under a specific key. Both keys and their
 corresponding values must be non-null. The token stores additional information about the 
 context in which the key is being set, such as the unique name of the workflow node. 
+To put a value into a token, first obtain access to the token from the workflow context,
+and then set a value for a specific key. 
 
-To put a value into a token, first obtain access to the token from the workflow context, and
-then set a value for a specific key, as shown in this example from a MapReduce mapper::
+In the case of a MapReduce program, the program's Mapper and Reducer classes need to
+implement ``ProgramLifecycle<MapReduceContext>``. After doing so, they can access the
+workflow token in either the ``initialize`` or ``destroy`` methods. To access it in the
+``map`` or ``reduce`` methods, you would need to cache a reference to the workflow token
+object as a class member in the ``initialize()`` method. This is because the context
+object passed to those methods is a Hadoop class that is unaware of CDAP and its workflow
+tokens.
 
-  public static class MyVerifier extends Mapper<LongWritable, Text, Text, NullWritable> {
-    public void map(LongWritable key, Text value, Context context)
-      throws IOException, InterruptedException {
-      String profile;
-      WorkflowToken workflowToken = context.getWorkflowToken();
-      if (workflowToken != null) {
-        if (value != null and value.toString().equals("BuildProductProfile")) {
-          profile = "1";
-        } else {
-          profile = "0";
-        }
-        workflowToken.put("BuildProductProfile", profile);
-      }
-    }
-  }
+Here is an example, taken from the
+the :ref:`Wikipedia Pipeline<wikipedia-data-pipeline>` example's ``TopNMapReduce.java``:
+
+.. literalinclude:: /../../../cdap-examples/WikipediaPipeline/src/main/java/co/cask/cdap/examples/wikipedia/TopNMapReduce.java
+   :language: java
+   :lines: 109-123
 
 **Note:** The test of ``workflowToken != null`` is only required because this Mapper could
 be used outside of a workflow. When run from within a workflow, the token is guaranteed to
