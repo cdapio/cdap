@@ -18,8 +18,8 @@ package co.cask.cdap.logging.gateway.handlers.store;
 
 import co.cask.cdap.data2.dataset2.tx.DatasetContext;
 import co.cask.cdap.data2.dataset2.tx.Transactional;
+import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.RunRecord;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.base.Supplier;
@@ -54,10 +54,10 @@ public class ProgramStore {
    * @param runid run id
    * @return run record for runid
    */
-  public RunRecord getRun(final Id.Program id, final String runid) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<DatasetContext<AppMetadataStore>, RunRecord>() {
+  public RunRecordMeta getRun(final Id.Program id, final String runid) {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<DatasetContext<AppMetadataStore>, RunRecordMeta>() {
       @Override
-      public RunRecord apply(DatasetContext<AppMetadataStore> context) throws Exception {
+      public RunRecordMeta apply(DatasetContext<AppMetadataStore> context) throws Exception {
         return context.get().getRun(id, runid);
       }
     });

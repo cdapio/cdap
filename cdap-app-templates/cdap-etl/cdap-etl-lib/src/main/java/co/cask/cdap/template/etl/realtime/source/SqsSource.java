@@ -44,8 +44,8 @@ import javax.jms.TextMessage;
  * TODO: CDAP-2978: Extend JMS source so this class can be deleted.
  */
 @Plugin(type = "source")
-@Name("SQS")
-@Description("Amazon SQS (Simple Queue Service) Realtime Source: Emits a record with a field 'body' of type String.")
+@Name("AmazonSQS")
+@Description("Amazon Simple Queue Service Realtime Source: Emits a record with a field 'body' of type String.")
 public class SqsSource extends RealtimeSource<StructuredRecord> {
   private static final Logger LOG = LoggerFactory.getLogger(SqsSource.class);
   private static final String REGION_DESCRIPTION = "Region where the queue is located.";

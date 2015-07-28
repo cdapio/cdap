@@ -11,6 +11,9 @@
         <span ng-bind="ns.name | myEllipsis: 15"></span>
       </a>
     </li>
+    <li role="menuitem" ng-show="namespaces.length === 1" class="disabled">
+      <a href="">No other namespaces</a>
+    </li>
 
 
 </ul>

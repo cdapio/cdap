@@ -18,6 +18,8 @@ package co.cask.cdap.data2.datafabric.dataset.service;
 
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.common.DatasetAlreadyExistsException;
+import co.cask.cdap.common.DatasetTypeNotFoundException;
 import co.cask.cdap.common.HandlerException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.Constants;
@@ -124,9 +126,17 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     Id.Namespace namespace = Id.Namespace.from(namespaceId);
 
     LOG.info("Creating dataset {}.{}, type name: {}, typeAndProps: {}",
-             namespaceId, name, creationProperties.getTypeName(), creationProperties.getProperties());
-    instanceService.create(namespace, name, creationProperties);
-    responder.sendStatus(HttpResponseStatus.OK);
+      namespaceId, name, creationProperties.getTypeName(), creationProperties.getProperties());
+    try {
+      instanceService.create(namespace, name, creationProperties);
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (DatasetAlreadyExistsException e) {
+      responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
+    } catch (DatasetTypeNotFoundException e) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
+    } catch (HandlerException e) {
+      responder.sendString(e.getFailureStatus(), e.getMessage());
+    }
   }
 
   /**

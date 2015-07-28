@@ -286,6 +286,7 @@ function _build_docs() {
   copy_docs_lower_level
   build_zip ${3}
   zip_extras ${4}
+  echo ""
   display_version
   display_messages_file
   local warnings="$?"

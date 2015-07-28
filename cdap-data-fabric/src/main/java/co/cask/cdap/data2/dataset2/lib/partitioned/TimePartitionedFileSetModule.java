@@ -33,8 +33,9 @@ public class TimePartitionedFileSetModule implements DatasetModule {
   @Override
   public void register(DatasetDefinitionRegistry registry) {
 
-    DatasetDefinition<FileSet, FileSetAdmin> fileSetDef = registry.get("fileSet");
-    DatasetDefinition<IndexedTable, ? extends DatasetAdmin> indexedTableDef = registry.get("indexedTable");
+    DatasetDefinition<FileSet, FileSetAdmin> fileSetDef = registry.get(FileSet.class.getName());
+    DatasetDefinition<IndexedTable, ? extends DatasetAdmin> indexedTableDef =
+      registry.get(IndexedTable.class.getName());
 
     // file dataset
     registry.add(new TimePartitionedFileSetDefinition(TimePartitionedFileSet.class.getName(), fileSetDef,

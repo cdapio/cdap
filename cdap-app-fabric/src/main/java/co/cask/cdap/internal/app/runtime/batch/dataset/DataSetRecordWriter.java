@@ -56,10 +56,11 @@ final class DataSetRecordWriter<KEY, VALUE> extends RecordWriter<KEY, VALUE> {
       LOG.error("Failed to flush operations at the end of reducer of " + mrContext.toString());
       throw Throwables.propagate(e);
     } finally {
-      mrContext.close();
-      // sleep to allow metrics to be emitted
-      TimeUnit.SECONDS.sleep(2L);
-      mrContext.getMetricsCollectionService().stop();
+      try {
+        mrContext.close();
+      } finally {
+        mrContext.getMetricsCollectionService().stop();
+      }
     }
   }
 }

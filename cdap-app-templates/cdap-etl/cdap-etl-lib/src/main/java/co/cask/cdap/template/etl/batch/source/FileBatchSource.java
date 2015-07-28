@@ -38,6 +38,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.lib.input.CombineTextInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -86,12 +87,15 @@ public class FileBatchSource extends BatchSource<LongWritable, Object, Structure
   private static final String TABLE_DESCRIPTION = "Name of the Table that keeps track of the last time files " +
     "were read in.";
   private static final String INPUT_FORMAT_CLASS_DESCRIPTION = "Name of the input format class, which must be a " +
-    "subclass of FileInputFormat. Defaults to TextInputFormat.";
+    "subclass of FileInputFormat. Defaults to CombineTextInputFormat.";
   private static final String FILESYSTEM_DESCRIPTION = "Distributed file system to read in from.";
+  private static final String MAX_SPLIT_SIZE_DESCRIPTION = "Max split size for each mapper in the MapReduce Job. " +
+    "Defaults to 128MB.";
   private static final Gson GSON = new Gson();
   private static final Logger LOG = LoggerFactory.getLogger(FileBatchSource.class);
   private static final Type ARRAYLIST_DATE_TYPE  = new TypeToken<ArrayList<Date>>() { }.getType();
   private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+  private static final int DEFAULT_SPLIT_SIZE = 134217728;
 
   private final FileBatchConfig config;
   private KeyValueTable table;
@@ -158,9 +162,18 @@ public class FileBatchSource extends BatchSource<LongWritable, Object, Structure
       Class<? extends FileInputFormat> classType = (Class<? extends FileInputFormat>)
         classLoader.loadClass(config.inputFormatClass);
       job.setInputFormatClass(classType);
+    } else {
+      job.setInputFormatClass(CombineTextInputFormat.class);
     }
     FileInputFormat.setInputPathFilter(job, BatchFileFilter.class);
     FileInputFormat.addInputPath(job, new Path(config.path));
+    long maxSplitSize;
+    try {
+      maxSplitSize = Long.parseLong(config.maxSplitSize);
+    } catch (NumberFormatException e) {
+      maxSplitSize = DEFAULT_SPLIT_SIZE;
+    }
+    CombineTextInputFormat.setMaxInputSplitSize(job, maxSplitSize);
   }
 
   @Override
@@ -216,14 +229,21 @@ public class FileBatchSource extends BatchSource<LongWritable, Object, Structure
     @Description(INPUT_FORMAT_CLASS_DESCRIPTION)
     private String inputFormatClass;
 
+    @Name("maxSplitSize")
+    @Nullable
+    @Description(MAX_SPLIT_SIZE_DESCRIPTION)
+    private String maxSplitSize;
+
     public FileBatchConfig(String fileSystem, String path, @Nullable String regex, @Nullable String timeTable,
-                           @Nullable String inputFormatClass, @Nullable String fileSystemProperties) {
+                           @Nullable String inputFormatClass, @Nullable String fileSystemProperties,
+                           @Nullable String maxSplitSize) {
       this.fileSystem = fileSystem;
       this.fileSystemProperties = fileSystemProperties;
       this.path = path;
       this.fileRegex = regex;
       this.timeTable = timeTable;
       this.inputFormatClass = inputFormatClass;
+      this.maxSplitSize = maxSplitSize;
     }
   }
 }

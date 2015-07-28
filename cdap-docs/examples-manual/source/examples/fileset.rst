@@ -78,19 +78,8 @@ It is worth mentioning that nothing in ``WordCount`` is specifically programmed 
 ``lines`` and ``counts``, it could use any other dataset as long as the key and value types match.
 
 
-Building and Starting
-=====================
-
-.. include:: building-and-starting.txt
-
-
-Running CDAP Applications
-=========================
-
 .. |example| replace:: FileSetExample
-
-.. include:: /../../developers-manual/source/getting-started/building-apps.rst
-   :start-line: 11
+.. include:: building-starting-running-cdap.txt
 
 
 Running the Example
@@ -136,8 +125,8 @@ In this case, as we have fixed the number of reducers to one, there is only a si
 
 Stopping and Removing the Application
 =====================================
-Once done, you can stop the application as described above in `Stopping an Application. 
-<#stopping-an-application>`__ Here is an example-specific description of the step:
+Once done, you can stop the application as described in :ref:`Stopping an Application 
+<cdap-building-running-stopping>`. Here is an example-specific description of the steps:
 
 **Stopping the Service**
 
@@ -151,7 +140,7 @@ Once done, you can stop the application as described above in `Stopping an Appli
 
 **Removing the Application**
 
-You can now remove the application as described above, `Removing an Application <#removing-an-application>`__, or:
+You can now remove the application as described in :ref:`Removing an Application <cdap-building-running-removing>`, or:
 
 - Go to the *FileSetExample* `application overview page 
   <http://localhost:9999/ns/default/apps/FileSetExample/overview/status>`__,

@@ -37,9 +37,9 @@ import com.google.common.base.Supplier;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.inject.Provider;
-import org.apache.twill.filesystem.Location;
 
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -129,6 +129,19 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
     return partitions;
   }
 
+  private Collection<String> getPartitionPathsByTime(long startTime, long endTime) {
+    final Set<String> paths = Sets.newHashSet();
+    for (PartitionFilter filter : partitionFiltersForTimeRange(startTime, endTime)) {
+      super.getPartitions(filter, new PartitionedFileSetDataset.PartitionConsumer() {
+        @Override
+        public void consume(PartitionKey key, String path, @Nullable PartitionMetadata metadata) {
+          paths.add(path);
+        }
+      });
+    }
+    return paths;
+  }
+
   @Override
   public TimePartitionOutput getPartitionOutput(long time) {
     if (isExternal) {
@@ -140,12 +153,13 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
   }
 
   @Override
-  public Map<String, String> getInputFormatConfiguration() {
+  @Nullable
+  protected Collection<String> computeFilterInputPaths() {
     Long startTime = TimePartitionedFileSetArguments.getInputStartTime(getRuntimeArguments());
     Long endTime = TimePartitionedFileSetArguments.getInputEndTime(getRuntimeArguments());
     if (startTime == null && endTime == null) {
       // no times specified; perhaps a partition filter was specified. super will deal with that
-      return super.getInputFormatConfiguration();
+      return super.computeFilterInputPaths();
     }
     if (startTime == null) {
       throw new DataSetException("Start time for input time range must be given as argument.");
@@ -153,12 +167,7 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
     if (endTime == null) {
       throw new DataSetException("End time for input time range must be given as argument.");
     }
-    Set<TimePartitionDetail> partitions = getPartitionsByTime(startTime, endTime);
-    List<Location> inputLocations = Lists.newArrayListWithExpectedSize(partitions.size());
-    for (TimePartitionDetail partition : partitions) {
-      inputLocations.add(files.getLocation(partition.getRelativePath()));
-    }
-    return files.getInputFormatConfiguration(inputLocations);
+    return getPartitionPathsByTime(startTime, endTime);
   }
 
   @VisibleForTesting

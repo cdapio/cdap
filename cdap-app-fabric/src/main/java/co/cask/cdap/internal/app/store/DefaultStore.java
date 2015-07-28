@@ -49,7 +49,6 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.templates.AdapterDefinition;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
@@ -164,7 +163,7 @@ public class DefaultStore implements Store {
     txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
       public Void apply(AppMds mds) throws Exception {
-        RunRecord target = mds.apps.getRun(id, pid);
+        RunRecordMeta target = mds.apps.getRun(id, pid);
         if (target.getStatus() == expectedStatus) {
           long now = System.currentTimeMillis();
           long nowSecs = TimeUnit.MILLISECONDS.toSeconds(now);
@@ -244,26 +243,26 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public List<RunRecord> getRuns(final Id.Program id, final ProgramRunStatus status,
+  public List<RunRecordMeta> getRuns(final Id.Program id, final ProgramRunStatus status,
                                  final long startTime, final long endTime, final int limit, final String adapter) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, List<RunRecord>>() {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, List<RunRecordMeta>>() {
       @Override
-      public List<RunRecord> apply(AppMds mds) throws Exception {
+      public List<RunRecordMeta> apply(AppMds mds) throws Exception {
         return mds.apps.getRuns(id, status, startTime, endTime, limit, adapter);
       }
     });
   }
 
   @Override
-  public List<RunRecord> getRuns(Id.Program id, ProgramRunStatus status, long startTime, long endTime, int limit) {
+  public List<RunRecordMeta> getRuns(Id.Program id, ProgramRunStatus status, long startTime, long endTime, int limit) {
     return getRuns(id, status, startTime, endTime, limit, null);
   }
 
   @Override
-  public List<RunRecord> getRuns(final ProgramRunStatus status, final Predicate<RunRecord> filter) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, List<RunRecord>>() {
+  public List<RunRecordMeta> getRuns(final ProgramRunStatus status, final Predicate<RunRecordMeta> filter) {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, List<RunRecordMeta>>() {
       @Override
-      public List<RunRecord> apply(AppMds mds) throws Exception {
+      public List<RunRecordMeta> apply(AppMds mds) throws Exception {
         return mds.apps.getRuns(status, filter);
       }
     });
@@ -277,10 +276,10 @@ public class DefaultStore implements Store {
    * @return run record for runid
    */
   @Override
-  public RunRecord getRun(final Id.Program id, final String runid) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, RunRecord>() {
+  public RunRecordMeta getRun(final Id.Program id, final String runid) {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, RunRecordMeta>() {
       @Override
-      public RunRecord apply(AppMds mds) throws Exception {
+      public RunRecordMeta apply(AppMds mds) throws Exception {
         return mds.apps.getRun(id, runid);
       }
     });
@@ -324,15 +323,17 @@ public class DefaultStore implements Store {
                                                                       .putAll(existingAppSpec.getWorkflows())
                                                                       .putAll(existingAppSpec.getFlows())
                                                                       .putAll(existingAppSpec.getServices())
+                                                                      .putAll(existingAppSpec.getWorkers())
                                                                       .build();
 
       ImmutableMap<String, ProgramSpecification> newSpec = new ImmutableMap.Builder<String, ProgramSpecification>()
                                                                       .putAll(appSpec.getMapReduce())
-                                                                      .putAll(existingAppSpec.getSpark())
+                                                                      .putAll(appSpec.getSpark())
                                                                       .putAll(appSpec.getWorkflows())
                                                                       .putAll(appSpec.getFlows())
                                                                       .putAll(appSpec.getServices())
-                                                                      .build();
+                                                                      .putAll(appSpec.getWorkers())
+        .build();
 
 
       MapDifference<String, ProgramSpecification> mapDiff = Maps.difference(existingSpec, newSpec);
