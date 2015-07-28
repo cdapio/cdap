@@ -59,6 +59,9 @@ body {
           // Namespace dropdown
           &:first-child {
             @media (min-width: @screen-sm-min) { float: left; }
+            @media (max-width: @screen-md-max) {
+              max-width: 140px;
+            }
             li.dropdown {
               @media (max-width: @screen-md-max) {
                 &.one {
@@ -130,7 +133,12 @@ body {
               float: left;
               padding-left: 20px;
             }
-            @media (min-width: @screen-lg-min) { padding-left: 0; }
+            @media (min-width: @screen-lg-min) {
+              padding-left: 0;
+              span.caret {
+                display: none;
+              }
+            }
             li.dropdown {
               @media (max-width: @screen-xs-max) { padding-top: 0; }
               @media (min-width: @screen-sm-min) {
@@ -198,15 +206,22 @@ body {
           li.dropdown {
             @media (max-width: @screen-md-max) {
               min-width: 140px;
-              a.dropdown-toggle { padding-bottom: 0; }
+              a.dropdown-toggle {
+                padding-bottom: 0;
+                span.caret {
+                  .transition (all 0.2s ease-in);
+                }
+              }
               li.disabled { display: none; }
               &.open {
                 a.dropdown-toggle {
                   background-color: transparent;
                   text-align: left;
-                  .transition(all 0.2s ease-in);
+                  .transition(all 0.1s ease);
                   &:hover, &:focus { background-color: transparent; }
-                  .caret { display: none; }
+                  .caret {
+                    .rotate(-90deg);
+                  }
                 }
               }
             }
