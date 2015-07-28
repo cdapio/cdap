@@ -16,8 +16,49 @@
       </ul>
     </div>
 
+    <div class="btn-group">
+
+      <div class="btn btn-default btn-danger"
+           ng-disabled="RunsController.runStatus !== 'RUNNING'"
+           ng-click="RunsController.stop()"
+           >
+        <span ng-if="RunsController.runStatus !== 'STOPPING'">
+          <span class="fa fa-stop"></span>
+        </span>
+        <span ng-if="RunsController.runStatus === 'STOPPING'">
+          <span class="fa fa-refresh fa-spin"></span>
+        </span>
+      </div>
+
+      <div class="btn btn-default btn-warning"
+           ng-if="['SUSPENDED', 'RESUMING'].indexOf(RunsController.runStatus) === -1"
+           ng-disabled="['COMPLETED', 'KILLED', 'STOPPING', 'SUSPENDING'].indexOf(RunsController.runStatus) !== -1 || RunsController.runs.length === 0"
+           ng-click="RunsController.suspend()">
+        <span ng-if="RunsController.runStatus !== 'SUSPENDING'">
+          <span class="fa fa-pause"></span>
+        </span>
+        <span ng-if="RunsController.runStatus === 'SUSPENDING'">
+          <span class="fa fa-refresh fa-spin"></span>
+        </span>
+      </div>
+
+      <div class="btn btn-default btn-warning"
+           ng-disabled="RunsController.runStatus === 'RESUMING'"
+           ng-if="RunsController.runStatus === 'SUSPENDED' || RunsController.runStatus === 'RESUMING'"
+           ng-click="RunsController.resume()">
+        <span ng-if="RunsController.runStatus !== 'RESUMING'">
+          <span class="fa fa-play"></span>
+        </span>
+        <span ng-if="RunsController.runStatus === 'RESUMING'">
+          <span class="fa fa-refresh fa-spin"></span>
+        </span>
+      </div>
+
+    </div>
+
   </div>
 </div>
+
 <br/>
 <div ng-include="'/assets/features/workflows/templates/tabs/runs/run-detail.html'"
       ng-if="!$stateParams.runid">
