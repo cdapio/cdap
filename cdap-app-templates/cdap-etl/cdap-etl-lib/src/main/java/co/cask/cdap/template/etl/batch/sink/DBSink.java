@@ -90,12 +90,15 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
                                                                                 dbSinkConfig.jdbcPluginName,
                                                                                 getJDBCPluginId(),
                                                                                 PluginProperties.builder().build());
-    Preconditions.checkArgument(jdbcDriverClass != null, "JDBC Driver class must be found.");
+    Preconditions.checkArgument(
+      jdbcDriverClass != null, "Unable to load JDBC Driver class for plugin name '%s'. Please make sure that the " +
+        "plugin '%s' of type '%s' containing the driver has been installed correctly.", dbSinkConfig.jdbcPluginName,
+      dbSinkConfig.jdbcPluginName, dbSinkConfig.jdbcPluginType);
   }
 
   @Override
   public void prepareRun(BatchSinkContext context) {
-    LOG.debug("tableName = {}; pluginType = {}; pluginName = {}; connectionString = {}; importQuery = {}; columns = {}",
+    LOG.debug("tableName = {}; pluginType = {}; pluginName = {}; connectionString = {}; columns = {}",
               dbSinkConfig.tableName, dbSinkConfig.jdbcPluginType, dbSinkConfig.jdbcPluginName,
               dbSinkConfig.connectionString, dbSinkConfig.columns);
 

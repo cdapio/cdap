@@ -80,7 +80,10 @@ public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredReco
                                                                                 dbSourceConfig.jdbcPluginName,
                                                                                 jdbcPluginId,
                                                                                 PluginProperties.builder().build());
-    Preconditions.checkArgument(jdbcDriverClass != null, "JDBC Driver class must be found.");
+    Preconditions.checkArgument(
+      jdbcDriverClass != null, "Unable to load JDBC Driver class for plugin name '%s'. Please make sure that the " +
+        "plugin '%s' of type '%s' containing the driver has been installed correctly.", dbSourceConfig.jdbcPluginName,
+      dbSourceConfig.jdbcPluginName, dbSourceConfig.jdbcPluginType);
   }
 
   @Override
