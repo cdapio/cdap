@@ -73,7 +73,13 @@
                 </thead>
                 <tbody>
                   <tr ng-repeat="schema in inputSchema" ng-keypress="enter($event, $last)">
-                    <td class="name" ng-if="!schema.empty"> {{schema.name}} </td>
+                    <td class="name" ng-if="!schema.empty">
+                      <span tooltip="{{ schema.name }}"
+                            tooltip-enable="schema.name.length > 5"
+                            tooltip-append-to-body="true">
+                        {{schema.name | myEllipsis:5}}
+                      </span>
+                    </td>
                     <td class="type" ng-if="!schema.empty"> {{schema.type}} </td>
 
                     <td class="name" ng-if="property.empty"></td>
