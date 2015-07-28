@@ -116,7 +116,7 @@ public class MonitorHandler extends AbstractMonitorHandler {
   /**
    * Send request to get the status of latest restart instances request for a CDAP system service.
    */
-  @Path("/system/services/{service-name}/lastrestartstatus")
+  @Path("/system/services/{service-name}/latest-restart")
   @GET
   public void getLatestRestartServiceInstanceStatus(HttpRequest request, HttpResponder responder,
                                                     @PathParam("service-name") String serviceName) {

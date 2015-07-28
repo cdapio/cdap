@@ -108,7 +108,7 @@ public class MonitorHandlerTest extends AppFabricTestBase {
 
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
 
-    path = String.format("%s/system/services/%s/lastrestartstatus", Constants.Gateway.API_VERSION_3,
+    path = String.format("%s/system/services/%s/latest-restart", Constants.Gateway.API_VERSION_3,
                          Constants.Service.APP_FABRIC_HTTP);
     response = doGet(path);
 
@@ -131,7 +131,7 @@ public class MonitorHandlerTest extends AppFabricTestBase {
 
     Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.getCode(), response.getStatusLine().getStatusCode());
 
-    path = String.format("%s/system/services/%s/lastrestartstatus", Constants.Gateway.API_VERSION_3,
+    path = String.format("%s/system/services/%s/latest-restart", Constants.Gateway.API_VERSION_3,
                          Constants.Service.APP_FABRIC_HTTP);
     response = doGet(path);
 
