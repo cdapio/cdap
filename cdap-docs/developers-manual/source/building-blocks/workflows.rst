@@ -98,17 +98,17 @@ shown above.
 
 Assigning Unique Names
 ----------------------
-It's important to assign unique names to each component of the workflow, especially when you
-use  multiple instances of the same program in the same workflow.
+It's important to assign unique names to each component of the workflow, especially when
+you use  multiple instances of the same program in the same workflow.
 
-These unique names can be set when the Workflow is first configured, passed to the instance of the
-program, and then be used when the program performs its own configuration. An example
-of this is the :ref:`Wikipedia Pipeline<wikipedia-data-pipeline>` example, and its use of the
-*StreamToDataset* MapReduce program multiple times::
+These unique names can be set when the Workflow is first configured, passed to the
+instance of the program, and then be used when the program performs its own configuration.
+
+An example of this is the :ref:`Wikipedia Pipeline<wikipedia-data-pipeline>` example, and
+its use of the *StreamToDataset* MapReduce program multiple times::
 
   public class StreamToDataset extends AbstractMapReduce {
-    private static final Logger LOG = LoggerFactory.getLogger(StreamToDataset.class);
-  
+    ...
     private final String name;
   
     public StreamToDataset(String name) {
@@ -242,7 +242,13 @@ Spark Accumulators and Workflow Tokens
 --------------------------------------
 `Spark Accumulators <https://spark.apache.org/docs/latest/programming-guide.html#accumulators-a-nameaccumlinka>`__ 
 can be accessed through the SparkContext, and used with workflow tokens. This allows the 
-values in the accumulators to be accessed through workflow tokens and vice-versa.
+values in the accumulators to be accessed through workflow tokens. An example of this is in
+the :ref:`Wikipedia Pipeline<wikipedia-data-pipeline>` example's ``ScalaSparkLDA.scala``:
+
+.. literalinclude:: /../../../cdap-examples/WikipediaPipeline/src/main/scala/co/cask/cdap/examples/wikipedia/ScalaSparkLDA.scala
+   :language: scala
+   :lines: 81-87
+
 
 Persisting the WorkflowToken
 ----------------------------
