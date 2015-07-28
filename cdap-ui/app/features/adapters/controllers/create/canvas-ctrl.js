@@ -51,6 +51,15 @@ angular.module(PKG.name + '.feature.adapters')
             keyboard: true,
             controller: ['$scope', 'config', function($scope, config) {
               $scope.config = JSON.stringify(config);
+
+
+              var content = JSON.stringify(config, null, 4);
+              var blob = new Blob([content], { type: 'application/json'});
+              $scope.url = URL.createObjectURL(blob);
+
+              $scope.$on('$destroy', function () {
+                URL.revokeObjectURL($scope.url);
+              });
             }],
             resolve: {
               config: function() {
