@@ -58,7 +58,7 @@
     <div class="row" ng-if="(PluginEditController.configfetched && !PluginEditController.noconfig)">
 
       <!-- INPUT SCHEMA -->
-      <div class="col-lg-2" ng-if="!isSource">
+      <div class="col-lg-3" ng-if="!isSource">
         <div class="input-schema modal-content-scroll">
             <div class="schema-inner" ng-if="inputSchema">
               <h4>Input Schema</h4>
@@ -73,7 +73,15 @@
                 </thead>
                 <tbody>
                   <tr ng-repeat="schema in inputSchema" ng-keypress="enter($event, $last)">
-                    <td class="name" ng-if="!schema.empty"> {{schema.name}} </td>
+                    <td class="name" ng-if="!schema.empty">
+                      <span tooltip="{{ schema.name }}"
+                            tooltip-ellipsis="{{ schema.name }}"
+                            data-ellipsis="isEllipsis"
+                            tooltip-enable="isEllipsis"
+                            tooltip-append-to-body="true">
+                        {{schema.name}}
+                      </span>
+                    </td>
                     <td class="type" ng-if="!schema.empty"> {{schema.type}} </td>
 
                     <td class="name" ng-if="property.empty"></td>
@@ -90,7 +98,7 @@
       </div>
 
       <!-- MAIN WIDGET -->
-      <div ng-class="{'col-lg-7': isSource, 'col-lg-5': isTransform }" ng-if="!isSink">
+      <div ng-class="{'col-lg-8': isSource, 'col-lg-5': isTransform }" ng-if="!isSink">
         <div class="modal-content-scroll" ng-class="{'padding-offset-right': isSource, 'padding-offset-left': isTransform}">
           <form plugin-property-edit-view>
             <fieldset ng-disabled="isDisabled">
@@ -136,7 +144,7 @@
       </div>
 
       <!-- OUTPUT EDITOR -->
-      <div class="col-lg-5" ng-if="!isSink">
+      <div class="col-lg-4" ng-if="!isSink">
         <div class="modal-content-scroll output-schema">
           <h4>Output Schema</h4>
 
@@ -159,7 +167,7 @@
         </div>
       </div>
 
-      <div class="col-lg-10" ng-if="isSink">
+      <div class="col-lg-9" ng-if="isSink">
         <div class="modal-content-scroll">
 
           <div class="row">
