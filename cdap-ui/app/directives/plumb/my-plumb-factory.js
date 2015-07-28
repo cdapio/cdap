@@ -1,7 +1,7 @@
 angular.module(PKG.name + '.commons')
   .factory('MyPlumbFactory', function() {
     var defaultSettings = {
-      Connector : [ 'Flowchart' ],
+      Connector : [ 'Flowchart', {gap: 7} ],
       ConnectionsDetachable: true
     };
     var connectorStyle = {
@@ -20,7 +20,7 @@ angular.module(PKG.name + '.commons')
         radius: 7,
         lineWidth: 3
       },
-      connectorOverlays: [ [ 'Arrow', { location:0.925, length: 12, width: 12, height: 10, foldback: 1 } ] ],
+      connectorOverlays: [ [ 'Arrow', { location: 1, length: 12, width: 12, height: 10, foldback: 1 } ] ],
       anchors: [ 'Perimeter', {shape: 'Circle'}]
     };
     var sourceSettings = angular.extend({
