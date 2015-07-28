@@ -54,9 +54,7 @@
     <property>
         <name>twill.java.reserved.memory.mb</name>
         <value>250</value>
-        <description>
-            Reserved non-heap memory in MB for Apache Twill container.
-        </description>
+        <description>Reserved non-heap memory in MB for Apache Twill container.</description>
     </property>
 
     <property>
@@ -110,9 +108,8 @@
         etc.</description>
     </property>
 
-    <!--
-        Gateway configuration
-    -->
+    <!-- Gateway configuration -->
+
     <property>
         <name>app.connection.backlog</name>
         <value>20000</value>
@@ -166,6 +163,7 @@
     </property>
 
     <!-- Master Services HTTP handles -->
+
     <property>
         <name>http.service.connection.backlog</name>
         <value>20000</value>
@@ -191,6 +189,7 @@
     </property>
 
     <!-- Stream handles -->
+
     <property>
         <name>stream.flume.port</name>
         <value>10004</value>
@@ -267,62 +266,61 @@
     </property>
 
     <property>
-      <name>stream.bind.address</name>
-      <value>0.0.0.0</value>
-      <description>Default inet address for binding Stream http service</description>
+        <name>stream.bind.address</name>
+        <value>0.0.0.0</value>
+        <description>Default inet address for binding Stream http service</description>
     </property>
 
     <property>
-      <name>stream.worker.threads</name>
-      <value>${http.service.worker.threads}</value>
-      <description>Default number of IO worker threads for the Stream http service</description>
+        <name>stream.worker.threads</name>
+        <value>${http.service.worker.threads}</value>
+        <description>Default number of IO worker threads for the Stream http service</description>
     </property>
 
     <property>
-      <name>stream.container.num.cores</name>
-      <value>2</value>
-      <description>Number of virtual core for the YARN container that runs the Stream handler</description>
+        <name>stream.container.num.cores</name>
+        <value>2</value>
+        <description>Number of virtual core for the YARN container that runs the Stream handler</description>
     </property>
 
     <property>
-      <name>stream.container.memory.mb</name>
-      <value>512</value>
-      <description>Amount of memory in MB for the YARN container that runs the Stream handler</description>
+        <name>stream.container.memory.mb</name>
+        <value>512</value>
+        <description>Amount of memory in MB for the YARN container that runs the Stream handler</description>
     </property>
 
     <property>
-      <name>stream.container.instances</name>
-      <value>1</value>
-      <description>Number of YARN container instances for the Stream handler</description>
+        <name>stream.container.instances</name>
+        <value>1</value>
+        <description>Number of YARN container instances for the Stream handler</description>
     </property>
 
     <property>
-      <name>stream.file.cleanup.period</name>
-      <value>300000</value>
-      <description>How often to run Stream file cleanup process in milliseconds</description>
+        <name>stream.file.cleanup.period</name>
+        <value>300000</value>
+        <description>How often to run Stream file cleanup process in milliseconds</description>
     </property>
 
     <property>
-      <name>stream.async.worker.threads</name>
-      <value>${stream.worker.threads}</value>
-      <description>Number of async worker threads for handling async write request</description>
+        <name>stream.async.worker.threads</name>
+        <value>${stream.worker.threads}</value>
+        <description>Number of async worker threads for handling async write request</description>
     </property>
 
     <property>
-      <name>stream.async.queue.size</name>
-      <value>100</value>
-      <description>Queue size per async worker thread for queuing up async write request</description>
+        <name>stream.async.queue.size</name>
+        <value>100</value>
+        <description>Queue size per async worker thread for queuing up async write request</description>
     </property>
 
     <property>
-      <name>stream.batch.buffer.threshold</name>
-      <value>1048576</value>
-      <description>Bytes retained in-memory before writing to a new stream file</description>
+        <name>stream.batch.buffer.threshold</name>
+        <value>1048576</value>
+        <description>Bytes retained in-memory before writing to a new stream file</description>
     </property>
 
-    <!--
-        Data Fabric Configuration
-    -->
+    <!-- Data Fabric Configuration -->
+ 
     <property>
         <name>data.local.storage</name>
         <value>${local.data.dir}/ldb</value>
@@ -344,29 +342,25 @@
     <property>
         <name>data.tx.bind.port</name>
         <value>15165</value>
-        <description>The port number for the transaction
-            service</description>
+        <description>The port number for the transaction service</description>
     </property>
 
     <property>
         <name>data.tx.bind.address</name>
         <value>0.0.0.0</value>
-        <description>The inet address for the transaction
-            service</description>
+        <description>The inet address for the transaction service</description>
     </property>
 
     <property>
         <name>data.tx.server.io.threads</name>
         <value>2</value>
-        <description>The number of IO threads for the transaction
-            service</description>
+        <description>The number of IO threads for the transaction service</description>
     </property>
 
     <property>
         <name>data.tx.server.threads</name>
         <value>25</value>
-        <description>The number of threads for the transaction
-            service</description>
+        <description>The number of threads for the transaction service</description>
     </property>
 
     <property>
@@ -378,8 +372,7 @@
     <property>
         <name>data.tx.client.count</name>
         <value>5</value>
-        <description>The number of pooled instanced of the transaction
-            client</description>
+        <description>The number of pooled instanced of the transaction client</description>
     </property>
 
     <property>
@@ -393,9 +386,9 @@
         <name>data.tx.thrift.max.read.buffer</name>
         <value>${thrift.max.read.buffer}</value>
         <description>
-          Specifies the max read buffer size used by
-          transaction server. Value should be set to something greater
-          than max frame that is sent on RPC channel.
+            Specifies the max read buffer size used by
+            transaction server. Value should be set to something greater
+            than max frame that is sent on RPC channel.
         </description>
     </property>
 
@@ -408,9 +401,9 @@
     <property>
         <name>data.tx.snapshot.codecs</name>
         <value>
-          co.cask.cdap.data2.transaction.snapshot.SnapshotCodecV1,
-          co.cask.cdap.data2.transaction.snapshot.SnapshotCodecV2,
-          co.cask.tephra.snapshot.SnapshotCodecV3
+            co.cask.cdap.data2.transaction.snapshot.SnapshotCodecV1,
+            co.cask.cdap.data2.transaction.snapshot.SnapshotCodecV2,
+            co.cask.tephra.snapshot.SnapshotCodecV3
         </value>
         <description>Specifies the class names of all supported transaction state codecs</description>
     </property>
@@ -439,15 +432,14 @@
     <property>
         <name>data.tx.snapshot.retain</name>
         <value>10</value>
-        <description>Number of transaction snapshot files to retain as
-            backups</description>
+        <description>Number of transaction snapshot files to retain as backups</description>
     </property>
 
     <property>
         <name>data.tx.janitor.enable</name>
         <value>true</value>
         <description>Whether or not the TransactionDataJanitor coprocessor
-        should be enabled on tables; should normally be true</description>
+            should be enabled on tables; should normally be true</description>
     </property>
 
     <property>
@@ -485,9 +477,8 @@
         <description>Base directory for user data on the filesystem</description>
     </property>
 
-    <!--
-        Queue-related Configuration
-    -->
+    <!-- Queue-related Configuration -->
+ 
     <property>
         <name>data.queue.table.name</name>
         <value>queues</value>
@@ -498,8 +489,8 @@
         <name>data.queue.dequeue.tx.percent</name>
         <value>30</value>
         <description>
-          Percentage of transaction time allowed to spend in dequeue. It should be an integer
-          between 1-100.
+            Percentage of transaction time allowed to spend in dequeue. It should be an integer
+            between 1-100.
         </description>
     </property>
 
@@ -507,7 +498,7 @@
         <name>data.queue.config.update.interval</name>
         <value>5</value>
         <description>Frequency, in seconds, of updates to the queue consumer
-        configuration used in evicting queue entries on flush and compaction
+            configuration used in evicting queue entries on flush and compaction
         </description>
     </property>
 
@@ -517,14 +508,12 @@
         <description>Number of splits in the queue table.</description>
     </property>
 
-    <!--
-        Metadata Service Configuration
-    -->
+    <!-- Metadata Service Configuration -->
+ 
     <property>
         <name>metadata.bind.address</name>
         <value>0.0.0.0</value>
-        <description>Specifies the server address of metadata
-            server</description>
+        <description>Specifies the server address of metadata server</description>
     </property>
 
     <property>
@@ -534,7 +523,6 @@
             is started on</description>
     </property>
 
-
     <property>
         <name>metadata.program.run.history.keepdays</name>
         <value>30</value>
@@ -542,9 +530,8 @@
             program run run-history in metadata</description>
     </property>
 
-    <!--
-        Log collection service configuration
-    -->
+    <!-- Log collection service configuration -->
+
     <property>
         <name>log.query.bind.address</name>
         <value>0.0.0.0</value>
@@ -578,6 +565,7 @@
     </property>
 
     <!-- Template configuration -->
+
     <property>
         <name>app.template.dir</name>
         <value>/opt/cdap/master/templates</value>
@@ -592,6 +580,7 @@
     </property>
 
     <!-- App Fabric related changes -->
+
     <property>
         <name>app.bind.address</name>
         <value>0.0.0.0</value>
@@ -646,12 +635,15 @@
         <description>Java options for all program containers</description>
     </property>
 
-  <!-- Used for MapReduce Info endpoint -->
+    <!-- Used for MapReduce Info endpoint -->
+
     <property>
-      <name>mapreduce.jobclient.connect.max.retries</name>
-      <value>2</value>
-      <description>Indicates the maximum number of retries JobClient will make to establish
-        a server connection when retrieving job status and history.</description>
+        <name>mapreduce.jobclient.connect.max.retries</name>
+        <value>2</value>
+        <description>
+            Indicates the maximum number of retries JobClient will make to establish
+            a server connection when retrieving job status and history.
+        </description>
     </property>
 
     <property>
@@ -663,17 +655,16 @@
         </description>
     </property>
 
-    <!-- scheduler related changes -->
+    <!-- Scheduler related changes -->
+
     <property>
         <name>scheduler.max.thread.pool.size</name>
         <value>30</value>
         <description>Size of the scheduler thread pool</description>
     </property>
 
-
-    <!--
-        Router configuration
-    -->
+    <!-- Router configuration -->
+ 
     <property>
         <name>router.bind.address</name>
         <value>0.0.0.0</value>
@@ -681,9 +672,9 @@
     </property>
 
     <property>
-      <name>router.webapp.enabled</name>
-      <value>false</value>
-      <description>Specifies if webapp listening service should be started at Router</description>
+        <name>router.webapp.enabled</name>
+        <value>false</value>
+        <description>Specifies if webapp listening service should be started at Router</description>
     </property>
 
     <property>
@@ -704,9 +695,9 @@
     </property>
 
     <property>
-      <name>router.ssl.bind.port</name>
-      <value>10443</value>
-      <description>Secure router listening port for gateway</description>
+        <name>router.ssl.bind.port</name>
+        <value>10443</value>
+        <description>Secure router listening port for gateway</description>
     </property>
 
     <property>
@@ -721,6 +712,7 @@
     </property>
 
     <!-- Sets whether Devsuite is in Cloud or not -->
+
     <property>
         <name>appfabric.environment</name>
         <value>devsuite</value>
@@ -728,6 +720,7 @@
     </property>
 
     <!-- New Metrics system settings -->
+
     <property>
         <name>metrics.query.bind.address</name>
         <value>0.0.0.0</value>
@@ -820,9 +813,7 @@
         <value>${master.service.memory.mb}</value>
     </property>
 
-    <!--
-        Metrics Processor Configuration
-     -->
+    <!-- Metrics Processor Configuration -->
 
     <property>
         <name>metrics.processor.num.instances</name>
@@ -865,9 +856,8 @@
         <description>Report interval for leveldb stats, in seconds.</description>
     </property>
 
-    <!--
-        Logging Configuration
-    -->
+    <!-- Logging Configuration -->
+ 
     <property>
         <name>kafka.seed.brokers</name>
         <value>127.0.0.1:9092</value>
@@ -921,9 +911,8 @@
         <description>Default inet address for binding logsaver http service</description>
     </property>
 
-    <!--
-        Kafka Configuration
-    -->
+    <!-- Kafka Server Configuration -->
+ 
     <property>
         <name>kafka.bind.address</name>
         <value>0.0.0.0</value>
@@ -960,9 +949,8 @@
         <description>Kafka replication factor</description>
     </property>
 
-    <!--
-        Global Configuration
-    -->
+    <!-- Global Configuration -->
+ 
     <property>
         <name>enable.unrecoverable.reset</name>
         <value>false</value>
@@ -973,17 +961,16 @@
     </property>
 
     <property>
-      <name>dataset.unchecked.upgrade</name>
-      <value>false</value>
-      <description>
-        By default, any changes made to existing datasets are not deployed when an app is redeployed.
-        Setting this value to true allows the dataset changes to be deployed upon app redeployment.
-      </description>
+        <name>dataset.unchecked.upgrade</name>
+        <value>false</value>
+        <description>
+            By default, any changes made to existing datasets are not deployed when an app is redeployed.
+            Setting this value to true allows the dataset changes to be deployed upon app redeployment.
+        </description>
     </property>
 
-    <!---
-         Web App Settings
-     -->
+    <!-- Web App Settings -->
+ 
     <property>
         <name>dashboard.bind.address</name>
         <value>0.0.0.0</value>
@@ -1009,66 +996,71 @@
         <value>127.0.0.1</value>
     </property>
 
-    <!---
-         Explore Server Settings
-     -->
+    <!-- Explore Service Settings -->
+ 
     <property>
         <name>explore.enabled</name>
         <value>false</value>
         <description>Whether ad-hoc SQL queries are enabled</description>
     </property>
+
     <property>
         <name>explore.writes.enabled</name>
         <value>true</value>
         <description>Whether writing to a table through ad-hoc SQL queries is enabled</description>
     </property>
+
     <property>
         <name>explore.start.on.demand</name>
         <value>false</value>
     </property>
+
     <property>
         <name>explore.local.data.dir</name>
         <value>${local.data.dir}/explore</value>
     </property>
+
     <property>
         <name>explore.executor.container.instances</name>
         <value>1</value>
         <description>Number of explore executor instances</description>
     </property>
+
     <property>
         <name>explore.executor.max.instances</name>
         <value>1</value>
         <description>Maximum number of explore executor instances</description>
     </property>
+
     <property>
         <name>explore.active.operation.timeout.secs</name>
         <value>86400</value>
         <description>Timeout value in seconds for a SQL operation whose result is not fetched completely</description>
     </property>
+
     <property>
         <name>explore.inactive.operation.timeout.secs</name>
         <value>3600</value>
         <description>Timeout value in seconds for a SQL operation which does not have any more results
             to be fetched</description>
     </property>
+
     <property>
         <name>explore.cleanup.job.schedule.secs</name>
         <value>60</value>
         <description>Time in secs to schedule clean up job to timeout operations</description>
     </property>
 
-    <!--
-        Notification System Settings
-    -->
+    <!-- Notification System Settings -->
+ 
     <property>
         <name>notification.transport.system</name>
         <value>kafka</value>
         <description>Transport system used by the Notification system - can be kafka/stream</description>
     </property>
 
-    <!--
-        External Authentication Settings
-    -->
+    <!-- External Authentication Settings -->
+ 
     <property>
         <name>security.token.digest.algorithm</name>
         <value>HmacSHA256</value>
@@ -1080,19 +1072,18 @@
     </property>
 
     <property>
-      <name>security.auth.server.address</name>
-      <value></value>
-      <description>Deprecated. Use security.auth.server.bind.address instead.</description>
-    </property>
-
-    <property>
-      <name>security.auth.server.bind.address</name>
-      <value>0.0.0.0</value>
+        <name>security.auth.server.bind.address</name>
+        <value>0.0.0.0</value>
     </property>
 
     <property>
         <name>security.auth.server.bind.port</name>
         <value>10009</value>
+    </property>
+
+    <property>
+        <name>security.auth.server.ssl.bind.port</name>
+        <value>10010</value>
     </property>
 
     <property>
@@ -1111,9 +1102,8 @@
         <value>${local.data.dir}/security/keyfile</value>
     </property>
 
-    <!--
-        External Authentication login module Settings
-    -->
+    <!-- External Authentication login module Settings -->
+ 
     <property>
         <name>security.authentication.handlerClassName</name>
         <value></value>
@@ -1125,22 +1115,22 @@
     </property>
 
     <property>
-      <name>security.authentication.basic.realmfile</name>
-      <value></value>
+        <name>security.authentication.basic.realmfile</name>
+        <value></value>
     </property>
 
     <property>
         <name>security.token.digest.key.expiration.ms</name>
         <value>3600000</value>
         <description>Time duration (in milliseconds) after which an active secret key used
-        for signing tokens should be retired</description>
+            for signing tokens should be retired</description>
     </property>
 
     <property>
         <name>security.server.extended.token.expiration.ms</name>
         <value>604800000</value>
         <description>Admin Tools AccessToken expiration time in milliseconds (defaults to
-        1 week) (internal)</description>
+            1 week) (internal)</description>
     </property>
 
     <property>
@@ -1149,9 +1139,8 @@
         <description>Parent node in ZooKeeper used for secret key distribution in distributed mode</description>
     </property>
 
-  <!--
-      Security-enabled Flag
-  -->
+  <!-- Security-enabled Flag -->
+ 
   <property>
       <name>security.enabled</name>
       <value>false</value>
@@ -1165,9 +1154,9 @@
   </property>
 
   <property>
-    <name>kerberos.auth.enabled</name>
-    <value>${security.enabled}</value>
-    <description>If true, Kerberos authentication will be enabled</description>
+      <name>kerberos.auth.enabled</name>
+      <value>${security.enabled}</value>
+      <description>If true, Kerberos authentication will be enabled</description>
   </property>
 
   <property>
@@ -1176,40 +1165,31 @@
       <description>Security realm used for authentication</description>
   </property>
 
-  <!--
-      Security configurations for Kerberos authentication
-  -->
+  <!-- Security configurations for Kerberos authentication -->
+ 
   <property>
-    <name>cdap.master.kerberos.keytab</name>
-    <value></value>
-    <description>The full path to the Kerberos keytab file containing the CDAP Master's
-    credentials.</description>
+      <name>cdap.master.kerberos.keytab</name>
+      <value></value>
+      <description>The full path to the Kerberos keytab file containing the CDAP Master's
+          credentials.</description>
   </property>
 
   <property>
-    <name>cdap.master.kerberos.principal</name>
-    <value></value>
-    <description>
-      Example: "cdap/_HOST@EXAMPLE.COM".
-      The Kerberos principal name that should be used to login the CDAP Master process.
-      The principal name should be in the form "user/hostname@REALM".  If the hostname portion
-      contains the string "_HOST", it will be substituted with the local hostname.
-    </description>
+      <name>cdap.master.kerberos.principal</name>
+      <value></value>
+      <description>
+          Example: "cdap/_HOST@EXAMPLE.COM".
+          The Kerberos principal name that should be used to login the CDAP Master process.
+          The principal name should be in the form "user/hostname@REALM".  If the hostname portion
+          contains the string "_HOST", it will be substituted with the local hostname.
+      </description>
   </property>
-
 
   <!-- Configuration for enabling SSL -->
 
   <property>
-    <name>ssl.enabled</name>
-    <value>false</value>
-  </property>
-
-  <!-- Security configuration for the external authentication server -->
-
-  <property>
-    <name>security.auth.server.ssl.bind.port</name>
-    <value>10010</value>
+      <name>ssl.enabled</name>
+      <value>false</value>
   </property>
 
 </configuration>
