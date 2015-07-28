@@ -48,8 +48,10 @@ set line=%line:java version "1.=!!%
 set line=%line:~0,1%
 if NOT "%line%" == "6" (
   if NOT "%line%" == "7" (
-    echo ERROR: Java version not supported. Please install Java 6 or 7 - other versions of Java are not yet supported.
-    GOTO :FINALLY
+    if NOT "%line%" == "8" (
+      echo ERROR: Java version not supported. Please install Java 6, 7 or 8 - other versions of Java are not yet supported.
+      GOTO :FINALLY
+    )
   )
 )
 endlocal
