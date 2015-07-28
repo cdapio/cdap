@@ -159,6 +159,5 @@ org.slf4j.slf4j-api-1.7.5.jar
 org.tukaani.xz-1.0.jar
 org.xerial.snappy.snappy-java-1.1.1.7.jar
 oro.oro-2.0.8.jar
-plugins
 stax.stax-api-1.0.1.jar
 xmlenc.xmlenc-0.52.jar
