@@ -19,6 +19,8 @@ package co.cask.cdap.internal.app.runtime.batch;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetArguments;
+import co.cask.cdap.api.dataset.table.Put;
+import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import com.google.common.collect.Maps;
@@ -34,23 +36,32 @@ import java.util.Map;
 /**
  * App used to test whether M/R can read from file datasets referenced at runtime.
  */
-public class AppWithMapReduceUsingRuntimeFileSet extends AbstractApplication {
+public class AppWithMapReduceUsingRuntimeDatasets extends AbstractApplication {
   public static final String INPUT_NAME = "input.name";
   public static final String INPUT_PATHS = "input.paths";
   public static final String OUTPUT_NAME = "output.name";
   public static final String OUTPUT_PATH = "output.path";
 
+  public static final String APP_NAME = "appWithRuntimeDS";
+  public static final String MR_NAME = "computeSum";
+
   @Override
   public void configure() {
-    setName("AppWithMapReduceUsingFile");
+    setName(APP_NAME);
     setDescription("Application with MapReduce job using file as dataset");
     addMapReduce(new ComputeSum());
+    createDataset("rtt", Table.class.getName());
   }
 
   /**
    *
    */
   public static final class ComputeSum extends AbstractMapReduce {
+
+    @Override
+    protected void configure() {
+      setName(MR_NAME);
+    }
 
     @Override
     public void beforeSubmit(MapReduceContext context) throws Exception {
@@ -83,6 +94,9 @@ public class AppWithMapReduceUsingRuntimeFileSet extends AbstractApplication {
 
       context.setInput(inputName, input);
       context.setOutput(outputName, output);
+
+      Table table = context.getDataset("rtt");
+      table.put(new Put("a").add("b", "c"));
     }
   }
 

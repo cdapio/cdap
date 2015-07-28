@@ -51,7 +51,7 @@ public final class BasicNotificationContext implements NotificationContext {
         final TransactionContext context = new TransactionContext(transactionSystemClient);
         try {
           context.start();
-          runnable.run(new DynamicDatasetContext(namespaceId, context, dsFramework,
+          runnable.run(new DynamicDatasetContext(namespaceId, context, null, dsFramework,
                                                  context.getClass().getClassLoader()));
           context.finish();
           return true;

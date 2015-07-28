@@ -31,6 +31,10 @@ import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
+import co.cask.cdap.api.dataset.lib.cube.AggregationFunction;
+import co.cask.cdap.api.metrics.MetricDataQuery;
+import co.cask.cdap.api.metrics.MetricStore;
+import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRunner;
@@ -77,6 +81,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -97,6 +103,7 @@ public class SparkProgramRunnerTest {
   private static TransactionManager txService;
   private static DatasetFramework dsFramework;
   private static DatasetInstantiator datasetInstantiator;
+  private static MetricStore metricStore;
 
   final String testString1 = "persisted data";
   final String testString2 = "distributed systems";
@@ -130,6 +137,7 @@ public class SparkProgramRunnerTest {
     datasetInstantiator = new DatasetInstantiator(DefaultId.NAMESPACE, dsFramework,
                                                   SparkProgramRunnerTest.class.getClassLoader(),
                                                   null, null);
+    metricStore = injector.getInstance(MetricStore.class);
 
     txService.startAndWait();
   }
@@ -155,6 +163,24 @@ public class SparkProgramRunnerTest {
     prepareInputData();
     runProgram(app, SparkAppUsingObjectStore.CharCountSpecification.class);
     checkOutputData();
+
+    // validate that the table emitted metrics
+    Collection<MetricTimeSeries> metrics =
+      metricStore.query(new MetricDataQuery(
+        0,
+        System.currentTimeMillis() / 1000L,
+        60,
+        "system." + Constants.Metrics.Name.Dataset.OP_COUNT,
+        AggregationFunction.SUM,
+        ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, DefaultId.NAMESPACE.getId(),
+                        Constants.Metrics.Tag.APP, SparkAppUsingObjectStore.APP_NAME,
+                        Constants.Metrics.Tag.SPARK, SparkAppUsingObjectStore.SPARK_NAME,
+                        Constants.Metrics.Tag.DATASET, "totals"),
+        Collections.<String>emptyList()));
+    Assert.assertEquals(1, metrics.size());
+    MetricTimeSeries ts = metrics.iterator().next();
+    Assert.assertEquals(1, ts.getTimeValues().size());
+    Assert.assertEquals(1, ts.getTimeValues().get(0).getValue());
   }
 
   @Test
