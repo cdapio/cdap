@@ -58,13 +58,10 @@ public class CreateAdapterCommand extends AbstractAuthCommand {
     File adapterConfigFile = filePathResolver.resolvePathToFile(
       arguments.get(ArgumentName.ADAPTER_SPEC.toString()));
 
-    FileReader fileReader = new FileReader(adapterConfigFile);
-    try {
+    try (FileReader fileReader = new FileReader(adapterConfigFile)) {
       adapterClient.create(Id.Adapter.from(cliConfig.getCurrentNamespace(), adapterName),
                            GSON.fromJson(fileReader, AdapterConfig.class));
       output.printf("Successfully created adapter '%s'\n", adapterName);
-    } finally {
-      fileReader.close();
     }
   }
 

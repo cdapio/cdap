@@ -83,7 +83,7 @@ public class GetStreamStatsCommand extends AbstractCommand {
     // hack to validate streamId
     StreamProperties config = streamClient.getConfig(streamId);
     if (config.getFormat().getName().equals("text")) {
-      output.printf("No schema found for %s", streamId);
+      output.printf("No schema found for stream '%s'", streamId.getId());
       output.println();
       return;
     }

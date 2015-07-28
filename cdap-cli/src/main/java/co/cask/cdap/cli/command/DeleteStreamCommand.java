@@ -47,7 +47,7 @@ public class DeleteStreamCommand extends AbstractAuthCommand {
     Id.Stream streamId = Id.Stream.from(cliConfig.getCurrentNamespace(),
                                         arguments.get(ArgumentName.STREAM.toString()));
     streamClient.delete(streamId);
-    output.printf("Successfully deleted stream '%s'\n", streamId);
+    output.printf("Successfully deleted stream '%s'\n", streamId.getId());
   }
 
   @Override
