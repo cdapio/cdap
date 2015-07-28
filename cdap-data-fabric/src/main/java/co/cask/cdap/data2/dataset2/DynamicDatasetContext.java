@@ -84,7 +84,9 @@ public class DynamicDatasetContext implements DatasetContext {
   }
 
   /**
-   * @param namespace the {@link Id.Namespace} in which the transaction context is created
+   * Create a dynamic dataset context that will get datasets and add them to the transaction context.
+   *
+   * @param namespace the {@link Id.Namespace} in which all datasets are instantiated
    * @param context the transaction context
    * @param metricsContext if non-null, this context is used as the context for dataset metrics,
    *                       with an additional tag for the dataset name.
@@ -103,7 +105,7 @@ public class DynamicDatasetContext implements DatasetContext {
   /**
    * Create a dynamic dataset context that will get datasets and add them to the transaction context.
    *
-   * @param namespace the {@link Id.Namespace} in which the transaction context is created
+   * @param namespace the {@link Id.Namespace} in which all datasets are instantiated
    * @param context the transaction context
    * @param metricsContext if non-null, this context is used as the context for dataset metrics,
    *                       with an additional tag for the dataset name.
