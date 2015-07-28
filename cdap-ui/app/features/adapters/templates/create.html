@@ -5,20 +5,23 @@
   tooltip-append-to-body="true"
   tooltip-class="tooltip-error"
 >
-  <div class="clearfix">
-    <h1 class="pull-left">
+  <div>
+    <h1>
       <a ng-if="AdapterCreateController.metadata.name.length > 0"
           ng-click="AdapterCreateController.showMetadataModal()">
-        {{AdapterCreateController.metadata.name}}
+        {{AdapterCreateController.metadata.name | myEllipsis: 35}}
       </a>
       <a ng-if="AdapterCreateController.metadata.name.length === 0"
           ng-click="AdapterCreateController.showMetadataModal()">
         [Adapter Name]
       </a>
     </h1>
-    <a class="pull-right fa fa-pencil" ng-click="AdapterCreateController.showMetadataModal()"></a>
+    <a class="fa fa-pencil" ng-click="AdapterCreateController.showMetadataModal()"></a>
     <p ng-if="AdapterCreateController.metadata.description.length > 0">
       {{AdapterCreateController.metadata.description | myEllipsis: 150 }}
+    </p>
+    <p ng-if="AdapterCreateController.metadata.description.length === 0">
+      [Adapter description]
     </p>
   </div>
 </div>
