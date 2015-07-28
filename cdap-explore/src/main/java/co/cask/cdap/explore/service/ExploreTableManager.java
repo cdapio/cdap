@@ -162,7 +162,7 @@ public class ExploreTableManager {
     // there are two ways to refer to each dataset type...
     if (ObjectMappedTableModule.FULL_NAME.equals(datasetType) ||
       ObjectMappedTableModule.SHORT_NAME.equals(datasetType)) {
-      return createFromSchemaProperty(spec, datasetID, serdeProperties);
+      return createFromSchemaProperty(spec, datasetID, serdeProperties, true);
     }
 
     try (SystemDatasetInstantiator datasetInstantiator = datasetInstantiatorFactory.create()) {
@@ -175,7 +175,8 @@ public class ExploreTableManager {
       // To be enabled for explore, a dataset must either be RecordScannable/Writable,
       // or it must be a FileSet or a PartitionedFileSet with explore enabled in it properties.
       if (dataset instanceof Table) {
-        return createFromSchemaProperty(spec, datasetID, serdeProperties);
+        // valid for a table not to have a schema property. this logic should really be in Table
+        return createFromSchemaProperty(spec, datasetID, serdeProperties, false);
       }
 
       boolean isRecordScannable = dataset instanceof RecordScannable;
@@ -190,7 +191,7 @@ public class ExploreTableManager {
           if (isRecordWritable && !isRecordScannable) {
             throw new UnsupportedTypeException("StructuredRecord is not supported as a type for RecordWritable.");
           }
-          return createFromSchemaProperty(spec, datasetID, serdeProperties);
+          return createFromSchemaProperty(spec, datasetID, serdeProperties, true);
         }
 
         // otherwise, derive the schema from the record type
@@ -220,15 +221,19 @@ public class ExploreTableManager {
   }
 
   private QueryHandle createFromSchemaProperty(DatasetSpecification spec, Id.DatasetInstance datasetID,
-                                               Map<String, String> serdeProperties)
+                                               Map<String, String> serdeProperties, boolean shouldErrorOnMissingSchema)
     throws ExploreException, SQLException, UnsupportedTypeException {
 
     String schemaStr = spec.getProperty(DatasetProperties.SCHEMA);
     // if there is no schema property, we cannot create the table and this is an error
     if (schemaStr == null) {
-      throw new IllegalArgumentException(String.format(
-        "Unable to enable exploration on dataset %s because the %s property is not set.",
-        datasetID.getId(), DatasetProperties.SCHEMA));
+      if (shouldErrorOnMissingSchema) {
+        throw new IllegalArgumentException(String.format(
+          "Unable to enable exploration on dataset %s because the %s property is not set.",
+          datasetID.getId(), DatasetProperties.SCHEMA));
+      } else {
+        return QueryHandle.NO_OP;
+      }
     }
 
     try {
