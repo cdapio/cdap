@@ -24,6 +24,8 @@ import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
+import co.cask.cdap.common.ApplicationNotFoundException;
+import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.proto.AdapterStatus;
 import co.cask.cdap.proto.Id;
@@ -63,7 +65,7 @@ public interface Store {
    * @return An instance of {@link co.cask.cdap.app.program.DefaultProgram} if found.
    * @throws IOException
    */
-  Program loadProgram(Id.Program program) throws IOException;
+  Program loadProgram(Id.Program program) throws IOException, ApplicationNotFoundException, ProgramNotFoundException;
 
   /**
    * Logs start of program run.
@@ -330,6 +332,13 @@ public interface Store {
    * @param scheduleName the name of the schedule to be removed from the program
    */
   void deleteSchedule(Id.Program program, String scheduleName);
+
+  /**
+   * Check if an application exists.
+   * @param id id of application.
+   * @return true if the application exists, false otherwise.
+   */
+  boolean applicationExists(Id.Application id);
 
   /**
    * Check if a program exists.
