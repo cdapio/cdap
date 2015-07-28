@@ -4,7 +4,7 @@
     "position": [ "group1" ],
     "group1": {
       "display" : "Elasticsearch Configuration",
-      "position" : [ "es.host", "es.port", "es.index", "es.type", "es.idField" ],
+      "position" : [ "es.host", "es.port", "es.index", "es.type", "es.idField", "schema", "query" ],
       "fields" : {
         "es.host": {
           "widget": "textbox",
@@ -37,6 +37,21 @@
           "description": "The idField will specify from which field the id of the document is derived.",
           "properties": {
             "width": "large"
+          }
+        },
+        "schema" : {
+          "widget": "schema",
+          "label": "Schema",
+          "description" : "Specify the schema for the table",
+          "schema-types" : [ "boolean", "int", "long", "float", "double", "bytes", "string" ],
+          "schema-default-type" : "string"
+        },
+        "query" : {
+          "widget": "textbox",
+          "label": "Query",
+          "description": "The query used to select record from the specified index/type. e.g. ?q=* will select all records",
+          "properties": {
+            "width":"large"
           }
         }
       }
