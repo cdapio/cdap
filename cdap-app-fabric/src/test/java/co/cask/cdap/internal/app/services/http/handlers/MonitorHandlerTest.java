@@ -102,22 +102,21 @@ public class MonitorHandlerTest extends AppFabricTestBase {
 
   @Test
   public void testRestartInstances() throws Exception {
-    String path = String.format("system/services/%s/instances/restart", Constants.Service.APP_FABRIC_HTTP);
-    HttpURLConnection urlConn = openURL(path, HttpMethod.PUT);
+    String path = String.format("%s/system/services/%s/restart", Constants.Gateway.API_VERSION_3,
+                                Constants.Service.APP_FABRIC_HTTP);
+    HttpResponse response = doPut(path);
 
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
 
-    urlConn.disconnect();
+    path = String.format("%s/system/services/%s/lastrestartstatus", Constants.Gateway.API_VERSION_3,
+                         Constants.Service.APP_FABRIC_HTTP);
+    response = doGet(path);
 
-    urlConn = openURL(path, HttpMethod.GET);
-
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
 
     RestartServiceInstancesStatus result =
-      GSON.fromJson(new String(ByteStreams.toByteArray(urlConn.getInputStream()), Charsets.UTF_8),
+      GSON.fromJson(new String(ByteStreams.toByteArray(response.getEntity().getContent()), Charsets.UTF_8),
                     RestartServiceInstancesStatus.class);
-
-    urlConn.disconnect();
 
     Assert.assertNotNull(result);
     Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP, result.getServiceName());
@@ -126,13 +125,13 @@ public class MonitorHandlerTest extends AppFabricTestBase {
 
   @Test
   public void testInvalidIdRestartInstances() throws Exception {
-    String path = String.format("%s/system/services/%s/instances/1000/restart", Constants.Gateway.API_VERSION_3,
+    String path = String.format("%s/system/services/%s/restart/1000", Constants.Gateway.API_VERSION_3,
                                 Constants.Service.APP_FABRIC_HTTP);
     HttpResponse response = doPut(path);
 
     Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.getCode(), response.getStatusLine().getStatusCode());
 
-    path = String.format("%s/system/services/%s/instances/restart", Constants.Gateway.API_VERSION_3,
+    path = String.format("%s/system/services/%s/lastrestartstatus", Constants.Gateway.API_VERSION_3,
                          Constants.Service.APP_FABRIC_HTTP);
     response = doGet(path);
 

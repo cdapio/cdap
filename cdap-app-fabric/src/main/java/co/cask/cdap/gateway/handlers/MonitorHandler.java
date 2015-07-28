@@ -95,7 +95,7 @@ public class MonitorHandler extends AbstractMonitorHandler {
   /**
    * Send request to restart all instances for a CDAP system service.
    */
-  @Path("/system/services/{service-name}/instances/restart")
+  @Path("/system/services/{service-name}/restart")
   @PUT
   public void restartAllServiceInstances(HttpRequest request, HttpResponder responder,
                                          @PathParam("service-name") String serviceName) {
@@ -105,7 +105,7 @@ public class MonitorHandler extends AbstractMonitorHandler {
   /**
    * Send request to restart single instance identified by <instance-id>
    */
-  @Path("/system/services/{service-name}/instances/{instance-id}/restart")
+  @Path("/system/services/{service-name}/restart/{instance-id}")
   @PUT
   public void restartServiceInstance(HttpRequest request, HttpResponder responder,
                                      @PathParam("service-name") String serviceName,
@@ -116,7 +116,7 @@ public class MonitorHandler extends AbstractMonitorHandler {
   /**
    * Send request to get the status of latest restart instances request for a CDAP system service.
    */
-  @Path("/system/services/{service-name}/instances/restart")
+  @Path("/system/services/{service-name}/lastrestartstatus")
   @GET
   public void getLatestRestartServiceInstanceStatus(HttpRequest request, HttpResponder responder,
                                                     @PathParam("service-name") String serviceName) {
