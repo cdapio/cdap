@@ -18,6 +18,7 @@ package co.cask.cdap.data2.increment.hbase10;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.data.hbase.HBase10Test;
 import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseTable;
 import co.cask.cdap.data2.increment.hbase.IncrementHandlerState;
 import co.cask.cdap.data2.util.TableId;
@@ -65,21 +66,21 @@ import static org.junit.Assert.assertTrue;
  */
 public class IncrementSummingScannerTest {
   private static final byte[] TRUE = Bytes.toBytes(true);
-  private static HBaseTestingUtility testUtil;
+  private static HBase10Test testUtil;
   private static Configuration conf;
   private static CConfiguration cConf;
 
   @BeforeClass
   public static void setupBeforeClass() throws Exception {
-    testUtil = new HBaseTestingUtility();
-    testUtil.startMiniCluster();
+    testUtil = new HBase10Test();
+    testUtil.startHBase();
     conf = testUtil.getConfiguration();
     cConf = CConfiguration.create();
   }
 
   @AfterClass
   public static void shutdownAfterClass() throws Exception {
-    testUtil.shutdownMiniCluster();
+    testUtil.stopHBase();
   }
 
   @Test
