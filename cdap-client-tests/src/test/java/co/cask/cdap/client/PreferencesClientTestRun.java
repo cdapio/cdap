@@ -138,10 +138,13 @@ public class PreferencesClientTestRun extends ClientTestBase {
     int iterations = 0;
     HttpResponse response;
     do {
+      response = HttpRequests.execute(HttpRequest.builder(HttpMethod.GET, serviceURL).build());
+      if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
+        return response;
+      }
       TimeUnit.MILLISECONDS.sleep(50);
       iterations++;
-      response = HttpRequests.execute(HttpRequest.builder(HttpMethod.GET, serviceURL).build());
-    } while (response.getResponseCode() != HttpURLConnection.HTTP_OK && iterations < 100);
+    } while (iterations <= 100);
     return response;
   }
 
