@@ -126,12 +126,18 @@ body {
 
           // Settings dropdown
           &.navbar-right {
-            @media (min-width: @screen-sm-min) { padding-left: 20px; }
+            @media (min-width: @screen-sm-min) {
+              float: left;
+              padding-left: 20px;
+            }
             @media (min-width: @screen-lg-min) { padding-left: 0; }
             li.dropdown {
               @media (max-width: @screen-xs-max) { padding-top: 0; }
-              @media (min-width: @screen-sm-min) { padding-bottom: 0; }
+              @media (min-width: @screen-sm-min) {
+                padding: 11px 5px 0;
+              }
               @media (min-width: @screen-lg-min) {
+                padding: 0;
                 height: 51px;
                 width: 40px;
                 .border-radius(4px 4px 0 0);
@@ -151,7 +157,7 @@ body {
                 .fa-cog:before { font-size: 17px; }
                 @media (max-width: @screen-md-max) {
                   padding-top: 0;
-                  padding-left: 10px;
+                  padding-left: 15px;
                   span.fa-cog { display: none; }
                   &:before {
                     content: 'Settings';
