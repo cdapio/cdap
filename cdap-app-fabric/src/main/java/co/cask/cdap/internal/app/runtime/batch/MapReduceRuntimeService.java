@@ -51,7 +51,7 @@ import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetInputFormat;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetOutputFormat;
 import co.cask.cdap.internal.app.runtime.batch.distributed.ContainerLauncherGenerator;
-import co.cask.cdap.internal.app.runtime.batch.distributed.MRContainerLauncher;
+import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerLauncher;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.templates.AdapterDefinition;
@@ -252,8 +252,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         Location launcherJar = createLauncherJar(yarnAppClassPath, tempLocation);
         job.addCacheFile(launcherJar.toURI());
 
-        // The only thing in the Yarn container classpath is the launcher.jar
-        // The MRContainerLauncher inside the launcher.jar will creates a MapReduceClassLoader and launch
+        // The only thing in the container classpath is the launcher.jar
+        // The MapReduceContainerLauncher inside the launcher.jar will creates a MapReduceClassLoader and launch
         // the actual MapReduce AM/Task from that
         mapredConf.set(YarnConfiguration.YARN_APPLICATION_CLASSPATH, launcherJar.getName());
       }
@@ -891,7 +891,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   /**
    * Creates a launcher jar.
    *
-   * @see MRContainerLauncher
+   * @see MapReduceContainerLauncher
    * @see ContainerLauncherGenerator
    */
   private Location createLauncherJar(String applicationClassPath, Location targetDir) throws IOException {
