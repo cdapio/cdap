@@ -73,6 +73,12 @@ body {
                     ul.dropdown-menu { padding: 0; }
                   }
                 }
+                &.open {
+                  ul.dropdown-menu {
+                    max-height: 200px;
+                    overflow: auto;
+                  }
+                }
               }
               @media (min-width: @screen-lg-min) {
                 &.one {
