@@ -534,7 +534,9 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     lifecycleWorkerManager.stop();
     lifecycleWorkerManager.waitForStatus(false);
 
-    workerManager.stop();
+    if (workerManager.isRunning()) {
+      workerManager.stop();
+    }
     workerManager.waitForStatus(false);
 
     // Should be same instances after being stopped.
@@ -592,6 +594,15 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals(AppWithWorker.INITIALIZE, Bytes.toString(table.read(AppWithWorker.INITIALIZE)));
     Assert.assertEquals(AppWithWorker.RUN, Bytes.toString(table.read(AppWithWorker.RUN)));
     Assert.assertEquals(AppWithWorker.STOP, Bytes.toString(table.read(AppWithWorker.STOP)));
+  }
+
+  @Test
+  public void testWorkerStop() throws Exception {
+    // Test to make sure the worker program's status goes to stopped after the run method finishes
+    ApplicationManager manager = deployApplication(NoOpWorkerApp.class);
+    WorkerManager workerManager = manager.getWorkerManager("NoOpWorker");
+    workerManager.start();
+    workerManager.waitForStatus(false, 5, 1);
   }
 
   @Category(SlowTests.class)
