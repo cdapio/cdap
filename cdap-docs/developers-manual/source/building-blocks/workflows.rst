@@ -287,8 +287,8 @@ In this code sample, we show how to update the WorkflowToken in a MapReduce prog
 **You will get an exception** if you try to update the workflow token in:
 
 - map or reduce methods;
-- Executors in Spark programs;
-- ``run`` method in A custom actions.
+- Executors in Spark programs; or
+- ``run`` method in custom actions.
 
 You can always read the workflow token in any of the above situations. The :ref:`Wikipedia
 Pipeline example <examples-wikipedia-data-pipeline>` demonstrates some of these techniques.
