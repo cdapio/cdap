@@ -25,7 +25,7 @@ angular.module(PKG.name + '.services')
       runs: myHelpers.getConfig('GET', 'REQUEST', basepath + '/runs', true),
       runDetail: myHelpers.getConfig('GET', 'REQUEST', basepath + '/runs/:runId'),
       pollRuns: myHelpers.getConfig('GET', 'POLL', basepath + '/runs', true),
-      pollRunDetail: myHelpers.getConfig('GET', 'POLL', basepath + '/runs/:runId', false, 1000),
+      pollRunDetail: myHelpers.getConfig('GET', 'POLL', basepath + '/runs/:runId', false, { interval: 1000 }),
       stopPollRunDetail: myHelpers.getConfig('GET', 'POLL-STOP', basepath + '/runs/:runId'),
       stopRun: myHelpers.getConfig('POST', 'REQUEST', basepath + '/runs/:runId/stop'),
       suspendRun: myHelpers.getConfig('POST', 'REQUEST', basepath + '/runs/:runId/suspend'),
@@ -36,7 +36,7 @@ angular.module(PKG.name + '.services')
 
       schedules: myHelpers.getConfig('GET', 'REQUEST', basepath + '/schedules', true),
       schedulesPreviousRunTime: myHelpers.getConfig('GET', 'REQUEST', basepath + '/previousruntime', true),
-      pollScheduleStatus: myHelpers.getConfig('GET', 'POLL', schedulepath + '/status', false, 2000),
+      pollScheduleStatus: myHelpers.getConfig('GET', 'POLL', schedulepath + '/status', false, { interval: 2000 }),
       scheduleSuspend: myHelpers.getConfig('POST', 'REQUEST', schedulepath + '/suspend'),
       scheduleResume: myHelpers.getConfig('POST', 'REQUEST', schedulepath + '/resume'),
       getCurrent: myHelpers.getConfig('GET', 'REQUEST', basepath + '/:runid/current', true)
