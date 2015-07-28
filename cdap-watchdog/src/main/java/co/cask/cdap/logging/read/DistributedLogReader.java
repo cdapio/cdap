@@ -62,12 +62,22 @@ public final class DistributedLogReader implements LogReader {
         fileLogReader.getLogNext(loggingContext, readRange, maxEvents, filter, callback);
         // If there are events from fileLogReader, return. Otherwise try in kafkaLogReader.
         if (callback.getCount() != 0) {
+          LOG.trace("Got {} log entries from file", callback.getCount());
           return;
         }
       }
     }
 
     kafkaLogReader.getLogNext(loggingContext, readRange, maxEvents, filter, callback);
+    LOG.trace("Got {} log entries from kafka", callback.getCount());
+
+    // No logs in Kafka. This can happen for the latest run of a program, where the logs have been saved and
+    // are expired in Kafka, but the checkpoint time is less than run end time - as this is the latest run.
+    // In this case, return whatever you can find in saved logs.
+    if (callback.getCount() == 0) {
+      fileLogReader.getLogNext(loggingContext, readRange, maxEvents, filter, callback);
+      LOG.trace("Got {} log entries from file", callback.getCount());
+    }
   }
 
   @Override
@@ -76,14 +86,24 @@ public final class DistributedLogReader implements LogReader {
     // If latest logs are not requested, try reading from file.
     if (readRange != ReadRange.LATEST) {
       long checkpointTime = getCheckpointTime(loggingContext);
-      // Read from file only if logs are saved for the loggingContext until fromTime
+      // Read from file only if logs are saved for the loggingContext until toTime
       if (readRange.getToMillis() < checkpointTime) {
         fileLogReader.getLogPrev(loggingContext, readRange, maxEvents, filter, callback);
+        LOG.trace("Got {} log entries from file", callback.getCount());
         return;
       }
     }
 
     kafkaLogReader.getLogPrev(loggingContext, readRange, maxEvents, filter, callback);
+    LOG.trace("Got {} log entries from kafka", callback.getCount());
+
+    // No logs in Kafka. This can happen for the latest run of a program, where the logs have been saved and
+    // are expired in Kafka, but the checkpoint time is less than run end time - as this is the latest run.
+    // In this case, return whatever you can find in saved logs.
+    if (callback.getCount() == 0) {
+      fileLogReader.getLogPrev(loggingContext, readRange, maxEvents, filter, callback);
+      LOG.trace("Got {} log entries from file", callback.getCount());
+    }
   }
 
   @Override

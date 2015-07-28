@@ -208,7 +208,9 @@ public class LogHandler extends AbstractHttpHandler {
         toTimeMillis = runStopMillis;
       }
     }
-    return new ReadRange(fromTimeMillis, toTimeMillis, readRange.getKafkaOffset());
+    ReadRange adjusted = new ReadRange(fromTimeMillis, toTimeMillis, readRange.getKafkaOffset());
+    LOG.trace("Original read range: {}. Adjusted read range: {}", readRange, adjusted);
+    return adjusted;
   }
 
   @GET

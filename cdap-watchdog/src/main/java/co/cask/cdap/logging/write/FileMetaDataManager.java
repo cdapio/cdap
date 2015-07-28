@@ -31,7 +31,6 @@ import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.Location;
@@ -41,7 +40,9 @@ import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.util.Map;
+import java.util.NavigableMap;
 import java.util.SortedMap;
+import java.util.TreeMap;
 
 /**
  * Handles reading/writing of file metadata.
@@ -51,6 +52,7 @@ public final class FileMetaDataManager {
 
   private static final byte[] ROW_KEY_PREFIX = Bytes.toBytes(200);
   private static final byte[] ROW_KEY_PREFIX_END = Bytes.toBytes(201);
+  private static final NavigableMap<?, ?> EMPTY_MAP = Maps.unmodifiableNavigableMap(new TreeMap());
 
   private final LocationFactory locationFactory;
   private final Transactional<DatasetContext<Table>, Table> mds;
@@ -116,17 +118,18 @@ public final class FileMetaDataManager {
    * @param loggingContext logging context.
    * @return Sorted map containing key as start time, and value as log file.
    */
-  public SortedMap<Long, Location> listFiles(final LoggingContext loggingContext) throws Exception {
-    return mds.execute(new TransactionExecutor.Function<DatasetContext<Table>, SortedMap<Long, Location>>() {
+  public NavigableMap<Long, Location> listFiles(final LoggingContext loggingContext) throws Exception {
+    return mds.execute(new TransactionExecutor.Function<DatasetContext<Table>, NavigableMap<Long, Location>>() {
       @Override
-      public SortedMap<Long, Location> apply(DatasetContext<Table> ctx) throws Exception {
+      public NavigableMap<Long, Location> apply(DatasetContext<Table> ctx) throws Exception {
         Row cols = ctx.get().get(getRowKey(loggingContext));
 
         if (cols.isEmpty()) {
-          return ImmutableSortedMap.of();
+          //noinspection unchecked
+          return (NavigableMap<Long, Location>) EMPTY_MAP;
         }
 
-        SortedMap<Long, Location> files = Maps.newTreeMap();
+        NavigableMap<Long, Location> files = new TreeMap<>();
         for (Map.Entry<byte[], byte[]> entry : cols.getColumns().entrySet()) {
           files.put(Bytes.toLong(entry.getKey()), locationFactory.create(new URI(Bytes.toString(entry.getValue()))));
         }
