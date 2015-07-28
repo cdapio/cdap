@@ -539,7 +539,8 @@ public abstract class AppFabricTestBase {
                                 program.getApplicationId(),
                                 program.getType().getCategoryName(),
                                 program.getId());
-    HttpResponse response = doPost(getVersionedAPIPath(path, program.getNamespaceId()), GSON.toJson(ImmutableMap.<String, String>of()));
+    HttpResponse response = doPost(getVersionedAPIPath(path, program.getNamespaceId()),
+                                   GSON.toJson(ImmutableMap.<String, String>of()));
     Assert.assertEquals(expectedStatusCode, response.getStatusLine().getStatusCode());
   }
 
