@@ -178,12 +178,12 @@ public class KafkaSource extends RealtimeSource<StructuredRecord> {
     private final String topic;
 
     @Name(KAFKA_ZOOKEEPER)
-    @Description("The connect string location of Zookeeper. Either this one or the list of brokers is required.")
+    @Description("The connect string location of Zookeeper. Either this or the list of brokers is required.")
     @Nullable
     private final String zkConnect;
 
     @Name(KAFKA_BROKERS)
-    @Description("Comma separated list of Kafka brokers. Either this one or Zookeeper connect info is required.")
+    @Description("Comma separated list of Kafka brokers. Either this or Zookeeper connect info is required.")
     @Nullable
     private final String kafkaBrokers;
 
@@ -195,7 +195,7 @@ public class KafkaSource extends RealtimeSource<StructuredRecord> {
     @Name(SCHEMA)
     @Description("Optional schema for the body of Kafka events. Schema is used " +
       "in conjunction with format to parse Kafka payloads. Some formats like the avro format require schema, " +
-      "while others do not. The schema given is for the body of the Kafka event")
+      "while others do not. The schema given is for the body of the Kafka event.")
     @Nullable
     private final String schema;
 

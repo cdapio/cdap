@@ -6,19 +6,35 @@
 Transformations: Projection
 ===========================
 
-.. rubric:: Description: Projection Transform: Drop, Rename, and Cast Fields
+.. rubric:: Description
 
-Projection transform that lets you drop, rename, and cast fields to a different type.
+A transform that can drop fields, rename fields, and cast fields to a different type.
+Operations are performed in a single step and are not applied in order on top of each other.
+For example, suppose the transform is configured to drop field 'B' and rename field 'A' to 'B'.
+If the transform receives an input record with field 'A' assigned a value of 10, and field 'B'
+assigned a value of 20, input field 'B' will be dropped and input field 'A' will be renamed
+to 'B'. Thus the output record will contain a single field named 'B' assigned a value of 10.  
 
-**Drop:** Comma separated list of fields to drop. For example: 'field1,field2,field3'.
+.. rubric:: Use Case
 
-**Rename:** List of fields to rename. This is a comma separated list of key-value pairs,
+The transform is used when you need to drop, rename, or change field types.
+
+For example, you may want to rename a field from 'timestamp' to 'ts' because you want
+to write to a database where 'timestamp' is a reserved keyword. Or you might want to
+drop a field named 'headers' because you know it is always empty for your particular
+data source. 
+
+.. rubric:: Properties
+
+**drop:** Comma separated list of fields to drop. For example: 'field1,field2,field3'.
+
+**rename:** List of fields to rename. This is a comma separated list of key-value pairs,
 where each pair is separated by a colon and specifies the input name and the output name.
 
 For example: 'datestr:date,timestamp:ts' specifies that the 'datestr' field should be
 renamed to 'date' and the 'timestamp' field should be renamed to 'ts'.
 
-**Convert:** List of fields to convert to a different type. This is a comma-separated list
+**convert:** List of fields to convert to a different type. This is a comma-separated list
 of key-value pairs, where each pair is separated by a colon and specifies the field name
 and the desired type.
 
@@ -29,3 +45,39 @@ Only simple types are supported (boolean, int, long, float, double, bytes, strin
 simple type can be converted to bytes or a string. Otherwise, a type can only be converted
 to a larger type. For example, an int can be converted to a long, but a long cannot be
 converted to an int.
+
+.. rubric:: Example 
+
+::
+
+  {
+    "name": "Projection",
+    "properties": {
+      "drop": "ts,headers",
+      "rename": "cost:price",
+      "convert": "cost:double"
+    }
+  }
+ 
+The example drops the 'ts' and 'headers' fields. It also renames the 'cost' field 
+to 'price', and changes its type to a double. For example, if the transform receives an
+input record::
+
+  +=========================================================+
+  | field name | type                | value                |
+  +=========================================================+
+  | id         | string              | "abc123"             |
+  | ts         | long                | 1234567890000        |
+  | headers    | map<string, string> | { "user": "samuel" } |
+  | cost       | float               | 8.88                 |
+  +=========================================================+
+
+It will transform it to an output record::
+
+  +=========================================================+
+  | field name | type                | value                |
+  +=========================================================+
+  | id         | string              | "abc123"             |
+  | price      | double              | 8.88                 |
+  +=========================================================+
+

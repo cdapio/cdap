@@ -6,12 +6,22 @@
 Transformations: LogParser
 ==========================
 
-.. rubric:: Description: Parses Logs From Any Input Source
+.. rubric:: Description
 
 Parses logs from any input source for relevant information such as URI, IP, Browser, Device, and
 Timestamp.
-  
-**Log Format:** Log format to parse. Currently supports S3, CLF, and Cloudfront formats.
 
-**Input Name:** Name of the field in the input schema which encodes the
+.. rubric:: Use Case
+
+TODO: Fill me out
+
+.. rubric:: Properties
+
+**logFormat:** Log format to parse. Currently supports S3, CLF, and Cloudfront formats.
+
+**inputName:** Name of the field in the input schema which encodes the
 log information. The given field must be of type String or Bytes.
+
+.. rubric:: Example
+
+TODO: Fill me out

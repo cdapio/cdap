@@ -6,6 +6,37 @@
 Sources: Batch: KVTable 
 =======================
 
-.. rubric:: Description: Batch Source for a CDAP KeyValue Table 
+.. rubric:: Description 
 
-Outputs records with a 'key' field and a 'value' field. Both fields are of type 'bytes'.
+Reads the entire contents of a KeyValueTable, outputting records with a 'key' field and a
+'value' field. Both fields are of type bytes.
+
+.. rubric:: Use Case
+
+The source is used whenever you need to read from a KeyValueTable in batch. For example,
+you may want to periodically dump the contents of a KeyValueTable to a Table.
+
+.. rubric:: Properties
+
+**name:** KeyValueTable name. If the table does not already exist, it will be created.
+
+.. rubric:: Example
+
+::
+
+  {
+    "name": "KVTable",
+    "properties": {
+      "name": "items",
+    }
+  }
+
+The example reads from a KeyValueTable named 'items'. It outputs records with the following schema::
+
+  +====================+
+  | field name | type  |
+  +====================+
+  | key        | bytes |
+  | value      | bytes |
+  +====================+
+
