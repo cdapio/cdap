@@ -81,6 +81,9 @@ public abstract class AbstractAppFabricHttpHandler extends AbstractHttpHandler {
 
     public static final AppFabricServiceStatus OK = new AppFabricServiceStatus(HttpResponseStatus.OK, "");
 
+    public static final AppFabricServiceStatus APP_NOT_FOUND =
+      new AppFabricServiceStatus(HttpResponseStatus.NOT_FOUND, "Application not found");
+
     public static final AppFabricServiceStatus PROGRAM_STILL_RUNNING =
       new AppFabricServiceStatus(HttpResponseStatus.FORBIDDEN, "Program is still running");
 

@@ -28,6 +28,7 @@ import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
+import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.ProgramNotFoundException;
@@ -353,7 +354,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                             @PathParam("app-id") String appId,
                             @PathParam("type") String type,
                             @PathParam("id") String id,
-                            @PathParam("action") String action) throws NotFoundException {
+                            @PathParam("action") String action) throws NotFoundException, BadRequestException {
     // If the app is an Application Template, then don't allow any action.
     // Operations are only allowed through Adapter Lifecycle management.
     if (adapterService.getApplicationTemplateInfo(appId) != null) {
@@ -368,11 +369,18 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
 
     if (!isValidAction(action)) {
-      responder.sendStatus(HttpResponseStatus.METHOD_NOT_ALLOWED);
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       return;
     }
 
-    ProgramType programType = ProgramType.valueOfCategoryName(type);
+    ProgramType programType;
+    try {
+      programType = ProgramType.valueOfCategoryName(type);
+    } catch (IllegalArgumentException e) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, "Unknown program type '" + type + "''");
+      return;
+    }
+
     if ("debug".equals(action) && !isDebugAllowed(programType)) {
       responder.sendStatus(HttpResponseStatus.NOT_IMPLEMENTED);
       return;
@@ -1277,7 +1285,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Temporarily protected. Should be made private when all v3 APIs (webapp in this case) have been implemented.
    */
   @Nullable
-  protected ProgramRuntimeService.RuntimeInfo findRuntimeInfo(Id.Program identifier, @Nullable String runId) {
+  private ProgramRuntimeService.RuntimeInfo findRuntimeInfo(Id.Program identifier, @Nullable String runId) {
     Map<RunId, ProgramRuntimeService.RuntimeInfo> runtimeInfos = runtimeService.list(identifier.getType());
 
     if (runId != null) {
@@ -1341,7 +1349,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   private synchronized void startStopProgram(HttpRequest request, HttpResponder responder, Id.Program programId,
-                                             String action) throws NotFoundException {
+                                             String action) throws NotFoundException, BadRequestException {
     if (programId.getType() == null) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } else {
@@ -1362,7 +1370,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
           return;
         }
-
         responder.sendString(status.getCode(), status.getMessage());
       } catch (SecurityException e) {
         responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
@@ -1389,6 +1396,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       return (runtimeInfo != null) ? AppFabricServiceStatus.OK : AppFabricServiceStatus.INTERNAL_ERROR;
     } catch (ProgramNotFoundException e) {
       return AppFabricServiceStatus.PROGRAM_NOT_FOUND;
+    } catch (ApplicationNotFoundException e) {
+      return AppFabricServiceStatus.APP_NOT_FOUND;
     } catch (Throwable throwable) {
       LOG.error(throwable.getMessage(), throwable);
       return AppFabricServiceStatus.INTERNAL_ERROR;
@@ -1405,18 +1414,27 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     return EnumSet.of(ProgramType.WORKFLOW, ProgramType.MAPREDUCE).contains(type);
   }
 
-  private AppFabricServiceStatus stop(Id.Program id) throws NotFoundException {
+  private AppFabricServiceStatus stop(Id.Program id) throws NotFoundException, BadRequestException {
     return stop(id, null);
   }
 
   /**
    * Stops a Program.
    */
-  private AppFabricServiceStatus stop(Id.Program identifier, @Nullable String runId) throws NotFoundException {
-    ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(identifier, runId);
+  private AppFabricServiceStatus stop(Id.Program identifier, @Nullable String runId)
+    throws NotFoundException, BadRequestException {
 
+    ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(identifier, runId);
     if (runtimeInfo == null) {
-      throw new NotFoundException(new Id.Run(identifier, runId));
+      if (!store.applicationExists(identifier.getApplication())) {
+        throw new ApplicationNotFoundException(identifier.getApplication());
+      } else if (!store.programExists(identifier)) {
+        throw new ProgramNotFoundException(identifier);
+      } else if (runId == null) {
+        throw new BadRequestException("Program not running");
+      } else {
+        throw new NotFoundException(new Id.Run(identifier, runId));
+      }
     }
 
     try {

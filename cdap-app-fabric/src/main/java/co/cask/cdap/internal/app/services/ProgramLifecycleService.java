@@ -22,6 +22,7 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.runtime.ProgramRuntimeService.RuntimeInfo;
 import co.cask.cdap.app.store.Store;
+import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
@@ -93,7 +94,8 @@ public class ProgramLifecycleService extends AbstractIdleService {
     }
   }
 
-  private Program getProgram(Id.Program id) throws IOException, ProgramNotFoundException {
+  private Program getProgram(Id.Program id)
+    throws IOException, ApplicationNotFoundException, ProgramNotFoundException {
     Program program = store.loadProgram(id);
     if (program == null) {
       throw new ProgramNotFoundException(id);
@@ -114,7 +116,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
    */
   public ProgramRuntimeService.RuntimeInfo start(final Id.Program id, Map<String, String> systemArgs,
                                                  Map<String, String> userArgs, boolean debug)
-    throws IOException, ProgramNotFoundException {
+    throws IOException, ProgramNotFoundException, ApplicationNotFoundException {
     final String adapterName = systemArgs.get(ProgramOptionConstants.ADAPTER_NAME);
     Program program = getProgram(id);
     BasicArguments systemArguments = new BasicArguments(systemArgs);
