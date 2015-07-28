@@ -116,15 +116,15 @@ body.theme-cdap.state-adapters-create {
     }
   }
 
-  .modal {
-    &.in {
-      overflow-y: hidden;
+  .modal.in {
+    overflow-y: hidden;
+  }
+  .modal-dialog {
+    @media (min-width: @screen-lg-min) {
+      margin-top: 115px;
     }
-    .modal-dialog {
-      @media (min-width: @screen-lg-min) {
-        margin-top: 115px;
-      }
-    }
+  }
+  .modal-lg {
     .modal-header {
       background-color: @body-bg;
       border-bottom: 1px solid @modal-table-border-color;
