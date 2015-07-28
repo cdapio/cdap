@@ -32,12 +32,13 @@
   <modules>
     <module>CountRandom</module>
     <module>CubeService</module>
+    <module>DataCleansing</module>
     <module>FileSetExample</module>
     <module>HelloWorld</module>
+    <module>LogAnalysis</module>
     <module>Purchase</module>
     <module>SparkKMeans</module>
     <module>SparkPageRank</module>
-    <module>LogAnalysis</module>
     <module>SportResults</module>
     <module>StreamConversion</module>
     <module>UserProfiles</module>

@@ -42,6 +42,9 @@ In addition to the :ref:`Getting Started's <getting-started-index>`
   * - :doc:`Count Random<count-random>`
     - An application that demonstrates the ``@Tick`` feature of flows. It uses a tick method to generate random
       numbers which are then counted by downstream flowlets.
+  * - :doc:`Data Cleansing<data-cleansing>`
+    - A Cask Data Application Platform (CDAP) example demonstrating incrementally consuming partitions of a
+      partitioned fileset using MapReduce.
   * - :doc:`File Sets<fileset>`
     - A variation of the *WordCount* example that operates on files. It demonstrates the usage of the FileSet
       dataset, including a service to upload and download files, and a MapReduce that operates over these files.
