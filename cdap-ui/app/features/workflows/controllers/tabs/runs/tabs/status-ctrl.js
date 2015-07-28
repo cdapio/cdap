@@ -91,6 +91,7 @@ class WorkflowsRunsStatusController {
           var mapreduceParams;
 
           if (node.program.programType === 'MAPREDUCE') {
+
             mapreduceParams = {
               namespace: this.$state.params.namespace,
               appId: this.$state.params.appId,
@@ -101,6 +102,7 @@ class WorkflowsRunsStatusController {
             this.myMapreduceApi.runDetail(mapreduceParams)
               .$promise
               .then( result => this.data.current[node.name] = result.status);
+
           } else if (node.program.programType === 'SPARK') {
 
             var sparkParams = {
@@ -114,6 +116,12 @@ class WorkflowsRunsStatusController {
             this.mySparkApi.runDetail(sparkParams)
               .$promise
               .then( (result) => this.data.current[node.name] = result.status );
+
+          } else if (node.program.programType === 'CUSTOM_ACTION') {
+
+            this.dataSrc.request({
+              _cdapNsPath: '/apps/' + this.$state.params.appId + '/custom/' + node.program.programName + '/runs/' + runid
+            }).then( (result) => this.data.current[node.name] = result.status );
           }
         });
 
