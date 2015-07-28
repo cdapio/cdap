@@ -529,13 +529,13 @@ and from within a workflow with a predicate, fork and joins::
     // "action.type" with the value as action type for that node in the WorkflowToken,
     // you can determine the breakdown by action type in a particular Workflow run:
     
-    List<NodeValueEntry> nodeValues = token.getAll("action.type");
+    List<NodeValue> nodeValues = token.getAll("action.type");
     int totalNodeExecuted = nodeValues.size();
     int mapReduceNodes = 0;
     int sparkNodes = 0;
     int customActionNodes = 0;
     int conditions = 0;
-    for (NodeValueEntry entry : nodeValues) {
+    for (NodeValue entry : nodeValues) {
       if (entry.getValue().equals("MAPREDUCE")) {
         mapReduceNodes++;
       }
@@ -554,7 +554,7 @@ and from within a workflow with a predicate, fork and joins::
     
     // To get the name of the last node which set the "ERROR" flag in the WorkflowToken:
     
-    List<NodeValueEntry> errorNodeValueList = token.getAll("ERROR");
+    List<NodeValue> errorNodeValueList = token.getAll("ERROR");
     String nodeNameWhoSetTheErrorFlagLast = errorNodeValueList.get(errorNodeValueList.size() - 1);
  
     // To get the start time of the MapReduce program with unique name "PurchaseHistoryBuilder":
