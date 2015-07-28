@@ -126,32 +126,29 @@ body {
 
           // Settings dropdown
           &.navbar-right {
-            @media (min-width: @screen-sm-min) {
-              float: left;
-              padding-left: 20px;
-            }
-            @media (min-width: @screen-lg-min) {
-              float: none;
-              padding-left: 0;
-            }
+            @media (min-width: @screen-sm-min) { padding-left: 20px; }
+            @media (min-width: @screen-lg-min) { padding-left: 0; }
             li.dropdown {
-              padding: 11px 5px;
               @media (max-width: @screen-xs-max) { padding-top: 0; }
               @media (min-width: @screen-sm-min) { padding-bottom: 0; }
               @media (min-width: @screen-lg-min) {
-                padding-bottom: 11px;
+                height: 51px;
+                width: 40px;
+                .border-radius(4px 4px 0 0);
               }
 
               &.open {
-                span {
-                  &.fa-cog { padding: 0 5px; }
-                  &.caret { display: none; }
+                a.dropdown-toggle {
+                  @media (min-width: @screen-lg-min) {
+                    .border-radius(4px 4px 0 0);
+                    font-size: 14px;
+                  }
                 }
               }
 
               a.dropdown-toggle {
                 height: auto;
-                .fa-cog:before { font-size: 16px; }
+                .fa-cog:before { font-size: 17px; }
                 @media (max-width: @screen-md-max) {
                   padding-top: 0;
                   padding-left: 10px;
@@ -162,7 +159,11 @@ body {
                   }
                 }
                 @media (min-width: @screen-lg-min) {
-                  padding: 5px 3px;
+                  display: inline-block;
+                  line-height: 51px;
+                  padding: 0;
+                  text-align: center;
+                  width: 100%;
                 }
               }
 
@@ -348,21 +349,37 @@ body {
 
             // Settings dropdown
             &.navbar-right {
+              margin-right: 0;
               li.dropdown {
 
                 &.open {
                   span.fa-cog { color: @cdap-darkness; }
                 }
-
-                a.dropdown-toggle {
-                  @media (min-width: @screen-lg-min) {
-                    color: lightgray;
+                @media (max-width: @screen-md-max) {
+                  ul.dropdown-menu {
+                    li.nav-subsection { color: #9d9d9d; }
                   }
                 }
+                @media (min-width: @screen-lg-min) {
+                  &.open {
+                    a.dropdown-toggle {
+                      background-color: @cdap-white;
+                      color: @cdap-header;
+                    }
+                  }
+                  a.dropdown-toggle { color: white; }
+                  ul.dropdown-menu {
+                    background-color: @brand-primary;
+                    li:not(:last-child) { border-bottom: 1px solid rgba(0,0,0,0.1); }
+                    a {
+                      color: white;
+                      &:hover, &:focus {
+                        background-color: white;
+                        color: @cdap-darkness;
 
-                ul.dropdown-menu {
-                  @media (max-width: @screen-md-max) {
-                    li.nav-subsection { color: #9d9d9d; }
+                        span { color: @cdap-darkness; }
+                      }
+                    }
                   }
                 }
               }
