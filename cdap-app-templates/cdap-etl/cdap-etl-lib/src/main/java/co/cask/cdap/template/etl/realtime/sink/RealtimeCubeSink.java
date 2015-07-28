@@ -49,9 +49,9 @@ import java.util.Map;
  * information on available {@link Cube} dataset configuration properties at
  * {@link co.cask.cdap.data2.dataset2.lib.cube.CubeDatasetDefinition}.
  * <p/>
- * To configure transformation from {@link co.cask.cdap.api.data.format.StructuredRecord} to a
- * {@link co.cask.cdap.api.dataset.lib.cube.CubeFact} the
- * mapping configuration is required, as per {@link StructuredRecordToCubeFact} documentation.
+ * To configure transformation from a {@link co.cask.cdap.api.data.format.StructuredRecord} to a
+ * {@link co.cask.cdap.api.dataset.lib.cube.CubeFact}, the
+ * mapping configuration is required, following {@link StructuredRecordToCubeFact} documentation.
  */
 @Plugin(type = "sink")
 @Name("Cube")

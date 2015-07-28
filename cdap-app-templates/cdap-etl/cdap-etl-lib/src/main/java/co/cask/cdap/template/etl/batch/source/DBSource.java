@@ -46,7 +46,7 @@ import java.sql.Driver;
  */
 @Plugin(type = "source")
 @Name("Database")
-@Description("Batch source for a database")
+@Description("Batch source for a database.")
 public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredRecord> {
   private static final Logger LOG = LoggerFactory.getLogger(DBSource.class);
 
@@ -56,7 +56,7 @@ public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredReco
     "should not be used in this query.";
   private static final String COUNT_QUERY_DESCRIPTION = "The SELECT query to use to get the count of records to " +
     "import from the specified table. Examples: SELECT COUNT(*) from <my_table> where <my_column> 1, " +
-    "SELECT COUNT(my_column) from my_table). NOTE: Please include the same WHERE clauses in this query as the ones " +
+    "SELECT COUNT(my_column) from my_table. NOTE: Please include the same WHERE clauses in this query as the ones " +
     "used in the import query to reflect an accurate number of records to import.";
 
   private final DBSourceConfig dbSourceConfig;

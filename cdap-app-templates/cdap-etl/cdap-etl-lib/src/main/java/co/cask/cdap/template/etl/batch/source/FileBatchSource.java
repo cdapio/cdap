@@ -83,11 +83,11 @@ public class FileBatchSource extends BatchSource<LongWritable, Object, Structure
     "\"<property value>\", ...\n}. For example, the property names needed for S3 are \"fs.s3n.awsSecretAccessKey\" " +
     "and \"fs.s3n.awsAccessKeyId\".";
   private static final String PATH_DESCRIPTION = "Path to file(s) to be read. If a directory is specified, " +
-    "terminate the path name with a \'/\'";
+    "terminate the path name with a \'/\'.";
   private static final String TABLE_DESCRIPTION = "Name of the Table that keeps track of the last time files " +
     "were read in.";
   private static final String INPUT_FORMAT_CLASS_DESCRIPTION = "Name of the input format class, which must be a " +
-    "subclass of FileInputFormat. Defaults to CombineTextInputFormat";
+    "subclass of FileInputFormat. Defaults to CombineTextInputFormat.";
   private static final String FILESYSTEM_DESCRIPTION = "Distributed file system to read in from.";
   private static final String MAX_SPLIT_SIZE_DESCRIPTION = "Max split size for each mapper in the MapReduce Job. " +
     "Defaults to 128MB.";

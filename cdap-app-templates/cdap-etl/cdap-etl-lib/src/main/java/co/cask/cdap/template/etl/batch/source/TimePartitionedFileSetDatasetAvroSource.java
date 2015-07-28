@@ -54,11 +54,12 @@ import javax.annotation.Nullable;
 public class TimePartitionedFileSetDatasetAvroSource extends
   BatchSource<AvroKey<GenericRecord>, NullWritable, StructuredRecord> {
 
-  private static final String SCHEMA_DESC = "The avro schema of the record being read from the Source as a JSON Object";
+  private static final String SCHEMA_DESC = "The Avro schema of the record being read from the Source as a JSON " +
+    "Object.";
   private static final String TPFS_NAME_DESC = "Name of the Time Partitioned FileSet Dataset to which the records " +
     "have to be read from.";
-  private static final String BASE_PATH_DESC = "Base path for the time partitioned fileset. Defaults to the " +
-    "name of the dataset";
+  private static final String BASE_PATH_DESC = "Base path for the Time Partitioned FileSet. Defaults to the " +
+    "name of the dataset.";
   private static final String DURATION_DESC = "Size of the time window to read with each run of the pipeline. " +
     "The format is expected to be a number followed by a 's', 'm', 'h', or 'd' specifying the time unit, with 's' " +
     "for seconds, 'm' for minutes, 'h' for hours, and 'd' for days. For example, a value of '5m' means each run of " +
