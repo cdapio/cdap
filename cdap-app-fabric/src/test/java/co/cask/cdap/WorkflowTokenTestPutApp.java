@@ -91,6 +91,12 @@ public class WorkflowTokenTestPutApp extends AbstractApplication {
       workflowToken.put("action.type", "MapReduce");
       workflowToken.put("start.time", Value.of(System.currentTimeMillis()));
     }
+
+    @Override
+    public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
+      WorkflowToken workflowToken = context.getWorkflowToken();
+      workflowToken.put("end.time", Value.of(System.currentTimeMillis()));
+    }
   }
 
   /**
