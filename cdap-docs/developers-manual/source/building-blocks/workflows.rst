@@ -219,7 +219,7 @@ object passed to those methods is a Hadoop class that is unaware of CDAP and its
 tokens.
 
 Here is an example, taken from the
-the :ref:`Wikipedia Pipeline<wikipedia-data-pipeline>` example's ``TopNMapReduce.java``:
+:ref:`Wikipedia Pipeline<wikipedia-data-pipeline>` example's ``TopNMapReduce.java``:
 
 .. literalinclude:: /../../../cdap-examples/WikipediaPipeline/src/main/java/co/cask/cdap/examples/wikipedia/TopNMapReduce.java
    :language: java
