@@ -65,8 +65,8 @@ public class KafkaSource extends RealtimeSource<StructuredRecord> {
   public static final String KAFKA_ZOOKEEPER = "kafka.zookeeper";
   public static final String KAFKA_BROKERS = "kafka.brokers";
   public static final String KAFKA_DEFAULT_OFFSET = "kafka.default.offset";
-  public static final String KAFKA_SCHEMA = "kafka.schema";
-  public static final String KAFKA_FORMAT = "kafka.format";
+  public static final String KAFKA_SCHEMA = "schema";
+  public static final String KAFKA_FORMAT = "format";
 
   private static final String FORMAT_SETTING_PREFIX = "format.setting.";
 

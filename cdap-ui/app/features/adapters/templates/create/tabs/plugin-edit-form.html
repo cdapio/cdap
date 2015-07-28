@@ -143,11 +143,11 @@
           <fieldset ng-disabled="isDisabled" ng-if="plugin.outputSchema || !isDisabled">
             <my-schema-editor
               ng-model="plugin.outputSchema"
-              data-disabled="plugin.implicitSchema" ng-if="plugin.name !== 'Stream'"></my-schema-editor>
+              data-disabled="plugin.implicitSchema" ng-if="plugin.name !== 'Stream' && plugin.name !== 'Kafka'"></my-schema-editor>
             <my-stream-properties
               ng-model="plugin.outputSchema"
               plugins="plugin.properties"
-              ng-if="plugin.name === 'Stream'"
+              ng-if="plugin.name === 'Stream' || plugin.name === 'Kafka'"
             ></my-stream-properties>
           </fieldset>
 
