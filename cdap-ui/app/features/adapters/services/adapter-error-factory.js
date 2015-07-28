@@ -45,26 +45,26 @@ angular.module(PKG.name + '.feature.adapters')
 
       if (source.length !== 1) {
         if (source.length < 1) {
-          errors.source = 'Adapter is missing a source';
+          errors.source = 'Application is missing a source';
         } else if (source.length > 1) {
           angular.forEach(source, function (node) {
-            errors[node] = 'Adapter should only have 1 source';
+            errors[node] = 'Application should only have 1 source';
           });
 
-          addCanvasError('Adapter should only have 1 source', errors);
+          addCanvasError('Application should only have 1 source', errors);
 
         }
       }
 
       if (sink.length !== 1) {
         if (sink.length < 1) {
-          errors.sink = 'Adapter is missing a sink';
+          errors.sink = 'Application is missing a sink';
         } else if (sink.length > 1) {
           angular.forEach(sink, function (node) {
-            errors[node] = 'Adapter should only have 1 sink';
+            errors[node] = 'Application should only have 1 sink';
           });
 
-          addCanvasError('Adapter should only have 1 sink', errors);
+          addCanvasError('Application should only have 1 sink', errors);
 
         }
       }
@@ -74,8 +74,8 @@ angular.module(PKG.name + '.feature.adapters')
     function hasNameAndTemplateType(nodes, connections, metadata, config, errors) {
       var name = metadata.name;
       if (!name.length) {
-        errors.name = 'Adapter needs to have a name';
-        metadata.error = 'Enter adapter name';
+        errors.name = 'Application needs to have a name';
+        metadata.error = 'Enter application name';
       }
 
       // Should probably add template type check here. Waiting for design.
@@ -84,14 +84,14 @@ angular.module(PKG.name + '.feature.adapters')
     function checkForRequiredField(nodes, connections, metadata, config, errors) {
 
       if(config.source.name && !isValidPlugin(config.source)) {
-        errors[config.source.id] = 'Adapter\'s source is missing required fields';
+        errors[config.source.id] = 'Source is missing required fields';
       }
       if (config.sink.name && !isValidPlugin(config.sink)) {
-        errors[config.sink.id] = 'Adapter\'s sink is missing required fields';
+        errors[config.sink.id] = 'Sink is missing required fields';
       }
       config.transforms.forEach(function(transform) {
         if (transform.name && !isValidPlugin(transform)) {
-          errors[transform.id] = 'Adapter\'s transform is missing required fields';
+          errors[transform.id] = 'Transform is missing required fields';
         }
       });
 
