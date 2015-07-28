@@ -21,8 +21,7 @@
   <div class="item"
         ng-repeat="group in MySidePanel.groups"
         ng-class="{'text-left': MySidePanel.isExpanded === true}"
-        ng-click="MySidePanel.openGroup(group)"
-        >
+        ng-click="MySidePanel.openGroup(group)">
 
     <div class="item-heading"
           tooltip="{{group.error}}"
@@ -31,16 +30,19 @@
           tooltip-toggle="group.error"
           tooltip-class="tooltip-error"
           ng-class="{source: group.name === 'source', transform: group.name === 'transform', sink: group.name === 'sink', 'item-open': MySidePanel.openedGroup === group.name }">
-        <span class="{{group.icon}}"
-          tooltip="{{ group.name }}"
-          tooltip-placement="{{ MySidePanel.placement === 'left' ? 'right' : 'left' }}"
-          tooltip-enable="MySidePanel.isExpanded === false && !group.error"
 
-        ></span>
+      <div tooltip="{{ group.name | caskCapitalizeFilter }}"
+            tooltip-placement="{{ MySidePanel.placement === 'left' ? 'right' : 'left' }}"
+            tooltip-enable="MySidePanel.isExpanded === false && !group.error">
+
+        <span class="{{group.icon}}"></span>
         <span class="name">{{group.name | caskCapitalizeFilter}}</span>
         <span ng-if="MySidePanel.isExpanded === true"
               ng-class="{'fa-chevron-right': MySidePanel.openedGroup !== group.name, 'fa-chevron-down': MySidePanel.openedGroup === group.name}"
               class="fa pull-right"></span>
+
+      </div>
+
     </div>
 
     <div class="item-body"
