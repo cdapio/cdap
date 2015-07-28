@@ -182,7 +182,7 @@ Workflow Tokens
 In addition to passing the control flow from one node to the next, a **workflow token** is
 passed, available to each of the programs in the workflow. This allows programs to:
 
-- pass custom data (such as metrics, a status, or an error code) from one program in the 
+- pass custom data (such as a counter, a status, or an error code) from one program in the 
   workflow to subsequent programs;
 - query and set the data in the token;
 - fetch the data from the token which was set by a specific node; and
