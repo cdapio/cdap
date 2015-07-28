@@ -17,27 +17,52 @@
 package co.cask.cdap.internal.app.runtime.batch.distributed;
 
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
+import co.cask.cdap.internal.asm.Methods;
+import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
+import com.google.common.io.ByteStreams;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileContext;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
+import org.apache.twill.api.ClassAcceptor;
+import org.apache.twill.internal.Constants;
+import org.apache.twill.internal.utils.Dependencies;
+import org.apache.twill.internal.utils.Paths;
+import org.apache.twill.launcher.FindFreePort;
+import org.apache.twill.launcher.TwillLauncher;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
+import org.objectweb.asm.commons.AdviceAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.jar.JarEntry;
+import java.util.jar.JarOutputStream;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 
@@ -148,6 +173,128 @@ public final class MapReduceContainerHelper {
       throw Throwables.propagate(e);
     }
   }
+
+  // TODO(CDAP-3119): Begin Hack for TWILL-144
+  /**
+   * Creates the launcher.jar for launch the main application. This is the central logic for the hack.
+   * It inserts an extra line at the beginning of the TwillLauncher.main() method to create an extra
+   * symlink for the mr-framework name. This is due to TWILL-144 that always append a ".tar.gz" suffix to the actual
+   * localized name which get rename later. However the rename happens too late for us since we need the TwillLauncher
+   * be able to scan the directories to pickup all necessary jar files
+   * to create the ClassLoader for the twill container.
+   */
+  public static void saveLauncher(final Configuration hConf,
+                                  File file, List<String> classPaths) throws URISyntaxException, IOException {
+    final String launcherName = TwillLauncher.class.getName();
+    final String portFinderName = FindFreePort.class.getName();
+    final String symLinkerName = MapReduceContainerSymLinker.class.getName();
+
+    // Create a jar file with the TwillLauncher
+    // Also a little utility to find a free port, used for debugging.
+    try (final JarOutputStream jarOut = new JarOutputStream(new FileOutputStream(file))) {
+      ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+      if (classLoader == null) {
+        classLoader = MapReduceContainerHelper.class.getClassLoader();
+      }
+
+      Dependencies.findClassDependencies(classLoader, new ClassAcceptor() {
+        @Override
+        public boolean accept(String className, URL classUrl, URL classPathUrl) {
+          Preconditions.checkArgument(
+            className.startsWith(launcherName) || className.equals(portFinderName) || className.equals(symLinkerName),
+            "Launcher jar should not have dependencies: %s", className);
+
+          try (InputStream is = classUrl.openStream()) {
+            jarOut.putNextEntry(new JarEntry(className.replace('.', '/') + ".class"));
+
+            if (className.equals(launcherName)) {
+              rewriteLauncher(hConf, is, jarOut);
+            } else {
+              ByteStreams.copy(is, jarOut);
+            }
+            return true;
+          } catch (IOException e) {
+            throw Throwables.propagate(e);
+          }
+        }
+      }, launcherName, portFinderName, symLinkerName);
+
+      addClassPaths(Constants.CLASSPATH, classPaths, jarOut);
+    }
+  }
+
+  /**
+   * Rewrites the TwillLauncher bytecode as described
+   * in {@link #rewriteLauncher(Configuration, InputStream, OutputStream)}.
+   *
+   * @param hConf the hadoop configuration
+   * @param sourceByteCode the original bytecode of the TwillLauncher
+   * @param output output stream for writing the modified bytecode.
+   * @throws IOException
+   */
+  private static void rewriteLauncher(Configuration hConf,
+                                      InputStream sourceByteCode, OutputStream output) throws IOException {
+    URI frameworkURI = getFrameworkURI(hConf);
+    if (frameworkURI == null) {
+      ByteStreams.copy(sourceByteCode, output);
+      return;
+    }
+
+    // It is localized as archive, and due to TWILL-144, a suffix is added. We need to reverse the effect of it
+    // by creating an extra symlink as the first line in the TwillLauncher.main() method.
+    String ext = Paths.getExtension(frameworkURI.getPath());
+    if (ext.isEmpty()) {
+      ByteStreams.copy(sourceByteCode, output);
+      return;
+    }
+
+    final String sourceName = frameworkURI.getFragment();
+    final String targetName = sourceName + "." + ext;
+
+    ClassReader cr = new ClassReader(sourceByteCode);
+    ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
+    cr.accept(new ClassVisitor(Opcodes.ASM5, cw) {
+
+      @Override
+      public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+        MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
+        if (!name.equals("main")) {
+          return mv;
+        }
+        Type[] argTypes = Type.getArgumentTypes(desc);
+        if (argTypes.length != 1) {
+          return mv;
+        }
+        Type argType = argTypes[0];
+        if (argType.getSort() != Type.ARRAY
+          || !String.class.getName().equals(argType.getElementType().getClassName())) {
+          return mv;
+        }
+
+        return new AdviceAdapter(Opcodes.ASM5, mv, access, name, desc) {
+          @Override
+          protected void onMethodEnter() {
+            visitLdcInsn(sourceName);
+            visitLdcInsn(targetName);
+            invokeStatic(Type.getType(MapReduceContainerSymLinker.class),
+                         Methods.getMethod(void.class, "symlink", String.class, String.class));
+          }
+        };
+      }
+    }, ClassReader.EXPAND_FRAMES);
+
+    output.write(cw.toByteArray());
+  }
+
+  private static void addClassPaths(String classpathId,
+                                    List<String> classPaths, JarOutputStream jarOut) throws IOException {
+    if (!classPaths.isEmpty()) {
+      jarOut.putNextEntry(new JarEntry(classpathId));
+      jarOut.write(Joiner.on(':').join(classPaths).getBytes(Charsets.UTF_8));
+    }
+  }
+
+  // End Hack for TWILL-144
 
   private MapReduceContainerHelper() {
     // no-op
