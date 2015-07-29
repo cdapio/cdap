@@ -220,6 +220,23 @@ body.theme-cdap.state-adapters-create {
           resize: vertical;
         }
       }
+      &.config-modal {
+        fieldset.view-plugin-json {
+          margin: 0;
+        }
+        a {
+          cursor: pointer;
+          background-color: transparent;
+          color: #6a7387;
+          &:hover, &:focus {
+            text-decoration: none;
+          }
+        }
+      }
+      @media (max-width: @screen-md-max) {
+        height: 65vh;
+        overflow-y: scroll;
+      }
       .modal-body {
         background-color: white;
         overflow-x: hidden;

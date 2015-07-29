@@ -2,6 +2,7 @@ angular.module(PKG.name + '.commons')
   .controller('MyPlumbController', function MyPlumbController(jsPlumb, $scope, $timeout, MyPlumbService, myHelpers, MyPlumbFactory, $window) {
     this.plugins = $scope.config || [];
     this.isDisabled = $scope.isDisabled;
+    this.reloadDAG = $scope.reloaddag;
     MyPlumbService.setIsDisabled(this.isDisabled);
 
     this.instance = null;
@@ -189,6 +190,17 @@ angular.module(PKG.name + '.commons')
 
       if (this.plugins.length > 0) {
         $timeout(this.drawGraph.bind(this));
+      }
+    }.bind(this));
+
+    $scope.$watch('reloaddag', function (value) {
+      if (value) {
+        this.instance.reset();
+        this.instance = jsPlumb.getInstance();
+        this.instance.importDefaults(MyPlumbFactory.getSettings().default);
+        this.plugins = $scope.config;
+        $timeout(this.drawGraph.bind(this));
+        $scope.reloaddag = false;
       }
     }.bind(this));
 
