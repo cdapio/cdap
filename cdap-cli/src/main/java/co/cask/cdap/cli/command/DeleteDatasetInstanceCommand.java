@@ -48,7 +48,7 @@ public class DeleteDatasetInstanceCommand extends AbstractAuthCommand {
                                                          arguments.get(ArgumentName.DATASET.toString()));
 
     datasetClient.delete(dataset);
-    output.printf("Successfully deleted %s\n", dataset);
+    output.printf("Successfully deleted dataset instance '%s'\n", dataset.getId());
   }
 
   @Override
