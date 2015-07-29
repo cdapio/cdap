@@ -32,6 +32,10 @@
 */
 angular.module(PKG.name + '.services')
   .service('MyPlumbService', function(myAdapterApi, $q, $bootstrapModal, $state, $filter, mySettings, $alert, AdapterErrorFactory) {
+    var countSink = 0,
+        countSource = 0,
+        countTransform = 0;
+
     this.resetToDefaults = function() {
       this.callbacks = [];
       this.errorCallbacks = [];
@@ -48,6 +52,10 @@ angular.module(PKG.name + '.services')
           }
         }
       };
+
+      countSink = 0;
+      countSource = 0;
+      countTransform = 0;
     };
 
     this.resetToDefaults();
@@ -84,6 +92,7 @@ angular.module(PKG.name + '.services')
     };
 
     this.addNodes = function(conf, type) {
+
       var config = {
         id: conf.id,
         name: conf.name,
@@ -95,6 +104,43 @@ angular.module(PKG.name + '.services')
         _backendProperties: conf._backendProperties,
         type: conf.type
       };
+      var offsetLeft = 0;
+      var offsetTop = 0;
+      var initial = 0;
+
+      if (type === 'source') {
+        initial = 30;
+
+        offsetLeft = countSource * 2;
+        offsetTop = countSource * 70;
+
+        countSource++;
+
+      } else if (type === 'transform') {
+        initial = 50;
+
+        offsetLeft = countTransform * 2;
+        offsetTop = countTransform * 70;
+
+        countTransform++;
+
+      } else if (type === 'sink') {
+        initial = 70;
+
+        offsetLeft = countSink * 2;
+        offsetTop = countSink * 70;
+
+        countSink++;
+      }
+
+      var left = initial + offsetLeft;
+      var top = 250 + offsetTop;
+
+      config.style = {
+        left: left + 'vw',
+        top: top + 'px'
+      };
+
       this.nodes[config.id] = config;
       if (!conf._backendProperties) {
         fetchBackendProperties
@@ -115,6 +161,20 @@ angular.module(PKG.name + '.services')
     };
 
     this.removeNode = function (nodeId) {
+      var type = this.nodes[nodeId].type;
+
+      switch (type) {
+        case 'source':
+          countSource--;
+          break;
+        case 'transform':
+          countTransform--;
+          break;
+        case 'sink':
+          countSink--;
+          break;
+      }
+
       delete this.nodes[nodeId];
     };
 
@@ -147,7 +207,7 @@ angular.module(PKG.name + '.services')
           plugin._backendProperties = pluginProperties;
           defer.resolve(plugin);
           return defer.promise;
-        })
+        });
     }
 
     this.editPluginProperties = function (scope, pluginId) {
@@ -372,7 +432,7 @@ angular.module(PKG.name + '.services')
                 messages: err
               });
             }
-          )
+          );
       } else {
         this.notifyError(errors);
         defer.reject(errors);
@@ -399,6 +459,6 @@ angular.module(PKG.name + '.services')
           res[this.metadata.name] = config;
           return mySettings.set('adapterDrafts', res);
         }.bind(this));
-    }
+    };
 
   });
