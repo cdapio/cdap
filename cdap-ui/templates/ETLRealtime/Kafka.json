@@ -60,9 +60,9 @@
 
     "group2" : {
        "display" : "Format & Schema",
-       "position" : [ "kafka.format", "kafka.schema" ],
+       "position" : [ "format", "schema" ],
        "fields" : {
-          "kafka.format" : {
+          "format" : {
              "widget" : "select",
              "label"  : "Format",
              "properties" : {
@@ -70,19 +70,13 @@
                "default" : ""
              }
           },
-          "kafka.schema" : {
+          "schema" : {
              "widget": "stream-properties",
              "label" : "Schema",
              "schema-types" : [ "boolean", "int", "long", "float", "double", "bytes", "string" ],
              "schema-default-type" : "string"
           }
        }
-    }
-  },
-  "implicit": {
-    "schema": {
-      "key": ["string", "null"],
-      "message": "bytes"
     }
   }
 }
