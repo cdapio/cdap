@@ -28,20 +28,42 @@ public class WorkflowActionNode extends WorkflowNode {
   private final ScheduleProgramInfo program;
   private final WorkflowActionSpecification actionSpecification;
 
+  /**
+   * Constructs the ACTION node in the {@link Workflow} for MapReduce or Spark program.
+   * @param nodeId the id with which the node is to be created
+   * @param program the program that will be executed at the node
+   */
   public WorkflowActionNode(String nodeId, ScheduleProgramInfo program) {
     this(nodeId, program, null);
   }
 
+  /**
+   * Constructs the ACTION node in the {@link Workflow} for MapReduce or Spark program.
+   * @param nodeId the id with which the node is to be created
+   * @param program the program that will be executed at the node
+   * @param parentNodeIds the set of parent node ids
+   */
   public WorkflowActionNode(String nodeId, ScheduleProgramInfo program, Set<String> parentNodeIds) {
     super(nodeId, WorkflowNodeType.ACTION, parentNodeIds);
     this.program = program;
     this.actionSpecification = null;
   }
 
+  /**
+   * Constructs the ACTION node in the {@link Workflow} for custom action.
+   * @param nodeId the id with which the node is to be created
+   * @param actionSpecification the specification of the custom action
+   */
   public WorkflowActionNode(String nodeId, WorkflowActionSpecification actionSpecification) {
     this(nodeId, actionSpecification, null);
   }
 
+  /**
+   * Constructs the ACTION node in the {@link Workflow} for custom action.
+   * @param nodeId the id with which the node is to be created
+   * @param actionSpecification the specification of the custom action
+   * @param parentNodeIds the set of parent node ids
+   */
   public WorkflowActionNode(String nodeId, WorkflowActionSpecification actionSpecification, Set<String> parentNodeIds) {
     super(nodeId, WorkflowNodeType.ACTION, parentNodeIds);
     this.program = new ScheduleProgramInfo(SchedulableProgramType.CUSTOM_ACTION, actionSpecification.getName());
