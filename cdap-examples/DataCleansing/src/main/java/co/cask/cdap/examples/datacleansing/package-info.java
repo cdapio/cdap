@@ -23,8 +23,8 @@
  *
  * <ol>
  *   <li>
- *   {@link co.cask.cdap.examples.datacleansing.DataCleansingService} that allows reading and writing to the
- *   rawRecords and cleanRecords PartitionedFileSets.
+ *   {@link co.cask.cdap.examples.datacleansing.DataCleansingService} that allows writing to the
+ *   rawRecords PartitionedFileSets.
  *   </li>
  *
  *   <li>

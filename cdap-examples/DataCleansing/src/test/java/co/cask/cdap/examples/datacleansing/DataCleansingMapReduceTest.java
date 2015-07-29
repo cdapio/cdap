@@ -30,16 +30,16 @@ import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
 import com.google.common.base.Joiner;
-import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import io.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.net.URL;
+import java.sql.Connection;
+import java.sql.ResultSet;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -86,7 +86,7 @@ public class DataCleansingMapReduceTest extends TestBase {
     MapReduceManager mapReduceManager = applicationManager.getMapReduceManager(DataCleansingMapReduce.NAME).start(args);
     mapReduceManager.waitForFinish(5, TimeUnit.MINUTES);
 
-    Assert.assertEquals(filterInvalidRecords(RECORDS1), getCleanData(serviceURL, now));
+    Assert.assertEquals(filterInvalidRecords(RECORDS1), getCleanData(now));
     // assert that some of the records have indeed been filtered
     Assert.assertNotEquals(filterInvalidRecords(RECORDS1), RECORDS1);
 
@@ -107,9 +107,9 @@ public class DataCleansingMapReduceTest extends TestBase {
     mapReduceManager.waitForFinish(5, TimeUnit.MINUTES);
 
     ImmutableSet<String> records2and3 = ImmutableSet.<String>builder().addAll(RECORDS2).addAll(RECORDS3).build();
-    Assert.assertEquals(filterInvalidRecords(records2and3), getCleanData(serviceURL, now));
+    Assert.assertEquals(filterInvalidRecords(records2and3), getCleanData(now));
 
-    // running the MapReduce job without adding new partitions does creates no additional output
+    // running the MapReduce job without adding new partitions creates no additional output
     now = System.currentTimeMillis();
     args = ImmutableMap.of(DataCleansingMapReduce.OUTPUT_PARTITION_KEY, now.toString(),
                            DataCleansingMapReduce.SCHEMA_KEY, schemaJson);
@@ -117,7 +117,7 @@ public class DataCleansingMapReduceTest extends TestBase {
     mapReduceManager = applicationManager.getMapReduceManager(DataCleansingMapReduce.NAME).start(args);
     mapReduceManager.waitForFinish(5, TimeUnit.MINUTES);
 
-    Assert.assertEquals(Collections.<String>emptySet(), getCleanData(serviceURL, now));
+    Assert.assertEquals(Collections.<String>emptySet(), getCleanData(now));
   }
 
   private void createPartition(URL serviceUrl, Set<String> records) throws IOException {
@@ -127,30 +127,22 @@ public class DataCleansingMapReduceTest extends TestBase {
     Assert.assertEquals(200, response.getResponseCode());
   }
 
-  private Set<String> getCleanData(URL serviceUrl, Long time) throws IOException {
-    HttpResponse response =
-      HttpRequests.execute(HttpRequest.get(new URL(serviceUrl, "v1/records/clean/" + time)).build());
-    if (response.getResponseCode() == HttpResponseStatus.OK.code()) {
-      return splitToRecords(response.getResponseBodyAsString());
+  private Set<String> getCleanData(Long time) throws Exception {
+    try (Connection connection = getQueryClient()) {
+      ResultSet results = connection
+        .prepareStatement("SELECT * FROM dataset_cleanRecords where TIME = " + time)
+        .executeQuery();
+
+      Set<String> cleanRecords = new HashSet<>();
+      while (results.next()) {
+        cleanRecords.add(results.getString(1));
+      }
+      return cleanRecords;
     }
-    if (response.getResponseCode() == HttpResponseStatus.NOT_FOUND.code()) {
-      return Collections.emptySet();
-    }
-    Assert.fail("Expected to either receive a 200 or 404.");
-    return null;
   }
 
   private String joinRecords(Set<String> records) {
     return Joiner.on("\n").join(records) + "\n";
-  }
-
-  private Set<String> splitToRecords(String content) {
-    Set<String> records = new HashSet<>();
-    Iterable<String> splitContent = Splitter.on("\n").omitEmptyStrings().split(content);
-    for (String record : splitContent) {
-      records.add(record);
-    }
-    return records;
   }
 
   private Set<String> filterInvalidRecords(Set<String> records) {

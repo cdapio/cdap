@@ -17,7 +17,7 @@ Overview
 This application has a MapReduce which processes records from one partitioned file set into another partitioned file set,
 while filtering records that do not match a particular schema.
 
-- The ``DataCleansingService`` writes and serves data from the partitioned file sets.
+- The ``DataCleansingService`` writes to the ``rawRecords`` partitioned file set.
 - The ``DataCleansingMapReduce`` processes the records, while filtering 'unclean' or invalid records.
 
 Let's look at some of these components, and then run the application and see the results.
@@ -44,12 +44,10 @@ Data Storage
 DataCleansingService
 --------------------
 
-The service allows writing to the 'rawRecords' and reading from the 'cleanRecords' PartitionedFileSet
-It exposes these endpoints:
+The service allows writing to the 'rawRecords' PartitionedFileSet.
+It exposes the following endpoint:
 
 - POST ``/records/raw`` allows for writing to a partition of the 'rawRecords' dataset;
-- GET ``/records/clean/{partition key}`` returns the contents of the file of the partition, specified
-  by the given key, of the cleanRecords dataset.
 
 MapReduce over PartitionedFileSet
 ---------------------------------
@@ -99,7 +97,7 @@ Ingesting Records
 
 Begin by uploading a file containing some newline-separated JSON records into the ``rawRecords`` dataset::
 
-  $ cdap-cli.sh call service DataCleansing.DataCleansingService PUT rawRecords body:file examples/DataCleansing/resources/person.json
+  $ cdap-cli.sh call service DataCleansing.DataCleansingService POST v1/records/raw body:file examples/DataCleansing/resources/person.json
 
 Starting the MapReduce
 ----------------------
@@ -130,23 +128,26 @@ Querying the Results
 
 .. highlight:: console
 
-To query the ``DataCleansingService`` service, either:
+To sample the ``cleanRecords`` PartitionedFileSet execute an explore query using the CDAP CLI::
 
-- Send a query via an HTTP request using the ``curl`` command::
+  $ cdap-cli.sh execute 'SELECT record FROM dataset_cleanRecords where TIME = 1 LIMIT 5'
 
-    $ curl -w'\n' 'http://localhost:10000/v3/namespaces/default/apps/DataCleansing/services/DataCleansingService/methods/cleanRecords/1'
-
-- Use the CDAP CLI::
-
-    $ cdap-cli.sh call service DataCleansing.DataCleansingService GET /cleanRecords/1
+- Alternatively, go to the *rawRecords* `dataset explore page
+  <http://localhost:9999/ns/default/datasets/cleanRecords/overview/explore>`__,
+  and execute the query from there.
 
 The records that are not filtered out (those that adhere to the given schema) will be displayed::
 
-  {"pid":223986723,"name":"bob","dob":"02-12-1983","zip":"84125"}
-  {"pid":001058370,"name":"jill","dob":"12-12-1963","zip":"84125"}
-  {"pid":000150018,"name":"wendy","dob":"06-19-1987","zip":"84125"}
-  {"pid":013587810,"name":"john","dob":"10-10-1991","zip":"84125"}
-  {"pid":811638015,"name":"samantha","dob":"04-20-1965","zip":"84125"}
+  +======================================================================+
+  | record: STRING                                                       |
+  +======================================================================+
+  | {"pid":223986723,"name":"bob","dob":"02-12-1983","zip":"84125"}      |
+  | {"pid":001058370,"name":"jill","dob":"12-12-1963","zip":"84125"}     |
+  | {"pid":000150018,"name":"wendy","dob":"06-19-1987","zip":"84125"}    |
+  | {"pid":013587810,"name":"john","dob":"10-10-1991","zip":"84125"}     |
+  | {"pid":811638015,"name":"samantha","dob":"04-20-1965","zip":"84125"} |
+  +======================================================================+
+  Fetched 5 rows
 
 This process of ingesting records, running the MapReduce job with a different output partition key,
 and requesting the filtered data can be repeated. Each time, the MapReduce job will pickup and process

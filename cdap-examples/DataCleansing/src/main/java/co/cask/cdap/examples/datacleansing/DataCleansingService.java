@@ -17,7 +17,6 @@
 package co.cask.cdap.examples.datacleansing;
 
 import co.cask.cdap.api.annotation.UseDataSet;
-import co.cask.cdap.api.dataset.lib.Partition;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionOutput;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
@@ -26,22 +25,16 @@ import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
-import com.google.common.base.Charsets;
-import com.google.common.collect.ImmutableMultimap;
-import com.google.common.io.ByteStreams;
 import org.apache.twill.filesystem.Location;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.WritableByteChannel;
-import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 
 /**
- * A {@link Service} to read and write to PartitionedFileSets.
+ * A {@link Service} to write to PartitionedFileSet.
  */
 public class DataCleansingService extends AbstractService {
 
@@ -50,12 +43,12 @@ public class DataCleansingService extends AbstractService {
   @Override
   protected void configure() {
     setName(NAME);
-    setDescription("A service to ingest data and serve data from partitioned file sets.");
+    setDescription("A service to ingest data into the rawRecords partitioned file set.");
     addHandler(new RecordsHandler());
   }
 
   /**
-   * A handler that allows writing to the 'rawRecords' and reading from the 'cleanRecords' PartitionedFileSet.
+   * A handler that allows writing to the 'rawRecords' PartitionedFileSet.
    */
   @Path("/v1")
   public static class RecordsHandler extends AbstractHttpServiceHandler {
@@ -83,25 +76,6 @@ public class DataCleansingService extends AbstractService {
         return;
       }
       responder.sendStatus(200);
-    }
-
-    @GET
-    @Path("/records/clean/{time}")
-    public void read(HttpServiceRequest request, HttpServiceResponder responder, @PathParam("time") Long time) {
-      PartitionKey partitionKey = PartitionKey.builder().addLongField("time", time).build();
-      Partition partition = cleanRecords.getPartition(partitionKey);
-
-      if (partition == null) {
-        responder.sendString(404, "Partition not found.", Charsets.UTF_8);
-        return;
-      }
-      try {
-        Location location = partition.getLocation().append("part-r-00000");
-        ByteBuffer content = ByteBuffer.wrap(ByteStreams.toByteArray(location.getInputStream()));
-        responder.send(200, content, "text/plain", ImmutableMultimap.<String, String>of());
-      } catch (IOException e) {
-        responder.sendError(400, String.format("Unable to read path '%s'", partition.getRelativePath()));
-      }
     }
   }
 }

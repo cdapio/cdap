@@ -60,6 +60,11 @@ public class DataCleansing extends AbstractApplication {
       .setPartitioning(Partitioning.builder().addLongField("time").build())
       // Properties for file set
       .setOutputFormat(TextOutputFormat.class)
+      // Properties for Explore (to create a partitioned Hive table)
+      .setEnableExploreOnCreate(true)
+      .setExploreFormat("text")
+      .setExploreFormatProperty("delimiter", "\n")
+      .setExploreSchema("record STRING")
       .build());
   }
 }

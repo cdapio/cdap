@@ -88,7 +88,6 @@ public class DataCleansingMapReduce extends AbstractMapReduce {
     Job job = context.getHadoopJob();
     job.setMapperClass(SchemaMatchingFilter.class);
     job.setReducerClass(IdentityReducer.class);
-    job.setNumReduceTasks(1);
 
     // simply propagate the schema (if any) to be used by the mapper
     String schemaJson = context.getRuntimeArguments().get(SCHEMA_KEY);
