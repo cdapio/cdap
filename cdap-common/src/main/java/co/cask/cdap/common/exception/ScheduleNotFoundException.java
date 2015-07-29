@@ -16,9 +16,16 @@
 
 package co.cask.cdap.common.exception;
 
-/**
- * Thrown when reset is not enabled for the CDAP instance.
- */
-public class ResetNotEnabledException extends Exception {
+import co.cask.cdap.proto.Id;
 
+/**
+ * Thrown when a schedule is not found.
+ * @deprecated Use {@link co.cask.cdap.common.ScheduleNotFoundException} instead
+ */
+@Deprecated
+public class ScheduleNotFoundException extends NotFoundException {
+
+  public ScheduleNotFoundException(Id.Schedule schedule) {
+    super(schedule);
+  }
 }
