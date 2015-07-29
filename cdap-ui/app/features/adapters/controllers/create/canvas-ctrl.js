@@ -48,6 +48,7 @@ angular.module(PKG.name + '.feature.adapters')
           modalInstance = $bootstrapModal.open({
             templateUrl: '/assets/features/adapters/templates/create/viewconfig.html',
             size: 'lg',
+            windowClass: 'adapter-modal',
             keyboard: true,
             controller: ['$scope', 'config', function($scope, config) {
               $scope.config = JSON.stringify(config);
@@ -89,6 +90,7 @@ angular.module(PKG.name + '.feature.adapters')
           $bootstrapModal.open({
             templateUrl: '/assets/features/adapters/templates/create/settings.html',
             size: 'lg',
+            windowClass: 'adapter-modal',
             keyboard: true,
             controller: ['$scope', 'metadata', 'EventPipe', function($scope, metadata, EventPipe) {
               $scope.metadata = metadata
