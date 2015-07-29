@@ -182,12 +182,13 @@ my-side-panel {
   }
 }
 
-.tooltip-error {
+.tooltip.tooltip-error {
   z-index: 1020; // lower z-index than modal
 
   .tooltip-inner {
     background-color: @brand-danger;
     color: white;
+    border: 0;
   }
 
   &.tooltip.right .tooltip-arrow {
