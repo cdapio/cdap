@@ -168,6 +168,7 @@
     <dependency>
       <groupId>org.apache.zookeeper</groupId>
       <artifactId>zookeeper</artifactId>
+      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.twill</groupId>

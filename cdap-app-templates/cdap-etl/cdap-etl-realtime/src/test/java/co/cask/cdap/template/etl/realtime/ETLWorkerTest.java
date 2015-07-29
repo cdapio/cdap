@@ -211,11 +211,11 @@ public class ETLWorkerTest extends TestBase {
                                     Schema.Field.of("AGE", Schema.of(Schema.Type.INT)));
     setUp();
     ETLStage source = new ETLStage("Kafka", ImmutableMap.<String, String>builder()
-      .put("kafka.topic", "MyTopic")
-      .put("kafka.zookeeper", zkServer.getConnectionStr())
-      .put("kafka.format", "csv")
-      .put("kafka.schema", schema.toString())
-      .put("kafka.partitions", Integer.toString(PARTITIONS))
+      .put(KafkaSource.KAFKA_TOPIC, "MyTopic")
+      .put(KafkaSource.KAFKA_ZOOKEEPER, zkServer.getConnectionStr())
+      .put(KafkaSource.FORMAT, "csv")
+      .put(KafkaSource.SCHEMA, schema.toString())
+      .put(KafkaSource.KAFKA_PARTITIONS, Integer.toString(PARTITIONS))
       .build()
     );
 
