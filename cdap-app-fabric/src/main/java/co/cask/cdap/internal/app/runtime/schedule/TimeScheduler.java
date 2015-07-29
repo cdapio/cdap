@@ -45,6 +45,7 @@ import org.quartz.JobKey;
 import org.quartz.Trigger;
 import org.quartz.TriggerBuilder;
 import org.quartz.TriggerKey;
+import org.quartz.impl.matchers.GroupMatcher;
 import org.quartz.spi.JobFactory;
 import org.quartz.spi.TriggerFiredBundle;
 import org.slf4j.Logger;
@@ -60,6 +61,8 @@ import java.util.concurrent.Executors;
  */
 final class TimeScheduler implements Scheduler {
   private static final Logger LOG = LoggerFactory.getLogger(TimeScheduler.class);
+  private static final String NEW_PAUSED_TRIGGERS_GROUP = "NewPausedTriggers";
+  public static final String DUMMY_JOB = "dummyJob";
 
   private org.quartz.Scheduler scheduler;
   private final Supplier<org.quartz.Scheduler> schedulerSupplier;
@@ -86,12 +89,27 @@ final class TimeScheduler implements Scheduler {
         Executors.newCachedThreadPool(Threads.createDaemonThreadFactory("time-schedule-task")));
       scheduler = schedulerSupplier.get();
       scheduler.setJobFactory(createJobFactory(store));
+      initNewPausedTriggersGroup();
     } catch (org.quartz.SchedulerException e) {
       throw new SchedulerException(e);
     }
   }
 
-  void lazyStart() throws SchedulerException {
+  private void initNewPausedTriggersGroup() throws org.quartz.SchedulerException {
+    // if the dummy job does not already exists in the TimeScheduler#NEW_PAUSED_TRIGGERS_GROUP then create a dummy job
+    // which will create the TimeScheduler#NEW_PAUSED_TRIGGERS_GROUP
+    if (!scheduler.checkExists(new JobKey(DUMMY_JOB, NEW_PAUSED_TRIGGERS_GROUP))) {
+      JobDetail job = JobBuilder.newJob(DefaultSchedulerService.ScheduledJob.class)
+        .withIdentity("dummyJob", NEW_PAUSED_TRIGGERS_GROUP)
+        .storeDurably(true)
+        .build();
+      scheduler.addJob(job, true);
+      // call pause on this group this ensures that all the new triggers added to this group will also be paused
+      scheduler.pauseTriggers(GroupMatcher.triggerGroupEquals(NEW_PAUSED_TRIGGERS_GROUP));
+    }
+  }
+
+  void start() throws SchedulerException {
     try {
       scheduler.start();
       schedulerStarted = true;
@@ -161,7 +179,8 @@ final class TimeScheduler implements Scheduler {
       LOG.debug("Scheduling job {} with cron {}", scheduleName, cronEntry);
 
       TriggerBuilder trigger = TriggerBuilder.newTrigger()
-        .withIdentity(triggerKey)
+        // all new triggers are added to the paused group which will ensure that the triggers are paused too
+        .withIdentity(triggerKey, NEW_PAUSED_TRIGGERS_GROUP)
         .forJob(job)
         .withSchedule(CronScheduleBuilder
                         .cronSchedule(getQuartzCronExpression(cronEntry))
@@ -240,20 +259,48 @@ final class TimeScheduler implements Scheduler {
     throws NotFoundException, SchedulerException {
     checkInitialized();
     try {
-      scheduler.pauseTrigger(new TriggerKey(AbstractSchedulerService.scheduleIdFor(program, programType,
-                                                                                   scheduleName)));
+      scheduler.pauseTrigger(getGroupedTriggerKey(program, programType, scheduleName));
     } catch (org.quartz.SchedulerException e) {
       throw new SchedulerException(e);
     }
+  }
+
+  private TriggerKey getGroupedTriggerKey(Id.Program program, SchedulableProgramType programType, String scheduleName)
+    throws org.quartz.SchedulerException {
+
+    TriggerKey neverResumedTriggerKey = new TriggerKey(AbstractSchedulerService.scheduleIdFor(program, programType,
+                                                                                              scheduleName),
+                                                       NEW_PAUSED_TRIGGERS_GROUP);
+    if (scheduler.checkExists(neverResumedTriggerKey)) {
+      return neverResumedTriggerKey;
+    }
+    return new TriggerKey(AbstractSchedulerService.scheduleIdFor(program, programType,
+                                                                 scheduleName));
   }
 
   @Override
   public void resumeSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName)
     throws NotFoundException, SchedulerException {
     checkInitialized();
+
+    TriggerKey triggerKey = new TriggerKey(AbstractSchedulerService.scheduleIdFor(program, programType, scheduleName),
+                                           NEW_PAUSED_TRIGGERS_GROUP);
     try {
-      scheduler.resumeTrigger(new TriggerKey(AbstractSchedulerService.scheduleIdFor(program, programType,
-                                                                                    scheduleName)));
+      if (scheduler.checkExists(triggerKey)) {
+        Trigger firstScheduledTrigger = scheduler.getTrigger(triggerKey);
+        TriggerBuilder<? extends Trigger> triggerBuilder = firstScheduledTrigger.getTriggerBuilder();
+        // move this key from TimeScheduler#NEW_PAUSED_TRIGGERS_GROUP to the default group
+        // (when no group name is provided default is used)
+        Trigger resumedTrigger = triggerBuilder.withIdentity(triggerKey.getName()).build();
+        scheduler.rescheduleJob(firstScheduledTrigger.getKey(), resumedTrigger);
+        triggerKey = resumedTrigger.getKey();
+      } else {
+        // if this trigger key is not in TimeScheduler#NEW_PAUSED_TRIGGERS_GROUP then it has been resumed before so get
+        // it from default group
+        triggerKey = new TriggerKey(AbstractSchedulerService.scheduleIdFor(program, programType,
+                                                                           scheduleName));
+      }
+      scheduler.resumeTrigger(triggerKey);
     } catch (org.quartz.SchedulerException e) {
       throw new SchedulerException(e);
     }
@@ -279,7 +326,7 @@ final class TimeScheduler implements Scheduler {
     checkInitialized();
     try {
       Trigger trigger = scheduler.getTrigger(
-        new TriggerKey(AbstractSchedulerService.scheduleIdFor(program, programType, scheduleName)));
+        getGroupedTriggerKey(program, programType, scheduleName));
       if (trigger == null) {
         throw new ScheduleNotFoundException(Id.Schedule.from(program.getApplication(), scheduleName));
       }
@@ -329,7 +376,7 @@ final class TimeScheduler implements Scheduler {
     checkInitialized();
     try {
       Trigger.TriggerState state = scheduler.getTriggerState(
-        new TriggerKey(AbstractSchedulerService.scheduleIdFor(program, programType, scheduleName)));
+        getGroupedTriggerKey(program, programType, scheduleName));
       // Map trigger state to schedule state.
       // This method is only interested in returning if the scheduler is
       // Paused, Scheduled or NotFound.

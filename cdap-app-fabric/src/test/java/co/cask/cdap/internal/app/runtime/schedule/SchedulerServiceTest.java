@@ -166,6 +166,31 @@ public class SchedulerServiceTest {
     checkState(Scheduler.ScheduleState.NOT_FOUND, scheduleIds);
   }
 
+  @Test
+  public void testPausedTriggers() throws Exception {
+    AppFabricTestHelper.deployApplication(namespace, AppWithWorkflow.class);
+    ApplicationSpecification applicationSpecification = store.getApplication(appId);
+
+    // create schedule with ignore lazy start so that the scheduler gets started when this schedule is created
+    schedulerService.schedule(program, programType, ImmutableList.of(timeSchedule1), ImmutableMap.of(
+      // hack for scheduler weirdness in unit tests, remove once CDAP-2281 is done
+      Constants.Scheduler.IGNORE_LAZY_START, String.valueOf(true)
+    ));
+    List<String> scheduleIds = schedulerService.getScheduleIds(program, programType);
+    applicationSpecification = createNewSpecification(applicationSpecification, program, programType, timeSchedule1);
+    store.addApplication(appId, applicationSpecification, locationFactory.create("app"));
+    Assert.assertEquals(1, scheduleIds.size());
+    checkState(Scheduler.ScheduleState.SUSPENDED, scheduleIds);
+    schedulerService.resumeSchedule(program, programType, "Schedule1");
+    checkState(Scheduler.ScheduleState.SCHEDULED, scheduleIds);
+    schedulerService.suspendSchedule(program, SchedulableProgramType.WORKFLOW, "Schedule1");
+    checkState(Scheduler.ScheduleState.SUSPENDED, scheduleIds);
+    schedulerService.deleteSchedules(program, programType);
+    Assert.assertEquals(0, schedulerService.getScheduleIds(program, programType).size());
+    applicationSpecification = deleteSchedulesFromSpec(applicationSpecification);
+    store.addApplication(appId, applicationSpecification, locationFactory.create("app"));
+  }
+
   /**
    * Returns a crontab that will get triggered after {@code offset} time in the given unit from current time.
    */
