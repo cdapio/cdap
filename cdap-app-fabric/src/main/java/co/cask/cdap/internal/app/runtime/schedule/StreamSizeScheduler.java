@@ -229,8 +229,7 @@ public class StreamSizeScheduler implements Scheduler {
 
     // Add the scheduleTask to the StreamSubscriber
     streamSubscriber.createScheduleTask(program, programType, streamSizeSchedule, properties);
-    scheduleSubscribers.put(AbstractSchedulerService.scheduleIdFor(program, programType,
-                                                                   streamSizeSchedule.getName()),
+    scheduleSubscribers.put(AbstractSchedulerService.scheduleIdFor(program, programType, streamSizeSchedule.getName()),
                             streamSubscriber);
   }
 
@@ -262,8 +261,7 @@ public class StreamSizeScheduler implements Scheduler {
     // Add the scheduleTask to the StreamSubscriber
     streamSubscriber.restoreScheduleFromStore(program, programType, streamSizeSchedule, properties, active,
                                               basePollSize, basePollTs, lastRunSize, lastRunTs);
-    scheduleSubscribers.put(AbstractSchedulerService.scheduleIdFor(program, programType,
-                                                                   streamSizeSchedule.getName()),
+    scheduleSubscribers.put(AbstractSchedulerService.scheduleIdFor(program, programType, streamSizeSchedule.getName()),
                             streamSubscriber);
   }
 
@@ -650,7 +648,7 @@ public class StreamSizeScheduler implements Scheduler {
                                                                     properties);
 
         // First time that we create this schedule, it has to be initialized with the latest polling info
-        newTask.startNewSchedule(streamSize.getSize(), streamSize.getTimestamp());
+        newTask.storeNewSchedule(streamSize.getSize(), streamSize.getTimestamp());
 
         // We only modify the scheduleTasks if the persistence in startSchedule() did not throw any exception
         scheduleTasks.put(scheduleId, newTask);
@@ -917,20 +915,19 @@ public class StreamSizeScheduler implements Scheduler {
     }
 
     /**
-     * Start a new stream size schedule task. The task is set as active, and its last run information
+     * Store a new stream size schedule task. The task is set as active, and its last run information
      * set to -1.
      *
      * @param basePollSize base size of the stream to start counting from. This info comes from polling the stream
      * @param basePollTs time at which the {@code basePollSize} was obtained
      */
-    public void startNewSchedule(long basePollSize, long basePollTs) throws SchedulerException {
+    public void storeNewSchedule(long basePollSize, long basePollTs) throws SchedulerException {
       LOG.debug("Starting new schedule {} with basePollSize {}, basePollTs {}",
                 streamSizeSchedule.getName(), basePollSize, basePollTs);
       this.basePollSize = basePollSize;
       this.basePollTs = basePollTs;
       this.lastRunSize = -1;
       this.lastRunTs = -1;
-//      this.active.set(true);
 
       try {
         scheduleStore.persist(programId, programType, streamSizeSchedule, properties,

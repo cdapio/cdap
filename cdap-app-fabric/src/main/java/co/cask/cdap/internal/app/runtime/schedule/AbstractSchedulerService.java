@@ -59,7 +59,6 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
 
   /**
    * Start the scheduler services, by initializing them and starting them
-   * right away if lazy start is not active.
    */
   protected final void startSchedulers() throws SchedulerException {
     try {
