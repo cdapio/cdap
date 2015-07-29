@@ -1,8 +1,10 @@
 antlr.antlr-2.7.7.jar
 aopalliance.aopalliance-1.0.jar
 c3p0.c3p0-0.9.1.1.jar
-cdap-etl-batch-3.2.0-SNAPSHOT.jar
-cdap-etl-realtime-3.2.0-SNAPSHOT.jar
+cdap-etl-batch-3.1.0.jar
+cdap-etl-lib-3.1.0-batch.jar
+cdap-etl-lib-3.1.0-realtime.jar
+cdap-etl-realtime-3.1.0.jar
 ch.qos.logback.logback-classic-1.0.9.jar
 ch.qos.logback.logback-core-1.0.9.jar
 com.101tec.zkclient-0.3.jar
@@ -50,7 +52,7 @@ eigenbase.eigenbase-properties-1.1.4.jar
 io.dropwizard.metrics.metrics-core-3.1.0.jar
 io.netty.netty-3.6.6.Final.jar
 io.thekraken.grok-0.1.0.jar
-it.unimi.dsi.fastutil-6.6.1.jar
+it.unimi.dsi.fastutil-6.5.6.jar
 javax.activation.activation-1.1.jar
 javax.annotation.jsr250-api-1.0.jar
 javax.inject.javax.inject-1.jar
