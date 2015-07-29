@@ -59,11 +59,11 @@ public class GetProgramStatusCommand extends AbstractAuthCommand {
 
   @Override
   public String getPattern() {
-    return String.format("get %s status <%s>", elementType.getName(), elementType.getArgumentName());
+    return String.format("get %s status <%s>", elementType.getShortName(), elementType.getArgumentName());
   }
 
   @Override
   public String getDescription() {
-    return String.format("Gets the status of %s.", Fragment.of(Article.A, elementType.getTitleName()));
+    return String.format("Gets the status of %s.", Fragment.of(Article.A, elementType.getName()));
   }
 }

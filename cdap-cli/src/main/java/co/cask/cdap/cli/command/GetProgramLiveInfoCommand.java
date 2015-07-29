@@ -98,6 +98,6 @@ public class GetProgramLiveInfoCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Gets the live info of %s.", Fragment.of(Article.A, elementType.getTitleName()));
+    return String.format("Gets the live info of %s.", Fragment.of(Article.A, elementType.getName()));
   }
 }

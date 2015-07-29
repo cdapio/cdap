@@ -82,7 +82,7 @@ public class GetServiceEndpointsCommand extends AbstractAuthCommand implements C
   @Override
   public String getDescription() {
     return String.format("Lists the endpoints that %s exposes.",
-                         Fragment.of(Article.A, ElementType.SERVICE.getTitleName()));
+                         Fragment.of(Article.A, ElementType.SERVICE.getName()));
   }
 
   @Override

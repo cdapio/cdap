@@ -58,6 +58,6 @@ public class DeleteDatasetInstanceCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Deletes %s.", Fragment.of(Article.A, ElementType.DATASET.getTitleName()));
+    return String.format("Deletes %s.", Fragment.of(Article.A, ElementType.DATASET.getName()));
   }
 }

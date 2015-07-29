@@ -71,6 +71,6 @@ public class ListDatasetTypesCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Lists all %s.", ElementType.DATASET_TYPE.getTitleNamePlural());
+    return String.format("Lists all %s.", ElementType.DATASET_TYPE.getNamePlural());
   }
 }
