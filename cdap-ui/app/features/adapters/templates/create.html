@@ -17,6 +17,10 @@
       </a>
     </h1>
     <a class="fa fa-pencil" ng-click="AdapterCreateController.showMetadataModal()"></a>
+    <div class="application-type">
+      <span class="icon-ETLtemplates"></span>
+      <span>Type: {{ $state.params.type }}</span>
+    </div>
     <p ng-if="AdapterCreateController.metadata.description.length > 0">
       {{AdapterCreateController.metadata.description | myEllipsis: 150 }}
     </p>
