@@ -36,6 +36,7 @@ import co.cask.cdap.gateway.handlers.CommonHandlers;
 import co.cask.cdap.hive.datasets.DatasetStorageHandler;
 import co.cask.http.HttpHandler;
 import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -55,6 +56,7 @@ import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapreduce.MRConfig;
 import org.apache.twill.api.ClassAcceptor;
 import org.slf4j.Logger;
@@ -309,7 +311,12 @@ public class ExploreRuntimeModule extends RuntimeModule {
     // we need to add this, otherwise when hive runs a MapRedLocalTask it cannot find
     // "org.apache.hadoop.hive.serde2.SerDe" class in its classpath.
     List<String> orderedDependenciesWithHiveJar = Lists.newArrayList(orderedDependenciesStr);
-    orderedDependenciesWithHiveJar.add(new HiveConf().getJar());
+    String hiveExecJar = new JobConf(org.apache.hadoop.hive.ql.exec.Task.class).getJar();
+    Preconditions.checkNotNull(hiveExecJar, "Couldn't locate hive-exec.jar to be included in HADOOP_CLASSPATH " +
+      "for MapReduce jobs launched by Hive");
+    orderedDependenciesWithHiveJar.add(hiveExecJar);
+    LOG.debug("Added hive-exec.jar {} to HADOOP_CLASSPATH to be included for MapReduce jobs launched by Hive",
+              hiveExecJar);
 
     //TODO: Setup HADOOP_CLASSPATH hack, more info on why this is needed, see CDAP-9
     LocalMapreduceClasspathSetter classpathSetter =
