@@ -75,7 +75,7 @@ class WorkflowsRunsStatusController {
     );
 
     this.myWorkFlowApi
-      .pollRunDetail(runparams)
+      .pollRunDetailOften(runparams)
       .$promise
       .then( response => {
         this.runStatus = response.status;
