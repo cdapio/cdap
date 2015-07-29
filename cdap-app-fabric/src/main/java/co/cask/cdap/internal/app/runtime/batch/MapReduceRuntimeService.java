@@ -51,7 +51,8 @@ import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetInputFormat;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetOutputFormat;
 import co.cask.cdap.internal.app.runtime.batch.distributed.ContainerLauncherGenerator;
-import co.cask.cdap.internal.app.runtime.batch.distributed.MRContainerLauncher;
+import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerHelper;
+import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerLauncher;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.templates.AdapterDefinition;
@@ -97,6 +98,7 @@ import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.net.URI;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -177,32 +179,30 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
 
   @Override
   protected void startUp() throws Exception {
-    final Job job = createJob();
-    Configuration mapredConf = job.getConfiguration();
-
-    classLoader = new MapReduceClassLoader(context.getProgram().getClassLoader());
-    mapredConf.setClassLoader(new WeakReferenceDelegatorClassLoader(classLoader));
-    ClassLoaders.setContextClassLoader(mapredConf.getClassLoader());
-
-    context.setJob(job);
-
-    beforeSubmit(job);
-
-    // Override user-defined job name, since we set it and depend on the name.
-    // https://issues.cask.co/browse/CDAP-2441
-    String jobName = job.getJobName();
-    if (!jobName.isEmpty()) {
-      LOG.warn("Job name {} is being overridden.", jobName);
-    }
-    job.setJobName(getJobName(context));
-
     // Creates a temporary directory locally for storing all generated files.
-    File tempDir = DirUtils.createTempDir(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
-                                                   cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile());
-    tempDir.mkdirs();
+    File tempDir = createTempDirectory();
     this.cleanupTask = createCleanupTask(tempDir);
 
     try {
+      Job job = createJob(new File(tempDir, "mapreduce"));
+      Configuration mapredConf = job.getConfiguration();
+
+      classLoader = new MapReduceClassLoader(context.getProgram().getClassLoader());
+      mapredConf.setClassLoader(new WeakReferenceDelegatorClassLoader(classLoader));
+      ClassLoaders.setContextClassLoader(mapredConf.getClassLoader());
+
+      context.setJob(job);
+
+      beforeSubmit(job);
+
+      // Override user-defined job name, since we set it and depend on the name.
+      // https://issues.cask.co/browse/CDAP-2441
+      String jobName = job.getJobName();
+      if (!jobName.isEmpty()) {
+        LOG.warn("Job name {} is being overridden.", jobName);
+      }
+      job.setJobName(getJobName(context));
+
       // Create a temporary location for storing all generated files through the LocationFactory.
       Location tempLocation = createTempLocationDirectory();
       this.cleanupTask = createCleanupTask(tempDir, tempLocation);
@@ -247,16 +247,25 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         programJar = copyProgramJar(tempLocation);
         job.addCacheFile(programJar.toURI());
 
-        // Generate and localize the launcher jar to control the classloader of MapReduce processes
-        String yarnAppClassPath = "job.jar/lib/*,job.jar/classes," +
-          mapredConf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH,
-                         Joiner.on(',').join(YarnConfiguration.DEFAULT_YARN_APPLICATION_CLASSPATH));
-        Location launcherJar = createLauncherJar(yarnAppClassPath, tempLocation);
+        // Generate and localize the launcher jar to control the classloader of MapReduce containers processes
+        List<String> paths = new ArrayList<>();
+        paths.add("job.jar/lib/*");
+        paths.add("job.jar/classes");
+        Location launcherJar = createLauncherJar(
+          Joiner.on(",").join(MapReduceContainerHelper.getMapReduceClassPath(mapredConf, paths)), tempLocation);
         job.addCacheFile(launcherJar.toURI());
 
-        // The only thing in the Yarn container classpath is the launcher.jar
-        // The MRContainerLauncher inside the launcher.jar will creates a MapReduceClassLoader and launch
+        // The only thing in the container classpath is the launcher.jar
+        // The MapReduceContainerLauncher inside the launcher.jar will creates a MapReduceClassLoader and launch
         // the actual MapReduce AM/Task from that
+        // We explicitly localize the mr-framwork, but not use it with the classpath
+        URI frameworkURI = MapReduceContainerHelper.getFrameworkURI(mapredConf);
+        if (frameworkURI != null) {
+          job.addCacheArchive(frameworkURI);
+        }
+
+        mapredConf.unset(MRJobConfig.MAPREDUCE_APPLICATION_FRAMEWORK_PATH);
+        mapredConf.set(MRJobConfig.MAPREDUCE_APPLICATION_CLASSPATH, launcherJar.getName());
         mapredConf.set(YarnConfiguration.YARN_APPLICATION_CLASSPATH, launcherJar.getName());
       }
 
@@ -383,15 +392,29 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
 
   /**
    * Creates a MapReduce {@link Job} instance.
+   *
+   * @param hadoopTmpDir directory for the "hadoop.tmp.dir" configuration
    */
-  private Job createJob() throws IOException {
+  private Job createJob(File hadoopTmpDir) throws IOException {
     Job job = Job.getInstance(new Configuration(hConf));
+    Configuration jobConf = job.getConfiguration();
+
+    if (MapReduceContextProvider.isLocal(jobConf)) {
+      // Set the MR framework local directories inside the given tmp directory.
+      // Setting "hadoop.tmp.dir" here has no effect due to Explore Service need to set "hadoop.tmp.dir"
+      // as system property for Hive to work in local mode. The variable substitution of hadoop conf
+      // gives system property the highest precedence.
+      jobConf.set("mapreduce.cluster.local.dir", new File(hadoopTmpDir, "local").getAbsolutePath());
+      jobConf.set("mapreduce.jobtracker.system.dir", new File(hadoopTmpDir, "system").getAbsolutePath());
+      jobConf.set("mapreduce.jobtracker.staging.root.dir", new File(hadoopTmpDir, "staging").getAbsolutePath());
+      jobConf.set("mapreduce.cluster.temp.dir", new File(hadoopTmpDir, "temp").getAbsolutePath());
+    }
 
     if (UserGroupInformation.isSecurityEnabled()) {
       // If runs in secure cluster, this program runner is running in a yarn container, hence not able
       // to get authenticated with the history.
-      job.getConfiguration().unset("mapreduce.jobhistory.address");
-      job.getConfiguration().setBoolean(Job.JOB_AM_ACCESS_DISABLED, false);
+      jobConf.unset("mapreduce.jobhistory.address");
+      jobConf.setBoolean(Job.JOB_AM_ACCESS_DISABLED, false);
 
       Credentials credentials = UserGroupInformation.getCurrentUser().getCredentials();
       LOG.info("Running in secure mode; adding all user credentials: {}", credentials.getAllTokens());
@@ -401,13 +424,28 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   }
 
   /**
+   * Creates a local temporary directory for this MapReduce run.
+   */
+  private File createTempDirectory() {
+    Id.Program programId = context.getProgram().getId();
+    File tempDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
+                            cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+    File dir = new File(tempDir, String.format("%s.%s.%s.%s.%s",
+                                               programId.getType().name().toLowerCase(),
+                                               programId.getNamespaceId(), programId.getApplicationId(),
+                                               programId.getId(), context.getRunId().getId()));
+    dir.mkdirs();
+    return dir;
+  }
+
+  /**
    * Creates a temporary directory through the {@link LocationFactory} provided to this class.
    */
   private Location createTempLocationDirectory() throws IOException {
     Id.Program programId = context.getProgram().getId();
 
     String tempLocationName = String.format("%s/%s.%s.%s.%s.%s", cConf.get(Constants.AppFabric.TEMP_DIR),
-                                            ProgramType.MAPREDUCE.name().toLowerCase(),
+                                            programId.getType().name().toLowerCase(),
                                             programId.getNamespaceId(), programId.getApplicationId(),
                                             programId.getId(), context.getRunId().getId());
     Location location = locationFactory.create(tempLocationName);
@@ -864,7 +902,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   /**
    * Creates a launcher jar.
    *
-   * @see MRContainerLauncher
+   * @see MapReduceContainerLauncher
    * @see ContainerLauncherGenerator
    */
   private Location createLauncherJar(String applicationClassPath, Location targetDir) throws IOException {

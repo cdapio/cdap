@@ -51,7 +51,7 @@ angular.module(PKG.name + '.feature.admin')
               })
               .state('admin.system.services.detail.logs', {
                 url: '/logs',
-                template: '<my-log-viewer data-model="logs"></my-log-viewer>',
+                templateUrl: '/assets/features/admin/templates/partials/service-detail-log.html',
                 controller: 'SystemServiceLogController'
               })
 

@@ -372,8 +372,6 @@ public class AppFabricClient {
       mockResponder = new MockResponder();
       bodyConsumer.finished(mockResponder);
       verifyResponse(HttpResponseStatus.OK, mockResponder.getStatus(), "Failed to deploy app");
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
     }
     return deployedJar;
   }

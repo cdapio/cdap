@@ -57,7 +57,8 @@ public class DistributedSparkProgramRunner extends AbstractDistributedProgramRun
 
   @Override
   protected ProgramController launch(Program program, ProgramOptions options,
-                                     Map<String, File> localizeFiles, ApplicationLauncher launcher) {
+                                     Map<String, LocalizeResource> localizeResources,
+                                     ApplicationLauncher launcher) {
     // Extract and verify parameters
     ApplicationSpecification appSpec = program.getApplicationSpecification();
     Preconditions.checkNotNull(appSpec, "Missing application specification for %s", program.getId());
@@ -73,11 +74,12 @@ public class DistributedSparkProgramRunner extends AbstractDistributedProgramRun
 
     // Localize the spark-assembly jar
     File sparkAssemblyJar = SparkUtils.locateSparkAssemblyJar();
-    localizeFiles.put(sparkAssemblyJar.getName(), sparkAssemblyJar);
+    localizeResources.put(sparkAssemblyJar.getName(), new LocalizeResource(sparkAssemblyJar));
 
     LOG.info("Launching Spark program: {}", program.getId());
-    TwillController controller = launcher.launch(new SparkTwillApplication(program, spec, localizeFiles, eventHandler),
-                                                 sparkAssemblyJar.getName());
+    TwillController controller = launcher.launch(
+      new SparkTwillApplication(program, spec, localizeResources, eventHandler),
+      sparkAssemblyJar.getName());
 
     RunId runId = RunIds.fromString(options.getArguments().getOption(ProgramOptionConstants.RUN_ID));
     return new SparkTwillProgramController(program.getName(), controller, runId).startListen();

@@ -30,6 +30,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -88,18 +89,13 @@ public class BasicWorkflowToken implements WorkflowToken, Serializable {
           }
 
           // Iterate over the list of NodeValue corresponding to the current key.
-          // Only add those NodeValue to the merged token which already do not exist.
+          // Only add those NodeValue to the merged token which do not exist already.
+
+          Set<NodeValue> thisNodeValueSet =
+            new HashSet<>(thisTokenValueMapForScope.get(otherTokenValueMapForScopeEntry.getKey()));
 
           for (NodeValue otherNodeValue : otherTokenValueMapForScopeEntry.getValue()) {
-            boolean otherNodeValueExist = false;
-            for (NodeValue thisNodeValue :
-              thisTokenValueMapForScope.get(otherTokenValueMapForScopeEntry.getKey())) {
-              if (thisNodeValue.equals(otherNodeValue)) {
-                otherNodeValueExist = true;
-                break;
-              }
-            }
-            if (!otherNodeValueExist) {
+            if (!thisNodeValueSet.contains(otherNodeValue)) {
               thisTokenValueMapForScope.get(otherTokenValueMapForScopeEntry.getKey()).add(otherNodeValue);
             }
           }

@@ -48,7 +48,7 @@ public class DeleteAdapterCommand extends AbstractAuthCommand {
                                          arguments.get(ArgumentName.ADAPTER.toString()));
 
     adapterClient.delete(adapter);
-    output.printf("Successfully deleted %s\n", adapter);
+    output.printf("Successfully deleted adapter '%s'\n", adapter.getId());
   }
 
   @Override

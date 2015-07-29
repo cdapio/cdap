@@ -16,13 +16,7 @@
 
 package co.cask.cdap.examples.loganalysis;
 
-import co.cask.cdap.api.common.RuntimeArguments;
-import co.cask.cdap.api.common.Scope;
-import co.cask.cdap.api.dataset.lib.TimePartitionDetail;
-import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
-import co.cask.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
 import co.cask.cdap.test.ApplicationManager;
-import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.MapReduceManager;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.SparkManager;
@@ -32,24 +26,25 @@ import co.cask.cdap.test.TestConfiguration;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
-import com.google.common.base.Charsets;
-import org.apache.twill.filesystem.Location;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 
 /**
  * Unit test for {@link LogAnalysisApp}
  */
 public class LogAnalysisAppTest extends TestBase {
+
+  private static final Gson GSON = new Gson();
   private static final String LOG_1 = "127.0.0.1 - - [21/Jul/2014:9:55:27 -0800] \"GET /home.html HTTP/1.1\" 200 2048";
   private static final String LOG_2 = "127.0.1.1 - - [21/Jul/2014:9:55:27 -0800] \"GET /home.html HTTP/1.1\" 400 2048";
   private static final String LOG_3 = "127.0.0.1 - - [21/Jul/2014:9:55:27 -0800] \"GET /index.html HTTP/1.1\" 200 2048";
@@ -57,7 +52,7 @@ public class LogAnalysisAppTest extends TestBase {
   private static final String TOTAL_HITS_VALUE = "2";
   private static final String TOTAL_RESPONSE_VALUE = "2";
   private static final String RESPONSE_CODE = "200";
-  private static final String TPFS_RESULT = "127.0.0.1:2";
+  private static final Map<String, Integer> TPFS_RESULT = ImmutableMap.of("127.0.1.1", 1, "127.0.0.1", 2);
 
   @ClassRule
   public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", false);
@@ -67,24 +62,15 @@ public class LogAnalysisAppTest extends TestBase {
     // Deploy the App
     ApplicationManager appManager = deployApplication(LogAnalysisApp.class);
 
-    long inputTime = System.currentTimeMillis();
-    final long outputTime = inputTime + TimeUnit.HOURS.toMillis(1);
-
     // Send a stream events to the Stream
     StreamManager streamManager = getStreamManager(LogAnalysisApp.LOG_STREAM);
     streamManager.send(LOG_1);
     streamManager.send(LOG_2);
     streamManager.send(LOG_3);
 
-    Map<String, String> outputArgs = new HashMap<>();
-    TimePartitionedFileSetArguments.setOutputPartitionTime(outputArgs, outputTime);
-    Map<String, String> args = new HashMap<>();
-    args.putAll(RuntimeArguments.addScope(Scope.DATASET, LogAnalysisApp.IP_COUNT_STORE, outputArgs));
-    args.put("output", LogAnalysisApp.IP_COUNT_STORE);
-
     // run the spark program
     SparkManager sparkManager = appManager.getSparkManager(
-      LogAnalysisApp.ResponseCounterSpark.class.getSimpleName()).start(args);
+      LogAnalysisApp.ResponseCounterSpark.class.getSimpleName()).start();
     sparkManager.waitForFinish(60, TimeUnit.SECONDS);
 
     // run the mapreduce job
@@ -95,6 +81,8 @@ public class LogAnalysisAppTest extends TestBase {
     ServiceManager hitCounterServiceManager = getServiceManager(appManager, LogAnalysisApp.HIT_COUNTER_SERVICE);
     ServiceManager responseCounterServiceManager = getServiceManager(appManager,
                                                                      LogAnalysisApp.RESPONSE_COUNTER_SERVICE);
+    ServiceManager requestCounterServiceManager = getServiceManager(appManager,
+                                                                    LogAnalysisApp.REQUEST_COUNTER_SERVICE);
 
     //Query for hit counts and verify it
     URL totalHitsURL = new URL(hitCounterServiceManager.getServiceURL(15, TimeUnit.SECONDS),
@@ -114,26 +102,31 @@ public class LogAnalysisAppTest extends TestBase {
     response = HttpRequests.execute(request);
     Assert.assertEquals(TOTAL_RESPONSE_VALUE, response.getResponseBodyAsString());
 
-    // validate the output by reading directly from the tpfs
-    DataSetManager<TimePartitionedFileSet> dataSetManager = getDataset(LogAnalysisApp.IP_COUNT_STORE);
-    TimePartitionedFileSet tpfs = dataSetManager.get();
-    TimePartitionDetail partitionDetail = tpfs.getPartitionByTime(outputTime);
+    // query to get partitions in the request count tpfs
+    URL requestCountFilsetsURL = new URL(requestCounterServiceManager.getServiceURL(15, TimeUnit.SECONDS),
+                                         LogAnalysisApp.RequestCounterHandler.REQUEST_COUNTER_PARTITIONS_PATH);
+    request = HttpRequest.get(requestCountFilsetsURL).build();
+    response = HttpRequests.execute(request);
+    TreeSet<String> partitions = GSON.fromJson(response.getResponseBodyAsString(),
+                                           new TypeToken<TreeSet<String>>() {
+                                           }.getType());
+    Assert.assertEquals(1, partitions.size());
+    String partition = partitions.iterator().next();
 
-    Assert.assertNotNull(partitionDetail);
-    Location location = partitionDetail.getLocation();
+    //Query for the contents of the files in this partition and verify
+    URL requestFilesetContentURL = new URL(requestCounterServiceManager.getServiceURL(15, TimeUnit.SECONDS),
+                                           LogAnalysisApp.RequestCounterHandler.REQUEST_FILE_CONTENT_PATH);
 
-    // find the part file that has the actual results
-    Assert.assertTrue(location.isDirectory());
-    for (Location file : location.list()) {
-      if (file.getName().startsWith("part")) {
-        location = file;
-      }
-    }
-    try (BufferedReader reader = new BufferedReader(new InputStreamReader(location.getInputStream(), Charsets.UTF_8))) {
-      Assert.assertEquals(TPFS_RESULT, reader.readLine());
-    }
+    response = HttpRequests.execute(HttpRequest.post(requestFilesetContentURL)
+                                      .withBody("{\"" +
+                                                  LogAnalysisApp.RequestCounterHandler.REQUEST_FILE_PATH_HANDLER_KEY +
+                                                  "\":\"" + partition + "\"}")
+                                      .build());
+    Assert.assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+    Map<String, Integer> responseMap = GSON.fromJson(response.getResponseBodyAsString(),
+                                                     new TypeToken<Map<String, Integer>>() { }.getType());
+    Assert.assertTrue(responseMap.equals(TPFS_RESULT));
   }
-
 
   private ServiceManager getServiceManager(ApplicationManager appManager, String serviceName)
     throws InterruptedException {

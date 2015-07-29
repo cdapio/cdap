@@ -59,7 +59,7 @@ import javax.naming.Context;
  */
 @Plugin(type = "source")
 @Name("JMS")
-@Description("JMS Realtime Source - Emits a record with a field 'message' of string type")
+@Description("JMS Realtime Source: Emits a record with a field 'message' of type String.")
 public class JmsSource extends RealtimeSource<StructuredRecord> {
   private static final Logger LOG = LoggerFactory.getLogger(JmsSource.class);
 

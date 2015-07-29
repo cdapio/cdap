@@ -58,7 +58,7 @@ public class SetProgramRuntimeArgsCommand extends AbstractAuthCommand {
     Map<String, String> runtimeArgs = ArgumentParser.parseMap(runtimeArgsString);
     programClient.setRuntimeArgs(programId, runtimeArgs);
     output.printf("Successfully set runtime args of %s '%s' of application '%s' to '%s'\n",
-                  elementType.getTitleName(), programId, appId, runtimeArgsString);
+                  elementType.getTitleName(), programName, appId, runtimeArgsString);
   }
 
   @Override

@@ -69,7 +69,7 @@ public class SetStreamPropertiesCommand extends AbstractAuthCommand {
     }
 
     streamClient.setStreamProperties(streamId, streamProperties);
-    output.printf("Successfully set properties of stream '%s'\n", streamId);
+    output.printf("Successfully set properties of stream '%s'\n", streamId.getId());
   }
 
   @Override

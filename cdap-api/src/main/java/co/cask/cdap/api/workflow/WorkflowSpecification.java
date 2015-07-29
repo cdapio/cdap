@@ -60,23 +60,20 @@ public final class WorkflowSpecification implements ProgramSpecification, Proper
       WorkflowNode node = nodes.poll();
       nodeIdMap.put(node.getNodeId(), node);
       switch (node.getType()) {
-        case ACTION: {
+        case ACTION:
           // do nothing. node already added to the nodeIdMap
           break;
-        }
-        case FORK: {
+        case FORK:
           WorkflowForkNode forkNode = (WorkflowForkNode) node;
           for (List<WorkflowNode> branch : forkNode.getBranches()) {
             nodes.addAll(branch);
           }
           break;
-        }
-        case CONDITION: {
+        case CONDITION:
           WorkflowConditionNode conditionNode = (WorkflowConditionNode) node;
           nodes.addAll(conditionNode.getIfBranch());
           nodes.addAll(conditionNode.getElseBranch());
           break;
-        }
         default:
           break;
       }

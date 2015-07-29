@@ -44,9 +44,9 @@ import javax.annotation.Nullable;
 public class TestSource extends RealtimeSource<StructuredRecord> {
   private static final Logger LOG = LoggerFactory.getLogger(TestSource.class);
   private static final String COUNT = "count";
-  private static final String TYPE_DESCRIPTION = "The type of data to be generated. Currently, only two types" +
-    " - 'stream' and 'table' are supported. By default, it generates a structured record containing one field - " +
-    "'data' of type String with value 'Hello'";
+  private static final String TYPE_DESCRIPTION = "The type of data to be generated. Currently, only two types " +
+    "('stream' and 'table') are supported. By default, it generates a structured record containing one field " +
+    "named 'data' of type String with the value 'Hello'.";
   public static final String PROPERTY_TYPE = "type";
   public static final String STREAM_TYPE = "stream";
   public static final String TABLE_TYPE = "table";
@@ -78,12 +78,12 @@ public class TestSource extends RealtimeSource<StructuredRecord> {
     }
 
     LOG.info("Emitting data! {}", prevCount);
-    if (config.type == null) {
-      writeDefaultRecords(writer);
-    } else if (STREAM_TYPE.equals(config.type)) {
+    if (STREAM_TYPE.equalsIgnoreCase(config.type)) {
       writeRecordsForStreamConsumption(writer);
-    } else if (TABLE_TYPE.equals(config.type)) {
+    } else if (TABLE_TYPE.equalsIgnoreCase(config.type)) {
       writeRecordsForTableConsumption(writer);
+    } else {
+      writeDefaultRecords(writer);
     }
     return currentState;
   }

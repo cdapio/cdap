@@ -24,7 +24,7 @@ import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.app.runtime.adapter.PluginClassLoader;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
-import co.cask.cdap.internal.app.runtime.batch.distributed.MRContainerLauncher;
+import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerLauncher;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.templates.AdapterDefinition;
 import co.cask.cdap.templates.AdapterPlugin;
@@ -76,7 +76,7 @@ public class MapReduceClassLoader extends CombineClassLoader {
 
   /**
    * Constructor. It creates classloader for MapReduce from information
-   * gathered through {@link MapReduceContextConfig}. This method is called by {@link MRContainerLauncher}.
+   * gathered through {@link MapReduceContextConfig}. This method is called by {@link MapReduceContainerLauncher}.
    */
   @SuppressWarnings("unused")
   public MapReduceClassLoader() {

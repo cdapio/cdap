@@ -69,7 +69,7 @@ public class SetStreamFormatCommand extends AbstractAuthCommand {
                                                              formatSpecification,
                                                              currentProperties.getNotificationThresholdMB());
     streamClient.setStreamProperties(streamId, streamProperties);
-    output.printf("Successfully set format of %s\n", streamId);
+    output.printf("Successfully set format of stream '%s'\n", streamId.getId());
   }
 
   private Schema getSchema(Arguments arguments) throws IOException {

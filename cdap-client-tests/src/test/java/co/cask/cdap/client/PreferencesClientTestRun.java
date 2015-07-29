@@ -33,15 +33,19 @@ import co.cask.common.http.HttpResponse;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 
@@ -53,6 +57,7 @@ public class PreferencesClientTestRun extends ClientTestBase {
 
   private static final Gson GSON = new Gson();
   private static final Id.Application FAKE_APP_ID = Id.Application.from(Id.Namespace.DEFAULT, FakeApp.NAME);
+  private static final Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
   private PreferencesClient client;
   private ApplicationClient appClient;
@@ -93,10 +98,10 @@ public class PreferencesClientTestRun extends ClientTestBase {
       propMap.putAll(setMap);
 
       URL serviceURL = new URL(serviceClient.getServiceURL(service), AppReturnsArgs.ENDPOINT);
-      HttpRequest request = HttpRequest.builder(HttpMethod.GET, serviceURL).build();
-      HttpResponse response = HttpRequests.execute(request);
+      HttpResponse response = getServiceResponse(serviceURL);
       assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-      assertEquals(GSON.toJson(propMap), response.getResponseBodyAsString());
+      Map<String, String> responseMap = GSON.fromJson(response.getResponseBodyAsString(), STRING_MAP_TYPE);
+      assertEquals(propMap, responseMap);
       programClient.stop(service);
       assertProgramStopped(programClient, service);
 
@@ -107,10 +112,9 @@ public class PreferencesClientTestRun extends ClientTestBase {
       propMap.remove("run");
 
       serviceURL = new URL(serviceClient.getServiceURL(service), AppReturnsArgs.ENDPOINT);
-      request = HttpRequest.builder(HttpMethod.GET, serviceURL).build();
-      response = HttpRequests.execute(request);
-      assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-      assertEquals(GSON.toJson(propMap), response.getResponseBodyAsString());
+      response = getServiceResponse(serviceURL);
+      responseMap = GSON.fromJson(response.getResponseBodyAsString(), STRING_MAP_TYPE);
+      assertEquals(propMap, responseMap);
       programClient.stop(service);
       assertProgramStopped(programClient, service);
 
@@ -119,15 +123,29 @@ public class PreferencesClientTestRun extends ClientTestBase {
       programClient.start(service);
       assertProgramRunning(programClient, service);
       serviceURL = new URL(serviceClient.getServiceURL(service), AppReturnsArgs.ENDPOINT);
-      request = HttpRequest.builder(HttpMethod.GET, serviceURL).build();
-      response = HttpRequests.execute(request);
+      response = getServiceResponse(serviceURL);
       assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-      assertEquals(GSON.toJson(propMap), response.getResponseBodyAsString());
+      responseMap = GSON.fromJson(response.getResponseBodyAsString(), STRING_MAP_TYPE);
+      assertEquals(propMap, responseMap);
     } finally {
       programClient.stop(service);
       assertProgramStopped(programClient, service);
       appClient.delete(app);
     }
+  }
+
+  private HttpResponse getServiceResponse(URL serviceURL) throws IOException, InterruptedException {
+    int iterations = 0;
+    HttpResponse response;
+    do {
+      response = HttpRequests.execute(HttpRequest.builder(HttpMethod.GET, serviceURL).build());
+      if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
+        return response;
+      }
+      TimeUnit.MILLISECONDS.sleep(50);
+      iterations++;
+    } while (iterations <= 100);
+    return response;
   }
 
   @Test

@@ -47,7 +47,7 @@ public class StopAdapterCommand extends AbstractAuthCommand {
     Id.Adapter adapter = Id.Adapter.from(cliConfig.getCurrentNamespace(),
                                          arguments.get(ArgumentName.ADAPTER.toString()));
     adapterClient.stop(adapter);
-    output.printf("Successfully stopped %s\n", adapter);
+    output.printf("Successfully stopped adapter '%s'\n", adapter.getId());
   }
 
   @Override

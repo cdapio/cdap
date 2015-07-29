@@ -22,12 +22,11 @@ angular.module(PKG.name + '.feature.admin')
         }
       })
         .then(
-          function success() {
+          function success(res) {
             $scope.isSaving = false;
             $modalInstance.close();
             $alert({
-              title: 'Success!',
-              content: 'Namespace Created!',
+              content: res,
               type: 'success'
             });
 

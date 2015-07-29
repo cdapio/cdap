@@ -62,7 +62,7 @@ import java.util.List;
 public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> {
   private static final Logger LOG = LoggerFactory.getLogger(DBSink.class);
 
-  private static final String COLUMNS_DESCRIPTION = "Comma-separated list of columns to export to in the specified " +
+  private static final String COLUMNS_DESCRIPTION = "Comma-separated list of columns to export into the specified " +
     "table.";
 
   private final DBSinkConfig dbSinkConfig;
@@ -90,12 +90,15 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
                                                                                 dbSinkConfig.jdbcPluginName,
                                                                                 getJDBCPluginId(),
                                                                                 PluginProperties.builder().build());
-    Preconditions.checkArgument(jdbcDriverClass != null, "JDBC Driver class must be found.");
+    Preconditions.checkArgument(
+      jdbcDriverClass != null, "Unable to load JDBC Driver class for plugin name '%s'. Please make sure that the " +
+        "plugin '%s' of type '%s' containing the driver has been installed correctly.", dbSinkConfig.jdbcPluginName,
+      dbSinkConfig.jdbcPluginName, dbSinkConfig.jdbcPluginType);
   }
 
   @Override
   public void prepareRun(BatchSinkContext context) {
-    LOG.debug("tableName = {}; pluginType = {}; pluginName = {}; connectionString = {}; importQuery = {}; columns = {}",
+    LOG.debug("tableName = {}; pluginType = {}; pluginName = {}; connectionString = {}; columns = {}",
               dbSinkConfig.tableName, dbSinkConfig.jdbcPluginType, dbSinkConfig.jdbcPluginName,
               dbSinkConfig.connectionString, dbSinkConfig.columns);
 
@@ -173,7 +176,7 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
       DriverManager.getDriver(dbSinkConfig.connectionString);
     } catch (SQLException e) {
       // Driver not found. We will try to register it with the DriverManager.
-      LOG.debug("Plugin Type: {} and Plugin Name: {}; Driver Class: {} not found. Registering JDBC driver via shim {} ",
+      LOG.debug("Plugin Type: {} and Plugin Name: {}; Driver Class: {} not found; registering JDBC driver via shim {} ",
                 dbSinkConfig.jdbcPluginType, dbSinkConfig.jdbcPluginName, driverClass.getName(),
                 JDBCDriverShim.class.getName());
       driverShim = new JDBCDriverShim(driverClass.newInstance());

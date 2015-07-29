@@ -606,7 +606,7 @@ function genericRender(scope, filter, location) {
     var initialScale = 1.1;
     var svgWidth = svg.node().getBoundingClientRect().width;
     if (svgWidth - g.graph().width <= 0) {
-      scope.currentScale = svg.width()/g.graph().width;
+      scope.currentScale = svgWidth / g.graph().width;
       scope.translateX = 0;
       scope.translateY = 0;
 

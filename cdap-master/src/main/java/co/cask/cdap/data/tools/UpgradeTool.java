@@ -101,7 +101,6 @@ public class UpgradeTool {
               "  The upgrade tool upgrades the following: \n" +
               "  1. User Datasets\n" +
               "      - Upgrades the coprocessor jars for tables\n" +
-              "      - Upgrades the base paths for file sets\n" +
               "      - Migrates the metadata for PartitionedFileSets\n" +
               "  2. System Datasets\n" +
               "  3. UsageRegistry Dataset Type\n" +
@@ -110,7 +109,7 @@ public class UpgradeTool {
 
     private final String description;
 
-    private Action(String description) {
+    Action(String description) {
       this.description = description;
     }
 
