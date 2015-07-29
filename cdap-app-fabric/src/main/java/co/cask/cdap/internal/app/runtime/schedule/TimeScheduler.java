@@ -94,7 +94,7 @@ final class TimeScheduler implements Scheduler {
       throw new SchedulerException(e);
     }
   }
-
+  
   private void initNewPausedTriggersGroup() throws org.quartz.SchedulerException {
     // if the dummy job does not already exists in the TimeScheduler#NEW_PAUSED_TRIGGERS_GROUP then create a dummy job
     // which will create the TimeScheduler#NEW_PAUSED_TRIGGERS_GROUP

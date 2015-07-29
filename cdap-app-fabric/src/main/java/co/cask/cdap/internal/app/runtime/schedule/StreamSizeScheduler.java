@@ -140,7 +140,7 @@ public class StreamSizeScheduler implements Scheduler {
     initializeScheduleStore();
   }
 
-  void lazyStart() throws SchedulerException {
+  void start() throws SchedulerException {
     schedulerStarted = true;
   }
 
@@ -654,11 +654,7 @@ public class StreamSizeScheduler implements Scheduler {
 
         // We only modify the scheduleTasks if the persistence in startSchedule() did not throw any exception
         scheduleTasks.put(scheduleId, newTask);
-
-        activeTasks.incrementAndGet();
       }
-
-      sendPollingInfoToActiveTasks(streamSize);
     }
 
     /**
@@ -934,7 +930,7 @@ public class StreamSizeScheduler implements Scheduler {
       this.basePollTs = basePollTs;
       this.lastRunSize = -1;
       this.lastRunTs = -1;
-      this.active.set(true);
+//      this.active.set(true);
 
       try {
         scheduleStore.persist(programId, programType, streamSizeSchedule, properties,

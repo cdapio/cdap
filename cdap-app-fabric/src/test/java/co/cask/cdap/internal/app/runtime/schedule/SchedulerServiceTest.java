@@ -172,10 +172,7 @@ public class SchedulerServiceTest {
     ApplicationSpecification applicationSpecification = store.getApplication(appId);
 
     // create schedule with ignore lazy start so that the scheduler gets started when this schedule is created
-    schedulerService.schedule(program, programType, ImmutableList.of(timeSchedule1), ImmutableMap.of(
-      // hack for scheduler weirdness in unit tests, remove once CDAP-2281 is done
-      Constants.Scheduler.IGNORE_LAZY_START, String.valueOf(true)
-    ));
+    schedulerService.schedule(program, programType, ImmutableList.of(timeSchedule1));
     List<String> scheduleIds = schedulerService.getScheduleIds(program, programType);
     applicationSpecification = createNewSpecification(applicationSpecification, program, programType, timeSchedule1);
     store.addApplication(appId, applicationSpecification, locationFactory.create("app"));
