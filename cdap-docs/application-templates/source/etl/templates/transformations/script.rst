@@ -8,22 +8,22 @@ Transformations: Script
 
 .. rubric:: Description
 
-Executes user-provided Javascript in order to transform one record into another.
+Executes user-provided Javascript that transforms one record into another.
 Input records are converted into JSON objects which can be directly accessed in
-Javascript. The transform expects to receive a JSON object as output, which it will
+Javascript. The transform expects to receive a JSON object as input, which it will
 convert back to a record in Java to pass to downstream transforms and sinks. 
 
 .. rubric:: Use Case
 
 The Script transform is used when other transforms cannot meet your needs.
 For example, you may want to multiply a field by 1024 and rename it from 'gigabytes'
-to 'megabytes'. Or you may want to convert a timestamp into a human-readable date string.
+to 'megabytes'. Or you might want to convert a timestamp into a human-readable date string.
 
 .. rubric:: Properties
 
 **script:** Javascript defining how to transform one record into another. The script must
 implement a function called 'transform', which takes as input a JSON object that represents
-the input record, and returns a JSON object that represents the transformed input.
+the input record, and returns a JSON object that represents the transformed record.
 
 **schema:** The schema of output objects. If no schema is given, it is assumed that the output
 schema is the same as the input schema.
@@ -43,13 +43,21 @@ schema is the same as the input schema.
                      'total': input.subtotal + tax
                    };
                  }",
-      "schema": "{\"type\":\"record\",\"name\":\"expanded\",\"fields\":[{\"name\":\"subtotal\",\"type\":\"double\"},{\"name\":\"tax\",\"type\":\"double\"},{\"name\":\"total\",\"type\":\"double\"}]}"
+      "schema": "{
+        \"type\":\"record\",
+        \"name\":\"expanded\",
+        \"fields\":[
+          {\"name\":\"subtotal\",\"type\":\"double\"},
+          {\"name\":\"tax\",\"type\":\"double\"},
+          {\"name\":\"total\",\"type\":\"double\"}
+        ]
+      }"
     }
   }
 
-The takes records that have a 'subtotal' field, calculates 'tax' and 'total' fields based on the
-subtotal, then returns a record containing those three fields.
-For example, if it gets an input record::
+The transform takes records that have a 'subtotal' field, calculates 'tax' and 'total' fields based on the
+subtotal, and then returns a record containing those three fields.
+For example, if it receives as an input record::
 
   +=========================================================+
   | field name | type                | value                |
@@ -63,7 +71,7 @@ It will transform it to an output record::
   +=========================================================+
   | field name | type                | value                |
   +=========================================================+
-  | subtotal   | string              | 100.0                |
+  | subtotal   | double              | 100.0                |
   | tax        | double              | 9.75                 |
   | total      | double              | 109.75               |
   +=========================================================+

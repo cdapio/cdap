@@ -10,9 +10,9 @@ Sources: Batch: Stream
 
 Reads a batch of data from a stream. The source will read a configurable chunk of data from
 a stream, based on the logical start time of the workflow it runs in and the configured
-duration and delay of the source. If the format and schema of the stream is known,
-they can be given as well. The source will return a record for each stream event it reads.
-Records will always contain 'ts' field of type 'long' that contains the timestamp of the event,
+duration and delay of the source. If the format and schema of the stream are known,
+they can be specified as well. The source will return a record for each stream event it reads.
+Records will always contain a 'ts' field of type 'long' that contains the timestamp of the event,
 as well as a 'headers' field of type 'map<string, string>' that contains the headers for
 the event. Other fields output records are determined by the configured format and schema.
   
@@ -64,13 +64,14 @@ the schema.
     }
   }
 
-The example reads from a stream named 'accesslogs'. Since the 'delay' property is set to '5m',
-the source will read data up to five minutes before the logical start time of the run.
-Since the 'duration' property is set to '10m', the source will read ten minutes worth of data.
-Since the end time is five minutes before the logical start time of the run, the start time will
-be 15 minutes before the logical start time of the run. For example, if the pipeline was scheduled
-to run at 10:00am, the source will read data from 9:45am to 9:55am. The stream contents will be
-parsed as 'clf' (Combined Log Format), which will output records with this schema::
+This example reads from a stream named 'accesslogs'. With the 'duration' property set to
+'10m', the source will read ten minutes worth of data. As the 'delay' property is set to
+'5m', the source will read data up to five minutes before the logical start time of the
+run. The 'end time' of the data will then be five minutes before that logical start time. 
+Combining the duration and the delay, the 'start time' of the data will be 15 minutes
+before the logical start time of the run. For example, if the pipeline was scheduled to
+run at 10:00am, the source will read data from 9:45am to 9:55am. The stream contents will
+be parsed as 'clf' (Combined Log Format), which will output records with this schema::
 
   +======================================+
   | field name     | type                |

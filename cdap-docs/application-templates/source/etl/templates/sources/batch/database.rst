@@ -8,11 +8,14 @@ Sources: Batch: Database
 
 .. rubric:: Description
 
-Batch source for a Database
+Reads from a database using a configurable SQL query.
+Outputs one record for each row returned by the query.
 
 .. rubric:: Use Case
 
-TODO: Fill me out
+The source is used whenever you need to read from a database. For example, you may want
+to create daily snapshots of a database table by using this source and writing to
+a TimePartitionedFileSet.
 
 .. rubric:: Properties
 
@@ -32,6 +35,53 @@ specified table. Examples::
 *Note:* Please include the same WHERE clauses in this query as the ones used in the import
 query to reflect an accurate number of records to import.
 
+**connectionString:** JDBC connection string including database name.
+
+**tableName:** Table name to read from.
+
+**user:** Use to connect to the specified database as. Required for databases that need
+authentication. Optional for databases that do not require authentication.
+
+**password:** Password to use to connect to the specified database. Required for databases
+that need authentication. Optional for databases that do not require authentication.
+
+**jdbcPluginName:** Name of the JDBC plugin to use. This is the value of the 'name' key
+defined in the JSON file for the JDBC plugin.
+
+**jdbcPluginType:** Type of the JDBC plugin to use. This is the value of the 'type' key
+defined in the JSON file for the JDBC plugin. Defaults to 'jdbc'.
+
 .. rubric:: Example
 
-TODO: Fill me out
+::
+
+  {
+    "name": "Database",
+    "properties": {
+      "importQuery": "select id,name,email,phone from users",
+      "countQuery": "select count(*) from users",
+      "connectionString": "jdbc:postgresql://localhost:5432/prod",
+      "tableName": "users",
+      "user": "postgres",
+      "password": "",
+      "jdbcPluginName": "postgres",
+      "jdbcPluginType": "jdbc"
+    }
+  }
+
+This example connects to a database using the specified connectionString, which means
+it will connect to the 'prod' database of a postgres instance running on localhost.
+It will run the 'importQuery' against the 'users' table to read four columns from the table.
+The column types will be used to derive the record field types output by the source.
+For example, if the 'id' column is a primary key of type int and the other columns are
+non-nullable varchars, output records will have this schema::
+
+  +======================================+
+  | field name     | type                |
+  +======================================+
+  | id             | int                 |
+  | name           | string              |
+  | email          | string              |
+  | phone          | string              |
+  +======================================+
+

@@ -37,7 +37,7 @@ you may want to periodically copy portions of a Table into a KeyValueTable.
     }
   }
 
-The example writes to a KeyValueTable named 'items'. It takes records with the following schema as input::
+This example writes to a KeyValueTable named 'items'. It takes records with the following schema as input::
 
   +======================================+
   | field name     | type                |

@@ -35,12 +35,20 @@ key when writing to the table.
     "name": "Table",
     "properties": {
       "name": "users",
-      "schema": "{\"type\":\"record\",\"name\":\"user\",\"fields\":[{\"name\":\"id\",\"type\":\"long\"},{\"name\":\"name\",\"type\":\"string\"},{\"name\":\"birthyear\",\"type\":\"int\"}]}",
+      "schema": "{
+        \"type\":\"record\",
+        \"name\":\"user\",
+        \"fields\":[
+          {\"name\":\"id\",\"type\":\"long\"},
+          {\"name\":\"name\",\"type\":\"string\"},
+          {\"name\":\"birthyear\",\"type\":\"int\"}
+        ]
+      }",
       "schema.row.field": "id"
     }
   }
 
-The example writes to a Table named 'users'. It takes records with the following schema as input::
+This example writes to a Table named 'users'. It takes records with the following schema as input::
 
   +======================================+
   | field name     | type                |

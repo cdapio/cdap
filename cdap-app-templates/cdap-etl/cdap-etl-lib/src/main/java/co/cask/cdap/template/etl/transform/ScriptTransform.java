@@ -45,7 +45,7 @@ import javax.script.ScriptException;
  */
 @Plugin(type = "transform")
 @Name("Script")
-@Description("Executes user-provided Javascript in order to transform one record into another.")
+@Description("Executes user-provided Javascript that transforms one record into another.")
 public class ScriptTransform extends Transform<StructuredRecord, StructuredRecord> {
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(StructuredRecord.class, new StructuredRecordSerializer())

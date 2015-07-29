@@ -31,7 +31,7 @@ you may want to periodically dump the contents of a KeyValueTable to a Table.
     }
   }
 
-The example reads from a KeyValueTable named 'items'. It outputs records with the following schema::
+This example reads from a KeyValueTable named 'items'. It outputs records with the following schema::
 
   +====================+
   | field name | type  |

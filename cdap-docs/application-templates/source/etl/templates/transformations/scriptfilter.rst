@@ -17,8 +17,8 @@ For example, you may want to filter out records that have null values for an imp
 
 .. rubric:: Properties
 
-**script:** Javascript that must implement a function 'shouldFilter' that takes a JSON object
-representation of the input record, and returns true if the input record should be
+**script:** Javascript that implements a function 'shouldFilter', taking a JSON object
+representation of the input record, and returning true if the input record should be
 filtered and false if not.
 
 .. rubric:: Example
@@ -32,4 +32,4 @@ filtered and false if not.
     }
   }
 
-The example filters out any records whose 'count' field contains a value greater than 100.
+This example filters out any records whose 'count' field contains a value greater than 100.

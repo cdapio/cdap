@@ -10,14 +10,14 @@ Transformations: StructuredRecordToGenericRecord
 
 Transforms a StructuredRecord into an Avro GenericRecord. StructuredRecord is
 the Java class that all built-in plugins work with. Most StructuredRecords can be
-directly converted to a GenericRecord. The exception is if the StructuredRecord contains
+directly converted to a GenericRecord. An exception is if the StructuredRecord contains
 a map field with keys that are not of type 'string'.
 
 .. rubric:: Use Case
 
-The transform is used whenever you need to use an Avro GenericRecord. For example, if
-you have a custom sink that writes GenericRecords, you will use this transform
-right before the sink. 
+The transform is used whenever you need to use an Avro GenericRecord.
+For example, if you have a custom sink that accepts as input GenericRecords, you will use this transform
+right before the sink.
 
 .. rubric:: Properties
 

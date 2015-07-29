@@ -13,7 +13,7 @@ Operations are performed in a single step and are not applied in order on top of
 For example, suppose the transform is configured to drop field 'B' and rename field 'A' to 'B'.
 If the transform receives an input record with field 'A' assigned a value of 10, and field 'B'
 assigned a value of 20, input field 'B' will be dropped and input field 'A' will be renamed
-to 'B'. Thus the output record will contain a single field named 'B' assigned a value of 10.  
+to 'B'. The output record will then contain a single field named 'B' with an assigned value of 10.  
 
 .. rubric:: Use Case
 
@@ -26,10 +26,10 @@ data source.
 
 .. rubric:: Properties
 
-**drop:** Comma separated list of fields to drop. For example: 'field1,field2,field3'.
+**drop:** Comma-separated list of fields to drop. For example: 'field1,field2,field3'.
 
-**rename:** List of fields to rename. This is a comma separated list of key-value pairs,
-where each pair is separated by a colon and specifies the input name and the output name.
+**rename:** List of fields to rename. This is a comma-separated list of key-value pairs,
+where each pair is separated by a colon and specifies the input and output names.
 
 For example: 'datestr:date,timestamp:ts' specifies that the 'datestr' field should be
 renamed to 'date' and the 'timestamp' field should be renamed to 'ts'.
@@ -59,8 +59,8 @@ converted to an int.
     }
   }
  
-The example drops the 'ts' and 'headers' fields. It also renames the 'cost' field 
-to 'price', and changes its type to a double. For example, if the transform receives an
+This example drops the 'ts' and 'headers' fields. It also renames the 'cost' field 
+to 'price', and changes its type to a double. For example, if the transform receives the
 input record::
 
   +=========================================================+
@@ -72,7 +72,7 @@ input record::
   | cost       | float               | 8.88                 |
   +=========================================================+
 
-It will transform it to an output record::
+It will transform it to this output record::
 
   +=========================================================+
   | field name | type                | value                |

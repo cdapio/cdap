@@ -8,12 +8,12 @@ Sinks: Real-time: Table
 
 .. rubric:: Description
 
-Realtime Sink for CDAP Tables. Writes records to a Table with one record field mapping
+Writes records to a Table with one record field mapping
 to the Table rowkey, and all other record fields mapping to Table columns.
 
 .. rubric:: Use Case
 
-The sink is used whenever you need to write to a Table in realtime. For example,
+The sink is used whenever you need to write to a Table in real-time. For example,
 you may want to read from kafka and write to a Table.
 
 .. rubric:: Properties
@@ -35,7 +35,15 @@ key when writing to the table.
     "name": "Table",
     "properties": {
       "name": "users",
-      "schema": "{\"type\":\"record\",\"name\":\"user\",\"fields\":[{\"name\":\"id\",\"type\":\"long\"},{\"name\":\"name\",\"type\":\"string\"},{\"name\":\"birthyear\",\"type\":\"int\"}]}",
+      "schema": "{
+        \"type\":\"record\",
+        \"name\":\"user\",
+        \"fields\":[
+          {\"name\":\"id\",\"type\":\"long\"},
+          {\"name\":\"name\",\"type\":\"string\"},
+          {\"name\":\"birthyear\",\"type\":\"int\"}
+        ]
+      }",
       "schema.row.field": "id"
     }
   }

@@ -8,19 +8,22 @@ Sources: Batch: TPFSAvro
 
 .. rubric:: Description
 
-Avro Source with Time Partitioned File Dataset
+Reads from a TimePartitionedFileSet whose data is in Avro format.
 
 .. rubric:: Use Case
 
-TODO: Fill me out
+The source is used when you need to read partitions of a TimePartitionedFileSet.
+For example, suppose there is an application that ingests data by writing to a TimePartitionedFileSet,
+where arrival time of the data is used as the partition key. You may want to create a pipeline that then
+reads newly arrived files, performs some data validation and cleansing, then writes to a Table.
 
 .. rubric:: Properties 
 
-**name:** Name of the Time Partitioned FileSet Dataset to which the records have to be read from.
+**name:** Name of the TimePartitionedFileSet from which the records are to be read from.
 
-**schema:** The Avro schema of the record being read from the Source as a JSON Object.
+**schema:** The Avro schema of the record being read from the source as a JSON Object.
 
-**basePath:** Base path for the Time Partitioned FileSet. Defaults to the name of the
+**basePath:** Base path for the TimePartitionedFileSet. Defaults to the name of the
 dataset.
 
 **duration:** Size of the time window to read with each run of the pipeline. The format is
@@ -30,9 +33,49 @@ expected to be a number followed by an 's', 'm', 'h', or 'd' specifying the time
 
 **delay:** Optional delay for reading from TPFS source. The value must be of the same
 format as the duration value. For example, a duration of '5m' and a delay of '10m' means
-each run of the pipeline will read events from 15 minutes before its logical start time to
-10 minutes before its logical start time. The default value is 0.
+each run of the pipeline will read events 5 minutes of data from 15 minutes before its logical
+start time to 10 minutes before its logical start time. The default value is 0.
 
 .. rubric:: Example
 
-TODO: Fill me out
+::
+
+  {
+    "name": "TPFSAvro",
+    "properties": {
+      "name": "webactivity",
+      "duration": "5m",
+      "delay": "1m",
+      "schema": "{
+        \"type\":\"record\",
+        \"name\":\"webactivity\",
+        \"fields\":[
+          {\"name\":\"date\",\"type\":\"string\"},
+          {\"name\":\"userid\",\"type\":\"long\"},
+          {\"name\":\"action\",\"type\":\"string\"},
+          {\"name\":\"item\",\"type\":\"string\"}
+        ]
+      }"
+    }
+  }
+
+This example reads from a TimePartitionedFileSet named 'webactivity', assuming the underlying
+files are in Avro format. TimePartitionedFileSets are partitioned by year, month, day, hour,
+and minute. Suppose the current run was scheduled to start at 10:00am on January 1, 2015.
+Since the 'delay' property is set to one minute, the most recent partition read will be one
+minute before the logical start time of the run. This corresponds to the partition for
+year 2015, month 1, day 1, hour 9, and minute 59. Since the 'duration' property is set to
+five minutes, a total of five partitions will be read. This means partitions for
+year 2015, month 1, day 1, hour 9, and minutes 55, 56, 57, 58, and 59 will be read. 
+The source will read the actual data using the given schema. This means it will output
+records with this schema::
+
+  +=======================+
+  | field name  | type    |
+  +=======================+
+  | date        | string  |
+  | userid      | long    |
+  | action      | string  |
+  | item        | string  |
+  +=======================+
+
