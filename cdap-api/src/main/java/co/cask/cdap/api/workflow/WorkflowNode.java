@@ -16,16 +16,24 @@
 
 package co.cask.cdap.api.workflow;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+import javax.annotation.Nullable;
+
 /**
  * Represents node in the {@link Workflow}.
  */
 public abstract class WorkflowNode {
   protected final String nodeId;
   protected final WorkflowNodeType nodeType;
+  protected final Set<String> parentNodeIds;
 
-  public WorkflowNode(String nodeId, WorkflowNodeType nodeType) {
+  public WorkflowNode(String nodeId, WorkflowNodeType nodeType, @Nullable Set<String> parentNodeIds) {
     this.nodeId = nodeId;
     this.nodeType = nodeType;
+    this.parentNodeIds = parentNodeIds == null ? Collections.unmodifiableSet(new HashSet<String>())
+      : Collections.unmodifiableSet(new HashSet<>(parentNodeIds));
   }
 
   /**
@@ -42,5 +50,13 @@ public abstract class WorkflowNode {
    */
   public WorkflowNodeType getType() {
     return nodeType;
+  }
+
+  /**
+   *
+   * @return the set of parent node ids.
+   */
+  public Set<String> getParentNodeIds() {
+    return parentNodeIds;
   }
 }

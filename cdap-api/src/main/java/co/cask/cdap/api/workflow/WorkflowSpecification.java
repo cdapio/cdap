@@ -17,25 +17,26 @@ package co.cask.cdap.api.workflow;
 
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.common.PropertyProvider;
-import com.google.common.collect.Lists;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 
 
 /**
- * Specification for a {@link Workflow}
+ * Specification for a {@link Workflow}.
  */
 public final class WorkflowSpecification implements ProgramSpecification, PropertyProvider {
   private final String className;
   private final String name;
   private final String description;
   private final Map<String, String> properties;
-
-  private List<WorkflowNode> nodes = Lists.newArrayList();
+  private final List<WorkflowNode> nodes;
+  private final transient Map<String, WorkflowNode> nodeIdMap;
 
   public WorkflowSpecification(String className, String name, String description,
                                       Map<String, String> properties, List<WorkflowNode> nodes) {
@@ -45,6 +46,43 @@ public final class WorkflowSpecification implements ProgramSpecification, Proper
     this.properties = properties == null ? Collections.<String, String>emptyMap() :
                                            Collections.unmodifiableMap(new HashMap<>(properties));
     this.nodes = Collections.unmodifiableList(new ArrayList<>(nodes));
+    this.nodeIdMap = Collections.unmodifiableMap(generateNodeIdMap());
+  }
+
+  /**
+   * Visit all the nodes in the {@link Workflow} and generate the map of node id to
+   * the {@link WorkflowNode}. Returned map does not contain any mapping for the FORK node,
+   * however contains the ACTION and CONDITION nodes within the FORK node itself.
+   */
+  private Map<String, WorkflowNode> generateNodeIdMap() {
+    Map<String, WorkflowNode> nodeIdMap = new HashMap<>();
+    Queue<WorkflowNode> nodes = new LinkedList<>(this.nodes);
+    while (!nodes.isEmpty()) {
+      WorkflowNode node = nodes.poll();
+      switch (node.getType()) {
+        case ACTION: {
+          nodeIdMap.put(node.getNodeId(), node);
+          break;
+        }
+        case FORK: {
+          WorkflowForkNode forkNode = (WorkflowForkNode) node;
+          for (List<WorkflowNode> branch : forkNode.getBranches()) {
+            nodes.addAll(branch);
+          }
+          break;
+        }
+        case CONDITION: {
+          nodeIdMap.put(node.getNodeId(), node);
+          WorkflowConditionNode conditionNode = (WorkflowConditionNode) node;
+          nodes.addAll(conditionNode.getIfBranch());
+          nodes.addAll(conditionNode.getElseBranch());
+          break;
+        }
+        default:
+          break;
+      }
+    }
+    return nodeIdMap;
   }
 
   @Override
@@ -74,6 +112,10 @@ public final class WorkflowSpecification implements ProgramSpecification, Proper
 
   public List<WorkflowNode> getNodes() {
     return nodes;
+  }
+
+  public Map<String, WorkflowNode> getNodeIdMap() {
+    return nodeIdMap;
   }
 
   @Override

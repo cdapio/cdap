@@ -54,6 +54,7 @@ import co.cask.cdap.internal.workflow.DefaultWorkflowActionSpecification;
 import co.cask.cdap.internal.workflow.ProgramWorkflowAction;
 import co.cask.cdap.logging.context.WorkflowLoggingContext;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.templates.AdapterDefinition;
 import co.cask.http.NettyHttpService;
@@ -67,7 +68,6 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -79,10 +79,13 @@ import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.ConcurrentHashMap;
@@ -124,6 +127,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private final TransactionSystemClient txClient;
   private final Store store;
   private final Id.Workflow workflowId;
+  private final String adapterName;
 
   WorkflowDriver(Program program, ProgramOptions options, InetAddress hostname,
                  WorkflowSpecification workflowSpec, ProgramRunnerFactory programRunnerFactory,
@@ -142,9 +146,10 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     this.lock = new ReentrantLock();
     this.condition = lock.newCondition();
     String adapterSpec = arguments.getOption(ProgramOptionConstants.ADAPTER_SPEC);
-    String adapterName = null;
     if (adapterSpec != null) {
       adapterName = GSON.fromJson(adapterSpec, AdapterDefinition.class).getName();
+    } else {
+      adapterName = null;
     }
     this.loggingContext = new WorkflowLoggingContext(program.getNamespaceId(), program.getApplicationId(),
                                                      program.getName(),
@@ -355,28 +360,24 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     ExecutorService executorService =
       Executors.newFixedThreadPool(fork.getBranches().size(),
                                    new ThreadFactoryBuilder().setNameFormat("workflow-fork-executor-%d").build());
-    CompletionService<Map.Entry<String, WorkflowToken>> completionService =
-      new ExecutorCompletionService<>(executorService);
+    CompletionService<String> completionService = new ExecutorCompletionService<>(executorService);
 
     try {
       for (final List<WorkflowNode> branch : fork.getBranches()) {
-        completionService.submit(new Callable<Map.Entry<String, WorkflowToken>>() {
+        completionService.submit(new Callable<String>() {
           @Override
-          public Map.Entry<String, WorkflowToken> call() throws Exception {
-            WorkflowToken copiedToken = ((BasicWorkflowToken) token).deepCopy();
+          public String call() throws Exception {
+            WorkflowToken copiedToken = ((BasicWorkflowToken) token).copy();
             executeAll(branch.iterator(), appSpec, instantiator, classLoader, copiedToken);
-            return Maps.immutableEntry(branch.toString(), copiedToken);
+            return branch.toString();
           }
         });
       }
 
       for (int i = 0; i < fork.getBranches().size(); i++) {
         try {
-          Future<Map.Entry<String, WorkflowToken>> f = completionService.take();
-          Map.Entry<String, WorkflowToken> retValue = f.get();
-          String branchInfo = retValue.getKey();
-          WorkflowToken branchToken = retValue.getValue();
-          ((BasicWorkflowToken) token).mergeToken((BasicWorkflowToken) branchToken);
+          Future<String> f = completionService.take();
+          String branchInfo = f.get();
           LOG.info("Execution of branch {} for fork {} completed", branchInfo, fork);
         } catch (Throwable t) {
           Throwable rootCause = Throwables.getRootCause(t);
@@ -398,18 +399,59 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     }
   }
 
+  private List<String> getNodeFilterList(WorkflowNode node) {
+    List<String> filterList = new ArrayList<>();
+    Queue<String> nodeQueueToProcess = new LinkedList<>();
+    nodeQueueToProcess.add(node.getNodeId());
+    while (!nodeQueueToProcess.isEmpty()) {
+      String queueNode = nodeQueueToProcess.poll();
+      filterList.add(queueNode);
+      for (String nodeIdInParentSet : workflowSpec.getNodeIdMap().get(queueNode).getParentNodeIds()) {
+        if (!nodeQueueToProcess.contains(nodeIdInParentSet)) {
+          nodeQueueToProcess.add(nodeIdInParentSet);
+        }
+      }
+    }
+    return filterList;
+  }
+
   private void executeNode(ApplicationSpecification appSpec, WorkflowNode node, InstantiatorFactory instantiator,
                            ClassLoader classLoader, WorkflowToken token) throws Exception {
     WorkflowNodeType nodeType = node.getType();
-    ((BasicWorkflowToken) token).setCurrentNode(node.getNodeId());
     switch (nodeType) {
       case ACTION:
-        executeAction(appSpec, (WorkflowActionNode) node, instantiator, classLoader, token);
+        ((BasicWorkflowToken) token).setCurrentNodeInfo(node.getNodeId(), getNodeFilterList(node));
+        WorkflowActionNode actionNode = (WorkflowActionNode) node;
+        if (actionNode.getProgram().getProgramType() == SchedulableProgramType.CUSTOM_ACTION) {
+          String customActionName = actionNode.getProgram().getProgramName();
+          RunId customActionRunId = RunIds.generate();
+          long startTimeInSeconds = RunIds.getTime(customActionRunId, TimeUnit.SECONDS);
+          Id.Program customActionId = Id.Program.from(workflowId.getApplication(), ProgramType.CUSTOM_ACTION,
+                                                      customActionName);
+
+          store.setWorkflowProgramStart(customActionId, customActionRunId.getId(), workflowId.getId(), runId.getId(),
+                                        node.getNodeId(), startTimeInSeconds, adapterName, null);
+          boolean bException = false;
+          try {
+            executeAction(appSpec, (WorkflowActionNode) node, instantiator, classLoader, token);
+          } catch (Throwable t) {
+            bException = true;
+            Throwables.propagateIfPossible(t, Exception.class);
+            throw Throwables.propagate(t);
+          } finally {
+            ProgramRunStatus runStatus = bException ? ProgramRunStatus.FAILED : ProgramRunStatus.COMPLETED;
+            store.setStop(customActionId, customActionRunId.getId(),
+                          TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()), runStatus);
+          }
+        } else {
+          executeAction(appSpec, (WorkflowActionNode) node, instantiator, classLoader, token);
+        }
         break;
       case FORK:
         executeFork(appSpec, (WorkflowForkNode) node, instantiator, classLoader, token);
         break;
       case CONDITION:
+        ((BasicWorkflowToken) token).setCurrentNodeInfo(node.getNodeId(), getNodeFilterList(node));
         executeCondition(appSpec, (WorkflowConditionNode) node, instantiator, classLoader, token);
         break;
       default:

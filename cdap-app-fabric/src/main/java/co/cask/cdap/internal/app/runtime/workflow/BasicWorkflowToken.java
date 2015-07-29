@@ -20,15 +20,19 @@ import co.cask.cdap.api.workflow.NodeValue;
 import co.cask.cdap.api.workflow.Value;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 /**
  * Implementation of the {@link WorkflowToken} interface.
@@ -38,8 +42,10 @@ public class BasicWorkflowToken implements WorkflowToken, Serializable {
   private static final long serialVersionUID = -1173500180640174909L;
 
   private Map<String, Map<String, Long>> mapReduceCounters;
-  private final Map<Scope, Map<String, List<NodeValue>>> tokenValueMap = new EnumMap<>(Scope.class);
+  private Map<Scope, Map<String, List<NodeValue>>> tokenValueMap =
+    Collections.synchronizedMap(new EnumMap<Scope, Map<String, List<NodeValue>>>(Scope.class));
   private String nodeName;
+  private List<String> nodeFilterList;
 
   public BasicWorkflowToken() {
     for (Scope scope : Scope.values()) {
@@ -48,24 +54,18 @@ public class BasicWorkflowToken implements WorkflowToken, Serializable {
   }
 
   private BasicWorkflowToken(BasicWorkflowToken other) {
-    for (Map.Entry<Scope, Map<String, List<NodeValue>>> entry : other.tokenValueMap.entrySet()) {
-      Map<String, List<NodeValue>> tokenValueMapForScope = new HashMap<>();
-      for (Map.Entry<String, List<NodeValue>> valueEntry : entry.getValue().entrySet()) {
-        tokenValueMapForScope.put(valueEntry.getKey(), Lists.newArrayList(valueEntry.getValue()));
-      }
-
-      this.tokenValueMap.put(entry.getKey(), tokenValueMapForScope);
-    }
-
-    this.nodeName = other.nodeName;
+    // Same instance of the tokenValueMap is shared across all the
+    // nodes in the Workflow, so that values can be put concurrently.
+    this.tokenValueMap = other.tokenValueMap;
 
     if (other.mapReduceCounters != null) {
       this.mapReduceCounters = copyHadoopCounters(other.mapReduceCounters);
     }
   }
 
-  void setCurrentNode(String nodeName) {
+  void setCurrentNodeInfo(String nodeName, List<String> nodeFilterList) {
     this.nodeName = nodeName;
+    this.nodeFilterList = nodeFilterList;
   }
 
   /**
@@ -122,22 +122,24 @@ public class BasicWorkflowToken implements WorkflowToken, Serializable {
     Preconditions.checkNotNull(value.toString(), String.format("Null value provided for the key '%s'.", key));
     Preconditions.checkState(nodeName != null, "nodeName cannot be null.");
 
-    List<NodeValue> nodeValueList = tokenValueMap.get(scope).get(key);
-    if (nodeValueList == null) {
-      nodeValueList = Lists.newArrayList();
-      tokenValueMap.get(scope).put(key, nodeValueList);
-    }
-
-    // Check if the current node already added the key to the token.
-    // In that case replace that entry with the new one
-    for (int i = 0; i < nodeValueList.size(); i++) {
-      if (nodeValueList.get(i).getNodeName().equals(nodeName)) {
-        nodeValueList.set(i, new NodeValue(nodeName, value));
-        return;
+    synchronized (tokenValueMap) {
+      List<NodeValue> nodeValueList = tokenValueMap.get(scope).get(key);
+      if (nodeValueList == null) {
+        nodeValueList = Lists.newArrayList();
+        tokenValueMap.get(scope).put(key, nodeValueList);
       }
-    }
 
-    nodeValueList.add(new NodeValue(nodeName, value));
+      // Check if the current node already added the key to the token.
+      // In that case replace that entry with the new one
+      for (int i = 0; i < nodeValueList.size(); i++) {
+        if (nodeValueList.get(i).getNodeName().equals(nodeName)) {
+          nodeValueList.set(i, new NodeValue(nodeName, value));
+          return;
+        }
+      }
+
+      nodeValueList.add(new NodeValue(nodeName, value));
+    }
   }
 
   @Override
@@ -147,17 +149,32 @@ public class BasicWorkflowToken implements WorkflowToken, Serializable {
 
   @Override
   public Value get(String key, Scope scope) {
-    List<NodeValue> nodeValueList = tokenValueMap.get(scope).get(key);
-    if (nodeValueList == null) {
-      return null;
+    synchronized (tokenValueMap) {
+      List<NodeValue> nodeValueList = tokenValueMap.get(scope).get(key);
+      if (nodeValueList == null) {
+        return null;
+      }
+
+      // List of NodeValue cannot be empty if the key is added in the WorkflowToken as
+      // when we add key, we also add single NodeValue.
+      Preconditions.checkState(!nodeValueList.isEmpty(),
+                               String.format("List of NodeValue for the key %s cannot be empty", key));
+
+      // Filter the nodeValueList so that it only contains the values added by the
+      // nodes in the current node's filter list.
+      Iterable<NodeValue> filteredNodeValueListIterable = Iterables.filter(nodeValueList, new Predicate<NodeValue>() {
+        @Override
+        public boolean apply(NodeValue input) {
+          return nodeFilterList.contains(input.getNodeName());
+        }
+      });
+
+      try {
+        return Iterables.getLast(filteredNodeValueListIterable).getValue();
+      } catch (NoSuchElementException e) {
+        return null;
+      }
     }
-
-    // List of NodeValue cannot be empty if the key is added in the WorkflowToken as
-    // when we add key, we also add single NodeValue.
-    Preconditions.checkState(!nodeValueList.isEmpty(),
-                             String.format("List of NodeValue for the key %s cannot be empty", key));
-
-    return nodeValueList.get(nodeValueList.size() - 1).getValue();
   }
 
   @Override
@@ -200,17 +217,19 @@ public class BasicWorkflowToken implements WorkflowToken, Serializable {
 
   @Override
   public Map<String, Value> getAllFromNode(String nodeName, Scope scope) {
-    ImmutableMap.Builder<String, Value> tokenValuesBuilder = ImmutableMap.builder();
-    for (Map.Entry<String, List<NodeValue>> entry : tokenValueMap.get(scope).entrySet()) {
-      List<NodeValue> nodeValueList = entry.getValue();
-      for (NodeValue nodeValue : nodeValueList) {
-        if (nodeValue.getNodeName().equals(nodeName)) {
-          tokenValuesBuilder.put(entry.getKey(), nodeValue.getValue());
-          break;
+    synchronized (tokenValueMap) {
+      ImmutableMap.Builder<String, Value> tokenValuesBuilder = ImmutableMap.builder();
+      for (Map.Entry<String, List<NodeValue>> entry : tokenValueMap.get(scope).entrySet()) {
+        List<NodeValue> nodeValueList = entry.getValue();
+        for (NodeValue nodeValue : nodeValueList) {
+          if (nodeValue.getNodeName().equals(nodeName)) {
+            tokenValuesBuilder.put(entry.getKey(), nodeValue.getValue());
+            break;
+          }
         }
       }
+      return tokenValuesBuilder.build();
     }
-    return tokenValuesBuilder.build();
   }
 
   @Override
@@ -233,10 +252,10 @@ public class BasicWorkflowToken implements WorkflowToken, Serializable {
   }
 
   /**
-   * Make a deep copy of the {@link WorkflowToken}.
+   * Make a copy of the {@link WorkflowToken}.
    * @return copied WorkflowToken
    */
-  public WorkflowToken deepCopy() {
+  public WorkflowToken copy() {
     return new BasicWorkflowToken(this);
   }
 
