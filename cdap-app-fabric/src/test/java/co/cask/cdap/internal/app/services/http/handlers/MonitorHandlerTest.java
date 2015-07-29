@@ -124,6 +124,29 @@ public class MonitorHandlerTest extends AppFabricTestBase {
   }
 
   @Test
+  public void testSingleIdRestartInstances() throws Exception {
+    String path = String.format("%s/system/services/%s/instances/0/restart", Constants.Gateway.API_VERSION_3,
+                                Constants.Service.APP_FABRIC_HTTP);
+    HttpResponse response = doPost(path);
+
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+
+    path = String.format("%s/system/services/%s/latest-restart", Constants.Gateway.API_VERSION_3,
+                         Constants.Service.APP_FABRIC_HTTP);
+    response = doGet(path);
+
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+
+    RestartServiceInstancesStatus result =
+      GSON.fromJson(new String(ByteStreams.toByteArray(response.getEntity().getContent()), Charsets.UTF_8),
+                    RestartServiceInstancesStatus.class);
+
+    Assert.assertNotNull(result);
+    Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP, result.getServiceName());
+    Assert.assertEquals(RestartServiceInstancesStatus.RestartStatus.SUCCESS, result.getStatus());
+  }
+
+  @Test
   public void testInvalidIdRestartInstances() throws Exception {
     String path = String.format("%s/system/services/%s/instances/1000/restart", Constants.Gateway.API_VERSION_3,
                                 Constants.Service.APP_FABRIC_HTTP);
