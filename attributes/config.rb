@@ -44,3 +44,25 @@ if node['cdap']['version'].to_f < 2.6
   default['cdap']['cdap_site']['gateway.server.port'] = '10000'
   default['cdap']['cdap_site']['gateway.memory.mb'] = '512'
 end
+
+# HDP 2.2+ support
+hdp_version =
+  case node['hadoop']['distribution_version']
+  when '2.2.0.0'
+    '2.2.0.0-2041'
+  when '2.2.1.0'
+    '2.2.1.0-2340'
+  when '2.2.4.2'
+    '2.2.4.2-2'
+  when '2.2.4.4'
+    '2.2.4.4-16'
+  when '2.2.6.0'
+    '2.2.6.0-2800'
+  else
+    node['hadoop']['distribution_version']
+  end
+
+if node['hadoop']['distribution'] == 'hdp' && node['hadoop']['distribution_version'].to_f >= 2.2 && node['cdap']['version'].to_f >= 3.1
+  default['cdap']['cdap_env']['opts'] = "${OPTS} -Dhdp.version=#{hdp_version}"
+  default['cdap']['cdap_site']['app.program.jvm.opts'] = "-XX:MaxPermSize=128M ${twill.jvm.gc.opts} -Dhdp.version=#{hdp_version}"
+end
