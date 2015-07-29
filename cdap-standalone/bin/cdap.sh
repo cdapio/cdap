@@ -100,7 +100,7 @@ fi
 JAVA_VERSION=`$JAVACMD -version 2>&1 | grep "java version" | awk '{print $3}' | awk -F '.' '{print $2}'`
 if [ $JAVA_VERSION -ne 7 ] && [ $JAVA_VERSION -ne 8 ]; then
   die "ERROR: Java version not supported
-Please install Java 7 or 8 - other versions of Java are not yet supported."
+Please install Java 7 or 8 - other versions of Java are not supported."
 fi
 
 # Check Node.js installation
