@@ -16,12 +16,17 @@
 
 package co.cask.cdap.examples.datacleansing;
 
+import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.dataset.lib.PartitionDetail;
+import co.cask.cdap.api.dataset.lib.PartitionKey;
+import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.cube.AggregationFunction;
 import co.cask.cdap.api.dataset.lib.cube.TimeValue;
 import co.cask.cdap.api.metrics.MetricDataQuery;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.test.ApplicationManager;
+import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.MapReduceManager;
 import co.cask.cdap.test.RuntimeStats;
 import co.cask.cdap.test.ServiceManager;
@@ -30,9 +35,12 @@ import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
 import com.google.common.base.Joiner;
+import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.io.ByteStreams;
+import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -86,7 +94,8 @@ public class DataCleansingMapReduceTest extends TestBase {
     MapReduceManager mapReduceManager = applicationManager.getMapReduceManager(DataCleansingMapReduce.NAME).start(args);
     mapReduceManager.waitForFinish(5, TimeUnit.MINUTES);
 
-    Assert.assertEquals(filterInvalidRecords(RECORDS1), getCleanData(now));
+    Assert.assertEquals(filterInvalidRecords(RECORDS1), getCleanDatafromExplore(now));
+    Assert.assertEquals(filterInvalidRecords(RECORDS1), getCleanDataFromFile(now));
     // assert that some of the records have indeed been filtered
     Assert.assertNotEquals(filterInvalidRecords(RECORDS1), RECORDS1);
 
@@ -107,7 +116,8 @@ public class DataCleansingMapReduceTest extends TestBase {
     mapReduceManager.waitForFinish(5, TimeUnit.MINUTES);
 
     ImmutableSet<String> records2and3 = ImmutableSet.<String>builder().addAll(RECORDS2).addAll(RECORDS3).build();
-    Assert.assertEquals(filterInvalidRecords(records2and3), getCleanData(now));
+    Assert.assertEquals(filterInvalidRecords(records2and3), getCleanDatafromExplore(now));
+    Assert.assertEquals(filterInvalidRecords(records2and3), getCleanDataFromFile(now));
 
     // running the MapReduce job without adding new partitions creates no additional output
     now = System.currentTimeMillis();
@@ -117,7 +127,8 @@ public class DataCleansingMapReduceTest extends TestBase {
     mapReduceManager = applicationManager.getMapReduceManager(DataCleansingMapReduce.NAME).start(args);
     mapReduceManager.waitForFinish(5, TimeUnit.MINUTES);
 
-    Assert.assertEquals(Collections.<String>emptySet(), getCleanData(now));
+    Assert.assertEquals(Collections.<String>emptySet(), getCleanDatafromExplore(now));
+    Assert.assertEquals(Collections.<String>emptySet(), getCleanDataFromFile(now));
   }
 
   private void createPartition(URL serviceUrl, Set<String> records) throws IOException {
@@ -127,7 +138,7 @@ public class DataCleansingMapReduceTest extends TestBase {
     Assert.assertEquals(200, response.getResponseCode());
   }
 
-  private Set<String> getCleanData(Long time) throws Exception {
+  private Set<String> getCleanDatafromExplore(Long time) throws Exception {
     try (Connection connection = getQueryClient()) {
       ResultSet results = connection
         .prepareStatement("SELECT * FROM dataset_cleanRecords where TIME = " + time)
@@ -139,6 +150,29 @@ public class DataCleansingMapReduceTest extends TestBase {
       }
       return cleanRecords;
     }
+  }
+
+  private Set<String> getCleanDataFromFile(Long time) throws Exception {
+    DataSetManager<PartitionedFileSet> cleanRecords = getDataset(DataCleansing.CLEAN_RECORDS);
+    PartitionDetail partition =
+      cleanRecords.get().getPartition(PartitionKey.builder().addLongField("time", time).build());
+
+    if (partition == null) {
+      return Collections.emptySet();
+    }
+
+    Location location = partition.getLocation().append("part-r-00000");
+    byte[] content = ByteStreams.toByteArray(location.getInputStream());
+    return splitToRecords(Bytes.toString(content));
+  }
+
+  private Set<String> splitToRecords(String content) {
+    Set<String> records = new HashSet<>();
+    Iterable<String> splitContent = Splitter.on("\n").omitEmptyStrings().split(content);
+    for (String record : splitContent) {
+      records.add(record);
+    }
+    return records;
   }
 
   private String joinRecords(Set<String> records) {
