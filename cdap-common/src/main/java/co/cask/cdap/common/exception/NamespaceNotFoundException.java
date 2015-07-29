@@ -16,12 +16,23 @@
 
 package co.cask.cdap.common.exception;
 
-/**
- * Thrown when there was an error in resetting the CDAP instance.
- */
-public class ResetFailureException extends Exception {
+import co.cask.cdap.proto.Id;
 
-  public ResetFailureException(String message) {
-    super(message);
+/**
+ * Thrown when a namespace is not found in CDAP.
+ * @deprecated Use {@link co.cask.cdap.common.NamespaceNotFoundException} instead
+ */
+@Deprecated
+public class NamespaceNotFoundException extends NotFoundException {
+
+  private final Id.Namespace namespace;
+
+  public NamespaceNotFoundException(Id.Namespace id) {
+    super(id);
+    this.namespace = id;
+  }
+
+  public Id.Namespace getId() {
+    return namespace;
   }
 }
