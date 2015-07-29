@@ -357,9 +357,12 @@ angular.module(PKG.name + '.services')
             function success() {
               mySettings.get('adapterDrafts')
                .then(function(res) {
-                 var adapterName = this.metadata.name;
-                 delete res[adapterName];
-                 mySettings.set('adapterDrafts', res);
+                 var adapterName;
+                 if (angular.isObject(res)) {
+                   adapterName = this.metadata.name;
+                   delete res[adapterName];
+                   mySettings.set('adapterDrafts', res);
+                 }
                  defer.resolve(adapterName);
                  this.resetToDefaults();
                }.bind(this));
