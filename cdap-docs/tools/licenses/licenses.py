@@ -382,7 +382,7 @@ def process_cdap_ui(options):
         
     print "\nCDAP UI: Row count: %s" % len(cdap_ui_dict.keys())
 
-    # Return 'Dependency','Version','License','License URL'
+    # Return 'Dependency','Version', 'Type','License','License URL'
     cdap_ui_data = []
     keys = cdap_ui_dict.keys()
     keys.sort()
@@ -543,7 +543,7 @@ def write_new_master_csv_file(lib_dict):
             for type in MASTER_CSV_TYPES:
                 csv_file.write(MASTER_CSV_COMMENTS[type])
                 for k in keys:
-                    r = lib_dict[k].get_row()
+                    r = lib_dict[k].get_full_row()
                     row_type = lib_dict[k].type
                     if row_type == type:
                         i += 1
@@ -705,6 +705,9 @@ class Library:
     def get_row(self):
         return (self.jar, self.version, self.classifier, self.license, self.license_url)
 
+    def get_full_row(self):
+        return self.get_row()
+
     def print_duplicate(self, lib_dict):
         print "Duplicate key: %s" % self.id
         print "%sCurrent library: %s" % (self.SPACE, lib_dict[self.id])
@@ -729,7 +732,9 @@ class UI_Library(Library):
         return "%s : %s (%s)" % (self.id, self.version, self.type)
 
     def get_row(self):
-#         return (self.id, self.version, self.type, self.license, self.license_url, )
+        return (self.id, self.version, self.type, self.license, self.license_url, )
+
+    def get_full_row(self):
         return (self.id, self.version, self.type, self.license, self.license_url, self.homepage, self.license_page)
 
 
