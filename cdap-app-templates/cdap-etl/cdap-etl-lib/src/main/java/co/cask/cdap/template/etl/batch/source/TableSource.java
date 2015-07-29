@@ -42,7 +42,7 @@ import javax.annotation.Nullable;
  */
 @Plugin(type = "source")
 @Name("Table")
-@Description("Reads the entire contents of a CDAP Table, outputting a record for each row in the Table.")
+@Description("Reads the entire contents of a CDAP Table. Outputs one record for each row in the Table.")
 public class TableSource extends BatchReadableSource<byte[], Row, StructuredRecord> {
   private RowRecordTransformer rowRecordTransformer;
 

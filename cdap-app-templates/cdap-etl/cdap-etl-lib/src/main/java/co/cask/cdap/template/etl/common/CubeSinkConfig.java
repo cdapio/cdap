@@ -39,8 +39,8 @@ public class CubeSinkConfig extends PluginConfig {
 
   @Name(Properties.Cube.DATASET_OTHER)
   @Description("Provide any dataset properties to be used if new Cube " +
-    "dataset needs to be created as a JSON Map. For example if aggregations are desired on fields - abc and xyz, the " +
-    "property should have the value: " +
+    "dataset needs to be created as a JSON Map. For example, if aggregations are desired on fields - abc and xyz," +
+    " the property should have the value: " +
     "\"{\"dataset.cube.aggregation.agg1.dimensions\":\"abc\", \"dataset.cube.aggregation.agg2.dimensions\":\"xyz\"}." +
     " See Cube dataset configuration " +
     "details for more information : http://docs.cask.co/cdap/current/en/developers-manual/building-blocks/datasets/" +

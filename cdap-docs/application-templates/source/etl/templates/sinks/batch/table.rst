@@ -8,7 +8,7 @@ Sinks: Batch: Table
 
 .. rubric:: Description
 
-Batch Sink for CDAP Tables. Writes records to a Table with one record field mapping
+Writes records to a Table with one record field mapping
 to the Table rowkey, and all other record fields mapping to Table columns.
 
 .. rubric:: Use Case
@@ -18,7 +18,7 @@ you may want to periodically dump the contents of a relational database into a C
 
 .. rubric:: Properties
 
-**name:** Name of the table dataset. If it does not already exist, one will be  created.
+**name:** Name of the table dataset. If it does not already exist, one will be created.
 
 **schema:** Optional schema of the table as a JSON Object. If the table does not
 already exist, one will be created with this schema, which will allow the table to be

@@ -17,13 +17,13 @@ convert back to a record in Java to pass to downstream transforms and sinks.
 
 The Script transform is used when other transforms cannot meet your needs.
 For example, you may want to multiply a field by 1024 and rename it from 'gigabytes'
-to 'megabytes'. Or you may want to convert a timestamp into a human readable date string. 
+to 'megabytes'. Or you may want to convert a timestamp into a human-readable date string.
 
 .. rubric:: Properties
 
 **script:** Javascript defining how to transform one record into another. The script must
 implement a function called 'transform', which takes as input a JSON object that represents
-the input record, and returns a JSON object that respresents the transformed input.
+the input record, and returns a JSON object that represents the transformed input.
 
 **schema:** The schema of output objects. If no schema is given, it is assumed that the output
 schema is the same as the input schema.

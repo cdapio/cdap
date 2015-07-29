@@ -18,7 +18,7 @@ you may want to read from kafka and write to a Table.
 
 .. rubric:: Properties
 
-**name:** Name of the table dataset. If it does not already exist, one will be  created.
+**name:** Name of the table dataset. If it does not already exist, one will be created.
 
 **schema:** Optional schema of the table as a JSON Object. If the table does not
 already exist, one will be created with this schema, which will allow the table to be

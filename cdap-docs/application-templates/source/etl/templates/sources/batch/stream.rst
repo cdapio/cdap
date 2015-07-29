@@ -20,7 +20,7 @@ the event. Other fields output records are determined by the configured format a
 
 The source is used whenever you need to read from a stream in batch. For example,
 you may want to read from a stream every hour, perform some data cleansing, then write
-the cleansed data for that hour as avro files.
+the cleansed data for that hour as Avro files.
 
 .. rubric:: Properties
 
@@ -28,7 +28,7 @@ the cleansed data for that hour as avro files.
 it will be created.
     
 **duration:** Size of the time window to read with each run of the pipeline. The format is
-expected to be a number followed by a 's', 'm', 'h', or 'd' specifying the time unit, with
+expected to be a number followed by an 's', 'm', 'h', or 'd' specifying the time unit, with
 's' for seconds, 'm' for minutes, 'h' for hours, and 'd' for days. For example, a value of
 '5m' means each run of the pipeline will read 5 minutes of events from the stream.
 
@@ -64,11 +64,13 @@ the schema.
     }
   }
 
-The example reads from a stream named 'accesslogs'. It reads ten minutes worth of data from
-the stream, starting 15 minutes before the logical start time of the run to 5 minutes before
-the logical start time of the run. For example, if the pipeline was scheduled to run at 10:00am,
-the source will read data from 9:45am to 9:55am. The stream contents will be parsed as 
-'clf' (Combined Log Format), which will output records with the following schema::
+The example reads from a stream named 'accesslogs'. Since the 'delay' property is set to '5m',
+the source will read data up to five minutes before the logical start time of the run.
+Since the 'duration' property is set to '10m', the source will read ten minutes worth of data.
+Since the end time is five minutes before the logical start time of the run, the start time will
+be 15 minutes before the logical start time of the run. For example, if the pipeline was scheduled
+to run at 10:00am, the source will read data from 9:45am to 9:55am. The stream contents will be
+parsed as 'clf' (Combined Log Format), which will output records with this schema::
 
   +======================================+
   | field name     | type                |

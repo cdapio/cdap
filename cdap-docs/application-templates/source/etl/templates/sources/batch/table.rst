@@ -8,7 +8,7 @@ Sources: Batch: Table
 
 .. rubric:: Description
 
-Reads the entire contents of a CDAP Table, outputting a record for each row in the Table.
+Reads the entire contents of a CDAP Table. Outputs one record for each row in the Table.
 The Table must conform to a given schema. 
 
 .. rubric:: Use Case
@@ -42,7 +42,7 @@ the schema, and must not be nullable.
     }
   }
 
-The example reads from a Table named 'users'. It outputs records with the following schema::
+The example reads from a Table named 'users'. It outputs records with this schema::
 
   +======================================+
   | field name     | type                |

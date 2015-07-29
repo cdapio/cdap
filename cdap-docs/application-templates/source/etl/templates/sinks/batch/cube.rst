@@ -8,8 +8,7 @@ Sinks: Batch: Cube
 
 .. rubric:: Description
 
-Batch Sink that writes to a Cube dataset.
-This BatchCubeSink takes a StructuredRecord in, maps it to a CubeFact, and writes it to
+A BatchCubeSink that takes a StructuredRecord in, maps it to a CubeFact, and writes it to
 the Cube dataset identified by the name property.
 
 If Cube dataset does not exist, it will be created using properties provided with this
@@ -30,7 +29,7 @@ TODO: Fill me out
 See `Cube dataset configuration details <http://docs.cask.co/cdap/current/en/developers-manual/building-blocks/datasets/cube.html#cube-configuration>`__ for more information.
 
 **dataset.cube.properties:** Provide any dataset properties to be used if new Cube dataset
-needs to be created as a JSON Map. For example if aggregations are desired on fields - abc and xyz, the
+needs to be created as a JSON Map. For example, if aggregations are desired on fields - abc and xyz, the
 property should have the value: {"dataset.cube.aggregation.agg1.dimensions":"abc", "dataset.cube.aggregation.agg2.dimensions":"xyz"}.
 See `Cube dataset configuration details <http://docs.cask.co/cdap/current/en/developers-manual/building-blocks/datasets/cube.html#cube-configuration>`__ for more information.
 

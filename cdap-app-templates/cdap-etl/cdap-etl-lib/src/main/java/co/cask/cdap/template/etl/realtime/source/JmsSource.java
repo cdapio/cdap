@@ -333,12 +333,12 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
 
     @Name(JMS_NAMING_FACTORY_INITIAL)
     @Description("The fully qualified class name of the factory class that will create an initial context. " +
-      "This will be passed to JNDI initial context as " + Context.INITIAL_CONTEXT_FACTORY + ".")
+      "This will be passed to the JNDI initial context as " + Context.INITIAL_CONTEXT_FACTORY + ".")
     private String initialContextFactory;
 
     @Name(JMS_PROVIDER_URL)
     @Description("Information for the service provider URL to use. " +
-      "This will be passed to JNDI initial context as " + Context.PROVIDER_URL + ".")
+      "This will be passed to the JNDI initial context as " + Context.PROVIDER_URL + ".")
     private String providerUrl;
 
     @Name(JMS_CONNECTION_FACTORY_NAME)
@@ -347,13 +347,13 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
     private String connectionFactoryName;
 
     @Name(JMS_PLUGIN_NAME)
-    @Description("Name of the JMS plugin to use. This is the value of the 'name' key defined in the json file " +
+    @Description("Name of the JMS plugin to use. This is the value of the 'name' key defined in the JSON file " +
         "for the JMS plugin. Defaults to " + Context.INITIAL_CONTEXT_FACTORY + ".")
     @Nullable
     public String jmsPluginName;
 
     @Name(JMS_PLUGIN_TYPE)
-    @Description("Type of the JMS plugin to use. This is the value of the 'type' key defined in the json file " +
+    @Description("Type of the JMS plugin to use. This is the value of the 'type' key defined in the JSON file " +
         "for the JMS plugin. Defaults to 'JMSProvider'.")
     @Nullable
     public String jmsPluginType;
