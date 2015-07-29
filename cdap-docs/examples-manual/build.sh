@@ -145,7 +145,7 @@ function download_includes() {
   test_an_include d9c7f594204f42adaac7ad866c11ed7a ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseStore.java
   
   test_an_include 050cde0eb54b20803e65aae63b11143d ../../cdap-examples/SparkKMeans/src/main/java/co/cask/cdap/examples/sparkkmeans/SparkKMeansApp.java
-  test_an_include c914c4c17b0b85bc8541ef00a36bb062 ../../cdap-examples/SparkPageRank/src/main/java/co/cask/cdap/examples/sparkpagerank/SparkPageRankApp.java
+  test_an_include cbe1aa2a457ed414c77a97ab1e1ef641 ../../cdap-examples/SparkPageRank/src/main/java/co/cask/cdap/examples/sparkpagerank/SparkPageRankApp.java
 
   test_an_include afe12d26b79607a846d3eaa58958ea5f ../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/SportResults.java
   test_an_include 2d85727db18c3261b60d4cb278846329 ../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/UploadService.java
@@ -160,7 +160,7 @@ function download_includes() {
   test_an_include 936d007286f0d6d59967c1b421850e37 ../../cdap-examples/WebAnalytics/src/main/java/co/cask/cdap/examples/webanalytics/UniqueVisitCount.java
   test_an_include 1656c8e7158e10175cb750aeafeea58f ../../cdap-examples/WebAnalytics/src/main/java/co/cask/cdap/examples/webanalytics/WebAnalyticsFlow.java
   
-  test_an_include 59ed7598e3f1e7c6dd8c3b8eae933c58 ../../cdap-examples/WordCount/src/main/java/co/cask/cdap/examples/wordcount/WordCount.java
+  test_an_include 23d3a5c9f8cbe1a41fe706c6f95bad73 ../../cdap-examples/WordCount/src/main/java/co/cask/cdap/examples/wordcount/WordCount.java
 }
 
 run_command ${1}

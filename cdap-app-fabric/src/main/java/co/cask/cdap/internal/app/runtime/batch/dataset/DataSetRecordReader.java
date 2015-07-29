@@ -26,7 +26,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.concurrent.TimeUnit;
 
 final class DataSetRecordReader<KEY, VALUE> extends RecordReader<KEY, VALUE> {
   private static final Logger LOG = LoggerFactory.getLogger(DataSetRecordReader.class);
@@ -73,12 +72,8 @@ final class DataSetRecordReader<KEY, VALUE> extends RecordReader<KEY, VALUE> {
     try {
       splitReader.close();
     } finally {
-      context.close();
-      // sleep to allow metrics to be emitted
       try {
-        TimeUnit.SECONDS.sleep(2L);
-      } catch (InterruptedException e) {
-        LOG.info("sleep interrupted while waiting for final metrics to be emitted", e);
+        context.close();
       } finally {
         context.getMetricsCollectionService().stop();
       }

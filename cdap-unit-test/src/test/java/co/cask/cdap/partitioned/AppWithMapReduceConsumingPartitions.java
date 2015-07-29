@@ -131,7 +131,7 @@ public class AppWithMapReduceConsumingPartitions extends AbstractApplication {
 
     @Override
     public void beforeSubmit(MapReduceContext context) throws Exception {
-      PartitionedFileSet lines = batchPartitionConsumer.getPartitionedFileSet(context, "lines");
+      PartitionedFileSet lines = batchPartitionConsumer.getConfiguredDataset(context, "lines");
       context.setInput("lines", lines);
 
       Job job = context.getHadoopJob();
@@ -143,7 +143,7 @@ public class AppWithMapReduceConsumingPartitions extends AbstractApplication {
     @Override
     public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
       if (succeeded) {
-        batchPartitionConsumer.onFinish(context);
+        batchPartitionConsumer.persist(context);
       }
       super.onFinish(succeeded, context);
     }

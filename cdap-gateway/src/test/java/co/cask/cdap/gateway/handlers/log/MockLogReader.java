@@ -253,7 +253,7 @@ public class MockLogReader implements LogReader {
     long startTs = RunIds.getTime(runId, TimeUnit.SECONDS);
     if (id != null) {
       //noinspection ConstantConditions
-      runRecordMap.put(id, new RunRecord(runId.getId(), startTs, stopTs, runStatus));
+      runRecordMap.put(id, new RunRecord(runId.getId(), startTs, stopTs, runStatus, null, null));
       store.setStart(id, runId.getId(), startTs);
       if (stopTs != null) {
         store.setStop(id, runId.getId(), stopTs, runStatus);

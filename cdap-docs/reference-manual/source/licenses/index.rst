@@ -59,6 +59,8 @@ Cloudera, Cloudera Impala, and Impala are trademarks of `Cloudera, Inc. <http://
 
 Hortonworks is a registered trademark of `Hortonworks, Inc. <http://hortonworks.com>`__
 
+MapR is a trademark of `MapR Technologies, Inc. <http://www.mapr.com>`__
+
 `Node.js <http://www.nodejs.org>`__ is a registered trademark of `Joyent, Inc. <http://joyent.com>`__
 
 The library `d3 <https://github.com/mbostock/d3>`__ is included in CDAP in binary format,

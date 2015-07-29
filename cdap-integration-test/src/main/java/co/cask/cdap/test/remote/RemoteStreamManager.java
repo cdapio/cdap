@@ -28,6 +28,7 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -118,6 +119,11 @@ public class RemoteStreamManager implements StreamManager {
   @Override
   public void send(Map<String, String> headers, ByteBuffer buffer) throws IOException {
     throw new UnsupportedOperationException("TODO");
+  }
+
+  @Override
+  public void send(File file, String contentType) throws Exception {
+    streamClient.sendFile(streamId, contentType, file);
   }
 
   @Override

@@ -42,11 +42,11 @@ import javax.annotation.Nullable;
  */
 @Plugin(type = "source")
 @Name("Table")
-@Description("CDAP Table Dataset Batch Source")
+@Description("CDAP Table Dataset Batch Source.")
 public class TableSource extends BatchReadableSource<byte[], Row, StructuredRecord> {
   private RowRecordTransformer rowRecordTransformer;
 
-  private static final String NAME_DESC = "Table name. If the table does not already exist, it will be created";
+  private static final String NAME_DESC = "Table name. If the table does not already exist, it will be created.";
   private static final String PROPERTY_SCHEMA_DESC = "Schema of records read from the Table. Row columns map to " +
     "record fields. For example, if the schema contains a field named 'user' of type string, " +
     "the value of that field will be taken from the value stored in the 'user' column. " +

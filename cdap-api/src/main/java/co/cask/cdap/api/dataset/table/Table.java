@@ -133,7 +133,6 @@ public interface Table extends BatchReadable<byte[], Row>, BatchWritable<byte[],
    */
   Row get(Get get);
 
-
   /**
    * Reads values for the rows and columns defined by the {@link Get} parameters.  When running in distributed mode,
    * and retrieving multiple rows at the same time, this method should be preferred to multiple {@link Table#get(Get)}

@@ -2,14 +2,16 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2015 Cask Data, Inc.
 
+.. :hide-toc: true
+
 .. _apptemplates-etl-templates:
 
-===============================
-ETL Template and Plugin Details 
-===============================
+========================
+ETL Template and Plugins 
+========================
 
-Introduction
-============
+.. rubric:: Introduction
+
 Details of templates and the required properties for sources, transformations, and sinks
 can be explored using RESTful APIs.
 
@@ -20,9 +22,15 @@ Shipped with CDAP as part of the *ETL Batch* and *ETL Realtime* application temp
 plugins listed below are available for creating ETL adapters.
 
 
-Application Template Details
-============================
+.. toctree::
+   :maxdepth: 3
+   
+    Sources <sources/index>
+    Transformations <transformations/index>
+    Sinks <sinks/index>
+    
+    
+.. rubric:: Exploring Application Template Details
 
-.. include:: ../../../reference-manual/source/http-restful-api/apptemplates.rst 
-   :start-after: .. _http-restful-api-apptemplates-available:
-   :end-before:  .. _http-restful-api-apptemplates-adapters:
+Details on the available application templates can be obtained using the
+:ref:`Application Template and Adapters HTTP RESTful API <http-restful-api-apptemplates>`.

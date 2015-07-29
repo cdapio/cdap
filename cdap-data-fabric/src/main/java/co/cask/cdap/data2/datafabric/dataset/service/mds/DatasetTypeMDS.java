@@ -42,7 +42,7 @@ public class DatasetTypeMDS extends MetadataStoreDataset {
    * NOTE: we store in same table list of modules, with keys being <MODULES_PREFIX><module_name> and
    *       types to modules mapping with keys being <TYPE_TO_MODULE_PREFIX><type_name>
    */
-  static final String MODULES_PREFIX = "m_";
+  public static final String MODULES_PREFIX = "m_";
 
   /**
    * Prefix for rows containing type -> module mapping
