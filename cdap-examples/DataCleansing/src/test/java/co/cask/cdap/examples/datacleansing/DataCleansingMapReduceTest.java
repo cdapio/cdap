@@ -16,7 +16,6 @@
 
 package co.cask.cdap.examples.datacleansing;
 
-import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.PartitionDetail;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
@@ -35,16 +34,16 @@ import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
 import com.google.common.base.Joiner;
-import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.io.ByteStreams;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -161,18 +160,19 @@ public class DataCleansingMapReduceTest extends TestBase {
       return Collections.emptySet();
     }
 
-    Location location = partition.getLocation().append("part-r-00000");
-    byte[] content = ByteStreams.toByteArray(location.getInputStream());
-    return splitToRecords(Bytes.toString(content));
-  }
-
-  private Set<String> splitToRecords(String content) {
-    Set<String> records = new HashSet<>();
-    Iterable<String> splitContent = Splitter.on("\n").omitEmptyStrings().split(content);
-    for (String record : splitContent) {
-      records.add(record);
+    Set<String> cleanData = new HashSet<>();
+    Location partitionLocation = partition.getLocation();
+    for (Location location : partitionLocation.list()) {
+      if (location.getName().startsWith("part-")) {
+        try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(location.getInputStream()))) {
+          String line;
+          while ((line = bufferedReader.readLine()) != null) {
+            cleanData.add(line);
+          }
+        }
+      }
     }
-    return records;
+    return cleanData;
   }
 
   private String joinRecords(Set<String> records) {
