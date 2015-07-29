@@ -285,7 +285,7 @@ def process_cdap_ui(options):
     #   cdap-ui/package.json
     # Create and print to standard out the list of the references
     # Make a list of the references for which links are missing and need to be added to the master
-    # Make a new master list (not done)
+    # Currently does not create a new master list
     # Return a list:
     #   'Dependency','Version','homepage','License','License URL','type'    
     master_libs_dict = process_master()
@@ -431,7 +431,7 @@ def _process_dependencies(dependency):
     # Read in the new dependencies csv file
     # Create and print to standard out the list of the references
     # Make a list of the references for which links are missing and need to be added to the master
-    # Make a new master list
+    # Make a new master list, if one does not already exist
     # Return 'Package','Version','Classifier','License','License URL'
     
     master_libs_dict = process_master()
@@ -489,30 +489,31 @@ def _process_dependencies(dependency):
             i += 1
             print "  %2d: %s" % (i, missing_libs_dict[key])
 
-    # Write out a new master cvs file, only if not already exists 
+    # Write out a new master csv file, only if not already exists 
     if missing_entries or missing_licenses:
-        print 'Creating New Master CSV file'
-        import csv
-        csv.register_dialect('masterCSV', delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL, lineterminator='\n')
-
-        csv_path = os.path.join(SCRIPT_DIR_PATH, MASTER_CSV + '.new.csv')
-        if os.path.isfile(csv_path):
-            print "New Master CSV: Master file already exists: %s" % csv_path
-        else:
-            with open(csv_path, 'w') as csv_file:
-                csv_writer = csv.writer(csv_file, 'masterCSV')
-                keys = master_libs_dict.keys()
-                keys.sort()
-                i = 0
-                for type in MASTER_CSV_TYPES:
-                    csv_file.write(MASTER_CSV_COMMENTS[type])
-                    for k in keys:
-                        r = lib_dict[k].get_row()
-                        row_type = lib_dict[k].type
-                        if row_type == type:
-                            i += 1
-                            csv_writer.writerow(r)
-            print "New master CSV: wrote %s records of %s to: %s" % (i, len(keys), csv_path)
+        write_new_master_csv_file(master_libs_dict)
+#         print 'Creating New Master CSV file'
+#         import csv
+#         csv.register_dialect('masterCSV', delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL, lineterminator='\n')
+# 
+#         csv_path = os.path.join(SCRIPT_DIR_PATH, MASTER_CSV + '.new.csv')
+#         if os.path.isfile(csv_path):
+#             print "New Master CSV: Master file already exists: %s" % csv_path
+#         else:
+#             with open(csv_path, 'w') as csv_file:
+#                 csv_writer = csv.writer(csv_file, 'masterCSV')
+#                 keys = master_libs_dict.keys()
+#                 keys.sort()
+#                 i = 0
+#                 for type in MASTER_CSV_TYPES:
+#                     csv_file.write(MASTER_CSV_COMMENTS[type])
+#                     for k in keys:
+#                         r = lib_dict[k].get_row()
+#                         row_type = lib_dict[k].type
+#                         if row_type == type:
+#                             i += 1
+#                             csv_writer.writerow(r)
+#             print "New master CSV: wrote %s records of %s to: %s" % (i, len(keys), csv_path)
 
     # Return the 'Package','Version','Classifier','License','License URL'
     rst_data = []
@@ -526,6 +527,35 @@ def _process_dependencies(dependency):
             print_debug(row)
         rst_data.append(row)
     return rst_data
+
+def write_new_master_csv_file(lib_dict):
+    print 'Creating new Master CSV file'
+    import csv
+    csv.register_dialect('masterCSV', delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL, lineterminator='\n')
+
+    csv_path = os.path.join(SCRIPT_DIR_PATH, MASTER_CSV + '.new.csv')
+    if os.path.isfile(csv_path):
+        print "New Master CSV: Exiting, as new Master file already exists: %s" % csv_path
+    else:
+        with open(csv_path, 'w') as csv_file:
+            csv_writer = csv.writer(csv_file, 'masterCSV')
+            keys = lib_dict.keys()
+            keys.sort()
+            i = 0
+            for type in MASTER_CSV_TYPES:
+                csv_file.write(MASTER_CSV_COMMENTS[type])
+                for k in keys:
+                    r = lib_dict[k].get_row()
+                    row_type = lib_dict[k].type
+                    if row_type == type:
+                        i += 1
+                        csv_writer.writerow(r)
+        print "New Master CSV: wrote %s records of %s to: %s" % (i, len(keys), csv_path)
+
+
+
+
+
 
 
 def print_rst_level_1(input_file, options):
