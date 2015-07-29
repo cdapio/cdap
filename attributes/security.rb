@@ -65,6 +65,18 @@ if node['cdap']['cdap_site'].key?('kerberos.auth.enabled') && node['cdap']['cdap
     end
   end
 
+  # Add cdap group to core-site.xml's hadoop.proxyuser.hive.groups
+  if node['hadoop'].key?('core_site') && node['hadoop']['core_site'].key?('hadoop.proxyuser.hive.groups')
+    arr = node['hadoop']['core_site']['hadoop.proxyuser.hive.groups'].split(',')
+    group = 'cdap'
+    unless arr.include?(group)
+      arr += [group]
+      default['hadoop']['core_site']['hadoop.proxyuser.hive.groups'] = arr.join(',')
+    end
+  else
+    default['hadoop']['core_site']['hadoop.proxyuser.hive.groups'] = 'cdap,hadoop'
+  end
+
   # For cdap-auth-server and cdap-router
   default['cdap']['cdap_site']['cdap.master.kerberos.keytab'] = node['cdap']['security']['cdap_keytab']
   default['cdap']['cdap_site']['cdap.master.kerberos.principal'] = node['cdap']['security']['cdap_principal']
