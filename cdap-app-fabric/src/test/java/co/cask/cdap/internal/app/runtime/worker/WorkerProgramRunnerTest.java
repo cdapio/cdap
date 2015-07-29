@@ -29,6 +29,7 @@ import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data.dataset.DatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.AppFabricTestHelper;
@@ -152,22 +153,22 @@ public class WorkerProgramRunnerTest {
 
     // validate worker wrote the "initialize" and "run" rows
     final KeyValueTable kvTable = datasetInstantiator.getDataset(AppWithWorker.DATASET);
-    TransactionExecutor executor = txExecutorFactory.createExecutor(Collections.singleton((TransactionAware) kvTable));
-    // wait at most 5 seconds
-    long timeout = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(5);
-    boolean done = false;
-    while (System.currentTimeMillis() < timeout) {
-      done = executor.execute(
-        new Callable<Boolean>() {
-          @Override
-          public Boolean call() throws Exception {
-            return AppWithWorker.RUN.equals(Bytes.toString(kvTable.read(AppWithWorker.RUN)));
-          }
-        });
-    }
-    if (!done) {
-      Assert.fail("timeout waiting for worker to start.");
-    }
+    final TransactionExecutor executor =
+      txExecutorFactory.createExecutor(Collections.singleton((TransactionAware) kvTable));
+
+    // wait at most 5 seconds until the "RUN" row is set (indicates the worker has started running)
+    Tasks.waitFor(AppWithWorker.RUN, new Callable<String>() {
+      @Override
+      public String call() throws Exception {
+        return executor.execute(
+          new Callable<String>() {
+            @Override
+            public String call() throws Exception {
+              return Bytes.toString(kvTable.read(AppWithWorker.RUN));
+            }
+          });
+      }
+    }, 5, TimeUnit.SECONDS, 50, TimeUnit.MILLISECONDS);
 
     stopProgram(controller);
 
@@ -182,39 +183,36 @@ public class WorkerProgramRunnerTest {
       });
 
     // validate that the table emitted metrics
-    timeout = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(2);
-    long metricValue = 0L;
-    while (System.currentTimeMillis() < timeout) {
-      Collection<MetricTimeSeries> metrics =
-        metricStore.query(new MetricDataQuery(
-          0,
-          System.currentTimeMillis() / 1000L,
-          60,
-          "system." + Constants.Metrics.Name.Dataset.OP_COUNT,
-          AggregationFunction.SUM,
-          ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, DefaultId.NAMESPACE.getId(),
-                          Constants.Metrics.Tag.APP, AppWithWorker.NAME,
-                          Constants.Metrics.Tag.WORKER, AppWithWorker.WORKER,
-                          Constants.Metrics.Tag.DATASET, AppWithWorker.DATASET),
-          Collections.<String>emptyList()));
-      if (!metrics.isEmpty()) {
+    Tasks.waitFor(3L, new Callable<Long>() {
+      @Override
+      public Long call() throws Exception {
+        Collection<MetricTimeSeries> metrics =
+          metricStore.query(new MetricDataQuery(
+            0,
+            System.currentTimeMillis() / 1000L,
+            60,
+            "system." + Constants.Metrics.Name.Dataset.OP_COUNT,
+            AggregationFunction.SUM,
+            ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, DefaultId.NAMESPACE.getId(),
+                            Constants.Metrics.Tag.APP, AppWithWorker.NAME,
+                            Constants.Metrics.Tag.WORKER, AppWithWorker.WORKER,
+                            Constants.Metrics.Tag.DATASET, AppWithWorker.DATASET),
+            Collections.<String>emptyList()));
+        if (metrics.isEmpty()) {
+          return 0L;
+        }
         Assert.assertEquals(1, metrics.size());
         MetricTimeSeries ts = metrics.iterator().next();
         Assert.assertEquals(1, ts.getTimeValues().size());
-        metricValue = ts.getTimeValues().get(0).getValue();
-        if (metricValue >= 3L) {
-          break;
-        }
+        return ts.getTimeValues().get(0).getValue();
       }
-      TimeUnit.MILLISECONDS.sleep(50);
-    }
-    Assert.assertEquals(3L, metricValue);
+    }, 5L, TimeUnit.SECONDS, 50L, TimeUnit.MILLISECONDS);
   }
 
   private ProgramController startProgram(ApplicationWithPrograms app, Class<?> programClass)
     throws Throwable {
     final AtomicReference<Throwable> errorCause = new AtomicReference<>();
-    ProgramController controller = submit(app, programClass, RuntimeArguments.NO_ARGUMENTS);
+    final ProgramController controller = submit(app, programClass, RuntimeArguments.NO_ARGUMENTS);
     runningPrograms.add(controller);
     controller.addListener(new AbstractListener() {
       @Override
@@ -227,18 +225,20 @@ public class WorkerProgramRunnerTest {
         errorCause.set(new RuntimeException("Killed"));
       }
     }, Threads.SAME_THREAD_EXECUTOR);
-    long timeout = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(30);
-    while (System.currentTimeMillis() < timeout) {
-      if (controller.getState() == ProgramController.State.ALIVE) {
-        return controller;
+
+    Tasks.waitFor(ProgramController.State.ALIVE, new Callable<ProgramController.State>() {
+      @Override
+      public ProgramController.State call() throws Exception {
+        Throwable t = errorCause.get();
+        if (t != null) {
+          Throwables.propagateIfInstanceOf(t, Exception.class);
+          throw Throwables.propagate(t);
+        }
+        return controller.getState();
       }
-    }
-    //noinspection ThrowableResultOfMethodCallIgnored
-    if (errorCause.get() != null) {
-      throw errorCause.get();
-    } else {
-      throw new RuntimeException("Timeout");
-    }
+    }, 30, TimeUnit.SECONDS, 50, TimeUnit.MILLISECONDS);
+
+    return controller;
   }
 
   private void stopProgram(ProgramController controller) throws Throwable {
@@ -264,9 +264,9 @@ public class WorkerProgramRunnerTest {
     controller.stop();
     complete.await(30, TimeUnit.SECONDS);
     runningPrograms.remove(controller);
-    //noinspection ThrowableResultOfMethodCallIgnored
-    if (errorCause.get() != null) {
-      throw errorCause.get();
+    Throwable t = errorCause.get();
+    if (t != null) {
+      throw t;
     }
   }
 
