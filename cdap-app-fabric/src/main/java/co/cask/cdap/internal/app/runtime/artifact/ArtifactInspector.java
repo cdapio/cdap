@@ -277,7 +277,7 @@ public class ArtifactInspector {
 
             try {
               return pluginClassLoader.loadClass(getClassName(currentPackage, classIterator.next()));
-            } catch (ClassNotFoundException e) {
+            } catch (ClassNotFoundException | NoClassDefFoundError e) {
               // Cannot happen, since the class name is from the list of the class files under the classloader.
               throw Throwables.propagate(e);
             }
