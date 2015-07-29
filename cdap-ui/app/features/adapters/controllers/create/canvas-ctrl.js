@@ -23,6 +23,10 @@ angular.module(PKG.name + '.feature.adapters')
 
     this.canvasOperations = [
       {
+        name: 'Settings',
+        icon: 'fa fa-sliders'
+      },
+      {
         name: 'Publish',
         icon: 'fa fa-cloud-upload'
       },
@@ -33,10 +37,6 @@ angular.module(PKG.name + '.feature.adapters')
       {
         name: 'Config',
         icon: 'fa fa-eye'
-      },
-      {
-        name: 'Settings',
-        icon: 'fa fa-sliders'
       }
     ];
 
