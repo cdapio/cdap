@@ -62,8 +62,6 @@ hdp_version =
     else
       node['hadoop']['distribution_version']
     end
-  else
-    nil
   end
 
 if node.key?('hadoop') && node['hadoop'].key?('distribution') && node['hadoop'].key?('distribution_version') &&
