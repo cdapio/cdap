@@ -1,0 +1,197 @@
+@import "../../styles/variables.less";
+@import "../../../bower_components/bootstrap/less/mixins.less";
+@import "../../styles/themes/cdap/mixins.less";
+
+my-side-panel {
+  .side-panel {
+    position: fixed;
+    top: 95px;
+    z-index: 1025;
+    width: 70px;
+    background-color: white;
+    .transition(all 0.2s ease);
+    .item-heading {
+      span:first-child {
+        font-size: 18px;
+        vertical-align: middle;
+      }
+    }
+    &.left {
+      left: 20px;
+      .btn.btn-info.btn-block {
+        text-align: left;
+      }
+      .item .item-heading {
+        &.item-open {
+          color: white;
+        }
+      }
+    }
+
+    &.right {
+      right: 20px;
+      .btn.btn-info.btn-block {
+        text-align: right;
+      }
+      span.fa-sliders {
+        .rotate(90deg);
+      }
+      .item .item-heading {
+        line-height: 70px;
+        height: 70px;
+        width: 70px;
+        span:last-child {
+          display: none;
+        }
+      }
+    }
+
+    .btn.btn-info.btn-block {
+      background-color: white;
+      border-bottom: 1px solid #DDD;
+      color: @cdap-header;
+      height: 30px;
+      padding: 5px 10px;
+      .border-radius(0);
+      .fa {
+        font-size: 11px;
+        &:first-child {
+          margin-right: -1px;
+        }
+      }
+    }
+
+    &.expanded {
+      width: 120px;
+
+      .item {
+        .item-body, .item-heading {
+          .name, .description {
+            display: inline-block;
+            vertical-align: top;
+            max-width: 70px;
+            overflow-x: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
+        }
+        .item-heading {
+          padding: 0 10px;
+          height: 50px;
+          line-height: 50px;
+          width: 120px;
+          span {
+            &:first-child {
+              font-size: 14px;
+              vertical-align: top;
+              width: 14px;
+              text-align: center;
+            }
+            &.name {
+              font-size: 13px;
+            }
+          }
+        }
+        .item-body {
+          padding: 10px;
+          .plugin-item {
+            width: 100px;
+            padding-left: 5px;
+            > .fa {
+              font-size: 14px;
+            }
+            .name {
+              font-size: 13px;
+            }
+          }
+        }
+      }
+    }
+
+    .item {
+      border-bottom: 1px solid #DDD;
+      color: @cdap-lightgray;
+      cursor: pointer;
+      font-size: 11px;
+      .item-heading {
+        height: 40px;
+        line-height: 40px;
+        vertical-align: middle;
+        span {
+          line-height: inherit;
+          &.name {
+            padding-left: 5px;
+          }
+          &:last-child {
+            font-size: 8px;
+          }
+        }
+        &.item-open {
+          &.source {
+            background-color: @adapter-source;
+            + .item-body .plugin-item {
+              color: @adapter-source;
+            }
+          }
+          &.transform {
+            background-color: @adapter-transform;
+            + .item-body .plugin-item {
+              color: @adapter-transform;
+            }
+          }
+          &.sink {
+            background-color: @adapter-sink;
+            + .item-body .plugin-item {
+              color: @adapter-sink;
+            }
+          }
+        }
+        .name, .description {
+          display: none;
+        }
+
+      }
+
+      .item-body {
+        padding: 15px;
+        background-color: #9A9EAA;
+
+        .plugin-item {
+          background-color: white;
+          margin: 0 auto 10px;
+          line-height: 40px;
+          height: 40px;
+          width: 40px;
+          .border-radius(4px);
+          &:last-child {
+            margin-bottom: 4px;
+          }
+          > .fa {
+            font-size: 18px;
+            text-align: center;
+            height: 18px;
+            width: 18px;
+            vertical-align: middle;
+          }
+        }
+        .name, .description {
+          display: none;
+        }
+      }
+    }
+  }
+}
+
+.tooltip.tooltip-error {
+  z-index: 1020; // lower z-index than modal
+
+  .tooltip-inner {
+    background-color: @brand-danger;
+    color: white;
+    border: 0;
+  }
+
+  &.tooltip.right .tooltip-arrow {
+    border-right-color: @brand-danger;
+  }
+}

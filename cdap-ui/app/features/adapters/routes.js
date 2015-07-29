@@ -2,7 +2,7 @@ angular.module(PKG.name + '.feature.adapters')
   .config(function($stateProvider, $urlRouterProvider, MYAUTH_ROLE) {
     $stateProvider
       .state('adapters', {
-        url: '/adapters',
+        url: '',
         abstract: true,
         parent: 'apps',
         data: {
@@ -13,21 +13,38 @@ angular.module(PKG.name + '.feature.adapters')
       })
 
         .state('adapters.list', {
-          url: '',
+          url: '/drafts',
           templateUrl: '/assets/features/adapters/templates/list.html',
           controller: 'AdapterListController',
           ncyBreadcrumb: {
-            label: 'Adapters',
+            label: 'All Drafts',
             parent: 'overview'
           }
         })
 
         .state('adapters.create', {
-          url: '/create',
-          params: {
-            data: null
+          url: '/create?name&type',
+          resolve: {
+            rConfig: function($stateParams, mySettings, $q) {
+              var defer = $q.defer();
+              if ($stateParams.name) {
+                mySettings.get('adapterDrafts')
+                  .then(function(res) {
+                    var draft = res[$stateParams.name];
+                    if (angular.isObject(draft)) {
+                      draft.name = $stateParams.name;
+                      defer.resolve(draft);
+                    } else {
+                      defer.resolve(false);
+                    }
+                  });
+              } else {
+                defer.resolve(false);
+              }
+              return defer.promise;
+            }
           },
-          controller: 'AdapterCreateController as AdapterCreateController',
+          controller: '_AdapterCreateController as AdapterCreateController',
           templateUrl: '/assets/features/adapters/templates/create.html',
           ncyBreadcrumb: {
             skip: true
@@ -68,7 +85,7 @@ angular.module(PKG.name + '.feature.adapters')
             }
           },
           ncyBreadcrumb: {
-            parent: 'adapters.list',
+            parent: 'apps.list',
             label: '{{$state.params.adapterId}}'
           },
           templateUrl: '/assets/features/adapters/templates/detail.html',
@@ -79,7 +96,7 @@ angular.module(PKG.name + '.feature.adapters')
             templateUrl: '/assets/features/adapters/templates/tabs/runs.html',
             controller: 'AdapterRunsController',
             ncyBreadcrumb: {
-              parent: 'adapters.list',
+              parent: 'apps.list',
               label: '{{$state.params.adapterId}}'
             }
           })

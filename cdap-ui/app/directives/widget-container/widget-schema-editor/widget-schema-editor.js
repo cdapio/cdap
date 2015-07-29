@@ -4,17 +4,36 @@ angular.module(PKG.name + '.commons')
       restrict: 'EA',
       scope: {
         model: '=ngModel',
-        config: '='
+        config: '=',
+        disabled: '='
       },
       templateUrl: 'widget-container/widget-schema-editor/widget-schema-editor.html',
-      controller: function($scope, myHelpers) {
-        $scope.options = $scope.config['schema-types'];
-        var defaultType = $scope.config['schema-default-type'] || $scope.options[0];
+      controller: function($scope, myHelpers, EventPipe) {
+        var defaultOptions = [ 'boolean', 'int', 'long', 'float', 'double', 'bytes', 'string' ];
+        var defaultType = null;
+        if ($scope.config) {
+          $scope.options = $scope.config['schema-types'];
+          defaultType = $scope.config['schema-default-type'] || $scope.options[0];
+        } else {
+          $scope.options = defaultOptions;
+          defaultType = 'string';
+        }
+
+        var modelCopy = angular.copy($scope.model);
+
+        EventPipe.on('plugin.reset', function () {
+          $scope.model = angular.copy(modelCopy);
+          initialize();
+        });
+
+        var filledCount;
 
         // Format model
         function initialize() {
-          var schema = {};
+          filledCount = 0;
 
+          var schema = {};
+          $scope.error = null;
           if ($scope.model) {
             try {
               schema = JSON.parse($scope.model);
@@ -47,17 +66,38 @@ angular.module(PKG.name + '.commons')
             }
           });
 
-          if ($scope.properties.length === 0) {
+          filledCount = $scope.properties.length;
+
+          // Note: 15 for now
+          if ($scope.properties.length < 15) {
+            if ($scope.properties.length === 0) {
+              $scope.properties.push({
+                name: '',
+                type: defaultType,
+                nullable: false
+              });
+              filledCount = 1;
+            }
+
+            for (var i = $scope.properties.length; i < 15; i++) {
+              $scope.properties.push({
+                empty: true
+              });
+            }
+          } else { // to add one empty line when there are more than 15 fields
             $scope.properties.push({
-              name: '',
-              type: defaultType,
-              nullable: false
+              empty: true
             });
           }
+
 
         } // End of initialize
 
         initialize();
+
+        $scope.$watch('disabled', function () {
+          initialize();
+        });
 
 
         function formatSchema() {
@@ -92,6 +132,23 @@ angular.module(PKG.name + '.commons')
         // watch for changes
         $scope.$watch('properties', formatSchema, true);
 
+        $scope.emptyRowClick = function (property, index) {
+          if (!property.empty || index !== filledCount || $scope.disabled) {
+            return;
+          }
+
+          delete property.empty;
+          property.name = '';
+          property.type = defaultType;
+          property.nullable = false;
+          filledCount++;
+
+          if (filledCount >= 15) {
+            $scope.properties.push({
+              empty: true
+            });
+          }
+        };
 
         $scope.addProperties = function() {
           $scope.properties.push({
@@ -99,16 +156,35 @@ angular.module(PKG.name + '.commons')
             type: defaultType,
             nullable: false
           });
+
+          filledCount++;
+
+          if ($scope.properties.length >= 15) {
+            $scope.properties.push({
+              empty: true
+            });
+          }
         };
 
         $scope.removeProperty = function(property) {
           var index = $scope.properties.indexOf(property);
           $scope.properties.splice(index, 1);
+
+          if ($scope.properties.length <= 15) {
+            $scope.properties.push({
+              empty: true
+            });
+          }
+          filledCount--;
         };
 
-        $scope.enter = function(event, last) {
-          if (last && event.keyCode === 13) {
-            $scope.addProperties();
+        $scope.enter = function(event, index) {
+          if (index === filledCount-1 && event.keyCode === 13) {
+            if (filledCount < $scope.properties.length) {
+              $scope.emptyRowClick($scope.properties[index + 1], index+1);
+            } else {
+              $scope.addProperties();
+            }
           }
         };
 

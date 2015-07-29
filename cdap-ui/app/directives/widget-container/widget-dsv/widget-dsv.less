@@ -1,33 +1,17 @@
 @import "../../../styles/variables.less";
+@import "../../../styles/themes/cdap/mixins.less";
+
 my-dsv {
   .dsv-container {
-    border: 2px solid @cdap-bluegray;
-    border-radius: 4px;
-    padding: 15px 0;
+    background-color: @body-bg;
+    border: 1px solid #ddd;
+    padding: 20px 10px;
+    .border-radius(4px);
 
     .empty-container {
-      padding: 5px 15px;
-    }
-  }
-
-  .delimiter {
-    margin-bottom: 5px;
-
-    .delimiter-label {
-      padding-left: 17px;
-      line-height: 30px;
-
-      > strong {
-        vertical-align: middle;
+      .btn.btn-info {
+        margin-top: 10px;
       }
     }
-  }
-
-  .property-row {
-    margin-bottom: 2px;
-  }
-
-  input.form-control {
-    width: 100%;
   }
 }
