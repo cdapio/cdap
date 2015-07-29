@@ -221,7 +221,7 @@ public class CLIMainTest {
     testCommandOutputNotContains(cli, "get stream " + streamId, "helloworld");
     testCommandOutputContains(cli, "set stream ttl " + streamId + " 100000", "Successfully set TTL of stream");
     testCommandOutputContains(cli, "set stream notification-threshold " + streamId + " 1",
-                              "Successfully set notification threshold of Stream");
+                              "Successfully set notification threshold of stream");
     testCommandOutputContains(cli, "describe stream " + streamId, "100000");
 
     File file = new File(TMP_FOLDER.newFolder(), "test.txt");
@@ -242,9 +242,9 @@ public class CLIMainTest {
                               "Successfully sent stream event to stream");
     testCommandOutputContains(cli, "get stream " + streamId, "9, Event 9");
     testCommandOutputContains(cli, "get stream-stats " + streamId,
-                              String.format("No schema found for %s", stream));
+                              String.format("No schema found for stream '%s'", streamId));
     testCommandOutputContains(cli, "set stream format " + streamId + " csv 'body string'",
-                              String.format("Successfully set format of %s", stream));
+                              String.format("Successfully set format of stream '%s'", streamId));
     testCommandOutputContains(cli, "execute 'show tables'", String.format("stream_%s", streamId));
     testCommandOutputContains(cli, "get stream-stats " + streamId,
                               "Analyzed 10 Stream events in the time range [0, 9223372036854775807]");
@@ -267,7 +267,6 @@ public class CLIMainTest {
   @Test
   public void testDataset() throws Exception {
     String datasetName = PREFIX + "sdf123lkj";
-    Id.DatasetInstance dataset = Id.DatasetInstance.from(Id.Namespace.DEFAULT, datasetName);
 
     DatasetTypeClient datasetTypeClient = new DatasetTypeClient(cliConfig.getClientConfig());
     DatasetTypeMeta datasetType = datasetTypeClient.list(Id.Namespace.DEFAULT).get(0);

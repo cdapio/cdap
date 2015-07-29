@@ -22,7 +22,6 @@ import com.google.common.base.Throwables;
 import org.apache.twill.api.EventHandler;
 import org.apache.twill.api.ResourceSpecification;
 
-import java.io.File;
 import java.util.Map;
 
 
@@ -33,8 +32,10 @@ public final class WebappTwillApplication extends AbstractProgramTwillApplicatio
 
   private final Program program;
 
-  protected WebappTwillApplication(Program program, Map<String, File> localizeFiles, EventHandler eventHandler) {
-    super(program, localizeFiles, eventHandler);
+  protected WebappTwillApplication(Program program,
+                                   Map<String, LocalizeResource> localizeResources,
+                                   EventHandler eventHandler) {
+    super(program, localizeResources, eventHandler);
     this.program = program;
   }
 
