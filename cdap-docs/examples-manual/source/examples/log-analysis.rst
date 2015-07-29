@@ -5,39 +5,52 @@
 
 .. _examples-spark-page-rank:
 
-=======================
+====================
 Log Analysis Example
-=======================
+====================
 
-A Cask Data Application Platform (CDAP) example demonstrating Spark and MapReduce running in parallel inside a
-Workflow through fork.
+A Cask Data Application Platform (CDAP) example demonstrating Spark and MapReduce
+running in parallel inside a Workflow through fork.
 
 Overview
 ========
 
-This example demonstrates Spark and MapReduce performing log analysis, computing total number of hits for every unique url, total number of responses for every unique response code and total number of requests made by every unique ip address based on Apache usage log.
+This example demonstrates Spark and MapReduce performing log analysis, computing
+total number of hits for every unique URL, total number of responses for every
+unique response code, and total number of requests made by every unique IP address,
+based on Apache usage log.
 
-Logs are sent to the CDAP and ingested into the *logStream*, which stores the log information event in its entirety.
+Logs are sent to CDAP and ingested into the *logStream*, which stores the log
+information event in its entirety.
 
 After these events are streamed, they are taken up by the *ResponseCounterSpark*, which
-goes through the entries, calculates the total number of responses for every unique response code and tabulates results in an KeyValueTable dataset, *responseCount*.
-The Spark program also computes the total number of requests made by every unique ip address and writes it to TimePartitionedFileSet, *reqCount*.
+goes through the entries, calculates the total number of responses for every unique
+response code, and tabulates results in an ``KeyValueTable`` dataset, *responseCount*.
+The Spark program also computes the total number of requests made by every unique IP
+address and writes it to ``TimePartitionedFileSet``, *reqCount*.
 
-In parallel, these events are also taken up by the *HitCounterProgram*, which goes through the entries, calculates the total number hits for every unique url and tabulates results in KeyValueTable dataset, *hitCount*.
+In parallel, these events are also taken up by the *HitCounterProgram*, which goes
+through the entries, calculates the total number hits for every unique URL and
+tabulates results in a ``KeyValueTable`` dataset, *hitCount*.
 
-The *LogAnalysisWorkflow* ties the Spark and MapReduce to run in parallel.
+The *LogAnalysisWorkflow* ties the Spark and MapReduce programs to run in parallel.
 
-Once the application completes, you can query the *responseCount* dataset by using the ``rescount`` endpoint of the *ResponseCounterService*.
-It will send back a string result with total number of responses on the ``rescount`` query parameter. You can also query the
-*hitCount* dataset by using ``url`` endpoint of the *HitCounterService*. It will send the total number of hits for the queried url.
-You can query the ``reqCount`` TimePartitionedFileSet by using the ``reqcount`` endpoint of the *RequestCounterService* which will return a set of all the available partitions.
-Using one of partitions from the above set you can query for the total number of request made by every unique ip address in last 60 minutes by using the ``reqfile``
-endpoint of the *RequestCounterService* which will return a Map of ip addresses and total number of requests made by them.
+Once the application completes, you can query the *responseCount* dataset by using
+the ``rescount`` endpoint of the *ResponseCounterService*. It will send back a
+string result with the total number of responses on the ``rescount`` query parameter.
+You can also query the *hitCount* dataset by using the ``url`` endpoint of the
+*HitCounterService*. It will send the total number of hits for the queried url.
+You can query the ``reqCount`` ``TimePartitionedFileSet`` by using the ``reqcount``
+endpoint of the *RequestCounterService* which will return a set of all available
+partitions. Using one of partitions from the above set, you can query for the total
+number of requests made by every unique IP address in last 60 minutes. The ``reqfile``
+endpoint of the *RequestCounterService* returns a map of IP addresses to the total
+number of requests made by them.
 
 Let's look at some of these components, and then run the application and see the results.
 
 The LogAnalysis Application
------------------------------
+---------------------------
 
 As in the other `examples <index.html>`__, the components
 of the application are tied together by the class ``LogAnalysisApp``:
@@ -46,16 +59,18 @@ of the application are tied together by the class ``LogAnalysisApp``:
    :language: java
    :lines: 70-94
 
-The ``hitCount``, ``responseCount`` KeyValueTable and  ``reqCount`` TimePartitionedFileSet
---------------------------------------------------------------------------------
+The *hitCount* and  *responseCount* ``KeyValueTable``s, and the  *reqCount* ``TimePartitionedFileSet``
+------------------------------------------------------------------------------------------------------
 
-The calculated hit count for every unique url is stored in an KeyValueTable dataset, *hitCount* and the total number of responses for a response code is stored in KeyValueTable dataset, *responseCount*.
-The total number of requests made by every unique ip address is written to TimePartitionedFileSet, *ipCount*.
+The calculated hit count for every unique URL is stored in a ``KeyValueTable`` dataset,
+*hitCount* and the total number of responses for a response code is stored in another
+``KeyValueTable`` dataset, *responseCount*. The total number of requests made by every
+unique ip address is written to a ``TimePartitionedFileSet``, *ipCount*.
 
 The ``HitCounterService``, ``ResponseCounterService`` and ``RequestCounterService`` Services
-----------------------------
+--------------------------------------------------------------------------------------------
 
-This ``HitCounterService`` service has a ``hitcount`` endpoint to obtain the total number of hits for a given url.
+This ``HitCounterService`` service has a ``hitcount`` endpoint to obtain the total number of hits for a given URL.
 This ``ResponseCounterService`` service has a ``rescount`` endpoint to obtain the total number of responses for a given response code.
 This ``RequestCounterService`` service has a ``reqcount`` endpoint to obtain a set of all the available partitions in the TimePartitionedFileSet and it also
 has a ``reqfile`` to retrieve data from a particular partition.
@@ -85,9 +100,9 @@ Once the application is deployed:
 
 - Go to the *LogAnalysisApp* `application overview page
   <http://localhost:9999/ns/default/apps/LogAnalysisApp/overview/status>`__,
-  click ``ResponseCounterService`` to get to the service detail page, then click the *Start* button,
-  and then do the same for the *HitCounterService* and ``RequestCounterService`` services; or
-- From the Standalone CDAP SDK directory, use the Command Line Interface::
+  click *ResponseCounterService* to get to the service detail page, then click the *Start* button,
+  and then do the same for the *HitCounterService* and *RequestCounterService* services; or
+- From the Standalone CDAP SDK directory, use the CDAP Command Line Interface::
 
     $ cdap-cli.sh start service LogAnalysisApp.ResponseCounterService
     $ cdap-cli.sh start service LogAnalysisApp.HitCounterService
@@ -97,18 +112,17 @@ Once the application is deployed:
     Successfully started service 'HitCounterService' of application 'LogAnalysisApp' with stored runtime arguments '{}'
     Successfully started service 'RequestCounterService' of application 'LogAnalysisApp' with stored runtime arguments '{}'
 
-Injecting access logs
+Injecting Access Logs
 ---------------------
 
-Inject a file of apache access log to the stream *logStream* by running this command from the
+Inject a file of Apache access log to the stream *logStream* by running this command from the
 Standalone CDAP SDK directory, using the Command Line Interface::
   
   $ cdap-cli.sh load stream logStream cdap-examples/LogAnalysis/resources/apache.accesslog "text/plain"
-  
   Successfully sent stream event to stream 'logStream'
 
 Running the Workflow
--------------------------
+--------------------
 There are three ways to start the workflow:
 
 1. Go to the *LogAnalysisApp* `application overview page
@@ -136,7 +150,9 @@ You can also use the Command Line Interface::
 
   $ cdap-cli.sh call service LogAnalysisApp.HitCounterService POST 'hitcount' body '{"url":"/index.html"}'
 
-Similarly to query *responseCount* KeyValueTable through the ``ResponseCounterService`` and *reqCount* TimePartitionedFileSet through the ``RequestCounterService``
+Similarly, to query the *responseCount* ``KeyValueTable`` through the *ResponseCounterService*, the *reqCount*
+``TimePartitionedFileSet`` through the *RequestCounterService*, and to retrieve data from a particular partition of
+the ``TimePartitionedFileSet``, use:
 
 curl::
 
@@ -159,12 +175,12 @@ Once done, you can stop the application as described above in `Stopping an Appli
 
 - Go to the *LogAnalysisApp* `application overview page
   <http://localhost:9999/ns/default/apps/LogAnalysisApp/overview/status>`__,
-  click ``LogAnalysisWorkflow`` to get to the workflow detail page, then click the *Stop* button; or
+  click *LogAnalysisWorkflow* to get to the workflow detail page, then click the *Stop* button; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface::
 
     $ cdap-cli.sh stop workflow LogAnalysisApp.LogAnalysisWorkflow
 
-**Stopping the Service**
+**Stopping the Services**
 
 - Go to the *LogAnalysisApp* `application overview page
   <http://localhost:9999/ns/default/apps/LogAnalysisApp/overview/status>`__,
