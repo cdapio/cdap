@@ -408,8 +408,12 @@ def process_level_1(input_file, options):
     print "Level 1: Unique Row count: %s" % unique_row_count
     print "Level 1: Missing Artifacts: %s" % len(missing_libs_dict.keys())
     
-    for key in missing_libs_dict.keys():
-        print "Missing artifact_id: %s (for %s)" % (key, missing_libs_dict[key])
+    if len(missing_libs_dict.keys()) > 0:
+        for key in missing_libs_dict.keys():
+            print "Missing artifact_id: %s (for %s)" % (key, missing_libs_dict[key])
+        print 'Add these lines to the Master file:'
+        for key in missing_libs_dict.keys():
+            print '"%s","","","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"' % missing_libs_dict[key]
 
     # Return the 'Package','Artifact','License','License URL'
     rst_data = []
@@ -492,28 +496,6 @@ def _process_dependencies(dependency):
     # Write out a new master csv file, only if not already exists 
     if missing_entries or missing_licenses:
         write_new_master_csv_file(master_libs_dict)
-#         print 'Creating New Master CSV file'
-#         import csv
-#         csv.register_dialect('masterCSV', delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL, lineterminator='\n')
-# 
-#         csv_path = os.path.join(SCRIPT_DIR_PATH, MASTER_CSV + '.new.csv')
-#         if os.path.isfile(csv_path):
-#             print "New Master CSV: Master file already exists: %s" % csv_path
-#         else:
-#             with open(csv_path, 'w') as csv_file:
-#                 csv_writer = csv.writer(csv_file, 'masterCSV')
-#                 keys = master_libs_dict.keys()
-#                 keys.sort()
-#                 i = 0
-#                 for type in MASTER_CSV_TYPES:
-#                     csv_file.write(MASTER_CSV_COMMENTS[type])
-#                     for k in keys:
-#                         r = lib_dict[k].get_row()
-#                         row_type = lib_dict[k].type
-#                         if row_type == type:
-#                             i += 1
-#                             csv_writer.writerow(r)
-#             print "New master CSV: wrote %s records of %s to: %s" % (i, len(keys), csv_path)
 
     # Return the 'Package','Version','Classifier','License','License URL'
     rst_data = []
@@ -551,12 +533,6 @@ def write_new_master_csv_file(lib_dict):
                         i += 1
                         csv_writer.writerow(r)
         print "New Master CSV: wrote %s records of %s to: %s" % (i, len(keys), csv_path)
-
-
-
-
-
-
 
 def print_rst_level_1(input_file, options):
     title = 'Level 1'
