@@ -29,6 +29,7 @@ CDAP HTTP RESTful API v3
     Metrics <metrics>
     Monitor <monitor>
     Transactions <transactions>
+    Workflow <workflow>
 
 .. highlight:: console
 
@@ -56,3 +57,4 @@ data isolation. This is an inital step towards introducing `multi-tenancy
 - :doc:`Metrics: <metrics>` retrieving metrics for system and user applications (user-defined metrics)
 - :doc:`Monitor: <monitor>` checking the status of various system and custom CDAP services
 - :doc:`Transactions: <transactions>` interacting with the transaction service
+- :doc:`Workflow: <workflow>` retrieving values from workflow tokens

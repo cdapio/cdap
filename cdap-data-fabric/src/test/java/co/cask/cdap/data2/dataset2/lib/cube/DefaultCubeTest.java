@@ -30,14 +30,16 @@ import java.util.Map;
 public class DefaultCubeTest extends AbstractCubeTest {
 
   @Override
-  protected Cube getCube(String name, int[] resolutions, Map<String, ? extends Aggregation> aggregations) {
+  protected Cube getCube(final String name, int[] resolutions, Map<String, ? extends Aggregation> aggregations) {
     FactTableSupplier supplier = new FactTableSupplier() {
       @Override
       public FactTable get(int resolution, int rollTime) {
-        InMemoryTableService.create("EntityTable");
-        InMemoryTableService.create("DataTable");
-        return new FactTable(new InMemoryMetricsTable("DataTable"),
-                             new EntityTable(new InMemoryMetricsTable("EntityTable")),
+        String entityTableName = "EntityTable-" + name;
+        InMemoryTableService.create(entityTableName);
+        String dataTableName = "DataTable-" + name + "-" + resolution;
+        InMemoryTableService.create(dataTableName);
+        return new FactTable(new InMemoryMetricsTable(dataTableName),
+                             new EntityTable(new InMemoryMetricsTable(entityTableName)),
                              resolution, rollTime);
 
       }

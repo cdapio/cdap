@@ -75,10 +75,10 @@ public abstract class AbstractCubeTest {
     writeIncViaBatchWritable(cube, "metric1", 9, 1, null, null, null);
     // writing in batch
     cube.add(ImmutableList.of(
-      getFact("metric1", 10, 2, "1", "1", "1", "1"),
-      getFact("metric1", 11, 3, "1", "1", "1", null),
-      getFact("metric1", 12, 4, "2", "1", "1", "1"),
-      getFact("metric1", 13, 5, null, null, null, "1")
+      getFact("metric1", 10, 2, MeasureType.COUNTER, "1", "1", "1", "1"),
+      getFact("metric1", 11, 3, MeasureType.COUNTER, "1", "1", "1", null),
+      getFact("metric1", 12, 4, MeasureType.COUNTER, "2", "1", "1", "1"),
+      getFact("metric1", 13, 5, MeasureType.COUNTER, null, null, null, "1")
     ));
 
     writeInc(cube, "metric2", 1, 1, "1", "1", "1");
@@ -164,6 +164,90 @@ public abstract class AbstractCubeTest {
   }
 
   @Test
+  public void testIncrements() throws Exception {
+    Aggregation agg1 = new DefaultAggregation(ImmutableList.of("dim1"));
+    Aggregation agg2 = new DefaultAggregation(ImmutableList.of("dim1", "dim2"));
+
+    int res1 = 1;
+    int res100 = 100;
+    Cube cube = getCube("myIncCube", new int[] {res1, res100},
+                        ImmutableMap.of("agg1", agg1, "agg2", agg2));
+
+    // write some data
+    writeInc(cube, "metric1",  1,  1,  "1",  "1");
+    writeInc(cube, "metric1",  1,  2,  "2",  "1");
+    writeInc(cube, "metric1",  1,  3,  "1",  "2");
+    writeInc(cube, "metric2",  1,  4,  "1",  "1");
+    writeInc(cube, "metric1",  1,  5,  "1",  "2");
+    writeInc(cube, "metric1", 10, 6, "1", "1");
+    writeInc(cube, "metric1", 101, 7, "1", "1");
+
+    // now let's query!
+    verifyCountQuery(cube, "agg1", 0, 150, res1, "metric1", AggregationFunction.SUM,
+                     ImmutableMap.of("dim1", "1"), new ArrayList<String>(),
+                     ImmutableList.of(
+                       new TimeSeries("metric1", new HashMap<String, String>(), timeValues(1, 9, 10, 6, 101, 7))));
+
+    verifyCountQuery(cube, "agg1", 0, 150, res100, "metric1", AggregationFunction.SUM,
+                     ImmutableMap.of("dim1", "1"), new ArrayList<String>(),
+                     ImmutableList.of(
+                       new TimeSeries("metric1", new HashMap<String, String>(), timeValues(0, 15, 100, 7))));
+
+    verifyCountQuery(cube, "agg2", 0, 150, res1, "metric1",  AggregationFunction.SUM,
+                     ImmutableMap.of("dim1", "1", "dim2", "1"), new ArrayList<String>(),
+                     ImmutableList.of(
+                       new TimeSeries("metric1", new HashMap<String, String>(), timeValues(1, 1, 10, 6, 101, 7))));
+
+    verifyCountQuery(cube, "agg2", 0, 150, res100, "metric1",  AggregationFunction.SUM,
+                     ImmutableMap.of("dim1", "1", "dim2", "1"), new ArrayList<String>(),
+                     ImmutableList.of(
+                       new TimeSeries("metric1", new HashMap<String, String>(), timeValues(0, 7, 100, 7))));
+
+  }
+
+  @Test
+  public void testGauges() throws Exception {
+    Aggregation agg1 = new DefaultAggregation(ImmutableList.of("dim1"));
+    Aggregation agg2 = new DefaultAggregation(ImmutableList.of("dim1", "dim2"));
+
+    int res1 = 1;
+    int res100 = 100;
+    Cube cube = getCube("myGaugeCube", new int[] {res1, res100},
+                        ImmutableMap.of("agg1", agg1, "agg2", agg2));
+
+    // write some data
+    writeGauge(cube, "metric1", 1, 1, "1", "1");
+    writeGauge(cube, "metric1", 1, 2, "2", "1");
+    writeGauge(cube, "metric1", 1, 3, "1", "2");
+    writeGauge(cube, "metric2", 1, 4, "1", "1");
+    writeGauge(cube, "metric1", 1, 5, "1", "2");
+    writeGauge(cube, "metric1", 10, 6, "1", "1");
+    writeGauge(cube, "metric1",  101,  7,  "1",  "1");
+
+    // now let's query!
+    verifyCountQuery(cube, "agg1", 0, 150, res1, "metric1", AggregationFunction.LATEST,
+                     ImmutableMap.of("dim1", "1"), new ArrayList<String>(),
+                     ImmutableList.of(
+                       new TimeSeries("metric1", new HashMap<String, String>(), timeValues(1, 5, 10, 6, 101, 7))));
+
+    verifyCountQuery(cube, "agg1", 0, 150, res100, "metric1", AggregationFunction.LATEST,
+                     ImmutableMap.of("dim1", "1"), new ArrayList<String>(),
+                     ImmutableList.of(
+                       new TimeSeries("metric1", new HashMap<String, String>(), timeValues(0, 6, 100, 7))));
+
+    verifyCountQuery(cube, "agg2", 0, 150, res1, "metric1",  AggregationFunction.LATEST,
+                     ImmutableMap.of("dim1", "1", "dim2", "1"), new ArrayList<String>(),
+                     ImmutableList.of(
+                       new TimeSeries("metric1", new HashMap<String, String>(), timeValues(1, 1, 10, 6, 101, 7))));
+
+    verifyCountQuery(cube, "agg2", 0, 150, res100, "metric1",  AggregationFunction.LATEST,
+                     ImmutableMap.of("dim1", "1", "dim2", "1"), new ArrayList<String>(),
+                     ImmutableList.of(
+                       new TimeSeries("metric1", new HashMap<String, String>(), timeValues(0, 6, 100, 7))));
+
+  }
+
+  @Test
   public void testInterpolate() throws Exception {
     Aggregation agg1 = new DefaultAggregation(ImmutableList.of("dim1", "dim2", "dim3"),
                                               ImmutableList.of("dim1", "dim2", "dim3"));
@@ -243,19 +327,23 @@ public abstract class AbstractCubeTest {
 
 
   protected void writeInc(Cube cube, String measureName, long ts, long value, String... dims) throws Exception {
-    cube.add(getFact(measureName, ts, value, dims));
+    cube.add(getFact(measureName, ts, value, MeasureType.COUNTER, dims));
+  }
+
+  protected void writeGauge(Cube cube, String measureName, long ts, long value, String... dims) throws Exception {
+    cube.add(getFact(measureName, ts, value, MeasureType.GAUGE, dims));
   }
 
   private void writeIncViaBatchWritable(Cube cube, String measureName, long ts,
                                         long value, String... dims) throws Exception {
     // null for key: it is ignored
-    cube.write(null, getFact(measureName, ts, value, dims));
+    cube.write(null, getFact(measureName, ts, value, MeasureType.COUNTER, dims));
   }
 
-  private CubeFact getFact(String measureName, long ts, long value, String... dims) {
+  private CubeFact getFact(String measureName, long ts, long value, MeasureType measureType, String... dims) {
     return new CubeFact(ts)
       .addDimensionValues(dimValuesByValues(dims))
-      .addMeasurement(measureName, MeasureType.COUNTER, value);
+      .addMeasurement(measureName, measureType, value);
   }
 
   private Map<String, String> dimValuesByValues(String... dims) {
@@ -315,8 +403,8 @@ public abstract class AbstractCubeTest {
       .build();
 
     Collection<TimeSeries> result = cube.query(query);
-    Assert.assertEquals(expected.size(), result.size());
-    Assert.assertTrue(expected.containsAll(result));
+    Assert.assertEquals(String.format("expected: %s, found: %s", expected, result), expected.size(), result.size());
+    Assert.assertTrue(String.format("expected: %s, found: %s", expected, result), expected.containsAll(result));
   }
 
   protected List<TimeValue> timeValues(long... longs) {
