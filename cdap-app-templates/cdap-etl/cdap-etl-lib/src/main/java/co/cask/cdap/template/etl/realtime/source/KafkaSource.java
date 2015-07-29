@@ -65,12 +65,12 @@ public class KafkaSource extends RealtimeSource<StructuredRecord> {
   public static final String KAFKA_ZOOKEEPER = "kafka.zookeeper";
   public static final String KAFKA_BROKERS = "kafka.brokers";
   public static final String KAFKA_DEFAULT_OFFSET = "kafka.default.offset";
-  public static final String KAFKA_SCHEMA = "schema";
-  public static final String KAFKA_FORMAT = "format";
+  public static final String SCHEMA = "schema";
+  public static final String FORMAT = "format";
 
   private static final String FORMAT_SETTING_PREFIX = "format.setting.";
 
-  private static final Schema SCHEMA = Schema.recordOf("Kafka Message",
+  private static final Schema DEFAULT_SCHEMA = Schema.recordOf("Kafka Message",
                                                        Schema.Field.of(MESSAGE, Schema.of(Schema.Type.BYTES)),
                                                        Schema.Field.of(KEY, Schema.nullableOf(
                                                          Schema.of(Schema.Type.STRING))));
@@ -146,7 +146,7 @@ public class KafkaSource extends RealtimeSource<StructuredRecord> {
   }
 
   private StructuredRecord byteBufferToSchemalessByteRecord(@Nullable String key, ByteBuffer payload) {
-    StructuredRecord.Builder recordBuilder = StructuredRecord.builder(SCHEMA);
+    StructuredRecord.Builder recordBuilder = StructuredRecord.builder(DEFAULT_SCHEMA);
     if (key != null) {
       recordBuilder.set(KEY, key);
     }
@@ -192,14 +192,14 @@ public class KafkaSource extends RealtimeSource<StructuredRecord> {
     @Nullable
     private final Long defaultOffset;
 
-    @Name(KAFKA_SCHEMA)
+    @Name(SCHEMA)
     @Description("Optional schema for the body of Kafka events. Schema is used " +
       "in conjunction with format to parse Kafka payloads. Some formats like the avro format require schema, " +
       "while others do not. The schema given is for the body of the Kafka event")
     @Nullable
     private final String schema;
 
-    @Name(KAFKA_FORMAT)
+    @Name(FORMAT)
     @Description("Optional format of the Kafka event. Any format supported by CDAP is also supported. " +
       "For example, a value of 'csv' will attempt to parse Kafka payloads as comma separated values. " +
       "If no format is given, Kafka message payloads will be treated as bytes, resulting in a two field schema: " +

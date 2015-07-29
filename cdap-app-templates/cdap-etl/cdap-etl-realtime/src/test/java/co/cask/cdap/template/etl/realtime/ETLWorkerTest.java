@@ -213,8 +213,8 @@ public class ETLWorkerTest extends TestBase {
     ETLStage source = new ETLStage("Kafka", ImmutableMap.<String, String>builder()
       .put(KafkaSource.KAFKA_TOPIC, "MyTopic")
       .put(KafkaSource.KAFKA_ZOOKEEPER, zkServer.getConnectionStr())
-      .put(KafkaSource.KAFKA_FORMAT, "csv")
-      .put(KafkaSource.KAFKA_SCHEMA, schema.toString())
+      .put(KafkaSource.FORMAT, "csv")
+      .put(KafkaSource.SCHEMA, schema.toString())
       .put(KafkaSource.KAFKA_PARTITIONS, Integer.toString(PARTITIONS))
       .build()
     );
