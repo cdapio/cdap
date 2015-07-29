@@ -218,6 +218,7 @@ angular.module(PKG.name + '.services')
 
             }],
             size: 'lg',
+            windowClass: 'adapter-modal',
             resolve: {
               AdapterModel: function () {
                 return plugin;

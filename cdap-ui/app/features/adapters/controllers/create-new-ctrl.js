@@ -34,6 +34,7 @@ angular.module(PKG.name + '.feature.adapters')
       $bootstrapModal.open({
         templateUrl: '/assets/features/adapters/templates/create/metadata.html',
         size: 'lg',
+        windowClass: 'adapter-modal',
         keyboard: true,
         controller: ['$scope', function($scope) {
           $scope.modelCopy = angular.copy(this.metadata);
