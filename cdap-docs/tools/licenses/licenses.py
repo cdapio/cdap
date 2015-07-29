@@ -291,6 +291,7 @@ def process_cdap_ui(options):
     master_libs_dict = process_master()
     cdap_ui_dict = {}
     missing_libs_dict = {}
+    new_versions_dict = {}
     
     import json
     from pprint import pprint
@@ -309,9 +310,24 @@ def process_cdap_ui(options):
                     if master_libs_dict.has_key(dependency):
                         # Look up reference in dictionary
                         cdap_ui_dict[dependency] = master_libs_dict[dependency]
+                        # Compare versions
+                        if master_libs_dict[dependency].version != version:
+                            if new_versions_dict.has_key(dependency):
+                                print "Dependency already in new versions: %s current: %s new: %s newer: %s" % (dependency, 
+                                    master_libs_dict[dependency].version, new_versions_dict[dependency], version)
+                            else:
+                                new_versions_dict[dependency]=version
                     else:
                         missing_libs_dict[dependency] = (type, version)
 
+    keys = new_versions_dict.keys()
+    count_new = len(keys)
+    if count_new:
+        print "\nCDAP UI: New Versions: %s" % count_new
+        keys.sort()
+        for key in keys:
+            print "%s : current: %s new: %s" % (key, master_libs_dict[key].version, new_versions_dict[key])
+        
     keys = missing_libs_dict.keys()
     count_missing = len(keys)
     print "\nCDAP UI: Missing Artifacts: %s" % count_missing
