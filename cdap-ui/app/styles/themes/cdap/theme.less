@@ -6,9 +6,14 @@ body.theme-cdap {
   //
   // Full width for Dashboard
   // --------------------------------------------------
-  &.state-dashboard {
+  &.state-dashboard, &.state-adapters-create {
     main.container {
       width: 100%;
+    }
+  }
+  &.state-adapters-create {
+    main.container {
+      padding: 0;
     }
   }
 
@@ -422,5 +427,47 @@ body.theme-cdap {
   //
   // Tooltips
   // --------------------------------------------------
-  .tooltip-inner { padding: 5px; }
+  .tooltip {
+    font-size: 11px;
+    &.top {
+      margin-top: -2px;
+      .tooltip-arrow {
+        bottom: 0;
+        left: 50%;
+        margin-left: -5px;
+        border-left: 5px solid transparent;
+        border-right: 5px solid transparent;
+        border-top: 5px solid @cdap-header;
+      }
+    }
+    &.right {
+      margin-left: 2px;
+      .tooltip-arrow {
+        top: 50%;
+        left: 0;
+        margin-top: -5px;
+        border-top: 5px solid transparent;
+        border-bottom: 5px solid transparent;
+        border-right: 5px solid @cdap-header;
+      }
+    }
+    &.left {
+      margin-left: -2px;
+      .tooltip-arrow {
+        top: 50%;
+        right: 0;
+        margin-top: -5px;
+        border-top: 5px solid transparent;
+        border-bottom: 5px solid transparent;
+        border-left: 5px solid @cdap-header;
+      }
+    }
+  }
+  .tooltip-inner {
+    background-color: @cdap-header;
+    border: 1px solid @cdap-header;
+    color: white;
+    padding: 7px;
+    .border-radius(3px);
+  }
 }

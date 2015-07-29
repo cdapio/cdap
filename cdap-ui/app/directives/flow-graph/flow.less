@@ -1,4 +1,5 @@
 @import "../../styles/variables.less";
+@import "../../styles/themes/cdap/mixins.less";
 
 my-flow-graph {
 
@@ -200,12 +201,13 @@ my-workflow-graph {
 
 .d3-tip {
   line-height: 1;
-  font-weight: bold;
-  padding: 12px;
-  background: rgba(0, 0, 0, 0.8);
+  font-size: 11px;
+  padding: 7px;
+  background: @cdap-header;
+  border: 1px solid @cdap-header;
   color: white;
-  border-radius: 2px;
   pointer-events: none;
+  .border-radius(3px);
 }
 
 /* Creates a small triangle extender for the tooltip */
@@ -215,7 +217,7 @@ my-workflow-graph {
   font-size: 10px;
   width: 100%;
   line-height: 1;
-  color: rgba(0, 0, 0, 0.8);
+  color: @cdap-header;
   position: absolute;
   pointer-events: none;
 }
@@ -223,7 +225,7 @@ my-workflow-graph {
 /* Style northward tooltips differently */
 .d3-tip.n:after {
   content: "\25BC";
-  margin: -1px 0 0 0;
+  margin: -3px 0 0 0;
   top: 100%;
   left: 0;
   text-align: center;

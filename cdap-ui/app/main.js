@@ -46,7 +46,7 @@ angular
       'mgcrea.ngStrap.timepicker',
 
       'mgcrea.ngStrap.alert',
-      'mgcrea.ngStrap.tooltip',
+
       'mgcrea.ngStrap.popover',
       'mgcrea.ngStrap.dropdown',
       'mgcrea.ngStrap.typeahead',
@@ -163,6 +163,12 @@ angular
     });
   })
 
+  .config(function ($bootstrapTooltipProvider) {
+    $bootstrapTooltipProvider.setTriggers({
+      'customShow': 'customHide'
+    });
+  })
+
   .config(function ($compileProvider) {
     $compileProvider.aHrefSanitizationWhitelist(
       /^\s*(https?|ftp|mailto|tel|file|blob):/
@@ -272,7 +278,7 @@ angular
       );
     });
 
-    $rootScope.$on('$stateChangeError', function (event, state) {
+    $rootScope.$on('$stateChangeError', function () {
       $state.go('login');
     });
 

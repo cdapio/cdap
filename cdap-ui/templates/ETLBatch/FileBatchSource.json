@@ -42,5 +42,11 @@
         }
       }
     }
+  },
+  "implicit": {
+    "schema": {
+      "ts": "long",
+      "body": "string"
+    }
   }
 }
