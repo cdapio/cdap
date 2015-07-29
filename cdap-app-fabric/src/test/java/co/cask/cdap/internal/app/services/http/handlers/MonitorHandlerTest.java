@@ -104,7 +104,7 @@ public class MonitorHandlerTest extends AppFabricTestBase {
   public void testRestartInstances() throws Exception {
     String path = String.format("%s/system/services/%s/restart", Constants.Gateway.API_VERSION_3,
                                 Constants.Service.APP_FABRIC_HTTP);
-    HttpResponse response = doPut(path);
+    HttpResponse response = doPost(path);
 
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
 
@@ -125,9 +125,9 @@ public class MonitorHandlerTest extends AppFabricTestBase {
 
   @Test
   public void testInvalidIdRestartInstances() throws Exception {
-    String path = String.format("%s/system/services/%s/restart/1000", Constants.Gateway.API_VERSION_3,
+    String path = String.format("%s/system/services/%s/instances/1000/restart", Constants.Gateway.API_VERSION_3,
                                 Constants.Service.APP_FABRIC_HTTP);
-    HttpResponse response = doPut(path);
+    HttpResponse response = doPost(path);
 
     Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.getCode(), response.getStatusLine().getStatusCode());
 

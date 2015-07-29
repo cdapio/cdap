@@ -25,6 +25,7 @@ import org.jboss.netty.handler.codec.http.HttpRequest;
 
 import java.util.Map;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -96,7 +97,7 @@ public class MonitorHandler extends AbstractMonitorHandler {
    * Send request to restart all instances for a CDAP system service.
    */
   @Path("/system/services/{service-name}/restart")
-  @PUT
+  @POST
   public void restartAllServiceInstances(HttpRequest request, HttpResponder responder,
                                          @PathParam("service-name") String serviceName) {
     super.restartAllServiceInstances(request, responder, serviceName);
@@ -105,8 +106,8 @@ public class MonitorHandler extends AbstractMonitorHandler {
   /**
    * Send request to restart single instance identified by <instance-id>
    */
-  @Path("/system/services/{service-name}/restart/{instance-id}")
-  @PUT
+  @Path("/system/services/{service-name}/instances/{instance-id}/restart")
+  @POST
   public void restartServiceInstance(HttpRequest request, HttpResponder responder,
                                      @PathParam("service-name") String serviceName,
                                      @PathParam("instance-id") int instanceId) {
