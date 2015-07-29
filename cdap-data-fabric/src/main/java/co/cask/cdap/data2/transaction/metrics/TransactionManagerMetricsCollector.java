@@ -44,8 +44,8 @@ public class TransactionManagerMetricsCollector extends TxMetricsCollector {
 
   @Override
   public void histogram(String metricName, int value) {
-    // TODO: change when CDAP metrics supports histograms
-    metricsContext.increment(metricName, value);
+    // TODO: change when CDAP metrics supports histograms: CDAP-3120
+    metricsContext.gauge(metricName, value);
   }
 
   @Override
