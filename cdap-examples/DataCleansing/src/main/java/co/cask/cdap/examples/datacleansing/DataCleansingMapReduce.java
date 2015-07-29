@@ -32,7 +32,6 @@ import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
-import org.apache.hadoop.mapreduce.Reducer;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -87,7 +86,6 @@ public class DataCleansingMapReduce extends AbstractMapReduce {
 
     Job job = context.getHadoopJob();
     job.setMapperClass(SchemaMatchingFilter.class);
-    job.setReducerClass(IdentityReducer.class);
 
     // simply propagate the schema (if any) to be used by the mapper
     String schemaJson = context.getRuntimeArguments().get(SCHEMA_KEY);
@@ -106,7 +104,7 @@ public class DataCleansingMapReduce extends AbstractMapReduce {
   /**
    * A Mapper which skips text that doesn't match a given schema.
    */
-  public static class SchemaMatchingFilter extends Mapper<LongWritable, Text, LongWritable, Text> {
+  public static class SchemaMatchingFilter extends Mapper<LongWritable, Text, NullWritable, Text> {
     public static final Schema DEFAULT_SCHEMA = Schema.recordOf("person",
                                                                 Schema.Field.of("pid", Schema.of(Schema.Type.LONG)),
                                                                 Schema.Field.of("name", Schema.of(Schema.Type.STRING)),
@@ -133,20 +131,7 @@ public class DataCleansingMapReduce extends AbstractMapReduce {
         mapMetrics.count("data.invalid", 1);
         return;
       }
-      context.write(key, data);
-    }
-  }
-
-  /**
-   * An identity reducer which writes only the values to the file.
-   */
-  public static class IdentityReducer extends Reducer<LongWritable, Text, NullWritable, Text> {
-    @Override
-    protected void reduce(LongWritable key, Iterable<Text> values, Context context)
-      throws IOException, InterruptedException {
-      for (Text value : values) {
-        context.write(NullWritable.get(), value);
-      }
+      context.write(NullWritable.get(), data);
     }
   }
 }
