@@ -179,7 +179,7 @@ public class BatchETLDBAdapterTest extends BaseETLBatchTest {
   @Test
   @Category(SlowTests.class)
   @SuppressWarnings("ConstantConditions")
-  public void testDBSource() throws Exception {
+  public void testDBSourceWithCaseInsensitiveRowKey() throws Exception {
     String importQuery = "SELECT ID, NAME, SCORE, GRADUATED, TINY, SMALL, BIG, FLOAT_COL, REAL_COL, NUMERIC_COL, " +
       "DECIMAL_COL, BIT_COL, DATE_COL, TIME_COL, TIMESTAMP_COL, BINARY_COL, BLOB_COL, CLOB_COL FROM my_table " +
       "WHERE ID < 3";
@@ -196,7 +196,9 @@ public class BatchETLDBAdapterTest extends BaseETLBatchTest {
     ETLStage sink = new ETLStage("Table", ImmutableMap.of(
       "name", "outputTable",
       Properties.Table.PROPERTY_SCHEMA, schema.toString(),
-      Properties.Table.PROPERTY_SCHEMA_ROW_FIELD, "ID"));
+      Properties.Table.PROPERTY_SCHEMA_ROW_FIELD, "id",
+      // Test case-insensitive row key matching
+      Properties.Table.CASE_SENSITIVE_ROW_FIELD, "false"));
 
     ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *", source, sink, Lists.<ETLStage>newArrayList());
     AdapterConfig adapterConfig = new AdapterConfig("", TEMPLATE_ID.getId(), GSON.toJsonTree(etlConfig));
@@ -268,6 +270,46 @@ public class BatchETLDBAdapterTest extends BaseETLBatchTest {
     Assert.assertEquals("user2", Bytes.toString(row2.get("BLOB_COL"), 0, 5));
     Assert.assertEquals(clobData, Bytes.toString(row1.get("CLOB_COL"), 0, clobData.length()));
     Assert.assertEquals(clobData, Bytes.toString(row2.get("CLOB_COL"), 0, clobData.length()));
+
+    // delete adapter
+    manager.delete();
+  }
+
+  @Test
+  @Category(SlowTests.class)
+  public void testDBSourceWithCaseSensitiveRowKey() throws Exception {
+    String importQuery = "SELECT ID, NAME FROM my_table WHERE ID < 3";
+    String countQuery = "SELECT COUNT(ID) from my_table WHERE id < 3";
+    ETLStage source = new ETLStage("Database", ImmutableMap.<String, String>builder()
+      .put(Properties.DB.CONNECTION_STRING, hsqlDBServer.getConnectionUrl())
+      .put(Properties.DB.TABLE_NAME, "my_table")
+      .put(Properties.DB.IMPORT_QUERY, importQuery)
+      .put(Properties.DB.COUNT_QUERY, countQuery)
+      .put(Properties.DB.JDBC_PLUGIN_NAME, "hypersql")
+      .build()
+    );
+
+    ETLStage sink = new ETLStage("Table", ImmutableMap.of(
+      "name", "outputTable1",
+      Properties.Table.PROPERTY_SCHEMA, schema.toString(),
+      Properties.Table.PROPERTY_SCHEMA_ROW_FIELD, "id"));
+
+    ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *", source, sink, Lists.<ETLStage>newArrayList());
+    AdapterConfig adapterConfig = new AdapterConfig("", TEMPLATE_ID.getId(), GSON.toJsonTree(etlConfig));
+    Id.Adapter adapterId = Id.Adapter.from(NAMESPACE, "dbSourceTest");
+    AdapterManager manager = createAdapter(adapterId, adapterConfig);
+    manager.start();
+    manager.waitForOneRunToFinish(5, TimeUnit.MINUTES);
+    manager.stop();
+
+    // No records should be written
+    DataSetManager<Table> outputManager = getDataset("outputTable1");
+    Table outputTable = outputManager.get();
+    Scanner scan = outputTable.scan(null, null);
+    Assert.assertNull(scan.next());
+
+    // Delete adapter
+    manager.delete();
   }
 
   // Test is ignored - Currently DBOutputFormat does a statement.executeBatch which seems to fail in HSQLDB.
