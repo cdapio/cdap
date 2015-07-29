@@ -64,5 +64,8 @@ hdp_version =
 
 if node['hadoop']['distribution'] == 'hdp' && node['hadoop']['distribution_version'].to_f >= 2.2 && node['cdap']['version'].to_f >= 3.1
   default['cdap']['cdap_env']['opts'] = "${OPTS} -Dhdp.version=#{hdp_version}"
+  default['cdap']['cdap_env']['spark_home'] = "/usr/hdp/#{hdp_version}/spark"
   default['cdap']['cdap_site']['app.program.jvm.opts'] = "-XX:MaxPermSize=128M ${twill.jvm.gc.opts} -Dhdp.version=#{hdp_version}"
+else
+  default['cdap']['cdap_env']['spark_home'] = '/usr/lib/spark'
 end
