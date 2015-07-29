@@ -1,91 +1,46 @@
 angular.module(PKG.name + '.feature.adapters')
-  .controller('AdapterListController', function($scope, mySettings, $state, $alert, $timeout, myAdapterApi, myAlert) {
-    $scope.adapters  = [];
+  .controller('AdapterListController', function($scope, mySettings, $state, $alert, $timeout, myAlert, myHelpers) {
+    $scope.drafts  = [];
 
-    var params = {
-      namespace: $state.params.namespace,
-      scope: $scope
-    };
-
-    myAdapterApi.list(params)
-      .$promise
-      .then(function(res) {
-        if (!res.length) {
-          return;
-        }
-        $scope.adapters = $scope.adapters.concat(res);
-        angular.forEach($scope.adapters, function(app) {
-          if (!app.isdraft)  {
-            pollStatus(app);
-          }
-        });
-      });
     mySettings.get('adapterDrafts')
       .then(function(res) {
         if (res && Object.keys(res).length) {
           angular.forEach(res, function(value, key) {
-            $scope.adapters.push({
+            $scope.drafts.push({
               isdraft: true,
               name: key,
-              template: value.config.metadata.type,
+              template: myHelpers.objectQuery(value, 'config', 'metadata', 'type') || myHelpers.objectQuery(value, 'template'),
               status: '-',
-              description: value.config.metadata.description
+              description: myHelpers.objectQuery(value, 'config', 'metadata', 'description') || myHelpers.objectQuery(value, 'description')
             });
           });
         }
       });
 
-    function pollStatus(app) {
-      var statusParams = angular.extend({
-        adapter: app.name
-      }, params);
-
-      myAdapterApi.pollStatus(statusParams)
-        .$promise
-        .then(function (res) {
-          app.status = res.status;
-        });
+    $scope.deleteDraft = function(draftName) {
+      mySettings.get('adapterDrafts')
+        .then(function(res) {
+          if (res[draftName]) {
+            delete res[draftName];
+          }
+          return mySettings.set('adapterDrafts', res);
+        })
+        .then(
+          function success() {
+            $alert({
+              type: 'success',
+              content: 'Adapter draft ' + draftName + ' delete successfully'
+            });
+            $state.reload();
+          },
+          function error() {
+            $alert({
+              type: 'danger',
+              content: 'Adapter draft ' + draftName + ' delete failed'
+            });
+            $state.reload();
+          });
     }
 
-    $scope.deleteAdapter = function (appName) {
-      var deleteParams = angular.extend({
-        adapter: appName
-      }, params);
 
-      myAdapterApi.delete(deleteParams)
-        .$promise
-        .then(function() {
-          $alert({
-            type: 'success',
-            content: 'Adapter ' + appName + ' deleted successfully.'
-          });
-          $timeout(function() {
-            $state.go($state.current, $state.params, {reload: true});
-          });
-        }, function(err){
-          myAlert({
-            title: 'Adapter Delete Failed',
-            content: err
-          });
-        });
-    };
-
-    $scope.doAction = function(action, appName) {
-      var app = $scope.adapters.filter(function(app) {
-        return app.name === appName;
-      });
-
-      var actionParams = angular.extend({
-        adapter: appName,
-        action: action
-      }, params);
-
-      myAdapterApi.action(actionParams, {});
-
-      if (action === 'start') {
-        app[0].status = 'STARTING';
-      } else {
-        app[0].status = 'STOPPING';
-      }
-    };
   });

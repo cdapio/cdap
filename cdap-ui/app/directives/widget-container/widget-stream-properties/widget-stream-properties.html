@@ -4,70 +4,65 @@
   </div>
 
   <div ng-if="properties.length > 0">
-    <div class="row">
-      <div class="col-xs-5">
-        <strong>Name</strong>
-      </div>
-      <div class="col-xs-5">
-        <strong>Type</strong>
-      </div>
-      <div class="col-xs-1 text-center">
-        <strong>Nullable</strong>
-      </div>
-    </div>
-    <div class="row" ng-repeat="property in properties" ng-keypress="enter($event, $last)">
+  <table class="table">
+    <thead>
+      <th>
+        <label class="control-label">Name</label>
+      </th>
+      <th>
+        <label class="control-label">Type</label>
+      </th>
+      <th>
+        <label class="control-label">Nullable</label>
+      </th>
+      <th></th>
+    </thead>
+    <tbody>
+      <tr ng-repeat="property in properties" ng-keypress="enter($event, $index)" ng-click="emptyRowClick(property, $index)">
+        <td class="name" ng-if="!property.empty">
+          <input type="text" class="form-control" ng-model="property.name" placeholder="name" my-focus-watch="!property.empty" />
+        </td>
+        <td class="type" ng-if="!property.empty">
+          <select ng-model="property.type" class="form-control col-xs-4"
+              ng-options="option as option for option in options"></select>
+        </td>
+        <td class="text-center nullable" ng-if="!property.empty">
+          <input type="checkbox" ng-model="property.nullable" />
+        </td>
+        <td class="text-center trash" ng-if="!property.empty">
+          <a href="" class="btn" ng-click="removeProperty(property)">
+            <span class="fa fa-fw fa-trash"> </span>
+          </a>
+        </td>
 
-      <div class="col-xs-5">
-        <input type="text" class="form-control" ng-model="property.name" placeholder="name" my-focus-watch="$last" />
-      </div>
-
-      <div class="col-xs-5">
-        <select ng-model="property.type" class="form-control col-xs-4"
-            ng-options="option as option for option in options"></select>
-      </div>
-
-      <div class="col-xs-1 text-center nullable">
-        <input type="checkbox" ng-model="property.nullable">
-      </div>
-
-      <div class="col-xs-1">
-        <a href="" class="btn btn-danger" ng-click="removeProperty(property)">
-          <span class="fa fa-fw fa-trash"> </span>
-        </a>
-      </div>
-
-    </div>
-
-  </div>
-
-  <div class="add-property-btn">
-    <a class="btn btn-info btn-transparent" ng-click="addProperties()">
-      <span class="fa fa-fw fa-plus"></span>
-      <span>Add Field</span>
-    </a>
+        <td class="name" ng-if="property.empty"></td>
+        <td class="type" ng-if="property.empty"></td>
+        <td class="nullable" ng-if="property.empty"></td>
+        <td class="trash" ng-if="property.empty"></td>
+      </tr>
+    </tbody>
+  </table>
   </div>
 
 </div>
 
 <div class="schema-container" ng-if="fields === 'AVRO'">
-  <div class="row" ng-if="plugins.format === 'avro'">
-    <div class="col-sm-12">
-      <textarea cask-json-edit="avro['schema']" class="form-control avro"></textarea>
-    </div>
+  <div ng-if="plugins.format === 'avro'" class="schema-inner">
+    <textarea cask-json-edit="avro['schema']" class="form-control avro"></textarea>
   </div>
 </div>
 
 <div class="schema-container" ng-if="fields === 'GROK'">
-  <div class="row">
-    <label class="col-xs-2 label-control">Pattern</label>
-    <div class="col-xs-12">
-      <input type="text" class="form-control" ng-model="model">
-    </div>
+  <div class="schema-inner">
+    <label class="control-label">Pattern</label>
+    <input type="text" class="form-control" ng-model="model" />
   </div>
 </div>
 
 <div class="schema-container" ng-if="fields === 'NOTHING'">
-  <div class="text-center">
-    <h3>No Editable Schema</h3>
+  <div class="schema-inner">
+    <div class="well well-lg text-center">
+      <h4>No Editable Schema</h4>
+    </div>
   </div>
 </div>
