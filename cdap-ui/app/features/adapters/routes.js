@@ -85,7 +85,7 @@ angular.module(PKG.name + '.feature.adapters')
             }
           },
           ncyBreadcrumb: {
-            parent: 'adapters.list',
+            parent: 'apps.list',
             label: '{{$state.params.adapterId}}'
           },
           templateUrl: '/assets/features/adapters/templates/detail.html',
@@ -96,7 +96,7 @@ angular.module(PKG.name + '.feature.adapters')
             templateUrl: '/assets/features/adapters/templates/tabs/runs.html',
             controller: 'AdapterRunsController',
             ncyBreadcrumb: {
-              parent: 'adapters.list',
+              parent: 'apps.list',
               label: '{{$state.params.adapterId}}'
             }
           })
