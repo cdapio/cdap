@@ -39,7 +39,7 @@ public final class DBUtils {
    * @param driverClass the JDBC driver class
    */
   public static void cleanup(Class<? extends Driver> driverClass) {
-    shutDownMySQLAbandonedConnectionCleanupThread(driverClass.getClassLoader());
+    shutDownRDBMSAbandonedConnectionCleanupThread(driverClass.getClassLoader());
   }
 
   /**
@@ -56,7 +56,7 @@ public final class DBUtils {
       driverField.setAccessible(true);
       Driver d = (Driver) driverField.get(driverInfo);
       if (d == null) {
-        LOG.debug("Found null driver object in drivers list. Ignoring.");
+        LOG.debug("Found null driver object in drivers list. Skipping.");
         continue;
       }
       LOG.debug("Removing non-null driver object from drivers list.");
@@ -80,7 +80,7 @@ public final class DBUtils {
    *
    * @param classLoader the unfiltered classloader of the jdbc driver class
    */
-  private static void shutDownMySQLAbandonedConnectionCleanupThread(ClassLoader classLoader) {
+  private static void shutDownRDBMSAbandonedConnectionCleanupThread(ClassLoader classLoader) {
     if (classLoader == null) {
       return;
     }
@@ -88,10 +88,10 @@ public final class DBUtils {
       Class<?> mysqlCleanupThreadClass = classLoader.loadClass("com.mysql.jdbc.AbandonedConnectionCleanupThread");
       Method shutdownMethod = mysqlCleanupThreadClass.getMethod("shutdown");
       shutdownMethod.invoke(null);
-      LOG.info("Successfully shutdown MySQL connection cleanup thread.");
+      LOG.info("Successfully shutdown RDBMS connection cleanup thread.");
     } catch (Throwable e) {
       // cleanup failed, ignoring silently
-      LOG.warn("Failed to shutdown MySQL connection cleanup thread. Ignoring.");
+      LOG.warn("Failed to shutdown RDBMS connection cleanup thread. Ignoring.");
     }
   }
 
