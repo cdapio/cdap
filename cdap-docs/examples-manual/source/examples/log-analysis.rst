@@ -3,7 +3,7 @@
     :description: Cask Data Application Platform SparkPageRank Application
     :copyright: Copyright © 2015 Cask Data, Inc.
 
-.. _examples-spark-page-rank:
+.. _examples-log-analysis:
 
 ====================
 Log Analysis Example
@@ -73,23 +73,13 @@ The ``HitCounterService``, ``ResponseCounterService`` and ``RequestCounterServic
 These services provide convenient endpoints:
 
 - ``HitCounterService:`` ``hitcount`` endpoint to obtain the total number of hits for a given URL;
-- ``ResponseCounterService:`` ``rescount `` endpoint to obtain the total number of responses for a given response code;
-- ``RequestCounterService:`` ``reqcount `` endpoint to obtain a set of all the available partitions in the TimePartitionedFileSet; and
-- ``RequestCounterService:`` ``reqfile `` endpoint to retrieve data from a particular partition.
+- ``ResponseCounterService:`` ``rescount`` endpoint to obtain the total number of responses for a given response code;
+- ``RequestCounterService:`` ``reqcount`` endpoint to obtain a set of all the available partitions in the TimePartitionedFileSet; and
+- ``RequestCounterService:`` ``reqfile`` endpoint to retrieve data from a particular partition.
 
-Building and Starting
-=====================
-
-.. include:: building-and-starting.txt
-
-
-Running CDAP Applications
-=========================
 
 .. |example| replace:: LogAnalysisApp
-
-.. include:: /../../developers-manual/source/getting-started/building-apps.rst
-:start-line: 11
+.. include:: building-starting-running-cdap.txt
 
 
 Running the Example
