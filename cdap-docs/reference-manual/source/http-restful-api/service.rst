@@ -70,13 +70,13 @@ See :ref:`downloading System Logs <http-restful-api-logging_downloading_system_l
 information and an example of using these system services.
 
 Restarting System Service Instances
-------------------------------------
+-----------------------------------
 
 To restart all instances of a system service in CDAP, you can issue an HTTP POST request to the URL::
 
   POST <base-url>/system/services/<service-id>/restart
 
-You can also restart a particular instance of a system service in CDAP, using the instance id, by issuing
+You can restart a particular instance of a system service in CDAP, using its instance id, by issuing
 an HTTP POST request to the URL::
 
   POST <base-url>/system/services/<service-id>/instances/<instance-id>/restart
@@ -89,9 +89,9 @@ an HTTP POST request to the URL::
    * - Parameter
      - Description
    * - ``<service-id>``
-     - Name of the service which instances to be restarted
+     - Name of the service whose instances are to be restarted
    * - ``<instance-id>``
-     - Specific instance id need to be restarted
+     - Specific instance of a service that needs to be restarted
 
 .. rubric:: HTTP Responses
 .. list-table::
@@ -101,19 +101,19 @@ an HTTP POST request to the URL::
    * - Status Codes
      - Description
    * - ``403 Bad Request``
-     - The service is unavailable because it was not enabled.
+     - The service is unavailable because it was not enabled
    * - ``404 Service not found``
-     - The service name is not valid.
+     - The service name is not valid
    * - ``500 Internal error``
-     - Internal error encountered when processing the request.
+     - Internal error encountered when processing the request
    * - ``503 Service Unavailable``
-     - The service is unavailable. For example, it may not yet have been started.
+     - The service is unavailable. For example, it may not yet have been started
 
-To get the last restart attempt to the system service instances, you can issue an HTTP GET request to the URL::
+To retrieve details of the last restart attempt made for a particular service, issue an HTTP GET request to the URL::
 
   GET <base-url>/system/services/<service-id>/latest-restart
 
-The response body will contain a JSON-formatted status of the last restart attempt::
+The response body will contain a JSON-formatted status of the last restart attempt for that service::
 
   {
       "instanceIds":[0],
@@ -130,7 +130,7 @@ The response body will contain a JSON-formatted status of the last restart attem
    * - Parameter
      - Description
    * - ``<service-id>``
-     - Name of the service which instances to get last status.
+     - Name of the service for which details of last restart are to be retrieved
 
 .. rubric:: HTTP Responses
 .. list-table::
@@ -140,7 +140,7 @@ The response body will contain a JSON-formatted status of the last restart attem
    * - Status Codes
      - Description
    * - ``404 Service not found``
-     - The service name is not valid.
+     - The service name is not valid
    * - ``500 Internal error``
      - Internal error encountered when processing the request.
 
