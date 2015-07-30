@@ -1,0 +1,46 @@
+{
+  "id": "S3BatchSource",
+  "groups" : {
+    "position": [ "group1" ],
+    "group1": {
+      "display" : "S3 Batch Source",
+      "position" : [ "accessID", "accessKey", "path", "fileRegex", "timeTable", "inputFormatClass", "maxSplitSize" ],
+      "fields" : {
+        "accessID" : {
+          "widget": "textbox",
+          "label": "Access ID"
+        },
+
+        "accessKey" : {
+          "widget": "textbox",
+          "label": "Access Key"
+        },
+
+        "path" : {
+          "widget": "textbox",
+          "label": "Path"
+        },
+
+        "fileRegex" : {
+          "widget": "textbox",
+          "label": "File Regex"
+        },
+
+        "timeTable" : {
+          "widget": "textbox",
+          "label": "Time Table"
+        },
+
+        "inputFormatClass" : {
+          "widget": "textbox",
+          "label": "Input Format Class"
+        },
+
+        "maxSplitSize" : {
+          "widget": "textbox",
+          "label": "Max Split Size"
+        }
+      }
+    }
+  }
+}
