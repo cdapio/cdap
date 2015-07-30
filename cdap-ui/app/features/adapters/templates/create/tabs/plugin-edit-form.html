@@ -19,8 +19,8 @@
 <div ng-controller="PluginEditController as PluginEditController">
   <div class="modal-header">
     <div ng-class="{ 'col-xs-6 col-md-9': !isDisabled, 'col-xs-10 col-md-11': isDisabled }">
-      <h3 class="modal-title">{{plugin.name | caskCapitalizeFilter}} Properties</h3>
-      <p>{{plugin.description | caskCapitalizeFilter}}</p>
+      <h3 class="modal-title">{{plugin.name}} Properties</h3>
+      <p>{{plugin.description}}</p>
     </div>
     <div ng-class="{ 'col-xs-6 col-md-3': !isDisabled, 'col-xs-2 col-md-1': isDisabled }">
       <div class="btn-group modal-btns">
@@ -235,7 +235,7 @@
                   </fieldset>
 
                   <div ng-if="!PluginEditController.noproperty">
-                    <h4>{{plugin.name | caskCapitalizeFilter}}</h4>
+                    <h4>{{plugin.name}}</h4>
                     <div class="well well-lg">
                       <p>No Properties for this Plugin.</p>
                     </div>
