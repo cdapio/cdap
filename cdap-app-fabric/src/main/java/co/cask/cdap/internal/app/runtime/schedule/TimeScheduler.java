@@ -279,10 +279,9 @@ final class TimeScheduler implements Scheduler {
 
     checkInitialized();
 
-    TriggerKey triggerKey = new TriggerKey(AbstractSchedulerService.scheduleIdFor(program, programType, scheduleName),
-                                           PAUSED_NEW_TRIGGERS_GROUP);
     try {
-      if (scheduler.checkExists(triggerKey)) {
+      TriggerKey triggerKey = getGroupedTriggerKey(program, programType, scheduleName);
+      if (triggerKey.getGroup().equals(PAUSED_NEW_TRIGGERS_GROUP)) {
         Trigger neverScheduledTrigger = scheduler.getTrigger(triggerKey);
         TriggerBuilder<? extends Trigger> triggerBuilder = neverScheduledTrigger.getTriggerBuilder();
         // move this key from TimeScheduler#PAUSED_NEW_TRIGGERS_GROUP to the Key#DEFAULT_GROUP group
@@ -290,11 +289,6 @@ final class TimeScheduler implements Scheduler {
         Trigger resumedTrigger = triggerBuilder.withIdentity(triggerKey.getName()).build();
         scheduler.rescheduleJob(neverScheduledTrigger.getKey(), resumedTrigger);
         triggerKey = resumedTrigger.getKey();
-      } else {
-        // if this trigger key is not in TimeScheduler#PAUSED_NEW_TRIGGERS_GROUP then it has been resumed before so get
-        // it from default group
-        triggerKey = new TriggerKey(AbstractSchedulerService.scheduleIdFor(program, programType,
-                                                                           scheduleName));
       }
       scheduler.resumeTrigger(triggerKey);
     } catch (org.quartz.SchedulerException e) {
