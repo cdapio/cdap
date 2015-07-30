@@ -174,6 +174,7 @@ angular.module(PKG.name + '.feature.adapters')
 
       if (branch) {
         addCanvasError('Branching in this application is not supported', errors);
+        return;
       }
 
 
@@ -193,6 +194,11 @@ angular.module(PKG.name + '.feature.adapters')
       var currNode = source;
       while (currNode !== sink) {
         if (connectionHash[currNode]) {
+          if (connectionHash[currNode].visited) {
+            addCanvasError('There is circular connection in this application', errors);
+            return;
+          }
+
           connectionHash[currNode].visited = true;
           currNode = connectionHash[currNode].target;
         } else {
