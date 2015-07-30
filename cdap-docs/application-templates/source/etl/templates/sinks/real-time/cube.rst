@@ -32,7 +32,7 @@ See `Cube dataset configuration details <http://docs.cask.co/cdap/current/en/dev
 
 **dataset.cube.properties:** Provides any dataset properties to be used if a new Cube dataset
 needs to be created; provided as a JSON Map. For example, if aggregations are desired on fields 'abc' and 'xyz', the
-property should have value: {"dataset.cube.aggregation.agg1.dimensions":"abc", "dataset.cube.aggregation.agg2.dimensions":"xyz"}.
+property should have the value: {"dataset.cube.aggregation.agg1.dimensions":"abc", "dataset.cube.aggregation.agg2.dimensions":"xyz"}.
 See `Cube dataset configuration details <http://docs.cask.co/cdap/current/en/developers-manual/building-blocks/datasets/cube.html#cube-configuration>`__ for more information.
 
 **cubeFact.timestamp.field:** Name of the StructuredRecord field that contains the timestamp to be used in
@@ -46,7 +46,7 @@ cubeFact.timestamp.field is provided).
 
 **cubeFact.measurements:** Measurements to be extracted from StructuredRecord to be used in CubeFact.
 Provide properties as a JSON Map. For example, to use the 'price' field as a measurement of type gauge,
-and the 'count' field as a measurement of type counter, the property should have value:
+and the 'count' field as a measurement of type counter, the property should have the value:
 {"cubeFact.measurement.price":"GAUGE", "cubeFact.measurement.count":"COUNTER"}.
 
 .. rubric:: Example

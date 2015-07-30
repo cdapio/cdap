@@ -37,9 +37,7 @@ query to reflect an accurate number of records to import.
 
 **connectionString:** JDBC connection string including database name.
 
-**tableName:** Table name to read from.
-
-**user:** Use to connect to the specified database as. Required for databases that need
+**user:** User identity for connecting to the specified database as. Required for databases that need
 authentication. Optional for databases that do not require authentication.
 
 **password:** Password to use to connect to the specified database. Required for databases
@@ -61,7 +59,6 @@ defined in the JSON file for the JDBC plugin. Defaults to 'jdbc'.
       "importQuery": "select id,name,email,phone from users",
       "countQuery": "select count(*) from users",
       "connectionString": "jdbc:postgresql://localhost:5432/prod",
-      "tableName": "users",
       "user": "postgres",
       "password": "",
       "jdbcPluginName": "postgres",
@@ -70,7 +67,7 @@ defined in the JSON file for the JDBC plugin. Defaults to 'jdbc'.
   }
 
 This example connects to a database using the specified connectionString, which means
-it will connect to the 'prod' database of a postgres instance running on localhost.
+it will connect to the 'prod' database of a PostgreSQL instance running on 'localhost'.
 It will run the 'importQuery' against the 'users' table to read four columns from the table.
 The column types will be used to derive the record field types output by the source.
 For example, if the 'id' column is a primary key of type int and the other columns are

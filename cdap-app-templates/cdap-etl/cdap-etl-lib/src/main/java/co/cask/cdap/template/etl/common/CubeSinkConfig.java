@@ -40,7 +40,7 @@ public class CubeSinkConfig extends PluginConfig {
   @Name(Properties.Cube.DATASET_OTHER)
   @Description("Provides any dataset properties to be used if a new Cube dataset needs to be created; " +
     "provided as a JSON Map. For example, if aggregations are desired on fields 'abc' and 'xyz', " +
-    "the property should have value: " +
+    "the property should have the value: " +
     "\"{\"dataset.cube.aggregation.agg1.dimensions\":\"abc\", \"dataset.cube.aggregation.agg2.dimensions\":\"xyz\"}. " +
     "See Cube dataset configuration " +
     "details for more information : http://docs.cask.co/cdap/current/en/developers-manual/building-blocks/datasets/" +
@@ -63,7 +63,7 @@ public class CubeSinkConfig extends PluginConfig {
   @Name(Properties.Cube.MEASUREMENTS)
   @Description("Measurements to be extracted from StructuredRecord to be " +
     "used in CubeFact. Provide properties as a JSON Map. For example, to use the 'price' field as a measurement of " +
-    "type gauge, and the 'count' field as a measurement of type counter, the property should have value: " +
+    "type gauge, and the 'count' field as a measurement of type counter, the property should have the value: " +
     "\"{\"cubeFact.measurement.price\":\"GAUGE\", \"cubeFact.measurement.count\":\"COUNTER\"}.")
   @Nullable
   String measurements;

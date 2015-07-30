@@ -37,10 +37,10 @@ terminate the path name with a \'/\'.
 **fileRegex:** Regex to filter out filenames in the path.
 
 To use the *TimeFilter*, input "timefilter". The TimeFilter assumes that it
-is reading in files with the File log naming convention of YYYY-MM-DD-HH-mm-SS-Tag. The TimeFilter
-reads in files from the previous hour if the timeTable field is left blank. So if it's currently
+is reading in files with the File log naming convention of 'YYYY-MM-DD-HH-mm-SS-Tag'. The TimeFilter
+reads in files from the previous hour if the field 'timeTable' is left blank. So if it's currently
 2015-06-16-15 (June 16th 2015, 3pm), it will read in files that contain 2015-06-16-14 in the filename.
-If the field timeTable is present, then it will read files in that haven't been read yet.
+If the field 'timeTable' is present, then it will read files in that haven't been read yet.
 
 **timeTable:** Name of the Table that keeps track of the last time files
 were read in.
@@ -48,7 +48,7 @@ were read in.
 **inputFormatClass:** Name of the input format class, which must be a
 subclass of FileInputFormat. Defaults to TextInputFormat.
 
-**maxSplitSize:** Max split size for each mapper in the MapReduce Job. Defaults to 128MB.
+**maxSplitSize:** Maximum split size for each mapper in the MapReduce Job. Defaults to 128MB.
 
 .. rubric:: Example
 

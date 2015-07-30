@@ -27,8 +27,8 @@ Samples tweets in real-time. Output records will have this schema::
 
 .. rubric:: Use Case
 
-The source is used whenever you want to sample tweets from Twitter in realtime.
-For example, you may want to read tweets and store them in a Table where they can
+The source is used whenever you want to sample tweets from Twitter in real-time.
+For example, you may want to read tweets and store them in a table where they can
 be accessed by your data scientists to perform experiments.
 
 .. rubric:: Properties
