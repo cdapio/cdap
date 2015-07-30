@@ -3,7 +3,7 @@
   "groups" : {
     "position": [ "group1" ],
     "group1": {
-       "display" : "Time Partitioned Filset - Parquet",
+       "display" : "Time Partitioned Fileset - Parquet",
        "position" : [ "name", "basePath", "schema"],
        "fields" : {
           "name" : {
