@@ -290,10 +290,9 @@ angular.module(PKG.name + '.services')
       fetchBackendProperties.call(this, plugin, scope)
         .then(function(plugin) {
           modalInstance = $bootstrapModal.open({
-            keyboard: false,
             backdrop: 'static',
             templateUrl: '/assets/features/adapters/templates/tabs/runs/tabs/properties/properties.html',
-            controller: ['$scope', 'AdapterModel', 'type', 'inputSchema', 'isDisabled', function ($scope, AdapterModel, type, inputSchema, isDisabled){
+            controller: ['$scope', 'AdapterModel', 'type', 'inputSchema', 'isDisabled', '$bootstrapModal', 'pluginCopy', function ($scope, AdapterModel, type, inputSchema, isDisabled, $bootstrapModal, pluginCopy){
               $scope.plugin = AdapterModel;
               $scope.type = type;
               $scope.isDisabled = isDisabled;
@@ -344,6 +343,40 @@ angular.module(PKG.name + '.services')
                 $scope.isTransform = true;
               }
 
+
+              $scope.$on('modal.closing', function (event, reason) {
+                if ((reason === 'cancel' || reason === 'escape key press') && !$scope.confirm ) {
+                  var stringCopy = JSON.stringify(pluginCopy.properties);
+                  var stringPlugin = JSON.stringify($scope.plugin.properties);
+
+                  if (stringCopy !== stringPlugin) {
+                    event.preventDefault();
+
+                    var confirmInstance = $bootstrapModal.open({
+                      keyboard: false,
+                      templateUrl: '/assets/features/adapters/templates/partial/confirm.html',
+                      windowClass: 'modal-confirm',
+                      controller: ['$scope', function ($scope) {
+                        $scope.continue = function () {
+                          $scope.$close('close');
+                        };
+
+                        $scope.cancel = function () {
+                          $scope.$close('keep open');
+                        };
+                      }]
+                    });
+
+                    confirmInstance.result.then(function (closing) {
+                      if (closing === 'close') {
+                        $scope.confirm = true;
+                        $scope.$close('cancel');
+                      }
+                    });
+                  }
+                }
+              });
+
             }],
             size: 'lg',
             windowClass: 'adapter-modal',
@@ -359,7 +392,10 @@ angular.module(PKG.name + '.services')
               },
               isDisabled: function() {
                 return this.isDisabled;
-              }.bind(this)
+              }.bind(this),
+              pluginCopy: function () {
+                return pluginCopy;
+              }
             }
           });
 
