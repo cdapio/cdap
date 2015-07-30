@@ -11,5 +11,6 @@ Sources: Real-time
 
     JMS <jms>
     Kafka <kafka>
+    AmazonSQS <amazonsqs>
     Test <test>
     Twitter <twitter>
