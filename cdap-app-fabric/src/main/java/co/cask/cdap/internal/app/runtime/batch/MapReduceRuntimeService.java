@@ -97,6 +97,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -773,8 +774,19 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       LOG.warn("Not including HBaseTableUtil classes in submitted Job Jar since they are not available");
     }
 
+    // Add the logback.xml as a resource while creating the MapReduce Job JAR
+    Set<URI> logbackURI = Sets.newHashSet();
+    try {
+      URL logback = getClass().getResource("logback.xml");
+      if (logback != null) {
+        logbackURI.add(logback.toURI());
+      }
+    } catch (URISyntaxException e) {
+      LOG.warn("Could not find logback.xml during building MapReduce Job JAR", e);
+    }
+
     ClassLoader oldCLassLoader = ClassLoaders.setContextClassLoader(job.getConfiguration().getClassLoader());
-    appBundler.createBundle(new LocalLocationFactory().create(jobJar.toURI()), classes);
+    appBundler.createBundle(new LocalLocationFactory().create(jobJar.toURI()), classes, logbackURI);
     ClassLoaders.setContextClassLoader(oldCLassLoader);
 
     LOG.info("Built MapReduce Job Jar at {}", jobJar.toURI());
