@@ -6,6 +6,18 @@
 Sinks: Batch: Database
 ===============================
 
-.. rubric:: Description: Batch sink for a database
+.. rubric:: Description
 
-**Columns:** Comma-separated list of columns to export into the specified table.
+Batch sink for a database
+
+.. rubric:: Use Case
+
+TODO: Fill me out
+
+.. rubric:: Properties
+
+**columns:** Comma-separated list of columns to export into the specified table.
+
+.. rubric:: Example
+
+TODO: Fill me out

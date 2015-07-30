@@ -45,7 +45,7 @@ import javax.jms.TextMessage;
  */
 @Plugin(type = "source")
 @Name("AmazonSQS")
-@Description("Amazon Simple Queue Service Realtime Source: Emits a record with a field 'body' of type String.")
+@Description("Amazon Simple Queue Service Real-time Source: Emits a record with a field 'body' of type String.")
 public class SqsSource extends RealtimeSource<StructuredRecord> {
   private static final Logger LOG = LoggerFactory.getLogger(SqsSource.class);
   private static final String REGION_DESCRIPTION = "Region where the queue is located.";

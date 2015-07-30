@@ -6,18 +6,30 @@
 Transformations: ScriptFilter 
 ===============================
 
-.. rubric:: Description: A transform plugin that filters records
+.. rubric:: Description
 
-A transform plugin that filters records using a custom Javascript provided in the plugin's
-config.
+A transform that filters records using a custom Javascript function.
 
-**Script:** Javascript that must implement a function 'shouldFilter' that takes a JSON object
-representation of the input record, and returns true if the input record should be
+.. rubric:: Use Case
+
+The transform is used when you need to filter records.
+For example, you may want to filter out records that have null values for an important field.
+
+.. rubric:: Properties
+
+**script:** Javascript that implements a function 'shouldFilter', taking a JSON object
+representation of the input record, and returning true if the input record should be
 filtered and false if not.
 
-For example::
+.. rubric:: Example
 
-  function shouldFilter(input) { return input.count > 100; } 
-  
-will filter out any records whose 'count' field is greater than 100.
+::
 
+  {
+    "name": "ScriptFilter",
+    "properties": {
+      "script": "function shouldFilter(input) { return input.count > 100; }",
+    }
+  }
+
+This example filters out any records whose 'count' field contains a value greater than 100.

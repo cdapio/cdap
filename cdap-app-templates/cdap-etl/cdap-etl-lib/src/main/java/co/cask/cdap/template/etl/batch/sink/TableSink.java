@@ -40,7 +40,8 @@ import java.util.Map;
  */
 @Plugin(type = "sink")
 @Name("Table")
-@Description("CDAP Table Dataset Batch Sink")
+@Description("Writes records to a Table with one record field mapping to the Table rowkey," +
+  " and all other record fields mapping to Table columns.")
 public class TableSink extends BatchWritableSink<StructuredRecord, byte[], Put> {
 
   private final TableConfig tableConfig;
