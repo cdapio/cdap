@@ -11,10 +11,12 @@
       <span class="icon-ETLRealtime" ng-if="AdapterCreateController.metadata.template.type === 'ETLRealtime'"></span>
       <span>Type: {{ AdapterCreateController.metadata.template.type }}</span>
     </div>
-    <h1>
-      <a ng-if="AdapterCreateController.metadata.name.length > 0"
-          >
-        {{AdapterCreateController.metadata['name'] | myEllipsis: 35}}
+    <h1 tooltip="{{ AdapterCreateController.metadata.name }}"
+        tooltip-placement="right"
+        tooltip-enable="AdapterCreateController.metadata.name.length > 38"
+        tooltip-append-to-body="true">
+      <a ng-if="AdapterCreateController.metadata.name.length > 0">
+        {{AdapterCreateController.metadata['name']}}
       </a>
       <a ng-if="AdapterCreateController.metadata['name'].length === 0"
           >
@@ -22,8 +24,12 @@
       </a>
     </h1>
     <a class="fa fa-pencil" ng-click="AdapterCreateController.showMetadataModal()"></a>
-    <p ng-if="AdapterCreateController.metadata['description'].length > 0">
-      {{AdapterCreateController.metadata['description'] | myEllipsis: 150 }}
+    <p ng-if="AdapterCreateController.metadata['description'].length > 0"
+        tooltip="{{ AdapterCreateController.metadata.description }}"
+        tooltip-placement="right"
+        tooltip-enable="AdapterCreateController.metadata.description.length > 158"
+        tooltip-append-to-body="true">
+      {{AdapterCreateController.metadata['description'] | myEllipsis: 158}}
     </p>
     <p ng-if="AdapterCreateController.metadata['description'].length === 0">
       [Adapter description]
