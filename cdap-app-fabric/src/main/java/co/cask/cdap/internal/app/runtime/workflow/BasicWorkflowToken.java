@@ -43,7 +43,7 @@ public class BasicWorkflowToken implements WorkflowToken, Serializable {
   private Map<String, Map<String, Long>> mapReduceCounters;
   private final Map<Scope, Map<String, List<NodeValue>>> tokenValueMap = new EnumMap<>(Scope.class);
   private String nodeName;
-  private transient boolean putOperationAllowed = true;
+  private transient boolean putAllowed = true;
 
   public BasicWorkflowToken() {
     for (Scope scope : Scope.values()) {
@@ -122,7 +122,7 @@ public class BasicWorkflowToken implements WorkflowToken, Serializable {
 
   void put(String key, Value value, Scope scope) {
     // Check if put operation is being performed inside the Spark executor
-    if (!putOperationAllowed) {
+    if (!putAllowed) {
       throw new UnsupportedOperationException("Put operation is not allowed from Spark executor.");
     }
 
@@ -262,10 +262,10 @@ public class BasicWorkflowToken implements WorkflowToken, Serializable {
     out.defaultWriteObject();
   }
 
-  // Deserialize the WorkflowToken for using it inside the Spark executor. Set the putOperationAllowed
+  // Deserialize the WorkflowToken for using it inside the Spark executor. Set the putAllowed
   // flag to false so that we do not allow putting the values inside the Spark executor.
   private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
     in.defaultReadObject();
-    putOperationAllowed = false;
+    putAllowed = false;
   }
 }
