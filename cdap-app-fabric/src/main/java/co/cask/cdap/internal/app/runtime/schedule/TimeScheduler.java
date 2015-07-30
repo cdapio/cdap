@@ -91,7 +91,6 @@ final class TimeScheduler implements Scheduler {
         Executors.newCachedThreadPool(Threads.createDaemonThreadFactory("time-schedule-task")));
       scheduler = schedulerSupplier.get();
       scheduler.setJobFactory(createJobFactory(store));
-      initNewPausedTriggersGroup();
     } catch (org.quartz.SchedulerException e) {
       throw new SchedulerException(e);
     }
@@ -112,15 +111,16 @@ final class TimeScheduler implements Scheduler {
         .storeDurably(true)
         .build();
       scheduler.addJob(job, true);
-      // call pause on this group this ensures that all the new triggers added to this group will also be paused
-      scheduler.pauseTriggers(GroupMatcher.triggerGroupEquals(PAUSED_NEW_TRIGGERS_GROUP));
     }
+    // call pause on this group this ensures that all the new triggers added to this group will also be paused
+    scheduler.pauseTriggers(GroupMatcher.triggerGroupEquals(PAUSED_NEW_TRIGGERS_GROUP));
   }
 
   void start() throws SchedulerException {
     try {
       scheduler.start();
       schedulerStarted = true;
+      initNewPausedTriggersGroup();
     } catch (org.quartz.SchedulerException e) {
       throw new SchedulerException(e);
     }
