@@ -25,22 +25,18 @@ import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
-import co.cask.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
-import co.cask.cdap.api.templates.plugins.PluginConfig;
 import co.cask.cdap.template.etl.api.Emitter;
 import co.cask.cdap.template.etl.api.PipelineConfigurer;
 import co.cask.cdap.template.etl.api.batch.BatchSink;
 import co.cask.cdap.template.etl.api.batch.BatchSinkContext;
 import co.cask.cdap.template.etl.common.SchemaConverter;
 import co.cask.cdap.template.etl.common.StructuredToAvroTransformer;
-import com.google.common.collect.Maps;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.hadoop.mapreduce.Job;
 import parquet.avro.AvroParquetInputFormat;
 import parquet.avro.AvroParquetOutputFormat;
 
 import java.io.IOException;
-import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -50,47 +46,25 @@ import javax.annotation.Nullable;
 @Name("TPFSParquet")
 @Description("Sink for a TimePartitionedFileSet that writes data in Parquet format.")
 public class TimePartitionedFileSetDatasetParquetSink extends
-  BatchSink<StructuredRecord, Void, GenericRecord> {
+  TimePartitionedFileSetSink<Void, GenericRecord> {
 
-  private static final String SCHEMA_DESC = "The Parquet schema of the record being written to the sink as a JSON " +
+  private static final String SCHEMA_DESC = "The Parquet schema of the record being written to the Sink as a JSON " +
     "Object.";
-  private static final String TPFS_NAME_DESC = "Name of the TimePartitionedFileSet to which records " +
-    "are written. If it doesn't exist, it will be created.";
-  private static final String BASE_PATH_DESC = "The base path for the TimePartitionedFileSet. Defaults to the " +
-    "name of the dataset.";
   private final StructuredToAvroTransformer recordTransformer = new StructuredToAvroTransformer();
-
-  /**
-   * Config for TimePartitionedFileSetDatasetParquetSink
-   */
-  public static class TPFSParquetSinkConfig extends PluginConfig {
-
-    @Description(TPFS_NAME_DESC)
-    private String name;
-
-    @Description(SCHEMA_DESC)
-    private String schema;
-
-    @Description(BASE_PATH_DESC)
-    @Nullable
-    private String basePath;
-  }
-
-  private final TPFSParquetSinkConfig tpfsParquetSinkConfig;
+  private final TPFSParquetSinkConfig config;
   private String hiveSchema;
 
-  public TimePartitionedFileSetDatasetParquetSink(TPFSParquetSinkConfig tpfsParquetSinkConfig)
-    throws IOException, UnsupportedTypeException {
-    this.tpfsParquetSinkConfig = tpfsParquetSinkConfig;
+  public TimePartitionedFileSetDatasetParquetSink(TPFSParquetSinkConfig config) {
+    super(config);
+    this.config = config;
   }
 
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
-
-    String tpfsName = tpfsParquetSinkConfig.name;
-    String basePath = tpfsParquetSinkConfig.basePath == null ? tpfsName : tpfsParquetSinkConfig.basePath;
+    String tpfsName = tpfsSinkConfig.name;
+    String basePath = tpfsSinkConfig.basePath == null ? tpfsName : tpfsSinkConfig.basePath;
     try {
-      hiveSchema = SchemaConverter.toHiveSchema(Schema.parseJson(tpfsParquetSinkConfig.schema.toLowerCase()));
+      hiveSchema = SchemaConverter.toHiveSchema(Schema.parseJson(config.schema.toLowerCase()));
     } catch (UnsupportedTypeException | IOException e) {
       throw new RuntimeException("Error: Schema is not valid ", e);
     }
@@ -106,12 +80,8 @@ public class TimePartitionedFileSetDatasetParquetSink extends
 
   @Override
   public void prepareRun(BatchSinkContext context) {
-    Map<String, String> sinkArgs = Maps.newHashMap();
-    TimePartitionedFileSetArguments.setOutputPartitionTime(sinkArgs, context.getLogicalStartTime());
-    TimePartitionedFileSet sink = context.getDataset(tpfsParquetSinkConfig.name, sinkArgs);
-    context.setOutput(tpfsParquetSinkConfig.name, sink);
-    org.apache.avro.Schema avroSchema = new org.apache.avro.Schema.Parser().parse(
-      tpfsParquetSinkConfig.schema.toLowerCase());
+    super.prepareRun(context);
+    org.apache.avro.Schema avroSchema = new org.apache.avro.Schema.Parser().parse(config.schema.toLowerCase());
     Job job = context.getHadoopJob();
     AvroParquetOutputFormat.setSchema(job, avroSchema);
   }
@@ -121,4 +91,20 @@ public class TimePartitionedFileSetDatasetParquetSink extends
                         Emitter<KeyValue<Void, GenericRecord>> emitter) throws Exception {
     emitter.emit(new KeyValue<Void, GenericRecord>(null, recordTransformer.transform(input)));
   }
+
+
+  /**
+   * Config for TimePartitionedFileSetParquetSink
+   */
+  public static class TPFSParquetSinkConfig extends TPFSSinkConfig {
+
+    @Description(SCHEMA_DESC)
+    private String schema;
+
+    public TPFSParquetSinkConfig(String name, String schema, @Nullable String basePath) {
+      super(name, basePath);
+      this.schema = schema;
+    }
+  }
+
 }
