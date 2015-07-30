@@ -18,6 +18,7 @@ Examples
    Hello World <hello-world>
    Count Random <count-random>
    File Sets <fileset>
+   Log Analysis <log-analysis>
    Purchase <purchase>
    Spark K-Means <spark-k-means>
    Spark Page Rank <spark-page-rank>
@@ -49,8 +50,8 @@ In addition to the :ref:`Getting Started's <getting-started-index>`
     - A variation of the *WordCount* example that operates on files. It demonstrates the usage of the FileSet
       dataset, including a service to upload and download files, and a MapReduce that operates over these files.
   * - :doc:`Log Analysis <log-analysis>`
-    - A Cask Data Application Platform (CDAP) example demonstrating Spark and MapReduce running in parallel
-      inside a Workflow through fork.
+    - An example demonstrating Spark and MapReduce running in parallel inside a workflow, showing the use of
+      forks within workflows.
   * - :doc:`Purchase<purchase>`
     - This example demonstrates use of many of the CDAP components |---| streams, flows, flowlets, datasets, queries,
       MapReduce programs, workflows, and services |---| in a single application.

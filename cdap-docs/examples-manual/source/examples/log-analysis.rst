@@ -57,23 +57,25 @@ of the application are tied together by the class ``LogAnalysisApp``:
 
 .. literalinclude:: /../../../cdap-examples/LogAnalysis/src/main/java/co/cask/cdap/examples/loganalysis/LogAnalysisApp.java
    :language: java
-   :lines: 70-94
+   :lines: 60-94
 
-The *hitCount* and  *responseCount* ``KeyValueTable``s, and the  *reqCount* ``TimePartitionedFileSet``
-------------------------------------------------------------------------------------------------------
+The *hitCount* and *responseCount* ``KeyValueTables`` and *reqCount* ``TimePartitionedFileSet``
+-----------------------------------------------------------------------------------------------
 
 The calculated hit count for every unique URL is stored in a ``KeyValueTable`` dataset,
 *hitCount* and the total number of responses for a response code is stored in another
 ``KeyValueTable`` dataset, *responseCount*. The total number of requests made by every
-unique ip address is written to a ``TimePartitionedFileSet``, *ipCount*.
+unique IP address is written to a ``TimePartitionedFileSet``, *ipCount*.
 
-The ``HitCounterService``, ``ResponseCounterService`` and ``RequestCounterService`` Services
---------------------------------------------------------------------------------------------
+The ``HitCounterService``, ``ResponseCounterService`` and ``RequestCounterService``
+-----------------------------------------------------------------------------------
 
-This ``HitCounterService`` service has a ``hitcount`` endpoint to obtain the total number of hits for a given URL.
-This ``ResponseCounterService`` service has a ``rescount`` endpoint to obtain the total number of responses for a given response code.
-This ``RequestCounterService`` service has a ``reqcount`` endpoint to obtain a set of all the available partitions in the TimePartitionedFileSet and it also
-has a ``reqfile`` to retrieve data from a particular partition.
+These services provide convenient endpoints:
+
+- ``HitCounterService:`` ``hitcount`` endpoint to obtain the total number of hits for a given URL;
+- ``ResponseCounterService:`` ``rescount `` endpoint to obtain the total number of responses for a given response code;
+- ``RequestCounterService:`` ``reqcount `` endpoint to obtain a set of all the available partitions in the TimePartitionedFileSet; and
+- ``RequestCounterService:`` ``reqfile `` endpoint to retrieve data from a particular partition.
 
 Building and Starting
 =====================
@@ -150,21 +152,36 @@ You can also use the Command Line Interface::
 
   $ cdap-cli.sh call service LogAnalysisApp.HitCounterService POST 'hitcount' body '{"url":"/index.html"}'
 
+On success, the above command will return the hit count for the above URL, such as::
+
+  4
+
 Similarly, to query the *responseCount* ``KeyValueTable`` through the *ResponseCounterService*, the *reqCount*
 ``TimePartitionedFileSet`` through the *RequestCounterService*, and to retrieve data from a particular partition of
 the ``TimePartitionedFileSet``, use:
 
-curl::
+curl and Command Line Interface::
 
   $ curl -w'\n' http://localhost:10000/v3/namespaces/default/apps/LogAnalysisApp/services/ResponseCounterService/methods/rescount/200
-  $ curl -w'\n' http://localhost:10000/v3/namespaces/default/apps/LogAnalysisApp/services/RequestCounterService/methods/reqcount
-  $ curl -w'\n' -X POST -d'{"time":"7/27/15 5:58 PM"}' http://localhost:10000/v3/namespaces/default/apps/LogAnalysisApp/services/RequestCounterService/methods/reqfile
-
-Command Line Interface::
-
   $ cdap-cli.sh call service LogAnalysisApp.ResponseCounterService GET 'rescount/200'
+
+On success, the above command will return the total number of responses sent with the queried response code::
+
+  30
+
+  $ curl -w'\n' http://localhost:10000/v3/namespaces/default/apps/LogAnalysisApp/services/RequestCounterService/methods/reqcount
   $ cdap-cli.sh call service LogAnalysisApp.RequestCounterService GET 'reqcount'
+
+On success, the above command will return a set of all the available partitions::
+
+  ["7/29/15 7:47 PM"]
+
+  $ curl -w'\n' -X POST -d'{"time":"7/27/15 5:58 PM"}' http://localhost:10000/v3/namespaces/default/apps/LogAnalysisApp/services/RequestCounterService/methods/reqfile
   $ cdap-cli.sh call service LogAnalysisApp.RequestCounterService POST 'reqfile' body '{"time":"7/27/15 5:58 PM"}'
+
+On success, the above command will return a map of all the unique IP addresses with number of request made by them::
+
+  {"255.255.255.109":1,255.255.255.121":1,"255.255.255.211":1}
 
 Stopping and Removing the Application
 =====================================
