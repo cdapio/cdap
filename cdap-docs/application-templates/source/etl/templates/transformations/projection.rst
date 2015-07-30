@@ -8,7 +8,7 @@ Transformations: Projection
 
 .. rubric:: Description
 
-A transform that can drop fields, rename fields, and cast fields to a different type.
+A transform that can drop fields, cast fields to a different type, and rename fields.
 Fields are first dropped, then cast, then renamed.
 For example, suppose the transform is configured to drop field 'B' and rename field 'A' to 'B'.
 If the transform receives this input record::
@@ -38,7 +38,7 @@ and then field 'A' will be renamed to 'B'::
 
 .. rubric:: Use Case
 
-The transform is used when you need to drop, rename, or change field types.
+The transform is used when you need to drop fields, change field types, or rename fields.
 
 For example, you may want to rename a field from 'timestamp' to 'ts' because you want
 to write to a database where 'timestamp' is a reserved keyword. Or you might want to
@@ -75,13 +75,13 @@ converted to an int.
     "name": "Projection",
     "properties": {
       "drop": "ts,headers",
-      "rename": "cost:price",
-      "convert": "cost:double"
+      "convert": "cost:double",
+      "rename": "cost:price"
     }
   }
  
-This example drops the 'ts' and 'headers' fields. It also renames the 'cost' field 
-to 'price', and changes its type to a double. For example, if the transform receives the
+This example drops the 'ts' and 'headers' fields. It also changes the type of the 'cost'
+field to a double and renames it 'price'. For example, if the transform receives this
 input record::
 
   +=========================================================+

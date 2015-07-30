@@ -16,9 +16,6 @@ a Cube dataset identified by the Dataset Name property.
 If Cube dataset does not exist, it will be created using properties provided with this
 sink.
 
-To configure transformation from a StructuredRecord to a CubeFact, the mapping
-configuration is required, following StructuredRecordToCubeFact documentation.
-
 .. rubric:: Use Case
 
 TODO: Fill me out
