@@ -60,9 +60,4 @@ public class RemoteAdapterManager extends AbstractAdapterManager {
     // TODO: implement
     return null;
   }
-
-  @Override
-  public void delete() throws Exception {
-    // TODO: implement
-  }
 }

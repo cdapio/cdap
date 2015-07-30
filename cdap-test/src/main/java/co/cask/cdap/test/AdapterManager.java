@@ -90,9 +90,4 @@ public interface AdapterManager {
    */
   void waitForRunsToFinish(int numRuns, long timeout,
                            TimeUnit timeoutUnit) throws TimeoutException, InterruptedException;
-
-  /**
-   * Deletes the adapter.
-   */
-  void delete() throws Exception;
 }

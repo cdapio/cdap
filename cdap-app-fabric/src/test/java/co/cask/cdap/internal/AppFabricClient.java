@@ -458,12 +458,4 @@ public class AppFabricClient {
       throw Throwables.propagate(e);
     }
   }
-
-  public void deleteAdapter(Id.Adapter adapterId) throws Exception {
-    String url = String.format("%s/adapters/%s", getNamespacePath(adapterId.getNamespaceId()), adapterId.getId());
-    DefaultHttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.DELETE, url);
-    MockResponder responder = new MockResponder();
-    adapterHttpHandler.deleteAdapter(request, responder, adapterId.getNamespaceId(), adapterId.getId());
-    verifyResponse(HttpResponseStatus.valueOf(200), responder.getStatus(), "Failed to delete adapter.");
-  }
 }

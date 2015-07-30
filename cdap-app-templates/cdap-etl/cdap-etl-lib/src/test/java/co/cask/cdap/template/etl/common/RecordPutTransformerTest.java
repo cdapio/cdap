@@ -29,7 +29,7 @@ import java.util.Map;
  */
 @SuppressWarnings("unchecked")
 public class RecordPutTransformerTest {
-
+  
   @Test(expected = IllegalArgumentException.class)
   public void testNullRowkeyThrowsException() throws Exception {
     RecordPutTransformer transformer = new RecordPutTransformer("key");
@@ -100,32 +100,5 @@ public class RecordPutTransformerTest {
     Assert.assertTrue(Math.abs(3.14f - Bytes.toFloat(values.get(Bytes.toBytes("floatField")))) < 0.000001);
     Assert.assertTrue(Math.abs(3.14 - Bytes.toDouble(values.get(Bytes.toBytes("doubleField")))) < 0.000001);
     Assert.assertArrayEquals(Bytes.toBytes("foo"), values.get(Bytes.toBytes("bytesField")));
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void testCaseSensitiveRowKey() {
-    RecordPutTransformer transformer = new RecordPutTransformer("key");
-    Schema schema = Schema.recordOf("record", Schema.Field.of("KEY", Schema.of(Schema.Type.STRING)));
-    StructuredRecord record = StructuredRecord.builder(schema).set("KEY", "someKey").build();
-    transformer.toPut(record);
-  }
-
-  @Test
-  public void testCaseInsensitiveRowKeyValid() {
-    RecordPutTransformer transformer = new RecordPutTransformer("key", false);
-    Schema schema = Schema.recordOf("record", Schema.Field.of("KEY", Schema.of(Schema.Type.STRING)));
-    StructuredRecord record = StructuredRecord.builder(schema).set("KEY", "someKey").build();
-    Put put = transformer.toPut(record);
-    Assert.assertEquals("someKey", Bytes.toString(put.getRow()));
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void testCaseInsensitiveRowKeyInvalid() {
-    RecordPutTransformer transformer = new RecordPutTransformer("key", false);
-    Schema schema = Schema.recordOf("record",
-                                    Schema.Field.of("KEY", Schema.of(Schema.Type.STRING)),
-                                    Schema.Field.of("Key", Schema.nullableOf(Schema.of(Schema.Type.BYTES))));
-    StructuredRecord record = StructuredRecord.builder(schema).set("KEY", "someKey").set("Key", "someOtherKey").build();
-    transformer.toPut(record);
   }
 }
