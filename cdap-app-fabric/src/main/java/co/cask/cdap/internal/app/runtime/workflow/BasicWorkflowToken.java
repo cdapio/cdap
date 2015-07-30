@@ -123,7 +123,9 @@ public class BasicWorkflowToken implements WorkflowToken, Serializable {
   void put(String key, Value value, Scope scope) {
     // Check if put operation is being performed inside the Spark executor
     if (!putAllowed) {
-      throw new UnsupportedOperationException("Put operation is not allowed from Spark executor.");
+      String msg = String.format("Failed to put key '%s' from node '%s' in the WorkflowToken. Put operation is not " +
+                                 "allowed from the Mapper and Reducer classes and from Spark executor.", key, nodeName);
+      throw new UnsupportedOperationException(msg);
     }
 
     Preconditions.checkNotNull(key, "Null key cannot be added in the WorkflowToken.");

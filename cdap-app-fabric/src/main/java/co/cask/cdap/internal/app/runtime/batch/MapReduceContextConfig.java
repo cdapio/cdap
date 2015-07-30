@@ -36,7 +36,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.StringWriter;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -45,6 +48,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
+import javax.xml.bind.DatatypeConverter;
 
 /**
  * Helper class for getting and setting specific config settings for a job context.
@@ -128,17 +132,30 @@ public final class MapReduceContextConfig {
 
   private void setWorkflowToken(@Nullable WorkflowToken workflowToken) {
     if (workflowToken != null) {
-      hConf.set(HCONF_ATTR_WORKFLOW_TOKEN, GSON.toJson(workflowToken));
+      try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+           ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteArrayOutputStream)) {
+        objectOutputStream.writeObject(workflowToken);
+        hConf.set(HCONF_ATTR_WORKFLOW_TOKEN, DatatypeConverter.printBase64Binary(byteArrayOutputStream.toByteArray()));
+      } catch (IOException e) {
+        throw Throwables.propagate(e);
+      }
     }
   }
 
   @Nullable
   public WorkflowToken getWorkflowToken() {
-    String tokenJson = hConf.get(HCONF_ATTR_WORKFLOW_TOKEN);
-    if (tokenJson == null) {
+    String token = hConf.get(HCONF_ATTR_WORKFLOW_TOKEN);
+    if (token == null) {
       return null;
     }
-    return GSON.fromJson(tokenJson, BasicWorkflowToken.class);
+
+    byte tokenBytes[] = DatatypeConverter.parseBase64Binary(token);
+    try (ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(tokenBytes);
+         ObjectInputStream inputStream = new ObjectInputStream(byteArrayInputStream)) {
+      return (BasicWorkflowToken) inputStream.readObject();
+    } catch (IOException | ClassNotFoundException e) {
+      throw Throwables.propagate(e);
+    }
   }
 
   private void setAdapterSpec(@Nullable AdapterDefinition adapterSpec) {
