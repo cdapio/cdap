@@ -45,7 +45,7 @@ function guide_rewrite_sed() {
   local readme_source="README_SOURCE.rst"
   local redirect="\.\./\.\./build/_includes" # Target, 2 redirects, escaped
   
-  if curl --output /dev/null --silent --head --fail "${url}/${readme}"; then
+  if [ curl --output /dev/null --silent --head --fail "${url}/${readme}" ]; then
     mkdir ${includes_dir}/${guide}
     curl --silent ${url}/${readme} --output ${includes_dir}/${guide}/${readme_source}
     # Find and download any images
