@@ -96,8 +96,10 @@ import com.google.common.io.Files;
 import com.google.common.io.Resources;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
+import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Module;
+import com.google.inject.Provider;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
@@ -145,6 +147,7 @@ public class ConfigurableTestBase {
   private static DatasetService datasetService;
   private static TransactionManager txService;
   private static StreamCoordinatorClient streamCoordinatorClient;
+  private static MetricsManager metricsManager;
 
   // This list is to record ApplicationManager create inside @Test method
   private static final List<ApplicationManager> applicationManagers = Lists.newArrayList();
@@ -230,6 +233,7 @@ public class ConfigurableTestBase {
           bind(StreamFileJanitorService.class).to(LocalStreamFileJanitorService.class).in(Scopes.SINGLETON);
           bind(StreamWriterSizeCollector.class).to(BasicStreamWriterSizeCollector.class).in(Scopes.SINGLETON);
           bind(StreamCoordinatorClient.class).to(InMemoryStreamCoordinatorClient.class).in(Scopes.SINGLETON);
+          bind(MetricsManager.class).toProvider(MetricsManagerProvider.class);
         }
       },
       // todo: do we need handler?
@@ -278,8 +282,23 @@ public class ConfigurableTestBase {
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
     // we use MetricStore directly, until RuntimeStats API changes
     RuntimeStats.metricStore = injector.getInstance(MetricStore.class);
+    metricsManager = injector.getInstance(MetricsManager.class);
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
     namespaceAdmin.createNamespace(NamespaceMeta.DEFAULT);
+  }
+
+  private static class MetricsManagerProvider implements Provider<MetricsManager> {
+    private final MetricStore metricStore;
+
+    @Inject
+    private MetricsManagerProvider(MetricStore metricStore) {
+      this.metricStore = metricStore;
+    }
+
+    @Override
+    public MetricsManager get() {
+      return new MetricsManager(metricStore);
+    }
   }
 
   private static CConfiguration createCConf(File localDataDir,
@@ -366,6 +385,10 @@ public class ConfigurableTestBase {
     datasetService.stopAndWait();
     dsOpService.stopAndWait();
     txService.stopAndWait();
+  }
+
+  protected MetricsManager getMetricsManager() {
+    return metricsManager;
   }
 
   /**

@@ -18,7 +18,7 @@ package co.cask.cdap.examples.wordcount;
 
 import co.cask.cdap.api.metrics.RuntimeMetrics;
 import co.cask.cdap.test.ApplicationManager;
-import co.cask.cdap.test.RuntimeStats;
+import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.TestBase;
@@ -57,7 +57,7 @@ public class WordCountTest extends TestBase {
     ApplicationManager appManager = deployApplication(WordCount.class, config);
 
     // Start the Flow
-    appManager.getFlowManager("WordCounter").start();
+    FlowManager flowManager = appManager.getFlowManager("WordCounter").start();
 
     // Send a few events to the stream
     StreamManager streamManager = getStreamManager("words");
@@ -66,7 +66,7 @@ public class WordCountTest extends TestBase {
     streamManager.send("the world says hello");
 
     // Wait for the events to be processed, or at most 5 seconds
-    RuntimeMetrics metrics = RuntimeStats.getFlowletMetrics("WordCount", "WordCounter", "associator");
+    RuntimeMetrics metrics = flowManager.getFlowletMetrics("associator");
     metrics.waitForProcessed(3, 5, TimeUnit.SECONDS);
 
     // Start RetrieveCounts service

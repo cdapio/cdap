@@ -96,6 +96,7 @@ public class UnitTestManager implements TestManager {
   private final LocationFactory locationFactory;
   private final File templateDir;
   private final File pluginDir;
+  private final MetricsManager metricsManager;
 
   @Inject
   public UnitTestManager(AppFabricClient appFabricClient,
@@ -106,7 +107,8 @@ public class UnitTestManager implements TestManager {
                          NamespaceAdmin namespaceAdmin,
                          StreamManagerFactory streamManagerFactory,
                          LocationFactory locationFactory,
-                         CConfiguration cConf) {
+                         CConfiguration cConf,
+                         MetricsManager metricsManager) {
     this.appFabricClient = appFabricClient;
     this.datasetFramework = datasetFramework;
     this.txSystemClient = txSystemClient;
@@ -118,6 +120,7 @@ public class UnitTestManager implements TestManager {
     // this should have been set to a temp dir during injector setup
     this.templateDir = new File(cConf.get(Constants.AppFabric.APP_TEMPLATE_DIR));
     this.pluginDir = new File(cConf.get(Constants.AppFabric.APP_TEMPLATE_PLUGIN_DIR));
+    this.metricsManager = metricsManager;
   }
 
   /**
@@ -235,7 +238,7 @@ public class UnitTestManager implements TestManager {
     } catch (Exception e) {
       throw Throwables.propagate(e);
     } finally {
-      RuntimeStats.resetAll();
+      metricsManager.resetAll();
     }
   }
 

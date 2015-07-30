@@ -32,6 +32,7 @@ import co.cask.cdap.test.DefaultMapReduceManager;
 import co.cask.cdap.test.DefaultSparkManager;
 import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.MapReduceManager;
+import co.cask.cdap.test.MetricsManager;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.SparkManager;
 import co.cask.cdap.test.StreamWriter;
@@ -68,6 +69,7 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
   private final StreamWriterFactory streamWriterFactory;
   private final AppFabricClient appFabricClient;
   private final DiscoveryServiceClient discoveryServiceClient;
+  private final MetricsManager metricsManager;
 
   @Inject
   public DefaultApplicationManager(DatasetFramework datasetFramework,
@@ -76,6 +78,7 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
                                    DiscoveryServiceClient discoveryServiceClient,
                                    TemporaryFolder tempFolder,
                                    AppFabricClient appFabricClient,
+                                   MetricsManager metricsManager,
                                    @Assisted("applicationId") Id.Application application,
                                    @Assisted Location deployedJar) {
     super(application);
@@ -83,7 +86,7 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
     this.discoveryServiceClient = discoveryServiceClient;
     this.txSystemClient = txSystemClient;
     this.appFabricClient = appFabricClient;
-
+    this.metricsManager = metricsManager;
     try {
       File tempDir = tempFolder.newFolder();
       BundleJarUtil.unpackProgramJar(deployedJar, tempDir);
@@ -116,7 +119,7 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
   @Override
   public FlowManager getFlowManager(String flowName) {
     Id.Program programId = Id.Program.from(application, ProgramType.FLOW, flowName);
-    return new DefaultFlowManager(programId, appFabricClient, this);
+    return new DefaultFlowManager(programId, appFabricClient, this, metricsManager);
   }
 
   @Override
@@ -140,7 +143,7 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
   @Override
   public ServiceManager getServiceManager(String serviceName) {
     Id.Program programId = Id.Program.from(application, ProgramType.SERVICE, serviceName);
-    return new DefaultServiceManager(programId, appFabricClient, discoveryServiceClient, this);
+    return new DefaultServiceManager(programId, appFabricClient, discoveryServiceClient, this, metricsManager);
   }
 
   @Override

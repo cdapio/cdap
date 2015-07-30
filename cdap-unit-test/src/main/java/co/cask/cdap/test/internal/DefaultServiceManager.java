@@ -23,7 +23,7 @@ import co.cask.cdap.internal.AppFabricClient;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ServiceInstances;
 import co.cask.cdap.test.AbstractProgramManager;
-import co.cask.cdap.test.RuntimeStats;
+import co.cask.cdap.test.MetricsManager;
 import co.cask.cdap.test.ServiceManager;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -52,9 +52,11 @@ public class DefaultServiceManager extends AbstractProgramManager<ServiceManager
   private final DiscoveryServiceClient discoveryServiceClient;
   private final AppFabricClient appFabricClient;
 
+  private final MetricsManager metricsManager;
+
   public DefaultServiceManager(Id.Program programId,
                                AppFabricClient appFabricClient, DiscoveryServiceClient discoveryServiceClient,
-                               DefaultApplicationManager applicationManager) {
+                               DefaultApplicationManager applicationManager, MetricsManager metricsManager) {
     super(programId, applicationManager);
     this.namespace = programId.getNamespaceId();
     this.applicationId = programId.getApplicationId();
@@ -62,6 +64,7 @@ public class DefaultServiceManager extends AbstractProgramManager<ServiceManager
 
     this.discoveryServiceClient = discoveryServiceClient;
     this.appFabricClient = appFabricClient;
+    this.metricsManager = metricsManager;
   }
 
   @Override
@@ -108,7 +111,7 @@ public class DefaultServiceManager extends AbstractProgramManager<ServiceManager
 
   @Override
   public RuntimeMetrics getMetrics() {
-    return RuntimeStats.getServiceMetrics(namespace, applicationId, serviceName);
+    return metricsManager.getServiceMetrics(namespace, applicationId, serviceName);
   }
 
   @Nullable

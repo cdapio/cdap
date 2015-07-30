@@ -28,7 +28,6 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.MapReduceManager;
-import co.cask.cdap.test.RuntimeStats;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.TestBase;
 import co.cask.common.http.HttpRequest;
@@ -196,7 +195,7 @@ public class DataCleansingMapReduceTest extends TestBase {
                                                Constants.Metrics.Tag.MAPREDUCE, DataCleansingMapReduce.NAME);
     MetricDataQuery metricQuery = new MetricDataQuery(0, Integer.MAX_VALUE, Integer.MAX_VALUE, "user.data.invalid",
                                                       AggregationFunction.SUM, tags, ImmutableList.<String>of());
-    Collection<MetricTimeSeries> result = RuntimeStats.metricStore.query(metricQuery);
+    Collection<MetricTimeSeries> result = getMetricsManager().query(metricQuery);
 
     if (result.isEmpty()) {
       return 0;
