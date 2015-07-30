@@ -77,7 +77,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
     LOG.info("Starting ProgramLifecycleService");
 
     scheduledExecutorService.scheduleWithFixedDelay(new RunRecordsCorrectorRunnable(this),
-                                                    2L, 600L, TimeUnit.SECONDS);
+                                                    2L, 6L, TimeUnit.SECONDS);
   }
 
   @Override
