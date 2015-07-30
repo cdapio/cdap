@@ -51,6 +51,10 @@
       <groupId>org.apache.spark</groupId>
       <artifactId>spark-sql_2.10</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.apache.spark</groupId>
+      <artifactId>spark-mllib_2.10</artifactId>
+    </dependency>
 
     <!-- Added to override the embedded guava class in hive-exec -->
     <dependency>

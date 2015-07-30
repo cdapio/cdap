@@ -35,14 +35,15 @@
     <module>DataCleansing</module>
     <module>FileSetExample</module>
     <module>HelloWorld</module>
-    <module>LogAnalysis</module>
     <module>Purchase</module>
     <module>SparkKMeans</module>
     <module>SparkPageRank</module>
+    <module>LogAnalysis</module>
     <module>SportResults</module>
     <module>StreamConversion</module>
     <module>UserProfiles</module>
     <module>WebAnalytics</module>
+    <module>WikipediaPipeline</module>
     <module>WordCount</module>
   </modules>
 

@@ -74,6 +74,9 @@ In addition to the :ref:`Getting Started's <getting-started-index>`
   * - :doc:`Web Analytics<web-analytics>`
     - An application to generate statistics and to provide insights about web usage through the analysis
       of web traffic.
+  * - :doc:`Wikipedia Pipeline<wikipedia-data-pipeline>`
+    - An application that performs analysis on Wikipedia data using MapReduce and Spark programs
+      running within a CDAP Workflow: *WikipediaPipelineWorkflow*.
   * - :doc:`Word Count<word-count>`
     - A simple application that counts words, and tracks word associations and unique words seen on the stream.
       It demonstrates the power of using datasets and how they can be employed to simplify storing complex data.
