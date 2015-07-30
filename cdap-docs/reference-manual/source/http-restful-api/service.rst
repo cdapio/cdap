@@ -142,7 +142,7 @@ The response body will contain a JSON-formatted status of the last restart attem
    * - ``404 Service not found``
      - The service name is not valid
    * - ``500 Internal error``
-     - Internal error encountered when processing the request.
+     - Internal error encountered when processing the request
 
 Requesting Service Methods
 --------------------------
