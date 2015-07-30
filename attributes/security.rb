@@ -79,8 +79,11 @@ if node['cdap']['cdap_site'].key?('kerberos.auth.enabled') && node['cdap']['cdap
     default['hadoop']['core_site']['hadoop.proxyuser.hive.groups'] = 'cdap,hadoop'
   end
 
+  # Tell HiveServer2 to use CDAP's keytab, not Hive's
+  default['hive']['hive_site']['hive.server2.authentication.kerberos.keytab'] = node['cdap']['kerberos']['cdap_keytab']
+
   # For cdap-auth-server and cdap-router
-  default['cdap']['cdap_site']['cdap.master.kerberos.keytab'] = node['cdap']['security']['cdap_keytab']
-  default['cdap']['cdap_site']['cdap.master.kerberos.principal'] = node['cdap']['security']['cdap_principal']
+  default['cdap']['cdap_site']['cdap.master.kerberos.keytab'] = node['cdap']['kerberos']['cdap_keytab']
+  default['cdap']['cdap_site']['cdap.master.kerberos.principal'] = node['cdap']['kerberos']['cdap_principal']
 
 end
