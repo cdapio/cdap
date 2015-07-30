@@ -89,9 +89,16 @@ public class WorkflowTest {
   public void testWorkflow() throws Exception {
     final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(WorkflowApp.class,
                                                                                          TEMP_FOLDER_SUPPLIER);
+    // Execute the Workflow without adding the data in the Spark closure
+    executeWorkflowProgram(app, false);
+
+    // Execute the Workflow with adding the data in the Spark closure
+    executeWorkflowProgram(app, true);
+  }
+
+  private void executeWorkflowProgram(ApplicationWithPrograms app, boolean shouldAddToTokenInClosure) throws Exception {
     final Injector injector = AppFabricTestHelper.getInjector();
     ProgramRunnerFactory runnerFactory = injector.getInstance(ProgramRunnerFactory.class);
-
     ProgramRunner programRunner = runnerFactory.create(ProgramRunnerFactory.Type.WORKFLOW);
 
     final Program program = Iterators.filter(app.getPrograms().iterator(), new Predicate<Program>() {
@@ -105,7 +112,15 @@ public class WorkflowTest {
     String outputPath = new File(tmpFolder.newFolder(), "output").getAbsolutePath();
     final String runId = RunIds.generate().getId();
     BasicArguments systemArgs = new BasicArguments(ImmutableMap.of(ProgramOptionConstants.RUN_ID, runId));
-    BasicArguments userArgs = new BasicArguments(ImmutableMap.of("inputPath", inputPath, "outputPath", outputPath));
+
+    ImmutableMap.Builder<String, String> userArgMapBuilder = ImmutableMap.builder();
+    userArgMapBuilder.put("inputPath", inputPath);
+    userArgMapBuilder.put("outputPath", outputPath);
+    if (shouldAddToTokenInClosure) {
+      userArgMapBuilder.put("addToTokenInFunction", "true");
+    }
+
+    BasicArguments userArgs = new BasicArguments(userArgMapBuilder.build());
     ProgramOptions options = new SimpleProgramOptions(program.getName(), systemArgs, userArgs);
 
     final SettableFuture<String> completion = SettableFuture.create();

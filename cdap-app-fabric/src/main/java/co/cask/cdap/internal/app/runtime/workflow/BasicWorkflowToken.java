@@ -24,6 +24,9 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.EnumMap;
 import java.util.HashMap;
@@ -40,6 +43,7 @@ public class BasicWorkflowToken implements WorkflowToken, Serializable {
   private Map<String, Map<String, Long>> mapReduceCounters;
   private final Map<Scope, Map<String, List<NodeValue>>> tokenValueMap = new EnumMap<>(Scope.class);
   private String nodeName;
+  private boolean putOperationAllowed = true;
 
   public BasicWorkflowToken() {
     for (Scope scope : Scope.values()) {
@@ -117,6 +121,11 @@ public class BasicWorkflowToken implements WorkflowToken, Serializable {
   }
 
   void put(String key, Value value, Scope scope) {
+    // Check if put operation is being performed inside the Spark executor
+    if (!putOperationAllowed) {
+      throw new UnsupportedOperationException("Put operation is not allowed from Spark executor.");
+    }
+
     Preconditions.checkNotNull(key, "Null key cannot be added in the WorkflowToken.");
     Preconditions.checkNotNull(value, String.format("Null value provided for the key '%s'.", key));
     Preconditions.checkNotNull(value.toString(), String.format("Null value provided for the key '%s'.", key));
@@ -246,5 +255,17 @@ public class BasicWorkflowToken implements WorkflowToken, Serializable {
       builder.put(entry.getKey(), ImmutableMap.copyOf(entry.getValue()));
     }
     return builder.build();
+  }
+
+  // Serialize the WorkflowToken content for passing it to the Spark executor.
+  private void writeObject(ObjectOutputStream out) throws IOException {
+    out.defaultWriteObject();
+  }
+
+  // Deserialize the WorkflowToken for using it inside the Spark executor. Set the putOperationAllowed
+  // flag to false so that we do not allow putting the values inside the Spark executor.
+  private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+    in.defaultReadObject();
+    putOperationAllowed = false;
   }
 }

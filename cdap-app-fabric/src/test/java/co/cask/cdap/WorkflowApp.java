@@ -31,14 +31,18 @@ import co.cask.cdap.internal.app.runtime.batch.WordCount;
 import co.cask.cdap.runtime.WorkflowTest;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Lists;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function;
+import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -108,7 +112,7 @@ public class WorkflowApp extends AbstractApplication {
 
   public static class SparkWorkflowTestProgram implements JavaSparkProgram {
     @Override
-    public void run(SparkContext context) {
+    public void run(final SparkContext context) {
       File outputDir = new File(context.getRuntimeArguments().get("outputPath"));
       File successFile = new File(outputDir, "_SUCCESS");
       Preconditions.checkState(successFile.exists());
@@ -120,20 +124,44 @@ public class WorkflowApp extends AbstractApplication {
       List<Integer> data = Arrays.asList(1, 2, 3, 4, 5);
       JavaRDD<Integer> distData = ((JavaSparkContext) context.getOriginalSparkContext()).parallelize(data);
       distData.collect();
+
       // If there are problems accessing workflow token here, Spark will throw a NotSerializableException in the test
       final WorkflowToken workflowToken = context.getWorkflowToken();
       if (workflowToken != null) {
-        workflowToken.put("otherKey", "otherValue");
+        workflowToken.put("multiplier", "2");
       }
-      distData.map(new Function<Integer, Integer>() {
+
+      final boolean addToToken = context.getRuntimeArguments().containsKey("addToTokenInFunction");
+
+      JavaRDD<Integer> mapData = distData.map(new Function<Integer, Integer>() {
         @Override
         public Integer call(Integer val) throws Exception {
-          if (workflowToken != null && workflowToken.get("tokenKey") != null) {
-            return 2 * val;
+          if (addToToken) {
+            workflowToken.put("some.key", "some.value");
           }
-          return val;
+
+          if (workflowToken.get("multiplier") != null) {
+            int multiplier = workflowToken.get("multiplier").getAsInt();
+            return multiplier * val;
+          }
+          return 0;
         }
       });
+
+      boolean exceptionThrown = false;
+      try {
+        List<Integer> result = mapData.collect();
+        Assert.assertTrue(result.equals(Arrays.asList(2, 4, 6, 8, 10)));
+      } catch (Throwable t) {
+        exceptionThrown = true;
+      }
+
+      if (addToToken) {
+        Assert.assertTrue(exceptionThrown);
+      } else {
+        Assert.assertFalse(exceptionThrown);
+      }
+
       Preconditions.checkState(!successFile.exists());
     }
   }
