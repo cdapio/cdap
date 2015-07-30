@@ -99,6 +99,7 @@ public class ExploreServiceUtils {
 
   private static final Pattern HIVE_SITE_FILE_PATTERN = Pattern.compile("^.*/hive-site\\.xml$");
   private static final Pattern YARN_SITE_FILE_PATTERN = Pattern.compile("^.*/yarn-site\\.xml$");
+  private static final Pattern MAPRED_SITE_FILE_PATTERN = Pattern.compile("^.*/mapred-site\\.xml$");
 
   /**
    * Get all the files contained in a class path.
@@ -349,14 +350,16 @@ public class ExploreServiceUtils {
       return hijackHiveConfFile(confFile);
     } else if (YARN_SITE_FILE_PATTERN.matcher(confFile.getAbsolutePath()).matches()) {
       return hijackYarnConfFile(confFile);
+    } else if (MAPRED_SITE_FILE_PATTERN.matcher(confFile.getAbsolutePath()).matches()) {
+      return hijackMapredConfFile(confFile);
     } else {
       return confFile;
     }
   }
 
   /**
-   * Check that the file is a yarn-site.xml file, and return a temp copy of it to which are added
-   * necessary options. If it is not a yarn-site.xml file, return it as is.
+   * Change yarn-site.xml file, and return a temp copy of it to which are added
+   * necessary options.
    */
   private static File hijackYarnConfFile(File confFile) {
     Configuration conf = new Configuration(false);
@@ -371,7 +374,7 @@ public class ExploreServiceUtils {
                                        Joiner.on(",").join(YarnConfiguration.DEFAULT_YARN_APPLICATION_CLASSPATH));
 
     // add the pwd/* at the beginning of classpath. so user's jar will take precedence and without this change,
-    // job.jar will be at the begging of the classpath, since job.jar has old guava version classes,
+    // job.jar will be at the beginning of the classpath, since job.jar has old guava version classes,
     // we want to add pwd/* before
     yarnAppClassPath = "$PWD/*," + yarnAppClassPath;
 
@@ -389,8 +392,41 @@ public class ExploreServiceUtils {
   }
 
   /**
-   * Check that the file is a hive-site.xml file, and return a temp copy of it to which are added
-   * necessary options. If it is not a hive-site.xml file, return it as is.
+   * Change mapred-site.xml file, and return a temp copy of it to which are added
+   * necessary options.
+   */
+  private static File hijackMapredConfFile(File confFile) {
+    Configuration conf = new Configuration(false);
+    try {
+      conf.addResource(confFile.toURI().toURL());
+    } catch (MalformedURLException e) {
+      LOG.error("File {} is malformed.", confFile, e);
+      throw Throwables.propagate(e);
+    }
+
+    String mrAppClassPath = conf.get(MRJobConfig.MAPREDUCE_APPLICATION_CLASSPATH,
+                                       MRJobConfig.DEFAULT_MAPREDUCE_APPLICATION_CLASSPATH);
+
+    // Add the pwd/* at the beginning of classpath. Without this change, old jars from mr framework classpath
+    // get into classpath.
+    mrAppClassPath = "$PWD/*," + mrAppClassPath;
+
+    conf.set(MRJobConfig.MAPREDUCE_APPLICATION_CLASSPATH, mrAppClassPath);
+
+    File newMapredConfFile = new File(Files.createTempDir(), "mapred-site.xml");
+    try (FileOutputStream os = new FileOutputStream(newMapredConfFile)) {
+      conf.writeXml(os);
+    } catch (IOException e) {
+      LOG.error("Problem creating and writing to temporary mapred-site.xml conf file at {}", newMapredConfFile, e);
+      throw Throwables.propagate(e);
+    }
+
+    return newMapredConfFile;
+  }
+
+  /**
+   * Change hive-site.xml file, and return a temp copy of it to which are added
+   * necessary options.
    */
   private static File hijackHiveConfFile(File confFile) {
     Configuration conf = new Configuration(false);
