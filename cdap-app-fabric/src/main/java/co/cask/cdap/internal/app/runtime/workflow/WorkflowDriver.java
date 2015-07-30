@@ -234,7 +234,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
 
     status.put(node.getNodeId(), node);
 
-    WorkflowToken copiedWorkflowToken = ((BasicWorkflowToken) token).deepCopyWithNodeDetails(node.getNodeId(), getNodeFilterSet(node));
+    WorkflowToken copiedWorkflowToken = ((BasicWorkflowToken) token).deepCopyWithNodeDetails(node.getNodeId(),
+                                                                                             getNodeFilterSet(node));
     final BasicWorkflowContext workflowContext = createWorkflowContext(actionSpec, copiedWorkflowToken,
                                                                        node.getNodeId());
 
@@ -443,7 +444,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     Predicate<WorkflowContext> predicate = instantiator.get(
       TypeToken.of((Class<? extends Predicate<WorkflowContext>>) clz)).create();
 
-    WorkflowToken copiedWorkflowToken = ((BasicWorkflowToken) token).deepCopyWithNodeDetails(node.getNodeId(), getNodeFilterSet(node));
+    WorkflowToken copiedWorkflowToken = ((BasicWorkflowToken) token).deepCopyWithNodeDetails(node.getNodeId(),
+                                                                                             getNodeFilterSet(node));
     WorkflowContext context = new BasicWorkflowContext(workflowSpec, null, logicalStartTime, null, runtimeArgs,
                                                        copiedWorkflowToken, program, runId, metricsCollectionService,
                                                        datasetFramework, discoveryServiceClient);
