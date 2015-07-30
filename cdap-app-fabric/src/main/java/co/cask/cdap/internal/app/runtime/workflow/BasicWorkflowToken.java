@@ -43,7 +43,7 @@ public class BasicWorkflowToken implements WorkflowToken, Serializable {
   private Map<String, Map<String, Long>> mapReduceCounters;
   private final Map<Scope, Map<String, List<NodeValue>>> tokenValueMap = new EnumMap<>(Scope.class);
   private String nodeName;
-  private boolean putOperationAllowed = true;
+  private transient boolean putOperationAllowed = true;
 
   public BasicWorkflowToken() {
     for (Scope scope : Scope.values()) {
