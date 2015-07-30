@@ -31,7 +31,7 @@
 
 */
 angular.module(PKG.name + '.services')
-  .service('MyPlumbService', function(myAdapterApi, $q, $bootstrapModal, $state, $filter, mySettings, $alert, AdapterErrorFactory) {
+  .service('MyPlumbService', function(myAdapterApi, $q, $bootstrapModal, $state, $filter, mySettings, $alert, AdapterErrorFactory, IMPLICIT_SCHEMA) {
     var countSink = 0,
         countSource = 0,
         countTransform = 0;
@@ -214,9 +214,9 @@ angular.module(PKG.name + '.services')
       var sourceConn = $filter('filter')(this.connections, { target: pluginId });
       var sourceSchema = null;
 
-      var clfSchema = '{"type":"record","name":"etlSchemaBody","fields":[{"name":"auth_user","type":["string","null"]},{"name":"content_length","type":["int","null"]},{"name":"date","type":["string","null"]},{"name":"referrer","type":["string","null"]},{"name":"remote_host","type":["string","null"]},{"name":"remote_login","type":["string","null"]},{"name":"request","type":["string","null"]},{"name":"status","type":["int","null"]},{"name":"user_agent","type":["string","null"]}]}';
+      var clfSchema = IMPLICIT_SCHEMA.clf;
 
-      var syslogSchema = '{"type":"record","name":"etlSchemaBody","fields":[{"name":"logsource","type":["string","null"]},{"name":"message","type":["string","null"]},{"name":"pid","type":["string","null"]},{"name":"program","type":["string","null"]},{"name":"timestamp","type":["string","null"]}]}';
+      var syslogSchema = IMPLICIT_SCHEMA.syslog;
 
       var source;
       if (sourceConn.length) {

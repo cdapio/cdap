@@ -8,7 +8,7 @@ angular.module(PKG.name + '.commons')
         plugins: '='
       },
       templateUrl: 'widget-container/widget-stream-properties/widget-stream-properties.html',
-      controller: function($scope, EventPipe) {
+      controller: function($scope, EventPipe, IMPLICIT_SCHEMA) {
         var modelCopy = angular.copy($scope.model);
 
         var defaultOptions = [ 'boolean', 'int', 'long', 'float', 'double', 'bytes', 'string' ];
@@ -44,12 +44,12 @@ angular.module(PKG.name + '.commons')
             $scope.disableEdit = true;
             // $scope.fields = 'NOTHING';
             if ($scope.plugins.format === 'clf') {
-              var clfSchema = '{"type":"record","name":"etlSchemaBody","fields":[{"name":"auth_user","type":["string","null"]},{"name":"content_length","type":["int","null"]},{"name":"date","type":["string","null"]},{"name":"referrer","type":["string","null"]},{"name":"remote_host","type":["string","null"]},{"name":"remote_login","type":["string","null"]},{"name":"request","type":["string","null"]},{"name":"status","type":["int","null"]},{"name":"user_agent","type":["string","null"]}]}';
+              var clfSchema = IMPLICIT_SCHEMA.clf;
 
               initialize(clfSchema);
               $scope.fields = 'SHOW';
             } else if ($scope.plugins.format === 'syslog') {
-              var syslogSchema = '{"type":"record","name":"etlSchemaBody","fields":[{"name":"logsource","type":["string","null"]},{"name":"message","type":["string","null"]},{"name":"pid","type":["string","null"]},{"name":"program","type":["string","null"]},{"name":"timestamp","type":["string","null"]}]}';
+              var syslogSchema = IMPLICIT_SCHEMA.syslog;
 
               initialize(syslogSchema);
               $scope.fields = 'SHOW';
