@@ -46,9 +46,9 @@ angular.module(PKG.name + '.services')
         description: '',
         template: {
           type: 'ETLBatch',
-          instance: '',
+          instance: 1,
           schedule: {
-            cron: ''
+            cron: '* * * * *'
           }
         }
       };
