@@ -89,7 +89,7 @@ Running CDAP Applications
 .. |example| replace:: LogAnalysisApp
 
 .. include:: /../../developers-manual/source/getting-started/building-apps.rst
-   :start-line: 11
+:start-line: 11
 
 
 Running the Example
@@ -152,9 +152,7 @@ You can also use the Command Line Interface::
 
   $ cdap-cli.sh call service LogAnalysisApp.HitCounterService POST 'hitcount' body '{"url":"/index.html"}'
 
-On success, the above command will return the hit count for the above URL, such as::
-
-  4
+On success, this command will return the hit count for the above URL, such as ``4``.
 
 Similarly, to query the *responseCount* ``KeyValueTable`` through the *ResponseCounterService*, the *reqCount*
 ``TimePartitionedFileSet`` through the *RequestCounterService*, and to retrieve data from a particular partition of
@@ -165,21 +163,25 @@ curl and Command Line Interface::
   $ curl -w'\n' http://localhost:10000/v3/namespaces/default/apps/LogAnalysisApp/services/ResponseCounterService/methods/rescount/200
   $ cdap-cli.sh call service LogAnalysisApp.ResponseCounterService GET 'rescount/200'
 
-On success, the above command will return the total number of responses sent with the queried response code::
+On success, this command will return the total number of responses sent with the queried response code, ``30``.
 
-  30
+::
 
   $ curl -w'\n' http://localhost:10000/v3/namespaces/default/apps/LogAnalysisApp/services/RequestCounterService/methods/reqcount
   $ cdap-cli.sh call service LogAnalysisApp.RequestCounterService GET 'reqcount'
 
-On success, the above command will return a set of all the available partitions::
+On success, this command will return a set of all the available partitions::
 
   ["7/29/15 7:47 PM"]
+
+|
+
+::
 
   $ curl -w'\n' -X POST -d'{"time":"7/27/15 5:58 PM"}' http://localhost:10000/v3/namespaces/default/apps/LogAnalysisApp/services/RequestCounterService/methods/reqfile
   $ cdap-cli.sh call service LogAnalysisApp.RequestCounterService POST 'reqfile' body '{"time":"7/27/15 5:58 PM"}'
 
-On success, the above command will return a map of all the unique IP addresses with number of request made by them::
+On success, this above command will return a map of all the unique IP addresses with number of request made by them::
 
   {"255.255.255.109":1,255.255.255.121":1,"255.255.255.211":1}
 
