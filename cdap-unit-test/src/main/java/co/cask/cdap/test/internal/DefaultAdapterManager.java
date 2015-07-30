@@ -58,10 +58,4 @@ public class DefaultAdapterManager extends AbstractAdapterManager {
     return appFabricClient.getAdapterRun(adapterId, runId);
   }
 
-  @Override
-  public void delete() throws Exception {
-    appFabricClient.deleteAdapter(adapterId);
-  }
-
-
 }

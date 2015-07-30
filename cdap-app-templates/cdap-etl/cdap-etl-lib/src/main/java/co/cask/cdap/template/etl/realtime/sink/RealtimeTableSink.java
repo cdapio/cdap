@@ -30,7 +30,6 @@ import co.cask.cdap.template.etl.api.realtime.RealtimeContext;
 import co.cask.cdap.template.etl.api.realtime.RealtimeSink;
 import co.cask.cdap.template.etl.common.Properties;
 import co.cask.cdap.template.etl.common.RecordPutTransformer;
-import co.cask.cdap.template.etl.common.TableConfig;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 
@@ -45,7 +44,39 @@ import javax.annotation.Nullable;
 @Description("Real Time Sink for CDAP Table dataset")
 public class RealtimeTableSink extends RealtimeSink<StructuredRecord> {
 
+  private static final String NAME_DESC = "Name of the table. If the table does not already exist, one will be " +
+    "created.";
+  private static final String PROPERTY_SCHEMA_DESC = "Optional schema of the table as a JSON Object. If the table " +
+    "does not already exist, one will be created with this schema, which will allow the table to be explored " +
+    "through Hive.\"";
+  private static final String PROPERTY_SCHEMA_ROW_FIELD_DESC = "The name of the record field that should be used as " +
+    "the row key when writing to the table.";
+
   private RecordPutTransformer recordPutTransformer;
+
+  /**
+   * Config class for RealtimeTableSink
+   */
+  public static class TableConfig extends PluginConfig {
+    @Name(Properties.Table.NAME)
+    @Description(NAME_DESC)
+    private String name;
+
+    @Name(Properties.Table.PROPERTY_SCHEMA)
+    @Description(PROPERTY_SCHEMA_DESC)
+    @Nullable
+    String schemaStr;
+
+    @Name(Properties.Table.PROPERTY_SCHEMA_ROW_FIELD)
+    @Description(PROPERTY_SCHEMA_ROW_FIELD_DESC)
+    String rowField;
+
+    public TableConfig(String name, String schemaStr, String rowField) {
+      this.name = name;
+      this.schemaStr = schemaStr;
+      this.rowField = rowField;
+    }
+  }
 
   private final TableConfig tableConfig;
 
@@ -56,10 +87,10 @@ public class RealtimeTableSink extends RealtimeSink<StructuredRecord> {
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     Map<String, String> properties = tableConfig.getProperties().getProperties();
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(tableConfig.getName()), "Dataset name must be given.");
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(tableConfig.getRowField()),
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(tableConfig.name), "Dataset name must be given.");
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(tableConfig.rowField),
                                 "Field to be used as rowkey must be given.");
-    pipelineConfigurer.createDataset(tableConfig.getName(), Table.class.getName(), DatasetProperties.builder()
+    pipelineConfigurer.createDataset(tableConfig.name, Table.class.getName(), DatasetProperties.builder()
       .addAll(properties)
       .build());
   }
@@ -67,12 +98,12 @@ public class RealtimeTableSink extends RealtimeSink<StructuredRecord> {
   @Override
   public void initialize(RealtimeContext context) throws Exception {
     super.initialize(context);
-    recordPutTransformer = new RecordPutTransformer(tableConfig.getRowField(), tableConfig.isRowFieldCaseInsensitive());
+    recordPutTransformer = new RecordPutTransformer(tableConfig.rowField);
   }
 
   @Override
   public int write(Iterable<StructuredRecord> records, DataWriter writer) throws Exception {
-    Table table = writer.getDataset(tableConfig.getName());
+    Table table = writer.getDataset(tableConfig.name);
     int numRecords = 0;
     for (StructuredRecord record : records) {
       Put put = recordPutTransformer.toPut(record);

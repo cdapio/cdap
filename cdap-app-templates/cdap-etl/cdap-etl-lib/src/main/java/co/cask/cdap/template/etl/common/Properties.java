@@ -109,7 +109,6 @@ public final class Properties {
     public static final String PROPERTY_SCHEMA = co.cask.cdap.api.dataset.table.Table.PROPERTY_SCHEMA;
     public static final String PROPERTY_SCHEMA_ROW_FIELD =
       co.cask.cdap.api.dataset.table.Table.PROPERTY_SCHEMA_ROW_FIELD;
-    public static final String CASE_SENSITIVE_ROW_FIELD = "case.sensitive.row.field";
   }
 
   /**
