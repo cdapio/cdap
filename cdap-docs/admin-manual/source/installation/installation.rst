@@ -147,7 +147,7 @@ Hadoop/HBase Environment
 For a distributed enterprise, you must install these Hadoop components:
 
 +---------------+-------------------+-----------------------------------------------------+
-| Component     | Source            | Required Version                                    |
+| Component     | Source            | Supported Versions                                  |
 +===============+===================+=====================================================+
 | **HDFS**      | Apache Hadoop     | 2.0.2-alpha through 2.5.0                           |
 +               +-------------------+-----------------------------------------------------+
