@@ -8,7 +8,9 @@ Sinks: Batch: Cube
 
 .. rubric:: Description
 
-A BatchCubeSink that takes a StructuredRecord in, maps it to a CubeFact, and writes it to
+Batch sink that writes to a Cube dataset.
+
+BatchCubeSink takes a StructuredRecord in, maps it to a CubeFact, and writes it to
 the Cube dataset identified by the name property.
 
 If Cube dataset does not exist, it will be created using properties provided with this
@@ -16,7 +18,9 @@ sink.
 
 .. rubric:: Use Case
 
-TODO: Fill me out
+A BatchCubeSink is used to write data into a Cube from batch-enabled data sources to allow further data analysis.
+E.g. with BatchCubeSink you can periodically upload data from PartitionedFileSet into a Cube to perform complex
+data queries across multiple dimensions and aggregated measurements.
 
 .. rubric:: Properties
 
@@ -42,9 +46,78 @@ cubeFact.timestamp.field is provided).
 **cubeFact.measurements:** Measurements to be extracted from StructuredRecord to be used in CubeFact.
 Provide properties as a JSON Map. For example, to use the 'price' field as a measurement of type gauge,
 and the 'count' field as a measurement of type counter, the property should have the value:
-{"cubeFact.measurement.price":"GAUGE", "cubeFact.measurement.count":"COUNTER"}.
+{"cubeFact.measurement.price":"GAUGE", "cubeFact.measurement.quantity":"COUNTER"}.
 
 .. rubric:: Example
 
-TODO: Fill me out
+The following configuration tells to write data into Cube dataset with name "myCube"; provides dataset properties
+(dataset.*) for creating new dataset, if the one with given name doesn't exist; configures measurements to aggregate and
+how to determine timestamp for the facts to be written into Cube::
 
+    {
+        "name": "myCube",
+
+        "dataset.cube.resolutions": "1,60,3600",
+        "dataset.cube.properties": {
+          "dataset.cube.aggregation.byName.dimensions": "name",
+          "dataset.cube.aggregation.byNameByZip.dimensions": "name,zip",
+        },
+
+        "cubeFact.timestamp.field": "ts",
+        "cubeFact.timestamp.format": "MM/dd/yyyy HH:mm:ss",
+        "cubeFact.measurements": {
+          "cubeFact.measurement.price": "GAUGE"
+          "cubeFact.measurement.quantity": "COUNTER"
+        }
+    }
+
+Once data is there, you can now run queries using AbstractCubeHttpHandler (you will need to deploy an application that
+contains service using it), e.g.::
+
+    {
+        "aggregation": "byName",
+        "startTs": 1323370200,
+        "endTs":   1523398198,
+        "measurements": {"price": "MAX"},
+        "resolution": 1,
+        "dimensionValues": {},
+        "groupByDimensions": ["name"],
+        "limit": 1000
+    }
+
+Example result::
+
+    [
+        {
+            "measureName": "price",
+            "dimensionValues": {
+                "name": "user1"
+            },
+            "timeValues": [
+                {
+                    "timestamp": 1323370201,
+                    "value": 100
+                },
+                {
+                    "timestamp": 1323370210,
+                    "value": 360
+                }
+            ]
+        },
+        {
+            "measureName": "price",
+            "dimensionValues": {
+                "name": "user2"
+            },
+            "timeValues": [
+                {
+                    "timestamp": 1323370201,
+                    "value": 200
+                },
+                {
+                    "timestamp": 1323370210,
+                    "value": 160
+                }
+            ]
+        }
+    ]
