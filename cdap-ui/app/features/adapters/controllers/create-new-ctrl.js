@@ -1,6 +1,12 @@
 angular.module(PKG.name + '.feature.adapters')
   .controller('_AdapterCreateController', function(MyPlumbService, myAdapterApi, $bootstrapModal, $scope, rConfig, $stateParams, $alert, $modalStack) {
     this.metadata = MyPlumbService['metadata'];
+    function resetMetadata() {
+      this.metadata = MyPlumbService['metadata'];
+    }
+
+    MyPlumbService.registerResetCallBack(resetMetadata.bind(this));
+
     if (rConfig) {
       this.data =  rConfig;
     }

@@ -73,7 +73,7 @@ angular.module(PKG.name + '.feature.adapters')
 
     function hasNameAndTemplateType(nodes, connections, metadata, config, errors) {
       var name = metadata.name;
-      if (name && !name.length) {
+      if (typeof name !== 'string' || !name.length) {
         errors.name = 'Application needs to have a name';
         metadata.error = 'Enter application name';
         return;
@@ -218,7 +218,8 @@ angular.module(PKG.name + '.feature.adapters')
     }
 
     return {
-      isModelValid: isModelValid
+      isModelValid: isModelValid,
+      hasNameAndTemplateType: hasNameAndTemplateType
     };
 
   });
