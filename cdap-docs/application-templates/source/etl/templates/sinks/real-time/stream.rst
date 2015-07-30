@@ -12,7 +12,8 @@ Real-time sink that outputs to a specified CDAP Stream
 
 .. rubric:: Use Case
 
-TODO: Fill me out
+This sink is used when you want to write to a stream in real-time. For example, you
+may want to read data from Kafka and write it to a stream.
 
 .. rubric:: Properties
 
@@ -28,4 +29,17 @@ presumed to be a map of string to string.
 
 .. rubric:: Example
 
-TODO: Fill me out
+::
+
+  {
+    "name": "Stream",
+    "properties": {
+      "name": "purchases",
+      "body.field": "message"
+    }
+  }
+
+This example will write to a stream named 'purchases'. Each record it receives will be written
+as a single stream event. The stream event body will be equal to the value of the 'message' field
+from the input record. No headers will be written in this example because the 'headers.field'
+property is not set.
