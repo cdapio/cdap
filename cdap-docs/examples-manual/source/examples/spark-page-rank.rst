@@ -58,7 +58,7 @@ This ``TotalPagesPRService`` service has a ``total`` endpoint to obtain the tota
 
 Memory Requirements
 -------------------
-When Spark program in running inside a workflow, the memory requirements configured for the Spark program may need increasing beyond the defaults:
+When a Spark program is running inside a workflow, the memory requirements configured for the Spark program may need increasing beyond the defaults:
 
 .. literalinclude:: /../../../cdap-examples/SparkPageRank/src/main/java/co/cask/cdap/examples/sparkpagerank/SparkPageRankApp.java
    :language: java
