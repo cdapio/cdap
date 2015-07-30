@@ -152,8 +152,9 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
     }
     try {
       try (Statement statement = connection.createStatement();
-           // Using LIMIT even though its not SQL standard since DBInputFormat already depends on it
-           ResultSet rs = statement.executeQuery(String.format("SELECT %s from %s LIMIT 1",
+           // Run a query against the DB table that returns 0 records, but returns valid ResultSetMetadata
+           // that can be used to construct DBRecord objects to sink to the database table.
+           ResultSet rs = statement.executeQuery(String.format("SELECT %s FROM %s WHERE 1 = 0",
                                                                dbSinkConfig.columns, dbSinkConfig.tableName))
       ) {
         resultSetMetadata = rs.getMetaData();
