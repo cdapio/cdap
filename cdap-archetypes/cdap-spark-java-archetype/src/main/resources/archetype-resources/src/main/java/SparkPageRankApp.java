@@ -138,7 +138,7 @@ public class SparkPageRankApp extends AbstractApplication {
 
     @Path(RANKS_SERVICE_PATH)
     @POST
-    public void getRank(HttpServiceRequest request, HttpServiceResponder responder) {
+    public void retrieveRank(HttpServiceRequest request, HttpServiceResponder responder) {
       String urlRequest = Charsets.UTF_8.decode(request.getContent()).toString();
       if (urlRequest == null) {
         responder.sendString(HttpURLConnection.HTTP_BAD_REQUEST,
