@@ -36,7 +36,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Wraps user-defined implementation of {@link Reducer} class which allows perform extra configuration.
@@ -135,7 +134,7 @@ public class ReducerWrapper extends Reducer {
       try {
         basicMapReduceContext.close(); // closes all datasets
       } finally {
-        basicMapReduceContext.getMetricsCollectionService().stop();
+        mrContextProvider.stop();
       }
     }
   }

@@ -90,6 +90,12 @@ public final class MapReduceContextProvider {
     return context;
   }
 
+  public synchronized void stop() {
+    if (contextBuilder != null) {
+      contextBuilder.finish();
+    }
+  }
+
   private synchronized AbstractMapReduceContextBuilder getBuilder(CConfiguration conf) {
     if (contextBuilder != null) {
       return contextBuilder;
