@@ -50,6 +50,42 @@ angular.module(PKG.name + '.feature.adapters')
               metadata['name'] = $scope.modelCopy.name;
               metadata['description'] = $scope.modelCopy.description;
             }.bind(this);
+
+
+            $scope.$on('modal.closing', function (event, reason) {
+              if ((reason === 'cancel' || reason === 'escape key press') && !$scope.confirm ) {
+                var stringCopy = JSON.stringify($scope.modelCopy);
+                var stringPlugin = JSON.stringify($scope.metadata);
+
+                if (stringCopy !== stringPlugin) {
+                  event.preventDefault();
+
+                  var confirmInstance = $bootstrapModal.open({
+                    keyboard: false,
+                    templateUrl: '/assets/features/adapters/templates/partial/confirm.html',
+                    windowClass: 'modal-confirm',
+                    controller: ['$scope', function ($scope) {
+                      $scope.continue = function () {
+                        $scope.$close('close');
+                      };
+
+                      $scope.cancel = function () {
+                        $scope.$close('keep open');
+                      };
+                    }]
+                  });
+
+                  confirmInstance.result.then(function (closing) {
+                    if (closing === 'close') {
+                      $scope.confirm = true;
+                      $scope.reset();
+                      $scope.$close('cancel');
+                    }
+                  });
+                }
+              }
+            });
+
           }.bind(this)],
           resolve: {
             metadata: function() {

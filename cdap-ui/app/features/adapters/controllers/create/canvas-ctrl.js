@@ -163,13 +163,48 @@ angular.module(PKG.name + '.feature.adapters')
             windowClass: 'adapter-modal',
             keyboard: true,
             controller: ['$scope', 'metadata', 'EventPipe', function($scope, metadata, EventPipe) {
-              $scope.metadata = metadata
+              $scope.metadata = metadata;
               var metadataCopy = angular.copy(metadata);
               $scope.reset = function() {
                 $scope.metadata.template.schedule.cron = metadataCopy.template.schedule.cron;
                 $scope.metadata.template.instance = metadataCopy.template.instance;
                 EventPipe.emit('plugin.reset');
               };
+
+
+              $scope.$on('modal.closing', function (event, reason) {
+                if ((reason === 'cancel' || reason === 'escape key press') && !$scope.confirm ) {
+                  var stringCopy = JSON.stringify(metadataCopy);
+                  var stringPlugin = JSON.stringify($scope.metadata);
+
+                  if (stringCopy !== stringPlugin) {
+                    event.preventDefault();
+
+                    var confirmInstance = $bootstrapModal.open({
+                      keyboard: false,
+                      templateUrl: '/assets/features/adapters/templates/partial/confirm.html',
+                      windowClass: 'modal-confirm',
+                      controller: ['$scope', function ($scope) {
+                        $scope.continue = function () {
+                          $scope.$close('close');
+                        };
+
+                        $scope.cancel = function () {
+                          $scope.$close('keep open');
+                        };
+                      }]
+                    });
+
+                    confirmInstance.result.then(function (closing) {
+                      if (closing === 'close') {
+                        $scope.confirm = true;
+                        $scope.reset();
+                        $scope.$close('cancel');
+                      }
+                    });
+                  }
+                }
+              });
             }],
             resolve: {
               'metadata': function() {
