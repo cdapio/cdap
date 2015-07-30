@@ -55,8 +55,8 @@ Prerequisites
 
 #. For Kerberos-enabled Hadoop clusters:
 
-   - The 'cdap' user needs to be granted Hbase permissions to create tables.
-     In an Hbase shell, enter::
+   - The 'cdap' user needs to be granted HBase permissions to create tables.
+     In an HBase shell, enter::
      
       grant 'cdap', 'ACRW'
 

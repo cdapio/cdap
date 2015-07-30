@@ -23,7 +23,6 @@ class WorkflowsRunsStatusController {
       scope: this.$scope
     };
 
-    this.runStatus = null;
     this.data = {};
 
     this.myWorkFlowApi.get(params)
@@ -76,7 +75,7 @@ class WorkflowsRunsStatusController {
     );
 
     this.myWorkFlowApi
-      .pollRunDetail(runparams)
+      .pollRunDetailOften(runparams)
       .$promise
       .then( response => {
         this.runStatus = response.status;
@@ -163,24 +162,6 @@ class WorkflowsRunsStatusController {
         });
       }
     }
-  }
-
-  stop() {
-    this.runStatus = 'STOPPING';
-    this.myWorkFlowApi
-     .stopRun(runparams, {});
-  }
-
-  suspend() {
-    this.runStatus = 'SUSPENDING';
-    this.myWorkFlowApi
-     .suspendRun(runparams, {});
-  }
-
-  resume() {
-    this.runStatus = 'RESUMING';
-    this.myWorkFlowApi
-     .resumeRun(runparams, {});
   }
 
 }

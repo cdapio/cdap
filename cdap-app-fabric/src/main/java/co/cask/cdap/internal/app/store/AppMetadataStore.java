@@ -640,8 +640,9 @@ public class AppMetadataStore extends MetadataStoreDataset {
     String workflowToken = runRecordMeta.getProperties().get(WORKFLOW_TOKEN_PROPERTY_KEY);
     // For pre-3.1 run records, there won't be a workflow token. Return an empty token for such run records.
     if (workflowToken == null) {
-      LOG.debug("Could not find workflowToken for workflow: {}, runId: {}", workflowId, workflowRunId);
-      return new BasicWorkflowToken();
+      LOG.debug("No workflow token available for workflow: {}, runId: {}", workflowId, workflowRunId);
+      // Its ok to not allow any updates by returning a 0 size token.
+      return new BasicWorkflowToken(0);
     }
     return GSON.fromJson(workflowToken, BasicWorkflowToken.class);
   }

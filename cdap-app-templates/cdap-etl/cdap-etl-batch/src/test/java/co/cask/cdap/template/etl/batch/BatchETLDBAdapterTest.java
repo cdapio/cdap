@@ -186,7 +186,6 @@ public class BatchETLDBAdapterTest extends BaseETLBatchTest {
     String countQuery = "SELECT COUNT(ID) from my_table WHERE id < 3";
     ETLStage source = new ETLStage("Database", ImmutableMap.<String, String>builder()
                                      .put(Properties.DB.CONNECTION_STRING, hsqlDBServer.getConnectionUrl())
-                                     .put(Properties.DB.TABLE_NAME, "my_table")
                                      .put(Properties.DB.IMPORT_QUERY, importQuery)
                                      .put(Properties.DB.COUNT_QUERY, countQuery)
                                      .put(Properties.DB.JDBC_PLUGIN_NAME, "hypersql")
@@ -282,7 +281,6 @@ public class BatchETLDBAdapterTest extends BaseETLBatchTest {
     String countQuery = "SELECT COUNT(ID) from my_table WHERE id < 3";
     ETLStage source = new ETLStage("Database", ImmutableMap.<String, String>builder()
       .put(Properties.DB.CONNECTION_STRING, hsqlDBServer.getConnectionUrl())
-      .put(Properties.DB.TABLE_NAME, "my_table")
       .put(Properties.DB.IMPORT_QUERY, importQuery)
       .put(Properties.DB.COUNT_QUERY, countQuery)
       .put(Properties.DB.JDBC_PLUGIN_NAME, "hypersql")

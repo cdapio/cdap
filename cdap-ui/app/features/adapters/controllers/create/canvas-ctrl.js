@@ -1,7 +1,7 @@
 angular.module(PKG.name + '.feature.adapters')
-  .controller('CanvasController', function (myAdapterApi, MyPlumbService, $bootstrapModal, $state, $scope, $alert, myHelpers, CanvasFactory, MyPlumbFactory, $modalStack) {
+  .controller('CanvasController', function (myAdapterApi, MyPlumbService, $bootstrapModal, $state, $scope, $alert, myHelpers, CanvasFactory, MyPlumbFactory, $modalStack, $timeout) {
     this.nodes = [];
-
+    this.reloadDAG = false;
     if ($scope.AdapterCreateController.data) {
       setNodesAndConnectionsFromDraft.call(this, $scope.AdapterCreateController.data);
     }
@@ -37,12 +37,94 @@ angular.module(PKG.name + '.feature.adapters')
       {
         name: 'Config',
         icon: 'fa fa-eye'
+      },
+      {
+        name: 'Export',
+        icon: 'fa fa-download'
+      },
+      {
+        name: 'Import',
+        icon: 'fa fa-upload'
       }
     ];
+
+    // Utterly naive. We need to be more efficient and this code should look better.
+    // Pushing for functionality for now. Will revisit this back.
+    this.importFile = function(files) {
+      var reader = new FileReader();
+      var config = MyPlumbService.getConfigForBackend();
+      reader.readAsText(files[0], "UTF-8");
+      reader.onload = function (evt) {
+        var result;
+        try {
+          result = JSON.parse(evt.target.result);
+        } catch(e) {
+          result = null;
+        }
+        if (!result) {
+          return;
+        }
+        if (result.template !== MyPlumbService.metadata.template.type) {
+          $alert({
+            type: 'danger',
+            content: 'Template imported is for ' + config.template + '. Please switch to ' + config.template + ' creation to import.'
+          });
+          return;
+        }
+        // We need to perform more validations on the uploaded json.
+        if (!result.config.source ||
+            !result.config.sink ||
+            !result.config.transforms) {
+          $alert({
+            type: 'danger',
+            content: 'Template config incorrect. Please fix the config and re-import.'
+          });
+          return;
+        }
+        $scope.config = JSON.stringify(result);
+        if (MyPlumbService.metadata.name.length) {
+          MyPlumbService.resetToDefaults(true);
+        } else {
+          MyPlumbService.resetToDefaults(false);
+        }
+        setNodesAndConnectionsFromDraft.call(this, result);
+        this.reloadDAG = true;
+        $alert({
+          type: 'success',
+          content: 'Template imported successfully.'
+        });
+      }.bind(this)
+      reader.onerror = function (evt) {
+        console.error('Upload config failed', evt);
+      };
+    };
 
     this.onCanvasOperationsClicked = function(group) {
       var config;
       switch(group.name) {
+        case 'Export':
+          var detailedConfig = MyPlumbService.getConfig();
+          var config = MyPlumbService.getConfigForBackend();
+          var configName = detailedConfig.name || 'noname';
+          var content = JSON.stringify(config, null, 4);
+          var blob = new Blob([content], { type: 'application/json'});
+          this.exportFileName = configName + '-' + config.template;
+          this.url = URL.createObjectURL(blob);
+
+          $scope.$on('$destroy', function () {
+            URL.revokeObjectURL(this.url);
+          });
+          // Clicking on the hidden download button. #hack.
+          $timeout(function() {
+            document.getElementById('adapter-export-config-link').click();
+          });
+          break;
+        case 'Import':
+          // Clicking on the hidden upload button. #hack.
+          $timeout(function() {
+            document.getElementById('adapter-import-config-link').click();
+          });
+          break;
         case 'Config':
           config = angular.copy(MyPlumbService.getConfigForBackend());
           modalInstance = $bootstrapModal.open({
@@ -50,18 +132,8 @@ angular.module(PKG.name + '.feature.adapters')
             size: 'lg',
             windowClass: 'adapter-modal',
             keyboard: true,
-            controller: ['$scope', 'config', function($scope, config) {
+            controller: ['$scope', 'config', '$timeout', function($scope, config, $timeout) {
               $scope.config = JSON.stringify(config);
-              var detailedConfig = MyPlumbService.getConfig();
-              var configName = detailedConfig.name || 'noname';
-              var content = JSON.stringify(config, null, 4);
-              var blob = new Blob([content], { type: 'application/json'});
-              $scope.exportFileName = configName + '-' + config.template;
-              $scope.url = URL.createObjectURL(blob);
-
-              $scope.$on('$destroy', function () {
-                URL.revokeObjectURL($scope.url);
-              });
             }],
             resolve: {
               config: function() {
@@ -218,7 +290,9 @@ angular.module(PKG.name + '.feature.adapters')
 
       var config = CanvasFactory.extractMetadataFromDraft(data.config, data);
 
-      MyPlumbService.metadata.name = config.name;
+      if (config.name) {
+        MyPlumbService.metadata.name = config.name;
+      }
       MyPlumbService.metadata.description = config.description;
       MyPlumbService.metadata.template = config.template;
     }

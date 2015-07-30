@@ -162,7 +162,7 @@ public class SparkPageRankProgram implements JavaSparkProgram {
     // The value of the entry is the URL rank.
     sc.writeToDataset(ranksRaw, "ranks", byte[].class, Integer.class);
 
-    LOG.info("Done!");
+    LOG.info("PageRanks successfuly computed and written to \"ranks\" dataset");
   }
 
   private int getIterationCount(SparkContext sc) {

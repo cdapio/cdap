@@ -57,6 +57,6 @@ public class TruncateDatasetInstanceCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Truncates %s.", Fragment.of(Article.A, ElementType.DATASET.getTitleName()));
+    return String.format("Truncates %s.", Fragment.of(Article.A, ElementType.DATASET.getName()));
   }
 }

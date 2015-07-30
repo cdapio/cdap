@@ -6,19 +6,21 @@
 Sources: Batch: File 
 ====================
 
-.. rubric:: Description: Batch source to use any Distributed File System as a Source
+.. rubric:: Description
 
-**Regex:** Regex to filter out filenames in the path.
+Batch source to use any Distributed File System as a Source
 
-To use the *TimeFilter*, input "timefilter". The TimeFilter assumes that it
-is reading in files with the File log naming convention of YYYY-MM-DD-HH-mm-SS-Tag. The TimeFilter
-reads in files from the previous hour if the timeTable field is left blank. So if it's currently
-2015-06-16-15 (June 16th 2015, 3pm), it will read in files that contain 2015-06-16-14 in the filename.
-If the field timeTable is present, then it will read files in that haven't been read yet.
+.. rubric:: Use Case
+
+TODO: Fill me out
+
+.. rubric:: Properties
+
+**fileSystem:** Distributed file system to read in from.
 
 .. highlight:: xml
 
-**Filesystem Properties:** JSON of the properties needed for the
+**fileSystemProperties:** JSON of the properties needed for the
 distributed file system. The formatting needs to be as follows::
 
   {
@@ -29,14 +31,25 @@ distributed file system. The formatting needs to be as follows::
 For example, the property names needed for S3 are \"fs.s3n.awsSecretAccessKey\"
 and \"fs.s3n.awsAccessKeyId\".
 
-**Path:** Path to file(s) to be read. If a directory is specified,
+**path:** Path to file(s) to be read. If a directory is specified,
 terminate the path name with a \'/\'.
 
-**Table:** Name of the Table that keeps track of the last time files
+**fileRegex:** Regex to filter out filenames in the path.
+
+To use the *TimeFilter*, input "timefilter". The TimeFilter assumes that it
+is reading in files with the File log naming convention of 'YYYY-MM-DD-HH-mm-SS-Tag'. The TimeFilter
+reads in files from the previous hour if the field 'timeTable' is left blank. So if it's currently
+2015-06-16-15 (June 16th 2015, 3pm), it will read in files that contain 2015-06-16-14 in the filename.
+If the field 'timeTable' is present, then it will read files in that haven't been read yet.
+
+**timeTable:** Name of the Table that keeps track of the last time files
 were read in.
 
-**Input Format Class:** Name of the input format class, which must be a
+**inputFormatClass:** Name of the input format class, which must be a
 subclass of FileInputFormat. Defaults to TextInputFormat.
 
-**File System:** Distributed file system to read in from.
-  
+**maxSplitSize:** Maximum split size for each mapper in the MapReduce Job. Defaults to 128MB.
+
+.. rubric:: Example
+
+TODO: Fill me out

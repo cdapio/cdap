@@ -16,11 +16,14 @@
 
 package co.cask.cdap.api.workflow;
 
+import co.cask.cdap.api.annotation.Beta;
+
 import java.io.Serializable;
 
 /**
  * Class representing the value of the key in the {@link WorkflowToken}.
  */
+@Beta
 public class Value implements Serializable {
 
   private static final long serialVersionUID = -3420759818008526875L;
@@ -32,24 +35,31 @@ public class Value implements Serializable {
   }
 
   /**
-   * @return the boolean value
+   * @return the result of calling <code>Boolean.parseBoolean(toString())</code>
    */
   public boolean getAsBoolean() {
     return Boolean.parseBoolean(value);
   }
 
   /**
-   * @return the int value
+   * @return the result of calling <code>Integer.parseInt(toString())</code>
    */
   public int getAsInt() {
     return Integer.parseInt(value);
   }
 
   /**
-   * @return the long value
+   * @return the result of calling <code>Long.parseLong(toString())</code>
    */
   public long getAsLong() {
     return Long.parseLong(value);
+  }
+
+  /**
+   * @return the result of calling <code>Double.parseDouble(toString())</code>
+   */
+  public double getAsDouble() {
+    return Double.parseDouble(value);
   }
 
   /**
@@ -81,6 +91,7 @@ public class Value implements Serializable {
 
   /**
    * Return the {@link Value} representation of the input <code>boolean</code> parameter.
+   *
    * @param value the <code>boolean</code> value to be represented as {@link Value}
    * @return a {@link Value} representation of the argument
    */
@@ -90,6 +101,7 @@ public class Value implements Serializable {
 
   /**
    * Return the {@link Value} representation of the input <code>int</code> parameter.
+   *
    * @param value the <code>int</code> value to be represented as {@link Value}
    * @return a {@link Value} representation of the argument
    */
@@ -99,6 +111,7 @@ public class Value implements Serializable {
 
   /**
    * Return the {@link Value} representation of the input <code>long</code> parameter.
+   *
    * @param value the <code>long</code> value to be represented as {@link Value}
    * @return a {@link Value} representation of the argument
    */
@@ -107,7 +120,18 @@ public class Value implements Serializable {
   }
 
   /**
+   * Return the {@link Value} representation of the input <code>double</code> parameter.
+   *
+   * @param value the <code>double</code> value to be represented as {@link Value}
+   * @return a {@link Value} representation of the argument
+   */
+  public static Value of(double value) {
+    return new Value(String.valueOf(value));
+  }
+
+  /**
    * Return the {@link Value} representation of the input <code>String</code> parameter.
+   *
    * @param value the <code>String</code> value to be represented as {@link Value}
    * @return a {@link Value} representation of the argument
    */

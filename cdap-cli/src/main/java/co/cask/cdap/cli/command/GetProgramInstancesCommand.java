@@ -90,6 +90,6 @@ public class GetProgramInstancesCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Gets the instances of %s.", Fragment.of(Article.A, elementType.getTitleName()));
+    return String.format("Gets the instances of %s.", Fragment.of(Article.A, elementType.getName()));
   }
 }

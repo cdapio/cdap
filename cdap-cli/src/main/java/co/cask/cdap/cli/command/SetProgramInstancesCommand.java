@@ -95,7 +95,7 @@ public class SetProgramInstancesCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Sets the instances of %s.", Fragment.of(Article.A, elementType.getTitleName()));
+    return String.format("Sets the instances of %s.", Fragment.of(Article.A, elementType.getName()));
 
   }
 }

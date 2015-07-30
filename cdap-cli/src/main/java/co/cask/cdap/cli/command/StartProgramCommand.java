@@ -67,26 +67,26 @@ public class StartProgramCommand extends AbstractAuthCommand {
       programClient.start(programId, isDebug);
       runtimeArgsString = GSON.toJson(programClient.getRuntimeArgs(programId));
       output.printf("Successfully started %s '%s' of application '%s' with stored runtime arguments '%s'\n",
-                    elementType.getTitleName(), programName, appId, runtimeArgsString);
+                    elementType.getName(), programName, appId, runtimeArgsString);
     } else {
       // run with user-provided runtime args
       Map<String, String> runtimeArgs = ArgumentParser.parseMap(runtimeArgsString);
       programClient.start(programId, isDebug, runtimeArgs);
       output.printf("Successfully started %s '%s' of application '%s' with provided runtime arguments '%s'\n",
-                    elementType.getTitleName(), programName, appId, runtimeArgsString);
+                    elementType.getName(), programName, appId, runtimeArgsString);
     }
 
   }
 
   @Override
   public String getPattern() {
-    return String.format("start %s <%s> [<%s>]", elementType.getName(), elementType.getArgumentName(),
+    return String.format("start %s <%s> [<%s>]", elementType.getShortName(), elementType.getArgumentName(),
                          ArgumentName.RUNTIME_ARGS);
   }
 
   @Override
   public String getDescription() {
-    return "Starts " + Fragment.of(Article.A, elementType.getTitleName()) + "." +
+    return "Starts " + Fragment.of(Article.A, elementType.getName()) + "." +
       " <" + ArgumentName.RUNTIME_ARGS + "> is specified in the format \"key1=a key2=b\".";
   }
 }

@@ -46,7 +46,8 @@ import java.sql.Driver;
  */
 @Plugin(type = "source")
 @Name("Database")
-@Description("Batch source for a database.")
+@Description("Reads from a database using a configurable SQL query." +
+  " Outputs one record for each row returned by the query.")
 public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredRecord> {
   private static final Logger LOG = LoggerFactory.getLogger(DBSource.class);
 
@@ -88,9 +89,9 @@ public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredReco
 
   @Override
   public void prepareRun(BatchSourceContext context) {
-    LOG.debug("tableName = {}; pluginType = {}; pluginName = {}; connectionString = {}; importQuery = {}; " +
+    LOG.debug("pluginType = {}; pluginName = {}; connectionString = {}; importQuery = {}; " +
                 "countQuery = {}",
-              dbSourceConfig.tableName, dbSourceConfig.jdbcPluginType, dbSourceConfig.jdbcPluginName,
+              dbSourceConfig.jdbcPluginType, dbSourceConfig.jdbcPluginName,
               dbSourceConfig.connectionString, dbSourceConfig.importQuery, dbSourceConfig.countQuery);
 
     Job job = context.getHadoopJob();

@@ -71,7 +71,7 @@ public abstract class AbstractSetPreferencesCommand extends AbstractCommand {
         break;
 
       default:
-        throw new IllegalArgumentException("Unrecognized element type for preferences " + type.getTitleName());
+        throw new IllegalArgumentException("Unrecognized element type for preferences: " + type.getShortName());
     }
   }
 
@@ -83,7 +83,7 @@ public abstract class AbstractSetPreferencesCommand extends AbstractCommand {
       case "load":
         return determinePatternLoadHelper();
     }
-    return "None";
+    throw new RuntimeException("Unrecognized element type: " + type.getShortName());
   }
 
   private String determinePatternSetHelper() {
@@ -91,32 +91,34 @@ public abstract class AbstractSetPreferencesCommand extends AbstractCommand {
       case INSTANCE:
       case NAMESPACE:
         return String.format("set preferences %s <%s>",
-                             type.getName(), ArgumentName.RUNTIME_ARGS);
+                             type.getShortName(), ArgumentName.RUNTIME_ARGS);
       case APP:
       case FLOW:
       case MAPREDUCE:
       case WORKFLOW:
       case SERVICE:
+      case WORKER:
       case SPARK:
-        return String.format("set preferences %s <%s> <%s>", type.getName(), ArgumentName.RUNTIME_ARGS,
+        return String.format("set preferences %s <%s> <%s>", type.getShortName(), ArgumentName.RUNTIME_ARGS,
                              type.getArgumentName());
     }
-    return "None";
+    throw new RuntimeException("Unrecognized element type: " + type.getShortName());
   }
 
   private String determinePatternLoadHelper() {
     switch (type) {
       case INSTANCE:
       case NAMESPACE:
-        return String.format("load preferences %s <%s> <%s>", type.getName(),
+        return String.format("load preferences %s <%s> <%s>", type.getShortName(),
                              ArgumentName.LOCAL_FILE_PATH, ArgumentName.CONTENT_TYPE);
       case APP:
       case FLOW:
       case MAPREDUCE:
       case WORKFLOW:
       case SERVICE:
+      case WORKER:
       case SPARK:
-        return String.format("load preferences %s <%s> <%s> <%s>", type.getName(),
+        return String.format("load preferences %s <%s> <%s> <%s>", type.getShortName(),
                              ArgumentName.LOCAL_FILE_PATH, ArgumentName.CONTENT_TYPE,
                              type.getArgumentName());
     }

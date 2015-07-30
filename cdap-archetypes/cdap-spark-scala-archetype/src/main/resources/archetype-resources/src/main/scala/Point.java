@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,11 +14,37 @@
  * the License.
  */
 
-/**
- * Package for SparkPageRank Application.
- *
- * An application that demonstrates text analysis using Spark and MapReduce programs.
- * It computes the page rank of URLs from an input stream.
- */
-
 package $package;
+
+import java.io.Serializable;
+
+/**
+ * Represents a point in space.
+ */
+public class Point implements Serializable {
+
+  private final double x;
+  private final double y;
+  private final double z;
+
+  /**
+   * Creates an instance with the given coordinates.
+   */
+  public Point(double x, double y, double z) {
+    this.x = x;
+    this.y = y;
+    this.z = z;
+  }
+
+  public double getX() {
+    return x;
+  }
+
+  public double getY() {
+    return y;
+  }
+
+  public double getZ() {
+    return z;
+  }
+}

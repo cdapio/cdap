@@ -8,7 +8,7 @@ angular.module(PKG.name + '.commons')
         plugins: '='
       },
       templateUrl: 'widget-container/widget-stream-properties/widget-stream-properties.html',
-      controller: function($scope, EventPipe) {
+      controller: function($scope, EventPipe, IMPLICIT_SCHEMA) {
         var modelCopy = angular.copy($scope.model);
 
         var defaultOptions = [ 'boolean', 'int', 'long', 'float', 'double', 'bytes', 'string' ];
@@ -41,8 +41,24 @@ angular.module(PKG.name + '.commons')
           // do things based on format
           if (['clf', 'syslog', ''].indexOf($scope.plugins.format) > -1) {
             $scope.model = null;
-            $scope.fields = 'NOTHING';
+            $scope.disableEdit = true;
+            // $scope.fields = 'NOTHING';
+            if ($scope.plugins.format === 'clf') {
+              var clfSchema = IMPLICIT_SCHEMA.clf;
+
+              initialize(clfSchema);
+              $scope.fields = 'SHOW';
+            } else if ($scope.plugins.format === 'syslog') {
+              var syslogSchema = IMPLICIT_SCHEMA.syslog;
+
+              initialize(syslogSchema);
+              $scope.fields = 'SHOW';
+            } else {
+              $scope.fields = 'NOTHING';
+            }
+
           } else if ($scope.plugins.format === 'avro'){
+            $scope.disableEdit = false;
             $scope.fields = 'AVRO';
             watcher = $scope.$watch('avro', formatAvro, true);
 
@@ -55,11 +71,13 @@ angular.module(PKG.name + '.commons')
 
             }
           } else if ($scope.plugins.format === 'grok') {
+            $scope.disableEdit = false;
             $scope.fields = 'GROK';
             $scope.model = null;
           }
 
           else {
+            $scope.disableEdit = false;
             $scope.fields = 'SHOW';
             watcher = $scope.$watch('properties', formatSchema, true);
           }
@@ -69,14 +87,14 @@ angular.module(PKG.name + '.commons')
         var filledCount;
 
         // Format model
-        function initialize() {
+        function initialize(jsonString) {
           filledCount = 0;
           var schema = {};
           $scope.avro = {};
 
-          if ($scope.model) {
+          if (jsonString) {
             try {
-              schema = JSON.parse($scope.model);
+              schema = JSON.parse(jsonString);
             } catch (e) {
               $scope.error = 'Invalid JSON string';
             }
@@ -132,14 +150,20 @@ angular.module(PKG.name + '.commons')
 
         } // End of initialize
 
-        initialize();
+        initialize($scope.model);
         EventPipe.on('plugin.reset', function () {
           $scope.model = angular.copy(modelCopy);
 
-          initialize();
+          initialize($scope.model);
         });
 
         function formatSchema() {
+
+          if (['clf', 'syslog'].indexOf($scope.plugins.format) !== -1) {
+            $scope.model = null;
+            return;
+          }
+
           // Format Schema
           var properties = [];
           angular.forEach($scope.properties, function(p) {

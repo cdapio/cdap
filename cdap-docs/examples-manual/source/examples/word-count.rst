@@ -66,7 +66,6 @@ It exposes these endpoints:
 - ``/assoc/{word1}/{word2}`` returns the top associated words (those with the highest counts).
 
 
-
 .. |example| replace:: WordCount
 .. include:: building-starting-running-cdap.txt
 

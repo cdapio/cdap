@@ -29,10 +29,7 @@ public class DBConfig extends PluginConfig {
   @Description("JDBC connection string including database name.")
   public String connectionString;
 
-  @Description("Table name to import/export from/to.")
-  public String tableName;
-
-  @Description("User to use to connect to the specified database. Required for databases that " +
+  @Description("User identity for connecting to the specified database. Required for databases that " +
     "need authentication. Optional for databases that do not require authentication.")
   @Nullable
   public String user;
