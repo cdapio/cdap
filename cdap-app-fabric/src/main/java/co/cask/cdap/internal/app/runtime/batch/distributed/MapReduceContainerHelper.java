@@ -24,7 +24,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.io.ByteStreams;
 import org.apache.hadoop.conf.Configuration;
@@ -60,7 +59,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.regex.Pattern;
@@ -155,18 +153,14 @@ public final class MapReduceContainerHelper {
    * @return a list of extra classpaths need to be set for the program runner container.
    */
   public static List<String> localizeFramework(Configuration hConf, Map<String, LocalizeResource> localizeResources) {
-    URI frameworkURI = getFrameworkURI(hConf);
-
-    // If MR Application framework is not used, no need for extra classpath for the Twill container
-    if (frameworkURI == null) {
-      return ImmutableList.of();
-    }
-
-    // If MR Application framework is used, need to localize the framework file to Twill container
-    // We also need extra classpath from the mapreduce.application.classpath config
     try {
-      URI uri = new URI(frameworkURI.getScheme(), frameworkURI.getAuthority(), frameworkURI.getPath(), null, null);
-      localizeResources.put(frameworkURI.getFragment(), new LocalizeResource(uri, true));
+      URI frameworkURI = getFrameworkURI(hConf);
+
+      // If MR Application framework is used, need to localize the framework file to Twill container
+      if (frameworkURI != null) {
+        URI uri = new URI(frameworkURI.getScheme(), frameworkURI.getAuthority(), frameworkURI.getPath(), null, null);
+        localizeResources.put(frameworkURI.getFragment(), new LocalizeResource(uri, true));
+      }
       return ImmutableList.copyOf(getMapReduceClassPath(hConf, new ArrayList<String>()));
     } catch (URISyntaxException e) {
       // Shouldn't happen since the frameworkURI is already parsed.
@@ -225,7 +219,7 @@ public final class MapReduceContainerHelper {
 
   /**
    * Rewrites the TwillLauncher bytecode as described
-   * in {@link #rewriteLauncher(Configuration, InputStream, OutputStream)}.
+   * in {@link #saveLauncher(Configuration, File, List)}.
    *
    * @param hConf the hadoop configuration
    * @param sourceByteCode the original bytecode of the TwillLauncher
