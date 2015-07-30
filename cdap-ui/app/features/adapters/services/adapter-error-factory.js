@@ -73,9 +73,17 @@ angular.module(PKG.name + '.feature.adapters')
 
     function hasNameAndTemplateType(nodes, connections, metadata, config, errors) {
       var name = metadata.name;
-      if (!name.length) {
+      if (name && !name.length) {
         errors.name = 'Application needs to have a name';
         metadata.error = 'Enter application name';
+        return;
+      }
+
+      var pattern = /^[\w]+$/;
+
+      if (!pattern.test(name)) {
+        errors.name = 'Application name can only have alphabets, numbers, and \'_\'';
+        metadata.error = 'Application name can only have alphabets, numbers, and \'_\'';
       }
 
       // Should probably add template type check here. Waiting for design.
@@ -166,6 +174,7 @@ angular.module(PKG.name + '.feature.adapters')
 
       if (branch) {
         addCanvasError('Branching in this application is not supported', errors);
+        return;
       }
 
 
@@ -185,6 +194,11 @@ angular.module(PKG.name + '.feature.adapters')
       var currNode = source;
       while (currNode !== sink) {
         if (connectionHash[currNode]) {
+          if (connectionHash[currNode].visited) {
+            addCanvasError('There is circular connection in this application', errors);
+            return;
+          }
+
           connectionHash[currNode].visited = true;
           currNode = connectionHash[currNode].target;
         } else {

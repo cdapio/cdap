@@ -1,3 +1,7 @@
 <div ng-controller="AdapterRunDetailStatusController">
+  <div class="btn btn-default my-clone-button" ng-click="cloneAdapter()">
+    <span class="fa fa-files-o"></span>
+    <span>Clone</span>
+  </div>
   <my-plumb data-is-disabled="true" ng-if="nodes.length > 0" data-config="nodes"></my-plumb>
 </div>

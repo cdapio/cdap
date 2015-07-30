@@ -8,13 +8,18 @@ angular.module(PKG.name + '.commons')
       },
       template: '<textarea class="form-control" data-ng-trim="false" cask-json-edit="internalModel" placeholder="placeholder"></textarea>',
       controller: function($scope, EventPipe) {
-
-        try {
-          $scope.internalModel = JSON.parse($scope.model);
-        } catch(e) {
-          $scope.internalModel = '';
-        }
         var modelCopy = angular.copy($scope.model);
+        function initialize () {
+          try {
+            $scope.internalModel = JSON.parse($scope.model);
+          } catch(e) {
+            $scope.internalModel = '';
+          }
+        }
+
+        initialize();
+
+        $scope.$watch('model', initialize);
 
         $scope.$watch('internalModel', function(newVal, oldVal) {
           if (newVal !== oldVal) {

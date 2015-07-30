@@ -7,7 +7,7 @@ angular.module(PKG.name + '.commons')
       link: function(scope, element, attrs) {
         // Enabling Customizability.
         scope.buttonLabel = attrs.buttonLabel || 'Upload';
-        scope.buttonIcon = attrs.buttonIcon || 'fa-upload';
+        scope.buttonIcon = attrs.buttonIcon || 'fa-plus';
         scope.buttonClass = attrs.buttonClass || '';
         scope.buttonDisabled = !!attrs.buttonDisabled || false;
 

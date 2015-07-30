@@ -1,6 +1,6 @@
 angular.module(PKG.name + '.feature.adapters')
   .controller('_AdapterCreateController', function(MyPlumbService, myAdapterApi, $bootstrapModal, $scope, rConfig, $stateParams, $alert, $modalStack) {
-    this.metadata = MyPlumbService.metadata;
+    this.metadata = MyPlumbService['metadata'];
     if (rConfig) {
       this.data =  rConfig;
     }
@@ -31,20 +31,31 @@ angular.module(PKG.name + '.feature.adapters')
         delete this.metadata.error;
       }
 
-      $bootstrapModal.open({
-        templateUrl: '/assets/features/adapters/templates/create/metadata.html',
-        size: 'lg',
-        windowClass: 'adapter-modal',
-        keyboard: true,
-        controller: ['$scope', function($scope) {
-          $scope.modelCopy = angular.copy(this.metadata);
-          $scope.metadata = this.metadata;
-          $scope.reset = function () {
-            this.metadata.name = $scope.modelCopy.name;
-            this.metadata.description = $scope.modelCopy.description;
-          }.bind(this);
-        }.bind(this)]
-      });
+      $bootstrapModal
+        .open({
+          templateUrl: '/assets/features/adapters/templates/create/metadata.html',
+          size: 'lg',
+          windowClass: 'adapter-modal',
+          keyboard: true,
+          controller: ['$scope', 'metadata', 'MyPlumbService', function($scope, metadata, MyPlumbService) {
+            $scope.modelCopy = angular.copy(this.metadata);
+            $scope.metadata = metadata;
+            $scope.reset = function () {
+              metadata['name'] = $scope.modelCopy.name;
+              metadata['description'] = $scope.modelCopy.description;
+            }.bind(this);
+          }.bind(this)],
+          resolve: {
+            metadata: function() {
+              return this['metadata'];
+            }.bind(this)
+          }
+        })
+        .result
+        .finally(function() {
+          MyPlumbService.metadata.name = this.metadata.name;
+          MyPlumbService.metadata.description = this.metadata.description;
+        }.bind(this));
     };
 
     $scope.$on('$destroy', function() {

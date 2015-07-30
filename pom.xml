@@ -1109,6 +1109,11 @@
         </exclusions>
       </dependency>
       <dependency>
+        <groupId>org.apache.spark</groupId>
+        <artifactId>spark-mllib_2.10</artifactId>
+        <version>${spark.version}</version>
+      </dependency>
+      <dependency>
         <groupId>co.cask.cdap</groupId>
         <artifactId>cdap-authentication-client</artifactId>
         <version>${cdap.client.version}</version>

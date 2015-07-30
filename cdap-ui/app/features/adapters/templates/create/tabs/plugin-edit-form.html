@@ -148,7 +148,7 @@
         <div class="modal-content-scroll output-schema">
           <h4>Output Schema</h4>
 
-          <fieldset ng-disabled="isDisabled" ng-if="plugin.outputSchema || !isDisabled">
+          <fieldset ng-disabled="isDisabled" ng-if="plugin.outputSchema || !isDisabled || plugin.properties.format === 'clf' || plugin.properties.format === 'syslog'">
             <my-schema-editor
               ng-model="plugin.outputSchema"
               data-disabled="plugin.implicitSchema"
@@ -160,7 +160,7 @@
             ></my-stream-properties>
           </fieldset>
 
-          <div ng-if="!plugin.outputSchema && isDisabled">
+          <div ng-if="!plugin.outputSchema && isDisabled && plugin.properties.format !== 'clf' && plugin.properties.format !== 'syslog'">
             <div class="well well-lg">
               <h4>There is no output schema</h4>
             </div>
