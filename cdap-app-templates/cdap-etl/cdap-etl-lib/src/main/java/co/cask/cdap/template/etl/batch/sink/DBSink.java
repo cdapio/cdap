@@ -62,9 +62,6 @@ import java.util.List;
 public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> {
   private static final Logger LOG = LoggerFactory.getLogger(DBSink.class);
 
-  private static final String COLUMNS_DESCRIPTION = "Comma-separated list of columns to export into the specified " +
-    "table.";
-
   private final DBSinkConfig dbSinkConfig;
   private ResultSetMetaData resultSetMetadata;
   private Class<? extends Driver> driverClass;
@@ -189,7 +186,10 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
    * {@link PluginConfig} for {@link DBSink}
    */
   public static class DBSinkConfig extends DBConfig {
-    @Description(COLUMNS_DESCRIPTION)
+    @Description("Comma-separated list of columns to export into the specified table.")
     String columns;
+
+    @Description("Name of the table to export to.")
+    public String tableName;
   }
 }
