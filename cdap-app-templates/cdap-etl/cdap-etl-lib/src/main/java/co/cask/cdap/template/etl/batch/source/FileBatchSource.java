@@ -71,8 +71,15 @@ public class FileBatchSource extends BatchSource<LongWritable, Object, Structure
     Schema.Field.of("ts", Schema.of(Schema.Type.LONG)),
     Schema.Field.of("body", Schema.of(Schema.Type.STRING))
   );
-
-  private static final String REGEX_DESCRIPTION = "Regex to filter out filenames in the path. " +
+  protected static final String MAX_SPLIT_SIZE_DESCRIPTION = "Maximum split size for each mapper in the MapReduce " +
+    "Job. Defaults to 128MB.";
+  protected static final String PATH_DESCRIPTION = "Path to file(s) to be read. If a directory is specified, " +
+    "terminate the path name with a \'/\'.";
+  protected static final String TABLE_DESCRIPTION = "Name of the Table that keeps track of the last time files " +
+    "were read in.";
+  protected static final String INPUT_FORMAT_CLASS_DESCRIPTION = "Name of the input format class, which must be a " +
+    "subclass of FileInputFormat. Defaults to CombineTextInputFormat.";
+  protected static final String REGEX_DESCRIPTION = "Regex to filter out filenames in the path. " +
     "To use the TimeFilter, input \"timefilter\". The TimeFilter assumes that it " +
     "is reading in files with the File log naming convention of 'YYYY-MM-DD-HH-mm-SS-Tag'. The TimeFilter " +
     "reads in files from the previous hour if the field 'timeTable' is left blank. So if it's currently " +
@@ -82,15 +89,7 @@ public class FileBatchSource extends BatchSource<LongWritable, Object, Structure
     "distributed file system. The formatting needs to be as follows:\n{\n\t\"<property name>\" : " +
     "\"<property value>\", ...\n}. For example, the property names needed for S3 are \"fs.s3n.awsSecretAccessKey\" " +
     "and \"fs.s3n.awsAccessKeyId\".";
-  private static final String PATH_DESCRIPTION = "Path to file(s) to be read. If a directory is specified, " +
-    "terminate the path name with a \'/\'.";
-  private static final String TABLE_DESCRIPTION = "Name of the Table that keeps track of the last time files " +
-    "were read in.";
-  private static final String INPUT_FORMAT_CLASS_DESCRIPTION = "Name of the input format class, which must be a " +
-    "subclass of FileInputFormat. Defaults to CombineTextInputFormat.";
   private static final String FILESYSTEM_DESCRIPTION = "Distributed file system to read in from.";
-  private static final String MAX_SPLIT_SIZE_DESCRIPTION = "Maximum split size for each mapper in the MapReduce Job. " +
-    "Defaults to 128MB.";
   private static final Gson GSON = new Gson();
   private static final Logger LOG = LoggerFactory.getLogger(FileBatchSource.class);
   private static final Type ARRAYLIST_DATE_TYPE  = new TypeToken<ArrayList<Date>>() { }.getType();

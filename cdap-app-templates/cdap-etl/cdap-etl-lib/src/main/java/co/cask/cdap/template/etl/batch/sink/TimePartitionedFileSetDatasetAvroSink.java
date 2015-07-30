@@ -23,14 +23,12 @@ import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
-import co.cask.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
 import co.cask.cdap.api.templates.plugins.PluginConfig;
 import co.cask.cdap.template.etl.api.Emitter;
 import co.cask.cdap.template.etl.api.PipelineConfigurer;
 import co.cask.cdap.template.etl.api.batch.BatchSink;
 import co.cask.cdap.template.etl.api.batch.BatchSinkContext;
 import co.cask.cdap.template.etl.common.StructuredToAvroTransformer;
-import com.google.common.collect.Maps;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.mapred.AvroKey;
@@ -40,7 +38,6 @@ import org.apache.avro.mapreduce.AvroKeyOutputFormat;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.Job;
 
-import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -50,42 +47,21 @@ import javax.annotation.Nullable;
 @Name("TPFSAvro")
 @Description("Sink for a TimePartitionedFileSet that writes data in Avro format.")
 public class TimePartitionedFileSetDatasetAvroSink extends
-  BatchSink<StructuredRecord, AvroKey<GenericRecord>, NullWritable> {
-
-  private static final String SCHEMA_DESC = "The Avro schema of the record being written to the sink as a JSON " +
+  TimePartitionedFileSetSink<AvroKey<GenericRecord>, NullWritable> {
+  private static final String SCHEMA_DESC = "The Avro schema of the record being written to the Sink as a JSON " +
     "Object.";
-  private static final String TPFS_NAME_DESC = "Name of the TimePartitionedFileSet to which records " +
-    "are written. If it doesn't exist, it will be created.";
-  private static final String BASE_PATH_DESC = "Base path for the TimePartitionedFileSet. Defaults to the " +
-    "name of the dataset.";
   private final StructuredToAvroTransformer recordTransformer = new StructuredToAvroTransformer();
+  private final TPFSAvroSinkConfig config;
 
-  /**
-   * Config for TimePartitionedFileSetDatasetAvroSink
-   */
-  public static class TPFSAvroSinkConfig extends PluginConfig {
-
-    @Description(TPFS_NAME_DESC)
-    private String name;
-
-    @Description(SCHEMA_DESC)
-    private String schema;
-
-    @Description(BASE_PATH_DESC)
-    @Nullable
-    private String basePath;
-  }
-
-  private final TPFSAvroSinkConfig tpfsAvroSinkConfig;
-
-  public TimePartitionedFileSetDatasetAvroSink(TPFSAvroSinkConfig tpfsAvroSinkConfig) {
-    this.tpfsAvroSinkConfig = tpfsAvroSinkConfig;
+  public TimePartitionedFileSetDatasetAvroSink(TPFSAvroSinkConfig config) {
+    super(config);
+    this.config = config;
   }
 
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
-    String tpfsName = tpfsAvroSinkConfig.name;
-    String basePath = tpfsAvroSinkConfig.basePath == null ? tpfsName : tpfsAvroSinkConfig.basePath;
+    String tpfsName = tpfsSinkConfig.name;
+    String basePath = tpfsSinkConfig.basePath == null ? tpfsName : tpfsSinkConfig.basePath;
     pipelineConfigurer.createDataset(tpfsName, TimePartitionedFileSet.class.getName(), FileSetProperties.builder()
       .setBasePath(basePath)
       .setInputFormat(AvroKeyInputFormat.class)
@@ -94,17 +70,14 @@ public class TimePartitionedFileSetDatasetAvroSink extends
       .setSerDe("org.apache.hadoop.hive.serde2.avro.AvroSerDe")
       .setExploreInputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat")
       .setExploreOutputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat")
-      .setTableProperty("avro.schema.literal", (tpfsAvroSinkConfig.schema))
+      .setTableProperty("avro.schema.literal", (config.schema))
       .build());
   }
 
   @Override
   public void prepareRun(BatchSinkContext context) {
-    Map<String, String> sinkArgs = Maps.newHashMap();
-    TimePartitionedFileSetArguments.setOutputPartitionTime(sinkArgs, context.getLogicalStartTime());
-    TimePartitionedFileSet sink = context.getDataset(tpfsAvroSinkConfig.name, sinkArgs);
-    context.setOutput(tpfsAvroSinkConfig.name, sink);
-    Schema avroSchema = new Schema.Parser().parse(tpfsAvroSinkConfig.schema);
+    super.prepareRun(context);
+    Schema avroSchema = new Schema.Parser().parse(config.schema);
     Job job = context.getHadoopJob();
     AvroJob.setOutputKeySchema(job, avroSchema);
   }
@@ -112,7 +85,21 @@ public class TimePartitionedFileSetDatasetAvroSink extends
   @Override
   public void transform(StructuredRecord input,
                         Emitter<KeyValue<AvroKey<GenericRecord>, NullWritable>> emitter) throws Exception {
-    emitter.emit(new KeyValue<>(
-      new AvroKey<>(recordTransformer.transform(input)), NullWritable.get()));
+    emitter.emit(new KeyValue<>(new AvroKey<>(recordTransformer.transform(input)), NullWritable.get()));
   }
+
+  /**
+   * Config for TimePartitionedFileSetAvroSink
+   */
+  public static class TPFSAvroSinkConfig extends TPFSSinkConfig {
+
+    @Description(SCHEMA_DESC)
+    private String schema;
+
+    public TPFSAvroSinkConfig(String name, String schema, @Nullable String basePath) {
+      super(name, basePath);
+      this.schema = schema;
+    }
+  }
+
 }
