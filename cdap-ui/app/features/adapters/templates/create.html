@@ -7,7 +7,8 @@
 >
   <div ng-click="AdapterCreateController.showMetadataModal()">
     <div class="application-type">
-      <span class="icon-ETLtemplates"></span>
+      <span class="icon-ETLBatch" ng-if="AdapterCreateController.metadata.template.type === 'ETLBatch'"></span>
+      <span class="icon-ETLRealtime" ng-if="AdapterCreateController.metadata.template.type === 'ETLRealtime'"></span>
       <span>Type: {{ AdapterCreateController.metadata.template.type }}</span>
     </div>
     <h1>

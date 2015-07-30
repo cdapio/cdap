@@ -6,7 +6,8 @@
       <span ng-bind="$state.params.adapterId"></span>
     </h2>
     <div class="type-block">
-      <span class="icon-ETLtemplates"></span>
+      <span class="icon-ETLRealtime" ng-if="template === 'ETLRealtime'"></span>
+      <span class="icon-ETLBatch" ng-if="template === 'ETLBatch'"></span>
       <small> Type: {{template}} </small>
     </div>
   </div>
