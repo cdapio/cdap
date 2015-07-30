@@ -43,10 +43,12 @@ public class WorkflowVerificationTest {
     ApplicationSpecification appSpec = Specifications.from(new GoodWorkflowApp());
     verifyGoodWorkflowSpecifications(appSpec);
     verifyAnotherGoodWorkflowSpecification(appSpec);
+    verifyWorkflowWithForkInConditionSpecification(appSpec);
     ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
     ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(appSpec));
     verifyGoodWorkflowSpecifications(newSpec);
     verifyAnotherGoodWorkflowSpecification(appSpec);
+    verifyWorkflowWithForkInConditionSpecification(appSpec);
   }
 
   private void verifyAnotherGoodWorkflowSpecification(ApplicationSpecification appSpec) {
@@ -57,6 +59,7 @@ public class WorkflowVerificationTest {
     WorkflowNode node = nodes.get(0);
     Assert.assertTrue(node.getType() == WorkflowNodeType.ACTION);
     WorkflowActionNode actionNode = (WorkflowActionNode) node;
+    Assert.assertEquals(0, node.getParentNodeIds().size());
     Assert.assertTrue(actionNode.getProgram().equals(new ScheduleProgramInfo(SchedulableProgramType.MAPREDUCE,
                                                                              "MR1")));
 
@@ -71,13 +74,18 @@ public class WorkflowVerificationTest {
     node = forkBranch1.get(0);
     Assert.assertTrue(node.getType() == WorkflowNodeType.ACTION);
     actionNode = (WorkflowActionNode) node;
+    Assert.assertEquals(1, node.getParentNodeIds().size());
+    Assert.assertEquals("MR1", node.getParentNodeIds().iterator().next());
     Assert.assertTrue(actionNode.getProgram().equals(new ScheduleProgramInfo(SchedulableProgramType.MAPREDUCE,
                                                                              "MR2")));
     node = forkBranch1.get(1);
     Assert.assertTrue(node.getType() == WorkflowNodeType.CONDITION);
-
     WorkflowConditionNode condition = (WorkflowConditionNode) node;
+    Assert.assertEquals(1, node.getParentNodeIds().size());
+    Assert.assertEquals("MR2", node.getParentNodeIds().iterator().next());
+    Assert.assertTrue(node.getNodeId().equals("MyVerificationPredicate"));
     Assert.assertTrue(condition.getPredicateClassName().contains("MyVerificationPredicate"));
+
     List<WorkflowNode> ifNodes = condition.getIfBranch();
     Assert.assertTrue(ifNodes.size() == 2);
     List<WorkflowNode> elseNodes = condition.getElseBranch();
@@ -86,29 +94,40 @@ public class WorkflowVerificationTest {
     node = ifNodes.get(0);
     Assert.assertTrue(node.getType() == WorkflowNodeType.ACTION);
     actionNode = (WorkflowActionNode) node;
+    Assert.assertEquals(1, node.getParentNodeIds().size());
+    Assert.assertEquals("MyVerificationPredicate", node.getParentNodeIds().iterator().next());
     Assert.assertTrue(actionNode.getProgram().equals(new ScheduleProgramInfo(SchedulableProgramType.MAPREDUCE,
                                                                              "MR3")));
 
     node = ifNodes.get(1);
     Assert.assertTrue(node.getType() == WorkflowNodeType.ACTION);
     actionNode = (WorkflowActionNode) node;
+    Assert.assertEquals(1, node.getParentNodeIds().size());
+    Assert.assertEquals("MR3", node.getParentNodeIds().iterator().next());
     Assert.assertTrue(actionNode.getProgram().equals(new ScheduleProgramInfo(SchedulableProgramType.MAPREDUCE,
                                                                              "MR4")));
 
     node = elseNodes.get(0);
     Assert.assertTrue(node.getType() == WorkflowNodeType.ACTION);
     actionNode = (WorkflowActionNode) node;
+    Assert.assertEquals(1, node.getParentNodeIds().size());
+    Assert.assertEquals("MyVerificationPredicate", node.getParentNodeIds().iterator().next());
     Assert.assertTrue(actionNode.getProgram().equals(new ScheduleProgramInfo(SchedulableProgramType.MAPREDUCE,
                                                                              "MR5")));
 
     node = elseNodes.get(1);
     Assert.assertTrue(node.getType() == WorkflowNodeType.ACTION);
     actionNode = (WorkflowActionNode) node;
+    Assert.assertEquals(1, node.getParentNodeIds().size());
+    Assert.assertEquals("MR5", node.getParentNodeIds().iterator().next());
     Assert.assertTrue(actionNode.getProgram().equals(new ScheduleProgramInfo(SchedulableProgramType.MAPREDUCE,
                                                                              "MR6")));
     node = forkBranch1.get(2);
     Assert.assertTrue(node.getType() == WorkflowNodeType.ACTION);
     actionNode = (WorkflowActionNode) node;
+    Assert.assertEquals(2, node.getParentNodeIds().size());
+    Assert.assertTrue(node.getParentNodeIds().contains("MR4"));
+    Assert.assertTrue(node.getParentNodeIds().contains("MR6"));
     Assert.assertTrue(actionNode.getProgram().equals(new ScheduleProgramInfo(SchedulableProgramType.MAPREDUCE,
                                                                              "MR7")));
 
@@ -118,11 +137,20 @@ public class WorkflowVerificationTest {
     node = forkBranch2.get(0);
     Assert.assertTrue(node.getType() == WorkflowNodeType.ACTION);
     actionNode = (WorkflowActionNode) node;
+    Assert.assertEquals(1, node.getParentNodeIds().size());
+    Assert.assertEquals("MR1", node.getParentNodeIds().iterator().next());
     Assert.assertTrue(actionNode.getProgram().equals(new ScheduleProgramInfo(SchedulableProgramType.MAPREDUCE,
                                                                              "MR8")));
 
     node = nodes.get(2);
     Assert.assertTrue(node.getType() == WorkflowNodeType.CONDITION);
+    Assert.assertEquals(2, node.getParentNodeIds().size());
+    Assert.assertTrue(node.getParentNodeIds().contains("MR7"));
+    Assert.assertTrue(node.getParentNodeIds().contains("MR8"));
+    Assert.assertTrue(node.getNodeId().equals("AnotherVerificationPredicate"));
+    condition = (WorkflowConditionNode) node;
+    Assert.assertTrue(condition.getPredicateClassName().contains("AnotherVerificationPredicate"));
+
     ifNodes = ((WorkflowConditionNode) node).getIfBranch();
     elseNodes = ((WorkflowConditionNode) node).getElseBranch();
 
@@ -130,12 +158,16 @@ public class WorkflowVerificationTest {
     node = ifNodes.get(0);
     Assert.assertTrue(node.getType() == WorkflowNodeType.ACTION);
     actionNode = (WorkflowActionNode) node;
+    Assert.assertEquals(1, node.getParentNodeIds().size());
+    Assert.assertEquals("AnotherVerificationPredicate", node.getParentNodeIds().iterator().next());
     Assert.assertTrue(actionNode.getProgram().equals(new ScheduleProgramInfo(SchedulableProgramType.SPARK,
                                                                              "SP1")));
 
     node = ifNodes.get(1);
     Assert.assertTrue(node.getType() == WorkflowNodeType.ACTION);
     actionNode = (WorkflowActionNode) node;
+    Assert.assertEquals(1, node.getParentNodeIds().size());
+    Assert.assertEquals("SP1", node.getParentNodeIds().iterator().next());
     Assert.assertTrue(actionNode.getProgram().equals(new ScheduleProgramInfo(SchedulableProgramType.SPARK,
                                                                              "SP2")));
 
@@ -144,12 +176,16 @@ public class WorkflowVerificationTest {
     node = elseNodes.get(0);
     Assert.assertTrue(node.getType() == WorkflowNodeType.ACTION);
     actionNode = (WorkflowActionNode) node;
+    Assert.assertEquals(1, node.getParentNodeIds().size());
+    Assert.assertEquals("AnotherVerificationPredicate", node.getParentNodeIds().iterator().next());
     Assert.assertTrue(actionNode.getProgram().equals(new ScheduleProgramInfo(SchedulableProgramType.SPARK,
                                                                              "SP3")));
 
     node = elseNodes.get(1);
     Assert.assertTrue(node.getType() == WorkflowNodeType.ACTION);
     actionNode = (WorkflowActionNode) node;
+    Assert.assertEquals(1, node.getParentNodeIds().size());
+    Assert.assertEquals("SP3", node.getParentNodeIds().iterator().next());
     Assert.assertTrue(actionNode.getProgram().equals(new ScheduleProgramInfo(SchedulableProgramType.SPARK,
                                                                              "SP4")));
 
@@ -166,18 +202,26 @@ public class WorkflowVerificationTest {
     node = anotherForkBranch1.get(0);
     Assert.assertTrue(node.getType() == WorkflowNodeType.ACTION);
     actionNode = (WorkflowActionNode) node;
+    Assert.assertEquals(1, node.getParentNodeIds().size());
+    Assert.assertEquals("SP4", node.getParentNodeIds().iterator().next());
     Assert.assertTrue(actionNode.getProgram().equals(new ScheduleProgramInfo(SchedulableProgramType.SPARK,
                                                                              "SP5")));
 
     node = anotherForkBranch2.get(0);
     Assert.assertTrue(node.getType() == WorkflowNodeType.ACTION);
     actionNode = (WorkflowActionNode) node;
+    Assert.assertEquals(1, node.getParentNodeIds().size());
+    Assert.assertEquals("SP4", node.getParentNodeIds().iterator().next());
     Assert.assertTrue(actionNode.getProgram().equals(new ScheduleProgramInfo(SchedulableProgramType.SPARK,
                                                                              "SP6")));
 
     node = nodes.get(3);
     Assert.assertTrue(node.getType() == WorkflowNodeType.ACTION);
     actionNode = (WorkflowActionNode) node;
+    Assert.assertEquals(3, node.getParentNodeIds().size());
+    Assert.assertTrue(node.getParentNodeIds().contains("SP2"));
+    Assert.assertTrue(node.getParentNodeIds().contains("SP5"));
+    Assert.assertTrue(node.getParentNodeIds().contains("SP6"));
     Assert.assertTrue(actionNode.getProgram().equals(new ScheduleProgramInfo(SchedulableProgramType.SPARK,
                                                                              "SP7")));
   }
@@ -190,8 +234,9 @@ public class WorkflowVerificationTest {
     WorkflowNode node = nodes.get(0);
     Assert.assertTrue(node.getType() == WorkflowNodeType.ACTION);
     WorkflowActionNode actionNode = (WorkflowActionNode) node;
+    Assert.assertEquals(0, node.getParentNodeIds().size());
     Assert.assertTrue(actionNode.getProgram().equals(new ScheduleProgramInfo(SchedulableProgramType.CUSTOM_ACTION,
-                                                                             "DummyAction")));
+                                                                             "DA1")));
     Assert.assertNotNull(actionNode.getActionSpecification());
 
     node = nodes.get(1);
@@ -206,8 +251,10 @@ public class WorkflowVerificationTest {
     Assert.assertTrue(fork1Branch2.size() == 1);
 
     actionNode = (WorkflowActionNode) fork1Branch1.get(0);
+    Assert.assertEquals(1, fork1Branch1.get(0).getParentNodeIds().size());
+    Assert.assertEquals("DA1", fork1Branch1.get(0).getParentNodeIds().iterator().next());
     Assert.assertTrue(actionNode.getProgram().equals(new ScheduleProgramInfo(SchedulableProgramType.MAPREDUCE,
-                                                                             "DummyMR")));
+                                                                             "MR1")));
     Assert.assertNull(actionNode.getActionSpecification());
 
     WorkflowForkNode fork2 = (WorkflowForkNode) fork1Branch1.get(1);
@@ -217,8 +264,10 @@ public class WorkflowVerificationTest {
     Assert.assertTrue(fork2Branch2.size() == 1);
 
     actionNode = (WorkflowActionNode) fork2Branch1.get(0);
+    Assert.assertEquals(1, fork2Branch1.get(0).getParentNodeIds().size());
+    Assert.assertEquals("MR1", fork2Branch1.get(0).getParentNodeIds().iterator().next());
     Assert.assertTrue(actionNode.getProgram().equals(new ScheduleProgramInfo(SchedulableProgramType.CUSTOM_ACTION,
-                                                                             "DummyAction")));
+                                                                             "DA2")));
     Assert.assertNotNull(actionNode.getActionSpecification());
 
     WorkflowForkNode fork3 = (WorkflowForkNode) fork2Branch1.get(1);
@@ -234,45 +283,63 @@ public class WorkflowVerificationTest {
     Assert.assertTrue(fork4Branch2.size() == 1);
 
     actionNode = (WorkflowActionNode) fork4Branch1.get(0);
+    Assert.assertEquals(1, fork4Branch1.get(0).getParentNodeIds().size());
+    Assert.assertEquals("DA2", fork4Branch1.get(0).getParentNodeIds().iterator().next());
     Assert.assertTrue(actionNode.getProgram().equals(new ScheduleProgramInfo(SchedulableProgramType.MAPREDUCE,
-                                                                             "DummyMR")));
+                                                                             "MR2")));
     Assert.assertNull(actionNode.getActionSpecification());
 
     actionNode = (WorkflowActionNode) fork4Branch1.get(1);
+    Assert.assertEquals(1, fork4Branch1.get(1).getParentNodeIds().size());
+    Assert.assertEquals("MR2", fork4Branch1.get(1).getParentNodeIds().iterator().next());
     Assert.assertTrue(actionNode.getProgram().equals(new ScheduleProgramInfo(SchedulableProgramType.CUSTOM_ACTION,
-                                                                             "DummyAction")));
+                                                                             "DA3")));
     Assert.assertNotNull(actionNode.getActionSpecification());
 
     actionNode = (WorkflowActionNode) fork4Branch2.get(0);
+    Assert.assertEquals(1, fork4Branch2.get(0).getParentNodeIds().size());
+    Assert.assertEquals("DA2", fork4Branch2.get(0).getParentNodeIds().iterator().next());
     Assert.assertTrue(actionNode.getProgram().equals(new ScheduleProgramInfo(SchedulableProgramType.MAPREDUCE,
-                                                                             "DummyMR")));
+                                                                             "MR3")));
     Assert.assertNull(actionNode.getActionSpecification());
 
-    actionNode = (WorkflowActionNode) fork4Branch1.get(0);
+    actionNode = (WorkflowActionNode) fork3Branch1.get(1);
+    Assert.assertEquals(2, fork3Branch1.get(1).getParentNodeIds().size());
+    Assert.assertTrue(fork3Branch1.get(1).getParentNodeIds().contains("DA3"));
+    Assert.assertTrue(fork3Branch1.get(1).getParentNodeIds().contains("MR3"));
     Assert.assertTrue(actionNode.getProgram().equals(new ScheduleProgramInfo(SchedulableProgramType.MAPREDUCE,
-                                                                             "DummyMR")));
-    Assert.assertNull(actionNode.getActionSpecification());
+                                                                             "MR4")));
 
-    actionNode = (WorkflowActionNode) fork4Branch2.get(0);
+    actionNode = (WorkflowActionNode) fork3Branch2.get(0);
+    Assert.assertEquals(1, fork3Branch2.get(0).getParentNodeIds().size());
+    Assert.assertEquals("DA2", fork3Branch2.get(0).getParentNodeIds().iterator().next());
     Assert.assertTrue(actionNode.getProgram().equals(new ScheduleProgramInfo(SchedulableProgramType.MAPREDUCE,
-                                                                             "DummyMR")));
-    Assert.assertNull(actionNode.getActionSpecification());
+                                                                             "MR5")));
 
     actionNode = (WorkflowActionNode) fork2Branch2.get(0);
+    Assert.assertEquals(1, fork2Branch2.get(0).getParentNodeIds().size());
+    Assert.assertEquals("MR1", fork2Branch2.get(0).getParentNodeIds().iterator().next());
     Assert.assertTrue(actionNode.getProgram().equals(new ScheduleProgramInfo(SchedulableProgramType.CUSTOM_ACTION,
-                                                                             "DummyAction")));
+                                                                             "DA4")));
     Assert.assertNotNull(actionNode.getActionSpecification());
 
     actionNode = (WorkflowActionNode) fork1Branch2.get(0);
+    Assert.assertEquals(1, fork1Branch2.get(0).getParentNodeIds().size());
+    Assert.assertEquals("DA1", fork1Branch2.get(0).getParentNodeIds().iterator().next());
     Assert.assertTrue(actionNode.getProgram().equals(new ScheduleProgramInfo(SchedulableProgramType.CUSTOM_ACTION,
-                                                                             "DummyAction")));
+                                                                             "DA5")));
     Assert.assertNotNull(actionNode.getActionSpecification());
 
     node = nodes.get(2);
     Assert.assertTrue(node.getType() == WorkflowNodeType.ACTION);
     actionNode = (WorkflowActionNode) node;
+    Assert.assertEquals(4, node.getParentNodeIds().size());
+    Assert.assertTrue(node.getParentNodeIds().contains("MR4"));
+    Assert.assertTrue(node.getParentNodeIds().contains("MR5"));
+    Assert.assertTrue(node.getParentNodeIds().contains("DA4"));
+    Assert.assertTrue(node.getParentNodeIds().contains("DA5"));
     Assert.assertTrue(actionNode.getProgram().equals(new ScheduleProgramInfo(SchedulableProgramType.MAPREDUCE,
-                                                                             "DummyMR")));
+                                                                             "MR6")));
     Assert.assertNull(actionNode.getActionSpecification());
 
     node = nodes.get(3);
@@ -283,13 +350,57 @@ public class WorkflowVerificationTest {
     Assert.assertTrue(fork5Branch2.size() == 1);
 
     actionNode = (WorkflowActionNode) fork5Branch1.get(0);
+    Assert.assertEquals(1, fork5Branch1.get(0).getParentNodeIds().size());
+    Assert.assertEquals("MR6", fork5Branch1.get(0).getParentNodeIds().iterator().next());
     Assert.assertTrue(actionNode.getProgram().equals(new ScheduleProgramInfo(SchedulableProgramType.CUSTOM_ACTION,
-                                                                             "DummyAction")));
+                                                                             "DA6")));
     Assert.assertNotNull(actionNode.getActionSpecification());
 
     actionNode = (WorkflowActionNode) fork5Branch2.get(0);
+    Assert.assertEquals(1, fork5Branch2.get(0).getParentNodeIds().size());
+    Assert.assertEquals("MR6", fork5Branch2.get(0).getParentNodeIds().iterator().next());
     Assert.assertTrue(actionNode.getProgram().equals(new ScheduleProgramInfo(SchedulableProgramType.MAPREDUCE,
-                                                                             "DummyMR")));
+                                                                             "MR7")));
     Assert.assertNull(actionNode.getActionSpecification());
+  }
+
+  private void verifyWorkflowWithForkInConditionSpecification(ApplicationSpecification appSpec) {
+    WorkflowSpecification spec = appSpec.getWorkflows().get("WorkflowWithForkInCondition");
+    List<WorkflowNode> nodes = spec.getNodes();
+    Assert.assertTrue(nodes.size() == 2);
+
+    WorkflowNode node = spec.getNodeIdMap().get("MyVerificationPredicate");
+    Assert.assertTrue(node.getType() == WorkflowNodeType.CONDITION);
+    Assert.assertEquals(0, node.getParentNodeIds().size());
+    WorkflowConditionNode conditionNode  = (WorkflowConditionNode) node;
+    Assert.assertTrue(conditionNode.getNodeId().equals("MyVerificationPredicate"));
+    Assert.assertTrue(conditionNode.getPredicateClassName().contains("MyVerificationPredicate"));
+
+    node = spec.getNodeIdMap().get("MR1");
+    Assert.assertEquals(1, node.getParentNodeIds().size());
+    Assert.assertEquals("MyVerificationPredicate", node.getParentNodeIds().iterator().next());
+
+    node = spec.getNodeIdMap().get("MR2");
+    Assert.assertEquals(1, node.getParentNodeIds().size());
+    Assert.assertEquals("MR1", node.getParentNodeIds().iterator().next());
+
+    node = spec.getNodeIdMap().get("MR3");
+    Assert.assertEquals(1, node.getParentNodeIds().size());
+    Assert.assertEquals("MyVerificationPredicate", node.getParentNodeIds().iterator().next());
+
+    node = spec.getNodeIdMap().get("SP1");
+    Assert.assertEquals(1, node.getParentNodeIds().size());
+    Assert.assertEquals("MyVerificationPredicate", node.getParentNodeIds().iterator().next());
+
+    node = spec.getNodeIdMap().get("SP2");
+    Assert.assertEquals(1, node.getParentNodeIds().size());
+    Assert.assertEquals("MyVerificationPredicate", node.getParentNodeIds().iterator().next());
+
+    node = spec.getNodeIdMap().get("MR4");
+    Assert.assertEquals(4, node.getParentNodeIds().size());
+    Assert.assertTrue(node.getParentNodeIds().contains("MR2"));
+    Assert.assertTrue(node.getParentNodeIds().contains("MR3"));
+    Assert.assertTrue(node.getParentNodeIds().contains("SP2"));
+    Assert.assertTrue(node.getParentNodeIds().contains("SP2"));
   }
 }

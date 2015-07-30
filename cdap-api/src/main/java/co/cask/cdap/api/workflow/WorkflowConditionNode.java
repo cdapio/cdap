@@ -17,6 +17,7 @@
 package co.cask.cdap.api.workflow;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Represents the CONDITION node in the {@link Workflow}.
@@ -28,7 +29,12 @@ public class WorkflowConditionNode extends WorkflowNode {
 
   public WorkflowConditionNode(String nodeId, String predicateClassName, List<WorkflowNode> ifBranch,
                                List<WorkflowNode> elseBranch) {
-    super(nodeId, WorkflowNodeType.CONDITION);
+    this(nodeId, predicateClassName, ifBranch, elseBranch, null);
+  }
+
+  public WorkflowConditionNode(String nodeId, String predicateClassName, List<WorkflowNode> ifBranch,
+                               List<WorkflowNode> elseBranch, Set<String> parentNodeIds) {
+    super(nodeId, WorkflowNodeType.CONDITION, parentNodeIds);
     this.ifBranch = ifBranch;
     this.elseBranch = elseBranch;
     this.predicateClassName = predicateClassName;

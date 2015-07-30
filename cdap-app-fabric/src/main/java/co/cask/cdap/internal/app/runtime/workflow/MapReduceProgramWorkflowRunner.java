@@ -107,6 +107,7 @@ final class MapReduceProgramWorkflowRunner extends AbstractProgramWorkflowRunner
     }
 
     ((BasicWorkflowToken) workflowTokenFromContext).setMapReduceCounters(mapReduceCounters);
-    ((BasicWorkflowToken) token).mergeToken((BasicWorkflowToken) workflowTokenFromContext);
+    ((BasicWorkflowToken) token).mergeToken(context.getSpecification().getName(),
+                                            (BasicWorkflowToken) workflowTokenFromContext);
   }
 }
