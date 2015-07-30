@@ -169,7 +169,7 @@ function download_includes() {
   test_an_include 936d007286f0d6d59967c1b421850e37 ../../cdap-examples/WebAnalytics/src/main/java/co/cask/cdap/examples/webanalytics/UniqueVisitCount.java
   test_an_include 1656c8e7158e10175cb750aeafeea58f ../../cdap-examples/WebAnalytics/src/main/java/co/cask/cdap/examples/webanalytics/WebAnalyticsFlow.java
   
-  test_an_include 2ad87b92766a879a6664a9f231993409 ../../cdap-examples/WikipediaPipeline/src/main/java/co/cask/cdap/examples/wikipedia/WikipediaPipelineApp.java
+  test_an_include a7d94268641250dc4387ee1c605569a2 ../../cdap-examples/WikipediaPipeline/src/main/java/co/cask/cdap/examples/wikipedia/WikipediaPipelineApp.java
   
   test_an_include 23d3a5c9f8cbe1a41fe706c6f95bad73 ../../cdap-examples/WordCount/src/main/java/co/cask/cdap/examples/wordcount/WordCount.java
 }
