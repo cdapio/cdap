@@ -41,6 +41,7 @@ angular.module(PKG.name + '.feature.adapters')
         .open({
           templateUrl: '/assets/features/adapters/templates/create/metadata.html',
           size: 'lg',
+          keyboard: false,
           windowClass: 'adapter-modal',
           keyboard: true,
           controller: ['$scope', 'metadata', 'MyPlumbService', function($scope, metadata, MyPlumbService) {

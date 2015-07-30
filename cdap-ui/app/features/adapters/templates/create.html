@@ -5,22 +5,22 @@
   tooltip-append-to-body="true"
   tooltip-class="tooltip-error"
 >
-  <div>
-    <h1>
-      <a ng-if="AdapterCreateController.metadata.name.length > 0"
-          ng-click="AdapterCreateController.showMetadataModal()">
-        {{AdapterCreateController.metadata['name'] | myEllipsis: 35}}
-      </a>
-      <a ng-if="AdapterCreateController.metadata['name'].length === 0"
-          ng-click="AdapterCreateController.showMetadataModal()">
-        [Adapter Name]
-      </a>
-    </h1>
-    <a class="fa fa-pencil" ng-click="AdapterCreateController.showMetadataModal()"></a>
+  <div ng-click="AdapterCreateController.showMetadataModal()">
     <div class="application-type">
       <span class="icon-ETLtemplates"></span>
       <span>Type: {{ AdapterCreateController.metadata.template.type }}</span>
     </div>
+    <h1>
+      <a ng-if="AdapterCreateController.metadata.name.length > 0"
+          >
+        {{AdapterCreateController.metadata['name'] | myEllipsis: 35}}
+      </a>
+      <a ng-if="AdapterCreateController.metadata['name'].length === 0"
+          >
+        [Adapter Name]
+      </a>
+    </h1>
+    <a class="fa fa-pencil" ng-click="AdapterCreateController.showMetadataModal()"></a>
     <p ng-if="AdapterCreateController.metadata['description'].length > 0">
       {{AdapterCreateController.metadata['description'] | myEllipsis: 150 }}
     </p>
