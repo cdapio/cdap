@@ -3,7 +3,7 @@
   "groups" : {
     "position": [ "group1" ],
     "group1": {
-       "display" : "TPFS Avro Properties",
+       "display" : "Time Partitioned Fileset - AVRO",
        "position" : [ "name", "basePath",  "duration", "delay", "schema"],
        "fields" : {
           "name" : {

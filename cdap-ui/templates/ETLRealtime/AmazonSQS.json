@@ -3,7 +3,7 @@
   "groups" : {
     "position": [ "group1" ],
     "group1": {
-      "display" : "Amazon SQS Properties",
+      "display" : "SQS realtime source",
       "position" : [ "region", "accessID", "accessKey", "queueName", "endpoint" ],
       "fields" : {
         "region" : {

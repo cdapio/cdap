@@ -3,7 +3,7 @@
   "groups" : {
     "position": [ "group1" ],
     "group1": {
-       "display" : "TPFS Parquet Properties",
+       "display" : "Time Partitioned Filset - Parquet",
        "position" : [ "name", "basePath", "schema"],
        "fields" : {
           "name" : {
