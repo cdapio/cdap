@@ -657,8 +657,8 @@ to make sure the CDAP table definitions in HBase are up-to-date.
 These steps will stop CDAP, update the installation, run an upgrade tool for the table definitions,
 and then restart CDAP.
 
-These steps will upgrade from CDAP 2.8.0 to 3.0.0. (**Note:** Apps need to be both
-recompiled and re-deployed.) 
+These steps will upgrade from CDAP 3.0.3 to 3.1.0. (**Note:** Some apps need to be both
+recompiled and re-deployed, see below.)
 
 .. highlight:: console
 
@@ -698,33 +698,20 @@ recompiled and re-deployed.)
              cdap-hbase-compat-1.0 cdap-hbase-compat-1.0-cdh \
              cdap-kafka cdap-master cdap-security cdap-ui
 
-   **Note:** We have deprecated the cdap-web-app package in favor of cdap-ui package 
-
-#. Copy the ``logback-container.xml`` into your ``conf`` directory. 
-   Please see :ref:`Configuration <install-configuration>`.
-
 #. If you are upgrading a secure Hadoop cluster, you should authenticate with ``kinit``
    before the next step (running the upgrade tool)::
 
-     $ kinit -kt <keytab> <principle>
+     $ kinit -kt <keytab> <principal>
 
-#. Run the upgrade tool::
+#. Run the upgrade tool as the user that runs CDAP master::
 
      $ /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.UpgradeTool upgrade
 
 #. Restart the CDAP processes::
 
      $ for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i start ; done
-     
-#. Run the flow queue pending metrics corrector::
 
-     $ /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.flow.FlowQueuePendingCorrector
-
-   This will correct the pending metrics for flows. This is a new metric that was introduced in 
-   CDAP 3.0; flows that existed before the upgrade to 3.0 do not have a correct value for this
-   metric and running the tool provides a one-time correction.
-
-#. You must recompile and then redeploy your applications. 
+#. You must recompile and then redeploy your applications that use Partition Filesets or Time Partitioned Filesets.
 
 .. _install-troubleshooting:
 
