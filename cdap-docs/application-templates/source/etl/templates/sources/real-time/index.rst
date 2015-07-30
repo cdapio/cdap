@@ -9,8 +9,8 @@ Sources: Real-time
 .. toctree::
    :maxdepth: 1
 
+    AmazonSQS <amazonsqs>
     JMS <jms>
     Kafka <kafka>
-    AmazonSQS <amazonsqs>
     Test <test>
     Twitter <twitter>
