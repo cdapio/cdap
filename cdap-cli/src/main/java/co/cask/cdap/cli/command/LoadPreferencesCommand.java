@@ -52,7 +52,7 @@ public class LoadPreferencesCommand extends AbstractSetPreferencesCommand {
 
   @Override
   public void printSuccessMessage(PrintStream printStream, ElementType type) {
-    printStream.printf(SUCCESS + "\n", type.getTitleName());
+    printStream.printf(SUCCESS + "\n", type.getName());
   }
 
   @SuppressWarnings("unchecked")
@@ -92,6 +92,6 @@ public class LoadPreferencesCommand extends AbstractSetPreferencesCommand {
   @Override
   public String getDescription() {
     return String.format("Sets preferences of %s from a local config file (supported formats = JSON).",
-                         Fragment.of(Article.A, type.getTitleName()));
+                         Fragment.of(Article.A, type.getName()));
   }
 }

@@ -132,7 +132,7 @@ public class CallServiceCommand extends AbstractCommand implements Categorized {
                          " The request body may be provided either as a string or a file." +
                          " To provide the body as a string, use \"body <%s>\"." +
                          " To provide the body as a file, use \"body:file <%s>\".",
-                         Fragment.of(Article.A, ElementType.SERVICE.getTitleName()),
+                         Fragment.of(Article.A, ElementType.SERVICE.getName()),
                          ArgumentName.HEADERS, ArgumentName.HTTP_BODY, ArgumentName.LOCAL_FILE_PATH);
   }
 

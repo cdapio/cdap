@@ -57,6 +57,6 @@ public class StopAdapterCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Stops %s.", Fragment.of(Article.A, ElementType.ADAPTER.getTitleName()));
+    return String.format("Stops %s.", Fragment.of(Article.A, ElementType.ADAPTER.getName()));
   }
 }
