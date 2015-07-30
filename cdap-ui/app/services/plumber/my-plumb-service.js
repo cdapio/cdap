@@ -36,11 +36,12 @@ angular.module(PKG.name + '.services')
         countSource = 0,
         countTransform = 0;
 
-    this.resetToDefaults = function() {
+    this.resetToDefaults = function(isRetainName) {
       this.callbacks = [];
       this.errorCallbacks = [];
       this.nodes = {};
       this.connections = [];
+      var name = this.metadata && this.metadata.name;
       this.metadata = {
         name: '',
         description: '',
@@ -56,6 +57,13 @@ angular.module(PKG.name + '.services')
       countSink = 0;
       countSource = 0;
       countTransform = 0;
+      // This is needed when we import a config from an already created draft.
+      // In that case we already have a name and we don't want to lose it. So resetting everything except name.
+      // Resetting template should be fine as it is going to be the same.
+      isRetainName = (isRetainName === true? true: false);
+      if (isRetainName) {
+        this.metadata.name = name;
+      }
     };
 
     this.resetToDefaults();
@@ -444,7 +452,7 @@ angular.module(PKG.name + '.services')
     this.saveAsDraft = function() {
       var defer = $q.defer();
       var config = this.getConfigForBackend();
-      if (!this.metadata.name.length) {
+      if (this.metadata.name && !this.metadata.name.length) {
         defer.reject('Adapter needs to have a name to be saved as draft');
         return defer.promise;
       }

@@ -73,7 +73,7 @@ angular.module(PKG.name + '.feature.adapters')
 
     function hasNameAndTemplateType(nodes, connections, metadata, config, errors) {
       var name = metadata.name;
-      if (!name.length) {
+      if (name && !name.length) {
         errors.name = 'Application needs to have a name';
         metadata.error = 'Enter application name';
         return;

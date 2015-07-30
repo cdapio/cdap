@@ -24,6 +24,9 @@ angular.module(PKG.name + '.feature.adapters')
 
         .state('adapters.create', {
           url: '/create?name&type',
+          params: {
+            data: null
+          },
           resolve: {
             rConfig: function($stateParams, mySettings, $q) {
               var defer = $q.defer();
@@ -38,6 +41,8 @@ angular.module(PKG.name + '.feature.adapters')
                       defer.resolve(false);
                     }
                   });
+              } else if ($stateParams.data){
+                defer.resolve($stateParams.data);
               } else {
                 defer.resolve(false);
               }
