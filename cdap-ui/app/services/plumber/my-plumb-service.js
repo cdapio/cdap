@@ -31,7 +31,7 @@
 
 */
 angular.module(PKG.name + '.services')
-  .service('MyPlumbService', function(myAdapterApi, $q, $bootstrapModal, $state, $filter, mySettings, $alert, AdapterErrorFactory) {
+  .service('MyPlumbService', function(myAdapterApi, $q, $bootstrapModal, $state, $filter, mySettings, $alert, AdapterErrorFactory, IMPLICIT_SCHEMA) {
     var countSink = 0,
         countSource = 0,
         countTransform = 0;
@@ -222,10 +222,21 @@ angular.module(PKG.name + '.services')
       var sourceConn = $filter('filter')(this.connections, { target: pluginId });
       var sourceSchema = null;
 
+      var clfSchema = IMPLICIT_SCHEMA.clf;
+
+      var syslogSchema = IMPLICIT_SCHEMA.syslog;
+
       var source;
       if (sourceConn.length) {
         source = this.nodes[sourceConn[0].source];
         sourceSchema = source.outputSchema;
+
+        if (source.properties.format && source.properties.format === 'clf') {
+          sourceSchema = clfSchema;
+        } else if (source.properties.format && source.properties.format === 'syslog') {
+          sourceSchema = syslogSchema;
+        }
+
       } else {
         sourceSchema = this.nodes[pluginId].properties.schema || '';
       }
