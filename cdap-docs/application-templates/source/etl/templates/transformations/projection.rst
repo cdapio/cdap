@@ -9,11 +9,32 @@ Transformations: Projection
 .. rubric:: Description
 
 A transform that can drop fields, rename fields, and cast fields to a different type.
-Operations are performed in a single step and are not applied in order on top of each other.
+Fields are first dropped, then cast, then renamed.
 For example, suppose the transform is configured to drop field 'B' and rename field 'A' to 'B'.
-If the transform receives an input record with field 'A' assigned a value of 10, and field 'B'
-assigned a value of 20, input field 'B' will be dropped and input field 'A' will be renamed
-to 'B'. The output record will then contain a single field named 'B' with an assigned value of 10.  
+If the transform receives this input record::
+
+  +============================+
+  | field name | type | value  |
+  +============================+
+  | A          | int  | 10     |
+  | B          | int  | 20     |
+  +============================+
+
+field 'B' will first be dropped::
+
+  +============================+
+  | field name | type | value  |
+  +============================+
+  | A          | int  | 10     |
+  +============================+
+
+and then field 'A' will be renamed to 'B'::
+
+  +============================+
+  | field name | type | value  |
+  +============================+
+  | B          | int  | 10     |
+  +============================+
 
 .. rubric:: Use Case
 

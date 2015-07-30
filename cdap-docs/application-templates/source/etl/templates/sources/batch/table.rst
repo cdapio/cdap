@@ -61,5 +61,5 @@ This example reads from a Table named 'users'. It outputs records with this sche
   +======================================+
 
 The 'id' field will be read from the rowkey of the table. The 'name' field will be read from the
-'name' column in the Table. The 'birthyear' field will be read from the 'birthyear' column in the
+'name' column in the table. The 'birthyear' field will be read from the 'birthyear' column in the
 table. Any other columns in the Table will be ignored by the source.
