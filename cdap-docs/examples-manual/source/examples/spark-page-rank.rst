@@ -56,6 +56,16 @@ The ``RanksService`` and ``TotalPagesPRService`` Service
 This ``RanksService`` service has a ``rank`` endpoint to obtain the page rank of a given URL.
 This ``TotalPagesPRService`` service has a ``total`` endpoint to obtain the total number of pages with a given page rank.
 
+Memory Requirements
+-------------------
+When running both a Spark and MapReduce programs in the same workflow, the memory
+requirements configured for the Spark program may need increasing beyond the defaults:
+
+.. literalinclude:: /../../../cdap-examples/SparkPageRank/src/main/java/co/cask/cdap/examples/sparkpagerank/SparkPageRankApp.java
+   :language: java
+   :lines: 123-124
+
+
 
 .. |example| replace:: SparkPageRank
 .. include:: building-starting-running-cdap.txt
