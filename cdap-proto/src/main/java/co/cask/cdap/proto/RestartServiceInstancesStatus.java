@@ -15,12 +15,15 @@
  */
 package co.cask.cdap.proto;
 
+import co.cask.cdap.api.annotation.Beta;
+
 import java.util.Set;
 
 /**
  * Class to describe status of restart instances of service request.
  */
-public class RestartServiceInstancesStatus {
+@Beta
+public final class RestartServiceInstancesStatus {
   private final Set<Integer> instanceIds;
   private final String serviceName;
   private final long startTimeInMs;
