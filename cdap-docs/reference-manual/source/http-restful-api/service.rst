@@ -81,7 +81,6 @@ an HTTP POST request to the URL::
 
   POST <base-url>/system/services/<service-id>/instances/<instance-id>/restart
 
-
 .. list-table::
    :widths: 20 80
    :header-rows: 1
