@@ -82,7 +82,8 @@ public class ProgramLifecycleService extends AbstractIdleService {
 
     long interval = configuration.getLong(Constants.AppFabric.PROGRAM_RUNID_CORRECTOR_INTERVAL_SECONDS);
     if (interval <= 0) {
-      interval = 300L;
+      LOG.debug("Invalid run id corrector interval {}. Setting it to 180 seconds.", interval);
+      interval = 180L;
     }
     scheduledExecutorService.scheduleWithFixedDelay(new RunRecordsCorrectorRunnable(this),
                                                     2L, interval, TimeUnit.SECONDS);
