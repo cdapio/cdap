@@ -95,7 +95,7 @@ angular.module(PKG.name + '.feature.adapters')
         });
       }.bind(this)
       reader.onerror = function (evt) {
-        console.errro('Upload config failed', evt);
+        console.error('Upload config failed', evt);
       };
     };
 
