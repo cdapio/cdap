@@ -214,10 +214,21 @@ angular.module(PKG.name + '.services')
       var sourceConn = $filter('filter')(this.connections, { target: pluginId });
       var sourceSchema = null;
 
+      var clfSchema = '{"type":"record","name":"etlSchemaBody","fields":[{"name":"auth_user","type":["string","null"]},{"name":"content_length","type":["int","null"]},{"name":"date","type":["string","null"]},{"name":"referrer","type":["string","null"]},{"name":"remote_host","type":["string","null"]},{"name":"remote_login","type":["string","null"]},{"name":"request","type":["string","null"]},{"name":"status","type":["int","null"]},{"name":"user_agent","type":["string","null"]}]}';
+
+      var syslogSchema = '{"type":"record","name":"etlSchemaBody","fields":[{"name":"logsource","type":["string","null"]},{"name":"message","type":["string","null"]},{"name":"pid","type":["string","null"]},{"name":"program","type":["string","null"]},{"name":"timestamp","type":["string","null"]}]}';
+
       var source;
       if (sourceConn.length) {
         source = this.nodes[sourceConn[0].source];
         sourceSchema = source.outputSchema;
+
+        if (source.properties.format && source.properties.format === 'clf') {
+          sourceSchema = clfSchema;
+        } else if (source.properties.format && source.properties.format === 'syslog') {
+          sourceSchema = syslogSchema;
+        }
+
       } else {
         sourceSchema = this.nodes[pluginId].properties.schema || '';
       }
