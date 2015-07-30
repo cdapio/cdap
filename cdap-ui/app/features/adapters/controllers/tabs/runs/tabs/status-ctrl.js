@@ -11,9 +11,30 @@ angular.module(PKG.name + '.feature.adapters')
 
     var template;
 
+    $scope.cloneAdapter = function() {
+      if ($scope.config) {
+        $state.go('adapters.create', {
+          data: $scope.config,
+          type: $scope.config.template
+        });
+      }
+    };
+
     myAdapterApi.get(params)
       .$promise
       .then(function(res) {
+        $scope.config = {
+          template: res.template,
+          description: res.description,
+          config: {
+            source: res.config.source,
+            sink: res.config.sink,
+            transforms: res.config.transforms,
+            instances: res.instance,
+            schedule: res.config.schedule
+          }
+        };
+
         $scope.source = res.config.source;
         $scope.sink = res.config.sink;
         $scope.transforms = res.config.transforms;
