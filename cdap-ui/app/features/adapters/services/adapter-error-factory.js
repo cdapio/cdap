@@ -114,7 +114,7 @@ angular.module(PKG.name + '.feature.adapters')
       plugin.valid = true;
       for (i=0; i< keys.length; i++) {
         var property = plugin.properties[keys[i]];
-        if (plugin._backendProperties[keys[i]].required && (!property || property === '')) {
+        if (plugin._backendProperties[keys[i]] && plugin._backendProperties[keys[i]].required && (!property || property === '')) {
           plugin.valid = false;
           break;
         }
