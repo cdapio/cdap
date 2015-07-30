@@ -31,7 +31,8 @@
 
 */
 angular.module(PKG.name + '.services')
-  .service('MyPlumbService', function(myAdapterApi, $q, $bootstrapModal, $state, $filter, mySettings, $alert, AdapterErrorFactory, IMPLICIT_SCHEMA, myHelpers) {
+  .service('MyPlumbService', function(myAdapterApi, $q, $bootstrapModal, $state, $filter, mySettings, $alert, AdapterErrorFactory, IMPLICIT_SCHEMA, myHelpers, PluginConfigFactory) {
+
     var countSink = 0,
         countSource = 0,
         countTransform = 0;
@@ -230,6 +231,29 @@ angular.module(PKG.name + '.services')
       if (sourceConn.length) {
         source = this.nodes[sourceConn[0].source];
         sourceSchema = source.outputSchema;
+
+        PluginConfigFactory.fetch(
+          scope,
+          this.metadata.template.type,
+          source.name
+        ).then(function (res) {
+          if (res.implicit) {
+            var schema = res.implicit.schema;
+            var keys = Object.keys(schema);
+
+            var formattedSchema = [];
+            angular.forEach(keys, function (key) {
+              formattedSchema.push({
+                name: key,
+                type: schema[key]
+              });
+            });
+
+            var obj = { fields: formattedSchema };
+            sourceSchema = JSON.stringify(obj);
+          }
+        });
+
 
         if (source.properties.format && source.properties.format === 'clf') {
           sourceSchema = clfSchema;
