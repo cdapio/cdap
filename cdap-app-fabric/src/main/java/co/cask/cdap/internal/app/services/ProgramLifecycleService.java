@@ -25,6 +25,8 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.common.app.RunIds;
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
@@ -64,20 +66,26 @@ public class ProgramLifecycleService extends AbstractIdleService {
   private final ScheduledExecutorService scheduledExecutorService;
   private final Store store;
   private final ProgramRuntimeService runtimeService;
+  private final CConfiguration configuration;
 
   @Inject
-  public ProgramLifecycleService(Store store, ProgramRuntimeService runtimeService) {
+  public ProgramLifecycleService(Store store, ProgramRuntimeService runtimeService, CConfiguration configuration) {
     this.store = store;
     this.runtimeService = runtimeService;
     this.scheduledExecutorService = Executors.newScheduledThreadPool(1);
+    this.configuration = configuration;
   }
 
   @Override
   protected void startUp() throws Exception {
     LOG.info("Starting ProgramLifecycleService");
 
+    long interval = configuration.getLong(Constants.AppFabric.PROGRAM_RUNID_CORRECTOR_INTERVAL_SECONDS);
+    if (interval <= 0) {
+      interval = 300L;
+    }
     scheduledExecutorService.scheduleWithFixedDelay(new RunRecordsCorrectorRunnable(this),
-                                                    2L, 6L, TimeUnit.SECONDS);
+                                                    2L, interval, TimeUnit.SECONDS);
   }
 
   @Override

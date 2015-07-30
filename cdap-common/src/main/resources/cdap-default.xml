@@ -646,6 +646,15 @@
         <description>Java options for all program containers</description>
     </property>
 
+    <property>
+        <name>app.program.runid.corrector.interval</name>
+        <value>300</value>
+        <description>
+            The interval of how often the run id corrector thread will run in seconds.
+            This value should be greater than 0.
+        </description>
+    </property>
+
   <!-- Used for MapReduce Info endpoint -->
     <property>
       <name>mapreduce.jobclient.connect.max.retries</name>
