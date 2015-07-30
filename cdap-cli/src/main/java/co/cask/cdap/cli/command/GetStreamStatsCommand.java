@@ -222,7 +222,7 @@ public class GetStreamStatsCommand extends AbstractCommand {
 
   @Override
   public String getDescription() {
-    return "Gets statistics for " + Fragment.of(Article.A, ElementType.STREAM.getTitleName()) + ". " +
+    return "Gets statistics for " + Fragment.of(Article.A, ElementType.STREAM.getName()) + ". " +
       "The <" + ArgumentName.LIMIT + "> limits how many Stream events to analyze; default is " + DEFAULT_LIMIT + ". " +
       "The time format for <" + ArgumentName.START_TIME + "> and <" + ArgumentName.END_TIME + "> " +
       "can be a timestamp in milliseconds or " +

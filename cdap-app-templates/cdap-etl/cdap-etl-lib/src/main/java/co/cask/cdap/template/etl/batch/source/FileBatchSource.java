@@ -74,10 +74,10 @@ public class FileBatchSource extends BatchSource<LongWritable, Object, Structure
 
   private static final String REGEX_DESCRIPTION = "Regex to filter out filenames in the path. " +
     "To use the TimeFilter, input \"timefilter\". The TimeFilter assumes that it " +
-    "is reading in files with the File log naming convention of YYYY-MM-DD-HH-mm-SS-Tag. The TimeFilter " +
-    "reads in files from the previous hour if the timeTable field is left blank. So if it's currently " +
+    "is reading in files with the File log naming convention of 'YYYY-MM-DD-HH-mm-SS-Tag'. The TimeFilter " +
+    "reads in files from the previous hour if the field 'timeTable' is left blank. So if it's currently " +
     "2015-06-16-15 (June 16th 2015, 3pm), it will read in files that contain 2015-06-16-14 in the filename. " +
-    "If the field timeTable is present, then it will read files in that haven't been read yet.";
+    "If the field 'timeTable' is present, then it will read files in that haven't been read yet.";
   private static final String FILESYSTEM_PROPERTIES_DESCRIPTION = "JSON of the properties needed for the " +
     "distributed file system. The formatting needs to be as follows:\n{\n\t\"<property name>\" : " +
     "\"<property value>\", ...\n}. For example, the property names needed for S3 are \"fs.s3n.awsSecretAccessKey\" " +
@@ -89,7 +89,7 @@ public class FileBatchSource extends BatchSource<LongWritable, Object, Structure
   private static final String INPUT_FORMAT_CLASS_DESCRIPTION = "Name of the input format class, which must be a " +
     "subclass of FileInputFormat. Defaults to CombineTextInputFormat.";
   private static final String FILESYSTEM_DESCRIPTION = "Distributed file system to read in from.";
-  private static final String MAX_SPLIT_SIZE_DESCRIPTION = "Max split size for each mapper in the MapReduce Job. " +
+  private static final String MAX_SPLIT_SIZE_DESCRIPTION = "Maximum split size for each mapper in the MapReduce Job. " +
     "Defaults to 128MB.";
   private static final Gson GSON = new Gson();
   private static final Logger LOG = LoggerFactory.getLogger(FileBatchSource.class);

@@ -101,7 +101,7 @@ public class SetStreamFormatCommand extends AbstractAuthCommand {
   public String getDescription() {
     return new StringBuilder()
       .append("Sets the format of ")
-      .append(Fragment.of(Article.A, ElementType.STREAM.getTitleName()))
+      .append(Fragment.of(Article.A, ElementType.STREAM.getName()))
       .append(". <")
       .append(ArgumentName.SCHEMA)
       .append("> is a sql-like schema \"column_name data_type, ...\" or Avro-like JSON schema and <")

@@ -19,6 +19,7 @@ package co.cask.cdap.explore.service;
 import com.google.common.base.Joiner;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.junit.Assert;
 import org.junit.ClassRule;
@@ -84,8 +85,28 @@ public class ExploreServiceUtilsTest {
 
     Assert.assertEquals(yarnApplicationClassPath, conf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH));
 
-    // Ensure conf files that are not hive-site.xml are unchanged
+    // check mapred-site changes
     confFile = tmpFolder.newFile("mapred-site.xml");
+    conf = new YarnConfiguration();
+
+    try (FileOutputStream os = new FileOutputStream(confFile)) {
+      conf.writeXml(os);
+    }
+
+    String mapredApplicationClassPath = "$PWD/*," +
+      conf.get(MRJobConfig.MAPREDUCE_APPLICATION_CLASSPATH,
+               MRJobConfig.DEFAULT_MAPREDUCE_APPLICATION_CLASSPATH);
+
+
+    newConfFile = ExploreServiceUtils.hijackConfFile(confFile);
+
+    conf = new Configuration(false);
+    conf.addResource(newConfFile.toURI().toURL());
+
+    Assert.assertEquals(mapredApplicationClassPath, conf.get(MRJobConfig.MAPREDUCE_APPLICATION_CLASSPATH));
+
+    // Ensure conf files that are not hive-site.xml/mapred-site.xml/yarn-site.xml are unchanged
+    confFile = tmpFolder.newFile("core-site.xml");
     Assert.assertEquals(confFile, ExploreServiceUtils.hijackConfFile(confFile));
   }
 

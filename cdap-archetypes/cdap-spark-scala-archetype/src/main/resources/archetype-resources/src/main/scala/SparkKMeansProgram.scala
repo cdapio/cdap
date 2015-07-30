@@ -22,15 +22,11 @@
 
 package $package
 
-import breeze.linalg.DenseVector
-import breeze.linalg.squaredDistance
-import breeze.linalg.Vector
-import co.cask.cdap.api.spark.ScalaSparkProgram
-import co.cask.cdap.api.spark.SparkContext
+import breeze.linalg.{DenseVector, Vector, squaredDistance}
+import co.cask.cdap.api.spark.{ScalaSparkProgram, SparkContext}
 import org.apache.spark.SparkContext._
 import org.apache.spark.rdd.NewHadoopRDD
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import org.slf4j.{Logger, LoggerFactory}
 
 /**
  * Implementation of KMeans Clustering Spark Program.
@@ -38,8 +34,8 @@ import org.slf4j.LoggerFactory
 class SparkKMeansProgram extends ScalaSparkProgram {
   private final val LOG: Logger = LoggerFactory.getLogger(classOf[SparkKMeansProgram])
 
-  def parseVector(line: String): Vector[Double] = {
-    DenseVector(line.split(' ').map(_.toDouble))
+  def pointVector(point: Point): Vector[Double] = {
+    DenseVector(Array(point.getX, point.getX, point.getZ).map(_.doubleValue()))
   }
 
   def closestPoint(p: Vector[Double], centers: Array[Vector[Double]]): Int = {
@@ -57,7 +53,9 @@ class SparkKMeansProgram extends ScalaSparkProgram {
 
   override def run(sc: SparkContext) {
 
-    val args: Array[String] = sc.getRuntimeArguments("args")
+    val arguments: String = sc.getRuntimeArguments.get("args")
+    var args : Array[String] = if (arguments == null) Array() else arguments.split("\\s")
+
     LOG.info("Running with arguments {}", args)
     // Amount of centers to calculate
     val K = if (args.length > 0) args(0).toInt else "2".toInt
@@ -66,10 +64,10 @@ class SparkKMeansProgram extends ScalaSparkProgram {
 
     LOG.info("Processing points data")
 
-    val linesDataset: NewHadoopRDD[Array[Byte], String] =
-      sc.readFromDataset("points", classOf[Array[Byte]], classOf[String])
+    val linesDataset: NewHadoopRDD[Array[Byte], Point] =
+      sc.readFromDataset("points", classOf[Array[Byte]], classOf[Point])
     val lines = linesDataset.values
-    val data = lines.map(parseVector).cache()
+    val data = lines.map(pointVector).cache()
 
     LOG.info("Calculating centers")
 

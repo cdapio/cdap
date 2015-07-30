@@ -57,6 +57,6 @@ public class StartAdapterCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Starts %s.", Fragment.of(Article.A, ElementType.ADAPTER.getTitleName()));
+    return String.format("Starts %s.", Fragment.of(Article.A, ElementType.ADAPTER.getName()));
   }
 }

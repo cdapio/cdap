@@ -73,6 +73,6 @@ public class GetAppTemplatePluginsCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Lists plugins for %s.", Fragment.of(Article.A, ElementType.APP_TEMPLATE.getTitleName()));
+    return String.format("Lists plugins for %s.", Fragment.of(Article.A, ElementType.APP_TEMPLATE.getName()));
   }
 }

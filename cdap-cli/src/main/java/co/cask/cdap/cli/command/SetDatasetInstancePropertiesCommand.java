@@ -67,6 +67,6 @@ public class SetDatasetInstancePropertiesCommand extends AbstractCommand {
   @Override
   public String getDescription() {
     return String.format("Sets properties for %s.",
-                         Fragment.of(Article.A, ElementType.DATASET.getTitleName()));
+                         Fragment.of(Article.A, ElementType.DATASET.getName()));
   }
 }

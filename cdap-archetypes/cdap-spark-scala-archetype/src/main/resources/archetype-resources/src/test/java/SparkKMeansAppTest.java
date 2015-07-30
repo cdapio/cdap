@@ -22,11 +22,13 @@ import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.RuntimeStats;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.SparkManager;
-import co.cask.cdap.test.StreamWriter;
+import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.TestBase;
+import co.cask.cdap.test.TestConfiguration;
 import com.google.common.base.Charsets;
 import com.google.common.io.ByteStreams;
 import org.junit.Assert;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -39,41 +41,41 @@ import java.util.concurrent.TimeUnit;
  */
 public class SparkKMeansAppTest extends TestBase {
 
+  @ClassRule
+  public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", false);
+
   @Test
   public void test() throws Exception {
     // Deploy the Application
     ApplicationManager appManager = deployApplication(SparkKMeansApp.class);
-
     // Start the Flow
-    FlowManager flowManager = appManager.startFlow("PointsFlow");
-    try {
-      // Send a few points to the stream
-      StreamWriter streamWriter = appManager.getStreamWriter("pointsStream");
-      streamWriter.send("10.6 519.2 110.3");
-      streamWriter.send("10.6 518.1 110.1");
-      streamWriter.send("10.6 519.6 109.9");
-      streamWriter.send("10.6 517.9 108.9");
-      streamWriter.send("10.7 518 109.2");
+    FlowManager flowManager = appManager.getFlowManager("PointsFlow").start();
+    // Send a few points to the stream
+    StreamManager streamManager = getStreamManager("pointsStream");
+    streamManager.send("10.6 519.2 110.3");
+    streamManager.send("10.6 518.1 110.1");
+    streamManager.send("10.6 519.6 109.9");
+    streamManager.send("10.6 517.9 108.9");
+    streamManager.send("10.7 518 109.2");
 
-      //  Wait for the events to be processed, or at most 5 seconds
-      RuntimeMetrics metrics = RuntimeStats.getFlowletMetrics("SparkKMeans", "PointsFlow", "reader");
-      metrics.waitForProcessed(3, 5, TimeUnit.SECONDS);
+    //  Wait for the events to be processed, or at most 5 seconds
+    RuntimeMetrics metrics = RuntimeStats.getFlowletMetrics("SparkKMeans", "PointsFlow", "reader");
+    metrics.waitForProcessed(3, 5, TimeUnit.SECONDS);
 
-      // Start a Spark Program
-      SparkManager sparkManager = appManager.startSpark("SparkKMeansProgram");
-      sparkManager.waitForFinish(60, TimeUnit.SECONDS);
-    } finally {
-      flowManager.stop();
-    }
+    // Start a Spark Program
+    SparkManager sparkManager = appManager.getSparkManager("SparkKMeansProgram").start();
+    sparkManager.waitForFinish(60, TimeUnit.SECONDS);
+
+    flowManager.stop();
 
     // Start CentersService
-    ServiceManager serviceManager = appManager.startService(SparkKMeansApp.CentersService.SERVICE_NAME);
+    ServiceManager serviceManager = appManager.getServiceManager(SparkKMeansApp.CentersService.SERVICE_NAME).start();
 
     // Wait service startup
     serviceManager.waitForStatus(true);
 
     // Request data and verify it
-    String response = requestService(new URL(serviceManager.getServiceURL(), "centers/1"));
+    String response = requestService(new URL(serviceManager.getServiceURL(15, TimeUnit.SECONDS), "centers/1"));
     String[] coordinates = response.split(",");
     Assert.assertTrue(coordinates.length == 3);
     for (String coordinate : coordinates) {
@@ -82,15 +84,13 @@ public class SparkKMeansAppTest extends TestBase {
     }
 
     // Request data by incorrect index and verify response
-    URL url = new URL(serviceManager.getServiceURL(), "centers/10");
+    URL url = new URL(serviceManager.getServiceURL(15, TimeUnit.SECONDS), "centers/10");
     HttpURLConnection conn = (HttpURLConnection) url.openConnection();
     try {
       Assert.assertEquals(HttpURLConnection.HTTP_NO_CONTENT, conn.getResponseCode());
     } finally {
       conn.disconnect();
     }
-
-    appManager.stopAll();
   }
 
   private String requestService(URL url) throws IOException {
