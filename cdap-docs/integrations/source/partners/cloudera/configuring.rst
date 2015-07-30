@@ -115,57 +115,9 @@ Complete instructions, step-by-step, for using the Admin Console *Add Service* W
 
 .. _cloudera-verification:
 
-Verification
-=======================================
-
-After CDAP has started up, the best way to verify the installation is to deploy an application,
-ingest some data, run a MapReduce program on it, and then query the results out.  The following
-procedure describes how to do this primarily, via the CDAP UI, though this can all be done via
-command line.
-
-We provide in our SDK pre-built ``.JAR`` files for convenience.
-
-#. Download and install the latest `CDAP Software Development Kit (SDK)
-   <http://cask.co/downloads/#cdap>`__. The version should match the version you have installed.
-#. Extract to a folder (``CDAP_HOME``).
-#. Open a command prompt and navigate to ``CDAP_HOME/examples``.
-#. Each example folder has a ``.jar`` file in its ``target`` directory.
-   For verification, we'll use the ``Purchase`` example and its jar, located in 
-   ``CDAP_HOME/examples/Purchase-``\ |literal-release|\ ``.jar``. The ``Purchase`` example is documented 
-   in the CDAP :ref:`examples manual <examples-purchase>`.
-
-#. Open a web browser to the CDAP UI. It is located on port ``9999`` of the box where
-   you installed CDAP.
-
-#. From the CDAP UI Development tab, under "Apps" click "Add App” and navigate to the jar.
-
-#. Once it is deployed, click on it in the list of applications (*PurchaseHistory*), then click on
-   *PurchaseFlow* in the list of programs to get to the *Flow* detail page, then click the *Start*
-   button.  (This will launch additional YARN containers.)
-
-#. Once the flow is *RUNNING*, inject data by clicking on the *purchaseStream* icon in
-   the flow diagram.  In the dialog that pops up, type ``Tom bought 5 apples for $3`` and click
-   *Inject*.  You should see activity in the graphs and the flowlet counters increment.
-
-#. Run a MapReduce program against this data by navigating back to the *PurchaseHistory* list of 
-   programs, select *PurchaseHistoryBuilder*, and click the *Start* button.  This will launch an
-   additional container and a MapReduce job in YARN.  After it starts you should see the Map and
-   Reduce progress bars complete.  Failures at this stage are often due to YARN MapReduce misconfiguration
-   or a lack of YARN capacity.
-
-#. After the MapReduce job is complete, we can startup a query service which will read
-   from the processed dataset.  Navigate to Application -> PurchaseHistory ->
-   PurchaseHistoryService.  Click the Start button to start the service.  (This will launch another YARN container.)
-
-#. From the *PurchaseHistoryService* page, click *Make Request* for the */history/{customer}* endpoint listed.
-   In the dialog that pops up, enter ``Tom`` in the *Path Params* field and click *Make Request*.
-
-#. You should get back a response similar to::
-
-     {"customer":"Tom","purchases":[{"customer":"Tom","product":"apple","quantity":5,"price":3,
-      "purchaseTime":1421470224780}]}
-
-#. You have now completed verification of the installation.
+.. include:: ../../../../admin-manual/source/installation/installation.rst
+   :start-after: .. _install-verification:
+   :end-before:  .. _install-upgrade:
 
 Upgrading an Existing Version
 =======================================
