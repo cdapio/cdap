@@ -76,6 +76,14 @@ angular.module(PKG.name + '.feature.adapters')
       if (!name.length) {
         errors.name = 'Application needs to have a name';
         metadata.error = 'Enter application name';
+        return;
+      }
+
+      var pattern = /^[\w]+$/;
+
+      if (!pattern.test(name)) {
+        errors.name = 'Application name can only have alphabets, numbers, and \'_\'';
+        metadata.error = 'Application name can only have alphabets, numbers, and \'_\'';
       }
 
       // Should probably add template type check here. Waiting for design.
