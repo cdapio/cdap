@@ -16,6 +16,8 @@
 
 package co.cask.cdap.api.workflow;
 
+import co.cask.cdap.api.annotation.Beta;
+
 import java.io.Serializable;
 
 /**
@@ -23,6 +25,7 @@ import java.io.Serializable;
  * This class provides a mapping from node name to the {@link Value} which was set for the
  * specific key.
  */
+@Beta
 public final class NodeValue implements Serializable {
 
   private static final long serialVersionUID = 6157808964174399650L;

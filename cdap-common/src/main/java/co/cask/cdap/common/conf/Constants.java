@@ -138,6 +138,10 @@ public final class Constants {
 
     public static final String SERVICE_DESCRIPTION = "Service for managing application lifecycle.";
 
+    /**
+     * Configuration setting to set the maximum size of a workflow token in MB
+     */
+    public static final String WORKFLOW_TOKEN_MAX_SIZE_MB = "workflow.token.max.size.mb";
   }
 
   /**
