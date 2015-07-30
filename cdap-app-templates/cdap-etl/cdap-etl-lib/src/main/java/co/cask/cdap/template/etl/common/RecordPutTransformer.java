@@ -20,27 +20,46 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.table.Put;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
+import com.google.common.collect.Iterables;
 
 import java.nio.ByteBuffer;
+import javax.annotation.Nullable;
 
 /**
  * Transforms records into Puts.
  */
 public class RecordPutTransformer {
-  private final String rowField;
+  // Not final for an optimization - When rowField is case-insensitive, we may have to look for it in the schema
+  // provided to the toPut method. When there isn't an exact match but a case-insensitive match, we have to loop over
+  // all fields in the schema to find the case-insensitive match. Making this non-final allows us to do this look up
+  // once and cache the value.
+  private String rowField;
+  private final boolean rowFieldCaseSensitive;
 
-  public RecordPutTransformer(String rowField) {
+  @VisibleForTesting
+  RecordPutTransformer(String rowField) {
+    this(rowField, true);
+  }
+
+  public RecordPutTransformer(String rowField, boolean rowFieldCaseSensitive) {
     this.rowField = rowField;
+    this.rowFieldCaseSensitive = rowFieldCaseSensitive;
   }
 
   public Put toPut(StructuredRecord record) {
     Schema recordSchema = record.getSchema();
     Preconditions.checkArgument(recordSchema.getType() == Schema.Type.RECORD, "input must be a record.");
-    Put output = createPut(record, recordSchema);
+
+    Schema.Field keyField = getKeyField(recordSchema);
+    Preconditions.checkArgument(keyField != null, "Could not find key field in record.");
+
+    Put output = createPut(record, keyField);
 
     for (Schema.Field field : recordSchema.getFields()) {
-      if (field.getName().equals(rowField)) {
+      if (field.getName().equals(keyField.getName())) {
         continue;
       }
       setField(output, field, record.get(field.getName()));
@@ -102,36 +121,56 @@ public class RecordPutTransformer {
     return type;
   }
 
-  private Put createPut(StructuredRecord record, Schema recordSchema) {
-    Schema.Field keyField = recordSchema.getField(rowField);
-    Preconditions.checkArgument(keyField != null, "Could not find key field in record.");
-    Object val = record.get(keyField.getName());
+  @SuppressWarnings("ConstantConditions")
+  private Put createPut(StructuredRecord record, Schema.Field keyField) {
+    String keyFieldName = keyField.getName();
+    Object val = record.get(keyFieldName);
     Preconditions.checkArgument(val != null, "Row key cannot be null.");
 
     Schema.Type keyType = validateAndGetType(keyField);
     switch (keyType) {
       case BOOLEAN:
-        return new Put(Bytes.toBytes((Boolean) record.get(rowField)));
+        return new Put(Bytes.toBytes((Boolean) val));
       case INT:
-        return new Put(Bytes.toBytes((Integer) record.get(rowField)));
+        return new Put(Bytes.toBytes((Integer) val));
       case LONG:
-        return new Put(Bytes.toBytes((Long) record.get(rowField)));
+        return new Put(Bytes.toBytes((Long) val));
       case FLOAT:
-        return new Put(Bytes.toBytes((Float) record.get(rowField)));
+        return new Put(Bytes.toBytes((Float) val));
       case DOUBLE:
-        return new Put(Bytes.toBytes((Double) record.get(rowField)));
+        return new Put(Bytes.toBytes((Double) val));
       case BYTES:
-        Object bytes = record.get(rowField);
-        if (bytes instanceof ByteBuffer) {
-          return new Put(Bytes.toBytes((ByteBuffer) bytes));
+        if (val instanceof ByteBuffer) {
+          return new Put(Bytes.toBytes((ByteBuffer) val));
         } else {
-          return new Put((byte[]) bytes);
+          return new Put((byte[]) val);
         }
       case STRING:
-        return new Put(Bytes.toBytes((String) record.get(rowField)));
+        return new Put(Bytes.toBytes((String) record.get(keyFieldName)));
       default:
         throw new IllegalArgumentException("Row key is of unsupported type " + keyType);
     }
   }
 
+  @Nullable
+  private Schema.Field getKeyField(Schema recordSchema) {
+    Schema.Field field = recordSchema.getField(rowField);
+    if (field == null && !rowFieldCaseSensitive) {
+      Iterable<Schema.Field> filtered = Iterables.filter(recordSchema.getFields(), new Predicate<Schema.Field>() {
+        @Override
+        public boolean apply(Schema.Field input) {
+          return input.getName().equalsIgnoreCase(rowField);
+        }
+      });
+      if (!Iterables.isEmpty(filtered)) {
+        Preconditions.checkArgument(Iterables.size(filtered) == 1,
+                                    "Cannot have multiple fields in the schema that match %s in a case-insensitive " +
+                                      "manner when the property %s is false. Found %s.",
+                                    rowField, Properties.Table.CASE_SENSITIVE_ROW_FIELD, Iterables.toString(filtered));
+        field = filtered.iterator().next();
+        rowField = field.getName();
+      }
+    }
+    return field;
+  }
 }

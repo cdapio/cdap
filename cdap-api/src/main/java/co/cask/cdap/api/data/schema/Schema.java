@@ -116,6 +116,11 @@ public final class Schema {
     public Schema getSchema() {
       return schema;
     }
+
+    @Override
+    public String toString() {
+      return String.format("{name: %s, schema: %s}", name, schema);
+    }
   }
 
   /**
