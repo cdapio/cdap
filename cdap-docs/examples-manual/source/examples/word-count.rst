@@ -168,7 +168,7 @@ Once done, you can stop the application as described in :ref:`Stopping an Applic
 
 - Go to the *WordCount* `application overview page 
   <http://localhost:9999/ns/default/apps/WordCount/overview/status>`__,
-  click ``RetrieveCounts`` to get to the flow detail page, then click the *Stop* button; or
+  click ``RetrieveCounts`` to get to the service detail page, then click the *Stop* button; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface::
 
     $ cdap-cli.sh stop service WordCount.RetrieveCounts 
