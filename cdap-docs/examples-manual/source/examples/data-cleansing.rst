@@ -3,7 +3,7 @@
     :description: Cask Data Application Platform Data Cleansing Application
     :copyright: Copyright © 2015 Cask Data, Inc.
 
-.. _examples-word-count:
+.. _examples-data-cleansing:
 
 ==============
 Data Cleansing
@@ -60,19 +60,8 @@ the ``cleanRecords`` PartitionedFileSet. The ``beforeSubmit`` method prepares th
 - It specifies the output partition that is written to, based upon the supplied runtime arguments.
 
 
-Building and Starting
-=====================
-
-.. include:: building-starting-running-cdap.txt
-
-
-Running CDAP Applications
-=========================
-
 .. |example| replace:: DataCleansing
-
-.. include:: /../../developers-manual/source/getting-started/building-apps.rst
-   :start-line: 11
+.. include:: building-starting-running-cdap.txt
 
 
 Running the Example
@@ -113,15 +102,16 @@ the ``cleanRecords`` dataset to write to. In this example, we'll simply use ``1`
 
     $ cdap-cli.sh start mapreduce DataCleansing.DataCleansingMapReduce output.partition.key=1
 
-    Successfully started mapreduce 'DataCleansingMapReduce' of application 'DataCleansing' with provided runtime arguments 'output.partition.key=1'
+    Successfully started mapreduce 'DataCleansingMapReduce' of application 'DataCleansing'
+    with provided runtime arguments 'output.partition.key=1'
 
 Optionally, to specify a custom schema to match records against, the JSON of the schema can be
 specified as an additional runtime argument to the MapReduce with the key 'schema.key'.
 Otherwise, the default schema that is matched against the records:
 
 .. literalinclude:: /../../../cdap-examples/DataCleansing/src/main/java/co/cask/cdap/examples/datacleansing/DataCleansingMapReduce.java
-:language: java
-     :lines: 112-117
+    :language: java
+    :lines: 108-112
 
 Querying the Results
 --------------------

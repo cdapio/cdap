@@ -66,8 +66,8 @@ public class TimePartitionedFileSetDatasetAvroSource extends
     "the pipeline will read 5 minutes of events from the TPFS source.";
   private static final String DELAY_DESC = "Optional delay for reading from TPFS source. The value must be " +
     "of the same format as the duration value. For example, a duration of '5m' and a delay of '10m' means each run " +
-    "of the pipeline will read 5 minutes of data from 15 minutes before its logical start time to 10 minutes before its " +
-    "logical start time. The default value is 0.";
+    "of the pipeline will read 5 minutes of data from 15 minutes before its logical start time to 10 minutes " +
+    "before its logical start time. The default value is 0.";
 
   private final AvroToStructuredTransformer recordTransformer = new AvroToStructuredTransformer();
 

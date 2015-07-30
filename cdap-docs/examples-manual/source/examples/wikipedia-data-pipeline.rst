@@ -17,13 +17,15 @@ Overview
 This example demonstrates a CDAP application performing analysis on Wikipedia data using MapReduce and Spark programs
 running within a CDAP Workflow: *WikipediaPipelineWorkflow*.
 
-This example can be run in both online and offline modes.
+This example can be run in both online and offline modes:
+
 - In the online mode, the custom action *DownloadWikiDataAction* reads the stream *pageTitleStream*, each event of which
   is an element from the output of the
   `Facebook "Likes" API <https://developers.facebook.com/docs/graph-api/reference/v2.4/object/likes>`__.
   For each event, it tries to download Wikipedia data for the page using the
   `MediaWiki Wikipedia API <https://www.mediawiki.org/wiki/API:Main_page>`__. It stores the downloaded data in the
   KeyValueTable dataset *wikiData*.
+  
 - In the offline mode, it expects Wikipedia data formatted per the output of the MediaWiki API in the stream *wikiStream*.
 
 The MapReduce program *wikiDataToDataset* consumes this stream and stores it in the same KeyValueTable dataset
@@ -51,16 +53,22 @@ of the application are tied together by the class ``WikipediaPipelineApp``:
    :language: java
    :lines: 24-55
 
-Among other things, this application demonstrates:
+This application demonstrates:
+
 - The use of assigning unique names, as the same MapReduce (*StreamToDataset*) is used twice in the workflow
   (*WikipediaPipelineWorkflow*) with two different names.
+  
 - The use of Workflow Tokens in:
+
     - Condition Predicates
     - Setting MapReduce program configuration (setting it based on values in the token)
     - ``map()``/``reduce()`` functions (read-only, no updates)
     - Spark Programs (reading from/writing to workflow token, adding Spark Accumulators to workflow token)
     - Assertions in application unit tests
 
+
+.. |example| replace:: WikipediaPipeline
+.. include:: building-starting-running-cdap.txt
 
 Running the Example
 ===================

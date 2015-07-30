@@ -104,7 +104,7 @@ you use  multiple instances of the same program in the same workflow.
 These unique names can be set when the Workflow is first configured, passed to the
 instance of the program, and then be used when the program performs its own configuration.
 
-An example of this is the :ref:`Wikipedia Pipeline<wikipedia-data-pipeline>` example, and
+An example of this is the :ref:`Wikipedia Pipeline <examples-wikipedia-data-pipeline>` example, and
 its use of the *StreamToDataset* MapReduce program multiple times::
 
   public class StreamToDataset extends AbstractMapReduce {
@@ -219,7 +219,7 @@ object passed to those methods is a Hadoop class that is unaware of CDAP and its
 tokens.
 
 Here is an example, taken from the
-:ref:`Wikipedia Pipeline<wikipedia-data-pipeline>` example's ``TopNMapReduce.java``:
+:ref:`Wikipedia Pipeline <examples-wikipedia-data-pipeline>` example's ``TopNMapReduce.java``:
 
 .. literalinclude:: /../../../cdap-examples/WikipediaPipeline/src/main/java/co/cask/cdap/examples/wikipedia/TopNMapReduce.java
    :language: java
@@ -241,7 +241,7 @@ Spark Accumulators and Workflow Tokens
 `Spark Accumulators <https://spark.apache.org/docs/latest/programming-guide.html#accumulators-a-nameaccumlinka>`__ 
 can be accessed through the SparkContext, and used with workflow tokens. This allows the 
 values in the accumulators to be accessed through workflow tokens. An example of this is in
-the :ref:`Wikipedia Pipeline<wikipedia-data-pipeline>` example's ``ScalaSparkLDA.scala``:
+the :ref:`Wikipedia Pipeline <examples-wikipedia-data-pipeline>` example's ``ScalaSparkLDA.scala``:
 
 .. literalinclude:: /../../../cdap-examples/WikipediaPipeline/src/main/scala/co/cask/cdap/examples/wikipedia/ScalaSparkLDA.scala
    :language: scala
@@ -585,4 +585,4 @@ Example of Using a Workflow
 
 - For an example of the use of **a workflow,** see the :ref:`Purchase
   <examples-purchase>` example.
-- The :ref:`Wikipedia Pipeline<wikipedia-data-pipeline>` example is another workflow example.
+- The :ref:`Wikipedia Pipeline <examples-wikipedia-data-pipeline>` example is another workflow example.
