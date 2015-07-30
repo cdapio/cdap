@@ -31,7 +31,7 @@
 
 */
 angular.module(PKG.name + '.services')
-  .service('MyPlumbService', function(myAdapterApi, $q, $bootstrapModal, $state, $filter, mySettings, $alert, AdapterErrorFactory, IMPLICIT_SCHEMA) {
+  .service('MyPlumbService', function(myAdapterApi, $q, $bootstrapModal, $state, $filter, mySettings, $alert, AdapterErrorFactory, IMPLICIT_SCHEMA, myHelpers) {
     var countSink = 0,
         countSource = 0,
         countTransform = 0;
@@ -379,10 +379,39 @@ angular.module(PKG.name + '.services')
           addPluginToConfig(nodes[connection.target], connection.target);
         }
       });
+      pruneNonBackEndProperties(config);
       return config;
     };
 
+    function pruneNonBackEndProperties(config) {
+      function propertiesIterator(properties, backendProperties) {
+        angular.forEach(properties, function(value, key) {
+          if (!backendProperties[key]) {
+            delete properties[key];
+          }
+        });
+        return properties;
+      }
+      if (myHelpers.objectQuery(config, 'source', 'properties') &&
+          Object.keys(config.source.properties).length > 0) {
+        config.source.properties = propertiesIterator(config.source.properties, config.source._backendProperties);
+      }
+      if (myHelpers.objectQuery(config, 'sink', 'properties') &&
+          Object.keys(config.sink.properties).length > 0) {
+        config.sink.properties = propertiesIterator(config.sink.properties, config.sink._backendProperties);
+      }
+      config.transforms.forEach(function(transform) {
+        if (myHelpers.objectQuery(transform, 'properties') &&
+            Object.keys(transform.properties).length > 0) {
+          transform.properties = propertiesIterator(transform.properties, transform._backendProperties);
+        }
+      });
+    }
+
     function pruneProperties(config) {
+
+      pruneNonBackEndProperties(config);
+
       if (config.source && (config.source.id || config.source._backendProperties)) {
         delete config.source._backendProperties;
         delete config.source.id;
