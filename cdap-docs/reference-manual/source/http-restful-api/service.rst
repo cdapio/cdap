@@ -90,7 +90,8 @@ an HTTP POST request to the URL::
    * - ``<service-id>``
      - Name of the service whose instances are to be restarted
    * - ``<instance-id>``
-     - Specific instance of a service that needs to be restarted
+     - Specific instance of a service that needs to be restarted;
+       instance-id runs from 0 to (the number of instances per service -1)
 
 .. rubric:: HTTP Responses
 .. list-table::
