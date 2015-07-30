@@ -114,7 +114,7 @@
             <p ng-bind="app.name"> </p>
             <div class="title-type-image">
               <span class="icon-fist"></span>
-              <span> CDAP </span>
+              <span> App </span>
             </div>
           </a>
           <a ui-sref="adapters.detail.runs({adapterId: app.name})"
@@ -122,8 +122,8 @@
               ng-click="AppsSectionCtrl.MyOrderings.appClicked(app.id)">
             <p ng-bind="app.name"> </p>
             <div class="title-type-image">
-              <span class="icon-fist"></span>
-              <span> CDAP </span>
+              <span class="icon-ETLtemplates"></span>
+              <span> {{app.template}} </span>
             </div>
           </a>
         </li>
