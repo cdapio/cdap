@@ -9,7 +9,7 @@
           "user" : {
              "widget": "textbox",
              "label": "Username",
-             "description" : "Username to connect to dashboard"
+             "description" : "Username to connect to database"
           },
 
           "password" : {

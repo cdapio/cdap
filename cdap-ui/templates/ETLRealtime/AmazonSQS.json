@@ -3,7 +3,7 @@
   "groups" : {
     "position": [ "group1" ],
     "group1": {
-      "display" : "SQS realtime source",
+      "display" : "Amazon SQS Properties",
       "position" : [ "region", "accessID", "accessKey", "queueName", "endpoint" ],
       "fields" : {
         "region" : {
@@ -13,12 +13,12 @@
 
         "accessID" : {
           "widget": "textbox",
-          "label": "AccessID"
+          "label": "Access ID"
         },
 
         "accessKey" : {
           "widget": "textbox",
-          "label": "AccessKey"
+          "label": "Access Key"
         },
 
         "queueName" : {

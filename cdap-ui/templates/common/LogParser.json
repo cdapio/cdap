@@ -3,7 +3,7 @@
   "groups" : {
     "position": [ "group1" ],
     "group1": {
-      "display" : "Log Parser Transform",
+      "display" : "Log Parser Properties",
       "position" : [ "logFormat", "inputName" ],
       "fields" : {
         "logFormat": {

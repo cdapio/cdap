@@ -4,7 +4,7 @@
     "position": [ "group1" ],
     "group1": {
        "display" : "General",
-       "position" : [ "name", "schema", "schema.row.field" ],
+       "position" : [ "name", "schema", "schema.row.field", "case.sensitive.row.field" ],
        "fields" : {
           "name" : {
              "widget": "textbox",
