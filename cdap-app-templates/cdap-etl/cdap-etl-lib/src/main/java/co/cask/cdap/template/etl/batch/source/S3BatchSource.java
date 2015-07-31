@@ -30,11 +30,11 @@ import javax.annotation.Nullable;
  * A {@link BatchSource} that reads from Amazon S3.
  */
 @Plugin(type = "source")
-@Name("S3BatchSource")
+@Name("S3")
 @Description("Batch source for Amazon S3")
 public class S3BatchSource extends FileBatchSource {
-  private static final String ACCESS_ID_DESCRIPTION = "Access ID of Amazon S3 instance to connect to.";
-  private static final String ACCESS_KEY_DESCRIPTION = "Access Key of Amazon S3 instance to connect to.";
+  private static final String ACCESS_ID_DESCRIPTION = "Access ID of the Amazon S3 instance to connect to.";
+  private static final String ACCESS_KEY_DESCRIPTION = "Access Key of the Amazon S3 instance to connect to.";
 
   private final S3BatchConfig config;
 

@@ -48,7 +48,7 @@ subclass of FileInputFormat. Defaults to TextInputFormat.
 ::
 
   {
-  "name": "FileBatchSource",
+    "name": "FileBatchSource",
     "properties": {
       "accessKey": "key",
       "accessID": "ID",
@@ -64,4 +64,4 @@ using the stateful Timefilter, which ensures that each file is read only once. T
 requires that files be named with either the convention "yy-MM-dd-HH..." (S3) or "...'.'yy-MM-dd-HH..."
 (Cloudfront). The stateful metadata is stored in a table named 'timeTable'. With the maxSplitSize
 set to 1MB, if the total size of the files being read is larger than 1MB, CDAP will
-configure Hadoop to use more than one mapper.
+configure Hadoop to use one mapper per MB.

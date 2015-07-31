@@ -199,7 +199,7 @@ public class ETLMapReduceTest extends BaseETLBatchTest {
                                                        new Class[]{URI.class, Configuration.class, FileSystem.class});
     method.setAccessible(true);
     method.invoke(FileSystem.class, URI.create("s3n://test/"), conf, fs);
-    ETLStage source = new ETLStage("S3BatchSource", ImmutableMap.<String, String>builder()
+    ETLStage source = new ETLStage("S3", ImmutableMap.<String, String>builder()
       .put(Properties.S3.ACCESS_KEY, "key")
       .put(Properties.S3.ACCESS_ID, "ID")
       .put(Properties.S3.PATH, testPath)

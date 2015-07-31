@@ -72,7 +72,7 @@ public class FileBatchSource extends BatchSource<LongWritable, Object, Structure
     Schema.Field.of("ts", Schema.of(Schema.Type.LONG)),
     Schema.Field.of("body", Schema.of(Schema.Type.STRING))
   );
-  protected static final String MAX_SPLIT_SIZE_DESCRIPTION = "Maximum split size for each mapper in the MapReduce " +
+  protected static final String MAX_SPLIT_SIZE_DESCRIPTION = "Maximum split-size for each mapper in the MapReduce " +
     "Job. Defaults to 128MB.";
   protected static final String PATH_DESCRIPTION = "Path to file(s) to be read. If a directory is specified, " +
     "terminate the path name with a \'/\'.";
