@@ -74,6 +74,7 @@ public abstract class ETLTemplate<T extends ETLConfig> extends ApplicationTempla
     ETLStage sinkConfig = etlConfig.getSink();
     List<ETLStage> transformConfigs = etlConfig.getTransforms();
     String sourcePluginId = PluginID.from(Constants.Source.PLUGINTYPE, sourceConfig.getName(), 1).getID();
+    // 2 + since we start at 1, and there is always a source.  For example, if there are 0 transforms, sink is stage 2.
     String sinkPluginId =
       PluginID.from(Constants.Sink.PLUGINTYPE,  sinkConfig.getName(), 2 + transformConfigs.size()).getID();
 
