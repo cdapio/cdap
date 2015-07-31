@@ -478,7 +478,7 @@ angular.module(PKG.name + '.services')
     function pruneNonBackEndProperties(config) {
       function propertiesIterator(properties, backendProperties) {
         angular.forEach(properties, function(value, key) {
-          if (!backendProperties[key]) {
+          if (!backendProperties[key] || properties[key] === '' || properties[key] === null) {
             delete properties[key];
           }
         });
