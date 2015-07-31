@@ -130,7 +130,8 @@ public class DefaultStore implements Store {
    */
   public static void setupDatasets(DatasetFramework framework) throws IOException, DatasetManagementException {
     framework.addInstance(Table.class.getName(), Id.DatasetInstance.from(
-                            Constants.SYSTEM_NAMESPACE_ID, APP_META_TABLE), DatasetProperties.EMPTY);
+                            Constants.SYSTEM_NAMESPACE_ID, APP_META_TABLE),
+                          DatasetProperties.EMPTY);
   }
 
   @Nullable
