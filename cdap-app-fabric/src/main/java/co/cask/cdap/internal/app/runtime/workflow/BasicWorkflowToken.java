@@ -85,6 +85,13 @@ public class BasicWorkflowToken implements WorkflowToken, Serializable {
   }
 
   /**
+   * Method to disable the put operation on the {@link WorkflowToken} form Mapper and Reducer classes.
+   */
+  public void disablePut() {
+    putAllowed = false;
+  }
+
+  /**
    * Merge the other WorkflowToken passed to the method as a parameter
    * with the WorkflowToken on which the method is invoked.
    * @param other the other WorkflowToken to be merged
