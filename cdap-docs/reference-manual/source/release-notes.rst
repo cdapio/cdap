@@ -1210,6 +1210,11 @@ Known Issues
   There is a problem with workflow runs not being scheduled due to Quartz exceptions. The
   issue is related to that there cannot be more than 30 concurrent runs of a workflow.
 
+- `CDAP-3221 <https://issues.cask.co/browse/CDAP-3221>`__ -
+  There is a problem when running Standalone mode: if an adapter is configured incorrectly
+  such that it leads to a MapReduce job to fail repeatedly, then the SDK hits an OOM exception due to perm gen.
+  The Standalone needs restarting at this point.
+
 - See also the *Known Issues* of `version 3.0.1 <#known-issues-301>`_\ .
 
 
