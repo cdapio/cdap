@@ -263,6 +263,7 @@ angular.module(PKG.name + '.services')
     this.editPluginProperties = function (scope, pluginId) {
       var sourceConn = $filter('filter')(this.connections, { target: pluginId });
       var sourceSchema = null;
+      var isStreamSource = false;
 
       var clfSchema = IMPLICIT_SCHEMA.clf;
 
@@ -272,6 +273,10 @@ angular.module(PKG.name + '.services')
       if (sourceConn.length) {
         source = this.nodes[sourceConn[0].source];
         sourceSchema = source.outputSchema;
+
+        if (source.name === 'Stream') {
+          isStreamSource = true;
+        }
 
         if (source.properties.format && source.properties.format === 'clf') {
           sourceSchema = clfSchema;
@@ -303,6 +308,23 @@ angular.module(PKG.name + '.services')
               } catch (e) {
                 input = null;
               }
+
+              if (isStreamSource && input) {
+                input.fields.push({
+                  name: 'ts',
+                  type: 'long'
+                });
+
+                input.fields.push({
+                  name: 'headers',
+                  type: {
+                    type: 'map',
+                    keys: 'string',
+                    values: 'string'
+                  }
+                });
+              }
+
               $scope.inputSchema = input ? input.fields : null;
               angular.forEach($scope.inputSchema, function (field) {
                 if (angular.isArray(field.type)) {
@@ -313,8 +335,9 @@ angular.module(PKG.name + '.services')
                 }
               });
 
+
               if (!$scope.plugin.outputSchema && inputSchema) {
-                $scope.plugin.outputSchema = angular.copy(inputSchema) || null;
+                $scope.plugin.outputSchema = angular.copy(JSON.stringify(input)) || null;
               }
 
               if ($scope.plugin._backendProperties.schema) {
@@ -374,6 +397,9 @@ angular.module(PKG.name + '.services')
               }.bind(this),
               pluginCopy: function () {
                 return pluginCopy;
+              },
+              isStreamSource: function () {
+                return isStreamSource;
               }
             }
           });
