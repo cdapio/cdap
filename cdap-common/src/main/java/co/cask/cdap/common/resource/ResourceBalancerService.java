@@ -13,11 +13,8 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.metrics.runtime;
+package co.cask.cdap.common.resource;
 
-import co.cask.cdap.api.metrics.MetricsContext;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.ResolvingDiscoverable;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.common.zookeeper.coordination.BalancedAssignmentStrategy;
@@ -26,12 +23,11 @@ import co.cask.cdap.common.zookeeper.coordination.ResourceCoordinator;
 import co.cask.cdap.common.zookeeper.coordination.ResourceCoordinatorClient;
 import co.cask.cdap.common.zookeeper.coordination.ResourceHandler;
 import co.cask.cdap.common.zookeeper.coordination.ResourceRequirement;
-import co.cask.cdap.metrics.process.KafkaMetricsProcessorServiceFactory;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Sets;
-import com.google.common.util.concurrent.AbstractExecutionThreadService;
+import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.SettableFuture;
-import com.google.inject.Inject;
 import org.apache.twill.api.ElectionHandler;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
@@ -39,7 +35,9 @@ import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.internal.Services;
 import org.apache.twill.internal.zookeeper.LeaderElection;
+import org.apache.twill.zookeeper.ZKClient;
 import org.apache.twill.zookeeper.ZKClientService;
+import org.apache.twill.zookeeper.ZKClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,48 +46,51 @@ import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.Collection;
 import java.util.Set;
-import java.util.concurrent.Executor;
-import javax.annotation.Nullable;
 
 /**
- * Metrics processor service that processes events from Kafka.
+ * A services that automatically balances resource assignments between its instances.
  */
-public final class KafkaMetricsProcessorService extends AbstractExecutionThreadService {
+public abstract class ResourceBalancerService extends AbstractIdleService {
 
-  private static final Logger LOG = LoggerFactory.getLogger(KafkaMetricsProcessorService.class);
-  private static final String SERVICE_NAME = "metrics.processor.consumer";
+  private static final Logger LOG = LoggerFactory.getLogger(ResourceBalancerService.class);
 
-  private final CConfiguration conf;
+  private final String serviceName;
+  private final int partitionCount;
   private final LeaderElection election;
   private final ResourceCoordinatorClient resourceClient;
   private final DiscoveryService discoveryService;
-  private final KafkaMetricsProcessorServiceFactory metricsProcessorFactory;
 
   private final SettableFuture<?> completion;
 
   private Cancellable cancelDiscoverable;
   private Cancellable cancelResourceHandler;
 
-  @Nullable
-  private MetricsContext metricsContext;
-
-  @Inject
-  public KafkaMetricsProcessorService(CConfiguration conf,
-                                      final ZKClientService zkClient,
-                                      DiscoveryService discoveryService,
-                                      final DiscoveryServiceClient discoveryServiceClient,
-                                      KafkaMetricsProcessorServiceFactory metricsProcessorFactory) {
-    this.conf = conf;
-    this.metricsProcessorFactory = metricsProcessorFactory;
+  /**
+   * Creates instance of {@link ResourceBalancerService}.
+   * @param serviceName name of the service
+   * @param partitionCount number of partitions of the resource to balance
+   * @param zkClient Zookeeper place to keep metadata for sync; will be further namespaced with service name
+   * @param discoveryService discovery service to register this service
+   * @param discoveryServiceClient discovery service client to discover other instances of this service
+   */
+  protected ResourceBalancerService(String serviceName,
+                                    int partitionCount,
+                                    ZKClientService zkClient,
+                                    DiscoveryService discoveryService,
+                                    final DiscoveryServiceClient discoveryServiceClient) {
+    this.serviceName = serviceName;
+    this.partitionCount = partitionCount;
     this.discoveryService = discoveryService;
 
+    final ZKClient zk = ZKClients.namespace(zkClient, "/" + serviceName);
+
     this.election =
-      new LeaderElection(zkClient, SERVICE_NAME, new ElectionHandler() {
+      new LeaderElection(zk, serviceName, new ElectionHandler() {
         private ResourceCoordinator coordinator;
 
         @Override
         public void leader() {
-          coordinator = new ResourceCoordinator(zkClient,
+          coordinator = new ResourceCoordinator(zk,
                                                 discoveryServiceClient,
                                                 new BalancedAssignmentStrategy());
           coordinator.startAndWait();
@@ -104,98 +105,77 @@ public final class KafkaMetricsProcessorService extends AbstractExecutionThreadS
         }
       });
 
-    this.resourceClient = new ResourceCoordinatorClient(zkClient);
+    this.resourceClient = new ResourceCoordinatorClient(zk);
     this.completion = SettableFuture.create();
   }
 
-  public void setMetricsContext(MetricsContext metricsContext) {
-    this.metricsContext = metricsContext;
-  }
-
-  @Override
-  protected Executor executor() {
-    return new Executor() {
-      @Override
-      public void execute(Runnable command) {
-        Thread t = new Thread(command, getServiceName());
-        t.setDaemon(true);
-        t.start();
-      }
-    };
-  }
+  /**
+   * Creates an instance of {@link Service} that gets assigned the given partitions.
+   * @param partitions partitions to process
+   * @return instance of {@link Service}
+   */
+  protected abstract Service createService(Set<Integer> partitions);
 
   @Override
   protected void startUp() throws Exception {
-    LOG.info("Starting Metrics Processor ...");
+    LOG.info("Starting ResourceBalancer {} service...", serviceName);
 
-    Discoverable discoverable = createDiscoverable(SERVICE_NAME);
+    // We first submit requirement before starting coordinator to make sure all needed paths in ZK are created
+    ResourceRequirement requirement =
+      ResourceRequirement.builder(serviceName).addPartitions("", partitionCount, 1).build();
+    resourceClient.submitRequirement(requirement).get();
+
+    Discoverable discoverable = createDiscoverable(serviceName);
     cancelDiscoverable = discoveryService.register(ResolvingDiscoverable.of(discoverable));
 
     election.start();
     resourceClient.startAndWait();
 
-    int partitionSize = conf.getInt(Constants.Metrics.KAFKA_PARTITION_SIZE,
-                                    Constants.Metrics.DEFAULT_KAFKA_PARTITION_SIZE);
-    ResourceRequirement requirement =
-      // kafka partition id is the name of the partition
-      ResourceRequirement.builder(SERVICE_NAME).addPartitions("", partitionSize, 1).build();
-    resourceClient.submitRequirement(requirement).get();
-
-    cancelResourceHandler =
-      resourceClient.subscribe(SERVICE_NAME, createResourceHandler(metricsProcessorFactory, discoverable));
-  }
-
-  @Override
-  protected void run() throws Exception {
-    completion.get();
-  }
-
-  @Override
-  protected void triggerShutdown() {
-    completion.set(null);
+    cancelResourceHandler = resourceClient.subscribe(serviceName,
+                                                     createResourceHandler(discoverable));
+    LOG.info("Started ResourceBalancer {} service...", serviceName);
   }
 
   @Override
   protected void shutDown() throws Exception {
-    LOG.info("Stopping Metrics Processor ...");
+    LOG.info("Stopping ResourceBalancer {} service...", serviceName);
     Throwable throwable = null;
     try {
       Services.chainStop(election, resourceClient).get();
     } catch (Throwable th) {
       throwable = th;
-      LOG.error("Exception while shutting down.", th);
+      LOG.error("Exception while shutting down {}.", serviceName, th);
     }
     try {
       cancelResourceHandler.cancel();
     } catch (Throwable th) {
       throwable = th;
-      LOG.error("Exception while shutting down.", th);
+      LOG.error("Exception while shutting down {}.", serviceName, th);
     }
     try {
       cancelDiscoverable.cancel();
     } catch (Throwable th) {
       throwable = th;
-      LOG.error("Exception while shutting down.", th);
+      LOG.error("Exception while shutting down{}.", serviceName, th);
     }
     if (throwable != null) {
       throw Throwables.propagate(throwable);
     }
+    LOG.info("Stopped ResourceBalancer {} service.", serviceName);
   }
 
-  private ResourceHandler createResourceHandler(final KafkaMetricsProcessorServiceFactory factory,
-                                                Discoverable discoverable) {
+  private ResourceHandler createResourceHandler(Discoverable discoverable) {
     return new ResourceHandler(discoverable) {
-        private co.cask.cdap.metrics.process.KafkaMetricsProcessorService service;
+        private Service service;
 
         @Override
         public void onChange(Collection<PartitionReplica> partitionReplicas) {
           Set<Integer> partitions = Sets.newHashSet();
           for (PartitionReplica replica : partitionReplicas) {
-            // kafka partition id is the name of the partition
             partitions.add(Integer.valueOf(replica.getName()));
           }
 
-          LOG.info("Metrics Kafka partition changed {}", partitions);
+          LOG.info("Partitions changed {}, service: {}", partitions, serviceName);
           try {
             if (service != null) {
               service.stopAndWait();
@@ -203,12 +183,11 @@ public final class KafkaMetricsProcessorService extends AbstractExecutionThreadS
             if (partitions.isEmpty() || !election.isRunning()) {
               service = null;
             } else {
-              service = factory.create(partitions);
-              service.setMetricsContext(metricsContext);
+              service = createService(partitions);
               service.startAndWait();
             }
           } catch (Throwable t) {
-            LOG.error("Failed to change Kafka partition.", t);
+            LOG.error("Failed to change partitions, service: {}.", serviceName, t);
             completion.setException(t);
           }
         }

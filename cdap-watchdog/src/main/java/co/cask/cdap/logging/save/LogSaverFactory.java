@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,7 +13,14 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
+package co.cask.cdap.logging.save;
+
+import java.util.Set;
+
 /**
- * This package contains helper classes for leader election.
+ * Creates instances of {@link LogSaver}.
  */
-package co.cask.cdap.watchdog.election;
+public interface LogSaverFactory {
+  LogSaver create(Set<Integer> partitions);
+}

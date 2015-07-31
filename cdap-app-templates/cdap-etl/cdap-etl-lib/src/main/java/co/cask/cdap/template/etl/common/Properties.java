@@ -113,6 +113,16 @@ public final class Properties {
   }
 
   /**
+   * Properties for elasticsearch
+   */
+  public static class Elasticsearch {
+    public static final String INDEX_NAME = "es.index";
+    public static final String TYPE_NAME = "es.type";
+    public static final String HOST = "es.host";
+    public static final String ID_FIELD = "es.idField";
+  }
+
+  /**
    * Properties for ProjectionTransform
    */
   public static class ProjectionTransform {

@@ -157,7 +157,6 @@ public abstract class AppFabricTestBase {
     conf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder("data").getAbsolutePath());
     conf.set(Constants.AppFabric.OUTPUT_DIR, System.getProperty("java.io.tmpdir"));
     conf.set(Constants.AppFabric.TEMP_DIR, System.getProperty("java.io.tmpdir"));
-    conf.setBoolean(Constants.Scheduler.SCHEDULERS_LAZY_START, true);
     conf.set(Constants.AppFabric.APP_TEMPLATE_DIR, tmpFolder.newFolder("templates").getAbsolutePath());
     conf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
 

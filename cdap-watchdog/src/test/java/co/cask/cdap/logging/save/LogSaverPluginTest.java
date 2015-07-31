@@ -47,9 +47,9 @@ import co.cask.cdap.logging.read.LogEvent;
 import co.cask.cdap.logging.serialize.LogSchema;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.test.SlowTests;
-import co.cask.cdap.watchdog.election.MultiLeaderElection;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.runtime.TransactionModules;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -60,7 +60,9 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
+import com.google.inject.PrivateModule;
 import com.google.inject.TypeLiteral;
+import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.name.Names;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.hadoop.conf.Configuration;
@@ -94,6 +96,7 @@ import static co.cask.cdap.logging.appender.LoggingTester.LogCallback;
 
 /**
  * Test LogSaver plugin.
+ * TODO (CDAP-3128) This class needs to be refactor with LogSaverTest.
  */
 @Category(SlowTests.class)
 public class LogSaverPluginTest extends KafkaTestBase {
@@ -107,7 +110,6 @@ public class LogSaverPluginTest extends KafkaTestBase {
   private static ZKClientService zkClientService;
   private static KafkaClientService kafkaClientService;
   private static LogSaver logSaver;
-  private static MultiLeaderElection multiElection;
   private static String namespaceDir;
 
   @BeforeClass
@@ -140,8 +142,15 @@ public class LogSaverPluginTest extends KafkaTestBase {
                           new DataSetsModules().getInMemoryModules(),
                           new SystemDatasetRuntimeModule().getInMemoryModules(),
                           new MetricsClientRuntimeModule().getNoopModules(),
-                          new LoggingModules().getDistributedModules()
-                        );
+                          new LoggingModules().getDistributedModules(),
+                          new PrivateModule() {
+                            @Override
+                            protected void configure() {
+                              install(new FactoryModuleBuilder().build(LogSaverFactory.class));
+                              expose(LogSaverFactory.class);
+                            }
+                          }
+    );
     namespaceDir = cConf.get(Constants.Namespace.NAMESPACES_DIR);
   }
 
@@ -155,12 +164,9 @@ public class LogSaverPluginTest extends KafkaTestBase {
     kafkaClientService = injector.getInstance(KafkaClientService.class);
     kafkaClientService.startAndWait();
 
-    logSaver = injector.getInstance(LogSaver.class);
+    LogSaverFactory factory = injector.getInstance(LogSaverFactory.class);
+    logSaver = factory.create(ImmutableSet.of(0));
     logSaver.startAndWait();
-
-    multiElection = new MultiLeaderElection(zkClientService, "log-saver", 2, logSaver);
-    multiElection.setLeaderElectionSleepMs(1);
-    multiElection.startAndWait();
 
     // Sleep a while to let Kafka server fully initialized.
     TimeUnit.SECONDS.sleep(5);
@@ -168,7 +174,6 @@ public class LogSaverPluginTest extends KafkaTestBase {
 
   private void stopLogSaver() {
     logSaver.stopAndWait();
-    multiElection.stopAndWait();
     kafkaClientService.stopAndWait();
     zkClientService.stopAndWait();
   }

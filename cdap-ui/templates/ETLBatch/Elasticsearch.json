@@ -1,0 +1,45 @@
+{
+  "id": "ElasticsearchSink",
+  "groups" : {
+    "position": [ "group1" ],
+    "group1": {
+      "display" : "Elasticsearch Configuration",
+      "position" : [ "es.host", "es.port", "es.index", "es.type", "es.idField" ],
+      "fields" : {
+        "es.host": {
+          "widget": "textbox",
+          "label": "Elasticsearch Host",
+          "description": "Specify the hostname and port for your elasticsearch instance (e.g. localhost:9200).",
+          "properties": {
+            "width": "large"
+          }
+        },
+        "es.index": {
+          "widget": "textbox",
+          "label": "Index",
+          "description": "The index name where the documents will be stored. If the index does not exist, one will be created using elasticsearch defaults",
+          "properties": {
+            "width": "medium"
+          }
+        },
+
+        "es.type": {
+          "widget": "textbox",
+          "label": "Type",
+          "description": "The type the documents will be stored as. If the type does not exist, one will be created.",
+          "properties": {
+            "width": "medium"
+          }
+        },
+        "es.idField" : {
+          "widget": "textbox",
+          "label": "ID Field",
+          "description": "The idField will specify from which field the id of the document is derived.",
+          "properties": {
+            "width": "large"
+          }
+        }
+      }
+    }
+  }
+}

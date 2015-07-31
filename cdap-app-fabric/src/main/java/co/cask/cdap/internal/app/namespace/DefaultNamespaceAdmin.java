@@ -34,6 +34,7 @@ import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.services.ApplicationLifecycleService;
 import co.cask.cdap.proto.AdapterStatus;
@@ -72,13 +73,15 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   private final Scheduler scheduler;
   private final ApplicationLifecycleService applicationLifecycleService;
   private final AdapterService adapterService;
+  private final ArtifactRepository artifactRepository;
 
   @Inject
   public DefaultNamespaceAdmin(Store store, PreferencesStore preferencesStore,
                                DashboardStore dashboardStore, DatasetFramework dsFramework,
                                ProgramRuntimeService runtimeService, QueueAdmin queueAdmin, StreamAdmin streamAdmin,
                                MetricStore metricStore, Scheduler scheduler,
-                               ApplicationLifecycleService applicationLifecycleService, AdapterService adapterService) {
+                               ApplicationLifecycleService applicationLifecycleService, AdapterService adapterService,
+                               ArtifactRepository artifactRepository) {
     this.queueAdmin = queueAdmin;
     this.streamAdmin = streamAdmin;
     this.store = store;
@@ -90,6 +93,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     this.metricStore = metricStore;
     this.applicationLifecycleService = applicationLifecycleService;
     this.adapterService = adapterService;
+    this.artifactRepository = artifactRepository;
   }
 
   /**
@@ -205,6 +209,8 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
       store.removeAll(namespaceId);
 
       deleteMetrics(namespaceId);
+      // delete all artifacts in the namespace
+      artifactRepository.clear(namespaceId);
 
       // Delete the namespace itself, only if it is a non-default namespace. This is because we do not allow users to
       // create default namespace, and hence deleting it may cause undeterministic behavior.

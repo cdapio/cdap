@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,17 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.watchdog.election;
-
-import java.util.Set;
+package co.cask.cdap.internal.app.runtime.artifact;
 
 /**
- * Encapsulates logic to handle leader partition changes.
+ * Thrown when an artifact range is invalid.
  */
-public interface PartitionChangeHandler {
-  /**
-   * Called when the leader partitions change.
-   * @param partitions new leader partitions.
-   */
-  void partitionsChanged(Set<Integer> partitions);
+public class InvalidArtifactRangeException extends Exception {
+
+  public InvalidArtifactRangeException(String message) {
+    super(message);
+  }
+
 }
