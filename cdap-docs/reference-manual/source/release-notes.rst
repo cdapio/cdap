@@ -440,7 +440,7 @@ Bug Fixes
   Fixed problems with the CDAP ClassLoading model.
 
 - `CDAP-674 <https://issues.cask.co/browse/CDAP-674>`__ -
-  Foixed a probelm with CDAP code examples and versioning.
+  Fixed problems with CDAP code examples and versioning.
 
 - `CDAP-814 <https://issues.cask.co/browse/CDAP-814>`__ -
   Resolved issues in the documentation about element versus program.
