@@ -33,7 +33,9 @@
         <input type="text"
                 ng-model="metadata['name']"
                 my-maxlength="128"
-                class="form-control"/>
+                class="form-control" />
+        <small>Maximum 128 characters</small>
+        <small class="pull-right">{{128 - metadata['name'].length}}</small>
       </div>
     </div>
 
@@ -44,6 +46,8 @@
                ng-model="metadata['description']"
                my-maxlength="512"
                class="form-control"></textarea>
+        <small>Maximum 512 characters</small>
+        <small class="pull-right">{{512 - metadata['description'].length}}</small>
       </div>
     </div>
 
