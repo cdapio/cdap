@@ -120,7 +120,9 @@ New Features
   Users are able to collect/view logs from Spark programs in distributed mode.
 
 - `CDAP-2705 <https://issues.cask.co/browse/CDAP-2705>`__ -
-  Added examples, guides and documentation for Spark in distributed mode.
+  Added examples, guides and documentation for Spark in distributed mode. LogAnalysis
+  application demonstrating parallel execution of the Spark and MapReduce programs using
+  Workflows.
 
 - `CDAP-2706 <https://issues.cask.co/browse/CDAP-2706>`__ -
   Workflow is able to aggregate the logs from underlying MapReduce/Spark programs.
@@ -306,7 +308,7 @@ Improvements
   Metrics processor scaling receives a master services restart.
 
 - `CDAP-1983 <https://issues.cask.co/browse/CDAP-1983>`__ -
-  Added integration tests for workflows.
+  Added example application for processing and analyzing Wikipedia data using Workflows.
 
 - `CDAP-1912 <https://issues.cask.co/browse/CDAP-1912>`__ -
   Changed Examples (Purchase, SportResults) to use Writable instead of JSON as mapper output.
@@ -462,7 +464,7 @@ Improvements
   CDAP-UI: added tab names during adapter creation.
 
 - `CDAP-2704 <https://issues.cask.co/browse/CDAP-2704>`__ -
-  Tested Spark ML with CDAP in distributed mode.
+  Support for Spark ML with CDAP in distributed mode.
 
 - `CDAP-2716 <https://issues.cask.co/browse/CDAP-2716>`__ -
   CDAP-UI: when creating an adapter, the tabbing order shows correctly.
@@ -478,7 +480,8 @@ Improvements
 
 - `CDAP-2747 <https://issues.cask.co/browse/CDAP-2747>`__ -
   PartitionedFileSets now index the creation time of partitions to allow selection of
-  partitions that were created after a given time.
+  partitions that were created after a given time. Introduced BatchPartitionConsumer as a
+  way to incrementally consume new data in a PartitionedFileSet.
 
 - `CDAP-2758 <https://issues.cask.co/browse/CDAP-2758>`__ -
   FileSet now support existing HDFS locations.
@@ -593,6 +596,9 @@ Improvements
 
 - `CDAP-2986 <https://issues.cask.co/browse/CDAP-2986>`__ -
   Spark program now are able to specify runtime arguments when reading or writing a datset.
+
+- `CDAP-2987 <https://issues.cask.co/browse/CDAP-2987>`__ -
+  Added an example for Spark using datasets directly.
 
 - `CDAP-2989 <https://issues.cask.co/browse/CDAP-2989>`__ -
   Added an example for Spark using FileSets.
@@ -896,7 +902,8 @@ Bug Fixes
   Fixed a problem with the Preferences Namespace CLI help having errors.
 
 - `CDAP-2541 <https://issues.cask.co/browse/CDAP-2541>`__ -
-  Added the ability to stop the particular run of a program.
+  Added the ability to stop the particular run of a program. Allows concurrent runs of the
+  MapReduce and Workflow programs and the ability to stop programs at a per-run level.
 
 - `CDAP-2547 <https://issues.cask.co/browse/CDAP-2547>`__ -
   Fixed a problem with Kakfa Source - not using the persisted offset when the Adapter is restarted.
@@ -1079,9 +1086,6 @@ Bug Fixes
 - `CDAP-2900 <https://issues.cask.co/browse/CDAP-2900>`__ -
   Fixed a problem with exposing app.template.dir as a config option.
 
-- `CDAP-2901 <https://issues.cask.co/browse/CDAP-2901>`__ -
-  Fixed a problem with the RunID in the Dashboard Widget creation not being sorted by run timestamp.
-
 - `CDAP-2904 <https://issues.cask.co/browse/CDAP-2904>`__ -
   Fixed a problem with "Make Request" button overlapping with paths when a path is long.
 
@@ -1163,9 +1167,6 @@ Bug Fixes
 
 - `CDAP-2999 <https://issues.cask.co/browse/CDAP-2999>`__ -
   Fixed a problem with MapReduce jobs showing the duration for tasks as 17 days before the mapper starts.
-
-- `CDAP-3000 <https://issues.cask.co/browse/CDAP-3000>`__ -
-  Fixed a problem with Workflow Token merging failing at fork nodes.
 
 - `CDAP-3001 <https://issues.cask.co/browse/CDAP-3001>`__ -
   Fixed a problem with truncating a custom dataset failing with internal server error.
