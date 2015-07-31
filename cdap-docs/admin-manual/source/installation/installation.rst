@@ -657,8 +657,9 @@ to make sure the CDAP table definitions in HBase are up-to-date.
 These steps will stop CDAP, update the installation, run an upgrade tool for the table definitions,
 and then restart CDAP.
 
-These steps will upgrade from CDAP 3.0.3 to 3.1.0. (**Note:** Some apps need to be both
-recompiled and re-deployed, see below.)
+These steps will upgrade from CDAP 3.0.3 to 3.1.0. If you are on an earlier version of CDAP,
+please follow the upgrade instructions for the earlier versions and upgrade first to 3.0.3 before proceeding.
+(**Note:** Some apps need to be both recompiled and re-deployed, see below.)
 
 .. highlight:: console
 
@@ -703,7 +704,7 @@ recompiled and re-deployed, see below.)
 
      $ kinit -kt <keytab> <principal>
 
-#. Run the upgrade tool as the user that runs CDAP master::
+#. Run the upgrade tool as the user that runs CDAP Master::
 
      $ /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.UpgradeTool upgrade
 
@@ -711,7 +712,7 @@ recompiled and re-deployed, see below.)
 
      $ for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i start ; done
 
-#. You must recompile and then redeploy your applications that use Partition Filesets or Time Partitioned Filesets.
+#. You must recompile and redeploy any applications that use either Partition Filesets or Time Partitioned Filesets.
 
 .. _install-troubleshooting:
 
