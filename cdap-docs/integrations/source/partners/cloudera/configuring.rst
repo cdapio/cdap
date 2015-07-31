@@ -85,11 +85,25 @@ Details on CSDs and Cloudera Manager Extensions are `available online
 Install, Setup, and Startup
 =======================================
 
-.. rubric:: Install the CSD
+.. _cloudera-configuring-csd-parcel:
+
+.. rubric:: Install the CSD, Download and Distribute Parcel
 
 #. `Install the CSD <http://www.cloudera.com/content/cloudera/en/documentation/core/latest/topics/cm_mc_addon_services.html>`__.
-#. Download and distribute the CDAP-|version| parcel. If the Cask parcel repo is
-   inaccessible to your cluster, please see :ref:`these suggestions <cloudera-direct-parcel-access>`.
+#. Download and distribute the CDAP-|version| parcel. Complete instructions on parcels are available at
+   `Cloudera's website <http://www.cloudera.com/content/cloudera/en/documentation/core/latest/topics/cm_ig_parcels.html>`__,
+   but in summary there are four steps:
+   
+   1. `Adding the repository <http://www.cloudera.com/content/cloudera/en/documentation/core/latest/topics/cm_ig_parcels.html#cmug_topic_7_11_5_unique_1>`__
+      to the list of repositories searched by Cloudera Manager;
+   #. `Downloading <http://www.cloudera.com/content/cloudera/en/documentation/core/latest/topics/cm_ig_parcels.html#concept_vwq_421_yk_unique_1__section_cnx_b3y_bm_unique_1>`__
+      the parcel to the Cloudera Manager server;
+   #. `Distributing <http://www.cloudera.com/content/cloudera/en/documentation/core/latest/topics/cm_ig_parcels.html#concept_vwq_421_yk_unique_1__section_sty_b3y_bm_unique_1>`__
+      the parcel to all the servers in the cluster; and
+   #. `Activating <http://www.cloudera.com/content/cloudera/en/documentation/core/latest/topics/cm_ig_parcels.html#concept_vwq_421_yk_unique_1__section_ug1_c3y_bm_unique_1>`__
+      the parcel.
+
+   If the Cask parcel repo is inaccessible to your cluster, please see :ref:`these suggestions <cloudera-direct-parcel-access>`.
 
 .. rubric:: Setup using the Cloudera Manager Admin Console *Add Service* Wizard
 
