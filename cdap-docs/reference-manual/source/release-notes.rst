@@ -29,7 +29,19 @@ Cask Data Application Platform Release Notes
 Summary
 -------
 
+**Distributions**
 
+- CDH 5.4 Support
+- HDP 2.2 Support
+- MapR Support
+
+**Major Features**
+
+- Distributed Spark runtime
+- Metrics enhancements
+- Workflow Enhancements
+- Dataset Improvements
+- CDAP-UI Adapter UI
 
 
 New Features
