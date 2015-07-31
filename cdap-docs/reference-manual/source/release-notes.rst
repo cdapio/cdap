@@ -33,7 +33,7 @@ Summary
 
 - CDH 5.4 support
 - HDP 2.2 support
-- MapR support
+- MapR 4.1 support
 
 **Major Features**
 
