@@ -180,6 +180,18 @@ query, try setting ``hive.exec.stagingdir`` in your Hive configuration to
 This can be done in Cloudera Manager using the *Hive Client
 Advanced Configuration Snippet (Safety Valve) for hive-site.xml* configuration field.
 
+.. rubric:: Missing Application Templates
+
+The bundled application templates are included in the CDAP parcel, located in a subdirectory
+of Cloudera's ``${PARCELS_ROOT}`` directory, for example:
+
+.. parsed-literal::
+  /opt/cloudera/parcels/CDAP/master/templates
+
+Ensure the ``App Template Dir`` configuration option points to this path on disk. Since this
+directory can change when CDAP parcels are upgraded, advanced users are encouraged to place
+these templates in a static directory outside the parcel root, and configure accordingly.
+
 .. _cloudera-direct-parcel-access:
 
 .. rubric:: Direct Parcel Access
