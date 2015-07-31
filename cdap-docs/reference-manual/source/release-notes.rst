@@ -31,17 +31,17 @@ Summary
 
 **Distributions**
 
-- CDH 5.4 Support
-- HDP 2.2 Support
-- MapR Support
+- CDH 5.4 support
+- HDP 2.2 support
+- MapR support
 
 **Major Features**
 
 - Distributed Spark runtime
 - Metrics enhancements
-- Workflow Enhancements
-- Dataset Improvements
-- CDAP-UI Adapter UI
+- Workflow enhancements
+- Dataset improvements
+- CDAP-UI Adapter UI enhancements
 
 
 New Features
@@ -225,8 +225,15 @@ New Features
 Improvements
 ------------
 
+- Introduced BatchPartitionConsumer as a way to incrementally consume new data in a
+  PartitionedFileSet.
+
 - `CDAP-347 <https://issues.cask.co/browse/CDAP-347>`__ -
   User can use datasets in beforeSubmit and afterFinish.
+
+- `CDAP-585 <https://issues.cask.co/browse/CDAP-585>`__ -
+  Changes to Spark program runner to use File dataset in Spark.
+  Spark programs can now use file-based datasets.
 
 - `CDAP-593 <https://issues.cask.co/browse/CDAP-593>`__ -
   Spark no longer determines the mode through MRConfig.FRAMEWORK_NAME.
@@ -396,6 +403,19 @@ Improvements
 
 - `CDAP-2844 <https://issues.cask.co/browse/CDAP-2844>`__ -
   MapReduce metrics collection no longer use counters, and instead report directly to Kafka.
+
+- `CDAP-2884 <https://issues.cask.co/browse/CDAP-2884>`__ -
+  Treat base paths that start with "/" as absolute in the file system. An absolute base
+  path for a (Partitioned)FileSet was interpreted as relative to the namespace's data
+  directory. Newly created FileSets interpret absolute base paths as absolute in the file
+  system.
+  
+- `CDAP-2885 <https://issues.cask.co/browse/CDAP-2885>`__ -
+  Introduced a new property for (Partitioned)FileSets name "data.external". If true, the
+  base path of the FileSet is assumed to be managed by some external process. That is, the
+  FileSet will not attempt to create the directory, it will not delete any files when the
+  FileSet is dropped or truncated, and it will not allow adding or deleting files or
+  partitions. In other words, the FileSet is read-only. 
 
 - `CDAP-2921 <https://issues.cask.co/browse/CDAP-2921>`__ -
   Removed backward-compatibility for pre-2.8 TPFS.
@@ -827,6 +847,7 @@ Bug Fixes
 
 - `CDAP-2922 <https://issues.cask.co/browse/CDAP-2922>`__ -
   Fixed a problem with datasets created through DynamicDatasetContext not having metrics context.
+  Datasets in MapReduce and Spark programs, and workers, were not emitting metrics.
 
 - `CDAP-2925 <https://issues.cask.co/browse/CDAP-2925>`__ -
   Fixed a problem with the documentation on how to create datasets with properties.
@@ -853,7 +874,10 @@ Bug Fixes
   Fixed a problem with the CDAP-UI namespace dropdown failing on standalone restart.
 
 - `CDAP-2945 <https://issues.cask.co/browse/CDAP-2945>`__ -
-  Fixed a problem with a MapReduce job using FileSet/PartitionedFileSet as input failing if there are no input paths.
+  Fixed a problem with a MapReduce job using FileSet/PartitionedFileSet as input failing
+  if there are no input paths. A bug in the PartitionedFileSet caused MapReduce to fail
+  if the input partition filter does not match any partitions. This will now be successful
+  |---| however without reading any data.
 
 - `CDAP-2946 <https://issues.cask.co/browse/CDAP-2946>`__ -
   Fixed a problem with the log.saver creating a lot of threads for HtablePool.
@@ -962,7 +986,9 @@ Bug Fixes
   Fixed a problem with deploying an app with a dataset with an invalid base path returning an "internal error".
 
 - `CDAP-3037 <https://issues.cask.co/browse/CDAP-3037>`__ -
-  Fixed a problem with not being able to use a PartitionedFileSet in a custom dataset.
+  Fixed a problem with not being able to use a PartitionedFileSet in a custom dataset. If
+  a custom dataset embedded a Table and a PartitionedFileSet, loading the dataset at
+  runtime would fail. 
 
 - `CDAP-3038 <https://issues.cask.co/browse/CDAP-3038>`__ -
   Fixed a problem with logs not showing up in UI when using Spark.
@@ -1080,13 +1106,13 @@ Bug Fixes
   Fixed a problem with the AbstractFlowlet constructors being deprecated when they should not be.
 
 
-API Changes
------------
+.. API Changes
+.. -----------
 
 
 
-Deprecated and Removed Features
--------------------------------
+.. Deprecated and Removed Features
+.. -------------------------------
 
 
 
@@ -1094,6 +1120,15 @@ Deprecated and Removed Features
 
 Known Issues
 ------------
+
+- `CDAP-2878 <https://issues.cask.co/browse/CDAP-2878>`__ -
+  There is a problem with confusing semantics for TTL. The Table TTL property is
+  interpreted as milliseconds in some contexts: ``DatasetDefinition.confgure()`` and
+  ``getAdmin()``.
+
+- `CDAP-3000 <https://issues.cask.co/browse/CDAP-3000>`__ -
+  There is a problem with the Workflow token being in inconsistent state for nodes in a
+  fork while the fork is still running. It becomes consistent after the join.
 
 - `CDAP-3101 <https://issues.cask.co/browse/CDAP-3101>`__ -
   There is a problem with workflow runs not being scheduled due to Quartz exceptions. The
