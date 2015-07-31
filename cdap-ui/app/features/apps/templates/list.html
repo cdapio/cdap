@@ -66,6 +66,7 @@
     <thead>
       <tr ng-class="{'sort-enabled': ListController.apps.length>0}">
         <th data-predicate="name"> Name </th>
+        <th data-predicate="type"> Type </th>
         <th data-predicate="version"> Version </th>
         <th data-predicate="description"> Description </th>
       </tr>
@@ -83,6 +84,14 @@
               ng-click="MyOrderings.appClicked(app.id)">
             <strong> {{ ::app.name }} </strong>
           </a>
+        </td>
+        <td ng-if="app.type !== 'adapter'">
+          <span class="icon-fist"></span>
+          <span>App</span>
+        </td>
+        <td ng-if="app.type === 'adapter'">
+          <span class="icon-ETLtemplates"></span>
+          <span>{{ ::app.template }}</span>
         </td>
         <td>{{ ::app.version }}</td>
         <td> {{ ::app.description }} </td>

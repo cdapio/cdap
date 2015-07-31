@@ -49,7 +49,6 @@
             <tbody>
                 <tr ng-repeat="app in apps | orderBy:sortable.predicate:sortable.reverse">
                     <td>
-                        <strong class="icon-app"></strong>
                         <a ng-if="app.type !== 'Adapter'" ui-sref="admin.namespace.detail.apps.metadata({appId: app.id})">
                             <strong> {{ ::app.name }} </strong>
                         </a>
@@ -58,8 +57,13 @@
                         </span>
                     </td>
                     <td>{{ ::app.version }}</td>
-                    <td>
-                        <span> {{ ::app.type }} </span>
+                    <td ng-if="app.type !== 'Adapter'">
+                      <span class="icon-fist"></span>
+                      <span>App</span>
+                    </td>
+                    <td ng-if="app.type === 'Adapter'">
+                      <span class="icon-ETLtemplates"></span>
+                      <span>{{ ::app.template }}</span>
                     </td>
                     <td>{{ ::app.description }}</td>
                     <td class="text-center">

@@ -35,7 +35,7 @@ public interface Table extends BatchReadable<byte[], Row>, BatchWritable<byte[],
   Dataset, RecordScannable<StructuredRecord> {
 
   /**
-   * Property set to configure time-to-live on data within this dataset. The value given is in milliseconds.
+   * Property set to configure time-to-live on data within this dataset. The value given is in seconds.
    * Once a cell's data has surpassed the given value in age,
    * the cell's data will no longer be visible and may be garbage collected.
    */

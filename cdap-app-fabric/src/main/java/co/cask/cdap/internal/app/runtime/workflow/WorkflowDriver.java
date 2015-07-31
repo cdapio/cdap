@@ -38,6 +38,8 @@ import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.app.RunIds;
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.lang.InstantiatorFactory;
@@ -124,11 +126,13 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private final TransactionSystemClient txClient;
   private final Store store;
   private final Id.Workflow workflowId;
+  private final CConfiguration cConf;
 
   WorkflowDriver(Program program, ProgramOptions options, InetAddress hostname,
                  WorkflowSpecification workflowSpec, ProgramRunnerFactory programRunnerFactory,
                  MetricsCollectionService metricsCollectionService, DatasetFramework datasetFramework,
-                 DiscoveryServiceClient discoveryServiceClient, TransactionSystemClient txClient, Store store) {
+                 DiscoveryServiceClient discoveryServiceClient, TransactionSystemClient txClient,
+                 Store store, CConfiguration cConf) {
     this.program = program;
     this.hostname = hostname;
     this.runtimeArgs = createRuntimeArgs(options.getUserArguments());
@@ -156,6 +160,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     this.txClient = txClient;
     this.store = store;
     this.workflowId = Id.Workflow.from(program.getId().getApplication(), workflowSpec.getName());
+    this.cConf = cConf;
   }
 
   @Override
@@ -446,7 +451,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   @Override
   protected void run() throws Exception {
     LOG.info("Start workflow execution for {}", workflowSpec);
-    WorkflowToken token = new BasicWorkflowToken();
+    WorkflowToken token = new BasicWorkflowToken(cConf.getInt(Constants.AppFabric.WORKFLOW_TOKEN_MAX_SIZE_MB));
     executeAll(workflowSpec.getNodes().iterator(), program.getApplicationSpecification(),
                new InstantiatorFactory(false), program.getClassLoader(), token);
 

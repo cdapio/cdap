@@ -24,16 +24,6 @@
              "widget": "textbox",
              "label" : "Row Field",
              "description" : "Specify the field from the record above that should be used as key"
-          },
-
-          "case.sensitive.row.field" : {
-             "widget": "select",
-             "label" : "Case-Sensitive Row Field",
-             "properties" : {
-               "values" : [ "true", "false" ],
-               "default" : "true"
-             },
-             "description" : "Specify whether the row field specified in schema.row.field is case sensitive"
           }
        }
     }

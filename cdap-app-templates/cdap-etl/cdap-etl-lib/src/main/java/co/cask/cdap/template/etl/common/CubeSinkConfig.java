@@ -31,9 +31,8 @@ public class CubeSinkConfig extends PluginConfig {
 
   @Name(Properties.Cube.DATASET_RESOLUTIONS)
   @Description("Aggregation resolutions to be used if a new Cube dataset " +
-    "needs to be created. See Cube dataset configuration " +
-    "details for more information : http://docs.cask.co/cdap/current/en/developers-manual/building-blocks/datasets/" +
-    "cube.html#cube-configuration")
+    "needs to be created. See Cube dataset configuration details available at http://docs.cask.co/cdap/current/en/ " +
+    "for more information.")
   @Nullable
   String resolutions;
 
@@ -42,9 +41,7 @@ public class CubeSinkConfig extends PluginConfig {
     "provided as a JSON Map. For example, if aggregations are desired on fields 'abc' and 'xyz', " +
     "the property should have the value: " +
     "\"{\"dataset.cube.aggregation.agg1.dimensions\":\"abc\", \"dataset.cube.aggregation.agg2.dimensions\":\"xyz\"}. " +
-    "See Cube dataset configuration " +
-    "details for more information : http://docs.cask.co/cdap/current/en/developers-manual/building-blocks/datasets/" +
-    "cube.html#cube-configuration")
+    "See Cube dataset configuration details available at http://docs.cask.co/cdap/current/en/ for more information")
   @Nullable
   String datasetOther;
 

@@ -25,6 +25,7 @@ import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.app.RunIds;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
@@ -52,6 +53,7 @@ public class WorkflowProgramRunner implements ProgramRunner {
   private final DiscoveryServiceClient discoveryServiceClient;
   private final TransactionSystemClient txClient;
   private final Store store;
+  private final CConfiguration cConf;
 
   @Inject
   public WorkflowProgramRunner(ProgramRunnerFactory programRunnerFactory,
@@ -59,7 +61,7 @@ public class WorkflowProgramRunner implements ProgramRunner {
                                @Named(Constants.AppFabric.SERVER_ADDRESS) InetAddress hostname,
                                MetricsCollectionService metricsCollectionService, DatasetFramework datasetFramework,
                                DiscoveryServiceClient discoveryServiceClient, TransactionSystemClient txClient,
-                               Store store) {
+                               Store store, CConfiguration cConf) {
     this.programRunnerFactory = programRunnerFactory;
     this.serviceAnnouncer = serviceAnnouncer;
     this.hostname = hostname;
@@ -68,6 +70,7 @@ public class WorkflowProgramRunner implements ProgramRunner {
     this.discoveryServiceClient = discoveryServiceClient;
     this.txClient = txClient;
     this.store = store;
+    this.cConf = cConf;
   }
 
   @Override
@@ -85,7 +88,7 @@ public class WorkflowProgramRunner implements ProgramRunner {
 
     WorkflowDriver driver = new WorkflowDriver(program, options, hostname, workflowSpec, programRunnerFactory,
                                                metricsCollectionService, datasetFramework,
-                                               discoveryServiceClient, txClient, store);
+                                               discoveryServiceClient, txClient, store, cConf);
 
     // Controller needs to be created before starting the driver so that the state change of the driver
     // service can be fully captured by the controller.

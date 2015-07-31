@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,12 +22,12 @@
 package $package;
 
 import co.cask.cdap.api.ServiceDiscoverer;
+import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.spark.JavaSparkProgram;
 import co.cask.cdap.api.spark.SparkContext;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
-import com.google.common.io.Closeables;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.spark.api.java.JavaPairRDD;
@@ -57,6 +57,11 @@ public class SparkPageRankProgram implements JavaSparkProgram {
 
   private static final int ITERATIONS_COUNT = 10;
   private static final Pattern SPACES = Pattern.compile("\\s+");
+  private static final String POPULAR_PAGES = "total.popular.pages";
+  private static final String UNPOPULAR_PAGES = "total.unpopular.pages";
+  private static final String REGULAR_PAGES = "total.regular.pages";
+  private static final int POPULAR_PAGE_THRESHOLD = 10;
+  private static final int UNPOPULAR_PAGE_THRESHOLD = 3;
 
   private static class Sum implements Function2<Double, Double, Double> {
     @Override
@@ -78,7 +83,7 @@ public class SparkPageRankProgram implements JavaSparkProgram {
         @Override
         public Tuple2<String, String> call(Text s) {
           String[] parts = SPACES.split(s.toString());
-          return new Tuple2<String, String>(parts[0], parts[1]);
+          return new Tuple2<>(parts[0], parts[1]);
         }
       }).distinct().groupByKey().cache();
 
@@ -99,9 +104,9 @@ public class SparkPageRankProgram implements JavaSparkProgram {
           public Iterable<Tuple2<String, Double>> call(Tuple2<Iterable<String>, Double> s) {
             LOG.debug("Processing {} with rank {}", s._1(), s._2());
             int urlCount = Iterables.size(s._1());
-            List<Tuple2<String, Double>> results = new ArrayList<Tuple2<String, Double>>();
+            List<Tuple2<String, Double>> results = new ArrayList<>();
             for (String n : s._1()) {
-              results.add(new Tuple2<String, Double>(n, s._2() / urlCount));
+              results.add(new Tuple2<>(n, s._2() / urlCount));
             }
             return results;
           }
@@ -118,6 +123,7 @@ public class SparkPageRankProgram implements JavaSparkProgram {
     LOG.info("Writing ranks data");
 
     final ServiceDiscoverer discoveryServiceContext = sc.getServiceDiscoverer();
+    final Metrics sparkMetrics = sc.getMetrics();
     JavaPairRDD<byte[], Integer> ranksRaw = ranks.mapToPair(new PairFunction<Tuple2<String, Double>, byte[],
       Integer>() {
       @Override
@@ -130,13 +136,17 @@ public class SparkPageRankProgram implements JavaSparkProgram {
         try {
           URLConnection connection = new URL(serviceURL, String.format("transform/%s",
                                                                        tuple._2().toString())).openConnection();
-          BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(),
-                                                                           Charsets.UTF_8));
-          try {
+          try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(),
+                                                                                Charsets.UTF_8))) {
             String pr = reader.readLine();
-            return new Tuple2<byte[], Integer>(tuple._1().getBytes(Charsets.UTF_8), Integer.parseInt(pr));
-          } finally {
-            Closeables.closeQuietly(reader);
+            if ((Integer.parseInt(pr)) == POPULAR_PAGE_THRESHOLD) {
+              sparkMetrics.count(POPULAR_PAGES, 1);
+            } else if (Integer.parseInt(pr) <= UNPOPULAR_PAGE_THRESHOLD) {
+              sparkMetrics.count(UNPOPULAR_PAGES, 1);
+            } else {
+              sparkMetrics.count(REGULAR_PAGES, 1);
+            }
+            return new Tuple2(tuple._1().getBytes(Charsets.UTF_8), Integer.parseInt(pr));
           }
         } catch (Exception e) {
           LOG.warn("Failed to read the Stream for service {}", SparkPageRankApp.GOOGLE_TYPE_PR_SERVICE_NAME, e);
@@ -151,17 +161,15 @@ public class SparkPageRankProgram implements JavaSparkProgram {
     // The value of the entry is the URL rank.
     sc.writeToDataset(ranksRaw, "ranks", byte[].class, Integer.class);
 
-    LOG.info("Done!");
+    LOG.info("PageRanks successfuly computed and written to \"ranks\" dataset");
   }
 
   private int getIterationCount(SparkContext sc) {
-    String[] args = sc.getRuntimeArguments("args");
-    int iterationCount;
-    if (args != null && args.length > 0) {
-      iterationCount = Integer.valueOf(args[0]);
-    } else {
-      iterationCount = ITERATIONS_COUNT;
+    String args = sc.getRuntimeArguments().get("args");
+    if (args == null) {
+      return ITERATIONS_COUNT;
     }
-    return iterationCount;
+    String[] parts = args.split("\\s");
+    return (parts.length > 0) ? Integer.parseInt(parts[0]) : ITERATIONS_COUNT;
   }
 }
