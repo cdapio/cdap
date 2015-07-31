@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.runtime.batch.dataset;
 import co.cask.cdap.api.data.batch.BatchWritable;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.internal.app.runtime.batch.BasicMapReduceContext;
+import co.cask.cdap.internal.app.runtime.batch.MapReduceContextProvider;
 import com.google.common.base.Throwables;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
@@ -26,17 +27,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.concurrent.TimeUnit;
 
 final class DataSetRecordWriter<KEY, VALUE> extends RecordWriter<KEY, VALUE> {
   private static final Logger LOG = LoggerFactory.getLogger(DataSetRecordWriter.class);
 
   private final BatchWritable<KEY, VALUE> batchWritable;
   private final BasicMapReduceContext mrContext;
+  private final MapReduceContextProvider mrContextProvider;
 
-  public DataSetRecordWriter(final BatchWritable<KEY, VALUE> batchWritable, BasicMapReduceContext mrContext) {
+  public DataSetRecordWriter(final BatchWritable<KEY, VALUE> batchWritable,
+                             final MapReduceContextProvider mrContextProvider) {
     this.batchWritable = batchWritable;
-    this.mrContext = mrContext;
+    this.mrContextProvider = mrContextProvider;
+    this.mrContext = mrContextProvider.get();
+
     // hack: making sure logging context is set on the thread that accesses the runtime context
     LoggingContextAccessor.setLoggingContext(mrContext.getLoggingContext());
   }
@@ -59,7 +63,7 @@ final class DataSetRecordWriter<KEY, VALUE> extends RecordWriter<KEY, VALUE> {
       try {
         mrContext.close();
       } finally {
-        mrContext.getMetricsCollectionService().stop();
+        mrContextProvider.stop();
       }
     }
   }
