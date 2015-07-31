@@ -31,7 +31,7 @@
 
 */
 angular.module(PKG.name + '.services')
-  .service('MyPlumbService', function(myAdapterApi, $q, $bootstrapModal, $state, $filter, mySettings, $alert, AdapterErrorFactory, IMPLICIT_SCHEMA, myHelpers, PluginConfigFactory, ModalConfirm) {
+  .service('MyPlumbService', function(myAdapterApi, $q, $bootstrapModal, $state, $filter, mySettings, $alert, AdapterErrorFactory, IMPLICIT_SCHEMA, myHelpers, PluginConfigFactory, ModalConfirm, EventPipe) {
 
     var countSink = 0,
         countSource = 0,
@@ -478,7 +478,7 @@ angular.module(PKG.name + '.services')
     function pruneNonBackEndProperties(config) {
       function propertiesIterator(properties, backendProperties) {
         angular.forEach(properties, function(value, key) {
-          if (!backendProperties[key]) {
+          if (!backendProperties[key] || properties[key] === '' || properties[key] === null) {
             delete properties[key];
           }
         });
@@ -545,6 +545,7 @@ angular.module(PKG.name + '.services')
       var errors = AdapterErrorFactory.isModelValid(this.nodes, this.connections, this.metadata, config);
 
       if (!angular.isObject(errors)) {
+        EventPipe.emit('showLoadingIcon');
         var data = this.getConfigForBackend();
         myAdapterApi.save(
           {
@@ -566,12 +567,14 @@ angular.module(PKG.name + '.services')
                  }
                  defer.resolve(adapterName);
                  this.resetToDefaults();
+                 EventPipe.emit('hideLoadingIcon.immediate');
                }.bind(this));
             }.bind(this),
             function error(err) {
               defer.reject({
                 messages: err
               });
+              EventPipe.emit('hideLoadingIcon.immediate');
             }
           );
       } else {

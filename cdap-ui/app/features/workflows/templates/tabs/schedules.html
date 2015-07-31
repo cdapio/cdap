@@ -26,11 +26,21 @@
       </div>
 
       <div class="col-xs-3">
-        <p>{{ schedule.schedule.name }}</p>
+        <p  tooltip="{{ schedule.schedule.name }}"
+            tooltip-placement="right"
+            tooltip-enable="schedule.schedule.name.length > 31"
+            tooltip-append-to-body="true">
+          {{ schedule.schedule.name | myEllipsis: 31 }}
+        </p>
       </div>
 
       <div class="col-xs-4">
-        <p>{{ schedule.schedule.description | myEllipsis: 50 }}</p>
+        <p  tooltip="{{ schedule.schedule.description }}"
+            tooltip-placement="right"
+            tooltip-enable="schedule.schedule.description.length > 50"
+            tooltip-append-to-body="true">
+            {{ schedule.schedule.description | myEllipsis: 50 }}
+        </p>
       </div>
 
       <div class="col-xs-2">
