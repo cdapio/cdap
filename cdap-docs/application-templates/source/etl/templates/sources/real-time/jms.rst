@@ -8,11 +8,12 @@ Sources: Real-time: JMS
 
 .. rubric:: Description
 
-JMS Real-time Source. Emits a record with a field 'message' of string type.
+Java Message Service (JMS) Real-time Source. Emits a record with a field 'message' of string type.
 
 .. rubric:: Use Case
 
-TODO: Fill me out
+This source is used whenever you want to read from a JMS queue. For example, you may want to read
+from an Apache ActiveMQ queue and write to a stream.
 
 .. rubric:: Properties
 
@@ -40,4 +41,21 @@ JSON file for the JMS plugin. Defaults to 'JMSProvider'.
 
 .. rubric:: Example
 
-TODO: Fill me out
+::
+
+  {
+    "name":"JMS",
+    "properties":{
+      "jms.messages.receive": 50,
+      "jms.destination.name": "purchases",
+      "jms.factory.initial": "org.apache.activemq.jndi.ActiveMQInitialContextFactory",
+      "jms.provider.url":"tcp://localhost:61616",
+      "jms.plugin.custom.properties": "{\"topic.purchases\":\"purchases\"}"
+    }
+  }
+
+This example will read from an instance of Apache ActiveMQ running on port 61616 on 'localhost'.
+It will poll the 'purchases' topic, reading up to 50 messages with each poll. A record is
+emitted for each message read from the topic. The record consists of a single field named 'message'
+containing the contents of the message.
+
