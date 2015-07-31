@@ -28,7 +28,7 @@ import co.cask.cdap.template.etl.api.PipelineConfigurer;
 import co.cask.cdap.template.etl.api.batch.BatchSinkContext;
 import co.cask.cdap.template.etl.common.Properties;
 import co.cask.cdap.template.etl.common.RecordPutTransformer;
-import co.cask.cdap.template.etl.common.TableConfig;
+import co.cask.cdap.template.etl.common.TableSinkConfig;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
@@ -44,30 +44,31 @@ import java.util.Map;
   " and all other record fields mapping to Table columns.")
 public class TableSink extends BatchWritableSink<StructuredRecord, byte[], Put> {
 
-  private final TableConfig tableConfig;
+  private final TableSinkConfig tableSinkConfig;
   private RecordPutTransformer recordPutTransformer;
 
-  public TableSink(TableConfig tableConfig) {
-    this.tableConfig = tableConfig;
+  public TableSink(TableSinkConfig tableSinkConfig) {
+    this.tableSinkConfig = tableSinkConfig;
   }
 
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     super.configurePipeline(pipelineConfigurer);
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(tableConfig.getRowField()),
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(tableSinkConfig.getRowField()),
                                 "Row field must be given as a property.");
   }
 
   @Override
   public void initialize(BatchSinkContext context) throws Exception {
     super.initialize(context);
-    recordPutTransformer = new RecordPutTransformer(tableConfig.getRowField(), tableConfig.isRowFieldCaseInsensitive());
+    recordPutTransformer = new RecordPutTransformer(tableSinkConfig.getRowField(),
+                                                    tableSinkConfig.isRowFieldCaseInsensitive());
   }
 
   @Override
   protected Map<String, String> getProperties() {
-    Map<String, String> properties = Maps.newHashMap(tableConfig.getProperties().getProperties());
-    properties.put(Properties.BatchReadableWritable.NAME, tableConfig.getName());
+    Map<String, String> properties = Maps.newHashMap(tableSinkConfig.getProperties().getProperties());
+    properties.put(Properties.BatchReadableWritable.NAME, tableSinkConfig.getName());
     properties.put(Properties.BatchReadableWritable.TYPE, Table.class.getName());
     return properties;
   }
