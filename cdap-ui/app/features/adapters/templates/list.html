@@ -34,7 +34,8 @@
           <a href ng-click="$state.go('^.create', {name: app.name})"
               class="content-panel">
               <h4 tooltip="{{::app.name}}">
-                <i class="icon-app"></i>
+                <i class="icon-ETLBatch" ng-if="app.template === 'ETLBatch'"></i>
+                <i class="icon-ETLRealtime" ng-if="app.template === 'ETLRealtime'"></i>
                 <span>{{::app.name | myEllipsis:15}}</span>
               </h4>
 

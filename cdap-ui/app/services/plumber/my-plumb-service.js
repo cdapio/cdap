@@ -36,9 +36,14 @@ angular.module(PKG.name + '.services')
         countSource = 0,
         countTransform = 0;
 
-    this.resetToDefaults = function(isRetainName) {
+    this.resetToDefaults = function(isImport) {
+      var callbacks = angular.copy(this.callbacks);
+      var errorCallbacks = angular.copy(this.errorCallbacks);
+      var resetCallbacks = angular.copy(this.resetCallbacks);
+
       this.callbacks = [];
       this.errorCallbacks = [];
+      this.resetCallbacks = [];
       this.nodes = {};
       this.connections = [];
       var name = this.metadata && this.metadata.name;
@@ -58,15 +63,28 @@ angular.module(PKG.name + '.services')
       countSource = 0;
       countTransform = 0;
       // This is needed when we import a config from an already created draft.
-      // In that case we already have a name and we don't want to lose it. So resetting everything except name.
+      // In that case we already have a name & callbacks registered and we don't want to lose it.
+      // So resetting everything except name.
       // Resetting template should be fine as it is going to be the same.
-      isRetainName = (isRetainName === true? true: false);
-      if (isRetainName) {
+      isImport = (isImport === true? true: false);
+      if (isImport) {
+        this.resetCallbacks = resetCallbacks;
+        this.errorCallbacks = errorCallbacks;
         this.metadata.name = name;
       }
     };
 
     this.resetToDefaults();
+
+    this.registerResetCallBack = function(callback) {
+      this.resetCallbacks.push(callback);
+    };
+    this.notifyResetListners = function () {
+      this.resetCallbacks.forEach(function(callback) {
+        callback();
+      });
+    };
+
     this.registerCallBack = function (callback) {
       this.callbacks.push(callback);
     };
@@ -492,8 +510,12 @@ angular.module(PKG.name + '.services')
     this.saveAsDraft = function() {
       var defer = $q.defer();
       var config = this.getConfigForBackend();
-      if (this.metadata.name && !this.metadata.name.length) {
-        defer.reject('Adapter needs to have a name to be saved as draft');
+      var error = {};
+      AdapterErrorFactory.hasNameAndTemplateType(null, null, this.metadata, null, error);
+
+      if (Object.keys(error).length) {
+        this.notifyError(error);
+        defer.reject(true);
         return defer.promise;
       }
       config.ui = {

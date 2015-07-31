@@ -82,17 +82,15 @@ angular.module(PKG.name + '.feature.adapters')
           return;
         }
         $scope.config = JSON.stringify(result);
-        if (MyPlumbService.metadata.name.length) {
-          MyPlumbService.resetToDefaults(true);
-        } else {
-          MyPlumbService.resetToDefaults(false);
-        }
+        MyPlumbService.resetToDefaults(true);
         setNodesAndConnectionsFromDraft.call(this, result);
         this.reloadDAG = true;
         $alert({
           type: 'success',
           content: 'Template imported successfully.'
         });
+        MyPlumbService.notifyError({});
+        MyPlumbService.notifyResetListners();
       }.bind(this)
       reader.onerror = function (evt) {
         console.error('Upload config failed', evt);
@@ -154,7 +152,7 @@ angular.module(PKG.name + '.feature.adapters')
                 $state.go('apps.list');
               },
               function error(errorObj) {
-                console.error('ERROR!: ', errorObj);
+                console.info('ERROR!: ', errorObj);
               }.bind(this)
             );
           break;
@@ -192,10 +190,7 @@ angular.module(PKG.name + '.feature.adapters')
                 $state.go('adapters.list');
               },
               function error(message) {
-                $alert({
-                  type: 'danger',
-                  content: message
-                });
+                console.info('Failed saving as draft');
               }
             )
       }
@@ -256,6 +251,7 @@ angular.module(PKG.name + '.feature.adapters')
 
     function errorNotification(errors) {
       angular.forEach(this.pluginTypes, function (type) {
+        delete type.error;
         if (errors[type.name]) {
           type.error = errors[type.name];
         }

@@ -49,11 +49,21 @@ body.theme-cdap {
       }
       p {
         word-wrap: break-word;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      h1 {
+        width: 100%;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
 
       .application-type {
         line-height: 15px;
         margin-bottom: 10px;
+        color: @cdap-lightgray;
 
         span {
           vertical-align: middle;
