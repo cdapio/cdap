@@ -433,7 +433,7 @@ public class StreamClient {
   }
 
   /**
-   * Sends an event to a stream. The writes is asynchronous, meaning when this method returns, it only guarantees
+   * Sends an event to a stream. The write is asynchronous, meaning when this method returns, it only guarantees
    * the event has been received by the server, but may not get persisted.
    *
    * @param stream ID of the stream
@@ -443,7 +443,7 @@ public class StreamClient {
    */
   public void asyncSendEvent(Id.Stream stream, String event) throws IOException,
                                                                    StreamNotFoundException, UnauthorizedException {
-    URL url = config.resolveNamespacedURLV3(stream.getNamespace(), String.format("streams/%s", stream.getId()));
+    URL url = config.resolveNamespacedURLV3(stream.getNamespace(), String.format("streams/%s/async", stream.getId()));
     writeEvent(url, stream, event);
   }
 
