@@ -13,12 +13,12 @@
 
         "accessID" : {
           "widget": "textbox",
-          "label": "AccessID"
+          "label": "Access ID"
         },
 
         "accessKey" : {
           "widget": "textbox",
-          "label": "AccessKey"
+          "label": "Access Key"
         },
 
         "queueName" : {

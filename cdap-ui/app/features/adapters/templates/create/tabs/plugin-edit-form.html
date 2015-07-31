@@ -119,7 +119,7 @@
                                   tooltip-placement="right"
                                   tooltip-append-to-body="true">
                             </span>
-                            <span class="fa fa-asterisk" ng-if="plugin._backendProperties[name].required"></span>
+                            <span class="fa fa-asterisk" ng-if="plugin._backendProperties[field].required"></span>
                           </label>
                           <div>
                             <div data-name="field"
@@ -214,7 +214,7 @@
                                         tooltip-placement="right"
                                         tooltip-append-to-body="true">
                                   </span>
-                                  <span class="fa fa-asterisk" ng-if="plugin._backendProperties[name].required"></span>
+                                  <span class="fa fa-asterisk" ng-if="plugin._backendProperties[field].required"></span>
                                 </label>
                                 <div>
                                   <div data-name="field"
@@ -290,7 +290,7 @@
                             tooltip-placement="right"
                             tooltip-append-to-body="true">
                       </span>
-                      <span class="fa fa-asterisk" ng-if="plugin._backendProperties[name].required"></span>
+                      <span class="fa fa-asterisk" ng-if="plugin.properties[name].required"></span>
                     </label>
                     <input type="text"
                             class="form-control"
