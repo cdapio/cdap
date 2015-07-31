@@ -25,6 +25,9 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.EnumMap;
 import java.util.HashMap;
@@ -42,6 +45,7 @@ public class BasicWorkflowToken implements WorkflowToken, Serializable {
   private final int maxSizeBytes;
   private Map<String, Map<String, Long>> mapReduceCounters;
   private String nodeName;
+  private boolean putAllowed = true;
   private int bytesLeft;
 
   /**
@@ -78,6 +82,13 @@ public class BasicWorkflowToken implements WorkflowToken, Serializable {
 
   void setCurrentNode(String nodeName) {
     this.nodeName = nodeName;
+  }
+
+  /**
+   * Method to disable the put operation on the {@link WorkflowToken} form Mapper and Reducer classes.
+   */
+  public void disablePut() {
+    putAllowed = false;
   }
 
   /**
@@ -129,6 +140,12 @@ public class BasicWorkflowToken implements WorkflowToken, Serializable {
   }
 
   void put(String key, Value value, Scope scope) {
+    if (!putAllowed) {
+      String msg = String.format("Failed to put key '%s' from node '%s' in the WorkflowToken. Put operation is not " +
+                                 "allowed from the Mapper and Reducer classes and from Spark executor.", key, nodeName);
+      throw new UnsupportedOperationException(msg);
+    }
+
     Preconditions.checkNotNull(key, "Null key cannot be added in the WorkflowToken.");
     Preconditions.checkNotNull(value, String.format("Null value provided for the key '%s'.", key));
     Preconditions.checkNotNull(value.toString(), String.format("Null value provided for the key '%s'.", key));
@@ -292,5 +309,17 @@ public class BasicWorkflowToken implements WorkflowToken, Serializable {
       nodeValues.add(nodeValue);
     }
     bytesLeft = left;
+  }
+
+  // Serialize the WorkflowToken content for passing it to the Spark executor.
+  private void writeObject(ObjectOutputStream out) throws IOException {
+    out.defaultWriteObject();
+  }
+
+  // Deserialize the WorkflowToken for using it inside the Spark executor. Set the putAllowed
+  // flag to false so that we do not allow putting the values inside the Spark executor.
+  private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+    in.defaultReadObject();
+    putAllowed = false;
   }
 }

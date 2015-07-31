@@ -1,28 +1,35 @@
-<div class="adapter-name"
+ <div class="adapter-name"
   tooltip="{{ AdapterCreateController.metadata.error }}"
   tooltip-placement="right"
   tooltip-toggle="AdapterCreateController.metadata.error"
   tooltip-append-to-body="true"
   tooltip-class="tooltip-error"
 >
-  <div>
-    <h1>
-      <a ng-if="AdapterCreateController.metadata.name.length > 0"
-          ng-click="AdapterCreateController.showMetadataModal()">
-        {{AdapterCreateController.metadata['name'] | myEllipsis: 35}}
+  <div ng-click="AdapterCreateController.showMetadataModal()">
+    <div class="application-type">
+      <span class="icon-ETLBatch" ng-if="AdapterCreateController.metadata.template.type === 'ETLBatch'"></span>
+      <span class="icon-ETLRealtime" ng-if="AdapterCreateController.metadata.template.type === 'ETLRealtime'"></span>
+      <span>Type: {{ AdapterCreateController.metadata.template.type }}</span>
+    </div>
+    <h1 tooltip="{{ AdapterCreateController.metadata.name }}"
+        tooltip-placement="right"
+        tooltip-enable="AdapterCreateController.metadata.name.length > 38"
+        tooltip-append-to-body="true">
+      <a ng-if="AdapterCreateController.metadata.name.length > 0">
+        {{AdapterCreateController.metadata['name']}}
       </a>
       <a ng-if="AdapterCreateController.metadata['name'].length === 0"
-          ng-click="AdapterCreateController.showMetadataModal()">
+          >
         [Adapter Name]
       </a>
     </h1>
     <a class="fa fa-pencil" ng-click="AdapterCreateController.showMetadataModal()"></a>
-    <div class="application-type">
-      <span class="icon-ETLtemplates"></span>
-      <span>Type: {{ AdapterCreateController.metadata.template.type }}</span>
-    </div>
-    <p ng-if="AdapterCreateController.metadata['description'].length > 0">
-      {{AdapterCreateController.metadata['description'] | myEllipsis: 150 }}
+    <p ng-if="AdapterCreateController.metadata['description'].length > 0"
+        tooltip="{{ AdapterCreateController.metadata.description }}"
+        tooltip-placement="right"
+        tooltip-enable="AdapterCreateController.metadata.description.length > 158"
+        tooltip-append-to-body="true">
+      {{AdapterCreateController.metadata['description'] | myEllipsis: 158}}
     </p>
     <p ng-if="AdapterCreateController.metadata['description'].length === 0">
       [Adapter description]

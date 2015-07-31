@@ -88,8 +88,8 @@ function download_includes() {
   download_readme_file_and_test ${includes_dir} ${ingest_url} 5fc88ec3a658062775403f5be30afbe9 cdap-stream-clients/ruby
 
   echo_red_bold "Check included example files for changes"
-#   test_an_include 3b877d261bf74f7521a14369d186a21b ../../cdap-examples/WikipediaPipeline/src/main/scala/co/cask/cdap/examples/wikipedia/ScalaSparkLDA.scala
-#   test_an_include 3b877d261bf74f7521a14369d186a21b ../../cdap-examples/WikipediaPipeline/src/main/scala/co/cask/cdap/examples/wikipedia/TopNMapReduce.java
+  test_an_include d90fd3f927380f7bc3d01fe0b0944364 ../../cdap-examples/WikipediaPipeline/src/main/java/co/cask/cdap/examples/wikipedia/TopNMapReduce.java
+  test_an_include 3b877d261bf74f7521a14369d186a21b ../../cdap-examples/WikipediaPipeline/src/main/scala/co/cask/cdap/examples/wikipedia/ScalaSparkLDA.scala
 }
 
 function test_includes () {

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.examples.sparkpagerank;
 
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
@@ -119,6 +120,8 @@ public class SparkPageRankApp extends AbstractApplication {
       setName(SparkPageRankProgram.class.getSimpleName());
       setDescription("Spark Page Rank Program");
       setMainClass(SparkPageRankProgram.class);
+      setDriverResources(new Resources(1024));
+      setExecutorResources(new Resources(1024));
     }
   }
 

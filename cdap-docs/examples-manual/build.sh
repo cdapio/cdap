@@ -39,25 +39,28 @@ function guide_rewrite_sed() {
   else
     local source2="release/cdap-${project_version}-compatible"
   fi
+  local url="${source1}/${guide}/${source2}"
+
   local readme="README.rst"
   local readme_source="README_SOURCE.rst"
-
   local redirect="\.\./\.\./build/_includes" # Target, 2 redirects, escaped
   
-  mkdir ${includes_dir}/${guide}
-  curl --silent ${source1}/${guide}/${source2}/${readme} --output ${includes_dir}/${guide}/${readme_source}
-
-  # Find and download any images
-  local images=`grep -o ".. image:: .*" ${includes_dir}/${guide}/README_SOURCE.rst | cut -d ' ' -f 3`
-  if [ "x${images}" != "x" ]; then
-    for image in ${images}; do
-      local image_file=`basename ${image}`
-      curl --silent ${source1}/${guide}/${source2}/${image} --output ${includes_dir}/${guide}/${image_file}
-    done
-  fi
-  
-  # Rewrite image and code 
-  sed -e "s|image:: docs/images/|image:: ${redirect}/${guide}/|g" -e "s|.. code:: |.. code-block:: |g" ${includes_dir}/${guide}/${readme_source} > ${includes_dir}/${guide}/${readme}
+  if curl --output /dev/null --silent --head --fail "${url}/${readme}"; then
+    mkdir ${includes_dir}/${guide}
+    curl --silent ${url}/${readme} --output ${includes_dir}/${guide}/${readme_source}
+    # Find and download any images
+    local images=`grep -o ".. image:: .*" ${includes_dir}/${guide}/README_SOURCE.rst | cut -d ' ' -f 3`
+    if [ "x${images}" != "x" ]; then
+      for image in ${images}; do
+        local image_file=`basename ${image}`
+        curl --silent ${url}/${image} --output ${includes_dir}/${guide}/${image_file}
+      done
+    fi
+    # Rewrite image and code 
+    sed -e "s|image:: docs/images/|image:: ${redirect}/${guide}/|g" -e "s|.. code:: |.. code-block:: |g" ${includes_dir}/${guide}/${readme_source} > ${includes_dir}/${guide}/${readme}
+  else
+    echo_red_bold "URL does not exist: $url"
+  fi  
 }
 
 function download_file() {
@@ -76,7 +79,7 @@ function download_file() {
 
   echo "Downloading using curl ${file_name}"
   echo "from ${source_dir}"
-  curl ${source_dir}/${file_name} --output ${target} --silent
+  curl --silent ${source_dir}/${file_name} --output ${target}
   test_an_include ${md5_hash} ${target}
 }
 
@@ -154,7 +157,7 @@ function download_includes() {
   
   test_an_include 050cde0eb54b20803e65aae63b11143d ../../cdap-examples/SparkKMeans/src/main/java/co/cask/cdap/examples/sparkkmeans/SparkKMeansApp.java
   
-  test_an_include cbe1aa2a457ed414c77a97ab1e1ef641 ../../cdap-examples/SparkPageRank/src/main/java/co/cask/cdap/examples/sparkpagerank/SparkPageRankApp.java
+  test_an_include 62a0d9ee7ad379265c5433095e25dd89 ../../cdap-examples/SparkPageRank/src/main/java/co/cask/cdap/examples/sparkpagerank/SparkPageRankApp.java
 
   test_an_include afe12d26b79607a846d3eaa58958ea5f ../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/SportResults.java
   test_an_include 2d85727db18c3261b60d4cb278846329 ../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/UploadService.java
@@ -169,7 +172,7 @@ function download_includes() {
   test_an_include 936d007286f0d6d59967c1b421850e37 ../../cdap-examples/WebAnalytics/src/main/java/co/cask/cdap/examples/webanalytics/UniqueVisitCount.java
   test_an_include 1656c8e7158e10175cb750aeafeea58f ../../cdap-examples/WebAnalytics/src/main/java/co/cask/cdap/examples/webanalytics/WebAnalyticsFlow.java
   
-  test_an_include 2ad87b92766a879a6664a9f231993409 ../../cdap-examples/WikipediaPipeline/src/main/java/co/cask/cdap/examples/wikipedia/WikipediaPipelineApp.java
+  test_an_include a7d94268641250dc4387ee1c605569a2 ../../cdap-examples/WikipediaPipeline/src/main/java/co/cask/cdap/examples/wikipedia/WikipediaPipelineApp.java
   
   test_an_include 23d3a5c9f8cbe1a41fe706c6f95bad73 ../../cdap-examples/WordCount/src/main/java/co/cask/cdap/examples/wordcount/WordCount.java
 }

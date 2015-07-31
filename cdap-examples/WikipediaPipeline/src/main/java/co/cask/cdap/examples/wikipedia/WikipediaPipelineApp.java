@@ -41,6 +41,7 @@ public class WikipediaPipelineApp extends AbstractApplication {
     addStream(new Stream(RAW_WIKIPEDIA_STREAM));
     addMapReduce(new StreamToDataset(LIKES_TO_DATASET_MR_NAME));
     addMapReduce(new StreamToDataset(WIKIPEDIA_TO_DATASET_MR_NAME));
+    addMapReduce(new WikipediaDataDownloader());
     addMapReduce(new WikiContentValidatorAndNormalizer());
     addMapReduce(new TopNMapReduce());
     addSpark(new SparkWikipediaAnalyzer());
@@ -50,5 +51,6 @@ public class WikipediaPipelineApp extends AbstractApplication {
     createDataset(SPARK_LDA_OUTPUT_DATASET, Table.class);
     createDataset(MAPREDUCE_TOPN_OUTPUT, KeyValueTable.class);
     addWorkflow(new WikipediaPipelineWorkflow());
+    addService(new WikipediaService());
   }
 }

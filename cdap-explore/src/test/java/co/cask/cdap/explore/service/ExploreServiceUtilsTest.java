@@ -49,13 +49,15 @@ public class ExploreServiceUtilsTest {
     conf.set("foo", "bar");
     Assert.assertEquals(1, conf.size());
 
+    File tempDir = tmpFolder.newFolder();
+
     File confFile = tmpFolder.newFile("hive-site.xml");
 
     try (FileOutputStream os = new FileOutputStream(confFile)) {
       conf.writeXml(os);
     }
 
-    File newConfFile = ExploreServiceUtils.hijackConfFile(confFile);
+    File newConfFile = ExploreServiceUtils.updateConfFileForExplore(confFile, tempDir);
 
     conf = new Configuration(false);
     conf.addResource(newConfFile.toURI().toURL());
@@ -78,7 +80,7 @@ public class ExploreServiceUtilsTest {
                Joiner.on(",").join(YarnConfiguration.DEFAULT_YARN_APPLICATION_CLASSPATH));
 
 
-    newConfFile = ExploreServiceUtils.hijackConfFile(confFile);
+    newConfFile = ExploreServiceUtils.updateConfFileForExplore(confFile, tempDir);
 
     conf = new Configuration(false);
     conf.addResource(newConfFile.toURI().toURL());
@@ -98,7 +100,7 @@ public class ExploreServiceUtilsTest {
                MRJobConfig.DEFAULT_MAPREDUCE_APPLICATION_CLASSPATH);
 
 
-    newConfFile = ExploreServiceUtils.hijackConfFile(confFile);
+    newConfFile = ExploreServiceUtils.updateConfFileForExplore(confFile, tempDir);
 
     conf = new Configuration(false);
     conf.addResource(newConfFile.toURI().toURL());
@@ -107,7 +109,7 @@ public class ExploreServiceUtilsTest {
 
     // Ensure conf files that are not hive-site.xml/mapred-site.xml/yarn-site.xml are unchanged
     confFile = tmpFolder.newFile("core-site.xml");
-    Assert.assertEquals(confFile, ExploreServiceUtils.hijackConfFile(confFile));
+    Assert.assertEquals(confFile, ExploreServiceUtils.updateConfFileForExplore(confFile, tempDir));
   }
 
 }

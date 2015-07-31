@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.adapters')
-  .controller('CanvasController', function (myAdapterApi, MyPlumbService, $bootstrapModal, $state, $scope, $alert, myHelpers, CanvasFactory, MyPlumbFactory, $modalStack, $timeout) {
+  .controller('CanvasController', function (myAdapterApi, MyPlumbService, $bootstrapModal, $state, $scope, $alert, myHelpers, CanvasFactory, MyPlumbFactory, $modalStack, $timeout, ModalConfirm) {
     this.nodes = [];
     this.reloadDAG = false;
     if ($scope.AdapterCreateController.data) {
@@ -82,17 +82,15 @@ angular.module(PKG.name + '.feature.adapters')
           return;
         }
         $scope.config = JSON.stringify(result);
-        if (MyPlumbService.metadata.name.length) {
-          MyPlumbService.resetToDefaults(true);
-        } else {
-          MyPlumbService.resetToDefaults(false);
-        }
+        MyPlumbService.resetToDefaults(true);
         setNodesAndConnectionsFromDraft.call(this, result);
         this.reloadDAG = true;
         $alert({
           type: 'success',
           content: 'Template imported successfully.'
         });
+        MyPlumbService.notifyError({});
+        MyPlumbService.notifyResetListners();
       }.bind(this)
       reader.onerror = function (evt) {
         console.error('Upload config failed', evt);
@@ -154,7 +152,7 @@ angular.module(PKG.name + '.feature.adapters')
                 $state.go('apps.list');
               },
               function error(errorObj) {
-                console.error('ERROR!: ', errorObj);
+                console.info('ERROR!: ', errorObj);
               }.bind(this)
             );
           break;
@@ -165,13 +163,26 @@ angular.module(PKG.name + '.feature.adapters')
             windowClass: 'adapter-modal',
             keyboard: true,
             controller: ['$scope', 'metadata', 'EventPipe', function($scope, metadata, EventPipe) {
-              $scope.metadata = metadata
+              $scope.metadata = metadata;
               var metadataCopy = angular.copy(metadata);
               $scope.reset = function() {
                 $scope.metadata.template.schedule.cron = metadataCopy.template.schedule.cron;
                 $scope.metadata.template.instance = metadataCopy.template.instance;
                 EventPipe.emit('plugin.reset');
               };
+
+              function closeFn() {
+                $scope.reset();
+                $scope.$close('cancel');
+              }
+
+              ModalConfirm.confirmModalAdapter(
+                $scope,
+                $scope.metadata,
+                metadataCopy,
+                closeFn
+              );
+
             }],
             resolve: {
               'metadata': function() {
@@ -192,10 +203,7 @@ angular.module(PKG.name + '.feature.adapters')
                 $state.go('adapters.list');
               },
               function error(message) {
-                $alert({
-                  type: 'danger',
-                  content: message
-                });
+                console.info('Failed saving as draft');
               }
             )
       }
@@ -256,6 +264,7 @@ angular.module(PKG.name + '.feature.adapters')
 
     function errorNotification(errors) {
       angular.forEach(this.pluginTypes, function (type) {
+        delete type.error;
         if (errors[type.name]) {
           type.error = errors[type.name];
         }

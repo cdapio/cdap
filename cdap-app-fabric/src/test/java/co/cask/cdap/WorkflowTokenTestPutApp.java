@@ -20,6 +20,9 @@ import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
+import co.cask.cdap.api.spark.AbstractSpark;
+import co.cask.cdap.api.spark.JavaSparkProgram;
+import co.cask.cdap.api.spark.SparkContext;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.Value;
 import co.cask.cdap.api.workflow.WorkflowToken;
@@ -34,8 +37,13 @@ import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.api.java.function.Function;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -50,6 +58,7 @@ public class WorkflowTokenTestPutApp extends AbstractApplication {
     setDescription("Application to test the put operation on the Workflow in beforeSubmit, " +
                      "onFinish, map, and reduce methods of the MapReduce program.");
     addMapReduce(new RecordCounter());
+    addSpark(new SparkTestApp());
     addWorkflow(new WorkflowTokenTestPut());
   }
 
@@ -59,6 +68,7 @@ public class WorkflowTokenTestPutApp extends AbstractApplication {
     protected void configure() {
       setName(NAME);
       addMapReduce(RecordCounter.NAME);
+      addSpark(SparkTestApp.NAME);
     }
   }
 
@@ -168,6 +178,51 @@ public class WorkflowTokenTestPutApp extends AbstractApplication {
     @Override
     public void destroy() {
       // no-op
+    }
+  }
+
+  /**
+   * Spark application to test the put on the WorkflowToken.
+   */
+  public static class SparkTestApp extends AbstractSpark {
+    public static final String NAME = "SparkTestApp";
+
+    @Override
+    public void configure() {
+      setName(NAME);
+      setDescription("Test Spark with the Workflow");
+      setMainClass(SparkTestProgram.class);
+    }
+  }
+
+  public static class SparkTestProgram implements JavaSparkProgram {
+    @Override
+    public void run(final SparkContext context) {
+      List<Integer> data = Arrays.asList(1, 2, 3, 4, 5);
+
+      final WorkflowToken workflowToken = context.getWorkflowToken();
+      if (workflowToken != null) {
+        workflowToken.put("multiplier", "2");
+      }
+
+      final boolean closurePutToken = context.getRuntimeArguments().containsKey("closurePutToken");
+      JavaRDD<Integer> distData = ((JavaSparkContext) context.getOriginalSparkContext()).parallelize(data);
+      JavaRDD<Integer> mapData = distData.map(new Function<Integer, Integer>() {
+        @Override
+        public Integer call(Integer val) throws Exception {
+          if (closurePutToken) {
+            workflowToken.put("some.key", "some.value");
+          }
+
+          if (workflowToken.get("multiplier") != null) {
+            int multiplier = workflowToken.get("multiplier").getAsInt();
+            return multiplier * val;
+          }
+          return val;
+        }
+      });
+
+      mapData.collect();
     }
   }
 }

@@ -31,14 +31,20 @@
 
 */
 angular.module(PKG.name + '.services')
-  .service('MyPlumbService', function(myAdapterApi, $q, $bootstrapModal, $state, $filter, mySettings, $alert, AdapterErrorFactory, IMPLICIT_SCHEMA, myHelpers) {
+  .service('MyPlumbService', function(myAdapterApi, $q, $bootstrapModal, $state, $filter, mySettings, $alert, AdapterErrorFactory, IMPLICIT_SCHEMA, myHelpers, PluginConfigFactory, ModalConfirm) {
+
     var countSink = 0,
         countSource = 0,
         countTransform = 0;
 
-    this.resetToDefaults = function(isRetainName) {
+    this.resetToDefaults = function(isImport) {
+      var callbacks = angular.copy(this.callbacks);
+      var errorCallbacks = angular.copy(this.errorCallbacks);
+      var resetCallbacks = angular.copy(this.resetCallbacks);
+
       this.callbacks = [];
       this.errorCallbacks = [];
+      this.resetCallbacks = [];
       this.nodes = {};
       this.connections = [];
       var name = this.metadata && this.metadata.name;
@@ -58,15 +64,28 @@ angular.module(PKG.name + '.services')
       countSource = 0;
       countTransform = 0;
       // This is needed when we import a config from an already created draft.
-      // In that case we already have a name and we don't want to lose it. So resetting everything except name.
+      // In that case we already have a name & callbacks registered and we don't want to lose it.
+      // So resetting everything except name.
       // Resetting template should be fine as it is going to be the same.
-      isRetainName = (isRetainName === true? true: false);
-      if (isRetainName) {
+      isImport = (isImport === true? true: false);
+      if (isImport) {
+        this.resetCallbacks = resetCallbacks;
+        this.errorCallbacks = errorCallbacks;
         this.metadata.name = name;
       }
     };
 
     this.resetToDefaults();
+
+    this.registerResetCallBack = function(callback) {
+      this.resetCallbacks.push(callback);
+    };
+    this.notifyResetListners = function () {
+      this.resetCallbacks.forEach(function(callback) {
+        callback();
+      });
+    };
+
     this.registerCallBack = function (callback) {
       this.callbacks.push(callback);
     };
@@ -150,6 +169,29 @@ angular.module(PKG.name + '.services')
       };
 
       this.nodes[config.id] = config;
+
+      PluginConfigFactory.fetch(
+        null,
+        this.metadata.template.type,
+        config.name
+      ).then(function (res) {
+        if (res.implicit) {
+          var schema = res.implicit.schema;
+          var keys = Object.keys(schema);
+
+          var formattedSchema = [];
+          angular.forEach(keys, function (key) {
+            formattedSchema.push({
+              name: key,
+              type: schema[key]
+            });
+          });
+
+          var obj = { fields: formattedSchema };
+          this.nodes[config.id].outputSchema = JSON.stringify(obj);
+        }
+      }.bind(this));
+
       if (!conf._backendProperties) {
         fetchBackendProperties
           .call(this, this.nodes[config.id])
@@ -249,10 +291,9 @@ angular.module(PKG.name + '.services')
       fetchBackendProperties.call(this, plugin, scope)
         .then(function(plugin) {
           modalInstance = $bootstrapModal.open({
-            keyboard: false,
             backdrop: 'static',
             templateUrl: '/assets/features/adapters/templates/tabs/runs/tabs/properties/properties.html',
-            controller: ['$scope', 'AdapterModel', 'type', 'inputSchema', 'isDisabled', function ($scope, AdapterModel, type, inputSchema, isDisabled){
+            controller: ['$scope', 'AdapterModel', 'type', 'inputSchema', 'isDisabled', '$bootstrapModal', 'pluginCopy', function ($scope, AdapterModel, type, inputSchema, isDisabled, $bootstrapModal, pluginCopy){
               $scope.plugin = AdapterModel;
               $scope.type = type;
               $scope.isDisabled = isDisabled;
@@ -263,6 +304,14 @@ angular.module(PKG.name + '.services')
                 input = null;
               }
               $scope.inputSchema = input ? input.fields : null;
+              angular.forEach($scope.inputSchema, function (field) {
+                if (angular.isArray(field.type)) {
+                  field.type = field.type[0];
+                  field.nullable = true;
+                } else {
+                  field.nullable = false;
+                }
+              });
 
               if (!$scope.plugin.outputSchema && inputSchema) {
                 $scope.plugin.outputSchema = angular.copy(inputSchema) || null;
@@ -295,6 +344,18 @@ angular.module(PKG.name + '.services')
                 $scope.isTransform = true;
               }
 
+              function closeFn() {
+                $scope.$close('cancel');
+              }
+
+              ModalConfirm.confirmModalAdapter(
+                $scope,
+                $scope.plugin.properties,
+                pluginCopy.properties,
+                closeFn
+              );
+
+
             }],
             size: 'lg',
             windowClass: 'adapter-modal',
@@ -310,7 +371,10 @@ angular.module(PKG.name + '.services')
               },
               isDisabled: function() {
                 return this.isDisabled;
-              }.bind(this)
+              }.bind(this),
+              pluginCopy: function () {
+                return pluginCopy;
+              }
             }
           });
 
@@ -492,8 +556,12 @@ angular.module(PKG.name + '.services')
     this.saveAsDraft = function() {
       var defer = $q.defer();
       var config = this.getConfigForBackend();
-      if (this.metadata.name && !this.metadata.name.length) {
-        defer.reject('Adapter needs to have a name to be saved as draft');
+      var error = {};
+      AdapterErrorFactory.hasNameAndTemplateType(null, null, this.metadata, null, error);
+
+      if (Object.keys(error).length) {
+        this.notifyError(error);
+        defer.reject(true);
         return defer.promise;
       }
       config.ui = {

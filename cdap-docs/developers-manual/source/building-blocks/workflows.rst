@@ -225,7 +225,7 @@ Here is an example, taken from the
    :language: java
    :lines: 109-123
 
-**Note:** The test of ``workflowToken != null`` is only required because this Mapper could
+**Note:** The test of ``workflowToken != null`` is only required because this Reducer could
 be used outside of a workflow. When run from within a workflow, the token is guaranteed to
 be non-null.
 
