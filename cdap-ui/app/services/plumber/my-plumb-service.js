@@ -151,6 +151,29 @@ angular.module(PKG.name + '.services')
       };
 
       this.nodes[config.id] = config;
+
+      PluginConfigFactory.fetch(
+        null,
+        this.metadata.template.type,
+        config.name
+      ).then(function (res) {
+        if (res.implicit) {
+          var schema = res.implicit.schema;
+          var keys = Object.keys(schema);
+
+          var formattedSchema = [];
+          angular.forEach(keys, function (key) {
+            formattedSchema.push({
+              name: key,
+              type: schema[key]
+            });
+          });
+
+          var obj = { fields: formattedSchema };
+          this.nodes[config.id].outputSchema = JSON.stringify(obj);
+        }
+      }.bind(this));
+
       if (!conf._backendProperties) {
         fetchBackendProperties
           .call(this, this.nodes[config.id])
@@ -236,28 +259,6 @@ angular.module(PKG.name + '.services')
           sourceSchema = clfSchema;
         } else if (source.properties.format && source.properties.format === 'syslog') {
           sourceSchema = syslogSchema;
-        } else {
-          PluginConfigFactory.fetch(
-            scope,
-            this.metadata.template.type,
-            source.name
-          ).then(function (res) {
-            if (res.implicit) {
-              var schema = res.implicit.schema;
-              var keys = Object.keys(schema);
-
-              var formattedSchema = [];
-              angular.forEach(keys, function (key) {
-                formattedSchema.push({
-                  name: key,
-                  type: schema[key]
-                });
-              });
-
-              var obj = { fields: formattedSchema };
-              sourceSchema = JSON.stringify(obj);
-            }
-          });
         }
 
       } else {
@@ -286,6 +287,14 @@ angular.module(PKG.name + '.services')
                 input = null;
               }
               $scope.inputSchema = input ? input.fields : null;
+              angular.forEach($scope.inputSchema, function (field) {
+                if (angular.isArray(field.type)) {
+                  field.type = field.type[0];
+                  field.nullable = true;
+                } else {
+                  field.nullable = false;
+                }
+              });
 
               if (!$scope.plugin.outputSchema && inputSchema) {
                 $scope.plugin.outputSchema = angular.copy(inputSchema) || null;

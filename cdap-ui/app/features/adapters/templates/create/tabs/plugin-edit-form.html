@@ -70,6 +70,9 @@
                   <th>
                     <label class="control-label">Type</label>
                   </th>
+                  <th>
+                    <label class="control-label">Null</label>
+                  </th>
                 </thead>
                 <tbody>
                   <tr ng-repeat="schema in inputSchema" ng-keypress="enter($event, $last)">
@@ -83,9 +86,9 @@
                       </span>
                     </td>
                     <td class="type" ng-if="!schema.empty"> {{schema.type}} </td>
-
-                    <td class="name" ng-if="property.empty"></td>
-                    <td class="type" ng-if="property.empty"></td>
+                    <td class="nullable text-center" ng-if="!schema.empty">
+                      <input type="checkbox" ng-model="schema.nullable" disabled>
+                    </td>
                   </tr>
                 </tbody>
               </table>
