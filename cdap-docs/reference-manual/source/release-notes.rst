@@ -1210,6 +1210,11 @@ Known Issues
   There is a problem with workflow runs not being scheduled due to Quartz exceptions. The
   issue is related to that there cannot be more than 30 concurrent runs of a workflow.
 
+- `CDAP-3179 <https://issues.cask.co/browse/CDAP-3179>`__ -
+  If you are using CDH 5.3 (CDAP 3.0.0) and are upgrading to CDH 5.4 (CDAP 3.1.0), you
+  must first upgrade the underlying HBase before you upgrade CDAP. This means perform the
+  CDH upgrade before upgrading the CDAP.
+  
 - `CDAP-3221 <https://issues.cask.co/browse/CDAP-3221>`__ -
   There is a problem when running Standalone mode: if an adapter is configured incorrectly
   such that it leads to a MapReduce job to fail repeatedly, then the SDK hits an OOM exception due to perm gen.
