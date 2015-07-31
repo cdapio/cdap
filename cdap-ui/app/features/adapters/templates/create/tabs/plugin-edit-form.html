@@ -85,7 +85,10 @@
                         {{schema.name}}
                       </span>
                     </td>
-                    <td class="type" ng-if="!schema.empty"> {{schema.type}} </td>
+                    <td class="type" ng-if="!schema.empty">
+                      <span ng-if="schema.type.type !== 'map'">{{schema.type}}</span>
+                      <span ng-if="schema.type.type === 'map'">map&lt;string, string&gt; </span>
+                    </td>
                     <td class="nullable text-center" ng-if="!schema.empty">
                       <input type="checkbox" ng-model="schema.nullable" disabled>
                     </td>
