@@ -75,7 +75,8 @@ Prerequisites
 Download
 =======================================
 
-Download the CDAP CSD (Custom Service Descriptor): `download JAR file <http://cask.co/resources/#cdap-integrations>`__.
+Download the CDAP CSD (Custom Service Descriptor): `download the JAR file <http://cask.co/resources/#cdap-integrations>`__.
+The source code is available `here <https://github.com/caskdata/cm_csd>`__.
 
 Details on CSDs and Cloudera Manager Extensions are `available online 
 <https://github.com/cloudera/cm_ext/wiki>`__.
@@ -110,62 +111,18 @@ When completing the Wizard, these notes may help:
    - *Add Service* Wizard, Page 5: **Router Server Port:** This should match the "Router Bind
      Port"; it’s used by the CDAP UI to connect to the Router service.
 
+   - *Add Service* Wizard, Page 5: **App Template Dir:** This should initially point to the bundled templates included in
+     the CDAP parcel directory. If you have modified ``${PARCELS_ROOT}``, please update this setting to match.  Advanced
+     users will want to customize this directory to a location outside of the CDAP Parcel.
+
 Complete instructions, step-by-step, for using the Admin Console *Add Service* Wizard to install CDAP
 :ref:`are available <step-by-step-cloudera-add-service>`.
 
 .. _cloudera-verification:
 
-Verification
-=======================================
-
-After CDAP has started up, the best way to verify the installation is to deploy an application,
-ingest some data, run a MapReduce program on it, and then query the results out.  The following
-procedure describes how to do this primarily, via the CDAP UI, though this can all be done via
-command line.
-
-We provide in our SDK pre-built ``.JAR`` files for convenience.
-
-#. Download and install the latest `CDAP Software Development Kit (SDK)
-   <http://cask.co/downloads/#cdap>`__. The version should match the version you have installed.
-#. Extract to a folder (``CDAP_HOME``).
-#. Open a command prompt and navigate to ``CDAP_HOME/examples``.
-#. Each example folder has a ``.jar`` file in its ``target`` directory.
-   For verification, we'll use the ``Purchase`` example and its jar, located in 
-   ``CDAP_HOME/examples/Purchase-``\ |literal-release|\ ``.jar``. The ``Purchase`` example is documented 
-   in the CDAP :ref:`examples manual <examples-purchase>`.
-
-#. Open a web browser to the CDAP UI. It is located on port ``9999`` of the box where
-   you installed CDAP.
-
-#. From the CDAP UI Development tab, under "Apps" click "Add App” and navigate to the jar.
-
-#. Once it is deployed, click on it in the list of applications (*PurchaseHistory*), then click on
-   *PurchaseFlow* in the list of programs to get to the *Flow* detail page, then click the *Start*
-   button.  (This will launch additional YARN containers.)
-
-#. Once the flow is *RUNNING*, inject data by clicking on the *purchaseStream* icon in
-   the flow diagram.  In the dialog that pops up, type ``Tom bought 5 apples for $3`` and click
-   *Inject*.  You should see activity in the graphs and the flowlet counters increment.
-
-#. Run a MapReduce program against this data by navigating back to the *PurchaseHistory* list of 
-   programs, select *PurchaseHistoryBuilder*, and click the *Start* button.  This will launch an
-   additional container and a MapReduce job in YARN.  After it starts you should see the Map and
-   Reduce progress bars complete.  Failures at this stage are often due to YARN MapReduce misconfiguration
-   or a lack of YARN capacity.
-
-#. After the MapReduce job is complete, we can startup a query service which will read
-   from the processed dataset.  Navigate to Application -> PurchaseHistory ->
-   PurchaseHistoryService.  Click the Start button to start the service.  (This will launch another YARN container.)
-
-#. From the *PurchaseHistoryService* page, click *Make Request* for the */history/{customer}* endpoint listed.
-   In the dialog that pops up, enter ``Tom`` in the *Path Params* field and click *Make Request*.
-
-#. You should get back a response similar to::
-
-     {"customer":"Tom","purchases":[{"customer":"Tom","product":"apple","quantity":5,"price":3,
-      "purchaseTime":1421470224780}]}
-
-#. You have now completed verification of the installation.
+.. include:: ../../../../admin-manual/source/installation/installation.rst
+   :start-after: .. _install-verification:
+   :end-before:  .. _install-upgrade:
 
 Upgrading an Existing Version
 =======================================
@@ -184,7 +141,11 @@ When a new compatible CDAP parcel is released, it will be available via the Parc
 
 .. rubric:: Upgrading Major/Minor Release versions
 
-These steps will upgrade from CDAP 2.8.0 to CDAP 3.0.0. (**Note:** Apps need to be both recompiled and re-deployed.)
+Upgrading between major versions of CDAP involves the additional steps of upgrading the CSD, and running the included
+CDAP Upgrade Tool. Upgrades between multiple Major/Minor versions must be done consecutively, and a version cannot be
+skipped unless otherwise noted.
+
+The following is the generic procedure for Major/Minor version upgrades:
 
 #. Stop all flows, services, and other programs in all your applications.
 
@@ -193,23 +154,38 @@ These steps will upgrade from CDAP 2.8.0 to CDAP 3.0.0. (**Note:** Apps need to 
 #. Ensure your installed version of the CSD matches the target version of CDAP. For example, CSD version 3.0.* is compatible
    with CDAP version 3.0.*.  Download the latest version of the CSD `here <http://cask.co/resources/#cdap-integrations>`__.
 
-#. Use the Cloudera Manager UI to download, distribute, and activate the parcel on all cluster hosts.
+#. Use the Cloudera Manager UI to download, distribute, and activate the corresponding CDAP parcel version on all cluster
+   hosts.
 
-#. Before starting services, run the Upgrade Tool to update any necessary CDAP table definitions.  From the CDAP Service page,
-   select "Run CDAP Upgrade Tool" from the Actions menu.
+#. Before starting services, run the Upgrade Tool to update any necessary CDAP table definitions. From the CDAP Service
+   page, select "Run CDAP Upgrade Tool" from the Actions menu.
 
 #. Start the CDAP services.  At this point it may be necessary to correct for any changes in the CSD.  For example, if new CDAP services
-   were added or removed, you must add or remove role instances as necessary.  When upgrading from 2.8.0 to 3.0.0, the CDAP Web-App role has
-   been replaced by the CDAP-UI role:
-
-   - From the CDAP Instances page, select Add Role Instances, and choose a host for the CDAP-UI role.
-
-   - From the CDAP Instances page, check the CDAP-Web-App role, and select Delete from the Actions menu.
+   were added or removed, you must add or remove role instances as necessary. Check the
+   :ref:`release-specific upgrade notes <cloudera-release-specific-upgrade-notes>` below for any specific instructions.
 
 #. After CDAP services have started, run the Post-Upgrade tool to perform any necessary upgrade steps against the running services.  From the
    CDAP Service page, select "Run CDAP Post-Upgrade Tasks."
 
 #. You must recompile and then redeploy your applications.
+
+.. _cloudera-release-specific-upgrade-notes:
+
+.. rubric:: Upgrading CDAP 3.0 to 3.1
+
+**Note:** An app need to be both recompiled and re-deployed if it uses either a PartitionedFileSet or a TimePartitionedFileSet.
+
+.. rubric:: Upgrading CDAP 2.8 to 3.0
+
+**Note:** Apps need to be both recompiled and re-deployed.
+
+When upgrading from 2.8.0 to 3.0.0, the CDAP Web-App role has been replaced by the CDAP-UI role.  After starting the 3.0 services 
+for the first time:
+
+   - From the CDAP Instances page, select "Add Role Instances", and choose a host for the CDAP-UI role.
+
+   - From the CDAP Instances page, check the CDAP-Web-App role, and select "Delete" from the Actions menu.
+
 
 Troubleshooting
 =======================================
@@ -223,6 +199,17 @@ query, try setting ``hive.exec.stagingdir`` in your Hive configuration to
 
 This can be done in Cloudera Manager using the *Hive Client
 Advanced Configuration Snippet (Safety Valve) for hive-site.xml* configuration field.
+
+.. rubric:: Missing Application Templates
+
+The bundled application templates are included in the CDAP parcel, located in a subdirectory
+of Cloudera's ``${PARCELS_ROOT}`` directory, for example::
+
+  /opt/cloudera/parcels/CDAP/master/templates
+
+Ensure that the ``App Template Dir`` configuration option points to this path on disk. Since this
+directory can change when CDAP parcels are upgraded, advanced users are encouraged to place
+these templates in a static directory outside the parcel root, and configure accordingly.
 
 .. _cloudera-direct-parcel-access:
 
