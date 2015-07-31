@@ -179,11 +179,12 @@ The following is the generic procedure for Major/Minor version upgrades:
 
 **Note:** Apps need to be both recompiled and re-deployed.
 
-When upgrading from 2.8.0 to 3.0.0, the CDAP Web-App role has been replaced by the CDAP-UI role.  After starting the 3.0 services the first time:
+When upgrading from 2.8.0 to 3.0.0, the CDAP Web-App role has been replaced by the CDAP-UI role.  After starting the 3.0 services 
+for the first time:
 
-   - From the CDAP Instances page, select Add Role Instances, and choose a host for the CDAP-UI role.
+   - From the CDAP Instances page, select "Add Role Instances", and choose a host for the CDAP-UI role.
 
-   - From the CDAP Instances page, check the CDAP-Web-App role, and select Delete from the Actions menu.
+   - From the CDAP Instances page, check the CDAP-Web-App role, and select "Delete" from the Actions menu.
 
 
 Troubleshooting
@@ -202,12 +203,11 @@ Advanced Configuration Snippet (Safety Valve) for hive-site.xml* configuration f
 .. rubric:: Missing Application Templates
 
 The bundled application templates are included in the CDAP parcel, located in a subdirectory
-of Cloudera's ``${PARCELS_ROOT}`` directory, for example:
+of Cloudera's ``${PARCELS_ROOT}`` directory, for example::
 
-.. parsed-literal::
   /opt/cloudera/parcels/CDAP/master/templates
 
-Ensure the ``App Template Dir`` configuration option points to this path on disk. Since this
+Ensure that the ``App Template Dir`` configuration option points to this path on disk. Since this
 directory can change when CDAP parcels are upgraded, advanced users are encouraged to place
 these templates in a static directory outside the parcel root, and configure accordingly.
 
