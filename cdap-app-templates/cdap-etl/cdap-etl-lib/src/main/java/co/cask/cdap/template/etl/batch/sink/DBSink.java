@@ -58,7 +58,7 @@ import java.util.List;
  */
 @Plugin(type = "sink")
 @Name("Database")
-@Description("Batch sink for a database.")
+@Description("Writes records to a database table. Each record will be written to a row in the table.")
 public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> {
   private static final Logger LOG = LoggerFactory.getLogger(DBSink.class);
 
@@ -187,7 +187,7 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
    * {@link PluginConfig} for {@link DBSink}
    */
   public static class DBSinkConfig extends DBConfig {
-    @Description("Comma-separated list of columns to export into the specified table.")
+    @Description("Comma-separated list of columns in the specified table to export to.")
     String columns;
 
     @Description("Name of the table to export to.")
