@@ -347,7 +347,7 @@ Improvements
   Documentation Build script now flags errors.
 
 - `CDAP-2554 <https://issues.cask.co/browse/CDAP-2554>`__ -
-  Streams can now be deleted.
+  Documented that streams can now be deleted.
 
 - `CDAP-2557 <https://issues.cask.co/browse/CDAP-2557>`__ -
   Non-handler logic moved out of DatasetInstanceHandler.
@@ -416,7 +416,7 @@ Improvements
   CDAP-UI: when creating an adapter, the tabbing order shows correctly.
 
 - `CDAP-2733 <https://issues.cask.co/browse/CDAP-2733>`__ -
-  Implemented a time paritioned FileSet source.
+  Implemented a TimeParitionedFileSet source.
 
 - `CDAP-2735 <https://issues.cask.co/browse/CDAP-2735>`__ -
   As DBSource doesn't use Table Name, removed it from Plugin configuration.
