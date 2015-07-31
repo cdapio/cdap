@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.adapters')
-  .controller('_AdapterCreateController', function(MyPlumbService, myAdapterApi, $bootstrapModal, $scope, rConfig, $stateParams, $alert, $modalStack, ModalConfirm) {
+  .controller('_AdapterCreateController', function(MyPlumbService, myAdapterApi, $bootstrapModal, $scope, rConfig, $stateParams, $alert, $modalStack) {
     this.metadata = MyPlumbService['metadata'];
     function resetMetadata() {
       this.metadata = MyPlumbService['metadata'];
@@ -50,20 +50,6 @@ angular.module(PKG.name + '.feature.adapters')
               metadata['name'] = $scope.modelCopy.name;
               metadata['description'] = $scope.modelCopy.description;
             }.bind(this);
-
-            function closeFn() {
-              $scope.reset();
-              $scope.$close('cancel');
-            }
-
-            ModalConfirm.confirmModalAdapter(
-              $scope,
-              $scope.metadata,
-              $scope.modelCopy,
-              closeFn
-            );
-
-
           }.bind(this)],
           resolve: {
             metadata: function() {
