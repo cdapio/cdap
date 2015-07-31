@@ -94,8 +94,8 @@ public class ETLMapReduce extends AbstractMapReduce {
     sourcePluginId = context.getRuntimeArguments().get(Constants.Source.PLUGINID);
     batchSource = context.newPluginInstance(sourcePluginId);
     BatchSourceContext sourceContext = new MapReduceSourceContext(context, mrMetrics, sourcePluginId);
-    LOG.info("Source Stage : {}", sourceStage);
-    LOG.info("Source Class : {}", batchSource.getClass().getName());
+    LOG.debug("Source Stage : {}", sourceStage);
+    LOG.debug("Source Class : {}", batchSource.getClass().getName());
     batchSource.prepareRun(sourceContext);
   }
 
@@ -103,8 +103,8 @@ public class ETLMapReduce extends AbstractMapReduce {
     sinkPluginId = context.getRuntimeArguments().get(Constants.Sink.PLUGINID);
     batchSink = context.newPluginInstance(sinkPluginId);
     BatchSinkContext sinkContext = new MapReduceSinkContext(context, mrMetrics, sinkPluginId);
-    LOG.info("Sink Stage : {}", sinkStage);
-    LOG.info("Sink Class : {}", batchSink.getClass().getName());
+    LOG.debug("Sink Stage : {}", sinkStage);
+    LOG.debug("Sink Class : {}", batchSink.getClass().getName());
     batchSink.prepareRun(sinkContext);
   }
 
@@ -157,8 +157,6 @@ public class ETLMapReduce extends AbstractMapReduce {
 
 
       List<ETLStage> stageList = etlConfig.getTransforms();
-      LOG.info("Transform Stages : {}", stageList);
-
       List<Transformation> pipeline = Lists.newArrayListWithCapacity(stageList.size() + 2);
       List<StageMetrics> stageMetrics = Lists.newArrayListWithCapacity(stageList.size() + 2);
       transforms = Lists.newArrayListWithCapacity(stageList.size());
@@ -190,8 +188,9 @@ public class ETLMapReduce extends AbstractMapReduce {
         String transformId = transformIds.get(i);
         Transform transform = context.newPluginInstance(transformId);
         BatchTransformContext transformContext = new BatchTransformContext(context, mapperMetrics, transformId);
+        LOG.debug("Transform Stage : {}", stageConfig.getName());
+        LOG.debug("Transform Class : {}", transform.getClass().getName());
         transform.initialize(transformContext);
-
         pipeline.add(transform);
         transforms.add(transform);
         stageMetrics.add(new StageMetrics(mapperMetrics, StageMetrics.Type.TRANSFORM, stageConfig.getName()));
