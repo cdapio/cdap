@@ -110,6 +110,10 @@ When completing the Wizard, these notes may help:
    - *Add Service* Wizard, Page 5: **Router Server Port:** This should match the "Router Bind
      Port"; it’s used by the CDAP UI to connect to the Router service.
 
+   - *Add Service* Wizard, Page 5: **App Template Dir:** This should initially point to the bundled templates included in the CDAP parcel
+     directory. If you have modified ``${PARCELS_ROOT}``, please update this setting to match.  Advanced users will want to customize
+     this directory to a location outside of the CDAP Parcel.
+
 Complete instructions, step-by-step, for using the Admin Console *Add Service* Wizard to install CDAP
 :ref:`are available <step-by-step-cloudera-add-service>`.
 
