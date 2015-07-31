@@ -48,7 +48,7 @@ subclass of FileInputFormat. Defaults to TextInputFormat.
 ::
 
   {
-    "name": "FileBatchSource",
+    "name": "S3",
     "properties": {
       "accessKey": "key",
       "accessID": "ID",
