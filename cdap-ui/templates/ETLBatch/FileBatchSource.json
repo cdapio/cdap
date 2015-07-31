@@ -1,5 +1,5 @@
 {
-  "id": "FileBatchSource",
+  "id": "File",
   "groups" : {
     "position": [ "group1" ],
     "group1": {
