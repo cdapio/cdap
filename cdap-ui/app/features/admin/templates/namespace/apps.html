@@ -52,10 +52,17 @@
                         <strong class="icon-app" ng-if="app.type !== 'Adapter'"></strong>
                         <span class="icon-ETLtemplates" ng-if="app.type === 'Adapter'"></span>
                         <a ng-if="app.type !== 'Adapter'" ui-sref="admin.namespace.detail.apps.metadata({appId: app.id})">
-                            <strong> {{ ::app.name }} </strong>
+                            <strong tooltip="{{app.name}}"
+                                    tooltip-enable="app.name.length > 25"
+                                    tooltip-append-to-body="true">
+                              {{ ::app.name | myEllipsis:25 }}
+                            </strong>
                         </a>
-                        <span ng-if="app.type === 'Adapter'">
-                          {{ ::app.name }}
+                        <span ng-if="app.type === 'Adapter'"
+                              tooltip="{{app.name}}"
+                              tooltip-enable="app.name.length > 25"
+                              tooltip-append-to-body="true">
+                          {{ ::app.name | myEllipsis:25 }}
                         </span>
                     </td>
                     <td>{{ ::app.version }}</td>
@@ -67,7 +74,13 @@
                       <span class="icon-ETLtemplates"></span>
                       <span>{{ ::app.template }}</span>
                     </td>
-                    <td>{{ ::app.description }}</td>
+                    <td>
+                      <span tooltip="{{app.description}}"
+                            tooltip-enable="app.description.length > 25"
+                            tooltip-append-to-body="true">
+                        {{ ::app.description | myEllipsis:25 }}
+                      </span>
+                    </td>
                     <td class="text-center">
                       <a href=""
                       ng-click="caskConfirm()"
