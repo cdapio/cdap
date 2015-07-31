@@ -24,7 +24,6 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.templates.plugins.PluginConfig;
 import co.cask.cdap.template.etl.api.Emitter;
-import co.cask.cdap.template.etl.api.batch.BatchSink;
 import co.cask.cdap.template.etl.api.batch.BatchSource;
 import co.cask.cdap.template.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.template.etl.common.Properties;
@@ -52,23 +51,19 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * A {@link BatchSink} that writes data to a Elasticsearch.
+ * A {@link BatchSource} that writes data to a Elasticsearch.
  * <p/>
- * This {@link ElasticsearchSource} takes a {@link StructuredRecord} in,
- * converts it to a json per {@link StructuredRecordStringConverter},
- * and writes it to the Elasticsearch server.
+ * This {@link ElasticsearchSource} reads from an Elasticsearch index and type and converts the MapWritable
+ * into an {@link StructuredRecord} and emits the StructuredRecord.
  * <p/>
- * If the Elasticsearch index does not exist, it will be created using the default properties
- * specified by Elasticsearch. See more information at
- * https://www.elastic.co/guide/en/elasticsearch/guide/current/_index_settings.html.
- * <p/>
+ * An exception will be thrown if the type of any of the fields does not match the type stated by the user.
  */
 @Plugin(type = "source")
 @Name("Elasticsearch")
 @Description("CDAP Elasticsearch Batch Sink takes the structured record from the input source" +
   " and converts it to a json, then indexes it in elasticsearch using the index, type, and id specified by the user." +
   "The elasticsearch server should be running prior to creating the adapter.")
-public class ElasticsearchSource extends BatchSource<Writable, Writable, StructuredRecord> {
+public class ElasticsearchSource extends BatchSource<Text, MapWritable, StructuredRecord> {
   private static final String INDEX_DESC = "The name of the index to query";
   private static final String TYPE_DESC = "The name of the type where the data is stored.";
   private static final String QUERY_DESC = "The query to use to import data from the specified index. " +
@@ -106,8 +101,8 @@ public class ElasticsearchSource extends BatchSource<Writable, Writable, Structu
   }
 
   @Override
-  public void transform(KeyValue<Writable, Writable> input, Emitter<StructuredRecord> emitter) throws Exception {
-    emitter.emit(readRecord((MapWritable) input.getValue(), schema == null ? parseSchema() : schema));
+  public void transform(KeyValue<Text, MapWritable> input, Emitter<StructuredRecord> emitter) throws Exception {
+    emitter.emit(readRecord(input.getValue(), schema == null ? parseSchema() : schema));
   }
 
   private Schema parseSchema() {

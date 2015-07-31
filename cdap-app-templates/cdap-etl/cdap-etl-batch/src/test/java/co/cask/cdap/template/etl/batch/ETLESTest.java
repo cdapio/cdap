@@ -21,10 +21,12 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.template.etl.batch.config.ETLBatchConfig;
 import co.cask.cdap.template.etl.batch.sink.ElasticsearchSink;
+import co.cask.cdap.template.etl.batch.source.ElasticsearchSource;
 import co.cask.cdap.template.etl.common.ETLStage;
 import co.cask.cdap.template.etl.common.Properties;
 import co.cask.cdap.test.AdapterManager;
@@ -48,6 +50,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
 
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -57,7 +60,7 @@ import static org.elasticsearch.node.NodeBuilder.nodeBuilder;
 
 /**
  * <p>
- *  Unit test for {@link ElasticsearchSink} ETL batch sink class.
+ *  Unit test for batch {@link ElasticsearchSink} and {@link ElasticsearchSource} classes.
  * </p>
  */
 public class ETLESTest extends BaseETLBatchTest {
@@ -75,10 +78,14 @@ public class ETLESTest extends BaseETLBatchTest {
   @ClassRule
   public static TemporaryFolder temporaryFolder = new TemporaryFolder();
 
+  private int port;
+
   @Before
   public void beforeTest() throws Exception {
+    port = Networks.getRandomPort();
     ImmutableSettings.Builder elasticsearchSettings = ImmutableSettings.settingsBuilder()
-      .put("path.data", tmpFolder.newFolder("data"));
+      .put("path.data", tmpFolder.newFolder("data"))
+      .put("http.port", port);
     node = nodeBuilder().settings(elasticsearchSettings.build()).client(false).node();
     client = node.client();
   }
@@ -116,7 +123,8 @@ public class ETLESTest extends BaseETLBatchTest {
       .build());
 
     ETLStage sink = new ETLStage("Elasticsearch",
-                                 ImmutableMap.of(Properties.Elasticsearch.HOST, "localhost:9200",
+                                 ImmutableMap.of(Properties.Elasticsearch.HOST,
+                                                 InetAddress.getLocalHost().getHostName() + ":" + port,
                                                  Properties.Elasticsearch.INDEX_NAME, "test",
                                                  Properties.Elasticsearch.TYPE_NAME, "testing",
                                                  Properties.Elasticsearch.ID_FIELD, "ticker"
@@ -148,7 +156,8 @@ public class ETLESTest extends BaseETLBatchTest {
   @SuppressWarnings("ConstantConditions")
   public void testESSource() throws Exception {
     ETLStage source = new ETLStage("Elasticsearch",
-                                   ImmutableMap.of(Properties.Elasticsearch.HOST, "localhost:9200",
+                                   ImmutableMap.of(Properties.Elasticsearch.HOST,
+                                                   InetAddress.getLocalHost().getHostName() + ":" + port,
                                                    Properties.Elasticsearch.INDEX_NAME, "test",
                                                    Properties.Elasticsearch.TYPE_NAME, "testing",
                                                    Properties.Elasticsearch.QUERY, "?q=*",
