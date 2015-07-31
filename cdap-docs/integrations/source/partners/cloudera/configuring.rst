@@ -143,7 +143,7 @@ When a new compatible CDAP parcel is released, it will be available via the Parc
 
 Upgrading between major versions of CDAP involves the additional steps of upgrading the CSD, and running the included
 CDAP Upgrade Tool. Upgrades between multiple Major/Minor versions must be done consecutively, and a version cannot be
-skipped unless otherwise noted.  **Note:** Apps need to be both recompiled and re-deployed.
+skipped unless otherwise noted.
 
 The following is the generic procedure for Major/Minor version upgrades:
 
@@ -173,9 +173,11 @@ The following is the generic procedure for Major/Minor version upgrades:
 
 .. rubric:: Upgrading CDAP 3.0 to 3.1
 
-No known additional requirements.
+**Note:** An app need to be both recompiled and re-deployed if it uses either a PartitionedFileSet or a TimePartitionedFileSet.
 
 .. rubric:: Upgrading CDAP 2.8 to 3.0
+
+**Note:** Apps need to be both recompiled and re-deployed.
 
 When upgrading from 2.8.0 to 3.0.0, the CDAP Web-App role has been replaced by the CDAP-UI role.  After starting the 3.0 services the first time:
 
