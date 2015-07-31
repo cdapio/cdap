@@ -528,9 +528,9 @@ In order to configure **CDAP Explore Service for secure Hadoop:**
       <value>*</value>
     </property>
 
-- To the configuration file ``mapred-site.xml``, set these properties, substituting your
-  domain for ``EXAMPLE.COM``, and the hostname of the node running the JHS
-  (JobHistoryServer) for ``HOSTNAME_OF_JHS``::
+- To the configuration file ``mapred-site.xml``, set these properties, substituting the 
+  Kerberos principal for ``CDAP_PRINCIPAL``, your domain for ``EXAMPLE.COM``, and the
+  hostname of the node running the JHS (JobHistoryServer) for ``HOSTNAME_OF_JHS``::
 
     <property>
       <name>mapreduce.jobhistory.keytab</name>
@@ -538,7 +538,9 @@ In order to configure **CDAP Explore Service for secure Hadoop:**
     </property>
     <property>
       <name>mapreduce.jobhistory.principal</name>
-        <value>jhs/_HOST@EXAMPLE>.COM</value>
+        <value>CDAP_PRINCIPAL/_HOST@EXAMPLE>.COM</value>
+      <description>The Kerberos principal name that should be used to login to the CDAP Master
+      process. The string "_HOST" will be substituted with the local hostname.</description>
     </property>
     <property>
       <name>mapreduce.jobhistory.address</name>
