@@ -174,7 +174,7 @@ angular.module(PKG.name + '.services')
         });
       });
       var localConnections = orderConnections.call(this, angular.copy(localConnections), angular.copy(localConnections));
-      connections.forEach(this.addConnection.bind(this));
+      this.connections = localConnections;
     };
 
     this.addNodes = function(conf, type) {
@@ -618,9 +618,8 @@ angular.module(PKG.name + '.services')
             function success() {
               mySettings.get('adapterDrafts')
                .then(function(res) {
-                 var adapterName;
+                 var adapterName = this.metadata.name;
                  if (angular.isObject(res)) {
-                   adapterName = this.metadata.name;
                    delete res[adapterName];
                    mySettings.set('adapterDrafts', res);
                  }
