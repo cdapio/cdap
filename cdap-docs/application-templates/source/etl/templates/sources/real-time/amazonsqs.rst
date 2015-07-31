@@ -8,11 +8,15 @@ Sources: Real-time: Amazon SQS
 
 .. rubric:: Description
 
-Amazon SQS (Simple Queue Service) Real-time Source that emits a record with a field 'body' of type String.
+Amazon SQS (Simple Queue Service) Real-time Source that emits a record with a field
+'body' of type String.
 
 .. rubric:: Use Case
 
-TODO: Fill me out
+This source is used when you want to read messages from Amazon SQS. For example,
+a web beacon is pushing log records to SQS and you want to read these log events
+in real-time. We can use this source to read these records and then store them
+in a Cube.
 
 .. rubric:: Properties
 
@@ -28,4 +32,17 @@ TODO: Fill me out
 
 .. rubric:: Example
 
-TODO: Fill me out
+::
+
+  {
+    "name": "SQS",
+    "properties": {
+      "region": "us-west-1",
+      "accessID": "accessID",
+      "accessKey": "accessKey",
+      "queueName": "queue_name"
+    }
+  }
+
+This example reads in from a queue named 'queue_name' which is hosted on a server that's
+located in the 'us-west-1' region.
