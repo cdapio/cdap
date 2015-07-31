@@ -55,11 +55,13 @@ import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.filter.TimestampsFilter;
 import org.apache.hadoop.hbase.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -263,6 +265,11 @@ public class HBaseTable extends BufferingTable {
   protected Scanner scanPersisted(co.cask.cdap.api.dataset.table.Scan scan) throws Exception {
     ScanBuilder hScan = tableUtil.buildScan();
     hScan.addFamily(columnFamily);
+    if (snapshotVersion != null) {
+      List<Long> timeFilter = new ArrayList<>();
+      timeFilter.add(Long.valueOf(snapshotVersion));
+      hScan.setFilter(new TimestampsFilter(timeFilter));
+    }
     // todo: should be configurable
     // NOTE: by default we assume scanner is used in mapreduce job, hence no cache blocks
     hScan.setCacheBlocks(false);
@@ -305,6 +312,11 @@ public class HBaseTable extends BufferingTable {
   private Get createGet(byte[] row, @Nullable byte[][] columns) {
     GetBuilder get = tableUtil.buildGet(row);
     get.addFamily(columnFamily);
+    if (snapshotVersion != null) {
+      List<Long> timeFilter = new ArrayList<>();
+      timeFilter.add(Long.valueOf(snapshotVersion));
+      get.setFilter(new TimestampsFilter(timeFilter));
+    }
     if (columns != null && columns.length > 0) {
       for (byte[] column : columns) {
         get.addColumn(columnFamily, column);
@@ -338,6 +350,8 @@ public class HBaseTable extends BufferingTable {
 
     return getRowMap(result, columnFamily);
   }
+
+
 
   static NavigableMap<byte[], byte[]> getRowMap(Result result, byte[] columnFamily) {
     if (result.isEmpty()) {
