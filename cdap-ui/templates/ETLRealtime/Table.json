@@ -9,7 +9,7 @@
           "name" : {
              "widget": "textbox",
              "label": "Name",
-             "description" : "Specifies the name of the table to which data will be written to"
+             "description" : "Specifies the name of the table the data will be written to"
           },
 
           "schema" : {
@@ -23,17 +23,17 @@
           "schema.row.field" : {
              "widget": "textbox",
              "label" : "Row Field",
-             "description" : "Specify the field from the record above that should be used as key"
+             "description" : "Specify the field from the above record to be used as key"
           },
 
           "case.sensitive.row.field" : {
              "widget": "select",
-             "label" : "Case-Sensitive Row Field",
+             "label" : "Case-sensitive Row Field",
              "properties" : {
                "values" : [ "true", "false" ],
                "default" : "true"
              },
-             "description" : "Specify whether the row field specified in schema.row.field is case sensitive"
+             "description" : "Specify whether the row field specified in schema.row.field is case-sensitive"
           }
        }
     }

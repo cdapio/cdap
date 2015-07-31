@@ -8,8 +8,7 @@
        "fields" : {
           "user" : {
              "widget": "textbox",
-             "label": "Username",
-             "description" : "Username to connect to database"
+             "label": "Username"
           },
 
           "password" : {

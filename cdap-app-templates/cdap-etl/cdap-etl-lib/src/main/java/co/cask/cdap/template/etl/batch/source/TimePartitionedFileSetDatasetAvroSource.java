@@ -56,8 +56,7 @@ public class TimePartitionedFileSetDatasetAvroSource extends
 
   private static final String SCHEMA_DESC = "The Avro schema of the record being read from the source as a JSON " +
     "Object.";
-  private static final String TPFS_NAME_DESC = "Name of the TimePartitionedFileSet from which the records " +
-    "should be read.";
+  private static final String TPFS_NAME_DESC = "Name of the TimePartitionedFileSet to read.";
   private static final String BASE_PATH_DESC = "Base path for the TimePartitionedFileSet. Defaults to the " +
     "name of the dataset.";
   private static final String DURATION_DESC = "Size of the time window to read with each run of the pipeline. " +

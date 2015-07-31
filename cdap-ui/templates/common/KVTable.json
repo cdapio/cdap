@@ -9,7 +9,7 @@
           "name" : {
             "widget": "textbox",
             "label": "Table Name",
-            "description" : "Specifies the name of the table to which data will be written to"
+            "description" : "Specifies the name of the table the data will be written to"
           },
 
           "key" : {
