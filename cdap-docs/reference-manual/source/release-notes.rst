@@ -56,9 +56,6 @@ New Features
 - `CDAP-865 <https://issues.cask.co/browse/CDAP-865>`__ -
   Removed support for v2 HTTP RESTful APIs.
 
-- `CDAP-1096 <https://issues.cask.co/browse/CDAP-1096>`__ -
-  Added the ability to discover services in unit tests.
-
 - `CDAP-1483 <https://issues.cask.co/browse/CDAP-1483>`__ -
   QueueAdmin now uses Id.Namespace instead of simply String.
 
