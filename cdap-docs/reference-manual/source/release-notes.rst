@@ -157,9 +157,6 @@ New Features
 - `CDAP-2836 <https://issues.cask.co/browse/CDAP-2836>`__ -
   Added support for restart of specific CDAP System Services Instances.
 
-- `CDAP-2837 <https://issues.cask.co/browse/CDAP-2837>`__ -
-  Added Hive "1.0" (aka 0.14) support.
-
 - `CDAP-2847 <https://issues.cask.co/browse/CDAP-2847>`__ -
   Added ability to add custom filters to FileBatchSource.
 
@@ -211,9 +208,6 @@ New Features
 
 Improvements
 ------------
-
-- Introduced BatchPartitionConsumer as a way to incrementally consume new data in a
-  PartitionedFileSet.
 
 - `CDAP-10 <https://issues.cask.co/browse/CDAP-10>`__ -
   Remove caching of class loaders in dataset accessor when the dataset framework does not
@@ -281,7 +275,7 @@ Improvements
   Added Spark job completion status for empty dummy programs.
 
 - `CDAP-1853 <https://issues.cask.co/browse/CDAP-1853>`__ -
-  Metrics processor scaling receives a master services restart.
+  Metrics processor scaling no longer needs a master services restart.
 
 - `CDAP-1983 <https://issues.cask.co/browse/CDAP-1983>`__ -
   Added example application for processing and analyzing Wikipedia data using Workflows.
