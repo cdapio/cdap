@@ -103,9 +103,12 @@ angular.module(PKG.name + '.commons')
               method: 'POST'
             })
             .then(function (res) {
+              var csv = 'data:text/csv;charset=utf-8,' + res;
+              var data = encodeURI(csv);
+
               var element = angular.element('<a/>');
               element.attr({
-                href: 'data:atachment/csv,' + encodeURIComponent(res),
+                href: data,
                 target: '_self',
                 download: 'result.csv'
               })[0].click();
