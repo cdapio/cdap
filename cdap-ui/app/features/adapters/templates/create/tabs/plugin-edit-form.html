@@ -18,12 +18,19 @@
 -->
 <div ng-controller="PluginEditController as PluginEditController">
   <div class="modal-header">
-    <div ng-class="{ 'col-xs-6 col-md-9': !isDisabled, 'col-xs-10 col-md-11': isDisabled }">
+    <div ng-class="{ 'col-xs-6 col-md-7': !isDisabled, 'col-xs-10 col-md-11': isDisabled }">
       <h3 class="modal-title">{{plugin.name}} Properties</h3>
       <p>{{plugin.description}}</p>
     </div>
-    <div ng-class="{ 'col-xs-6 col-md-3': !isDisabled, 'col-xs-2 col-md-1': isDisabled }">
+    <div ng-class="{ 'col-xs-6 col-md-5': !isDisabled, 'col-xs-2 col-md-1': isDisabled }">
       <div class="btn-group modal-btns">
+        <div ng-class="{'active-info': PluginEditController.showinfo === true}">
+          <a class="btn"
+              ng-click="PluginEditController.showinfo = !PluginEditController.showinfo;">
+            <span class="fa fa-info"></span>
+          </a>
+        </div>
+
         <div ng-if="!isDisabled">
           <a class="btn" ng-click="PluginEditController.reset()">
             <span class="fa fa-repeat"></span>
@@ -48,12 +55,12 @@
             <span class="sr-only">Close</span>
           </a>
         </div>
-
       </div>
     </div>
   </div>
 
   <div class="modal-body plugin-modal" ng-class="{'modal-source': plugin.type === 'source', 'modal-transform': plugin.type === 'transform', 'modal-sink': plugin.type === 'sink'}">
+    <div ng-show="!PluginEditController.showinfo">
     <div ng-if="PluginEditController.noproperty !== 0">
     <div class="row" ng-if="(PluginEditController.configfetched && !PluginEditController.noconfig)">
 
@@ -324,5 +331,11 @@
         </div>
       </div>
     </div>
+    </div>
+
+    <div ng-show="PluginEditController.showinfo" class="embed-responsive embed-responsive-4by3">
+      <iframe class="ember-responsive-item" src="{{PluginEditController.trustSrc(PluginEditController.infoUrl)}}"></iframe>
+    </div>
+
   </div>
 </div>

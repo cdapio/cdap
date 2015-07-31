@@ -167,6 +167,14 @@ body.theme-cdap.state-adapters-create {
             border-left: 1px solid @modal-table-border-color;
             text-align: center;
             width: 60px;
+
+            &.active-info {
+              background-color: @cdap-header;
+              .btn {
+                color: white;
+              }
+            }
+
             .transition(all 0.2s ease);
             @media (max-width: @screen-sm-max) {
               width: 45px;
@@ -235,13 +243,13 @@ body.theme-cdap.state-adapters-create {
       }
       @media (max-width: @screen-md-max) {
         height: 65vh;
-        overflow-y: scroll;
       }
       .modal-body {
         background-color: white;
         overflow-x: hidden;
         padding: 0 10px;
         width: 100%;
+        overflow-y: scroll;
         .border-radius(0 0 4px 4px);
 
         &.settings-modal, &.metadata-modal {
@@ -249,7 +257,6 @@ body.theme-cdap.state-adapters-create {
         }
         @media (max-width: @screen-md-max) {
           height: 65vh;
-          overflow-y: scroll;
         }
         @media (min-width: @screen-lg-min) {
           height: 70vh;

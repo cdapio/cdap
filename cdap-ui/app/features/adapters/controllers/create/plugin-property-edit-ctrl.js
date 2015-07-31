@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.adapters')
-  .controller('PluginEditController', function($scope, PluginConfigFactory, myHelpers, EventPipe, $timeout) {
+  .controller('PluginEditController', function($scope, PluginConfigFactory, myHelpers, EventPipe, $timeout, MyPlumbService, $sce) {
     var pluginCopy;
 
     var propertiesFromBackend = Object.keys($scope.plugin._backendProperties);
@@ -18,6 +18,31 @@ angular.module(PKG.name + '.feature.adapters')
     this.configfetched = null;
     this.properties = [];
     this.noconfig = null;
+    if (MyPlumbService.metadata.template.type === 'ETLBatch') {
+      this.infoPluginType = 'batch';
+    } else if (MyPlumbService.metadata.template.type === 'ETLRealtime') {
+      this.infoPluginType = 'real-time';
+    }
+
+    this.infoPluginCategory = $scope.plugin.type + 's';
+
+    this.infoPluginName = $scope.plugin.name.toLowerCase();
+    if (this.infoPluginCategory === 'transforms') {
+      this.infoPluginCategory = 'transformations';
+      this.infoUrl = 'http://docs-staging.cask.co/cdap/3.1.0-SNAPSHOT/en/application-templates/etl/templates/'
+                      + this.infoPluginCategory + '/'
+                      + this.infoPluginName + '.html?hidenav';
+    } else {
+      this.infoUrl = 'http://docs-staging.cask.co/cdap/3.1.0-SNAPSHOT/en/application-templates/etl/templates/'
+                      + this.infoPluginCategory + '/'
+                      + this.infoPluginType + '/'
+                      + this.infoPluginName + '.html?hidenav';
+    }
+
+    this.trustSrc = function(src) {
+      return $sce.trustAsResourceUrl(src);
+    };
+
     this.noproperty = Object.keys(
       $scope.plugin._backendProperties || {}
     ).length;
