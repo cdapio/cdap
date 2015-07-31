@@ -9,7 +9,7 @@
         "es.host": {
           "widget": "textbox",
           "label": "Elasticsearch Host",
-          "description": "Specify the hostname and port for your elasticsearch instance (e.g. localhost:9200).",
+          "description": "Specify the hostname and port for your elasticsearch instance, for example localhost:9200.",
           "properties": {
             "width": "large"
           }
@@ -49,7 +49,7 @@
         "query" : {
           "widget": "textbox",
           "label": "Query",
-          "description": "The query used to select record from the specified index/type. e.g. ?q=* will select all records",
+          "description": "The query used to select record from the specified index/type; for example, ?q=* will select all records",
           "properties": {
             "width":"large"
           }

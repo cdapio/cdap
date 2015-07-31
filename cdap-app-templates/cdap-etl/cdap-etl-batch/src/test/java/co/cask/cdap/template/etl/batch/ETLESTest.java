@@ -59,15 +59,12 @@ import static org.elasticsearch.index.query.QueryBuilders.matchQuery;
 import static org.elasticsearch.node.NodeBuilder.nodeBuilder;
 
 /**
- * <p>
  *  Unit test for batch {@link ElasticsearchSink} and {@link ElasticsearchSource} classes.
- * </p>
  */
 public class ETLESTest extends BaseETLBatchTest {
-  private Client client;
-  private Node node;
-
   private static final Gson GSON = new Gson();
+  private static final String STREAM_NAME = "myStream";
+  private static final String TABLE_NAME = "outputTable";
 
   private static final Schema BODY_SCHEMA = Schema.recordOf(
     "event",
@@ -78,7 +75,10 @@ public class ETLESTest extends BaseETLBatchTest {
   @ClassRule
   public static TemporaryFolder temporaryFolder = new TemporaryFolder();
 
+  private Client client;
+  private Node node;
   private int port;
+
 
   @Before
   public void beforeTest() throws Exception {
@@ -107,14 +107,14 @@ public class ETLESTest extends BaseETLBatchTest {
     testESSource();
   }
 
-  public void testESSink() throws Exception {
-    StreamManager streamManager = getStreamManager("myStream");
+  private void testESSink() throws Exception {
+    StreamManager streamManager = getStreamManager(STREAM_NAME);
     streamManager.createStream();
     streamManager.send(ImmutableMap.of("header1", "bar"), "AAPL|10|500.32");
     streamManager.send(ImmutableMap.of("header1", "bar"), "CDAP|13|212.36");
 
     ETLStage source = new ETLStage("Stream", ImmutableMap.<String, String>builder()
-      .put(Properties.Stream.NAME, "myStream")
+      .put(Properties.Stream.NAME, STREAM_NAME)
       .put(Properties.Stream.DURATION, "10m")
       .put(Properties.Stream.DELAY, "0d")
       .put(Properties.Stream.FORMAT, Formats.CSV)
@@ -154,7 +154,7 @@ public class ETLESTest extends BaseETLBatchTest {
   }
 
   @SuppressWarnings("ConstantConditions")
-  public void testESSource() throws Exception {
+  private void testESSource() throws Exception {
     ETLStage source = new ETLStage("Elasticsearch",
                                    ImmutableMap.of(Properties.Elasticsearch.HOST,
                                                    InetAddress.getLocalHost().getHostName() + ":" + port,
@@ -163,7 +163,7 @@ public class ETLESTest extends BaseETLBatchTest {
                                                    Properties.Elasticsearch.QUERY, "?q=*",
                                                    Properties.Elasticsearch.SCHEMA, BODY_SCHEMA.toString()));
     ETLStage sink = new ETLStage("Table",
-                                 ImmutableMap.of("name", "outputTable",
+                                 ImmutableMap.of("name", TABLE_NAME,
                                                  Properties.Table.PROPERTY_SCHEMA, BODY_SCHEMA.toString(),
                                                  Properties.Table.PROPERTY_SCHEMA_ROW_FIELD, "ticker"));
 
@@ -177,7 +177,7 @@ public class ETLESTest extends BaseETLBatchTest {
     manager.waitForOneRunToFinish(5, TimeUnit.MINUTES);
     manager.stop();
 
-    DataSetManager<Table> outputManager = getDataset("outputTable");
+    DataSetManager<Table> outputManager = getDataset(TABLE_NAME);
     Table outputTable = outputManager.get();
 
     // Scanner to verify number of rows

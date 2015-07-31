@@ -27,7 +27,6 @@ import co.cask.cdap.template.etl.api.Emitter;
 import co.cask.cdap.template.etl.api.batch.BatchSource;
 import co.cask.cdap.template.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.template.etl.common.Properties;
-import co.cask.cdap.template.etl.common.StructuredRecordStringConverter;
 import com.google.common.base.Strings;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.ArrayWritable;
@@ -51,17 +50,17 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * A {@link BatchSource} that writes data to a Elasticsearch.
- * <p/>
+ * A {@link BatchSource} that writes data to Elasticsearch.
+ * <p>
  * This {@link ElasticsearchSource} reads from an Elasticsearch index and type and converts the MapWritable
- * into an {@link StructuredRecord} and emits the StructuredRecord.
- * <p/>
+ * into a {@link StructuredRecord} and emits the StructuredRecord.
+ * </p>
  * An exception will be thrown if the type of any of the fields does not match the type stated by the user.
  */
 @Plugin(type = "source")
 @Name("Elasticsearch")
-@Description("CDAP Elasticsearch Batch Sink takes the structured record from the input source" +
-  " and converts it to a json, then indexes it in elasticsearch using the index, type, and id specified by the user." +
+@Description("CDAP Elasticsearch Batch Sink takes the structured record from the input source " +
+  "and converts it to a JSON, then indexes it in elasticsearch using the index, type, and id specified by the user. " +
   "The elasticsearch server should be running prior to creating the adapter.")
 public class ElasticsearchSource extends BatchSource<Text, MapWritable, StructuredRecord> {
   private static final String INDEX_DESC = "The name of the index to query";
@@ -102,7 +101,7 @@ public class ElasticsearchSource extends BatchSource<Text, MapWritable, Structur
 
   @Override
   public void transform(KeyValue<Text, MapWritable> input, Emitter<StructuredRecord> emitter) throws Exception {
-    emitter.emit(readRecord(input.getValue(), schema == null ? parseSchema() : schema));
+    emitter.emit(convertToRecord(input.getValue(), schema == null ? parseSchema() : schema));
   }
 
   private Schema parseSchema() {
@@ -113,21 +112,21 @@ public class ElasticsearchSource extends BatchSource<Text, MapWritable, Structur
     }
   }
 
-  private static StructuredRecord readRecord(MapWritable input, Schema schema) throws IOException {
+  private static StructuredRecord convertToRecord(MapWritable input, Schema schema) throws IOException {
     StructuredRecord.Builder builder = StructuredRecord.builder(schema);
 
     for (Schema.Field field : schema.getFields()) {
       try {
-        builder.set(field.getName(), readWritables(input.get(new Text(field.getName())), field.getSchema()));
+        builder.set(field.getName(), convertWritables(input.get(new Text(field.getName())), field.getSchema()));
       } catch (Exception e) {
         throw(new IOException(String.format("Type exception for field %s: %s",
-                                                   field.getName(), e.getMessage())));
+                                            field.getName(), e.getMessage())));
       }
     }
     return builder.build();
   }
 
-  private static Object readWritables(Writable writable, Schema schema) throws IOException {
+  private static Object convertWritables(Writable writable, Schema schema) throws IOException {
     switch (schema.getType()) {
       case NULL:
         if (writable.getClass() == NullWritable.class) {
@@ -156,26 +155,26 @@ public class ElasticsearchSource extends BatchSource<Text, MapWritable, Structur
         // Currently there is no standard container to represent enum type
         return writable.toString();
       case ARRAY:
-        return readArray((ArrayWritable) writable, schema.getComponentSchema());
+        return convertArray((ArrayWritable) writable, schema.getComponentSchema());
       case MAP:
-        return readMap((MapWritable) writable, schema.getMapSchema());
+        return convertMap((MapWritable) writable, schema.getMapSchema());
       case RECORD:
-        return readRecord((MapWritable) writable, schema);
+        return convertToRecord((MapWritable) writable, schema);
       case UNION:
-        return readUnion(writable, schema);
+        return convertUnion(writable, schema);
     }
     throw new IOException("Unsupported schema: " + schema);
   }
 
-  private static List<Object> readArray(ArrayWritable input, Schema elementSchema) throws IOException {
+  private static List<Object> convertArray(ArrayWritable input, Schema elementSchema) throws IOException {
     List<Object> result = new ArrayList<>();
     for (Writable writable : input.get()) {
-      result.add(readWritables(writable, elementSchema));
+      result.add(convertWritables(writable, elementSchema));
     }
     return result;
   }
 
-  private static Map<Object, Object> readMap(MapWritable input,
+  private static Map<Object, Object> convertMap(MapWritable input,
                                              Map.Entry<Schema, Schema> mapSchema) throws IOException {
     Schema keySchema = mapSchema.getKey();
     if (!keySchema.isCompatible(Schema.of(Schema.Type.STRING))) {
@@ -186,20 +185,20 @@ public class ElasticsearchSource extends BatchSource<Text, MapWritable, Structur
     Map<Object, Object> result = new HashMap<>();
 
     for (Writable key : input.keySet()) {
-      result.put(readWritables(key, keySchema), readWritables(input.get(key), valueSchema));
+      result.put(convertWritables(key, keySchema), convertWritables(input.get(key), valueSchema));
     }
     return result;
   }
 
-  private static Object readUnion(Writable input, Schema unionSchema) throws IOException {
-      for (Schema schema : unionSchema.getUnionSchemas()) {
-        try {
-          return readWritables(input, schema);
-        } catch (ClassCastException e) {
-          //no-op; keep iterating until the appropriate class is found
-        }
+  private static Object convertUnion(Writable input, Schema unionSchema) throws IOException {
+    for (Schema schema : unionSchema.getUnionSchemas()) {
+      try {
+        return convertWritables(input, schema);
+      } catch (ClassCastException e) {
+        //no-op; keep iterating until the appropriate class is found
       }
-      throw new IOException("No matching schema found for union type: " + unionSchema);
+    }
+    throw new IOException("No matching schema found for union type: " + unionSchema);
   }
 
   /**
