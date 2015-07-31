@@ -35,6 +35,7 @@ import co.cask.cdap.template.etl.common.Constants;
 import co.cask.cdap.template.etl.common.DefaultEmitter;
 import co.cask.cdap.template.etl.common.Destroyables;
 import co.cask.cdap.template.etl.common.ETLStage;
+import co.cask.cdap.template.etl.common.PluginID;
 import co.cask.cdap.template.etl.common.StageMetrics;
 import co.cask.cdap.template.etl.common.TransformExecutor;
 import co.cask.cdap.template.etl.realtime.config.ETLRealtimeConfig;
@@ -131,7 +132,7 @@ public class ETLWorker extends AbstractWorker {
     LOG.debug("Source Stage : {}", stage.getName());
     LOG.debug("Source Class : {}", source.getClass().getName());
     source.initialize(sourceContext);
-    sourceEmitter = new DefaultEmitter(new StageMetrics(metrics, StageMetrics.Type.SOURCE, stage.getName()));
+    sourceEmitter = new DefaultEmitter(new StageMetrics(metrics, PluginID.from(sourcePluginId)));
   }
 
   @SuppressWarnings("unchecked")
@@ -142,7 +143,7 @@ public class ETLWorker extends AbstractWorker {
     LOG.debug("Sink Stage : {}", stage.getName());
     LOG.debug("Sink Class : {}", sink.getClass().getName());
     sink.initialize(sinkContext);
-    sink = new TrackedRealtimeSink(sink, metrics, stage.getName());
+    sink = new TrackedRealtimeSink(sink, metrics, PluginID.from(sinkPluginId));
   }
 
   private List<Transformation> initializeTransforms(WorkerContext context, List<ETLStage> stages) throws Exception {
@@ -163,7 +164,7 @@ public class ETLWorker extends AbstractWorker {
         LOG.debug("Transform Class : {}", transform.getClass().getName());
         transform.initialize(transformContext);
         transforms.add(transform);
-        transformMetrics.add(new StageMetrics(metrics, StageMetrics.Type.TRANSFORM, stage.getName()));
+        transformMetrics.add(new StageMetrics(metrics, PluginID.from(transformId)));
       } catch (InstantiationException e) {
         LOG.error("Unable to instantiate Transform : {}", stage.getName(), e);
         Throwables.propagate(e);
