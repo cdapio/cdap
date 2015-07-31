@@ -134,7 +134,7 @@ public class ETLWorkerTest extends TestBase {
   @Category(SlowTests.class)
   public void testStreamSink() throws Exception {
     long startTime = System.currentTimeMillis();
-    ETLStage source = new ETLStage("Test", ImmutableMap.of(DataGeneratorSource.PROPERTY_TYPE,
+    ETLStage source = new ETLStage("DataGenerator", ImmutableMap.of(DataGeneratorSource.PROPERTY_TYPE,
                                                            DataGeneratorSource.STREAM_TYPE));
     ETLStage sink = new ETLStage("Stream", ImmutableMap.of(Properties.Stream.NAME, "testStream"));
     ETLRealtimeConfig etlConfig = new ETLRealtimeConfig(source, sink);
@@ -174,7 +174,7 @@ public class ETLWorkerTest extends TestBase {
   @Test
   @SuppressWarnings("ConstantConditions")
   public void testTableSink() throws Exception {
-    ETLStage source = new ETLStage("Test", ImmutableMap.of(DataGeneratorSource.PROPERTY_TYPE,
+    ETLStage source = new ETLStage("DataGenerator", ImmutableMap.of(DataGeneratorSource.PROPERTY_TYPE,
                                                            DataGeneratorSource.TABLE_TYPE));
     ETLStage sink = new ETLStage("Table",
                                  ImmutableMap.of(Properties.Table.NAME, "table1",

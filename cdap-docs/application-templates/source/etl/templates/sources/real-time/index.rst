@@ -12,5 +12,5 @@ Sources: Real-time
     AmazonSQS <amazonsqs>
     JMS <jms>
     Kafka <kafka>
-    Test <test>
+    DataGenerator <datagenerator>
     Twitter <twitter>
