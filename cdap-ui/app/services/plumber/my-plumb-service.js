@@ -69,6 +69,7 @@ angular.module(PKG.name + '.services')
       // Resetting template should be fine as it is going to be the same.
       isImport = (isImport === true? true: false);
       if (isImport) {
+        this.callbacks = callbacks;
         this.resetCallbacks = resetCallbacks;
         this.errorCallbacks = errorCallbacks;
         this.metadata.name = name;
@@ -113,8 +114,66 @@ angular.module(PKG.name + '.services')
       });
     };
 
+    function addConnectionsInOrder(node, finalConnections, originalConnections) {
+      if (node.visited) {
+        return finalConnections;
+      }
+
+      node.visited = true;
+      finalConnections.push(node);
+      var nextConnection = originalConnections.filter(function(conn) {
+        if (node.target === conn.source) {
+          return conn;
+        }
+      });
+      if (nextConnection.length) {
+        return addConnectionsInOrder(nextConnection[0], finalConnections, originalConnections);
+      }
+    }
+
+    function findTransformThatIsSource(originalConnections) {
+      var transformAsSource = {};
+      for (var i =0; i<originalConnections.length; i++) {
+        var connection = originalConnections[i];
+        var isSoureATarget = originalConnections.filter(function (c) {
+          if (c.target === connection.source) {
+            return c;
+          }
+        });
+        if (!isSoureATarget.length) {
+          transformAsSource = connection;
+          break;
+        }
+      }
+      return transformAsSource;
+    }
+
+    function orderConnections(connections, originalConnections) {
+      var finalConnections = [];
+      var source = connections.filter(function(conn) {
+        if (this.nodes[conn.source].type === 'source') {
+          return conn;
+        }
+      }.bind(this));
+      if (source.length) {
+        addConnectionsInOrder(source[0], finalConnections, originalConnections);
+      } else {
+        var source = findTransformThatIsSource(originalConnections);
+        addConnectionsInOrder(source, finalConnections, originalConnections);
+      }
+      return finalConnections;
+    }
+
     this.setConnections = function(connections) {
       this.connections = [];
+      var localConnections = [];
+      connections.forEach(function(con) {
+        localConnections.push({
+          source: con.sourceId,
+          target: con.targetId
+        });
+      });
+      var localConnections = orderConnections.call(this, angular.copy(localConnections), angular.copy(localConnections));
       connections.forEach(this.addConnection.bind(this));
     };
 

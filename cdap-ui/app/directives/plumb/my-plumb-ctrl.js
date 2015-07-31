@@ -200,8 +200,6 @@ angular.module(PKG.name + '.commons')
 
     $scope.$watch('reloaddag', function (value) {
       if (value) {
-        this.instance.reset();
-        this.instance = jsPlumb.getInstance();
         this.instance.importDefaults(MyPlumbFactory.getSettings().default);
         this.plugins = $scope.config;
         $timeout(this.drawGraph.bind(this));

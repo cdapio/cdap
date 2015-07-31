@@ -13,7 +13,7 @@ angular.module(PKG.name + '.commons')
 
     var commonSettings = {
       endpoint:'Dot',
-      maxConnections: -1,
+      maxConnections: 1,
       paintStyle: {
         strokeStyle: 'white',
         fillStyle: '#666e82',
