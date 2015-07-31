@@ -75,8 +75,8 @@ Prerequisites
 Download
 =======================================
 
-Download the CDAP CSD (Custom Service Descriptor): `download JAR file <http://cask.co/resources/#cdap-integrations>`__. The
-source code is available `here <https://github.com/caskdata/cm_csd>`__.
+Download the CDAP CSD (Custom Service Descriptor): `download JAR file <http://cask.co/resources/#cdap-integrations>`__.
+The source code is available `here <https://github.com/caskdata/cm_csd>`__.
 
 Details on CSDs and Cloudera Manager Extensions are `available online 
 <https://github.com/cloudera/cm_ext/wiki>`__.
@@ -111,9 +111,9 @@ When completing the Wizard, these notes may help:
    - *Add Service* Wizard, Page 5: **Router Server Port:** This should match the "Router Bind
      Port"; it’s used by the CDAP UI to connect to the Router service.
 
-   - *Add Service* Wizard, Page 5: **App Template Dir:** This should initially point to the bundled templates included in the CDAP parcel
-     directory. If you have modified ``${PARCELS_ROOT}``, please update this setting to match.  Advanced users will want to customize
-     this directory to a location outside of the CDAP Parcel.
+   - *Add Service* Wizard, Page 5: **App Template Dir:** This should initially point to the bundled templates included in
+     the CDAP parcel directory. If you have modified ``${PARCELS_ROOT}``, please update this setting to match.  Advanced
+     users will want to customize this directory to a location outside of the CDAP Parcel.
 
 Complete instructions, step-by-step, for using the Admin Console *Add Service* Wizard to install CDAP
 :ref:`are available <step-by-step-cloudera-add-service>`.
@@ -141,9 +141,9 @@ When a new compatible CDAP parcel is released, it will be available via the Parc
 
 .. rubric:: Upgrading Major/Minor Release versions
 
-Upgrading between major versions of CDAP involves the additional steps of upgrading the CSD, and running the included CDAP Upgrade
-Tool. Upgrades between multiple Major/Minor versions must be done consecutively, and a version cannot be skipped unless otherwise noted.
-**Note:** Apps need to be both recompiled and re-deployed.
+Upgrading between major versions of CDAP involves the additional steps of upgrading the CSD, and running the included
+CDAP Upgrade Tool. Upgrades between multiple Major/Minor versions must be done consecutively, and a version cannot be
+skipped unless otherwise noted.  **Note:** Apps need to be both recompiled and re-deployed.
 
 The following is the generic procedure for Major/Minor version upgrades:
 
@@ -154,10 +154,11 @@ The following is the generic procedure for Major/Minor version upgrades:
 #. Ensure your installed version of the CSD matches the target version of CDAP. For example, CSD version 3.0.* is compatible
    with CDAP version 3.0.*.  Download the latest version of the CSD `here <http://cask.co/resources/#cdap-integrations>`__.
 
-#. Use the Cloudera Manager UI to download, distribute, and activate the corresponding CDAP parcel version on all cluster hosts.
+#. Use the Cloudera Manager UI to download, distribute, and activate the corresponding CDAP parcel version on all cluster
+   hosts.
 
-#. Before starting services, run the Upgrade Tool to update any necessary CDAP table definitions. From the CDAP Service page,
-   select "Run CDAP Upgrade Tool" from the Actions menu.
+#. Before starting services, run the Upgrade Tool to update any necessary CDAP table definitions. From the CDAP Service
+   page, select "Run CDAP Upgrade Tool" from the Actions menu.
 
 #. Start the CDAP services.  At this point it may be necessary to correct for any changes in the CSD.  For example, if new CDAP services
    were added or removed, you must add or remove role instances as necessary. Check the
