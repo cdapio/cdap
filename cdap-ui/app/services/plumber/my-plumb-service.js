@@ -32,6 +32,7 @@
 */
 angular.module(PKG.name + '.services')
   .service('MyPlumbService', function(myAdapterApi, $q, $bootstrapModal, $state, $filter, mySettings, $alert, AdapterErrorFactory, IMPLICIT_SCHEMA, myHelpers, PluginConfigFactory, ModalConfirm) {
+
     var countSink = 0,
         countSource = 0,
         countTransform = 0;
@@ -343,39 +344,17 @@ angular.module(PKG.name + '.services')
                 $scope.isTransform = true;
               }
 
+              function closeFn() {
+                $scope.$close('cancel');
+              }
 
-              $scope.$on('modal.closing', function (event, reason) {
-                if ((reason === 'cancel' || reason === 'escape key press') && !$scope.confirm ) {
-                  var stringCopy = JSON.stringify(pluginCopy.properties);
-                  var stringPlugin = JSON.stringify($scope.plugin.properties);
+              ModalConfirm.confirmModalAdapter(
+                $scope,
+                $scope.plugin.properties,
+                pluginCopy.properties,
+                closeFn
+              );
 
-                  if (stringCopy !== stringPlugin) {
-                    event.preventDefault();
-
-                    var confirmInstance = $bootstrapModal.open({
-                      keyboard: false,
-                      templateUrl: '/assets/features/adapters/templates/partial/confirm.html',
-                      windowClass: 'modal-confirm',
-                      controller: ['$scope', function ($scope) {
-                        $scope.continue = function () {
-                          $scope.$close('close');
-                        };
-
-                        $scope.cancel = function () {
-                          $scope.$close('keep open');
-                        };
-                      }]
-                    });
-
-                    confirmInstance.result.then(function (closing) {
-                      if (closing === 'close') {
-                        $scope.confirm = true;
-                        $scope.$close('cancel');
-                      }
-                    });
-                  }
-                }
-              });
 
             }],
             size: 'lg',

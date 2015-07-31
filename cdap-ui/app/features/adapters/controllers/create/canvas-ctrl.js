@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.adapters')
-  .controller('CanvasController', function (myAdapterApi, MyPlumbService, $bootstrapModal, $state, $scope, $alert, myHelpers, CanvasFactory, MyPlumbFactory, $modalStack, $timeout) {
+  .controller('CanvasController', function (myAdapterApi, MyPlumbService, $bootstrapModal, $state, $scope, $alert, myHelpers, CanvasFactory, MyPlumbFactory, $modalStack, $timeout, ModalConfirm) {
     this.nodes = [];
     this.reloadDAG = false;
     if ($scope.AdapterCreateController.data) {
@@ -171,40 +171,18 @@ angular.module(PKG.name + '.feature.adapters')
                 EventPipe.emit('plugin.reset');
               };
 
+              function closeFn() {
+                $scope.reset();
+                $scope.$close('cancel');
+              }
 
-              $scope.$on('modal.closing', function (event, reason) {
-                if ((reason === 'cancel' || reason === 'escape key press') && !$scope.confirm ) {
-                  var stringCopy = JSON.stringify(metadataCopy);
-                  var stringPlugin = JSON.stringify($scope.metadata);
+              ModalConfirm.confirmModalAdapter(
+                $scope,
+                $scope.metadata,
+                metadataCopy,
+                closeFn
+              );
 
-                  if (stringCopy !== stringPlugin) {
-                    event.preventDefault();
-
-                    var confirmInstance = $bootstrapModal.open({
-                      keyboard: false,
-                      templateUrl: '/assets/features/adapters/templates/partial/confirm.html',
-                      windowClass: 'modal-confirm',
-                      controller: ['$scope', function ($scope) {
-                        $scope.continue = function () {
-                          $scope.$close('close');
-                        };
-
-                        $scope.cancel = function () {
-                          $scope.$close('keep open');
-                        };
-                      }]
-                    });
-
-                    confirmInstance.result.then(function (closing) {
-                      if (closing === 'close') {
-                        $scope.confirm = true;
-                        $scope.reset();
-                        $scope.$close('cancel');
-                      }
-                    });
-                  }
-                }
-              });
             }],
             resolve: {
               'metadata': function() {
