@@ -264,8 +264,8 @@ public abstract class HBaseTableUtil {
         @Override
         public boolean accept(String className, final URL classUrl, URL classPathUrl) {
           // Assuming the endpoint and protocol class doesn't have dependencies
-          // other than those comes with HBase and Java.
-          if (className.startsWith("co.cask")) {
+          // other than those comes with HBase, Java and fastutil.
+          if (className.startsWith("co.cask") || className.startsWith("it.unimi.dsi.fastutil")) {
             if (!dependentClasses.containsKey(className)) {
               dependentClasses.put(className, classUrl);
             }
