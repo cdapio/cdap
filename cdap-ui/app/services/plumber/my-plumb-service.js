@@ -310,18 +310,20 @@ angular.module(PKG.name + '.services')
               }
 
               if (isStreamSource && input) {
-                input.fields.push({
-                  name: 'ts',
-                  type: 'long'
-                });
+                // Must be in this order!!
 
-                input.fields.push({
+                input.fields.unshift({
                   name: 'headers',
                   type: {
                     type: 'map',
                     keys: 'string',
                     values: 'string'
                   }
+                });
+
+                input.fields.unshift({
+                  name: 'ts',
+                  type: 'long'
                 });
               }
 
