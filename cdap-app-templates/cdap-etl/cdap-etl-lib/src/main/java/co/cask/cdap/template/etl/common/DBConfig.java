@@ -34,7 +34,7 @@ public class DBConfig extends PluginConfig {
   @Nullable
   public String user;
 
-  @Description("Password used to connect to the specified database. Required for databases that " +
+  @Description("Password to use to connect to the specified database. Required for databases that " +
     "need authentication. Optional for databases that do not require authentication.")
   @Nullable
   public String password;
