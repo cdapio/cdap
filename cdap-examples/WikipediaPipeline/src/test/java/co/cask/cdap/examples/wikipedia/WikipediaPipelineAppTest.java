@@ -155,8 +155,7 @@ public class WikipediaPipelineAppTest extends TestBase {
     assertTokenAtRawDataMRNode(workflowManager, pid, continueConditionSucceeded);
     assertTokenAtNormalizationMRNode(workflowManager, pid, continueConditionSucceeded);
     assertTokenAtSparkLDANode(workflowManager, pid, continueConditionSucceeded);
-    // TODO: Verification fails if the last node of the workflow is a fork node.
-//    assertTokenAtTopNMRNode(workflowManager, pid, continueConditionSucceeded);
+    assertTokenAtTopNMRNode(workflowManager, pid, continueConditionSucceeded);
   }
 
   private void assertTokenAtPageTitlesMRNode(WorkflowManager workflowManager, String pid) throws NotFoundException {

@@ -397,6 +397,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
         }
       }
     } finally {
+      // Update the WorkflowToken after the execution of the FORK node completes.
+      store.updateWorkflowToken(workflowId, runId.getId(), token);
       executorService.shutdownNow();
       executorService.awaitTermination(Integer.MAX_VALUE, TimeUnit.NANOSECONDS);
     }
