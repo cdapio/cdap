@@ -32,10 +32,10 @@ import co.cask.cdap.template.etl.realtime.config.ETLRealtimeConfig;
 import co.cask.cdap.template.etl.realtime.sink.RealtimeCubeSink;
 import co.cask.cdap.template.etl.realtime.sink.RealtimeTableSink;
 import co.cask.cdap.template.etl.realtime.sink.StreamSink;
+import co.cask.cdap.template.etl.realtime.source.DataGeneratorSource;
 import co.cask.cdap.template.etl.realtime.source.JmsSource;
 import co.cask.cdap.template.etl.realtime.source.KafkaSource;
 import co.cask.cdap.template.etl.realtime.source.SqsSource;
-import co.cask.cdap.template.etl.realtime.source.TestSource;
 import co.cask.cdap.template.etl.realtime.source.TwitterSource;
 import co.cask.cdap.template.etl.transform.ProjectionTransform;
 import co.cask.cdap.template.etl.transform.ScriptFilterTransform;
@@ -103,7 +103,7 @@ public class ETLWorkerTest extends TestBase {
   @BeforeClass
   public static void setupTests() throws IOException {
     addTemplatePlugins(TEMPLATE_ID, "realtime-sources-1.0.0.jar",
-                       TestSource.class, JmsSource.class, KafkaSource.class, TwitterSource.class, SqsSource.class);
+                       DataGeneratorSource.class, JmsSource.class, KafkaSource.class, TwitterSource.class, SqsSource.class);
     addTemplatePlugins(TEMPLATE_ID, "realtime-sinks-1.0.0.jar",
                        RealtimeCubeSink.class, RealtimeTableSink.class, StreamSink.class);
     addTemplatePlugins(TEMPLATE_ID, "transforms-1.0.0.jar",
@@ -133,7 +133,7 @@ public class ETLWorkerTest extends TestBase {
   @Category(SlowTests.class)
   public void testStreamSink() throws Exception {
     long startTime = System.currentTimeMillis();
-    ETLStage source = new ETLStage("Test", ImmutableMap.of(TestSource.PROPERTY_TYPE, TestSource.STREAM_TYPE));
+    ETLStage source = new ETLStage("Test", ImmutableMap.of(DataGeneratorSource.PROPERTY_TYPE, DataGeneratorSource.STREAM_TYPE));
     ETLStage sink = new ETLStage("Stream", ImmutableMap.of(Properties.Stream.NAME, "testStream"));
     ETLRealtimeConfig etlConfig = new ETLRealtimeConfig(source, sink);
 
@@ -172,7 +172,7 @@ public class ETLWorkerTest extends TestBase {
   @Test
   @SuppressWarnings("ConstantConditions")
   public void testTableSink() throws Exception {
-    ETLStage source = new ETLStage("Test", ImmutableMap.of(TestSource.PROPERTY_TYPE, TestSource.TABLE_TYPE));
+    ETLStage source = new ETLStage("Test", ImmutableMap.of(DataGeneratorSource.PROPERTY_TYPE, DataGeneratorSource.TABLE_TYPE));
     ETLStage sink = new ETLStage("Table",
                                  ImmutableMap.of(Properties.Table.NAME, "table1",
                                    Properties.Table.PROPERTY_SCHEMA_ROW_FIELD, "binary"));
