@@ -20,11 +20,10 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.explore.guice.ExploreRuntimeModule;
+import co.cask.cdap.explore.service.hive.Hive12CDH5ExploreService;
 import co.cask.cdap.explore.service.hive.Hive12ExploreService;
 import co.cask.cdap.explore.service.hive.Hive13ExploreService;
 import co.cask.cdap.explore.service.hive.Hive14ExploreService;
-import co.cask.cdap.explore.service.hive.HiveCDH4ExploreService;
-import co.cask.cdap.explore.service.hive.HiveCDH5ExploreService;
 import co.cask.cdap.format.RecordFormats;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
@@ -64,9 +63,11 @@ public class ExploreServiceUtils {
    * Hive support enum.
    */
   public enum HiveSupport {
-    HIVE_CDH4(Pattern.compile("^.*cdh4\\..*$"), HiveCDH4ExploreService.class),
-    HIVE_CDH5_4(Pattern.compile("^.*cdh5.4\\..*$"), Hive14ExploreService.class),
-    HIVE_CDH5(Pattern.compile("^.*cdh5\\..*$"), HiveCDH5ExploreService.class),
+    // CDH 5.0 to 5.1 uses Hive 0.12
+    // CDH >5.1 uses Hive >=0.13.1 (aka 1.0, which Hive14ExploreService supports)
+    HIVE_CDH5_0(Pattern.compile("^.*cdh5.0\\..*$"), Hive12CDH5ExploreService.class),
+    HIVE_CDH5_1(Pattern.compile("^.*cdh5.1\\..*$"), Hive12CDH5ExploreService.class),
+    HIVE_CDH5(Pattern.compile("^.*cdh5\\..*$"), Hive14ExploreService.class),
 
     HIVE_12(null, Hive12ExploreService.class),
     HIVE_13(null, Hive13ExploreService.class),
