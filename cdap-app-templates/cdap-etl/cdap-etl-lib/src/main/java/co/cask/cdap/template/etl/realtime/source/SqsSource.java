@@ -52,7 +52,7 @@ public class SqsSource extends RealtimeSource<StructuredRecord> {
   private static final String ACCESSKEY_DESCRIPTION = "Access Key of the AWS (Amazon Web Services) account to use.";
   private static final String ACCESSID_DESCRIPTION = "Access ID of the AWS (Amazon Web Services) account to use.";
   private static final String QUEUENAME_DESCRIPTION = "Name of the queue.";
-  private static final String ENDPOINT_DESCRIPTION = "Endpoint of the SQS server to connect to. Omit this field to" +
+  private static final String ENDPOINT_DESCRIPTION = "Endpoint of the SQS server to connect to. Omit this field to " +
     "connect to AWS (Amazon Web Services).";
   private static final Schema DEFAULT_SCHEMA = Schema.recordOf(
     "event",

@@ -3,7 +3,7 @@
   "groups" : {
     "position": [ "group1" ],
     "group1": {
-      "display" : "File Batch Source",
+      "display" : "File Batch Source Properties",
       "position" : [ "fileSystem", "fileSystemProperties", "path", "fileRegex", "timeTable", "inputFormatClass", "maxSplitSize" ],
       "fields" : {
         "fileSystem" : {

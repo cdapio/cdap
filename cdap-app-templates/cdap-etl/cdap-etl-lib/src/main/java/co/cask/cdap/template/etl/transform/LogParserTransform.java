@@ -45,7 +45,7 @@ import javax.annotation.Nullable;
 @Plugin(type = "transform")
 @Name("LogParser")
 @Description("Parses logs from any input source for relevant information such as URI, IP, Browser, Device, " +
-  "HTTP status code and Timestamp.")
+  "HTTP status code, and timestamp.")
 public class LogParserTransform extends Transform<StructuredRecord, StructuredRecord> {
   private static final Schema LOG_SCHEMA = Schema.recordOf(
     "event",
@@ -75,9 +75,9 @@ public class LogParserTransform extends Transform<StructuredRecord, StructuredRe
       "(\\p{Print}+)");
   //Regex used to parse the request field for the URI
   private static final Pattern REQUEST_PAGE_PATTERN = Pattern.compile("(\\S+)\\s(\\S+).*");
-  //Indices of which group request, time, ip, user agent and HTTP status code are in the S3 regex
+  //Indices of which group request, time, ip, user agent, and HTTP status code are in the S3 regex
   private static final int[] S3_INDICES = {9, 3, 4, 17, 10};
-  //Indices of which group request, time, ip, user agent and HTTP status code are in the CLF regex
+  //Indices of which group request, time, ip, user agent, and HTTP status code are in the CLF regex
   private static final int[] CLF_INDICES = {5, 4, 1, 9, 6};
   //Number of groups matched in the S3 regex
   private static final int S3_REGEX_LENGTH = 18;
@@ -201,7 +201,7 @@ public class LogParserTransform extends Transform<StructuredRecord, StructuredRe
    * Parses a request for the URI, IP, Browser, Device, and Time
    * @param logMatcher the regex matcher to use
    * @param indices array of indices that define what position in the regex the fields are,
-   *                 in the order of Request, Time, IP, User Agent and HTTP status code.
+   *                 in the order of Request, Time, IP, User Agent, and HTTP status code.
    */
   @Nullable
   private StructuredRecord parseRequest(Matcher logMatcher, int[] indices) {
