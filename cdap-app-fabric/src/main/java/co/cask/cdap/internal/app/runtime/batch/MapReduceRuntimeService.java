@@ -706,7 +706,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
    *
    * @return a new {@link File} containing the job jar
    */
-  private File buildJobJar(Job job, File tempDir) throws IOException {
+  private File buildJobJar(Job job, File tempDir) throws IOException, URISyntaxException {
     File jobJar = new File(tempDir, "job.jar");
     LOG.debug("Creating Job jar: {}", jobJar);
 
@@ -776,13 +776,11 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
 
     // Add the logback.xml as a resource while creating the MapReduce Job JAR
     Set<URI> logbackURI = Sets.newHashSet();
-    try {
-      URL logback = getClass().getResource("logback.xml");
-      if (logback != null) {
-        logbackURI.add(logback.toURI());
-      }
-    } catch (URISyntaxException e) {
-      LOG.warn("Could not find logback.xml during building MapReduce Job JAR", e);
+    URL logback = getClass().getResource("/logback.xml");
+    if (logback != null) {
+      logbackURI.add(logback.toURI());
+    } else {
+      LOG.warn("Could not find logback.xml while building MapReduce Job JAR!");
     }
 
     ClassLoader oldCLassLoader = ClassLoaders.setContextClassLoader(job.getConfiguration().getClassLoader());
