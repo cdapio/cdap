@@ -137,17 +137,15 @@ angular.module(PKG.name + '.commons')
           next = connections[i].target;
         }
 
+        var connObj = {
+          uuids: [curr, next]
+        };
+
         if (this.isDisabled) {
-          this.instance.connect({
-            uuids: [curr, next],
-            detachable: false
-          });
-        } else {
-          this.instance.connect({
-            uuids: [curr, next],
-            editable: true
-          });
+          connObj.detachable = false;
         }
+
+        this.instance.connect(connObj);
       }
     }
 
