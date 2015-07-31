@@ -57,6 +57,7 @@ public class StreamWriterTestRun extends GatewayTestBase {
     waitState("services", AppWritingtoStream.APPNAME, AppWritingtoStream.SERVICE, "RUNNING");
 
     checkCount(AppWritingtoStream.VALUE);
+    checkHeader("Event", "1");
 
     //Stop Flow
     response = GatewayFastTestsSuite.doPost(String.format("/v3/namespaces/default/apps/%s/flows/%s/stop",
@@ -86,6 +87,8 @@ public class StreamWriterTestRun extends GatewayTestBase {
     response = GatewayFastTestsSuite.doDelete(String.format("/v3/namespaces/default/apps/%s",
                                                             AppWritingtoStream.APPNAME));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+
+
   }
 
   private void checkCount(int expected) throws Exception {
@@ -99,6 +102,25 @@ public class StreamWriterTestRun extends GatewayTestBase {
       if (response.getStatusLine().getStatusCode() == HttpResponseStatus.OK.getCode()) {
         String count = EntityUtils.toString(response.getEntity());
         if (expected == Integer.valueOf(count)) {
+          break;
+        }
+      }
+      TimeUnit.MILLISECONDS.sleep(250);
+    }
+    Assert.assertTrue(trials < 5);
+  }
+
+  private void checkHeader(String key, String expected) throws Exception {
+    int trials = 0;
+    while (trials++ < 5) {
+      HttpResponse response = GatewayFastTestsSuite.doGet(
+        String.format("/v3/namespaces/default/apps/%s/services/%s/methods/headers/%s",
+          AppWritingtoStream.APPNAME,
+          AppWritingtoStream.SERVICE,
+          key));
+      if (response.getStatusLine().getStatusCode() == HttpResponseStatus.OK.getCode()) {
+        String val = EntityUtils.toString(response.getEntity());
+        if (expected.equals(val)) {
           break;
         }
       }
