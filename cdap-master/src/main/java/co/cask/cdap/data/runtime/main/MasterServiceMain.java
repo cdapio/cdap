@@ -55,6 +55,7 @@ import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModu
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
@@ -655,6 +656,10 @@ public class MasterServiceMain extends DaemonMain {
    * runnable.
    */
   private TwillPreparer prepareExploreContainer(TwillPreparer preparer) {
+    File tempDir = DirUtils.createTempDir(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
+                                                   cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile());
+    Preconditions.checkState(tempDir.mkdirs(), "Cannot create temp dir " + tempDir.getAbsolutePath());
+
     try {
       // Put jars needed by Hive in the containers classpath. Those jars are localized in the Explore
       // container by MasterTwillApplication, so they are available for ExploreServiceTwillRunnable
@@ -681,7 +686,7 @@ public class MasterServiceMain extends DaemonMain {
       if (file.getName().matches(".*\\.xml") && !file.getName().equals("logback.xml")) {
         if (addedFiles.add(file.getName())) {
           LOG.debug("Adding config file: {}", file.getAbsolutePath());
-          preparer = preparer.withResources(ExploreServiceUtils.hijackConfFile(file).toURI());
+          preparer = preparer.withResources(ExploreServiceUtils.updateConfFileForExplore(file, tempDir).toURI());
         } else {
           LOG.warn("Ignoring duplicate config file: {}", file.getAbsolutePath());
         }
