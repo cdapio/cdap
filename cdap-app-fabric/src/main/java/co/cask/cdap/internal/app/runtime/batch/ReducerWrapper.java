@@ -65,6 +65,7 @@ public class ReducerWrapper extends Reducer {
     MapReduceContextProvider mrContextProvider =
       new MapReduceContextProvider(context, MapReduceMetrics.TaskType.Reducer);
     final BasicMapReduceContext basicMapReduceContext = mrContextProvider.get();
+    LoggingContextAccessor.setLoggingContext(basicMapReduceContext.getLoggingContext());
     basicMapReduceContext.getMetricsCollectionService().startAndWait();
 
     try {
@@ -82,8 +83,6 @@ public class ReducerWrapper extends Reducer {
         LOG.error("Failed to inject fields to {}.", delegate.getClass(), t);
         throw Throwables.propagate(t);
       }
-
-      LoggingContextAccessor.setLoggingContext(basicMapReduceContext.getLoggingContext());
 
       // this is a hook for periodic flushing of changes buffered by datasets (to avoid OOME)
       WrappedReducer.Context flushingContext = createAutoFlushingContext(context, basicMapReduceContext);
