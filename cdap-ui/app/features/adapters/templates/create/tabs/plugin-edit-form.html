@@ -17,7 +17,7 @@
    I wish I was vandame.
 -->
 <div ng-controller="PluginEditController as PluginEditController">
-  <div class="modal-header">
+  <div class="modal-header" ng-init="showinfo = false">
     <div ng-class="{ 'col-xs-6 col-md-7': !isDisabled, 'col-xs-8 col-md-8': isDisabled }">
       <h3 class="modal-title">{{plugin.name}} Properties</h3>
       <p tooltip="{{plugin.description}}"
@@ -26,23 +26,25 @@
         {{plugin.description | myEllipsis:70}}
       </p>
     </div>
-    <div ng-class="{ 'col-xs-6 col-md-5': !isDisabled, 'col-xs-4 col-md-4': isDisabled }">
-      <div class="btn-group modal-btns">
-        <div ng-class="{'active-info': PluginEditController.showinfo === true}">
-          <a class="btn"
-              ng-click="PluginEditController.showinfo = !PluginEditController.showinfo;">
-            <span class="fa fa-info"></span>
-          </a>
-        </div>
 
-        <div ng-if="!isDisabled">
+    <div ng-class="{ 'col-xs-6 col-md-5': !isDisabled, 'col-xs-4 col-md-4': isDisabled }">
+      <div class="btn-group modal-btns" ng-class="{'hideNonInfoButtons': showinfo}">
+        <div ng-if="!isDisabled" class="non-info">
           <a class="btn" ng-click="PluginEditController.reset()">
             <span class="fa fa-repeat"></span>
           </a>
         </div>
-        <div ng-if="!isDisabled">
+        <div ng-if="!isDisabled" class="non-info">
           <a class="btn" ng-click="$close('save')">
             <span class="fa fa-floppy-o"></span>
+          </a>
+        </div>
+        <div ng-class="{'active-info': showinfo === true}">
+          <a class="btn"
+              ng-click="showinfo = !showinfo;">
+            <span ng-class="{'fa-arrow-left': showinfo, 'fa-info': !showinfo}"
+                  class="fa">
+            </span>
           </a>
         </div>
         <div ng-if="!isDisabled">
@@ -64,7 +66,7 @@
   </div>
 
   <div class="modal-body plugin-modal" ng-class="{'modal-source': plugin.type === 'source', 'modal-transform': plugin.type === 'transform', 'modal-sink': plugin.type === 'sink'}">
-    <div ng-show="!PluginEditController.showinfo">
+    <div ng-show="!showinfo">
     <div ng-if="PluginEditController.noproperty !== 0">
     <div class="row" ng-if="(PluginEditController.configfetched && !PluginEditController.noconfig)">
 
@@ -337,7 +339,7 @@
     </div>
     </div>
 
-    <div ng-show="PluginEditController.showinfo" class="embed-responsive embed-responsive-4by3">
+    <div ng-show="showinfo" class="embed-responsive embed-responsive-4by3">
       <iframe class="ember-responsive-item" src="{{PluginEditController.trustSrc(PluginEditController.infoUrl)}}"></iframe>
     </div>
 

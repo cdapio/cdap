@@ -162,6 +162,12 @@ body.theme-cdap.state-adapters-create {
         .modal-btns {
           margin-right: -15px;
           text-align: right;
+
+          &.hideNonInfoButtons {
+            .non-info {
+              display: none;
+            }
+          }
           > div {
             background-color: transparent;
             border-left: 1px solid @modal-table-border-color;
