@@ -103,7 +103,8 @@ public class ETLWorkerTest extends TestBase {
   @BeforeClass
   public static void setupTests() throws IOException {
     addTemplatePlugins(TEMPLATE_ID, "realtime-sources-1.0.0.jar",
-                       DataGeneratorSource.class, JmsSource.class, KafkaSource.class, TwitterSource.class, SqsSource.class);
+                       DataGeneratorSource.class, JmsSource.class, KafkaSource.class,
+                       TwitterSource.class, SqsSource.class);
     addTemplatePlugins(TEMPLATE_ID, "realtime-sinks-1.0.0.jar",
                        RealtimeCubeSink.class, RealtimeTableSink.class, StreamSink.class);
     addTemplatePlugins(TEMPLATE_ID, "transforms-1.0.0.jar",
@@ -133,7 +134,8 @@ public class ETLWorkerTest extends TestBase {
   @Category(SlowTests.class)
   public void testStreamSink() throws Exception {
     long startTime = System.currentTimeMillis();
-    ETLStage source = new ETLStage("Test", ImmutableMap.of(DataGeneratorSource.PROPERTY_TYPE, DataGeneratorSource.STREAM_TYPE));
+    ETLStage source = new ETLStage("Test", ImmutableMap.of(DataGeneratorSource.PROPERTY_TYPE,
+                                                           DataGeneratorSource.STREAM_TYPE));
     ETLStage sink = new ETLStage("Stream", ImmutableMap.of(Properties.Stream.NAME, "testStream"));
     ETLRealtimeConfig etlConfig = new ETLRealtimeConfig(source, sink);
 
@@ -172,7 +174,8 @@ public class ETLWorkerTest extends TestBase {
   @Test
   @SuppressWarnings("ConstantConditions")
   public void testTableSink() throws Exception {
-    ETLStage source = new ETLStage("Test", ImmutableMap.of(DataGeneratorSource.PROPERTY_TYPE, DataGeneratorSource.TABLE_TYPE));
+    ETLStage source = new ETLStage("Test", ImmutableMap.of(DataGeneratorSource.PROPERTY_TYPE,
+                                                           DataGeneratorSource.TABLE_TYPE));
     ETLStage sink = new ETLStage("Table",
                                  ImmutableMap.of(Properties.Table.NAME, "table1",
                                    Properties.Table.PROPERTY_SCHEMA_ROW_FIELD, "binary"));
