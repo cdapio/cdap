@@ -102,7 +102,13 @@
           <span>{{ ::app.template }}</span>
         </td>
         <td>{{ ::app.version }}</td>
-        <td> {{ ::app.description }} </td>
+        <td>
+          <span tooltip="{{app.description}}"
+                tooltip-enable="app.description.length > 50"
+                tooltip-append-to-body="true">
+            {{ ::app.description | myEllipsis:50}}
+          </span>
+        </td>
       </tr>
     </tbody>
   </table>

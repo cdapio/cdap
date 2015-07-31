@@ -74,7 +74,13 @@
                       <span class="icon-ETLtemplates"></span>
                       <span>{{ ::app.template }}</span>
                     </td>
-                    <td>{{ ::app.description }}</td>
+                    <td>
+                      <span tooltip="{{app.description}}"
+                            tooltip-enable="app.description.length > 25"
+                            tooltip-append-to-body="true">
+                        {{ ::app.description | myEllipsis:25 }}
+                      </span>
+                    </td>
                     <td class="text-center">
                       <a href=""
                       ng-click="caskConfirm()"
