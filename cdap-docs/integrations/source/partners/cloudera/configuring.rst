@@ -75,7 +75,7 @@ Prerequisites
 Download
 =======================================
 
-Download the CDAP CSD (Custom Service Descriptor): `download JAR file <http://cask.co/resources/#cdap-integrations>`__.
+Download the CDAP CSD (Custom Service Descriptor): `download the JAR file <http://cask.co/resources/#cdap-integrations>`__.
 The source code is available `here <https://github.com/caskdata/cm_csd>`__.
 
 Details on CSDs and Cloudera Manager Extensions are `available online 
