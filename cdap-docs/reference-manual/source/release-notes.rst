@@ -60,7 +60,7 @@ New Features
   QueueAdmin now uses Id.Namespace instead of simply String.
 
 - `CDAP-1584 <https://issues.cask.co/browse/CDAP-1584>`__ -
-  Now shows the username in the CLI prompt.
+  CDAP CLI now shows the username in the CLI prompt.
 
 - `CDAP-1614 <https://issues.cask.co/browse/CDAP-1614>`__ -
   Added HBase 1.0 support.
@@ -120,9 +120,6 @@ New Features
   Added examples, guides and documentation for Spark in distributed mode. LogAnalysis
   application demonstrating parallel execution of the Spark and MapReduce programs using
   Workflows.
-
-- `CDAP-2706 <https://issues.cask.co/browse/CDAP-2706>`__ -
-  Workflow is able to aggregate the logs from underlying MapReduce/Spark programs.
 
 - `CDAP-2709 <https://issues.cask.co/browse/CDAP-2709>`__ -
   Added ability to add generic keys to the WorkflowToken.
