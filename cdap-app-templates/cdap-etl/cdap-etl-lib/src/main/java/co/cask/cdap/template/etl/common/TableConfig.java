@@ -43,7 +43,7 @@ public class TableConfig extends PluginConfig {
   private String rowField;
 
   @Name(Properties.Table.CASE_SENSITIVE_ROW_FIELD)
-  @Description("Whether or not schema.row.field is case sensitive, defaults to true.")
+  @Description("Whether schema.row.field is case sensitive; defaults to true.")
   @Nullable
   private Boolean rowFieldCaseSensitive;
 

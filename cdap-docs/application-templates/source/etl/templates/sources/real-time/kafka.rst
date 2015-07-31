@@ -64,8 +64,8 @@ If no format is given, Kafka message payloads will be treated as bytes, resultin
 
 This example reads from ten partitions of the 'purchases' topic of a Kafka instance.
 It connects to Kafka via a Zookeeper instance running on 'localhost'. It also
-parses Kafka messages using the 'csv' format into records with the given schema.
-For each Kafka message read, it will output a record with schema::
+parses Kafka messages using the 'csv' format into records with the specified schema.
+For each Kafka message read, it will output a record with the schema::
 
   +================================+
   | field name  | type             |
@@ -75,3 +75,4 @@ For each Kafka message read, it will output a record with schema::
   | count       | int              |
   | price       | double           |
   +================================+
+

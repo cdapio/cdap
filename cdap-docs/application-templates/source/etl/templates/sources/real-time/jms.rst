@@ -8,7 +8,7 @@ Sources: Real-time: JMS
 
 .. rubric:: Description
 
-Java Message Service (JMS) Real-time Source. Emits a record with a field 'message' of string type.
+Java Message Service (JMS) Real-time Source. Emits a record with a field 'message' of type string.
 
 .. rubric:: Use Case
 
