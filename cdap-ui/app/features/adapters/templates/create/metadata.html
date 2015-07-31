@@ -32,6 +32,7 @@
       <div class="col-sm-10">
         <input type="text"
                 ng-model="metadata['name']"
+                my-maxlength="128"
                 class="form-control"/>
       </div>
     </div>
@@ -41,6 +42,7 @@
       <div class="col-sm-10">
         <textarea type="text"
                ng-model="metadata['description']"
+               my-maxlength="512"
                class="form-control"></textarea>
       </div>
     </div>
