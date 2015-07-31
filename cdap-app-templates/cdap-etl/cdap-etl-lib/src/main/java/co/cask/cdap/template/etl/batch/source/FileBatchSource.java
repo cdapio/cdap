@@ -31,6 +31,7 @@ import co.cask.cdap.template.etl.api.PipelineConfigurer;
 import co.cask.cdap.template.etl.api.batch.BatchSource;
 import co.cask.cdap.template.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.template.etl.common.BatchFileFilter;
+import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -156,7 +157,7 @@ public class FileBatchSource extends BatchSource<LongWritable, Object, Structure
     }
 
     conf.set(CUTOFF_READ_TIME, dateFormat.format(prevHour));
-    if (config.inputFormatClass != null) {
+    if (!Strings.isNullOrEmpty(config.inputFormatClass)) {
       ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
       Class<? extends FileInputFormat> classType = (Class<? extends FileInputFormat>)
         classLoader.loadClass(config.inputFormatClass);
