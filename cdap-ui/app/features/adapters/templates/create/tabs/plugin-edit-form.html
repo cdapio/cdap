@@ -20,7 +20,11 @@
   <div class="modal-header">
     <div ng-class="{ 'col-xs-6 col-md-7': !isDisabled, 'col-xs-10 col-md-11': isDisabled }">
       <h3 class="modal-title">{{plugin.name}} Properties</h3>
-      <p>{{plugin.description}}</p>
+      <p tooltip="{{plugin.description}}"
+          tooltip-enable="plugin.description.length > 70"
+          tooltip-append-to-body="true">
+        {{plugin.description | myEllipsis:70}}
+      </p>
     </div>
     <div ng-class="{ 'col-xs-6 col-md-5': !isDisabled, 'col-xs-2 col-md-1': isDisabled }">
       <div class="btn-group modal-btns">
