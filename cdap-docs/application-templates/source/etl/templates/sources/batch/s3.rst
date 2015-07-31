@@ -18,11 +18,11 @@ the logs in a TimePartitionedFileSet.
 
 .. rubric:: Properties
 
-**accessID:** Access ID of Amazon S3 instance to connect to.
+**accessID:** Access ID of the Amazon S3 instance to connect to.
 
 .. highlight:: xml
 
-**accessKey:** Access Key of Amazon S3 instance to connect to.
+**accessKey:** Access Key of the Amazon S3 instance to connect to.
 
 **path:** Path to file(s) to be read. If a directory is specified,
 terminate the path name with a \'/\'.
@@ -41,7 +41,7 @@ were read in.
 **inputFormatClass:** Name of the input format class, which must be a
 subclass of FileInputFormat. Defaults to TextInputFormat.
 
-**maxSplitSize:** Maximum split size for each mapper in the MapReduce Job. Defaults to 128MB.
+**maxSplitSize:** Maximum split-size for each mapper in the MapReduce Job. Defaults to 128MB.
 
 .. rubric:: Example
 
