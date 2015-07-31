@@ -15,8 +15,8 @@ Amazon SQS (Simple Queue Service) Real-time Source that emits a record with a fi
 
 This source is used when you want to read messages from Amazon SQS. For example,
 a web beacon is pushing log records to SQS and you want to read these log events
-in real-time. We can use this source to read these records in and then store them
-into a Cube.
+in real-time. We can use this source to read these records and then store them
+in a Cube.
 
 .. rubric:: Properties
 
@@ -35,7 +35,7 @@ into a Cube.
 ::
 
   {
-    "name": "Sqs",
+    "name": "SQS",
     "properties": {
       "region": "us-west-1",
       "accessID": "accessID",
