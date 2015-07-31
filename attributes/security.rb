@@ -81,6 +81,7 @@ if node['cdap']['cdap_site'].key?('kerberos.auth.enabled') && node['cdap']['cdap
 
   # Tell HiveServer2 to use CDAP's keytab, not Hive's
   default['hive']['hive_site']['hive.server2.authentication.kerberos.keytab'] = node['cdap']['kerberos']['cdap_keytab']
+  default['hive']['hive_site']['hive.server2.authentication.kerberos.principal'] = node['cdap']['kerberos']['cdap_principal']
 
   # For cdap-auth-server and cdap-router
   default['cdap']['cdap_site']['cdap.master.kerberos.keytab'] = node['cdap']['kerberos']['cdap_keytab']
