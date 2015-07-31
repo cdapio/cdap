@@ -1092,8 +1092,8 @@
             <artifactId>scala-compiler</artifactId>
           </exclusion>
           <!--
-            Need to exclude this since spark brings in older version that makes
-            S3 not work in Standalone. This doesn't affect distributed mode.
+            Need to exclude this since Spark brings in an older version that makes
+            S3 not work in standalone. This doesn't affect distributed mode.
           -->
           <exclusion>
             <groupId>net.java.dev.jets3t</groupId>
