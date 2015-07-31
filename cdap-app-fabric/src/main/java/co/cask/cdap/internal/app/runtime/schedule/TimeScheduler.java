@@ -283,7 +283,7 @@ final class TimeScheduler implements Scheduler {
   }
 
   @Override
-  public void resumeSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName)
+  public synchronized void resumeSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName)
     throws NotFoundException, SchedulerException {
 
     checkInitialized();
@@ -446,7 +446,8 @@ final class TimeScheduler implements Scheduler {
    * {@link Key#DEFAULT_GROUP}
    * @throws org.quartz.SchedulerException
    */
-  private TriggerKey getGroupedTriggerKey(Id.Program program, SchedulableProgramType programType, String scheduleName)
+  private synchronized TriggerKey getGroupedTriggerKey(Id.Program program, SchedulableProgramType programType,
+                                                       String scheduleName)
     throws org.quartz.SchedulerException {
 
     TriggerKey neverResumedTriggerKey = new TriggerKey(AbstractSchedulerService.scheduleIdFor(program, programType,
