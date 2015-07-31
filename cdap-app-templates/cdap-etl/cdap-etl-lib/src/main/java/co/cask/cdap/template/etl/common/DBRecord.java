@@ -58,16 +58,16 @@ public class DBRecord implements Writable, DBWritable {
    * This is because we cannot rely on JDBC drivers to properly set metadata in the {@link PreparedStatement}
    * passed to the #write method in this class.
    */
-  private ResultSetMetaData metadata;
+  private int [] columnTypes;
 
   /**
    * Used to construct a DBRecord from a StructuredRecord in the ETL Pipeline
    *
    * @param record the {@link StructuredRecord} to construct the {@link DBRecord} from
    */
-  public DBRecord(StructuredRecord record, ResultSetMetaData metadata) {
+  public DBRecord(StructuredRecord record, int [] columnTypes) {
     this.record = record;
-    this.metadata = metadata;
+    this.columnTypes = columnTypes;
   }
 
   /**
@@ -142,8 +142,7 @@ public class DBRecord implements Writable, DBWritable {
       String fieldName = field.getName();
       Schema.Type fieldType = getNonNullableType(field);
       Object fieldValue = record.get(fieldName);
-      // In JDBC, field indices start with 1
-      writeToDB(stmt, fieldType, fieldValue, i + 1);
+      writeToDB(stmt, fieldType, fieldValue, i);
     }
   }
 
@@ -301,75 +300,76 @@ public class DBRecord implements Writable, DBWritable {
 
   private void writeToDB(PreparedStatement stmt, Schema.Type fieldType, Object fieldValue,
                          int fieldIndex) throws SQLException {
+    int sqlIndex = fieldIndex + 1;
     switch (fieldType) {
       case NULL:
-        stmt.setNull(fieldIndex, fieldIndex);
+        stmt.setNull(sqlIndex, fieldIndex);
         break;
       case STRING:
         // clob can also be written to as setString
-        stmt.setString(fieldIndex, (String) fieldValue);
+        stmt.setString(sqlIndex, (String) fieldValue);
         break;
       case BOOLEAN:
-        stmt.setBoolean(fieldIndex, (Boolean) fieldValue);
+        stmt.setBoolean(sqlIndex, (Boolean) fieldValue);
         break;
       case INT:
         // write short or int appropriately
-        writeInt(stmt, fieldIndex, fieldValue);
+        writeInt(stmt, fieldIndex, sqlIndex, fieldValue);
         break;
       case LONG:
         // write date, timestamp or long appropriately
-        writeLong(stmt, fieldIndex, fieldValue);
+        writeLong(stmt, fieldIndex, sqlIndex, fieldValue);
         break;
       case FLOAT:
         // both real and float are set with the same method on prepared statement
-        stmt.setFloat(fieldIndex, (Float) fieldValue);
+        stmt.setFloat(sqlIndex, (Float) fieldValue);
         break;
       case DOUBLE:
-        stmt.setDouble(fieldIndex, (Double) fieldValue);
+        stmt.setDouble(sqlIndex, (Double) fieldValue);
         break;
       case BYTES:
-        writeBytes(stmt, fieldIndex, fieldValue);
+        writeBytes(stmt, fieldIndex, sqlIndex, fieldValue);
         break;
       default:
         throw new SQLException(String.format("Unsupported datatype: %s with value: %s.", fieldType, fieldValue));
     }
   }
 
-  private void writeBytes(PreparedStatement stmt, int fieldIndex, Object fieldValue) throws SQLException {
+  private void writeBytes(PreparedStatement stmt, int fieldIndex, int sqlIndex, Object fieldValue) throws SQLException {
     byte [] byteValue = (byte []) fieldValue;
-    int parameterType = metadata.getColumnType(fieldIndex);
+    int parameterType = columnTypes[fieldIndex];
     if (Types.BLOB == parameterType) {
-      stmt.setBlob(fieldIndex, new SerialBlob(byteValue));
+      stmt.setBlob(sqlIndex, new SerialBlob(byteValue));
       return;
     }
     // handles BINARY, VARBINARY and LOGVARBINARY
-    stmt.setBytes(fieldIndex, (byte []) fieldValue);
+    stmt.setBytes(sqlIndex, (byte []) fieldValue);
   }
 
-  private void writeInt(PreparedStatement stmt, int fieldIndex, Object fieldValue) throws SQLException {
+  private void writeInt(PreparedStatement stmt, int fieldIndex, int sqlIndex, Object fieldValue) throws SQLException {
     Integer intValue = (Integer) fieldValue;
-    int parameterType = metadata.getColumnType(fieldIndex);
+    int parameterType = columnTypes[fieldIndex];
     if (Types.TINYINT == parameterType || Types.SMALLINT == parameterType) {
-      stmt.setShort(fieldIndex, intValue.shortValue());
+      stmt.setShort(sqlIndex, intValue.shortValue());
       return;
     }
-    stmt.setInt(fieldIndex, intValue);
+    stmt.setInt(sqlIndex, intValue);
   }
 
-  private void writeLong(PreparedStatement stmt, int fieldIndex, Object fieldValue) throws SQLException {
+  private void writeLong(PreparedStatement stmt, int fieldIndex, int sqlIndex, Object fieldValue) throws SQLException {
     Long longValue = (Long) fieldValue;
-    switch (metadata.getColumnType(fieldIndex)) {
+    switch (columnTypes[fieldIndex]) {
       case Types.DATE:
-        stmt.setDate(fieldIndex, new Date(longValue));
+        stmt.setDate(sqlIndex, new Date(longValue));
         break;
       case Types.TIME:
-        stmt.setTime(fieldIndex, new Time(longValue));
+        stmt.setTime(sqlIndex, new Time(longValue));
         break;
       case Types.TIMESTAMP:
-        stmt.setTimestamp(fieldIndex, new Timestamp(longValue));
+        stmt.setTimestamp(sqlIndex, new Timestamp(longValue));
         break;
       default:
-        stmt.setLong(fieldIndex, longValue);
+        stmt.setLong(sqlIndex, longValue);
         break;
     }
   }

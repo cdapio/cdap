@@ -63,9 +63,9 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
   private static final Logger LOG = LoggerFactory.getLogger(DBSink.class);
 
   private final DBSinkConfig dbSinkConfig;
-  private ResultSetMetaData resultSetMetadata;
   private Class<? extends Driver> driverClass;
   private JDBCDriverShim driverShim;
+  private int [] columnTypes;
 
   public DBSink(DBSinkConfig dbSinkConfig) {
     this.dbSinkConfig = dbSinkConfig;
@@ -128,7 +128,7 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
 
   @Override
   public void transform(StructuredRecord input, Emitter<KeyValue<DBRecord, NullWritable>> emitter) throws Exception {
-    emitter.emit(new KeyValue<DBRecord, NullWritable>(new DBRecord(input, resultSetMetadata), null));
+    emitter.emit(new KeyValue<DBRecord, NullWritable>(new DBRecord(input, columnTypes), null));
   }
 
   @Override
@@ -157,7 +157,13 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
            ResultSet rs = statement.executeQuery(String.format("SELECT %s FROM %s WHERE 1 = 0",
                                                                dbSinkConfig.columns, dbSinkConfig.tableName))
       ) {
-        resultSetMetadata = rs.getMetaData();
+        ResultSetMetaData resultSetMetadata = rs.getMetaData();
+        int columnCount = resultSetMetadata.getColumnCount();
+        columnTypes = new int[columnCount];
+        // JDBC driver column indices start with 1
+        for (int i = 0; i < columnCount; i++) {
+          columnTypes[i] = resultSetMetadata.getColumnType(i + 1);
+        }
       }
     } finally {
       connection.close();
