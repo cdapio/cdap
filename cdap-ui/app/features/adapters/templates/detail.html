@@ -4,13 +4,14 @@
 
   <div class="col-sm-6">
     <h2 class="programTitle">
-      <span tooltip="{{ $state.params.adapterId }}"
-            tooltip-ellipsis="{{ $state.params.adapterId }}"
-            data-ellipsis="isEllipsis"
-            tooltip-placement="right"
-            tooltip-enable="isEllipsis"
-            tooltip-append-to-body="true"
-            ng-bind="$state.params.adapterId"></span>
+      <span>
+        <!-- There is a display: block on the first span -->
+        <span tooltip="{{ $state.params.adapterId }}"
+              tooltip-placement="right"
+              tooltip-enable="$state.params.adapterId.length > 50"
+              tooltip-append-to-body="true"
+              ng-bind="$state.params.adapterId | myEllipsis: 50"></span>
+      </span>
     </h2>
     <div class="type-block">
       <span class="icon-ETLRealtime" ng-if="template === 'ETLRealtime'"></span>

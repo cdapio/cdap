@@ -77,12 +77,20 @@
           <a ui-sref="apps.detail.overview.status({ appId: app.id })"
               ng-if="app.type !== 'adapter'"
               ng-click="MyOrderings.appClicked(app.id)">
-            <strong> {{ ::app.name }} </strong>
+            <strong tooltip="{{app.name}}"
+                    tooltip-enable="app.name.length > 35"
+                    tooltip-append-to-body="true">
+              {{ ::app.name | myEllipsis:35 }}
+            </strong>
           </a>
           <a ui-sref="adapters.detail.runs({adapterId: app.name})"
               ng-if="app.type === 'adapter'"
               ng-click="MyOrderings.appClicked(app.id)">
-            <strong> {{ ::app.name }} </strong>
+            <strong tooltip="{{app.name}}"
+                    tooltip-enable="app.name.length > 35"
+                    tooltip-append-to-body="true">
+              {{ ::app.name | myEllipsis:35 }}
+            </strong>
           </a>
         </td>
         <td ng-if="app.type !== 'adapter'">
