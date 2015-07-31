@@ -23,19 +23,16 @@ import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.api.templates.plugins.PluginConfig;
 import co.cask.cdap.template.etl.api.PipelineConfigurer;
 import co.cask.cdap.template.etl.api.realtime.DataWriter;
 import co.cask.cdap.template.etl.api.realtime.RealtimeContext;
 import co.cask.cdap.template.etl.api.realtime.RealtimeSink;
-import co.cask.cdap.template.etl.common.Properties;
 import co.cask.cdap.template.etl.common.RecordPutTransformer;
-import co.cask.cdap.template.etl.common.TableConfig;
+import co.cask.cdap.template.etl.common.TableSinkConfig;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 
 import java.util.Map;
-import javax.annotation.Nullable;
 
 /**
  * Real-time sink for Table
@@ -47,19 +44,19 @@ public class RealtimeTableSink extends RealtimeSink<StructuredRecord> {
 
   private RecordPutTransformer recordPutTransformer;
 
-  private final TableConfig tableConfig;
+  private final TableSinkConfig tableSinkConfig;
 
-  public RealtimeTableSink(TableConfig tableConfig) {
-    this.tableConfig = tableConfig;
+  public RealtimeTableSink(TableSinkConfig tableSinkConfig) {
+    this.tableSinkConfig = tableSinkConfig;
   }
 
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
-    Map<String, String> properties = tableConfig.getProperties().getProperties();
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(tableConfig.getName()), "Dataset name must be given.");
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(tableConfig.getRowField()),
+    Map<String, String> properties = tableSinkConfig.getProperties().getProperties();
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(tableSinkConfig.getName()), "Dataset name must be given.");
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(tableSinkConfig.getRowField()),
                                 "Field to be used as rowkey must be given.");
-    pipelineConfigurer.createDataset(tableConfig.getName(), Table.class.getName(), DatasetProperties.builder()
+    pipelineConfigurer.createDataset(tableSinkConfig.getName(), Table.class.getName(), DatasetProperties.builder()
       .addAll(properties)
       .build());
   }
@@ -67,12 +64,13 @@ public class RealtimeTableSink extends RealtimeSink<StructuredRecord> {
   @Override
   public void initialize(RealtimeContext context) throws Exception {
     super.initialize(context);
-    recordPutTransformer = new RecordPutTransformer(tableConfig.getRowField(), tableConfig.isRowFieldCaseInsensitive());
+    recordPutTransformer = new RecordPutTransformer(tableSinkConfig.getRowField(),
+                                                    tableSinkConfig.isRowFieldCaseInsensitive());
   }
 
   @Override
   public int write(Iterable<StructuredRecord> records, DataWriter writer) throws Exception {
-    Table table = writer.getDataset(tableConfig.getName());
+    Table table = writer.getDataset(tableSinkConfig.getName());
     int numRecords = 0;
     for (StructuredRecord record : records) {
       Put put = recordPutTransformer.toPut(record);
