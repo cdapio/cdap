@@ -51,9 +51,11 @@ public class ArgumentParser {
     List<String> tokens = Parser.parseInput(mapString);
     for (String token : tokens) {
       int firstEquals = token.indexOf('=');
-      String key = token.substring(0, firstEquals);
-      String value = token.substring(firstEquals + 1, token.length());
-      result.put(extractValue(key), extractValue(value));
+      if (firstEquals > 0) {
+        String key = token.substring(0, firstEquals);
+        String value = token.substring(firstEquals + 1, token.length());
+        result.put(extractValue(key), extractValue(value));
+      }
     }
     return result.build();
   }

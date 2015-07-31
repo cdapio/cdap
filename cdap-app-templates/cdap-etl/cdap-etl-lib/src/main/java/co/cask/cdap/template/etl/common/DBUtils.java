@@ -85,13 +85,21 @@ public final class DBUtils {
       return;
     }
     try {
-      Class<?> mysqlCleanupThreadClass = classLoader.loadClass("com.mysql.jdbc.AbandonedConnectionCleanupThread");
+      Class<?> mysqlCleanupThreadClass;
+      try {
+        mysqlCleanupThreadClass = classLoader.loadClass("com.mysql.jdbc.AbandonedConnectionCleanupThread");
+      } catch (ClassNotFoundException e) {
+        // Ok to ignore, since we may not be running mysql
+        LOG.trace("Failed to load MySQL abandoned connection cleanup thread class. Presuming DB Adapter is " +
+                    "not being run with MySQL and ignoring", e);
+        return;
+      }
       Method shutdownMethod = mysqlCleanupThreadClass.getMethod("shutdown");
       shutdownMethod.invoke(null);
-      LOG.info("Successfully shutdown MySQL connection cleanup thread.");
+      LOG.debug("Successfully shutdown MySQL connection cleanup thread.");
     } catch (Throwable e) {
-      // cleanup failed, ignoring silently
-      LOG.warn("Failed to shutdown MySQL connection cleanup thread. Ignoring.");
+      // cleanup failed, ignoring silently with a log, since not much can be done.
+      LOG.warn("Failed to shutdown MySQL connection cleanup thread. Ignoring.", e);
     }
   }
 

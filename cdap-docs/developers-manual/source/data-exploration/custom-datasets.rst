@@ -132,6 +132,48 @@ The SQL schema of the dataset would be::
 
 Refer to the Hive language manual for more details on schema and data types.
 
+StructuredRecord Type
+---------------------
+There are times when your record type cannot be expressed as a plain old Java object. For example, you may want to write
+a custom dataset whose schema may change depending on the properties it is given. In these situations, you can implement
+a record-scannable dataset that uses ``StructuredRecord`` as the record type::
+
+  class MyStructuredDataset ... implements RecordScannable<StructuredRecord> {
+    ...
+    public Type getRecordType() {
+      return StructuredRecord.class;
+    }
+
+The ``StructuredRecord`` class is essentially a map of fields to values, with a ``Schema`` describing the fields and values::
+
+  public class StructuredRecord {
+    ...
+    public Schema getSchema() { ... }
+
+    public <T> T get(String fieldName) { ... }
+
+Datasets that use ``StructuredRecord`` as the record type must also set the schema dataset property when they are created::
+
+  @Override
+  public void configure() {
+    Schema schema = Schema.recordOf("mySchema",
+      Schema.Field.of("id", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("name", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("age", Schema.of(Schema.Type.INT)),
+      Schema.Field.of("email", Schema.of(Schema.Type.STRING))
+    );
+    createDataset("users", MyStructuredDataset.class,
+                  DatasetProperties.builder()
+                    .add(DatasetProperties.SCHEMA, schema.toString())
+                    .build());
+
+Failure to set the schema property will result in errors when enabling exploration on the dataset. The dataset will still
+be created, but it will not be explorable until the schema property is set correctly through the RESTful API.
+In addition, it is up to the user to ensure that the schema set in the dataset properties
+matches the schema of records returned by the dataset. Schema mismatches will result in runtime errors.
+
+The CDAP ``Table`` and ``ObjectMappedTable`` datasets implement ``RecordScannable`` in this way and can be used as references.
+
 .. _sql-scanning-records:
 
 Scanning Records

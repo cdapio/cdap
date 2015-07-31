@@ -174,7 +174,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
                            "SQL exception while trying to enable explore on dataset " + datasetID);
     } catch (UnsupportedTypeException e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST,
-                           "Schema for dataset " + datasetID + " is not supported for exploration");
+                           "Schema for dataset " + datasetID + " is not supported for exploration: " + e.getMessage());
     } catch (Throwable e) {
       LOG.error("Got exception:", e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());

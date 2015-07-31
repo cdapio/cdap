@@ -23,7 +23,6 @@ import org.apache.twill.api.EventHandler;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.TwillApplication;
 
-import java.io.File;
 import java.util.Map;
 
 /**
@@ -34,8 +33,9 @@ public final class MapReduceTwillApplication extends AbstractProgramTwillApplica
   private final String name;
 
   public MapReduceTwillApplication(Program program, MapReduceSpecification spec,
-                                   Map<String, File> localizeFiles, EventHandler eventHandler) {
-    super(program, localizeFiles, eventHandler);
+                                   Map<String, LocalizeResource> localizeResources,
+                                   EventHandler eventHandler) {
+    super(program, localizeResources, eventHandler);
     this.name = spec.getName();
   }
 

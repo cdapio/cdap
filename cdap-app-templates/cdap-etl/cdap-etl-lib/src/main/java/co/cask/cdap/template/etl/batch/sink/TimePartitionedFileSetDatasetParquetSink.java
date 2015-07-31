@@ -44,19 +44,20 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- * A {@link BatchSink} to write Parquet record to {@link TimePartitionedFileSet}
+ * A {@link BatchSink} to write Parquet records to a {@link TimePartitionedFileSet}.
  */
 @Plugin(type = "sink")
 @Name("TPFSParquet")
-@Description("PARQUET Sink with Time Partitioned File Dataset")
+@Description("Sink for a TimePartitionedFileSet that writes data in Parquet format.")
 public class TimePartitionedFileSetDatasetParquetSink extends
   BatchSink<StructuredRecord, Void, GenericRecord> {
 
-  private static final String SCHEMA_DESC = "The schema of the record";
-  private static final String TPFS_NAME_DESC = "Name of the Time Partitioned FileSet Dataset to which the records " +
-    "have to be written";
-  private static final String BASE_PATH_DESC = "The base path for the time partitioned fileset. Defaults to the " +
-    "name of the dataset";
+  private static final String SCHEMA_DESC = "The Parquet schema of the record being written to the sink as a JSON " +
+    "Object.";
+  private static final String TPFS_NAME_DESC = "Name of the TimePartitionedFileSet to which records " +
+    "are written. If it doesn't exist, it will be created.";
+  private static final String BASE_PATH_DESC = "The base path for the TimePartitionedFileSet. Defaults to the " +
+    "name of the dataset.";
   private final StructuredToAvroTransformer recordTransformer = new StructuredToAvroTransformer();
 
   /**

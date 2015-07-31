@@ -64,6 +64,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
 
 /**
@@ -98,6 +99,10 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
   // their onFinish() any longer. But existing map/reduce programs may still do that, and would now fail.
   private final Map<String, PartitionKey> partitionsAddedInSameTx = Maps.newHashMap();
   private Transaction tx;
+
+  // this will store the result of filterInputPaths() after it is called (the result is needed by
+  // both getInputFormat() and getInputFormatConfiguration(), and we don't want to compute it twice).
+  private AtomicReference<Collection<String>> inputPathsCache = null;
 
   public PartitionedFileSetDataset(DatasetContext datasetContext, String name,
                                    Partitioning partitioning, FileSet fileSet, IndexedTable partitionTable,
@@ -404,7 +409,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
   }
 
   @VisibleForTesting
-  Set<String> getPartitionPaths(@Nullable PartitionFilter filter) {
+  Collection<String> getPartitionPaths(@Nullable PartitionFilter filter) {
     // this avoids constructing the Partition object for every partition.
     final Set<String> paths = Sets.newHashSet();
     getPartitions(filter, new PartitionConsumer() {
@@ -509,11 +514,45 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
 
   @Override
   public String getInputFormatClassName() {
+    Collection<String> inputPaths = filterInputPaths();
+    if (inputPaths != null && inputPaths.isEmpty()) {
+      return EmptyInputFormat.class.getName();
+    }
     return files.getInputFormatClassName();
   }
 
   @Override
   public Map<String, String> getInputFormatConfiguration() {
+    Collection<String> inputPaths = filterInputPaths();
+    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+    if (inputPaths == null) {
+      return files.getInputFormatConfiguration();
+    }
+    List<Location> inputLocations = Lists.newArrayListWithExpectedSize(inputPaths.size());
+    for (String path : inputPaths) {
+      inputLocations.add(files.getLocation(path));
+    }
+    return files.getInputFormatConfiguration(inputLocations);
+  }
+
+  /**
+   * Computes the input paths given by the partition filter - if present. Stores the result in a cache and returns it.
+   */
+  private Collection<String> filterInputPaths() {
+    if (inputPathsCache != null) {
+      return inputPathsCache.get();
+    }
+    Collection<String> inputPaths = computeFilterInputPaths();
+    inputPathsCache = new AtomicReference<>(inputPaths);
+    return inputPaths;
+  }
+
+  /**
+   * If a partition filter was specified, return the input locations of all partitions
+   * matching the filter. Otherwise return null.
+   */
+  @Nullable
+  protected Collection<String> computeFilterInputPaths() {
     PartitionFilter filter;
     try {
       filter = PartitionedFileSetArguments.getInputPartitionFilter(runtimeArguments, partitioning);
@@ -521,15 +560,9 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
       throw new DataSetException("Partition filter must be correctly specified in arguments.");
     }
     if (filter == null) {
-      // no PartitionFilter specified. Perhaps input paths were specified. Embedded FileSet will deal with that.
-      return files.getInputFormatConfiguration();
+      return null;
     }
-    Collection<String> inputPaths = getPartitionPaths(filter);
-    List<Location> inputLocations = Lists.newArrayListWithExpectedSize(inputPaths.size());
-    for (String path : inputPaths) {
-      inputLocations.add(files.getLocation(path));
-    }
-    return files.getInputFormatConfiguration(inputLocations);
+    return getPartitionPaths(filter); // never returns null
   }
 
   @Override

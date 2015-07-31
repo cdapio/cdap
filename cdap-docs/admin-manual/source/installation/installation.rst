@@ -110,7 +110,7 @@ You'll need this software installed:
 
 Java Runtime
 ++++++++++++
-The latest `JDK or JRE version 1.7.xx <http://www.java.com/en/download/manual.jsp>`__
+The latest `JDK or JRE version 1.7.xx or 1.8.xx <http://www.java.com/en/download/manual.jsp>`__
 for Linux, Windows, or Mac OS X must be installed in your environment; we recommend the Oracle JDK.
 
 To check the Java version installed, run the command::
@@ -146,29 +146,39 @@ Hadoop/HBase Environment
 
 For a distributed enterprise, you must install these Hadoop components:
 
-+---------------+-------------------+--------------------------------------------------+
-| Component     | Source            | Required Version                                 |
-+===============+===================+==================================================+
-| **HDFS**      | Apache Hadoop     | 2.0.2-alpha through 2.5.0                        |
-+               +-------------------+--------------------------------------------------+
-|               | CDH or HDP        | (CDH) 4.2.x through 5.3.3 or (HDP) 2.0 or 2.1    |
-+---------------+-------------------+--------------------------------------------------+
-| **YARN**      | Apache Hadoop     | 2.0.2-alpha through 2.5.0                        |
-+               +-------------------+--------------------------------------------------+
-|               | CDH or HDP        | (CDH) 4.2.x through 5.3.3 or (HDP) 2.0 or 2.1    |
-+---------------+-------------------+--------------------------------------------------+
-| **HBase**     | Apache            | 0.94.2+, 0.96.x, and 0.98.x                      |
-+               +-------------------+--------------------------------------------------+
-|               | CDH or HDP        | (CDH) 4.2.x through 5.3.3 or (HDP) 2.0 or 2.1    |
-+---------------+-------------------+--------------------------------------------------+
-| **Zookeeper** | Apache            | Version 3.4.3 through 3.4.5                      |
-+               +-------------------+--------------------------------------------------+
-|               | CDH or HDP        | (CDH) 4.2.x through 5.3.3 or (HDP) 2.0 or 2.1    |
-+---------------+-------------------+--------------------------------------------------+
-| **Hive**      | Apache            | Version 0.12.0 through 0.13.1                    |
-+               +-------------------+--------------------------------------------------+
-|               | CDH or HDP        | (CDH) 4.3.x through 5.3.3 or (HDP) 2.0 or 2.1    |
-+---------------+-------------------+--------------------------------------------------+
++---------------+-------------------+-----------------------------------------------------+
+| Component     | Source            | Supported Versions                                  |
++===============+===================+=====================================================+
+| **HDFS**      | Apache Hadoop     | 2.0.2-alpha through 2.6.0                           |
++               +-------------------+-----------------------------------------------------+
+|               | CDH or HDP        | (CDH) 5.0.0 through 5.4.4 or (HDP) 2.0, 2.1, or 2.2 |
++               +-------------------+-----------------------------------------------------+
+|               | MapR              | 4.1 (with MapR-FS)                                  |
++---------------+-------------------+-----------------------------------------------------+
+| **YARN**      | Apache Hadoop     | 2.0.2-alpha through 2.6.0                           |
++               +-------------------+-----------------------------------------------------+
+|               | CDH or HDP        | (CDH) 5.0.0 through 5.4.4 or (HDP) 2.0, 2.1, or 2.2 |
++               +-------------------+-----------------------------------------------------+
+|               | MapR              | 4.1                                                 |
++---------------+-------------------+-----------------------------------------------------+
+| **HBase**     | Apache            | 0.96.x, 0.98.x, and 1.0.x                           |
++               +-------------------+-----------------------------------------------------+
+|               | CDH or HDP        | (CDH) 5.0.0 through 5.4.4 or (HDP) 2.0, 2.1, or 2.2 |
++               +-------------------+-----------------------------------------------------+
+|               | MapR              | 4.1 (with Apache HBase)                             |
++---------------+-------------------+-----------------------------------------------------+
+| **Zookeeper** | Apache            | Version 3.4.3 through 3.4.5                         |
++               +-------------------+-----------------------------------------------------+
+|               | CDH or HDP        | (CDH) 5.0.0 through 5.4.4 or (HDP) 2.0, 2.1, or 2.2 |
++               +-------------------+-----------------------------------------------------+
+|               | MapR              | 4.1                                                 |
++---------------+-------------------+-----------------------------------------------------+
+| **Hive**      | Apache            | Version 0.12.0 through 0.13.1                       |
++               +-------------------+-----------------------------------------------------+
+|               | CDH or HDP        | (CDH) 5.0.0 through 5.4.4 or (HDP) 2.0, 2.1, or 2.2 |
++               +-------------------+-----------------------------------------------------+
+|               | MapR              | 4.1                                                 |
++---------------+-------------------+-----------------------------------------------------+
 
 **Note:** Components versions shown in this table are those that we have tested and are
 confident of their suitability and compatibility. Later versions of components may work,
@@ -463,7 +473,11 @@ In order to configure CDAP Master for Kerberos authentication:
     CDAP_PRINCIPAL="<cdap-principal>@EXAMPLE.REALM.COM"
 
 - Edit ``/etc/cdap/conf/cdap-site.xml``, substituting the Kerberos principal for
-  ``<cdap-principal>`` when adding these two properties::
+  ``CDAP_PRINCIPAL``, and your domain for ``EXAMPLE.COM``, when adding these two properties:
+  
+  .. highlight:: xml
+
+  ::
 
     <property>
       <name>cdap.master.kerberos.keytab</name>
@@ -473,13 +487,15 @@ In order to configure CDAP Master for Kerberos authentication:
     </property>
     <property>
       <name>cdap.master.kerberos.principal</name>
-      <value><cdap-principal>/_HOST@EXAMPLE.COM</value>
+      <value>CDAP_PRINCIPAL/_HOST@EXAMPLE.COM</value>
       <description>The Kerberos principal name that should be used to login the CDAP Master
       process. The string "_HOST" will be substituted with the local hostname.</description>
     </property>
 
 - The ``<cdap-principal>`` is shown in the commands that follow as ``cdap``; however, you
   are free to use a different appropriate name.
+
+  .. highlight:: console
 
 - The ``/cdap`` directory needs to be owned by the ``<cdap-principal>``; you can set
   that by running the following command as the ``hdfs`` user::
@@ -505,6 +521,8 @@ this setting with the command ``ulimit -n`` when logged in as the CDAP user.
 For more information, refer to the ``ulimit`` discussion in the `Apache HBase Reference
 Guide <https://hbase.apache.org/book.html#ulimit>`__.
 
+.. highlight:: console
+
 .. _install-tmp-files:
 
 Writing to Temp Files
@@ -522,6 +540,41 @@ Configuring Security
 For instructions on enabling CDAP Security, see :doc:`CDAP Security <security>`;
 and in particular, see the instructions for 
 :ref:`configuring the properties of cdap-site.xml <enabling-security>`.
+
+Configuring Hortonworks Data Platform
+.....................................
+Beginning with `Hortonworks Data Platform (HDP) 2.2 <http://hortonworks.com>`__, the
+MapReduce libraries are in HDFS. This requires an addition be made to the file
+``cdap-env.sh`` to indicate the version of HDP::
+
+  export OPTS="${OPTS} -Dhdp.version=<version>" 
+  
+where ``<version>`` matches the HDP version of the cluster. The build iteration must be
+included, so if the cluster version of HDP is ``2.2.6.0-2800``, use::
+
+  export OPTS="${OPTS} -Dhdp.version=2.2.6.0-2800" 
+
+The file ``cdap-env.sh`` is located in the configuration directory, as described above
+under :ref:`Configuration <install-alternatives>`.
+
+.. highlight:: xml
+
+In addition, the property ``app.program.jvm.opts`` must be set in the ``cdap-site.xml``::
+
+  <property>
+    <name>app.program.jvm.opts</name>
+    <value>-XX:MaxPermSize=128M ${twill.jvm.gc.opts} -Dhdp.version=<version></value>
+    <description>Java options for all program containers</description>
+  </property>
+  
+Using the same example as above, substituting ``2.2.6.0-2800`` for ``<version>``, as::
+
+  <property>
+    <name>app.program.jvm.opts</name>
+    <value>-XX:MaxPermSize=128M ${twill.jvm.gc.opts} -Dhdp.version=2.2.6.0-2800</value>
+    <description>Java options for all program containers</description>
+  </property>
+
 
 .. _install-starting-services:
 
@@ -634,13 +687,15 @@ recompiled and re-deployed.)
    - Using Yum (on one line)::
 
        $ sudo yum install cdap cdap-gateway \
-             cdap-hbase-compat-0.94 cdap-hbase-compat-0.96 cdap-hbase-compat-0.98 \
+             cdap-hbase-compat-0.96 cdap-hbase-compat-0.98 \
+             cdap-hbase-compat-1.0 cdap-hbase-compat-1.0-cdh \
              cdap-kafka cdap-master cdap-security cdap-ui
 
    - Using APT (on one line)::
 
        $ sudo apt-get install cdap cdap-gateway \
-             cdap-hbase-compat-0.94 cdap-hbase-compat-0.96 cdap-hbase-compat-0.98 \
+             cdap-hbase-compat-0.96 cdap-hbase-compat-0.98 \
+             cdap-hbase-compat-1.0 cdap-hbase-compat-1.0-cdh \
              cdap-kafka cdap-master cdap-security cdap-ui
 
    **Note:** We have deprecated the cdap-web-app package in favor of cdap-ui package 

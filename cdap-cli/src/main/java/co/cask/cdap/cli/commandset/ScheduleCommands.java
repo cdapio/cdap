@@ -128,7 +128,7 @@ public class ScheduleCommands extends CommandSet<Command> implements Categorized
       Id.Schedule scheduleId = Id.Schedule.from(cliConfig.getCurrentNamespace(), appId, scheduleName);
 
       scheduleClient.suspend(scheduleId);
-      printStream.printf("Successfully suspended schedule '%s'", scheduleId);
+      printStream.printf("Successfully suspended schedule '%s' in app '%s'\n", scheduleName, appId);
     }
 
     @Override
@@ -167,7 +167,7 @@ public class ScheduleCommands extends CommandSet<Command> implements Categorized
       Id.Schedule schedule = Id.Schedule.from(cliConfig.getCurrentNamespace(), appId, scheduleName);
 
       scheduleClient.resume(schedule);
-      printStream.printf("Successfully resumed schedule '%s'", schedule);
+      printStream.printf("Successfully resumed schedule '%s' in app '%s'\n", scheduleName, appId);
     }
 
     @Override

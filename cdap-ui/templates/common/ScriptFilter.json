@@ -3,7 +3,8 @@
   "groups" : {
     "position": [ "group1" ],
     "group1": {
-       "position" : ["script" ],
+       "display" : "Script Filter Properties",
+       "position" : [ "script" ],
        "fields" : {
           "script" : {
              "widget": "javascript-editor",

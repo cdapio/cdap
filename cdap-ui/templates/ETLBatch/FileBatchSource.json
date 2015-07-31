@@ -3,8 +3,8 @@
   "groups" : {
     "position": [ "group1" ],
     "group1": {
-      "display" : "File Batch Source",
-      "position" : [ "fileSystem", "fileSystemProperties", "path", "fileRegex", "timeTable", "inputFormatClass"],
+      "display" : "File Batch Source Properties",
+      "position" : [ "fileSystem", "fileSystemProperties", "path", "fileRegex", "timeTable", "inputFormatClass", "maxSplitSize" ],
       "fields" : {
         "fileSystem" : {
           "widget": "textbox",
@@ -34,8 +34,19 @@
         "inputFormatClass" : {
           "widget": "textbox",
           "label": "Input Format Class"
+        },
+
+        "maxSplitSize" : {
+          "widget": "textbox",
+          "label": "Max Split Size"
         }
       }
+    }
+  },
+  "implicit": {
+    "schema": {
+      "ts": "long",
+      "body": "string"
     }
   }
 }

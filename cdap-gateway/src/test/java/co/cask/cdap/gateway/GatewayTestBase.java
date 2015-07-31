@@ -247,14 +247,22 @@ public abstract class GatewayTestBase {
     int trials = 0;
     // it may take a while for workflow/mr to start...
     while (trials++ < 20) {
-      HttpResponse response = GatewayFastTestsSuite.doGet(String.format("/v3/namespaces/default/apps/%s/%s/%s/status",
-                                                                        appId, programType, programId));
-      JsonObject status = GSON.fromJson(EntityUtils.toString(response.getEntity()), JsonObject.class);
-      if (status != null && status.has("status") && state.equals(status.get("status").getAsString())) {
+      String status = getState(programType, appId, programId);
+      if (status != null && state.equals(status)) {
         break;
       }
       TimeUnit.SECONDS.sleep(1);
     }
     Assert.assertTrue(trials < 20);
+  }
+
+  protected static String getState(String programType, String appId, String programId) throws Exception {
+    HttpResponse response = GatewayFastTestsSuite.doGet(String.format("/v3/namespaces/default/apps/%s/%s/%s/status",
+                                                                      appId, programType, programId));
+    JsonObject status = GSON.fromJson(EntityUtils.toString(response.getEntity()), JsonObject.class);
+    if (status != null && status.has("status")) {
+      return status.get("status").getAsString();
+    }
+    return null;
   }
 }

@@ -55,16 +55,16 @@ public class StopProgramCommand extends AbstractAuthCommand {
                                            elementType.getProgramType(), programName);
 
     programClient.stop(programId);
-    output.printf("Successfully stopped %s '%s' of application '%s'\n", elementType.getTitleName(), programId, appId);
+    output.printf("Successfully stopped %s '%s' of application '%s'\n", elementType.getName(), programName, appId);
   }
 
   @Override
   public String getPattern() {
-    return String.format("stop %s <%s>", elementType.getName(), elementType.getArgumentName());
+    return String.format("stop %s <%s>", elementType.getShortName(), elementType.getArgumentName());
   }
 
   @Override
   public String getDescription() {
-    return String.format("Stops %s.", Fragment.of(Article.A, elementType.getTitleName()));
+    return String.format("Stops %s.", Fragment.of(Article.A, elementType.getName()));
   }
 }

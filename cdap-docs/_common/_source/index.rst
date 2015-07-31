@@ -21,9 +21,9 @@ application abstractions to simplify and accelerate application development, add
 broader range of real-time and batch use cases, and deploy applications into production
 while satisfying enterprise requirements.
 
-CDAP is a layer of software running on top of Apache Hadoop |(R)| platforms such as the
-Cloudera Enterprise Data Hub or the Hortonworks |(R)| Data Platform. CDAP provides these 
-essential capabilities:
+CDAP is a layer of software running on top of Apache Hadoop |(R)| platforms such as
+the Cloudera Enterprise Data Hub, the Hortonworks |(R)| Data Platform, or 
+the MapR Distribution. CDAP provides these essential capabilities:
 
 - Abstraction of data in the Hadoop environment through logical representations of underlying
   data;

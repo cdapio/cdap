@@ -190,7 +190,13 @@ public class PluginRepository {
     try (CloseableClassLoader templateClassLoader = createTemplateClassLoader(templateJar)) {
       for (PluginFile pluginFile : pluginFiles) {
         if (!configureByFile(pluginFile, templatePlugins)) {
-          configureByInspection(pluginFile, templateClassLoader, template, templatePlugins);
+          try {
+            configureByInspection(pluginFile, templateClassLoader, template, templatePlugins);
+          } catch (NoClassDefFoundError e) {
+            // Continue to configure plugins even if one of them threw a NoClassDefFoundError
+            LOG.warn("Error while trying to inspect plugin : {}. Make sure to include plugin config json file if " +
+                       "you want to use 3rd party jars as plugins.", pluginFile, e);
+          }
         }
       }
     }

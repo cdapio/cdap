@@ -59,7 +59,7 @@ public class SetProgramInstancesCommand extends AbstractAuthCommand {
         Id.Flow.Flowlet flowletId = Id.Flow.Flowlet.from(appId, flowId, flowletName);
         programClient.setFlowletInstances(flowletId, numInstances);
         output.printf("Successfully set flowlet '%s' of flow '%s' of app '%s' to %d instances\n",
-                      flowId, flowletId, appId, numInstances);
+                      flowId, flowletId, appId.getId(), numInstances);
         break;
       case WORKER:
         if (programIdParts.length < 2) {
@@ -69,7 +69,7 @@ public class SetProgramInstancesCommand extends AbstractAuthCommand {
         Id.Worker workerId = Id.Worker.from(appId, workerName);
         programClient.setWorkerInstances(workerId, numInstances);
         output.printf("Successfully set worker '%s' of app '%s' to %d instances\n",
-                      workerId, appId, numInstances);
+                      workerName, appId.getId(), numInstances);
         break;
       case SERVICE:
         if (programIdParts.length < 2) {
@@ -78,7 +78,8 @@ public class SetProgramInstancesCommand extends AbstractAuthCommand {
         String serviceName = programIdParts[1];
         Id.Service service = Id.Service.from(appId, serviceName);
         programClient.setServiceInstances(service, numInstances);
-        output.printf("Successfully set service '%s' of app '%s' to %d instances\n", service, appId, numInstances);
+        output.printf("Successfully set service '%s' of app '%s' to %d instances\n",
+                      serviceName, appId.getId(), numInstances);
         break;
       default:
         // TODO: remove this
@@ -94,7 +95,7 @@ public class SetProgramInstancesCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Sets the instances of %s.", Fragment.of(Article.A, elementType.getTitleName()));
+    return String.format("Sets the instances of %s.", Fragment.of(Article.A, elementType.getName()));
 
   }
 }

@@ -38,6 +38,7 @@ import co.cask.cdap.internal.app.runtime.AbstractResourceReporter;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.runtime.service.SimpleRuntimeInfo;
+import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.proto.Containers;
 import co.cask.cdap.proto.DistributedProgramLiveInfo;
 import co.cask.cdap.proto.Id;
@@ -173,7 +174,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
       }
 
       // Program matched
-      RunRecord record = store.getRun(programId, runId.getId());
+      RunRecordMeta record = store.getRun(programId, runId.getId());
       if (record == null) {
         return null;
       }
@@ -235,15 +236,15 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
     }
 
     final Set<RunId> twillRunIds = twillProgramInfo.columnKeySet();
-    List<RunRecord> activeRunRecords = store.getRuns(ProgramRunStatus.RUNNING, new Predicate<RunRecord>() {
+    List<RunRecordMeta> activeRunRecords = store.getRuns(ProgramRunStatus.RUNNING, new Predicate<RunRecordMeta>() {
       @Override
-      public boolean apply(RunRecord record) {
+      public boolean apply(RunRecordMeta record) {
         return record.getTwillRunId() != null
           && twillRunIds.contains(org.apache.twill.internal.RunIds.fromString(record.getTwillRunId()));
       }
     });
 
-    for (RunRecord record : activeRunRecords) {
+    for (RunRecordMeta record : activeRunRecords) {
       RunId twillRunIdFromRecord = org.apache.twill.internal.RunIds.fromString(record.getTwillRunId());
       // Get the CDAP RunId from RunRecord
       RunId runId = RunIds.fromString(record.getPid());

@@ -66,7 +66,7 @@ public class ListProgramsCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Lists all %s.", getElementType().getTitleNamePlural());
+    return String.format("Lists all %s.", getElementType().getNamePlural());
   }
 
   private ElementType getElementType() {

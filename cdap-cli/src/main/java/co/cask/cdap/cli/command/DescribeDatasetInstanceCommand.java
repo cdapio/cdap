@@ -76,6 +76,6 @@ public class DescribeDatasetInstanceCommand extends AbstractAuthCommand {
   @Override
   public String getDescription() {
     return String.format("Shows information about %s.",
-                         Fragment.of(Article.A, ElementType.DATASET.getTitleName()));
+                         Fragment.of(Article.A, ElementType.DATASET.getName()));
   }
 }

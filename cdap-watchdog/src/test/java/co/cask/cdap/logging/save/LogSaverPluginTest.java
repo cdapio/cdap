@@ -73,7 +73,6 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
@@ -97,8 +96,6 @@ import static co.cask.cdap.logging.appender.LoggingTester.LogCallback;
  * Test LogSaver plugin.
  */
 @Category(SlowTests.class)
-// TODO: This test will be fixed as part of https://issues.cask.co/browse/CDAP-2177
-@Ignore
 public class LogSaverPluginTest extends KafkaTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(LogSaverTest.class);
 
@@ -200,8 +197,8 @@ public class LogSaverPluginTest extends KafkaTestBase {
                                 0, Long.MAX_VALUE, Filter.EMPTY_FILTER, logCallback);
     Assert.assertEquals(60, logCallback.getEvents().size());
 
-    // Reset checkpoint for metrics plugin
-    resetMetricsPluginCheckPoint();
+    // Reset checkpoint for log saver plugin
+    resetLogSaverPluginCheckpoint();
 
     // reset the logsaver to start reading from reset offset
     Set<Integer> partitions = Sets.newHashSet(0, 1);
@@ -211,22 +208,24 @@ public class LogSaverPluginTest extends KafkaTestBase {
     waitTillLogSaverDone(ns1LogBaseDir, "APP_1/flow-FLOW_1/%s", "Test log message 59 arg1 arg2");
     stopLogSaver();
 
-    //Verify that no more records are processed by LogWriter plugin
+    LogCallback callbackAfterReset = new LogCallback();
+
+    //Verify that more records are processed by LogWriter plugin
     distributedLogReader.getLog(new FlowletLoggingContext("NS_1", "APP_1", "FLOW_1", "", null, "INSTANCE"),
-                                0, Long.MAX_VALUE, Filter.EMPTY_FILTER, logCallback);
+                                0, Long.MAX_VALUE, Filter.EMPTY_FILTER, callbackAfterReset);
     Assert.assertEquals(60, logCallback.getEvents().size());
     // Checkpoint should read 60 for both processor
     verifyCheckpoint();
   }
 
-  private void resetMetricsPluginCheckPoint() throws Exception {
+  private void resetLogSaverPluginCheckpoint() throws Exception {
     TypeLiteral<Set<KafkaLogProcessor>> type = new TypeLiteral<Set<KafkaLogProcessor>>() { };
     Set<KafkaLogProcessor> processors =
       injector.getInstance(Key.get(type, Names.named(Constants.LogSaver.MESSAGE_PROCESSORS)));
 
     for (KafkaLogProcessor processor : processors) {
-      if (processor instanceof  LogMetricsPlugin) {
-        LogMetricsPlugin plugin = (LogMetricsPlugin) processor;
+      if (processor instanceof  KafkaLogWriterPlugin) {
+        KafkaLogWriterPlugin plugin = (KafkaLogWriterPlugin) processor;
         CheckpointManager manager = plugin.getCheckPointManager();
         manager.saveCheckpoint(0, new Checkpoint(10, -1));
         Set<Integer> partitions = Sets.newHashSet(0, 1);

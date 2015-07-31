@@ -8,9 +8,18 @@ angular.module(PKG.name + '.commons')
         plugins: '='
       },
       templateUrl: 'widget-container/widget-stream-properties/widget-stream-properties.html',
-      controller: function($scope) {
-        $scope.options = $scope.config['schema-types'];
-        var defaultType = $scope.config['schema-default-type'] || $scope.options[0];
+      controller: function($scope, EventPipe, IMPLICIT_SCHEMA) {
+        var modelCopy = angular.copy($scope.model);
+
+        var defaultOptions = [ 'boolean', 'int', 'long', 'float', 'double', 'bytes', 'string' ];
+        var defaultType = null;
+        if ($scope.config) {
+          $scope.options = $scope.config['schema-types'];
+          defaultType = $scope.config['schema-default-type'] || $scope.options[0];
+        } else {
+          $scope.options = defaultOptions;
+          defaultType = 'string';
+        }
 
         var watcher;
         function removeWatcher() {
@@ -22,14 +31,34 @@ angular.module(PKG.name + '.commons')
         }
 
         $scope.$watch('plugins.format', function() {
+          if (!$scope.plugins) {
+            return;
+          }
+
           // watch for changes
           removeWatcher();
 
           // do things based on format
           if (['clf', 'syslog', ''].indexOf($scope.plugins.format) > -1) {
             $scope.model = null;
-            $scope.fields = 'NOTHING';
+            $scope.disableEdit = true;
+            // $scope.fields = 'NOTHING';
+            if ($scope.plugins.format === 'clf') {
+              var clfSchema = IMPLICIT_SCHEMA.clf;
+
+              initialize(clfSchema);
+              $scope.fields = 'SHOW';
+            } else if ($scope.plugins.format === 'syslog') {
+              var syslogSchema = IMPLICIT_SCHEMA.syslog;
+
+              initialize(syslogSchema);
+              $scope.fields = 'SHOW';
+            } else {
+              $scope.fields = 'NOTHING';
+            }
+
           } else if ($scope.plugins.format === 'avro'){
+            $scope.disableEdit = false;
             $scope.fields = 'AVRO';
             watcher = $scope.$watch('avro', formatAvro, true);
 
@@ -42,25 +71,30 @@ angular.module(PKG.name + '.commons')
 
             }
           } else if ($scope.plugins.format === 'grok') {
+            $scope.disableEdit = false;
             $scope.fields = 'GROK';
             $scope.model = null;
           }
 
           else {
+            $scope.disableEdit = false;
             $scope.fields = 'SHOW';
             watcher = $scope.$watch('properties', formatSchema, true);
           }
 
         });
 
+        var filledCount;
+
         // Format model
-        function initialize() {
+        function initialize(jsonString) {
+          filledCount = 0;
           var schema = {};
           $scope.avro = {};
 
-          if ($scope.model) {
+          if (jsonString) {
             try {
-              schema = JSON.parse($scope.model);
+              schema = JSON.parse(jsonString);
             } catch (e) {
               $scope.error = 'Invalid JSON string';
             }
@@ -90,20 +124,46 @@ angular.module(PKG.name + '.commons')
             }
           });
 
-          if ($scope.properties.length === 0) {
+          filledCount = $scope.properties.length;
+
+          // Note: 15 for now
+          if ($scope.properties.length < 15) {
+            if ($scope.properties.length === 0) {
+              $scope.properties.push({
+                name: '',
+                type: defaultType,
+                nullable: false
+              });
+              filledCount = 1;
+            }
+
+            for (var i = $scope.properties.length; i < 15; i++) {
+              $scope.properties.push({
+                empty: true
+              });
+            }
+          } else { // to add one empty line when there are more than 15
             $scope.properties.push({
-              name: '',
-              type: defaultType,
-              nullable: false
+              empty: true
             });
           }
 
         } // End of initialize
 
-        initialize();
+        initialize($scope.model);
+        EventPipe.on('plugin.reset', function () {
+          $scope.model = angular.copy(modelCopy);
 
+          initialize($scope.model);
+        });
 
         function formatSchema() {
+
+          if (['clf', 'syslog'].indexOf($scope.plugins.format) !== -1) {
+            $scope.model = null;
+            return;
+          }
+
           // Format Schema
           var properties = [];
           angular.forEach($scope.properties, function(p) {
@@ -129,8 +189,10 @@ angular.module(PKG.name + '.commons')
           } else {
             $scope.model = null;
           }
-
         }
+
+        // watch for changes
+        $scope.$watch('properties', formatSchema, true);
 
         function formatAvro() {
           if ($scope.plugins.format !== 'avro') {
@@ -141,7 +203,23 @@ angular.module(PKG.name + '.commons')
           $scope.model = avroJson;
         }
 
+        $scope.emptyRowClick = function (property, index) {
+          if (!property.empty || index !== filledCount || $scope.disabled) {
+            return;
+          }
 
+          delete property.empty;
+          property.name = '';
+          property.type = defaultType;
+          property.nullable = false;
+          filledCount++;
+
+          if (filledCount >= 15) {
+            $scope.properties.push({
+              empty: true
+            });
+          }
+        };
 
         $scope.addProperties = function() {
           $scope.properties.push({
@@ -149,16 +227,35 @@ angular.module(PKG.name + '.commons')
             type: defaultType,
             nullable: false
           });
+
+          filledCount++;
+
+          if ($scope.properties.length >= 15) {
+            $scope.properties.push({
+              empty: true
+            });
+          }
         };
 
         $scope.removeProperty = function(property) {
           var index = $scope.properties.indexOf(property);
           $scope.properties.splice(index, 1);
+
+          if ($scope.properties.length <= 15) {
+            $scope.properties.push({
+              empty: true
+            });
+          }
+          filledCount--;
         };
 
-        $scope.enter = function(event, last) {
-          if (last && event.keyCode === 13) {
-            $scope.addProperties();
+        $scope.enter = function(event, index) {
+          if (index === filledCount-1 && event.keyCode === 13) {
+            if (filledCount < $scope.properties.length) {
+              $scope.emptyRowClick($scope.properties[index + 1], index+1);
+            } else {
+              $scope.addProperties();
+            }
           }
         };
 

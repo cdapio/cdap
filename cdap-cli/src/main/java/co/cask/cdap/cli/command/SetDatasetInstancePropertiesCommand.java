@@ -54,7 +54,8 @@ public class SetDatasetInstancePropertiesCommand extends AbstractCommand {
       arguments.get(ArgumentName.DATASET_PROPERTIES.toString()));
 
     datasetClient.updateExisting(instance, properties);
-    output.printf("Successfully updated properties for %s to %s", instance, GSON.toJson(properties));
+    output.printf("Successfully updated properties for dataset instance '%s' to %s",
+                  instance.getId(), GSON.toJson(properties));
   }
 
   @Override
@@ -66,6 +67,6 @@ public class SetDatasetInstancePropertiesCommand extends AbstractCommand {
   @Override
   public String getDescription() {
     return String.format("Sets properties for %s.",
-                         Fragment.of(Article.A, ElementType.DATASET.getTitleName()));
+                         Fragment.of(Article.A, ElementType.DATASET.getName()));
   }
 }

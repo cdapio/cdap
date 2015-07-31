@@ -91,13 +91,13 @@ public class GetProgramRunsCommand extends AbstractCommand {
 
   @Override
   public String getPattern() {
-    return String.format("get %s runs <%s> [<%s>] [<%s>] [<%s>] [<%s>]", elementType.getName(),
+    return String.format("get %s runs <%s> [<%s>] [<%s>] [<%s>] [<%s>]", elementType.getShortName(),
                          elementType.getArgumentName(), ArgumentName.RUN_STATUS,
                          ArgumentName.START_TIME, ArgumentName.END_TIME, ArgumentName.LIMIT);
   }
 
   @Override
   public String getDescription() {
-    return String.format("Gets the run history of %s.", Fragment.of(Article.A, elementType.getTitleName()));
+    return String.format("Gets the run history of %s.", Fragment.of(Article.A, elementType.getName()));
   }
 }

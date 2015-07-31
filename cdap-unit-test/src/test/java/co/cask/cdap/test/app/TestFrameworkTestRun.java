@@ -23,12 +23,17 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
+import co.cask.cdap.api.dataset.lib.cube.AggregationFunction;
 import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.api.flow.flowlet.StreamEvent;
+import co.cask.cdap.api.metrics.MetricDataQuery;
+import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.api.metrics.RuntimeMetrics;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.workflow.WorkflowToken;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.proto.Id;
@@ -52,7 +57,10 @@ import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
 import com.google.common.base.Charsets;
+import com.google.common.base.Function;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -60,13 +68,18 @@ import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -75,6 +88,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.ResultSet;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -90,6 +104,9 @@ import java.util.concurrent.TimeoutException;
 @Category(SlowTests.class)
 public class TestFrameworkTestRun extends TestFrameworkTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(TestFrameworkTestRun.class);
+
+  @ClassRule
+  public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
   private final Id.Namespace testSpace = Id.Namespace.from("testspace");
 
@@ -204,6 +221,41 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     DataSetManager<KeyValueTable> outTableManager = getDataset("table2");
     KeyValueTable outputTable = outTableManager.get();
     Assert.assertEquals("world", Bytes.toString(outputTable.read("hello")));
+
+    // Verify dataset metrics
+    // Currently the RuntimeStats doesn't provide easy to use method to query metrics,
+    // hence need to operate on MetricsStore directly to get the metrics
+    String readCountName = "system." + Constants.Metrics.Name.Dataset.READ_COUNT;
+    String writeCountName = "system." + Constants.Metrics.Name.Dataset.WRITE_COUNT;
+    Collection<MetricTimeSeries> metrics = RuntimeStats.metricStore.query(
+      new MetricDataQuery(
+        0, System.currentTimeMillis() / 1000, Integer.MAX_VALUE,
+        ImmutableMap.of(
+          readCountName, AggregationFunction.SUM,
+          writeCountName, AggregationFunction.SUM
+        ),
+        ImmutableMap.<String, String>of(),
+        ImmutableList.<String>of()
+      )
+    );
+
+    // Transform the collection of metrics into a map from metrics name to aggregated sum
+    Map<String, Long> aggs = Maps.transformEntries(Maps.uniqueIndex(metrics, new Function<MetricTimeSeries, String>() {
+      @Override
+      public String apply(MetricTimeSeries input) {
+        return input.getMetricName();
+      }
+    }), new Maps.EntryTransformer<String, MetricTimeSeries, Long>() {
+      @Override
+      public Long transformEntry(String key, MetricTimeSeries value) {
+        Preconditions.checkArgument(value.getTimeValues().size() == 1,
+                                    "Expected one value for aggregated sum for metrics %s", key);
+        return value.getTimeValues().get(0).getValue();
+      }
+    });
+
+    Assert.assertEquals(Long.valueOf(1), aggs.get(readCountName));
+    Assert.assertEquals(Long.valueOf(1), aggs.get(writeCountName));
   }
 
   @Category(SlowTests.class)
@@ -296,6 +348,37 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals(true, Boolean.parseBoolean(workflowTokenAtNode.getTokenDataAtNode().get("finished")));
     workflowToken = wfmanager.getToken(pid, null, null);
     Assert.assertEquals(false, Boolean.parseBoolean(workflowToken.getTokenData().get("running").get(0).getValue()));
+  }
+
+  @Test
+  public void testBatchStreamUpload() throws Exception {
+    StreamManager batchStream = getStreamManager("batchStream");
+    batchStream.createStream();
+    String event1 = "this,is,some";
+    String event2 = "test,csv,data";
+    String event3 = "that,can,be,used,to,test";
+    String event4 = "batch,upload,capability";
+    String event5 = "for,streams in testbase";
+    File testData = TEMP_FOLDER.newFile("test-stream-data.txt");
+    try (FileWriter fileWriter = new FileWriter(testData);
+         BufferedWriter out = new BufferedWriter(fileWriter)) {
+      out.write(String.format("%s\n", event1));
+      out.write(String.format("%s\n", event2));
+      out.write(String.format("%s\n", event3));
+      out.write(String.format("%s\n", event4));
+      out.write(String.format("%s\n", event5));
+    }
+
+    // batch upload file containing 10 events
+    batchStream.send(testData, "text/csv");
+    // verify upload
+    List<StreamEvent> uploadedEvents = batchStream.getEvents(0, System.currentTimeMillis(), 100);
+    Assert.assertEquals(5, uploadedEvents.size());
+    Assert.assertEquals(event1, Bytes.toString(uploadedEvents.get(0).getBody()));
+    Assert.assertEquals(event2, Bytes.toString(uploadedEvents.get(1).getBody()));
+    Assert.assertEquals(event3, Bytes.toString(uploadedEvents.get(2).getBody()));
+    Assert.assertEquals(event4, Bytes.toString(uploadedEvents.get(3).getBody()));
+    Assert.assertEquals(event5, Bytes.toString(uploadedEvents.get(4).getBody()));
   }
 
   private void waitForWorkflowStatus(final WorkflowManager wfmanager, ProgramRunStatus expected) throws Exception {
@@ -451,7 +534,9 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     lifecycleWorkerManager.stop();
     lifecycleWorkerManager.waitForStatus(false);
 
-    workerManager.stop();
+    if (workerManager.isRunning()) {
+      workerManager.stop();
+    }
     workerManager.waitForStatus(false);
 
     // Should be same instances after being stopped.
@@ -509,6 +594,15 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals(AppWithWorker.INITIALIZE, Bytes.toString(table.read(AppWithWorker.INITIALIZE)));
     Assert.assertEquals(AppWithWorker.RUN, Bytes.toString(table.read(AppWithWorker.RUN)));
     Assert.assertEquals(AppWithWorker.STOP, Bytes.toString(table.read(AppWithWorker.STOP)));
+  }
+
+  @Test
+  public void testWorkerStop() throws Exception {
+    // Test to make sure the worker program's status goes to stopped after the run method finishes
+    ApplicationManager manager = deployApplication(NoOpWorkerApp.class);
+    WorkerManager workerManager = manager.getWorkerManager("NoOpWorker");
+    workerManager.start();
+    workerManager.waitForStatus(false, 5, 1);
   }
 
   @Category(SlowTests.class)

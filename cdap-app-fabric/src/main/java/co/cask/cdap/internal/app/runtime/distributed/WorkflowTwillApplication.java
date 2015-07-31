@@ -23,7 +23,6 @@ import co.cask.cdap.proto.ProgramType;
 import org.apache.twill.api.EventHandler;
 import org.apache.twill.api.TwillApplication;
 
-import java.io.File;
 import java.util.Map;
 
 /**
@@ -35,10 +34,10 @@ public class WorkflowTwillApplication extends AbstractProgramTwillApplication {
   private final Resources resources;
 
   public WorkflowTwillApplication(Program program, WorkflowSpecification spec,
-                                  Map<String, File> localizeFiles,
+                                  Map<String, LocalizeResource> localizeResources,
                                   EventHandler eventHandler,
                                   Resources resources) {
-    super(program, localizeFiles, eventHandler);
+    super(program, localizeResources, eventHandler);
     this.spec = spec;
     this.resources = resources;
   }

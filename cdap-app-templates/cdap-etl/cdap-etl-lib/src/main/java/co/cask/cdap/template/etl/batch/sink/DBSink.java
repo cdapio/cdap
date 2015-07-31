@@ -58,12 +58,9 @@ import java.util.List;
  */
 @Plugin(type = "sink")
 @Name("Database")
-@Description("Batch sink for a database.")
+@Description("Writes records to a database table. Each record will be written to a row in the table.")
 public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> {
   private static final Logger LOG = LoggerFactory.getLogger(DBSink.class);
-
-  private static final String COLUMNS_DESCRIPTION = "Comma-separated list of columns to export to in the specified " +
-    "table.";
 
   private final DBSinkConfig dbSinkConfig;
   private ResultSetMetaData resultSetMetadata;
@@ -90,12 +87,15 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
                                                                                 dbSinkConfig.jdbcPluginName,
                                                                                 getJDBCPluginId(),
                                                                                 PluginProperties.builder().build());
-    Preconditions.checkArgument(jdbcDriverClass != null, "JDBC Driver class must be found.");
+    Preconditions.checkArgument(
+      jdbcDriverClass != null, "Unable to load JDBC Driver class for plugin name '%s'. Please make sure that the " +
+        "plugin '%s' of type '%s' containing the driver has been installed correctly.", dbSinkConfig.jdbcPluginName,
+      dbSinkConfig.jdbcPluginName, dbSinkConfig.jdbcPluginType);
   }
 
   @Override
   public void prepareRun(BatchSinkContext context) {
-    LOG.debug("tableName = {}; pluginType = {}; pluginName = {}; connectionString = {}; importQuery = {}; columns = {}",
+    LOG.debug("tableName = {}; pluginType = {}; pluginName = {}; connectionString = {}; columns = {}",
               dbSinkConfig.tableName, dbSinkConfig.jdbcPluginType, dbSinkConfig.jdbcPluginName,
               dbSinkConfig.connectionString, dbSinkConfig.columns);
 
@@ -152,8 +152,9 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
     }
     try {
       try (Statement statement = connection.createStatement();
-           // Using LIMIT even though its not SQL standard since DBInputFormat already depends on it
-           ResultSet rs = statement.executeQuery(String.format("SELECT %s from %s LIMIT 1",
+           // Run a query against the DB table that returns 0 records, but returns valid ResultSetMetadata
+           // that can be used to construct DBRecord objects to sink to the database table.
+           ResultSet rs = statement.executeQuery(String.format("SELECT %s FROM %s WHERE 1 = 0",
                                                                dbSinkConfig.columns, dbSinkConfig.tableName))
       ) {
         resultSetMetadata = rs.getMetaData();
@@ -173,7 +174,7 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
       DriverManager.getDriver(dbSinkConfig.connectionString);
     } catch (SQLException e) {
       // Driver not found. We will try to register it with the DriverManager.
-      LOG.debug("Plugin Type: {} and Plugin Name: {}; Driver Class: {} not found. Registering JDBC driver via shim {} ",
+      LOG.debug("Plugin Type: {} and Plugin Name: {}; Driver Class: {} not found; registering JDBC driver via shim {} ",
                 dbSinkConfig.jdbcPluginType, dbSinkConfig.jdbcPluginName, driverClass.getName(),
                 JDBCDriverShim.class.getName());
       driverShim = new JDBCDriverShim(driverClass.newInstance());
@@ -186,7 +187,10 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
    * {@link PluginConfig} for {@link DBSink}
    */
   public static class DBSinkConfig extends DBConfig {
-    @Description(COLUMNS_DESCRIPTION)
+    @Description("Comma-separated list of columns in the specified table to export to.")
     String columns;
+
+    @Description("Name of the table to export to.")
+    public String tableName;
   }
 }

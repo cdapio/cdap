@@ -109,9 +109,6 @@ public class ReducerWrapper extends Reducer {
         ClassLoaders.setContextClassLoader(oldClassLoader);
       }
 
-      // sleep to allow metrics to be written
-      TimeUnit.SECONDS.sleep(2L);
-
       // transaction is not finished, but we want all operations to be dispatched (some could be buffered in
       // memory by tx agent
       try {
@@ -135,8 +132,11 @@ public class ReducerWrapper extends Reducer {
       }
 
     } finally {
-      basicMapReduceContext.close(); // closes all datasets
-      basicMapReduceContext.getMetricsCollectionService().stop();
+      try {
+        basicMapReduceContext.close(); // closes all datasets
+      } finally {
+        basicMapReduceContext.getMetricsCollectionService().stop();
+      }
     }
   }
 

@@ -72,6 +72,7 @@ public class LogParserTransformTest {
     Assert.assertEquals("122.122.111.11", output.get("ip"));
     Assert.assertEquals("unknown", output.get("browser"));
     Assert.assertEquals("", output.get("device"));
+    Assert.assertEquals(403, output.get("httpStatus"));
     Assert.assertEquals(1421924601000L, output.get("ts"));
 
     S3_TRANSFORM.transform(browserRecord, emitter);
@@ -80,6 +81,7 @@ public class LogParserTransformTest {
     Assert.assertEquals("133.133.133.133", output.get("ip"));
     Assert.assertEquals("Firefox", output.get("browser"));
     Assert.assertEquals("Personal computer", output.get("device"));
+    Assert.assertEquals(304, output.get("httpStatus"));
     Assert.assertEquals(1422741477000L, output.get("ts"));
   }
 
@@ -109,6 +111,7 @@ public class LogParserTransformTest {
     Assert.assertEquals("11.111.111.11", output.get("ip"));
     Assert.assertEquals("unknown", output.get("browser"));
     Assert.assertEquals("", output.get("device"));
+    Assert.assertEquals(200, output.get("httpStatus"));
     Assert.assertEquals(1429277748000L, output.get("ts"));
 
     CLOUDFRONT_TRANSFORM.transform(commentRecord, emitter);
@@ -132,6 +135,7 @@ public class LogParserTransformTest {
     Assert.assertEquals("127.0.0.1", output.get("ip"));
     Assert.assertEquals("Chrome", output.get("browser"));
     Assert.assertEquals("Personal computer", output.get("device"));
+    Assert.assertEquals(200, output.get("httpStatus"));
     Assert.assertEquals(971211336000L, output.get("ts"));
   }
 }

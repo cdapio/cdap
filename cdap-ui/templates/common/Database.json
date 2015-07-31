@@ -4,23 +4,16 @@
     "position": [ "group1", "group2", "group3" ],
     "group1": {
        "display" : "General",
-       "position" : [ "user", "password", "tableName"],
+       "position" : [ "user", "password" ],
        "fields" : {
           "user" : {
              "widget": "textbox",
-             "label": "Username",
-             "description" : "Username to connect to dashboard"
+             "label": "Username"
           },
 
           "password" : {
              "widget": "password",
              "label": "Password"
-          },
-
-          "tableName" : {
-             "widget": "textbox",
-             "label" : "Table Name",
-             "description" : "Name of the table you want to import from"
           }
        }
     },

@@ -53,7 +53,7 @@ import javax.annotation.Nullable;
  */
 @Plugin(type = "source")
 @Name("Kafka")
-@Description("Kafka Realtime Source - Emits a record with two fields - 'key' (nullable string) and 'message' (bytes)")
+@Description("Kafka Real-time Source: Emits a record with two fields: 'key' (nullable string) and 'message' (bytes).")
 public class KafkaSource extends RealtimeSource<StructuredRecord> {
   private static final Logger LOG = LoggerFactory.getLogger(KafkaSource.class);
 
@@ -65,12 +65,12 @@ public class KafkaSource extends RealtimeSource<StructuredRecord> {
   public static final String KAFKA_ZOOKEEPER = "kafka.zookeeper";
   public static final String KAFKA_BROKERS = "kafka.brokers";
   public static final String KAFKA_DEFAULT_OFFSET = "kafka.default.offset";
-  public static final String KAFKA_SCHEMA = "kafka.schema";
-  public static final String KAFKA_FORMAT = "kafka.format";
+  public static final String SCHEMA = "schema";
+  public static final String FORMAT = "format";
 
   private static final String FORMAT_SETTING_PREFIX = "format.setting.";
 
-  private static final Schema SCHEMA = Schema.recordOf("Kafka Message",
+  private static final Schema DEFAULT_SCHEMA = Schema.recordOf("Kafka Message",
                                                        Schema.Field.of(MESSAGE, Schema.of(Schema.Type.BYTES)),
                                                        Schema.Field.of(KEY, Schema.nullableOf(
                                                          Schema.of(Schema.Type.STRING))));
@@ -146,7 +146,7 @@ public class KafkaSource extends RealtimeSource<StructuredRecord> {
   }
 
   private StructuredRecord byteBufferToSchemalessByteRecord(@Nullable String key, ByteBuffer payload) {
-    StructuredRecord.Builder recordBuilder = StructuredRecord.builder(SCHEMA);
+    StructuredRecord.Builder recordBuilder = StructuredRecord.builder(DEFAULT_SCHEMA);
     if (key != null) {
       recordBuilder.set(KEY, key);
     }
@@ -178,12 +178,12 @@ public class KafkaSource extends RealtimeSource<StructuredRecord> {
     private final String topic;
 
     @Name(KAFKA_ZOOKEEPER)
-    @Description("The connect string location of Zookeeper. Either this one or the list of brokers is required.")
+    @Description("The connect string location of Zookeeper. Either this or the list of brokers is required.")
     @Nullable
     private final String zkConnect;
 
     @Name(KAFKA_BROKERS)
-    @Description("Comma separated list of Kafka brokers. Either this one or Zookeeper connect info is required.")
+    @Description("Comma-separated list of Kafka brokers. Either this or the Zookeeper connect info is required.")
     @Nullable
     private final String kafkaBrokers;
 
@@ -192,17 +192,17 @@ public class KafkaSource extends RealtimeSource<StructuredRecord> {
     @Nullable
     private final Long defaultOffset;
 
-    @Name(KAFKA_SCHEMA)
-    @Description("Optional schema for the body of Kafka events. Schema is used " +
-      "in conjunction with format to parse Kafka payloads. Some formats like the avro format require schema, " +
-      "while others do not. The schema given is for the body of the Kafka event")
+    @Name(SCHEMA)
+    @Description("Optional schema for the body of Kafka events. The schema is used in conjunction with the format " +
+      "to parse Kafka payloads. Some formats (such as the 'avro' format) require schema while others do not. " +
+      "The schema given is for the body of the Kafka event.")
     @Nullable
     private final String schema;
 
-    @Name(KAFKA_FORMAT)
-    @Description("Optional format of the Kafka event. Any format supported by CDAP is also supported. " +
-      "For example, a value of 'csv' will attempt to parse Kafka payloads as comma separated values. " +
-      "If no format is given, Kafka message payloads will be treated as bytes, resulting in a two field schema: " +
+    @Name(FORMAT)
+    @Description("Optional format of the Kafka event. Any format supported by CDAP is supported. " +
+      "For example, a value of 'csv' will attempt to parse Kafka payloads as comma-separated values. " +
+      "If no format is given, Kafka message payloads will be treated as bytes, resulting in a two-field schema: " +
       "'key' of type string (which is nullable) and 'payload' of type bytes.")
     @Nullable
     private final String format;

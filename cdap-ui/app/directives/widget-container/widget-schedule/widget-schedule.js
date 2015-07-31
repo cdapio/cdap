@@ -7,7 +7,9 @@ angular.module(PKG.name + '.commons')
         config: '='
       },
       templateUrl: 'widget-container/widget-schedule/widget-schedule.html',
-      controller: function($scope) {
+      controller: function($scope, EventPipe) {
+        var modelCopy = angular.copy($scope.model);
+
         var defaultSchedule = $scope.config.properties.default || ['*', '*', '*', '*', '*'];
 
         function initialize() {
@@ -32,6 +34,11 @@ angular.module(PKG.name + '.commons')
         }
 
         initialize();
+        EventPipe.on('plugin.reset', function () {
+          $scope.model = angular.copy(modelCopy);
+
+          initialize();
+        });
 
         $scope.$watch('schedule', function() {
           var schedule = '';

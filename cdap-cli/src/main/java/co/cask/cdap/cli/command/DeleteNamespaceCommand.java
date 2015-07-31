@@ -86,6 +86,6 @@ public class DeleteNamespaceCommand extends AbstractCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Deletes %s.", Fragment.of(Article.A, ElementType.NAMESPACE.getTitleName()));
+    return String.format("Deletes %s.", Fragment.of(Article.A, ElementType.NAMESPACE.getName()));
   }
 }

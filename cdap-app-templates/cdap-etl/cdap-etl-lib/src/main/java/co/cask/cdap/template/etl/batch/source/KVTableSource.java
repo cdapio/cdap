@@ -35,7 +35,7 @@ import java.util.Map;
  */
 @Plugin(type = "source")
 @Name("KVTable")
-@Description("CDAP KeyValue Table Dataset Batch Source. Outputs records with a 'key' field and a 'value' field. " +
+@Description("Reads the entire contents of a KeyValueTable. Outputs records with a 'key' field and a 'value' field. " +
   "Both fields are of type bytes.")
 public class KVTableSource extends BatchReadableSource<byte[], byte[], StructuredRecord> {
   private static final Schema SCHEMA = Schema.recordOf(
@@ -44,7 +44,7 @@ public class KVTableSource extends BatchReadableSource<byte[], byte[], Structure
     Schema.Field.of("value", Schema.of(Schema.Type.BYTES))
   );
 
-  private static final String NAME_DESC = "Name of the dataset. If it does not already exist, one will be created";
+  private static final String NAME_DESC = "Name of the dataset. If it does not already exist, one will be created.";
 
   /**
    * Config class for KVTableSource

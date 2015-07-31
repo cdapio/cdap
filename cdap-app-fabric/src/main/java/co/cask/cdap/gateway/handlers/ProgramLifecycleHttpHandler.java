@@ -28,6 +28,7 @@ import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
+import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.ProgramNotFoundException;
@@ -45,6 +46,7 @@ import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.services.PropertiesResolver;
+import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.proto.Containers;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
@@ -57,11 +59,12 @@ import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.ServiceInstances;
-import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
+import com.google.common.base.Function;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
@@ -164,6 +167,14 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    */
   private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
 
+  private static final Function<RunRecordMeta, RunRecord> CONVERT_TO_RUN_RECORD =
+    new Function<RunRecordMeta, RunRecord>() {
+      @Override
+      public RunRecord apply(RunRecordMeta input) {
+        return new RunRecord(input);
+      }
+    };
+
   /**
    * Store manages non-runtime lifecycle.
    */
@@ -222,18 +233,18 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       if (!appSpec.getMapReduce().containsKey(mapreduceId)) {
         throw new NotFoundException(programId);
       }
-      RunRecord runRecord = store.getRun(programId, runId);
-      if (runRecord == null) {
+      RunRecordMeta runRecordMeta = store.getRun(programId, runId);
+      if (runRecordMeta == null) {
         throw new NotFoundException(run);
       }
 
       MRJobInfo mrJobInfo = mrJobInfoFetcher.getMRJobInfo(run);
 
-      mrJobInfo.setState(runRecord.getStatus().name());
+      mrJobInfo.setState(runRecordMeta.getStatus().name());
       // Multiple startTs / endTs by 1000, to be consistent with Task-level start/stop times returned by JobClient
       // in milliseconds. RunRecord returns seconds value.
-      mrJobInfo.setStartTime(TimeUnit.SECONDS.toMillis(runRecord.getStartTs()));
-      Long stopTs = runRecord.getStopTs();
+      mrJobInfo.setStartTime(TimeUnit.SECONDS.toMillis(runRecordMeta.getStartTs()));
+      Long stopTs = runRecordMeta.getStopTs();
       if (stopTs != null) {
         mrJobInfo.setStopTime(TimeUnit.SECONDS.toMillis(stopTs));
       }
@@ -343,7 +354,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                             @PathParam("app-id") String appId,
                             @PathParam("type") String type,
                             @PathParam("id") String id,
-                            @PathParam("action") String action) throws NotFoundException {
+                            @PathParam("action") String action) throws NotFoundException, BadRequestException {
     // If the app is an Application Template, then don't allow any action.
     // Operations are only allowed through Adapter Lifecycle management.
     if (adapterService.getApplicationTemplateInfo(appId) != null) {
@@ -358,11 +369,18 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
 
     if (!isValidAction(action)) {
-      responder.sendStatus(HttpResponseStatus.METHOD_NOT_ALLOWED);
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       return;
     }
 
-    ProgramType programType = ProgramType.valueOfCategoryName(type);
+    ProgramType programType;
+    try {
+      programType = ProgramType.valueOfCategoryName(type);
+    } catch (IllegalArgumentException e) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, "Unknown program type '" + type + "''");
+      return;
+    }
+
     if ("debug".equals(action) && !isDebugAllowed(programType)) {
       responder.sendStatus(HttpResponseStatus.NOT_IMPLEMENTED);
       return;
@@ -474,8 +492,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
 
     try {
-      RunRecord runRecord = store.getRun(Id.Program.from(namespaceId, appId, type, programId), runid);
-      if (runRecord != null) {
+      RunRecordMeta runRecordMeta = store.getRun(Id.Program.from(namespaceId, appId, type, programId), runid);
+      if (runRecordMeta != null) {
+        RunRecord runRecord = CONVERT_TO_RUN_RECORD.apply(runRecordMeta);
         responder.sendJson(HttpResponseStatus.OK, runRecord);
         return;
       }
@@ -1230,8 +1249,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
             // program doesn't exist
             return new ProgramStatus(id.getApplicationId(), id.getId(), HttpResponseStatus.NOT_FOUND.toString());
           }
-          if (id.getType() == ProgramType.MAPREDUCE && !store.getRuns(id, ProgramRunStatus.RUNNING, 0,
-                                                              Long.MAX_VALUE, 1).isEmpty()) {
+          if (id.getType() == ProgramType.MAPREDUCE &&
+              !store.getRuns(id, ProgramRunStatus.RUNNING, 0, Long.MAX_VALUE, 1).isEmpty()) {
             // MapReduce program exists and running as a part of Workflow
             return new ProgramStatus(id.getApplicationId(), id.getId(), "RUNNING");
           }
@@ -1266,7 +1285,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Temporarily protected. Should be made private when all v3 APIs (webapp in this case) have been implemented.
    */
   @Nullable
-  protected ProgramRuntimeService.RuntimeInfo findRuntimeInfo(Id.Program identifier, @Nullable String runId) {
+  private ProgramRuntimeService.RuntimeInfo findRuntimeInfo(Id.Program identifier, @Nullable String runId) {
     Map<RunId, ProgramRuntimeService.RuntimeInfo> runtimeInfos = runtimeService.list(identifier.getType());
 
     if (runId != null) {
@@ -1330,7 +1349,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   private synchronized void startStopProgram(HttpRequest request, HttpResponder responder, Id.Program programId,
-                                             String action) throws NotFoundException {
+                                             String action) throws NotFoundException, BadRequestException {
     if (programId.getType() == null) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } else {
@@ -1351,7 +1370,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
           return;
         }
-
         responder.sendString(status.getCode(), status.getMessage());
       } catch (SecurityException e) {
         responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
@@ -1378,6 +1396,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       return (runtimeInfo != null) ? AppFabricServiceStatus.OK : AppFabricServiceStatus.INTERNAL_ERROR;
     } catch (ProgramNotFoundException e) {
       return AppFabricServiceStatus.PROGRAM_NOT_FOUND;
+    } catch (ApplicationNotFoundException e) {
+      return AppFabricServiceStatus.APP_NOT_FOUND;
     } catch (Throwable throwable) {
       LOG.error(throwable.getMessage(), throwable);
       return AppFabricServiceStatus.INTERNAL_ERROR;
@@ -1394,18 +1414,27 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     return EnumSet.of(ProgramType.WORKFLOW, ProgramType.MAPREDUCE).contains(type);
   }
 
-  private AppFabricServiceStatus stop(Id.Program id) throws NotFoundException {
+  private AppFabricServiceStatus stop(Id.Program id) throws NotFoundException, BadRequestException {
     return stop(id, null);
   }
 
   /**
    * Stops a Program.
    */
-  private AppFabricServiceStatus stop(Id.Program identifier, @Nullable String runId) throws NotFoundException {
-    ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(identifier, runId);
+  private AppFabricServiceStatus stop(Id.Program identifier, @Nullable String runId)
+    throws NotFoundException, BadRequestException {
 
+    ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(identifier, runId);
     if (runtimeInfo == null) {
-      throw new NotFoundException(new Id.Run(identifier, runId));
+      if (!store.applicationExists(identifier.getApplication())) {
+        throw new ApplicationNotFoundException(identifier.getApplication());
+      } else if (!store.programExists(identifier)) {
+        throw new ProgramNotFoundException(identifier);
+      } else if (runId == null) {
+        throw new BadRequestException("Program not running");
+      } else {
+        throw new NotFoundException(new Id.Run(identifier, runId));
+      }
     }
 
     try {
@@ -1424,7 +1453,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       try {
         ProgramRunStatus runStatus = (status == null) ? ProgramRunStatus.ALL :
           ProgramRunStatus.valueOf(status.toUpperCase());
-        responder.sendJson(HttpResponseStatus.OK, store.getRuns(programId, runStatus, start, end, limit));
+        List<RunRecord> records =
+          Lists.transform(store.getRuns(programId, runStatus, start, end, limit), CONVERT_TO_RUN_RECORD);
+        responder.sendJson(HttpResponseStatus.OK, records);
       } catch (IllegalArgumentException e) {
         responder.sendString(HttpResponseStatus.BAD_REQUEST,
                              "Supported options for status of runs are running/completed/failed");

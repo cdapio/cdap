@@ -11,6 +11,12 @@ angular.module(PKG.name+'.feature.foo')
         url: '/foo',
         templateUrl: '/assets/features/foo/foo.html'
       })
+      .state('test-plumb', {
+        url: '/foo/plumb',
+        controller: 'PlumbController',
+        controllerAs: 'PlumbController',
+        templateUrl: '/assets/features/foo/plumb/plumb.html'
+      })
       .state('test-edwin', {
         url: '/test/edwin',
         templateUrl: '/assets/features/foo/edwin.html',
