@@ -141,7 +141,11 @@ When a new compatible CDAP parcel is released, it will be available via the Parc
 
 .. rubric:: Upgrading Major/Minor Release versions
 
-These steps will upgrade from CDAP 2.8.0 to CDAP 3.0.0. (**Note:** Apps need to be both recompiled and re-deployed.)
+Upgrading between major versions of CDAP involves the additional steps of upgrading the CSD, and running the included CDAP Upgrade
+Tool. Upgrades between multiple Major/Minor versions must be done consecutively, and a version cannot be skipped unless otherwise noted.
+**Note:** Apps need to be both recompiled and re-deployed.
+
+The following is the generic procedure for Major/Minor version upgrades:
 
 #. Stop all flows, services, and other programs in all your applications.
 
@@ -150,23 +154,34 @@ These steps will upgrade from CDAP 2.8.0 to CDAP 3.0.0. (**Note:** Apps need to 
 #. Ensure your installed version of the CSD matches the target version of CDAP. For example, CSD version 3.0.* is compatible
    with CDAP version 3.0.*.  Download the latest version of the CSD `here <http://cask.co/resources/#cdap-integrations>`__.
 
-#. Use the Cloudera Manager UI to download, distribute, and activate the parcel on all cluster hosts.
+#. Use the Cloudera Manager UI to download, distribute, and activate the corresponding CDAP parcel version on all cluster hosts.
 
-#. Before starting services, run the Upgrade Tool to update any necessary CDAP table definitions.  From the CDAP Service page,
+#. Before starting services, run the Upgrade Tool to update any necessary CDAP table definitions. From the CDAP Service page,
    select "Run CDAP Upgrade Tool" from the Actions menu.
 
 #. Start the CDAP services.  At this point it may be necessary to correct for any changes in the CSD.  For example, if new CDAP services
-   were added or removed, you must add or remove role instances as necessary.  When upgrading from 2.8.0 to 3.0.0, the CDAP Web-App role has
-   been replaced by the CDAP-UI role:
-
-   - From the CDAP Instances page, select Add Role Instances, and choose a host for the CDAP-UI role.
-
-   - From the CDAP Instances page, check the CDAP-Web-App role, and select Delete from the Actions menu.
+   were added or removed, you must add or remove role instances as necessary. Check the
+   :ref:`release-specific upgrade notes <cloudera-release-specific-upgrade-notes>` below for any specific instructions.
 
 #. After CDAP services have started, run the Post-Upgrade tool to perform any necessary upgrade steps against the running services.  From the
    CDAP Service page, select "Run CDAP Post-Upgrade Tasks."
 
 #. You must recompile and then redeploy your applications.
+
+.. _cloudera-release-specific-upgrade-notes:
+
+.. rubric:: Upgrading CDAP 3.0 to 3.1
+
+No known additional requirements.
+
+.. rubric:: Upgrading CDAP 2.8 to 3.0
+
+When upgrading from 2.8.0 to 3.0.0, the CDAP Web-App role has been replaced by the CDAP-UI role.  After starting the 3.0 services the first time:
+
+   - From the CDAP Instances page, select Add Role Instances, and choose a host for the CDAP-UI role.
+
+   - From the CDAP Instances page, check the CDAP-Web-App role, and select Delete from the Actions menu.
+
 
 Troubleshooting
 =======================================
