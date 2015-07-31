@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.adapters')
-  .controller('CanvasController', function (myAdapterApi, MyPlumbService, $bootstrapModal, $state, $scope, $alert, myHelpers, CanvasFactory, MyPlumbFactory, $modalStack, $timeout, ModalConfirm) {
+  .controller('CanvasController', function (myAdapterApi, MyPlumbService, $bootstrapModal, $state, $scope, $alert, myHelpers, CanvasFactory, MyPlumbFactory, $modalStack, $timeout) {
     this.nodes = [];
     this.reloadDAG = false;
     if ($scope.AdapterCreateController.data) {
@@ -163,26 +163,13 @@ angular.module(PKG.name + '.feature.adapters')
             windowClass: 'adapter-modal',
             keyboard: true,
             controller: ['$scope', 'metadata', 'EventPipe', function($scope, metadata, EventPipe) {
-              $scope.metadata = metadata;
+              $scope.metadata = metadata
               var metadataCopy = angular.copy(metadata);
               $scope.reset = function() {
                 $scope.metadata.template.schedule.cron = metadataCopy.template.schedule.cron;
                 $scope.metadata.template.instance = metadataCopy.template.instance;
                 EventPipe.emit('plugin.reset');
               };
-
-              function closeFn() {
-                $scope.reset();
-                $scope.$close('cancel');
-              }
-
-              ModalConfirm.confirmModalAdapter(
-                $scope,
-                $scope.metadata,
-                metadataCopy,
-                closeFn
-              );
-
             }],
             resolve: {
               'metadata': function() {
