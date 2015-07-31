@@ -86,14 +86,14 @@
                   </my-file-select>
                 </li>
                 <li>
-                  <a ui-sref="adapters.create({type: 'ETLBatch'})">
-                    ETL Batch App
+                  <a ui-sref="adapters.create({type: 'ETLBatch'})" class="clearfix">
+                    <span class="pull-left">ETL Batch App</span>
                     <i class="icon-ETLBatch pull-right"></i>
                   </a>
                 </li>
                 <li>
-                  <a ui-sref="adapters.create({type: 'ETLRealtime'})">
-                    ETL Realtime App
+                  <a ui-sref="adapters.create({type: 'ETLRealtime'})" class="clearfix">
+                    <span class="pull-left">ETL Realtime App</span>
                     <i class="icon-ETLRealtime pull-right"></i>
                   </a>
                 </li>
@@ -122,7 +122,7 @@
               ng-click="AppsSectionCtrl.MyOrderings.appClicked(app.id)">
             <p ng-bind="app.name"> </p>
             <div class="title-type-image">
-              <span class="icon-ETLtemplates"></span>
+              <span class="icon-{{app.template}}"></span>
               <span> {{app.template}} </span>
             </div>
           </a>
@@ -148,14 +148,14 @@
             </my-file-select>
           </li>
           <li>
-            <a ui-sref="adapters.create({type: 'ETLBatch'})">
-              ETL Batch App
+            <a ui-sref="adapters.create({type: 'ETLBatch'})" class="clearfix">
+              <span class="pull-left">ETL Batch App</span>
               <i class="icon-ETLBatch pull-right"></i>
             </a>
           </li>
           <li>
-            <a ui-sref="adapters.create({type: 'ETLRealtime'})">
-              ETL Realtime App
+            <a ui-sref="adapters.create({type: 'ETLRealtime'})" class="clearfix">
+              <span class="pull-left">ETL Realtime App</span>
               <i class="icon-ETLRealtime pull-right"></i>
             </a>
           </li>

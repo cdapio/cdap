@@ -50,6 +50,19 @@ public final class Properties {
   }
 
   /**
+   * Class to hold properties for S3BatchSource
+   */
+  public static class S3 {
+    public static final String ACCESS_ID = "accessID";
+    public static final String ACCESS_KEY = "accessKey";
+    public static final String PATH = "path";
+    public static final String FILE_REGEX = "fileRegex";
+    public static final String TIME_TABLE = "timeTable";
+    public static final String INPUT_FORMAT_CLASS = "inputFormatClass";
+    public static final String MAX_SPLIT_SIZE = "maxSplitSize";
+  }
+
+  /**
    * Properties for the StreamBatchSource as well as the real-time StreamSink
    */
   public static class Stream {

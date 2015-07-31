@@ -75,11 +75,11 @@ public final class DataSetInputFormat<KEY, VALUE> extends InputFormat<KEY, VALUE
     BasicMapReduceContext mrContext = contextProvider.get();
     mrContext.getMetricsCollectionService().startAndWait();
     String dataSetName = getInputName(conf);
-    BatchReadable<KEY, VALUE> inputDataset = (BatchReadable<KEY, VALUE>) mrContext.getDataset(dataSetName);
+    BatchReadable<KEY, VALUE> inputDataset = mrContext.getDataset(dataSetName);
     SplitReader<KEY, VALUE> splitReader = inputDataset.createSplitReader(inputSplit.getSplit());
 
     // the record reader now owns the context and will close it
-    return new DataSetRecordReader<>(splitReader, mrContext);
+    return new DataSetRecordReader<>(splitReader, contextProvider);
   }
 
   private String getInputName(Configuration conf) {

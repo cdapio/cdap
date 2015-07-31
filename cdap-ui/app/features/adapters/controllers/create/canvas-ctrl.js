@@ -3,6 +3,7 @@ angular.module(PKG.name + '.feature.adapters')
     this.nodes = [];
     this.reloadDAG = false;
     if ($scope.AdapterCreateController.data) {
+      this.reloadDAG = true;
       setNodesAndConnectionsFromDraft.call(this, $scope.AdapterCreateController.data);
     }
 
@@ -60,14 +61,17 @@ angular.module(PKG.name + '.feature.adapters')
           result = JSON.parse(evt.target.result);
         } catch(e) {
           result = null;
-        }
-        if (!result) {
+          $alert({
+            type: 'danger',
+            content: 'The imported config json is incorrect. Please check the JSON content'
+          });
           return;
         }
+
         if (result.template !== MyPlumbService.metadata.template.type) {
           $alert({
             type: 'danger',
-            content: 'Template imported is for ' + config.template + '. Please switch to ' + config.template + ' creation to import.'
+            content: 'Template imported is for ' + result.template + '. Please switch to ' + result.template + ' creation to import.'
           });
           return;
         }
@@ -77,13 +81,16 @@ angular.module(PKG.name + '.feature.adapters')
             !result.config.transforms) {
           $alert({
             type: 'danger',
-            content: 'Template config incorrect. Please fix the config and re-import.'
+            content: 'The structure of imported config is incorrect. To the base structure of the config please try creating a new adpater and viewing the config.'
           });
           return;
         }
         $scope.config = JSON.stringify(result);
         MyPlumbService.resetToDefaults(true);
         setNodesAndConnectionsFromDraft.call(this, result);
+        if ($scope.config.name) {
+          MyPlumbService.metadata.name = $scope.config.name;
+        }
         this.reloadDAG = true;
         $alert({
           type: 'success',
@@ -103,6 +110,9 @@ angular.module(PKG.name + '.feature.adapters')
         case 'Export':
           var detailedConfig = MyPlumbService.getConfig();
           var config = MyPlumbService.getConfigForBackend();
+          if (MyPlumbService.metadata.name) {
+            config.name = MyPlumbService.metadata.name;
+          }
           var configName = detailedConfig.name || 'noname';
           var content = JSON.stringify(config, null, 4);
           var blob = new Blob([content], { type: 'application/json'});
@@ -277,6 +287,14 @@ angular.module(PKG.name + '.feature.adapters')
       var ui = data.ui;
       var config = data.config;
       var nodes;
+      var config1 = CanvasFactory.extractMetadataFromDraft(data.config, data);
+
+      if (config1.name) {
+        MyPlumbService.metadata.name = config1.name;
+      }
+      MyPlumbService.metadata.description = config1.description;
+      MyPlumbService.metadata.template = config1.template;
+
       // Purely for feeding my-plumb to draw the diagram
       // if I already have the nodes and connections
       if (ui && ui.nodes) {
@@ -296,14 +314,6 @@ angular.module(PKG.name + '.feature.adapters')
       } else {
         MyPlumbService.connections = CanvasFactory.getConnectionsBasedOnNodes(this.nodes);
       }
-
-      var config = CanvasFactory.extractMetadataFromDraft(data.config, data);
-
-      if (config.name) {
-        MyPlumbService.metadata.name = config.name;
-      }
-      MyPlumbService.metadata.description = config.description;
-      MyPlumbService.metadata.template = config.template;
     }
 
     $scope.$on('$destroy', function() {

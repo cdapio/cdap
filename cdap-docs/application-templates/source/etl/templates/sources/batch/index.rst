@@ -12,6 +12,7 @@ Sources: Batch
     Database <database>
     File <file>
     KVTable <kvtable>
+    S3 <s3>
     Stream <stream>
     Table <table>
     TPFSAvro <tpfsavro>

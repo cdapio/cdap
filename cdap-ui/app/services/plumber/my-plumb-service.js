@@ -31,7 +31,7 @@
 
 */
 angular.module(PKG.name + '.services')
-  .service('MyPlumbService', function(myAdapterApi, $q, $bootstrapModal, $state, $filter, mySettings, $alert, AdapterErrorFactory, IMPLICIT_SCHEMA, myHelpers, PluginConfigFactory, ModalConfirm) {
+  .service('MyPlumbService', function(myAdapterApi, $q, $bootstrapModal, $state, $filter, mySettings, AdapterErrorFactory, IMPLICIT_SCHEMA, myHelpers, PluginConfigFactory, ModalConfirm, EventPipe) {
 
     var countSink = 0,
         countSource = 0,
@@ -69,6 +69,7 @@ angular.module(PKG.name + '.services')
       // Resetting template should be fine as it is going to be the same.
       isImport = (isImport === true? true: false);
       if (isImport) {
+        this.callbacks = callbacks;
         this.resetCallbacks = resetCallbacks;
         this.errorCallbacks = errorCallbacks;
         this.metadata.name = name;
@@ -113,9 +114,67 @@ angular.module(PKG.name + '.services')
       });
     };
 
+    function addConnectionsInOrder(node, finalConnections, originalConnections) {
+      if (node.visited) {
+        return finalConnections;
+      }
+
+      node.visited = true;
+      finalConnections.push(node);
+      var nextConnection = originalConnections.filter(function(conn) {
+        if (node.target === conn.source) {
+          return conn;
+        }
+      });
+      if (nextConnection.length) {
+        return addConnectionsInOrder(nextConnection[0], finalConnections, originalConnections);
+      }
+    }
+
+    function findTransformThatIsSource(originalConnections) {
+      var transformAsSource = {};
+      for (var i =0; i<originalConnections.length; i++) {
+        var connection = originalConnections[i];
+        var isSoureATarget = originalConnections.filter(function (c) {
+          if (c.target === connection.source) {
+            return c;
+          }
+        });
+        if (!isSoureATarget.length) {
+          transformAsSource = connection;
+          break;
+        }
+      }
+      return transformAsSource;
+    }
+
+    function orderConnections(connections, originalConnections) {
+      var finalConnections = [];
+      var source = connections.filter(function(conn) {
+        if (this.nodes[conn.source].type === 'source') {
+          return conn;
+        }
+      }.bind(this));
+      if (source.length) {
+        addConnectionsInOrder(source[0], finalConnections, originalConnections);
+      } else {
+        var source = findTransformThatIsSource(originalConnections);
+        addConnectionsInOrder(source, finalConnections, originalConnections);
+      }
+      return finalConnections;
+    }
+
     this.setConnections = function(connections) {
       this.connections = [];
-      connections.forEach(this.addConnection.bind(this));
+      var localConnections = [];
+      connections.forEach(function(con) {
+        localConnections.push({
+          source: con.sourceId,
+          target: con.targetId
+        });
+      });
+      var localConnections = orderConnections.call(this, angular.copy(localConnections), angular.copy(localConnections));
+      this.connections = localConnections;
     };
 
     this.addNodes = function(conf, type) {
@@ -263,6 +322,7 @@ angular.module(PKG.name + '.services')
     this.editPluginProperties = function (scope, pluginId) {
       var sourceConn = $filter('filter')(this.connections, { target: pluginId });
       var sourceSchema = null;
+      var isStreamSource = false;
 
       var clfSchema = IMPLICIT_SCHEMA.clf;
 
@@ -272,6 +332,10 @@ angular.module(PKG.name + '.services')
       if (sourceConn.length) {
         source = this.nodes[sourceConn[0].source];
         sourceSchema = source.outputSchema;
+
+        if (source.name === 'Stream') {
+          isStreamSource = true;
+        }
 
         if (source.properties.format && source.properties.format === 'clf') {
           sourceSchema = clfSchema;
@@ -303,6 +367,25 @@ angular.module(PKG.name + '.services')
               } catch (e) {
                 input = null;
               }
+
+              if (isStreamSource && input) {
+                // Must be in this order!!
+
+                input.fields.unshift({
+                  name: 'headers',
+                  type: {
+                    type: 'map',
+                    keys: 'string',
+                    values: 'string'
+                  }
+                });
+
+                input.fields.unshift({
+                  name: 'ts',
+                  type: 'long'
+                });
+              }
+
               $scope.inputSchema = input ? input.fields : null;
               angular.forEach($scope.inputSchema, function (field) {
                 if (angular.isArray(field.type)) {
@@ -313,8 +396,9 @@ angular.module(PKG.name + '.services')
                 }
               });
 
+
               if (!$scope.plugin.outputSchema && inputSchema) {
-                $scope.plugin.outputSchema = angular.copy(inputSchema) || null;
+                $scope.plugin.outputSchema = angular.copy(JSON.stringify(input)) || null;
               }
 
               if ($scope.plugin._backendProperties.schema) {
@@ -374,6 +458,9 @@ angular.module(PKG.name + '.services')
               }.bind(this),
               pluginCopy: function () {
                 return pluginCopy;
+              },
+              isStreamSource: function () {
+                return isStreamSource;
               }
             }
           });
@@ -450,7 +537,7 @@ angular.module(PKG.name + '.services')
     function pruneNonBackEndProperties(config) {
       function propertiesIterator(properties, backendProperties) {
         angular.forEach(properties, function(value, key) {
-          if (!backendProperties[key]) {
+          if (!backendProperties[key] || properties[key] === '' || properties[key] === null) {
             delete properties[key];
           }
         });
@@ -517,6 +604,7 @@ angular.module(PKG.name + '.services')
       var errors = AdapterErrorFactory.isModelValid(this.nodes, this.connections, this.metadata, config);
 
       if (!angular.isObject(errors)) {
+        EventPipe.emit('showLoadingIcon');
         var data = this.getConfigForBackend();
         myAdapterApi.save(
           {
@@ -530,20 +618,21 @@ angular.module(PKG.name + '.services')
             function success() {
               mySettings.get('adapterDrafts')
                .then(function(res) {
-                 var adapterName;
+                 var adapterName = this.metadata.name;
                  if (angular.isObject(res)) {
-                   adapterName = this.metadata.name;
                    delete res[adapterName];
                    mySettings.set('adapterDrafts', res);
                  }
                  defer.resolve(adapterName);
                  this.resetToDefaults();
+                 EventPipe.emit('hideLoadingIcon.immediate');
                }.bind(this));
             }.bind(this),
             function error(err) {
               defer.reject({
                 messages: err
               });
+              EventPipe.emit('hideLoadingIcon.immediate');
             }
           );
       } else {

@@ -36,7 +36,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Wraps user-defined implementation of {@link Mapper} class which allows perform extra configuration.
@@ -66,6 +65,8 @@ public class MapperWrapper extends Mapper {
     MapReduceContextProvider mrContextProvider =
       new MapReduceContextProvider(context, MapReduceMetrics.TaskType.Mapper);
     final BasicMapReduceContext basicMapReduceContext = mrContextProvider.get();
+    LoggingContextAccessor.setLoggingContext(basicMapReduceContext.getLoggingContext());
+
     ClassLoader programClassLoader = MapReduceContextProvider.getProgramClassLoader(context.getConfiguration());
     basicMapReduceContext.getMetricsCollectionService().startAndWait();
 
@@ -84,8 +85,6 @@ public class MapperWrapper extends Mapper {
         LOG.error("Failed to inject fields to {}.", delegate.getClass(), t);
         throw Throwables.propagate(t);
       }
-
-      LoggingContextAccessor.setLoggingContext(basicMapReduceContext.getLoggingContext());
 
       // this is a hook for periodic flushing of changes buffered by datasets (to avoid OOME)
       WrappedMapper.Context flushingContext = createAutoFlushingContext(context, basicMapReduceContext);
@@ -135,7 +134,7 @@ public class MapperWrapper extends Mapper {
       try {
         basicMapReduceContext.close();
       } finally {
-        basicMapReduceContext.getMetricsCollectionService().stop();
+        mrContextProvider.stop();
       }
     }
   }

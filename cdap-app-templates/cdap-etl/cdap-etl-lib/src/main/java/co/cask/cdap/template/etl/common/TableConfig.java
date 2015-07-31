@@ -20,12 +20,13 @@ import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.templates.plugins.PluginConfig;
 import co.cask.cdap.template.etl.batch.sink.TableSink;
+import co.cask.cdap.template.etl.batch.source.TableSource;
 import co.cask.cdap.template.etl.realtime.sink.RealtimeTableSink;
 
 import javax.annotation.Nullable;
 
 /**
- * {@link PluginConfig} for {@link TableSink} and {@link RealtimeTableSink}
+ * {@link PluginConfig} for {@link TableSource}, {@link TableSink} and {@link RealtimeTableSink}
  */
 public class TableConfig extends PluginConfig {
   @Name(Properties.Table.NAME)
@@ -42,15 +43,6 @@ public class TableConfig extends PluginConfig {
   @Description("The name of the record field that should be used as the row key when writing to the table.")
   private String rowField;
 
-  @Name(Properties.Table.CASE_SENSITIVE_ROW_FIELD)
-  @Description("Whether schema.row.field is case sensitive; defaults to true.")
-  @Nullable
-  private Boolean rowFieldCaseSensitive;
-
-  public TableConfig() {
-    this.rowFieldCaseSensitive = true;
-  }
-
   public String getName() {
     return name;
   }
@@ -62,9 +54,5 @@ public class TableConfig extends PluginConfig {
 
   public String getRowField() {
     return rowField;
-  }
-
-  public Boolean isRowFieldCaseInsensitive() {
-    return rowFieldCaseSensitive;
   }
 }

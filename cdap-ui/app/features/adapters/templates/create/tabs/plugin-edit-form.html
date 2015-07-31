@@ -17,21 +17,34 @@
    I wish I was vandame.
 -->
 <div ng-controller="PluginEditController as PluginEditController">
-  <div class="modal-header">
-    <div ng-class="{ 'col-xs-6 col-md-9': !isDisabled, 'col-xs-10 col-md-11': isDisabled }">
+  <div class="modal-header" ng-init="showinfo = false">
+    <div ng-class="{ 'col-xs-6 col-md-7': !isDisabled, 'col-xs-8 col-md-8': isDisabled }">
       <h3 class="modal-title">{{plugin.name}} Properties</h3>
-      <p>{{plugin.description}}</p>
+      <p tooltip="{{plugin.description}}"
+          tooltip-enable="plugin.description.length > 70"
+          tooltip-append-to-body="true">
+        {{plugin.description | myEllipsis:70}}
+      </p>
     </div>
-    <div ng-class="{ 'col-xs-6 col-md-3': !isDisabled, 'col-xs-2 col-md-1': isDisabled }">
-      <div class="btn-group modal-btns">
-        <div ng-if="!isDisabled">
+
+    <div ng-class="{ 'col-xs-6 col-md-5': !isDisabled, 'col-xs-4 col-md-4': isDisabled }">
+      <div class="btn-group modal-btns" ng-class="{'hideNonInfoButtons': showinfo}">
+        <div ng-if="!isDisabled" class="non-info">
           <a class="btn" ng-click="PluginEditController.reset()">
             <span class="fa fa-repeat"></span>
           </a>
         </div>
-        <div ng-if="!isDisabled">
+        <div ng-if="!isDisabled" class="non-info">
           <a class="btn" ng-click="$close('save')">
             <span class="fa fa-floppy-o"></span>
+          </a>
+        </div>
+        <div ng-class="{'active-info': showinfo === true}">
+          <a class="btn"
+              ng-click="showinfo = !showinfo;">
+            <span ng-class="{'fa-arrow-left': showinfo, 'fa-info': !showinfo}"
+                  class="fa">
+            </span>
           </a>
         </div>
         <div ng-if="!isDisabled">
@@ -48,12 +61,12 @@
             <span class="sr-only">Close</span>
           </a>
         </div>
-
       </div>
     </div>
   </div>
 
   <div class="modal-body plugin-modal" ng-class="{'modal-source': plugin.type === 'source', 'modal-transform': plugin.type === 'transform', 'modal-sink': plugin.type === 'sink'}">
+    <div ng-show="!showinfo">
     <div ng-if="PluginEditController.noproperty !== 0">
     <div class="row" ng-if="(PluginEditController.configfetched && !PluginEditController.noconfig)">
 
@@ -85,7 +98,10 @@
                         {{schema.name}}
                       </span>
                     </td>
-                    <td class="type" ng-if="!schema.empty"> {{schema.type}} </td>
+                    <td class="type" ng-if="!schema.empty">
+                      <span ng-if="schema.type.type !== 'map'">{{schema.type}}</span>
+                      <span ng-if="schema.type.type === 'map'">map&lt;string, string&gt; </span>
+                    </td>
                     <td class="nullable text-center" ng-if="!schema.empty">
                       <input type="checkbox" ng-model="schema.nullable" disabled>
                     </td>
@@ -321,5 +337,11 @@
         </div>
       </div>
     </div>
+    </div>
+
+    <div ng-show="showinfo" class="embed-responsive embed-responsive-4by3">
+      <iframe class="ember-responsive-item" src="{{PluginEditController.trustSrc(PluginEditController.infoUrl)}}"></iframe>
+    </div>
+
   </div>
 </div>

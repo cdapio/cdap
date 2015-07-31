@@ -9,7 +9,14 @@ angular.module(PKG.name + '.commons')
       },
       templateUrl: 'widget-container/widget-schema-editor/widget-schema-editor.html',
       controller: function($scope, myHelpers, EventPipe) {
-        var defaultOptions = [ 'boolean', 'int', 'long', 'float', 'double', 'bytes', 'string' ];
+        var typeMap = 'map<string, string>';
+        var mapObj = {
+          type: 'map',
+          keys: 'string',
+          values: 'string'
+        };
+
+        var defaultOptions = [ 'boolean', 'int', 'long', 'float', 'double', 'bytes', 'string', 'map<string, string>' ];
         var defaultType = null;
         if ($scope.config) {
           $scope.options = $scope.config['schema-types'];
@@ -52,11 +59,19 @@ angular.module(PKG.name + '.commons')
                 nullable: true
               });
             } else if (angular.isObject(p.type)) {
-              $scope.properties.push({
-                name: p.name,
-                type: p.type.items,
-                nullable: false
-              });
+              if (p.type.type === 'map') {
+                $scope.properties.push({
+                  name: p.name,
+                  type: typeMap,
+                  nullable: false
+                });
+              } else {
+                $scope.properties.push({
+                  name: p.name,
+                  type: p.type.items,
+                  nullable: false
+                });
+              }
             } else {
               $scope.properties.push({
                 name: p.name,
@@ -105,9 +120,16 @@ angular.module(PKG.name + '.commons')
           var properties = [];
           angular.forEach($scope.properties, function(p) {
             if (p.name) {
+              var property;
+              if (p.type === typeMap) {
+                property = angular.copy(mapObj);
+              } else {
+                property = p.type;
+              }
+
               properties.push({
                 name: p.name,
-                type: p.nullable ? [p.type, 'null'] : p.type
+                type: p.nullable ? [property, 'null'] : property
               });
             }
           });

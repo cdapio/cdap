@@ -23,14 +23,14 @@
           </my-file-select>
         </li>
         <li>
-          <a ui-sref="adapters.create({type: 'ETLBatch'})">
-            ETL Batch App
+          <a ui-sref="adapters.create({type: 'ETLBatch'})"  class="clearfix">
+            <span class="pull-left">ETL Batch App</span>
             <i class="icon-ETLBatch pull-right"></i>
           </a>
         </li>
         <li>
-          <a ui-sref="adapters.create({type: 'ETLRealtime'})">
-            ETL Realtime App
+          <a ui-sref="adapters.create({type: 'ETLRealtime'})" class="clearfix">
+            <span class="pull-left"> ETL Realtime App</span>
             <i class="icon-ETLRealtime pull-right"></i>
           </a>
         </li>
@@ -77,12 +77,20 @@
           <a ui-sref="apps.detail.overview.status({ appId: app.id })"
               ng-if="app.type !== 'adapter'"
               ng-click="MyOrderings.appClicked(app.id)">
-            <strong> {{ ::app.name }} </strong>
+            <strong tooltip="{{app.name}}"
+                    tooltip-enable="app.name.length > 35"
+                    tooltip-append-to-body="true">
+              {{ ::app.name | myEllipsis:35 }}
+            </strong>
           </a>
           <a ui-sref="adapters.detail.runs({adapterId: app.name})"
               ng-if="app.type === 'adapter'"
               ng-click="MyOrderings.appClicked(app.id)">
-            <strong> {{ ::app.name }} </strong>
+            <strong tooltip="{{app.name}}"
+                    tooltip-enable="app.name.length > 35"
+                    tooltip-append-to-body="true">
+              {{ ::app.name | myEllipsis:35 }}
+            </strong>
           </a>
         </td>
         <td ng-if="app.type !== 'adapter'">
@@ -90,11 +98,17 @@
           <span>App</span>
         </td>
         <td ng-if="app.type === 'adapter'">
-          <span class="icon-ETLtemplates"></span>
+          <span class="icon-{{app.template}}"></span>
           <span>{{ ::app.template }}</span>
         </td>
         <td>{{ ::app.version }}</td>
-        <td> {{ ::app.description }} </td>
+        <td>
+          <span tooltip="{{app.description}}"
+                tooltip-enable="app.description.length > 50"
+                tooltip-append-to-body="true">
+            {{ ::app.description | myEllipsis:50}}
+          </span>
+        </td>
       </tr>
     </tbody>
   </table>
