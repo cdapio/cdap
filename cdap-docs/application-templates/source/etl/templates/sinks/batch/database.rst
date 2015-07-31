@@ -12,20 +12,20 @@ Writes records to a database table. Each record will be written to a row in the 
 
 .. rubric:: Use Case
 
-This sink is used whenever you need to write to a database table. For example,
-suppose you periodically build a machine learned recommendation model for products
-on your online store. The model is stored in a FileSet and you want to export the contents
+This sink is used whenever you need to write to a database table.
+Suppose you periodically build a recommendation model for products on your online store.
+The model is stored in a FileSet and you want to export the contents
 of the FileSet to a database table where it can be served to your users.
 
 .. rubric:: Properties
 
 **tableName:** Name of the table to export to.
 
-**columns:** Comma-separated list of columns to export to the specified table.
+**columns:** Comma-separated list of columns in the specified table to export to.
 
 **connectionString:** JDBC connection string including database name.
 
-**user:** User identity for connecting to the specified database as. Required for databases that need
+**user:** User identity for connecting to the specified database. Required for databases that need
 authentication. Optional for databases that do not require authentication.
 
 **password:** Password to use to connect to the specified database. Required for databases
@@ -54,7 +54,7 @@ defined in the JSON file for the JDBC plugin. Defaults to 'jdbc'.
     }
   }
 
-This example connects to a database using the specified connectionString, which means
+This example connects to a database using the specified 'connectionString', which means
 it will connect to the 'prod' database of a PostgreSQL instance running on 'localhost'.
 Each input record will be written to a row of the 'users' table, with the value for each
 column taken from the value of the field in the record. For example, the 'id' field in
