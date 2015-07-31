@@ -976,12 +976,6 @@ Bug Fixes
 - `CDAP-2942 <https://issues.cask.co/browse/CDAP-2942>`__ -
   Fixed a problem with the CDAP-UI namespace dropdown failing on standalone restart.
 
-- `CDAP-2945 <https://issues.cask.co/browse/CDAP-2945>`__ -
-  Fixed a problem with a MapReduce job using FileSet/PartitionedFileSet as input failing
-  if there are no input paths. A bug in the PartitionedFileSet caused MapReduce to fail
-  if the input partition filter does not match any partitions. This will now be successful
-  |---| however without reading any data.
-
 - `CDAP-2948 <https://issues.cask.co/browse/CDAP-2948>`__ -
   Fixed a problem with creating Adapters.
 
@@ -1202,6 +1196,10 @@ Known Issues
   interpreted as milliseconds in some contexts: ``DatasetDefinition.confgure()`` and
   ``getAdmin()``.
 
+- `CDAP-2945 <https://issues.cask.co/browse/CDAP-2945>`__ -
+  There is a problem in the PartitionedFileSet causing MapReduce to fail if the input
+  partition filter does not match any partitions.
+  
 - `CDAP-3000 <https://issues.cask.co/browse/CDAP-3000>`__ -
   There is a problem with the Workflow token being in inconsistent state for nodes in a
   fork while the fork is still running. It becomes consistent after the join.
