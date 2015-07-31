@@ -26,6 +26,11 @@ Cask Data Application Platform Release Notes
 `Release 3.1.0 <http://docs.cask.co/cdap/3.1.0/index.html>`__
 =============================================================
 
+Summary
+-------
+
+
+
 
 New Features
 ------------
@@ -1078,8 +1083,11 @@ Deprecated and Removed Features
 Known Issues
 ------------
 
-- See also the *Known Issues* of `version 3.0.1 <#known-issues-301>`_\ .
+- `CDAP-3101 <https://issues.cask.co/browse/CDAP-3101>`__ -
+  There is a problem with workflow runs not being scheduled due to Quartz exceptions. The
+  issue is related to that there cannot be more than 30 concurrent runs of a workflow.
 
+- See also the *Known Issues* of `version 3.0.1 <#known-issues-301>`_\ .
 
 
 
