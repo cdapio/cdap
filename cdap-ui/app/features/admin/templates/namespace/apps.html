@@ -49,8 +49,6 @@
             <tbody>
                 <tr ng-repeat="app in apps | orderBy:sortable.predicate:sortable.reverse">
                     <td>
-                        <strong class="icon-app" ng-if="app.type !== 'Adapter'"></strong>
-                        <span class="icon-ETLtemplates" ng-if="app.type === 'Adapter'"></span>
                         <a ng-if="app.type !== 'Adapter'" ui-sref="admin.namespace.detail.apps.metadata({appId: app.id})">
                             <strong tooltip="{{app.name}}"
                                     tooltip-enable="app.name.length > 25"
@@ -71,7 +69,7 @@
                       <span>App</span>
                     </td>
                     <td ng-if="app.type === 'Adapter'">
-                      <span class="icon-ETLtemplates"></span>
+                      <span class="icon-{{app.template}}"></span>
                       <span>{{ ::app.template }}</span>
                     </td>
                     <td>
