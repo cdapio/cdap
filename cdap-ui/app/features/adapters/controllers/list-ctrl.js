@@ -1,3 +1,4 @@
+var alertpromise;
 angular.module(PKG.name + '.feature.adapters')
   .controller('AdapterListController', function($scope, mySettings, $state, $alert, $timeout, myAlert, myHelpers) {
     $scope.drafts  = [];
@@ -27,17 +28,31 @@ angular.module(PKG.name + '.feature.adapters')
         })
         .then(
           function success() {
-            $alert({
+            var alertObj = {
               type: 'success',
               content: 'Adapter draft ' + draftName + ' delete successfully'
-            });
+            }, e;
+            if (!alertpromise) {
+              alertpromise = $alert(alertObj);
+              e = $scope.$on('alert.hide', function() {
+                alertpromise = null;
+                e(); // un-register from listening to the hide event of a closed alert.
+              });
+            }
             $state.reload();
           },
           function error() {
-            $alert({
+            var alertObj = {
               type: 'danger',
               content: 'Adapter draft ' + draftName + ' delete failed'
-            });
+            }, e;
+            if (!alertpromise) {
+              alertpromise = $alert(alertObj);
+              e = $scope.$on('alert.hide', function() {
+                alertpromise = null;
+                e();
+              });
+            }
             $state.reload();
           });
     }

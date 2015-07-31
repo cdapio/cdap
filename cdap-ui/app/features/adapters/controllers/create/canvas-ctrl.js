@@ -61,10 +61,13 @@ angular.module(PKG.name + '.feature.adapters')
           result = JSON.parse(evt.target.result);
         } catch(e) {
           result = null;
-        }
-        if (!result) {
+          $alert({
+            type: 'danger',
+            content: 'The imported config json is incorrect. Please check the JSON content'
+          });
           return;
         }
+
         if (result.template !== MyPlumbService.metadata.template.type) {
           $alert({
             type: 'danger',
@@ -78,7 +81,7 @@ angular.module(PKG.name + '.feature.adapters')
             !result.config.transforms) {
           $alert({
             type: 'danger',
-            content: 'Template config incorrect. Please fix the config and re-import.'
+            content: 'The structure of imported config is incorrect. To the base structure of the config please try creating a new adpater and viewing the config.'
           });
           return;
         }
