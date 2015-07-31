@@ -1214,10 +1214,12 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
   }
 
   @Test
-  public void testWorkflowPutOperation() throws Exception {
+  public void testWorkflowTokenPut() throws Exception {
     Assert.assertEquals(200, deploy(WorkflowTokenTestPutApp.class).getStatusLine().getStatusCode());
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, WorkflowTokenTestPutApp.NAME);
     Id.Workflow workflowId = Id.Workflow.from(appId, WorkflowTokenTestPutApp.WorkflowTokenTestPut.NAME);
+    Id.Program mapReduceId = Id.Program.from(appId, ProgramType.MAPREDUCE, WorkflowTokenTestPutApp.RecordCounter.NAME);
+    Id.Program sparkId = Id.Program.from(appId, ProgramType.SPARK, WorkflowTokenTestPutApp.SparkTestApp.NAME);
 
     // Start program with "put.in.mapper.initialize" argument.
     // It will perform put operation on the WorkflowToken in the Initialize method of the Mapper class.
@@ -1228,8 +1230,11 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     waitState(workflowId, ProgramRunStatus.RUNNING.name());
     waitState(workflowId, "STOPPED");
 
-    List<RunRecord> programRuns = getProgramRuns(workflowId, ProgramRunStatus.FAILED.name());
-    Assert.assertEquals(1, programRuns.size());
+    List<RunRecord> workflowProgramRuns = getProgramRuns(workflowId, ProgramRunStatus.FAILED.name());
+    Assert.assertEquals(1, workflowProgramRuns.size());
+
+    List<RunRecord> mapReduceProgramRuns = getProgramRuns(mapReduceId, ProgramRunStatus.FAILED.name());
+    Assert.assertEquals(1, mapReduceProgramRuns.size());
 
     // Start program with "put.in.map" argument.
     // It will perform put operation on the WorkflowToken in the map method of the Mapper class.
@@ -1240,8 +1245,11 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     waitState(workflowId, ProgramRunStatus.RUNNING.name());
     waitState(workflowId, "STOPPED");
 
-    programRuns = getProgramRuns(workflowId, ProgramRunStatus.FAILED.name());
-    Assert.assertEquals(2, programRuns.size());
+    workflowProgramRuns = getProgramRuns(workflowId, ProgramRunStatus.FAILED.name());
+    Assert.assertEquals(2, workflowProgramRuns.size());
+
+    mapReduceProgramRuns = getProgramRuns(mapReduceId, ProgramRunStatus.FAILED.name());
+    Assert.assertEquals(2, mapReduceProgramRuns.size());
 
     // Start program with "put.in.reducer.initialize" argument.
     // It will perform put operation on the WorkflowToken in the Initialize method of the Reducer class.
@@ -1252,8 +1260,11 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     waitState(workflowId, ProgramRunStatus.RUNNING.name());
     waitState(workflowId, "STOPPED");
 
-    programRuns = getProgramRuns(workflowId, ProgramRunStatus.FAILED.name());
-    Assert.assertEquals(3, programRuns.size());
+    workflowProgramRuns = getProgramRuns(workflowId, ProgramRunStatus.FAILED.name());
+    Assert.assertEquals(3, workflowProgramRuns.size());
+
+    mapReduceProgramRuns = getProgramRuns(mapReduceId, ProgramRunStatus.FAILED.name());
+    Assert.assertEquals(3, mapReduceProgramRuns.size());
 
     // Start program with "put.in.reduce" argument.
     // It will perform put operation on the WorkflowToken in the reduce method of the Reducer class.
@@ -1264,18 +1275,41 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     waitState(workflowId, ProgramRunStatus.RUNNING.name());
     waitState(workflowId, "STOPPED");
 
-    programRuns = getProgramRuns(workflowId, ProgramRunStatus.FAILED.name());
-    Assert.assertEquals(4, programRuns.size());
+    workflowProgramRuns = getProgramRuns(workflowId, ProgramRunStatus.FAILED.name());
+    Assert.assertEquals(4, workflowProgramRuns.size());
+
+    mapReduceProgramRuns = getProgramRuns(mapReduceId, ProgramRunStatus.FAILED.name());
+    Assert.assertEquals(4, mapReduceProgramRuns.size());
+
+    // Start program with closurePutToken parameter, so that put will be tried from the closure
+    outputPath = new File(tmpFolder.newFolder(), "output").getAbsolutePath();
+    startProgram(workflowId, ImmutableMap.of("inputPath", createInputForRecordVerification("fifthInput"),
+                                             "outputPath", outputPath, "closurePutToken", "true"));
+    waitState(workflowId, ProgramRunStatus.RUNNING.name());
+    waitState(workflowId, "STOPPED");
+
+    workflowProgramRuns = getProgramRuns(workflowId, ProgramRunStatus.FAILED.name());
+    Assert.assertEquals(5, workflowProgramRuns.size());
+
+    mapReduceProgramRuns = getProgramRuns(mapReduceId, ProgramRunStatus.COMPLETED.name());
+    Assert.assertEquals(1, mapReduceProgramRuns.size());
+
+    List<RunRecord> sparkProgramRuns = getProgramRuns(sparkId, ProgramRunStatus.FAILED.name());
+    Assert.assertEquals(1, sparkProgramRuns.size());
 
     // Start program with only inputPath and outputPath arguments.
     // This should succeed.
     outputPath = new File(tmpFolder.newFolder(), "output").getAbsolutePath();
-    startProgram(workflowId, ImmutableMap.of("inputPath", createInputForRecordVerification("fifthInput"),
+    startProgram(workflowId, ImmutableMap.of("inputPath", createInputForRecordVerification("sixthInput"),
                                              "outputPath", outputPath));
+
     waitState(workflowId, ProgramRunStatus.RUNNING.name());
     waitState(workflowId, "STOPPED");
 
-    programRuns = getProgramRuns(workflowId, ProgramRunStatus.COMPLETED.name());
-    Assert.assertEquals(1, programRuns.size());
+    workflowProgramRuns = getProgramRuns(workflowId, ProgramRunStatus.COMPLETED.name());
+    Assert.assertEquals(1, workflowProgramRuns.size());
+
+    workflowProgramRuns = getProgramRuns(sparkId, ProgramRunStatus.COMPLETED.name());
+    Assert.assertEquals(1, workflowProgramRuns.size());
   }
 }
