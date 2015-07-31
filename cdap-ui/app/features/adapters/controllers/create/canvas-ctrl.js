@@ -3,6 +3,7 @@ angular.module(PKG.name + '.feature.adapters')
     this.nodes = [];
     this.reloadDAG = false;
     if ($scope.AdapterCreateController.data) {
+      this.reloadDAG = true;
       setNodesAndConnectionsFromDraft.call(this, $scope.AdapterCreateController.data);
     }
 
@@ -67,7 +68,7 @@ angular.module(PKG.name + '.feature.adapters')
         if (result.template !== MyPlumbService.metadata.template.type) {
           $alert({
             type: 'danger',
-            content: 'Template imported is for ' + config.template + '. Please switch to ' + config.template + ' creation to import.'
+            content: 'Template imported is for ' + result.template + '. Please switch to ' + result.template + ' creation to import.'
           });
           return;
         }
