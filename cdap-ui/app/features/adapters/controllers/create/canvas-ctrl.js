@@ -3,6 +3,7 @@ angular.module(PKG.name + '.feature.adapters')
     this.nodes = [];
     this.reloadDAG = false;
     if ($scope.AdapterCreateController.data) {
+      this.reloadDAG = true;
       setNodesAndConnectionsFromDraft.call(this, $scope.AdapterCreateController.data);
     }
 

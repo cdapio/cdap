@@ -2,7 +2,7 @@ angular.module(PKG.name + '.commons')
   .controller('MyPlumbController', function MyPlumbController(jsPlumb, $scope, $timeout, MyPlumbService, myHelpers, MyPlumbFactory, $window) {
     this.plugins = $scope.config || [];
     this.isDisabled = $scope.isDisabled;
-    this.reloadDAG = $scope.reloaddag;
+    this.reloadDAG = false;
     MyPlumbService.setIsDisabled(this.isDisabled);
 
     this.instance = null;
@@ -59,17 +59,22 @@ angular.module(PKG.name + '.commons')
           return graph.node(node);
         });
 
-      if (this.isDisabled) {
+      if (this.isDisabled || this.reloadDAG) {
         var margins = $scope.getGraphMargins(this.plugins);
         var marginLeft = margins.left;
       }
 
       this.plugins.forEach(function(plugin) {
         plugin.icon = MyPlumbFactory.getIcon(plugin.name);
-        plugin.style = plugin.style ||
-        ( this.isDisabled? MyPlumbFactory.generateStyles(plugin.id, nodes, 0, marginLeft): '');
+        if (this.reloadDAG) {
+          plugin.style = plugin.style || MyPlumbFactory.generateStyles(plugin.id, nodes, 200, marginLeft);
+        } else if (this.isDisabled) {
+          plugin.style = plugin.style || MyPlumbFactory.generateStyles(plugin.id, nodes, 0, marginLeft);
+        }
         drawNode.call(this, plugin.id, plugin.type);
       }.bind(this));
+
+      this.reloadDAG = false;
 
       drawConnections.call(this);
 
@@ -200,10 +205,20 @@ angular.module(PKG.name + '.commons')
 
     $scope.$watch('reloaddag', function (value) {
       if (value) {
+        this.instance.reset();
+        this.instance = jsPlumb.getInstance();
         this.instance.importDefaults(MyPlumbFactory.getSettings().default);
+        // Need to move this to the controller that is using this directive.
+        this.instance.bind('connection', function () {
+          // Whenever there is a change in the connection just copy the entire array
+          // We never know if a connection was altered or removed. We don't want to 'Sync'
+          // between jsPlumb's internal connection array and ours (pointless)
+          MyPlumbService.setConnections(this.instance.getConnections());
+        }.bind(this));
         this.plugins = $scope.config;
         $timeout(this.drawGraph.bind(this));
         $scope.reloaddag = false;
+        this.reloadDAG = true;
       }
     }.bind(this));
 
