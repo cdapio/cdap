@@ -44,6 +44,7 @@ import org.quartz.JobDetail;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.quartz.JobKey;
+import org.quartz.ObjectAlreadyExistsException;
 import org.quartz.Trigger;
 import org.quartz.TriggerBuilder;
 import org.quartz.TriggerKey;
@@ -199,7 +200,15 @@ final class TimeScheduler implements Scheduler {
         }
       }
       try {
-        scheduler.scheduleJob(trigger.build());
+        // Once the schedule is resumed we move the trigger from TimeScheduler#PAUSED_NEW_TRIGGERS_GROUP to
+        // Key#DEFAULT_GROUP so before adding check if this schedule does not exist in default group
+        if (!scheduler.checkExists(new TriggerKey(triggerKey))) {
+          scheduler.scheduleJob(trigger.build());
+        } else {
+          throw new ObjectAlreadyExistsException("Unable to store Trigger with name " + triggerKey + "and group "
+                                                   + Key.DEFAULT_GROUP + " because one already exists with " +
+                                                   "this identification.");
+        }
       } catch (org.quartz.SchedulerException e) {
         throw new SchedulerException(e);
       }

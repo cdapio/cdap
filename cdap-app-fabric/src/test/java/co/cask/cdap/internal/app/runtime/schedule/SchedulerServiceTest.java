@@ -39,7 +39,10 @@ import org.apache.twill.filesystem.LocationFactory;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
+import org.quartz.ObjectAlreadyExistsException;
 
 import java.util.Calendar;
 import java.util.List;
@@ -66,6 +69,9 @@ public class SchedulerServiceTest {
     Schedules.createDataSchedule("Schedule3", "Every 1M", Schedules.Source.STREAM, STREAM_ID.getId(), 1);
   private static final Schedule dataSchedule2 =
     Schedules.createDataSchedule("Schedule4", "Every 10M", Schedules.Source.STREAM, STREAM_ID.getId(), 10);
+
+  @Rule
+  public final ExpectedException exception = ExpectedException.none();
 
   @BeforeClass
   public static void set() throws Exception {
@@ -187,6 +193,10 @@ public class SchedulerServiceTest {
     // schedule1 should go in scheduled state on resume
     schedulerService.resumeSchedule(program, programType, "Schedule1");
     checkState(Scheduler.ScheduleState.SCHEDULED, "Schedule1");
+
+    // adding the schedule again which has been resumed and moved to default group should fail and throw an exception
+    exception.expect(SchedulerException.class);
+    schedulerService.schedule(program, programType, ImmutableList.of(timeSchedule1));
 
     // schedule2 should still be in suspended state
     checkState(Scheduler.ScheduleState.SUSPENDED, "Schedule2");
