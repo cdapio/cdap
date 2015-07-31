@@ -56,7 +56,7 @@ encoding of the data, such as shown in this code fragment::
 .. rubric:: Stream Time-To-Live (TTL)
 
 Streams are persisted by CDAP, and once an event has been sent to a stream, by default it
-never expires. The Time-To-Live (TTL) property governs how long an event is valid for
+never expires. The Time-To-Live (TTL, specified in seconds) property governs how long an event is valid for
 consumption since it was written to the stream. The default TTL for all streams is
 infinite, meaning that events will never expire. The TTL property of a stream can be
 changed, using the :ref:`http-restful-api-stream`, the :ref:`stream-client` of the
