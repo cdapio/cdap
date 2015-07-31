@@ -13,13 +13,13 @@ Batch sink that writes to a Cube dataset.
 BatchCubeSink takes a StructuredRecord in, maps it to a CubeFact, and writes it to
 the Cube dataset identified by the name property.
 
-If Cube dataset does not exist, it will be created using properties provided with this
+If the Cube dataset does not exist, it will be created using properties provided with this
 sink.
 
 .. rubric:: Use Case
 
 A BatchCubeSink is used to write data into a Cube from batch-enabled data sources to allow further data analysis.
-E.g. with BatchCubeSink you can periodically upload data from PartitionedFileSet into a Cube to perform complex
+For example, you can periodically upload data from a PartitionedFileSet into a Cube to perform complex
 data queries across multiple dimensions and aggregated measurements.
 
 .. rubric:: Properties
@@ -45,24 +45,21 @@ cubeFact.timestamp.field is provided).
 
 **cubeFact.measurements:** Measurements to be extracted from StructuredRecord to be used in CubeFact.
 Provide properties as a JSON Map. For example, to use the 'price' field as a measurement of type gauge,
-and the 'count' field as a measurement of type counter, the property should have the value:
+and the 'quantity' field as a measurement of type counter, the property should have the value:
 {"cubeFact.measurement.price":"GAUGE", "cubeFact.measurement.quantity":"COUNTER"}.
 
 .. rubric:: Example
 
-The following configuration tells to write data into Cube dataset with name "myCube"; provides dataset properties
-(dataset.*) for creating new dataset, if the one with given name doesn't exist; configures measurements to aggregate and
-how to determine timestamp for the facts to be written into Cube::
+This configuration specifies writing data into a Cube dataset named "myCube"; it provides dataset properties
+(dataset.*) for creating a new dataset, if one with the given name doesn't exist; it then configures measurements to aggregate and specifies the timestamp format for facts being written into the Cube::
 
     {
         "name": "myCube",
-
         "dataset.cube.resolutions": "1,60,3600",
         "dataset.cube.properties": {
           "dataset.cube.aggregation.byName.dimensions": "name",
           "dataset.cube.aggregation.byNameByZip.dimensions": "name,zip",
         },
-
         "cubeFact.timestamp.field": "ts",
         "cubeFact.timestamp.format": "MM/dd/yyyy HH:mm:ss",
         "cubeFact.measurements": {
@@ -71,8 +68,8 @@ how to determine timestamp for the facts to be written into Cube::
         }
     }
 
-Once data is there, you can now run queries using AbstractCubeHttpHandler (you will need to deploy an application that
-contains service using it), e.g.::
+Once the data is there, you could run queries using an AbstractCubeHttpHandler. (You'd need to deploy an application
+containing a service using it.) A sample query::
 
     {
         "aggregation": "byName",
