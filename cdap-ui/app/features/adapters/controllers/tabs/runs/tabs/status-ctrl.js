@@ -24,6 +24,7 @@ angular.module(PKG.name + '.feature.adapters')
       .$promise
       .then(function(res) {
         $scope.config = {
+          name: $state.params.adapterId,
           template: res.template,
           description: res.description,
           config: {
@@ -35,6 +36,15 @@ angular.module(PKG.name + '.feature.adapters')
           }
         };
 
+        MyPlumbService.metadata.name = res.name;
+        MyPlumbService.metadata.description = res.description;
+        MyPlumbService.metadata.template.type = res.template;
+        if (res.template === 'ETLBatch') {
+          MyPlumbService.metadata.template.schedule = res.config.schedule;
+        } else if (res.template === 'ETLRealtime') {
+          MyPlumbService.metadata.template.instances = res.config.instances;
+        }
+
         $scope.source = res.config.source;
         $scope.sink = res.config.sink;
         $scope.transforms = res.config.transforms;
@@ -45,11 +55,6 @@ angular.module(PKG.name + '.feature.adapters')
 
         MyPlumbService.connections = CanvasFactory.getConnectionsBasedOnNodes($scope.nodes);
 
-        MyPlumbService.metadata.name = res.name;
-        MyPlumbService.metadata.description = res.description;
-        MyPlumbService.metadata.template.type = res.template;
-        if (res.template === 'ETLBatch') {
-          MyPlumbService.metadata.template.instances = res.instances;
-        }
+
       });
   });

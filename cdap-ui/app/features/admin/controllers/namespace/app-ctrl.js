@@ -1,3 +1,4 @@
+var alertpromise;
 angular.module(PKG.name + '.feature.admin').controller('NamespaceAppController',
 function ($scope, $state, myAppUploader, MyDataSource, myNamespace, myAdapterApi, $alert, $timeout) {
 
@@ -46,17 +47,31 @@ function ($scope, $state, myAppUploader, MyDataSource, myNamespace, myAdapterApi
       .$promise
       .then(
         function success() {
-          $alert({
+          var alertObj = {
             type: 'success',
             content: 'Adapter ' + id + ' delete successfully'
-          });
+          }, e;
+          if (!alertpromise) {
+            alertpromise = $alert(alertObj);
+            e = $scope.$on('alert.hide', function() {
+              alertpromise = null;
+              e();
+            });
+          }
           $state.reload();
         },
         function error() {
-          $alert({
+          var alertObj = {
             type: 'danger',
             content: 'Adapter ' + id + ' could not be deleted. Please check for errors.'
-          });
+          }, e;
+          if (!alertpromise) {
+            alertpromise = $alert(alertObj);
+            e = $scope.$on('alert.hide', function() {
+              alertpromise = null;
+              e();
+            });
+          }
         }
       );
   }
