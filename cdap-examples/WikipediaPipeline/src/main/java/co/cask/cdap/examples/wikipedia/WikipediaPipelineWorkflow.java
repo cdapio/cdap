@@ -17,26 +17,11 @@
 package co.cask.cdap.examples.wikipedia;
 
 import co.cask.cdap.api.Predicate;
-import co.cask.cdap.api.annotation.UseDataSet;
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.dataset.lib.CloseableIterator;
-import co.cask.cdap.api.dataset.lib.KeyValue;
-import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
-import co.cask.cdap.api.workflow.AbstractWorkflowAction;
 import co.cask.cdap.api.workflow.Value;
 import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.api.workflow.WorkflowToken;
-import co.cask.common.http.HttpRequest;
-import co.cask.common.http.HttpRequests;
-import co.cask.common.http.HttpResponse;
-import com.google.common.base.Charsets;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.net.URL;
-import java.net.URLEncoder;
 import java.util.Map;
 
 /**
@@ -53,7 +38,7 @@ public class WikipediaPipelineWorkflow extends AbstractWorkflow {
     addMapReduce(WikipediaPipelineApp.LIKES_TO_DATASET_MR_NAME);
     condition(new EnoughDataToProceed())
       .condition(new IsWikipediaSourceOnline())
-        .addAction(new DownloadWikiDataAction())
+        .addMapReduce(WikipediaDataDownloader.NAME)
       .otherwise()
         .addMapReduce(WikipediaPipelineApp.WIKIPEDIA_TO_DATASET_MR_NAME)
       .end()
@@ -100,51 +85,6 @@ public class WikipediaPipelineWorkflow extends AbstractWorkflow {
       WorkflowToken token = context.getToken();
       Value online = token.get("online", EnoughDataToProceed.class.getSimpleName(), WorkflowToken.Scope.USER);
       return online != null && online.getAsBoolean();
-    }
-  }
-
-  private static class DownloadWikiDataAction extends AbstractWorkflowAction {
-    private static final Logger LOG = LoggerFactory.getLogger(DownloadWikiDataAction.class);
-    private static final String WIKI_URL_FORMAT =
-      "https://en.wikipedia.org/w/api.php?action=query&titles=%s&prop=revisions&rvprop=content&format=json";
-
-    @SuppressWarnings("unused")
-    @UseDataSet(WikipediaPipelineApp.PAGE_TITLES_DATASET)
-    private KeyValueTable pages;
-
-    @SuppressWarnings("unused")
-    @UseDataSet(WikipediaPipelineApp.RAW_WIKIPEDIA_DATASET)
-    private KeyValueTable wikiData;
-
-    @Override
-    public void run() {
-      CloseableIterator<KeyValue<byte[], byte[]>> scanner = pages.scan(null, null);
-      try {
-        while (scanner.hasNext()) {
-          KeyValue<byte[], byte[]> next = scanner.next();
-          String rawWikiJson;
-          try {
-            rawWikiJson = downloadWikiData(Bytes.toString(next.getValue()));
-          } catch (IOException e) {
-            LOG.info("Exception while downloading wiki data {}", e.getMessage());
-            continue;
-          }
-          wikiData.write(next.getValue(), Bytes.toBytes(rawWikiJson));
-        }
-      } finally {
-        scanner.close();
-      }
-    }
-
-    private String downloadWikiData(String page) throws IOException {
-      String pageDetailsUrl = String.format(WIKI_URL_FORMAT, URLEncoder.encode(page, Charsets.UTF_8.displayName()));
-      HttpRequest request = HttpRequest.get(new URL(pageDetailsUrl)).build();
-      HttpResponse httpResponse = HttpRequests.execute(request);
-      String responseBody = httpResponse.getResponseBodyAsString();
-      if (200 != httpResponse.getResponseCode()) {
-        throw new IOException(responseBody);
-      }
-      return responseBody;
     }
   }
 }

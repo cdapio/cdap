@@ -27,6 +27,8 @@ explored through Hive.
 **schema.row.field:** The name of the record field that should be used as the row
 key when writing to the table.
 
+**case.sensitive.row.field:** Whether 'schema.row.field' is case sensitive; defaults to true.
+
 .. rubric:: Example
 
 ::

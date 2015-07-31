@@ -4,7 +4,7 @@
     "position": [ "group1", "group2", "group3" ],
     "group1": {
        "display" : "General",
-       "position" : [ "user", "password" ],
+       "position" : [ "user", "password", "tableName" ],
        "fields" : {
           "user" : {
              "widget": "textbox",
@@ -14,6 +14,11 @@
           "password" : {
              "widget": "password",
              "label": "Password"
+          },
+
+          "tableName" : {
+             "widget": "textbox",
+             "label" : "Table Name"
           }
        }
     },
@@ -48,14 +53,12 @@
        "fields" : {
           "importQuery" : {
              "widget": "textbox",
-             "label": "Import SQL",
-             "description" : "SQL query used to import the rows from the RDBMS"
+             "label": "Import SQL"
           },
 
           "countQuery" : {
              "widget": "textbox",
-             "label": "Count SQL",
-             "description" : "SQL query specifying how the counts need to be computed. This information is used in determining the degree of parallelism."
+             "label": "Count SQL"
           }
        }
     }

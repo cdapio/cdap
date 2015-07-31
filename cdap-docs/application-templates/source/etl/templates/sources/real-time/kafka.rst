@@ -12,7 +12,8 @@ Kafka Real-time Source. Emits a record with two fields: 'key' (nullable string) 
 
 .. rubric:: Use Case
 
-TODO: Fill me out
+This source is used whenever you want to read from Kafka. For example, you may want to read messages
+from Kafka and write them to a stream.
 
 .. rubric:: Properties
 
@@ -39,4 +40,39 @@ If no format is given, Kafka message payloads will be treated as bytes, resultin
 
 .. rubric:: Example
 
-TODO: Fill me out
+::
+
+  {
+    "name": "Kafka",
+    "properties": {
+      "kafka.partitions": 10,
+      "kafka.topic": "purchases",
+      "kafka.zookeeper": "localhost:2181/cdap/kafka",
+      "format": "csv",
+      "schema": "{
+        \"type\":\"record\",
+        \"name\":\"purchase\",
+        \"fields\":[
+          {\"name\":\"user\",\"type\":\"string\"},
+          {\"name\":\"item\",\"type\":\"string\"},
+          {\"name\":\"count\",\"type\":\"int\"},
+          {\"name\":\"price\",\"type\":\"double\"}
+        ]
+      }"
+    }
+  }
+
+This example reads from ten partitions of the 'purchases' topic of a Kafka instance.
+It connects to Kafka via a Zookeeper instance running on 'localhost'. It then 
+parses Kafka messages using the 'csv' format into records with the specified schema.
+For each Kafka message read, it will output a record with the schema::
+
+  +================================+
+  | field name  | type             |
+  +================================+
+  | user        | string           |
+  | item        | string           |
+  | count       | int              |
+  | price       | double           |
+  +================================+
+

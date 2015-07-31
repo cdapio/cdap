@@ -56,7 +56,6 @@ import co.cask.cdap.internal.workflow.DefaultWorkflowActionSpecification;
 import co.cask.cdap.internal.workflow.ProgramWorkflowAction;
 import co.cask.cdap.logging.context.WorkflowLoggingContext;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.templates.AdapterDefinition;
 import co.cask.http.NettyHttpService;
 import co.cask.tephra.TransactionAware;
@@ -398,6 +397,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
         }
       }
     } finally {
+      // Update the WorkflowToken after the execution of the FORK node completes.
+      store.updateWorkflowToken(workflowId, runId.getId(), token);
       executorService.shutdownNow();
       executorService.awaitTermination(Integer.MAX_VALUE, TimeUnit.NANOSECONDS);
     }

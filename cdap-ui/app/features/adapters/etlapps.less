@@ -315,6 +315,13 @@ body.theme-cdap.state-adapters-create {
             .table {
               td.type {
                 border-right: 0;
+                width: 40%;
+              }
+              td.name {
+                width: 40%;
+              }
+              td.nullable {
+                width: 20%;
               }
             }
           }
@@ -702,6 +709,23 @@ body.theme-cdap.state-adapters-list {
     .description {
       color: @cdap-darkness;
       word-wrap: break-word;
+    }
+  }
+}
+
+div.modal.modal-confirm {
+  .modal-dialog {
+    margin-top: 50vh;
+  }
+
+  .modal-content .text-center {
+    margin: 25px auto;
+
+    button.btn {
+      height: 35px;
+      width: 70px;
+      border: 0;
+
     }
   }
 }

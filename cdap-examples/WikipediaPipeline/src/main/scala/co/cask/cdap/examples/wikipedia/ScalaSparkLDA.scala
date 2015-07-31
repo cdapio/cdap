@@ -205,18 +205,19 @@ class ScalaSparkLDA extends ScalaSparkProgram {
       words
     }
   }
+}
 
-  class Term(termName: String, termWeight: Double) {
-    val name: String = termName
-    val weight: Double = termWeight
+class Term(termName: String, termWeight: Double) {
+  val name: String = termName
+  val weight: Double = termWeight
+}
+
+object HighestAccumulatorParam extends AccumulatorParam[Term] {
+  def zero(initialValue: Term): Term = {
+    initialValue
   }
 
-  object HighestAccumulatorParam extends AccumulatorParam[Term] {
-    def zero(initialValue: Term): Term = {
-      initialValue
-    }
-    def addInPlace(v1: Term, v2: Term): Term = {
-      if (v1.weight >= v2.weight) v1 else v2
-    }
+  def addInPlace(v1: Term, v2: Term): Term = {
+    if (v1.weight >= v2.weight) v1 else v2
   }
 }

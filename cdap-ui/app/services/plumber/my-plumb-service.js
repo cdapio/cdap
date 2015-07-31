@@ -31,7 +31,8 @@
 
 */
 angular.module(PKG.name + '.services')
-  .service('MyPlumbService', function(myAdapterApi, $q, $bootstrapModal, $state, $filter, mySettings, $alert, AdapterErrorFactory, IMPLICIT_SCHEMA, myHelpers) {
+  .service('MyPlumbService', function(myAdapterApi, $q, $bootstrapModal, $state, $filter, mySettings, $alert, AdapterErrorFactory, IMPLICIT_SCHEMA, myHelpers, PluginConfigFactory, ModalConfirm) {
+
     var countSink = 0,
         countSource = 0,
         countTransform = 0;
@@ -168,6 +169,29 @@ angular.module(PKG.name + '.services')
       };
 
       this.nodes[config.id] = config;
+
+      PluginConfigFactory.fetch(
+        null,
+        this.metadata.template.type,
+        config.name
+      ).then(function (res) {
+        if (res.implicit) {
+          var schema = res.implicit.schema;
+          var keys = Object.keys(schema);
+
+          var formattedSchema = [];
+          angular.forEach(keys, function (key) {
+            formattedSchema.push({
+              name: key,
+              type: schema[key]
+            });
+          });
+
+          var obj = { fields: formattedSchema };
+          this.nodes[config.id].outputSchema = JSON.stringify(obj);
+        }
+      }.bind(this));
+
       if (!conf._backendProperties) {
         fetchBackendProperties
           .call(this, this.nodes[config.id])
@@ -267,10 +291,9 @@ angular.module(PKG.name + '.services')
       fetchBackendProperties.call(this, plugin, scope)
         .then(function(plugin) {
           modalInstance = $bootstrapModal.open({
-            keyboard: false,
             backdrop: 'static',
             templateUrl: '/assets/features/adapters/templates/tabs/runs/tabs/properties/properties.html',
-            controller: ['$scope', 'AdapterModel', 'type', 'inputSchema', 'isDisabled', function ($scope, AdapterModel, type, inputSchema, isDisabled){
+            controller: ['$scope', 'AdapterModel', 'type', 'inputSchema', 'isDisabled', '$bootstrapModal', 'pluginCopy', function ($scope, AdapterModel, type, inputSchema, isDisabled, $bootstrapModal, pluginCopy){
               $scope.plugin = AdapterModel;
               $scope.type = type;
               $scope.isDisabled = isDisabled;
@@ -281,6 +304,14 @@ angular.module(PKG.name + '.services')
                 input = null;
               }
               $scope.inputSchema = input ? input.fields : null;
+              angular.forEach($scope.inputSchema, function (field) {
+                if (angular.isArray(field.type)) {
+                  field.type = field.type[0];
+                  field.nullable = true;
+                } else {
+                  field.nullable = false;
+                }
+              });
 
               if (!$scope.plugin.outputSchema && inputSchema) {
                 $scope.plugin.outputSchema = angular.copy(inputSchema) || null;
@@ -313,6 +344,18 @@ angular.module(PKG.name + '.services')
                 $scope.isTransform = true;
               }
 
+              function closeFn() {
+                $scope.$close('cancel');
+              }
+
+              ModalConfirm.confirmModalAdapter(
+                $scope,
+                $scope.plugin.properties,
+                pluginCopy.properties,
+                closeFn
+              );
+
+
             }],
             size: 'lg',
             windowClass: 'adapter-modal',
@@ -328,7 +371,10 @@ angular.module(PKG.name + '.services')
               },
               isDisabled: function() {
                 return this.isDisabled;
-              }.bind(this)
+              }.bind(this),
+              pluginCopy: function () {
+                return pluginCopy;
+              }
             }
           });
 

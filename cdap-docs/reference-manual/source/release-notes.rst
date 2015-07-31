@@ -1091,9 +1091,29 @@ Known Issues
 
 
 
-`Release 3.0.1 <http://docs.cask.co/cdap/3.0.1/index.html>`__
+`Release 3.0.3 <http://docs.cask.co/cdap/3.0.3/index.html>`__
 =============================================================
 
+Bug Fix
+-------
+
+- Fixed a Bower dependency error in the CDAP UI
+  (`CDAP-3010 <https://issues.cask.co/browse/CDAP-3010>`__).
+
+
+`Release 3.0.2 <http://docs.cask.co/cdap/3.0.2/index.html>`__
+=============================================================
+
+Bug Fixes
+---------
+
+- Fixed problems with the dataset upgrade tool
+  (`CDAP-2962 <https://issues.cask.co/browse/CDAP-2962>`__, 
+  `CDAP-2897 <https://issues.cask.co/browse/CDAP-2897>`__).
+
+
+`Release 3.0.1 <http://docs.cask.co/cdap/3.0.1/index.html>`__
+=============================================================
 
 New Features
 ------------

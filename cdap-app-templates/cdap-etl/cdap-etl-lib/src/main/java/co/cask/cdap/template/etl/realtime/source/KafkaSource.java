@@ -99,7 +99,7 @@ public class KafkaSource extends RealtimeSource<StructuredRecord> {
 
     kafkaConsumer = new Kafka08SimpleApiConsumer(this);
     kafkaConsumer.initialize(context);
-    if (config.format != null) {
+    if (!Strings.isNullOrEmpty(config.format)) {
       FormatSpecification spec = config.getFormatSpec();
       RecordFormat<ByteBuffer, StructuredRecord> format = RecordFormats.createInitializedFormat(spec);
       format.initialize(spec);
@@ -132,7 +132,7 @@ public class KafkaSource extends RealtimeSource<StructuredRecord> {
    */
   public StructuredRecord byteBufferToStructuredRecord(@Nullable String key, ByteBuffer payload) {
     FormatSpecification spec = config.getFormatSpec();
-    if (config.format == null) {
+    if (Strings.isNullOrEmpty(config.format)) {
       return byteBufferToSchemalessByteRecord(key, payload);
     }
     try {

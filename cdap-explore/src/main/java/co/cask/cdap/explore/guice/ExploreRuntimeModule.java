@@ -268,13 +268,12 @@ public class ExploreRuntimeModule extends RuntimeModule {
         * We need to remove Kryo dependency in the Explore container. Spark introduced version 2.21 version of Kryo,
         * which would be normally shipped to the Explore container. Yet, Hive requires Kryo 2.22,
         * and gets it from the Hive jars - hive-exec.jar to be precise.
-        * hive-exec is the job.jar in hive, since hive has guava-11.0.2 classes
-        * we want to exclude the hive-exec.jar from classpath.
+        * we also exclude hive jars as hive dependencies are found in job.jar.
         * */
       @Override
       public boolean accept(String className, URL classUrl, URL classPathUrl) {
         if (bootstrapClassPaths.contains(classPathUrl.getFile()) ||
-          className.startsWith("com.esotericsoftware.kryo") || classPathUrl.getFile().contains("hive-exec")) {
+          className.startsWith("com.esotericsoftware.kryo") || classPathUrl.getFile().contains("hive")) {
           return false;
         }
         return true;

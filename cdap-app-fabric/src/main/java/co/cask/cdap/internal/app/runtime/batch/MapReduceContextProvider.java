@@ -24,7 +24,6 @@ import co.cask.cdap.common.lang.Delegators;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.batch.distributed.DistributedMapReduceContextBuilder;
 import co.cask.cdap.internal.app.runtime.batch.inmemory.InMemoryMapReduceContextBuilder;
-import co.cask.cdap.internal.app.runtime.workflow.NonUpdatableWorkflowToken;
 import com.google.common.base.Throwables;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -76,7 +75,7 @@ public final class MapReduceContextProvider {
                taskContext.getTaskAttemptID().getTaskID().toString(),
                contextConfig.getLogicalStartTime(),
                contextConfig.getProgramNameInWorkflow(),
-               new NonUpdatableWorkflowToken(contextConfig.getWorkflowToken()),
+               contextConfig.getWorkflowToken(),
                contextConfig.getArguments(),
                contextConfig.getTx(),
                createProgram(contextConfig),

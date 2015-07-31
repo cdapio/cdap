@@ -434,7 +434,8 @@ Depending on your installation, you may want to set these properties:
 
   This feature cannot be used unless the cluster has a correct version of Hive installed.
   See the section on :ref:`Hadoop/HBase Environment <install-hadoop-hbase>`.
-  This feature is currently not supported on secure Hadoop clusters.
+  To use this feature on secure Hadoop clusters, please see these instructions on
+  :ref:`installing secure Hadoop. <install-secure-hadoop>`
 
   **Note:** Some versions of Hive contain a bug that may prevent the CDAP Explore Service from starting
   up. See `CDAP-1865 <https://issues.cask.co/browse/CDAP-1865>`__ for more information about the issue.
@@ -458,7 +459,10 @@ authenticate with Hadoop and HBase.  In this case, the setting for ``hdfs.user``
 ``cdap-site.xml`` will be ignored and the CDAP Master process will be identified as the
 Kerberos principal it is authenticated as.
 
-In order to configure CDAP Master for Kerberos authentication:
+**Note:** CDAP support for secure Hadoop clusters is limited to CDH 5.0.0 through CDH 5.4.4, 
+and HDP 2.0 through 2.2.
+
+In order to configure **CDAP Master for Kerberos authentication:**
 
 - Create a Kerberos principal for the user running CDAP Master.  The principal name should be in
   the form ``username/hostname@REALM``, creating a separate principal for each host where the CDAP Master
@@ -488,7 +492,7 @@ In order to configure CDAP Master for Kerberos authentication:
     <property>
       <name>cdap.master.kerberos.principal</name>
       <value>CDAP_PRINCIPAL/_HOST@EXAMPLE.COM</value>
-      <description>The Kerberos principal name that should be used to login the CDAP Master
+      <description>The Kerberos principal name that should be used to login to the CDAP Master
       process. The string "_HOST" will be substituted with the local hostname.</description>
     </property>
 
@@ -508,7 +512,75 @@ In order to configure CDAP Master for Kerberos authentication:
 
 - When CDAP Master is started, it will login using the configured keytab file and principal.
 
-**Note:** CDAP support for secure Hadoop clusters is limited to CDH 5.0 through CDH 5.3.x, and HDP 2.0 or higher.
+
+In order to configure **CDAP Explore Service for secure Hadoop:**
+
+.. highlight:: xml
+
+- To the configuration file ``core-site.xml``, set these properties::
+
+    <property>
+      <name>hadoop.proxyuser.hive.groups</name>
+      <value>cdap,hadoop,hive</value>
+    </property>
+    <property>
+      <name>hadoop.proxyuser.hive.hosts</name>
+      <value>*</value>
+    </property>
+
+- To the configuration file ``mapred-site.xml``, set these properties, substituting your
+  domain for ``EXAMPLE.COM``, and the hostname of the node running the JHS
+  (JobHistoryServer) for ``HOSTNAME_OF_JHS``::
+
+    <property>
+      <name>mapreduce.jobhistory.keytab</name>
+      <value>/etc/security/keytabs/jhs.service.keytab</value>
+    </property>
+    <property>
+      <name>mapreduce.jobhistory.principal</name>
+        <value>jhs/_HOST@EXAMPLE.COM</value>
+      <description>The string "_HOST" will be substituted with the local hostname.</description>
+    </property>
+    <property>
+      <name>mapreduce.jobhistory.address</name>
+        <value>HOSTNAME_OF_JHS:10020</value>
+    </property>
+
+- To the configuration file ``hive-site.xml``, set these properties, substituting your
+  domain for ``EXAMPLE.COM`` (two locations)::
+
+    <property>
+      <name>hive.metastore.sasl.enabled</name>
+      <value>true</value>
+      <description>If true, the metastore thrift interface will be secured with SASL. 
+      Clients must authenticate with Kerberos.</description>
+    </property>
+    <property>
+      <name>hive.metastore.kerberos.keytab.file</name>
+      <value>/etc/security/keytabs/hive.service.keytab</value>
+      <description>The path to the Kerberos Keytab file containing the metastore thrift 
+      server's service principal.</description>
+    </property>
+    <property>
+      <name>hive.metastore.kerberos.principal</name>
+      <value>hive/_HOST@EXAMPLE.COM</value>
+      <description>The service principal for the metastore thrift server. 
+      The string "_HOST" will be substituted with the local hostname.</description>
+    </property>
+    <property>
+      <name>hive.server2.authentication</name>
+      <value>KERBEROS</value>
+    </property>
+    <property>
+      <name>hive.server2.authentication.kerberos.principal</name>
+      <value>cdap/_HOST@EXAMPLE.COM</value>
+    </property>
+    <property>
+      <name>hive.server2.authentication.kerberos.keytab</name>
+      <value>/etc/security/keytabs/cdap.service.keytab</value>
+    </property>
+
+With all these properties set, the CDAP Explore Service will run on secure Hadoop clusters.
 
 .. _install-ulimit:
 
@@ -657,8 +729,9 @@ to make sure the CDAP table definitions in HBase are up-to-date.
 These steps will stop CDAP, update the installation, run an upgrade tool for the table definitions,
 and then restart CDAP.
 
-These steps will upgrade from CDAP 2.8.0 to 3.0.0. (**Note:** Apps need to be both
-recompiled and re-deployed.) 
+These steps will upgrade from CDAP 3.0.3 to 3.1.0. If you are on an earlier version of CDAP,
+please follow the upgrade instructions for the earlier versions and upgrade first to 3.0.3 before proceeding.
+(**Note:** Some apps need to be both recompiled and re-deployed, see below.)
 
 .. highlight:: console
 
@@ -698,33 +771,20 @@ recompiled and re-deployed.)
              cdap-hbase-compat-1.0 cdap-hbase-compat-1.0-cdh \
              cdap-kafka cdap-master cdap-security cdap-ui
 
-   **Note:** We have deprecated the cdap-web-app package in favor of cdap-ui package 
-
-#. Copy the ``logback-container.xml`` into your ``conf`` directory. 
-   Please see :ref:`Configuration <install-configuration>`.
-
 #. If you are upgrading a secure Hadoop cluster, you should authenticate with ``kinit``
    before the next step (running the upgrade tool)::
 
-     $ kinit -kt <keytab> <principle>
+     $ kinit -kt <keytab> <principal>
 
-#. Run the upgrade tool::
+#. Run the upgrade tool as the user that runs CDAP Master::
 
      $ /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.UpgradeTool upgrade
 
 #. Restart the CDAP processes::
 
      $ for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i start ; done
-     
-#. Run the flow queue pending metrics corrector::
 
-     $ /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.flow.FlowQueuePendingCorrector
-
-   This will correct the pending metrics for flows. This is a new metric that was introduced in 
-   CDAP 3.0; flows that existed before the upgrade to 3.0 do not have a correct value for this
-   metric and running the tool provides a one-time correction.
-
-#. You must recompile and then redeploy your applications. 
+#. You must recompile and redeploy any applications that use either Partition Filesets or Time Partitioned Filesets.
 
 .. _install-troubleshooting:
 

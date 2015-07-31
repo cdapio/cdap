@@ -118,7 +118,7 @@ public class WikipediaPipelineAppTest extends TestBase {
     if (threshold == null) {
       workflowManager.start();
     } else {
-      workflowManager.start(ImmutableMap.of("min.page.threshold", String.valueOf(threshold)));
+      workflowManager.start(ImmutableMap.of("min.page.threshold", String.valueOf(threshold), "mode", "online"));
     }
     workflowManager.waitForFinish(5, TimeUnit.MINUTES);
     String pid = getLatestPid(workflowManager.getHistory());
@@ -155,8 +155,7 @@ public class WikipediaPipelineAppTest extends TestBase {
     assertTokenAtRawDataMRNode(workflowManager, pid, continueConditionSucceeded);
     assertTokenAtNormalizationMRNode(workflowManager, pid, continueConditionSucceeded);
     assertTokenAtSparkLDANode(workflowManager, pid, continueConditionSucceeded);
-    // TODO: Verification fails if the last node of the workflow is a fork node.
-//    assertTokenAtTopNMRNode(workflowManager, pid, continueConditionSucceeded);
+    assertTokenAtTopNMRNode(workflowManager, pid, continueConditionSucceeded);
   }
 
   private void assertTokenAtPageTitlesMRNode(WorkflowManager workflowManager, String pid) throws NotFoundException {
@@ -175,10 +174,10 @@ public class WikipediaPipelineAppTest extends TestBase {
       return;
     }
     WorkflowTokenNodeDetail rawWikiDataUserTokens =
-      workflowManager.getTokenAtNode(pid, WikipediaPipelineApp.WIKIPEDIA_TO_DATASET_MR_NAME, null, null);
+      workflowManager.getTokenAtNode(pid, WikipediaDataDownloader.NAME, null, null);
     Assert.assertTrue(Boolean.parseBoolean(rawWikiDataUserTokens.getTokenDataAtNode().get("result")));
     WorkflowTokenNodeDetail rawWikiDataSystemTokens =
-      workflowManager.getTokenAtNode(pid, WikipediaPipelineApp.WIKIPEDIA_TO_DATASET_MR_NAME,
+      workflowManager.getTokenAtNode(pid, WikipediaDataDownloader.NAME,
                                      WorkflowToken.Scope.SYSTEM, null);
     Assert.assertEquals(2, Integer.parseInt(rawWikiDataSystemTokens.getTokenDataAtNode().get("custom.num.records")));
   }

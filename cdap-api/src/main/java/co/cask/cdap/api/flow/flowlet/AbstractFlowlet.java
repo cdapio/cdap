@@ -130,9 +130,7 @@ public abstract class AbstractFlowlet implements Flowlet, Callback {
   /**
    * Default constructor that uses {@link #getClass()}.{@link Class#getSimpleName() getSimpleName} as the
    * flowlet name.
-   * @deprecated not required if you are using {@link AbstractFlowlet#configure} method.
    */
-  @Deprecated
   protected AbstractFlowlet() {
     this.name = getClass().getSimpleName();
   }

@@ -54,7 +54,7 @@
       "lang": ["string", "null"],
       "time": ["long", "null"],
       "favCount": "int",
-      "recount": "int",
+      "rtCount": "int",
       "source": ["string", "null"],
       "geoLat": ["double", "null"],
       "geoLong": ["double", "null"],
