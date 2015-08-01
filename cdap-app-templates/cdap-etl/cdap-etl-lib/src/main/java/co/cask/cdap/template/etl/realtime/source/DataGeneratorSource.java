@@ -39,10 +39,10 @@ import javax.annotation.Nullable;
  * Realtime TestSource that emits {@link StructuredRecord} objects as needed for testing.
  */
 @Plugin(type = "source")
-@Name("Test")
+@Name("DataGenerator")
 @Description("Source that can generate test data for Real-time Stream and Table Sinks.")
-public class TestSource extends RealtimeSource<StructuredRecord> {
-  private static final Logger LOG = LoggerFactory.getLogger(TestSource.class);
+public class DataGeneratorSource extends RealtimeSource<StructuredRecord> {
+  private static final Logger LOG = LoggerFactory.getLogger(DataGeneratorSource.class);
   private static final String COUNT = "count";
   private static final String TYPE_DESCRIPTION = "The type of data to be generated. Currently, only two types " +
     "('stream' and 'table') are supported. By default, it generates a structured record containing one field " +
@@ -51,9 +51,9 @@ public class TestSource extends RealtimeSource<StructuredRecord> {
   public static final String STREAM_TYPE = "stream";
   public static final String TABLE_TYPE = "table";
 
-  private final TestConfig config;
+  private final DataGeneratorConfig config;
 
-  public TestSource(TestConfig config) {
+  public DataGeneratorSource(DataGeneratorConfig config) {
     this.config = config;
   }
 
@@ -141,9 +141,9 @@ public class TestSource extends RealtimeSource<StructuredRecord> {
   }
 
   /**
-   * {@link PluginConfig} class for {@link TestSource}
+   * {@link PluginConfig} class for {@link DataGeneratorSource}
    */
-  public static class TestConfig extends PluginConfig {
+  public static class DataGeneratorConfig extends PluginConfig {
     @Description(TYPE_DESCRIPTION)
     @Nullable
     String type;

@@ -10,7 +10,7 @@ Sources: Real-time
    :maxdepth: 1
 
     AmazonSQS <amazonsqs>
+    DataGenerator <datagenerator>
     JMS <jms>
     Kafka <kafka>
-    Test <test>
     Twitter <twitter>

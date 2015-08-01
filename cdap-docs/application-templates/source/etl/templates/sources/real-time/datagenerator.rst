@@ -2,9 +2,9 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2015 Cask Data, Inc.
 
-===============================
-Sources: Real-time: Test 
-===============================
+=================================
+Sources: Real-time: DataGenerator 
+=================================
 
 .. rubric:: Description
 
@@ -50,7 +50,7 @@ If the type is set to 'table', it will output records with this schema::
 ::
 
   {
-    "name": "Test",
+    "name": "DataGenerator",
     "properties": {
       "type": "table"
     }
