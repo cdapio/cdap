@@ -47,7 +47,7 @@
             </span>
           </a>
         </div>
-        <div ng-if="!isDisabled">
+        <div ng-if="!isDisabled" class="close-button">
           <a class="btn" ng-click="$close('cancel')">
             <span class="fa fa-remove"></span>
             <span class="sr-only"> Close </span>
@@ -55,7 +55,7 @@
         </div>
 
         <!-- Only shows the close button on already created adapter -->
-        <div ng-if="isDisabled">
+        <div ng-if="isDisabled" class="close-button">
           <a class="btn" ng-click="$close()">
             <span class="fa fa-remove"></span>
             <span class="sr-only">Close</span>
