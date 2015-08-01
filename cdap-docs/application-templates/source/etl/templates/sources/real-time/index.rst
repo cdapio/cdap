@@ -9,7 +9,7 @@ Sources: Real-time
 .. toctree::
    :maxdepth: 1
 
-    AmazonSQS <amazonsqs>
+    AmazonSQS <sqs>
     DataGenerator <datagenerator>
     JMS <jms>
     Kafka <kafka>
