@@ -70,7 +70,8 @@ angular.module(PKG.name + '.commons')
         $scope.addProperty = function() {
           $scope.properties.push({
             key: '',
-            value: ''
+            value: '',
+            newField: 'add'
           });
         };
 
