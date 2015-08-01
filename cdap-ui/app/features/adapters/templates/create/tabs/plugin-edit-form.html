@@ -21,9 +21,9 @@
     <div ng-class="{ 'col-xs-6 col-md-7': !isDisabled, 'col-xs-8 col-md-8': isDisabled }">
       <h3 class="modal-title">{{plugin.name}} Properties</h3>
       <p tooltip="{{plugin.description}}"
-          tooltip-enable="plugin.description.length > 70"
+          tooltip-enable="plugin.description.length > 110"
           tooltip-append-to-body="true">
-        {{plugin.description | myEllipsis:70}}
+        {{plugin.description | myEllipsis:110}}
       </p>
     </div>
 
