@@ -42,6 +42,7 @@ import org.slf4j.LoggerFactory;
 
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -111,7 +112,8 @@ public class SnapshotDefinition extends AbstractDatasetDefinition<SnapshotDatase
     LOG.info("Yaojie - called here1");
     final Table metadataTable = metadataTableDef.getDataset(datasetContext, spec.getSpecification(METADATA_TABLE_NAME),
                                                       arguments, classLoader);
-    LOG.info("Yaojie - called get the table");
+    LOG.info("Yaojie - metaTable is null? {}, name: {}, type: {}", metadataTable == null,
+      spec.getSpecification(METADATA_TABLE_NAME).getName(), spec.getSpecification(METADATA_TABLE_NAME).getType());
     Transactional<co.cask.cdap.data2.dataset2.tx.DatasetContext<Table>, Table> transactional =
       Transactional.of(txExecutorFactory, new Supplier<co.cask.cdap.data2.dataset2.tx.DatasetContext<Table>>() {
         @Override
@@ -133,21 +135,26 @@ public class SnapshotDefinition extends AbstractDatasetDefinition<SnapshotDatase
     } catch (Exception e) {
       e.printStackTrace();
     }
+    LOG.info("Yaojie - maindef is null? {} maintable info, name: {}, type: {}", mainTableDef == null,
+      spec.getSpecification(MAIN_TABLE_NAME).getName(), spec.getSpecification(MAIN_TABLE_NAME).getType());
     LOG.info("Yaojie - version is {}", version);
+    Map<String, String> copyOfArguments = new HashMap<>(arguments);
     // metadataTable.get(Bytes.toBytes(METADATA_PROPERTY_ROW_FIELD)).getLong(Bytes.toBytes(METADATA_PROPERTY_COLUMN));
-    arguments.put(METADATA_PROPERTY_ROW_FIELD, String.valueOf(version));
+    copyOfArguments.put(METADATA_PROPERTY_ROW_FIELD, String.valueOf(version));
     Table mainTable = mainTableDef.getDataset(datasetContext, spec.getSpecification(MAIN_TABLE_NAME),
-                                              arguments, classLoader);
+                                              copyOfArguments, classLoader);
     LOG.info("Yaojie - called here4");
     return new SnapshotDataset(spec.getName(), metadataTable, mainTable);
   }
 
   private Long getVersion(Transactional transactional) throws Exception {
+    LOG.info("Yaojie - in the transaction");
     return (Long) transactional.execute(
       new TransactionExecutor.Function<co.cask.cdap.data2.dataset2.tx.DatasetContext<Table>, Long>() {
         @Override
         public Long apply(co.cask.cdap.data2.dataset2.tx.DatasetContext<Table> ctx) throws Exception {
           Table table = ctx.get();
+          LOG.info("Yaojie - in the transaction");
           return table.get(Bytes.toBytes(METADATA_PROPERTY_ROW_FIELD)).getLong(Bytes.toBytes(METADATA_PROPERTY_COLUMN));
         }
       });
