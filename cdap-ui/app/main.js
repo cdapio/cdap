@@ -198,7 +198,7 @@ angular
     });
 
     $rootScope.$on(MYSOCKET_EVENT.message, function (angEvent, data) {
-      if(data.statusCode > 399) {
+      if(data.statusCode > 399 && !data.resource.suppressErrors) {
         myAlert({
           title: data.statusCode.toString(),
           content: data.response || 'Server had an issue, please try refreshing the page',
