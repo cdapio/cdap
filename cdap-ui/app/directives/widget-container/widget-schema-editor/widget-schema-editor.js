@@ -63,20 +63,20 @@ angular.module(PKG.name + '.commons')
                 $scope.properties.push({
                   name: p.name,
                   type: typeMap,
-                  nullable: false
+                  nullable: p.nullable
                 });
               } else {
                 $scope.properties.push({
                   name: p.name,
                   type: p.type.items,
-                  nullable: false
+                  nullable: p.nullable
                 });
               }
             } else {
               $scope.properties.push({
                 name: p.name,
                 type: p.type,
-                nullable: false
+                nullable: p.nullable
               });
             }
           });
