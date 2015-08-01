@@ -31,7 +31,13 @@ import java.util.Map;
  */
 public class StructuredToAvroTransformer extends RecordConverter<StructuredRecord, GenericRecord> {
 
-  private final Map<Integer, Schema> schemaCache = Maps.newHashMap();
+  private final Map<Integer, Schema> schemaCache;
+  private final Schema outputAvroSchema;
+
+  public StructuredToAvroTransformer(String outputSchema) {
+    this.schemaCache = Maps.newHashMap();
+    this.outputAvroSchema = (outputSchema != null) ? new Schema.Parser().parse(outputSchema) : null;
+  }
 
   public GenericRecord transform(StructuredRecord structuredRecord) throws IOException {
     co.cask.cdap.api.data.schema.Schema structuredRecordSchema = structuredRecord.getSchema();
@@ -39,7 +45,9 @@ public class StructuredToAvroTransformer extends RecordConverter<StructuredRecor
     int hashCode = structuredRecordSchema.hashCode();
     Schema avroSchema;
 
-    if (schemaCache.containsKey(hashCode)) {
+    if (outputAvroSchema != null) {
+      avroSchema = outputAvroSchema;
+    } else if (schemaCache.containsKey(hashCode)) {
       avroSchema = schemaCache.get(hashCode);
     } else {
       avroSchema = new Schema.Parser().parse(structuredRecordSchema.toString());
