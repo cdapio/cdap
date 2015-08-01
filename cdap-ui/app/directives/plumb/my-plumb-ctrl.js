@@ -66,10 +66,12 @@ angular.module(PKG.name + '.commons')
 
       this.plugins.forEach(function(plugin) {
         plugin.icon = MyPlumbFactory.getIcon(plugin.name);
+        if (this.isDisabled) {
+          plugin.style = plugin.style || MyPlumbFactory.generateStyles(plugin.id, nodes, 0, marginLeft);
+        }
+
         if (this.reloadDAG) {
           plugin.style = plugin.style || MyPlumbFactory.generateStyles(plugin.id, nodes, 200, marginLeft);
-        } else if (this.isDisabled) {
-          plugin.style = plugin.style || MyPlumbFactory.generateStyles(plugin.id, nodes, 0, marginLeft);
         }
         drawNode.call(this, plugin.id, plugin.type);
       }.bind(this));
@@ -212,6 +214,7 @@ angular.module(PKG.name + '.commons')
           MyPlumbService.setConnections(this.instance.getConnections());
         }.bind(this));
         $timeout(this.drawGraph.bind(this));
+        this.plugins = $scope.config;
         $scope.reloaddag = false;
         this.reloadDAG = true;
       }

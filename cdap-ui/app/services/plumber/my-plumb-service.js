@@ -149,6 +149,9 @@ angular.module(PKG.name + '.services')
     }
 
     function orderConnections(connections, originalConnections) {
+      if (!originalConnections.length) {
+        return originalConnections;
+      }
       var finalConnections = [];
       var parallelConnections = [];
       var source = connections.filter(function(conn) {
