@@ -129,6 +129,8 @@ angular
       newHttp.save = $delegate.save;
       newHttp.query = $delegate.query;
       newHttp.remove = $delegate.remove;
+      newHttp.post = $delegate.post;
+      newHttp.put = $delegate.put;
       return newHttp;
     });
   })
@@ -143,6 +145,7 @@ angular
             angular.extend(config, {
               user: $rootScope.currentUser || null,
               headers: {
+                'Content-Type': 'application/json',
                 // Accessing stuff from $rootScope is bad. This is done as to resolve circular dependency.
                 // $http <- myAuthPromise <- myAuth <- $http <- $templateFactory <- $view <- $state
                 Authorization: ($rootScope.currentUser.token ? 'Bearer ' + $rootScope.currentUser.token: null)
