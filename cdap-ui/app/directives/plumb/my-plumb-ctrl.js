@@ -181,6 +181,7 @@ angular.module(PKG.name + '.commons')
     }.bind(this));
 
     jsPlumb.ready(function() {
+
       jsPlumb.setContainer('plumb-container');
       this.instance = jsPlumb.getInstance();
 
@@ -197,10 +198,6 @@ angular.module(PKG.name + '.commons')
         // between jsPlumb's internal connection array and ours (pointless)
         MyPlumbService.setConnections(this.instance.getConnections());
       }.bind(this));
-
-      if (this.plugins.length > 0) {
-        $timeout(this.drawGraph.bind(this));
-      }
     }.bind(this));
 
     $scope.$watch('reloaddag', function (value) {
@@ -208,14 +205,12 @@ angular.module(PKG.name + '.commons')
         this.instance.reset();
         this.instance = jsPlumb.getInstance();
         this.instance.importDefaults(MyPlumbFactory.getSettings().default);
-        // Need to move this to the controller that is using this directive.
         this.instance.bind('connection', function () {
-          // Whenever there is a change in the connection just copy the entire array
-          // We never know if a connection was altered or removed. We don't want to 'Sync'
-          // between jsPlumb's internal connection array and ours (pointless)
           MyPlumbService.setConnections(this.instance.getConnections());
         }.bind(this));
-        this.plugins = $scope.config;
+        this.instance.bind('connectionDetached', function() {
+          MyPlumbService.setConnections(this.instance.getConnections());
+        }.bind(this));
         $timeout(this.drawGraph.bind(this));
         $scope.reloaddag = false;
         this.reloadDAG = true;

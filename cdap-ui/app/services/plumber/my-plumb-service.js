@@ -150,6 +150,7 @@ angular.module(PKG.name + '.services')
 
     function orderConnections(connections, originalConnections) {
       var finalConnections = [];
+      var parallelConnections = [];
       var source = connections.filter(function(conn) {
         if (this.nodes[conn.source].type === 'source') {
           return conn;
@@ -157,12 +158,21 @@ angular.module(PKG.name + '.services')
       }.bind(this));
       if (source.length) {
         addConnectionsInOrder(source[0], finalConnections, originalConnections);
+        if (finalConnections.length < originalConnections.length) {
+          originalConnections.forEach(function(oConn) {
+            if ($filter('filter')(finalConnections, oConn).length === 0) {
+              parallelConnections.push(oConn);
+            }
+          });
+          finalConnections = finalConnections.concat(parallelConnections);
+        }
       } else {
         var source = findTransformThatIsSource(originalConnections);
         addConnectionsInOrder(source, finalConnections, originalConnections);
       }
       return finalConnections;
     }
+
 
     this.setConnections = function(connections) {
       this.connections = [];
@@ -177,8 +187,8 @@ angular.module(PKG.name + '.services')
       this.connections = localConnections;
     };
 
-    this.addNodes = function(conf, type) {
-
+    this.addNodes = function(conf, type, inCreationMode) {
+      console.info('Adding nodes in plumb service: ');
       var config = {
         id: conf.id,
         name: conf.name,
@@ -222,10 +232,12 @@ angular.module(PKG.name + '.services')
       var left = initial + offsetLeft;
       var top = 250 + offsetTop;
 
-      config.style = {
-        left: left + 'vw',
-        top: top + 'px'
-      };
+      if (inCreationMode) {
+        config.style = {
+          left: left + 'vw',
+          top: top + 'px'
+        };
+      }
 
       this.nodes[config.id] = config;
 
@@ -266,7 +278,9 @@ angular.module(PKG.name + '.services')
           config.properties[key] = config.properties[key] || '';
         });
       }
-      this.notifyListeners(config, type);
+      if (inCreationMode) {
+        this.notifyListeners(config, type);
+      }
     };
 
     this.removeNode = function (nodeId) {
