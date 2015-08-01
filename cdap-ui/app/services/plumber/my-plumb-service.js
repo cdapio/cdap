@@ -191,7 +191,6 @@ angular.module(PKG.name + '.services')
     };
 
     this.addNodes = function(conf, type, inCreationMode) {
-      console.info('Adding nodes in plumb service: ');
       var config = {
         id: conf.id,
         name: conf.name,
@@ -389,8 +388,13 @@ angular.module(PKG.name + '.services')
                 input = null;
               }
 
-              if (isStreamSource && input) {
+              if (isStreamSource) {
                 // Must be in this order!!
+                if (!input) {
+                  input = {
+                    fields: [{ name: 'body', type: 'string' }]
+                  };
+                }
 
                 input.fields.unshift({
                   name: 'headers',
@@ -405,6 +409,8 @@ angular.module(PKG.name + '.services')
                   name: 'ts',
                   type: 'long'
                 });
+
+
               }
 
               $scope.inputSchema = input ? input.fields : null;
@@ -418,7 +424,7 @@ angular.module(PKG.name + '.services')
               });
 
 
-              if (!$scope.plugin.outputSchema && inputSchema) {
+              if (!$scope.plugin.outputSchema && input) {
                 $scope.plugin.outputSchema = angular.copy(JSON.stringify(input)) || null;
               }
 
