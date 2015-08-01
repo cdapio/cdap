@@ -162,7 +162,7 @@ angular
     angular.extend($alertProvider.defaults, {
       animation: 'am-fade-and-scale',
       container: '#alerts > .container',
-      duration: 5
+      duration: 3
     });
   })
 
@@ -241,6 +241,7 @@ angular
       })
         .then(function(res) {
           $scope.version = res.version;
+          $rootScope.cdapVersion = $scope.version;
         });
     }
 
