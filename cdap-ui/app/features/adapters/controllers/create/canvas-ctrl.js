@@ -95,10 +95,6 @@ angular.module(PKG.name + '.feature.adapters')
 
         MyPlumbService.notifyError({});
         MyPlumbService.notifyResetListners();
-        $alert({
-          type: 'success',
-          content: 'Template imported successfully.'
-        });
       }.bind(this)
       reader.onerror = function (evt) {
         console.error('Upload config failed', evt);
