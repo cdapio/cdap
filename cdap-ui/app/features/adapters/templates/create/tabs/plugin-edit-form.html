@@ -20,10 +20,11 @@
   <div class="modal-header" ng-init="showinfo = false">
     <div ng-class="{ 'col-xs-6 col-md-7': !isDisabled, 'col-xs-8 col-md-8': isDisabled }">
       <h3 class="modal-title">{{plugin.name}} Properties</h3>
-      <p tooltip="{{plugin.description}}"
-          tooltip-enable="plugin.description.length > 80"
-          tooltip-append-to-body="true">
-        {{plugin.description | myEllipsis:80}}
+      <p>
+        <span tooltip="{{plugin.description}}"
+              tooltip-append-to-body="true">
+          {{plugin.description}}
+        </span>
       </p>
     </div>
 
