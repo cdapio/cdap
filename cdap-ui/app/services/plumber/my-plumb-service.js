@@ -312,7 +312,11 @@ angular.module(PKG.name + '.services')
       return propertiesApiMap[plugin.type](params)
         .$promise
         .then(function(res) {
+
           var pluginProperties = (res.length? res[0].properties: {});
+          if (res.length && (!plugin.description || (plugin.description && !plugin.description.length))) {
+            plugin.description = res[0].description;
+          }
           plugin._backendProperties = pluginProperties;
           defer.resolve(plugin);
           return defer.promise;
