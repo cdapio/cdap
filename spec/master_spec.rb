@@ -13,10 +13,14 @@ describe 'cdap::master' do
     end
     pkg = 'cdap-master'
 
-    %w(cdap-hbase-compat-0.94 cdap-hbase-compat-0.96 cdap-hbase-compat-0.98).each do |compat|
+    %w(cdap-hbase-compat-0.96 cdap-hbase-compat-0.98 cdap-hbase-compat-1.0 cdap-hbase-compat-1.0-cdh).each do |compat|
       it "installs #{compat} package" do
         expect(chef_run).to install_package(compat)
       end
+    end
+
+    it 'does not install cdap-hbase-compat-0.94 package' do
+      expect(chef_run).not_to install_package('cdap-hbase-compat-0.94')
     end
 
     %W(
