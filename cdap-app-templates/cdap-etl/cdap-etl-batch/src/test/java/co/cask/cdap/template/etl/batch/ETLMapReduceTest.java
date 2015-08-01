@@ -239,7 +239,7 @@ public class ETLMapReduceTest extends BaseETLBatchTest {
     writeData.flush();
     writeData.close();
 
-    ETLStage source = new ETLStage("FileBatchSource", ImmutableMap.<String, String>builder()
+    ETLStage source = new ETLStage("File", ImmutableMap.<String, String>builder()
       .put(Properties.File.FILESYSTEM, "Text")
       .put(Properties.File.PATH, filePath)
       .build());
