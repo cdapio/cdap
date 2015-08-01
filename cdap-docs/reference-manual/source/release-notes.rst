@@ -26,24 +26,6 @@ Cask Data Application Platform Release Notes
 `Release 3.1.0 <http://docs.cask.co/cdap/3.1.0/index.html>`__
 =============================================================
 
-Summary
--------
-
-**Distributions**
-
-- CDH 5.4 support
-- HDP 2.2 support
-- MapR 4.1 support
-
-**Major Features**
-
-- Distributed Spark runtime
-- Metrics enhancements
-- Workflow enhancements
-- Dataset improvements
-- CDAP-UI Adapter UI enhancements
-
-
 New Features
 ------------
 
