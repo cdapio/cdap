@@ -99,17 +99,17 @@ public class BatchETLDBAdapterTest extends BaseETLBatchTest {
                              Schema.Field.of("TINY", nullableInt),
                              Schema.Field.of("SMALL", nullableInt),
                              Schema.Field.of("BIG", nullableLong),
-                             Schema.Field.of("FLOAT", nullableFloat),
-                             Schema.Field.of("REAL", nullableFloat),
-                             Schema.Field.of("NUMERIC", nullableDouble),
-                             Schema.Field.of("DECIMAL", nullableDouble),
-                             Schema.Field.of("BIT", nullableBoolean),
-                             Schema.Field.of("DATE", nullableLong),
-                             Schema.Field.of("TIME", nullableLong),
-                             Schema.Field.of("TIMESTAMP", nullableLong),
-                             Schema.Field.of("BINARY", nullableBytes),
-                             Schema.Field.of("BLOB", nullableBytes),
-                             Schema.Field.of("CLOB", nullableString));
+                             Schema.Field.of("FLOAT_COL", nullableFloat),
+                             Schema.Field.of("REAL_COL", nullableFloat),
+                             Schema.Field.of("NUMERIC_COL", nullableDouble),
+                             Schema.Field.of("DECIMAL_COL", nullableDouble),
+                             Schema.Field.of("BIT_COL", nullableBoolean),
+                             Schema.Field.of("DATE_COL", nullableLong),
+                             Schema.Field.of("TIME_COL", nullableLong),
+                             Schema.Field.of("TIMESTAMP_COL", nullableLong),
+                             Schema.Field.of("BINARY_COL", nullableBytes),
+                             Schema.Field.of("BLOB_COL", nullableBytes),
+                             Schema.Field.of("CLOB_COL", nullableString));
   }
 
   private static void createTestTables(Connection conn) throws SQLException {
