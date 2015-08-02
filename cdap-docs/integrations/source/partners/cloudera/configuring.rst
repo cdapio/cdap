@@ -186,9 +186,45 @@ The following is the generic procedure for Major/Minor version upgrades:
 
 .. _cloudera-release-specific-upgrade-notes:
 
+.. rubric:: Upgrading CDAP 3.0 to 3.1 and Upgrading CDH 5.3 to 5.4
+
+**Background:** CDH 5.3 ships with Hbase 0.98 while CDH 5.4 supports HBase 1.0. We support
+CDH 5.4 as of CDAP 3.1.0. Upgrading from CDH 5.3 to CDH 5.4 entails an HBase upgrade in
+addition to a CDAP upgrade. **It is important to perform these steps as described, otherwise
+you can end up with a unworkable system.**
+
+**Upgrade Steps**
+
+1. Stop CDAP applications and services
+#. Disable all CDAP tables; from an HBase shell, run this command::
+
+    > disable_all 'cdap.*'
+    
+#. Upgrade to CDH 5.4
+#. Stop CDAP application and services, as CDH will have auto-started CDAP
+#. Upgrade to CDAP 3.1
+#. Run the CDAP Upgrade Tool 
+#. Check if the co-processor JARs for these tables have been upgraded to ``cdh-1.0``:
+
+    - ``cdap_system:app.meta``
+    - ``cdap_system:datasets.instance``
+    - ``cdap_system:datasets.type``
+
+#. Enable these tables; from an HBase shell, run these commands::
+   
+    > enable 'cdap_system:app.meta'
+    > enable 'cdap_system:datasets.instance'
+    > enable 'cdap_system:datasets.type'
+
+#. Run the CDAP Upgrade Tool
+#. Before starting CDAP, check that all tables have co-processors upgraded
+#. Start CDAP
+
+
 .. rubric:: Upgrading CDAP 3.0 to 3.1
 
 **Note:** An app need to be both recompiled and re-deployed if it uses either a PartitionedFileSet or a TimePartitionedFileSet.
+
 
 .. rubric:: Upgrading CDAP 2.8 to 3.0
 
