@@ -23,7 +23,7 @@ import org.apache.avro.generic.GenericRecord;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class StructuredToAvroTest {
+public class StructuredtoAvroTest {
 
   @Test
   public void testStructuredToAvroConversionForNested() throws Exception {
