@@ -203,7 +203,7 @@ you can end up with a unworkable system.**
 #. Upgrade to CDH 5.4
 #. Stop CDAP application and services, as CDH will have auto-started CDAP
 #. Upgrade to CDAP 3.1
-#. Run the CDAP Upgrade Tool 
+#. Run the CDAP Upgrade Tool, as the user that runs CDAP Master (the CDAP user)
 #. Check if the co-processor JARs for these tables have been upgraded to ``cdh-1.0``:
 
     - ``cdap_system:app.meta``
@@ -216,7 +216,7 @@ you can end up with a unworkable system.**
     > enable 'cdap_system:datasets.instance'
     > enable 'cdap_system:datasets.type'
 
-#. Run the CDAP Upgrade Tool
+#. Run the CDAP Upgrade Tool, as the user that runs CDAP Master (the CDAP user)
 #. Before starting CDAP, check that all tables have co-processors upgraded
 #. Start CDAP
 
