@@ -23,7 +23,6 @@ import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
-import co.cask.cdap.api.templates.plugins.PluginConfig;
 import co.cask.cdap.template.etl.api.Emitter;
 import co.cask.cdap.template.etl.api.PipelineConfigurer;
 import co.cask.cdap.template.etl.api.batch.BatchSink;
@@ -50,7 +49,7 @@ public class TimePartitionedFileSetDatasetAvroSink extends
   TimePartitionedFileSetSink<AvroKey<GenericRecord>, NullWritable> {
   private static final String SCHEMA_DESC = "The Avro schema of the record being written to the Sink as a JSON " +
     "Object.";
-  private final StructuredToAvroTransformer recordTransformer = new StructuredToAvroTransformer();
+  private StructuredToAvroTransformer recordTransformer;
   private final TPFSAvroSinkConfig config;
 
   public TimePartitionedFileSetDatasetAvroSink(TPFSAvroSinkConfig config) {
@@ -80,6 +79,13 @@ public class TimePartitionedFileSetDatasetAvroSink extends
     Schema avroSchema = new Schema.Parser().parse(config.schema);
     Job job = context.getHadoopJob();
     AvroJob.setOutputKeySchema(job, avroSchema);
+  }
+
+
+  @Override
+  public void initialize(BatchSinkContext context) throws Exception {
+    super.initialize(context);
+    recordTransformer = new StructuredToAvroTransformer(config.schema);
   }
 
   @Override

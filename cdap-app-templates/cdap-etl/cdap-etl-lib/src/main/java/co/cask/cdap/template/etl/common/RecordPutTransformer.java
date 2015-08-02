@@ -38,15 +38,22 @@ public class RecordPutTransformer {
   // once and cache the value.
   private String rowField;
   private final boolean rowFieldCaseSensitive;
+  private final Schema outputSchema;
 
   @VisibleForTesting
   RecordPutTransformer(String rowField) {
-    this(rowField, true);
+    this(rowField, null, true);
   }
 
-  public RecordPutTransformer(String rowField, boolean rowFieldCaseSensitive) {
+  @VisibleForTesting
+  RecordPutTransformer(String rowField, Schema outputSchema) {
+    this(rowField, outputSchema, true);
+  }
+
+  public RecordPutTransformer(String rowField, Schema outputSchema, boolean rowFieldCaseSensitive) {
     this.rowField = rowField;
     this.rowFieldCaseSensitive = rowFieldCaseSensitive;
+    this.outputSchema = outputSchema;
   }
 
   public Put toPut(StructuredRecord record) {
@@ -62,6 +69,11 @@ public class RecordPutTransformer {
       if (field.getName().equals(keyField.getName())) {
         continue;
       }
+
+      // Skip fields that are not present in the Output Schema
+      if (outputSchema != null && outputSchema.getField(field.getName()) == null) {
+        continue;
+      }
       setField(output, field, record.get(field.getName()));
     }
     return output;
@@ -75,6 +87,7 @@ public class RecordPutTransformer {
       put.add(field.getName(), (byte[]) null);
       return;
     }
+
     Schema.Type type = validateAndGetType(field);
 
     switch (type) {

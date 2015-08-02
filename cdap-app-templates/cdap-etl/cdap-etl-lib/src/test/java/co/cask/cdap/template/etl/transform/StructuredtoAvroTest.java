@@ -18,11 +18,8 @@ package co.cask.cdap.template.etl.transform;
 
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.template.etl.common.AvroToStructuredTransformer;
 import co.cask.cdap.template.etl.common.StructuredToAvroTransformer;
-import com.google.common.collect.ImmutableList;
 import org.apache.avro.generic.GenericRecord;
-import org.apache.avro.generic.GenericRecordBuilder;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -48,11 +45,31 @@ public class StructuredtoAvroTest {
              .build()
       )
       .build();
-    StructuredToAvroTransformer structuredToAvroTransformer = new StructuredToAvroTransformer();
+    StructuredToAvroTransformer structuredToAvroTransformer = new StructuredToAvroTransformer(null);
     GenericRecord result = structuredToAvroTransformer.transform(record);
     Assert.assertEquals(5, result.get("intField"));
     GenericRecord innerRecord = (GenericRecord) result.get("recordField");
     Assert.assertEquals(7, innerRecord.get("innerInt"));
     Assert.assertEquals("hello world", innerRecord.get("innerString"));
   }
+
+  @Test
+  public void testOutputSchemaUsage() throws Exception {
+    Schema outputSchema = Schema.recordOf("output",
+                                          Schema.Field.of("id", Schema.of(Schema.Type.LONG)),
+                                          Schema.Field.of("name", Schema.of(Schema.Type.STRING)));
+    Schema inputSchema = Schema.recordOf("input",
+                                         Schema.Field.of("id", Schema.of(Schema.Type.LONG)),
+                                         Schema.Field.of("name", Schema.of(Schema.Type.STRING)),
+                                         Schema.Field.of("age", Schema.of(Schema.Type.INT)));
+    StructuredRecord record = StructuredRecord.builder(inputSchema)
+      .set("id", 123L).set("name", "ABC").set("age", 10).build();
+
+    StructuredToAvroTransformer avroTransformer = new StructuredToAvroTransformer(outputSchema.toString());
+    GenericRecord result = avroTransformer.transform(record);
+    Assert.assertEquals(123L, result.get("id"));
+    Assert.assertEquals("ABC", result.get("name"));
+    Assert.assertNull(result.get("age"));
+  }
+
 }

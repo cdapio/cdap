@@ -20,6 +20,7 @@ import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Table;
@@ -27,6 +28,7 @@ import co.cask.cdap.template.etl.api.PipelineConfigurer;
 import co.cask.cdap.template.etl.api.realtime.DataWriter;
 import co.cask.cdap.template.etl.api.realtime.RealtimeContext;
 import co.cask.cdap.template.etl.api.realtime.RealtimeSink;
+import co.cask.cdap.template.etl.common.Properties;
 import co.cask.cdap.template.etl.common.RecordPutTransformer;
 import co.cask.cdap.template.etl.common.TableSinkConfig;
 import com.google.common.base.Preconditions;
@@ -64,7 +66,14 @@ public class RealtimeTableSink extends RealtimeSink<StructuredRecord> {
   @Override
   public void initialize(RealtimeContext context) throws Exception {
     super.initialize(context);
-    recordPutTransformer = new RecordPutTransformer(tableSinkConfig.getRowField(),
+    Schema outputSchema = null;
+    // If a schema string is present in the properties, use that to construct the outputSchema and pass it to the
+    // recordPutTransformer
+    String schemaString = context.getPluginProperties().getProperties().get(Properties.Table.PROPERTY_SCHEMA);
+    if (schemaString != null) {
+      outputSchema = Schema.parseJson(schemaString);
+    }
+    recordPutTransformer = new RecordPutTransformer(tableSinkConfig.getRowField(), outputSchema,
                                                     tableSinkConfig.isRowFieldCaseInsensitive());
   }
 
