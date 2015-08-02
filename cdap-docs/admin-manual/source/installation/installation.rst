@@ -401,7 +401,7 @@ Depending on your installation, you may want to set these properties:
 
 - If you want to use **a different HDFS user** than ``yarn``:
 
-  1. Check that there is |--—| and create if necessary —--| a corresponding user on all machines
+  1. Check that there is |---| and create if necessary |---| a corresponding user on all machines
      in the cluster on which YARN is running (typically, all of the machines).
   #. Create an ``hdfs.user`` property for that user in ``conf/cdap-site.xml``::
 

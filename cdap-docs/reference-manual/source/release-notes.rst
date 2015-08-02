@@ -1163,10 +1163,10 @@ Bug Fixes
 
 
 
-.. Deprecated and Removed Features
-.. -------------------------------
+Deprecated and Removed Features
+-------------------------------
 
-
+- See the :ref:`CDAP 3.1.0 Javadocs <javadocs>` for a list of deprecated and removed APIs.
 
 .. _known-issues-310:
 
