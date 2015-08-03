@@ -218,7 +218,7 @@ you can end up with an unusable system.**
   
     > describe 'cdap_system:app.meta'
     
-  The result output will look something like, and show the coprocessor classname::
+  The result output will show the coprocessor classname::
   
     'cdap_system:app.meta', {TABLE_ATTRIBUTES => {coprocessor$1 =>
     'hdfs://server.example.com/cdap/cdap/lib/
