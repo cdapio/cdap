@@ -334,10 +334,14 @@ tables will get re-enabled before the coprocessors are upgraded. This could caus
 regionservers to abort and may make it very difficult to get the cluster back to a stable
 state where the tables can be disabled again and complete the process.
 
+.. highlight:: xml
+
 In that case, set this configuration property in ``hbase-site.xml``::
 
-  hbase.coprocessor.abortonerror
-  false
+  <property>
+    <name>hbase.coprocessor.abortonerror</name>
+    <value>false</value>
+  </property>
 
 and restart the HBase regionservers. This will allow the regionservers to start up
 despite the coprocessor version mismatch. At this point, you should be able to run through
