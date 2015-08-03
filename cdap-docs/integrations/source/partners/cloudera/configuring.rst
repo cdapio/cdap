@@ -220,7 +220,7 @@ In the future, we intend to automate all these steps. The issue that tracks that
    If using Cloudera Manager, this can be done by selecting ``Run CDAP Upgrade Tool`` from
    the *CDAP Service Actions* menu
     
-#. Check if the coprocessor JARs for these tables have been upgraded to ``cdh-1.0``:
+#. Check if the coprocessor JARs for these tables have been upgraded to CDH HBase 1.0:
 
     - ``cdap_system:app.meta``
     - ``cdap_system:datasets.instance``
@@ -333,7 +333,7 @@ Previously released parcels can also be accessed from their version-specific URL
 If you miss a step in the upgrade process and something goes wrong, it's possible that the
 tables will get re-enabled before the coprocessors are upgraded. This could cause the
 regionservers to abort and may make it very difficult to get the cluster back to a stable
-state where the tables can be disabled again and complete the process.
+state where the tables can be disabled again and complete the upgrade process.
 
 .. highlight:: xml
 
@@ -348,10 +348,5 @@ and restart the HBase regionservers. This will allow the regionservers to start 
 despite the coprocessor version mismatch. At this point, you should be able to run through
 the upgrade steps successfully. 
 
-At the end, set the entry for ``hbase.coprocessor.abortonerror`` to ``true`` in order to
-ensure that data correctness is maintained::
-
-  <property>
-    <name>hbase.coprocessor.abortonerror</name>
-    <value>true</value>
-  </property>
+At the end, remove the entry for ``hbase.coprocessor.abortonerror`` in order to ensure
+that data correctness is maintained.
