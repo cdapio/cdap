@@ -232,6 +232,8 @@ you can end up with an unusable system.**
     > enable 'cdap_system:datasets.instance'
     > enable 'cdap_system:datasets.type'
 
+#. Run the CDAP Upgrade Tool (again), as the user that runs CDAP Master (the CDAP user)
+#. Before starting CDAP, check that all tables have co-processors upgraded, as described above
 #. Start CDAP
 
 
