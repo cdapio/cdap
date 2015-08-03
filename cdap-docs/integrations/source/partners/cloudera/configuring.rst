@@ -188,20 +188,21 @@ The following is the generic procedure for Major/Minor version upgrades:
 
 .. rubric:: Upgrading CDAP 3.0 to 3.1 and Upgrading CDH 5.3 to 5.4
 
-**Background:** CDH 5.3 ships with Hbase 0.98 while CDH 5.4 supports HBase 1.0. We support
+**Background:** CDH 5.3 ships with Hbase 0.98 while CDH 5.4 ships with HBase 1.0. We support
 CDH 5.4 as of CDAP 3.1.0. Upgrading from CDH 5.3 to CDH 5.4 entails an HBase upgrade in
 addition to a CDAP upgrade. **It is important to perform these steps as described, otherwise
 you can end up with an unusable system.**
 
 **Upgrade Steps**
 
-1. Stop CDAP applications and services
+1. If using Cloudera Manager, :ref:`stop all CDAP application and services
+   <install-upgrade-stop>`, as Cloudera Manager will have auto-started CDAP
 #. Disable all CDAP tables; from an HBase shell, run this command::
 
     > disable_all 'cdap.*'
     
 #. Upgrade to CDH 5.4
-#. Stop CDAP application and services, as CDH will have auto-started CDAP
+#. :ref:`Stop CDAP application and services <install-upgrade-stop>, as CDH will have auto-started CDAP
 #. Upgrade to CDAP 3.1
 #. Run the CDAP Upgrade Tool, as the user that runs CDAP Master (the CDAP user)
 #. Check if the co-processor JARs for these tables have been upgraded to ``cdh-1.0``:
@@ -209,6 +210,9 @@ you can end up with an unusable system.**
     - ``cdap_system:app.meta``
     - ``cdap_system:datasets.instance``
     - ``cdap_system:datasets.type``
+    
+  by checking that the coprocessor classnames are using the ``base10cdh`` package |---|
+  for example, ``co.cask.cdap.data2.transaction.coprocessor.hbase10cdh.DefaultTransactionProcessor``
 
 #. Enable these tables; from an HBase shell, run these commands::
    
