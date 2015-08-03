@@ -20,10 +20,11 @@
   <div class="modal-header" ng-init="showinfo = false">
     <div ng-class="{ 'col-xs-6 col-md-7': !isDisabled, 'col-xs-8 col-md-8': isDisabled }">
       <h3 class="modal-title">{{plugin.name}} Properties</h3>
-      <p tooltip="{{plugin.description}}"
-          tooltip-enable="plugin.description.length > 70"
-          tooltip-append-to-body="true">
-        {{plugin.description | myEllipsis:70}}
+      <p>
+        <span tooltip="{{plugin.description}}"
+              tooltip-append-to-body="true">
+          {{plugin.description}}
+        </span>
       </p>
     </div>
 
@@ -47,7 +48,7 @@
             </span>
           </a>
         </div>
-        <div ng-if="!isDisabled">
+        <div ng-if="!isDisabled" class="close-button">
           <a class="btn" ng-click="$close('cancel')">
             <span class="fa fa-remove"></span>
             <span class="sr-only"> Close </span>
@@ -55,7 +56,7 @@
         </div>
 
         <!-- Only shows the close button on already created adapter -->
-        <div ng-if="isDisabled">
+        <div ng-if="isDisabled" class="close-button">
           <a class="btn" ng-click="$close()">
             <span class="fa fa-remove"></span>
             <span class="sr-only">Close</span>

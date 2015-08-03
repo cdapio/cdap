@@ -149,7 +149,11 @@ angular.module(PKG.name + '.services')
     }
 
     function orderConnections(connections, originalConnections) {
+      if (!originalConnections.length) {
+        return originalConnections;
+      }
       var finalConnections = [];
+      var parallelConnections = [];
       var source = connections.filter(function(conn) {
         if (this.nodes[conn.source].type === 'source') {
           return conn;
@@ -157,12 +161,21 @@ angular.module(PKG.name + '.services')
       }.bind(this));
       if (source.length) {
         addConnectionsInOrder(source[0], finalConnections, originalConnections);
+        if (finalConnections.length < originalConnections.length) {
+          originalConnections.forEach(function(oConn) {
+            if ($filter('filter')(finalConnections, oConn).length === 0) {
+              parallelConnections.push(oConn);
+            }
+          });
+          finalConnections = finalConnections.concat(parallelConnections);
+        }
       } else {
         var source = findTransformThatIsSource(originalConnections);
         addConnectionsInOrder(source, finalConnections, originalConnections);
       }
       return finalConnections;
     }
+
 
     this.setConnections = function(connections) {
       this.connections = [];
@@ -177,8 +190,7 @@ angular.module(PKG.name + '.services')
       this.connections = localConnections;
     };
 
-    this.addNodes = function(conf, type) {
-
+    this.addNodes = function(conf, type, inCreationMode) {
       var config = {
         id: conf.id,
         name: conf.name,
@@ -222,10 +234,12 @@ angular.module(PKG.name + '.services')
       var left = initial + offsetLeft;
       var top = 250 + offsetTop;
 
-      config.style = {
-        left: left + 'vw',
-        top: top + 'px'
-      };
+      if (inCreationMode) {
+        config.style = {
+          left: left + 'vw',
+          top: top + 'px'
+        };
+      }
 
       this.nodes[config.id] = config;
 
@@ -266,7 +280,9 @@ angular.module(PKG.name + '.services')
           config.properties[key] = config.properties[key] || '';
         });
       }
-      this.notifyListeners(config, type);
+      if (inCreationMode) {
+        this.notifyListeners(config, type);
+      }
     };
 
     this.removeNode = function (nodeId) {
@@ -312,7 +328,11 @@ angular.module(PKG.name + '.services')
       return propertiesApiMap[plugin.type](params)
         .$promise
         .then(function(res) {
+
           var pluginProperties = (res.length? res[0].properties: {});
+          if (res.length && (!plugin.description || (plugin.description && !plugin.description.length))) {
+            plugin.description = res[0].description;
+          }
           plugin._backendProperties = pluginProperties;
           defer.resolve(plugin);
           return defer.promise;
@@ -368,8 +388,13 @@ angular.module(PKG.name + '.services')
                 input = null;
               }
 
-              if (isStreamSource && input) {
+              if (isStreamSource) {
                 // Must be in this order!!
+                if (!input) {
+                  input = {
+                    fields: [{ name: 'body', type: 'string' }]
+                  };
+                }
 
                 input.fields.unshift({
                   name: 'headers',
@@ -384,6 +409,8 @@ angular.module(PKG.name + '.services')
                   name: 'ts',
                   type: 'long'
                 });
+
+
               }
 
               $scope.inputSchema = input ? input.fields : null;
@@ -397,7 +424,7 @@ angular.module(PKG.name + '.services')
               });
 
 
-              if (!$scope.plugin.outputSchema && inputSchema) {
+              if (!$scope.plugin.outputSchema && input) {
                 $scope.plugin.outputSchema = angular.copy(JSON.stringify(input)) || null;
               }
 

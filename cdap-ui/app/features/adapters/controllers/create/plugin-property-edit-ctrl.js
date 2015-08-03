@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.adapters')
-  .controller('PluginEditController', function($scope, PluginConfigFactory, myHelpers, EventPipe, $timeout, MyPlumbService, $sce) {
+  .controller('PluginEditController', function($scope, PluginConfigFactory, myHelpers, EventPipe, $timeout, MyPlumbService, $sce, $rootScope) {
     var pluginCopy;
 
     var propertiesFromBackend = Object.keys($scope.plugin._backendProperties);
@@ -29,11 +29,14 @@ angular.module(PKG.name + '.feature.adapters')
     this.infoPluginName = $scope.plugin.name.toLowerCase();
     if (this.infoPluginCategory === 'transforms') {
       this.infoPluginCategory = 'transformations';
-      this.infoUrl = 'http://docs-staging.cask.co/cdap/3.1.0-SNAPSHOT/en/application-templates/etl/templates/'
+      this.infoUrl =
+      'http://docs.cask.co/cdap/'
+                      + $rootScope.cdapVersion + '/en/application-templates/etl/templates/'
                       + this.infoPluginCategory + '/'
                       + this.infoPluginName + '.html?hidenav';
     } else {
-      this.infoUrl = 'http://docs-staging.cask.co/cdap/3.1.0-SNAPSHOT/en/application-templates/etl/templates/'
+      this.infoUrl = 'http://docs.cask.co/cdap/'
+                      + $rootScope.cdapVersion +'/en/application-templates/etl/templates/'
                       + this.infoPluginCategory + '/'
                       + this.infoPluginType + '/'
                       + this.infoPluginName + '.html?hidenav';

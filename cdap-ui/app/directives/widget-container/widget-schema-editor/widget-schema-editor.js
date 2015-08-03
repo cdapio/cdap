@@ -63,20 +63,20 @@ angular.module(PKG.name + '.commons')
                 $scope.properties.push({
                   name: p.name,
                   type: typeMap,
-                  nullable: false
+                  nullable: p.nullable
                 });
               } else {
                 $scope.properties.push({
                   name: p.name,
                   type: p.type.items,
-                  nullable: false
+                  nullable: p.nullable
                 });
               }
             } else {
               $scope.properties.push({
                 name: p.name,
                 type: p.type,
-                nullable: false
+                nullable: p.nullable
               });
             }
           });
@@ -163,6 +163,7 @@ angular.module(PKG.name + '.commons')
           property.name = '';
           property.type = defaultType;
           property.nullable = false;
+          property.newField = 'add';
           filledCount++;
 
           if (filledCount >= 15) {
@@ -176,7 +177,8 @@ angular.module(PKG.name + '.commons')
           $scope.properties.push({
             name: '',
             type: defaultType,
-            nullable: false
+            nullable: false,
+            newField: 'add'
           });
 
           filledCount++;

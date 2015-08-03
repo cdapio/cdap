@@ -9,7 +9,7 @@
   </div>
   <div ng-repeat="property in properties" class="row" ng-keypress="enter($event, $last)">
     <div class="col-xs-8">
-      <input type="text" class="form-control" ng-model="property.value" placeholder="value" my-focus-watch="$last" />
+      <input type="text" class="form-control" ng-model="property.value" placeholder="value" my-focus-watch="property.newField" />
     </div>
 
     <div class="col-xs-4 text-left">

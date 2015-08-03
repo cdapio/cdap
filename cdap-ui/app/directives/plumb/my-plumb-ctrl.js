@@ -66,10 +66,12 @@ angular.module(PKG.name + '.commons')
 
       this.plugins.forEach(function(plugin) {
         plugin.icon = MyPlumbFactory.getIcon(plugin.name);
+        if (this.isDisabled) {
+          plugin.style = plugin.style || MyPlumbFactory.generateStyles(plugin.id, nodes, 0, marginLeft);
+        }
+
         if (this.reloadDAG) {
           plugin.style = plugin.style || MyPlumbFactory.generateStyles(plugin.id, nodes, 200, marginLeft);
-        } else if (this.isDisabled) {
-          plugin.style = plugin.style || MyPlumbFactory.generateStyles(plugin.id, nodes, 0, marginLeft);
         }
         drawNode.call(this, plugin.id, plugin.type);
       }.bind(this));
@@ -181,6 +183,7 @@ angular.module(PKG.name + '.commons')
     }.bind(this));
 
     jsPlumb.ready(function() {
+
       jsPlumb.setContainer('plumb-container');
       this.instance = jsPlumb.getInstance();
 
@@ -197,10 +200,6 @@ angular.module(PKG.name + '.commons')
         // between jsPlumb's internal connection array and ours (pointless)
         MyPlumbService.setConnections(this.instance.getConnections());
       }.bind(this));
-
-      if (this.plugins.length > 0) {
-        $timeout(this.drawGraph.bind(this));
-      }
     }.bind(this));
 
     $scope.$watch('reloaddag', function (value) {
@@ -208,15 +207,14 @@ angular.module(PKG.name + '.commons')
         this.instance.reset();
         this.instance = jsPlumb.getInstance();
         this.instance.importDefaults(MyPlumbFactory.getSettings().default);
-        // Need to move this to the controller that is using this directive.
         this.instance.bind('connection', function () {
-          // Whenever there is a change in the connection just copy the entire array
-          // We never know if a connection was altered or removed. We don't want to 'Sync'
-          // between jsPlumb's internal connection array and ours (pointless)
           MyPlumbService.setConnections(this.instance.getConnections());
         }.bind(this));
-        this.plugins = $scope.config;
+        this.instance.bind('connectionDetached', function() {
+          MyPlumbService.setConnections(this.instance.getConnections());
+        }.bind(this));
         $timeout(this.drawGraph.bind(this));
+        this.plugins = $scope.config;
         $scope.reloaddag = false;
         this.reloadDAG = true;
       }

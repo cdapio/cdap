@@ -21,7 +21,7 @@
         <tbody>
           <tr ng-repeat="property in properties" ng-keypress="enter($event, $index)" ng-click="emptyRowClick(property, $index)">
             <td class="name" ng-if="!property.empty">
-              <input type="text" class="form-control" ng-model="property.name" placeholder="name" my-focus-watch="!property.empty" />
+              <input type="text" class="form-control" ng-model="property.name" placeholder="name" my-focus-watch="property.newField" />
             </td>
             <td class="type" ng-if="!property.empty">
               <select ng-model="property.type" class="form-control col-xs-4"

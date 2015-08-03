@@ -20,6 +20,7 @@ import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Table;
@@ -61,7 +62,14 @@ public class TableSink extends BatchWritableSink<StructuredRecord, byte[], Put> 
   @Override
   public void initialize(BatchSinkContext context) throws Exception {
     super.initialize(context);
-    recordPutTransformer = new RecordPutTransformer(tableSinkConfig.getRowField(),
+    Schema outputSchema = null;
+    // If a schema string is present in the properties, use that to construct the outputSchema and pass it to the
+    // recordPutTransformer
+    String schemaString = context.getPluginProperties().getProperties().get(Properties.Table.PROPERTY_SCHEMA);
+    if (schemaString != null) {
+      outputSchema = Schema.parseJson(schemaString);
+    }
+    recordPutTransformer = new RecordPutTransformer(tableSinkConfig.getRowField(), outputSchema,
                                                     tableSinkConfig.isRowFieldCaseInsensitive());
   }
 

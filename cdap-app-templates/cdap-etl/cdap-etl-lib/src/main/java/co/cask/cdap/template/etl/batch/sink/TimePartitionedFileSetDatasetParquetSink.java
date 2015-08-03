@@ -50,7 +50,7 @@ public class TimePartitionedFileSetDatasetParquetSink extends
 
   private static final String SCHEMA_DESC = "The Parquet schema of the record being written to the Sink as a JSON " +
     "Object.";
-  private final StructuredToAvroTransformer recordTransformer = new StructuredToAvroTransformer();
+  private StructuredToAvroTransformer recordTransformer;
   private final TPFSParquetSinkConfig config;
   private String hiveSchema;
 
@@ -84,6 +84,12 @@ public class TimePartitionedFileSetDatasetParquetSink extends
     org.apache.avro.Schema avroSchema = new org.apache.avro.Schema.Parser().parse(config.schema.toLowerCase());
     Job job = context.getHadoopJob();
     AvroParquetOutputFormat.setSchema(job, avroSchema);
+  }
+
+  @Override
+  public void initialize(BatchSinkContext context) throws Exception {
+    super.initialize(context);
+    recordTransformer = new StructuredToAvroTransformer(config.schema);
   }
 
   @Override

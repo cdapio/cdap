@@ -86,16 +86,13 @@ angular.module(PKG.name + '.feature.adapters')
           return;
         }
         $scope.config = JSON.stringify(result);
+        this.reloadDAG = true;
         MyPlumbService.resetToDefaults(true);
         setNodesAndConnectionsFromDraft.call(this, result);
         if ($scope.config.name) {
           MyPlumbService.metadata.name = $scope.config.name;
         }
-        this.reloadDAG = true;
-        $alert({
-          type: 'success',
-          content: 'Template imported successfully.'
-        });
+
         MyPlumbService.notifyError({});
         MyPlumbService.notifyResetListners();
       }.bind(this)
@@ -108,15 +105,20 @@ angular.module(PKG.name + '.feature.adapters')
       var config;
       switch(group.name) {
         case 'Export':
-          var detailedConfig = MyPlumbService.getConfig();
-          var config = MyPlumbService.getConfigForBackend();
-          if (MyPlumbService.metadata.name) {
-            config.name = MyPlumbService.metadata.name;
+          var detailedConfig = MyPlumbService.getConfigForBackend();
+          if (!MyPlumbService.metadata.name || MyPlumbService.metadata.name === '') {
+            detailedConfig.name = 'noname';
+          } else {
+            detailedConfig.name =  MyPlumbService.metadata.name;
           }
-          var configName = detailedConfig.name || 'noname';
-          var content = JSON.stringify(config, null, 4);
+
+          detailedConfig.ui = {
+            nodes: MyPlumbService.nodes,
+            connections: MyPlumbService.connections
+          };
+          var content = JSON.stringify(detailedConfig, null, 4);
           var blob = new Blob([content], { type: 'application/json'});
-          this.exportFileName = configName + '-' + config.template;
+          this.exportFileName = detailedConfig.name + '-' + detailedConfig.template;
           this.url = URL.createObjectURL(blob);
 
           $scope.$on('$destroy', function () {
@@ -269,7 +271,7 @@ angular.module(PKG.name + '.feature.adapters')
         description: item.description,
         type: item.type
       };
-      MyPlumbService.addNodes(config, config.type);
+      MyPlumbService.addNodes(config, config.type, true);
     };
 
     function errorNotification(errors) {
@@ -299,6 +301,9 @@ angular.module(PKG.name + '.feature.adapters')
       // if I already have the nodes and connections
       if (ui && ui.nodes) {
         nodes = ui.nodes;
+        while(this.nodes.length) {
+          this.nodes.pop();
+        }
         angular.forEach(nodes, function(value) {
           this.nodes.push(value);
         }.bind(this));
