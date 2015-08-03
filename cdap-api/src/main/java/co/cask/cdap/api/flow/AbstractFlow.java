@@ -37,7 +37,7 @@ public abstract class AbstractFlow implements Flow {
   /**
    * Configure the flow.
    *
-   * @deprecated Use {@link AbstractFlow#configure} instead.
+   * @deprecated Use {@link AbstractFlow#configure()} instead.
    */
   @Deprecated
   protected void configureFlow() {
