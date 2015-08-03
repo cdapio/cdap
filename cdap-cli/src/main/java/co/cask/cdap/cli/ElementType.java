@@ -64,7 +64,7 @@ public enum ElementType {
 
   WORKFLOW("workflow", new Noun("workflow"), new Noun("Workflow"), ProgramType.WORKFLOW, null,
            ArgumentName.WORKFLOW,
-           Capability.RUNS, Capability.STATUS, Capability.START,
+           Capability.RUNS, Capability.STATUS, Capability.START, Capability.STOP,
            Capability.LIST, Capability.RUNTIME_ARGS, Capability.PREFERENCES),
 
   FLOWLET("flowlet", new Noun("flowlet"), new Noun("Flowlet"), null, ProgramType.FLOW,
