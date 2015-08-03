@@ -211,14 +211,14 @@ you can end up with an unusable system.**
     - ``cdap_system:datasets.instance``
     - ``cdap_system:datasets.type``
     
-  by checking that the coprocessor classnames are using the ``base10cdh`` package |---|
-  for example, ``co.cask.cdap.data2.transaction.coprocessor.hbase10cdh.DefaultTransactionProcessor``
+   by checking that the coprocessor classnames are using the ``base10cdh`` package |---|
+   for example, ``co.cask.cdap.data2.transaction.coprocessor.hbase10cdh.DefaultTransactionProcessor``
   
-  Running this command in an HBase shell will give you table attributes::
+   Running this command in an HBase shell will give you table attributes::
   
     > describe 'cdap_system:app.meta'
     
-  The result output will show the coprocessor classname::
+   The resulting output will show the coprocessor classname::
   
     'cdap_system:app.meta', {TABLE_ATTRIBUTES => {coprocessor$1 =>
     'hdfs://server.example.com/cdap/cdap/lib/
