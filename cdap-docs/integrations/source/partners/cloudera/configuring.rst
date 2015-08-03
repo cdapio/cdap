@@ -8,6 +8,8 @@ Configuring and Installing CDAP using Cloudera Manager
 Overview
 =======================================
 
+.. highlight:: console
+
 You can use `Cloudera Manager
 <http://www.cloudera.com/content/cloudera/en/products-and-services/cloudera-enterprise/cloudera-manager.html>`__ 
 to integrate CDAP into a Hadoop cluster by downloading and installing a CDAP CSD (Custom
@@ -58,7 +60,7 @@ Prerequisites
    - The 'cdap' user needs to be granted HBase permissions to create tables.
      In an HBase shell, enter::
      
-      grant 'cdap', 'ACRW'
+      > grant 'cdap', 'ACRW'
 
    - The 'cdap' user must be able to launch YARN containers, either by adding it to the YARN
      ``allowed.system.users`` or by adjusting ``min.user.id``.
@@ -188,8 +190,8 @@ The following is the generic procedure for Major/Minor version upgrades:
 
 .. rubric:: Upgrading CDAP 3.0 to 3.1 and Upgrading CDH 5.3 to 5.4
 
-**Background:** CDH 5.3 ships with Hbase 0.98 while CDH 5.4 ships with HBase 1.0. We support
-CDH 5.4 as of CDAP 3.1.0. Upgrading from CDH 5.3 to CDH 5.4 entails an HBase upgrade in
+**Background:** CDH 5.3 ships with HBase 0.98 while CDH 5.4 ships with HBase 1.0. We support
+CDH 5.4 as of CDAP 3.1.0. Upgrading from CDH 5.3 to CDH 5.4 includes an HBase upgrade in
 addition to a CDAP upgrade. **It is important to perform these steps as described, otherwise
 you can end up with an unusable system.**
 
@@ -204,8 +206,11 @@ you can end up with an unusable system.**
 #. Upgrade to CDH 5.4
 #. :ref:`Stop CDAP application and services <install-upgrade>`, as CDH will have auto-started CDAP
 #. Upgrade to CDAP 3.1
-#. Run the CDAP Upgrade Tool, as the user that runs CDAP Master (the CDAP user)
-#. Check if the co-processor JARs for these tables have been upgraded to ``cdh-1.0``:
+#. Run the CDAP Upgrade Tool, as the user that runs CDAP Master (the CDAP user)::
+
+    $ /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.UpgradeTool upgrade
+    
+#. Check if the coprocessor JARs for these tables have been upgraded to ``cdh-1.0``:
 
     - ``cdap_system:app.meta``
     - ``cdap_system:datasets.instance``
@@ -233,7 +238,11 @@ you can end up with an unusable system.**
     > enable 'cdap_system:datasets.type'
 
 #. Run the CDAP Upgrade Tool (again), as the user that runs CDAP Master (the CDAP user)
-#. Before starting CDAP, check that all tables have co-processors upgraded, as described above
+#. Before starting CDAP, check that all tables have coprocessors upgraded, as described above
+#. Enable all CDAP tables; from an HBase shell, run this command::
+
+    > enable_all 'cdap.*'
+    
 #. Start CDAP
 
 
