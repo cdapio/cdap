@@ -8,6 +8,8 @@ Configuring and Installing CDAP using Cloudera Manager
 Overview
 =======================================
 
+.. highlight:: console
+
 You can use `Cloudera Manager
 <http://www.cloudera.com/content/cloudera/en/products-and-services/cloudera-enterprise/cloudera-manager.html>`__ 
 to integrate CDAP into a Hadoop cluster by downloading and installing a CDAP CSD (Custom
@@ -58,7 +60,7 @@ Prerequisites
    - The 'cdap' user needs to be granted HBase permissions to create tables.
      In an HBase shell, enter::
      
-      grant 'cdap', 'ACRW'
+      > grant 'cdap', 'ACRW'
 
    - The 'cdap' user must be able to launch YARN containers, either by adding it to the YARN
      ``allowed.system.users`` or by adjusting ``min.user.id``.
@@ -186,16 +188,83 @@ The following is the generic procedure for Major/Minor version upgrades:
 
 .. _cloudera-release-specific-upgrade-notes:
 
-.. rubric:: Upgrading CDAP 3.0 to 3.1
+.. rubric:: Upgrading CDAP 3.0 to 3.1 and Upgrading CDH 5.3 to 5.4
 
-**Note:** An app need to be both recompiled and re-deployed if it uses either a PartitionedFileSet or a TimePartitionedFileSet.
+**Background:** CDH 5.3 ships with HBase 0.98 while CDH 5.4 ships with HBase 1.0. We support
+CDH 5.4 as of CDAP 3.1.0. Upgrading from CDH 5.3 to CDH 5.4 includes an HBase upgrade in
+addition to a CDAP upgrade. 
+
+**It is important to perform these steps as described, otherwise the coprocessors may not
+get upgraded correctly and HBase regionservers may crash.** In the case where something
+goes wrong, see these troubleshooting instructions for :ref:`problems while upgrading CDH
+<cloudera-troubleshooting-upgrade-cdh>`.
+
+In the future, we intend to automate all these steps. The issue that tracks that work is
+`CDAP-3179 <https://issues.cask.co/browse/CDAP-3179>`__.
+
+**Upgrade Steps**
+
+1. If using Cloudera Manager, :ref:`stop all CDAP application and services
+   <install-upgrade>`, as Cloudera Manager will have auto-started CDAP
+#. Disable all CDAP tables; from an HBase shell, run this command::
+
+    > disable_all 'cdap.*'
+    
+#. Upgrade to CDH 5.4
+#. :ref:`Stop CDAP application and services <install-upgrade>`, as CDH will have auto-started CDAP
+#. Upgrade to CDAP 3.1
+#. Run the CDAP Upgrade Tool, as the user that runs CDAP Master (the CDAP user)::
+
+    $ /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.UpgradeTool upgrade
+    
+   If using Cloudera Manager, this can be done by selecting ``Run CDAP Upgrade Tool`` from
+   the *CDAP Service Actions* menu
+    
+#. Check if the coprocessor JARs for these tables have been upgraded to CDH HBase 1.0:
+
+    - ``cdap_system:app.meta``
+    - ``cdap_system:datasets.instance``
+    - ``cdap_system:datasets.type``
+    
+   by checking that the coprocessor classnames are using the ``hbase10cdh`` package |---|
+   for example, ``co.cask.cdap.data2.transaction.coprocessor.hbase10cdh.DefaultTransactionProcessor``
+  
+   Running this command in an HBase shell will give you table attributes::
+  
+    > describe 'cdap_system:app.meta'
+    
+   The resulting output will show the coprocessor classname::
+  
+    'cdap_system:app.meta', {TABLE_ATTRIBUTES => {coprocessor$1 =>
+    'hdfs://server.example.com/cdap/cdap/lib/
+    coprocessorb5cb1b69834de686a84d513dff009908.jar|co.cask.cdap.data2.transaction.
+    coprocessor.hbase10cdh.DefaultTransactionProcessor|1073741823|', METADATA =>
+    {'cdap.version' => '3.1.0...
+
+#. Enable these tables; from an HBase shell, run these commands::
+   
+    > enable 'cdap_system:app.meta'
+    > enable 'cdap_system:datasets.instance'
+    > enable 'cdap_system:datasets.type'
+
+#. Run the CDAP Upgrade Tool (again), as the user that runs CDAP Master (the CDAP user)
+#. Before starting CDAP, check that all tables have coprocessors upgraded, as described above
+#. Enable all CDAP tables; from an HBase shell, run this command::
+
+    > enable_all 'cdap.*'
+    
+#. Start CDAP
+
+**Note:** Any apps will need to be both recompiled and re-deployed if they use either a
+PartitionedFileSet or a TimePartitionedFileSet.
+
 
 .. rubric:: Upgrading CDAP 2.8 to 3.0
 
 **Note:** Apps need to be both recompiled and re-deployed.
 
-When upgrading from 2.8.0 to 3.0.0, the CDAP Web-App role has been replaced by the CDAP-UI role.  After starting the 3.0 services 
-for the first time:
+When upgrading from 2.8.0 to 3.0.0, the CDAP Web-App role has been replaced by the CDAP-UI
+role.  After starting the 3.0 services for the first time:
 
    - From the CDAP Instances page, select "Add Role Instances", and choose a host for the CDAP-UI role.
 
@@ -255,3 +324,29 @@ Previously released parcels can also be accessed from their version-specific URL
   |http:|//repository.cask.co/parcels/cdap/2.8/CDAP-2.8.0-1-precise.parcel
   |http:|//repository.cask.co/parcels/cdap/2.8/CDAP-2.8.0-1-trusty.parcel
   |http:|//repository.cask.co/parcels/cdap/2.8/CDAP-2.8.0-1-wheezy.parcel
+  
+
+.. _cloudera-troubleshooting-upgrade-cdh:
+
+.. rubric:: Problems While Upgrading CDH
+
+If you miss a step in the upgrade process and something goes wrong, it's possible that the
+tables will get re-enabled before the coprocessors are upgraded. This could cause the
+regionservers to abort and may make it very difficult to get the cluster back to a stable
+state where the tables can be disabled again and complete the upgrade process.
+
+.. highlight:: xml
+
+In that case, set this configuration property in ``hbase-site.xml``::
+
+  <property>
+    <name>hbase.coprocessor.abortonerror</name>
+    <value>false</value>
+  </property>
+
+and restart the HBase regionservers. This will allow the regionservers to start up
+despite the coprocessor version mismatch. At this point, you should be able to run through
+the upgrade steps successfully. 
+
+At the end, remove the entry for ``hbase.coprocessor.abortonerror`` in order to ensure
+that data correctness is maintained.
