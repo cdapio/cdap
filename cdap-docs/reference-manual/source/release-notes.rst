@@ -130,6 +130,35 @@ New Features
 
 **Datasets**
 
+- `CDAP-347 <https://issues.cask.co/browse/CDAP-347>`__ -
+  User can use datasets in beforeSubmit and afterFinish.
+
+- `CDAP-585 <https://issues.cask.co/browse/CDAP-585>`__ -
+  Changes to Spark program runner to use File dataset in Spark.
+  Spark programs can now use file-based datasets.
+
+- `CDAP-2734 <https://issues.cask.co/browse/CDAP-2734>`__ -
+  Added PartitionedFileSet support to setting/getting properties at the Partition level.
+
+- `CDAP-2746 <https://issues.cask.co/browse/CDAP-2746>`__ -
+  PartitionedFileSets now record the creation time of each partition in the metadata.
+
+- `CDAP-2747 <https://issues.cask.co/browse/CDAP-2747>`__ -
+  PartitionedFileSets now index the creation time of partitions to allow selection of
+  partitions that were created after a given time. Introduced BatchPartitionConsumer as a
+  way to incrementally consume new data in a PartitionedFileSet.
+
+- `CDAP-2752 <https://issues.cask.co/browse/CDAP-2752>`__ -
+  Added ability for custom actions to access the CDAP datasets and services.
+
+- `CDAP-2758 <https://issues.cask.co/browse/CDAP-2758>`__ -
+  FileSet now support existing HDFS locations.
+
+- `CDAP-2784 <https://issues.cask.co/browse/CDAP-2784>`__ -
+  Added support to write to PartitionedFileSet Partition metadata from MapReduce.
+
+- `CDAP-2822 <https://issues.cask.co/browse/CDAP-2822>`__ -
+  IndexedTable now supports scans on the indexed field.
 
 
 **Metrics**
@@ -194,20 +223,11 @@ New Features
 - `CDAP-2670 <https://issues.cask.co/browse/CDAP-2670>`__ -
   Added Parquet sink with time partitioned file dataset.
 
-- `CDAP-2734 <https://issues.cask.co/browse/CDAP-2734>`__ -
-  Added PartitionedFileSet support to setting/getting properties at the Partition level.
-
 - `CDAP-2739 <https://issues.cask.co/browse/CDAP-2739>`__ -
   Added S3 batch source for ETLbatch.
 
-- `CDAP-2784 <https://issues.cask.co/browse/CDAP-2784>`__ -
-  Added support to write to PartitionedFileSet Partition metadata from MapReduce.
-
 - `CDAP-2802 <https://issues.cask.co/browse/CDAP-2802>`__ -
   Stopped using HiveConf.ConfVars.defaultValue, to support Hive >0.13.
-
-- `CDAP-2822 <https://issues.cask.co/browse/CDAP-2822>`__ -
-  IndexedTable now supports scans on the indexed field.
 
 - `CDAP-2847 <https://issues.cask.co/browse/CDAP-2847>`__ -
   Added ability to add custom filters to FileBatchSource.
@@ -238,9 +258,6 @@ Improvements
 - `CDAP-37 <https://issues.cask.co/browse/CDAP-37>`__ -
   Inject hconf in AbstractSparkContext by guice module ConfigModule.
 
-- `CDAP-347 <https://issues.cask.co/browse/CDAP-347>`__ -
-  User can use datasets in beforeSubmit and afterFinish.
-
 - `CDAP-362 <https://issues.cask.co/browse/CDAP-362>`__ -
   Enabled Spark job listing and job page in Distributed mode.
 
@@ -249,10 +266,6 @@ Improvements
 
 - `CDAP-419 <https://issues.cask.co/browse/CDAP-419>`__ -
   Added automation and restructuring of the building of documentation.
-
-- `CDAP-585 <https://issues.cask.co/browse/CDAP-585>`__ -
-  Changes to Spark program runner to use File dataset in Spark.
-  Spark programs can now use file-based datasets.
 
 - `CDAP-593 <https://issues.cask.co/browse/CDAP-593>`__ -
   Spark no longer determines the mode through MRConfig.FRAMEWORK_NAME.
@@ -430,17 +443,6 @@ Improvements
 
 - `CDAP-2735 <https://issues.cask.co/browse/CDAP-2735>`__ -
   As DBSource doesn't use Table Name, removed it from Plugin configuration.
-
-- `CDAP-2746 <https://issues.cask.co/browse/CDAP-2746>`__ -
-  PartitionedFileSets now record the creation time of each partition in the metadata.
-
-- `CDAP-2747 <https://issues.cask.co/browse/CDAP-2747>`__ -
-  PartitionedFileSets now index the creation time of partitions to allow selection of
-  partitions that were created after a given time. Introduced BatchPartitionConsumer as a
-  way to incrementally consume new data in a PartitionedFileSet.
-
-- `CDAP-2758 <https://issues.cask.co/browse/CDAP-2758>`__ -
-  FileSet now support existing HDFS locations.
 
 - `CDAP-2795 <https://issues.cask.co/browse/CDAP-2795>`__ -
   Dropped support for Hbase-0.94.
