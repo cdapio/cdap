@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data.hbase;
 
+import co.cask.cdap.common.utils.Networks;
 import com.google.common.base.Function;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Futures;
@@ -77,6 +78,13 @@ public abstract class HBaseTestBase {
     getConfiguration().setInt("hbase.hconnection.threads.max", 10);
     // Tunn down handler threads in regionserver
     getConfiguration().setInt("hbase.regionserver.handler.count", 10);
+
+    // Set to random port
+    getConfiguration().setInt("hbase.master.port", Networks.getRandomPort());
+    getConfiguration().setInt("hbase.master.info.port", Networks.getRandomPort());
+    getConfiguration().setInt("hbase.regionserver.port", Networks.getRandomPort());
+    getConfiguration().setInt("hbase.regionserver.info.port", Networks.getRandomPort());
+
     doStartHBase();
   }
 

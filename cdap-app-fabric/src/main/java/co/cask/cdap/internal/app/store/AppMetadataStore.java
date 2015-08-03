@@ -34,14 +34,15 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.templates.AdapterDefinition;
+
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -140,7 +141,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
       .add(pid)
       .build();
 
-    write(key, new RunRecord(pid, startTs, null, ProgramRunStatus.RUNNING, adapter, twillRunId));
+    write(key, new RunRecordMeta(pid, startTs, null, ProgramRunStatus.RUNNING, adapter, null, twillRunId));
   }
 
   public void recordProgramSuspend(Id.Program program, String pid) {
@@ -170,7 +171,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
       .add(program.getId())
       .add(pid)
       .build();
-    RunRecord record = get(key, RunRecord.class);
+    RunRecordMeta record = get(key, RunRecordMeta.class);
     if (record == null) {
       String msg = String.format("No meta for %s run record for namespace %s app %s program type %s " +
                                    "program %s pid %s exists", action.equals("suspend") ? "started" : "suspended",
@@ -190,7 +191,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
       .add(program.getId())
       .add(pid)
       .build();
-    write(key, new RunRecord(record, null, toStatus));
+    write(key, new RunRecordMeta(record, null, toStatus));
   }
 
   public void recordProgramStop(Id.Program program, String pid, long stopTs, ProgramRunStatus runStatus) {
@@ -202,7 +203,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
       .add(program.getId())
       .add(pid)
       .build();
-    RunRecord started = getFirst(key, RunRecord.class);
+    RunRecordMeta started = getFirst(key, RunRecordMeta.class);
     if (started == null) {
       String msg = String.format("No meta for started run record for namespace %s app %s program type %s " +
                                  "program %s pid %s exists",
@@ -222,10 +223,11 @@ public class AppMetadataStore extends MetadataStoreDataset {
       .add(program.getId())
       .add(getInvertedTsKeyPart(started.getStartTs()))
       .add(pid).build();
-    write(key, new RunRecord(started, stopTs, runStatus));
+
+    write(key, new RunRecordMeta(started, stopTs, runStatus));
   }
 
-  public List<RunRecord> getRuns(ProgramRunStatus status, Predicate<RunRecord> filter) {
+  public List<RunRecordMeta> getRuns(ProgramRunStatus status, Predicate<RunRecordMeta> filter) {
     return getRuns(null, status, Long.MIN_VALUE, Long.MAX_VALUE, Integer.MAX_VALUE, null, filter);
   }
 
@@ -240,11 +242,11 @@ public class AppMetadataStore extends MetadataStoreDataset {
     return builder;
   }
 
-  public List<RunRecord> getRuns(@Nullable Id.Program program, ProgramRunStatus status,
+  public List<RunRecordMeta> getRuns(@Nullable Id.Program program, ProgramRunStatus status,
                                  long startTime, long endTime, int limit, String adapter,
-                                 @Nullable Predicate<RunRecord> filter) {
+                                 @Nullable Predicate<RunRecordMeta> filter) {
     if (status.equals(ProgramRunStatus.ALL)) {
-      List<RunRecord> resultRecords = Lists.newArrayList();
+      List<RunRecordMeta> resultRecords = Lists.newArrayList();
       resultRecords.addAll(getSuspendedRuns(program, startTime, endTime, limit, adapter, filter));
       resultRecords.addAll(getActiveRuns(program, startTime, endTime, limit, adapter, filter));
       resultRecords.addAll(getHistoricalRuns(program, status, startTime, endTime, limit, adapter, filter));
@@ -258,7 +260,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
     }
   }
 
-  public List<RunRecord> getRuns(@Nullable Id.Program program, ProgramRunStatus status,
+  public List<RunRecordMeta> getRuns(@Nullable Id.Program program, ProgramRunStatus status,
                                  long startTime, long endTime, int limit, String adapter) {
     return getRuns(program, status, startTime, endTime, limit, adapter, null);
   }
@@ -266,16 +268,16 @@ public class AppMetadataStore extends MetadataStoreDataset {
   // TODO: getRun is duplicated in cdap-watchdog AppMetadataStore class.
   // Any changes made here will have to be made over there too.
   // JIRA https://issues.cask.co/browse/CDAP-2172
-  public RunRecord getRun(Id.Program program, final String runid) {
+  public RunRecordMeta getRun(Id.Program program, final String runid) {
     // Query active run record first
-    RunRecord running = getUnfinishedRun(program, TYPE_RUN_RECORD_STARTED, runid);
+    RunRecordMeta running = getUnfinishedRun(program, TYPE_RUN_RECORD_STARTED, runid);
     // If program is running, this will be non-null
     if (running != null) {
       return running;
     }
 
     // If program is not running, query completed run records
-    RunRecord complete = getCompletedRun(program, runid);
+    RunRecordMeta complete = getCompletedRun(program, runid);
     if (complete != null) {
       return complete;
     }
@@ -287,7 +289,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
   /**
    * @return run records for runs that do not have start time in mds key for the run record.
    */
-  private RunRecord getUnfinishedRun(Id.Program program, String recordType, String runid) {
+  private RunRecordMeta getUnfinishedRun(Id.Program program, String recordType, String runid) {
     MDSKey runningKey = new MDSKey.Builder()
       .add(recordType)
       .add(program.getNamespaceId())
@@ -297,10 +299,10 @@ public class AppMetadataStore extends MetadataStoreDataset {
       .add(runid)
       .build();
 
-    return get(runningKey, RunRecord.class);
+    return get(runningKey, RunRecordMeta.class);
   }
 
-  private RunRecord getCompletedRun(Id.Program program, final String runid) {
+  private RunRecordMeta getCompletedRun(Id.Program program, final String runid) {
     MDSKey completedKey = new MDSKey.Builder()
       .add(TYPE_RUN_RECORD_COMPLETED)
       .add(program.getNamespaceId())
@@ -318,16 +320,16 @@ public class AppMetadataStore extends MetadataStoreDataset {
         .add(runid)
         .build();
 
-      return get(key, RunRecord.class);
+      return get(key, RunRecordMeta.class);
     } else {
       // If start time is not found, scan the table (backwards compatibility when run ids were random UUIDs)
       MDSKey startKey = new MDSKey.Builder(completedKey).add(getInvertedTsScanKeyPart(Long.MAX_VALUE)).build();
       MDSKey stopKey = new MDSKey.Builder(completedKey).add(getInvertedTsScanKeyPart(0)).build();
-      List<RunRecord> runRecords =
-        list(startKey, stopKey, RunRecord.class, 1,  // Should have only one record for this runid
-             new Predicate<RunRecord>() {
+      List<RunRecordMeta> runRecords =
+        list(startKey, stopKey, RunRecordMeta.class, 1,  // Should have only one record for this runid
+             new Predicate<RunRecordMeta>() {
                @Override
-               public boolean apply(RunRecord input) {
+               public boolean apply(RunRecordMeta input) {
                  return input.getPid().equals(runid);
                }
              });
@@ -335,24 +337,24 @@ public class AppMetadataStore extends MetadataStoreDataset {
     }
   }
 
-  private List<RunRecord> getSuspendedRuns(Id.Program program, long startTime, long endTime, int limit,
-                                           final String adapter, @Nullable Predicate<RunRecord> filter) {
+  private List<RunRecordMeta> getSuspendedRuns(Id.Program program, long startTime, long endTime, int limit,
+                                           final String adapter, @Nullable Predicate<RunRecordMeta> filter) {
     return getNonCompleteRuns(program, TYPE_RUN_RECORD_SUSPENDED, startTime, endTime, limit, adapter, filter);
   }
 
-  private List<RunRecord> getActiveRuns(Id.Program program, final long startTime, final long endTime, int limit,
-                                        final String adapter, @Nullable Predicate<RunRecord> filter) {
+  private List<RunRecordMeta> getActiveRuns(Id.Program program, final long startTime, final long endTime, int limit,
+                                        final String adapter, @Nullable Predicate<RunRecordMeta> filter) {
     return getNonCompleteRuns(program, TYPE_RUN_RECORD_STARTED, startTime, endTime, limit, adapter, filter);
     }
 
-  private List<RunRecord> getNonCompleteRuns(Id.Program program, String recordType,
+  private List<RunRecordMeta> getNonCompleteRuns(Id.Program program, String recordType,
                                              final long startTime, final long endTime, int limit,
-                                             final String adapter, Predicate<RunRecord> filter) {
+                                             final String adapter, Predicate<RunRecordMeta> filter) {
     MDSKey activeKey = getProgramKeyBuilder(recordType, program).build();
 
-    return list(activeKey, null, RunRecord.class, limit, andPredicate(new Predicate<RunRecord>() {
+    return list(activeKey, null, RunRecordMeta.class, limit, andPredicate(new Predicate<RunRecordMeta>() {
                   @Override
-                  public boolean apply(RunRecord input) {
+                  public boolean apply(RunRecordMeta input) {
                     boolean normalCheck = input.getStartTs() >= startTime && input.getStartTs() < endTime;
                     // Check if RunRecord matches with passed in adapter name
                     if (normalCheck && adapter != null) {
@@ -363,18 +365,18 @@ public class AppMetadataStore extends MetadataStoreDataset {
                 }, filter));
   }
 
-  private List<RunRecord> getHistoricalRuns(Id.Program program, ProgramRunStatus status,
+  private List<RunRecordMeta> getHistoricalRuns(Id.Program program, ProgramRunStatus status,
                                             final long startTime, final long endTime, int limit, final String adapter,
-                                            @Nullable Predicate<RunRecord> filter) {
+                                            @Nullable Predicate<RunRecordMeta> filter) {
     MDSKey historyKey = getProgramKeyBuilder(TYPE_RUN_RECORD_COMPLETED, program).build();
 
     MDSKey start = new MDSKey.Builder(historyKey).add(getInvertedTsScanKeyPart(endTime)).build();
     MDSKey stop = new MDSKey.Builder(historyKey).add(getInvertedTsScanKeyPart(startTime)).build();
     if (status.equals(ProgramRunStatus.ALL)) {
       //return all records (successful and failed)
-      return list(start, stop, RunRecord.class, limit, andPredicate(new Predicate<RunRecord>() {
+      return list(start, stop, RunRecordMeta.class, limit, andPredicate(new Predicate<RunRecordMeta>() {
         @Override
-        public boolean apply(@Nullable RunRecord record) {
+        public boolean apply(@Nullable RunRecordMeta record) {
           // Check if RunRecord matches with passed in adapter name
           return (adapter == null) || (record != null && adapter.equals(record.getAdapterName()));
         }
@@ -382,21 +384,21 @@ public class AppMetadataStore extends MetadataStoreDataset {
     }
 
     if (status.equals(ProgramRunStatus.COMPLETED)) {
-      return list(start, stop, RunRecord.class, limit,
+      return list(start, stop, RunRecordMeta.class, limit,
                   andPredicate(getPredicate(ProgramController.State.COMPLETED, adapter), filter));
     }
     if (status.equals(ProgramRunStatus.KILLED)) {
-      return list(start, stop, RunRecord.class, limit,
+      return list(start, stop, RunRecordMeta.class, limit,
                   andPredicate(getPredicate(ProgramController.State.KILLED, adapter), filter));
     }
-    return list(start, stop, RunRecord.class, limit,
+    return list(start, stop, RunRecordMeta.class, limit,
                 andPredicate(getPredicate(ProgramController.State.ERROR, adapter), filter));
   }
 
-  private Predicate<RunRecord> getPredicate(final ProgramController.State state, final String adapter) {
-    return new Predicate<RunRecord>() {
+  private Predicate<RunRecordMeta> getPredicate(final ProgramController.State state, final String adapter) {
+    return new Predicate<RunRecordMeta>() {
       @Override
-      public boolean apply(RunRecord record) {
+      public boolean apply(RunRecordMeta record) {
         boolean normalCheck = record.getStatus().equals(state.getRunStatus());
         // Check if RunRecord matches with passed in adapter name
         if (normalCheck && adapter != null) {
@@ -407,7 +409,8 @@ public class AppMetadataStore extends MetadataStoreDataset {
     };
   }
 
-  private Predicate<RunRecord> andPredicate(Predicate<RunRecord> first, @Nullable Predicate<RunRecord> second) {
+  private Predicate<RunRecordMeta> andPredicate(Predicate<RunRecordMeta> first,
+                                                @Nullable Predicate<RunRecordMeta> second) {
     if (second != null) {
       return and(first, second);
     }
@@ -579,7 +582,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
     // Get the run record of the Workflow which started this program
     MDSKey key = getWorkflowRunRecordKey(Id.Workflow.from(program.getApplication(), workflow), workflowRunId);
 
-    RunRecord record = get(key, RunRecord.class);
+    RunRecordMeta record = get(key, RunRecordMeta.class);
     if (record == null) {
       String msg = String.format("No meta found for associated Workflow %s run record %s, while recording run for the" +
                                    " namespace %s app %s type %s program %s runid %s", workflow, workflowRunId,
@@ -593,8 +596,8 @@ public class AppMetadataStore extends MetadataStoreDataset {
     Map<String, String> properties = record.getProperties();
     properties.put(workflowNodeId, programRunId);
 
-    write(key, new RunRecord(record.getPid(), record.getStartTs(), null, ProgramRunStatus.RUNNING,
-                             record.getAdapterName(), record.getTwillRunId(), properties));
+    write(key, new RunRecordMeta(record.getPid(), record.getStartTs(), null, ProgramRunStatus.RUNNING,
+                                 record.getAdapterName(), properties, record.getTwillRunId()));
 
     // Record the program start
     key = new MDSKey.Builder()
@@ -606,39 +609,40 @@ public class AppMetadataStore extends MetadataStoreDataset {
       .add(programRunId)
       .build();
 
-    write(key, new RunRecord(programRunId, startTimeInSeconds, null, ProgramRunStatus.RUNNING, adapter, twillRunId,
-                             ImmutableMap.of("workflowrunid", workflowRunId)));
+    write(key, new RunRecordMeta(programRunId, startTimeInSeconds, null, ProgramRunStatus.RUNNING, adapter,
+                                 ImmutableMap.of("workflowrunid", workflowRunId), twillRunId));
   }
 
   public void updateWorkflowToken(Id.Workflow workflowId, String workflowRunId,
                                   WorkflowToken workflowToken) throws NotFoundException {
-    RunRecord runRecord = getUnfinishedRun(workflowId, TYPE_RUN_RECORD_STARTED, workflowRunId);
-    if (runRecord == null) {
+    RunRecordMeta runRecordMeta = getUnfinishedRun(workflowId, TYPE_RUN_RECORD_STARTED, workflowRunId);
+    if (runRecordMeta == null) {
       // Even if a run is suspended, the currently running node runs to completion.
       // This node also updates the workflow token at the end.
       // For such a scenario, check for a suspended run record too.
-      runRecord = getUnfinishedRun(workflowId, TYPE_RUN_RECORD_SUSPENDED, workflowRunId);
-      if (runRecord == null) {
+      runRecordMeta = getUnfinishedRun(workflowId, TYPE_RUN_RECORD_SUSPENDED, workflowRunId);
+      if (runRecordMeta == null) {
         throw new NotFoundException(new Id.Run(workflowId, workflowRunId));
       }
     }
-    Map<String, String> propertiesToUpdate = runRecord.getProperties();
+    Map<String, String> propertiesToUpdate = runRecordMeta.getProperties();
     propertiesToUpdate.put(WORKFLOW_TOKEN_PROPERTY_KEY, GSON.toJson(workflowToken));
 
     write(getWorkflowRunRecordKey(workflowId, workflowRunId),
-          new RunRecord(runRecord, propertiesToUpdate));
+          new RunRecordMeta(runRecordMeta, propertiesToUpdate));
   }
 
   public WorkflowToken getWorkflowToken(Id.Workflow workflowId, String workflowRunId) throws NotFoundException {
-    RunRecord runRecord = getRun(workflowId, workflowRunId);
-    if (runRecord == null) {
+    RunRecordMeta runRecordMeta = getRun(workflowId, workflowRunId);
+    if (runRecordMeta == null) {
       throw new NotFoundException(new Id.Run(workflowId, workflowRunId));
     }
-    String workflowToken = runRecord.getProperties().get(WORKFLOW_TOKEN_PROPERTY_KEY);
+    String workflowToken = runRecordMeta.getProperties().get(WORKFLOW_TOKEN_PROPERTY_KEY);
     // For pre-3.1 run records, there won't be a workflow token. Return an empty token for such run records.
     if (workflowToken == null) {
-      LOG.debug("Could not find workflowToken for workflow: {}, runId: {}", workflowId, workflowRunId);
-      return new BasicWorkflowToken();
+      LOG.debug("No workflow token available for workflow: {}, runId: {}", workflowId, workflowRunId);
+      // Its ok to not allow any updates by returning a 0 size token.
+      return new BasicWorkflowToken(0);
     }
     return GSON.fromJson(workflowToken, BasicWorkflowToken.class);
   }

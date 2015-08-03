@@ -18,11 +18,9 @@ package co.cask.cdap.data.tools;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
-import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
@@ -31,7 +29,6 @@ import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.TwillModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
-import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.utils.ProjectInfo;
 import co.cask.cdap.config.DefaultConfigStore;
 import co.cask.cdap.data.runtime.DataFabricDistributedModule;
@@ -48,11 +45,6 @@ import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.explore.guice.ExploreClientModule;
-import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
-import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
-import co.cask.cdap.internal.app.runtime.schedule.AbstractSchedulerService;
-import co.cask.cdap.internal.app.runtime.schedule.ExecutorThreadPool;
-import co.cask.cdap.internal.app.runtime.schedule.store.DatasetBasedTimeScheduleStore;
 import co.cask.cdap.internal.app.runtime.schedule.store.ScheduleStoreTableUtil;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.logging.save.LogSaverTableUtil;
@@ -61,11 +53,6 @@ import co.cask.cdap.metrics.store.DefaultMetricStore;
 import co.cask.cdap.metrics.store.MetricDatasetFactory;
 import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
-import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.templates.AdapterDefinition;
-import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionSystemClient;
 import co.cask.tephra.distributed.TransactionService;
 import com.google.common.annotations.VisibleForTesting;
@@ -81,25 +68,11 @@ import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.zookeeper.ZKClientService;
-import org.quartz.JobKey;
-import org.quartz.SchedulerException;
-import org.quartz.TriggerKey;
-import org.quartz.core.JobRunShellFactory;
-import org.quartz.core.QuartzScheduler;
-import org.quartz.core.QuartzSchedulerResources;
-import org.quartz.impl.DefaultThreadExecutor;
-import org.quartz.impl.DirectSchedulerFactory;
-import org.quartz.impl.StdJobRunShellFactory;
-import org.quartz.simpl.CascadingClassLoadHelper;
-import org.quartz.spi.ClassLoadHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.List;
 import java.util.Scanner;
 
 /**
@@ -116,14 +89,9 @@ public class UpgradeTool {
   private final Configuration hConf;
   private final TransactionService txService;
   private final ZKClientService zkClientService;
-  private final NamespacedLocationFactory namespacedLocationFactory;
   private final MDSDatasetsRegistry mdsDatasetsRegistry;
 
-  private Store store;
-  private QuartzScheduler qs;
-  private final AdapterService adapterService;
   private final DatasetFramework dsFramework;
-  private DatasetBasedTimeScheduleStore datasetBasedTimeScheduleStore;
 
   /**
    * Set of Action available in this tool.
@@ -131,16 +99,17 @@ public class UpgradeTool {
   private enum Action {
     UPGRADE("Upgrades CDAP to 3.0\n" +
               "  The upgrade tool upgrades the following: \n" +
-              "  1. User Datasets (Upgrades the coprocessor jars for tables, and the base paths for file sets)\n" +
+              "  1. User Datasets\n" +
+              "      - Upgrades the coprocessor jars for tables\n" +
+              "      - Migrates the metadata for PartitionedFileSets\n" +
               "  2. System Datasets\n" +
-              "  3. StreamConversionAdapter\n" +
-              "  4. UsageRegistry Dataset Type\n" +
+              "  3. UsageRegistry Dataset Type\n" +
               "  Note: Once you run the upgrade tool you cannot rollback to the previous version."),
     HELP("Show this help.");
 
     private final String description;
 
-    private Action(String description) {
+    Action(String description) {
       this.description = description;
     }
 
@@ -155,11 +124,9 @@ public class UpgradeTool {
     this.injector = init();
     this.txService = injector.getInstance(TransactionService.class);
     this.zkClientService = injector.getInstance(ZKClientService.class);
-    this.namespacedLocationFactory = injector.getInstance(NamespacedLocationFactory.class);
     this.dsFramework = injector.getInstance(DatasetFramework.class);
     this.mdsDatasetsRegistry = injector.getInstance(Key.get(MDSDatasetsRegistry.class,
                                                             Names.named("mdsDatasetsRegistry")));
-    this.adapterService = injector.getInstance(AdapterService.class);
 
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
@@ -208,26 +175,17 @@ public class UpgradeTool {
         @Provides
         @Singleton
         @Named("mdsDatasetsRegistry")
-        public MDSDatasetsRegistry getMDSDatasetsRegistry (TransactionSystemClient txClient,
-                            @Named("datasetMDS") DatasetFramework framework) {
+        public MDSDatasetsRegistry getMDSDatasetsRegistry(TransactionSystemClient txClient,
+                                                          @Named("datasetMDS") DatasetFramework framework) {
           return new MDSDatasetsRegistry(txClient, framework);
         }
 
         @Provides
         @Singleton
         @Named("datasetInstanceManager")
-        public DatasetInstanceManager getDatasetInstanceManager (@Named("mdsDatasetsRegistry")
-                                                                 MDSDatasetsRegistry mdsDatasetsRegistry) {
+        public DatasetInstanceManager getDatasetInstanceManager(@Named("mdsDatasetsRegistry")
+                                                                MDSDatasetsRegistry mdsDatasetsRegistry) {
           return new DatasetInstanceManager(mdsDatasetsRegistry);
-        }
-
-        @Provides
-        @Singleton
-        @Named("defaultStore")
-        public Store getStore(DatasetFramework dsFramework,
-                              CConfiguration cConf, LocationFactory locationFactory,
-                              TransactionExecutorFactory txExecutorFactory) {
-          return new DefaultStore(cConf, locationFactory, namespacedLocationFactory, txExecutorFactory, dsFramework);
         }
 
         // This is needed because the LocalAdapterManager, LocalApplicationManager, LocalApplicationTemplateManager
@@ -260,9 +218,6 @@ public class UpgradeTool {
     try {
       txService.stopAndWait();
       zkClientService.stopAndWait();
-      if (qs != null) {
-        qs.shutdown();
-      }
       mdsDatasetsRegistry.shutDown();
     } catch (Throwable e) {
       LOG.error("Exception while trying to stop upgrade process", e);
@@ -317,7 +272,6 @@ public class UpgradeTool {
     } catch (Exception e) {
       System.out.println(String.format("Failed to perform action '%s'. Reason: '%s'.", action, e.getMessage()));
       e.printStackTrace(System.out);
-      throw e;
     }
   }
 
@@ -359,44 +313,17 @@ public class UpgradeTool {
     DatasetUpgrader dsUpgrade = injector.getInstance(DatasetUpgrader.class);
     dsUpgrade.upgrade();
 
+    LOG.info("Upgrading PartitionedFileSets ...");
+    PFSUpgrader pfsUpgrader = injector.getInstance(PFSUpgrader.class);
+    pfsUpgrader.upgrade();
+
+    LOG.info("Upgrading QueueAdmin ...");
     QueueAdmin queueAdmin = injector.getInstance(QueueAdmin.class);
     queueAdmin.upgrade();
-
-    upgradeAdapters();
 
     UsageRegistry usageRegistry = injector.getInstance(UsageRegistry.class);
     usageRegistry.upgrade(injector.getInstance(Key.get(DatasetInstanceManager.class,
                                                        Names.named("datasetInstanceManager"))));
-  }
-
-  /**
-   * Upgrades adapters by first deleting all the schedule triggers and the the job itself in every namespace follwed by
-   * all the adapters in the namespace
-   *
-   * @throws SchedulerException
-   */
-  private void upgradeAdapters() throws SchedulerException {
-    DatasetBasedTimeScheduleStore datasetBasedTimeScheduleStore = getDatasetBasedTimeScheduleStore();
-    NamespaceAdmin namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
-    List<NamespaceMeta> namespaceMetas = namespaceAdmin.listNamespaces();
-    for (NamespaceMeta namespaceMeta : namespaceMetas) {
-      String namespace = namespaceMeta.getName();
-      Collection<AdapterDefinition> adapters = adapterService.getAdapters(Id.Namespace
-                                                                            .from(namespace));
-      Id.Program program = Id.Program.from(namespace, "stream-conversion", ProgramType.WORKFLOW,
-                                           "StreamConversionWorkflow");
-      for (AdapterDefinition adapter : adapters) {
-        TriggerKey triggerKey = new TriggerKey(AbstractSchedulerService.scheduleIdFor(
-          program, SchedulableProgramType.WORKFLOW, adapter.getName() + "StreamConversionWorkflow"));
-        if (datasetBasedTimeScheduleStore.removeTrigger(triggerKey)) {
-          LOG.info("Removed adapter trigger: {}", triggerKey.toString());
-          getStore().removeAdapter(Id.Namespace.from(namespace), adapter.getName());
-        }
-      }
-      //delete the stream-conversion job entry
-      datasetBasedTimeScheduleStore.removeJob(new JobKey(AbstractSchedulerService
-                                                           .programIdFor(program, SchedulableProgramType.WORKFLOW)));
-    }
   }
 
   public static void main(String[] args) {
@@ -427,51 +354,8 @@ public class UpgradeTool {
     // metrics data
     DefaultMetricDatasetFactory factory = new DefaultMetricDatasetFactory(cConf, datasetFramework);
     DefaultMetricDatasetFactory.setupDatasets(factory);
-  }
 
-  /**
-   * gets the Store to access the app meta table
-   *
-   * @return {@link Store}
-   */
-  private Store getStore() {
-    if (store == null) {
-      store = injector.getInstance(Key.get(Store.class, Names.named("defaultStore")));
-    }
-    return store;
-  }
-
-  /**
-   * gets the {@link DatasetBasedTimeScheduleStore} which stores the schedules of adapters
-   *
-   * @return {@link DatasetBasedTimeScheduleStore}
-   * @throws SchedulerException
-   */
-  private DatasetBasedTimeScheduleStore getDatasetBasedTimeScheduleStore() throws SchedulerException {
-    if (datasetBasedTimeScheduleStore == null) {
-      datasetBasedTimeScheduleStore = injector.getInstance(DatasetBasedTimeScheduleStore.class);
-      // need to call initialize on datasetBasedTimeScheduleStore
-      ExecutorThreadPool threadPool = new ExecutorThreadPool(1);
-      threadPool.initialize();
-      String schedulerName = DirectSchedulerFactory.DEFAULT_SCHEDULER_NAME;
-      String schedulerInstanceId = DirectSchedulerFactory.DEFAULT_INSTANCE_ID;
-
-      QuartzSchedulerResources qrs = new QuartzSchedulerResources();
-      JobRunShellFactory jrsf = new StdJobRunShellFactory();
-
-      qrs.setName(schedulerName);
-      qrs.setInstanceId(schedulerInstanceId);
-      qrs.setJobRunShellFactory(jrsf);
-      qrs.setThreadPool(threadPool);
-      qrs.setThreadExecutor(new DefaultThreadExecutor());
-      qrs.setJobStore(datasetBasedTimeScheduleStore);
-      qrs.setRunUpdateCheck(false);
-      qs = new QuartzScheduler(qrs, -1, -1);
-      ClassLoadHelper cch = new CascadingClassLoadHelper();
-      cch.initialize();
-
-      datasetBasedTimeScheduleStore.initialize(cch, qs.getSchedulerSignaler());
-    }
-    return datasetBasedTimeScheduleStore;
+    // Usage registry
+    UsageRegistry.setupDatasets(datasetFramework);
   }
 }

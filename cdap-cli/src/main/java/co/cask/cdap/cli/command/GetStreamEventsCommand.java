@@ -73,7 +73,7 @@ public class GetStreamEventsCommand extends AbstractCommand {
       }).build();
     cliConfig.getTableRenderer().render(cliConfig, output, table);
 
-    output.printf("Fetched %d events from stream %s", events.size(), streamId);
+    output.printf("Fetched %d events from stream '%s'", events.size(), streamId.getId());
     output.println();
   }
 
@@ -85,7 +85,7 @@ public class GetStreamEventsCommand extends AbstractCommand {
 
   @Override
   public String getDescription() {
-    return "Gets events from " + Fragment.of(Article.A, ElementType.STREAM.getTitleName()) + ". " +
+    return "Gets events from " + Fragment.of(Article.A, ElementType.STREAM.getName()) + ". " +
       "The time format for <" + ArgumentName.START_TIME + "> and <" + ArgumentName.END_TIME + "> " +
       "can be a timestamp in milliseconds or " +
       "a relative time in the form of [+|-][0-9][d|h|m|s]. " +

@@ -42,7 +42,7 @@ public class SetPreferencesCommand extends AbstractSetPreferencesCommand {
 
   @Override
   public void printSuccessMessage(PrintStream printStream, ElementType type) {
-    printStream.printf(SUCCESS + "\n", type.getTitleName());
+    printStream.printf(SUCCESS + "\n", type.getName());
   }
 
   @Override
@@ -64,7 +64,7 @@ public class SetPreferencesCommand extends AbstractSetPreferencesCommand {
 
   @Override
   public String getDescription() {
-    return "Sets the preferences of " + Fragment.of(Article.A, type.getTitleName()) + "." +
+    return "Sets the preferences of " + Fragment.of(Article.A, type.getName()) + "." +
       " <" + ArgumentName.RUNTIME_ARGS + "> is specified in the format \"key1=v1 key2=v2\".";
   }
 }

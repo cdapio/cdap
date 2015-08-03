@@ -47,7 +47,7 @@ public class TruncateStreamCommand extends AbstractAuthCommand {
     Id.Stream streamId = Id.Stream.from(cliConfig.getCurrentNamespace(),
                                         arguments.get(ArgumentName.STREAM.toString()));
     streamClient.truncate(streamId);
-    output.printf("Successfully truncated stream '%s'\n", streamId);
+    output.printf("Successfully truncated stream '%s'\n", streamId.getId());
   }
 
   @Override
@@ -57,6 +57,6 @@ public class TruncateStreamCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Truncates %s.", Fragment.of(Article.A, ElementType.STREAM.getTitleName()));
+    return String.format("Truncates %s.", Fragment.of(Article.A, ElementType.STREAM.getName()));
   }
 }

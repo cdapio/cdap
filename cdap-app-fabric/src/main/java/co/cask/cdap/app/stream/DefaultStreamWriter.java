@@ -119,8 +119,11 @@ public class DefaultStreamWriter implements StreamWriter {
 
   private void write(String stream, ByteBuffer data, Map<String, String> headers) throws IOException {
     URL streamURL = getStreamURL(stream);
-    HttpRequest request = HttpRequest.post(streamURL).withBody(data).addHeaders(headers).build();
-    writeToStream(Id.Stream.from(namespace, stream), request);
+    HttpRequest.Builder requestBuilder = HttpRequest.post(streamURL).withBody(data);
+    for (Map.Entry<String, String> header : headers.entrySet()) {
+      requestBuilder.addHeader(stream + "." + header.getKey(), header.getValue());
+    }
+    writeToStream(Id.Stream.from(namespace, stream), requestBuilder.build());
   }
 
   @Override

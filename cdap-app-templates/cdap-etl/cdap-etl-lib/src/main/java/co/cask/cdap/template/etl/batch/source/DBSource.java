@@ -46,7 +46,8 @@ import java.sql.Driver;
  */
 @Plugin(type = "source")
 @Name("Database")
-@Description("Batch source for a database")
+@Description("Reads from a database using a configurable SQL query." +
+  " Outputs one record for each row returned by the query.")
 public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredRecord> {
   private static final Logger LOG = LoggerFactory.getLogger(DBSource.class);
 
@@ -56,7 +57,7 @@ public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredReco
     "should not be used in this query.";
   private static final String COUNT_QUERY_DESCRIPTION = "The SELECT query to use to get the count of records to " +
     "import from the specified table. Examples: SELECT COUNT(*) from <my_table> where <my_column> 1, " +
-    "SELECT COUNT(my_column) from my_table). NOTE: Please include the same WHERE clauses in this query as the ones " +
+    "SELECT COUNT(my_column) from my_table. NOTE: Please include the same WHERE clauses in this query as the ones " +
     "used in the import query to reflect an accurate number of records to import.";
 
   private final DBSourceConfig dbSourceConfig;
@@ -80,14 +81,17 @@ public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredReco
                                                                                 dbSourceConfig.jdbcPluginName,
                                                                                 jdbcPluginId,
                                                                                 PluginProperties.builder().build());
-    Preconditions.checkArgument(jdbcDriverClass != null, "JDBC Driver class must be found.");
+    Preconditions.checkArgument(
+      jdbcDriverClass != null, "Unable to load JDBC Driver class for plugin name '%s'. Please make sure that the " +
+        "plugin '%s' of type '%s' containing the driver has been installed correctly.", dbSourceConfig.jdbcPluginName,
+      dbSourceConfig.jdbcPluginName, dbSourceConfig.jdbcPluginType);
   }
 
   @Override
   public void prepareRun(BatchSourceContext context) {
-    LOG.debug("tableName = {}; pluginType = {}; pluginName = {}; connectionString = {}; importQuery = {}; " +
+    LOG.debug("pluginType = {}; pluginName = {}; connectionString = {}; importQuery = {}; " +
                 "countQuery = {}",
-              dbSourceConfig.tableName, dbSourceConfig.jdbcPluginType, dbSourceConfig.jdbcPluginName,
+              dbSourceConfig.jdbcPluginType, dbSourceConfig.jdbcPluginName,
               dbSourceConfig.connectionString, dbSourceConfig.importQuery, dbSourceConfig.countQuery);
 
     Job job = context.getHadoopJob();

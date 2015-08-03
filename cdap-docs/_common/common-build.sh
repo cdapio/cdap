@@ -120,7 +120,7 @@ GITHUB="github"
 
 # BUILD.rst
 BUILD_RST="BUILD.rst"
-BUILD_RST_HASH="0d41d293a6e11c0461bf3ff3be03c242"
+BUILD_RST_HASH="f54ae74bb72f9ad894766b6c0bd2d2df"
 
 
 function usage() {
@@ -183,7 +183,7 @@ function build_javadocs_api() {
   cd ${PROJECT_PATH}
   set_mvn_environment
   check_build_for_changes
-  MAVEN_OPTS="-Xmx1024m" mvn clean install -P examples,templates,release -DskipTests -Dgpg.skip=true && mvn clean site -DskipTests -P templates -DisOffline=false
+  MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn clean install -P examples,templates,release -DskipTests -Dgpg.skip=true && mvn clean site -DskipTests -P templates -DisOffline=false
 }
 
 function build_javadocs_sdk() {
@@ -357,7 +357,9 @@ function version() {
   local full_branch=`git rev-parse --abbrev-ref HEAD`
   IFS=/ read -a branch <<< "${full_branch}"
   GIT_BRANCH="${branch[1]}"
+  GIT_BRANCH_PARENT="develop"
   # Determine branch and branch type: one of develop, master, release, develop-feature, release-feature
+  # If unable to determine type, uses develop-feature
   if [ "${full_branch}" == "develop" -o  "${full_branch}" == "master" ]; then
     GIT_BRANCH="${full_branch}"
     GIT_BRANCH_TYPE=${GIT_BRANCH}
@@ -365,10 +367,15 @@ function version() {
     GIT_BRANCH_TYPE="release"
   else
     # We are on a feature branch: but from develop or release?
-    if [[ "x${GIT_BRANCH_PARENT}" == "x" ]]; then
-      GIT_BRANCH_PARENT=`git show-branch | grep '*' | grep -v "$(git rev-parse --abbrev-ref HEAD)" | head -n1 | sed 's/.*\[\(.*\)\].*/\1/' | sed 's/[\^~].*//'`  
+    # This is not easy to determine. This can fail very easily.
+    local git_branch_listing=`git show-branch | grep '*' | grep -v "$(git rev-parse --abbrev-ref HEAD)" | head -n1`
+    if [ "x${git_branch_listing}" == "x" ]; then 
+      echo_red_bold "Unable to determine parent branch as git_branch_listing empty; perhaps in a new branch with no commits"
+      echo_red_bold "Using default GIT_BRANCH_PARENT: ${GIT_BRANCH_PARENT}"
+    else
+      GIT_BRANCH_PARENT=`echo ${git_branch_listing} | sed 's/.*\[\(.*\)\].*/\1/' | sed 's/[\^~].*//'`
     fi
-    if [ "${GIT_BRANCH_PARENT}" == "release" ]; then
+    if [ "${GIT_BRANCH_PARENT:0:7}" == "release" ]; then
       GIT_BRANCH_TYPE="release-feature"
     else
       GIT_BRANCH_TYPE="develop-feature"
@@ -380,7 +387,6 @@ function version() {
 
 function display_version() {
   version
-  echo
   echo "PROJECT_PATH: ${PROJECT_PATH}"
   echo "PROJECT_VERSION: ${PROJECT_VERSION}"
   echo "PROJECT_LONG_VERSION: ${PROJECT_LONG_VERSION}"

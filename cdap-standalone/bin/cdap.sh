@@ -98,28 +98,25 @@ fi
 
 # java version check
 JAVA_VERSION=`$JAVACMD -version 2>&1 | grep "java version" | awk '{print $3}' | awk -F '.' '{print $2}'`
-if [ $JAVA_VERSION -ne 6 ] && [ $JAVA_VERSION -ne 7 ]; then
+if [ $JAVA_VERSION -ne 7 ] && [ $JAVA_VERSION -ne 8 ]; then
   die "ERROR: Java version not supported
-Please install Java 6 or 7 - other versions of Java are not yet supported."
+Please install Java 7 or 8 - other versions of Java are not supported."
 fi
 
 # Check Node.js installation
 NODE_INSTALL_STATUS=$(program_is_installed node)
 if [ "x$NODE_INSTALL_STATUS" == "x1" ]; then
   die "Node.js is not installed
-Please install Node.js - the minimum version supported v0.8.16."
+Please install Node.js - the minimum version supported v0.10.0."
 fi
 
 # Check Node.js version
 NODE_VERSION=`node -v 2>&1`
 NODE_VERSION_MAJOR=`echo $NODE_VERSION | awk -F '.' ' { print $2 } '`
 NODE_VERSION_MINOR=`echo $NODE_VERSION | awk -F '.' ' { print $3 } '`
-if [ $NODE_VERSION_MAJOR -lt 8 ]; then
+if [ $NODE_VERSION_MAJOR -lt 10 ]; then
   die "ERROR: Node.js version is not supported
-The minimum version supported is v0.8.16."
-elif [ $NODE_VERSION_MAJOR -eq 8 ] && [ $NODE_VERSION_MINOR -lt 16 ]; then
-  die "ERROR: Node.js version is not supported
-The minimum version supported is v0.8.16."
+The minimum version supported is v0.10.0."
 fi
 
 

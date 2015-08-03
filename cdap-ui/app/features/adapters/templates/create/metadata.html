@@ -1,38 +1,55 @@
-<div class="panel panel-default" ng-init="metadataTabOpen=true">
-  <div class="panel-heading" ng-click="metadataTabOpen = !metadataTabOpen">
-    <div class="panel-title">
-      <div class="clearfix">
-        <span class="pull-left">
-          <span class="fa fa-fw"
-              ng-class="{'fa-chevron-down': metadataTabOpen, 'fa-chevron-right': !metadataTabOpen}"></span>
-          Metadata
-        </span>
+<div class="modal-header">
+  <div class="col-xs-6 col-md-9">
+    <h3 class="modal-title"> Edit Metadata</p>
+  </div>
+  <div class="col-xs-6 col-md-3">
+    <div class="btn-group modal-btns">
+      <div>
+        <a class="btn" ng-click="reset()">
+          <span class="fa fa-repeat"></span>
+        </a>
+      </div>
+      <div>
+        <a class="btn" ng-click="$close('save')">
+          <span class="fa fa-floppy-o"></span>
+        </a>
+      </div>
+      <div>
+        <a class="btn" ng-click="$close('cancel')">
+          <span class="fa fa-remove"></span>
+          <span class="sr-only"> Close </span>
+        </a>
       </div>
     </div>
   </div>
-  <div class="panel-body" ng-if="metadataTabOpen">
-    <div class="row">
-      <div class="col-md-4 col-xs-12">
-        <label for="adapaterType" class="control-label">Choose an Application Template</label>
-        <select ng-model="AdapterCreateController.model.metadata.type"
-                ng-change="AdapterCreateController.onMetadataChange()"
-                class="form-control">
-          <option ng-selected="{{adapter.name == AdapterCreateController.model.metadata.type}}"
-                  ng-repeat="adapter in AdapterCreateController.adapterTypes"
-                  value="{{adapter.name}}">
-            {{adapter.name}}
-          </option>
-        </select>
-      </div>
-      <div class="col-md-3 col-xs-12">
-        <label class="control-label">Name</label>
-        <span class="fa fa-asterisk"></span>
-        <input name="name" class="form-control" ng-model="AdapterCreateController.model.metadata.name"/>
-      </div>
-      <div class="col-md-5 col-xs-12">
-        <label class="control-label">Description</label>
-        <input class="form-control" ng-model="AdapterCreateController.model.metadata.description"/>
+</div>
+
+<div class="modal-body metadata-modal">
+  <form class="form-horizontal">
+
+    <div class="form-group">
+      <label class="col-sm-2 control-label">Name</label>
+      <div class="col-sm-10">
+        <input type="text"
+                ng-model="metadata['name']"
+                my-maxlength="128"
+                class="form-control" />
+        <small>Maximum 128 characters</small>
+        <small class="pull-right">{{128 - metadata['name'].length}}</small>
       </div>
     </div>
-  </div>
+
+    <div class="form-group">
+      <label class="col-sm-2 control-label">Description</label>
+      <div class="col-sm-10">
+        <textarea type="text"
+               ng-model="metadata['description']"
+               my-maxlength="512"
+               class="form-control"></textarea>
+        <small>Maximum 512 characters</small>
+        <small class="pull-right">{{512 - metadata['description'].length}}</small>
+      </div>
+    </div>
+
+  </form>
 </div>

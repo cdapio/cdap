@@ -81,6 +81,6 @@ public class GetAdapterRunsCommand extends AbstractCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Gets the runs of %s.", Fragment.of(Article.A, ElementType.ADAPTER.getTitleName()));
+    return String.format("Gets the runs of %s.", Fragment.of(Article.A, ElementType.ADAPTER.getName()));
   }
 }

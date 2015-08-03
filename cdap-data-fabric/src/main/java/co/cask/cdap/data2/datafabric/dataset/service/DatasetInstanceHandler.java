@@ -18,10 +18,14 @@ package co.cask.cdap.data2.datafabric.dataset.service;
 
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.common.DatasetAlreadyExistsException;
+import co.cask.cdap.common.DatasetNotFoundException;
+import co.cask.cdap.common.DatasetTypeNotFoundException;
 import co.cask.cdap.common.HandlerException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpResponse;
+import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.cdap.proto.DatasetMeta;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
@@ -124,9 +128,17 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     Id.Namespace namespace = Id.Namespace.from(namespaceId);
 
     LOG.info("Creating dataset {}.{}, type name: {}, typeAndProps: {}",
-             namespaceId, name, creationProperties.getTypeName(), creationProperties.getProperties());
-    instanceService.create(namespace, name, creationProperties);
-    responder.sendStatus(HttpResponseStatus.OK);
+      namespaceId, name, creationProperties.getTypeName(), creationProperties.getProperties());
+    try {
+      instanceService.create(namespace, name, creationProperties);
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (DatasetAlreadyExistsException e) {
+      responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
+    } catch (DatasetTypeNotFoundException e) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
+    } catch (HandlerException e) {
+      responder.sendString(e.getFailureStatus(), e.getMessage());
+    }
   }
 
   /**
@@ -230,6 +242,12 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   private Collection<DatasetSpecificationSummary> spec2Summary(Collection<DatasetSpecification> specs) {
     List<DatasetSpecificationSummary> datasetSummaries = Lists.newArrayList();
     for (DatasetSpecification spec : specs) {
+      // TODO: (CDAP-3097) handle system datasets specially within a namespace instead of filtering them out
+      // by the handler. This filter is only in the list endpoint because the other endpoints are used by
+      // HBaseQueueAdmin through DatasetFramework.
+      if (QueueConstants.STATE_STORE_NAME.equals(spec.getName())) {
+        continue;
+      }
       datasetSummaries.add(new DatasetSpecificationSummary(spec.getName(), spec.getType(), spec.getProperties()));
     }
     return datasetSummaries;

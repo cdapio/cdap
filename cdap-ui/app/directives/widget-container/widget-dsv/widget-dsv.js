@@ -8,7 +8,9 @@ angular.module(PKG.name + '.commons')
         type: '@'
       },
       templateUrl: 'widget-container/widget-dsv/widget-dsv.html',
-      controller: function($scope) {
+      controller: function($scope, EventPipe) {
+        var modelCopy = angular.copy($scope.model);
+
         if ($scope.type === 'csv') {
           $scope.showDelimiter = false;
         } else {
@@ -41,6 +43,12 @@ angular.module(PKG.name + '.commons')
 
         initialize();
 
+        EventPipe.on('plugin.reset', function () {
+          $scope.model = angular.copy(modelCopy);
+
+          initialize();
+        });
+
         var propertyListener = $scope.$watch('properties', function() {
           var str = '';
 
@@ -65,7 +73,8 @@ angular.module(PKG.name + '.commons')
 
         $scope.addProperty = function() {
           $scope.properties.push({
-            value: ''
+            value: '',
+            newField: 'add'
           });
         };
 

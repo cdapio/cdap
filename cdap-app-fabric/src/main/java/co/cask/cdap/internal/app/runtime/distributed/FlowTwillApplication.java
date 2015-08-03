@@ -37,8 +37,8 @@ public final class FlowTwillApplication extends AbstractProgramTwillApplication 
   private final FlowSpecification spec;
 
   public FlowTwillApplication(Program program, FlowSpecification spec,
-                              Map<String, File> localizeFiles, EventHandler eventHandler) {
-    super(program, localizeFiles, eventHandler);
+                              Map<String, LocalizeResource> localizeResources, EventHandler eventHandler) {
+    super(program, localizeResources, eventHandler);
     this.spec = spec;
   }
 

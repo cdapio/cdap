@@ -41,8 +41,10 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Map;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 
 /**
  * Application writing to Stream.
@@ -54,6 +56,7 @@ public class AppWritingtoStream extends AbstractApplication {
   public static final String FLOW = "flow";
   public static final String WORKER = "worker";
   public static final String DATASET = "kvTable";
+  public static final String HEADER_DATASET = "headers";
   public static final String SERVICE = "srv";
   public static final String KEY = "key";
   public static final String ENDPOINT = "count";
@@ -67,6 +70,7 @@ public class AppWritingtoStream extends AbstractApplication {
     addFlow(new SimpleFlow());
     addService(SERVICE, new MyServiceHandler());
     createDataset(DATASET, KeyValueTable.class);
+    createDataset(HEADER_DATASET, KeyValueTable.class);
   }
 
   public static final class MyServiceHandler extends AbstractHttpServiceHandler {
@@ -74,10 +78,20 @@ public class AppWritingtoStream extends AbstractApplication {
     @UseDataSet(DATASET)
     private KeyValueTable table;
 
+    @UseDataSet(HEADER_DATASET)
+    private KeyValueTable headers;
+
     @GET
     @Path(ENDPOINT)
     public void process(HttpServiceRequest request, HttpServiceResponder responder) {
       responder.sendString(String.valueOf(Bytes.toLong(table.read(Bytes.toBytes(KEY)))));
+    }
+
+    @GET
+    @Path("/headers/{header}")
+    public void getHeader(HttpServiceRequest request, HttpServiceResponder responder,
+                          @PathParam("header") String header) {
+      responder.sendString(Bytes.toString(headers.read(header)));
     }
   }
 
@@ -93,7 +107,7 @@ public class AppWritingtoStream extends AbstractApplication {
     public void run() {
       try {
         getContext().write(STREAM, ByteBuffer.wrap(Bytes.toBytes("Event 0")));
-        getContext().write(STREAM, new StreamEventData(ImmutableMap.<String, String>of(),
+        getContext().write(STREAM, new StreamEventData(ImmutableMap.of("Event", "1"),
                                                        ByteBuffer.wrap(Bytes.toBytes("Event 1"))));
 
         File tempDir = Files.createTempDir();
@@ -151,9 +165,15 @@ public class AppWritingtoStream extends AbstractApplication {
     @UseDataSet(DATASET)
     private KeyValueTable table;
 
+    @UseDataSet(HEADER_DATASET)
+    private KeyValueTable headers;
+
     @ProcessInput
     public void receive(StreamEvent data) {
       table.increment(Bytes.toBytes(KEY), 1L);
+      for (Map.Entry<String, String> header : data.getHeaders().entrySet()) {
+        headers.write(header.getKey(), header.getValue());
+      }
     }
   }
 }

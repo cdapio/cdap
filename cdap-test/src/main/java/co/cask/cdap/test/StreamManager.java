@@ -19,6 +19,7 @@ package co.cask.cdap.test;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -104,6 +105,14 @@ public interface StreamManager {
    * @throws java.io.IOException If there is error writing to the stream.
    */
   void send(Map<String, String> headers, ByteBuffer buffer) throws IOException;
+
+  /**
+   * Sends the content of a file to the stream. Use this to load events into a stream in batch.
+   *
+   * @param file the file to send to the stream
+   * @throws IOException if there is an error writing to the stream
+   */
+  void send(File file, String contentType) throws Exception;
 
   /**
    * Get events from the specified stream in the specified interval

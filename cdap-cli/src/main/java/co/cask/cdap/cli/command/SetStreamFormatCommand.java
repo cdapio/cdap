@@ -69,7 +69,7 @@ public class SetStreamFormatCommand extends AbstractAuthCommand {
                                                              formatSpecification,
                                                              currentProperties.getNotificationThresholdMB());
     streamClient.setStreamProperties(streamId, streamProperties);
-    output.printf("Successfully set format of %s\n", streamId);
+    output.printf("Successfully set format of stream '%s'\n", streamId.getId());
   }
 
   private Schema getSchema(Arguments arguments) throws IOException {
@@ -101,7 +101,7 @@ public class SetStreamFormatCommand extends AbstractAuthCommand {
   public String getDescription() {
     return new StringBuilder()
       .append("Sets the format of ")
-      .append(Fragment.of(Article.A, ElementType.STREAM.getTitleName()))
+      .append(Fragment.of(Article.A, ElementType.STREAM.getName()))
       .append(". <")
       .append(ArgumentName.SCHEMA)
       .append("> is a sql-like schema \"column_name data_type, ...\" or Avro-like JSON schema and <")

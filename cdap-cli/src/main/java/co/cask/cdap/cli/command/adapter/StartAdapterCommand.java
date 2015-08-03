@@ -47,7 +47,7 @@ public class StartAdapterCommand extends AbstractAuthCommand {
     Id.Adapter adapter = Id.Adapter.from(cliConfig.getCurrentNamespace(),
                                          arguments.get(ArgumentName.ADAPTER.toString()));
     adapterClient.start(adapter);
-    output.printf("Successfully started %s\n", adapter);
+    output.printf("Successfully started adapter '%s'\n", adapter.getId());
   }
 
   @Override
@@ -57,6 +57,6 @@ public class StartAdapterCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Starts %s.", Fragment.of(Article.A, ElementType.ADAPTER.getTitleName()));
+    return String.format("Starts %s.", Fragment.of(Article.A, ElementType.ADAPTER.getName()));
   }
 }

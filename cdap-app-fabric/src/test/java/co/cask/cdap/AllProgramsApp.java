@@ -29,6 +29,8 @@ import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
+import co.cask.cdap.api.service.AbstractService;
+import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.spark.AbstractSpark;
 import co.cask.cdap.api.spark.JavaSparkProgram;
 import co.cask.cdap.api.spark.SparkContext;
@@ -70,6 +72,7 @@ public class AllProgramsApp extends AbstractApplication {
     addWorkflow(new NoOpWorkflow());
     addWorker(new NoOpWorker());
     addSpark(new NoOpSpark());
+    addService(new NoOpService());
   }
 
   /**
@@ -232,4 +235,23 @@ public class AllProgramsApp extends AbstractApplication {
     }
   }
 
+  /**
+   *
+   */
+  public static class NoOpService extends AbstractService {
+
+    public static final String NAME = "NoOpService";
+
+    @Override
+    protected void configure() {
+      addHandler(new NoOpHandler());
+    }
+
+    private class NoOpHandler extends AbstractHttpServiceHandler {
+      @Override
+      protected void configure() {
+        useDatasets(DATASET_NAME);
+      }
+    }
+  }
 }

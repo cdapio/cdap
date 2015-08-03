@@ -32,15 +32,14 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nonnull;
@@ -50,6 +49,11 @@ import javax.annotation.Nullable;
  * Implementation of file dataset.
  */
 public final class FileSetDataset implements FileSet {
+
+  private static final Logger LOG = LoggerFactory.getLogger(FileSetDataset.class);
+
+  static final String FILESET_VERSION_PROPERTY = "fileset.version";
+  static final String FILESET_VERSION = "2";
 
   private final DatasetSpecification spec;
   private final Map<String, String> runtimeArguments;
@@ -101,42 +105,49 @@ public final class FileSetDataset implements FileSet {
   static Location determineBaseLocation(DatasetContext datasetContext, CConfiguration cConf,
                                         DatasetSpecification spec, LocationFactory rootLocationFactory,
                                         NamespacedLocationFactory namespacedLocationFactory) throws IOException {
+
+    // older versions of file set incorrectly interpret absolute paths as relative to the namespace's
+    // data directory. These file sets do not have the file set version property.
+    boolean hasAbsoluteBasePathBug = spec.getProperties().get(FILESET_VERSION_PROPERTY) == null;
+
     String basePath = FileSetProperties.getBasePath(spec.getProperties());
     if (basePath == null) {
       basePath = spec.getName().replace('.', '/');
     }
+    // for absolute paths, get the location from the file system's root.
     if (basePath.startsWith("/")) {
-      String topLevelPath = namespacedLocationFactory.getBaseLocation().toURI().getPath();
-      topLevelPath = topLevelPath.endsWith("/") ? topLevelPath : topLevelPath + "/";
-      Location baseLocation = rootLocationFactory.create(basePath);
-      if (baseLocation.toURI().getPath().startsWith(topLevelPath)) {
-        throw new DataSetException("Invalid base path '" + basePath + "' for dataset '" + spec.getName() + "'. " +
-                                     "It must not be inside the CDAP base path '" + topLevelPath + "'.");
+      // but only if it is not a legacy dataset that interprets absolute paths as relative
+      if (hasAbsoluteBasePathBug) {
+        LOG.info("Dataset {} was created with a version of FileSet that treats absolute path {} as relative. " +
+                   "To disable this message, upgrade the dataset properties with a relative path. ",
+                 spec.getName(), basePath);
+      } else {
+        String topLevelPath = namespacedLocationFactory.getBaseLocation().toURI().getPath();
+        topLevelPath = topLevelPath.endsWith("/") ? topLevelPath : topLevelPath + "/";
+        Location baseLocation = rootLocationFactory.create(basePath);
+        if (baseLocation.toURI().getPath().startsWith(topLevelPath)) {
+          throw new DataSetException("Invalid base path '" + basePath + "' for dataset '" + spec.getName() + "'. " +
+                                       "It must not be inside the CDAP base path '" + topLevelPath + "'.");
+        }
+        return baseLocation;
       }
-      return baseLocation;
-    } else {
-      Id.Namespace namespaceId = Id.Namespace.from(datasetContext.getNamespaceId());
-      String dataDir = cConf.get(Constants.Dataset.DATA_DIR, Constants.Dataset.DEFAULT_DATA_DIR);
-      return namespacedLocationFactory.get(namespaceId).append(dataDir).append(basePath);
     }
+    Id.Namespace namespaceId = Id.Namespace.from(datasetContext.getNamespaceId());
+    String dataDir = cConf.get(Constants.Dataset.DATA_DIR, Constants.Dataset.DEFAULT_DATA_DIR);
+    return namespacedLocationFactory.get(namespaceId).append(dataDir).append(basePath);
   }
 
   private Location determineOutputLocation() {
     String outputPath = FileSetArguments.getOutputPath(runtimeArguments);
-    return outputPath == null ? baseLocation : createLocation(outputPath);
+    return outputPath == null ? null : createLocation(outputPath);
   }
 
   private List<Location> determineInputLocations() {
-    Collection<String> inputPaths = FileSetArguments.getInputPaths(runtimeArguments);
-    if (inputPaths == null) {
-      return Collections.singletonList(baseLocation);
-    } else {
-      List<Location> locations = Lists.newLinkedList();
-      for (String path : inputPaths) {
-        locations.add(createLocation(path));
-      }
-      return locations;
+    List<Location> locations = Lists.newLinkedList();
+    for (String path : FileSetArguments.getInputPaths(runtimeArguments)) {
+      locations.add(createLocation(path));
     }
+    return locations;
   }
 
   private Location createLocation(String relativePath) {
@@ -192,17 +203,17 @@ public final class FileSetDataset implements FileSet {
 
   @Override
   public Map<String, String> getInputFormatConfiguration(Iterable<? extends Location> inputLocs) {
+    ImmutableMap.Builder<String, String> config = ImmutableMap.builder();
+    config.putAll(FileSetProperties.getInputProperties(spec.getProperties()));
+    config.putAll(FileSetProperties.getInputProperties(runtimeArguments));
     String inputs = Joiner.on(',').join(Iterables.transform(inputLocs, new Function<Location, String>() {
       @Override
       public String apply(@Nullable Location location) {
         return getFileSystemPath(location);
       }
     }));
-    Map<String, String> config = Maps.newHashMap();
-    config.putAll(FileSetProperties.getInputProperties(spec.getProperties()));
-    config.putAll(FileSetProperties.getInputProperties(runtimeArguments));
     config.put(FileInputFormat.INPUT_DIR, inputs);
-    return ImmutableMap.copyOf(config);
+    return config.build();
   }
 
   @Override
@@ -220,11 +231,13 @@ public final class FileSetDataset implements FileSet {
       throw new UnsupportedOperationException(
         "Output is not supported for external file set '" + spec.getName() + "'");
     }
-    Map<String, String> config = Maps.newHashMap();
-    config.putAll(FileSetProperties.getOutputProperties(spec.getProperties()));
-    config.putAll(FileSetProperties.getOutputProperties(runtimeArguments));
-    config.put(FileOutputFormat.OUTDIR, getFileSystemPath(outputLocation));
-    return ImmutableMap.copyOf(config);
+    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+    builder.putAll(FileSetProperties.getOutputProperties(spec.getProperties()));
+    builder.putAll(FileSetProperties.getOutputProperties(runtimeArguments));
+    if (outputLocation != null) {
+      builder.put(FileOutputFormat.OUTDIR, getFileSystemPath(outputLocation));
+    }
+    return builder.build();
   }
 
   @Override

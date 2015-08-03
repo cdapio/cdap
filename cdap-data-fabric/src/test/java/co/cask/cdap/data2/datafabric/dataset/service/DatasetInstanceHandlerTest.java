@@ -23,8 +23,12 @@ import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
+import co.cask.cdap.data2.transaction.queue.QueueConstants;
+import co.cask.cdap.data2.transaction.queue.hbase.HBaseConsumerStateStore;
+import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueDatasetModule;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.cdap.proto.DatasetMeta;
 import co.cask.cdap.proto.DatasetModuleMeta;
@@ -55,6 +59,24 @@ import java.util.Map;
  * Unit-test for {@link DatasetInstanceHandler}
  */
 public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
+
+  @Test
+  public void testSystemDatasetNotInList() throws Exception {
+    try {
+      deployModule("default-table", InMemoryTableModule.class);
+      deployModule(HBaseConsumerStateStore.class.getSimpleName(), HBaseQueueDatasetModule.class);
+      // yes it's weird, you can create one a system dataset, but don't expect to see it in the get all request
+      Assert.assertEquals(HttpStatus.SC_OK,
+        createInstance(QueueConstants.STATE_STORE_NAME, HBaseConsumerStateStore.class.getSimpleName()));
+
+      // nothing has been created, modules and types list is empty
+      Assert.assertTrue(getInstances().getResponseObject().isEmpty());
+    } finally {
+      // cleanup
+      deleteInstance(QueueConstants.STATE_STORE_NAME);
+      Assert.assertEquals(HttpStatus.SC_OK, deleteModules());
+    }
+  }
 
   @Test
   public void testBasics() throws Exception {

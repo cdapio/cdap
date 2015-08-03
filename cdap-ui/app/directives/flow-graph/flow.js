@@ -191,7 +191,7 @@ module.directive('myFlowGraph', function ($filter, $state, $alert, myStreamServi
       scope.handleTooltip = function(tip, nodeId) {
         tip
           .html(function() {
-            return '<strong>' + nodeId + '</strong>';
+            return '<span>' + nodeId + '</span>';
           })
           .show();
       };
@@ -425,7 +425,7 @@ module.directive('myWorkflowGraph', function ($filter, $location) {
         if (['Start', 'End'].indexOf(nodeId) === -1) {
           tip
             .html(function() {
-              return '<strong>'+ scope.instanceMap[nodeId].nodeId + ' : ' + scope.instanceMap[nodeId].program.programName +'</strong>';
+              return '<span>'+ scope.instanceMap[nodeId].nodeId + ' : ' + scope.instanceMap[nodeId].program.programName +'</span>';
             })
             .show();
         }
@@ -606,7 +606,7 @@ function genericRender(scope, filter, location) {
     var initialScale = 1.1;
     var svgWidth = svg.node().getBoundingClientRect().width;
     if (svgWidth - g.graph().width <= 0) {
-      scope.currentScale = svg.width()/g.graph().width;
+      scope.currentScale = svgWidth / g.graph().width;
       scope.translateX = 0;
       scope.translateY = 0;
 

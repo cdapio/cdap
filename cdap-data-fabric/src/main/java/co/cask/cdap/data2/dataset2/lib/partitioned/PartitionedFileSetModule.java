@@ -32,8 +32,9 @@ public class PartitionedFileSetModule implements DatasetModule {
   @Override
   public void register(DatasetDefinitionRegistry registry) {
 
-    DatasetDefinition<FileSet, FileSetAdmin> fileSetDef = registry.get("fileSet");
-    DatasetDefinition<IndexedTable, ? extends DatasetAdmin> indexedTableDef = registry.get("indexedTable");
+    DatasetDefinition<FileSet, FileSetAdmin> fileSetDef = registry.get(FileSet.class.getName());
+    DatasetDefinition<IndexedTable, ? extends DatasetAdmin> indexedTableDef =
+      registry.get(IndexedTable.class.getName());
 
     // file dataset
     registry.add(new PartitionedFileSetDefinition(PartitionedFileSet.class.getName(), fileSetDef, indexedTableDef));

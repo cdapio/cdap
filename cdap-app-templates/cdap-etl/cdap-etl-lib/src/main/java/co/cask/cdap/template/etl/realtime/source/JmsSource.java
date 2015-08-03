@@ -59,7 +59,7 @@ import javax.naming.Context;
  */
 @Plugin(type = "source")
 @Name("JMS")
-@Description("JMS Realtime Source - Emits a record with a field 'message' of string type")
+@Description("JMS Real-time Source: Emits a record with a field 'message' of type String.")
 public class JmsSource extends RealtimeSource<StructuredRecord> {
   private static final Logger LOG = LoggerFactory.getLogger(JmsSource.class);
 
@@ -323,22 +323,22 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
    */
   public static class JmsPluginConfig extends PluginConfig {
     @Name(JMS_DESTINATION_NAME)
-    @Description("Name of the destination to get messages")
+    @Description("Name of the destination from which to retrieve messages.")
     private String destinationName;
 
     @Name(JMS_MESSAGES_TO_RECEIVE)
-    @Description("Max number messages should be retrieved per poll. The default value is 50.")
+    @Description("Maximum number of messages that should be retrieved per poll. The default value is 50.")
     @Nullable
     private Integer messagesToReceive;
 
     @Name(JMS_NAMING_FACTORY_INITIAL)
-    @Description("The fully qualified class name of the factory class that will create an initial context. " +
-      "This will be passed to JNDI initial context as " + Context.INITIAL_CONTEXT_FACTORY)
+    @Description("The fully-qualified class name of the factory class that will be used to create an initial " +
+      "context. This will be passed to the JNDI initial context as '" + Context.INITIAL_CONTEXT_FACTORY + "'.")
     private String initialContextFactory;
 
     @Name(JMS_PROVIDER_URL)
-    @Description("This property contains information for the service provider URL to use. " +
-      "This will be passed to JNDI initial context as " + Context.PROVIDER_URL)
+    @Description("Information for the service provider URL to use. " +
+      "This will be passed to the JNDI initial context as '" + Context.PROVIDER_URL + "'.")
     private String providerUrl;
 
     @Name(JMS_CONNECTION_FACTORY_NAME)
@@ -347,19 +347,19 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
     private String connectionFactoryName;
 
     @Name(JMS_PLUGIN_NAME)
-    @Description("Name of the JMS plugin to use. This is the value of the 'name' key defined in the json file " +
-        "for the JMS plugin. Defaults to " + Context.INITIAL_CONTEXT_FACTORY)
+    @Description("Name of the JMS plugin to use. This is the value of the 'name' key defined in the JSON file " +
+        "for the JMS plugin. Defaults to '" + Context.INITIAL_CONTEXT_FACTORY + "'.")
     @Nullable
     public String jmsPluginName;
 
     @Name(JMS_PLUGIN_TYPE)
-    @Description("Type of the JMS plugin to use. This is the value of the 'type' key defined in the json file " +
+    @Description("Type of the JMS plugin to use. This is the value of the 'type' key defined in the JSON file " +
         "for the JMS plugin. Defaults to 'JMSProvider'.")
     @Nullable
     public String jmsPluginType;
 
     @Name(JMS_CUSTOM_PROPERTIES)
-    @Description("Provide any custom properties as a JSON Map")
+    @Description("Provide any required custom properties as a JSON Map.")
     @Nullable
     public String customProperties;
 

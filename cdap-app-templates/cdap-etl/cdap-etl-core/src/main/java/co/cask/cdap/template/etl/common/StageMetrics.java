@@ -26,23 +26,9 @@ public class StageMetrics implements Metrics {
   private final Metrics metrics;
   private final String prefix;
 
-  /**
-   * Types of ETL stages.
-   */
-  public enum Type {
-    SOURCE,
-    SINK,
-    TRANSFORM;
-
-    @Override
-    public String toString() {
-      return name().toLowerCase();
-    }
-  }
-
-  public StageMetrics(Metrics metrics, Type stageType, String name) {
+  public StageMetrics(Metrics metrics, PluginID id) {
     this.metrics = metrics;
-    this.prefix = stageType.toString() + "." + name + ".";
+    this.prefix = id.getMetricsContext() + ".";
   }
 
   @Override

@@ -81,6 +81,7 @@ public class KafkaLogReader implements LogReader {
     }
 
     int partition = partitioner.partition(loggingContext.getLogPartition(), -1);
+    LOG.trace("Reading from kafka partiton {}", partition);
 
     callback.init();
 
@@ -99,6 +100,7 @@ public class KafkaLogReader implements LogReader {
       long latestOffset = kafkaConsumer.fetchOffsetBefore(KafkaConsumer.LATEST_OFFSET);
       long startOffset = readRange.getKafkaOffset() + 1;
 
+      LOG.trace("Using startOffset={}, latestOffset={}, readRange={}", startOffset, latestOffset, readRange);
       if (startOffset >= latestOffset) {
         // At end of events, nothing to return
         return;
@@ -126,6 +128,7 @@ public class KafkaLogReader implements LogReader {
     }
 
     int partition = partitioner.partition(loggingContext.getLogPartition(), -1);
+    LOG.trace("Reading from kafka partiton {}", partition);
 
     callback.init();
 
@@ -150,6 +153,7 @@ public class KafkaLogReader implements LogReader {
         startOffset = earliestOffset;
       }
 
+      LOG.trace("Using startOffset={}, latestOffset={}, readRange={}", startOffset, latestOffset, readRange);
       if (startOffset >= stopOffset || startOffset >= latestOffset) {
         // At end of kafka events, nothing to return
         return;

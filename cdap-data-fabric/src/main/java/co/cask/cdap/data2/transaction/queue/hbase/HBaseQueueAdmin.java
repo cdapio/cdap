@@ -124,7 +124,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
   }
 
   public static TableId getConfigTableId(String namespace) {
-    return TableId.from(namespace, HBaseQueueDatasetModule.STATE_STORE_NAME + "."
+    return TableId.from(namespace, QueueConstants.STATE_STORE_NAME + "."
                                   + HBaseQueueDatasetModule.STATE_STORE_EMBEDDED_TABLE_NAME);
   }
 
@@ -259,7 +259,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
   }
 
   private Id.DatasetInstance getStateStoreId(String namespaceId) {
-    return Id.DatasetInstance.from(namespaceId, HBaseQueueDatasetModule.STATE_STORE_NAME);
+    return Id.DatasetInstance.from(namespaceId, QueueConstants.STATE_STORE_NAME);
   }
 
   private Id.DatasetInstance createStateStoreDataset(String namespace) throws IOException {

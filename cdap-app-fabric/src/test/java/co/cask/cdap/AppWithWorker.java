@@ -46,12 +46,13 @@ public class AppWithWorker extends AbstractApplication {
     createDataset(DATASET, KeyValueTable.class);
   }
 
-  private static class TableWriter extends AbstractWorker {
+  public class TableWriter extends AbstractWorker {
 
     private volatile boolean running;
 
     @Override
     public void configure() {
+      setName(WORKER);
       setDescription(DESCRIPTION);
     }
 

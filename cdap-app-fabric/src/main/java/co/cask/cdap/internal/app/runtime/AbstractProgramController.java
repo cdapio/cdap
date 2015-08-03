@@ -144,6 +144,7 @@ public abstract class AbstractProgramController implements ProgramController {
       LOG.debug("Cannot transit to COMPLETED state from {} state: {} {}", state.get(), programName, runId);
       return;
     }
+    LOG.debug("Program stopped: {} {}", programName, runId);
     executor(State.COMPLETED).execute(new Runnable() {
       @Override
       public void run() {

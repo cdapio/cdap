@@ -32,7 +32,6 @@ import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -61,9 +60,10 @@ public final class ClientSparkContext extends AbstractSparkContext {
 
     this.datasets = new ArrayList<>();
     this.transactionContext = transactionContext;
-    this.datasetContext = new DynamicDatasetContext(program.getId().getNamespace(), transactionContext,
-                                                    datasetFramework, program.getClassLoader(), runtimeArguments,
-                                                    null, getOwners());
+    this.datasetContext = new DynamicDatasetContext(program.getId().getNamespace(),
+                                                    transactionContext, getMetricsContext(),
+                                                    datasetFramework, program.getClassLoader(),
+                                                    runtimeArguments, null, getOwners());
   }
 
   @Override
