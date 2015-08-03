@@ -351,5 +351,10 @@ and restart the HBase regionservers. This will allow the regionservers to start 
 despite the coprocessor version mismatch. At this point, you should be able to run through
 the upgrade steps successfully. 
 
-At the end, remove the entry for ``hbase.coprocessor.abortonerror`` in order to ensure
-that data correctness is maintained.
+At the end, set the entry for ``hbase.coprocessor.abortonerror`` to ``true`` in order to
+ensure that data correctness is maintained::
+
+  <property>
+    <name>hbase.coprocessor.abortonerror</name>
+    <value>true</value>
+  </property>
