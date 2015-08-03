@@ -226,7 +226,7 @@ In the future, we intend to automate all these steps. The issue that tracks that
     - ``cdap_system:datasets.instance``
     - ``cdap_system:datasets.type``
     
-   by checking that the coprocessor classnames are using the ``base10cdh`` package |---|
+   by checking that the coprocessor classnames are using the ``hbase10cdh`` package |---|
    for example, ``co.cask.cdap.data2.transaction.coprocessor.hbase10cdh.DefaultTransactionProcessor``
   
    Running this command in an HBase shell will give you table attributes::
