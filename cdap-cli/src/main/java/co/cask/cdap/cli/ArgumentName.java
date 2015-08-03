@@ -64,6 +64,9 @@ public enum ArgumentName {
   ENDPOINT("endpoint"),
   HEADERS("headers"),
   HTTP_BODY("body"),
+  /**
+   * stream format
+   */
   FORMAT("format"),
   SCHEMA("schema"),
   SETTINGS("settings"),
