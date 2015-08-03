@@ -512,6 +512,14 @@ public final class Constants {
         public static final String WRITE_COUNT = "dataset.store.writes";
         public static final String WRITE_BYTES = "dataset.store.bytes";
       }
+
+      /**
+       * Logs metrics
+       */
+      public static final class Log {
+        public static final String PROCESS_DELAY = "log.process.delay";
+        public static final String PROCESS_MESSAGES_COUNT = "log.process.message.count";
+      }
     }
 
     /**

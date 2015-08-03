@@ -17,6 +17,8 @@
 package co.cask.cdap.logging.save;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import co.cask.cdap.api.metrics.MetricsContext;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.logging.appender.kafka.LoggingEventSerializer;
 import co.cask.cdap.logging.context.LoggingContextHelper;
@@ -41,12 +43,15 @@ public class KafkaMessageCallback implements KafkaConsumer.MessageCallback {
   private final Set<KafkaLogProcessor> kafkaLogProcessors;
   private final LoggingEventSerializer serializer;
   private final CountDownLatch stopLatch;
+  private final MetricsContext metricsContext;
 
   public KafkaMessageCallback(CountDownLatch stopLatch,
-                              Set<KafkaLogProcessor> kafkaLogProcessors) throws Exception {
+                              Set<KafkaLogProcessor> kafkaLogProcessors,
+                              MetricsContext metricsContext) throws Exception {
     this.kafkaLogProcessors = kafkaLogProcessors;
     this.serializer = new LoggingEventSerializer();
     this.stopLatch = stopLatch;
+    this.metricsContext = metricsContext;
   }
 
   @Override
@@ -66,11 +71,16 @@ public class KafkaMessageCallback implements KafkaConsumer.MessageCallback {
 
     int count = 0;
 
+    long oldestProcessed = 0;
     while (messages.hasNext()) {
       FetchedMessage message = messages.next();
       try {
         GenericRecord genericRecord = serializer.toGenericRecord(message.getPayload());
         ILoggingEvent event = serializer.fromGenericRecord(genericRecord);
+
+        if (event.getTimeStamp() < oldestProcessed) {
+          oldestProcessed = event.getTimeStamp();
+        }
 
         LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(event.getMDCPropertyMap());
         KafkaLogEvent logEvent = new KafkaLogEvent(genericRecord, event, loggingContext,
@@ -93,6 +103,13 @@ public class KafkaMessageCallback implements KafkaConsumer.MessageCallback {
 
       count++;
     }
+
+    if (count > 0) {
+      // todo: use hostogram when available (CDAP-3120)
+      metricsContext.gauge(Constants.Metrics.Name.Log.PROCESS_DELAY, System.currentTimeMillis() - oldestProcessed);
+      metricsContext.increment(Constants.Metrics.Name.Log.PROCESS_MESSAGES_COUNT, count);
+    }
+
     LOG.trace("Got {} messages from kafka", count);
   }
 
