@@ -78,6 +78,7 @@ public class ETLESTest extends BaseETLBatchTest {
   private Client client;
   private Node node;
   private int port;
+  private Schema schema;
 
 
   @Before
@@ -192,4 +193,3 @@ public class ETLESTest extends BaseETLBatchTest {
     Assert.assertNull(row1.get("NOT_IMPORTED"));
   }
 }
-

@@ -27,27 +27,15 @@ import co.cask.cdap.template.etl.api.Emitter;
 import co.cask.cdap.template.etl.api.batch.BatchSource;
 import co.cask.cdap.template.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.template.etl.common.Properties;
+import co.cask.cdap.template.etl.common.RecordWritableConverter;
 import com.google.common.base.Strings;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.io.ArrayWritable;
-import org.apache.hadoop.io.BooleanWritable;
-import org.apache.hadoop.io.ByteWritable;
-import org.apache.hadoop.io.DoubleWritable;
-import org.apache.hadoop.io.FloatWritable;
-import org.apache.hadoop.io.IntWritable;
-import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.MapWritable;
-import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.Job;
 import org.elasticsearch.hadoop.mr.EsInputFormat;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * A {@link BatchSource} that writes data to Elasticsearch.
@@ -63,12 +51,13 @@ import java.util.Map;
   "and converts it to a JSON, then indexes it in elasticsearch using the index, type, and id specified by the user. " +
   "The elasticsearch server should be running prior to creating the adapter.")
 public class ElasticsearchSource extends BatchSource<Text, MapWritable, StructuredRecord> {
-  private static final String INDEX_DESC = "The name of the index to query";
-  private static final String TYPE_DESC = "The name of the type where the data is stored.";
-  private static final String QUERY_DESC = "The query to use to import data from the specified index. " +
-    "See elasticsearch for query examples";
-  private static final String HOST_DESC = "The hostname and port for the elasticsearch instance, e.g. localhost:9200";
-  private static final String SCHEMA_DESC = "The schema or mapping of the data in elasticsearch";
+  private static final String INDEX_DESCRIPTION = "The name of the index to query.";
+  private static final String TYPE_DESCRIPTION = "The name of the type where the data is stored.";
+  private static final String QUERY_DESCRIPTION = "The query to use to import data from the specified index. " +
+    "See elasticsearch for query examples.";
+  private static final String HOST_DESCRIPTION = "The hostname and port for the elasticsearch instance;" +
+    " for example, localhost:9200.";
+  private static final String SCHEMA_DESCRIPTION = "The schema or mapping of the data in elasticsearch.";
 
   private final ESConfig config;
   private Schema schema;
@@ -101,7 +90,7 @@ public class ElasticsearchSource extends BatchSource<Text, MapWritable, Structur
 
   @Override
   public void transform(KeyValue<Text, MapWritable> input, Emitter<StructuredRecord> emitter) throws Exception {
-    emitter.emit(convertToRecord(input.getValue(), schema == null ? parseSchema() : schema));
+    emitter.emit(RecordWritableConverter.convertToRecord(input.getValue(), schema));
   }
 
   private Schema parseSchema() {
@@ -112,117 +101,28 @@ public class ElasticsearchSource extends BatchSource<Text, MapWritable, Structur
     }
   }
 
-  private static StructuredRecord convertToRecord(MapWritable input, Schema schema) throws IOException {
-    StructuredRecord.Builder builder = StructuredRecord.builder(schema);
-
-    for (Schema.Field field : schema.getFields()) {
-      try {
-        builder.set(field.getName(), convertWritables(input.get(new Text(field.getName())), field.getSchema()));
-      } catch (Exception e) {
-        throw(new IOException(String.format("Type exception for field %s: %s",
-                                            field.getName(), e.getMessage())));
-      }
-    }
-    return builder.build();
-  }
-
-  private static Object convertWritables(Writable writable, Schema schema) throws IOException {
-    switch (schema.getType()) {
-      case NULL:
-        if (writable.getClass() == NullWritable.class) {
-          return null;
-        }
-        throw new ClassCastException("This field is not null:" + writable.toString());
-      case BOOLEAN:
-        return ((BooleanWritable) writable).get();
-      case INT:
-        //Downcasting is necessary because Elasticsearch defaults to storing all ints as longs
-        return (int) (writable.getClass() == IntWritable.class ? ((IntWritable) writable).get() :
-          ((LongWritable) writable).get());
-      case LONG:
-        return ((LongWritable) writable).get();
-      case FLOAT:
-        // Downcasting is necessary because Elasticsearch defaults to storing all floats as doubles
-        return (float) (writable.getClass() == FloatWritable.class ? ((FloatWritable) writable).get() :
-          ((DoubleWritable) writable).get());
-      case DOUBLE:
-        return ((DoubleWritable) writable).get();
-      case BYTES:
-        return ((ByteWritable) writable).get();
-      case STRING:
-        return writable.toString();
-      case ENUM:
-        // Currently there is no standard container to represent enum type
-        return writable.toString();
-      case ARRAY:
-        return convertArray((ArrayWritable) writable, schema.getComponentSchema());
-      case MAP:
-        return convertMap((MapWritable) writable, schema.getMapSchema());
-      case RECORD:
-        return convertToRecord((MapWritable) writable, schema);
-      case UNION:
-        return convertUnion(writable, schema);
-    }
-    throw new IOException("Unsupported schema: " + schema);
-  }
-
-  private static List<Object> convertArray(ArrayWritable input, Schema elementSchema) throws IOException {
-    List<Object> result = new ArrayList<>();
-    for (Writable writable : input.get()) {
-      result.add(convertWritables(writable, elementSchema));
-    }
-    return result;
-  }
-
-  private static Map<Object, Object> convertMap(MapWritable input,
-                                             Map.Entry<Schema, Schema> mapSchema) throws IOException {
-    Schema keySchema = mapSchema.getKey();
-    if (!keySchema.isCompatible(Schema.of(Schema.Type.STRING))) {
-      throw new IOException("Complex key type not supported: " + keySchema);
-    }
-
-    Schema valueSchema = mapSchema.getValue();
-    Map<Object, Object> result = new HashMap<>();
-
-    for (Writable key : input.keySet()) {
-      result.put(convertWritables(key, keySchema), convertWritables(input.get(key), valueSchema));
-    }
-    return result;
-  }
-
-  private static Object convertUnion(Writable input, Schema unionSchema) throws IOException {
-    for (Schema schema : unionSchema.getUnionSchemas()) {
-      try {
-        return convertWritables(input, schema);
-      } catch (ClassCastException e) {
-        //no-op; keep iterating until the appropriate class is found
-      }
-    }
-    throw new IOException("No matching schema found for union type: " + unionSchema);
-  }
-
   /**
-   * Config class for Batch ElasticsearchSink
+   * Config class for Batch {@link ElasticsearchSource}.
    */
   public static class ESConfig extends PluginConfig {
     @Name(Properties.Elasticsearch.HOST)
-    @Description(HOST_DESC)
+    @Description(HOST_DESCRIPTION)
     private String hostname;
 
     @Name(Properties.Elasticsearch.INDEX_NAME)
-    @Description(INDEX_DESC)
+    @Description(INDEX_DESCRIPTION)
     private String index;
 
     @Name(Properties.Elasticsearch.TYPE_NAME)
-    @Description(TYPE_DESC)
+    @Description(TYPE_DESCRIPTION)
     private String type;
 
     @Name(Properties.Elasticsearch.QUERY)
-    @Description(QUERY_DESC)
+    @Description(QUERY_DESCRIPTION)
     private String query;
 
     @Name(Properties.Elasticsearch.SCHEMA)
-    @Description(SCHEMA_DESC)
+    @Description(SCHEMA_DESCRIPTION)
     private String schema;
 
     public ESConfig(String hostname, String index, String type, String query, String schema) {
