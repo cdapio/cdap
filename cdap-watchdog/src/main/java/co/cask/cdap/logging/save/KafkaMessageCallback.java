@@ -71,7 +71,7 @@ public class KafkaMessageCallback implements KafkaConsumer.MessageCallback {
 
     int count = 0;
 
-    long oldestProcessed = 0;
+    long oldestProcessed = Long.MAX_VALUE;
     while (messages.hasNext()) {
       FetchedMessage message = messages.next();
       try {
