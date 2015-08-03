@@ -247,18 +247,16 @@ see these troubleshooting instructions for :ref:`problems while upgrading CDH
     
 #. Start CDAP
 
-
-.. rubric:: Upgrading CDAP 3.0 to 3.1
-
-**Note:** An app need to be both recompiled and re-deployed if it uses either a PartitionedFileSet or a TimePartitionedFileSet.
+**Note:** Any apps will need to be both recompiled and re-deployed if they use either a
+PartitionedFileSet or a TimePartitionedFileSet.
 
 
 .. rubric:: Upgrading CDAP 2.8 to 3.0
 
 **Note:** Apps need to be both recompiled and re-deployed.
 
-When upgrading from 2.8.0 to 3.0.0, the CDAP Web-App role has been replaced by the CDAP-UI role.  After starting the 3.0 services 
-for the first time:
+When upgrading from 2.8.0 to 3.0.0, the CDAP Web-App role has been replaced by the CDAP-UI
+role.  After starting the 3.0 services for the first time:
 
    - From the CDAP Instances page, select "Add Role Instances", and choose a host for the CDAP-UI role.
 
@@ -331,7 +329,8 @@ state where the tables can be disabled again and complete the process.
 
 In that case, set this configuration property in ``hbase-site.xml``::
 
-  hbase.coprocessor.abortonerror = false
+  hbase.coprocessor.abortonerror
+  false
 
 and restart the HBase regionservers. This will allow the regionservers to start up
 despite the coprocessor version mismatch. At this point, you should be able to run through
