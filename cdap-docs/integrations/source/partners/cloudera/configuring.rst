@@ -220,6 +220,9 @@ In the future, we intend to automate all these steps. The issue that tracks that
 
     $ /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.UpgradeTool upgrade
     
+   If using Cloudera Manager, this can be done by selecting ``Run CDAP Upgrade Tool`` from
+   the *CDAP Service Actions* menu
+    
 #. Check if the coprocessor JARs for these tables have been upgraded to ``cdh-1.0``:
 
     - ``cdap_system:app.meta``
