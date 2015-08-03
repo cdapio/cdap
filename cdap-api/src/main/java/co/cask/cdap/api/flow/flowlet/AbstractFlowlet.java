@@ -33,6 +33,7 @@ public abstract class AbstractFlowlet implements Flowlet, Callback {
   private FlowletConfigurer configurer;
   private FlowletContext flowletContext;
 
+  @Override
   public void configure(FlowletConfigurer configurer) {
     this.configurer = configurer;
     configure();

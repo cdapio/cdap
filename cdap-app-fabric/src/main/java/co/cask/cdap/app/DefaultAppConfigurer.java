@@ -23,7 +23,6 @@ import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
-import co.cask.cdap.api.flow.AbstractFlow;
 import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.mapreduce.MapReduce;
@@ -140,10 +139,8 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   public void addFlow(Flow flow) {
     Preconditions.checkArgument(flow != null, "Flow cannot be null.");
     DefaultFlowConfigurer configurer = new DefaultFlowConfigurer(flow);
-    FlowSpecification spec;
-    AbstractFlow abstractFlow = (AbstractFlow) flow;
-    abstractFlow.configure(configurer);
-    spec = configurer.createSpecification();
+    flow.configure(configurer);
+    FlowSpecification spec = configurer.createSpecification();
     flows.put(spec.getName(), spec);
   }
 

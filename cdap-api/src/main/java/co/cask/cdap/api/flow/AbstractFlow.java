@@ -27,15 +27,26 @@ public abstract class AbstractFlow implements Flow {
 
   private FlowConfigurer configurer;
 
+  @Override
   public final void configure(FlowConfigurer configurer) {
     this.configurer = configurer;
     configureFlow();
+    configure();
   }
 
   /**
    * Configure the flow.
+   *
+   * @deprecated Use {@link AbstractFlow#configure} instead.
    */
-  protected abstract void configureFlow();
+  @Deprecated
+  protected void configureFlow() {
+
+  }
+
+  protected void configure() {
+
+  }
 
   /**
    * Returns the {@link FlowConfigurer} used for configuration. Only available during configuration time.
