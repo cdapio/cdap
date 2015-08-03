@@ -29,7 +29,7 @@ Cask Data Application Platform Release Notes
 New Features
 ------------
 
-**MapR Support, HDP 2.2 Support, CDH 5.4 Support**
+**MapR 4.1 Support, HDP 2.2 Support, CDH 5.4 Support**
 
 - `CDAP-1614 <https://issues.cask.co/browse/CDAP-1614>`__ -
   Added HBase 1.0 support.
@@ -38,7 +38,7 @@ New Features
   Made CDAP work on the HDP 2.2 distribution.
 
 - `CDAP-2786 <https://issues.cask.co/browse/CDAP-2786>`__ -
-  Added support to CDAP 3.1.0 for the MapR distro.
+  Added support to CDAP 3.1.0 for the MapR 4.1 distro.
 
 - `CDAP-2798 <https://issues.cask.co/browse/CDAP-2798>`__ -
   Added Hive 0.14 support.
@@ -71,13 +71,13 @@ New Features
 **Spark**
 
 - `CDAP-344 <https://issues.cask.co/browse/CDAP-344>`__ -
-  Users can now run Spark in Distributed mode.
+  Users can now run Spark in distributed mode.
 
 - `CDAP-1993 <https://issues.cask.co/browse/CDAP-1993>`__ -
   Added ability to manipulate the SparkConf.
 
 - `CDAP-2700 <https://issues.cask.co/browse/CDAP-2700>`__ -
-  Added the ability to Spark programs of discovering CDAP services.
+  Added the ability to Spark programs of discovering CDAP services in distributed mode.
 
 - `CDAP-2701 <https://issues.cask.co/browse/CDAP-2701>`__ -
   Spark programs are able to collect Metrics in distributed mode.
