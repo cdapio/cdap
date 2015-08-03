@@ -29,10 +29,7 @@ Cask Data Application Platform Release Notes
 New Features
 ------------
 
-Metrics
-.......
-
-.. rubric:: Metrics Performance, Scalability & Stability Improvements
+**Metrics**
 
 - `CDAP-2975 <https://issues.cask.co/browse/CDAP-2975>`__ -
   Added pre-split FactTables.
@@ -43,33 +40,23 @@ Metrics
 - `CDAP-1853 <https://issues.cask.co/browse/CDAP-1853>`__ -
   Metrics processor scaling no longer needs a master services restart.
 
-.. rubric:: MapReduce Metrics Improvements
-
 - `CDAP-2844 <https://issues.cask.co/browse/CDAP-2844>`__ -
   MapReduce metrics collection no longer use counters, and instead report directly to Kafka.
-
-.. rubric:: Metrics Aggregation in Spark
 
 - `CDAP-2701 <https://issues.cask.co/browse/CDAP-2701>`__ -
   Spark programs are able to collect Metrics in distributed mode.
 
-.. rubric:: Metrics access in CLI
-
 - `CDAP-2466 <https://issues.cask.co/browse/CDAP-2466>`__ -
   Added CLI for metrics search and query.
-
-.. rubric:: Metrics UI improvements
 
 - `CDAP-2236 <https://issues.cask.co/browse/CDAP-2236>`__ -
   New CDAP UI switched over to using newer search/query APIs.
 
-.. rubric:: Remove deprecated Metrics APIs
-
 - `CDAP-1998 <https://issues.cask.co/browse/CDAP-1998>`__ -
   Removed deprecated Context - Query param in Metrics v3 API.
 
-Workflows
-.........
+
+**Workflows**
 
 - `CDAP-1983 <https://issues.cask.co/browse/CDAP-1983>`__ -
   Added example application for processing and analyzing Wikipedia data using Workflows.
@@ -99,8 +86,8 @@ Workflows
 - `CDAP-2982 <https://issues.cask.co/browse/CDAP-2982>`__ -
   Added verification that the Workflow contains all programs/custom actions with a unique name.
 
-Spark
-.....
+
+**Spark**
 
 - `CDAP-344 <https://issues.cask.co/browse/CDAP-344>`__ -
   Users can now run Spark in Distributed mode.
@@ -129,8 +116,7 @@ Spark
   Spark program can now specify resources usage for driver and executor process in distributed mode.
 
 
-MapR Support, HDP 2.2 Support, CDH 5.4 Support
-..............................................
+**MapR Support, HDP 2.2 Support, CDH 5.4 Support**
 
 - `CDAP-1614 <https://issues.cask.co/browse/CDAP-1614>`__ -
   Added HBase 1.0 support.
@@ -169,8 +155,7 @@ MapR Support, HDP 2.2 Support, CDH 5.4 Support
   Added HiveServer2 support in a secure cluster.
 
 
-Miscellaneous New Features
-..........................
+**Miscellaneous New Features**
 
 - `CDAP-332 <https://issues.cask.co/browse/CDAP-332>`__ -
   Added a Restful end-point for deleting Streams.
