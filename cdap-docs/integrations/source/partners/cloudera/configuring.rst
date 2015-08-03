@@ -196,13 +196,13 @@ you can end up with an unusable system.**
 **Upgrade Steps**
 
 1. If using Cloudera Manager, :ref:`stop all CDAP application and services
-   <install-upgrade-stop>`, as Cloudera Manager will have auto-started CDAP
+   <install-upgrade>`, as Cloudera Manager will have auto-started CDAP
 #. Disable all CDAP tables; from an HBase shell, run this command::
 
     > disable_all 'cdap.*'
     
 #. Upgrade to CDH 5.4
-#. :ref:`Stop CDAP application and services <install-upgrade-stop>, as CDH will have auto-started CDAP
+#. :ref:`Stop CDAP application and services <install-upgrade>`, as CDH will have auto-started CDAP
 #. Upgrade to CDAP 3.1
 #. Run the CDAP Upgrade Tool, as the user that runs CDAP Master (the CDAP user)
 #. Check if the co-processor JARs for these tables have been upgraded to ``cdh-1.0``:
@@ -213,6 +213,18 @@ you can end up with an unusable system.**
     
   by checking that the coprocessor classnames are using the ``base10cdh`` package |---|
   for example, ``co.cask.cdap.data2.transaction.coprocessor.hbase10cdh.DefaultTransactionProcessor``
+  
+  Running this command in an HBase shell will give you table attributes::
+  
+    > describe 'cdap_system:app.meta'
+    
+  The result output will look something like, and show the coprocessor classname::
+  
+    'cdap_system:app.meta', {TABLE_ATTRIBUTES => {coprocessor$1 =>
+    'hdfs://server.example.com/cdap/cdap/lib/
+    coprocessorb5cb1b69834de686a84d513dff009908.jar|co.cask.cdap.data2.transaction.
+    coprocessor.hbase10cdh.DefaultTransactionProcessor|1073741823|', METADATA =>
+    {'cdap.version' => '3.1.0...
 
 #. Enable these tables; from an HBase shell, run these commands::
    

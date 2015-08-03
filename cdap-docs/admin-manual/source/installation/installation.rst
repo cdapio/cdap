@@ -733,8 +733,6 @@ These steps will upgrade from CDAP 3.0.3 to 3.1.0. If you are on an earlier vers
 please follow the upgrade instructions for the earlier versions and upgrade first to 3.0.3 before proceeding.
 (**Note:** Some apps need to be both recompiled and re-deployed, see below.)
 
-.. _install-upgrade-stop:
-
 .. highlight:: console
 
 1. Stop all flows, services, and other programs in all your applications.
