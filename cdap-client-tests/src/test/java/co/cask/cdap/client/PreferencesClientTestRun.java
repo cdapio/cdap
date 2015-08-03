@@ -19,6 +19,7 @@ package co.cask.cdap.client;
 import co.cask.cdap.client.app.AppReturnsArgs;
 import co.cask.cdap.client.app.FakeApp;
 import co.cask.cdap.client.common.ClientTestBase;
+import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.common.conf.Constants;
@@ -238,7 +239,11 @@ public class PreferencesClientTestRun extends ClientTestBase {
       Assert.assertEquals(propMap, client.getApplicationPreferences(FAKE_APP_ID, false));
       Assert.assertEquals(propMap, client.getProgramPreferences(flow, false));
     } finally {
-      appClient.delete(FAKE_APP_ID);
+      try {
+        appClient.delete(FAKE_APP_ID);
+      } catch (ApplicationNotFoundException e) {
+        // ok if this happens, means its already deleted.
+      }
       namespaceClient.delete(invalidNamespace.getId());
     }
   }

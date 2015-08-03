@@ -51,6 +51,7 @@ import co.cask.cdap.internal.app.worker.DefaultWorkerConfigurer;
 import co.cask.cdap.internal.app.workflow.DefaultWorkflowConfigurer;
 import co.cask.cdap.internal.flow.DefaultFlowSpecification;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
+import co.cask.cdap.proto.Id;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 
@@ -63,6 +64,7 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   private String name;
   private String description;
   private String configuration;
+  private Id.Artifact artifactId;
   private final Map<String, StreamSpecification> streams = Maps.newHashMap();
   private final Map<String, String> dataSetModules = Maps.newHashMap();
   private final Map<String, DatasetCreationSpec> dataSetInstances = Maps.newHashMap();
@@ -83,6 +85,12 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   public DefaultAppConfigurer(Application app, String configuration) {
     this(app);
     this.configuration = configuration;
+  }
+
+  public DefaultAppConfigurer(Id.Artifact artifactId, Application app, String configuration) {
+    this(app);
+    this.configuration = configuration;
+    this.artifactId = artifactId;
   }
 
   @Override
@@ -225,7 +233,7 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   }
 
   public ApplicationSpecification createSpecification(String version) {
-    return new DefaultApplicationSpecification(name, version, description, configuration, streams,
+    return new DefaultApplicationSpecification(name, version, description, configuration, artifactId, streams,
                                                dataSetModules, dataSetInstances,
                                                flows, mapReduces, sparks, workflows, services,
                                                schedules, workers);

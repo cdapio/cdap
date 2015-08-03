@@ -14,12 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.proto.artifact;
+package co.cask.cdap.common;
 
 /**
  * Thrown when an artifact is invalid.
  */
-public class InvalidArtifactException extends Exception {
+public class InvalidArtifactException extends BadRequestException {
 
   public InvalidArtifactException(String message) {
     super(message);

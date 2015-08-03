@@ -30,7 +30,6 @@ import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.ArtifactNotFoundException;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.internal.test.PluginJarHelper;
@@ -178,9 +177,11 @@ public class ArtifactClientTestRun extends ClientTestBase {
     ArtifactSummary pluginArtifactSummary =
       new ArtifactSummary(pluginId.getName(), pluginId.getVersion().getVersion(), false);
 
-    // list all artifacts, should get all 3 back
-    Assert.assertEquals(ImmutableList.of(myapp1Summary, myapp2Summary, pluginArtifactSummary),
-                        artifactClient.list(Id.Namespace.DEFAULT));
+    // no way to delete artifacts yet... when run in a suite will see other artifacts from app deployments.
+    // so just test that these expected ones are in the list returned.
+    Set<ArtifactSummary> artifacts = Sets.newHashSet(artifactClient.list(Id.Namespace.DEFAULT));
+
+    Assert.assertTrue(artifacts.containsAll(ImmutableList.of(myapp1Summary, myapp2Summary, pluginArtifactSummary)));
 
     // list all artifacts named 'myapp'
     Assert.assertEquals(ImmutableList.of(myapp1Summary, myapp2Summary),

@@ -22,13 +22,13 @@ import co.cask.cdap.api.templates.plugins.PluginClass;
 import co.cask.cdap.common.ArtifactAlreadyExistsException;
 import co.cask.cdap.common.ArtifactNotFoundException;
 import co.cask.cdap.common.ArtifactRangeNotFoundException;
+import co.cask.cdap.common.InvalidArtifactException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
-import co.cask.cdap.proto.artifact.InvalidArtifactException;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
@@ -186,12 +186,40 @@ public class ArtifactRepository {
    *
    * @param artifactId the id of the artifact to inspect and store
    * @param artifactFile the artifact to inspect and store
+   * @return detail about the newly added artifact
+   * @throws IOException if there was an exception reading from the artifact store
+   * @throws WriteConflictException if there was a write conflict writing to the ArtifactStore
+   * @throws ArtifactAlreadyExistsException if the artifact already exists
+   * @throws InvalidArtifactException if the artifact is invalid. For example, if it is not a zip file,
+   *                                  or the application class given is not an Application.
+   */
+  public ArtifactDetail addArtifact(Id.Artifact artifactId, File artifactFile)
+    throws IOException, WriteConflictException, ArtifactAlreadyExistsException, InvalidArtifactException {
+
+    try (CloseableClassLoader parentClassLoader =
+           artifactClassLoaderFactory.createClassLoader(Locations.toLocation(artifactFile))) {
+      ArtifactClasses artifactClasses = artifactInspector.inspectArtifact(artifactId, artifactFile, parentClassLoader);
+      ArtifactMeta meta = new ArtifactMeta(artifactClasses, ImmutableSet.<ArtifactRange>of());
+      return artifactStore.write(artifactId, meta, Files.newInputStreamSupplier(artifactFile));
+    }
+  }
+
+  /**
+   * Inspects and builds plugin and application information for the given artifact.
+   *
+   * @param artifactId the id of the artifact to inspect and store
+   * @param artifactFile the artifact to inspect and store
    * @param parentArtifacts artifacts the given artifact extends.
    *                        If null, the given artifact does not extend another artifact
    * @throws IOException if there was an exception reading from the artifact store
    * @throws ArtifactRangeNotFoundException if none of the parent artifacts could be found
+   * @throws WriteConflictException if there was a write conflict writing to the ArtifactStore
+   * @throws ArtifactAlreadyExistsException if the artifact already exists
+   * @throws InvalidArtifactException if the artifact is invalid. For example, if it is not a zip file,
+   *                                  or the application class given is not an Application.
    */
-  public void addArtifact(Id.Artifact artifactId, File artifactFile, @Nullable Set<ArtifactRange> parentArtifacts)
+  public ArtifactDetail addArtifact(Id.Artifact artifactId, File artifactFile,
+                                    @Nullable Set<ArtifactRange> parentArtifacts)
     throws IOException, ArtifactRangeNotFoundException, WriteConflictException,
     ArtifactAlreadyExistsException, InvalidArtifactException {
 
@@ -201,24 +229,13 @@ public class ArtifactRepository {
       // if this artifact doesn't extend another, use itself to create the parent classloader
       parentClassLoader = artifactClassLoaderFactory.createClassLoader(Locations.toLocation(artifactFile));
     } else {
-      // otherwise, use any of the parent artifacts to create the parent classloader.
-      Location parentLocation = null;
-      for (ArtifactRange parentRange : parentArtifacts) {
-        List<ArtifactDetail> parents = artifactStore.getArtifacts(parentRange);
-        if (!parents.isEmpty()) {
-          parentLocation = parents.get(0).getDescriptor().getLocation();
-        }
-      }
-      if (parentLocation == null) {
-        throw new ArtifactRangeNotFoundException(parentArtifacts);
-      }
-      parentClassLoader = artifactClassLoaderFactory.createClassLoader(parentLocation);
+      parentClassLoader = createClassLoader(parentArtifacts);
     }
 
     try {
       ArtifactClasses artifactClasses = artifactInspector.inspectArtifact(artifactId, artifactFile, parentClassLoader);
       ArtifactMeta meta = new ArtifactMeta(artifactClasses, parentArtifacts);
-      artifactStore.write(artifactId, meta, Files.newInputStreamSupplier(artifactFile));
+      return artifactStore.write(artifactId, meta, Files.newInputStreamSupplier(artifactFile));
     } finally {
       parentClassLoader.close();
     }
@@ -232,5 +249,22 @@ public class ArtifactRepository {
         new ArtifactSummary(descriptor.getName(), descriptor.getVersion().getVersion(), descriptor.isSystem()));
     }
     return summaries;
+  }
+
+  // create a classloader using an artifact from one of the artifacts in the specified parents.
+  private CloseableClassLoader createClassLoader(Set<ArtifactRange> parentArtifacts)
+    throws ArtifactRangeNotFoundException, IOException {
+
+    Location parentLocation = null;
+    for (ArtifactRange parentRange : parentArtifacts) {
+      List<ArtifactDetail> parents = artifactStore.getArtifacts(parentRange);
+      if (!parents.isEmpty()) {
+        parentLocation = parents.get(0).getDescriptor().getLocation();
+      }
+    }
+    if (parentLocation == null) {
+      throw new ArtifactRangeNotFoundException(parentArtifacts);
+    }
+    return artifactClassLoaderFactory.createClassLoader(parentLocation);
   }
 }

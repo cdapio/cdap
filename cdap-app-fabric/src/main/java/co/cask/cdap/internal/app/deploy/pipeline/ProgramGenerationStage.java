@@ -133,19 +133,24 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationDeployable>
       executorService.shutdown();
     }
 
-    // moves the <appfabricdir>/archive/<app-name>.jar to <appfabricdir>/<app-name>/archive/<app-name>.jar
-    // Cannot do this before starting the deploy pipeline because appId could be null at that time.
-    // However, it is guaranteed to be non-null from VerificationsStage onwards
-    Location newArchiveLocation = appFabricDir.append(applicationName).append(Constants.ARCHIVE_DIR);
-    moveAppArchiveUnderAppDirectory(input.getLocation(), newArchiveLocation);
-    Location programLocation = newArchiveLocation.append(input.getLocation().getName());
-    ApplicationDeployable updatedAppDeployable = new ApplicationDeployable(input.getId(), input.getSpecification(),
-                                                                           input.getExistingAppSpec(),
-                                                                           input.getApplicationDeployScope(),
-                                                                           programLocation);
+    // TODO: (CDAP-2662) remove after app templates are gone
+    if (input.getSpecification().getArtifactId() == null) {
+      // moves the <appfabricdir>/archive/<app-name>.jar to <appfabricdir>/<app-name>/archive/<app-name>.jar
+      // Cannot do this before starting the deploy pipeline because appId could be null at that time.
+      // However, it is guaranteed to be non-null from VerificationsStage onwards
+      Location newArchiveLocation = appFabricDir.append(applicationName).append(Constants.ARCHIVE_DIR);
+      moveAppArchiveUnderAppDirectory(input.getLocation(), newArchiveLocation);
+      Location programLocation = newArchiveLocation.append(input.getLocation().getName());
+      ApplicationDeployable updatedAppDeployable = new ApplicationDeployable(input.getId(), input.getSpecification(),
+        input.getExistingAppSpec(),
+        input.getApplicationDeployScope(),
+        programLocation);
+      // Emits the received specification with programs.
+      emit(new ApplicationWithPrograms(updatedAppDeployable, programs.build()));
+    } else {
+      emit(new ApplicationWithPrograms(input, programs.build()));
+    }
 
-    // Emits the received specification with programs.
-    emit(new ApplicationWithPrograms(updatedAppDeployable, programs.build()));
   }
 
   private void moveAppArchiveUnderAppDirectory(Location origArchiveLocation,

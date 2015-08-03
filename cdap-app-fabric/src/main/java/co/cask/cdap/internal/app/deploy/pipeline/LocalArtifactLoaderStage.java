@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,24 +20,20 @@ import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.deploy.ConfigResponse;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.ForwardingApplicationSpecification;
 import co.cask.cdap.internal.app.deploy.InMemoryConfigurator;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.pipeline.AbstractStage;
 import co.cask.cdap.proto.Id;
-import com.google.common.io.Files;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.ListenableFuture;
-import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import javax.annotation.Nullable;
 
 /**
@@ -46,77 +42,62 @@ import javax.annotation.Nullable;
  * This stage is responsible for reading the JAR and generating an ApplicationSpecification
  * that is forwarded to the next stage of processing.
  * </p>
- * TODO: (CDAP-2662) remove after application templates can be removed
  */
-public class LocalArchiveLoaderStage extends AbstractStage<DeploymentInfo> {
-  private final Store store;
+public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
   private final CConfiguration cConf;
+  private final Store store;
+  private final Id.Namespace namespace;
+  private final String appName;
   private final ApplicationSpecificationAdapter adapter;
-  private final Id.Namespace id;
-  private final String appId;
-  private static final Logger LOG = LoggerFactory.getLogger(LocalArchiveLoaderStage.class);
 
   /**
    * Constructor with hit for handling type.
    */
-  public LocalArchiveLoaderStage(Store store, CConfiguration cConf, Id.Namespace id, @Nullable String appId) {
-    super(TypeToken.of(DeploymentInfo.class));
-    this.store = store;
+  public LocalArtifactLoaderStage(CConfiguration cConf, Store store,
+                                  Id.Namespace namespace, @Nullable String appName) {
+    super(TypeToken.of(AppDeploymentInfo.class));
     this.cConf = cConf;
-    this.id = id;
-    this.appId = appId;
+    this.store = store;
+    this.namespace = namespace;
+    this.appName = appName;
     this.adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
   }
 
   /**
-   * Creates a {@link co.cask.cdap.internal.app.deploy.InMemoryConfigurator} to run through
-   * the process of generation of {@link ApplicationSpecification}
+   * Instantiates the Application class and calls configure() on it to generate the {@link ApplicationSpecification}.
    *
-   * @param deploymentInfo Location of the input and output location
+   * @param deploymentInfo information needed to deploy the application, such as the artifact to create it from
+   *                       and the application config to use.
    */
   @Override
-  public void process(DeploymentInfo deploymentInfo) throws Exception {
+  public void process(AppDeploymentInfo deploymentInfo)
+    throws InterruptedException, ExecutionException, TimeoutException, IOException {
 
-    Location outputLocation = deploymentInfo.getDestination();
-    Location parent = Locations.getParent(outputLocation);
-    Locations.mkdirsIfNotExists(parent);
+    Id.Artifact artifactId = deploymentInfo.getArtifactId();
+    Location artifactLocation = deploymentInfo.getArtifactLocation();
+    String appClassName = deploymentInfo.getAppClassName();
+    String configString = deploymentInfo.getConfigString();
 
-    File input = deploymentInfo.getAppJarFile();
-    Location tmpLocation = parent.getTempFile(".tmp");
-    LOG.debug("Copy from {} to {}", input.getName(), tmpLocation.toURI());
-    Files.copy(input, Locations.newOutputSupplier(tmpLocation));
+    InMemoryConfigurator inMemoryConfigurator =
+      new InMemoryConfigurator(cConf, artifactId, appClassName, artifactLocation, configString);
 
-    // Finally, move archive to final location
-    try {
-      if (tmpLocation.renameTo(outputLocation) == null) {
-        throw new IOException(String.format("Could not move archive from location: %s, to location: %s",
-                                            tmpLocation.toURI(), outputLocation.toURI()));
-      }
-    } catch (IOException e) {
-      // In case copy to temporary file failed, or rename failed
-      tmpLocation.delete();
-      throw e;
-    }
-
-    InMemoryConfigurator inMemoryConfigurator = new InMemoryConfigurator(cConf,
-      new LocalLocationFactory().create(input.toURI()), deploymentInfo.getConfigString());
     ListenableFuture<ConfigResponse> result = inMemoryConfigurator.config();
     ConfigResponse response = result.get(120, TimeUnit.SECONDS);
     if (response.getExitCode() != 0) {
       throw new IllegalArgumentException("Failed to configure application: " + deploymentInfo);
     }
     ApplicationSpecification specification = adapter.fromJson(response.get());
-    if (appId != null) {
+    if (appName != null) {
       specification = new ForwardingApplicationSpecification(specification) {
         @Override
         public String getName() {
-          return appId;
+          return appName;
         }
       };
     }
 
-    Id.Application application = Id.Application.from(id, specification.getName());
+    Id.Application application = Id.Application.from(namespace, specification.getName());
     emit(new ApplicationDeployable(application, specification, store.getApplication(application),
-                                   deploymentInfo.getApplicationDeployScope(), outputLocation));
+      ApplicationDeployScope.USER, artifactLocation));
   }
 }
