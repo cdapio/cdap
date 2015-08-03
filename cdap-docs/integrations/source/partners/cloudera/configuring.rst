@@ -192,10 +192,17 @@ The following is the generic procedure for Major/Minor version upgrades:
 
 **Background:** CDH 5.3 ships with HBase 0.98 while CDH 5.4 ships with HBase 1.0. We support
 CDH 5.4 as of CDAP 3.1.0. Upgrading from CDH 5.3 to CDH 5.4 includes an HBase upgrade in
-addition to a CDAP upgrade. **It is important to perform these steps as described,
-otherwise you can end up with an unusable system.** If you make a mistake and get stuck,
-see these troubleshooting instructions for :ref:`problems while upgrading CDH
-<cloudera-troubleshooting-upgrade-cdh>`.
+addition to a CDAP upgrade. 
+
+**It is important to perform these steps as described, otherwise you can end up with an
+unusable system.** The coprocessors may not get upgraded correctly, and HBase
+regionservers may crash.
+
+If you make a mistake and get stuck, see these troubleshooting instructions for
+:ref:`problems while upgrading CDH <cloudera-troubleshooting-upgrade-cdh>`.
+
+In the future, we intend to automate all these steps. The issue that tracks that work is
+`CDAP-3179 <https://issues.cask.co/browse/CDAP-3179>`__.
 
 **Upgrade Steps**
 
