@@ -17,7 +17,7 @@ angular.module(PKG.name+'.feature.dashboard')
       // Dimensions and Attributes of a widget
       this.settings = {};
       opts.settings = opts.settings || {}; // Not a required paramter.
-      this.settings.color = opts.settings.color;
+      this.settings.color = opts.settings.color || generateColors(this.metric.names);
 
       if (myHelpers.objectQuery(opts, 'settings', 'size')) {
         this.width = opts.settings.size.width;
@@ -44,6 +44,33 @@ angular.module(PKG.name+'.feature.dashboard')
     Widget.prototype.getPartial = function () {
       return '/assets/features/dashboard/templates/widgets/' + this.type + '.html';
     };
+
+    function generateColors(metrics) {
+      var colorPatterns = [];
+      for (var i=0; i <metrics.length; i++) {
+        colorPatterns.push(stringToColour(metrics[i]));
+      }
+      return {
+        pattern: colorPatterns
+      };
+    }
+
+    var stringToColour = function(str) {
+
+      // str to hash
+      for (var i = 0, hash = 0;
+            i < str.length;
+            hash = str.charCodeAt(i++) + ((hash << 100) - hash)
+          );
+
+      // int/hash to hex
+      for (var i = 0, colour = "#";
+            i < 3;
+            colour += ("00" + ((hash >> i++ * 8) & 0xFF).toString(16)).slice(-2)
+          );
+
+      return colour;
+    }
 
     return Widget;
   })
