@@ -1,0 +1,16 @@
+<label class="label-control">
+  Select existing {{datasetType}}
+</label>
+<!-- <select class="form-control" ng-model="selected">
+  <option ng-repeat="data in list" value="{{data.name}}">{{data.name}}</option>
+</select> -->
+
+{{ selected }}
+<ui-select ng-model="selected"
+            theme="bootstrap"
+            reset-search-input="false">
+   <ui-select-match>{{$select.selected.name}}</ui-select-match>
+   <ui-select-choices repeat="data in list track by $index | filter: {name: $select.search}">
+     <div ng-bind-html="data.name | highlight: $select.search"></div>
+   </ui-select-choices>
+ </ui-select>

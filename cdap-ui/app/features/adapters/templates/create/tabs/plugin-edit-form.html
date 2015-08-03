@@ -120,10 +120,15 @@
       <!-- MAIN WIDGET -->
       <div ng-class="{'col-lg-8': isSource, 'col-lg-5': isTransform }" ng-if="!isSink">
         <div class="modal-content-scroll" ng-class="{'padding-offset-right': isSource, 'padding-offset-left': isTransform}">
+
           <form plugin-property-edit-view>
             <fieldset ng-disabled="isDisabled">
 
               <div ng-if="PluginEditController.configfetched">
+
+                <div ng-if="datasetType">
+                  <my-dataset-selector dataset-type="{{ ::datasetType }}"></my-dataset-selector>
+                </div>
 
                 <div ng-repeat="group in PluginEditController.config.groups.position">
                   <div class="widget-group-container">
