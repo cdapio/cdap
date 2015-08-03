@@ -192,8 +192,10 @@ The following is the generic procedure for Major/Minor version upgrades:
 
 **Background:** CDH 5.3 ships with HBase 0.98 while CDH 5.4 ships with HBase 1.0. We support
 CDH 5.4 as of CDAP 3.1.0. Upgrading from CDH 5.3 to CDH 5.4 includes an HBase upgrade in
-addition to a CDAP upgrade. **It is important to perform these steps as described, otherwise
-you can end up with an unusable system.**
+addition to a CDAP upgrade. **It is important to perform these steps as described,
+otherwise you can end up with an unusable system.** If you make a mistake and get stuck,
+see these troubleshooting instructions for :ref:`problems while upgrading CDH
+<cloudera-troubleshooting-upgrade-cdh>`.
 
 **Upgrade Steps**
 
@@ -316,3 +318,24 @@ Previously released parcels can also be accessed from their version-specific URL
   |http:|//repository.cask.co/parcels/cdap/2.8/CDAP-2.8.0-1-precise.parcel
   |http:|//repository.cask.co/parcels/cdap/2.8/CDAP-2.8.0-1-trusty.parcel
   |http:|//repository.cask.co/parcels/cdap/2.8/CDAP-2.8.0-1-wheezy.parcel
+  
+
+.. _cloudera-troubleshooting-upgrade-cdh:
+
+.. rubric:: Problems While Upgrading CDH
+
+If you miss a step in the upgrade process and something goes wrong, it's possible that the
+tables will get re-enabled before the coprocessors are upgraded. This could cause the
+regionservers to abort and may make it very difficult to get the cluster back to a stable
+state where the tables can be disabled again and complete the process.
+
+In that case, set this configuration property in ``hbase-site.xml``::
+
+  hbase.coprocessor.abortonerror = false
+
+and restart the HBase regionservers. This will allow the regionservers to start up
+despite the coprocessor version mismatch. At this point, you should be able to run through
+the upgrade steps successfully. 
+
+At the end, remove the entry for ``hbase.coprocessor.abortonerror`` in order to ensure
+that data correctness is maintained.
