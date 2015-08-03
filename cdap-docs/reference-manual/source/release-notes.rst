@@ -29,93 +29,6 @@ Cask Data Application Platform Release Notes
 New Features
 ------------
 
-**Metrics**
-
-- `CDAP-2975 <https://issues.cask.co/browse/CDAP-2975>`__ -
-  Added pre-split FactTables.
-
-- `CDAP-2326 <https://issues.cask.co/browse/CDAP-2326>`__ -
-  Added better unit-test coverage for Cube dataset.
-
-- `CDAP-1853 <https://issues.cask.co/browse/CDAP-1853>`__ -
-  Metrics processor scaling no longer needs a master services restart.
-
-- `CDAP-2844 <https://issues.cask.co/browse/CDAP-2844>`__ -
-  MapReduce metrics collection no longer use counters, and instead report directly to Kafka.
-
-- `CDAP-2701 <https://issues.cask.co/browse/CDAP-2701>`__ -
-  Spark programs are able to collect Metrics in distributed mode.
-
-- `CDAP-2466 <https://issues.cask.co/browse/CDAP-2466>`__ -
-  Added CLI for metrics search and query.
-
-- `CDAP-2236 <https://issues.cask.co/browse/CDAP-2236>`__ -
-  New CDAP UI switched over to using newer search/query APIs.
-
-- `CDAP-1998 <https://issues.cask.co/browse/CDAP-1998>`__ -
-  Removed deprecated Context - Query param in Metrics v3 API.
-
-
-**Workflows**
-
-- `CDAP-1983 <https://issues.cask.co/browse/CDAP-1983>`__ -
-  Added example application for processing and analyzing Wikipedia data using Workflows.
-
-- `CDAP-2709 <https://issues.cask.co/browse/CDAP-2709>`__ -
-  Added ability to add generic keys to the WorkflowToken.
-
-- `CDAP-2712 <https://issues.cask.co/browse/CDAP-2712>`__ -
-  Added ability to update the WorkflowToken in MapReduce and Spark programs.
-
-- `CDAP-2713 <https://issues.cask.co/browse/CDAP-2713>`__ -
-  Added ability to persist the WorkflowToken per run of the Workflow.
-
-- `CDAP-2714 <https://issues.cask.co/browse/CDAP-2714>`__ -
-  Added ability to query the WorkflowToken for the past as well as currently running Workflow runs.
-
-- `CDAP-2752 <https://issues.cask.co/browse/CDAP-2752>`__ -
-  Added ability for custom actions to access the CDAP datasets and services.
-
-- `CDAP-2894 <https://issues.cask.co/browse/CDAP-2894>`__ -
-  Added an API to retreive the system properties (e.g. MapReduce counters in case of
-  MapReduce program) from the WorkflowToken.
-
-- `CDAP-2923 <https://issues.cask.co/browse/CDAP-2923>`__ -
-  Added support for the WorkflowToken in the Spark programs.
-
-- `CDAP-2982 <https://issues.cask.co/browse/CDAP-2982>`__ -
-  Added verification that the Workflow contains all programs/custom actions with a unique name.
-
-
-**Spark**
-
-- `CDAP-344 <https://issues.cask.co/browse/CDAP-344>`__ -
-  Users can now run Spark in Distributed mode.
-
-- `CDAP-1993 <https://issues.cask.co/browse/CDAP-1993>`__ -
-  Added ability to manipulate the SparkConf.
-
-- `CDAP-2700 <https://issues.cask.co/browse/CDAP-2700>`__ -
-  Added the ability to Spark programs of discovering CDAP services.
-
-- `CDAP-2701 <https://issues.cask.co/browse/CDAP-2701>`__ -
-  Spark programs are able to collect Metrics in distributed mode.
-
-- `CDAP-2703 <https://issues.cask.co/browse/CDAP-2703>`__ -
-  Users are able to collect/view logs from Spark programs in distributed mode.
-
-- `CDAP-2705 <https://issues.cask.co/browse/CDAP-2705>`__ -
-  Added examples, guides and documentation for Spark in distributed mode. LogAnalysis
-  application demonstrating parallel execution of the Spark and MapReduce programs using
-  Workflows.
-
-- `CDAP-2923 <https://issues.cask.co/browse/CDAP-2923>`__ -
-  Added support for the WorkflowToken in the Spark programs.
-
-- `CDAP-2936 <https://issues.cask.co/browse/CDAP-2936>`__ -
-  Spark program can now specify resources usage for driver and executor process in distributed mode.
-
-
 **MapR Support, HDP 2.2 Support, CDH 5.4 Support**
 
 - `CDAP-1614 <https://issues.cask.co/browse/CDAP-1614>`__ -
@@ -153,6 +66,97 @@ New Features
 
 - `CDAP-2953 <https://issues.cask.co/browse/CDAP-2953>`__ -
   Added HiveServer2 support in a secure cluster.
+
+
+**Spark**
+
+- `CDAP-344 <https://issues.cask.co/browse/CDAP-344>`__ -
+  Users can now run Spark in Distributed mode.
+
+- `CDAP-1993 <https://issues.cask.co/browse/CDAP-1993>`__ -
+  Added ability to manipulate the SparkConf.
+
+- `CDAP-2700 <https://issues.cask.co/browse/CDAP-2700>`__ -
+  Added the ability to Spark programs of discovering CDAP services.
+
+- `CDAP-2701 <https://issues.cask.co/browse/CDAP-2701>`__ -
+  Spark programs are able to collect Metrics in distributed mode.
+
+- `CDAP-2703 <https://issues.cask.co/browse/CDAP-2703>`__ -
+  Users are able to collect/view logs from Spark programs in distributed mode.
+
+- `CDAP-2705 <https://issues.cask.co/browse/CDAP-2705>`__ -
+  Added examples, guides and documentation for Spark in distributed mode. LogAnalysis
+  application demonstrating parallel execution of the Spark and MapReduce programs using
+  Workflows.
+
+- `CDAP-2923 <https://issues.cask.co/browse/CDAP-2923>`__ -
+  Added support for the WorkflowToken in the Spark programs.
+
+- `CDAP-2936 <https://issues.cask.co/browse/CDAP-2936>`__ -
+  Spark program can now specify resources usage for driver and executor process in distributed mode.
+
+
+**Workflows**
+
+- `CDAP-1983 <https://issues.cask.co/browse/CDAP-1983>`__ -
+  Added example application for processing and analyzing Wikipedia data using Workflows.
+
+- `CDAP-2709 <https://issues.cask.co/browse/CDAP-2709>`__ -
+  Added ability to add generic keys to the WorkflowToken.
+
+- `CDAP-2712 <https://issues.cask.co/browse/CDAP-2712>`__ -
+  Added ability to update the WorkflowToken in MapReduce and Spark programs.
+
+- `CDAP-2713 <https://issues.cask.co/browse/CDAP-2713>`__ -
+  Added ability to persist the WorkflowToken per run of the Workflow.
+
+- `CDAP-2714 <https://issues.cask.co/browse/CDAP-2714>`__ -
+  Added ability to query the WorkflowToken for the past as well as currently running Workflow runs.
+
+- `CDAP-2752 <https://issues.cask.co/browse/CDAP-2752>`__ -
+  Added ability for custom actions to access the CDAP datasets and services.
+
+- `CDAP-2894 <https://issues.cask.co/browse/CDAP-2894>`__ -
+  Added an API to retreive the system properties (e.g. MapReduce counters in case of
+  MapReduce program) from the WorkflowToken.
+
+- `CDAP-2923 <https://issues.cask.co/browse/CDAP-2923>`__ -
+  Added support for the WorkflowToken in the Spark programs.
+
+- `CDAP-2982 <https://issues.cask.co/browse/CDAP-2982>`__ -
+  Added verification that the Workflow contains all programs/custom actions with a unique name.
+
+
+**Datasets**
+
+
+
+**Metrics**
+
+- `CDAP-2975 <https://issues.cask.co/browse/CDAP-2975>`__ -
+  Added pre-split FactTables.
+
+- `CDAP-2326 <https://issues.cask.co/browse/CDAP-2326>`__ -
+  Added better unit-test coverage for Cube dataset.
+
+- `CDAP-1853 <https://issues.cask.co/browse/CDAP-1853>`__ -
+  Metrics processor scaling no longer needs a master services restart.
+
+- `CDAP-2844 <https://issues.cask.co/browse/CDAP-2844>`__ -
+  MapReduce metrics collection no longer use counters, and instead report directly to Kafka.
+
+- `CDAP-2701 <https://issues.cask.co/browse/CDAP-2701>`__ -
+  Spark programs are able to collect Metrics in distributed mode.
+
+- `CDAP-2466 <https://issues.cask.co/browse/CDAP-2466>`__ -
+  Added CLI for metrics search and query.
+
+- `CDAP-2236 <https://issues.cask.co/browse/CDAP-2236>`__ -
+  New CDAP UI switched over to using newer search/query APIs.
+
+- `CDAP-1998 <https://issues.cask.co/browse/CDAP-1998>`__ -
+  Removed deprecated Context - Query param in Metrics v3 API.
 
 
 **Miscellaneous New Features**
@@ -222,6 +226,7 @@ New Features
 
 - `CDAP-3032 <https://issues.cask.co/browse/CDAP-3032>`__ -
   Documented TestConfiguration class usage in unit-test framework.
+
 
 Improvements
 ------------
