@@ -96,13 +96,13 @@ public class HBaseTable extends BufferingTable {
 
   public HBaseTable(DatasetContext datasetContext, DatasetSpecification spec,
                     CConfiguration cConf, Configuration hConf, HBaseTableUtil tableUtil,
-                    String snapshotVersion) throws IOException {
+                    Map<String, String> arguments) throws IOException {
     super(PrefixedNamespaces.namespace(cConf, datasetContext.getNamespaceId(), spec.getName()),
       ConflictDetection.valueOf(spec.getProperty(PROPERTY_CONFLICT_LEVEL, ConflictDetection.ROW.name())),
       HBaseTableAdmin.supportsReadlessIncrements(spec),
       spec.getProperty(Table.PROPERTY_SCHEMA) == null ?
         null : Schema.parseJson(spec.getProperty(Table.PROPERTY_SCHEMA)),
-      spec.getProperty(Table.PROPERTY_SCHEMA_ROW_FIELD), snapshotVersion);
+      spec.getProperty(Table.PROPERTY_SCHEMA_ROW_FIELD), arguments);
     TableId tableId = TableId.from(datasetContext.getNamespaceId(), spec.getName());
     HTable hTable = tableUtil.createHTable(hConf, tableId);
     // todo: make configurable
@@ -265,9 +265,10 @@ public class HBaseTable extends BufferingTable {
   protected Scanner scanPersisted(co.cask.cdap.api.dataset.table.Scan scan) throws Exception {
     ScanBuilder hScan = tableUtil.buildScan();
     hScan.addFamily(columnFamily);
-    if (snapshotVersion != null) {
+    if (snapshotVersion == null) {
       List<Long> timeFilter = new ArrayList<>();
-      timeFilter.add(Long.valueOf(snapshotVersion));
+      LOG.info("Yaojie in HBase scan - snapshotVersion: {}", snapshotVersion);
+      timeFilter.add(snapshotVersion);
       hScan.setFilter(new TimestampsFilter(timeFilter));
     }
     // todo: should be configurable
@@ -312,9 +313,10 @@ public class HBaseTable extends BufferingTable {
   private Get createGet(byte[] row, @Nullable byte[][] columns) {
     GetBuilder get = tableUtil.buildGet(row);
     get.addFamily(columnFamily);
-    if (snapshotVersion != null) {
+    if (snapshotVersion == null) {
+      LOG.info("Yaojie in HBase get - snapshotVersion: {}", snapshotVersion);
       List<Long> timeFilter = new ArrayList<>();
-      timeFilter.add(Long.valueOf(snapshotVersion));
+      timeFilter.add(snapshotVersion);
       get.setFilter(new TimestampsFilter(timeFilter));
     }
     if (columns != null && columns.length > 0) {

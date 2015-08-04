@@ -26,6 +26,8 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Objects;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -39,6 +41,7 @@ import javax.annotation.Nullable;
  * and unpack them in a local directory, which must be cleaned up after the dataset is no longer needed.
  */
 public class SystemDatasetInstantiator implements Closeable {
+  private static final Logger LOG = LoggerFactory.getLogger(SystemDatasetInstantiator.class);
 
   private final DatasetFramework datasetFramework;
   // provides classloaders to use for different dataset modules
@@ -82,6 +85,7 @@ public class SystemDatasetInstantiator implements Closeable {
       }
 
     } catch (Exception e) {
+      LOG.info("Exception: {}", e);
       throw new DatasetInstantiationException("Failed to access dataset: " + datasetId, e);
     }
 

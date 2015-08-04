@@ -81,9 +81,9 @@ public class InMemoryTable extends BufferingTable {
   }
 
   public InMemoryTable(DatasetContext datasetContext, String name, ConflictDetection level,
-                       CConfiguration cConf, Schema schema, String schemaRowField, String snapshotVersion) {
+                       CConfiguration cConf, Schema schema, String schemaRowField, Map<String, String> arguments) {
     super(PrefixedNamespaces.namespace(cConf, datasetContext.getNamespaceId(), name),
-      level, false, schema, schemaRowField, snapshotVersion);
+      level, false, schema, schemaRowField, arguments);
   }
 
   @Override

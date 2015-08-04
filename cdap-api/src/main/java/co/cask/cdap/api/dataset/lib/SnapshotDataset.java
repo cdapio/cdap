@@ -53,8 +53,8 @@ public class SnapshotDataset extends AbstractDataset implements Table {
     this.mainTable = mainTable;
   }
 
-  public byte[] getCurrentVersion() {
-    return metadataTable.get(METADATA_ROW_KEY, METADATA_KEY_COLUMN);
+  public Long getCurrentVersion() {
+    return metadataTable.get(METADATA_ROW_KEY).getLong(METADATA_KEY_COLUMN);
   }
 
   public long getTransactionId() {

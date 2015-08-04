@@ -91,7 +91,7 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
   // Whether read-less increments should be used when increment() is called
   private final boolean enableReadlessIncrements;
   //the current snapshot version
-  protected final String snapshotVersion;
+  protected final Long snapshotVersion;
 
   // In-memory buffer that keeps not yet persisted data. It is row->(column->value) map. Value can be null which means
   // that the corresponded column was removed.
@@ -147,7 +147,8 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
    * @param rowFieldName the name of the schema field that the row key maps to, or null if there is none
    */
   public BufferingTable(String name, ConflictDetection level, boolean enableReadlessIncrements,
-                        @Nullable Schema schema, @Nullable String rowFieldName, @Nullable String snapshotVersion) {
+                        @Nullable Schema schema, @Nullable String rowFieldName,
+                        @Nullable Map<String, String> properties) {
     super(schema, rowFieldName);
     // for optimization purposes we don't allow table name of length greater than Byte.MAX_VALUE
     Preconditions.checkArgument(name.length() < Byte.MAX_VALUE,
@@ -161,7 +162,7 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
     // Default uses the above scheme. Subclasses can change it by overriding the #getNameAsTxChangePrefix method
     this.nameAsTxChangePrefix = Bytes.add(new byte[]{(byte) name.length()}, Bytes.toBytes(name));
     this.buff = new ConcurrentSkipListMap<>(Bytes.BYTES_COMPARATOR);
-    this.snapshotVersion = snapshotVersion;
+    this.snapshotVersion = properties == null ? null : Long.valueOf(properties.get("version"));
   }
 
   /**

@@ -20,6 +20,7 @@ import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.SnapshotDataset;
@@ -33,7 +34,10 @@ import co.cask.cdap.template.etl.common.RecordPutTransformer;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -44,6 +48,8 @@ import javax.annotation.Nullable;
 @Name("SnapshotSink")
 @Description("CDAP Snapshot Dataset Batch Sink")
 public class SnapshotSink extends BatchWritableSink<StructuredRecord, byte[], Put> {
+  private static final Logger LOG = LoggerFactory.getLogger(SnapshotSink.class);
+
 
   private static final String NAME_DESC = "Name of the snapshot dataset. If it does not already exist, one will be " +
     "created.";
@@ -57,6 +63,7 @@ public class SnapshotSink extends BatchWritableSink<StructuredRecord, byte[], Pu
   private final SnapshotSinkConfig snapshotSinkConfig;
   private SnapshotDataset snapshotDataset;
   private long transactionId;
+  private BatchSinkContext batchSinkContext;
 
   public SnapshotSink(SnapshotSinkConfig snapshotSinkConfig) {
     this.snapshotSinkConfig = snapshotSinkConfig;
@@ -65,7 +72,13 @@ public class SnapshotSink extends BatchWritableSink<StructuredRecord, byte[], Pu
   @Override
   public void initialize(BatchSinkContext context) throws Exception {
     super.initialize(context);
-    recordPutTransformer = new RecordPutTransformer(snapshotSinkConfig.rowField);
+    this.batchSinkContext = context;
+    Map<String, String> sinkArgs = new HashMap<>();
+    this.snapshotDataset = batchSinkContext.getDataset(snapshotSinkConfig.name, sinkArgs);
+    transactionId = snapshotDataset.getTransactionId();
+    LOG.info("Yaojie - transaction id in initialize is {}", transactionId);
+    recordPutTransformer = new RecordPutTransformer(snapshotSinkConfig.rowField,
+      Schema.parseJson(snapshotSinkConfig.schemaStr), true);
   }
 
   @Override
@@ -84,23 +97,28 @@ public class SnapshotSink extends BatchWritableSink<StructuredRecord, byte[], Pu
   }
 
   @Override
-  public void prepareRun(BatchSinkContext batchSinkContext) {
-    this.snapshotDataset = batchSinkContext.getDataset(snapshotSinkConfig.name);
-    transactionId = snapshotDataset.getTransactionId();
-  }
-
-  @Override
   public void transform(StructuredRecord input, Emitter<KeyValue<byte[], Put>> emitter) throws Exception {
     Put put = recordPutTransformer.toPut(input);
     emitter.emit(new KeyValue<>(put.getRow(), put));
   }
 
+//  @Override
+//  public void onRunFinish(boolean succeeded, BatchSinkContext batchSinkContext) {
+//    LOG.info("Yaojie in onRunFinish - transaction id in meta is {}", transactionId);
+////    if (succeeded) {
+////      Map<String, String> sinkArgs = Maps.newHashMap();
+////      snapshotDataset = batchSinkContext.getDataset(snapshotSinkConfig.name, sinkArgs);
+////      snapshotDataset.updateMetaDataTable(transactionId);
+////      LOG.info("Yaojie in onRunFinish - transaction id in meta is {}", snapshotDataset.getCurrentVersion());
+////    }
+//  }
+
   @Override
-  public void onRunFinish(boolean succeeded, BatchSinkContext batchSinkContext) {
-    if (succeeded) {
-      snapshotDataset = batchSinkContext.getDataset(snapshotSinkConfig.name);
-      snapshotDataset.updateMetaDataTable(transactionId);
-    }
+  public void destroy() {
+    Map<String, String> sinkArgs = Maps.newHashMap();
+    snapshotDataset = batchSinkContext.getDataset(snapshotSinkConfig.name, sinkArgs);
+    snapshotDataset.updateMetaDataTable(transactionId);
+    LOG.info("Yaojie in Destroy - transaction id in meta is {}", snapshotDataset.getCurrentVersion());
   }
 
   /**
