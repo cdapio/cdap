@@ -26,13 +26,13 @@ angular.module(PKG.name + '.commons')
             $scope.list = res;
           });
 
-        $scope.$watch('list.selected', function () {
-          if (!$scope.list.selected) { return; }
+        $scope.$watch('selected', function () {
+          if (!$scope.selected) { return; }
 
           if ($scope.datasetType === 'stream') {
-            params.streamId = $scope.list.selected.name;
+            params.streamId = $scope.selected.name;
           } else if ($scope.datasetType === 'dataset') {
-            params.datasetI = $scope.list.selected.name;
+            params.datasetId = $scope.selected.name;
           }
 
           resource.get(params)

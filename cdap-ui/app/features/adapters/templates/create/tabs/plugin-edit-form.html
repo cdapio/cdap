@@ -126,10 +126,6 @@
 
               <div ng-if="PluginEditController.configfetched">
 
-                <div ng-if="datasetType">
-                  <my-dataset-selector dataset-type="{{ ::datasetType }}"></my-dataset-selector>
-                </div>
-
                 <div ng-repeat="group in PluginEditController.config.groups.position">
                   <div class="widget-group-container">
                     <h4>{{PluginEditController.groups[group].display}}</h4>
