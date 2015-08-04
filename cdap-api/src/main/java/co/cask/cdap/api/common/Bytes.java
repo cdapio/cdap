@@ -15,7 +15,6 @@
  */
 package co.cask.cdap.api.common;
 
-import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableSortedMap;
 
 import java.io.DataOutput;
@@ -81,6 +80,7 @@ public class Bytes {
   public static final int SIZEOF_SHORT = Short.SIZE / Byte.SIZE;
 
   private static final char[] hexDigits = "0123456789abcdef".toCharArray();
+  private static final Charset UTF_8 = Charset.forName("UTF-8");
 
   /**
    * Byte array comparator class.
@@ -208,7 +208,7 @@ public class Bytes {
    * @return String made from <code>buf</code> or null
    */
   public static String toString(ByteBuffer buf) {
-    return toString(buf, Charsets.UTF_8);
+    return toString(buf, UTF_8);
   }
 
   /**

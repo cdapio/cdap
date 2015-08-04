@@ -23,7 +23,6 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.internal.io.SchemaGenerator;
 import co.cask.cdap.internal.io.TypeRepresentation;
-import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
 
 import java.io.IOException;
@@ -145,8 +144,9 @@ public class ObjectMappedTableProperties {
      * the corresponding Hive table will instead have the schema (rowkey string, id string).
      */
     public Builder setRowKeyExploreType(Schema.Type type) {
-      Preconditions.checkArgument(type == Schema.Type.BYTES || type == Schema.Type.STRING,
-                                  "Key type must be bytes or string.");
+      if (type != Schema.Type.BYTES && type != Schema.Type.STRING) {
+        throw new IllegalArgumentException("Key type must be bytes or string.");
+      }
       add(ROW_KEY_EXPLORE_TYPE, type.name());
       return this;
     }

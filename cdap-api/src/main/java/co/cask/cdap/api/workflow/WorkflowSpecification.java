@@ -17,7 +17,6 @@ package co.cask.cdap.api.workflow;
 
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.common.PropertyProvider;
-import com.google.common.collect.Lists;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -34,8 +33,7 @@ public final class WorkflowSpecification implements ProgramSpecification, Proper
   private final String name;
   private final String description;
   private final Map<String, String> properties;
-
-  private List<WorkflowNode> nodes = Lists.newArrayList();
+  private final List<WorkflowNode> nodes;
 
   public WorkflowSpecification(String className, String name, String description,
                                       Map<String, String> properties, List<WorkflowNode> nodes) {

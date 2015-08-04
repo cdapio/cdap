@@ -16,8 +16,8 @@
 package co.cask.cdap.api.stream;
 
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
-import com.google.common.base.Objects;
 
+import java.util.Objects;
 import javax.annotation.concurrent.NotThreadSafe;
 
 /**
@@ -81,7 +81,7 @@ public interface StreamEventDecoder<K, V>  {
 
     @Override
     public int hashCode() {
-      return Objects.hashCode(key, value);
+      return Objects.hash(key, value);
     }
   }
 }

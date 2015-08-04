@@ -17,9 +17,8 @@
 package co.cask.cdap.api.dataset.lib;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import javax.annotation.Nonnull;
@@ -70,7 +69,7 @@ public class Partitioning {
    * Private constructor to force the use of the builder.
    */
   private Partitioning(LinkedHashMap<String, FieldType> fields) {
-    this.fields = ImmutableMap.copyOf(fields);
+    this.fields = Collections.unmodifiableMap(new LinkedHashMap<>(fields));
   }
 
   /**
@@ -103,7 +102,7 @@ public class Partitioning {
    */
   public static class Builder {
 
-    private final LinkedHashMap<String, FieldType> fields = Maps.newLinkedHashMap();
+    private final LinkedHashMap<String, FieldType> fields = new LinkedHashMap<>();
 
     private Builder() { }
 

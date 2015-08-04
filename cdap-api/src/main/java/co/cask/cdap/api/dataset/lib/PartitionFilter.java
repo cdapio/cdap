@@ -17,9 +17,9 @@
 package co.cask.cdap.api.dataset.lib;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -32,7 +32,7 @@ public class PartitionFilter {
 
   // we only allow creating a filter through the builder.
   private PartitionFilter(Map<String, Condition<? extends Comparable>> conditions) {
-    this.conditions = ImmutableMap.copyOf(conditions);
+    this.conditions = Collections.unmodifiableMap(new LinkedHashMap<>(conditions));
   }
 
   /**
@@ -83,7 +83,7 @@ public class PartitionFilter {
    * A builder for partition filters.
    */
   public static class Builder {
-    private final Map<String, Condition<? extends Comparable>> map = Maps.newLinkedHashMap();
+    private final Map<String, Condition<? extends Comparable>> map = new LinkedHashMap<>();
 
     /**
      * Add a condition for a given field name with an inclusive lower and an exclusive upper bound.

@@ -18,8 +18,9 @@ package co.cask.cdap.api.artifact;
 
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.templates.plugins.PluginClass;
-import com.google.common.collect.ImmutableSet;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
@@ -79,50 +80,46 @@ public final class ArtifactClasses {
    * Builder to more easily add application and plugin classes, and in the future, program and dataset classes.
    */
   public static class Builder {
-    private final ImmutableSet.Builder<ApplicationClass> appsBuilder;
-    private final ImmutableSet.Builder<PluginClass> pluginsBuilder;
 
-    private Builder() {
-      appsBuilder = ImmutableSet.builder();
-      pluginsBuilder = ImmutableSet.builder();
-    }
+    private final Set<ApplicationClass> apps = new HashSet<>();
+    private final Set<PluginClass> plugins = new HashSet<>();
 
     public Builder addApps(ApplicationClass... apps) {
-      for (ApplicationClass app : apps) {
-        appsBuilder.add(app);
-      }
+      Collections.addAll(this.apps, apps);
       return this;
     }
 
     public Builder addApps(Iterable<ApplicationClass> apps) {
-      appsBuilder.addAll(apps);
-      return this;
-    }
-
-    public Builder addApp(ApplicationClass app) {
-      appsBuilder.add(app);
-      return this;
-    }
-
-    public Builder addPlugins(PluginClass... plugins) {
-      for (PluginClass plugin : plugins) {
-        pluginsBuilder.add(plugin);
+      for (ApplicationClass app : apps) {
+        this.apps.add(app);
       }
       return this;
     }
 
+    public Builder addApp(ApplicationClass app) {
+      apps.add(app);
+      return this;
+    }
+
+    public Builder addPlugins(PluginClass... plugins) {
+      Collections.addAll(this.plugins, plugins);
+      return this;
+    }
+
     public Builder addPlugins(Iterable<PluginClass> plugins) {
-      pluginsBuilder.addAll(plugins);
+      for (PluginClass plugin : plugins) {
+        this.plugins.add(plugin);
+      }
       return this;
     }
 
     public Builder addPlugin(PluginClass plugin) {
-      pluginsBuilder.add(plugin);
+      plugins.add(plugin);
       return this;
     }
 
     public ArtifactClasses build() {
-      return new ArtifactClasses(appsBuilder.build(), pluginsBuilder.build());
+      return new ArtifactClasses(Collections.unmodifiableSet(apps), Collections.unmodifiableSet(plugins));
     }
   }
 }

@@ -16,8 +16,7 @@
 
 package co.cask.cdap.api.common;
 
-import com.google.common.collect.Maps;
-
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -45,7 +44,7 @@ public enum Scope {
   // helper map for efficient implementation of scopeFor()
   private static final Map<String, Scope> LOOKUP_BY_DISPLAY_NAME;
   static {
-    LOOKUP_BY_DISPLAY_NAME = Maps.newHashMapWithExpectedSize(Scope.values().length);
+    LOOKUP_BY_DISPLAY_NAME = new HashMap<>();
     for (Scope scope : Scope.values()) {
       LOOKUP_BY_DISPLAY_NAME.put(scope.toString(), scope);
     }
