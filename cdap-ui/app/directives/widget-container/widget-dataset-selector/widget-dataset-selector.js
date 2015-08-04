@@ -53,7 +53,6 @@ angular.module(PKG.name + '.commons')
                 schema = res.spec.properties.schema;
               }
 
-              // var schema = JSON.stringify(res.format.schema);
               EventPipe.emit('dataset.selected', schema);
             });
         });
