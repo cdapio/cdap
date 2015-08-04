@@ -18,6 +18,11 @@ package co.cask.cdap.internal.app.runtime.schedule;
 
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.service.RetryOnStartFailureService;
+import co.cask.cdap.common.service.RetryStrategies;
+import com.google.common.base.Supplier;
+import com.google.common.util.concurrent.AbstractService;
+import com.google.common.util.concurrent.Service;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,45 +35,49 @@ import java.util.concurrent.TimeUnit;
 public final class DistributedSchedulerService extends AbstractSchedulerService {
 
   private static final Logger LOG = LoggerFactory.getLogger(DistributedSchedulerService.class);
-  private Thread startSchedulerThread;
+  private final Service serviceDelegate;
 
   @Inject
   public DistributedSchedulerService(TimeScheduler timeScheduler, StreamSizeScheduler streamSizeScheduler,
                                      CConfiguration cConf, Store store) {
     super(timeScheduler, streamSizeScheduler, cConf, store);
+    this.serviceDelegate = new RetryOnStartFailureService(new Supplier<Service>() {
+      @Override
+      public Service get() {
+        return new AbstractService() {
+          @Override
+          protected void doStart() {
+            try {
+              startSchedulers();
+              notifyStarted();
+            } catch (SchedulerException e) {
+              notifyFailed(e);
+            }
+          }
+
+          @Override
+          protected void doStop() {
+            try {
+              stopScheduler();
+              notifyStopped();
+            } catch (SchedulerException e) {
+              notifyFailed(e);
+            }
+          }
+        };
+      }
+    }, RetryStrategies.exponentialDelay(200, 5000, TimeUnit.MILLISECONDS));
   }
 
   @Override
   protected void startUp() throws Exception {
     LOG.info("Starting scheduler.");
-    startSchedulerThread = new Thread("Scheduler-Start-Up") {
-      @Override
-      public void run() {
-        boolean started = false;
-        while (!started && !isInterrupted()) {
-          try {
-            startSchedulers();
-            started = true;
-            LOG.info("Scheduler started successfully.");
-          } catch (Throwable t) {
-            LOG.error("Error starting scheduler {}", t.getMessage());
-            try {
-              TimeUnit.SECONDS.sleep(5);
-            } catch (InterruptedException ie) {
-              break;
-            }
-          }
-        }
-      }
-    };
-    startSchedulerThread.start();
+    serviceDelegate.startAndWait();
   }
 
   @Override
   protected void shutDown() throws Exception {
     LOG.info("Stopping scheduler.");
-    startSchedulerThread.interrupt();
-    startSchedulerThread.join();
-    stopScheduler();
+    serviceDelegate.stopAndWait();
   }
 }

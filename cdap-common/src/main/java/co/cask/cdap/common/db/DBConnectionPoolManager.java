@@ -124,7 +124,7 @@ public class DBConnectionPoolManager {
     }
 
     semaphore = new Semaphore(maxConnections, true);
-    recycledConnections = new LinkedList<PooledConnection>();
+    recycledConnections = new LinkedList<>();
     poolConnectionEventListener = new PoolConnectionEventListener();
   }
 

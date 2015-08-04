@@ -11,92 +11,82 @@ angular.module(PKG.name + '.feature.services')
         },
         template: '<ui-view/>'
       })
-      .state('services.list', {
-        url: '/list',
-        templateUrl: '/assets/features/services/templates/list.html',
-        controller: 'ServicesListController',
-        ncyBreadcrumb: {
-          parent: 'apps.detail.overview',
-          label: 'Services'
-        }
-      })
       .state('services.detail', {
         url: '/:programId',
-        controller: 'ServicesDetailController',
         templateUrl: '/assets/features/services/templates/detail.html',
-        onEnter: function($state, $timeout) {
+        resolve : {
+          rRuns: function($stateParams, $q, myServiceApi) {
+            var defer = $q.defer();
 
-          $timeout(function() {
-            if ($state.is('services.detail')) {
-              $state.go('services.detail.status');
-            }
-          });
+            var params = {
+              namespace: $stateParams.namespace,
+              appId: $stateParams.appId,
+              serviceId: $stateParams.programId
+            };
+            myServiceApi.runs(params)
+              .$promise
+              .then(function (res) {
+                defer.resolve(res);
+              });
 
+            return defer.promise;
+          }
         },
         ncyBreadcrumb: {
-          parent: 'apps.detail.overview',
-          label: '{{$state.params.programId}}'
+          parent: 'apps.detail.overview.status',
+          label: 'Services',
+          skip: true
         }
       })
-        .state('services.detail.status', {
-          url: '/status',
-          templateUrl: '/assets/features/services/templates/tabs/status.html',
+        .state('services.detail.runs', {
+          url: '/runs',
+          templateUrl: '/assets/features/services/templates/tabs/runs.html',
+          controller: 'ServicesRunsController',
+          controllerAs: 'RunsController',
           ncyBreadcrumb: {
-            parent: 'apps.detail.overview',
             label: '{{$state.params.programId}}'
           }
         })
-          .state('services.detail.status.makerequest', {
+          .state('services.detail.runs.run', {
+            url: '/:runid',
+            templateUrl: '/assets/features/services/templates/tabs/runs/run-detail.html',
+            controller: 'ServicesRunDetailController',
+            ncyBreadcrumb: {
+              label: '{{$state.params.runid}}'
+            }
+          })
+          .state('services.detail.runs.makerequest', {
             params: {
               requestUrl: null,
               requestMethod: null
             },
             onEnter: function ($state, $modal) {
               var modal = $modal({
-                template: '/assets/features/services/templates/tabs/status/make-request.html',
+                template: '/assets/features/services/templates/tabs/runs/tabs/status/make-request.html',
               });
               modal.$scope.$on('modal.hide', function() {
                 $state.go('^');
               });
             }
           })
-        .state('services.detail.data', {
+
+
+        .state('services.detail.datasets', {
           url: '/data',
           templateUrl: '/assets/features/services/templates/tabs/data.html',
           ncyBreadcrumb: {
-            skip: true
-          }
-        })
-        .state('services.detail.metadata', {
-          url: '/metadata',
-          templateUrl: '/assets/features/services/templates/tabs/metadata.html',
-          ncyBreadcrumb: {
-            skip: true
+            parent: 'services.detail.runs',
+            label: 'Datasets'
           }
         })
         .state('services.detail.history', {
           url: '/history',
           templateUrl: '/assets/features/services/templates/tabs/history.html',
+          controller: 'ServicesRunsController',
+          controllerAs: 'RunsController',
           ncyBreadcrumb: {
-            parent: 'apps.detail.overview',
-            label: '{{$state.params.programId}} / History'
-          }
-        })
-        .state('services.detail.logs', {
-          url: '/logs?filter',
-          reloadOnSearch: false,
-          controller: 'ServicesLogsController',
-          template: '<my-log-viewer data-model="logs"></my-log-viewer>',
-          ncyBreadcrumb: {
-            parent: 'apps.detail.overview',
-            label: '{{$state.params.programId}} / Logs'
-          }
-        })
-        .state('services.detail.resources', {
-          url: '/resource',
-          templateUrl: '/assets/features/services/templates/tabs/resources.html',
-          ncyBreadcrumb: {
-            skip: true
+            parent: 'services.detail.runs',
+            label: 'History'
           }
         });
   });

@@ -24,8 +24,8 @@ import co.cask.cdap.api.templates.plugins.PluginInfo;
 import co.cask.cdap.data.dataset.DatasetCreationSpec;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
-import com.clearspring.analytics.util.Preconditions;
 import com.google.common.base.Objects;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
@@ -132,7 +132,7 @@ public final class AdapterDefinition implements AdapterSpecification {
    * Returns set of {@link PluginInfo} for the plugins in this specification.
    */
   public NavigableSet<PluginInfo> getPluginInfos() {
-    NavigableSet<PluginInfo> result = new TreeSet<PluginInfo>();
+    NavigableSet<PluginInfo> result = new TreeSet<>();
     for (AdapterPlugin plugin : plugins.values()) {
       result.add(plugin.getPluginInfo());
     }

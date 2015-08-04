@@ -1,163 +1,151 @@
 angular.module(PKG.name + '.feature.flows')
-  .controller('FlowletDetailInputController', function($state, $scope, MyDataSource, myHelpers) {
+  .controller('FlowletDetailInputController', function($state, $scope, MyDataSource, MyMetricsQueryHelper, MyChartHelpers, myFlowsApi) {
 
     var dataSrc = new MyDataSource($scope);
-    var flowletid = $scope.$parent.activeFlowlet.name;
-    var runid = $scope.runs.selected.runid;
+    var flowletid = $scope.FlowletsController.activeFlowlet.name;
 
-    $scope.inputs = [];
+    var metric = {
+      startTime: 'now-60s',
+      endTime: 'now',
+      resolution: '1s',
+      names: ['system.queue.pending']
+    };
 
-    // Initialize
-    dataSrc
-      .request({
-        _cdapNsPath: '/apps/' + $state.params.appId+  '/flows/' + $state.params.programId
-      })
+    this.inputs = [];
+
+    this.chartSettings = {
+      chartMetadata: {
+        showx: true,
+        showy: true,
+        legend: {
+          show: false,
+          position: 'inset'
+        }
+      },
+      color: {
+        pattern: ['red']
+      },
+      isLive: true,
+      interval: 1000,
+      aggregate: 5
+    };
+
+    var params = {
+      namespace: $state.params.namespace,
+      appId: $state.params.appId,
+      flowId: $state.params.programId,
+      scope: $scope
+    };
+
+    myFlowsApi.get(params)
+      .$promise
       .then(function (res) {
-
         // INPUTS
         angular.forEach(res.connections, function(v) {
           if (v.targetName === flowletid) {
-            $scope.inputs.push({
+            this.inputs.push({
               name: v.sourceName,
               max: 0,
               type: v.sourceType
             });
           }
+        }.bind(this));
+
+        if (this.inputs.length > 0) {
+          formatInput.bind(this)();
+        }
+      }.bind(this));
+
+    function pollArrivalRate(input) {
+      var arrivalPath = '/metrics/query?metric=system.process.events.processed'+
+        '&tag=namespace:' + $state.params.namespace +
+        '&tag=app:' + $state.params.appId +
+        '&tag=flow' + $state.params.programId +
+        '&tag=flowlet:' + flowletid +
+        '&tag=run:' + $scope.RunsController.runs.selected.runid +
+        '&start=now-1s&end=now';
+      // TODO: should this value be averaged over more than just the past 1 second?
+      // POLLING ARRIVAL RATE
+      dataSrc
+        .poll({
+          _cdapPath: arrivalPath,
+          method: 'POST'
+        }, function (res) {
+          if (res.series[0]) {
+            input.total = res.series[0].data[0].value;
+          }
         });
+    }
 
-        if ($scope.inputs.length > 0) {
+    function formatTimeseries(aggregate, series, input) {
+      var processedData = MyChartHelpers.processData(
+        series,
+        'qid',
+        metric.names,
+        metric.resolution
+      );
+      processedData = MyChartHelpers.c3ifyData(processedData, metric, metric.names);
 
-          angular.forEach($scope.inputs, function (input) {
-            var flowletPath = '/metrics/query?context=namespace.' + $state.params.namespace
-                              + '.app.' + $state.params.appId
-                              + '.flow.' + $state.params.programId
-                              + '.consumer.' + flowletid
-                              + '.producer.' + input.name
-                              + '&metric=system.queue.pending',
-                streamPath = '/metrics/query?context=namespace.' + $state.params.namespace
-                              + '.stream.' + input.name
-                              + '&metric=system.collect.events&start=now-60s';
+      var data = processedData.columns[0].slice(1);
+      var format = [];
 
-            var path = '';
-            if (input.sourceType === 'STREAM') {
-              path = streamPath;
-            } else {
-              path = flowletPath;
-            }
-            var aggregate = 0;
-            // Get Aggregate
-            dataSrc.request({
-              _cdapPath: path + '&start=now-60s&end=now&aggregate=true',
-              method: 'POST'
-            }).then(function(res) {
-              aggregate = res.series[0] ? res.series[0].data[0].value : 0;
-            }).then(function() {
+      format.unshift(aggregate - data[data.length-1]);
+      for (var i = data.length - 2; i >= 0; i--) {
+        format.unshift(format[0] - data[i]);
+      }
 
-              dataSrc.request({
-                _cdapPath: path + '&start=now-60s&end=now',
-                method: 'POST'
-              }).then(function(initial) {
-                if (initial.series[0]) {
-                  var response = initial.series[0].data;
-                  var v = [];
+      format.unshift(processedData.columns[0][0]);
+      processedData.columns[0] = format;
 
-                  response[response.length - 1].value = aggregate - response[response.length - 1].value;
-                  for (var i = response.length - 2; i >= 0; i--) {
-                    response[i].value = response[i+1].value - response[i].value;
-                    v.unshift({
-                      time: response[i].time,
-                      y: response[i].value
-                    });
-                  }
+      input.chartData = {
+        x: 'x',
+        columns: processedData.columns,
+        keys: {
+          x: 'x'
+        }
+      };
 
-                  input.stream = v.slice(-1);
+      input.max = Math.max.apply(Math, format.slice(1));
 
-                  input.history = [
-                    {
-                      label: 'output',
-                      values: v
-                    }
-                  ];
+    }
 
-                } else {
+    function formatInput() {
 
-                  var val = [];
+      angular.forEach(this.inputs, function (input) {
+        var flowletTags = {
+          namespace: $state.params.namespace,
+          app: $state.params.appId,
+          flow: $state.params.programId,
+          consumer: flowletid,
+          producer: input.name
+        };
 
-                  for (var i = 60; i > 0; i--) {
-                    val.push({
-                      time: Math.floor((new Date()).getTime()/1000 - (i)),
-                      y: 0
-                    });
-                  }
+        var path = '/metrics/query?' + MyMetricsQueryHelper.tagsToParams(flowletTags) + '&metric=system.queue.pending';
 
-                  if (input.history) {
-                    input.stream = val.slice(-1);
-                  }
+        var aggregate = 0;
 
-                  input.history = [{
-                    label: 'output',
-                    values: val
-                  }];
+        dataSrc.poll({
+          _cdapPath: path + '&start=now-60s&end=now&aggregate=true',
+          method: 'POST',
+          interval: 2000
+        }, function (res) {
+          // Get initial aggregate
+          aggregate = res.series[0] ? res.series[0].data[0].value : 0;
 
-                }
-              }).then(function() {
-                // start polling aggregate
-
-                dataSrc.poll({
-                  _cdapPath: path + '&start=now-60s&end=now&aggregate=true',
-                  method: 'POST',
-                  interval: 1000
-                }, function(streamData) {
-                  var stream = {};
-
-                  if (streamData.series[0]) {
-                    stream = {
-                      time: Math.floor((new Date()).getTime()/1000),
-                      y: streamData.series[0].data[0].value
-                    };
-
-                  } else {
-
-                    stream = {
-                      time: Math.floor((new Date()).getTime()/1000),
-                      y: 0
-                    };
-                  }
-
-                  var array = input.history[0].values;
-                  array.shift();
-                  array.push(stream);
-
-                  input.history = [
-                    {
-                      label: 'output',
-                      values: array
-                    }
-                  ];
-
-                  input.stream = array.slice(-1);
-
-                  input.max = Math.max.apply(Math, array.map(function(o){return o.y;}));
-
-                });
-              });
-
-            });
-
-            // POLLING ARRIVAL RATE
-            dataSrc
-              .poll({
-                _cdapPath: path + '&count=1',
-                method: 'POST'
-              }, function (res) {
-                if (res.series[0]) {
-                  input.total = res.series[0].data[0].value / 60;
-                }
-              });
+          dataSrc.request({
+            _cdapPath: '/metrics/query',
+            method: 'POST',
+            body: MyMetricsQueryHelper.constructQuery('qid', flowletTags, metric)
+          })
+          .then(function (seriesResult) {
+            formatTimeseries(aggregate, seriesResult, input);
 
           });
+        });
 
-        }
+        pollArrivalRate(input);
 
       });
+    }
+
   });

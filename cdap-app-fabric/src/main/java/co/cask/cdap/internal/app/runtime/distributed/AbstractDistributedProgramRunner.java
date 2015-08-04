@@ -26,32 +26,35 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.twill.AbortOnTimeoutEventHandler;
+import co.cask.cdap.common.twill.HadoopClassExcluder;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data.security.HBaseTokenUtils;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.templates.AdapterDefinition;
 import com.google.common.base.Charsets;
+import com.google.common.base.Joiner;
+import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
 import com.google.common.io.Resources;
-import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.security.Credentials;
+import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.api.EventHandler;
 import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillPreparer;
 import org.apache.twill.api.TwillRunner;
 import org.apache.twill.api.logging.PrinterLogHandler;
-import org.apache.twill.common.ServiceListenerAdapter;
 import org.apache.twill.common.Threads;
 import org.apache.twill.yarn.YarnSecureStore;
 import org.slf4j.Logger;
@@ -64,6 +67,7 @@ import java.io.PrintWriter;
 import java.io.Writer;
 import java.net.URI;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -82,15 +86,51 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
     .create();
 
   private final TwillRunner twillRunner;
-  private final Configuration hConf;
-  private final CConfiguration cConf;
+  protected final Configuration hConf;
+  protected final CConfiguration cConf;
   protected final EventHandler eventHandler;
 
   /**
    * An interface for launching TwillApplication. Used by sub-classes only.
    */
-  protected interface ApplicationLauncher {
-    TwillController launch(TwillApplication twillApplication);
+  protected abstract class ApplicationLauncher {
+
+    /**
+     * Starts the given application through Twill.
+     *
+     * @param twillApplication the application to start
+     *
+     * @return the {@link TwillController} for the application.
+     */
+    public TwillController launch(TwillApplication twillApplication) {
+      return launch(twillApplication, ImmutableList.<String>of());
+    }
+
+    /**
+     * Starts the given application through Twill with extra classpaths appended to the end of the classpath of
+     * the runnables inside the applications.
+     *
+     * @param twillApplication the application to start
+     * @param extraClassPaths to append
+     *
+     * @return the {@link TwillController} for the application.
+     * @see TwillPreparer#withClassPaths(Iterable)
+     */
+    public TwillController launch(TwillApplication twillApplication, String...extraClassPaths) {
+      return launch(twillApplication, Arrays.asList(extraClassPaths));
+    }
+
+    /**
+     * Starts the given application through Twill with extra classpaths appended to the end of the classpath of
+     * the runnables inside the applications.
+     *
+     * @param twillApplication the application to start
+     * @param extraClassPaths to append
+     *
+     * @return the {@link TwillController} for the application.
+     * @see TwillPreparer#withClassPaths(Iterable)
+     */
+    public abstract TwillController launch(TwillApplication twillApplication, Iterable<String> extraClassPaths);
   }
 
   protected AbstractDistributedProgramRunner(TwillRunner twillRunner, Configuration hConf, CConfiguration cConf) {
@@ -106,10 +146,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
 
   @Override
   public final ProgramController run(final Program program, final ProgramOptions options) {
-    final Program copiedProgram;
-    final File programDir;    // Temp directory for unpacking the program
     final String schedulerQueueName = options.getArguments().getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE);
-
     final File tempDir = DirUtils.createTempDir(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                                                          cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile());
     try {
@@ -118,15 +155,18 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
         LOG.info("Setting scheduler queue to {}", schedulerQueueName);
       }
 
-      Map<String, File> localizeFiles = addAdapterPluginFiles(options, new HashMap<String, File>());
+      Map<String, LocalizeResource> localizeResources = addAdapterPluginFiles(options,
+                                                                              new HashMap<String, LocalizeResource>());
 
       // Copy config files and program jar to local temp, and ask Twill to localize it to container.
       // What Twill does is to save those files in HDFS and keep using them during the lifetime of application.
       // Twill will manage the cleanup of those files in HDFS.
-      localizeFiles.put("hConf.xml", saveHConf(hConf, File.createTempFile("hConf", ".xml", tempDir)));
-      localizeFiles.put("cConf.xml", saveCConf(cConf, File.createTempFile("cConf", ".xml", tempDir)));
-      programDir = DirUtils.createTempDir(tempDir);
-      copiedProgram = copyProgramJar(program, programDir);
+      localizeResources.put("hConf.xml",
+                            new LocalizeResource(saveHConf(hConf, File.createTempFile("hConf", ".xml", tempDir))));
+      localizeResources.put("cConf.xml",
+                            new LocalizeResource(saveCConf(cConf, File.createTempFile("cConf", ".xml", tempDir))));
+      File programDir = DirUtils.createTempDir(tempDir);
+      final Program copiedProgram = copyProgramJar(program, tempDir, programDir);
 
       final URI logbackURI = getLogBackURI(copiedProgram, programDir, tempDir);
       final String programOptions = GSON.toJson(options);
@@ -134,9 +174,9 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
       // Obtains and add the HBase delegation token as well (if in non-secure mode, it's a no-op)
       // Twill would also ignore it if it is not running in secure mode.
       // The HDFS token should already obtained by Twill.
-      return launch(copiedProgram, options, localizeFiles, new ApplicationLauncher() {
+      return launch(copiedProgram, options, localizeResources, new ApplicationLauncher() {
         @Override
-        public TwillController launch(TwillApplication twillApplication) {
+        public TwillController launch(TwillApplication twillApplication, Iterable<String> extraClassPaths) {
           TwillPreparer twillPreparer = twillRunner.prepare(twillApplication);
           if (options.isDebug()) {
             LOG.info("Starting {} with debugging enabled, programOptions: {}, and logback: {}",
@@ -151,15 +191,22 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
           if (logbackURI != null) {
             twillPreparer.withResources(logbackURI);
           }
+
+          String yarnAppClassPath = hConf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH,
+                                           Joiner.on(",").join(YarnConfiguration.DEFAULT_YARN_APPLICATION_CLASSPATH));
           TwillController twillController = twillPreparer
             .withDependencies(HBaseTableUtilFactory.getHBaseTableUtilClass())
             .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)))
             .addSecureStore(YarnSecureStore.create(HBaseTokenUtils.obtainToken(hConf, new Credentials())))
+            .withClassPaths(Iterables.concat(extraClassPaths, Splitter.on(',').trimResults()
+                              .split(hConf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH, ""))))
+            .withApplicationClassPaths(Splitter.on(",").trimResults().split(yarnAppClassPath))
+            .withBundlerClassAcceptor(new HadoopClassExcluder())
             .withApplicationArguments(
               String.format("--%s", RunnableOptions.JAR), copiedProgram.getJarLocation().getName(),
               String.format("--%s", RunnableOptions.PROGRAM_OPTIONS), programOptions
             ).start();
-          return addCleanupListener(twillController, program.getId(), tempDir);
+          return addCleanupListener(twillController, program, tempDir);
         }
       });
     } catch (IOException e) {
@@ -172,10 +219,11 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
    * Gets plugin files that needs to be localized for the adapter. If the given run is not an adapter, no
    * modification will be done to the map.
    */
-  private Map<String, File> addAdapterPluginFiles(ProgramOptions options, Map<String, File> localizeFiles) {
+  private Map<String, LocalizeResource> addAdapterPluginFiles(ProgramOptions options,
+                                                              Map<String, LocalizeResource> localizeResources) {
     Arguments arguments = options.getArguments();
     if (!arguments.hasOption(ProgramOptionConstants.ADAPTER_SPEC)) {
-      return localizeFiles;
+      return localizeResources;
     }
 
     // Decode the adapter spec from program system argument
@@ -187,7 +235,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
 
     // If there is no plugin used by the adapter, nothing need to be localized
     if (plugins.isEmpty()) {
-      return localizeFiles;
+      return localizeResources;
     }
 
     File templateDir = new File(cConf.get(Constants.AppFabric.APP_TEMPLATE_DIR));
@@ -201,16 +249,16 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
     // The AbstractProgramTwillRunnable will set the APP_TEMPLATE_DIR correspondingly.
     for (PluginInfo plugin : plugins) {
       String localizedName = String.format("%s/%s", localizePrefix, plugin.getFileName());
-      localizeFiles.put(localizedName, new File(templatePluginDir, plugin.getFileName()));
+      localizeResources.put(localizedName, new LocalizeResource(new File(templatePluginDir, plugin.getFileName())));
     }
 
     // Localize all files under template plugin "lib" directory
     for (File libJar : DirUtils.listFiles(new File(templatePluginDir, "lib"), "jar")) {
       String localizedName = String.format("%s/lib/%s", localizePrefix, libJar.getName());
-      localizeFiles.put(localizedName, libJar);
+      localizeResources.put(localizedName, new LocalizeResource(libJar));
     }
 
-    return localizeFiles;
+    return localizeResources;
   }
 
   /**
@@ -240,25 +288,20 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
    * Sub-class overrides this method to launch the twill application.
    */
   protected abstract ProgramController launch(Program program, ProgramOptions options,
-                                              Map<String, File> localizeFiles, ApplicationLauncher launcher);
+                                              Map<String, LocalizeResource> localizeResources,
+                                              ApplicationLauncher launcher);
 
 
   private File saveHConf(Configuration conf, File file) throws IOException {
-    Writer writer = Files.newWriter(file, Charsets.UTF_8);
-    try {
+    try (Writer writer = Files.newWriter(file, Charsets.UTF_8)) {
       conf.writeXml(writer);
-    } finally {
-      writer.close();
     }
     return file;
   }
 
   private File saveCConf(CConfiguration conf, File file) throws IOException {
-    Writer writer = Files.newWriter(file, Charsets.UTF_8);
-    try {
+    try (Writer writer = Files.newWriter(file, Charsets.UTF_8)) {
       conf.writeXml(writer);
-    } finally {
-      writer.close();
     }
     return file;
   }
@@ -267,8 +310,8 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
    * Copies the program jar to a local temp file and return a {@link Program} instance
    * with {@link Program#getJarLocation()} points to the local temp file.
    */
-  private Program copyProgramJar(final Program program, File programDir) throws IOException {
-    File tempJar = File.createTempFile(program.getName(), ".jar");
+  private Program copyProgramJar(final Program program, File tempDir, File programDir) throws IOException {
+    File tempJar = File.createTempFile(program.getName(), ".jar", tempDir);
     Files.copy(new InputSupplier<InputStream>() {
       @Override
       public InputStream getInput() throws IOException {
@@ -297,33 +340,20 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
    * @return The same TwillController instance.
    */
   private TwillController addCleanupListener(TwillController controller,
-                                             final Id.Program programId, final File tempDir) {
+                                             final Program program, final File tempDir) {
 
     final AtomicBoolean deleted = new AtomicBoolean(false);
-    controller.addListener(new ServiceListenerAdapter() {
-      @Override
-      public void running() {
-        cleanup();
-      }
+    Runnable cleanup = new Runnable() {
 
-      @Override
-      public void terminated(Service.State from) {
-        cleanup();
-      }
-
-      @Override
-      public void failed(Service.State from, Throwable failure) {
-        cleanup();
-      }
-
-      private void cleanup() {
+      public void run() {
         if (!deleted.compareAndSet(false, true)) {
           return;
         }
-        LOG.debug("Cleanup tmp files for {}: {}", programId, tempDir);
+        LOG.debug("Cleanup tmp files for {}: {}", program.getId(), tempDir);
         deleteDirectory(tempDir);
-      }
-    }, Threads.SAME_THREAD_EXECUTOR);
+      }};
+    controller.onRunning(cleanup, Threads.SAME_THREAD_EXECUTOR);
+    controller.onTerminated(cleanup, Threads.SAME_THREAD_EXECUTOR);
     return controller;
   }
 }

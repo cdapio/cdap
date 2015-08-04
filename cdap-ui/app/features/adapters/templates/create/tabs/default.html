@@ -1,36 +1,16 @@
-<div class="panel panel-default">
-  <div class="panel-heading clearfix">
-    <div class="pull-left panel-title">
-      <span class="icon-app" ng-if="metadata.name.length"></span>
-      <span>{{metadata.name}}</span>
-    </div>
-    <div class="pull-right" aria-label="...">
-      <button type="button"
-              class="btn btn-default"
-              ng-click="saveAsDraft()">
-        Draft
-      </button>
-      <button type="button"
-              class="btn btn-success"
-              ng-click="doSave()">
-          Publish
-      </button>
-    </div>
-  </div>
-  <div class="panel-body">
-    <div class="row">
-      <div class="col-xs-12">
-        <div ng-include="'/assets/features/adapters/templates/create/plugins.html'">
-        </div>
+<div ng-controller="DefaultCanvasController as DefaultCanvasController">
+  <div class="row">
+    <div class="col-xs-12">
+      <div ng-include="'/assets/features/adapters/templates/create/plugins.html'">
       </div>
     </div>
+  </div>
 
-    <br />
+  <br />
 
-    <div class="row">
-      <div class="col-xs-12" etl-canvas-template>
-        <div ng-include="'/assets/features/adapters/templates/create/etlcanvas.html'">
-        </div>
+  <div class="row">
+    <div class="col-xs-12" etl-canvas-template>
+      <div ng-include="'/assets/features/adapters/templates/create/etlcanvas.html'">
       </div>
     </div>
   </div>

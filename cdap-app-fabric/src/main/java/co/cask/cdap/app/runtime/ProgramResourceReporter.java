@@ -26,5 +26,5 @@ public interface ProgramResourceReporter extends Service {
   /**
    * Report resource usage of a program.  Implementors will likely want to write usage to persistant storage.
    */
-  public void reportResources();
+  void reportResources();
 }

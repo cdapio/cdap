@@ -1,0 +1,70 @@
+<div class="schema-container" ng-if="fields === 'SHOW'">
+  <div class="text-danger" ng-if="error">
+    {{ error }}
+  </div>
+
+  <div ng-if="properties.length > 0">
+    <fieldset ng-disabled="disableEdit">
+      <table class="table">
+        <thead>
+          <th>
+            <label class="control-label">Name</label>
+          </th>
+          <th>
+            <label class="control-label">Type</label>
+          </th>
+          <th>
+            <label class="control-label">Nullable</label>
+          </th>
+          <th></th>
+        </thead>
+        <tbody>
+          <tr ng-repeat="property in properties" ng-keypress="enter($event, $index)" ng-click="emptyRowClick(property, $index)">
+            <td class="name" ng-if="!property.empty">
+              <input type="text" class="form-control" ng-model="property.name" placeholder="name" my-focus-watch="property.newField" />
+            </td>
+            <td class="type" ng-if="!property.empty">
+              <select ng-model="property.type" class="form-control col-xs-4"
+                  ng-options="option as option for option in options"></select>
+            </td>
+            <td class="text-center nullable" ng-if="!property.empty">
+              <input type="checkbox" ng-model="property.nullable" />
+            </td>
+            <td class="text-center trash" ng-if="!property.empty">
+              <a href="" class="btn" ng-click="removeProperty(property)">
+                <span class="fa fa-fw fa-trash"> </span>
+              </a>
+            </td>
+
+            <td class="name" ng-if="property.empty"></td>
+            <td class="type" ng-if="property.empty"></td>
+            <td class="nullable" ng-if="property.empty"></td>
+            <td class="trash" ng-if="property.empty"></td>
+          </tr>
+        </tbody>
+      </table>
+    </fieldset>
+  </div>
+
+</div>
+
+<div class="schema-container" ng-if="fields === 'AVRO'">
+  <div ng-if="plugins.format === 'avro'" class="schema-inner">
+    <textarea cask-json-edit="avro['schema']" class="form-control avro"></textarea>
+  </div>
+</div>
+
+<div class="schema-container" ng-if="fields === 'GROK'">
+  <div class="schema-inner">
+    <label class="control-label">Pattern</label>
+    <input type="text" class="form-control" ng-model="model" />
+  </div>
+</div>
+
+<div class="schema-container" ng-if="fields === 'NOTHING'">
+  <div class="schema-inner">
+    <div class="well well-lg text-center">
+      <h4>No Editable Schema</h4>
+    </div>
+  </div>
+</div>

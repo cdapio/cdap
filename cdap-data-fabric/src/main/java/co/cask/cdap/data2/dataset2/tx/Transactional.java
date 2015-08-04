@@ -45,7 +45,7 @@ public class Transactional<T extends Iterable<V>, V> {
 
   public static <T extends Iterable<V>, V> Transactional<T, V> of(TransactionExecutorFactory txFactory,
                                                                             Supplier<T> supplier) {
-    return new Transactional<T, V>(txFactory, supplier);
+    return new Transactional<>(txFactory, supplier);
   }
 
   /**
@@ -75,9 +75,7 @@ public class Transactional<T extends Iterable<V>, V> {
   public <R> R executeUnchecked(final TransactionExecutor.Function<T, R> func) {
     try {
       return execute(txFactory, supplier, func);
-    } catch (IOException e) {
-      throw Throwables.propagate(e);
-    } catch (TransactionFailureException e) {
+    } catch (IOException | TransactionFailureException e) {
       throw Throwables.propagate(e);
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();

@@ -21,12 +21,12 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.stream.StreamEventDecoder;
-import co.cask.cdap.data.format.RecordFormats;
 import co.cask.cdap.data.stream.decoder.BytesStreamEventDecoder;
 import co.cask.cdap.data.stream.decoder.FormatStreamEventDecoder;
 import co.cask.cdap.data.stream.decoder.IdentityStreamEventDecoder;
 import co.cask.cdap.data.stream.decoder.StringStreamEventDecoder;
 import co.cask.cdap.data.stream.decoder.TextStreamEventDecoder;
+import co.cask.cdap.format.RecordFormats;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -311,7 +311,7 @@ public class StreamInputFormat<K, V> extends InputFormat<K, V> {
   @Override
   public RecordReader<K, V> createRecordReader(InputSplit split,
                                                TaskAttemptContext context) throws IOException, InterruptedException {
-    return new StreamRecordReader<K, V>(createStreamEventDecoder(context.getConfiguration()));
+    return new StreamRecordReader<>(createStreamEventDecoder(context.getConfiguration()));
   }
 
   protected long getCurrentTime() {

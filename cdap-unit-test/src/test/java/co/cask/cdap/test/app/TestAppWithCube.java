@@ -24,10 +24,12 @@ import co.cask.cdap.api.dataset.lib.cube.DimensionValue;
 import co.cask.cdap.api.dataset.lib.cube.MeasureType;
 import co.cask.cdap.api.dataset.lib.cube.TimeSeries;
 import co.cask.cdap.api.dataset.lib.cube.TimeValue;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.test.TestBase;
+import co.cask.cdap.test.TestConfiguration;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
@@ -36,6 +38,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import org.junit.Assert;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -51,6 +54,10 @@ import java.util.concurrent.TimeUnit;
  *
  */
 public class TestAppWithCube extends TestBase {
+
+  @ClassRule
+  public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false);
+
   private static final Gson GSON = new Gson();
 
   @Category(SlowTests.class)
@@ -59,7 +66,7 @@ public class TestAppWithCube extends TestBase {
     // Deploy the application
     ApplicationManager appManager = deployApplication(AppWithCube.class);
 
-    ServiceManager serviceManager = appManager.startService(AppWithCube.SERVICE_NAME);
+    ServiceManager serviceManager = appManager.getServiceManager(AppWithCube.SERVICE_NAME).start();
     try {
       serviceManager.waitForStatus(true);
       URL url = serviceManager.getServiceURL();

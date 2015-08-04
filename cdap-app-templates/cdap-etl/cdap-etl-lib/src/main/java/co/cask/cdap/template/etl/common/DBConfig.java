@@ -26,16 +26,10 @@ import javax.annotation.Nullable;
  */
 public class DBConfig extends PluginConfig {
 
-  @Description("Driver class to connect to the database.")
-  public String driverClass;
-
   @Description("JDBC connection string including database name.")
   public String connectionString;
 
-  @Description("Table name to import/export from/to.")
-  public String tableName;
-
-  @Description("User to use to connect to the specified database. Required for databases that " +
+  @Description("User identity for connecting to the specified database. Required for databases that " +
     "need authentication. Optional for databases that do not require authentication.")
   @Nullable
   public String user;
@@ -45,11 +39,11 @@ public class DBConfig extends PluginConfig {
   @Nullable
   public String password;
 
-  @Description("Name of the JDBC plugin to use. This is the value of the 'name' key defined in the json file " +
+  @Description("Name of the JDBC plugin to use. This is the value of the 'name' key defined in the JSON file " +
     "for the JDBC plugin.")
   public String jdbcPluginName;
 
-  @Description("Type of the JDBC plugin to use. This is the value of the 'type' key defined in the json file " +
+  @Description("Type of the JDBC plugin to use. This is the value of the 'type' key defined in the JSON file " +
     "for the JDBC plugin. Defaults to 'jdbc'.")
   @Nullable
   public String jdbcPluginType = "jdbc";

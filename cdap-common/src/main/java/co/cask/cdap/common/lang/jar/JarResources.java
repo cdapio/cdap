@@ -140,8 +140,7 @@ public final class JarResources {
    * initializes internal hash tables with Jar file resources.
    */
   private Manifest init(Location jarLocation) throws IOException {
-    JarInputStream jarInput = new JarInputStream(new BufferedInputStream(jarLocation.getInputStream()));
-    try {
+    try (JarInputStream jarInput = new JarInputStream(new BufferedInputStream(jarLocation.getInputStream()))) {
       Manifest manifest = jarInput.getManifest();
       JarEntry ze;
       // For each ".class" entry in the jar file, read the bytes and stores it in the classContents map.
@@ -184,8 +183,6 @@ public final class JarResources {
       }
       return manifest;
 
-    } finally {
-      jarInput.close();
     }
   }
 }

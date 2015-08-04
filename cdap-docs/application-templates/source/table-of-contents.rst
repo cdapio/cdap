@@ -7,11 +7,13 @@ CDAP Application Templates Table of Contents
 ============================================
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 4
 
     Introduction <index>
     ETL Overview <etl/index>
-    ETL Templates <etl/templates>
-    Creating An ETL Adapter <etl/creating>
+    ETL Templates and Plugins <etl/templates/index>
+    Creating an ETL Adapter <etl/creating>
     Adapter Lifecycle Management <etl/operations>
     Creating Custom ETL Plugins <etl/custom>
+    Using Third-party Jars <etl/third-party>
+    

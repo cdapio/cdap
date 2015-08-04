@@ -19,7 +19,6 @@ package co.cask.cdap.data2.transaction.queue.coprocessor.hbase96;
 import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
 import co.cask.cdap.data2.transaction.queue.hbase.DequeueScanAttributes;
-import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueAdmin;
 import co.cask.tephra.Transaction;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;

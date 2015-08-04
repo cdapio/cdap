@@ -16,12 +16,13 @@
 
 package co.cask.cdap.client;
 
+import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
-import co.cask.cdap.common.exception.BadRequestException;
-import co.cask.cdap.common.exception.NotFoundException;
-import co.cask.cdap.common.exception.ServiceNotEnabledException;
-import co.cask.cdap.common.exception.UnauthorizedException;
+import co.cask.cdap.common.BadRequestException;
+import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.ServiceNotEnabledException;
+import co.cask.cdap.common.UnauthorizedException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
 import co.cask.cdap.proto.SystemServiceLiveInfo;
@@ -43,6 +44,7 @@ import javax.inject.Inject;
 /**
  * Provides ways to monitor CDAP.
  */
+@Beta
 public class MonitorClient {
 
   private static final Gson GSON = new Gson();
@@ -135,6 +137,20 @@ public class MonitorClient {
     URL url = config.resolveURL("system/services/status");
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
     return ObjectResponse.fromJsonBody(response, new TypeToken<Map<String, String>>() { }).getResponseObject();
+  }
+
+  /**
+   * @return true if all system services' status is 'OK'; false otherwise
+   * @throws IOException if a network error occurred
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   */
+  public boolean allSystemServicesOk() throws IOException, UnauthorizedException {
+    for (String status : getAllSystemServiceStatus().values()) {
+      if (!"OK".equals(status)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   /**

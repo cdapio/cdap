@@ -7,7 +7,7 @@
       <span></span>
       <span class="pull-right">
         {{ query.timestamp | amDateFormat:'dddd, MMMM Do YYYY, h:mm:ss a'}}
-        <span class="status fa fa-circle" ng-class="{ 'green': query.status === 'FINISHED', 'red': query.status !== 'FINISHED' }"></span>
+        <span class="status fa fa-circle" ng-class="{ 'green': query.status === 'FINISHED', 'yellow': query.status === 'RUNNING', 'red': ['RUNNING', 'FINISHED'].indexOf(query.status) === -1 }"></span>
       </span>
     </div>
     <div class="panel-body" ng-if="query.isOpen">
@@ -23,15 +23,24 @@
         <div class="results">
           <div class="row">
             <div class="col-xs-6">
-              <h3>Results</h3>
+              <h3>Preview</h3>
             </div>
 
             <div class="col-xs-6 text-right">
             <a
               class="btn btn-default download"
               ng-click="download(responses.request)"
+              ng-if="!downloading[responses.request]"
             >
-              <i class="fa fa-download"></i> Download All
+              <i class="fa fa-download"></i>
+              <span> Download All </span>
+            </a>
+
+            <a class="btn btn-default download"
+              ng-if="downloading[responses.request]"
+              disabled>
+              <i class="fa fa-spinner fa-spin"></i>
+              <span>Downloading</span>
             </a>
           </div>
 
@@ -47,8 +56,8 @@
               <tbody>
                 <tr ng-repeat="results in responses.results">
                   <td ng-repeat="result in results.columns track by $index">
-                    <span>{{ result }}</span>
-                    <span ng-if="!result && result !== 0">null</span>
+                    <span ng-if="result !== null">{{ result }}</span>
+                    <span ng-if="result === null">null</span>
                   </td>
                 </tr>
                 <tr class="text-center" ng-if="responses.results.length === 0">

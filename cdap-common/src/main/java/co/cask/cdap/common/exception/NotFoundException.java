@@ -20,7 +20,9 @@ import co.cask.cdap.proto.Id;
 
 /**
  * Thrown when an element is not found
+ * @deprecated Use {@link co.cask.cdap.common.NotFoundException} instead
  */
+@Deprecated
 public class NotFoundException extends Exception {
 
   private final Object object;

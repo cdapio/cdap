@@ -17,7 +17,7 @@
 package co.cask.cdap.examples.streamconversion;
 
 import co.cask.cdap.api.common.RuntimeArguments;
-import co.cask.cdap.api.dataset.lib.TimePartition;
+import co.cask.cdap.api.dataset.lib.TimePartitionDetail;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.test.ApplicationManager;
@@ -61,7 +61,7 @@ public class StreamConversionTest extends TestBase {
 
     // run the mapreduce
     MapReduceManager mapReduceManager =
-      appManager.startMapReduce("StreamConversionMapReduce", RuntimeArguments.NO_ARGUMENTS);
+      appManager.getMapReduceManager("StreamConversionMapReduce").start(RuntimeArguments.NO_ARGUMENTS);
     mapReduceManager.waitForFinish(5, TimeUnit.MINUTES);
 
     // verify the single partition in the file set
@@ -70,7 +70,7 @@ public class StreamConversionTest extends TestBase {
       public Long call() throws Exception {
         DataSetManager<TimePartitionedFileSet> fileSetManager = getDataset("converted");
         TimePartitionedFileSet converted = fileSetManager.get();
-        Set<TimePartition> partitions = converted.getPartitionsByTime(startTime, System.currentTimeMillis());
+        Set<TimePartitionDetail> partitions = converted.getPartitionsByTime(startTime, System.currentTimeMillis());
         Assert.assertEquals(1, partitions.size());
         return partitions.iterator().next().getTime();
       }
@@ -131,7 +131,7 @@ public class StreamConversionTest extends TestBase {
                         long sleepDelay, TimeUnit sleepDelayUnit)
     throws InterruptedException, ExecutionException, TimeoutException {
 
-    final AtomicMarkableReference<T> result = new AtomicMarkableReference<T>(null, false);
+    final AtomicMarkableReference<T> result = new AtomicMarkableReference<>(null, false);
     Tasks.waitFor(true, new Callable<Boolean>() {
       public Boolean call() throws Exception {
         try {

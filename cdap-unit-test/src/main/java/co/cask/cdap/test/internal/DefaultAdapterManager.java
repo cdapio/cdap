@@ -16,6 +16,7 @@
 
 package co.cask.cdap.test.internal;
 
+import co.cask.cdap.internal.AppFabricClient;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.test.AbstractAdapterManager;
@@ -56,5 +57,11 @@ public class DefaultAdapterManager extends AbstractAdapterManager {
   public RunRecord getRun(String runId) {
     return appFabricClient.getAdapterRun(adapterId, runId);
   }
+
+  @Override
+  public void delete() throws Exception {
+    appFabricClient.deleteAdapter(adapterId);
+  }
+
 
 }

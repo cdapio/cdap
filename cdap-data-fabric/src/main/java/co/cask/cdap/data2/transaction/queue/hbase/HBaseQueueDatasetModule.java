@@ -25,9 +25,7 @@ import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.queue.QueueName;
-import co.cask.cdap.data2.transaction.queue.QueueConstants;
 
 import java.io.IOException;
 import java.net.URI;
@@ -45,8 +43,6 @@ public class HBaseQueueDatasetModule implements DatasetModule {
   // State store table name is system.queue.
   // The embedded table used in HBaseConsumerStateStore has the name "config", hence it will
   // map to "system.queue.config" for backward compatibility
-  static final String STATE_STORE_NAME
-    = Constants.SYSTEM_NAMESPACE + "." + QueueConstants.QueueType.QUEUE.toString();
   // The name of the embedded table dataset for the state store. It has to be "config".
   static final String STATE_STORE_EMBEDDED_TABLE_NAME = "config";
 

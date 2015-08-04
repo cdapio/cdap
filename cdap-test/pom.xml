@@ -20,7 +20,7 @@
   <parent>
     <artifactId>cdap</artifactId>
     <groupId>co.cask.cdap</groupId>
-    <version>3.0.0</version>
+    <version>3.1.0</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
@@ -36,6 +36,11 @@
     <dependency>
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-proto</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-common</artifactId>
       <version>${project.version}</version>
     </dependency>
   </dependencies>

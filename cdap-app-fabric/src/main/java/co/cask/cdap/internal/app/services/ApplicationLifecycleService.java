@@ -27,10 +27,10 @@ import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
+import co.cask.cdap.common.CannotBeDeletedException;
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.exception.CannotBeDeletedException;
-import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data2.registry.UsageRegistry;
@@ -123,7 +123,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @throws Exception
    */
   public void removeAll(Id.Namespace identifier) throws Exception {
-    List<ApplicationSpecification> allSpecs = new ArrayList<ApplicationSpecification>(
+    List<ApplicationSpecification> allSpecs = new ArrayList<>(
       store.getAllApplications(identifier));
 
     //Check if any program associated with this namespace is running
@@ -202,7 +202,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                                       namespace, entry.getValue());
       }
 
-      queueAdmin.dropAllForFlow(appId.getNamespaceId(), appId.getId(), flowSpecification.getName());
+      queueAdmin.dropAllForFlow(Id.Flow.from(appId, flowSpecification.getName()));
     }
     deleteProgramLocations(appId);
 
@@ -233,7 +233,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       ProgramType type = ProgramTypes.fromSpecification(spec);
       Id.Program programId = Id.Program.from(appId, type, spec.getName());
       try {
-        Location location = Programs.programLocation(namespacedLocationFactory, appFabricDir, programId, type);
+        Location location = Programs.programLocation(namespacedLocationFactory, appFabricDir, programId);
         location.delete();
       } catch (FileNotFoundException e) {
         LOG.warn("Program jar for program {} not found.", programId.toString(), e);
@@ -245,8 +245,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     try {
       Id.Program programId = Id.Program.from(appId.getNamespaceId(), appId.getId(),
                                              ProgramType.WEBAPP, ProgramType.WEBAPP.name().toLowerCase());
-      Location location = Programs.programLocation(namespacedLocationFactory, appFabricDir, programId,
-                                                   ProgramType.WEBAPP);
+      Location location = Programs.programLocation(namespacedLocationFactory, appFabricDir, programId);
       location.delete();
     } catch (FileNotFoundException e) {
       // expected exception when webapp is not present.

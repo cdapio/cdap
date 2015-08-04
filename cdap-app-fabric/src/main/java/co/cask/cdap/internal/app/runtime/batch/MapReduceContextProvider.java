@@ -74,7 +74,8 @@ public final class MapReduceContextProvider {
                contextConfig.getRunId(),
                taskContext.getTaskAttemptID().getTaskID().toString(),
                contextConfig.getLogicalStartTime(),
-               contextConfig.getWorkflowBatch(),
+               contextConfig.getProgramNameInWorkflow(),
+               contextConfig.getWorkflowToken(),
                contextConfig.getArguments(),
                contextConfig.getTx(),
                createProgram(contextConfig),
@@ -88,18 +89,26 @@ public final class MapReduceContextProvider {
     return context;
   }
 
+  // TODO: CDAP-3160 : Refactor to remove the need for the stop method below. Provider/Builder classes should not have
+  // methods like stop(), finish() or close().
+  public synchronized void stop() {
+    if (contextBuilder != null) {
+      contextBuilder.finish();
+    }
+  }
+
   private synchronized AbstractMapReduceContextBuilder getBuilder(CConfiguration conf) {
     if (contextBuilder != null) {
       return contextBuilder;
     }
 
     if (isLocal(taskContext.getConfiguration())) {
-      contextBuilder = new InMemoryMapReduceContextBuilder(conf, taskContext);
+      contextBuilder = new InMemoryMapReduceContextBuilder(conf);
     } else {
       // mrFramework = "yarn" or "classic"
       // if the jobContext is not a TaskAttemptContext, mrFramework should not be yarn.
       contextBuilder = new DistributedMapReduceContextBuilder(
-        conf, HBaseConfiguration.create(taskContext.getConfiguration()), taskContext);
+        conf, HBaseConfiguration.create(taskContext.getConfiguration()));
     }
     return contextBuilder;
   }

@@ -17,6 +17,7 @@ package co.cask.cdap.internal.app.runtime.workflow;
 
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
+import co.cask.cdap.api.workflow.Value;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.ApplicationSpecification;
@@ -87,13 +88,25 @@ final class MapReduceProgramWorkflowRunner extends AbstractProgramWorkflowRunner
 
   private void updateWorkflowToken(MapReduceContext context) throws Exception {
     Map<String, Map<String, Long>> mapReduceCounters = Maps.newHashMap();
+    WorkflowToken workflowTokenFromContext = context.getWorkflowToken();
+
+    if (workflowTokenFromContext == null) {
+      throw new IllegalStateException("WorkflowToken cannot be null when the " +
+                                        "MapReduce program is started by Workflow.");
+    }
+
     Counters counters = ((Job) context.getHadoopJob()).getCounters();
     for (CounterGroup group : counters) {
       mapReduceCounters.put(group.getName(), new HashMap<String, Long>());
       for (Counter counter : group) {
         mapReduceCounters.get(group.getName()).put(counter.getName(), counter.getValue());
+        ((BasicWorkflowToken) workflowTokenFromContext).put(group.getName() + "." + counter.getName(),
+                                                            Value.of(counter.getValue()),
+                                                            WorkflowToken.Scope.SYSTEM);
       }
     }
-    ((BasicWorkflowToken) token).setMapReduceCounters(mapReduceCounters);
+
+    ((BasicWorkflowToken) workflowTokenFromContext).setMapReduceCounters(mapReduceCounters);
+    ((BasicWorkflowToken) token).mergeToken((BasicWorkflowToken) workflowTokenFromContext);
   }
 }

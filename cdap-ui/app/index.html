@@ -34,13 +34,13 @@
           <div class="col-xs-12 col-md-6 text-uppercase">
             <p>
               <img src="/assets/img/cask.png" alt="" />
-              <span>Copyright &copy; 2015 Cask Data, Inc. All Rights Reserved.</span>
+              <span>Copyright &copy; 2015 Cask Data, Inc.</span>
             </p>
           </div>
           <div class="col-xs-12 col-md-6">
             <ul class="list-inline">
               <li>
-                CDAP Ver 3.0
+                {{version}}
               </li>
               <li>
                 <a href="http://cask.co/terms" target="_blank">Terms</a>
@@ -60,7 +60,14 @@
     <script type="text/javascript" src="/assets/bundle/lib.js"></script>
     <script type="text/javascript" src="/config.js"></script>
     <script type="text/javascript" src="/assets/bundle/app.js"></script>
+    <!-- This will throw a 404 not found when we run only gulp build.
+        This is temporary and should be fixed by the end of the release
+    -->
+    <script type="text/javascript" src="/assets/bundle/app.es6.js"></script>
     <script type="text/javascript" src="/assets/bundle/tpl.js"></script>
+
+    <!-- TODO: REMOVE BEFORE RELEASE -->
+    <script src="http://localhost:35729/livereload.js"></script>
 
 </body>
 </html>

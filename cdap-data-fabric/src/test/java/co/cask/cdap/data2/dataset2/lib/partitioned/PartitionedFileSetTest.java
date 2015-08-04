@@ -16,7 +16,9 @@
 
 package co.cask.cdap.data2.dataset2.lib.partitioned;
 
+import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.lib.Partition;
+import co.cask.cdap.api.dataset.lib.PartitionDetail;
 import co.cask.cdap.api.dataset.lib.PartitionFilter;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionOutput;
@@ -27,46 +29,74 @@ import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.SlowTests;
 import co.cask.tephra.TransactionAware;
+import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionExecutor;
+import co.cask.tephra.TransactionManager;
+import co.cask.tephra.inmemory.InMemoryTxSystemClient;
 import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import org.apache.twill.filesystem.Location;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.Callable;
 
 /**
  * Test partitioned file sets without map/reduce and without explore.
  */
 public class PartitionedFileSetTest {
+
+  @ClassRule
+  public static TemporaryFolder tmpFolder = new TemporaryFolder();
   @ClassRule
   public static DatasetFrameworkTestUtil dsFrameworkUtil = new DatasetFrameworkTestUtil();
 
-  static final Logger LOG = org.slf4j.LoggerFactory.getLogger(PartitionedFileSetTest.class);
+  private static final Logger LOG = org.slf4j.LoggerFactory.getLogger(PartitionedFileSetTest.class);
 
-  static final Partitioning PARTITIONING_1 = Partitioning.builder()
+  private static final Partitioning PARTITIONING_1 = Partitioning.builder()
     .addStringField("s")
     .addIntField("i")
     .addLongField("l")
     .build();
-  static final Partitioning PARTITIONING_2 = Partitioning.builder()
+  private static final Partitioning PARTITIONING_2 = Partitioning.builder()
     .addStringField("s")
     .addIntField("i")
     .addLongField("l")
     .addStringField("x")
     .build();
 
+  // key can be in any order... partitioning dictates the order of fields in row key
+  private static final PartitionKey PARTITION_KEY = PartitionKey.builder()
+    .addIntField("i", 42)
+    .addLongField("l", 17L)
+    .addStringField("s", "x")
+    .build();
+
   private static final Id.DatasetInstance pfsInstance =
     Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "pfs");
+  private static final Id.DatasetInstance pfsExternalInstance =
+    Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "ext");
+  private static Location pfsBaseLocation;
 
   @Before
   public void before() throws Exception {
@@ -74,11 +104,20 @@ public class PartitionedFileSetTest {
       .setPartitioning(PARTITIONING_1)
       .setBasePath("testDir")
       .build());
+    pfsBaseLocation = ((PartitionedFileSet) dsFrameworkUtil.getInstance(pfsInstance))
+      .getEmbeddedFileSet().getBaseLocation();
+    Assert.assertTrue(pfsBaseLocation.exists());
   }
 
   @After
   public void after() throws Exception {
-    dsFrameworkUtil.deleteInstance(pfsInstance);
+    if (dsFrameworkUtil.getInstance(pfsInstance) != null) {
+      dsFrameworkUtil.deleteInstance(pfsInstance);
+    }
+    if (dsFrameworkUtil.getInstance(pfsExternalInstance) != null) {
+      dsFrameworkUtil.deleteInstance(pfsExternalInstance);
+    }
+    Assert.assertFalse(pfsBaseLocation.exists());
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -92,27 +131,328 @@ public class PartitionedFileSetTest {
 
   @Test
   public void testEncodeDecode() {
-    // key can be in any order... partitioning dictates the order of fields in row key
-    PartitionKey key = PartitionKey.builder()
-      .addIntField("i", 42)
-      .addLongField("l", 17L)
-      .addStringField("s", "x")
-      .build();
-    byte[] rowKey = PartitionedFileSetDataset.generateRowKey(key, PARTITIONING_1);
+    byte[] rowKey = PartitionedFileSetDataset.generateRowKey(PARTITION_KEY, PARTITIONING_1);
     PartitionKey decoded = PartitionedFileSetDataset.parseRowKey(rowKey, PARTITIONING_1);
-    Assert.assertEquals(key, decoded);
+    Assert.assertEquals(PARTITION_KEY, decoded);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testDecodeIncomplete() {
-    // key can be in any order... partitioning dictates the order of fields in row key
-    PartitionKey key = PartitionKey.builder()
-      .addIntField("i", 42)
-      .addLongField("l", 17L)
-      .addStringField("s", "x")
-      .build();
-    byte[] rowKey = PartitionedFileSetDataset.generateRowKey(key, PARTITIONING_1);
+    byte[] rowKey = PartitionedFileSetDataset.generateRowKey(PARTITION_KEY, PARTITIONING_1);
     PartitionedFileSetDataset.parseRowKey(rowKey, PARTITIONING_2);
+  }
+
+  @Test
+  public void testPartitionConsumer() throws Exception {
+    // exercises the edge case of partition consumption, when partitions are being consumed, while another in-progress
+    // transaction has added a partition, but it has not yet committed, so the partition is not available for the
+    // consumer
+    PartitionedFileSet dataset1 = dsFrameworkUtil.getInstance(pfsInstance);
+    PartitionedFileSet dataset2 = dsFrameworkUtil.getInstance(pfsInstance);
+    TransactionManager txManager = dsFrameworkUtil.getTxManager();
+    InMemoryTxSystemClient txClient = new InMemoryTxSystemClient(txManager);
+
+    // producer simply adds initial partition
+    TransactionContext txContext1 = new TransactionContext(txClient, (TransactionAware) dataset1);
+    txContext1.start();
+    PartitionKey partitionKey1 = generateUniqueKey();
+    dataset1.getPartitionOutput(partitionKey1).addPartition();
+    txContext1.finish();
+
+    // consumer simply consumes initial partition
+    TransactionContext txContext2 = new TransactionContext(txClient, (TransactionAware) dataset2);
+    txContext2.start();
+    PartitionConsumer partitionConsumer = new PartitionConsumer(dataset2);
+    Iterator<Partition> partitionIterator = partitionConsumer.consumePartitions();
+    Assert.assertEquals(partitionKey1, partitionIterator.next().getPartitionKey());
+    Assert.assertFalse(partitionIterator.hasNext());
+    txContext2.finish();
+
+    // producer adds a second partition, but does not yet commit the transaction
+    txContext1.start();
+    PartitionKey partitionKey2 = generateUniqueKey();
+    dataset1.getPartitionOutput(partitionKey2).addPartition();
+
+    // consumer attempts to consume at a time after the partition was added, but before it committed. Because of this,
+    // the partition is not visible and will not be consumed
+    txContext2.start();
+    Assert.assertFalse(partitionConsumer.consumePartitions().hasNext());
+    txContext2.finish();
+
+    // producer commits the transaction in which the second partition was added
+    txContext1.finish();
+
+    // the next time the consumer runs, it processes the second partition
+    txContext2.start();
+    partitionIterator = partitionConsumer.consumePartitions();
+    Assert.assertEquals(partitionKey2, partitionIterator.next().getPartitionKey());
+    Assert.assertFalse(partitionIterator.hasNext());
+    txContext2.finish();
+  }
+
+  @Test
+  public void testSimplePartitionConsuming() throws Exception {
+    final PartitionedFileSet dataset = dsFrameworkUtil.getInstance(pfsInstance);
+    final TransactionAware txAwareDataset = (TransactionAware) dataset;
+
+    final Set<PartitionKey> partitionKeys1 = Sets.newHashSet();
+    for (int i = 0; i < 10; i++) {
+      partitionKeys1.add(generateUniqueKey());
+    }
+
+    final Set<PartitionKey> partitionKeys2 = Sets.newHashSet();
+    for (int i = 0; i < 15; i++) {
+      partitionKeys2.add(generateUniqueKey());
+    }
+
+    final PartitionConsumer partitionConsumer = new PartitionConsumer(dataset);
+    dsFrameworkUtil.newInMemoryTransactionExecutor(txAwareDataset).execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        for (PartitionKey partitionKey : partitionKeys1) {
+          dataset.getPartitionOutput(partitionKey).addPartition();
+        }
+      }
+    });
+
+    dsFrameworkUtil.newInMemoryTransactionExecutor(txAwareDataset).execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        // Initial consumption results in the partitions corresponding to partitionKeys1 to be consumed because only
+        // those partitions are added to the dataset at this point
+        List<Partition> consumedPartitions = Lists.newArrayList();
+        Iterators.addAll(consumedPartitions, partitionConsumer.consumePartitions());
+
+        Set<PartitionKey> retrievedKeys = Sets.newHashSet();
+        for (Partition consumedPartition : consumedPartitions) {
+          retrievedKeys.add(consumedPartition.getPartitionKey());
+        }
+        Assert.assertEquals(partitionKeys1, retrievedKeys);
+      }
+    });
+
+    dsFrameworkUtil.newInMemoryTransactionExecutor(txAwareDataset).execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        for (PartitionKey partitionKey : partitionKeys2) {
+          dataset.getPartitionOutput(partitionKey).addPartition();
+        }
+      }
+    });
+
+    dsFrameworkUtil.newInMemoryTransactionExecutor(txAwareDataset).execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        // using the same PartitionConsumer (which remembers the PartitionConsumerState) to consume additional
+        // partitions results in only the newly added partitions (corresponding to partitionKeys2) to be returned
+        List<Partition> consumedPartitions = Lists.newArrayList();
+        Iterators.addAll(consumedPartitions, partitionConsumer.consumePartitions());
+
+        Set<PartitionKey> retrievedKeys = Sets.newHashSet();
+        for (Partition consumedPartition : consumedPartitions) {
+          retrievedKeys.add(consumedPartition.getPartitionKey());
+        }
+        Assert.assertEquals(partitionKeys2, retrievedKeys);
+      }
+    });
+
+    dsFrameworkUtil.newInMemoryTransactionExecutor(txAwareDataset).execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        // consuming the partitions again, without adding any new partitions returns an empty iterator
+        Assert.assertFalse(partitionConsumer.consumePartitions().hasNext());
+      }
+    });
+
+    dsFrameworkUtil.newInMemoryTransactionExecutor(txAwareDataset).execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        // creating a new PartitionConsumer resets the consumption state. Consuming from it then returns an iterator
+        // with all the partition keys
+        List<Partition> consumedPartitions = Lists.newArrayList();
+        Iterators.addAll(consumedPartitions, new PartitionConsumer(dataset).consumePartitions());
+
+        Set<PartitionKey> retrievedKeys = Sets.newHashSet();
+        for (Partition consumedPartition : consumedPartitions) {
+          retrievedKeys.add(consumedPartition.getPartitionKey());
+        }
+        Set<PartitionKey> allKeys = Sets.newHashSet();
+        allKeys.addAll(partitionKeys1);
+        allKeys.addAll(partitionKeys2);
+        Assert.assertEquals(allKeys, retrievedKeys);
+      }
+    });
+  }
+
+  private PartitionKey generateUniqueKey() {
+    return PartitionKey.builder()
+      .addIntField("i", 1)
+      .addLongField("l", 17L)
+      .addStringField("s", UUID.randomUUID().toString())
+      .build();
+  }
+
+  @Test
+  public void testPartitionCreationTime() throws Exception {
+    final PartitionedFileSet dataset = dsFrameworkUtil.getInstance(pfsInstance);
+
+    dsFrameworkUtil.newTransactionExecutor((TransactionAware) dataset).execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        PartitionOutput partitionOutput = dataset.getPartitionOutput(PARTITION_KEY);
+        long beforeTime = System.currentTimeMillis();
+        partitionOutput.addPartition();
+        long afterTime = System.currentTimeMillis();
+
+        PartitionDetail partitionDetail = dataset.getPartition(PARTITION_KEY);
+        Assert.assertNotNull(partitionDetail);
+        long creationTime = partitionDetail.getMetadata().getCreationTime();
+        Assert.assertTrue(creationTime >= beforeTime && creationTime <= afterTime);
+      }
+    });
+  }
+
+  @Test
+  public void testPartitionMetadata() throws Exception {
+    final PartitionedFileSet dataset = dsFrameworkUtil.getInstance(pfsInstance);
+
+    dsFrameworkUtil.newTransactionExecutor((TransactionAware) dataset).execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        PartitionKey partitionKey = PartitionKey.builder()
+          .addIntField("i", 42)
+          .addLongField("l", 17L)
+          .addStringField("s", "x")
+          .build();
+
+        ImmutableMap<String, String> metadata = ImmutableMap.of("key1", "value",
+                                                                "key2", "value2",
+                                                                "key3", "value2");
+
+        PartitionOutput partitionOutput = dataset.getPartitionOutput(partitionKey);
+        partitionOutput.setMetadata(metadata);
+        partitionOutput.addPartition();
+
+        PartitionDetail partitionDetail = dataset.getPartition(partitionKey);
+        Assert.assertNotNull(partitionDetail);
+        Assert.assertEquals(metadata, partitionDetail.getMetadata().asMap());
+      }
+    });
+  }
+
+  @Test
+  public void testUpdateMetadata() throws Exception {
+    final PartitionedFileSet dataset = dsFrameworkUtil.getInstance(pfsInstance);
+    dsFrameworkUtil.newTransactionExecutor((TransactionAware) dataset).execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        PartitionOutput partitionOutput = dataset.getPartitionOutput(PARTITION_KEY);
+        ImmutableMap<String, String> originalEntries = ImmutableMap.of("key1", "value1");
+        partitionOutput.setMetadata(originalEntries);
+        partitionOutput.addPartition();
+
+        ImmutableMap<String, String> updatedMetadata = ImmutableMap.of("key2", "value2");
+        dataset.addMetadata(PARTITION_KEY, updatedMetadata);
+
+        PartitionDetail partitionDetail = dataset.getPartition(PARTITION_KEY);
+        Assert.assertNotNull(partitionDetail);
+
+        HashMap<String, String> combinedEntries = Maps.newHashMap();
+        combinedEntries.putAll(originalEntries);
+        combinedEntries.putAll(updatedMetadata);
+        Assert.assertEquals(combinedEntries, partitionDetail.getMetadata().asMap());
+
+        // adding an entry, for a key that already exists will throw an Exception
+        try {
+          dataset.addMetadata(PARTITION_KEY, "key2", "value3");
+          Assert.fail("Expected not to be able to update an existing metadata entry");
+        } catch (DataSetException expected) {
+        }
+
+        PartitionKey nonexistentPartitionKey = PartitionKey.builder()
+          .addIntField("i", 42)
+          .addLongField("l", 17L)
+          .addStringField("s", "nonexistent")
+          .build();
+
+        try {
+          // adding an entry, for a key that already exists will throw an Exception
+          dataset.addMetadata(nonexistentPartitionKey, "key2", "value3");
+          Assert.fail("Expected not to be able to add metadata for a nonexistent partition");
+        } catch (DataSetException expected) {
+        }
+      }
+    });
+  }
+
+  @Test
+  public void testAddRemoveGetPartition() throws Exception {
+    final PartitionedFileSet pfs = dsFrameworkUtil.getInstance(pfsInstance);
+
+    dsFrameworkUtil.newTransactionExecutor((TransactionAware) pfs).execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        PartitionOutput output = pfs.getPartitionOutput(PARTITION_KEY);
+        Location outputLocation = output.getLocation().append("file");
+        OutputStream out = outputLocation.getOutputStream();
+        out.close();
+        output.addPartition();
+        Assert.assertTrue(outputLocation.exists());
+        Assert.assertNotNull(pfs.getPartition(PARTITION_KEY));
+        Assert.assertTrue(pfs.getPartition(PARTITION_KEY).getLocation().exists());
+        pfs.dropPartition(PARTITION_KEY);
+        Assert.assertFalse(outputLocation.exists());
+        Assert.assertNull(pfs.getPartition(PARTITION_KEY));
+        pfs.dropPartition(PARTITION_KEY);
+      }
+    });
+  }
+
+  @Test
+  public void testAddRemoveGetPartitionExternal() throws Exception {
+    final File absolutePath = tmpFolder.newFolder();
+    absolutePath.mkdirs();
+
+    dsFrameworkUtil.createInstance("partitionedFileSet", pfsExternalInstance, PartitionedFileSetProperties.builder()
+      .setPartitioning(PARTITIONING_1)
+      .setBasePath(absolutePath.getPath())
+      .setDataExternal(true)
+      .build());
+    final PartitionedFileSet pfs = dsFrameworkUtil.getInstance(pfsExternalInstance);
+
+    dsFrameworkUtil.newTransactionExecutor((TransactionAware) pfs).execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        Location baseLocation = pfs.getEmbeddedFileSet().getBaseLocation();
+        Assert.assertTrue(pfsBaseLocation.exists());
+
+        // attempt to write a new partition - should fail
+        try {
+          PartitionOutput output = pfs.getPartitionOutput(PARTITION_KEY);
+          Assert.fail("External partitioned file set should not allow writing files");
+        } catch (UnsupportedOperationException e) {
+          // expected
+        }
+
+        // create an external file and addit as a partition
+        File someFile = new File(absolutePath, "some.file");
+        OutputStream out = new FileOutputStream(someFile);
+        out.close();
+        Assert.assertTrue(someFile.exists());
+        pfs.addPartition(PARTITION_KEY, "some.file");
+        Assert.assertNotNull(pfs.getPartition(PARTITION_KEY));
+        Assert.assertTrue(pfs.getPartition(PARTITION_KEY).getLocation().exists());
+
+        // now drop the partition and validate the file is still there
+        pfs.dropPartition(PARTITION_KEY);
+        Assert.assertNull(pfs.getPartition(PARTITION_KEY));
+        Assert.assertTrue(someFile.exists());
+      }
+    });
+    // drop the dataset and validate that the base dir still exists
+    dsFrameworkUtil.deleteInstance(pfsExternalInstance);
+    Assert.assertTrue(pfsBaseLocation.exists());
+    Assert.assertTrue(absolutePath.isDirectory());
   }
 
   @Test
@@ -123,7 +463,7 @@ public class PartitionedFileSetTest {
 
     final PartitionKey[][][] keys = new PartitionKey[4][4][4];
     final String[][][] paths = new String[4][4][4];
-    final Set<Partition> allPartitions = Sets.newHashSet();
+    final Set<BasicPartition> allPartitionDetails = Sets.newHashSet();
 
     // add a bunch of partitions
     for (int s = 0; s < 4; s++) {
@@ -134,18 +474,19 @@ public class PartitionedFileSetTest {
             .addField("i", i * 100)
             .addField("l", 15L - 10 * l)
             .build();
-          Partition partition = dsFrameworkUtil.newTransactionExecutor((TransactionAware) dataset)
-            .execute(new Callable<PartitionOutput>() {
+          BasicPartition basicPartition = dsFrameworkUtil.newTransactionExecutor((TransactionAware) dataset)
+            .execute(new Callable<BasicPartition>() {
               @Override
-              public PartitionOutput call() throws Exception {
+              public BasicPartition call() throws Exception {
                 PartitionOutput p = dataset.getPartitionOutput(key);
                 p.addPartition();
-                return p;
+                return new BasicPartition((PartitionedFileSetDataset) dataset,
+                                          p.getRelativePath(), p.getPartitionKey());
               }
             });
           keys[s][i][l] = key;
-          paths[s][i][l] = partition.getRelativePath();
-          allPartitions.add(partition);
+          paths[s][i][l] = basicPartition.getRelativePath();
+          allPartitionDetails.add(basicPartition);
         }
       }
     }
@@ -160,14 +501,14 @@ public class PartitionedFileSetTest {
             new TransactionExecutor.Subroutine() {
               @Override
               public void apply() throws Exception {
-                Partition partition = dataset.getPartition(key);
-                Assert.assertNotNull(partition);
-                Assert.assertEquals(path, partition.getRelativePath());
+                PartitionDetail partitionDetail = dataset.getPartition(key);
+                Assert.assertNotNull(partitionDetail);
+                Assert.assertEquals(path, partitionDetail.getRelativePath());
               }
           });
           // also test getPartitionPaths() and getPartitions() for the filter matching this
           @SuppressWarnings({"unchecked", "unused"})
-          boolean success = testFilter(dataset, allPartitions,
+          boolean success = testFilter(dataset, allPartitionDetails,
                                        PartitionFilter.builder()
                                          .addValueCondition("l", key.getField("l"))
                                          .addValueCondition("s", key.getField("s"))
@@ -178,13 +519,13 @@ public class PartitionedFileSetTest {
     }
 
     // test whether query works without filter
-    testFilter(dataset, allPartitions, null);
+    testFilter(dataset, allPartitionDetails, null);
 
     // generate an list of partition filters with exhaustive coverage
     List<PartitionFilter> filters = generateFilters();
 
     // test all kinds of filters
-    testAllFilters(dataset, allPartitions, filters);
+    testAllFilters(dataset, allPartitionDetails, filters);
 
     // remove a few of the partitions and test again, repeatedly
     PartitionKey[] keysToRemove = { keys[1][2][3], keys[0][1][0], keys[2][3][2], keys[3][1][2] };
@@ -200,24 +541,24 @@ public class PartitionedFileSetTest {
       }, key);
 
       // test all filters
-      Partition toRemove = Iterables.tryFind(allPartitions, new Predicate<Partition>() {
+      BasicPartition toRemove = Iterables.tryFind(allPartitionDetails, new Predicate<BasicPartition>() {
         @Override
-        public boolean apply(Partition partition) {
+        public boolean apply(BasicPartition partition) {
           return key.equals(partition.getPartitionKey());
         }
       }).get();
-      allPartitions.remove(toRemove);
-      testAllFilters(dataset, allPartitions, filters);
+      allPartitionDetails.remove(toRemove);
+      testAllFilters(dataset, allPartitionDetails, filters);
     }
 
   }
 
   private void testAllFilters(PartitionedFileSet dataset,
-                              Set<Partition> allPartitions,
+                              Set<BasicPartition> allPartitionDetails,
                               List<PartitionFilter> filters) throws Exception {
     for (PartitionFilter filter : filters) {
       try {
-        testFilter(dataset, allPartitions, filter);
+        testFilter(dataset, allPartitionDetails, filter);
       } catch (Throwable e) {
         throw new Exception("testFilter() failed for filter: " + filter, e);
       }
@@ -225,14 +566,14 @@ public class PartitionedFileSetTest {
   }
 
   private boolean testFilter(final PartitionedFileSet dataset,
-                             Set<Partition> allPartitions,
+                             Set<BasicPartition> allPartitionDetails,
                              final PartitionFilter filter) throws Exception {
 
     // determine the keys and paths that match the filter
-    final Set<Partition> matching = filter == null ? allPartitions :
-      Sets.filter(allPartitions, new Predicate<Partition>() {
+    final Set<BasicPartition> matching = filter == null ? allPartitionDetails :
+      Sets.filter(allPartitionDetails, new Predicate<BasicPartition>() {
         @Override
-        public boolean apply(Partition partition) {
+        public boolean apply(BasicPartition partition) {
           return filter.match(partition.getPartitionKey());
         }
       });
@@ -240,7 +581,14 @@ public class PartitionedFileSetTest {
     dsFrameworkUtil.newTransactionExecutor((TransactionAware) dataset).execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
-        Assert.assertEquals(matching, dataset.getPartitions(filter));
+        Set<PartitionDetail> retrievedPartitionDetails = dataset.getPartitions(filter);
+        HashSet<BasicPartition> retrievedBasicPartitions = Sets.newHashSet();
+        for (PartitionDetail retrievedPartition : retrievedPartitionDetails) {
+          retrievedBasicPartitions.add(new BasicPartition((PartitionedFileSetDataset) dataset,
+                                                          retrievedPartition.getRelativePath(),
+                                                          retrievedPartition.getPartitionKey()));
+        }
+        Assert.assertEquals(matching, retrievedBasicPartitions);
       }
     });
 

@@ -21,22 +21,32 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.AbstractProgramController;
+import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
+import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import com.google.common.base.Function;
+import com.google.common.base.Throwables;
+import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Table;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
 import org.apache.twill.api.RunId;
+import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -47,10 +57,12 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractInMemoryProgramRunner.class);
 
+  private final String host;
   private final ProgramRunnerFactory programRunnerFactory;
 
   @Inject
-  public AbstractInMemoryProgramRunner(ProgramRunnerFactory programRunnerFactory) {
+  public AbstractInMemoryProgramRunner(CConfiguration cConf, ProgramRunnerFactory programRunnerFactory) {
+    this.host = cConf.get(Constants.AppFabric.SERVER_ADDRESS);
     this.programRunnerFactory = programRunnerFactory;
   }
 
@@ -65,7 +77,7 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
    * @param components A Table for storing the resulting ProgramControllers
    * @param type Type of ProgramRunnerFactory
    */
-  protected void startComponent(Program program, String name, int instances, RunId runId, ProgramOptions options,
+  private void startComponent(Program program, String name, int instances, RunId runId, ProgramOptions options,
                                 Table<String, Integer, ProgramController> components, ProgramRunnerFactory.Type type) {
     for (int instanceId = 0; instanceId < instances; instanceId++) {
       ProgramOptions componentOptions = createComponentOptions(name, instanceId, instances, runId, options);
@@ -74,8 +86,42 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
     }
   }
 
-  protected abstract ProgramOptions createComponentOptions(String name, int instanceId, int instances, RunId runId,
-                                                           ProgramOptions options);
+  protected Table<String, Integer, ProgramController> startPrograms(Program program, RunId runId,
+                                                                    ProgramOptions options,
+                                                                    ProgramRunnerFactory.Type type, int numInstances) {
+    Table<String, Integer, ProgramController> components = HashBasedTable.create();
+    try {
+      startComponent(program, program.getName(), numInstances, runId, options, components, type);
+    } catch (Throwable t) {
+      LOG.error("Failed to start all program instances", t);
+      try {
+        // Need to stop all started components
+        Futures.successfulAsList(Iterables.transform(components.values(),
+                                                     new Function<ProgramController, ListenableFuture<?>>() {
+                                                       @Override
+                                                       public ListenableFuture<?> apply(ProgramController controller) {
+                                                         return controller.stop();
+                                                       }
+                                                     })).get();
+        throw Throwables.propagate(t);
+      } catch (Exception e) {
+        LOG.error("Failed to stop all program instances upon startup failure.", e);
+        throw Throwables.propagate(e);
+      }
+    }
+    return components;
+  }
+
+  private ProgramOptions createComponentOptions(String name, int instanceId, int instances, RunId runId,
+                                                           ProgramOptions options) {
+    Map<String, String> systemOptions = Maps.newHashMap();
+    systemOptions.putAll(options.getArguments().asMap());
+    systemOptions.put(ProgramOptionConstants.INSTANCE_ID, Integer.toString(instanceId));
+    systemOptions.put(ProgramOptionConstants.INSTANCES, Integer.toString(instances));
+    systemOptions.put(ProgramOptionConstants.RUN_ID, runId.getId());
+    systemOptions.put(ProgramOptionConstants.HOST, host);
+    return new SimpleProgramOptions(name, new BasicArguments(systemOptions), options.getUserArguments());
+  }
 
   /**
    * ProgramController to manage multiple in-memory instances of a Program.
@@ -87,17 +133,35 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
     private final ProgramOptions options;
     private final Lock lock = new ReentrantLock();
     private final ProgramRunnerFactory.Type type;
+    private final AtomicLong liveComponents;
 
     public InMemoryProgramController(Table<String, Integer, ProgramController> components,
-                              RunId runId, Program program, ProgramSpecification spec,
-                              ProgramOptions options, ProgramRunnerFactory.Type type) {
+                                     RunId runId, Program program, ProgramSpecification spec,
+                                     ProgramOptions options, ProgramRunnerFactory.Type type) {
       super(program.getName(), runId);
       this.program = program;
       this.components = components;
       this.spec = spec;
       this.options = options;
       this.type = type;
+      this.liveComponents = new AtomicLong(components.size());
       started();
+      monitorComponents();
+    }
+
+    // Add listener to monitor completion/killed status of individual components, so that the program can be marked
+    // as completed once all the components have completed/killed.
+    private void monitorComponents() {
+      for (ProgramController controller : components.values()) {
+        controller.addListener(new AbstractListener() {
+          @Override
+          public void completed() {
+            if (liveComponents.decrementAndGet()  == 0) {
+              complete();
+            }
+          }
+        }, Threads.SAME_THREAD_EXECUTOR);
+      }
     }
 
     @Override

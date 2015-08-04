@@ -23,11 +23,6 @@ import co.cask.cdap.data2.util.hbase.HBaseVersionSpecificFactory;
  */
 public class HBaseQueueUtilFactory extends HBaseVersionSpecificFactory<HBaseQueueUtil> {
   @Override
-  protected String getHBase94Classname() {
-    return "co.cask.cdap.data2.transaction.queue.hbase.HBase94QueueUtil";
-  }
-
-  @Override
   protected String getHBase96Classname() {
     return "co.cask.cdap.data2.transaction.queue.hbase.HBase96QueueUtil";
   }
@@ -35,5 +30,15 @@ public class HBaseQueueUtilFactory extends HBaseVersionSpecificFactory<HBaseQueu
   @Override
   protected String getHBase98Classname() {
     return "co.cask.cdap.data2.transaction.queue.hbase.HBase98QueueUtil";
+  }
+
+  @Override
+  protected String getHBase10Classname() {
+    return "co.cask.cdap.data2.transaction.queue.hbase.HBase10QueueUtil";
+  }
+
+  @Override
+  protected String getHBase10CDHClassname() {
+    return "co.cask.cdap.data2.transaction.queue.hbase.HBase10CDHQueueUtil";
   }
 }

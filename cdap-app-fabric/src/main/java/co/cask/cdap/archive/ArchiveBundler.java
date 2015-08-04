@@ -112,48 +112,42 @@ public final class ArchiveBundler {
     Preconditions.checkNotNull(files);
 
     // Create a input stream based on the original archive file.
-    JarInputStream zin = new JarInputStream(archive.getInputStream());
-    try {
-      // Create a new output JAR file with new MANIFEST.
+    // Create a new output JAR file with new MANIFEST.
+    try (
+      JarInputStream zin = new JarInputStream(archive.getInputStream());
       JarOutputStream zout = new JarOutputStream(new BufferedOutputStream(output.getOutputStream()),
-                                                 combineManifest(zin.getManifest(), manifest));
-
-      try {
-        // Iterates through the input zip entry and make sure, the new files
-        // being added are not already present. If not, they are added to the
-        // output zip.
-        JarEntry entry = zin.getNextJarEntry();
-        while (entry != null) {
-          // Invoke the predicate to see if the entry needs to be filtered.
-          // If the ignoreFilter returns true, then it needs to be filtered; false keep it.
-          if (ignoreFilter.apply(entry)) {
-            entry = zin.getNextJarEntry();
-            continue;
-          }
-
-          final String name = entry.getName();
-          // adding entries missing in jar
-          if (!files.containsKey(name)) {
-            zout.putNextEntry(new JarEntry(entry));
-            ByteStreams.copy(zin, zout);
-          }
+                                                 combineManifest(zin.getManifest(), manifest))
+    ) {
+      // Iterates through the input zip entry and make sure, the new files
+      // being added are not already present. If not, they are added to the
+      // output zip.
+      JarEntry entry = zin.getNextJarEntry();
+      while (entry != null) {
+        // Invoke the predicate to see if the entry needs to be filtered.
+        // If the ignoreFilter returns true, then it needs to be filtered; false keep it.
+        if (ignoreFilter.apply(entry)) {
           entry = zin.getNextJarEntry();
+          continue;
         }
 
-        // Add the new files.
-        for (Map.Entry<String, ? extends InputSupplier<? extends InputStream>> toAdd : files.entrySet()) {
-          zout.putNextEntry(new JarEntry(jarEntryPrefix + toAdd.getKey()));
-          try {
-            ByteStreams.copy(toAdd.getValue(), zout);
-          } finally {
-            zout.closeEntry();
-          }
+        final String name = entry.getName();
+        // adding entries missing in jar
+        if (!files.containsKey(name)) {
+          zout.putNextEntry(new JarEntry(entry));
+          ByteStreams.copy(zin, zout);
         }
-      } finally {
-        zout.close();
+        entry = zin.getNextJarEntry();
       }
-    } finally {
-      zin.close();
+
+      // Add the new files.
+      for (Map.Entry<String, ? extends InputSupplier<? extends InputStream>> toAdd : files.entrySet()) {
+        zout.putNextEntry(new JarEntry(jarEntryPrefix + toAdd.getKey()));
+        try {
+          ByteStreams.copy(toAdd.getValue(), zout);
+        } finally {
+          zout.closeEntry();
+        }
+      }
     }
   }
 

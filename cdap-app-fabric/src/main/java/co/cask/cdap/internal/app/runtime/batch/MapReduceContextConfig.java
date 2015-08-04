@@ -18,11 +18,13 @@ package co.cask.cdap.internal.app.runtime.batch;
 
 import co.cask.cdap.api.data.batch.SimpleSplit;
 import co.cask.cdap.api.data.batch.Split;
+import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetInputFormat;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetOutputFormat;
+import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import co.cask.cdap.templates.AdapterDefinition;
 import co.cask.tephra.Transaction;
 import com.google.common.base.Throwables;
@@ -54,7 +56,8 @@ public final class MapReduceContextConfig {
 
   private static final String HCONF_ATTR_RUN_ID = "hconf.program.run.id";
   private static final String HCONF_ATTR_LOGICAL_START_TIME = "hconf.program.logical.start.time";
-  private static final String HCONF_ATTR_WORKFLOW_BATCH = "hconf.program.workflow.batch";
+  private static final String HCONF_ATTR_PROGRAM_NAME_IN_WORKFLOW = "hconf.program.name.in.workflow";
+  private static final String HCONF_ATTR_WORKFLOW_TOKEN = "hconf.program.workflow.token";
   private static final String HCONF_ATTR_ADAPTER_SPEC = "hconf.program.adapter.spec";
   private static final String HCONF_ATTR_ARGS = "hconf.program.args";
   private static final String HCONF_ATTR_PROGRAM_JAR_URI = "hconf.program.jar.uri";
@@ -76,7 +79,8 @@ public final class MapReduceContextConfig {
   public void set(BasicMapReduceContext context, CConfiguration conf, Transaction tx, URI programJarURI) {
     setRunId(context.getRunId().getId());
     setLogicalStartTime(context.getLogicalStartTime());
-    setWorkflowBatch(context.getWorkflowBatch());
+    setProgramNameInWorkflow(context.getProgramNameInWorkflow());
+    setWorkflowToken(context.getWorkflowToken());
     setAdapterSpec(context.getAdapterSpecification());
     setArguments(context.getRuntimeArguments());
     setProgramJarURI(programJarURI);
@@ -112,14 +116,31 @@ public final class MapReduceContextConfig {
     return hConf.getLong(HCONF_ATTR_LOGICAL_START_TIME, System.currentTimeMillis());
   }
 
-  private void setWorkflowBatch(@Nullable String workflowBatch) {
-    if (workflowBatch != null) {
-      hConf.set(HCONF_ATTR_WORKFLOW_BATCH, workflowBatch);
+  private void setProgramNameInWorkflow(@Nullable String programNameInWorkflow) {
+    if (programNameInWorkflow != null) {
+      hConf.set(HCONF_ATTR_PROGRAM_NAME_IN_WORKFLOW, programNameInWorkflow);
     }
   }
 
-  public String getWorkflowBatch() {
-    return hConf.get(HCONF_ATTR_WORKFLOW_BATCH);
+  public String getProgramNameInWorkflow() {
+    return hConf.get(HCONF_ATTR_PROGRAM_NAME_IN_WORKFLOW);
+  }
+
+  private void setWorkflowToken(@Nullable WorkflowToken workflowToken) {
+    if (workflowToken != null) {
+      hConf.set(HCONF_ATTR_WORKFLOW_TOKEN, GSON.toJson(workflowToken));
+    }
+  }
+
+  @Nullable
+  public WorkflowToken getWorkflowToken() {
+    String tokenJson = hConf.get(HCONF_ATTR_WORKFLOW_TOKEN);
+    if (tokenJson == null) {
+      return null;
+    }
+    BasicWorkflowToken token = GSON.fromJson(tokenJson, BasicWorkflowToken.class);
+    token.disablePut();
+    return token;
   }
 
   private void setAdapterSpec(@Nullable AdapterDefinition adapterSpec) {

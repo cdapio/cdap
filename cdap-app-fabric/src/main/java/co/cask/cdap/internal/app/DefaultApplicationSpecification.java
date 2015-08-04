@@ -29,6 +29,7 @@ import co.cask.cdap.data.dataset.DatasetCreationSpec;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  *
@@ -38,6 +39,7 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
   private final String name;
   private final String version;
   private final String description;
+  private final String configuration;
   private final Map<String, StreamSpecification> streams;
   private final Map<String, String> datasetModules;
   private final Map<String, DatasetCreationSpec> datasetInstances;
@@ -49,7 +51,7 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
   private final Map<String, ScheduleSpecification> schedules;
   private final Map<String, WorkerSpecification> workers;
 
-  public DefaultApplicationSpecification(String name, String version, String description,
+  public DefaultApplicationSpecification(String name, String version, String description, String configuration,
                                          Map<String, StreamSpecification> streams,
                                          Map<String, String> datasetModules,
                                          Map<String, DatasetCreationSpec> datasetInstances,
@@ -63,6 +65,7 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
     this.name = name;
     this.version = version;
     this.description = description;
+    this.configuration = configuration;
     this.streams = ImmutableMap.copyOf(streams);
     this.datasetModules = ImmutableMap.copyOf(datasetModules);
     this.datasetInstances = ImmutableMap.copyOf(datasetInstances);
@@ -77,6 +80,7 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
 
   public static DefaultApplicationSpecification from(ApplicationSpecification spec) {
     return new DefaultApplicationSpecification(spec.getName(), spec.getVersion(), spec.getDescription(),
+                                               spec.getConfiguration(),
                                                spec.getStreams(),
                                                spec.getDatasetModules(), spec.getDatasets(),
                                                spec.getFlows(),
@@ -92,6 +96,12 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
   @Override
   public String getVersion() {
     return version;
+  }
+
+  @Nullable
+  @Override
+  public String getConfiguration() {
+    return configuration;
   }
 
   @Override

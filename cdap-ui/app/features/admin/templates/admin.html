@@ -30,7 +30,7 @@
           <li>
             <a ui-sref="admin.system.preferences"
                ng-class="{ current: $state.includes('admin.system.preferences.**') }">
-              <span class="icon-systempreference"></span>
+              <span class="icon-systempreferences"></span>
               Preferences
             </a>
           </li>
@@ -75,6 +75,12 @@
                 <a ui-sref-active="current"
                     ui-sref="admin.namespace.detail.preferences({nsadmin: ns.name})">
                   Preferences
+                </a>
+              </li>
+              <li>
+                <a ui-sref-active="current"
+                    ui-sref="admin.namespace.detail.settings({nsadmin: ns.name})">
+                  Settings
                 </a>
               </li>
             </ul>

@@ -18,9 +18,11 @@ package co.cask.cdap.api.flow;
 
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
+import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.Flowlet;
 import co.cask.cdap.api.flow.flowlet.FlowletSpecification;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
+import co.cask.cdap.internal.flow.DefaultFlowletConfigurer;
 import co.cask.cdap.internal.flowlet.DefaultFlowletSpecification;
 import co.cask.cdap.internal.io.SchemaGenerator;
 import co.cask.cdap.internal.lang.Reflections;
@@ -55,8 +57,17 @@ public final class FlowletDefinition {
   private Map<String, Set<Schema>> inputs;
   private Map<String, Set<Schema>> outputs;
 
-  FlowletDefinition(String flowletName, Flowlet flowlet, int instances) {
-    FlowletSpecification flowletSpec = flowlet.configure();
+  public FlowletDefinition(String flowletName, Flowlet flowlet, int instances) {
+    FlowletSpecification flowletSpec;
+    //TODO: CDAP-2943 Remove deprecated methods in Flow/Flowlet and move the configure methods.
+    if (flowlet instanceof AbstractFlowlet) {
+      DefaultFlowletConfigurer flowletConfigurer = new DefaultFlowletConfigurer(flowlet);
+      AbstractFlowlet abstractFlowlet = (AbstractFlowlet) flowlet;
+      abstractFlowlet.configure(flowletConfigurer);
+      flowletSpec = flowletConfigurer.createSpecification();
+    } else {
+      flowletSpec = flowlet.configure();
+    }
 
     this.instances = instances;
 
@@ -196,7 +207,7 @@ public final class FlowletDefinition {
 
   private Map<String, Set<Schema>> generateSchema(SchemaGenerator generator, Map<String, Set<Type>> types)
                                                   throws UnsupportedTypeException {
-    Map<String, Set<Schema>> result = new HashMap<String, Set<Schema>>();
+    Map<String, Set<Schema>> result = new HashMap<>();
     for (Map.Entry<String, Set<Type>> entry : types.entrySet()) {
       ImmutableSet.Builder<Schema> schemas = ImmutableSet.builder();
       for (Type type : entry.getValue()) {
@@ -208,7 +219,7 @@ public final class FlowletDefinition {
   }
 
   private <K, V> Map<K, Set<V>> immutableCopyOf(Map<K, Set<V>> map) {
-    Map<K, Set<V>> result = new HashMap<K, Set<V>>();
+    Map<K, Set<V>> result = new HashMap<>();
     for (Map.Entry<K, Set<V>> entry : map.entrySet()) {
       result.put(entry.getKey(), ImmutableSet.copyOf(entry.getValue()));
     }

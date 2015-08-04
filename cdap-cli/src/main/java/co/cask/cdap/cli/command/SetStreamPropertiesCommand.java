@@ -22,17 +22,16 @@ import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.StreamClient;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.common.cli.Arguments;
 import com.google.common.base.Charsets;
+import com.google.common.io.Files;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileReader;
-import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.io.Reader;
 
@@ -54,25 +53,23 @@ public class SetStreamPropertiesCommand extends AbstractAuthCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    String streamId = arguments.get(ArgumentName.STREAM.toString());
+    Id.Stream streamId = Id.Stream.from(cliConfig.getCurrentNamespace(),
+                                        arguments.get(ArgumentName.STREAM.toString()));
     File file = new File(arguments.get(ArgumentName.LOCAL_FILE_PATH.toString()));
 
     if (!file.isFile()) {
       throw new IllegalArgumentException("Not a file: " + file);
     }
 
-    Reader reader = new InputStreamReader(new FileInputStream(file), Charsets.UTF_8);
     StreamProperties streamProperties;
-    try {
-      streamProperties = GSON.fromJson(new FileReader(file), StreamProperties.class);
+    try (Reader reader = Files.newReader(file, Charsets.UTF_8)) {
+      streamProperties = GSON.fromJson(reader, StreamProperties.class);
     } catch (Exception e) {
       throw new IllegalArgumentException("Stream properties are malformed.", e);
-    } finally {
-      reader.close();
     }
 
     streamClient.setStreamProperties(streamId, streamProperties);
-    output.printf("Successfully set properties of stream '%s'\n", streamId);
+    output.printf("Successfully set properties of stream '%s'\n", streamId.getId());
   }
 
   @Override
@@ -82,6 +79,6 @@ public class SetStreamPropertiesCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return "Sets the properties of a Stream, such as TTL, format, and notification threshold.";
+    return "Sets the properties of a stream, such as TTL, format, and notification threshold.";
   }
 }

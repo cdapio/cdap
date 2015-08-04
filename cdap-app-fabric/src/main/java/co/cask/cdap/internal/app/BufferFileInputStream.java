@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app;
 
+import java.io.Closeable;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -25,7 +26,7 @@ import java.util.Arrays;
 /**
  * File input stream that returns byte array while reading.
  */
-public final class BufferFileInputStream {
+public final class BufferFileInputStream implements Closeable {
 
   /**
    * Buffer for holding bytes read from file.
@@ -92,6 +93,7 @@ public final class BufferFileInputStream {
    *
    * @throws java.io.IOException
    */
+  @Override
   public void close() throws IOException {
     stream.close();
   }

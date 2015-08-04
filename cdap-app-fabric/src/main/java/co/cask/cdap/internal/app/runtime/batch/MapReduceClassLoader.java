@@ -24,6 +24,7 @@ import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.app.runtime.adapter.PluginClassLoader;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
+import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerLauncher;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.templates.AdapterDefinition;
 import co.cask.cdap.templates.AdapterPlugin;
@@ -40,7 +41,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
-import org.apache.hadoop.yarn.util.ApplicationClassLoader;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
@@ -75,10 +75,11 @@ public class MapReduceClassLoader extends CombineClassLoader {
   private final Parameters parameters;
 
   /**
-   * Constructor called by children classes only. Mainly called by {@link ApplicationClassLoader} from
-   * the MR framework in distributed mode.
+   * Constructor. It creates classloader for MapReduce from information
+   * gathered through {@link MapReduceContextConfig}. This method is called by {@link MapReduceContainerLauncher}.
    */
-  protected MapReduceClassLoader() {
+  @SuppressWarnings("unused")
+  public MapReduceClassLoader() {
     this(new Parameters());
   }
 
@@ -244,7 +245,7 @@ public class MapReduceClassLoader extends CombineClassLoader {
 
         // There should be just one plugin lib ClassLoader shared across all plugins
         List<ClassLoader> pluginClassLoaders = Lists.newArrayList();
-        pluginClassLoaders.add(pluginInstantiator.getPluginParentClassLoader());
+        pluginClassLoaders.add(pluginInstantiator.getParentClassLoader());
 
         for (PluginInfo pluginInfo : adapterSpec.getPluginInfos()) {
           ClassLoader pluginClassLoader = pluginInstantiator.getPluginClassLoader(pluginInfo);
@@ -279,7 +280,8 @@ public class MapReduceClassLoader extends CombineClassLoader {
     private static ClassLoader createClassFilteredClassLoader(Iterable<String> allowedClasses,
                                                               ClassLoader parentClassLoader) {
       Set<String> allowedResources = ImmutableSet.copyOf(Iterables.transform(allowedClasses, CLASS_TO_RESOURCE_NAME));
-      return new FilterClassLoader(Predicates.in(allowedResources), Predicates.<String>alwaysTrue(), parentClassLoader);
+      return FilterClassLoader.create(Predicates.in(allowedResources),
+        Predicates.<String>alwaysTrue(), parentClassLoader);
     }
   }
 }

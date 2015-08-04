@@ -137,7 +137,7 @@ public class FactCodec {
     return rowKey;
   }
 
-  private int writeVersion(byte[] rowKey) {
+  private static int writeVersion(byte[] rowKey) {
     System.arraycopy(VERSION, 0, rowKey, 0, VERSION.length);
     return VERSION.length;
   }
@@ -255,6 +255,24 @@ public class FactCodec {
     return timebase + leftover;
   }
 
+  static byte[][] getSplits(int aggGroupsCount) {
+    // Row key format:
+    // <version><encoded agg group><time base>...
+    // Version is fixed. We assume agg group name is encoded with 1, ..., <aggGroupsCount>.
+    int encodedIdSize = EntityTable.computeSize();
+    int rowKeySize = VERSION.length + encodedIdSize;
+    // NOTE: we don't need to include first split, it will be added automatically (e.g. by HBase).
+    byte[][] splits = new byte[aggGroupsCount - 1][];
+    for (int i = 2; i <= aggGroupsCount; i++) {
+      byte[] rowKey = new byte[rowKeySize];
+      int offset = writeVersion(rowKey);
+      writeEncoded(rowKey, offset, i, encodedIdSize);
+      splits[i - 2] = rowKey;
+    }
+
+    return splits;
+  }
+
   private int writeEncodedAggGroup(List<DimensionValue> dimensionValues, byte[] rowKey, int offset) {
     // aggregation group is defined by list of dimension names
     StringBuilder sb = new StringBuilder();
@@ -271,13 +289,18 @@ public class FactCodec {
   private int writeEncoded(String type, String entity, byte[] destination, int offset) {
     long id = entityTable.getId(type, entity);
     int idSize = entityTable.getIdSize();
-    while (idSize != 0) {
-      idSize--;
-      destination[offset + idSize] = (byte) (id & 0xff);
+    return writeEncoded(destination, offset, id, idSize);
+  }
+
+  private static int writeEncoded(byte[] destination, int offset, long id, int idSize) {
+    int shift = idSize;
+    while (shift != 0) {
+      shift--;
+      destination[offset + shift] = (byte) (id & 0xff);
       id >>= 8;
     }
 
-    return offset + entityTable.getIdSize();
+    return offset + idSize;
   }
 
   /**

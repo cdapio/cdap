@@ -33,6 +33,7 @@ import co.cask.cdap.proto.ProgramLiveInfo;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
+import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
@@ -75,7 +76,7 @@ public final class InMemoryProgramRuntimeService extends AbstractProgramRuntimeS
       Preconditions.checkState(!destinationUnpackedJarDir.exists());
       destinationUnpackedJarDir.mkdirs();
 
-      Program bundleJarProgram = Programs.createWithUnpack(program.getJarLocation(), destinationUnpackedJarDir);
+      final Program bundleJarProgram = Programs.createWithUnpack(program.getJarLocation(), destinationUnpackedJarDir);
       RuntimeInfo info = super.run(bundleJarProgram, options);
       final ProgramController controller = info.getController();
       controller.addListener(new AbstractListener() {
@@ -83,6 +84,7 @@ public final class InMemoryProgramRuntimeService extends AbstractProgramRuntimeS
         @Override
         public void killed() {
           try {
+            Closeables.closeQuietly(bundleJarProgram);
             FileUtils.deleteDirectory(destinationUnpackedJarDir);
           } catch (IOException e) {
             LOG.warn("Failed to cleanup temporary program directory {}.", destinationUnpackedJarDir, e);
@@ -92,6 +94,7 @@ public final class InMemoryProgramRuntimeService extends AbstractProgramRuntimeS
         @Override
         public void completed() {
           try {
+            Closeables.closeQuietly(bundleJarProgram);
             FileUtils.deleteDirectory(destinationUnpackedJarDir);
           } catch (IOException e) {
             LOG.warn("Failed to cleanup temporary program directory {}.", destinationUnpackedJarDir, e);
@@ -101,6 +104,7 @@ public final class InMemoryProgramRuntimeService extends AbstractProgramRuntimeS
         @Override
         public void error(Throwable cause) {
           try {
+            Closeables.closeQuietly(bundleJarProgram);
             FileUtils.deleteDirectory(destinationUnpackedJarDir);
           } catch (IOException e) {
             LOG.warn("Failed to cleanup temporary program directory {}.", destinationUnpackedJarDir, e);
@@ -116,9 +120,9 @@ public final class InMemoryProgramRuntimeService extends AbstractProgramRuntimeS
   }
 
   @Override
-  public ProgramLiveInfo getLiveInfo(Id.Program programId, ProgramType type) {
-    return isRunning(programId, type) ? new InMemoryProgramLiveInfo(programId, type)
-                                      : new NotRunningProgramLiveInfo(programId, type);
+  public ProgramLiveInfo getLiveInfo(Id.Program programId) {
+    return isRunning(programId) ? new InMemoryProgramLiveInfo(programId)
+      : new NotRunningProgramLiveInfo(programId);
   }
 
   @Override
@@ -134,7 +138,7 @@ public final class InMemoryProgramRuntimeService extends AbstractProgramRuntimeS
     for (ProgramType type : ProgramType.values()) {
       for (Map.Entry<RunId, RuntimeInfo> entry : list(type).entrySet()) {
         RuntimeInfo runtimeInfo = entry.getValue();
-        if (isRunning(runtimeInfo.getProgramId(), type)) {
+        if (isRunning(runtimeInfo.getProgramId())) {
           futures.add(runtimeInfo.getController().stop());
         }
       }

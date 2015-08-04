@@ -25,8 +25,8 @@ import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -49,25 +49,26 @@ public final class LocalStreamFileJanitorService extends AbstractService impleme
 
   @Override
   protected void doStart() {
-    executor = new ScheduledThreadPoolExecutor(1, Threads.createDaemonThreadFactory("stream-cleanup")) {
-      @Override
-      protected void terminated() {
-        notifyStopped();
-      }
-    };
+    executor = Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("stream-cleanup"));
 
     // Always run the cleanup when it starts
     executor.submit(new Runnable() {
 
       @Override
       public void run() {
+        if (state() != State.RUNNING) {
+          LOG.info("Janitor already stopped");
+          return;
+        }
+
         LOG.debug("Execute stream file cleanup.");
 
         try {
           janitor.cleanAll();
           LOG.debug("Completed stream file cleanup.");
         } catch (Throwable e) {
-          LOG.error("Failed to cleanup stream file.", e);
+          LOG.warn("Failed to cleanup stream file: {}", e.getMessage());
+          LOG.debug("Failed to cleanup stream file.", e);
         } finally {
           // Compute the next cleanup time. It is aligned to work clock based on the period.
           long now = System.currentTimeMillis();
@@ -87,6 +88,13 @@ public final class LocalStreamFileJanitorService extends AbstractService impleme
 
   @Override
   protected void doStop() {
-    executor.shutdownNow();
+    executor.submit(new Runnable() {
+      @Override
+      public void run() {
+        LOG.debug("Stream file janitor stopped");
+        notifyStopped();
+      }
+    });
+    executor.shutdown();
   }
 }

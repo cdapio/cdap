@@ -38,7 +38,9 @@ public interface Flowlet extends ProgramLifecycle<FlowletContext> {
    * </p>
    *
    * @return An instance of {@link FlowletSpecification}
+   * @deprecated Use {@link AbstractFlowlet#configure} instead
    */
+  @Deprecated
   FlowletSpecification configure();
 
   /**

@@ -41,7 +41,6 @@ import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.explore.guice.ExploreClientModule;
-import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.internal.app.queue.QueueReaderFactory;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
@@ -59,6 +58,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
+import com.google.common.io.Closeables;
 import com.google.common.io.Files;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -89,10 +89,10 @@ import org.apache.twill.api.TwillContext;
 import org.apache.twill.api.TwillRunnable;
 import org.apache.twill.api.TwillRunnableSpecification;
 import org.apache.twill.common.Cancellable;
-import org.apache.twill.common.Services;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
+import org.apache.twill.internal.Services;
 import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.slf4j.Logger;
@@ -104,6 +104,7 @@ import java.net.InetAddress;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
+import javax.annotation.Nullable;
 
 /**
  * A {@link TwillRunnable} for running a program through a {@link ProgramRunner}.
@@ -136,6 +137,13 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
   private LogAppenderInitializer logAppenderInitializer;
   private CountDownLatch runlatch;
 
+  /**
+   * Constructor.
+   *
+   * @param name Name of the TwillRunnable
+   * @param hConfName Name of the hConf file as in the container directory
+   * @param cConfName Name of the cConf file as in the container directory
+   */
   protected AbstractProgramTwillRunnable(String name, String hConfName, String cConfName) {
     this.name = name;
     this.hConfName = hConfName;
@@ -271,6 +279,21 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
     controller = injector.getInstance(getProgramClass()).run(program, programOpts);
     final SettableFuture<ProgramController.State> state = SettableFuture.create();
     controller.addListener(new AbstractListener() {
+
+      @Override
+      public void alive() {
+        runlatch.countDown();
+      }
+
+      @Override
+      public void init(ProgramController.State currentState, @Nullable Throwable cause) {
+        if (currentState == ProgramController.State.ALIVE) {
+          alive();
+        } else {
+          super.init(currentState, cause);
+        }
+      }
+
       @Override
       public void completed() {
         state.set(ProgramController.State.COMPLETED);
@@ -288,7 +311,6 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       }
     }, MoreExecutors.sameThreadExecutor());
 
-    runlatch.countDown();
     try {
       state.get();
       LOG.info("Program stopped.");
@@ -299,12 +321,19 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       if (propagateServiceError()) {
         throw Throwables.propagate(Throwables.getRootCause(e));
       }
+    } finally {
+      // Always unblock the handleCommand method if it is not unblocked before (e.g if program failed to start).
+      // The controller state will make sure the corresponding command will be handled correctly in the correct state.
+      runlatch.countDown();
     }
   }
 
   @Override
   public void destroy() {
     LOG.info("Releasing resources: {}", name);
+    if (program != null) {
+      Closeables.closeQuietly(program);
+    }
     Futures.getUnchecked(
       Services.chainStop(resourceReporter, streamCoordinatorClient,
                          metricsCollectionService, kafkaClientService, zkClientService));
@@ -358,7 +387,6 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       new IOModule(),
       new ZKClientModule(),
       new KafkaClientModule(),
-      new AuthModule(),
       new MetricsClientRuntimeModule().getDistributedModules(),
       new LocationRuntimeModule().getDistributedModules(),
       new LoggingModules().getDistributedModules(),

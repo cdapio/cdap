@@ -5,7 +5,10 @@ var baseDirective = {
   replace: true,
   template: '<div class="c3"></div>',
   scope: {
-    chartData: '='
+    chartMetric: '=',
+    chartMetricAlias: '@',
+    chartSize: '=',
+    chartSettings: '='
   },
   controller: 'c3Controller'
 };
@@ -15,94 +18,104 @@ ngC3.factory('c3', function ($window) {
   return $window.c3;
 });
 
-ngC3.controller('c3Controller', function ($scope, c3, myHelpers, $filter) {
+ngC3.controller('c3Controller', function ($scope, c3, $filter, $timeout) {
   // We need to bind because the init function is called directly from the directives below
   // and so the function arguments would not otherwise be available to the initC3 and render functions.
-  var c3 = c3;
-  var myHelpers = myHelpers;
-  var $filter = $filter;
+  /* jshint shadow:true */
+  var c3 = c3,
+      $filter = $filter;
+
+  $scope.metrics = $scope.chartMetric;
+  $scope.alias = $scope.chartMetricAlias;
 
   $scope.$on('$destroy', function() {
-      if ($scope.chart) {
-        $scope.chart = $scope.chart.destroy();
-      }
+    if ($scope.chart) {
+      $scope.chart = $scope.chart.destroy();
+    }
   });
+  $scope.pollId = null;
 
   $scope.initC3 = function (elem, type, attr, forcedOpts) {
-    if($scope.chart) {
-      return;
-    }
 
     // Default options:
+    // The queryId value does not matter, as long as we are using the same value in the request
+    // as in parsing the response.
     var options = {stack: false, formatAsTimestamp: true};
     angular.extend(options, forcedOpts || {}, {
       el: elem[0]
     });
 
-    angular.forEach(attr, function (v, k) {
-      if ( v && k.indexOf('chart')===0 ) {
-        var key = k.substring(5);
-        this[key.charAt(0).toLowerCase() + key.slice(1)] = $scope.$eval(v);
-      }
-    }, options);
-
     options.data = { x: 'x', columns: [] };
 
     $scope.type = type;
     $scope.options = options;
+    $scope.options.showx = $scope.chartSettings.chartMetadata.showx;
+    $scope.options.showy = $scope.chartSettings.chartMetadata.showy;
+    $scope.options.legend = $scope.chartSettings.chartMetadata.legend;
+    $scope.options.color = $scope.chartSettings.color;
 
-
-    if(attr.chartData) {
-      $scope.$watch('chartData', function (chartData) {
-        if(chartData) {
-          myData = { x: 'x', columns: chartData.columns, keys: {x: 'x'} };
-
-          if ($scope.options.stack) {
-            myData.groups = [chartData.metricNames];
-          }
-
-          // Save the data for when it gets resized.
-          $scope.options.data = myData;
-
-          render();
-          // WARN: using load() API has funny animation (when inserting new data points to the right)
-//            $scope.chart.load(myData);  // Alternative to render()
-        }
+    $scope.$watch('chartSize', function(newVal) {
+      $scope.options.size = newVal;
+      $timeout(function() {
+        render();
       });
+    }, true);
+
+    if ($scope.metrics) {
+      drawChart();
     }
-    render();
+    $scope.$watch('chartMetric', drawChart, true);
+
   };
 
+  function drawChart() {
+    if (!$scope.chartMetric) {
+      return;
+    }
+
+    $scope.options.data = $scope.chartMetric;
+    $timeout(function () {
+      render();
+    });
+
+  }
+
   function render() {
-    var data = $scope.options.data;
+    var data = $scope.options.data,
+        myTooltip,
+        chartConfig,
+        timestampFormat,
+        xTick = {};
+
     data.type = $scope.type;
 
     // Mainly needed for pie chart values to be shown upon tooltip, but also useful for other types.
-    var myTooltip = { format: { value: d3.format(',') } };
+    myTooltip = { format: { value: d3.format(',') } };
 
-    var chartConfig = {bindto: $scope.options.el, data: data, tooltip: myTooltip};
+    chartConfig = {bindto: $scope.options.el, data: data, tooltip: myTooltip};
     chartConfig.size = $scope.options.size;
 
-    var xTick = {};
     xTick.count = $scope.options.xtickcount;
     xTick.culling = $scope.options.xTickCulling;
     if ($scope.options.formatAsTimestamp) {
-      var timestampFormat = function(timestampSeconds) {
+      timestampFormat = function(timestampSeconds) {
         return $filter('amDateFormat')(timestampSeconds * 1000, 'h:mm:ss a');
       };
       xTick.format = timestampFormat;
     }
     chartConfig.axis = { x: { show: $scope.options.showx,
                               tick : xTick },
-                         y: { show: $scope.options.showy } };
+                         y: { show: $scope.options.showy,
+                              padding: { bottom: 0 } } };
     chartConfig.color = $scope.options.color;
     chartConfig.legend = $scope.options.legend;
     chartConfig.point = { show: false };
-    if($scope.options.subchart) {
+    if ($scope.options.subchart) {
       chartConfig.subchart = $scope.options.subchart;
     }
     chartConfig.zoom = { enabled: false };
     chartConfig.transition = { duration: 1000 };
+    chartConfig.donut = { width: 45 };
     $scope.chart = c3.generate(chartConfig);
   }
 

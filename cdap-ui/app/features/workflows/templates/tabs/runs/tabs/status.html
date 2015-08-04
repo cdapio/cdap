@@ -1,3 +1,5 @@
-<div ng-controller="WorkflowsRunsStatusController">
-  <my-workflow-graph data-model="data" data-click="workflowProgramClick"></my-workflow-graph>
+<div ng-controller="WorkflowsRunsStatusController as StatusController">
+  <my-workflow-graph data-model="StatusController.data"
+                     data-click-context="StatusController"
+                     data-click="StatusController.workflowProgramClick"></my-workflow-graph>
 </div>

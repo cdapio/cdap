@@ -1,6 +1,6 @@
 {
   "variables": {
-    "sdk_version": "3.0.0"
+    "sdk_version": "3.1.0"
   },
   "builders": [
     {
@@ -29,9 +29,12 @@
         "initrd=/install/initrd.gz -- <enter>"
       ],
       "vboxmanage_post": [
-        ["modifyvm", "{{ .Name }}", "--memory", "4096"]
+        ["modifyvm", "{{ .Name }}", "--memory", "4096"],
+        ["modifyvm", "{{ .Name }}", "--clipboard", "bidirectional"],
+        ["modifyvm", "{{ .Name }}", "--accelerate2dvideo", "on"],
+        ["modifyvm", "{{ .Name }}", "--accelerate3d", "on"]
       ],
-      "vm_name": "CDAP SDK VM {{user `sdk_version`}}",
+      "vm_name": "cdap-standalone-vm-{{user `sdk_version`}}",
       "name": "cdap-sdk-vm"
     }
   ],
@@ -62,26 +65,31 @@
     },
     {
       "type": "shell",
-      "scripts": [
-        "scripts/eclipse-cookbook.sh",
-        "scripts/motd.sh"
-      ],
+      "scripts": "scripts/eclipse-cookbook.sh",
       "only": ["cdap-sdk-vm"]
     },
     {
       "type": "chef-solo",
       "remote_cookbook_paths": "/var/chef/cookbooks",
-      "run_list": "recipe[maven],recipe[idea],recipe[eclipse]",
+      "run_list": "recipe[maven],recipe[hadoop::flume_agent],recipe[idea],recipe[eclipse]",
       "prevent_sudo": true,
       "skip_install": true,
       "json": {
         "eclipse": {
           "version": "Luna",
           "release_code": "SR2",
+          "plugins": [
+            { "http://download.eclipse.org/releases/luna": "org.eclipse.egit.feature.group" },
+            { "http://download.eclipse.org/technology/m2e/releases": "org.eclipse.m2e.feature.feature.group" }
+          ],
           "url": "http://mirrors.ibiblio.org/pub/mirrors/eclipse/technology/epp/downloads/release/luna/SR2/eclipse-jee-luna-SR2-linux-gtk-x86_64.tar.gz"
         },
         "idea": {
           "setup_dir": "/opt"
+        },
+        "hadoop": {
+          "distribution": "hdp",
+          "distribution_version": "2.1.7.0"
         },
         "java": {
           "install_flavor": "oracle",
@@ -103,10 +111,11 @@
     {
       "type": "shell",
       "scripts": [
+        "scripts/motd.sh",
         "scripts/xorg.sh",
-        "scripts/fluxbox.sh",
         "scripts/slim.sh",
-        "scripts/firefox.sh",
+        "scripts/fill-maven-cache.sh",
+        "scripts/lxde.sh",
         "scripts/vbox-guest-additions.sh"
       ],
       "only": ["cdap-sdk-vm"]
@@ -115,6 +124,8 @@
       "type": "shell",
       "scripts": [
         "scripts/remove-chef.sh",
+        "scripts/sdk-cleanup.sh",
+        "scripts/network-cleanup.sh",
         "scripts/apt-cleanup.sh"
       ]
     },

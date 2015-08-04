@@ -38,8 +38,7 @@ public final class ProjectInfo {
     Version version = new Version(null);
     try {
       Properties buildProp = new Properties();
-      InputStream input = ProjectInfo.class.getResourceAsStream("/build.properties");
-      try {
+      try (InputStream input = ProjectInfo.class.getResourceAsStream("/build.properties")) {
         buildProp.load(input);
 
         String versionStr = buildProp.getProperty("project.info.version");
@@ -49,8 +48,6 @@ public final class ProjectInfo {
           long buildTime = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ").parse(buildTimeStr).getTime();
           version = new Version(String.format("%s-%d", versionStr, buildTime));
         }
-      } finally {
-        input.close();
       }
     } catch (Exception e) {
       LOG.warn("No BuildInfo available: {}", e.getMessage(), e);

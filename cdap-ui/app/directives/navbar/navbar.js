@@ -9,7 +9,7 @@ function myNavbarDirective ($dropdown, myAuth, caskTheme, MY_CONFIG) {
     restrict: 'A',
     templateUrl: 'navbar/navbar.html',
     controller: 'navbarCtrl',
-    link: function (scope, element, attrs) {
+    link: function (scope, element) {
 
       var toggles = element[0].querySelectorAll('a.dropdown-toggle');
 

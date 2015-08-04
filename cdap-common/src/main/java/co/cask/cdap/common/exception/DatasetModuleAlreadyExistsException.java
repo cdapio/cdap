@@ -20,7 +20,9 @@ import co.cask.cdap.proto.Id;
 
 /**
  * Thrown when the user tried to add a dataset module, but a dataset module by that name already exists.
+ * @deprecated Use {@link co.cask.cdap.common.DatasetModuleAlreadyExistsException} instead
  */
+@Deprecated
 public class DatasetModuleAlreadyExistsException extends AlreadyExistsException {
 
   private final Id.DatasetModule id;

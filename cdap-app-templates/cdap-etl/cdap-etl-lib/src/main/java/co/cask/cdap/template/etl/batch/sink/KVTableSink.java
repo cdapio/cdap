@@ -34,14 +34,14 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- * CDAP Table Dataset Batch Sink.
+ * CDAP KVTable Dataset Batch Sink.
  */
 @Plugin(type = "sink")
 @Name("KVTable")
-@Description("CDAP Key Value Table Dataset Batch Sink")
+@Description("Writes records to a KeyValueTable, using configurable fields from input records as the key and value.")
 public class KVTableSink extends BatchWritableSink<StructuredRecord, byte[], byte[]> {
 
-  private static final String NAME_DESC = "Dataset Name";
+  private static final String NAME_DESC = "Name of the dataset. If it does not already exist, one will be created.";
   private static final String KEY_FIELD_DESC = "The name of the field to use as the key. Defaults to 'key'.";
   private static final String VALUE_FIELD_DESC = "The name of the field to use as the value. Defaults to 'value'.";
 
@@ -94,6 +94,6 @@ public class KVTableSink extends BatchWritableSink<StructuredRecord, byte[], byt
     byte[] keyBytes = key instanceof ByteBuffer ? Bytes.toBytes((ByteBuffer) key) : (byte[]) key;
     Object val = input.get(kvTableConfig.valueField);
     byte[] valBytes = val instanceof ByteBuffer ? Bytes.toBytes((ByteBuffer) val) : (byte[]) val;
-    emitter.emit(new KeyValue<byte[], byte[]>(keyBytes, valBytes));
+    emitter.emit(new KeyValue<>(keyBytes, valBytes));
   }
 }

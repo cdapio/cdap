@@ -16,6 +16,7 @@
 
 package co.cask.cdap.proto;
 
+import co.cask.cdap.internal.artifact.ArtifactVersion;
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Charsets;
 import com.google.common.base.Objects;
@@ -628,6 +629,28 @@ public abstract class Id {
     public static Service from(Application application, String id) {
       return new Service(application, id);
     }
+
+    public static Service from(Namespace namespace, String application, String id) {
+      return new Service(Id.Application.from(namespace, application), id);
+    }
+  }
+
+  /**
+   * Uniquely identifies a Workflow.
+   */
+  public static class Workflow extends Program {
+
+    private Workflow(Application application, String id) {
+      super(application, ProgramType.WORKFLOW, id);
+    }
+
+    public static Workflow from(Application application, String id) {
+      return new Workflow(application, id);
+    }
+
+    public static Workflow from(Namespace namespace, String application, String id) {
+      return new Workflow(Id.Application.from(namespace, application), id);
+    }
   }
 
   /**
@@ -648,6 +671,10 @@ public abstract class Id {
     }
 
     public static Flow from(String namespaceId, String appId, String flowId) {
+      return new Flow(Id.Application.from(namespaceId, appId), flowId);
+    }
+
+    public static Flow from(Id.Namespace namespaceId, String appId, String flowId) {
       return new Flow(Id.Application.from(namespaceId, appId), flowId);
     }
 
@@ -688,6 +715,10 @@ public abstract class Id {
       @Override
       public String getId() {
         return id;
+      }
+
+      public Flow getFlow() {
+        return flow;
       }
 
       /**
@@ -753,6 +784,10 @@ public abstract class Id {
     @Override
     public Namespace getNamespace() {
       return application.getNamespace();
+    }
+
+    public Application getApplication() {
+      return application;
     }
 
     @Override
@@ -1025,14 +1060,6 @@ public abstract class Id {
       return this.namespace.equals(that.namespace) &&
         this.streamName.equals(that.streamName);
     }
-
-    @Override
-    public String toString() {
-      return Objects.toStringHelper(this)
-        .add("namespace", namespace)
-        .add("streamName", streamName)
-        .toString();
-    }
   }
 
   /**
@@ -1233,14 +1260,6 @@ public abstract class Id {
       return Objects.hashCode(namespace, instanceId);
     }
 
-    @Override
-    public String toString() {
-      return Objects.toStringHelper(this)
-        .add("namespace", namespace)
-        .add("instance", instanceId)
-        .toString();
-    }
-
     public static DatasetInstance from(Namespace id, String instanceId) {
       return new DatasetInstance(id, instanceId);
     }
@@ -1249,4 +1268,81 @@ public abstract class Id {
       return new DatasetInstance(Namespace.from(namespaceId), instanceId);
     }
   }
+
+  /**
+   * Artifact Id identifies an artifact by its namespace, name, and version.
+   */
+  public static class Artifact extends NamespacedId {
+    private final Namespace namespace;
+    private final String name;
+    private final ArtifactVersion version;
+
+    public Artifact(Namespace namespace, String name, ArtifactVersion version) {
+      // TODO: enforce name, version characters
+      Preconditions.checkNotNull(namespace, "Namespace cannot be null.");
+      Preconditions.checkNotNull(name, "Name cannot be null.");
+      Preconditions.checkNotNull(version, "Version cannot be null.");
+      this.namespace = namespace;
+      this.name = name;
+      this.version = version;
+    }
+
+    public Namespace getNamespace() {
+      return namespace;
+    }
+
+    public String getName() {
+      return name;
+    }
+
+    public ArtifactVersion getVersion() {
+      return version;
+    }
+
+    @Nullable
+    @Override
+    protected Id getParent() {
+      return null;
+    }
+
+    @Override
+    public String getId() {
+      return String.format("%s-%s", name, version.getVersion());
+    }
+
+    @Override
+    public String toString() {
+      return Objects.toStringHelper(this)
+        .add("namespace", namespace)
+        .add("name", name)
+        .add("version", version)
+        .toString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+
+      Artifact that = (Artifact) o;
+
+      return Objects.equal(namespace, that.namespace) &&
+        Objects.equal(name, that.name)
+        && Objects.equal(version, that.version);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hashCode(namespace, name, version);
+    }
+
+    public static Artifact from(Namespace namespace, String name, String version) {
+      return new Artifact(namespace, name, new ArtifactVersion(version));
+    }
+  }
+
 }

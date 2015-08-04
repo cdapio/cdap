@@ -18,18 +18,19 @@ package co.cask.cdap.explore.service.hive;
 
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.dataset.lib.Partition;
+import co.cask.cdap.api.dataset.lib.PartitionDetail;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.app.runtime.scheduler.SchedulerQueueResolver;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
+import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.explore.service.Explore;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.ExploreService;
-import co.cask.cdap.explore.service.ExploreServiceUtils;
 import co.cask.cdap.explore.service.ExploreTableManager;
 import co.cask.cdap.explore.service.HandleNotFoundException;
 import co.cask.cdap.explore.service.HiveStreamRedirector;
@@ -40,7 +41,6 @@ import co.cask.cdap.hive.context.ConfigurationUtil;
 import co.cask.cdap.hive.context.ContextManager;
 import co.cask.cdap.hive.context.HConfCodec;
 import co.cask.cdap.hive.context.TxnCodec;
-import co.cask.cdap.hive.datasets.DatasetAccessor;
 import co.cask.cdap.hive.datasets.DatasetStorageHandler;
 import co.cask.cdap.hive.stream.StreamStorageHandler;
 import co.cask.cdap.proto.ColumnDesc;
@@ -77,8 +77,8 @@ import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.ql.session.SessionState;
-import org.apache.hadoop.hive.shims.ShimLoader;
 import org.apache.hadoop.mapreduce.JobContext;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hive.service.auth.HiveAuthFactory;
 import org.apache.hive.service.cli.CLIService;
 import org.apache.hive.service.cli.ColumnDescriptor;
@@ -90,8 +90,6 @@ import org.apache.hive.service.cli.OperationHandle;
 import org.apache.hive.service.cli.SessionHandle;
 import org.apache.hive.service.cli.TableSchema;
 import org.apache.hive.service.cli.thrift.TColumnValue;
-import org.apache.hive.service.cli.thrift.TRow;
-import org.apache.hive.service.cli.thrift.TRowSet;
 import org.apache.thrift.TException;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
@@ -105,8 +103,6 @@ import java.io.Reader;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
@@ -154,6 +150,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   private final StreamAdmin streamAdmin;
   private final DatasetFramework datasetFramework;
   private final ExploreTableManager exploreTableManager;
+  private final SystemDatasetInstantiatorFactory datasetInstantiatorFactory;
 
   private final ThreadLocal<Supplier<IMetaStoreClient>> metastoreClientLocal;
 
@@ -168,18 +165,20 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
   protected BaseHiveExploreService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
                                    CConfiguration cConf, Configuration hConf, HiveConf hiveConf,
-                                   File previewsDir, StreamAdmin streamAdmin, Store store) {
+                                   File previewsDir, StreamAdmin streamAdmin, Store store,
+                                   SystemDatasetInstantiatorFactory datasetInstantiatorFactory) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.hiveConf = hiveConf;
     this.schedulerQueueResolver = new SchedulerQueueResolver(cConf, store);
     this.previewsDir = previewsDir;
-    this.metastoreClientLocal = new ThreadLocal<Supplier<IMetaStoreClient>>();
+    this.metastoreClientLocal = new ThreadLocal<>();
     this.metastoreClientReferences = Maps.newConcurrentMap();
-    this.metastoreClientReferenceQueue = new ReferenceQueue<Supplier<IMetaStoreClient>>();
+    this.metastoreClientReferenceQueue = new ReferenceQueue<>();
     this.datasetFramework = datasetFramework;
     this.streamAdmin = streamAdmin;
-    this.exploreTableManager = new ExploreTableManager(this, datasetFramework);
+    this.exploreTableManager = new ExploreTableManager(this, datasetInstantiatorFactory);
+    this.datasetInstantiatorFactory = datasetInstantiatorFactory;
 
     // Create a Timer thread to periodically collect metastore clients that are no longer in used and call close on them
     this.metastoreClientsExecutorService =
@@ -198,10 +197,10 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
         .expireAfterWrite(cConf.getLong(Constants.Explore.INACTIVE_OPERATION_TIMEOUT_SECS), TimeUnit.SECONDS)
         .build();
 
-    this.cliService = new CLIService();
+    this.cliService = createCLIService();
 
     this.txClient = txClient;
-    ContextManager.saveContext(datasetFramework, streamAdmin);
+    ContextManager.saveContext(datasetFramework, streamAdmin, datasetInstantiatorFactory);
 
     cleanupJobSchedule = cConf.getLong(Constants.Explore.CLEANUP_JOB_SCHEDULE_SECS);
 
@@ -210,10 +209,14 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     LOG.info("Cleanup job schedule = {} secs", cleanupJobSchedule);
   }
 
+  protected CLIService createCLIService() {
+    return new CLIService(null);
+  }
+
   protected HiveConf getHiveConf() {
     HiveConf conf = new HiveConf();
     // Read delegation token if security is enabled.
-    if (ShimLoader.getHadoopShims().isSecurityEnabled()) {
+    if (UserGroupInformation.isSecurityEnabled()) {
       conf.set(HIVE_METASTORE_TOKEN_KEY, HiveAuthFactory.HS2_CLIENT_TOKEN);
 
       // mapreduce.job.credentials.binary is added by Hive only if Kerberos credentials are present and impersonation
@@ -221,7 +224,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       // Hence it will not be automatically added by Hive, instead we have to add it ourselves.
       // TODO: When Explore does secure impersonation this has to be the tokens of the user,
       // TODO: ... and not the tokens of the service itself.
-      String hadoopAuthToken = System.getenv(ShimLoader.getHadoopShims().getTokenFileLocEnvName());
+      String hadoopAuthToken = System.getenv(UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION);
       if (hadoopAuthToken != null) {
         conf.set("mapreduce.job.credentials.binary", hadoopAuthToken);
       }
@@ -247,7 +250,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
         // We can use the weak reference, which is retrieved through polling the ReferenceQueue,
         // to get back the client and call close() on it.
         metastoreClientReferences.put(
-          new WeakReference<Supplier<IMetaStoreClient>>(supplier, metastoreClientReferenceQueue), client);
+          new WeakReference<>(supplier, metastoreClientReferenceQueue), client);
       } catch (MetaException e) {
         throw new ExploreException("Error initializing Hive Metastore client", e);
       }
@@ -320,9 +323,6 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     }
 
     cliService.stop();
-
-    // Close all resources associated with instantiated Datasets
-    DatasetAccessor.closeAllQueries();
   }
 
   @Override
@@ -774,6 +774,10 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     }
   }
 
+  protected abstract List<QueryResult> doFetchNextResults(OperationHandle handle,
+                                                          FetchOrientation fetchOrientation,
+                                                          int size) throws Exception;
+
   @SuppressWarnings("unchecked")
   protected List<QueryResult> fetchNextResults(QueryHandle handle, int size)
     throws HiveSQLException, ExploreException, HandleNotFoundException {
@@ -786,44 +790,11 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       LOG.trace("Getting results for handle {}", handle);
       OperationHandle operationHandle = getOperationHandle(handle);
       if (operationHandle.hasResultSet()) {
-        // Rowset is an interface in Hive 13, but a class in Hive 12, so we use reflection
-        // so that the compiler does not make assumption on the return type of fetchResults
-        Object rowSet = getCliService().fetchResults(operationHandle, FetchOrientation.FETCH_NEXT, size);
-
-        ImmutableList.Builder<QueryResult> rowsBuilder = ImmutableList.builder();
-        // if it's the interface
-        if (rowSet instanceof Iterable) {
-          for (Object[] row : (Iterable<Object[]>) rowSet) {
-            List<Object> cols = Lists.newArrayList();
-            for (int i = 0; i < row.length; i++) {
-              cols.add(row[i]);
-            }
-            rowsBuilder.add(new QueryResult(cols));
-          }
-        } else {
-          // otherwise do nasty thrift stuff
-          Class rowSetClass = Class.forName("org.apache.hive.service.cli.RowSet");
-          Method toTRowSetMethod = rowSetClass.getMethod("toTRowSet");
-          TRowSet tRowSet = (TRowSet) toTRowSetMethod.invoke(rowSet);
-          for (TRow tRow : tRowSet.getRows()) {
-            List<Object> cols = Lists.newArrayList();
-            for (TColumnValue tColumnValue : tRow.getColVals()) {
-              cols.add(tColumnToObject(tColumnValue));
-            }
-            rowsBuilder.add(new QueryResult(cols));
-          }
-        }
-        return rowsBuilder.build();
+        return doFetchNextResults(operationHandle, FetchOrientation.FETCH_NEXT, size);
       } else {
         return Collections.emptyList();
       }
-    } catch (ClassNotFoundException e) {
-      throw Throwables.propagate(e);
-    } catch (NoSuchMethodException e) {
-      throw Throwables.propagate(e);
-    } catch (InvocationTargetException e) {
-      throw Throwables.propagate(e);
-    } catch (IllegalAccessException e) {
+    } catch (Exception e) {
       throw Throwables.propagate(e);
     } finally {
       nextLock.unlock();
@@ -861,14 +832,11 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       try {
         // Create preview results for query
         previewFile = new File(previewsDir, handle.getHandle());
-        FileWriter fileWriter = new FileWriter(previewFile);
-        try {
+        try (FileWriter fileWriter = new FileWriter(previewFile)) {
           List<QueryResult> results = fetchNextResults(handle, PREVIEW_COUNT);
           GSON.toJson(results, fileWriter);
           operationInfo.setPreviewFile(previewFile);
           return results;
-        } finally {
-          Closeables.closeQuietly(fileWriter);
         }
       } catch (IOException e) {
         LOG.error("Could not write preview results into file", e);
@@ -948,7 +916,6 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     startAndWait();
     inactiveHandleCache.invalidate(handle);
     activeHandleCache.invalidate(handle);
-    DatasetAccessor.closeQuery(handle);
   }
 
   @Override
@@ -991,11 +958,13 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     return result;
   }
 
+  // this upgrade code is for upgrading CDAP v2.6 to v2.8 and above.
   @Override
   public void upgrade() throws Exception {
     // all old CDAP tables used to be in the default database
     LOG.info("Checking for tables that need upgrade...");
     List<TableNameInfo> tables = getTables("default");
+
     for (TableNameInfo tableNameInfo : tables) {
       String tableName = tableNameInfo.getTableName();
       TableInfo tableInfo = getTableInfo(tableNameInfo.getDatabaseName(), tableName);
@@ -1015,7 +984,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
         upgradeRecordScannableTable(tableInfo);
       } else {
         LOG.info("Upgrading file set table {}.", tableName);
-        // handle filesets differently since they can have partitions, and dropping the table will remove all partitions
+        // handle filesets differently since they can have partitions,
+        // and dropping the table will remove all partitions
         upgradeFilesetTable(tableInfo);
       }
     }
@@ -1048,20 +1018,24 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     // enable the new table
     enableDataset(datasetID, spec);
 
-    Dataset dataset = ExploreServiceUtils.instantiateDataset(datasetFramework, datasetID);
-    // if this is a time partitioned file set, we need to add all partitions
-    if (dataset instanceof TimePartitionedFileSet) {
-      TimePartitionedFileSet tpfs = (TimePartitionedFileSet) dataset;
-      Set<Partition> partitions = tpfs.getPartitions(null);
-      if (!partitions.isEmpty()) {
-        QueryHandle handle = exploreTableManager.addPartitions(datasetID, partitions);
-        QueryStatus status = waitForCompletion(handle);
-        // if add partitions failed, stop
-        if (status.getStatus() != QueryStatus.OpStatus.FINISHED) {
-          throw new ExploreException("Failed to add all partitions to dataset " + datasetID);
+    try (SystemDatasetInstantiator datasetInstantiator = datasetInstantiatorFactory.create()) {
+      Dataset dataset = datasetInstantiator.getDataset(datasetID);
+
+      // if this is a time partitioned file set, we need to add all partitions
+      if (dataset instanceof TimePartitionedFileSet) {
+        TimePartitionedFileSet tpfs = (TimePartitionedFileSet) dataset;
+        Set<PartitionDetail> partitionDetails = tpfs.getPartitions(null);
+        if (!partitionDetails.isEmpty()) {
+          QueryHandle handle = exploreTableManager.addPartitions(datasetID, partitionDetails);
+          QueryStatus status = waitForCompletion(handle);
+          // if add partitions failed, stop
+          if (status.getStatus() != QueryStatus.OpStatus.FINISHED) {
+            throw new ExploreException("Failed to add all partitions to dataset " + datasetID);
+          }
         }
       }
     }
+
     // now it is safe to drop the old table
     dropTable(tableInfo.getTableName());
   }

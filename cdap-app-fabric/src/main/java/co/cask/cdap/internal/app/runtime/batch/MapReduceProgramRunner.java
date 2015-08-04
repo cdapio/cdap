@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.runtime.batch;
 import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
@@ -41,6 +42,7 @@ import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
+import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.templates.AdapterDefinition;
@@ -56,10 +58,10 @@ import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.api.RunId;
-import org.apache.twill.common.ServiceListenerAdapter;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocationFactory;
+import org.apache.twill.internal.ServiceListenerAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -136,7 +138,14 @@ public class MapReduceProgramRunner implements ProgramRunner {
                                                    .getOption(ProgramOptionConstants.LOGICAL_START_TIME))
                                 : System.currentTimeMillis();
 
-    String workflowBatch = arguments.getOption(ProgramOptionConstants.WORKFLOW_BATCH);
+    String programNameInWorkflow = arguments.getOption(ProgramOptionConstants.PROGRAM_NAME_IN_WORKFLOW);
+
+    WorkflowToken workflowToken = null;
+    if (arguments.hasOption(ProgramOptionConstants.WORKFLOW_TOKEN)) {
+      workflowToken = GSON.fromJson(arguments.getOption(ProgramOptionConstants.WORKFLOW_TOKEN),
+                                    BasicWorkflowToken.class);
+    }
+
     final AdapterDefinition adapterSpec = getAdapterSpecification(arguments);
 
     MapReduce mapReduce;
@@ -151,8 +160,9 @@ public class MapReduceProgramRunner implements ProgramRunner {
     try {
       final DynamicMapReduceContext context =
         new DynamicMapReduceContext(program, null, runId, null, options.getUserArguments(), spec,
-                                    logicalStartTime, workflowBatch, discoveryServiceClient, metricsCollectionService,
-                                    txSystemClient, datasetFramework, adapterSpec, pluginInstantiator);
+                                    logicalStartTime, programNameInWorkflow, workflowToken, discoveryServiceClient,
+                                    metricsCollectionService, txSystemClient, datasetFramework, adapterSpec,
+                                    pluginInstantiator);
 
 
       Reflections.visit(mapReduce, TypeToken.of(mapReduce.getClass()),

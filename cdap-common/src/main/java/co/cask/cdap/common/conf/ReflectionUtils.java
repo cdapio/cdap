@@ -32,7 +32,7 @@ public class ReflectionUtils {
    * can't be garbage collected until ReflectionUtils can be collected.
    */
   private static final Map<Class<?>, Constructor<?>> CONSTRUCTOR_CACHE =
-    new ConcurrentHashMap<Class<?>, Constructor<?>>();
+    new ConcurrentHashMap<>();
 
   /**
    * Check and set 'configuration' if necessary.

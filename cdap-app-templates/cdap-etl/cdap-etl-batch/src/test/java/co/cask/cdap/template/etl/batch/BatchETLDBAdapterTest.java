@@ -99,17 +99,17 @@ public class BatchETLDBAdapterTest extends BaseETLBatchTest {
                              Schema.Field.of("TINY", nullableInt),
                              Schema.Field.of("SMALL", nullableInt),
                              Schema.Field.of("BIG", nullableLong),
-                             Schema.Field.of("FLOAT", nullableFloat),
-                             Schema.Field.of("REAL", nullableFloat),
-                             Schema.Field.of("NUMERIC", nullableDouble),
-                             Schema.Field.of("DECIMAL", nullableDouble),
-                             Schema.Field.of("BIT", nullableBoolean),
-                             Schema.Field.of("DATE", nullableLong),
-                             Schema.Field.of("TIME", nullableLong),
-                             Schema.Field.of("TIMESTAMP", nullableLong),
-                             Schema.Field.of("BINARY", nullableBytes),
-                             Schema.Field.of("BLOB", nullableBytes),
-                             Schema.Field.of("CLOB", nullableString));
+                             Schema.Field.of("FLOAT_COL", nullableFloat),
+                             Schema.Field.of("REAL_COL", nullableFloat),
+                             Schema.Field.of("NUMERIC_COL", nullableDouble),
+                             Schema.Field.of("DECIMAL_COL", nullableDouble),
+                             Schema.Field.of("BIT_COL", nullableBoolean),
+                             Schema.Field.of("DATE_COL", nullableLong),
+                             Schema.Field.of("TIME_COL", nullableLong),
+                             Schema.Field.of("TIMESTAMP_COL", nullableLong),
+                             Schema.Field.of("BINARY_COL", nullableBytes),
+                             Schema.Field.of("BLOB_COL", nullableBytes),
+                             Schema.Field.of("CLOB_COL", nullableString));
   }
 
   private static void createTestTables(Connection conn) throws SQLException {
@@ -179,15 +179,13 @@ public class BatchETLDBAdapterTest extends BaseETLBatchTest {
   @Test
   @Category(SlowTests.class)
   @SuppressWarnings("ConstantConditions")
-  public void testDBSource() throws Exception {
+  public void testDBSourceWithCaseInsensitiveRowKey() throws Exception {
     String importQuery = "SELECT ID, NAME, SCORE, GRADUATED, TINY, SMALL, BIG, FLOAT_COL, REAL_COL, NUMERIC_COL, " +
       "DECIMAL_COL, BIT_COL, DATE_COL, TIME_COL, TIMESTAMP_COL, BINARY_COL, BLOB_COL, CLOB_COL FROM my_table " +
       "WHERE ID < 3";
     String countQuery = "SELECT COUNT(ID) from my_table WHERE id < 3";
     ETLStage source = new ETLStage("Database", ImmutableMap.<String, String>builder()
-                                     .put(Properties.DB.DRIVER_CLASS, hsqlDBServer.getHsqlDBDriver())
                                      .put(Properties.DB.CONNECTION_STRING, hsqlDBServer.getConnectionUrl())
-                                     .put(Properties.DB.TABLE_NAME, "my_table")
                                      .put(Properties.DB.IMPORT_QUERY, importQuery)
                                      .put(Properties.DB.COUNT_QUERY, countQuery)
                                      .put(Properties.DB.JDBC_PLUGIN_NAME, "hypersql")
@@ -197,7 +195,9 @@ public class BatchETLDBAdapterTest extends BaseETLBatchTest {
     ETLStage sink = new ETLStage("Table", ImmutableMap.of(
       "name", "outputTable",
       Properties.Table.PROPERTY_SCHEMA, schema.toString(),
-      Properties.Table.PROPERTY_SCHEMA_ROW_FIELD, "ID"));
+      Properties.Table.PROPERTY_SCHEMA_ROW_FIELD, "id",
+      // Test case-insensitive row key matching
+      Properties.Table.CASE_SENSITIVE_ROW_FIELD, "false"));
 
     ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *", source, sink, Lists.<ETLStage>newArrayList());
     AdapterConfig adapterConfig = new AdapterConfig("", TEMPLATE_ID.getId(), GSON.toJsonTree(etlConfig));
@@ -269,6 +269,45 @@ public class BatchETLDBAdapterTest extends BaseETLBatchTest {
     Assert.assertEquals("user2", Bytes.toString(row2.get("BLOB_COL"), 0, 5));
     Assert.assertEquals(clobData, Bytes.toString(row1.get("CLOB_COL"), 0, clobData.length()));
     Assert.assertEquals(clobData, Bytes.toString(row2.get("CLOB_COL"), 0, clobData.length()));
+
+    // delete adapter
+    manager.delete();
+  }
+
+  @Test
+  @Category(SlowTests.class)
+  public void testDBSourceWithCaseSensitiveRowKey() throws Exception {
+    String importQuery = "SELECT ID, NAME FROM my_table WHERE ID < 3";
+    String countQuery = "SELECT COUNT(ID) from my_table WHERE id < 3";
+    ETLStage source = new ETLStage("Database", ImmutableMap.<String, String>builder()
+      .put(Properties.DB.CONNECTION_STRING, hsqlDBServer.getConnectionUrl())
+      .put(Properties.DB.IMPORT_QUERY, importQuery)
+      .put(Properties.DB.COUNT_QUERY, countQuery)
+      .put(Properties.DB.JDBC_PLUGIN_NAME, "hypersql")
+      .build()
+    );
+
+    ETLStage sink = new ETLStage("Table", ImmutableMap.of(
+      "name", "outputTable1",
+      Properties.Table.PROPERTY_SCHEMA, schema.toString(),
+      Properties.Table.PROPERTY_SCHEMA_ROW_FIELD, "id"));
+
+    ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *", source, sink, Lists.<ETLStage>newArrayList());
+    AdapterConfig adapterConfig = new AdapterConfig("", TEMPLATE_ID.getId(), GSON.toJsonTree(etlConfig));
+    Id.Adapter adapterId = Id.Adapter.from(NAMESPACE, "dbSourceTest");
+    AdapterManager manager = createAdapter(adapterId, adapterConfig);
+    manager.start();
+    manager.waitForOneRunToFinish(5, TimeUnit.MINUTES);
+    manager.stop();
+
+    // No records should be written
+    DataSetManager<Table> outputManager = getDataset("outputTable1");
+    Table outputTable = outputManager.get();
+    Scanner scan = outputTable.scan(null, null);
+    Assert.assertNull(scan.next());
+
+    // Delete adapter
+    manager.delete();
   }
 
   // Test is ignored - Currently DBOutputFormat does a statement.executeBatch which seems to fail in HSQLDB.
@@ -285,8 +324,7 @@ public class BatchETLDBAdapterTest extends BaseETLBatchTest {
                                      Properties.Table.PROPERTY_SCHEMA_ROW_FIELD, "ID",
                                      Properties.Table.PROPERTY_SCHEMA, schema.toString()));
     ETLStage sink = new ETLStage("Database",
-                                 ImmutableMap.of(Properties.DB.DRIVER_CLASS, hsqlDBServer.getHsqlDBDriver(),
-                                                 Properties.DB.CONNECTION_STRING, hsqlDBServer.getConnectionUrl(),
+                                 ImmutableMap.of(Properties.DB.CONNECTION_STRING, hsqlDBServer.getConnectionUrl(),
                                                  Properties.DB.TABLE_NAME, "my_dest_table",
                                                  Properties.DB.COLUMNS, cols,
                                                  Properties.DB.JDBC_PLUGIN_NAME, "hypersql"

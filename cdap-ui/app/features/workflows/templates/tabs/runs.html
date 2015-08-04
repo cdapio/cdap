@@ -5,25 +5,62 @@
           dropdown is-open="dropdown.isopen">
       <button type="button"
               class="btn btn-default dropdown-toggle"
-              dropdown-toggle ng-disabled="current === 'No Run'">
-        {{ runs.selected.runid }}
+              dropdown-toggle ng-disabled="RunsController.runs.length === 0">
+        {{ RunsController.runs.selected.runid }}
         <span class="caret"></span>
       </button>
       <ul class="dropdown-menu" role="menu">
-        <li ng-repeat="run in runs">
+        <li ng-repeat="run in RunsController.runs">
           <a ui-sref="workflows.detail.runs.run({runid: run.runid})">{{ run.runid }}</a>
         </li>
       </ul>
     </div>
 
-  </div>
-</div>
-<br/>
-<div>
-  <div>
-    <div ng-include="'/assets/features/workflows/templates/tabs/runs/run-detail.html'"
-          ng-if="!$stateParams.runid">
+    <div class="btn-group">
+
+      <div class="btn btn-default btn-red"
+           ng-disabled="RunsController.runStatus !== 'RUNNING'"
+           ng-click="RunsController.stop()"
+           >
+        <span ng-if="RunsController.runStatus !== 'STOPPING'">
+          <span class="fa fa-stop"></span>
+        </span>
+        <span ng-if="RunsController.runStatus === 'STOPPING'">
+          <span class="fa fa-refresh fa-spin"></span>
+        </span>
+      </div>
+
+      <div class="btn btn-default"
+           ng-if="['SUSPENDED', 'RESUMING'].indexOf(RunsController.runStatus) === -1"
+           ng-disabled="['COMPLETED', 'KILLED', 'STOPPING', 'SUSPENDING'].indexOf(RunsController.runStatus) !== -1 || RunsController.runs.length === 0"
+           ng-click="RunsController.suspend()">
+        <span ng-if="RunsController.runStatus !== 'SUSPENDING'">
+          <span class="fa fa-pause"></span>
+        </span>
+        <span ng-if="RunsController.runStatus === 'SUSPENDING'">
+          <span class="fa fa-refresh fa-spin"></span>
+        </span>
+      </div>
+
+      <div class="btn btn-default btn-green"
+           ng-disabled="RunsController.runStatus === 'RESUMING'"
+           ng-if="RunsController.runStatus === 'SUSPENDED' || RunsController.runStatus === 'RESUMING'"
+           ng-click="RunsController.resume()">
+        <span ng-if="RunsController.runStatus !== 'RESUMING'">
+          <span class="fa fa-play"></span>
+        </span>
+        <span ng-if="RunsController.runStatus === 'RESUMING'">
+          <span class="fa fa-refresh fa-spin"></span>
+        </span>
+      </div>
+
     </div>
-    <div ui-view  ng-if="$stateParams.runid"> </div>
+
   </div>
 </div>
+
+<br/>
+<div ng-include="'/assets/features/workflows/templates/tabs/runs/run-detail.html'"
+      ng-if="!$stateParams.runid">
+</div>
+<div ui-view  ng-if="$stateParams.runid"> </div>

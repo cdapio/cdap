@@ -18,7 +18,7 @@ package co.cask.cdap.client.util;
 
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.exception.DisconnectedException;
-import co.cask.cdap.common.exception.UnauthorizedException;
+import co.cask.cdap.common.UnauthorizedException;
 import co.cask.cdap.security.authentication.client.AccessToken;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
@@ -168,7 +168,7 @@ public class RESTClient {
   /**
    * Listener for when requests are made and when responses are received.
    */
-  public static interface Listener {
+  public interface Listener {
     void onRequest(HttpRequest request, int attempt);
     void onResponse(HttpRequest request, HttpResponse response, int attemptsMade);
   }

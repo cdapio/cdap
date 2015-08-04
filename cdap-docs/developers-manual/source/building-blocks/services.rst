@@ -8,16 +8,16 @@
 Services
 ========
 
-Services can be run in a Cask Data Application Platform (CDAP) Application to serve data to external clients.
-Similar to Flows, Services run in containers and the number of running service instances can be dynamically scaled.
-Developers can implement Custom Services to interface with a legacy system and perform additional processing beyond
-the CDAP processing paradigms. Examples could include running an IP-to-Geo lookup and serving user-profiles.
+*Services* can be run in a Cask Data Application Platform (CDAP) application to serve data to external clients.
+Similar to flows, services run in containers and the number of running service instances can be dynamically scaled.
+Developers can implement custom services to interface with a legacy system and perform additional processing beyond
+the CDAP processing paradigms. Examples could include running an IP-to-geo lookup and serving user-profiles.
 
-The lifecycle of a Custom Service can be controlled via the CDAP UI, by using the
+The lifecycle of a custom service can be controlled via the CDAP UI, by using the
 :ref:`CDAP Java Client API <client-api>`, or with the :ref:`CDAP RESTful HTTP API <restful-api>`.
 
-You can add Services to your application by calling the ``addService`` method in the
-Application's ``configure`` method::
+You can add services to your application by calling the ``addService`` method in the
+application's ``configure`` method::
 
   public class AnalyticsApp extends AbstractApplication {
     @Override
@@ -47,22 +47,19 @@ Services are implemented by extending ``AbstractService``, which consists of
     }
   }
 
-.. Similarly, you can also add Services using the ``addLocalService`` method. These Services
-.. will only be accessible by other programs within the same Application—other Applications
-.. and external clients will not be able to use them.
 
 Service Handlers
 ----------------
 
 ``ServiceHandler``\s are used to handle and serve HTTP requests.
 
-You add handlers to your Service by calling the ``addHandler`` method in the Service's
+You add handlers to your service by calling the ``addHandler`` method in the service's
 ``configure`` method, as shown above. Only handler classes that are declared public,
-with public methods for endpoints, will be exposed by the Service.
+with public methods for endpoints, will be exposed by the service.
 
-To use a Dataset within a handler, specify the Dataset by calling the ``useDataset``
-method in the Service's ``configure`` method and include the ``@UseDataSet`` annotation in
-the handler to obtain an instance of the Dataset. Each request to a method is committed as
+To use a dataset within a handler, specify the dataset by calling the ``useDataset``
+method in the service's ``configure`` method and include the ``@UseDataSet`` annotation in
+the handler to obtain an instance of the dataset. Each request to a method is committed as
 a single transaction.
 
 ::
@@ -135,9 +132,6 @@ There are two ways to work around this:
   character in the query of a URI.
 
 
-
-
-
 Service Discovery
 -----------------
 
@@ -145,11 +139,11 @@ Services announce the host and port they are running on so that they can be disc
 accessed—by other programs.
 
 Service are announced using the name passed in the ``configure`` method. The *application name*, *service id*, and
-*hostname* required for registering the Service are automatically obtained.
+*hostname* required for registering the service are automatically obtained.
 
-The Service can then be discovered in a Flow, MapReduce, Spark, or other Service using
-the appropriate program context. You may also access a Service in a different Application
-by specifying the Application name in the ``getServiceURL`` call.
+The service can then be discovered in a flow, MapReduce, Spark, or other service using
+the appropriate program context. You may also access a service in a different application
+by specifying the application name in the ``getServiceURL`` call.
 
 For example, in Flows::
 
@@ -163,10 +157,10 @@ For example, in Flows::
 
     @ProcessInput
     public void process(String ip) {
-      // Get URL for Service in same Application
+      // Get URL for service in same application
       serviceURL = getContext().getServiceURL("IPGeoLookupService");
 
-      // Get URL for Service in a different Application
+      // Get URL for service in a different application
       securityURL = getContext().getServiceURL("SecurityApplication", "SecurityService");
 
       // Access the IPGeoLookupService using its URL
@@ -206,4 +200,3 @@ For example, in Flows::
 
 - From the :ref:`tutorials`, the *WISE: Web Analytics* and the 
   *MovieRecommender: Recommender System* both demonstrate the use of services.
-

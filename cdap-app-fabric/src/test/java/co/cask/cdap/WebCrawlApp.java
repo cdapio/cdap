@@ -51,7 +51,7 @@ public class WebCrawlApp extends AbstractApplication {
   /**
    * Defines a document url.
    */
-  public static interface DocumentURL {
+  public interface DocumentURL {
     String getURL();
   }
 
@@ -74,7 +74,7 @@ public class WebCrawlApp extends AbstractApplication {
   /**
    * Defines a basic document.
    */
-  public static interface Document {
+  public interface Document {
     String getBody();
     String getMeta();
     String getResolveInfo();

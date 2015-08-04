@@ -1,19 +1,69 @@
-angular.module(PKG.name + '.feature.workflows')
-  .controller('WorkFlowsRunDetailLogController', function($scope, MyDataSource, $state) {
+var params;
+class WorkFlowsRunDetailLogController {
 
-    var dataSrc = new MyDataSource($scope),
-        basePath = '/apps/' + $state.params.appId +
-                   '/workflows/' + $state.params.programId +
-                   '/runs/' + $scope.runs.selected.runid;
+  constructor($scope, myWorkFlowApi, $state, $timeout) {
+    this.myWorkFlowApi = myWorkFlowApi;
+    this.$timeout = $timeout;
 
-    $scope.logs = [];
-    if (!$scope.runs.length) {
+    params = {
+      namespace: $state.params.namespace,
+      appId: $state.params.appId,
+      workflowId: $state.params.programId,
+      runId: $scope.RunsController.runs.selected.runid,
+      scope: $scope,
+      max: 50
+    };
+    this.logs = [];
+    if (!$scope.RunsController.runs.length) {
       return;
     }
-    dataSrc.poll({
-      _cdapNsPath: basePath + '/logs/next?max=50'
-    }, function(res) {
-      $scope.logs = res;
-    });
 
-});
+    this.loadingNext = true;
+    this.myWorkFlowApi.prevLogs(params)
+      .$promise
+      .then( res => {
+        this.logs = res;
+        this.loadingNext = false;
+      });
+  }
+
+  loadNextLogs () {
+    if (this.logs.length < params.max) {
+      return;
+    }
+    this.loadingNext = true;
+    params.fromOffset = this.logs[this.logs.length-1].offset;
+
+    this.myWorkFlowApi.logs(params)
+      .$promise
+      .then( res => {
+        this.logs = _.uniq(this.logs.concat(res));
+        this.loadingNext = false;
+      });
+  }
+
+  loadPrevLogs () {
+    if (this.loadingPrev) {
+      return;
+    }
+
+    this.loadingPrev = true;
+    params.fromOffset = this.logs[0].offset;
+
+    this.myWorkFlowApi.prevLogs(params)
+      .$promise
+      .then( res => {
+        this.logs = _.uniq(res.concat(this.logs));
+        this.loadingPrev = false;
+
+        this.$timeout(function() {
+          document.getElementById(params.fromOffset).scrollIntoView();
+        });
+      });
+  }
+
+}
+
+WorkFlowsRunDetailLogController.$inject = ['$scope', 'myWorkFlowApi', '$state', '$timeout'];
+angular.module(`${PKG.name}.feature.workflows`)
+  .controller('WorkFlowsRunDetailLogController', WorkFlowsRunDetailLogController);

@@ -28,6 +28,7 @@ import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.mapreduce.MapReduce;
+import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.stream.StreamEventDecoder;
 import co.cask.cdap.api.templates.plugins.PluginInfo;
@@ -35,9 +36,10 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.ClassLoaders;
+import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.lang.WeakReferenceDelegatorClassLoader;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
-import co.cask.cdap.common.utils.ApplicationBundler;
+import co.cask.cdap.common.twill.HadoopClassExcluder;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data.stream.StreamInputFormat;
 import co.cask.cdap.data.stream.StreamUtils;
@@ -48,12 +50,14 @@ import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetInputFormat;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetOutputFormat;
+import co.cask.cdap.internal.app.runtime.batch.distributed.ContainerLauncherGenerator;
+import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerHelper;
+import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerLauncher;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.templates.AdapterDefinition;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionContext;
-import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionFailureException;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.annotations.VisibleForTesting;
@@ -77,8 +81,11 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
+import org.apache.twill.api.ClassAcceptor;
+import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
+import org.apache.twill.internal.ApplicationBundler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -90,13 +97,18 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
+import java.util.regex.Pattern;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -119,8 +131,9 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   @SuppressWarnings("unused")
   private org.apache.hadoop.mapreduce.v2.app.MRClientSecurityInfo mrClientSecurityInfo;
 
-  // Name of configuration source if it is set programmatically. This constant is not defined in Hadoop
-  private static final String PROGRAMMATIC_SOURCE = "programmatically";
+  // Regex pattern for configuration source if it is set programmatically. This constant is not defined in Hadoop
+  // Hadoop 2.3.0 and before has a typo as 'programatically', while it is fixed later as 'programmatically'.
+  private static final Pattern PROGRAMATIC_SOURCE_PATTERN = Pattern.compile("program{1,2}atically");
 
   private final CConfiguration cConf;
   private final Configuration hConf;
@@ -136,6 +149,9 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   private Job job;
   private Transaction transaction;
   private Runnable cleanupTask;
+
+  // This needs to keep as a field.
+  // We need to hold a strong reference to the ClassLoader until the end of the MapReduce job.
   private ClassLoader classLoader;
   private volatile boolean stopRequested;
 
@@ -164,54 +180,43 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
 
   @Override
   protected void startUp() throws Exception {
-    final Job job = Job.getInstance(new Configuration(hConf));
-    Configuration mapredConf = job.getConfiguration();
+    // Creates a temporary directory locally for storing all generated files.
+    File tempDir = createTempDirectory();
+    this.cleanupTask = createCleanupTask(tempDir);
 
-    if (UserGroupInformation.isSecurityEnabled()) {
-      // If runs in secure cluster, this program runner is running in a yarn container, hence not able
-      // to get authenticated with the history.
-      mapredConf.unset("mapreduce.jobhistory.address");
-      mapredConf.setBoolean(Job.JOB_AM_ACCESS_DISABLED, false);
-
-      Credentials credentials = UserGroupInformation.getCurrentUser().getCredentials();
-      LOG.info("Running in secure mode; adding all user credentials: {}", credentials.getAllTokens());
-      job.getCredentials().addAll(credentials);
-    }
-
-    // We need to hold a strong reference to the ClassLoader until the end of the MapReduce job.
-    classLoader = new MapReduceClassLoader(context.getProgram().getClassLoader());
-    job.getConfiguration().setClassLoader(new WeakReferenceDelegatorClassLoader(classLoader));
-    ClassLoaders.setContextClassLoader(job.getConfiguration().getClassLoader());
-
-    context.setJob(job);
-
-    // both beforeSubmit() and setInput/OutputDataset() may call dataset methods. They must be run inside a tx
-    runUserCodeInTx(new TransactionExecutor.Subroutine() {
-      // Call the user MapReduce for initialization
-      @Override
-      public void apply() throws Exception {
-        beforeSubmit();
-
-        // set input/output datasets info
-        setInputDatasetIfNeeded(job);
-        setOutputDatasetIfNeeded(job);
-      }
-    }, "startUp()");
-
-    // Override user-defined job name, since we set it and depend on the name.
-    // https://issues.cask.co/browse/CDAP-2441
-    String jobName = job.getJobName();
-    if (!jobName.isEmpty()) {
-      LOG.warn("Job name {} is being overridden.", jobName);
-    }
-    job.setJobName(getJobName(context));
-
-    // After calling beforeSubmit, we know what plugins are needed for adapter, hence construct the proper
-    // ClassLoader from here and use it for setting up the job
-    Location pluginArchive = createPluginArchive(context.getAdapterSpecification(), context.getProgram().getId());
     try {
-      if (pluginArchive != null) {
-        job.addCacheArchive(pluginArchive.toURI());
+      Job job = createJob(new File(tempDir, "mapreduce"));
+      Configuration mapredConf = job.getConfiguration();
+
+      classLoader = new MapReduceClassLoader(context.getProgram().getClassLoader());
+      mapredConf.setClassLoader(new WeakReferenceDelegatorClassLoader(classLoader));
+      ClassLoaders.setContextClassLoader(mapredConf.getClassLoader());
+
+      context.setJob(job);
+
+      beforeSubmit(job);
+
+      // Override user-defined job name, since we set it and depend on the name.
+      // https://issues.cask.co/browse/CDAP-2441
+      String jobName = job.getJobName();
+      if (!jobName.isEmpty()) {
+        LOG.warn("Job name {} is being overridden.", jobName);
+      }
+      job.setJobName(getJobName(context));
+
+      // Create a temporary location for storing all generated files through the LocationFactory.
+      Location tempLocation = createTempLocationDirectory();
+      this.cleanupTask = createCleanupTask(tempDir, tempLocation);
+
+      Location pluginArchive = null;
+      // For local mode, everything is in the configuration classloader already, hence no need to create new jar
+      if (!MapReduceContextProvider.isLocal(mapredConf)) {
+        // After calling beforeSubmit, we know what plugins are needed for adapter, hence construct the proper
+        // ClassLoader from here and use it for setting up the job
+        pluginArchive = createPluginArchive(context.getAdapterSpecification(), tempDir, tempLocation);
+        if (pluginArchive != null) {
+          job.addCacheArchive(pluginArchive.toURI());
+        }
       }
 
       // Alter the configuration ClassLoader to a MapReduceClassLoader that supports plugin
@@ -219,97 +224,79 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       // It can only be constructed here because we need to have all adapter plugins information
       classLoader = new MapReduceClassLoader(context.getProgram().getClassLoader(), context.getAdapterSpecification(),
                                              context.getPluginInstantiator());
-      job.getConfiguration().setClassLoader(new WeakReferenceDelegatorClassLoader(classLoader));
-      ClassLoaders.setContextClassLoader(job.getConfiguration().getClassLoader());
+      mapredConf.setClassLoader(new WeakReferenceDelegatorClassLoader(classLoader));
+      ClassLoaders.setContextClassLoader(mapredConf.getClassLoader());
 
       setOutputClassesIfNeeded(job);
       setMapOutputClassesIfNeeded(job);
 
-      // Prefer our job jar in the classpath
-      // Set both old and new keys
-      mapredConf.setBoolean("mapreduce.user.classpath.first", true);
-      mapredConf.setBoolean(Job.MAPREDUCE_JOB_USER_CLASSPATH_FIRST, true);
-      mapredConf.setBoolean(Job.MAPREDUCE_JOB_CLASSLOADER, true);
-
-      // Make CDAP classes (which is in the job.jar created below) to have higher precedence
-      // It is needed to override the ApplicationClassLoader to use our implementation
-      String yarnAppClassPath = mapredConf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH, Joiner.on(',')
-                                                 .join(YarnConfiguration.DEFAULT_YARN_APPLICATION_CLASSPATH));
-      mapredConf.set(YarnConfiguration.YARN_APPLICATION_CLASSPATH, "job.jar/lib/*,job.jar/classes," + yarnAppClassPath);
-
       // set resources for the job
-      Resources mapperResources = context.getMapperResources();
-      Resources reducerResources = context.getReducerResources();
-
-      // this will determine how much memory and virtual cores the yarn container will run with
-      if (mapperResources != null) {
-        mapredConf.setInt(Job.MAP_MEMORY_MB, mapperResources.getMemoryMB());
-        // Also set the Xmx to be smaller than the container memory.
-        mapredConf.set(Job.MAP_JAVA_OPTS, "-Xmx" + (int) (mapperResources.getMemoryMB() * 0.8) + "m");
-        setVirtualCores(mapredConf, mapperResources.getVirtualCores(), "MAP");
-      }
-      if (reducerResources != null) {
-        mapredConf.setInt(Job.REDUCE_MEMORY_MB, reducerResources.getMemoryMB());
-        // Also set the Xmx to be smaller than the container memory.
-        mapredConf.set(Job.REDUCE_JAVA_OPTS, "-Xmx" + (int) (reducerResources.getMemoryMB() * 0.8) + "m");
-        setVirtualCores(mapredConf, reducerResources.getVirtualCores(), "REDUCE");
-      }
+      TaskType.MAP.setResources(mapredConf, context.getMapperResources());
+      TaskType.REDUCE.setResources(mapredConf, context.getReducerResources());
 
       // replace user's Mapper & Reducer's with our wrappers in job config
       MapperWrapper.wrap(job);
       ReducerWrapper.wrap(job);
 
       // packaging job jar which includes cdap classes with dependencies
-      Location jobJar = buildJobJar(context);
+      File jobJar = buildJobJar(job, tempDir);
+      job.setJar(jobJar.toURI().toString());
 
-      try {
-        Location programJarCopy = copyProgramJar();
-        try {
-          job.setJar(jobJar.toURI().toString());
-          // Localize the program jar, but not add it to class path
-          // The ApplicationLoader will create ProgramClassLoader from it
-          job.addCacheFile(programJarCopy.toURI());
+      Location programJar = programJarLocation;
+      if (!MapReduceContextProvider.isLocal(mapredConf)) {
+        // Copy and localize the program jar in distributed mode
+        programJar = copyProgramJar(tempLocation);
+        job.addCacheFile(programJar.toURI());
 
+        // Generate and localize the launcher jar to control the classloader of MapReduce containers processes
+        List<String> paths = new ArrayList<>();
+        paths.add("job.jar/lib/*");
+        paths.add("job.jar/classes");
+        Location launcherJar = createLauncherJar(
+          Joiner.on(",").join(MapReduceContainerHelper.getMapReduceClassPath(mapredConf, paths)), tempLocation);
+        job.addCacheFile(launcherJar.toURI());
 
-            MapReduceContextConfig contextConfig = new MapReduceContextConfig(job.getConfiguration());
-            // We start long-running tx to be used by mapreduce job tasks.
-            Transaction tx = txClient.startLong();
-            try {
-              // We remember tx, so that we can re-use it in mapreduce tasks
-              // Make a copy of the conf and rewrite the template plugin directory to be the plugin archive name
-              CConfiguration cConfCopy = cConf;
-              if (pluginArchive != null) {
-                cConfCopy = CConfiguration.copy(cConf);
-                cConfCopy.set(Constants.AppFabric.APP_TEMPLATE_DIR, pluginArchive.getName());
-              }
-              contextConfig.set(context, cConfCopy, tx, programJarCopy.toURI());
-
-              LOG.info("Submitting MapReduce Job: {}", context);
-              // submits job and returns immediately. Shouldn't need to set context ClassLoader.
-              job.submit();
-
-              this.job = job;
-              this.transaction = tx;
-              this.cleanupTask = createCleanupTask(jobJar, programJarCopy, pluginArchive);
-            } catch (Throwable t) {
-              Transactions.invalidateQuietly(txClient, tx);
-              throw Throwables.propagate(t);
-            }
-        } catch (Throwable t) {
-          Locations.deleteQuietly(programJarCopy);
-          throw Throwables.propagate(t);
+        // The only thing in the container classpath is the launcher.jar
+        // The MapReduceContainerLauncher inside the launcher.jar will creates a MapReduceClassLoader and launch
+        // the actual MapReduce AM/Task from that
+        // We explicitly localize the mr-framwork, but not use it with the classpath
+        URI frameworkURI = MapReduceContainerHelper.getFrameworkURI(mapredConf);
+        if (frameworkURI != null) {
+          job.addCacheArchive(frameworkURI);
         }
+
+        mapredConf.unset(MRJobConfig.MAPREDUCE_APPLICATION_FRAMEWORK_PATH);
+        mapredConf.set(MRJobConfig.MAPREDUCE_APPLICATION_CLASSPATH, launcherJar.getName());
+        mapredConf.set(YarnConfiguration.YARN_APPLICATION_CLASSPATH, launcherJar.getName());
+      }
+
+      MapReduceContextConfig contextConfig = new MapReduceContextConfig(mapredConf);
+      // We start long-running tx to be used by mapreduce job tasks.
+      Transaction tx = txClient.startLong();
+      try {
+        // We remember tx, so that we can re-use it in mapreduce tasks
+        // Make a copy of the conf and rewrite the template plugin directory to be the plugin archive name
+        CConfiguration cConfCopy = cConf;
+        if (pluginArchive != null) {
+          cConfCopy = CConfiguration.copy(cConf);
+          cConfCopy.set(Constants.AppFabric.APP_TEMPLATE_DIR, pluginArchive.getName());
+        }
+        contextConfig.set(context, cConfCopy, tx, programJar.toURI());
+
+        LOG.info("Submitting MapReduce Job: {}", context);
+        // submits job and returns immediately. Shouldn't need to set context ClassLoader.
+        job.submit();
+
+        this.job = job;
+        this.transaction = tx;
       } catch (Throwable t) {
-        Locations.deleteQuietly(jobJar);
-        throw Throwables.propagate(t);
+        Transactions.invalidateQuietly(txClient, tx);
+        throw t;
       }
     } catch (Throwable t) {
-      if (pluginArchive != null) {
-        Locations.deleteQuietly(pluginArchive);
-      }
-
       LOG.error("Exception when submitting MapReduce Job: {}", context, t);
-      throw Throwables.propagate(t);
+      cleanupTask.run();
+      throw t;
     }
   }
 
@@ -405,44 +392,102 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   }
 
   /**
-   * Sets mapper/reducer virtual cores into job configuration if the platform supports it.
+   * Creates a MapReduce {@link Job} instance.
    *
-   * @param conf The job configuration
-   * @param vcores Number of virtual cores to use
-   * @param type Either {@code MAP} or {@code REDUCE}.
+   * @param hadoopTmpDir directory for the "hadoop.tmp.dir" configuration
    */
-  private void setVirtualCores(Configuration conf, int vcores, String type) {
-    // Try to set virtual cores if the platform supports it
-    try {
-      String fieldName = type + "_CPU_VCORES";
-      Field field = Job.class.getField(fieldName);
-      conf.setInt(field.get(null).toString(), vcores);
-    } catch (Exception e) {
-      // OK to ignore
-      // Some older version of hadoop-mr-client doesn't has the VCORES field as vcores was not supported in YARN.
+  private Job createJob(File hadoopTmpDir) throws IOException {
+    Job job = Job.getInstance(new Configuration(hConf));
+    Configuration jobConf = job.getConfiguration();
+
+    if (MapReduceContextProvider.isLocal(jobConf)) {
+      // Set the MR framework local directories inside the given tmp directory.
+      // Setting "hadoop.tmp.dir" here has no effect due to Explore Service need to set "hadoop.tmp.dir"
+      // as system property for Hive to work in local mode. The variable substitution of hadoop conf
+      // gives system property the highest precedence.
+      jobConf.set("mapreduce.cluster.local.dir", new File(hadoopTmpDir, "local").getAbsolutePath());
+      jobConf.set("mapreduce.jobtracker.system.dir", new File(hadoopTmpDir, "system").getAbsolutePath());
+      jobConf.set("mapreduce.jobtracker.staging.root.dir", new File(hadoopTmpDir, "staging").getAbsolutePath());
+      jobConf.set("mapreduce.cluster.temp.dir", new File(hadoopTmpDir, "temp").getAbsolutePath());
     }
+
+    if (UserGroupInformation.isSecurityEnabled()) {
+      // If runs in secure cluster, this program runner is running in a yarn container, hence not able
+      // to get authenticated with the history.
+      jobConf.unset("mapreduce.jobhistory.address");
+      jobConf.setBoolean(Job.JOB_AM_ACCESS_DISABLED, false);
+
+      Credentials credentials = UserGroupInformation.getCurrentUser().getCredentials();
+      LOG.info("Running in secure mode; adding all user credentials: {}", credentials.getAllTokens());
+      job.getCredentials().addAll(credentials);
+    }
+    return job;
   }
 
   /**
-   * Calls the {@link MapReduce#beforeSubmit(co.cask.cdap.api.mapreduce.MapReduceContext)} method.
+   * Creates a local temporary directory for this MapReduce run.
    */
-  private void beforeSubmit() throws Exception {
-    ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(context.getProgram().getClassLoader());
-    try {
-      mapReduce.beforeSubmit(context);
-    } finally {
-      ClassLoaders.setContextClassLoader(oldClassLoader);
-    }
+  private File createTempDirectory() {
+    Id.Program programId = context.getProgram().getId();
+    File tempDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
+                            cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+    File dir = new File(tempDir, String.format("%s.%s.%s.%s.%s",
+                                               programId.getType().name().toLowerCase(),
+                                               programId.getNamespaceId(), programId.getApplicationId(),
+                                               programId.getId(), context.getRunId().getId()));
+    dir.mkdirs();
+    return dir;
+  }
+
+  /**
+   * Creates a temporary directory through the {@link LocationFactory} provided to this class.
+   */
+  private Location createTempLocationDirectory() throws IOException {
+    Id.Program programId = context.getProgram().getId();
+
+    String tempLocationName = String.format("%s/%s.%s.%s.%s.%s", cConf.get(Constants.AppFabric.TEMP_DIR),
+                                            programId.getType().name().toLowerCase(),
+                                            programId.getNamespaceId(), programId.getApplicationId(),
+                                            programId.getId(), context.getRunId().getId());
+    Location location = locationFactory.create(tempLocationName);
+    location.mkdirs();
+    return location;
+  }
+
+  /**
+   * Calls the {@link MapReduce#beforeSubmit(MapReduceContext)} method and
+   * also setup the Input/Output dataset within the same transaction.
+   */
+  private void beforeSubmit(final Job job) throws TransactionFailureException {
+    TransactionContext txContext = context.getTransactionContext();
+    Transactions.execute(txContext, "beforeSubmit", new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        ClassLoader oldClassLoader = setContextCombinedClassLoader(context);
+        try {
+          mapReduce.beforeSubmit(context);
+
+          // set input/output datasets info
+          setInputDatasetIfNeeded(job);
+          setOutputDatasetIfNeeded(job);
+
+          return null;
+        } finally {
+          ClassLoaders.setContextClassLoader(oldClassLoader);
+        }
+      }
+    });
   }
 
   /**
    * Calls the {@link MapReduce#onFinish(boolean, co.cask.cdap.api.mapreduce.MapReduceContext)} method.
    */
-  private void onFinish(final boolean succeeded) throws TransactionFailureException, InterruptedException {
-    runUserCodeInTx(new TransactionExecutor.Subroutine() {
+  private void onFinish(final boolean succeeded) throws TransactionFailureException {
+    TransactionContext txContext = context.getTransactionContext();
+    Transactions.execute(txContext, "onFinish", new Callable<Void>() {
       @Override
-      public void apply() throws Exception {
-        ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(context.getProgram().getClassLoader());
+      public Void call() throws Exception {
+        ClassLoader oldClassLoader = setContextCombinedClassLoader(context);
         try {
           // TODO this should be done in the output committer, to make the M/R fail if addPartition fails
           boolean success = succeeded;
@@ -456,44 +501,17 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
               }
             } catch (Throwable t) {
               LOG.error(String.format("Error from %s method of output dataset %s.",
-                        succeeded ? "onSuccess" : "onFailure", context.getOutputDatasetName()), t);
+                                      succeeded ? "onSuccess" : "onFailure", context.getOutputDatasetName()), t);
               success = false;
             }
           }
           mapReduce.onFinish(success, context);
+          return null;
         } finally {
           ClassLoaders.setContextClassLoader(oldClassLoader);
         }
       }
-    }, "onFinish()");
-  }
-
-  // instead of using Tephra's TransactionExecutor, we must implement the transaction lifecycle
-  // ourselves. This is because the user code may add new datasets through the dynamic mr context,
-  // which is not supported by the TransactionExecutor. Instead, we reuse the same txContext
-  // (which is managed by the mr context) for all transactions.
-  private void runUserCodeInTx(TransactionExecutor.Subroutine userCode, String methodName) {
-    TransactionContext txContext = context.getTransactionContext();
-    try {
-      txContext.start();
-      userCode.apply();
-      txContext.finish();
-    } catch (TransactionFailureException e) {
-      abortTransaction(e, "Failed to commit after running " + methodName + ". Aborting transaction.", txContext);
-    } catch (Throwable t) {
-      abortTransaction(t, "Exception occurred running " + methodName + ". Aborting transaction.", txContext);
-    }
-  }
-
-  private void abortTransaction(Throwable t, String message, TransactionContext context) {
-    try {
-      LOG.error(message, t);
-      context.abort();
-      Throwables.propagate(t);
-    } catch (TransactionFailureException e) {
-      LOG.error("Failed to abort transaction.", e);
-      Throwables.propagate(e);
-    }
+    });
   }
 
   @SuppressWarnings("unchecked")
@@ -682,48 +700,54 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
                          programId.getNamespaceId(), programId.getApplicationId(), programId.getId());
   }
 
+
   /**
    * Creates a jar that contains everything that are needed for running the MapReduce program by Hadoop.
    *
-   * @return a new {@link Location} containing the job jar
+   * @return a new {@link File} containing the job jar
    */
-  private Location buildJobJar(BasicMapReduceContext context) throws IOException {
+  private File buildJobJar(Job job, File tempDir) throws IOException, URISyntaxException {
+    File jobJar = new File(tempDir, "job.jar");
+    LOG.debug("Creating Job jar: {}", jobJar);
+
+    // For local mode, nothing is needed in the job jar since we use the classloader in the configuration object.
+    if (MapReduceContextProvider.isLocal(job.getConfiguration())) {
+      JarOutputStream output = new JarOutputStream(new FileOutputStream(jobJar));
+      output.close();
+      return jobJar;
+    }
+
     // Excludes libraries that are for sure not needed.
     // Hadoop - Available from the cluster
     // Spark - MR never uses Spark
-    ApplicationBundler appBundler = new ApplicationBundler(ImmutableList.of("org.apache.hadoop",
-                                                                            "org.apache.spark"),
-                                                           ImmutableList.of("org.apache.hadoop.hbase",
-                                                                            "org.apache.hadoop.hive"));
-    Id.Program programId = context.getProgram().getId();
-
-    Location jobJar =
-      locationFactory.create(String.format("%s.%s.%s.%s.%s.jar",
-                                           ProgramType.MAPREDUCE.name().toLowerCase(),
-                                           programId.getNamespaceId(), programId.getApplicationId(),
-                                           programId.getId(), context.getRunId().getId()));
-
-    LOG.debug("Creating Job jar: {}", jobJar.toURI());
-
+    final HadoopClassExcluder hadoopClassExcluder = new HadoopClassExcluder();
+    ApplicationBundler appBundler = new ApplicationBundler(new ClassAcceptor() {
+      @Override
+      public boolean accept(String className, URL classUrl, URL classPathUrl) {
+        if (className.startsWith("org.apache.spark") || classPathUrl.toString().contains("spark-assembly")) {
+          return false;
+        }
+        return hadoopClassExcluder.accept(className, classUrl, classPathUrl);
+      }
+    });
     Set<Class<?>> classes = Sets.newHashSet();
     classes.add(MapReduce.class);
     classes.add(MapperWrapper.class);
     classes.add(ReducerWrapper.class);
 
-    Job jobConf = context.getHadoopJob();
     // We only need to trace the Input/OutputFormat class due to MAPREDUCE-5957 so that those classes are included
     // in the job.jar and be available in the MR system classpath before our job classloader (ApplicationClassLoader)
     // take over the classloading.
     if (cConf.getBoolean(Constants.AppFabric.MAPREDUCE_INCLUDE_CUSTOM_CLASSES)) {
       try {
-        Class<? extends InputFormat<?, ?>> inputFormatClass = jobConf.getInputFormatClass();
+        Class<? extends InputFormat<?, ?>> inputFormatClass = job.getInputFormatClass();
         LOG.info("InputFormat class: {} {}", inputFormatClass, inputFormatClass.getClassLoader());
         classes.add(inputFormatClass);
 
         // If it is StreamInputFormat, also add the StreamEventCodec class as well.
         if (StreamInputFormat.class.isAssignableFrom(inputFormatClass)) {
           Class<? extends StreamEventDecoder> decoderType =
-            StreamInputFormat.getDecoderClass(jobConf.getConfiguration());
+            StreamInputFormat.getDecoderClass(job.getConfiguration());
           if (decoderType != null) {
             classes.add(decoderType);
           }
@@ -733,7 +757,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         // Ignore
       }
       try {
-        Class<? extends OutputFormat<?, ?>> outputFormatClass = jobConf.getOutputFormatClass();
+        Class<? extends OutputFormat<?, ?>> outputFormatClass = job.getOutputFormatClass();
         LOG.info("OutputFormat class: {} {}", outputFormatClass, outputFormatClass.getClassLoader());
         classes.add(outputFormatClass);
       } catch (Throwable t) {
@@ -750,8 +774,17 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       LOG.warn("Not including HBaseTableUtil classes in submitted Job Jar since they are not available");
     }
 
-    ClassLoader oldCLassLoader = ClassLoaders.setContextClassLoader(jobConf.getConfiguration().getClassLoader());
-    appBundler.createBundle(jobJar, classes);
+    // Add the logback.xml as a resource while creating the MapReduce Job JAR
+    Set<URI> logbackURI = Sets.newHashSet();
+    URL logback = getClass().getResource("/logback.xml");
+    if (logback != null) {
+      logbackURI.add(logback.toURI());
+    } else {
+      LOG.warn("Could not find logback.xml while building MapReduce Job JAR!");
+    }
+
+    ClassLoader oldCLassLoader = ClassLoaders.setContextClassLoader(job.getConfiguration().getClassLoader());
+    appBundler.createBundle(new LocalLocationFactory().create(jobJar.toURI()), classes, logbackURI);
     ClassLoaders.setContextClassLoader(oldCLassLoader);
 
     LOG.info("Built MapReduce Job Jar at {}", jobJar.toURI());
@@ -859,7 +892,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
 
   private boolean isProgrammaticConfig(Configuration conf, String name) {
     String[] sources = conf.getPropertySources(name);
-    return sources != null && sources.length > 0 && PROGRAMMATIC_SOURCE.equals(sources[sources.length - 1]);
+    return sources != null && sources.length > 0 &&
+      PROGRAMATIC_SOURCE_PATTERN.matcher(sources[sources.length - 1]).matches();
   }
 
   /**
@@ -867,17 +901,25 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
    *
    * @return a new {@link Location} which contains the same content as the program jar
    */
-  private Location copyProgramJar() throws IOException {
-    Id.Program programId = context.getProgram().getId();
-    Location programJarCopy = locationFactory.create(
-      String.format("%s.%s.%s.%s.%s.program.jar",
-                    ProgramType.MAPREDUCE.name().toLowerCase(),
-                    programId.getNamespaceId(), programId.getApplicationId(),
-                    programId.getId(), context.getRunId().getId()));
+  private Location copyProgramJar(Location targetDir) throws IOException {
+    Location programJarCopy = targetDir.append("program.jar");
 
     ByteStreams.copy(Locations.newInputSupplier(programJarLocation), Locations.newOutputSupplier(programJarCopy));
     LOG.info("Copied Program Jar to {}, source: {}", programJarCopy.toURI(), programJarLocation.toURI());
     return programJarCopy;
+  }
+
+  /**
+   * Creates a launcher jar.
+   *
+   * @see MapReduceContainerLauncher
+   * @see ContainerLauncherGenerator
+   */
+  private Location createLauncherJar(String applicationClassPath, Location targetDir) throws IOException {
+    Location launcherJar = targetDir.append("launcher.jar");
+    ContainerLauncherGenerator.generateLauncherJar(applicationClassPath, MapReduceClassLoader.class.getName(),
+                                                   Locations.newOutputSupplier(launcherJar));
+    return launcherJar;
   }
 
   /**
@@ -889,7 +931,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
    */
   @Nullable
   private Location createPluginArchive(@Nullable AdapterDefinition adapterSpec,
-                                       Id.Program programId) throws IOException {
+                                       File tempDir, Location targetDir) throws IOException {
     if (adapterSpec == null) {
       return null;
     }
@@ -902,59 +944,111 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     // Find plugins that are used by this adapter.
     File pluginDir = new File(cConf.get(Constants.AppFabric.APP_TEMPLATE_PLUGIN_DIR));
     File templatePluginDir = new File(pluginDir, adapterSpec.getTemplate());
-    File jarFile = File.createTempFile("plugin", ".jar");
-    try {
-      String entryPrefix = pluginDir.getName() + "/" + adapterSpec.getTemplate();
+    File jarFile = File.createTempFile("plugin", ".jar", tempDir);
 
-      try (JarOutputStream output = new JarOutputStream(new FileOutputStream(jarFile))) {
-        // Create the directory entries
-        output.putNextEntry(new JarEntry(entryPrefix + "/"));
-        output.putNextEntry(new JarEntry(entryPrefix + "/lib/"));
+    String entryPrefix = pluginDir.getName() + "/" + adapterSpec.getTemplate();
 
-        // copy the plugin jars
-        for (PluginInfo plugin : pluginInfos) {
-          String entryName = String.format("%s/%s", entryPrefix, plugin.getFileName());
-          output.putNextEntry(new JarEntry(entryName));
-          Files.copy(new File(templatePluginDir, plugin.getFileName()), output);
-        }
+    try (JarOutputStream output = new JarOutputStream(new FileOutputStream(jarFile))) {
+      // Create the directory entries
+      output.putNextEntry(new JarEntry(entryPrefix + "/"));
+      output.putNextEntry(new JarEntry(entryPrefix + "/lib/"));
 
-        // copy the common plugin lib jars
-        for (File libJar : DirUtils.listFiles(new File(templatePluginDir, "lib"), "jar")) {
-          String entryName = String.format("%s/lib/%s", entryPrefix, libJar.getName());
-          output.putNextEntry(new JarEntry(entryName));
-          Files.copy(libJar, output);
-        }
+      // copy the plugin jars
+      for (PluginInfo plugin : pluginInfos) {
+        String entryName = String.format("%s/%s", entryPrefix, plugin.getFileName());
+        output.putNextEntry(new JarEntry(entryName));
+        Files.copy(new File(templatePluginDir, plugin.getFileName()), output);
       }
 
-      // Copy the jar to a location, based on the location factory
-      Location location = locationFactory.create(
-        String.format("%s.%s.%s.%s.%s.plugins.jar",
-                      ProgramType.MAPREDUCE.name().toLowerCase(),
-                      programId.getNamespaceId(), programId.getApplicationId(),
-                      programId.getId(), context.getRunId().getId()));
-      try {
-        Files.copy(jarFile, Locations.newOutputSupplier(location));
-        return location;
-      } catch (IOException e) {
-        Locations.deleteQuietly(location);
-        throw e;
+      // copy the common plugin lib jars
+      for (File libJar : DirUtils.listFiles(new File(templatePluginDir, "lib"), "jar")) {
+        String entryName = String.format("%s/lib/%s", entryPrefix, libJar.getName());
+        output.putNextEntry(new JarEntry(entryName));
+        Files.copy(libJar, output);
       }
-    } finally {
-      jarFile.delete();
     }
+
+    // Copy the jar to a location, based on the location factory
+    Location location = targetDir.append("plugins.jar");
+    Files.copy(jarFile, Locations.newOutputSupplier(location));
+    return location;
   }
 
-  private Runnable createCleanupTask(final Location... locations) {
+  private Runnable createCleanupTask(final Object...resources) {
     return new Runnable() {
 
       @Override
       public void run() {
-        for (Location location : locations) {
-          if (location != null) {
-            Locations.deleteQuietly(location);
+        for (Object resource : resources) {
+          if (resource == null) {
+            continue;
+          }
+
+          try {
+            if (resource instanceof File) {
+              if (((File) resource).isDirectory()) {
+                DirUtils.deleteDirectoryContents((File) resource);
+              } else {
+                ((File) resource).delete();
+              }
+            } else if (resource instanceof Location) {
+              Locations.deleteQuietly((Location) resource);
+            }
+          } catch (Throwable t) {
+            LOG.warn("Exception when cleaning up resource {}", resource, t);
           }
         }
       }
     };
+  }
+
+  private enum TaskType {
+    MAP(Job.MAP_MEMORY_MB, Job.MAP_JAVA_OPTS),
+    REDUCE(Job.REDUCE_MEMORY_MB, Job.REDUCE_JAVA_OPTS);
+
+    private final String memoryConfKey;
+    private final String javaOptsKey;
+    private final String vcoreConfKey;
+
+    TaskType(String memoryConfKey, String javaOptsKey) {
+      this.memoryConfKey = memoryConfKey;
+      this.javaOptsKey = javaOptsKey;
+
+      String vcoreConfKey = null;
+      try {
+        String fieldName = name() + "_CPU_VCORES";
+        Field field = Job.class.getField(fieldName);
+        vcoreConfKey = field.get(null).toString();
+      } catch (Exception e) {
+        // OK to ignore
+        // Some older version of hadoop-mr-client doesn't has the VCORES field as vcores was not supported in YARN.
+      }
+      this.vcoreConfKey = vcoreConfKey;
+    }
+
+    /**
+     * Sets up resources usage for the task represented by this task type.
+     *
+     * @param conf configuration to modify
+     * @param resources resources information or {@code null} if nothing to set
+     */
+    public void setResources(Configuration conf, @Nullable Resources resources) {
+      if (resources == null) {
+        return;
+      }
+
+      conf.setInt(memoryConfKey, resources.getMemoryMB());
+      // Also set the Xmx to be smaller than the container memory.
+      conf.set(javaOptsKey, "-Xmx" + (int) (resources.getMemoryMB() * 0.8) + "m");
+
+      if (vcoreConfKey != null) {
+        conf.setInt(vcoreConfKey, resources.getVirtualCores());
+      }
+    }
+  }
+
+  private ClassLoader setContextCombinedClassLoader(DynamicMapReduceContext context) {
+    return ClassLoaders.setContextClassLoader(new CombineClassLoader(
+      null, ImmutableList.of(context.getProgram().getClassLoader(), getClass().getClassLoader())));
   }
 }

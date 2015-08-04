@@ -10,7 +10,7 @@
     "immed"         : true,     // true: Require immediate invocations to be wrapped in parens e.g. `(function () { } ());`
     "indent"        : 2,        // {int} Number of spaces to use for indentation
     "latedef"       : false,    // true: Require variables/functions to be defined before being used
-    "newcap"        : true,     // true: Require capitalization of all constructor functions e.g. `new F()`
+    "newcap"        : false,     // true: Require capitalization of all constructor functions e.g. `new F()`
     "noarg"         : true,     // true: Prohibit use of `arguments.caller` and `arguments.callee`
     "noempty"       : true,     // true: Prohibit use of empty blocks
     "nonew"         : false,    // true: Prohibit use of constructors for side-effects (without assignment)
@@ -21,7 +21,7 @@
                                 //   "single" : require single quotes
                                 //   "double" : require double quotes
     "undef"         : true,     // true: Require all non-global variables to be declared (prevents global leaks)
-    "unused"        : false,    // true: Require all defined variables be used
+    "unused"        : true,     // true: Require all defined variables be used
     "strict"        : false,    // true: Requires all functions run in ES5 Strict Mode
     "maxparams"     : false,    // {int} Max number of formal params allowed per function
     "maxdepth"      : false,    // {int} Max depth of nested blocks (within functions)
@@ -35,7 +35,7 @@
     "debug"         : false,     // true: Allow debugger statements e.g. browser breakpoints.
     "eqnull"        : false,     // true: Tolerate use of `== null`
     "es5"           : false,     // true: Allow ES5 syntax (ex: getters and setters)
-    "esnext"        : false,     // true: Allow ES.next (ES6) syntax (ex: `const`)
+    "esnext"        : true,     // true: Allow ES.next (ES6) syntax (ex: `const`)
     "moz"           : false,     // true: Allow Mozilla specific syntax (extends and overrides esnext features)
                                  // (ex: `for each`, multiple try/catch, function expression…)
     "evil"          : false,     // true: Tolerate use of `eval` and `new Function()`
@@ -51,7 +51,7 @@
     "proto"         : false,     // true: Tolerate using the `__proto__` property
     "scripturl"     : false,     // true: Tolerate script-targeted URLs
     "shadow"        : false,     // true: Allows re-define variables later in code e.g. `var x=1; x=2;`
-    "sub"           : false,     // true: Tolerate using `[]` notation when it can still be expressed in dot notation
+    "sub"           : true,     // true: Tolerate using `[]` notation when it can still be expressed in dot notation
     "supernew"      : false,     // true: Tolerate `new function () { ... };` and `new Object;`
     "validthis"     : false,     // true: Tolerate using this in a non-constructor function
 
@@ -72,8 +72,15 @@
     "yui"           : false,    // Yahoo User Interface
 
     // Custom Globals
+    // This is the #of globals we are using. http://goo.gl/DQHhxh
     "globals"       : {
       "PKG": true,
-      "angular": true
+      "angular": true,
+      "d3": true,
+      "c3": true,
+      "dagreD3": true,
+      "_": true,
+      "uuid": true,
+      "__dirname": true
     }
 }

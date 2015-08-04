@@ -39,19 +39,19 @@ Operations
 .. _preferences: preferences.html
 
 - |preferences|_ **Preferences** provide the ability to save configuration information. 
-  Flows, MapReduce programs, Services, Workflows and Workers can receive **runtime arguments.**
+  flows, MapReduce programs, services, workflows and workers can receive **runtime arguments.**
 
 
 .. |scaling-instances| replace:: **Scaling Instances:**
 .. _scaling-instances: scaling-instances.html
 
-- |scaling-instances|_ Covers **querying and setting the number of instances of Flowlets.** 
+- |scaling-instances|_ Covers **querying and setting the number of instances of flowlets.** 
 
 
 .. |resource-guarantees| replace:: **Resource Guarantees:**
 .. _resource-guarantees: resource-guarantees.html
 
-- |resource-guarantees|_ Providing resource guarantees **for CDAP Programs in YARN.**
+- |resource-guarantees|_ Providing resource guarantees **for CDAP programs in YARN.**
 
 
 .. |cdap-ui| replace:: **CDAP UI:**
@@ -119,9 +119,9 @@ On success, the calls return a valid HTTP response with a 200 code.
   
     [{"name":"appfabric","description":"Service for managing application
       lifecycle.","status":"OK","logs":"OK","min":1,"max":1,"requested":1,"provisioned":1},
-     {"name":"dataset.executor","description":"Service to perform Dataset
+     {"name":"dataset.executor","description":"Service to perform dataset
       operations.","status":"OK","logs":"OK","min":1,"max":1,"requested":1,"provisioned":1},
-     {"name":"explore.service","description":"Service to run Ad-hoc
+     {"name":"explore.service","description":"Service to run ad-hoc
       queries.","status":"OK","logs":"OK","min":1,"max":1,"requested":1,"provisioned":1},
      {"name":"log.saver","description":"Service to collect and store
       logs.","status":"OK","logs":"NOTOK","min":1,"max":1,"requested":1,"provisioned":1},

@@ -50,7 +50,7 @@ public class ScriptFilterTransformTest {
 
     Schema schema = Schema.recordOf("number", Schema.Field.of("x", Schema.of(Schema.Type.INT)));
     StructuredRecord input = StructuredRecord.builder(schema).set("x", 1).build();
-    MockEmitter<StructuredRecord> emitter = new MockEmitter<StructuredRecord>();
+    MockEmitter<StructuredRecord> emitter = new MockEmitter<>();
     transform.transform(input, emitter);
   }
 
@@ -64,7 +64,7 @@ public class ScriptFilterTransformTest {
     TransformContext transformContext = new MockTransformContext(ImmutableMap.<String, String>of());
     transform.initialize(transformContext);
 
-    MockEmitter<StructuredRecord> emitter = new MockEmitter<StructuredRecord>();
+    MockEmitter<StructuredRecord> emitter = new MockEmitter<>();
     transform.transform(input, emitter);
     Assert.assertTrue(emitter.getEmitted().isEmpty());
     emitter.clear();
@@ -135,7 +135,7 @@ public class ScriptFilterTransformTest {
     TransformContext transformContext = new MockTransformContext(ImmutableMap.<String, String>of());
     transform.initialize(transformContext);
 
-    MockEmitter<StructuredRecord> emitter = new MockEmitter<StructuredRecord>();
+    MockEmitter<StructuredRecord> emitter = new MockEmitter<>();
     transform.transform(input, emitter);
     Assert.assertTrue(emitter.getEmitted().isEmpty());
     emitter.clear();

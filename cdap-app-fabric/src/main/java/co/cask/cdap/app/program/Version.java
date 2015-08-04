@@ -23,5 +23,5 @@ public interface Version {
   /**
    * @return A version.
    */
-  public int get();
+  int get();
 }

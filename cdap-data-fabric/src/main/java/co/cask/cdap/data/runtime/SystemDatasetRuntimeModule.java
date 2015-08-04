@@ -31,6 +31,7 @@ import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryMetricsTableModul
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
 import co.cask.cdap.data2.dataset2.module.lib.leveldb.LevelDBMetricsTableModule;
 import co.cask.cdap.data2.dataset2.module.lib.leveldb.LevelDBTableModule;
+import co.cask.cdap.data2.registry.UsageDatasetModule;
 import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueDatasetModule;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
@@ -103,5 +104,6 @@ public class SystemDatasetRuntimeModule extends RuntimeModule {
     mapBinder.addBinding("partitionedFileSet").toInstance(new PartitionedFileSetModule());
     mapBinder.addBinding("objectMappedTable").toInstance(new ObjectMappedTableModule());
     mapBinder.addBinding("cube").toInstance(new CubeModule());
+    mapBinder.addBinding("usage").toInstance(new UsageDatasetModule());
   }
 }

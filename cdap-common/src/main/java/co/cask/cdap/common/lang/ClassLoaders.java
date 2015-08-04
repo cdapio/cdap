@@ -51,4 +51,32 @@ public final class ClassLoaders {
     Thread.currentThread().setContextClassLoader(classLoader);
     return oldClassLoader;
   }
+
+  /**
+   * Finds a ClassLoader along the ClassLoader hierarchy that is assignable from the given type.
+   * This method recognize usage of {@link Delegator} on ClassLoader and will try to match with
+   * the object returned by {@link Delegator#getDelegate()} for the ClassLoader of the given type.
+   *
+   * @return the ClassLoader found or {@code null} if no such ClassLoader exists.
+   */
+  @SuppressWarnings("unchecked")
+  @Nullable
+  public static <T extends ClassLoader> T find(@Nullable ClassLoader classLoader, Class<T> type) {
+    ClassLoader result = classLoader;
+    while (result != null) {
+      if (result instanceof Delegator) {
+        Object delegate = ((Delegator) result).getDelegate();
+        if (delegate != null && delegate instanceof ClassLoader) {
+          result = (ClassLoader) delegate;
+        }
+      }
+
+      if (type.isAssignableFrom(result.getClass())) {
+        break;
+      }
+      result = result.getParent();
+    }
+    // The casting should succeed since it's either null or is assignable to the given type
+    return (T) result;
+  }
 }

@@ -19,6 +19,7 @@ package co.cask.cdap.api.dataset.lib;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
+import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.Dataset;
 
 import java.util.Map;
@@ -49,6 +50,26 @@ public interface PartitionedFileSet extends Dataset, InputFormatProvider, Output
   void addPartition(PartitionKey key, String path);
 
   /**
+   * Add a partition for a given partition key, stored at a given path (relative to the file set's base path),
+   * with the given metadata.
+   */
+  void addPartition(PartitionKey key, String path, Map<String, String> metadata);
+
+  /**
+   * Adds a new metadata entry for a particular partition.
+   * Note that existing entries can not be updated.
+   * @throws DataSetException in case an attempt is made to update existing entries.
+   */
+  void addMetadata(PartitionKey key, String metadataKey, String metadataValue);
+
+  /**
+   * Adds a set of new metadata entries for a particular partition
+   * Note that existing entries can not be updated.
+   * @throws DataSetException in case an attempt is made to update existing entries.
+   */
+  void addMetadata(PartitionKey key, Map<String, String> metadata);
+
+  /**
    * Remove a partition for a given partition key.
    */
   void dropPartition(PartitionKey key);
@@ -57,14 +78,25 @@ public interface PartitionedFileSet extends Dataset, InputFormatProvider, Output
    * Return the partition for a specific partition key.
    */
   @Nullable
-  Partition getPartition(PartitionKey key);
+  PartitionDetail getPartition(PartitionKey key);
 
   /**
    * Return all partitions matching the partition filter.
    * @param filter If non null, only partitions that match this filter are returned. If null,
    *               all partitions are returned.
    */
-  Set<Partition> getPartitions(@Nullable PartitionFilter filter);
+  Set<PartitionDetail> getPartitions(@Nullable PartitionFilter filter);
+
+  /**
+   * Incrementally consumes partitions. This method can be used to retrieve partitions that have been created since the
+   * last call to this method. Note that it is the client's responsibility to maintain state of the partitions processed
+   * in the iterator returned in the PartitionConsumerResult.
+   *
+   * @param partitionConsumerState the state from which to start consuming from
+   * @return {@link PartitionConsumerResult} which holds the state of consumption as well as an iterator to the consumed
+   * {@link Partition}s
+   */
+  PartitionConsumerResult consumePartitions(PartitionConsumerState partitionConsumerState);
 
   /**
    * Return a partition output for a specific partition key, in preparation for creating a new partition.

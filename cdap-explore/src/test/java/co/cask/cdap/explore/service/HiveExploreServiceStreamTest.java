@@ -285,7 +285,7 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
     GenericRecord record = builder.build();
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     BinaryEncoder encoder = EncoderFactory.get().binaryEncoder(out, null);
-    DatumWriter<GenericRecord> writer = new GenericDatumWriter<GenericRecord>(schema);
+    DatumWriter<GenericRecord> writer = new GenericDatumWriter<>(schema);
 
     writer.write(record, encoder);
     encoder.flush();

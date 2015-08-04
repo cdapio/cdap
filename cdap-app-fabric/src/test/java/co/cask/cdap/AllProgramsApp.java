@@ -30,6 +30,8 @@ import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
+import co.cask.cdap.api.service.AbstractService;
+import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.spark.AbstractSpark;
 import co.cask.cdap.api.spark.JavaSparkProgram;
 import co.cask.cdap.api.spark.SparkContext;
@@ -42,6 +44,7 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
+import org.apache.spark.api.java.JavaPairRDD;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,6 +73,7 @@ public class AllProgramsApp extends AbstractApplication {
     addWorkflow(new NoOpWorkflow());
     addWorker(new NoOpWorker());
     addSpark(new NoOpSpark());
+    addService(new NoOpService());
   }
 
   /**
@@ -172,8 +176,11 @@ public class AllProgramsApp extends AbstractApplication {
   public static class NoOpSparkProgram implements JavaSparkProgram {
     @Override
     public void run(SparkContext context) {
-      context.readFromStream(STREAM_NAME, String.class);
-      context.readFromDataset(DATASET_NAME, byte[].class, byte[].class);
+      JavaPairRDD<LongWritable, String> streamRDD = context.readFromStream(STREAM_NAME, String.class);
+      LOG.info("Stream events: {}", streamRDD.count());
+
+      JavaPairRDD<byte[], byte[]> datasetRDD = context.readFromDataset(DATASET_NAME, byte[].class, byte[].class);
+      LOG.info("Dataset pairs: {}", datasetRDD.count());
     }
   }
 
@@ -232,4 +239,23 @@ public class AllProgramsApp extends AbstractApplication {
     }
   }
 
+  /**
+   *
+   */
+  public static class NoOpService extends AbstractService {
+
+    public static final String NAME = "NoOpService";
+
+    @Override
+    protected void configure() {
+      addHandler(new NoOpHandler());
+    }
+
+    private class NoOpHandler extends AbstractHttpServiceHandler {
+      @Override
+      protected void configure() {
+        useDatasets(DATASET_NAME);
+      }
+    }
+  }
 }

@@ -16,48 +16,42 @@
 
 package co.cask.cdap.explore.service;
 
-import co.cask.cdap.api.data.DatasetInstantiationException;
-import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.exception.DatasetNotFoundException;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.explore.guice.ExploreRuntimeModule;
+import co.cask.cdap.explore.service.hive.Hive12CDH5ExploreService;
 import co.cask.cdap.explore.service.hive.Hive12ExploreService;
 import co.cask.cdap.explore.service.hive.Hive13ExploreService;
-import co.cask.cdap.explore.service.hive.HiveCDH4ExploreService;
-import co.cask.cdap.explore.service.hive.HiveCDH5ExploreService;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.explore.service.hive.Hive14ExploreService;
+import co.cask.cdap.format.RecordFormats;
 import com.google.common.base.Function;
+import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
-import com.google.common.io.Closeables;
-import com.google.common.io.Files;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.util.VersionInfo;
+import org.apache.hadoop.yarn.conf.YarnConfiguration;
+import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.internal.utils.Dependencies;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
-import javax.annotation.Nullable;
 
 /**
  * Utility class for the explore service.
@@ -69,16 +63,22 @@ public class ExploreServiceUtils {
    * Hive support enum.
    */
   public enum HiveSupport {
-    HIVE_CDH4(Pattern.compile("^.*cdh4\\..*$"), HiveCDH4ExploreService.class),
-    HIVE_CDH5(Pattern.compile("^.*cdh5\\..*$"), HiveCDH5ExploreService.class),
+    // CDH 5.0 to 5.1 uses Hive 0.12
+    // CDH >5.1 uses Hive >=0.13.1 (aka 1.0, which Hive14ExploreService supports)
+    HIVE_CDH5_0(Pattern.compile("^.*cdh5.0\\..*$"), Hive12CDH5ExploreService.class),
+    HIVE_CDH5_1(Pattern.compile("^.*cdh5.1\\..*$"), Hive12CDH5ExploreService.class),
+    HIVE_CDH5(Pattern.compile("^.*cdh5\\..*$"), Hive14ExploreService.class),
 
     HIVE_12(null, Hive12ExploreService.class),
-    HIVE_13(null, Hive13ExploreService.class);
+    HIVE_13(null, Hive13ExploreService.class),
+    HIVE_14(null, Hive14ExploreService.class),
+    HIVE_1_0(null, Hive14ExploreService.class),
+    HIVE_1_1(null, Hive14ExploreService.class);
 
     private final Pattern hadoopVersionPattern;
     private final Class<? extends ExploreService> hiveExploreServiceClass;
 
-    private HiveSupport(Pattern hadoopVersionPattern, Class<? extends ExploreService> hiveExploreServiceClass) {
+    HiveSupport(Pattern hadoopVersionPattern, Class<? extends ExploreService> hiveExploreServiceClass) {
       this.hadoopVersionPattern = hadoopVersionPattern;
       this.hiveExploreServiceClass = hiveExploreServiceClass;
     }
@@ -98,6 +98,8 @@ public class ExploreServiceUtils {
   private static ClassLoader exploreClassLoader = null;
 
   private static final Pattern HIVE_SITE_FILE_PATTERN = Pattern.compile("^.*/hive-site\\.xml$");
+  private static final Pattern YARN_SITE_FILE_PATTERN = Pattern.compile("^.*/yarn-site\\.xml$");
+  private static final Pattern MAPRED_SITE_FILE_PATTERN = Pattern.compile("^.*/mapred-site\\.xml$");
 
   /**
    * Get all the files contained in a class path.
@@ -169,54 +171,42 @@ public class ExploreServiceUtils {
 
   /**
    * Check that Hive is in the class path - with a right version.
-   *
-   * @param hiveClassLoader class loader to use to load hive classes.
-   *                        If null, the class loader of this class is used.
    */
   public static HiveSupport checkHiveSupport(ClassLoader hiveClassLoader) {
+    // First try to figure which hive support is relevant based on Hadoop distribution name
+    String hadoopVersion = VersionInfo.getVersion();
+    LOG.info("Hadoop version is: {}", hadoopVersion);
+    for (HiveSupport hiveSupport : HiveSupport.values()) {
+      if (hiveSupport.getHadoopVersionPattern() != null &&
+        hiveSupport.getHadoopVersionPattern().matcher(hadoopVersion).matches()) {
+        return hiveSupport;
+      }
+    }
+
+    ClassLoader usingCL = hiveClassLoader;
+    if (usingCL == null) {
+      usingCL = ExploreServiceUtils.class.getClassLoader();
+    }
+
     try {
-      ClassLoader usingCL = hiveClassLoader;
-      if (usingCL == null) {
-        usingCL = ExploreServiceUtils.class.getClassLoader();
-      }
-
-      // First try to figure which hive support is relevant based on Hadoop distribution name
-      String hadoopVersion = VersionInfo.getVersion();
-      LOG.info("Hadoop version is: {}", hadoopVersion);
-      for (HiveSupport hiveSupport : HiveSupport.values()) {
-        if (hiveSupport.getHadoopVersionPattern() != null &&
-          hiveSupport.getHadoopVersionPattern().matcher(hadoopVersion).matches()) {
-          return hiveSupport;
-        }
-      }
-
-      // In Hive 12, CLIService.getOperationStatus returns OperationState.
-      // In Hive 13, CLIService.getOperationStatus returns OperationStatus.
-      Class cliServiceClass = usingCL.loadClass("org.apache.hive.service.cli.CLIService");
-      Class operationHandleCl = usingCL.loadClass("org.apache.hive.service.cli.OperationHandle");
-      @SuppressWarnings("unchecked")
-      Method getStatusMethod = cliServiceClass.getDeclaredMethod("getOperationStatus", operationHandleCl);
-
-      // Rowset is an interface in Hive 13, but a class in Hive 12
-      Class rowSetClass = usingCL.loadClass("org.apache.hive.service.cli.RowSet");
-
-      if (rowSetClass.isInterface()
-        && getStatusMethod.getReturnType() == usingCL.loadClass("org.apache.hive.service.cli.OperationStatus")) {
-        return HiveSupport.HIVE_13;
-      } else if (!rowSetClass.isInterface()
-        && getStatusMethod.getReturnType() == usingCL.loadClass("org.apache.hive.service.cli.OperationState")) {
+      Class<?> hiveVersionInfoClass = usingCL.loadClass("org.apache.hive.common.util.HiveVersionInfo");
+      String hiveVersion = (String) hiveVersionInfoClass.getDeclaredMethod("getVersion").invoke(null);
+      if (hiveVersion.startsWith("0.12.")) {
         return HiveSupport.HIVE_12;
+      } else if (hiveVersion.startsWith("0.13.")) {
+        return HiveSupport.HIVE_13;
+      } else if (hiveVersion.startsWith("0.14.") || hiveVersion.startsWith("1.0.")) {
+        return HiveSupport.HIVE_14;
+      } else if (hiveVersion.startsWith("1.1.")) {
+        return HiveSupport.HIVE_1_1;
       }
-      throw new RuntimeException("Hive distribution not supported. Set the configuration '" +
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+
+    throw new RuntimeException("Hive distribution not supported. Set the configuration '" +
                                  Constants.Explore.EXPLORE_ENABLED +
                                  "' to false to start up without Explore.");
-    } catch (RuntimeException e) {
-      throw e;
-    } catch (Throwable e) {
-      throw new RuntimeException("Hive jars not present in classpath. Set the configuration '" +
-                                 Constants.Explore.EXPLORE_ENABLED +
-                                 "' to false to start up without Explore.", e);
-    }
   }
 
   /**
@@ -268,35 +258,54 @@ public class ExploreServiceUtils {
     if (classLoader == null) {
       usingCL = ExploreRuntimeModule.class.getClassLoader();
     }
-    Set<String> bootstrapClassPaths = getBoostrapClasses();
+
+    final Set<String> bootstrapClassPaths = getBoostrapClasses();
+
+    ClassAcceptor classAcceptor = new ClassAcceptor() {
+      /* Excluding any class contained in the bootstrapClassPaths and Kryo classes.
+        * We need to remove Kryo dependency in the Explore container. Spark introduced version 2.21 version of Kryo,
+        * which would be normally shipped to the Explore container. Yet, Hive requires Kryo 2.22,
+        * and gets it from the Hive jars - hive-exec.jar to be precise.
+        * */
+      @Override
+      public boolean accept(String className, URL classUrl, URL classPathUrl) {
+        if (bootstrapClassPaths.contains(classPathUrl.getFile()) ||
+          className.startsWith("com.esotericsoftware.kryo")) {
+          return false;
+        }
+        return true;
+      }
+    };
 
     Set<File> hBaseTableDeps = traceDependencies(HBaseTableUtilFactory.getHBaseTableUtilClass().getName(),
-                                                 bootstrapClassPaths, usingCL);
+                                                 usingCL, classAcceptor);
 
     // Note the order of dependency jars is important so that HBase jars come first in the classpath order
     // LinkedHashSet maintains insertion order while removing duplicate entries.
-    Set<File> orderedDependencies = new LinkedHashSet<File>();
+    Set<File> orderedDependencies = new LinkedHashSet<>();
     orderedDependencies.addAll(hBaseTableDeps);
-    orderedDependencies.addAll(traceDependencies(DatasetService.class.getCanonicalName(),
-                                                 bootstrapClassPaths, usingCL));
+    orderedDependencies.addAll(traceDependencies(DatasetService.class.getName(),
+                                                 usingCL, classAcceptor));
     orderedDependencies.addAll(traceDependencies("co.cask.cdap.hive.datasets.DatasetStorageHandler",
-                                                 bootstrapClassPaths, usingCL));
+                                                 usingCL, classAcceptor));
     orderedDependencies.addAll(traceDependencies("co.cask.cdap.hive.datasets.StreamStorageHandler",
-                                                 bootstrapClassPaths, usingCL));
+                                                 usingCL, classAcceptor));
     orderedDependencies.addAll(traceDependencies("org.apache.hadoop.hive.ql.exec.mr.ExecDriver",
-                                                 bootstrapClassPaths, usingCL));
+                                                 usingCL, classAcceptor));
     orderedDependencies.addAll(traceDependencies("org.apache.hive.service.cli.CLIService",
-                                                 bootstrapClassPaths, usingCL));
+                                                 usingCL, classAcceptor));
     orderedDependencies.addAll(traceDependencies("org.apache.hadoop.mapred.YarnClientProtocolProvider",
-                                                 bootstrapClassPaths, usingCL));
+                                                 usingCL, classAcceptor));
+    orderedDependencies.addAll(traceDependencies(RecordFormats.class.getName(),
+                                                 usingCL, classAcceptor));
 
     // Needed for - at least - CDH 4.4 integration
     orderedDependencies.addAll(traceDependencies("org.apache.hive.builtins.BuiltinUtils",
-                                                 bootstrapClassPaths, usingCL));
+                                                 usingCL, classAcceptor));
 
     // Needed for - at least - CDH 5 integration
     orderedDependencies.addAll(traceDependencies("org.apache.hadoop.hive.shims.Hadoop23Shims",
-                                                 bootstrapClassPaths, usingCL));
+                                                 usingCL, classAcceptor));
 
     exploreDependencies = orderedDependencies;
     return orderedDependencies;
@@ -304,15 +313,12 @@ public class ExploreServiceUtils {
 
   /**
    * Trace the dependencies files of the given className, using the classLoader,
-   * and excluding any class contained in the bootstrapClassPaths and Kryo classes.
-   * We need to remove Kryo dependency in the Explore container. Spark introduced version 2.21 version of Kryo,
-   * which would be normally shipped to the Explore container. Yet, Hive requires Kryo 2.22,
-   * and gets it from the Hive jars - hive-exec.jar to be precise.
+   * and including the classes that's accepted by the classAcceptor
    *
    * Nothing is returned if the classLoader does not contain the className.
    */
-  public static Set<File> traceDependencies(String className, final Set<String> bootstrapClassPaths,
-                                            ClassLoader classLoader)
+  public static Set<File> traceDependencies(String className, ClassLoader classLoader,
+                                            final ClassAcceptor classAcceptor)
     throws IOException {
     ClassLoader usingCL = classLoader;
     if (usingCL == null) {
@@ -322,14 +328,10 @@ public class ExploreServiceUtils {
 
     Dependencies.findClassDependencies(
       usingCL,
-      new Dependencies.ClassAcceptor() {
+      new ClassAcceptor() {
         @Override
         public boolean accept(String className, URL classUrl, URL classPathUrl) {
-          if (bootstrapClassPaths.contains(classPathUrl.getFile())) {
-            return false;
-          }
-
-          if (className.startsWith("com.esotericsoftware.kryo")) {
+          if (!classAcceptor.accept(className, classUrl, classPathUrl)) {
             return false;
           }
 
@@ -344,14 +346,29 @@ public class ExploreServiceUtils {
   }
 
   /**
-   * Check that the file is a hive-site.xml file, and return a temp copy of it to which are added
-   * necessary options. If it is not a hive-site.xml file, return it as is.
+   * Updates environment variables in hive-site.xml, mapred-site.xml and yarn-site.xml for explore.
+   * All other conf files are returned without any update.
+   * @param confFile conf file to update
+   * @param tempDir temp dir to create files if necessary
+   * @return the new conf file to use in place of confFile
    */
-  public static File hijackHiveConfFile(File confFile) {
-    if (!HIVE_SITE_FILE_PATTERN.matcher(confFile.getAbsolutePath()).matches()) {
+  public static File updateConfFileForExplore(File confFile, File tempDir) {
+    if (HIVE_SITE_FILE_PATTERN.matcher(confFile.getAbsolutePath()).matches()) {
+      return updateHiveConfFile(confFile, tempDir);
+    } else if (YARN_SITE_FILE_PATTERN.matcher(confFile.getAbsolutePath()).matches()) {
+      return updateYarnConfFile(confFile, tempDir);
+    } else if (MAPRED_SITE_FILE_PATTERN.matcher(confFile.getAbsolutePath()).matches()) {
+      return updateMapredConfFile(confFile, tempDir);
+    } else {
       return confFile;
     }
+  }
 
+  /**
+   * Change yarn-site.xml file, and return a temp copy of it to which are added
+   * necessary options.
+   */
+  private static File updateYarnConfFile(File confFile, File tempDir) {
     Configuration conf = new Configuration(false);
     try {
       conf.addResource(confFile.toURI().toURL());
@@ -360,66 +377,89 @@ public class ExploreServiceUtils {
       throw Throwables.propagate(e);
     }
 
-    // Prefer our job jar in the classpath
-    // Set both old and new keys
-    // Those settings will be in hive-site.xml in the classpath of the Explore Service. Therefore,
-    // all HiveConf objects created there will have those settings, and they will be passed to
-    // the map reduces jobs launched by Hive.
-    conf.setBoolean("mapreduce.user.classpath.first", true);
-    conf.setBoolean(Job.MAPREDUCE_JOB_USER_CLASSPATH_FIRST, true);
+    String yarnAppClassPath = conf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH,
+                                       Joiner.on(",").join(YarnConfiguration.DEFAULT_YARN_APPLICATION_CLASSPATH));
 
-    File newHiveConfFile = new File(Files.createTempDir(), "hive-site.xml");
-    FileOutputStream fos;
+    // add the pwd/* at the beginning of classpath. so user's jar will take precedence and without this change,
+    // job.jar will be at the beginning of the classpath, since job.jar has old guava version classes,
+    // we want to add pwd/* before
+    yarnAppClassPath = "$PWD/*," + yarnAppClassPath;
+
+    conf.set(YarnConfiguration.YARN_APPLICATION_CLASSPATH, yarnAppClassPath);
+
+    File newYarnConfFile = new File(tempDir, "yarn-site.xml");
+    try (FileOutputStream os = new FileOutputStream(newYarnConfFile)) {
+      conf.writeXml(os);
+    } catch (IOException e) {
+      LOG.error("Problem creating and writing to temporary yarn-conf.xml conf file at {}", newYarnConfFile, e);
+      throw Throwables.propagate(e);
+    }
+
+    return newYarnConfFile;
+  }
+
+  /**
+   * Change mapred-site.xml file, and return a temp copy of it to which are added
+   * necessary options.
+   */
+  private static File updateMapredConfFile(File confFile, File tempDir) {
+    Configuration conf = new Configuration(false);
     try {
-      fos = new FileOutputStream(newHiveConfFile);
-    } catch (FileNotFoundException e) {
+      conf.addResource(confFile.toURI().toURL());
+    } catch (MalformedURLException e) {
+      LOG.error("File {} is malformed.", confFile, e);
+      throw Throwables.propagate(e);
+    }
+
+    String mrAppClassPath = conf.get(MRJobConfig.MAPREDUCE_APPLICATION_CLASSPATH,
+                                       MRJobConfig.DEFAULT_MAPREDUCE_APPLICATION_CLASSPATH);
+
+    // Add the pwd/* at the beginning of classpath. Without this change, old jars from mr framework classpath
+    // get into classpath.
+    mrAppClassPath = "$PWD/*," + mrAppClassPath;
+
+    conf.set(MRJobConfig.MAPREDUCE_APPLICATION_CLASSPATH, mrAppClassPath);
+
+    File newMapredConfFile = new File(tempDir, "mapred-site.xml");
+    try (FileOutputStream os = new FileOutputStream(newMapredConfFile)) {
+      conf.writeXml(os);
+    } catch (IOException e) {
+      LOG.error("Problem creating and writing to temporary mapred-site.xml conf file at {}", newMapredConfFile, e);
+      throw Throwables.propagate(e);
+    }
+
+    return newMapredConfFile;
+  }
+
+  /**
+   * Change hive-site.xml file, and return a temp copy of it to which are added
+   * necessary options.
+   */
+  private static File updateHiveConfFile(File confFile, File tempDir) {
+    Configuration conf = new Configuration(false);
+    try {
+      conf.addResource(confFile.toURI().toURL());
+    } catch (MalformedURLException e) {
+      LOG.error("File {} is malformed.", confFile, e);
+      throw Throwables.propagate(e);
+    }
+
+    // we prefer jars at container's root directory before job.jar,
+    // we edit the YARN_APPLICATION_CLASSPATH in yarn-site.xml using
+    // co.cask.cdap.explore.service.ExploreServiceUtils.updateYarnConfFile and
+    // setting the MAPREDUCE_JOB_CLASSLOADER and MAPREDUCE_JOB_USER_CLASSPATH_FIRST to false will put
+    // YARN_APPLICATION_CLASSPATH before job.jar for container's classpath.
+    conf.setBoolean(Job.MAPREDUCE_JOB_USER_CLASSPATH_FIRST, false);
+    conf.setBoolean(MRJobConfig.MAPREDUCE_JOB_CLASSLOADER, false);
+
+    File newHiveConfFile = new File(tempDir, "hive-site.xml");
+
+    try (FileOutputStream os = new FileOutputStream(newHiveConfFile)) {
+      conf.writeXml(os);
+    } catch (IOException e) {
       LOG.error("Problem creating temporary hive-site.xml conf file at {}", newHiveConfFile, e);
       throw Throwables.propagate(e);
     }
-
-    try {
-      conf.writeXml(fos);
-    } catch (IOException e) {
-      LOG.error("Could not write modified configuration to temporary hive-site.xml at {}", newHiveConfFile, e);
-      throw Throwables.propagate(e);
-    } finally {
-      Closeables.closeQuietly(fos);
-    }
-
     return newHiveConfFile;
-  }
-
-  public static Dataset instantiateDataset(DatasetFramework datasetFramework, Id.DatasetInstance datasetID)
-    throws DatasetNotFoundException, DatasetInstantiationException, ClassNotFoundException {
-    try {
-      Dataset dataset = datasetFramework.getDataset(datasetID, DatasetDefinition.NO_ARGUMENTS, null);
-      if (dataset == null) {
-        throw new DatasetNotFoundException(datasetID);
-      }
-      return dataset;
-    } catch (Exception e) {
-      String className = isClassNotFoundException(e);
-      if (className == null) {
-        throw new DatasetInstantiationException(e.getMessage());
-      }
-      String errMsg = String.format(
-        "Cannot load dataset %s because class %s cannot be found. This is probably because class %s is a " +
-          "type parameter of dataset %s that is not present in the dataset's jar file. See the developer " +
-          "guide for more information.", datasetID, className, className, datasetID);
-      LOG.info(errMsg);
-      // throw a class not found...
-      throw new ClassNotFoundException(errMsg);
-    }
-  }
-
-  @Nullable
-  private static String isClassNotFoundException(Throwable e) {
-    if (e instanceof ClassNotFoundException) {
-      return e.getMessage();
-    }
-    if (e.getCause() != null) {
-      return isClassNotFoundException(e.getCause());
-    }
-    return null;
   }
 }

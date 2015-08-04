@@ -52,7 +52,7 @@ final class StreamRecordReader<K, V> extends RecordReader<K, V> {
   StreamRecordReader(StreamEventDecoder<K, V> decoder) {
     this.decoder = decoder;
     this.events = Lists.newArrayListWithCapacity(1);
-    this.currentEntry = new StreamEventDecoder.DecodeResult<K, V>();
+    this.currentEntry = new StreamEventDecoder.DecodeResult<>();
   }
 
   @Override

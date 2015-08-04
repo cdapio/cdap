@@ -17,11 +17,13 @@
 package co.cask.cdap.cli.completer.element;
 
 import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
+import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ProgramIdArgument;
 import co.cask.cdap.cli.util.ArgumentParser;
 import co.cask.cdap.client.ServiceClient;
-import co.cask.cdap.common.exception.NotFoundException;
-import co.cask.cdap.common.exception.UnauthorizedException;
+import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.UnauthorizedException;
+import co.cask.cdap.proto.Id;
 import co.cask.common.cli.completers.PrefixCompleter;
 import com.google.common.collect.Lists;
 
@@ -41,9 +43,12 @@ public class HttpMethodPrefixCompleter extends PrefixCompleter {
 
   private final ServiceClient serviceClient;
   private final EndpointCompleter completer;
+  private final CLIConfig cliConfig;
 
-  public HttpMethodPrefixCompleter(final ServiceClient serviceClient, String prefix, EndpointCompleter completer) {
+  public HttpMethodPrefixCompleter(final ServiceClient serviceClient, final CLIConfig cliConfig,
+                                   String prefix, EndpointCompleter completer) {
     super(prefix, completer);
+    this.cliConfig = cliConfig;
     this.serviceClient = serviceClient;
     this.completer = completer;
   }
@@ -53,25 +58,25 @@ public class HttpMethodPrefixCompleter extends PrefixCompleter {
     Map<String, String> arguments = ArgumentParser.getArguments(buffer, PATTERN);
     ProgramIdArgument programIdArgument = ArgumentParser.parseProgramId(arguments.get(PROGRAM_ID));
     if (programIdArgument != null) {
-      completer.setEndpoints(getMethods(programIdArgument.getAppId(), programIdArgument.getProgramId()));
+      Id.Service service = Id.Service.from(cliConfig.getCurrentNamespace(),
+                                           programIdArgument.getAppId(), programIdArgument.getProgramId());
+      completer.setEndpoints(getMethods(service));
     } else {
       completer.setEndpoints(Collections.<String>emptyList());
     }
     return super.complete(buffer, cursor, candidates);
   }
 
-  public Collection<String> getMethods(String appId, String serviceId) {
+  public Collection<String> getMethods(Id.Service serviceId) {
     Collection<String> httpMethods = Lists.newArrayList();
     try {
-      for (ServiceHttpEndpoint endpoint : serviceClient.getEndpoints(appId, serviceId)) {
+      for (ServiceHttpEndpoint endpoint : serviceClient.getEndpoints(serviceId)) {
         String method = endpoint.getMethod();
         if (!httpMethods.contains(method)) {
           httpMethods.add(method);
         }
       }
-    } catch (IOException ignored) {
-    } catch (UnauthorizedException ignored) {
-    } catch (NotFoundException ignored) {
+    } catch (IOException | UnauthorizedException | NotFoundException ignored) {
     }
     return httpMethods;
   }

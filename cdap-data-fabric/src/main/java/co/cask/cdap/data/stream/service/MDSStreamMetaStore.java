@@ -68,7 +68,8 @@ public final class MDSStreamMetaStore implements StreamMetaStore {
 
           return new StreamMds(new MetadataStoreDataset(mdsTable));
         } catch (Exception e) {
-          LOG.error("Failed to access app.meta table", e);
+          LOG.warn("Failed to access app.meta table {}", e.getMessage());
+          LOG.debug("Failed to access app.meta table", e);
           throw Throwables.propagate(e);
         }
       }

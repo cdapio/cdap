@@ -2,19 +2,19 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2014 Cask Data, Inc.
 
-============================================
+==========================================
 Best Practices for Developing Applications
-============================================
+==========================================
 
 Initializing Instance Fields
-==========================================
-There are three ways to initialize instance fields used in Flowlets:
+============================
+There are three ways to initialize instance fields used in flowlets:
 
 #. Using the default constructor;
-#. Using the ``initialize()`` method of the Flowlets; and
+#. Using the ``initialize()`` method of the flowlets; and
 #. Using ``@Property`` annotations.
 
-To initialize using an Property annotation, simply annotate the field definition with
+To initialize using a property annotation, simply annotate the field definition with
 ``@Property``. 
 
 The following example demonstrates the convenience of using ``@Property`` in a
@@ -28,7 +28,7 @@ that filters out specific words::
     @Property
     private final String toFilterOut;
 
-    public CountByField(String toFilterOut) {
+    public WordFilter(String toFilterOut) {
       this.toFilterOut = toFilterOut;
     }
 
@@ -41,26 +41,25 @@ that filters out specific words::
   }
 
 
-The Flowlet constructor is called with the parameter when the Flow is configured::
+The flowlet constructor is called with the parameter when the flow is configured::
 
-  public static class WordCountFlow implements Flow {
+  public static class WordCountFlow extends AbstractFlow {
+
     @Override
-    public FlowSpecification configure() {
-      return FlowSpecification.Builder.with()
-        .setName("WordCountFlow")
-        .setDescription("Flow for counting words")
-        .withFlowlets().add(new Tokenizer())
-                       .add(new WordsFilter("the"))
-                       .add(new WordsCounter())
-        .connect().fromStream("text").to("Tokenizer")
-                  .from("Tokenizer").to("WordsFilter")
-                  .from("WordsFilter").to("WordsCounter")
-        .build();
+    public void configureFlow() {
+      setName("WordCountFlow");
+      setDescription("Flow for counting words");
+      addFlowlet("Tokenizer", new Tokenizer());
+      addFlowlet("WordsFilter", new WordsFilter("the"));
+      addFlowlet("WordsCounter", new WordsCounter());
+      connectStream("text", "Tokenizer");
+      connect("Tokenizer", "WordsFilter");
+      connect("WordsFilter", "WordsCounter");
     }
   }
 
 
-At run-time, when the Flowlet is started, a value is injected into the ``toFilterOut``
+At run-time, when the flowlet is started, a value is injected into the ``toFilterOut``
 field.
 
 Field types that are supported using the ``@Property`` annotation are primitives,

@@ -12,12 +12,26 @@ body.state-workflows{
       }
     }
   }
-  .table.table-status { margin-top: 0; }
+
   .col-sm-6 > div.btn-group { margin-top: 14px; }
   .col-xs-12 > strong {
     color: @cdap-header;
     font-size: 14px;
     padding-right: 5px;
+  }
+
+  .btn-group {
+    .btn-red {
+      span.fa {
+        color: @brand-danger;
+      }
+    }
+
+    .btn-green {
+      span.fa {
+        color: @brand-success;
+      }
+    }
   }
 
   .schedule-heading {

@@ -16,9 +16,9 @@
 
 package co.cask.cdap.test;
 
+import co.cask.cdap.api.Config;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.app.Application;
-import co.cask.cdap.api.app.ApplicationContext;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
@@ -26,6 +26,7 @@ import co.cask.cdap.api.templates.ApplicationTemplate;
 import co.cask.cdap.api.templates.plugins.PluginPropertyField;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.DefaultAppConfigurer;
+import co.cask.cdap.app.DefaultApplicationContext;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -34,13 +35,13 @@ import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.explore.jdbc.ExploreDriver;
+import co.cask.cdap.internal.AppFabricClient;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.internal.test.PluginJarHelper;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.test.internal.AppFabricClient;
 import co.cask.cdap.test.internal.ApplicationManagerFactory;
 import co.cask.cdap.test.internal.DefaultAdapterManager;
 import co.cask.cdap.test.internal.StreamManagerFactory;
@@ -57,6 +58,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
+import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
@@ -76,6 +78,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.jar.Manifest;
+import javax.annotation.Nullable;
 
 /**
  *
@@ -129,18 +132,31 @@ public class UnitTestManager implements TestManager {
   public ApplicationManager deployApplication(Id.Namespace namespace,
                                               Class<? extends Application> applicationClz,
                                               File... bundleEmbeddedJars) {
+    return deployApplication(namespace, applicationClz, null, bundleEmbeddedJars);
+  }
+
+  @Override
+  public ApplicationManager deployApplication(Id.Namespace namespace, Class<? extends Application> applicationClz,
+                                              @Nullable Config configObject, File... bundleEmbeddedJars) {
     Preconditions.checkNotNull(applicationClz, "Application class cannot be null.");
+    String appConfig = "";
+    TypeToken typeToken = TypeToken.of(applicationClz);
+    TypeToken<?> configToken = typeToken.resolveType(Application.class.getTypeParameters()[0]);
 
     try {
+      if (configObject != null) {
+        appConfig = GSON.toJson(configObject);
+      } else {
+        configObject = (Config) configToken.getRawType().newInstance();
+      }
+
       Application app = applicationClz.newInstance();
       DefaultAppConfigurer configurer = new DefaultAppConfigurer(app);
-      app.configure(configurer, new ApplicationContext());
+      app.configure(configurer, new DefaultApplicationContext(configObject));
       ApplicationSpecification appSpec = configurer.createSpecification();
-
       Location deployedJar = appFabricClient.deployApplication(namespace, appSpec.getName(),
-                                                               applicationClz, bundleEmbeddedJars);
+                                                               applicationClz, appConfig, bundleEmbeddedJars);
       return appManagerFactory.create(Id.Application.from(namespace, appSpec.getName()), deployedJar, appSpec);
-
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -201,11 +217,8 @@ public class UnitTestManager implements TestManager {
       json.add("properties", GSON.toJsonTree(properties));
     }
     File configFile = new File(templateDir, fileName);
-    Writer writer = Files.newWriter(configFile, Charsets.UTF_8);
-    try {
+    try (Writer writer = Files.newWriter(configFile, Charsets.UTF_8)) {
       GSON.toJson(Lists.newArrayList(json), writer);
-    } finally {
-      writer.close();
     }
   }
 

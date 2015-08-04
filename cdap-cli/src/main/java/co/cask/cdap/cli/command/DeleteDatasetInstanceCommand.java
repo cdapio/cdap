@@ -23,6 +23,7 @@ import co.cask.cdap.cli.english.Article;
 import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.DatasetClient;
+import co.cask.cdap.proto.Id;
 import co.cask.common.cli.Arguments;
 import com.google.inject.Inject;
 
@@ -43,10 +44,11 @@ public class DeleteDatasetInstanceCommand extends AbstractAuthCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    String datasetName = arguments.get(ArgumentName.DATASET.toString());
+    Id.DatasetInstance dataset = Id.DatasetInstance.from(cliConfig.getCurrentNamespace(),
+                                                         arguments.get(ArgumentName.DATASET.toString()));
 
-    datasetClient.delete(datasetName);
-    output.printf("Successfully deleted dataset named '%s'\n", datasetName);
+    datasetClient.delete(dataset);
+    output.printf("Successfully deleted dataset instance '%s'\n", dataset.getId());
   }
 
   @Override
@@ -56,6 +58,6 @@ public class DeleteDatasetInstanceCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Deletes %s.", Fragment.of(Article.A, ElementType.DATASET.getTitleName()));
+    return String.format("Deletes %s.", Fragment.of(Article.A, ElementType.DATASET.getName()));
   }
 }

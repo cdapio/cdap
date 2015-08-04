@@ -16,6 +16,7 @@
 
 package co.cask.cdap.template.etl.realtime.source;
 
+import co.cask.cdap.api.data.format.Formats;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.template.etl.api.Emitter;
 import co.cask.cdap.template.etl.api.realtime.SourceState;
@@ -124,10 +125,75 @@ public class KafkaSourceTest {
 
     TimeUnit.SECONDS.sleep(2);
 
-    verifyEmittedMessages(kafkaSource, msgCount);
+    verifyEmittedMessages(kafkaSource, msgCount, new SourceState());
   }
 
-  private void initializeKafkaSource(String topic, int partitions, boolean preferZK)  throws Exception {
+  @Test
+  public void testSavedSourceState() throws Exception {
+    final String topic = "testKafkaSavedSourceState";
+
+    SourceState sourceState = new SourceState();
+
+    initializeKafkaSource(topic, PARTITIONS, false);
+
+    // Publish 5 messages to Kafka, the source should consume them
+    int msgCount = 5;
+    Map<String, String> messages = Maps.newHashMap();
+    for (int i = 0; i < msgCount; i++) {
+      messages.put(Integer.toString(i), "Message " + i);
+    }
+    sendMessage(topic, messages);
+
+    TimeUnit.SECONDS.sleep(2);
+
+    verifyEmittedMessages(kafkaSource, msgCount, sourceState);
+
+    // Do it again but this time the messages will still be 5 instead of 10 from beginning.
+
+    // Reset KafkaSource
+    kafkaSource.destroy();
+    kafkaSource = null;
+
+    initializeKafkaSource(topic, PARTITIONS, false);
+
+    sendMessage(topic, messages);
+
+    TimeUnit.SECONDS.sleep(2);
+
+    verifyEmittedMessages(kafkaSource, msgCount, sourceState);
+  }
+
+  @Test
+  public void testStructuredRecord() throws Exception {
+    final String topic = "testKafkaStructuredRecord";
+    initializeKafkaSource(topic, PARTITIONS, false, Formats.TEXT);
+
+    // Publish 5 messages to Kafka, the source should consume them
+    int msgCount = 5;
+    Map<String, String> messages = Maps.newHashMap();
+    for (int i = 0; i < msgCount; i++) {
+      messages.put(Integer.toString(i), "Message " + i);
+    }
+    sendMessage(topic, messages);
+
+    TimeUnit.SECONDS.sleep(2);
+
+    MockEmitter emitter = new MockEmitter();
+    SourceState updatedSourceState = kafkaSource.poll(emitter, new SourceState());
+
+    System.out.println("Message sent out: " + msgCount);
+    System.out.println("Message being emitted by Kafka realtime source: " + emitter.getInternalSize());
+
+    Assert.assertTrue(updatedSourceState.getState() != null && !updatedSourceState.getState().isEmpty());
+    Assert.assertTrue(emitter.getInternalSize() == msgCount);
+    Assert.assertTrue(((String) emitter.entryList.get(0).get("body")).contains("Message"));
+  }
+
+  private void initializeKafkaSource(String topic, int partitions, boolean preferZK) throws Exception {
+    initializeKafkaSource(topic, partitions, preferZK, null);
+  }
+
+  private void initializeKafkaSource(String topic, int partitions, boolean preferZK, String format) throws Exception {
     String zk = null;
     String brokerList = null;
     if (!supportBrokerList() || preferZK) {
@@ -135,8 +201,8 @@ public class KafkaSourceTest {
     } else {
       brokerList = "localhost:" + kafkaPort;
     }
-
-    KafkaSource.KafkaPluginConfig config = new KafkaSource.KafkaPluginConfig(zk, brokerList, partitions, topic, null);
+    KafkaSource.KafkaPluginConfig config = new KafkaSource.KafkaPluginConfig(zk, brokerList, partitions,
+                                                                             topic, null, format, null);
 
     kafkaSource = new KafkaSource(config);
 
@@ -144,14 +210,14 @@ public class KafkaSourceTest {
   }
 
   // Helper method to verify
-  private void verifyEmittedMessages(KafkaSource source, int msgCount)  {
+  private void verifyEmittedMessages(KafkaSource source, int msgCount, SourceState sourceState)  {
     MockEmitter emitter = new MockEmitter();
-    SourceState sourceState = source.poll(emitter, new SourceState());
+    SourceState updatedSourceState = source.poll(emitter, sourceState);
 
     System.out.println("Message sent out: " + msgCount);
     System.out.println("Message being emitted by Kafka realtime source: " + emitter.getInternalSize());
 
-    Assert.assertTrue(sourceState.getState() != null && !sourceState.getState().isEmpty());
+    Assert.assertTrue(updatedSourceState.getState() != null && !updatedSourceState.getState().isEmpty());
     Assert.assertTrue(emitter.getInternalSize() == msgCount);
   }
 

@@ -68,12 +68,12 @@ import java.util.concurrent.atomic.AtomicLong;
 class LocalDistributedCacheManagerWithFix {
   public static final Logger LOG = LoggerFactory.getLogger(LocalDistributedCacheManagerWithFix.class);
   
-  private List<String> localArchives = new ArrayList<String>();
-  private List<String> localFiles = new ArrayList<String>();
-  private List<String> localClasspaths = new ArrayList<String>();
-  private List<File> jarExpandDirs = new ArrayList<File>();
+  private List<String> localArchives = new ArrayList<>();
+  private List<String> localFiles = new ArrayList<>();
+  private List<String> localClasspaths = new ArrayList<>();
+  private List<File> jarExpandDirs = new ArrayList<>();
 
-  private List<File> symlinksCreated = new ArrayList<File>();
+  private List<File> symlinksCreated = new ArrayList<>();
 
   private boolean setupCalled = false;
   private JobID jobId;
@@ -95,14 +95,14 @@ class LocalDistributedCacheManagerWithFix {
     // Generate YARN local resources objects corresponding to the distributed
     // cache configuration
     Map<String, LocalResource> localResources =
-      new LinkedHashMap<String, LocalResource>();
+      new LinkedHashMap<>();
     MRApps.setupDistributedCache(conf, localResources);
     // Generating unique numbers for FSDownload.
     AtomicLong uniqueNumberGenerator =
       new AtomicLong(System.currentTimeMillis());
 
     // Find which resources are to be put on the local classpath
-    Map<String, Path> classpaths = new HashMap<String, Path>();
+    Map<String, Path> classpaths = new HashMap<>();
     Path[] archiveClassPaths = DistributedCache.getArchiveClassPaths(conf);
     if (archiveClassPaths != null) {
       for (Path p : archiveClassPaths) {

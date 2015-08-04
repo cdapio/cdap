@@ -20,7 +20,9 @@ import co.cask.cdap.proto.Id;
 
 /**
  * Thrown when a dataset module cannot be deleted.
+ * @deprecated Use {@link co.cask.cdap.common.DatasetModuleCannotBeDeletedException} instead
  */
+@Deprecated
 public class DatasetModuleCannotBeDeletedException extends CannotBeDeletedException {
 
   private final Id.DatasetModule id;

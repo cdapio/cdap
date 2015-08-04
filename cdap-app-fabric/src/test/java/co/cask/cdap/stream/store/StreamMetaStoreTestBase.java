@@ -17,8 +17,8 @@
 package co.cask.cdap.stream.store;
 
 import co.cask.cdap.api.data.stream.StreamSpecification;
-import co.cask.cdap.common.exception.AlreadyExistsException;
-import co.cask.cdap.common.exception.NotFoundException;
+import co.cask.cdap.common.AlreadyExistsException;
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.proto.Id;
 import com.google.common.collect.ImmutableList;

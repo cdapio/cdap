@@ -161,7 +161,7 @@ public class StandardListObjectInspector implements SettableListObjectInspector 
   // SettableListObjectInspector
   @Override
   public Object create(int size) {
-    List<Object> a = new ArrayList<Object>(size);
+    List<Object> a = new ArrayList<>(size);
     for (int i = 0; i < size; i++) {
       a.add(null);
     }

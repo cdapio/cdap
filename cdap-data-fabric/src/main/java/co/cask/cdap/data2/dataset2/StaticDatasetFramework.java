@@ -16,22 +16,14 @@
 
 package co.cask.cdap.data2.dataset2;
 
-import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.dataset.DatasetAdmin;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
-import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.base.Throwables;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 
-import java.io.IOException;
-import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -52,49 +44,8 @@ public class StaticDatasetFramework extends InMemoryDatasetFramework implements 
 
   public StaticDatasetFramework(DatasetDefinitionRegistryFactory registryFactory,
                                 Map<String, DatasetModule> modules,
-                                CConfiguration configuration,
-                                TransactionExecutorFactory txExecutorFactory) {
-    super(registryFactory, modules, configuration, txExecutorFactory);
-  }
-
-  @Override
-  public Collection<DatasetSpecificationSummary> getInstances(Id.Namespace namespaceId) {
-    return super.getInstances(namespaceId);
-  }
-
-  @Nullable
-  @Override
-  public DatasetSpecification getDatasetSpec(Id.DatasetInstance datasetInstanceId) {
-    return super.getDatasetSpec(datasetInstanceId);
-  }
-
-  @Override
-  public boolean hasInstance(Id.DatasetInstance datasetInstanceId) {
-    return super.hasInstance(datasetInstanceId);
-  }
-
-  @Override
-  public boolean hasSystemType(String typeName) {
-    return super.hasSystemType(typeName);
-  }
-
-  @Override
-  public boolean hasType(Id.DatasetType datasetTypeId) {
-    return super.hasType(datasetTypeId);
-  }
-
-  @Nullable
-  @Override
-  public <T extends DatasetAdmin> T getAdmin(Id.DatasetInstance datasetInstanceId, @Nullable ClassLoader classLoader)
-    throws IOException {
-    return super.getAdmin(datasetInstanceId, classLoader);
-  }
-
-  @Nullable
-  @Override
-  public <T extends Dataset> T getDataset(Id.DatasetInstance datasetInstanceId, @Nullable Map<String, String> arguments,
-                                          @Nullable ClassLoader classLoader) throws IOException {
-    return super.getDataset(datasetInstanceId, arguments, classLoader);
+                                CConfiguration configuration) {
+    super(registryFactory, modules, configuration);
   }
 
   @Override
@@ -128,28 +79,6 @@ public class StaticDatasetFramework extends InMemoryDatasetFramework implements 
     } catch (ExecutionException e) {
       throw Throwables.propagate(e);
     }
-  }
-
-  @Override
-  public void addInstance(String datasetTypeName, Id.DatasetInstance datasetInstanceId, DatasetProperties props)
-    throws DatasetManagementException, IOException {
-    super.addInstance(datasetTypeName, datasetInstanceId, props);
-  }
-
-  @Override
-  public void updateInstance(Id.DatasetInstance datasetInstanceId, DatasetProperties props)
-    throws DatasetManagementException, IOException {
-    super.updateInstance(datasetInstanceId, props);
-  }
-
-  @Override
-  public void deleteInstance(Id.DatasetInstance datasetInstanceId) throws DatasetManagementException, IOException {
-    super.deleteInstance(datasetInstanceId);
-  }
-
-  @Override
-  public void deleteAllInstances(Id.Namespace namespaceId) throws DatasetManagementException, IOException {
-    super.deleteAllInstances(namespaceId);
   }
 
   @Override

@@ -80,7 +80,7 @@ public class StructuredRecord {
 
     private Builder(Schema schema) {
       this.schema = schema;
-      this.fields = new HashMap<String, Object>();
+      this.fields = new HashMap<>();
     }
 
     /**

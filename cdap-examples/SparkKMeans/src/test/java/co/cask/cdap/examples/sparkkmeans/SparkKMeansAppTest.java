@@ -24,9 +24,11 @@ import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.SparkManager;
 import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.TestBase;
+import co.cask.cdap.test.TestConfiguration;
 import com.google.common.base.Charsets;
 import com.google.common.io.ByteStreams;
 import org.junit.Assert;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -39,12 +41,15 @@ import java.util.concurrent.TimeUnit;
  */
 public class SparkKMeansAppTest extends TestBase {
 
+  @ClassRule
+  public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", false);
+
   @Test
   public void test() throws Exception {
     // Deploy the Application
     ApplicationManager appManager = deployApplication(SparkKMeansApp.class);
     // Start the Flow
-    FlowManager flowManager = appManager.startFlow("PointsFlow");
+    FlowManager flowManager = appManager.getFlowManager("PointsFlow").start();
     // Send a few points to the stream
     StreamManager streamManager = getStreamManager("pointsStream");
     streamManager.send("10.6 519.2 110.3");
@@ -58,13 +63,13 @@ public class SparkKMeansAppTest extends TestBase {
     metrics.waitForProcessed(3, 5, TimeUnit.SECONDS);
 
     // Start a Spark Program
-    SparkManager sparkManager = appManager.startSpark("SparkKMeansProgram");
+    SparkManager sparkManager = appManager.getSparkManager("SparkKMeansProgram").start();
     sparkManager.waitForFinish(60, TimeUnit.SECONDS);
 
     flowManager.stop();
 
     // Start CentersService
-    ServiceManager serviceManager = appManager.startService(SparkKMeansApp.CentersService.SERVICE_NAME);
+    ServiceManager serviceManager = appManager.getServiceManager(SparkKMeansApp.CentersService.SERVICE_NAME).start();
 
     // Wait service startup
     serviceManager.waitForStatus(true);

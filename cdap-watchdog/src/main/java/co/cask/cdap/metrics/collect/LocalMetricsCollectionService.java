@@ -20,6 +20,7 @@ import co.cask.cdap.api.metrics.MetricValues;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.apache.twill.common.Threads;
@@ -40,6 +41,10 @@ public final class LocalMetricsCollectionService extends AggregatedMetricsCollec
 
   private static final Logger LOG = LoggerFactory.getLogger(LocalMetricsCollectionService.class);
 
+  public static final ImmutableMap<String, String> METRICS_PROCESSOR_CONTEXT =
+    ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE,
+                    Constants.Metrics.Tag.COMPONENT, Constants.Service.METRICS_PROCESSOR);
+
   private final CConfiguration cConf;
   private final MetricStore metricStore;
   private ScheduledExecutorService scheduler;
@@ -48,6 +53,7 @@ public final class LocalMetricsCollectionService extends AggregatedMetricsCollec
   public LocalMetricsCollectionService(CConfiguration cConf, MetricStore metricStore) {
     this.cConf = cConf;
     this.metricStore = metricStore;
+    metricStore.setMetricsContext(this.getContext(METRICS_PROCESSOR_CONTEXT));
   }
 
   @Override
@@ -60,8 +66,6 @@ public final class LocalMetricsCollectionService extends AggregatedMetricsCollec
 
   @Override
   protected void startUp() throws Exception {
-    super.startUp();
-
     // It will only do cleanup if the underlying table doesn't supports TTL.
     scheduler = Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("metrics-cleanup"));
     long retention = cConf.getLong(Constants.Metrics.RETENTION_SECONDS + ".1.seconds",

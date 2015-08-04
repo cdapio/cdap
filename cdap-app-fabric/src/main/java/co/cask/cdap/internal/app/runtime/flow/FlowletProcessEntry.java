@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.internal.app.runtime.flow;
 
+import com.google.common.math.LongMath;
 import com.google.common.primitives.Longs;
 
 import java.util.concurrent.TimeUnit;
@@ -42,15 +43,27 @@ final class FlowletProcessEntry<T> implements Comparable<FlowletProcessEntry> {
   private final ProcessSpecification<T> processSpec;
   private final ProcessSpecification<T> retrySpec;
   private final boolean isTick;
+
+  /**
+   * {@code System.nanoTime} when the next deque should happen.
+   */
   private long nextDeque;
   private long currentBackOff = BACKOFF_MIN;
 
   static <T> FlowletProcessEntry<T> create(ProcessSpecification<T> processSpec) {
-    return new FlowletProcessEntry<T>(processSpec, null, processSpec.getInitialCallDelay());
+    long nextDeque;
+    try {
+      nextDeque = LongMath.checkedAdd(System.nanoTime(), processSpec.getInitialCallDelay());
+    } catch (ArithmeticException e) {
+      // in case System.nanoTime + initialCallDelay > MAX_VALUE, we simply set nextDeque to MAX_VALUE
+      // so that the flowlet never performs a deque instead of dequing immediately.
+      nextDeque = Long.MAX_VALUE;
+    }
+    return new FlowletProcessEntry<>(processSpec, null, nextDeque);
   }
 
   static <T> FlowletProcessEntry<T> create(ProcessSpecification<T> processSpec, ProcessSpecification<T> retrySpec) {
-    return new FlowletProcessEntry<T>(processSpec, retrySpec, 0);
+    return new FlowletProcessEntry<>(processSpec, retrySpec, 0);
   }
 
   private FlowletProcessEntry(ProcessSpecification<T> processSpec, ProcessSpecification<T> retrySpec, long nextDeque) {
@@ -58,6 +71,10 @@ final class FlowletProcessEntry<T> implements Comparable<FlowletProcessEntry> {
     this.retrySpec = retrySpec;
     this.nextDeque = nextDeque;
     this.isTick = processSpec.isTick();
+  }
+
+  long getNextDeque() {
+    return nextDeque;
   }
 
   public boolean isRetry() {
@@ -99,7 +116,7 @@ final class FlowletProcessEntry<T> implements Comparable<FlowletProcessEntry> {
   }
 
   public FlowletProcessEntry<T> resetRetry() {
-    return retrySpec == null ? this : new FlowletProcessEntry<T>(processSpec, null, processSpec.getCallDelay());
+    return retrySpec == null ? this : new FlowletProcessEntry<>(processSpec, null, processSpec.getCallDelay());
   }
 
   public boolean isTick() {

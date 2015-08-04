@@ -19,8 +19,6 @@ import co.cask.cdap.api.data.format.FormatSpecification;
 import com.google.common.base.Objects;
 import com.google.gson.annotations.SerializedName;
 
-import javax.ws.rs.HEAD;
-
 /**
  * Represents the properties of a stream.
  */

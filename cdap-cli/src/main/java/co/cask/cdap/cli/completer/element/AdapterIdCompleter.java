@@ -16,9 +16,10 @@
 
 package co.cask.cdap.cli.completer.element;
 
+import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.completer.StringsCompleter;
 import co.cask.cdap.client.AdapterClient;
-import co.cask.cdap.common.exception.UnauthorizedException;
+import co.cask.cdap.common.UnauthorizedException;
 import co.cask.cdap.proto.AdapterDetail;
 import com.google.common.base.Supplier;
 import com.google.common.collect.Lists;
@@ -34,12 +35,12 @@ import javax.inject.Inject;
 public class AdapterIdCompleter extends StringsCompleter {
 
   @Inject
-  public AdapterIdCompleter(final AdapterClient adapterClient) {
+  public AdapterIdCompleter(final CLIConfig config, final AdapterClient adapterClient) {
     super(new Supplier<Collection<String>>() {
       @Override
       public Collection<String> get() {
         try {
-          List<AdapterDetail> list = adapterClient.list();
+          List<AdapterDetail> list = adapterClient.list(config.getCurrentNamespace());
           List<String> ids = Lists.newArrayList();
           for (AdapterDetail item : list) {
             ids.add(item.getName());

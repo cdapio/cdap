@@ -23,6 +23,7 @@ import co.cask.cdap.cli.english.Article;
 import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.StreamClient;
+import co.cask.cdap.proto.Id;
 import co.cask.common.cli.Arguments;
 import com.google.inject.Inject;
 
@@ -45,7 +46,7 @@ public class CreateStreamCommand extends AbstractAuthCommand {
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     String streamId = arguments.get(ArgumentName.NEW_STREAM.toString());
 
-    streamClient.create(streamId);
+    streamClient.create(Id.Stream.from(cliConfig.getCurrentNamespace(), streamId));
     output.printf("Successfully created stream with ID '%s'\n", streamId);
   }
 
@@ -56,6 +57,6 @@ public class CreateStreamCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Creates %s.", Fragment.of(Article.A, ElementType.STREAM.getTitleName()));
+    return String.format("Creates %s.", Fragment.of(Article.A, ElementType.STREAM.getName()));
   }
 }

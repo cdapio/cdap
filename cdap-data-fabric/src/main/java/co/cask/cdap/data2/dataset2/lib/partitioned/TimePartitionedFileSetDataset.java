@@ -16,33 +16,27 @@
 
 package co.cask.cdap.data2.dataset2.lib.partitioned;
 
-import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.FileSet;
-import co.cask.cdap.api.dataset.lib.Partition;
+import co.cask.cdap.api.dataset.lib.IndexedTable;
+import co.cask.cdap.api.dataset.lib.PartitionDetail;
 import co.cask.cdap.api.dataset.lib.PartitionFilter;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
+import co.cask.cdap.api.dataset.lib.PartitionMetadata;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetProperties;
 import co.cask.cdap.api.dataset.lib.Partitioning;
-import co.cask.cdap.api.dataset.lib.TimePartition;
+import co.cask.cdap.api.dataset.lib.TimePartitionDetail;
 import co.cask.cdap.api.dataset.lib.TimePartitionOutput;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
-import co.cask.cdap.api.dataset.table.Put;
-import co.cask.cdap.api.dataset.table.Row;
-import co.cask.cdap.api.dataset.table.Scanner;
-import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.explore.client.ExploreFacade;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Supplier;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.inject.Provider;
-import org.apache.twill.filesystem.Location;
-import org.slf4j.LoggerFactory;
 
 import java.util.Calendar;
 import java.util.Collection;
@@ -56,8 +50,6 @@ import javax.annotation.Nullable;
  * Implementation of partitioned datasets using a Table to store the meta data.
  */
 public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset implements TimePartitionedFileSet {
-
-  private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(TimePartitionedFileSetDataset.class);
 
   // the fixed partitioning that time maps to
   private static final String FIELD_YEAR = "year";
@@ -74,105 +66,75 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
     .addIntField(FIELD_MINUTE)
     .build();
 
-  // for testing: if arguments contain this key, dataset behaves as if it was created pre-2.8
-  @VisibleForTesting
-  public static final String ARGUMENT_LEGACY_DATASET = "legacy.dataset";
-
-  // this will help us distinguish legacy (2.7) partitions, because they do not have this column
-  static final byte[] YEAR_COLUMN_KEY = Bytes.add(FIELD_PREFIX, Bytes.toBytes(FIELD_YEAR));
-
-  // this flag will tell whether the dataset was created before release 2.8
-  private final boolean isLegacyDataset;
-
   public TimePartitionedFileSetDataset(DatasetContext datasetContext, String name,
-                                       FileSet fileSet, Table partitionTable,
+                                       FileSet fileSet, IndexedTable partitionTable,
                                        DatasetSpecification spec, Map<String, String> arguments,
                                        Provider<ExploreFacade> exploreFacadeProvider) {
-    super(datasetContext, name, PARTITIONING, fileSet, partitionTable, spec, arguments, exploreFacadeProvider);
+    super(datasetContext, name, PARTITIONING, fileSet, partitionTable, spec, arguments,
+          exploreFacadeProvider);
 
-    isLegacyDataset = arguments.containsKey(ARGUMENT_LEGACY_DATASET) ||
-      PartitionedFileSetProperties.getPartitioning(spec.getProperties()) == null;
-    if (isLegacyDataset) {
-      // prevents overly verbose logging of legacy row keys
-      ignoreInvalidRowsSilently = true;
-      LOG.info("Backward compatibility mode for dataset '{}' is turned on.", getName());
+    // the first version of TPFS in CDAP 2.7 did not have the partitioning in the properties. It is not supported.
+    if (PartitionedFileSetProperties.getPartitioning(spec.getProperties()) == null) {
+      throw new DataSetException("Unsupported version of TimePartitionedFileSet. Dataset '" + name + "' is missing " +
+                                   "the partitioning property. This probably means that it was created in CDAP 2.7, " +
+                                   "which is not supported any longer.");
     }
   }
 
   @Override
   public void addPartition(long time, String path) {
-    if (isLegacyDataset && getLegacyPartition(time) != null) {
-      throw new DataSetException(String.format("Dataset '%s' already has a partition with the same time: %d",
-                                               getName(), time));
-    }
-    addPartition(partitionKeyForTime(time), path);
+    addPartition(time, path, Collections.<String, String>emptyMap());
+  }
+
+  @Override
+  public void addPartition(long time, String path, Map<String, String> metadata) {
+    addPartition(partitionKeyForTime(time), path, metadata);
+  }
+
+  @Override
+  public void addMetadata(long time, String metadataKey, String metadataValue) {
+    addMetadata(partitionKeyForTime(time), metadataKey, metadataValue);
+  }
+
+  @Override
+  public void addMetadata(long time, Map<String, String> metadata) {
+    addMetadata(partitionKeyForTime(time), metadata);
   }
 
   @Override
   public void dropPartition(long time) {
     dropPartition(partitionKeyForTime(time));
-    if (isLegacyDataset) {
-      dropLegacyPartition(time);
-    }
   }
 
   @Nullable
   @Override
-  public TimePartition getPartitionByTime(long time) {
-    Partition partition = getPartition(partitionKeyForTime(time));
-    return partition == null ? null
-      : new BasicTimePartition(partition.getRelativePath(), partition.getPartitionKey());
+  public TimePartitionDetail getPartitionByTime(long time) {
+    PartitionDetail partitionDetail = getPartition(partitionKeyForTime(time));
+    return partitionDetail == null ? null
+      : new BasicTimePartitionDetail(this, partitionDetail.getRelativePath(), partitionDetail.getPartitionKey(),
+                                     partitionDetail.getMetadata());
   }
 
   @Override
-  public Set<TimePartition> getPartitionsByTime(long startTime, long endTime) {
-    final Set<TimePartition> partitions = Sets.newHashSet();
+  public Set<TimePartitionDetail> getPartitionsByTime(long startTime, long endTime) {
+    final Set<TimePartitionDetail> partitions = Sets.newHashSet();
     for (PartitionFilter filter : partitionFiltersForTimeRange(startTime, endTime)) {
       super.getPartitions(filter, new PartitionedFileSetDataset.PartitionConsumer() {
         @Override
-        public void consume(PartitionKey key, String path) {
-          partitions.add(new BasicTimePartition(path, key));
-        }
-      });
-    }
-    if (isLegacyDataset) {
-      getLegacyPartitions(startTime, endTime, new PartitionConsumer() {
-        @Override
-        public void consume(byte[] row, String path) {
-          partitions.add(new BasicTimePartition(path, Bytes.toLong(row)));
+        public void consume(PartitionKey key, String path, @Nullable PartitionMetadata metadata) {
+          partitions.add(new BasicTimePartitionDetail(TimePartitionedFileSetDataset.this, path, key, metadata));
         }
       });
     }
     return partitions;
   }
 
-  @Override
-  public TimePartitionOutput getPartitionOutput(long time) {
-    PartitionKey key = partitionKeyForTime(time);
-    return new BasicTimePartitionOutput(getOutputPath(partitioning, key), key);
-  }
-
-  @Override
-  public String getPartition(long time) {
-    Partition partition = getPartition(partitionKeyForTime(time));
-    if (partition != null) {
-      return partition.getRelativePath();
-    } else if (isLegacyDataset) {
-      return getLegacyPartition(time);
-    }
-    return null;
-  }
-
-  @Override
-  public Collection<String> getPartitionPaths(long startTime, long endTime) {
+  private Collection<String> getPartitionPathsByTime(long startTime, long endTime) {
     final Set<String> paths = Sets.newHashSet();
     for (PartitionFilter filter : partitionFiltersForTimeRange(startTime, endTime)) {
-      paths.addAll(getPartitionPaths(filter));
-    }
-    if (isLegacyDataset) {
-      getLegacyPartitions(startTime, endTime, new PartitionConsumer() {
+      super.getPartitions(filter, new PartitionedFileSetDataset.PartitionConsumer() {
         @Override
-        public void consume(byte[] row, String path) {
+        public void consume(PartitionKey key, String path, @Nullable PartitionMetadata metadata) {
           paths.add(path);
         }
       });
@@ -181,113 +143,23 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
   }
 
   @Override
-  public Map<Long, String> getPartitions(long startTime, long endTime) {
-    final Map<Long, String> partitions = Maps.newHashMap();
-    for (PartitionFilter filter : partitionFiltersForTimeRange(startTime, endTime)) {
-      for (Partition partition : getPartitions(filter)) {
-        partitions.put(timeForPartitionKey(partition.getPartitionKey()), partition.getRelativePath());
-      }
+  public TimePartitionOutput getPartitionOutput(long time) {
+    if (isExternal) {
+      throw new UnsupportedOperationException(
+        "Output is not supported for external time-partitioned file set '" + spec.getName() + "'");
     }
-    if (isLegacyDataset) {
-      getLegacyPartitions(startTime, endTime, new PartitionConsumer() {
-        @Override
-        public void consume(byte[] row, String path) {
-          partitions.put(Bytes.toLong(row), path);
-        }
-      });
-    }
-    return partitions;
-  }
-
-  @VisibleForTesting
-  public void addLegacyPartition(long time, String path) {
-    final byte[] rowKey = Bytes.toBytes(time);
-    Row row = partitionsTable.get(rowKey);
-    if (row != null && !row.isEmpty()) {
-      throw new DataSetException(String.format("Dataset '%s' already has a partition with time: %d.",
-                                               getName(), time));
-    }
-    Put put = new Put(rowKey);
-    put.add(RELATIVE_PATH, Bytes.toBytes(path));
-    partitionsTable.put(put);
-    addPartitionToExplore(partitionKeyForTime(time), path);
-  }
-
-  /**
-   * The pre-2.8 way of getting a partition.
-   */
-  private String getLegacyPartition(long time) {
-    if (!isLegacyDataset) {
-      return null;
-    }
-    final byte[] rowKey = Bytes.toBytes(time);
-    Row row = partitionsTable.get(rowKey);
-    if (row == null) {
-      return null;
-    }
-    byte[] pathBytes = row.get(RELATIVE_PATH);
-    if (pathBytes == null) {
-      return null;
-    }
-    return Bytes.toString(pathBytes);
-  }
-
-  /**
-   * The pre-2.8 way of dropping a partition.
-   */
-  private void dropLegacyPartition(long time) {
-    final byte[] rowKey = Bytes.toBytes(time);
-    partitionsTable.delete(rowKey);
-  }
-
-  /**
-   * The pre-2.8 way of querying partitions.
-   */
-  private void getLegacyPartitions(long startTime, long endTime, PartitionConsumer consumer) {
-
-    // the legacy (2.7) implementation of this dataset used the partition time as the row key
-    final byte[] startKey = Bytes.toBytes(startTime);
-    final byte[] endKey = Bytes.toBytes(endTime);
-    Scanner scanner = partitionsTable.scan(startKey, endKey);
-
-    try {
-      while (true) {
-        Row row = scanner.next();
-        if (row == null) {
-          break;
-        }
-        if (!isLegacyPartition(row)) {
-          continue;
-        }
-        byte[] pathBytes = row.get(RELATIVE_PATH);
-        if (pathBytes != null) {
-          consumer.consume(row.getRow(), Bytes.toString(pathBytes));
-        }
-      }
-    } finally {
-      scanner.close();
-    }
-  }
-
-  private interface PartitionConsumer {
-    void consume(byte[] row, String path);
-  }
-
-  private static boolean isLegacyPartition(Row row) {
-    return
-      // legacy rows have a row key that is just the long partition time
-      (row.getRow().length == Bytes.SIZEOF_LONG)
-        // legacy rows do not have the columns for each partitioning field, especially not for YEAR
-        && (row.get(YEAR_COLUMN_KEY) == null);
+    PartitionKey key = partitionKeyForTime(time);
+    return new BasicTimePartitionOutput(this, getOutputPath(partitioning, key), key);
   }
 
   @Override
-  public Map<String, String> getInputFormatConfiguration() {
+  @Nullable
+  protected Collection<String> computeFilterInputPaths() {
     Long startTime = TimePartitionedFileSetArguments.getInputStartTime(getRuntimeArguments());
     Long endTime = TimePartitionedFileSetArguments.getInputEndTime(getRuntimeArguments());
     if (startTime == null && endTime == null) {
-      // no times specified, perhaps a partition filter was specified? super will deal with that
-      return super.getInputFormatConfiguration();
+      // no times specified; perhaps a partition filter was specified. super will deal with that
+      return super.computeFilterInputPaths();
     }
     if (startTime == null) {
       throw new DataSetException("Start time for input time range must be given as argument.");
@@ -295,18 +167,7 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
     if (endTime == null) {
       throw new DataSetException("End time for input time range must be given as argument.");
     }
-    Collection<String> inputPaths = getPartitionPaths(startTime, endTime);
-    List<Location> inputLocations = Lists.newArrayListWithExpectedSize(inputPaths.size());
-    for (String path : inputPaths) {
-      inputLocations.add(files.getLocation(path));
-    }
-    return files.getInputFormatConfiguration(inputLocations);
-  }
-
-  @Override
-  @Deprecated
-  public FileSet getUnderlyingFileSet() {
-    return getEmbeddedFileSet();
+    return getPartitionPathsByTime(startTime, endTime);
   }
 
   @VisibleForTesting
@@ -336,6 +197,7 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
     int minute = (Integer) key.getField(FIELD_MINUTE);
     Calendar calendar = Calendar.getInstance();
     calendar.clear();
+    //noinspection MagicConstant
     calendar.set(year, month, day, hour, minute);
     return calendar.getTimeInMillis();
   }
@@ -526,72 +388,14 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
     return upperBound > 0;
   }
 
-  /**
-   * This can be called to determine whether the dataset was created before 2.8 and needs migration.
-   *
-   * @return whether this is a legacy dataset.
-   */
-  public boolean isLegacyDataset() {
-    return isLegacyDataset;
-  }
-
-  /**
-   * Migrate legacy partitions to the current format, starting a the given partition time, spending at most a limited
-   * number of seconds. The caller can invoke this repeatedly until it returns -1.
-   * <p>
-   * This method is not in the API for this dataset. It is implementation-specific. The upgrade tool must obtain an
-   * instance of {@link TimePartitionedFileSet} and cast it to this class.
-   *
-   * @param startTime the partition time to start at
-   * @param timeLimitInSeconds the number of seconds after which to stop. This is to avoid transaction timeouts.
-   * @return the start time for the next call of this method. All partitions with a lesser time stamp have been
-   *     migrated. When there are no more entries to migrate, returns -1.
-   */
-  public long upgradeLegacyEntries(long startTime, long timeLimitInSeconds) {
-    long timeLimit = System.currentTimeMillis() + 1000L * timeLimitInSeconds;
-    startTime = Math.max(0L, startTime);
-    byte[] startRow = Bytes.toBytes(startTime);
-    long partitionTime = startTime;
-    Scanner scanner = partitionsTable.scan(startRow, null);
-    try {
-      while (timeLimit - System.currentTimeMillis() > 0) {
-        Row row = scanner.next();
-        if (row == null) {
-          return -1; // no more legacy entries
-        }
-        if (!isLegacyPartition(row)) {
-          continue;
-        }
-        partitionTime = Bytes.toLong(row.getRow());
-        byte[] pathBytes = row.get(RELATIVE_PATH);
-        if (pathBytes != null) {
-          String path = Bytes.toString(pathBytes);
-          addPartition(partitionKeyForTime(partitionTime), path,
-                       false); // do not register in explore - it is already there
-          partitionsTable.delete(row.getRow());
-        } else {
-          LOG.info("Dropping legacy partition for time %d because it has no path.", partitionTime);
-          dropPartition(partitionTime);
-        }
-      }
-      return partitionTime + 1; // next scan can start after the last partition processed
-    } finally {
-      scanner.close();
-    }
-  }
-
-  private class BasicTimePartition extends BasicPartition implements TimePartition {
+  private static class BasicTimePartitionDetail extends BasicPartitionDetail implements TimePartitionDetail {
 
     private final Long time;
 
-    private BasicTimePartition(String relativePath, PartitionKey key) {
-      super(relativePath, key);
+    private BasicTimePartitionDetail(TimePartitionedFileSetDataset timePartitionedFileSetDataset, String relativePath,
+                                     PartitionKey key, PartitionMetadata metadata) {
+      super(timePartitionedFileSetDataset, relativePath, key, metadata);
       this.time = timeForPartitionKey(key);
-    }
-
-    private BasicTimePartition(String relativePath, long time) {
-      super(relativePath, partitionKeyForTime(time));
-      this.time = time;
     }
 
     @Override
@@ -600,12 +404,13 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
     }
   }
 
-  private class BasicTimePartitionOutput extends BasicPartitionOutput implements TimePartitionOutput {
+  private static class BasicTimePartitionOutput extends BasicPartitionOutput implements TimePartitionOutput {
 
     private final Long time;
 
-    private BasicTimePartitionOutput(String relativePath, PartitionKey key) {
-      super(relativePath, key);
+    private BasicTimePartitionOutput(TimePartitionedFileSetDataset timePartitionedFileSetDataset, String relativePath,
+                                     PartitionKey key) {
+      super(timePartitionedFileSetDataset, relativePath, key);
       this.time = timeForPartitionKey(key);
     }
 

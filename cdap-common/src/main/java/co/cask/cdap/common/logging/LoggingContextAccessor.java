@@ -26,7 +26,7 @@ package co.cask.cdap.common.logging;
  */
 public class LoggingContextAccessor {
   private static final InheritableThreadLocal<LoggingContext> loggingContext =
-    new InheritableThreadLocal<LoggingContext>();
+    new InheritableThreadLocal<>();
 
   /**
    * Sets the logging context.

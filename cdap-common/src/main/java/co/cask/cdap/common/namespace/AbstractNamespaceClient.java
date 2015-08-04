@@ -16,12 +16,12 @@
 
 package co.cask.cdap.common.namespace;
 
-import co.cask.cdap.common.exception.BadRequestException;
-import co.cask.cdap.common.exception.NamespaceAlreadyExistsException;
-import co.cask.cdap.common.exception.NamespaceCannotBeCreatedException;
-import co.cask.cdap.common.exception.NamespaceCannotBeDeletedException;
-import co.cask.cdap.common.exception.NamespaceNotFoundException;
-import co.cask.cdap.common.exception.UnauthorizedException;
+import co.cask.cdap.common.BadRequestException;
+import co.cask.cdap.common.NamespaceAlreadyExistsException;
+import co.cask.cdap.common.NamespaceCannotBeCreatedException;
+import co.cask.cdap.common.NamespaceCannotBeDeletedException;
+import co.cask.cdap.common.NamespaceNotFoundException;
+import co.cask.cdap.common.UnauthorizedException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.common.http.HttpRequest;
@@ -39,7 +39,7 @@ import java.util.List;
  * Common implementation of methods to interact with namespace service.
  */
 public abstract class AbstractNamespaceClient {
-  private static final String NAMESPACE_ENTITY_TYPE = "namespace";
+  private static final Gson GSON = new Gson();
 
   protected abstract HttpResponse execute(HttpRequest request) throws IOException, UnauthorizedException;
   protected abstract URL resolve(String resource) throws IOException;
@@ -51,7 +51,7 @@ public abstract class AbstractNamespaceClient {
       return ObjectResponse.fromJsonBody(response, new TypeToken<List<NamespaceMeta>>() { })
         .getResponseObject();
     }
-    throw new IOException("Cannot list namespaces. Reason: " + "getDetails(response)");
+    throw new IOException(String.format("Cannot list namespaces. Reason: %s", response));
   }
 
   public NamespaceMeta get(String namespaceId) throws NamespaceNotFoundException, IOException, UnauthorizedException {
@@ -62,7 +62,7 @@ public abstract class AbstractNamespaceClient {
     } else if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
       return ObjectResponse.fromJsonBody(response, NamespaceMeta.class).getResponseObject();
     }
-    throw new IOException("Cannot get namespace. Reason: " + "getDetails(response)");
+    throw new IOException("Cannot get namespace. Reason: " + response);
   }
 
   public void delete(String namespaceId)
@@ -75,11 +75,11 @@ public abstract class AbstractNamespaceClient {
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NamespaceNotFoundException(namespace);
     } else if (HttpURLConnection.HTTP_FORBIDDEN == response.getResponseCode()) {
-      throw new NamespaceCannotBeDeletedException(namespace);
+      throw new NamespaceCannotBeDeletedException(namespace, response.getResponseBodyAsString());
     } else if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
       return;
     }
-    throw new IOException("Cannot delete namespace. Reason: " + "getDetails(response)");
+    throw new IOException("Cannot delete namespace. Reason: " + response);
   }
 
   public void create(NamespaceMeta namespaceMeta)
@@ -88,7 +88,7 @@ public abstract class AbstractNamespaceClient {
 
     Id.Namespace namespace = Id.Namespace.from(namespaceMeta.getName());
     URL url = resolve(String.format("namespaces/%s", namespace.getId()));
-    HttpResponse response = execute(HttpRequest.put(url).withBody(new Gson().toJson(namespaceMeta)).build());
+    HttpResponse response = execute(HttpRequest.put(url).withBody(GSON.toJson(namespaceMeta)).build());
     String responseBody = response.getResponseBodyAsString();
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
       if (responseBody != null && responseBody.equals(String.format("Namespace '%s' already exists.",
@@ -100,7 +100,7 @@ public abstract class AbstractNamespaceClient {
     if (response.getResponseCode() == HttpURLConnection.HTTP_BAD_REQUEST) {
       throw new BadRequestException("Bad request: " + responseBody);
     }
-    throw new IOException("Cannot get create namespace. Reason: " + "getDetails(response)");
+    throw new IOException(String.format("Cannot create namespace %s. Reason: %s", namespaceMeta.getName(), response));
   }
 
   public void deleteAll() throws

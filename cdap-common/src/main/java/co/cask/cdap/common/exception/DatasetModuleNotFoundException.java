@@ -20,7 +20,9 @@ import co.cask.cdap.proto.Id;
 
 /**
  * Thrown when a dataset module could not be found.
+ * @deprecated {@link co.cask.cdap.common.DatasetModuleNotFoundException} instead
  */
+@Deprecated
 public class DatasetModuleNotFoundException extends NotFoundException {
 
   private final Id.DatasetModule id;

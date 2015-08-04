@@ -20,84 +20,63 @@ import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.api.templates.plugins.PluginConfig;
 import co.cask.cdap.template.etl.api.Emitter;
 import co.cask.cdap.template.etl.api.PipelineConfigurer;
 import co.cask.cdap.template.etl.api.batch.BatchSinkContext;
 import co.cask.cdap.template.etl.common.Properties;
 import co.cask.cdap.template.etl.common.RecordPutTransformer;
+import co.cask.cdap.template.etl.common.TableSinkConfig;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 
 import java.util.Map;
-import javax.annotation.Nullable;
 
 /**
  * CDAP Table Dataset Batch Sink.
  */
 @Plugin(type = "sink")
 @Name("Table")
-@Description("CDAP Table Dataset Batch Sink")
+@Description("Writes records to a Table with one record field mapping to the Table rowkey," +
+  " and all other record fields mapping to Table columns.")
 public class TableSink extends BatchWritableSink<StructuredRecord, byte[], Put> {
-  private static final String NAME_DESC = "Name of the table. If the table does not already exist, one will be " +
-    "created.";
-  private static final String PROPERTY_SCHEMA_DESC = "Optional schema of the table as a JSON Object. If the table " +
-    "does not already exist, one will be created with this schema, which will allow the table to be explored " +
-    "through Hive.\"";
-  private static final String PROPERTY_SCHEMA_ROW_FIELD_DESC = "The name of the record field that should be used as " +
-    "the row key when writing to the table.";
 
+  private final TableSinkConfig tableSinkConfig;
   private RecordPutTransformer recordPutTransformer;
 
-  /**
-   * Config class for TableSink
-   */
-  public static class TableConfig extends PluginConfig {
-    @Description(NAME_DESC)
-    private String name;
-
-    @Name(Properties.Table.PROPERTY_SCHEMA)
-    @Description(PROPERTY_SCHEMA_DESC)
-    @Nullable
-    String schemaStr;
-
-    @Name(Properties.Table.PROPERTY_SCHEMA_ROW_FIELD)
-    @Description(PROPERTY_SCHEMA_ROW_FIELD_DESC)
-    String rowField;
-
-    public TableConfig(String name, String schemaStr, String rowField) {
-      this.name = name;
-      this.schemaStr = schemaStr;
-      this.rowField = rowField;
-    }
-  }
-
-  private final TableConfig tableConfig;
-
-  public TableSink(TableConfig tableConfig) {
-    this.tableConfig = tableConfig;
+  public TableSink(TableSinkConfig tableSinkConfig) {
+    this.tableSinkConfig = tableSinkConfig;
   }
 
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     super.configurePipeline(pipelineConfigurer);
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(tableConfig.rowField), "Row field must be given as a property.");
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(tableSinkConfig.getRowField()),
+                                "Row field must be given as a property.");
   }
 
   @Override
   public void initialize(BatchSinkContext context) throws Exception {
     super.initialize(context);
-    recordPutTransformer = new RecordPutTransformer(tableConfig.rowField);
+    Schema outputSchema = null;
+    // If a schema string is present in the properties, use that to construct the outputSchema and pass it to the
+    // recordPutTransformer
+    String schemaString = context.getPluginProperties().getProperties().get(Properties.Table.PROPERTY_SCHEMA);
+    if (schemaString != null) {
+      outputSchema = Schema.parseJson(schemaString);
+    }
+    recordPutTransformer = new RecordPutTransformer(tableSinkConfig.getRowField(), outputSchema,
+                                                    tableSinkConfig.isRowFieldCaseInsensitive());
   }
 
   @Override
   protected Map<String, String> getProperties() {
-    Map<String, String> properties = Maps.newHashMap(tableConfig.getProperties().getProperties());
-    properties.put(Properties.BatchReadableWritable.NAME, tableConfig.name);
+    Map<String, String> properties = Maps.newHashMap(tableSinkConfig.getProperties().getProperties());
+    properties.put(Properties.BatchReadableWritable.NAME, tableSinkConfig.getName());
     properties.put(Properties.BatchReadableWritable.TYPE, Table.class.getName());
     return properties;
   }
@@ -105,6 +84,6 @@ public class TableSink extends BatchWritableSink<StructuredRecord, byte[], Put> 
   @Override
   public void transform(StructuredRecord input, Emitter<KeyValue<byte[], Put>> emitter) throws Exception {
     Put put = recordPutTransformer.toPut(input);
-    emitter.emit(new KeyValue<byte[], Put>(put.getRow(), put));
+    emitter.emit(new KeyValue<>(put.getRow(), put));
   }
 }

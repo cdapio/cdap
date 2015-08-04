@@ -11,40 +11,72 @@ angular.module(PKG.name+'.feature.foo')
         url: '/foo',
         templateUrl: '/assets/features/foo/foo.html'
       })
+      .state('test-plumb', {
+        url: '/foo/plumb',
+        controller: 'PlumbController',
+        controllerAs: 'PlumbController',
+        templateUrl: '/assets/features/foo/plumb/plumb.html'
+      })
       .state('test-edwin', {
         url: '/test/edwin',
         templateUrl: '/assets/features/foo/edwin.html',
         controller: function ($scope, $timeout) {
-          $scope.testNumber = 10000;
-          $scope.data = {};
-          $timeout(function() {
-            $scope.data = {
-              nodes: [
-                'one',
-                'two',
-                'three',
-                'four',
-                'five',
-                'whew',
-                'err',
-                'six',
-                'seven'
-              ],
-              edges: [
-                { sourceName: 'one', targetName: 'three' },
-                { sourceName: 'two', targetName: 'three' },
-                { sourceName: 'three', targetName: 'four' },
-                { sourceName: 'three', targetName: 'five'},
-                { sourceName: 'whew', targetName: 'seven'},
-                { sourceName: 'four', targetName: 'seven' },
-                { sourceName: 'six', targetName: 'seven'},
-                { sourceName: 'err', targetName: 'seven'},
-                { sourceName: 'five', targetName: 'six' },
-                { sourceName: 'two', targetName: 'seven'},
-                { sourceName: 'four', targetName: 'six'}
-              ]
-            };
-          }, 3000);
+          $scope.settings = {
+            size: {
+              height: 100,
+              width: 280
+            },
+            chartMetadata: {
+              showx: true,
+              showy: true,
+              legend: {
+                show: true,
+                position: 'inset'
+              }
+            },
+            color: {
+              pattern: ['red', '#f4b400']
+            },
+            isLive: true,
+            interval: 60*1000,
+            aggregate: 5
+          };
+
+          $scope.data = {
+            columns: [],
+            keys: 'x',
+            x: 'x',
+            type: 'line'
+          };
+
+          var latestTime = 1435686300;
+
+          function generateData() {
+            var columns = [];
+
+            columns.push(['x']);
+
+            for (var i = 0; i < 5; i++) {
+              columns[0].push(latestTime + 300);
+              latestTime += 300;
+            }
+
+            columns.push(['data1']);
+            columns.push(['data2']);
+            for (var i = 0; i<5; i++) {
+              columns[1].push(Math.floor(Math.random() * 101));
+              columns[2].push(Math.floor(Math.random() * 101));
+            }
+
+            $scope.data.columns = columns;
+
+            $timeout(function() {
+              generateData();
+            }, 3000);
+          }
+
+          generateData();
+
         }
       })
 

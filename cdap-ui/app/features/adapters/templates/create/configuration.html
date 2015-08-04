@@ -1,0 +1,32 @@
+<div class="panel panel-default" ng-init="configurationTabOpen=false">
+  <div class="panel-heading" ng-click="configurationTabOpen = !configurationTabOpen">
+    <div class="panel-title">
+      <div class="clearfix">
+        <div class="pull-left">
+          <span class="fa fa-fw"
+                ng-class="{'fa-chevron-down': configurationTabOpen, 'fa-chevron-right': !configurationTabOpen}"></span>
+          <span ng-if="AdapterCreateController.model.metadata.type === 'ETLRealtime'">Configuration</span>
+          <span ng-if="AdapterCreateController.model.metadata.type === 'ETLBatch'">Schedule: Cron Expression</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="panel-body" ng-if="configurationTabOpen">
+    <div ng-if="AdapterCreateController.model.metadata.type === 'ETLBatch'">
+      <div data-name="field"
+           class="my-widget-container"
+           data-model="AdapterCreateController.model.schedule['cron']"
+           data-myconfig="{properties: {}, widget: 'schedule'}"
+           widget-container>
+      </div>
+    </div>
+    <div ng-if="AdapterCreateController.model.metadata.type === 'ETLRealtime'">
+      <form class="form-inline">
+        <div class="form-group">
+          <label class="control-label">Instances</label>
+          <input type="number" ng-model="AdapterCreateController.model.instance" class="form-control" min="1">
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

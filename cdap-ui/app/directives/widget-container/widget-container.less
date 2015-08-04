@@ -1,21 +1,71 @@
-.my-widget-container {
-  .form-control {
-    width: 100%;
-    display: inline-block;
-    vertical-align: middle;
-    margin-right: 5px;
-  }
-  [class*="fa-"] {
-    vertical-align: middle;
-  }
+@import '../../styles/variables.less';
 
+.my-widget-container {
+
+  .empty-container {
+    padding: 0;
+  }
   my-timestamp-picker {
     .form-control {
       margin-right: 0;
     }
   }
-
   textarea {
     resize: vertical;
+  }
+
+}
+
+body.state-adapters {
+  [plugin-property-edit-view] {
+    .widget-group-container {
+
+      &.well {
+        h3 { margin: 0 0 10px 0; }
+
+        .row-padding {
+          .popover {
+            max-width: 550px;
+            width: 500px;
+          }
+          textarea.form-control {
+            min-height: 200px;
+          }
+        }
+      }
+    }
+  }
+  .modal {
+    @media (min-width: @screen-lg-min) {
+      [my-ace-editor] {
+        width: 100%;
+      }
+    }
+    &.well {
+      padding: 10px;
+    }
+    [class*="-container"] {
+      a.btn-info, a.btn-danger {
+        padding-top: 10px;
+        padding-bottom: 10px;
+      }
+    }
+    fieldset {
+      > div > div {
+        .widget-group-container {
+          padding-top: 15px;
+        }
+        &:first-child .widget-group-container {
+          padding-top: 0;
+        }
+      }
+      &[disabled] {
+        .schema-container {
+          .form-control {
+            height: 32px;
+          }
+        }
+      }
+    }
   }
 }

@@ -11,13 +11,13 @@ Service HTTP RESTful API
 
 .. highlight:: console
 
-This interface supports listing all Services and making requests to the methods of an Application’s Services.
-See the :ref:`http-restful-api-lifecycle` for how to control the lifecycle of Services.
+This interface supports listing all services and making requests to the methods of an application’s services.
+See the :ref:`http-restful-api-lifecycle` for how to control the lifecycle of services.
 
 Listing all Services
 --------------------
 
-You can list all Services in a namespace in CDAP by issuing an HTTP GET request to the URL::
+You can list all services in a namespace in CDAP by issuing an HTTP GET request to the URL::
 
   GET <base-url>/namespaces/<namespace>/services
 
@@ -30,7 +30,7 @@ You can list all Services in a namespace in CDAP by issuing an HTTP GET request 
    * - ``<namespace>``
      - Namespace ID
      
-The response body will contain a JSON-formatted list of the existing Services::
+The response body will contain a JSON-formatted list of the existing services::
 
   [
       {
@@ -46,11 +46,11 @@ The response body will contain a JSON-formatted list of the existing Services::
 Listing all System Services
 ---------------------------
 
-You can list all System Services in CDAP by issuing an HTTP GET request to the URL::
+You can list all system services in CDAP by issuing an HTTP GET request to the URL::
 
   GET <base-url>/system/services
      
-The response body will contain a JSON-formatted list of the existing System Services::
+The response body will contain a JSON-formatted list of the existing system services::
 
   [
       {
@@ -69,13 +69,87 @@ The response body will contain a JSON-formatted list of the existing System Serv
 See :ref:`downloading System Logs <http-restful-api-logging_downloading_system_logs>` for
 information and an example of using these system services.
 
+Restarting System Service Instances
+-----------------------------------
+
+To restart all instances of a system service in CDAP, you can issue an HTTP POST request to the URL::
+
+  POST <base-url>/system/services/<service-id>/restart
+
+You can restart a particular instance of a system service in CDAP, using its instance id, by issuing
+an HTTP POST request to the URL::
+
+  POST <base-url>/system/services/<service-id>/instances/<instance-id>/restart
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<service-id>``
+     - Name of the service whose instances are to be restarted
+   * - ``<instance-id>``
+     - Specific instance of a service that needs to be restarted;
+       instance-id runs from 0 to (the number of instances per service -1)
+
+.. rubric:: HTTP Responses
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``403 Bad Request``
+     - The service is unavailable because it was not enabled
+   * - ``404 Service not found``
+     - The service name is not valid
+   * - ``500 Internal error``
+     - Internal error encountered when processing the request
+   * - ``503 Service Unavailable``
+     - The service is unavailable. For example, it may not yet have been started
+
+To retrieve details of the last restart attempt made for a particular service, issue an HTTP GET request to the URL::
+
+  GET <base-url>/system/services/<service-id>/latest-restart
+
+The response body will contain a JSON-formatted status of the last restart attempt for that service::
+
+  {
+      "instanceIds":[0],
+      "serviceName":"dataset.executor",
+      "startTimeInMs":1437070039984,
+      "endTimeInMs":1437070039992,
+      "status":"SUCCESS"}
+  }
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<service-id>``
+     - Name of the service for which details of last restart are to be retrieved
+
+.. rubric:: HTTP Responses
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``404 Service not found``
+     - The service name is not valid
+   * - ``500 Internal error``
+     - Internal error encountered when processing the request
 
 Requesting Service Methods
 --------------------------
-To make a request to a Service's method, send the value of the method's ``@Path`` annotation
+To make a request to a service's method, send the value of the method's ``@Path`` annotation
 as part of the request URL along with any additional headers, body and query parameters.
 
-The request type is defined by the Service's method::
+The request type is defined by the service's method::
 
   <request-type> <base-url>/namespaces/<namespace>/apps/<app-id>/services/<service-id>/methods/<endpoint-path>
   
@@ -95,9 +169,9 @@ encoding parameters.
    * - ``<request-type>``
      - One of GET, POST, PUT and DELETE. This is defined by the handler method.
    * - ``<app-id>``
-     - Name of the Application being called
+     - Name of the application being called
    * - ``<service-id>``
-     - Name of the Service being called
+     - Name of the service being called
    * - ``<endpoint-path>``
      - Endpoint path of the method being called
 
@@ -109,9 +183,9 @@ encoding parameters.
    * - Status Codes
      - Description
    * - ``503 Service Unavailable``
-     - The Service is unavailable. For example, it may not yet have been started.
+     - The service is unavailable. For example, it may not yet have been started.
 
-Other responses are defined by the Service's method.
+Other responses are defined by the service's method.
 
 .. rubric:: Example
 .. list-table::
@@ -121,7 +195,7 @@ Other responses are defined by the Service's method.
    * - HTTP Method
      - ``GET <base-url>/namespaces/default/apps/WordCount/services/RetrieveCounts/methods/count/Cask?limit=2``
    * - Description
-     - Make a request to the ``count/{word}`` endpoint of the ``RetrieveCounts`` Service
+     - Make a request to the ``count/{word}`` endpoint of the ``RetrieveCounts`` service
        in the application ``WordCount`` in the namespace *default* to get a count of the
        word "Cask" and its associated words with a limit of 2.
    * - Response Status Code

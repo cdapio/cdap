@@ -23,6 +23,7 @@ import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.api.flow.AbstractFlow;
 import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.mapreduce.MapReduce;
@@ -43,6 +44,7 @@ import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.data.dataset.DatasetCreationSpec;
 import co.cask.cdap.internal.app.DefaultApplicationSpecification;
 import co.cask.cdap.internal.app.mapreduce.DefaultMapReduceConfigurer;
+import co.cask.cdap.internal.app.runtime.flow.DefaultFlowConfigurer;
 import co.cask.cdap.internal.app.services.DefaultServiceConfigurer;
 import co.cask.cdap.internal.app.spark.DefaultSparkConfigurer;
 import co.cask.cdap.internal.app.worker.DefaultWorkerConfigurer;
@@ -60,6 +62,7 @@ import java.util.Map;
 public class DefaultAppConfigurer implements ApplicationConfigurer {
   private String name;
   private String description;
+  private String configuration;
   private final Map<String, StreamSpecification> streams = Maps.newHashMap();
   private final Map<String, String> dataSetModules = Maps.newHashMap();
   private final Map<String, DatasetCreationSpec> dataSetInstances = Maps.newHashMap();
@@ -75,6 +78,11 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   public DefaultAppConfigurer(Application app) {
     this.name = app.getClass().getSimpleName();
     this.description = "";
+  }
+
+  public DefaultAppConfigurer(Application app, String configuration) {
+    this(app);
+    this.configuration = configuration;
   }
 
   @Override
@@ -132,7 +140,15 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   @Override
   public void addFlow(Flow flow) {
     Preconditions.checkArgument(flow != null, "Flow cannot be null.");
-    FlowSpecification spec = new DefaultFlowSpecification(flow.getClass().getName(), flow.configure());
+    DefaultFlowConfigurer configurer = new DefaultFlowConfigurer(flow);
+    FlowSpecification spec = flow.configure();
+    if (spec == null && flow instanceof AbstractFlow) {
+      AbstractFlow abstractFlow = (AbstractFlow) flow;
+      abstractFlow.configure(configurer);
+      spec = configurer.createSpecification();
+    } else {
+      spec = new DefaultFlowSpecification(flow.getClass().getName(), spec);
+    }
     flows.put(spec.getName(), spec);
   }
 
@@ -209,7 +225,7 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   }
 
   public ApplicationSpecification createSpecification(String version) {
-    return new DefaultApplicationSpecification(name, version, description, streams,
+    return new DefaultApplicationSpecification(name, version, description, configuration, streams,
                                                dataSetModules, dataSetInstances,
                                                flows, mapReduces, sparks, workflows, services,
                                                schedules, workers);

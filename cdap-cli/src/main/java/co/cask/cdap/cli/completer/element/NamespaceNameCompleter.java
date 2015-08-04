@@ -18,7 +18,7 @@ package co.cask.cdap.cli.completer.element;
 
 import co.cask.cdap.cli.completer.StringsCompleter;
 import co.cask.cdap.client.NamespaceClient;
-import co.cask.cdap.common.exception.UnauthorizedException;
+import co.cask.cdap.common.UnauthorizedException;
 import co.cask.cdap.proto.NamespaceMeta;
 import com.google.common.base.Supplier;
 import com.google.common.collect.Lists;
@@ -39,7 +39,7 @@ public class NamespaceNameCompleter extends StringsCompleter {
     super(new Supplier<Collection<String>>() {
       @Override
       public Collection<String> get() {
-        List<String> namespaceIds = new ArrayList<String>();
+        List<String> namespaceIds = new ArrayList<>();
         try {
           for (NamespaceMeta namespaceMeta : namespaceClient.list()) {
             namespaceIds.add(namespaceMeta.getName());

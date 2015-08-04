@@ -33,6 +33,7 @@ import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStore;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStoreFactory;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import co.cask.cdap.data2.util.hbase.HTableDescriptorBuilder;
 import co.cask.cdap.hbase.wd.AbstractRowKeyDistributor;
 import co.cask.cdap.hbase.wd.RowKeyDistributorByHashPrefix;
 import com.google.inject.Inject;
@@ -78,7 +79,7 @@ public final class HBaseStreamFileConsumerFactory extends AbstractStreamFileCons
 
     byte[][] splitKeys = HBaseTableUtil.getSplitKeys(splits, splits, distributor);
 
-    HTableDescriptor htd = tableUtil.createHTableDescriptor(tableId);
+    HTableDescriptorBuilder htd = tableUtil.buildHTableDescriptor(tableId);
 
     HColumnDescriptor hcd = new HColumnDescriptor(QueueEntryRow.COLUMN_FAMILY);
     hcd.setMaxVersions(1);
@@ -86,14 +87,14 @@ public final class HBaseStreamFileConsumerFactory extends AbstractStreamFileCons
     htd.addFamily(hcd);
     htd.setValue(QueueConstants.DISTRIBUTOR_BUCKETS, Integer.toString(splits));
 
-    tableUtil.createTableIfNotExists(getAdmin(), tableId, htd, splitKeys,
+    tableUtil.createTableIfNotExists(getAdmin(), tableId, htd.build(), splitKeys,
                                      QueueConstants.MAX_CREATE_TABLE_WAIT, TimeUnit.MILLISECONDS);
 
     HTable hTable = tableUtil.createHTable(hConf, tableId);
     hTable.setWriteBufferSize(Constants.Stream.HBASE_WRITE_BUFFER_SIZE);
     hTable.setAutoFlush(false);
 
-    return new HBaseStreamFileConsumer(cConf, streamConfig, consumerConfig, hTable, reader,
+    return new HBaseStreamFileConsumer(cConf, streamConfig, consumerConfig, tableUtil, hTable, reader,
                                        stateStore, beginConsumerState, extraFilter,
                                        createKeyDistributor(hTable.getTableDescriptor()));
   }

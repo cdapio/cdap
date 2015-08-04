@@ -50,7 +50,7 @@ public abstract class PropertyStoreTestBase {
     PropertyStore<String> store = createPropertyStore(STRING_CODEC);
 
     // Add a listener before the property watch exists
-    final BlockingQueue<String> changes = new LinkedBlockingQueue<String>();
+    final BlockingQueue<String> changes = new LinkedBlockingQueue<>();
     store.addChangeListener("basic", new AbstractPropertyChangeListener<String>() {
       @Override
       public void onChange(String name, String property) {

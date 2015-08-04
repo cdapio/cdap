@@ -17,7 +17,7 @@
 package co.cask.cdap.data.tools;
 
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.common.exception.NotFoundException;
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
@@ -43,18 +43,23 @@ import co.cask.cdap.data2.transaction.queue.hbase.ShardedHBaseQueueStrategy;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
+import co.cask.cdap.data2.util.hbase.ScanBuilder;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
+import co.cask.tephra.TransactionFailureException;
+import co.cask.tephra.TransactionNotInProgressException;
 import co.cask.tephra.runtime.TransactionClientModule;
 import co.cask.tephra.runtime.TransactionModules;
-import com.google.common.collect.ImmutableSet;
+import com.google.common.base.Predicates;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.Multimaps;
 import com.google.common.collect.PeekingIterator;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.AbstractModule;
@@ -63,14 +68,12 @@ import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Singleton;
 import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.client.Scan;
 import org.apache.twill.zookeeper.ZKClientService;
 
 import java.net.URI;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -78,16 +81,18 @@ import javax.annotation.Nullable;
  */
 public class HBaseQueueDebugger extends AbstractIdleService {
 
+  private final HBaseTableUtil tableUtil;
   private final HBaseQueueAdmin queueAdmin;
   private final ZKClientService zkClientService;
   private final HBaseQueueClientFactory queueClientFactory;
   private final TransactionExecutorFactory txExecutorFactory;
 
   @Inject
-  public HBaseQueueDebugger(HBaseQueueAdmin queueAdmin,
+  public HBaseQueueDebugger(HBaseTableUtil tableUtil, HBaseQueueAdmin queueAdmin,
                             HBaseQueueClientFactory queueClientFactory,
                             ZKClientService zkClientService,
                             TransactionExecutorFactory txExecutorFactory) {
+    this.tableUtil = tableUtil;
     this.queueAdmin = queueAdmin;
     this.queueClientFactory = queueClientFactory;
     this.zkClientService = zkClientService;
@@ -126,24 +131,24 @@ public class HBaseQueueDebugger extends AbstractIdleService {
     System.out.printf("Got %d barriers\n", barriers.size());
 
     QueueStatistics stats = new QueueStatistics();
-    int currentSection = 1;
 
-    Set<Long> groupIds;
     if (consumerGroupId != null) {
-      groupIds = ImmutableSet.of(consumerGroupId);
-    } else {
-      groupIds = barriers.keySet();
+      barriers = Multimaps.filterKeys(barriers, Predicates.equalTo(consumerGroupId));
     }
 
-    for (Long groupId : groupIds) {
-      System.out.printf("Scanning barriers for group %s\n", groupId);
-      Collection<QueueBarrier> groupBarriers = barriers.get(groupId);
+    for (Map.Entry<Long, Collection<QueueBarrier>> entry : barriers.asMap().entrySet()) {
+      long groupId = entry.getKey();
+      Collection<QueueBarrier> groupBarriers = entry.getValue();
+
+      System.out.printf("Scanning barriers for group %d\n", groupId);
+
+      int currentSection = 1;
       PeekingIterator<QueueBarrier> barrierIterator = Iterators.peekingIterator(groupBarriers.iterator());
       while (barrierIterator.hasNext()) {
         QueueBarrier start = barrierIterator.next();
         QueueBarrier end = barrierIterator.hasNext() ? barrierIterator.peek() : null;
 
-        System.out.printf("Scanning section %d/%d...\n", currentSection, barriers.size());
+        System.out.printf("Scanning section %d/%d...\n", currentSection, groupBarriers.size());
         scanQueue(txExecutor, stateStore, queueName, start, end, stats);
         System.out.printf("Current results: %s\n", stats.getReport());
         currentSection++;
@@ -174,16 +179,21 @@ public class HBaseQueueDebugger extends AbstractIdleService {
                                              Bytes.toBytes(groupConfig.getGroupId()));
 
     int distributorBuckets = queueClientFactory.getDistributorBuckets(hTable.getTableDescriptor());
-    ShardedHBaseQueueStrategy queueStrategy = new ShardedHBaseQueueStrategy(distributorBuckets);
+    ShardedHBaseQueueStrategy queueStrategy = new ShardedHBaseQueueStrategy(tableUtil, distributorBuckets);
 
-    Scan scan = new Scan();
+    ScanBuilder scan = tableUtil.buildScan();
     scan.setStartRow(start.getStartRow());
     if (end != null) {
       scan.setStopRow(end.getStartRow());
+    } else {
+      scan.setStopRow(QueueEntryRow.getQueueEntryRowKey(queueName, Long.MAX_VALUE, Integer.MAX_VALUE));
     }
-    scan.addColumn(QueueEntryRow.COLUMN_FAMILY, QueueEntryRow.DATA_COLUMN);
+
+    // Needs to include meta column for row that doesn't have state yet.
     scan.addColumn(QueueEntryRow.COLUMN_FAMILY, QueueEntryRow.META_COLUMN);
     scan.addColumn(QueueEntryRow.COLUMN_FAMILY, stateColumnName);
+    // Don't do block cache for debug tool. We don't want old blocks get cached
+    scan.setCacheBlocks(false);
     scan.setMaxVersions(1);
 
     System.out.printf("Scanning section with scan: %s\n", scan.toString());
@@ -197,21 +207,35 @@ public class HBaseQueueDebugger extends AbstractIdleService {
       }
     }
 
-    for (int instanceId : instanceIds) {
-      System.out.printf("Processing instance %d\n", instanceId);
+    final int rowsCache = Integer.parseInt(System.getProperty("rows.cache", "100000"));
+    for (final int instanceId : instanceIds) {
+      System.out.printf("Processing instance %d", instanceId);
       ConsumerConfig consConfig = new ConsumerConfig(groupConfig, instanceId);
-      final QueueScanner scanner = queueStrategy.createScanner(consConfig, hTable, scan, 100);
-      txExecutor.execute(new TransactionExecutor.Procedure<HBaseConsumerStateStore>() {
-        @Override
-        public void apply(HBaseConsumerStateStore input) throws Exception {
-          ImmutablePair<byte[], Map<byte[], byte[]>> result;
-          while ((result = scanner.next()) != null) {
-            byte[] rowKey = result.getFirst();
-            Map<byte[], byte[]> columns = result.getSecond();
-            visitRow(outStats, input.getTransaction(), rowKey, columns.get(stateColumnName), queueRowPrefix.length);
+      final QueueScanner scanner = queueStrategy.createScanner(consConfig, hTable, scan.build(), rowsCache);
+
+      try {
+        txExecutor.execute(new TransactionExecutor.Procedure<HBaseConsumerStateStore>() {
+          @Override
+          public void apply(HBaseConsumerStateStore input) throws Exception {
+            ImmutablePair<byte[], Map<byte[], byte[]>> result;
+            while ((result = scanner.next()) != null) {
+              byte[] rowKey = result.getFirst();
+              Map<byte[], byte[]> columns = result.getSecond();
+              visitRow(outStats, input.getTransaction(), rowKey, columns.get(stateColumnName), queueRowPrefix.length);
+
+              if (Boolean.parseBoolean(System.getProperty("show.progress")) && outStats.getTotal() % rowsCache == 0) {
+                System.out.printf("\rProcessing instance %d: %s", instanceId, outStats.getReport());
+              }
+            }
           }
+        }, stateStore);
+      } catch (TransactionFailureException e) {
+        // Ignore transaction not in progress exception as it's caued by short TX timeout on commit
+        if (!(Throwables.getRootCause(e) instanceof TransactionNotInProgressException)) {
+          throw Throwables.propagate(e);
         }
-      }, stateStore);
+      }
+      System.out.printf("\rProcessing instance %d: %s\n", instanceId, outStats.getReport());
     }
   }
 
@@ -292,6 +316,10 @@ public class HBaseQueueDebugger extends AbstractIdleService {
       System.out.println("queue-uri: queue:///<namespace>/<app>/<flow>/<flowlet>/<queue>");
       System.out.println("consumer-flowlet: <flowlet>");
       System.out.println("Example: queue:///default/PurchaseHistory/PurchaseFlow/reader/queue collector");
+      System.out.println();
+      System.out.println("System properties:");
+      System.out.println("-Dshow.progress=true         Show progress while scanning the queue table");
+      System.out.println("-Drows.cache=[num_of_rows]   Number of rows to pass to HBase Scan.setCaching() method");
       System.exit(1);
     }
 

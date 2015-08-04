@@ -58,7 +58,7 @@ public final class SchemaFinder {
     for (Schema outputSchema : output) {
       for (Schema inputSchema : input) {
         if (outputSchema.equals(inputSchema)) {
-          return new ImmutablePair<Schema, Schema>(inputSchema, outputSchema);
+          return new ImmutablePair<>(inputSchema, outputSchema);
         }
 
         if (outputSchema.isCompatible(inputSchema)) {
@@ -67,7 +67,7 @@ public final class SchemaFinder {
           if (compatibleSchema != null) {
             return null;
           }
-          compatibleSchema = new ImmutablePair<Schema, Schema>(outputSchema, inputSchema);
+          compatibleSchema = new ImmutablePair<>(outputSchema, inputSchema);
         }
       }
     }

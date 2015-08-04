@@ -18,7 +18,9 @@ package co.cask.cdap.common.exception;
 
 /**
  * Thrown when a user is not authorized to perform an operation.
+ * @deprecated Use {@link co.cask.cdap.common.UnauthorizedException} instead
  */
+@Deprecated
 public class UnauthorizedException extends Exception {
 
   public UnauthorizedException() {

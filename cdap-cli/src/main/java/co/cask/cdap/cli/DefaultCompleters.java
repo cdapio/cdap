@@ -16,6 +16,7 @@
 
 package co.cask.cdap.cli;
 
+import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.cli.command.system.RenderAsCommand;
 import co.cask.cdap.cli.completer.element.AdapterIdCompleter;
 import co.cask.cdap.cli.completer.element.AppIdCompleter;
@@ -66,6 +67,7 @@ public class DefaultCompleters implements Supplier<Map<String, Completer>> {
         .put(ArgumentName.NAMESPACE_NAME.getName(), injector.getInstance(NamespaceNameCompleter.class))
         .put(ArgumentName.COMMAND_CATEGORY.getName(), new EnumCompleter(CommandCategory.class))
         .put(ArgumentName.TABLE_RENDERER.getName(), new EnumCompleter(RenderAsCommand.Type.class))
+        .put(ArgumentName.WORKFLOW_TOKEN_SCOPE.getName(), new EnumCompleter(WorkflowToken.Scope.class))
         .putAll(generateProgramIdCompleters(injector)).build();
   }
 
@@ -74,7 +76,9 @@ public class DefaultCompleters implements Supplier<Map<String, Completer>> {
     for (ElementType elementType : ElementType.values()) {
       if (elementType.getProgramType() != null && elementType.isListable()) {
         result.put(elementType.getArgumentName().getName(),
-                   new ProgramIdCompleter(injector.getInstance(ApplicationClient.class), elementType.getProgramType()));
+                   new ProgramIdCompleter(injector.getInstance(ApplicationClient.class),
+                                          injector.getInstance(CLIConfig.class),
+                                          elementType.getProgramType()));
       }
     }
     return result.build();

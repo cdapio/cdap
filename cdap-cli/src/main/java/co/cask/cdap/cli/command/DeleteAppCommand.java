@@ -23,6 +23,7 @@ import co.cask.cdap.cli.english.Article;
 import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.ApplicationClient;
+import co.cask.cdap.proto.Id;
 import co.cask.common.cli.Arguments;
 import com.google.inject.Inject;
 
@@ -33,7 +34,6 @@ import java.io.PrintStream;
  */
 public class DeleteAppCommand extends AbstractAuthCommand {
 
-  public static final String SUCCESS_MSG = "Successfully deleted application '%s'";
   private final ApplicationClient appClient;
 
   @Inject
@@ -44,10 +44,11 @@ public class DeleteAppCommand extends AbstractAuthCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    String appId = arguments.get(ArgumentName.APP.toString());
+    Id.Application appId = Id.Application.from(cliConfig.getCurrentNamespace(),
+                                               arguments.get(ArgumentName.APP.toString()));
 
     appClient.delete(appId);
-    output.printf(SUCCESS_MSG + "\n", appId);
+    output.printf("Successfully deleted application '%s'\n", appId.getId());
   }
 
   @Override
@@ -57,6 +58,6 @@ public class DeleteAppCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Deletes %s.", Fragment.of(Article.A, ElementType.APP.getTitleName()));
+    return String.format("Deletes %s.", Fragment.of(Article.A, ElementType.APP.getName()));
   }
 }

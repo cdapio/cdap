@@ -4,16 +4,16 @@
 
 .. _transaction-system:
 
-============================================
+==================
 Transaction System
-============================================
+==================
 
 The Need for Transactions
 -------------------------
 
-A Flowlet processes the data objects received on its inputs one at a time. While processing
+A flowlet processes the data objects received on its inputs one at a time. While processing
 a single input object, all operations, including the removal of the data from the input,
-and emission of data to the outputs, are executed in a **transaction**. This provides us
+and emission of data to the outputs, are executed in a *transaction*. This provides us
 with ACID—atomicity, consistency, isolation, and durability properties:
 
 - The process method runs under read isolation to ensure that it does not see dirty writes
@@ -52,17 +52,17 @@ rollback in case of write conflicts. We can only achieve high throughput with OC
 number of conflicts is small. It is therefore good practice to reduce the probability of
 conflicts wherever possible.
 
-Here are some rules to follow for Flows, Flowlets, and Services:
+Here are some rules to follow for flows, flowlets, and services:
 
 - Keep transactions short. The Cask Data Application Platform attempts to delay the beginning of each
-  transaction as long as possible. For instance, if your Flowlet only performs write
+  transaction as long as possible. For instance, if your flowlet only performs write
   operations, but no read operations, then all writes are deferred until the process
   method returns. They are then performed and transacted, together with the
   removal of the processed object from the input, in a single batch execution.
   This minimizes the duration of the transaction.
 
-- However, if your Flowlet performs a read, then the transaction must
-  begin at the time of the read. If your Flowlet performs long-running
+- However, if your flowlet performs a read, then the transaction must
+  begin at the time of the read. If your flowlet performs long-running
   computations after that read, then the transaction runs longer, too,
   and the risk of conflicts increases. It is therefore good practice
   to perform reads as late in the process method as possible.
@@ -74,9 +74,9 @@ Here are some rules to follow for Flows, Flowlets, and Services:
   depend on that return value, you should always perform an increment
   only as a write operation.
 
-- Use hash-based partitioning for the inputs of highly concurrent Flowlets
+- Use hash-based partitioning for the inputs of highly concurrent flowlets
   that perform writes. This helps reduce concurrent writes to the same
-  key from different instances of the Flowlet.
+  key from different instances of the flowlet.
 
 Keeping these guidelines in mind will help you write more efficient and faster-performing
 code.
@@ -133,8 +133,8 @@ You have these options:
 
 Transactions in MapReduce
 -------------------------
-When you run a MapReduce that interacts with Datasets, the system creates a
-long-running transaction. Similar to the transaction of a Flowlet, here are
+When you run a MapReduce that interacts with datasets, the system creates a
+long-running transaction. Similar to the transaction of a flowlet, here are
 some rules to follow:
 
 - Reads can only see the writes of other transactions that were committed
@@ -150,11 +150,11 @@ conflict detection. If another transaction overlaps with the long-running transa
 writes to the same row, it will not cause a conflict but simply overwrite it.
 
 It is not efficient to fail the long-running job based on a single conflict. Because of
-this, it is not recommended to write to the same Dataset from both real-time and MapReduce
-programs. It is better to use different Datasets, or at least ensure that the real-time
+this, it is not recommended to write to the same dataset from both real-time and MapReduce
+programs. It is better to use different datasets, or at least ensure that the real-time
 processing writes to a disjoint set of columns.
 
 It's important to note that the MapReduce framework will reattempt a task (Mapper or
-Reducer) if it fails. If the task is writing to a Dataset, the reattempt of the task will
+Reducer) if it fails. If the task is writing to a dataset, the reattempt of the task will
 most likely repeat the writes that were already performed in the failed attempt. Therefore
 it is highly advisable that all writes performed by MapReduce programs be idempotent.

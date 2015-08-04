@@ -37,6 +37,6 @@ public class OrderedPairs {
     KeyMaker<FIRST> keyMaker1 = (KeyMaker<FIRST>) keyMakers.get(first);
     @SuppressWarnings("unchecked")
     KeyMaker<SECOND> keyMaker2 = (KeyMaker<SECOND>) keyMakers.get(second);
-    return new OrderedPair<FIRST, SECOND>(keyMaker1, keyMaker2, first + second);
+    return new OrderedPair<>(keyMaker1, keyMaker2, first + second);
   }
 }

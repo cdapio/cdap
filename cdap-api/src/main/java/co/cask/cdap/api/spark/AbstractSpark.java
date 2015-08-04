@@ -16,11 +16,15 @@
 
 package co.cask.cdap.api.spark;
 
+import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.annotation.Beta;
+
 import java.util.Map;
 
 /**
  * This abstract class provides a default implementation of {@link Spark} methods for easy extension.
  */
+@Beta
 public abstract class AbstractSpark implements Spark {
 
   private SparkConfigurer configurer;
@@ -87,6 +91,20 @@ public abstract class AbstractSpark implements Spark {
    */
   protected final void setProperties(Map<String, String> properties) {
     configurer.setProperties(properties);
+  }
+
+  /**
+   * Sets the resources requirement for the Spark driver process.
+   */
+  protected final void setDriverResources(Resources resources) {
+    configurer.setDriverResources(resources);
+  }
+
+  /**
+   * Sets the resources requirement for the Spark executor processes.
+   */
+  protected final void setExecutorResources(Resources resources) {
+    configurer.setExecutorResources(resources);
   }
 
   @Override

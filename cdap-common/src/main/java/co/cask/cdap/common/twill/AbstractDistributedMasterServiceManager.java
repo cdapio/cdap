@@ -21,6 +21,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.Containers;
 import co.cask.cdap.proto.SystemServiceLiveInfo;
 import com.google.common.base.Preconditions;
+import com.google.common.util.concurrent.Futures;
 import org.apache.twill.api.ResourceReport;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunResources;
@@ -177,6 +178,24 @@ public abstract class AbstractDistributedMasterServiceManager implements MasterS
       if (httpConn != null) {
         httpConn.disconnect();
       }
+    }
+  }
+
+  @Override
+  public void restartAllInstances() {
+    Iterable<TwillController> twillControllers = twillRunnerService.lookup(Constants.Service.MASTER_SERVICES);
+    for (TwillController twillController : twillControllers) {
+      // Call restart instances
+      Futures.getUnchecked(twillController.restartAllInstances(serviceName));
+    }
+  }
+
+  @Override
+  public void restartInstances(int instanceId, int... moreInstanceIds) {
+    Iterable<TwillController> twillControllers = twillRunnerService.lookup(Constants.Service.MASTER_SERVICES);
+    for (TwillController twillController : twillControllers) {
+      // Call restart instances
+      Futures.getUnchecked(twillController.restartInstances(serviceName, instanceId, moreInstanceIds));
     }
   }
 }

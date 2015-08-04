@@ -16,7 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.service.http;
 
-import co.cask.cdap.api.metrics.MetricsCollector;
+import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
@@ -44,7 +44,7 @@ public final class DelayedHttpServiceResponder implements HttpServiceResponder {
   private static final Logger LOG = LoggerFactory.getLogger(DelayedHttpServiceResponder.class);
   private static final Gson GSON = new Gson();
   private final HttpResponder responder;
-  private final MetricsCollector metricsCollector;
+  private final MetricsContext metricsContext;
   private BufferedResponse bufferedResponse;
 
   /**
@@ -52,9 +52,9 @@ public final class DelayedHttpServiceResponder implements HttpServiceResponder {
    *
    * @param responder the responder which will be bound to
    */
-  public DelayedHttpServiceResponder(HttpResponder responder, MetricsCollector metricsCollector) {
+  public DelayedHttpServiceResponder(HttpResponder responder, MetricsContext metricsContext) {
     this.responder = responder;
-    this.metricsCollector = metricsCollector;
+    this.metricsContext = metricsContext;
   }
 
   /**
@@ -215,8 +215,8 @@ public final class DelayedHttpServiceResponder implements HttpServiceResponder {
     }
     builder.append(".count");
 
-    metricsCollector.increment(builder.toString(), 1);
-    metricsCollector.increment("requests.count", 1);
+    metricsContext.increment(builder.toString(), 1);
+    metricsContext.increment("requests.count", 1);
   }
 
   private static final class BufferedResponse {

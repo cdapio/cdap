@@ -16,7 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.service.http;
 
-import co.cask.cdap.api.metrics.MetricsCollector;
+import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
@@ -147,10 +147,11 @@ final class HttpHandlerGenerator {
     Class<?> rawType = inspectType.getRawType();
 
     // Visit the delegate class, copy and rewrite handler method, with method body just do delegation
-    InputStream sourceBytes = rawType.getClassLoader().getResourceAsStream(Type.getInternalName(rawType) + ".class");
-    try {
+    try (
+      InputStream sourceBytes = rawType.getClassLoader().getResourceAsStream(Type.getInternalName(rawType) + ".class")
+    ) {
       ClassReader classReader = new ClassReader(sourceBytes);
-      classReader.accept(new ClassVisitor(Opcodes.ASM4) {
+      classReader.accept(new ClassVisitor(Opcodes.ASM5) {
 
         // Only need to visit @Path at the class level if we are inspecting the user handler class
         private final boolean inspectDelegate = delegateType.equals(inspectType);
@@ -169,7 +170,7 @@ final class HttpHandlerGenerator {
           if (inspectDelegate && type.equals(Type.getType(Path.class))) {
             visitedPath = true;
             AnnotationVisitor annotationVisitor = classWriter.visitAnnotation(desc, visible);
-            return new AnnotationVisitor(Opcodes.ASM4, annotationVisitor) {
+            return new AnnotationVisitor(Opcodes.ASM5, annotationVisitor) {
               @Override
               public void visit(String name, Object value) {
                 // "value" is the key for the Path annotation string.
@@ -207,8 +208,6 @@ final class HttpHandlerGenerator {
                                           exceptions, classType, classWriter, preservedClasses);
         }
       }, ClassReader.SKIP_DEBUG);
-    } finally {
-      sourceBytes.close();
     }
   }
 
@@ -216,19 +215,19 @@ final class HttpHandlerGenerator {
    * Generates the constructor. The constructor generated has signature {@code (DelegatorContext)}.
    */
   private void generateConstructor(TypeToken<? extends HttpServiceHandler> delegateType, ClassWriter classWriter) {
-    Method constructor = Methods.getMethod(void.class, "<init>", DelegatorContext.class, MetricsCollector.class);
+    Method constructor = Methods.getMethod(void.class, "<init>", DelegatorContext.class, MetricsContext.class);
     String signature = Signatures.getMethodSignature(constructor, getContextType(delegateType),
-                                                     TypeToken.of(MetricsCollector.class));
+                                                     TypeToken.of(MetricsContext.class));
 
-    // Constructor(DelegatorContext, MetricsCollector)
+    // Constructor(DelegatorContext, MetricsContext)
     GeneratorAdapter mg = new GeneratorAdapter(Opcodes.ACC_PUBLIC, constructor, signature, null, classWriter);
 
-    // super(context, metricsCollector);
+    // super(context, metricsContext);
     mg.loadThis();
     mg.loadArg(0);
     mg.loadArg(1);
     mg.invokeConstructor(Type.getType(AbstractHttpHandlerDelegator.class),
-                         Methods.getMethod(void.class, "<init>", DelegatorContext.class, MetricsCollector.class));
+                         Methods.getMethod(void.class, "<init>", DelegatorContext.class, MetricsContext.class));
     mg.returnValue();
     mg.endMethod();
   }
@@ -320,7 +319,7 @@ final class HttpHandlerGenerator {
     HandlerMethodVisitor(TypeToken<?> delegateType, MethodVisitor mv, String desc,
                          String signature, int access, String name, String[] exceptions,
                          Type classType, ClassWriter classWriter, List<Class<?>> preservedClasses) {
-      super(Opcodes.ASM4, mv);
+      super(Opcodes.ASM5, mv);
       this.delegateType = delegateType;
       this.desc = desc;
       this.signature = signature;
@@ -338,7 +337,7 @@ final class HttpHandlerGenerator {
     public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
       // Memorize all visible annotations
       if (visible) {
-        AnnotationNode annotationNode = new AnnotationNode(Opcodes.ASM4, desc);
+        AnnotationNode annotationNode = new AnnotationNode(Opcodes.ASM5, desc);
         annotations.add(annotationNode);
         return annotationNode;
       }
@@ -350,7 +349,7 @@ final class HttpHandlerGenerator {
       // Memorize all visible annotations for each parameter.
       // It needs to store in a Multimap because there can be multiple annotations per parameter.
       if (visible) {
-        AnnotationNode annotationNode = new AnnotationNode(Opcodes.ASM4, desc);
+        AnnotationNode annotationNode = new AnnotationNode(Opcodes.ASM5, desc);
         paramAnnotations.put(parameter, annotationNode);
         return annotationNode;
       }

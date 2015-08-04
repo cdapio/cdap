@@ -26,9 +26,11 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.io.CharStreams;
+import com.google.common.io.Closeables;
 import com.google.common.io.Files;
 import org.apache.twill.filesystem.Location;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.util.jar.Attributes;
@@ -92,7 +94,7 @@ public final class DefaultProgram implements Program {
     }
   }
 
-  public DefaultProgram(Location programJarLocation, ClassLoader classLoader) throws IOException {
+  DefaultProgram(Location programJarLocation, ClassLoader classLoader) throws IOException {
     this(programJarLocation, null, null);
     this.classLoader = classLoader;
   }
@@ -189,6 +191,13 @@ public final class DefaultProgram implements Program {
       expanded = true;
     } catch (IOException e) {
       throw Throwables.propagate(e);
+    }
+  }
+
+  @Override
+  public synchronized void close() throws IOException {
+    if (expanded && classLoader instanceof Closeable) {
+      Closeables.closeQuietly((Closeable) classLoader);
     }
   }
 }

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.api.app;
 
+import co.cask.cdap.api.Config;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.Dataset;
@@ -44,9 +45,10 @@ import java.util.Map;
  * Implement the {@link #configure()} method to define your application.
  * </p>
  *
+ * @param <T> {@link Config} config class that represents the configuration of the Application.
  * @see co.cask.cdap.api.app
  */
-public abstract class AbstractApplication implements Application {
+public abstract class AbstractApplication<T extends Config> implements Application<T> {
   private ApplicationContext context;
   private ApplicationConfigurer configurer;
 
@@ -56,7 +58,7 @@ public abstract class AbstractApplication implements Application {
   public abstract void configure();
 
   @Override
-  public final void configure(ApplicationConfigurer configurer, ApplicationContext context) {
+  public final void configure(ApplicationConfigurer configurer, ApplicationContext<T> context) {
     this.context = context;
     this.configurer = configurer;
 
@@ -73,8 +75,17 @@ public abstract class AbstractApplication implements Application {
   /**
    * @return The {@link ApplicationContext} of the {@link Application}
    */
-  protected final ApplicationContext getContext() {
+  protected final ApplicationContext<T> getContext() {
     return context;
+  }
+
+  /**
+   * Get the configuration object.
+   *
+   * @return application configuration provided during application creation
+   */
+  protected T getConfig() {
+    return getContext().getConfig();
   }
 
   /**

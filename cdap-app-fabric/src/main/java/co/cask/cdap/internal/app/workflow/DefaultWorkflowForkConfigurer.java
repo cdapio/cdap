@@ -67,14 +67,14 @@ public class DefaultWorkflowForkConfigurer<T extends WorkflowForkJoiner & Workfl
   @Override
   @SuppressWarnings("unchecked")
   public WorkflowForkConfigurer<? extends WorkflowForkConfigurer<T>> fork() {
-    return new DefaultWorkflowForkConfigurer<DefaultWorkflowForkConfigurer<T>>(this);
+    return new DefaultWorkflowForkConfigurer<>(this);
   }
 
   @Override
   public WorkflowConditionConfigurer<? extends WorkflowForkConfigurer<T>> condition(
     Predicate<WorkflowContext> predicate) {
-    return new DefaultWorkflowConditionConfigurer<DefaultWorkflowForkConfigurer<T>>(this,
-                                                                                    predicate.getClass().getName());
+    return new DefaultWorkflowConditionConfigurer<>(predicate.getClass().getSimpleName(), this,
+                                                    predicate.getClass().getName());
   }
 
   @Override
@@ -98,8 +98,8 @@ public class DefaultWorkflowForkConfigurer<T extends WorkflowForkJoiner & Workfl
   }
 
   @Override
-  public void addWorkflowConditionNode(String predicateClassName, List<WorkflowNode> ifBranch,
+  public void addWorkflowConditionNode(String conditionNodeName, String predicateClassName, List<WorkflowNode> ifBranch,
                                        List<WorkflowNode> elseBranch) {
-    currentBranch.add(new WorkflowConditionNode(null, predicateClassName, ifBranch, elseBranch));
+    currentBranch.add(new WorkflowConditionNode(conditionNodeName, predicateClassName, ifBranch, elseBranch));
   }
 }

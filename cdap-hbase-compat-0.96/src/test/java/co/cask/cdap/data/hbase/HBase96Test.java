@@ -57,7 +57,7 @@ public class HBase96Test extends HBaseTestBase {
   }
 
   @Override
-  public void startHBase() throws Exception {
+  public void doStartHBase() throws Exception {
     testUtil.startMiniCluster();
   }
 
@@ -133,7 +133,7 @@ public class HBase96Test extends HBaseTestBase {
   @Override
   public <T> Map<byte[], T> forEachRegion(byte[] tableName, Function<HRegion, T> function) {
     MiniHBaseCluster hbaseCluster = getHBaseCluster();
-    Map<byte[], T> results = new TreeMap<byte[], T>(Bytes.BYTES_COMPARATOR);
+    Map<byte[], T> results = new TreeMap<>(Bytes.BYTES_COMPARATOR);
     // make sure consumer config cache is updated
     for (JVMClusterUtil.RegionServerThread t : hbaseCluster.getRegionServerThreads()) {
       List<HRegion> serverRegions = t.getRegionServer().getOnlineRegions(TableName.valueOf(tableName));

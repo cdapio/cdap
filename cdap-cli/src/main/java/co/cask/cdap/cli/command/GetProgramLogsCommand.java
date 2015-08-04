@@ -24,6 +24,8 @@ import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.ProgramClient;
+import co.cask.cdap.common.utils.TimeMathParser;
+import co.cask.cdap.proto.Id;
 import co.cask.common.cli.Arguments;
 
 import java.io.PrintStream;
@@ -46,16 +48,20 @@ public class GetProgramLogsCommand extends AbstractAuthCommand {
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     String[] programIdParts = arguments.get(elementType.getArgumentName().toString()).split("\\.");
     String appId = programIdParts[0];
-    long start = arguments.getLong(ArgumentName.START_TIME.toString(), 0);
-    long stop = arguments.getLong(ArgumentName.START_TIME.toString(), Long.MAX_VALUE);
+    String startString = arguments.get(ArgumentName.START_TIME.toString(), "0");
+    long start = TimeMathParser.parseTimeInSeconds(startString);
+    String stopString = arguments.get(ArgumentName.END_TIME.toString(), Long.toString(Integer.MAX_VALUE));
+    long stop = TimeMathParser.parseTimeInSeconds(stopString);
 
     String logs;
     if (elementType.getProgramType() != null) {
       if (programIdParts.length < 2) {
         throw new CommandInputError(this);
       }
-      String programId = programIdParts[1];
-      logs = programClient.getProgramLogs(appId, elementType.getProgramType(), programId, start, stop);
+      String programName = programIdParts[1];
+      Id.Program programId = Id.Program.from(cliConfig.getCurrentNamespace(), appId,
+                                             elementType.getProgramType(), programName);
+      logs = programClient.getProgramLogs(programId, start, stop);
     } else {
       throw new IllegalArgumentException("Cannot get logs for " + elementType.getNamePlural());
     }
@@ -65,12 +71,12 @@ public class GetProgramLogsCommand extends AbstractAuthCommand {
 
   @Override
   public String getPattern() {
-    return String.format("get %s logs <%s> [<%s>] [<%s>]", elementType.getName(), elementType.getArgumentName(),
+    return String.format("get %s logs <%s> [<%s>] [<%s>]", elementType.getShortName(), elementType.getArgumentName(),
                          ArgumentName.START_TIME, ArgumentName.END_TIME);
   }
 
   @Override
   public String getDescription() {
-    return String.format("Gets the logs of %s.", Fragment.of(Article.A, elementType.getTitleName()));
+    return String.format("Gets the logs of %s.", Fragment.of(Article.A, elementType.getName()));
   }
 }

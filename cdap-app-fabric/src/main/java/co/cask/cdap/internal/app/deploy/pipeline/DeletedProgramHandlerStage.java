@@ -79,7 +79,7 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
       //call the deleted spec
       ProgramType type = ProgramTypes.fromSpecification(spec);
       Id.Program programId = Id.Program.from(appSpec.getId(), type, spec.getName());
-      programTerminator.stop(Id.Namespace.from(appSpec.getId().getNamespaceId()), programId, type);
+      programTerminator.stop(programId);
 
       // TODO: Unify with AppFabricHttpHandler.removeApplication
       // drop all queues and stream states of a deleted flow
@@ -101,7 +101,7 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
                                         namespace, entry.getValue());
         }
 
-        queueAdmin.dropAllForFlow(programId.getNamespaceId(), programId.getApplicationId(), programId.getId());
+        queueAdmin.dropAllForFlow(Id.Flow.from(programId.getApplication(), programId.getId()));
         deletedFlows.add(programId.getId());
       }
     }

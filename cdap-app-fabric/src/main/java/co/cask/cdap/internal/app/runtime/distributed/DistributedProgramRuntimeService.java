@@ -18,7 +18,7 @@ package co.cask.cdap.internal.app.runtime.distributed;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.api.metrics.MetricsCollector;
+import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.queue.QueueSpecification;
 import co.cask.cdap.app.queue.QueueSpecificationGenerator;
@@ -38,6 +38,7 @@ import co.cask.cdap.internal.app.runtime.AbstractResourceReporter;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.runtime.service.SimpleRuntimeInfo;
+import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.proto.Containers;
 import co.cask.cdap.proto.DistributedProgramLiveInfo;
 import co.cask.cdap.proto.Id;
@@ -173,7 +174,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
       }
 
       // Program matched
-      RunRecord record = store.getRun(programId, runId.getId());
+      RunRecordMeta record = store.getRun(programId, runId.getId());
       if (record == null) {
         return null;
       }
@@ -188,7 +189,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
         if (!twillRunId.equals(twillRunIdFromRecord)) {
           continue;
         }
-        runtimeInfo = createRuntimeInfo(programId.getType(), programId, controller, runId);
+        runtimeInfo = createRuntimeInfo(programId, controller, runId);
         if (runtimeInfo != null) {
           updateRuntimeInfo(programId.getType(), runId, runtimeInfo);
         } else {
@@ -235,17 +236,15 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
     }
 
     final Set<RunId> twillRunIds = twillProgramInfo.columnKeySet();
-    List<RunRecord> activeRunRecords = store.getRuns(ProgramRunStatus.RUNNING, new Predicate<RunRecord>() {
+    List<RunRecordMeta> activeRunRecords = store.getRuns(ProgramRunStatus.RUNNING, new Predicate<RunRecordMeta>() {
       @Override
-      public boolean apply(RunRecord record) {
-        if (record.getTwillRunId() == null) {
-          return false;
-        }
-        return twillRunIds.contains(record.getTwillRunId());
+      public boolean apply(RunRecordMeta record) {
+        return record.getTwillRunId() != null
+          && twillRunIds.contains(org.apache.twill.internal.RunIds.fromString(record.getTwillRunId()));
       }
     });
 
-    for (RunRecord record : activeRunRecords) {
+    for (RunRecordMeta record : activeRunRecords) {
       RunId twillRunIdFromRecord = org.apache.twill.internal.RunIds.fromString(record.getTwillRunId());
       // Get the CDAP RunId from RunRecord
       RunId runId = RunIds.fromString(record.getPid());
@@ -254,7 +253,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
       Map.Entry<Id.Program, TwillController> entry = mapForTwillId.entrySet().iterator().next();
 
       // Create RuntimeInfo for the current Twill RunId
-      RuntimeInfo runtimeInfo = createRuntimeInfo(type, entry.getKey(), entry.getValue(), runId);
+      RuntimeInfo runtimeInfo = createRuntimeInfo(entry.getKey(), entry.getValue(), runId);
       if (runtimeInfo != null) {
         result.put(runId, runtimeInfo);
         updateRuntimeInfo(type, runId, runtimeInfo);
@@ -266,10 +265,9 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
     return ImmutableMap.copyOf(result);
   }
 
-  private RuntimeInfo createRuntimeInfo(ProgramType type, Id.Program programId, TwillController controller,
-                                        RunId runId) {
+  private RuntimeInfo createRuntimeInfo(Id.Program programId, TwillController controller, RunId runId) {
     try {
-      Program program = store.loadProgram(programId, type);
+      Program program = store.loadProgram(programId);
       Preconditions.checkNotNull(program, "Program not found");
 
       ProgramController programController = createController(program, controller, runId);
@@ -349,9 +347,9 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
   }
 
   @Override
-  public ProgramLiveInfo getLiveInfo(Id.Program program, ProgramType type) {
-    String twillAppName = String.format("%s.%s.%s.%s", type.name().toLowerCase(),
-                                      program.getNamespaceId(), program.getApplicationId(), program.getId());
+  public ProgramLiveInfo getLiveInfo(Id.Program program) {
+    String twillAppName = String.format("%s.%s.%s.%s", program.getType().name().toLowerCase(),
+                                        program.getNamespaceId(), program.getApplicationId(), program.getId());
     Iterator<TwillController> controllers = twillRunner.lookup(twillAppName).iterator();
     // this will return an empty Json if there is no live instance
     if (controllers.hasNext()) {
@@ -361,11 +359,11 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
       }
       ResourceReport report = controller.getResourceReport();
       if (report != null) {
-        DistributedProgramLiveInfo liveInfo = new DistributedProgramLiveInfo(program, type, report.getApplicationId());
+        DistributedProgramLiveInfo liveInfo = new DistributedProgramLiveInfo(program, report.getApplicationId());
 
         // if program type is flow then the container type is flowlet.
-        Containers.ContainerType containerType = ProgramType.FLOW.equals(type) ? FLOWLET :
-                                                 Containers.ContainerType.valueOf(type.name());
+        Containers.ContainerType containerType = ProgramType.FLOW.equals(program.getType()) ? FLOWLET :
+                                                 Containers.ContainerType.valueOf(program.getType().name());
 
         for (Map.Entry<String, Collection<TwillRunResources>> entry : report.getResources().entrySet()) {
           for (TwillRunResources resources : entry.getValue()) {
@@ -385,7 +383,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
         return liveInfo;
       }
     }
-    return new NotRunningProgramLiveInfo(program, type);
+    return new NotRunningProgramLiveInfo(program);
   }
 
   /**
@@ -402,7 +400,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
 
     public ClusterResourceReporter(MetricsCollectionService metricsCollectionService, Configuration hConf,
                                    CConfiguration cConf) {
-      super(metricsCollectionService.getCollector(
+      super(metricsCollectionService.getContext(
         ImmutableMap.<String, String>of()));
       try {
         this.hdfs = FileSystem.get(hConf);
@@ -532,7 +530,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
           JsonObject clusterMetrics = response.getAsJsonObject("clusterMetrics");
           long totalMemory = clusterMetrics.get("totalMB").getAsLong();
           long availableMemory = clusterMetrics.get("availableMB").getAsLong();
-          MetricsCollector collector = getCollector();
+          MetricsContext collector = getCollector();
           LOG.trace("resource manager, total memory = " + totalMemory + " available = " + availableMemory);
           collector.gauge("resources.total.memory", totalMemory);
           collector.gauge("resources.available.memory", availableMemory);
@@ -575,7 +573,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
         long storageCapacity = hdfsStatus.getCapacity();
         long storageAvailable = hdfsStatus.getRemaining();
 
-        MetricsCollector collector = getCollector();
+        MetricsContext collector = getCollector();
         LOG.trace("total cluster storage = " + storageCapacity + " total used = " + totalUsed);
         collector.gauge("resources.total.storage", (storageCapacity / 1024 / 1024));
         collector.gauge("resources.available.storage", (storageAvailable / 1024 / 1024));

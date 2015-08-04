@@ -39,7 +39,7 @@ import java.util.Set;
  * TwillApplication wrapper for Master Services running in YARN.
  */
 public class MasterTwillApplication implements TwillApplication {
-  private static final Logger LOG = LoggerFactory.getLogger(MasterServiceMain.class);
+  private static final Logger LOG = LoggerFactory.getLogger(MasterTwillApplication.class);
   private static final String NAME = Constants.Service.MASTER_SERVICES;
 
   private final CConfiguration cConf;
@@ -49,12 +49,12 @@ public class MasterTwillApplication implements TwillApplication {
   private final boolean runHiveService;
   private final Map<String, Integer> instanceCountMap;
 
-  public MasterTwillApplication(CConfiguration cConf, File cConfFile, File hConfFile, boolean runHiveService,
+  public MasterTwillApplication(CConfiguration cConf, File cConfFile, File hConfFile,
                                 Map<String, Integer> instanceCountMap) {
     this.cConf = cConf;
     this.cConfFile = cConfFile;
     this.hConfFile = hConfFile;
-    this.runHiveService = runHiveService;
+    this.runHiveService = cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED);
     this.instanceCountMap = instanceCountMap;
   }
 

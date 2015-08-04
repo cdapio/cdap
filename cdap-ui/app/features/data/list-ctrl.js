@@ -1,51 +1,73 @@
 angular.module(PKG.name + '.feature.data')
-  .controller('CdapDataListController', function($state, $scope, MyDataSource, MyOrderings) {
-    $scope.MyOrderings = MyOrderings;
-    var dataSrc = new MyDataSource($scope);
-    $scope.dataList = [];
-    dataSrc.request({
-      _cdapNsPath: '/streams'
-    })
-      .then(function(res) {
-        $scope.dataList = res
+  .controller('CdapDataListController', function($state, $scope, MyOrderings, myStreamApi, myDatasetApi) {
+    this.MyOrderings = MyOrderings;
+    this.dataList = [];
+    this.currentPage = 1;
+    this.searchText = '';
+    var params = {
+      namespace: $state.params.namespace,
+      scope: $scope
+    };
+
+    myDatasetApi.list(params)
+      .$promise
+      .then(function (res) {
+        this.dataList = res
           .map(function(dataset) {
-            dataset.dataType = 'Stream';
+            dataset.dataType = 'Dataset';
+
+            var datasetParams = {
+              namespace: $state.params.namespace,
+              datasetId: dataset.name,
+              scope: $scope
+            };
+
+            myDatasetApi.programsList(datasetParams)
+              .$promise
+              .then(function (programs) {
+                dataset.programs = programs;
+              });
+
             return dataset;
-          })
-          .concat($scope.dataList);
-      });
+          }.bind(this))
+          .concat(this.dataList);
+      }.bind(this));
 
-    dataSrc.request({
-      _cdapNsPath: '/data/datasets'
-    })
+    myStreamApi.list(params)
+      .$promise
       .then(function(res) {
-        $scope.dataList = res
+        this.dataList = res
           .map(function(stream) {
-            stream.dataType = 'Dataset';
-            return stream;
-          })
-          .concat($scope.dataList);
-      });
+            stream.dataType = 'Stream';
 
-    $scope.goToDetail = function(data) {
+            var streamParams = {
+              namespace: $state.params.namespace,
+              streamId: stream.name,
+              scope: $scope
+            };
+
+            myStreamApi.programsList(streamParams)
+              .$promise
+              .then(function (programs) {
+                stream.programs = programs;
+              });
+
+            return stream;
+          }.bind(this))
+          .concat(this.dataList);
+      }.bind(this));
+
+    this.goToDetail = function(data) {
       if (data.dataType === 'Dataset') {
-        $state.go('datasets.detail.overview', {
+        $state.go('datasets.detail.overview.status', {
           datasetId: data.name
         });
       } else if (data.dataType === 'Stream') {
-        $state.go('streams.detail.overview', {
+        $state.go('streams.detail.overview.status', {
           streamId: data.name
         });
       }
       MyOrderings.dataClicked(data.name);
-    };
-
-    $scope.goToList = function(data) {
-      if (data.dataType === 'Dataset') {
-        $state.go('datasets.list');
-      } else if (data.dataType === 'Stream') {
-        $state.go('streams.list');
-      }
     };
 
   });

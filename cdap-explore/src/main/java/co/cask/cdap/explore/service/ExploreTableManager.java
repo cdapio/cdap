@@ -18,6 +18,7 @@ package co.cask.cdap.explore.service;
 
 import co.cask.cdap.api.data.batch.RecordScannable;
 import co.cask.cdap.api.data.batch.RecordWritable;
+import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.dataset.Dataset;
@@ -25,14 +26,15 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
-import co.cask.cdap.api.dataset.lib.Partition;
+import co.cask.cdap.api.dataset.lib.PartitionDetail;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.Partitioning;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.common.DatasetNotFoundException;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.exception.DatasetNotFoundException;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
+import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
 import co.cask.cdap.data2.dataset2.lib.table.ObjectMappedTableModule;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.explore.table.CreateStatementBuilder;
@@ -65,12 +67,13 @@ public class ExploreTableManager {
   private static final Logger LOG = LoggerFactory.getLogger(ExploreTableManager.class);
 
   private final ExploreService exploreService;
-  private final DatasetFramework datasetFramework;
+  private final SystemDatasetInstantiatorFactory datasetInstantiatorFactory;
 
   @Inject
-  public ExploreTableManager(ExploreService exploreService, DatasetFramework datasetFramework) {
+  public ExploreTableManager(ExploreService exploreService,
+                             SystemDatasetInstantiatorFactory datasetInstantiatorFactory) {
     this.exploreService = exploreService;
-    this.datasetFramework = datasetFramework;
+    this.datasetInstantiatorFactory = datasetInstantiatorFactory;
   }
 
   /**
@@ -159,27 +162,54 @@ public class ExploreTableManager {
     // there are two ways to refer to each dataset type...
     if (ObjectMappedTableModule.FULL_NAME.equals(datasetType) ||
       ObjectMappedTableModule.SHORT_NAME.equals(datasetType)) {
-      return createFromSchemaProperty(spec, datasetID, serdeProperties);
+      return createFromSchemaProperty(spec, datasetID, serdeProperties, true);
     }
 
-    Dataset dataset = ExploreServiceUtils.instantiateDataset(datasetFramework, datasetID);
-
-    // To be enabled for explore, a dataset must either be RecordScannable/Writable,
-    // or it must be a FileSet or a PartitionedFileSet with explore enabled in it properties.
-    if (dataset instanceof Table) {
-      return createFromSchemaProperty(spec, datasetID, serdeProperties);
-    } else if (dataset instanceof RecordScannable || dataset instanceof RecordWritable) {
-      LOG.debug("Enabling explore for dataset instance {}", datasetName);
-      createStatement = new CreateStatementBuilder(datasetName, getDatasetTableName(datasetID))
-        .setSchema(hiveSchemaFor(dataset))
-        .setTableComment("CDAP Dataset")
-        .buildWithStorageHandler(Constants.Explore.DATASET_STORAGE_HANDLER_CLASS, serdeProperties);
-    } else if (dataset instanceof FileSet || dataset instanceof PartitionedFileSet) {
-      Map<String, String> properties = spec.getProperties();
-      if (FileSetProperties.isExploreEnabled(properties)) {
-        LOG.debug("Enabling explore for dataset instance {}", datasetName);
-        createStatement = generateFileSetCreateStatement(datasetID, dataset, properties);
+    try (SystemDatasetInstantiator datasetInstantiator = datasetInstantiatorFactory.create()) {
+      Dataset dataset = datasetInstantiator.getDataset(datasetID);
+      if (dataset == null) {
+        throw new DatasetNotFoundException(datasetID);
       }
+
+      // CDAP-1573: all these instanceofs are a sign that this logic really belongs in each dataset instead of here
+      // To be enabled for explore, a dataset must either be RecordScannable/Writable,
+      // or it must be a FileSet or a PartitionedFileSet with explore enabled in it properties.
+      if (dataset instanceof Table) {
+        // valid for a table not to have a schema property. this logic should really be in Table
+        return createFromSchemaProperty(spec, datasetID, serdeProperties, false);
+      }
+
+      boolean isRecordScannable = dataset instanceof RecordScannable;
+      boolean isRecordWritable = dataset instanceof RecordWritable;
+      if (isRecordScannable || isRecordWritable) {
+        Type recordType = isRecordScannable ?
+          ((RecordScannable) dataset).getRecordType() : ((RecordWritable) dataset).getRecordType();
+
+        // if the type is a structured record, use the schema property to create the table
+        if (StructuredRecord.class.equals(recordType)) {
+          // TODO: CDAP-3079 remove this check once RecordWritable<StructuredRecord> is supported
+          if (isRecordWritable && !isRecordScannable) {
+            throw new UnsupportedTypeException("StructuredRecord is not supported as a type for RecordWritable.");
+          }
+          return createFromSchemaProperty(spec, datasetID, serdeProperties, true);
+        }
+
+        // otherwise, derive the schema from the record type
+        LOG.debug("Enabling explore for dataset instance {}", datasetName);
+        createStatement = new CreateStatementBuilder(datasetName, getDatasetTableName(datasetID))
+          .setSchema(hiveSchemaFor(recordType))
+          .setTableComment("CDAP Dataset")
+          .buildWithStorageHandler(Constants.Explore.DATASET_STORAGE_HANDLER_CLASS, serdeProperties);
+      } else if (dataset instanceof FileSet || dataset instanceof PartitionedFileSet) {
+        Map<String, String> properties = spec.getProperties();
+        if (FileSetProperties.isExploreEnabled(properties)) {
+          LOG.debug("Enabling explore for dataset instance {}", datasetName);
+          createStatement = generateFileSetCreateStatement(datasetID, dataset, properties);
+        }
+      }
+    } catch (IOException e) {
+      LOG.error("Exception instantiating dataset {}.", datasetID, e);
+      throw new ExploreException("Exception while trying to instantiate dataset " + datasetID);
     }
 
     if (createStatement != null) {
@@ -191,14 +221,21 @@ public class ExploreTableManager {
   }
 
   private QueryHandle createFromSchemaProperty(DatasetSpecification spec, Id.DatasetInstance datasetID,
-                                               Map<String, String> serdeProperties)
+                                               Map<String, String> serdeProperties, boolean shouldErrorOnMissingSchema)
     throws ExploreException, SQLException, UnsupportedTypeException {
 
     String schemaStr = spec.getProperty(DatasetProperties.SCHEMA);
-    // if there is no schema, this is a no-op.
+    // if there is no schema property, we cannot create the table and this is an error
     if (schemaStr == null) {
-      return QueryHandle.NO_OP;
+      if (shouldErrorOnMissingSchema) {
+        throw new IllegalArgumentException(String.format(
+          "Unable to enable exploration on dataset %s because the %s property is not set.",
+          datasetID.getId(), DatasetProperties.SCHEMA));
+      } else {
+        return QueryHandle.NO_OP;
+      }
     }
+
     try {
       Schema schema = Schema.parseJson(schemaStr);
       String createStatement = new CreateStatementBuilder(datasetID.getId(), getDatasetTableName(datasetID))
@@ -246,15 +283,23 @@ public class ExploreTableManager {
       return exploreService.execute(datasetID.getNamespace(), deleteStatement);
     }
 
-    Dataset dataset = ExploreServiceUtils.instantiateDataset(datasetFramework, datasetID);
-
-    if (dataset instanceof RecordScannable || dataset instanceof RecordWritable) {
-      deleteStatement = generateDeleteStatement(tableName);
-    } else if (dataset instanceof FileSet || dataset instanceof PartitionedFileSet) {
-      Map<String, String> properties = spec.getProperties();
-      if (FileSetProperties.isExploreEnabled(properties)) {
-        deleteStatement = generateDeleteStatement(tableName);
+    try (SystemDatasetInstantiator datasetInstantiator = datasetInstantiatorFactory.create()) {
+      Dataset dataset = datasetInstantiator.getDataset(datasetID);
+      if (dataset == null) {
+        throw new DatasetNotFoundException(datasetID);
       }
+
+      if (dataset instanceof RecordScannable || dataset instanceof RecordWritable) {
+        deleteStatement = generateDeleteStatement(tableName);
+      } else if (dataset instanceof FileSet || dataset instanceof PartitionedFileSet) {
+        Map<String, String> properties = spec.getProperties();
+        if (FileSetProperties.isExploreEnabled(properties)) {
+          deleteStatement = generateDeleteStatement(tableName);
+        }
+      }
+    } catch (IOException e) {
+      LOG.error("Exception creating dataset classLoaderProvider for dataset {}.", datasetID, e);
+      throw new ExploreException("Exception instantiating dataset " + datasetID);
     }
 
     if (deleteStatement != null) {
@@ -291,25 +336,25 @@ public class ExploreTableManager {
    * Adds multiple partitions to the Hive table for the given dataset.
    *
    * @param datasetID the ID of the dataset to add partitions to
-   * @param partitions a map of partition key to partition path
+   * @param partitionDetails a map of partition key to partition path
    * @return the query handle for adding partitions to the dataset
    * @throws ExploreException if there was an exception adding the partition
    * @throws SQLException if there was a problem with the add partition statement
    */
   public QueryHandle addPartitions(Id.DatasetInstance datasetID,
-                                   Set<Partition> partitions) throws ExploreException, SQLException {
-    if (partitions.isEmpty()) {
+                                   Set<PartitionDetail> partitionDetails) throws ExploreException, SQLException {
+    if (partitionDetails.isEmpty()) {
       return QueryHandle.NO_OP;
     }
     StringBuilder statement = new StringBuilder()
       .append("ALTER TABLE ")
       .append(getDatasetTableName(datasetID))
       .append(" ADD");
-    for (Partition partition : partitions) {
+    for (PartitionDetail partitionDetail : partitionDetails) {
       statement.append(" PARTITION")
-        .append(generateHivePartitionKey(partition.getPartitionKey()))
+        .append(generateHivePartitionKey(partitionDetail.getPartitionKey()))
         .append(" LOCATION '")
-        .append(partition.getRelativePath())
+        .append(partitionDetail.getRelativePath())
         .append("'");
     }
 
@@ -375,9 +420,13 @@ public class ExploreTableManager {
 
     String format = FileSetProperties.getExploreFormat(properties);
     if (format != null) {
+      if ("parquet".equals(format)) {
+        return createStatementBuilder.setSchema(FileSetProperties.getExploreSchema(properties))
+          .buildWithFileFormat("parquet");
+      }
       // for text and csv, we know what to do
       Preconditions.checkArgument("text".equals(format) || "csv".equals(format),
-                                  "Only text and csv are supported as native formats");
+        "Only text and csv are supported as native formats");
       String schema = FileSetProperties.getExploreSchema(properties);
       Preconditions.checkNotNull(schema, "for native formats, explore schema must be given in dataset properties");
       String delimiter = null;
@@ -420,27 +469,14 @@ public class ExploreTableManager {
     return builder.toString();
   }
 
-  /**
-   * Given a record-enabled dataset, its record type and generate a schema string compatible with Hive.
-   *
-   * @param dataset The data set
-   * @return the hive schema
-   * @throws UnsupportedTypeException if the dataset is neither RecordScannable, nor RecordWritable,
-   * or if the row type is not a record or contains null types.
-   */
-  private String hiveSchemaFor(Dataset dataset) throws UnsupportedTypeException {
-    if (dataset instanceof RecordScannable) {
-      return hiveSchemaFor(((RecordScannable) dataset).getRecordType());
-    } else if (dataset instanceof RecordWritable) {
-      return hiveSchemaFor(((RecordWritable) dataset).getRecordType());
-    }
-    throw new UnsupportedTypeException("Dataset neither implements RecordScannable not RecordWritable.");
-  }
-
   // TODO: replace with SchemaConverter.toHiveSchema when we tackle queries on Tables.
   private String hiveSchemaFor(Type type) throws UnsupportedTypeException {
     // This call will make sure that the type is not recursive
-    new ReflectionSchemaGenerator().generate(type, false);
+    try {
+      new ReflectionSchemaGenerator().generate(type, false);
+    } catch (Exception e) {
+      throw new UnsupportedTypeException("Unable to derive schema from " + type, e);
+    }
 
     ObjectInspector objectInspector = ObjectInspectorFactory.getReflectionObjectInspector(type);
     if (!(objectInspector instanceof StructObjectInspector)) {

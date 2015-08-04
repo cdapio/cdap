@@ -256,7 +256,7 @@ an example of the latter, please refer to the
 :Reference <restful-api>`.
 
 To configure pre-splitting for a Table created during application deployment, in your
-Application class' ``configure()`` you specify::
+application class' ``configure()`` you specify::
 
   public class MyApp extends AbstractApplication {
 

@@ -20,7 +20,9 @@ import co.cask.cdap.proto.Id;
 
 /**
  * Thrown when a namespace cannot be deleted.
+ * @deprecated Use {@link co.cask.cdap.common.NamespaceCannotBeCreatedException} instead
  */
+@Deprecated
 public class NamespaceCannotBeDeletedException extends CannotBeDeletedException {
 
   private final Id.Namespace namespace;

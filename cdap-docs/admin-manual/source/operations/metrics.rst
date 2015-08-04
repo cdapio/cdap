@@ -4,9 +4,9 @@
 
 .. _operations-metrics:
 
-============================================
+=======
 Metrics
-============================================
+=======
 
 .. highlight:: java
 
@@ -20,7 +20,7 @@ To add user-defined metrics to your application, read this section in conjunctio
 details on available system metrics in the :ref:`Metrics HTTP API. <http-restful-api-metrics>`
 
 You embed user-defined metrics in the methods defining the components of your application.
-The Metrics system currently supports two kinds of metrics: count and gauge:
+The metrics system currently supports two kinds of metrics: count and gauge:
 
 - count: Increments (or decrements) the metric named metricName by delta::
 
@@ -36,7 +36,7 @@ via the CDAP’s :ref:`restful-api`. The names given to the metrics (such as
 ``names.longnames`` and ``names.bytes`` as in the example below) should be composed only
 of alphanumeric characters.
 
-To add a count metric to a Flowlet *NameSaver*::
+To add a count metric to a flowlet *NameSaver*::
 
   public static class NameSaver extends AbstractFlowlet {
     static final byte[] NAME = { 'n', 'a', 'm', 'e' };
@@ -58,7 +58,7 @@ To add a count metric to a Flowlet *NameSaver*::
     }
   }
 
-To add a gauge metric to the Flowlet *WordProcessor*::
+To add a gauge metric to the flowlet *WordProcessor*::
 
   public class WordProcessor extends AbstractFlowlet {
     OutputEmitter<String> output;

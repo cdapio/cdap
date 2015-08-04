@@ -1,0 +1,75 @@
+{
+  "id": "Jms",
+  "groups" : {
+    "position": [ "group1", "group2" ],
+    "group1": {
+       "display" : "JMS Configuration",
+       "position" : [ "jms.destination.name", "jms.messages.receive" ],
+       "fields" : {
+          "jms.destination.name" : {
+             "widget": "textbox",
+             "label": "Destination Queue",
+             "description" : "Specifies the name of a JMS queue to retrieve the data from",
+             "properties": {
+               "width": "medium"
+             }
+          },
+
+          "jms.messages.receive" : {
+             "widget": "number",
+             "label": "Message Count",
+             "description" : "Number of messages to be retrieved from the JMS queue. Default is set to 50",
+             "info": "",
+             "properties": {
+               "width": "extra-small",
+               "default": 1
+             },
+             "max": 999,
+             "min": 1
+          }
+       }
+    },
+
+    "group2": {
+       "display" : "JMS Connection Factory",
+       "position" : [ "jms.jndi.connectionfactory.name", "jms.factory.initial", "jms.provider.url", "jms.plugin.name", "jms.plugin.type", "jms.plugin.custom.properties"],
+       "fields" : {
+          "jms.jndi.connectionfactory.name" : {
+             "widget": "textbox",
+             "label": "Connection Factory Name"
+          },
+
+          "jms.factory.initial" : {
+             "widget": "textbox",
+             "label": "Factory Class Name"
+          },
+
+          "jms.provider.url" : {
+             "widget" : "textbox",
+             "label" : "Provider URL"
+          },
+
+         "jms.plugin.name" : {
+           "widget": "textbox",
+           "label": "JMS Provider Plugin Name"
+         },
+
+         "jms.plugin.type": {
+           "widget": "textbox",
+           "label": "JMS Provider Plugin Type"
+         },
+
+         "jms.plugin.custom.properties": {
+           "widget" : "json-editor",
+           "label": "JMS Provider Plugin Custom properties as JSON string"
+         }
+       }
+    }
+
+  },
+  "implicit": {
+    "schema": {
+      "message": "string"
+    }
+  }
+}

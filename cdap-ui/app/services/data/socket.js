@@ -14,7 +14,7 @@ angular.module(PKG.name+'.services')
 
   this.prefix = '/_sock';
 
-  this.$get = function (MYSOCKET_EVENT, myAuth, $rootScope, SockJS, $log, MY_CONFIG, myCdapUrl, EventPipe) {
+  this.$get = function (MYSOCKET_EVENT, $rootScope, SockJS, $log, myCdapUrl, EventPipe, MY_CONFIG) {
 
     var self = this,
         socket = null,
@@ -29,7 +29,10 @@ angular.module(PKG.name+'.services')
       socket.onmessage = function (event) {
         try {
           var data = JSON.parse(event.data);
-          $log.log('[mySocket] ←', data);
+          // Same as line 107.
+          if (!MY_CONFIG.securityEnabled) {
+            $log.debug('[mySocket] ←', data);
+          }
           $rootScope.$broadcast(MYSOCKET_EVENT.message, data);
         }
         catch(e) {
@@ -81,10 +84,7 @@ angular.module(PKG.name+'.services')
     }
 
     function doSend(obj) {
-      var msg = angular.extend({
-            user: myAuth.currentUser || null
-          }, obj),
-
+      var msg = obj,
           r = obj.resource;
 
       if(r) {
@@ -105,13 +105,11 @@ angular.module(PKG.name+'.services')
           msg.resource.method = 'GET';
         }
 
-        if(MY_CONFIG.securityEnabled) {
-          msg.resource.headers = angular.extend(r.headers || {}, {
-            authorization: 'Bearer ' + myAuth.currentUser.token
-          });
+        // Trivial attempt to not log anything if security is enabled.
+        // This is to avoid excessive logging in secure mode + not to openly log auth token.
+        if (!MY_CONFIG.securityEnabled) {
+          $log.debug('[mySocket] →', msg.action, r.method, r.url);
         }
-
-        $log.log('[mySocket] →', msg.action, r.method, r.url);
       }
 
       socket.send(JSON.stringify(msg));

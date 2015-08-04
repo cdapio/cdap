@@ -6,9 +6,9 @@
 .. _http-restful-api-namespace:
 .. _http-restful-api-v3-namespace:
 
-===========================================================
+==========================
 Namespace HTTP RESTful API
-===========================================================
+==========================
 
 .. highlight:: console
 
@@ -22,6 +22,7 @@ by the ``<base-url>``, as descibed under :ref:`Conventions <http-restful-api-con
 
 Create a Namespace
 ------------------
+
 To create a namespace, submit an HTTP PUT request::
 
   PUT <base-url>/namespaces/<namespace>
@@ -81,7 +82,7 @@ This will return a JSON String map that lists each namespace with its name and d
    {"name":"demo_namespace","description":"My Demo Namespace","config":{"scheduler.queue.name":"demo"}]
 
 Details of a Namespace
----------------------------------
+----------------------
 
 For detailed information on a specific namespace, use::
 
@@ -116,6 +117,7 @@ response, such as::
 
 Editing a Namespace
 -------------------
+
 To edit an existing namespace, submit an HTTP PUT request to::
 
   PUT <base-url>/namespaces/<namespace>/properties
@@ -144,7 +146,7 @@ for when you `Create a Namespace`_.
    * - ``config``
      - Configuration properties, with a JSON map of name-value pairs. Currently, the only
        supported configuration property is ``scheduler.queue.name``: 
-       :ref:`Scheduler queue <resource-guarantees>` for CDAP Programs and Explore Queries in the namespace.
+       :ref:`Scheduler queue <resource-guarantees>` for CDAP programs and *Explore Queries* in the namespace.
     
 .. rubric:: HTTP Responses
 .. list-table::
@@ -178,4 +180,35 @@ for when you `Create a Namespace`_.
    * - Description
      - Set the *description* property of the Namespace named *dev*,
        and set the *scheduler.queue.name* to *A*. 
-    
+
+.. _http-restful-api-namespace-deleting:
+
+Deleting a Namespace
+--------------------
+
+To delete an existing namespace (including all applications, streams, flows, datasets, metrics,
+and other components), submit an HTTP DELETE request to::
+
+  DELETE <base-url>/unrecoverable/namespaces/<namespace>
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<namespace>``
+     - Namespace
+
+To prevent accidental use of this method, it will only work if the ``cdap-site.xml`` parameter
+``enable.unrecoverable.reset`` has been enabled.
+This method must be exercised with extreme caution, as there is no recovery from it.
+
+Both the CDAP CLI and the CDAP UI expose this function; they also require the parameter to be 
+enabled in order for their functions to work.
+
+In the case of the ``default`` namespace, after everything has been deleted, the ``default`` 
+namespace is retained, as it is always available in CDAP.
+
+To delete only the datasets of a namespace, there is a 
+:ref:`specific dataset endpoint <http-restful-api-dataset-deleting-all>` for that.

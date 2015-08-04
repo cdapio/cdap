@@ -25,6 +25,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import co.cask.cdap.data2.util.hbase.HTableDescriptorBuilder;
 import co.cask.tephra.TxConstants;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
@@ -87,7 +88,7 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin {
       }
     }
 
-    final HTableDescriptor tableDescriptor = tableUtil.createHTableDescriptor(tableId);
+    final HTableDescriptorBuilder tableDescriptor = tableUtil.buildHTableDescriptor(tableId);
     setVersion(tableDescriptor);
     tableDescriptor.addFamily(columnDescriptor);
 
@@ -119,7 +120,7 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin {
       splits = GSON.fromJson(splitsProperty, byte[][].class);
     }
 
-    tableUtil.createTableIfNotExists(getAdmin(), tableId, tableDescriptor, splits);
+    tableUtil.createTableIfNotExists(getAdmin(), tableId, tableDescriptor.build(), splits);
   }
 
   @Override

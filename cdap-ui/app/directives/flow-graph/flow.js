@@ -5,6 +5,7 @@ var baseDirective = {
   templateUrl: 'flow-graph/flow.html',
   scope: {
     model: '=',
+    clickContext: '=',
     click: '&'
   },
   controller: 'myFlowController'
@@ -18,8 +19,8 @@ module.factory('dagreD3', function ($window) {
   return $window.dagreD3;
 });
 
-module.controller('myFlowController', function($scope, d3, dagreD3) {
-  function update(newVal, oldVal) {
+module.controller('myFlowController', function($scope) {
+  function update(newVal) {
     if (angular.isObject(newVal) && Object.keys(newVal).length) {
       $scope.render();
     }
@@ -28,31 +29,20 @@ module.controller('myFlowController', function($scope, d3, dagreD3) {
   $scope.instanceMap = {};
   $scope.labelMap = {};
 
-  /**
-   * Gets number of instances from node map.
-   */
-  $scope.getInstances = function(nodeId) {
-    return $scope.instanceMap[nodeId].instances ? $scope.instanceMap[nodeId].instances : 0;
-  };
+  $scope.$watch('model', update, true);
 
-  $scope.$watch('model', update);
-  $scope.$watchCollection('model.metrics', update);
 });
 
-module.directive('myFlowGraph', function ($filter, $state, $alert, myStreamService) {
+module.directive('myFlowGraph', function ($filter, $state, $alert, myStreamService, $location) {
   return angular.extend({
     link: function (scope, elem, attr) {
-      scope.render = genericRender.bind(null, scope, $filter);
+      scope.render = genericRender.bind(null, scope, $filter, $location);
       scope.parentSelector = attr.parent;
-      /**
-       * Circle radius for instance count.
-       * @type {Number}
-       */
-      var instanceCircleRadius = 10;
+
       /**
        * Circle radius for flowlets.
        */
-      var flowletCircleRadius = 50;
+      var flowletCircleRadius = 45;
 
       // Since names are padded inside of shapes, this needs the same padding to be vertically center aligned.
       /**
@@ -67,10 +57,6 @@ module.directive('myFlowGraph', function ($filter, $state, $alert, myStreamServi
        * Height of stream diagram.
        */
       var streamDiagramHeight = 30;
-      /**
-       * Number of pixes instance should display above base.
-       */
-      var instanceBufferHeight = 30;
 
       /**
        * Leaf node variables.
@@ -90,40 +76,27 @@ module.directive('myFlowGraph', function ($filter, $state, $alert, myStreamServi
       /**
        * Overflow of leaf into the flowlet/stream shape.
        */
-      var leafBuffer = flowletCircleRadius * 0.4;
+      var leafBuffer = flowletCircleRadius * 0.2;
 
       var numberFilter = $filter('myNumber');
       scope.getShapes = function() {
         var shapes = {};
         shapes.flowlet = function(parent, bbox, node) {
-          var w = bbox.width;
-          var h = bbox.height;
-          var points = [
-            //clockwise points from top
-            { x: -streamDiagramWidth, y: streamDiagramHeight}, //e
-            { x: -streamDiagramWidth, y: -h - streamDiagramHeight}, //a
-            { x: w/2, y: -h - streamDiagramHeight}, //b
-            { x: w, y: -h/2}, //c
-            { x: w/2, y: streamDiagramHeight} //d
-          ];
-          var instances = scope.getInstances(node.elem.__data__); // No other way to get name from node.
-          var instanceCircleScaled = scope.getInstancesScaledRadius(instances, instanceCircleRadius);
+          var instances = scope.model.instances[node.elem.__data__] || 1;
+
+          // Pushing labels down
+          parent.select('.label')
+            .attr('transform', 'translate(0,'+ bbox.height / 3 + ')');
+
           var shapeSvg = parent.insert('circle', ':first-child')
             .attr('x', -bbox.width / 2)
             .attr('y', -bbox.height / 2)
             .attr('r', flowletCircleRadius)
             .attr('class', 'flow-shapes foundation-shape flowlet-svg');
 
-          parent.insert('circle')
-            .attr('cx', flowletCircleRadius - instanceCircleScaled)
-            .attr('cy', -instanceBufferHeight)
-            .attr('r', instanceCircleScaled)
-            .attr('class', 'flow-shapes flowlet-instances');
-
           parent.insert('text')
-            .attr('x', flowletCircleRadius - instanceCircleScaled)
-            .attr('y', -instanceBufferHeight + metricCountPadding)
-            .text(instances)
+            .attr('y', -bbox.height/4)
+            .text('x' + instances)
             .attr('class', 'flow-shapes flowlet-instance-count');
 
           var leafOptions = {
@@ -160,10 +133,6 @@ module.directive('myFlowGraph', function ($filter, $state, $alert, myStreamServi
             .attr('points', points.map(function(d) { return d.x + ',' + d.y; }).join(' '))
             .attr('transform', 'translate(' + (-w/8) + ',' + (h * 1/2) + ')')
             .attr('class', 'flow-shapes foundation-shape stream-svg');
-
-          // Elements are positioned with respect to shapeSvg.
-          var width = shapeSvg.node().getBBox().width+10;
-          var circleXPos = -1 * width/2;
 
           var leafOptions = {
             classNames: ['stream-events'],
@@ -213,20 +182,22 @@ module.directive('myFlowGraph', function ($filter, $state, $alert, myStreamServi
           scope.$apply(function(scope) {
             var fn = scope.click();
             if ('undefined' !== typeof fn) {
-              fn(nodeId);
+              fn.call(scope.clickContext, nodeId);
             }
           });
         }
       };
 
-      /**
-       * Radius for instances circle in flowlets. This is a determined as a factor of the size of the
-       * instances text.
-       */
-      scope.getInstancesScaledRadius = function(instances, radius) {
-        var base = radius;
-        var extra = (instances.toString().length - 1) * base / 2;
-        return base + extra;
+      scope.handleTooltip = function(tip, nodeId) {
+        tip
+          .html(function() {
+            return '<span>' + nodeId + '</span>';
+          })
+          .show();
+      };
+
+      scope.arrowheadRule = function() {
+        return false;
       };
 
       /**
@@ -262,14 +233,13 @@ module.directive('myFlowGraph', function ($filter, $state, $alert, myStreamServi
           .x(function(d){return d.x;})
           .y(function(d){return d.y;})
           // Must use basis interpolation for curve.
-          .interpolate("basis-closed");
+          .interpolate('basis-closed');
 
-        svgParent.insert("svg:path")
-          .attr("d", line(pathinfo))
+        svgParent.insert('svg:path')
+          .attr('d', line(pathinfo))
           .attr('class', classNamesStr)
-          .attr("transform", function(d) {
-            return "translate("
-              + (- circleRadius + leafBuffer) + ", 0) rotate(-180)";
+          .attr('transform', function() {
+            return 'translate(' + (- circleRadius + leafBuffer) + ', 0) rotate(-180)';
           });
       }
 
@@ -277,7 +247,7 @@ module.directive('myFlowGraph', function ($filter, $state, $alert, myStreamServi
        * Calcualtes where event count should be placed relative to leaf shape and centers it.
        */
       function calculateLeafBuffer(parent, nodeOptions) {
-        var w = parent.select(".leaf-shape").node().getBBox().width;
+        var w = parent.select('.leaf-shape').node().getBBox().width;
         return - nodeOptions.circleRadius - w / 2 + leafBuffer / 2;
       }
 
@@ -285,30 +255,47 @@ module.directive('myFlowGraph', function ($filter, $state, $alert, myStreamServi
   }, baseDirective);
 });
 
-module.directive('myWorkflowGraph', function ($filter, $state) {
+module.directive('myWorkflowGraph', function ($filter, $location) {
   return angular.extend({
-    link: function (scope, elem, attr) {
-      scope.render = genericRender.bind(null, scope, $filter);
+    link: function (scope) {
+      scope.render = genericRender.bind(null, scope, $filter, $location);
+
       var defaultRadius = 50;
       scope.getShapes = function() {
         var shapes = {};
         shapes.job = function(parent, bbox, node) {
-          var w = bbox.width;
-          var h = bbox.height;
+
+          // Creating Hexagon
+          var xPoint = defaultRadius * 7/8;
+          var yPoint = defaultRadius * 1/2;
           var points = [
-            //clockwise points from top
-            { x: -defaultRadius * 2/3, y: -defaultRadius * 2/3}, //a
-            { x: 0, y: -defaultRadius}, // b
-            { x: defaultRadius * 2/3, y: -defaultRadius * 2/3}, // c
-            { x: defaultRadius, y: 0}, // d
-            { x: defaultRadius * 2/3, y: defaultRadius * 2/3}, // e
-            { x: 0, y: defaultRadius}, // f
-            { x: -defaultRadius * 2/3, y: defaultRadius * 2/3}, // g
-            { x: -defaultRadius, y: -0}, //h
+            // points are listed from top and going clockwise
+            { x: 0, y: defaultRadius},
+            { x: xPoint, y: yPoint},
+            { x: xPoint, y: -yPoint },
+            { x: 0, y: -defaultRadius},
+            { x: -xPoint, y: -yPoint},
+            { x: -xPoint, y: yPoint}
           ];
           var shapeSvg = parent.insert('polygon', ':first-child')
-            .attr('points', points.map(function(p) { return p.x + ',' + p.y; }).join(' '))
-            .attr('class', 'workflow-shapes foundation-shape job-svg');
+              .attr('points', points.map(function(p) { return p.x + ',' + p.y; }).join(' '));
+
+          switch(scope.model.current[node.elem.__data__]) {
+            case 'COMPLETED':
+              shapeSvg.attr('class', 'workflow-shapes foundation-shape job-svg completed');
+              break;
+            case 'RUNNING':
+              shapeSvg.attr('class', 'workflow-shapes foundation-shape job-svg running');
+              break;
+            case 'FAILED':
+              shapeSvg.attr('class', 'workflow-shapes foundation-shape job-svg failed');
+              break;
+            case 'KILLED':
+              shapeSvg.attr('class', 'workflow-shapes foundation-shape job-svg killed');
+              break;
+            default:
+              shapeSvg.attr('class', 'workflow-shapes foundation-shape job-svg');
+          }
 
           node.intersect = function(point) {
             return dagreD3.intersect.polygon(node, points, point);
@@ -319,7 +306,6 @@ module.directive('myWorkflowGraph', function ($filter, $state) {
 
         shapes.start = function(parent, bbox, node) {
           var w = bbox.width;
-          var h = bbox.height;
           var points = [
             // draw a triangle facing right
             { x: -30, y: -40},
@@ -340,7 +326,6 @@ module.directive('myWorkflowGraph', function ($filter, $state) {
 
         shapes.end = function(parent, bbox, node) {
           var w = bbox.width;
-          var h = bbox.height;
           var points = [
             // draw a triangle facing right
             { x: -30, y: 0},
@@ -360,14 +345,12 @@ module.directive('myWorkflowGraph', function ($filter, $state) {
         };
 
         shapes.conditional = function(parent, bbox, node) {
-          var w = (bbox.width * Math.SQRT2) / 2,
-          h = (bbox.height * Math.SQRT2) / 2,
-          points = [
+          var points = [
             // draw a diamond
-            { x:  0, y: -defaultRadius },
-            { x: -defaultRadius, y:  0 },
-            { x:  0, y:  defaultRadius },
-            { x:  defaultRadius, y:  0 }
+            { x:  0, y: -defaultRadius*3/4 },
+            { x: -defaultRadius*3/4, y:  0 },
+            { x:  0, y:  defaultRadius*3/4 },
+            { x:  defaultRadius*3/4, y:  0 }
           ],
           shapeSvg = parent.insert('polygon', ':first-child')
             .attr('points', points.map(function(p) { return p.x + ',' + p.y; }).join(' '))
@@ -376,6 +359,24 @@ module.directive('myWorkflowGraph', function ($filter, $state) {
           node.intersect = function(p) {
             return dagreD3.intersect.polygon(node, points, p);
           };
+          return shapeSvg;
+        };
+
+        shapes.forkjoin = function(parent, bbox, node) {
+
+          parent.select('.label')
+            .attr('style', 'display: none;');
+
+          var shapeSvg = parent.insert('circle', ':first-child')
+            .attr('x', -bbox.width / 2)
+            .attr('y', -bbox.height / 2)
+            .attr('r', 0);
+
+
+          node.intersect = function(p) {
+            return dagreD3.intersect.circle(node, 1, p);
+          };
+
           return shapeSvg;
         };
 
@@ -388,6 +389,12 @@ module.directive('myWorkflowGraph', function ($filter, $state) {
         switch(name) {
           case 'ACTION':
             shapeName = 'job';
+            break;
+          case 'FORKNODE':
+            shapeName = 'forkjoin';
+            break;
+          case 'JOINNODE':
+            shapeName = 'forkjoin';
             break;
           case 'START':
             shapeName = 'start';
@@ -409,16 +416,34 @@ module.directive('myWorkflowGraph', function ($filter, $state) {
         scope.$apply(function(scope) {
           var fn = scope.click();
           if ('undefined' !== typeof fn) {
-            fn(instance);
+            fn.call(scope.clickContext, instance);
           }
         });
       };
 
+      scope.handleTooltip = function(tip, nodeId) {
+        if (['Start', 'End'].indexOf(nodeId) === -1) {
+          tip
+            .html(function() {
+              return '<span>'+ scope.instanceMap[nodeId].nodeId + ' : ' + scope.instanceMap[nodeId].program.programName +'</span>';
+            })
+            .show();
+        }
+
+      };
+
+      scope.arrowheadRule = function(edge) {
+        if (edge.targetType === 'JOINNODE' || edge.targetType === 'FORKNODE') {
+          return false;
+        } else {
+          return true;
+        }
+      };
     }
   }, baseDirective);
 });
 
-function genericRender(scope) {
+function genericRender(scope, filter, location) {
   var nodes = scope.model.nodes;
   var edges = scope.model.edges;
 
@@ -436,17 +461,27 @@ function genericRender(scope) {
 
   // First set nodes and edges.
   angular.forEach(nodes, function (node) {
-    var nodeLabel = node.name.length > 8 ? node.name.substr(0, 5) + '...' : node.name;
+    var nodeLabel = '';
+    if (node.label && node.label.length) {
+      nodeLabel = node.label.length > 8? node.label.substr(0,5) + '...': node.label;
+    } else {
+      nodeLabel = node.name.length > 8? node.name.substr(0,5) + '...': node.name;
+    }
     scope.instanceMap[node.name] = node;
     scope.labelMap[nodeLabel] = node;
     g.setNode(node.name, { shape: scope.getShape(node.type), label: nodeLabel});
   });
 
   angular.forEach(edges, function (edge) {
-    g.setEdge(edge.sourceName, edge.targetName);
+    if (scope.arrowheadRule(edge)) {
+      g.setEdge(edge.sourceName, edge.targetName);
+    } else {
+      g.setEdge(edge.sourceName, edge.targetName, { arrowhead: 'undirected' });
+    }
   });
 
   angular.extend(renderer.shapes(), scope.getShapes());
+
   var selector = '';
   // Making the query to be more specific instead of doing
   // it under the entire DOM. This allows us to draw the diagram
@@ -455,6 +490,7 @@ function genericRender(scope) {
     selector += scope.parentSelector;
   }
   selector += ' svg';
+
   // Set up an SVG group so that we can translate the final graph and tooltip.
   var svg = d3.select(selector).attr('fill', 'white');
   var svgGroup = d3.select(selector + ' g');
@@ -463,31 +499,93 @@ function genericRender(scope) {
     .offset([-10, 0]);
   svg.call(tip);
 
-  // Set up zoom support
-  var zoom = d3.behavior.zoom().on('zoom', function() {
-    svgGroup.attr('transform', 'translate(' + d3.event.translate + ')' +
-                                'scale(' + d3.event.scale + ')');
+  // initializing value
+  scope.translateX = 0;
+  scope.translateY = 0;
+  scope.currentScale = 1.1;
+
+
+  // only being used to center and fit diagram
+  var zoom = d3.behavior.zoom();
+  zoom.on('zoom', function() {
+    svgGroup.attr('transform', 'translate(' + d3.event.translate + ')' + ' scale(' + scope.currentScale + ')');
   });
-  // svg.call(zoom);
+
+  var drag = d3.behavior.drag();
+  drag.on('drag', function () {
+    d3.event.sourceEvent.stopPropagation();
+    scope.translateX = scope.translateX + d3.event.dx;
+    scope.translateY = scope.translateY + d3.event.dy;
+
+    var boundingClient = svg.node().getBoundingClientRect(),
+        gGraph = g.graph();
+
+    if (scope.translateX > boundingClient.width) {
+      scope.translateX = boundingClient.width;
+    }
+    if (scope.translateX < -(gGraph.width * scope.currentScale)) {
+      scope.translateX = -(gGraph.width * scope.currentScale);
+    }
+
+    if (scope.translateY > boundingClient.height) {
+      scope.translateY = boundingClient.height;
+    }
+    if (scope.translateY < -(gGraph.height * scope.currentScale)) {
+      scope.translateY = -(gGraph.height * scope.currentScale);
+    }
+
+    var arr = [scope.translateX, scope.translateY];
+
+    svgGroup.attr('transform', 'translate(' + arr + ')' + ' scale(' + scope.currentScale + ')');
+  });
+  svg.call(drag);
+
+  scope.zoomIn = function() {
+    scope.currentScale += 0.1;
+
+    if (scope.currentScale > 2.5) {
+      scope.currentScale = 2.5;
+    }
+
+    scope.translateX = scope.translateX - (scope.translateX * 0.1);
+    scope.translateY = scope.translateY - (scope.translateY * 0.1);
+
+    var arr = [scope.translateX, scope.translateY];
+    svgGroup.attr('transform', 'translate(' + arr + ')' + ' scale(' + scope.currentScale + ')');
+  };
+
+  scope.zoomOut = function() {
+    scope.currentScale -= 0.1;
+
+    if (scope.currentScale < 0.1) {
+      scope.currentScale = 0.1;
+    }
+
+    var arr = [scope.translateX, scope.translateY];
+    svgGroup.attr('transform', 'translate(' + arr + ')' + ' scale(' + scope.currentScale + ')');
+  };
 
   // Run the renderer. This is what draws the final graph.
   renderer(d3.select(selector + ' g'), g);
 
   /**
+   * We need to specify the full URL for the arrowhead.
+   * http://stackoverflow.com/questions/19742805/angular-and-svg-filters
+   */
+  var paths = svgGroup.selectAll('g.edgePath > path.path');
+  angular.forEach(paths[0], function(p) {
+    p.attributes['marker-end'].nodeValue = 'url(' + location.absUrl() + p.attributes['marker-end'].nodeValue.substr(4);
+  });
+
+  /**
    * Handles showing tooltip on mouseover of node name.
    */
-  scope.handleShowTip = function(nodeId) {
-    tip
-      .html(function(d) {
-        return '<strong>' + scope.instanceMap[nodeId].type +':</strong> <span class="tip-node-name">'+ nodeId +'</span>';
-      })
-      .show();
-  };
+  scope.handleShowTip = scope.handleTooltip.bind(null, tip);
 
   /**
    * Handles hiding tooltip on mouseout of node name.
    */
-  scope.handleHideTip = function(nodeId) {
+  scope.handleHideTip = function() {
     tip.hide();
   };
 
@@ -503,12 +601,28 @@ function genericRender(scope) {
 
   scope.$on('$destroy', scope.handleHideTip);
 
-  // Center svg.
-  var initialScale = 1.1;
-  var svgWidth = svg.node().getBoundingClientRect().width;
-  zoom
-    .translate([(svgWidth - g.graph().width * initialScale) / 2, 20])
-    .scale(initialScale)
-    .event(svg);
-  svg.attr('height', g.graph().height * initialScale + 40);
+  scope.centerImage = function() {
+    // Center svg.
+    var initialScale = 1.1;
+    var svgWidth = svg.node().getBoundingClientRect().width;
+    if (svgWidth - g.graph().width <= 0) {
+      scope.currentScale = svgWidth / g.graph().width;
+      scope.translateX = 0;
+      scope.translateY = 0;
+
+    } else {
+      scope.translateX = (svgWidth - g.graph().width * initialScale) / 2;
+      scope.translateY = 20;
+      scope.currentScale = initialScale;
+    }
+
+    zoom
+      .translate([scope.translateX, scope.translateY])
+      .scale(scope.currentScale)
+      .event(svg);
+    svg.attr('height', g.graph().height * initialScale + 40);
+  };
+
+  scope.centerImage();
+
 }

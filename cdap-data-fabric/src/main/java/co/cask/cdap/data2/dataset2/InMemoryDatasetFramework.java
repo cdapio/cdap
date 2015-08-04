@@ -27,11 +27,11 @@ import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.ClassLoaders;
+import co.cask.cdap.data2.datafabric.dataset.type.ConstantClassLoaderProvider;
+import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
 import co.cask.cdap.data2.dataset2.module.lib.DatasetModules;
-import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
-import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
@@ -89,19 +89,16 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   //       this in-mem implementation for now) and passed client (program) class loader
   // NOTE: We maintain one DatasetDefinitionRegistry per namespace
   private final Map<Id.Namespace, DatasetDefinitionRegistry> registries;
-  private final UsageRegistry usageRegistry;
 
-  public InMemoryDatasetFramework(DatasetDefinitionRegistryFactory registryFactory, CConfiguration configuration,
-                                  TransactionExecutorFactory txExecutorFactory) {
-    this(registryFactory, new HashMap<String, DatasetModule>(), configuration, txExecutorFactory);
+  public InMemoryDatasetFramework(DatasetDefinitionRegistryFactory registryFactory, CConfiguration configuration) {
+    this(registryFactory, new HashMap<String, DatasetModule>(), configuration);
   }
 
   @Inject
   public InMemoryDatasetFramework(DatasetDefinitionRegistryFactory registryFactory,
                                   @Named("defaultDatasetModules") Map<String, DatasetModule> defaultModules,
-                                  CConfiguration configuration, TransactionExecutorFactory txExecutorFactory) {
+                                  CConfiguration configuration) {
     this.registryFactory = registryFactory;
-    this.usageRegistry = new UsageRegistry(txExecutorFactory, this);
     this.allowDatasetUncheckedUpgrade = configuration.getBoolean(Constants.Dataset.DATASET_UNCHECKED_UPGRADE);
 
     this.namespaces = Sets.newHashSet();
@@ -140,8 +137,7 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   }
 
   @Override
-  public void addModule(Id.DatasetModule moduleId,
-                        DatasetModule module) throws ModuleConflictException {
+  public void addModule(Id.DatasetModule moduleId, DatasetModule module) throws ModuleConflictException {
     writeLock.lock();
     try {
       if (moduleClasses.contains(moduleId.getNamespace(), moduleId)) {
@@ -201,7 +197,7 @@ public class InMemoryDatasetFramework implements DatasetFramework {
 
   @Override
   public void addInstance(String datasetType, Id.DatasetInstance datasetInstanceId,
-                                       DatasetProperties props) throws DatasetManagementException, IOException {
+                          DatasetProperties props) throws DatasetManagementException, IOException {
     writeLock.lock();
     try {
       if (!allowDatasetUncheckedUpgrade && instances.contains(datasetInstanceId.getNamespace(), datasetInstanceId)) {
@@ -342,7 +338,15 @@ public class InMemoryDatasetFramework implements DatasetFramework {
 
   @Override
   public <T extends DatasetAdmin> T getAdmin(Id.DatasetInstance datasetInstanceId,
-                                                          @Nullable ClassLoader classLoader) throws IOException {
+                                             @Nullable ClassLoader classLoader) throws IOException {
+    return getAdmin(datasetInstanceId, classLoader, new ConstantClassLoaderProvider(classLoader));
+  }
+
+  @Nullable
+  @Override
+  public <T extends DatasetAdmin> T getAdmin(Id.DatasetInstance datasetInstanceId,
+                                             @Nullable ClassLoader classLoader,
+                                             DatasetClassLoaderProvider classLoaderProvider) throws IOException {
     readLock.lock();
     try {
       DatasetSpecification spec = instances.get(datasetInstanceId.getNamespace(), datasetInstanceId);
@@ -370,12 +374,8 @@ public class InMemoryDatasetFramework implements DatasetFramework {
       }
       LinkedHashSet<String> availableModuleClasses = getAvailableModuleClasses(datasetInstanceId.getNamespace());
       DatasetDefinition def = createRegistry(availableModuleClasses, classLoader).get(spec.getType());
-      T result = (T) (def.getDataset(DatasetContext.from(datasetInstanceId.getNamespaceId()),
-                                     spec, arguments, classLoader));
-      if (owners != null) {
-        usageRegistry.registerAll(owners, datasetInstanceId);
-      }
-      return result;
+      return (T) (def.getDataset(DatasetContext.from(datasetInstanceId.getNamespaceId()),
+                                 spec, arguments, classLoader));
     } finally {
       readLock.unlock();
     }
@@ -386,6 +386,29 @@ public class InMemoryDatasetFramework implements DatasetFramework {
                                           Map<String, String> arguments,
                                           @Nullable ClassLoader classLoader) throws IOException {
     return getDataset(datasetInstanceId, arguments, classLoader, null);
+  }
+
+  @Nullable
+  @Override
+  public <T extends Dataset> T getDataset(Id.DatasetInstance datasetInstanceId,
+                                          @Nullable Map<String, String> arguments,
+                                          @Nullable ClassLoader parentClassLoader,
+                                          DatasetClassLoaderProvider classLoaderProvider,
+                                          @Nullable Iterable<? extends Id> owners) throws IOException {
+    readLock.lock();
+    try {
+      DatasetSpecification spec = instances.get(datasetInstanceId.getNamespace(), datasetInstanceId);
+      if (spec == null) {
+        return null;
+      }
+      LinkedHashSet<String> availableModuleClasses = getAvailableModuleClasses(datasetInstanceId.getNamespace());
+      DatasetDefinition def =
+        createRegistry(availableModuleClasses, parentClassLoader).get(spec.getType());
+      return (T) (def.getDataset(DatasetContext.from(datasetInstanceId.getNamespaceId()),
+        spec, arguments, parentClassLoader));
+    } finally {
+      readLock.unlock();
+    }
   }
 
   @Override

@@ -23,7 +23,7 @@
   <parent>
     <groupId>co.cask.cdap</groupId>
     <artifactId>cdap-etl</artifactId>
-    <version>3.0.0</version>
+    <version>3.1.0</version>
   </parent>
 
   <artifactId>cdap-etl-lib</artifactId>
@@ -36,6 +36,11 @@
       <artifactId>cdap-etl-api</artifactId>
       <version>${project.version}</version>
       <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-formats</artifactId>
+      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.hadoop</groupId>
@@ -158,7 +163,13 @@
         </exclusion>
       </exclusions>
     </dependency>
+    <!-- End for JMS Source -->
     <!-- Start for Kafka Source -->
+    <dependency>
+      <groupId>org.apache.zookeeper</groupId>
+      <artifactId>zookeeper</artifactId>
+      <scope>compile</scope>
+    </dependency>
     <dependency>
       <groupId>org.apache.twill</groupId>
       <artifactId>twill-core</artifactId>
@@ -184,6 +195,31 @@
       <artifactId>snappy-java</artifactId>
     </dependency>
     <!-- End for Kafka Source -->
+    <dependency>
+      <groupId>com.amazonaws</groupId>
+      <artifactId>amazon-sqs-java-messaging-lib</artifactId>
+      <version>1.0.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.elasticmq</groupId>
+      <artifactId>elasticmq-core_2.10</artifactId>
+      <version>0.6.3</version>
+    </dependency>
+    <dependency>
+      <groupId>org.elasticmq</groupId>
+      <artifactId>elasticmq-rest-sqs_2.10</artifactId>
+      <version>0.6.3</version>
+    </dependency>
+    <dependency>
+      <groupId>com.twitter</groupId>
+      <artifactId>parquet-avro</artifactId>
+      <version>1.6.0</version>
+    </dependency>
+    <dependency>
+      <groupId>net.sf.uadetector</groupId>
+      <artifactId>uadetector-resources</artifactId>
+      <version>2014.04</version>
+    </dependency>
   </dependencies>
 
   <build>
@@ -202,7 +238,7 @@
               <instructions>
                 <!-- build bundle jar for batch. excluding realtime-->
                 <Export-Package>co.cask.cdap.template.etl.batch.*;co.cask.cdap.template.etl.transform.*;
-                  co.cask.cdap.template.etl.common;org.apache.avro.mapreduce</Export-Package>
+                  co.cask.cdap.template.etl.common;org.apache.avro.mapreduce;parquet.avro;</Export-Package>
                 <Embed-Dependency>*;inline=false;scope=compile</Embed-Dependency>
                 <Embed-Transitive>true</Embed-Transitive>
                 <Embed-Directory>lib</Embed-Directory>

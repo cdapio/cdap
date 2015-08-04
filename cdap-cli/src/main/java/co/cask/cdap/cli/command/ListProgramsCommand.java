@@ -46,7 +46,7 @@ public class ListProgramsCommand extends AbstractAuthCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    List<ProgramRecord> programs = appClient.listAllPrograms(programType);
+    List<ProgramRecord> programs = appClient.listAllPrograms(cliConfig.getCurrentNamespace(), programType);
 
     Table table = Table.builder()
       .setHeader("app", "id", "description")
@@ -66,7 +66,7 @@ public class ListProgramsCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Lists all %s.", getElementType().getTitleNamePlural());
+    return String.format("Lists all %s.", getElementType().getNamePlural());
   }
 
   private ElementType getElementType() {

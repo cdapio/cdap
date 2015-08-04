@@ -28,6 +28,7 @@ import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.data.dataset.DatasetCreationSpec;
 
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  *
@@ -48,6 +49,12 @@ public abstract class ForwardingApplicationSpecification implements ApplicationS
   @Override
   public String getVersion() {
     return delegate.getVersion();
+  }
+
+  @Nullable
+  @Override
+  public String getConfiguration() {
+    return delegate.getConfiguration();
   }
 
   @Override

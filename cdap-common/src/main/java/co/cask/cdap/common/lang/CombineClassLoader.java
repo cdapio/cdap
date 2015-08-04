@@ -28,6 +28,7 @@ import java.net.URL;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * A {@link ClassLoader} that load classes from list of other {@link ClassLoader}s. Note that
@@ -39,7 +40,13 @@ public class CombineClassLoader extends ClassLoader {
   private static final Logger LOG = LoggerFactory.getLogger(CombineClassLoader.class);
   private final List<ClassLoader> delegates;
 
-  public CombineClassLoader(ClassLoader parent, Iterable<? extends ClassLoader> delegates) {
+  /**
+   * Creates a CombineClassLoader with the given parent and a list of ClassLoaders for delegation.
+   *
+   * @param parent parent ClassLoader. If null, bootstrap ClassLoader will be the parent.
+   * @param delegates list of ClassLoaders for delegation
+   */
+  public CombineClassLoader(@Nullable ClassLoader parent, Iterable<? extends ClassLoader> delegates) {
     super(parent);
     this.delegates = ImmutableList.copyOf(delegates);
   }
@@ -77,7 +84,8 @@ public class CombineClassLoader extends ClassLoader {
 
   @Override
   protected Enumeration<URL> findResources(String name) throws IOException {
-    Set<URL> urls = Sets.newHashSet();
+    // Using LinkedHashSet to preserve the ordering
+    Set<URL> urls = Sets.newLinkedHashSet();
     for (ClassLoader classLoader : delegates) {
       Iterators.addAll(urls, Iterators.forEnumeration(classLoader.getResources(name)));
     }

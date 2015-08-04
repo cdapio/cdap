@@ -19,17 +19,18 @@ package co.cask.cdap.app.store;
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
-import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.worker.Worker;
+import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
+import co.cask.cdap.common.ApplicationNotFoundException;
+import co.cask.cdap.common.ProgramNotFoundException;
+import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.proto.AdapterStatus;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.templates.AdapterDefinition;
 import com.google.common.base.Predicate;
 import org.apache.twill.filesystem.Location;
@@ -61,11 +62,10 @@ public interface Store {
    * Loads a given program.
    *
    * @param program id of the program
-   * @param type of program
    * @return An instance of {@link co.cask.cdap.app.program.DefaultProgram} if found.
    * @throws IOException
    */
-  Program loadProgram(Id.Program program, ProgramType type) throws IOException;
+  Program loadProgram(Id.Program program) throws IOException, ApplicationNotFoundException, ProgramNotFoundException;
 
   /**
    * Logs start of program run.
@@ -123,8 +123,8 @@ public interface Store {
    * @param adapter   name of the adapter associated with the runs
    * @return          list of logged runs
    */
-  List<RunRecord> getRuns(Id.Program id, ProgramRunStatus status, long startTime, long endTime, int limit,
-                          String adapter);
+  List<RunRecordMeta> getRuns(Id.Program id, ProgramRunStatus status, long startTime, long endTime, int limit,
+                              String adapter);
 
   /**
    * Fetches run records for particular program. Returns only finished runs.
@@ -137,7 +137,7 @@ public interface Store {
    * @param limit     max number of entries to fetch for this history call
    * @return          list of logged runs
    */
-  List<RunRecord> getRuns(Id.Program id, ProgramRunStatus status, long startTime, long endTime, int limit);
+  List<RunRecordMeta> getRuns(Id.Program id, ProgramRunStatus status, long startTime, long endTime, int limit);
 
   /**
    * Fetches the run records for the particular status.
@@ -145,7 +145,7 @@ public interface Store {
    * @param filter  predicate to be passed to filter the records
    * @return        list of logged runs
    */
-  List<RunRecord> getRuns(ProgramRunStatus status, Predicate<RunRecord> filter);
+  List<RunRecordMeta> getRuns(ProgramRunStatus status, Predicate<RunRecordMeta> filter);
 
   /**
    * Fetches the run record for particular run of a program.
@@ -154,7 +154,8 @@ public interface Store {
    * @param runid     run id of the program
    * @return          run record for the specified program and runid, null if not found
    */
-  RunRecord getRun(Id.Program id, String runid);
+  @Nullable
+  RunRecordMeta getRun(Id.Program id, String runid);
 
   /**
    * Creates a new stream if it does not exist.
@@ -328,18 +329,23 @@ public interface Store {
   /**
    * Deletes a schedules from a particular program
    * @param program defines program from which a schedule is being deleted
-   * @param programType defines the type of the program
    * @param scheduleName the name of the schedule to be removed from the program
    */
-  void deleteSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName);
+  void deleteSchedule(Id.Program program, String scheduleName);
+
+  /**
+   * Check if an application exists.
+   * @param id id of application.
+   * @return true if the application exists, false otherwise.
+   */
+  boolean applicationExists(Id.Application id);
 
   /**
    * Check if a program exists.
    * @param id id of program.
-   * @param type type of program.
    * @return true if the program exists, false otherwise.
    */
-  boolean programExists(Id.Program id, ProgramType type);
+  boolean programExists(Id.Program id);
 
   /**
    * Creates a new namespace.
@@ -462,4 +468,22 @@ public interface Store {
   void setWorkflowProgramStart(Id.Program programId, String programRunId, String workflow, String workflowRunId,
                                String workflowNodeId, long startTimeInSeconds, @Nullable String adapter,
                                @Nullable String twillRunId);
+
+  /**
+   * Updates the {@link WorkflowToken} for a specified run of a workflow.
+   *
+   * @param workflowId {@link Id.Workflow} of the workflow whose {@link WorkflowToken} is to be updated
+   * @param workflowRunId Run Id of the workflow for which the {@link WorkflowToken} is to be updated
+   * @param token the {@link WorkflowToken} to update
+   */
+  void updateWorkflowToken(Id.Workflow workflowId, String workflowRunId, WorkflowToken token);
+
+  /**
+   * Retrieves the {@link WorkflowToken} for a specified run of a workflow.
+   *
+   * @param workflowId {@link Id.Workflow} of the workflow whose {@link WorkflowToken} is to be retrieved
+   * @param workflowRunId Run Id of the workflow for which the {@link WorkflowToken} is to be retrieved
+   * @return the {@link WorkflowToken} for the specified workflow run
+   */
+  WorkflowToken getWorkflowToken(Id.Workflow workflowId, String workflowRunId);
 }

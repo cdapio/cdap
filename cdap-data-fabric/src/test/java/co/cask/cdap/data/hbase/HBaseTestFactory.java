@@ -24,11 +24,6 @@ import co.cask.cdap.data2.util.hbase.HBaseVersionSpecificFactory;
  */
 public class HBaseTestFactory extends HBaseVersionSpecificFactory<HBaseTestBase> {
   @Override
-  protected String getHBase94Classname() {
-    return "co.cask.cdap.data.hbase.HBase94Test";
-  }
-
-  @Override
   protected String getHBase96Classname() {
     return "co.cask.cdap.data.hbase.HBase96Test";
   }
@@ -36,5 +31,15 @@ public class HBaseTestFactory extends HBaseVersionSpecificFactory<HBaseTestBase>
   @Override
   protected String getHBase98Classname() {
     return "co.cask.cdap.data.hbase.HBase98Test";
+  }
+
+  @Override
+  protected String getHBase10Classname() {
+    return "co.cask.cdap.data.hbase.HBase10Test";
+  }
+
+  @Override
+  protected String getHBase10CDHClassname() {
+    return "co.cask.cdap.data.hbase.HBase10CDHTest";
   }
 }

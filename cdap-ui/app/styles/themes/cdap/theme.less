@@ -6,9 +6,14 @@ body.theme-cdap {
   //
   // Full width for Dashboard
   // --------------------------------------------------
-  &.state-dashboard {
+  &.state-dashboard, &.state-adapters-create {
     main.container {
       width: 100%;
+    }
+  }
+  &.state-adapters-create {
+    main.container {
+      padding: 0;
     }
   }
 
@@ -34,7 +39,6 @@ body.theme-cdap {
   .alert-info       { .alert-styles(@alert-info-bg); }
   .alert-warning    { .alert-styles(@alert-warning-bg); }
   .alert-danger     { .alert-styles(@alert-danger-bg); }
-
 
   //
   // Progress bars
@@ -72,16 +76,14 @@ body.theme-cdap {
     margin-top: 10px;
     &[cask-sortable] {
       thead {
-
-
         .empty { cursor: default; }
       }
     }
     tbody {
-      color: @cdap-bluegray;
+      color: @cdap-darkness;
       a {
         color: @cdap-bluegray;
-        &:hover, &:focus { text-decoration: underline; }
+        &:hover, &:focus { text-decoration: none; }
         &.btn-danger { .cask-btn(@background: transparent, @border: 0, @border-radius: 0, @color: @brand-danger, @padding: 0); }
       }
     }
@@ -128,8 +130,9 @@ body.theme-cdap {
         &:only-child { .border-radius(@table-radius @table-radius 0 0); }
       }
       tr:last-child {
-        td:first-child { .border-radius(0 0 0 @table-radius); }
-        td:last-child { .border-radius(0 0 @table-radius 0); }
+        & > td:first-child { .border-radius(0 0 0 @table-radius); }
+        & > td:last-child { .border-radius(0 0 @table-radius 0); }
+        & > td:only-child { .border-radius(0 0 @table-radius @table-radius); }
       }
   }
 
@@ -188,11 +191,10 @@ body.theme-cdap {
 // Message panel (appears on Dev + Management start screens)
   .panel-message {
     background: white;
-    border: 1px solid lightgray;
+    border: 1px solid #d1d4dc;
     margin-bottom: 20px;
     padding: 10px;
     .border-radius(4px);
-    .box-shadow(0 8px 6px -6px @cdap-darkness);
     p { margin-bottom: 0; }
     .btn-close {
       .cask-btn(@background: @cdap-lightgray, @border: 0, @border-radius: 28px, @padding: 0);
@@ -206,23 +208,26 @@ body.theme-cdap {
     }
   }
 
+  .panel { .box-shadow(none); }
+
+  .panel-title {
+    span.fa {
+      font-size: 10px;
+      margin-right: 10px;
+      height: 15px;
+      vertical-align: middle;
+      .border-radius(25px);
+    }
+  }
   .panel-explore {
     background-color: transparent;
     color: @cdap-header;
-    .box-shadow(none);
     > .panel-heading {
       background: white;
       border: 1px solid lightgray;
       padding: 20px;
+      cursor: pointer;
       .border-radius(8px);
-    }
-    .panel-title {
-      font-size: 17px;
-      span.fa {
-        margin-right: 10px;
-        line-height: 1.2;
-        .border-radius(25px);
-      }
     }
     > .panel-collapse {
       > .panel-body {
@@ -259,10 +264,15 @@ body.theme-cdap {
     //#gradient > .vertical(@start-color: darken(@well-bg, 5%); @end-color: @well-bg);
     background-color: #DCDCE4;
     border-color: darken(@well-bg, 10%);
-    color: @cdap-header;
     @shadow: inset 0 1px 3px rgba(0,0,0,.05), 0 1px 0 rgba(255,255,255,.1);
     .box-shadow(@shadow);
-
+    p {
+      color: @cdap-header;
+    }
+    a {
+      cursor: pointer;
+    }
+    *:only-child { margin: 0; }
     &.dark {
       margin-top: 0;
       background: @cdap-darkness;
@@ -306,7 +316,6 @@ body.theme-cdap {
         line-height: 1;
         opacity: 1;
       }
-      .modal-title { font-weight: bold; }
     }
     .modal-dialog { .border-radius(4px); }
     .modal-content {
@@ -314,6 +323,9 @@ body.theme-cdap {
       background-color: fade(#343841, 85%);
       button.form-control {
         &:focus { outline: none; }
+      }
+      table > thead {
+        color: @text-color;
       }
     }
     .modal-footer {
@@ -346,6 +358,7 @@ body.theme-cdap {
     }
     .input-group-addon + .form-control {
       border-left: 1px solid lightgray;
+      .border-radius(0);
      }
     textarea.form-control { min-height: 100px; }
     select.form-control {
@@ -360,7 +373,6 @@ body.theme-cdap {
 
     // caskConfirm modal styling (no modal-lg or modal-sm class present)
     &.center {
-      h4 { font-weight: bold; }
       .close { display: none; }
       .modal-content, .modal-footer { text-align: center; }
       .modal-content {
@@ -373,6 +385,7 @@ body.theme-cdap {
       }
     }
     .modal-dialog {
+      margin-top: 100px;
       .modal-header {
         .btn {
           .cask-btn(@color: @cdap-header, @background: white, @border: 0, @border-radius: 16px, @padding: 5px 7px);
@@ -393,27 +406,70 @@ body.theme-cdap {
       }
       // Small modal styling
       &.modal-sm {
-        -ms-transform: translateX(0%) translateY(50%);
-        -webkit-transform: translateX(0%) translateY(50%);
-        transform: translateX(0%) translateY(50%);
         text-align: center;
         .modal-footer { text-align: center; }
       }
       // Large modal styling
       &.modal-lg {
-        -ms-transform: translateX(0%) translateY(40%);
-        -webkit-transform: translateX(0%) translateY(40%);
-        transform: translateX(0%) translateY(40%);
         .modal-content {
           .fa-plus { padding-top: 2px }
           a.fa-times { .cask-btn(@color: @brand-danger, @background: @brand-danger, @border: 0, @padding: 15px 15px); }
           .btn-danger {}
         }
         .modal-footer { text-align: right; }
-        .panel { background-color: transparent; }
+        .panel {
+          background-color: transparent;
+        }
       }
     }
-
   }
 
+  //
+  // Tooltips
+  // --------------------------------------------------
+  .tooltip {
+    font-size: 11px;
+    &.top {
+      margin-top: -2px;
+      .tooltip-arrow {
+        bottom: 0;
+        left: 50%;
+        margin-left: -5px;
+        border-left: 5px solid transparent;
+        border-right: 5px solid transparent;
+        border-top: 5px solid @cdap-header;
+      }
+    }
+    &.right {
+      margin-left: 2px;
+      .tooltip-arrow {
+        top: 50%;
+        left: 0;
+        margin-top: -5px;
+        border-top: 5px solid transparent;
+        border-bottom: 5px solid transparent;
+        border-right: 5px solid @cdap-header;
+      }
+    }
+    &.left {
+      margin-left: -2px;
+      .tooltip-arrow {
+        top: 50%;
+        right: 0;
+        margin-top: -5px;
+        border-top: 5px solid transparent;
+        border-bottom: 5px solid transparent;
+        border-left: 5px solid @cdap-header;
+      }
+    }
+  }
+  .tooltip-inner {
+    background-color: @cdap-header;
+    border: 1px solid @cdap-header;
+    color: white;
+    padding: 7px;
+    word-wrap: break-word;
+    text-align: left;
+    .border-radius(3px);
+  }
 }

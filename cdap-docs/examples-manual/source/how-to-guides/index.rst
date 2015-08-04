@@ -14,44 +14,20 @@ How-To Guides
    :maxdepth: 1
    :titlesonly:
 
+   cdap-bi-guide
+   cdap-cube-guide
+   cdap-etl-adapter-guide
    cdap-flow-guide
    cdap-flume-guide
    cdap-kafka-ingest-guide
    cdap-mapreduce-guide
-   cdap-bi-guide
+   cdap-spark-guide
    cdap-timeseries-guide
    cdap-twitter-ingest-guide
-   cdap-spark-guide
-   cdap-cube-guide
-
+   cdap-workflow-guide
 
 Designed to be completed in 15-30 minutes, these guides provide quick, hands-on
 instructions for building the “Hello World” of any development task with CDAP.
-
-
-.. |flow-guide| replace:: **Realtime Data Processing With a Flow:**
-.. _flow-guide: cdap-flow-guide.html
-
-- |flow-guide|_  Learn how to **process data in realtime** with CDAP. You will discover how
-  easy it is to scale out applications on CDAP.
-
-
-.. |flume-guide| replace:: **Ingesting Data into CDAP using Apache Flume:**
-.. _flume-guide: cdap-flume-guide.html
-
-- |flume-guide|_ Learn how to use **Flume to ingest data into CDAP** in real-time.
-
-
-.. |kafka-ingest-guide| replace:: **Consuming Data From Kafka:**
-.. _kafka-ingest-guide: cdap-kafka-ingest-guide.html
-
-- |kafka-ingest-guide|_ Learn how to **consume data from a Kafka topic** to process data **in realtime.**
-
-
-.. |mapreduce-guide| replace:: **Batch Data Processing With CDAP:**
-.. _mapreduce-guide: cdap-mapreduce-guide.html
-
-- |mapreduce-guide|_ Learn how to **run MapReduce programs to process data in CDAP.**
 
 
 .. |bi-guide| replace:: **Analyzing CDAP Data from BI Tools:**
@@ -61,17 +37,41 @@ instructions for building the “Hello World” of any development task with CDA
   perform data analysis.
 
 
-.. |timeseries-guide| replace:: **Storing Timeseries Data:**
-.. _timeseries-guide: cdap-timeseries-guide.html
+.. |cube-guide| replace:: **Data Analysis with OLAP Cube:**
+.. _cube-guide: cdap-cube-guide.html
 
-- |timeseries-guide|_ Learn how to **store timeseries data in CDAP Datasets.**
+- |cube-guide|_ Use a **Cube Dataset** to perform **online analytical processing** of weblogs with CDAP.
 
 
-.. |twitter-ingest-guide| replace:: **Consuming Twitter Data in Realtime:**
-.. _twitter-ingest-guide: cdap-twitter-ingest-guide.html
+.. |etl-adapter-guide| replace:: **Creating ETL Pipelines:**
+.. _etl-adapter-guide: cdap-etl-adapter-guide.html
 
-- |twitter-ingest-guide|_ Learn how to **consume a live tweets stream in realtime,** one of
-  the common tasks of big data applications that power the social analytics.
+- |etl-adapter-guide|_ Using CDAP **ETL Application Templates and Adapters**.
+
+
+.. |flow-guide| replace:: **Real-time Data Processing With a Flow:**
+.. _flow-guide: cdap-flow-guide.html
+
+- |flow-guide|_  Learn how to **process data in real time** with CDAP. You will discover how
+  easy it is to scale out applications on CDAP.
+
+
+.. |flume-guide| replace:: **Ingesting Data into CDAP using Apache Flume:**
+.. _flume-guide: cdap-flume-guide.html
+
+- |flume-guide|_ Learn how to use **Flume to ingest data into CDAP** in real time.
+
+
+.. |kafka-ingest-guide| replace:: **Consuming Data From Kafka:**
+.. _kafka-ingest-guide: cdap-kafka-ingest-guide.html
+
+- |kafka-ingest-guide|_ Learn how to **consume data from a Kafka topic** to process data **in real time.**
+
+
+.. |mapreduce-guide| replace:: **Batch Data Processing With CDAP:**
+.. _mapreduce-guide: cdap-mapreduce-guide.html
+
+- |mapreduce-guide|_ Learn how to **run MapReduce programs to process data in CDAP.**
 
 
 .. |spark-guide| replace:: **Iterative Data Processing with Apache Spark:**
@@ -80,7 +80,22 @@ instructions for building the “Hello World” of any development task with CDA
 - |spark-guide|_ Learn how to **run a Spark program to process data in CDAP.**
 
 
-.. |cube-guide| replace:: **Data Analysis with OLAP Cube:**
-.. _cube-guide: cdap-cube-guide.html
+.. |timeseries-guide| replace:: **Storing Timeseries Data:**
+.. _timeseries-guide: cdap-timeseries-guide.html
 
-- |cube-guide|_ Use a **Cube Dataset** to perform **online analytical processing** of weblogs with CDAP.
+- |timeseries-guide|_ Learn how to **store timeseries data in CDAP Datasets.**
+
+
+.. |twitter-ingest-guide| replace:: **Consuming Twitter Data in Real-time:**
+.. _twitter-ingest-guide: cdap-twitter-ingest-guide.html
+
+- |twitter-ingest-guide|_ Learn how to **consume a live tweets stream in real time,** one of
+  the common tasks of big data applications that power the social analytics.
+
+
+.. |workflow-guide| replace:: **Batch Data Processing with CDAP using Workflow:**
+.. _workflow-guide: cdap-workflow-guide.html
+
+- |workflow-guide|_  Learn how **workflows** can be used to execute
+  `MapReduce <http://research.google.com/archive/mapreduce.html>`__
+  programs in parallel based on the evaluation of conditions.

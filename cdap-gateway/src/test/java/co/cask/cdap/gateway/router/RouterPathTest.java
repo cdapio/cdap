@@ -17,7 +17,6 @@
 package co.cask.cdap.gateway.router;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.gateway.auth.NoAuthenticator;
 import org.jboss.netty.handler.codec.http.DefaultHttpRequest;
 import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -38,7 +37,7 @@ public class RouterPathTest {
 
   @BeforeClass
   public static void init() throws Exception {
-    pathLookup = new RouterPathLookup(new NoAuthenticator());
+    pathLookup = new RouterPathLookup();
   }
 
   @Test
@@ -84,9 +83,9 @@ public class RouterPathTest {
     result = pathLookup.getRoutingService(FALLBACKSERVICE, flowPath, httpRequest);
     Assert.assertEquals(Constants.Service.METRICS, result);
 
-    testMetricsPath("/v3/metrics/search?target=childContext&context=user");
-    testMetricsPath("/v3/metrics/search?target=childContext&context=PurchaeHistory.f.PurchaseFlow");
-    testMetricsPath("/v3/metrics/search?target=metric&context=PurchaeHistory.f.PurchaseFlow");
+    testMetricsPath("/v3/metrics/search?target=tag&tag=namespace:user");
+    testMetricsPath("/v3/metrics/search?target=tag&tag=app:PurchaeHistory&tag=flow:PurchaseFlow");
+    testMetricsPath("/v3/metrics/search?target=metric&tag=app:PurchaeHistory&tag=flow:PurchaseFlow");
   }
 
   private void testMetricsPath(String path) {

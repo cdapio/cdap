@@ -2,7 +2,7 @@ angular.module(PKG.name + '.feature.adapters')
   .config(function($stateProvider, $urlRouterProvider, MYAUTH_ROLE) {
     $stateProvider
       .state('adapters', {
-        url: '/adapters',
+        url: '',
         abstract: true,
         parent: 'apps',
         data: {
@@ -13,22 +13,44 @@ angular.module(PKG.name + '.feature.adapters')
       })
 
         .state('adapters.list', {
-          url: '',
+          url: '/drafts',
           templateUrl: '/assets/features/adapters/templates/list.html',
           controller: 'AdapterListController',
           ncyBreadcrumb: {
-            label: 'Adapters',
+            label: 'All Drafts',
             parent: 'overview'
           }
         })
 
         .state('adapters.create', {
-          url: '/create',
+          url: '/create?name&type',
           params: {
             data: null
           },
+          resolve: {
+            rConfig: function($stateParams, mySettings, $q) {
+              var defer = $q.defer();
+              if ($stateParams.name) {
+                mySettings.get('adapterDrafts')
+                  .then(function(res) {
+                    var draft = res[$stateParams.name];
+                    if (angular.isObject(draft)) {
+                      draft.name = $stateParams.name;
+                      defer.resolve(draft);
+                    } else {
+                      defer.resolve(false);
+                    }
+                  });
+              } else if ($stateParams.data){
+                defer.resolve($stateParams.data);
+              } else {
+                defer.resolve(false);
+              }
+              return defer.promise;
+            }
+          },
+          controller: '_AdapterCreateController as AdapterCreateController',
           templateUrl: '/assets/features/adapters/templates/create.html',
-          controller: 'AdapterCreateController',
           ncyBreadcrumb: {
             skip: true
           }
@@ -41,26 +63,35 @@ angular.module(PKG.name + '.feature.adapters')
             highlightTab: 'development'
           },
           resolve : {
-            rRuns: function(MyDataSource, $stateParams, $q) {
+            rRuns: function($stateParams, $q, myAdapterApi) {
               var defer = $q.defer();
-              var dataSrc = new MyDataSource();
               // Using _cdapPath here as $state.params is not updated with
               // runid param when the request goes out
               // (timing issue with re-direct from login state).
-              dataSrc.request({
-                _cdapPath: '/namespaces/' + $stateParams.namespace +
-                           '/adapters/' + $stateParams.adapterId +
-                           '/runs'
-              })
+              var params = {
+                namespace: $stateParams.namespace,
+                adapter: $stateParams.adapterId
+              };
+
+              myAdapterApi.runs(params)
+                .$promise
                 .then(function(res) {
                   defer.resolve(res);
                 });
               return defer.promise;
+            },
+            rAdapterDetail: function($stateParams, $q, myAdapterApi) {
+              var params = {
+                namespace: $stateParams.namespace,
+                adapter: $stateParams.adapterId
+              };
+
+              return myAdapterApi.get(params).$promise;
             }
           },
           ncyBreadcrumb: {
-            parent: 'adapters.list',
-            label: '{{$state.params.adapterId | caskCapitalizeFilter}}'
+            parent: 'apps.list',
+            label: '{{$state.params.adapterId}}'
           },
           templateUrl: '/assets/features/adapters/templates/detail.html',
           controller: 'AdpaterDetailController'
@@ -70,8 +101,8 @@ angular.module(PKG.name + '.feature.adapters')
             templateUrl: '/assets/features/adapters/templates/tabs/runs.html',
             controller: 'AdapterRunsController',
             ncyBreadcrumb: {
-              parent: 'adapters.list',
-              label: '{{$state.params.adapterId | caskCapitalizeFilter}}'
+              parent: 'apps.list',
+              label: '{{$state.params.adapterId}}'
             }
           })
             .state('adapters.detail.runs.run', {
@@ -91,7 +122,8 @@ angular.module(PKG.name + '.feature.adapters')
           templateUrl: 'data-list/data-list.html',
           controller: 'AdapterDatasetsController',
           ncyBreadcrumb: {
-            label: 'History'
+            label: 'Datasets',
+            parent: 'adapters.detail.runs'
           }
         })
         .state('adapters.detail.history', {
@@ -103,7 +135,8 @@ angular.module(PKG.name + '.feature.adapters')
           templateUrl: '/assets/features/adapters/templates/tabs/history.html',
           controller: 'AdapterRunsController',
           ncyBreadcrumb: {
-            label: 'History'
+            label: 'History',
+            parent: 'adapters.detail.runs'
           }
-        })
+        });
   });

@@ -8,7 +8,11 @@ angular.module(PKG.name + '.commons')
       restrict: 'E',
 
       scope: {
-        model: '='
+        model: '=',
+        next: '&',
+        prev: '&',
+        loadingNext: '=',
+        loadingPrev: '='
       },
 
       templateUrl: 'log-viewer/log-viewer.html',
@@ -44,7 +48,7 @@ angular.module(PKG.name + '.commons')
 
       },
 
-      link: function (scope, element, attrs) {
+      link: function (scope, element) {
 
         var termEl = angular.element(element[0].querySelector('.terminal')),
             QPARAM = 'filter';

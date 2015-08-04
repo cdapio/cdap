@@ -22,7 +22,7 @@
 
   <groupId>co.cask.cdap</groupId>
   <artifactId>cdap</artifactId>
-  <version>3.0.0</version>
+  <version>3.1.0</version>
   <packaging>pom</packaging>
   <name>Cask Data Application Platform (CDAP)</name>
   <description>Data Application Platform for Hadoop</description>
@@ -61,10 +61,6 @@
       <id>sonatype</id>
       <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
     </repository>
-    <repository>
-      <id>continuuity-public</id>
-      <url>https://repository.continuuity.com/content/repositories/public</url>
-    </repository>
   </repositories>
 
 
@@ -84,21 +80,21 @@
   </distributionManagement>
 
   <properties>
+    <jee.version>7</jee.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <surefire.redirectTestOutputToFile>true</surefire.redirectTestOutputToFile>
 
     <etl.batch.plugin.name>ETLBatch</etl.batch.plugin.name>
     <etl.realtime.plugin.name>ETLRealtime</etl.realtime.plugin.name>
 
-    <asm.version>4.0</asm.version>
+    <asm.version>5.0.3</asm.version>
     <async.http.version>1.7.18</async.http.version>
     <avro.version>1.6.2</avro.version>
     <commons.codec.version>1.6</commons.codec.version>
     <commons.cli.version>1.2</commons.cli.version>
     <concurrent.trees.version>2.4.0</concurrent.trees.version>
-    <cask.common.cli.version>0.5.0</cask.common.cli.version>
-    <cask.common.version>0.6.1</cask.common.version>
-    <cdap.hive.version>0.13.0</cdap.hive.version>
+    <cask.common.cli.version>0.7.1</cask.common.cli.version>
+    <cask.common.version>0.7.1</cask.common.version>
     <findbugs.jsr305.version>2.0.1</findbugs.jsr305.version>
     <flume.version>1.2.0</flume.version>
     <geronimo.version>2.0.0</geronimo.version>
@@ -107,10 +103,11 @@
     <guava.version>13.0.1</guava.version>
     <guice.version>3.0</guice.version>
     <hadoop.version>2.3.0</hadoop.version>
-    <hbase94.version>0.94.6.1.continuuity</hbase94.version>
     <hbase96.version>0.96.2-hadoop2</hbase96.version>
     <hbase98.version>0.98.6.1-hadoop2</hbase98.version>
-    <hive.version>0.13.0</hive.version>
+    <hbase10cdh.version>1.0.0-cdh5.4.4</hbase10cdh.version>
+    <hbase10.version>1.0.1.1</hbase10.version>
+    <hive.version>1.1.0</hive.version>
     <hsql.version>2.2.4</hsql.version>
     <http.component.version>4.2.5</http.component.version>
     <jetty.version>6.1.22</jetty.version>
@@ -128,56 +125,21 @@
     <quartz.version>2.2.0</quartz.version>
     <resteasy.version>3.0.8.Final</resteasy.version>
     <servlet.api.version>3.0.1</servlet.api.version>
+    <snappy.version>1.1.1.7</snappy.version>
     <shiro.version>1.2.1</shiro.version>
     <slf4j.version>1.7.5</slf4j.version>
-    <tephra.version>0.4.1</tephra.version>
+    <tephra.version>0.6.1</tephra.version>
     <thrift.version>0.9.0</thrift.version>
-    <twill.version>0.5.0-incubating</twill.version>
+    <twill.version>0.6.0-incubating</twill.version>
     <unboundid.version>2.3.6</unboundid.version>
     <zookeeper.version>3.4.5</zookeeper.version>
-    <spark.version>1.2.0</spark.version>
+    <spark.version>1.3.1</spark.version>
     <cdap.client.version>1.2.0</cdap.client.version>
     <twitter4j.version>4.0.3</twitter4j.version>
     <cask.packages.snapshot.repo>http://cask.invalid.snapshot.repo.co</cask.packages.snapshot.repo>
     <cask.packages.release.repo>http://cask.invalid.release.repo.co</cask.packages.release.repo>
     <release.iteration>1</release.iteration>
   </properties>
-
-  <modules>
-    <module>cdap-common-unit-test</module>
-    <module>cdap-api</module>
-    <module>cdap-common</module>
-    <module>cdap-watchdog-api</module>
-    <module>cdap-kafka</module>
-    <module>cdap-data-fabric</module>
-    <module>cdap-data-fabric-tests</module>
-    <module>cdap-hbase-compat-0.94</module>
-    <module>cdap-hbase-compat-0.96</module>
-    <module>cdap-hbase-compat-0.98</module>
-    <module>cdap-watchdog</module>
-    <module>cdap-app-fabric</module>
-    <module>cdap-security</module>
-    <module>cdap-gateway</module>
-    <module>cdap-explore-client</module>
-    <module>cdap-explore-jdbc</module>
-    <module>cdap-explore</module>
-    <module>cdap-unit-test</module>
-    <module>cdap-unit-test-standalone</module>
-    <module>cdap-master</module>
-    <module>cdap-proto</module>
-    <module>cdap-notifications</module>
-    <module>cdap-notifications-api</module>
-    <module>cdap-client</module>
-    <module>cdap-client-tests</module>
-    <module>cdap-cli</module>
-    <module>cdap-cli-tests</module>
-    <module>cdap-standalone</module>
-    <module>cdap-distributions</module>
-    <module>cdap-archetypes</module>
-    <module>cdap-test</module>
-    <module>cdap-integration-test</module>
-    <module>cdap-ui</module>
-  </modules>
 
   <dependencyManagement>
     <dependencies>
@@ -230,17 +192,6 @@
       </dependency>
       <dependency>
         <groupId>co.cask.tephra</groupId>
-        <artifactId>tephra-hbase-compat-0.94</artifactId>
-        <version>${tephra.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>co.cask.tephra</groupId>
         <artifactId>tephra-hbase-compat-0.96</artifactId>
         <version>${tephra.version}</version>
         <exclusions>
@@ -253,6 +204,28 @@
       <dependency>
         <groupId>co.cask.tephra</groupId>
         <artifactId>tephra-hbase-compat-0.98</artifactId>
+        <version>${tephra.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>co.cask.tephra</groupId>
+        <artifactId>tephra-hbase-compat-1.0-cdh</artifactId>
+        <version>${tephra.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>co.cask.tephra</groupId>
+        <artifactId>tephra-hbase-compat-1.0</artifactId>
         <version>${tephra.version}</version>
         <exclusions>
           <exclusion>
@@ -295,6 +268,11 @@
         <groupId>org.jboss.resteasy</groupId>
         <artifactId>resteasy-guice</artifactId>
         <version>${resteasy.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.xerial.snappy</groupId>
+        <artifactId>snappy-java</artifactId>
+        <version>${snappy.version}</version>
       </dependency>
       <dependency>
         <groupId>jline</groupId>
@@ -416,6 +394,7 @@
         <groupId>org.apache.zookeeper</groupId>
         <artifactId>zookeeper</artifactId>
         <version>${zookeeper.version}</version>
+        <scope>provided</scope>
         <exclusions>
           <exclusion>
             <artifactId>slf4j-api</artifactId>
@@ -512,6 +491,12 @@
         <groupId>org.apache.twill</groupId>
         <artifactId>twill-core</artifactId>
         <version>${twill.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-compiler</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.apache.twill</groupId>
@@ -720,108 +705,33 @@
       </dependency>
       <dependency>
         <groupId>org.apache.hbase</groupId>
-        <artifactId>hbase</artifactId>
-        <version>${hbase94.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>commons-logging</groupId>
-            <artifactId>commons-logging</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.apache.thrift</groupId>
-            <artifactId>libthrift</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.mortbay.jetty</groupId>
-            <artifactId>jetty</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.mortbay.jetty</groupId>
-            <artifactId>jetty-util</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.mortbay.jetty</groupId>
-            <artifactId>jsp-2.1</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.mortbay.jetty</groupId>
-            <artifactId>jsp-api-2.1</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.mortbay.jetty</groupId>
-            <artifactId>servlet-api-2.5</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.jruby</groupId>
-            <artifactId>jruby-complete</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>tomcat</groupId>
-            <artifactId>jasper-compiler</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>tomcat</groupId>
-            <artifactId>jasper-runtime</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>com.sun.jersey</groupId>
-            <artifactId>jersey-core</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>com.sun.jersey</groupId>
-            <artifactId>jersey-json</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>com.sun.jersey</groupId>
-            <artifactId>jersey-server</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.apache.avro</groupId>
-            <artifactId>avro</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.apache.avro</groupId>
-            <artifactId>avro-ipc</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.hbase</groupId>
         <artifactId>hbase-common</artifactId>
-        <version>${hbase96.version}</version>
+        <version>${hbase98.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.hbase</groupId>
         <artifactId>hbase-client</artifactId>
-        <version>${hbase96.version}</version>
+        <version>${hbase98.version}</version>
         <exclusions>
           <exclusion>
             <groupId>io.netty</groupId>
             <artifactId>netty</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
       <dependency>
         <groupId>org.apache.hbase</groupId>
         <artifactId>hbase-protocol</artifactId>
-        <version>${hbase96.version}</version>
+        <version>${hbase98.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.hbase</groupId>
         <artifactId>hbase-server</artifactId>
-        <version>${hbase96.version}</version>
+        <version>${hbase98.version}</version>
         <exclusions>
           <exclusion>
             <groupId>org.mortbay.jetty</groupId>
@@ -1064,9 +974,9 @@
         </exclusions>
       </dependency>
       <dependency>
-        <groupId>co.cask.cdap</groupId>
+        <groupId>org.apache.hive</groupId>
         <artifactId>hive-exec</artifactId>
-        <version>${cdap.hive.version}</version>
+        <version>${hive.version}</version>
         <exclusions>
           <exclusion>
             <groupId>com.google.guava</groupId>
@@ -1126,65 +1036,8 @@
       </dependency>
       <dependency>
         <groupId>org.apache.hbase</groupId>
-        <artifactId>hbase</artifactId>
-        <classifier>tests</classifier>
-        <version>${hbase94.version}</version>
-        <scope>test</scope>
-        <exclusions>
-          <exclusion>
-            <groupId>org.mortbay.jetty</groupId>
-            <artifactId>jetty</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.mortbay.jetty</groupId>
-            <artifactId>jetty-util</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.mortbay.jetty</groupId>
-            <artifactId>jsp-2.1</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.mortbay.jetty</groupId>
-            <artifactId>jsp-api-2.1</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.mortbay.jetty</groupId>
-            <artifactId>servlet-api-2.5</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.jruby</groupId>
-            <artifactId>jruby-complete</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>tomcat</groupId>
-            <artifactId>jasper-compiler</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>tomcat</groupId>
-            <artifactId>jasper-runtime</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>com.sun.jersey</groupId>
-            <artifactId>jersey-core</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>com.sun.jersey</groupId>
-            <artifactId>jersey-json</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>com.sun.jersey</groupId>
-            <artifactId>jersey-server</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.hbase</groupId>
         <artifactId>hbase-testing-util</artifactId>
-        <version>${hbase96.version}</version>
+        <version>${hbase98.version}</version>
         <scope>test</scope>
         <exclusions>
           <exclusion>
@@ -1215,6 +1068,10 @@
             <artifactId>slf4j-log4j12</artifactId>
           </exclusion>
           <exclusion>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+          </exclusion>
+          <exclusion>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-client</artifactId>
           </exclusion>
@@ -1222,7 +1079,43 @@
             <groupId>com.esotericsoftware.reflectasm</groupId>
             <artifactId>reflectasm</artifactId>
           </exclusion>
+          <exclusion>
+            <groupId>org.apache.curator</groupId>
+            <artifactId>curator-recipes</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.tachyonproject</groupId>
+            <artifactId>tachyon-client</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-compiler</artifactId>
+          </exclusion>
+          <!--
+            Need to exclude this since Spark brings in an older version that makes
+            S3 not work in standalone. This doesn't affect distributed mode.
+          -->
+          <exclusion>
+            <groupId>net.java.dev.jets3t</groupId>
+            <artifactId>jets3t</artifactId>
+          </exclusion>
         </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.spark</groupId>
+        <artifactId>spark-sql_2.10</artifactId>
+        <version>${spark.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-compiler</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.spark</groupId>
+        <artifactId>spark-mllib_2.10</artifactId>
+        <version>${spark.version}</version>
       </dependency>
       <dependency>
         <groupId>co.cask.cdap</groupId>
@@ -1280,7 +1173,7 @@
           <artifactId>maven-surefire-plugin</artifactId>
           <version>2.14.1</version>
           <configuration>
-            <argLine>-Xmx5000m -Djava.awt.headless=true -XX:MaxPermSize=256m -XX:+UseConcMarkSweepGC -XX:OnOutOfMemoryError="kill -9 %p"</argLine>
+            <argLine>-Xmx5000m -Djava.awt.headless=true -XX:MaxPermSize=256m -XX:+UseConcMarkSweepGC -XX:OnOutOfMemoryError="kill -9 %p" -Djava.net.preferIPv4Stack=true</argLine>
             <redirectTestOutputToFile>${surefire.redirectTestOutputToFile}</redirectTestOutputToFile>
             <reuseForks>false</reuseForks>
             <reportFormat>plain</reportFormat>
@@ -1309,6 +1202,19 @@
           <groupId>org.apache.rat</groupId>
           <artifactId>apache-rat-plugin</artifactId>
           <version>0.10</version>
+          <dependencies>
+            <dependency>
+              <groupId>org.apache.maven.doxia</groupId>
+              <artifactId>doxia-core</artifactId>
+              <version>1.6</version>
+              <exclusions>
+                <exclusion>
+                  <groupId>xerces</groupId>
+                  <artifactId>xercesImpl</artifactId>
+                </exclusion>
+              </exclusions>
+            </dependency>
+          </dependencies>
           <executions>
             <execution>
               <id>rat-check</id>
@@ -1534,14 +1440,18 @@
               <artifactId>maven-javadoc-plugin</artifactId>
               <version>2.9.1</version>
               <configuration>
-                <stylesheetfile>cdap-distributions/src/javadoc/stylesheet.css</stylesheetfile>
-                <links>
-                  <link>http://download.oracle.com/javase/6/docs/api/</link>
-                </links>
-                <doctitle>${project.name} ${project.version}</doctitle>
                 <bottom>
                   <![CDATA[Copyright &#169; {currentYear} <a href="http://cask.co" target="_blank">Cask Data, Inc.</a> Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0" target="_blank">Apache License, Version 2.0</a>.]]>
                 </bottom>
+                <doctitle>${project.name} ${project.version}</doctitle>
+                <links>
+                  <link>http://avro.apache.org/docs/current/api/java/</link>
+                  <link>http://docs.oracle.com/javaee/${jee.version}/api/</link>
+                  <link>http://hadoop.apache.org/docs/r${hadoop.version}/api/</link>
+                  <link>http://twill.incubator.apache.org/apidocs-${twill.version}/</link>
+                  <link>http://twitter4j.org/javadoc/</link>
+                </links>
+                <quiet>true</quiet>
               </configuration>
               <executions>
                 <execution>
@@ -1628,7 +1538,8 @@
                     <overWriteReleases>false</overWriteReleases>
                     <overWriteSnapshots>false</overWriteSnapshots>
                     <overWriteIfNewer>true</overWriteIfNewer>
-                    <excludeGroupIds>org.apache.hadoop,org.apache.hbase,org.apache.hive,com.google.protobuf,org.datanucleus,asm,org.apache.spark</excludeGroupIds>
+                    <excludeGroupIds>org.apache.hadoop,org.apache.hbase,org.apache.hive,com.google.protobuf,\
+                      org.datanucleus,asm,org.apache.spark,slf4j-log4j12,org.codehaus.jackson</excludeGroupIds>
                     <excludeArtifactIds>hive-exec</excludeArtifactIds>
                     <prependGroupId>true</prependGroupId>
                     <silent>true</silent>
@@ -2163,66 +2074,126 @@
         </plugins>
       </build>
     </profile>
+
+    <!--
+      This profile contains modules that only has tests.
+    -->
+    <profile>
+      <id>unit-tests</id>
+      <activation>
+        <jdk>[1.7,)</jdk>
+      </activation>
+
+      <modules>
+        <module>cdap-data-fabric-tests</module>
+        <module>cdap-cli-tests</module>
+        <module>cdap-client-tests</module>
+      </modules>
+    </profile>
+
+    <!--
+       This profile defines all default modules and must come as the last profile.
+       It is needed so that when examples and templates profile are turned on, they are
+       built before cdap-standalone and cdap-master, which need examples and templates artifacts
+    -->
+    <profile>
+      <id>default</id>
+      <activation>
+        <jdk>[1.7,)</jdk>
+      </activation>
+
+      <modules>
+        <module>cdap-common-unit-test</module>
+        <module>cdap-api</module>
+        <module>cdap-formats</module>
+        <module>cdap-hbase-compat-0.96</module>
+        <module>cdap-hbase-compat-0.98</module>
+        <module>cdap-hbase-compat-1.0-cdh</module>
+        <module>cdap-hbase-compat-1.0</module>
+        <module>cdap-common</module>
+        <module>cdap-watchdog-api</module>
+        <module>cdap-kafka</module>
+        <module>cdap-data-fabric</module>
+        <module>cdap-watchdog</module>
+        <module>cdap-app-fabric</module>
+        <module>cdap-security</module>
+        <module>cdap-gateway</module>
+        <module>cdap-explore-client</module>
+        <module>cdap-explore-jdbc</module>
+        <module>cdap-explore</module>
+        <module>cdap-unit-test</module>
+        <module>cdap-master</module>
+        <module>cdap-proto</module>
+        <module>cdap-notifications</module>
+        <module>cdap-notifications-api</module>
+        <module>cdap-client</module>
+        <module>cdap-cli</module>
+        <module>cdap-standalone</module>
+        <module>cdap-distributions</module>
+        <module>cdap-archetypes</module>
+        <module>cdap-test</module>
+        <module>cdap-integration-test</module>
+        <module>cdap-ui</module>
+      </modules>
+    </profile>
   </profiles>
 
   <!-- Site reporting section -->
   <reporting>
+    <excludeDefaults>true</excludeDefaults>
     <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-project-info-reports-plugin</artifactId>
-        <version>2.7</version>
-        <reportSets>
-          <reportSet>
-            <reports/>
-          </reportSet>
-          <reportSet>
-            <id>site</id>
-            <reports>
-              <report>index</report>
-              <report>mailing-list</report>
-              <report>scm</report>
-              <report>issue-tracking</report>
-              <report>project-team</report>
-            </reports>
-          </reportSet>
-        </reportSets>
-      </plugin>
-
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-javadoc-plugin</artifactId>
         <version>2.9.1</version>
         <configuration>
           <stylesheetfile>cdap-distributions/src/javadoc/stylesheet.css</stylesheetfile>
-          <links>
-            <link>http://download.oracle.com/javase/6/docs/api/</link>
-          </links>
-          <doctitle>${project.name} ${project.version}</doctitle>
           <bottom>
             <![CDATA[Copyright &#169; {currentYear} <a href="http://cask.co" target="_blank">Cask Data, Inc.</a> Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0" target="_blank">Apache License, Version 2.0</a>.]]>
           </bottom>
+          <doctitle>${project.name} ${project.version}</doctitle>
+          <links>
+            <link>http://hadoop.apache.org/docs/r${hadoop.version}/api/</link>
+            <link>http://twill.incubator.apache.org/apidocs-${twill.version}/</link>
+          </links>
+          <quiet>true</quiet>
+          <groups>
+            <group>
+              <title>Core Packages</title>
+              <packages>co.cask.cdap.api:co.cask.cdap.api.*:co.cask.cdap.test</packages>
+            </group>
+            <group>
+              <title>Application Template Packages</title>
+              <packages>co.cask.cdap.template.*</packages>
+            </group>
+          </groups>
         </configuration>
         <reportSets>
-          <reportSet>
-            <reports>
-              <report>javadoc</report>
-            </reports>
-          </reportSet>
           <reportSet>
             <id>aggregate</id>
             <inherited>false</inherited>
             <reports>
               <report>aggregate</report>
             </reports>
+            <configuration>
+              <excludePackageNames>*.internal.*</excludePackageNames>
+              <sourceFileIncludes>
+                <include>**/api/**/*.java</include>
+                <include>co/cask/cdap/test/*.java</include>
+              </sourceFileIncludes>
+            </configuration>
+          </reportSet>
+          <reportSet>
+            <id>javadoc</id>
+            <inherited>true</inherited>
+            <reports>
+              <report>javadoc</report>
+            </reports>
+            <configuration>
+              <skip>true</skip>
+            </configuration>
           </reportSet>
         </reportSets>
-      </plugin>
-
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-surefire-report-plugin</artifactId>
-        <version>2.14.1</version>
       </plugin>
     </plugins>
   </reporting>

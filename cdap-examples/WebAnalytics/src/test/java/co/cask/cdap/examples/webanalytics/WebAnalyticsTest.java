@@ -21,7 +21,9 @@ import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.RuntimeStats;
 import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.TestBase;
+import co.cask.cdap.test.TestConfiguration;
 import org.junit.Assert;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.io.BufferedReader;
@@ -35,12 +37,15 @@ import java.util.concurrent.TimeUnit;
  */
 public class WebAnalyticsTest extends TestBase {
 
+  @ClassRule
+  public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", false);
+
   @Test
   public void testWebAnalytics() throws Exception {
     // Deploy the Application
     ApplicationManager appManager = deployApplication(WebAnalytics.class);
     // Start the Flow
-    appManager.startFlow("WebAnalyticsFlow");
+    appManager.getFlowManager("WebAnalyticsFlow").start();
 
     // Send events to the Stream
     StreamManager streamManager = getStreamManager("log");

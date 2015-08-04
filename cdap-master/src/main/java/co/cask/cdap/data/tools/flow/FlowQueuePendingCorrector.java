@@ -23,7 +23,7 @@ import co.cask.cdap.api.metrics.MetricDataQuery;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.api.metrics.MetricsCollector;
+import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
@@ -32,9 +32,9 @@ import co.cask.cdap.app.queue.QueueSpecification;
 import co.cask.cdap.app.queue.QueueSpecificationGenerator;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
@@ -57,7 +57,6 @@ import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueClientFactory;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.explore.guice.ExploreClientModule;
-import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.app.queue.SimpleQueueSpecificationGenerator;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
@@ -295,7 +294,7 @@ public class FlowQueuePendingCorrector extends AbstractIdleService {
 
     metricsCollectionService.startAndWait();
 
-    MetricsCollector collector = metricsCollectionService.getCollector(tags);
+    MetricsContext collector = metricsCollectionService.getContext(tags);
     collector.gauge("queue.pending", correctQueuePendingValue);
     System.out.printf("Adjusted system.queue.pending metric from %d to %d (tags %s)\n",
                       queuePending, correctQueuePendingValue, GSON.toJson(tags));
@@ -308,7 +307,7 @@ public class FlowQueuePendingCorrector extends AbstractIdleService {
   protected void startUp() throws Exception {
     kafkaClientService.startAndWait();
     zkClientService.startAndWait();
-    twillRunnerService.startAndWait();
+    twillRunnerService.start();
     programRuntimeService.startAndWait();
     queueDebugger.startAndWait();
   }
@@ -316,8 +315,8 @@ public class FlowQueuePendingCorrector extends AbstractIdleService {
   @Override
   protected void shutDown() throws Exception {
     queueDebugger.stopAndWait();
-    programRuntimeService.startAndWait();
-    twillRunnerService.startAndWait();
+    programRuntimeService.stopAndWait();
+    twillRunnerService.stop();
     zkClientService.stopAndWait();
     kafkaClientService.stopAndWait();
   }
@@ -332,10 +331,9 @@ public class FlowQueuePendingCorrector extends AbstractIdleService {
       new StreamAdminModules().getDistributedModules(),
       new NotificationFeedClientModule(),
       new TwillModule(),
-      new AuthModule(),
       new ExploreClientModule(),
       new DataFabricDistributedModule(),
-      new ServiceStoreModules().getDistributedModule(),
+      new ServiceStoreModules().getDistributedModules(),
       new DataSetsModules().getDistributedModules(),
       new AppFabricServiceRuntimeModule().getDistributedModules(),
       new ProgramRunnerRuntimeModule().getDistributedModules(),

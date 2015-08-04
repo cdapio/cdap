@@ -19,7 +19,6 @@ package co.cask.cdap.data2.util.hbase;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueAdmin;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.hbase.wd.AbstractRowKeyDistributor;
 import co.cask.cdap.proto.Id;
@@ -42,9 +41,14 @@ import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableExistsException;
+import org.apache.hadoop.hbase.client.Delete;
+import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
+import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.internal.utils.Dependencies;
 import org.slf4j.Logger;
@@ -254,14 +258,14 @@ public abstract class HBaseTableUtil {
     final Hasher hasher = Hashing.md5().newHasher();
     final byte[] buffer = new byte[COPY_BUFFER_SIZE];
 
-    final Map<String, URL> dependentClasses = new HashMap<String, URL>();
+    final Map<String, URL> dependentClasses = new HashMap<>();
     for (Class<? extends Coprocessor> clz : classes) {
-      Dependencies.findClassDependencies(clz.getClassLoader(), new Dependencies.ClassAcceptor() {
+      Dependencies.findClassDependencies(clz.getClassLoader(), new ClassAcceptor() {
         @Override
         public boolean accept(String className, final URL classUrl, URL classPathUrl) {
           // Assuming the endpoint and protocol class doesn't have dependencies
-          // other than those comes with HBase and Java.
-          if (className.startsWith("co.cask")) {
+          // other than those comes with HBase, Java and fastutil.
+          if (className.startsWith("co.cask") || className.startsWith("it.unimi.dsi.fastutil")) {
             if (!dependentClasses.containsKey(className)) {
               dependentClasses.put(className, classUrl);
             }
@@ -276,32 +280,23 @@ public abstract class HBaseTableUtil {
       LOG.debug("Adding " + dependentClasses.size() + " classes to jar");
       File jarFile = File.createTempFile(filePrefix, ".jar");
       try {
-        JarOutputStream jarOutput = null;
-        try {
-          jarOutput = new JarOutputStream(new FileOutputStream(jarFile));
+        try (JarOutputStream jarOutput = new JarOutputStream(new FileOutputStream(jarFile))) {
           for (Map.Entry<String, URL> entry : dependentClasses.entrySet()) {
             try {
               jarOutput.putNextEntry(new JarEntry(entry.getKey().replace('.', File.separatorChar) + ".class"));
-              InputStream inputStream = entry.getValue().openStream();
 
-              try {
+              try (InputStream inputStream = entry.getValue().openStream()) {
                 int len = inputStream.read(buffer);
                 while (len >= 0) {
                   hasher.putBytes(buffer, 0, len);
                   jarOutput.write(buffer, 0, len);
                   len = inputStream.read(buffer);
                 }
-              } finally {
-                inputStream.close();
               }
             } catch (IOException e) {
               LOG.info("Error writing to jar", e);
               throw Throwables.propagate(e);
             }
-          }
-        } finally {
-          if (jarOutput != null) {
-            jarOutput.close();
           }
         }
 
@@ -397,12 +392,20 @@ public abstract class HBaseTableUtil {
   public abstract HTable createHTable(Configuration conf, TableId tableId) throws IOException;
 
   /**
-   * Creates a new {@link HTableDescriptor} which may contain an HBase namespace depending on the HBase version
+   * Creates a new {@link HTableDescriptorBuilder} which may contain an HBase namespace depending on the HBase version
    *
    * @param tableId the {@link TableId} to create an {@link HTableDescriptor} for
-   * @return an {@link HTableDescriptor} for the table
+   * @return an {@link HTableDescriptorBuilder} for the table
    */
-  public abstract HTableDescriptor createHTableDescriptor(TableId tableId);
+  public abstract HTableDescriptorBuilder buildHTableDescriptor(TableId tableId);
+
+  /**
+   * Creates a new {@link HTableDescriptorBuilder} which may contain an HBase namespace depending on the HBase version
+   *
+   * @param tableDescriptor the {@link HTableDescriptor} whose values should be copied
+   * @return an {@link HTableDescriptorBuilder} for the table
+   */
+  public abstract HTableDescriptorBuilder buildHTableDescriptor(HTableDescriptor tableDescriptor);
 
   /**
    * Constructs a {@link HTableDescriptor} which may contain an HBase namespace for an existing table
@@ -560,6 +563,62 @@ public abstract class HBaseTableUtil {
     HTableDescriptor tableDescriptor = getHTableDescriptor(admin, tableId);
     dropTable(admin, tableId);
     createTableIfNotExists(admin, tableId, tableDescriptor);
+  }
+
+  /**
+   * Creates a {@link ScanBuilder}.
+   */
+  public ScanBuilder buildScan() {
+    return new DefaultScanBuilder();
+  }
+
+  /**
+   * Creates a {@link ScanBuilder} by copying from another {@link Scan} instance.
+   */
+  public ScanBuilder buildScan(Scan scan) throws IOException {
+    return new DefaultScanBuilder(scan);
+  }
+
+  /**
+   * Creates a {@link PutBuilder} for the given row.
+   */
+  public PutBuilder buildPut(byte[] row) {
+    return new DefaultPutBuilder(row);
+  }
+
+  /**
+   * Creates a {@link PutBuilder} by copying from another {@link Put} instance.
+   */
+  public PutBuilder buildPut(Put put) {
+    return new DefaultPutBuilder(put);
+  }
+
+  /**
+   * Creates a {@link GetBuilder} for the given row.
+   */
+  public GetBuilder buildGet(byte[] row) {
+    return new DefaultGetBuilder(row);
+  }
+
+  /**
+   * Creates a {@link GetBuilder} by copying from another {@link Get} instance.
+   */
+  public GetBuilder buildGet(Get get) {
+    return new DefaultGetBuilder(get);
+  }
+
+  /**
+   * Creates a {@link DeleteBuilder} for the given row.
+   */
+  public DeleteBuilder buildDelete(byte[] row) {
+    return new DefaultDeleteBuilder(row);
+  }
+
+  /**
+   * Creates a {@link DeleteBuilder} by copying from another {@link Delete} instance.
+   */
+  public DeleteBuilder buildDelete(Delete delete) {
+    return new DefaultDeleteBuilder(delete);
   }
 
   public abstract void setCompression(HColumnDescriptor columnDescriptor, CompressionType type);

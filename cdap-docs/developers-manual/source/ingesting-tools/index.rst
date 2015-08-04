@@ -23,7 +23,5 @@ One of the first tasks of actually working with Big Data applications is getting
 As data ingestion is a fundamental issue, and as one tool often does not fit all needs,
 we have assembled tools and applications to assist with ingesting data into CDAP:
 
-.. - Java, JavaScript, Python, and Ruby APIs for controlling and writing to Streams; and
-
-- Java, Python, and Ruby APIs for controlling and writing to Streams; and
+- Java, Python, and Ruby APIs for controlling and writing to streams; and
 - an Apache Flume Sink implementation for writing events received from a source.

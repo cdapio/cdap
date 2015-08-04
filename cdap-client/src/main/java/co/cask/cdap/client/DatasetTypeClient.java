@@ -16,10 +16,11 @@
 
 package co.cask.cdap.client;
 
+import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
-import co.cask.cdap.common.exception.DatasetTypeNotFoundException;
-import co.cask.cdap.common.exception.UnauthorizedException;
+import co.cask.cdap.common.DatasetTypeNotFoundException;
+import co.cask.cdap.common.UnauthorizedException;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
@@ -42,6 +43,7 @@ import javax.inject.Inject;
 /**
  * Provides ways to interact with CDAP Dataset types.
  */
+@Beta
 public class DatasetTypeClient {
 
   private final RESTClient restClient;
@@ -58,17 +60,19 @@ public class DatasetTypeClient {
     this.restClient = new RESTClient(config);
   }
 
+
   /**
    * Lists all dataset types.
    *
    * @return list of {@link DatasetTypeMeta}s.
    * @throws IOException if a network error occurred
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   *
+   * @deprecated As of 3.1, use {@link #list(Id.Namespace)} instead.
    */
+  @Deprecated
   public List<DatasetTypeMeta> list() throws IOException, UnauthorizedException {
-    URL url = config.resolveNamespacedURLV3("data/types");
-    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
-    return ObjectResponse.fromJsonBody(response, new TypeToken<List<DatasetTypeMeta>>() { }).getResponseObject();
+    return list(config.getNamespace());
   }
 
   /**
@@ -79,19 +83,14 @@ public class DatasetTypeClient {
    * @throws DatasetTypeNotFoundException if the dataset type could not be found
    * @throws IOException if a network error occurred
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   *
+   * @deprecated As of 3.1, use {@link #get(Id.DatasetType)} instead.
    */
+  @Deprecated
   public DatasetTypeMeta get(String typeName)
     throws DatasetTypeNotFoundException, IOException, UnauthorizedException {
 
-    Id.DatasetType type = Id.DatasetType.from(config.getNamespace(), typeName);
-    URL url = config.resolveNamespacedURLV3(String.format("data/types/%s", typeName));
-    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
-                                               HttpURLConnection.HTTP_NOT_FOUND);
-    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new DatasetTypeNotFoundException(type);
-    }
-
-    return ObjectResponse.fromJsonBody(response, DatasetTypeMeta.class).getResponseObject();
+    return get(Id.DatasetType.from(config.getNamespace(), typeName));
   }
 
   /**
@@ -101,13 +100,13 @@ public class DatasetTypeClient {
    * @return true if the dataset type exists
    * @throws IOException if a network error occurred
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   *
+   * @deprecated As of 3.1, use {@link #exists(Id.DatasetType)} instead.
    */
+  @Deprecated
   public boolean exists(String typeName)
     throws DatasetTypeNotFoundException, IOException, UnauthorizedException {
-    URL url = config.resolveNamespacedURLV3(String.format("data/types/%s", typeName));
-    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
-                                               HttpURLConnection.HTTP_NOT_FOUND);
-    return response.getResponseCode() != HttpURLConnection.HTTP_NOT_FOUND;
+    return exists(Id.DatasetType.from(config.getNamespace(), typeName));
   }
 
   /**
@@ -120,20 +119,14 @@ public class DatasetTypeClient {
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    * @throws TimeoutException if the dataset type was not yet existent before {@code timeout} milliseconds
    * @throws InterruptedException if interrupted while waiting
+   *
+   * @deprecated As of 3.1, use {@link #waitForExists(Id.DatasetType, long, TimeUnit)} instead.
    */
+  @Deprecated
   public void waitForExists(final String typeName, long timeout, TimeUnit timeoutUnit)
     throws IOException, UnauthorizedException, TimeoutException, InterruptedException {
 
-    try {
-      Tasks.waitFor(true, new Callable<Boolean>() {
-        @Override
-        public Boolean call() throws Exception {
-          return exists(typeName);
-        }
-      }, timeout, timeoutUnit, 1, TimeUnit.SECONDS);
-    } catch (ExecutionException e) {
-      Throwables.propagateIfPossible(e.getCause(), IOException.class, UnauthorizedException.class);
-    }
+    waitForExists(Id.DatasetType.from(config.getNamespace(), typeName), timeout, timeoutUnit);
   }
 
   /**
@@ -146,15 +139,112 @@ public class DatasetTypeClient {
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    * @throws TimeoutException if the dataset type was not yet deleted before {@code timeout} milliseconds
    * @throws InterruptedException if interrupted while waiting
+   *
+   * @deprecated As of 3.1, use {@link #waitForDeleted(Id.DatasetType, long, TimeUnit)} instead.
    */
+  @Deprecated
   public void waitForDeleted(final String typeName, long timeout, TimeUnit timeoutUnit)
+    throws IOException, UnauthorizedException, TimeoutException, InterruptedException {
+
+    waitForDeleted(Id.DatasetType.from(config.getNamespace(), typeName), timeout, timeoutUnit);
+  }
+
+  /**
+   * Lists all dataset types.
+   *
+   * @return list of {@link DatasetTypeMeta}s.
+   * @throws IOException if a network error occurred
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   */
+  public List<DatasetTypeMeta> list(Id.Namespace namespace) throws IOException, UnauthorizedException {
+    URL url = config.resolveNamespacedURLV3(namespace, "data/types");
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
+    return ObjectResponse.fromJsonBody(response, new TypeToken<List<DatasetTypeMeta>>() { }).getResponseObject();
+  }
+
+  /**
+   * Gets information about a dataset type.
+   *
+   * @param type the dataset type
+   * @return {@link DatasetTypeMeta} of the dataset type
+   * @throws DatasetTypeNotFoundException if the dataset type could not be found
+   * @throws IOException if a network error occurred
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   */
+  public DatasetTypeMeta get(Id.DatasetType type)
+    throws DatasetTypeNotFoundException, IOException, UnauthorizedException {
+
+    URL url = config.resolveNamespacedURLV3(type.getNamespace(), String.format("data/types/%s", type.getId()));
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
+    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
+      throw new DatasetTypeNotFoundException(type);
+    }
+
+    return ObjectResponse.fromJsonBody(response, DatasetTypeMeta.class).getResponseObject();
+  }
+
+  /**
+   * Checks if a dataset type exists.
+   *
+   * @param type the dataset type to check
+   * @return true if the dataset type exists
+   * @throws IOException if a network error occurred
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   */
+  public boolean exists(Id.DatasetType type)
+    throws DatasetTypeNotFoundException, IOException, UnauthorizedException {
+    URL url = config.resolveNamespacedURLV3(type.getNamespace(), String.format("data/types/%s", type.getId()));
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
+    return response.getResponseCode() != HttpURLConnection.HTTP_NOT_FOUND;
+  }
+
+  /**
+   * Waits for a dataset type to exist.
+   *
+   * @param type the dataset type to check
+   * @param timeout time to wait before timing out
+   * @param timeoutUnit time unit of timeout
+   * @throws IOException if a network error occurred
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   * @throws TimeoutException if the dataset type was not yet existent before {@code timeout} milliseconds
+   * @throws InterruptedException if interrupted while waiting
+   */
+  public void waitForExists(final Id.DatasetType type, long timeout, TimeUnit timeoutUnit)
+    throws IOException, UnauthorizedException, TimeoutException, InterruptedException {
+
+    try {
+      Tasks.waitFor(true, new Callable<Boolean>() {
+        @Override
+        public Boolean call() throws Exception {
+          return exists(type);
+        }
+      }, timeout, timeoutUnit, 1, TimeUnit.SECONDS);
+    } catch (ExecutionException e) {
+      Throwables.propagateIfPossible(e.getCause(), IOException.class, UnauthorizedException.class);
+    }
+  }
+
+  /**
+   * Waits for a dataset type to be deleted.
+   *
+   * @param type the dataset type to check
+   * @param timeout time to wait before timing out
+   * @param timeoutUnit time unit of timeout
+   * @throws IOException if a network error occurred
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   * @throws TimeoutException if the dataset type was not yet deleted before {@code timeout} milliseconds
+   * @throws InterruptedException if interrupted while waiting
+   */
+  public void waitForDeleted(final Id.DatasetType type, long timeout, TimeUnit timeoutUnit)
     throws IOException, UnauthorizedException, TimeoutException, InterruptedException {
 
     try {
       Tasks.waitFor(false, new Callable<Boolean>() {
         @Override
         public Boolean call() throws Exception {
-          return exists(typeName);
+          return exists(type);
         }
       }, timeout, timeoutUnit, 1, TimeUnit.SECONDS);
     } catch (ExecutionException e) {

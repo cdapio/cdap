@@ -18,6 +18,8 @@ package co.cask.cdap.common.exception;
 
 /**
  * Thrown when some operation is not implemented.
+ * @deprecated Use {@link co.cask.cdap.common.NotImplementedException} instead
  */
+@Deprecated
 public class NotImplementedException extends Exception {
 }

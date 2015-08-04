@@ -29,7 +29,7 @@ import java.util.Map;
  */
 @SuppressWarnings("unchecked")
 public class RecordPutTransformerTest {
-  
+
   @Test(expected = IllegalArgumentException.class)
   public void testNullRowkeyThrowsException() throws Exception {
     RecordPutTransformer transformer = new RecordPutTransformer("key");
@@ -100,5 +100,52 @@ public class RecordPutTransformerTest {
     Assert.assertTrue(Math.abs(3.14f - Bytes.toFloat(values.get(Bytes.toBytes("floatField")))) < 0.000001);
     Assert.assertTrue(Math.abs(3.14 - Bytes.toDouble(values.get(Bytes.toBytes("doubleField")))) < 0.000001);
     Assert.assertArrayEquals(Bytes.toBytes("foo"), values.get(Bytes.toBytes("bytesField")));
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testCaseSensitiveRowKey() {
+    RecordPutTransformer transformer = new RecordPutTransformer("key");
+    Schema schema = Schema.recordOf("record", Schema.Field.of("KEY", Schema.of(Schema.Type.STRING)));
+    StructuredRecord record = StructuredRecord.builder(schema).set("KEY", "someKey").build();
+    transformer.toPut(record);
+  }
+
+  @Test
+  public void testCaseInsensitiveRowKeyValid() {
+    RecordPutTransformer transformer = new RecordPutTransformer("key", null, false);
+    Schema schema = Schema.recordOf("record", Schema.Field.of("KEY", Schema.of(Schema.Type.STRING)));
+    StructuredRecord record = StructuredRecord.builder(schema).set("KEY", "someKey").build();
+    Put put = transformer.toPut(record);
+    Assert.assertEquals("someKey", Bytes.toString(put.getRow()));
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testCaseInsensitiveRowKeyInvalid() {
+    RecordPutTransformer transformer = new RecordPutTransformer("key", null, false);
+    Schema schema = Schema.recordOf("record",
+                                    Schema.Field.of("KEY", Schema.of(Schema.Type.STRING)),
+                                    Schema.Field.of("Key", Schema.nullableOf(Schema.of(Schema.Type.BYTES))));
+    StructuredRecord record = StructuredRecord.builder(schema).set("KEY", "someKey").set("Key", "someOtherKey").build();
+    transformer.toPut(record);
+  }
+
+  @Test
+  public void testOutputSchemaUsage() {
+    Schema outputSchema = Schema.recordOf("output",
+                                          Schema.Field.of("id", Schema.of(Schema.Type.LONG)),
+                                          Schema.Field.of("name", Schema.of(Schema.Type.STRING)));
+    Schema inputSchema = Schema.recordOf("input",
+                                         Schema.Field.of("id", Schema.of(Schema.Type.LONG)),
+                                         Schema.Field.of("name", Schema.of(Schema.Type.STRING)),
+                                         Schema.Field.of("age", Schema.of(Schema.Type.INT)));
+    StructuredRecord record = StructuredRecord.builder(inputSchema)
+      .set("id", 123L).set("name", "ABC").set("age", 10).build();
+    RecordPutTransformer transformer = new RecordPutTransformer("id", outputSchema, true);
+    Put put = transformer.toPut(record);
+    Assert.assertEquals(1, put.getValues().size());
+
+    transformer = new RecordPutTransformer("id", null, true);
+    put = transformer.toPut(record);
+    Assert.assertEquals(2, put.getValues().size());
   }
 }

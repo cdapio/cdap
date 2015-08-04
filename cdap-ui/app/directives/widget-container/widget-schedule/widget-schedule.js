@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.commons')
-  .directive('mySchedule', function($compile, $window, WidgetFactory) {
+  .directive('mySchedule', function() {
     return {
       restrict: 'E',
       scope: {
@@ -7,7 +7,9 @@ angular.module(PKG.name + '.commons')
         config: '='
       },
       templateUrl: 'widget-container/widget-schedule/widget-schedule.html',
-      controller: function($scope) {
+      controller: function($scope, EventPipe) {
+        var modelCopy = angular.copy($scope.model);
+
         var defaultSchedule = $scope.config.properties.default || ['*', '*', '*', '*', '*'];
 
         function initialize() {
@@ -32,10 +34,15 @@ angular.module(PKG.name + '.commons')
         }
 
         initialize();
+        EventPipe.on('plugin.reset', function () {
+          $scope.model = angular.copy(modelCopy);
+
+          initialize();
+        });
 
         $scope.$watch('schedule', function() {
           var schedule = '';
-          angular.forEach($scope.schedule, function(v, k) {
+          angular.forEach($scope.schedule, function(v) {
             schedule += v + ' ';
           });
           schedule = schedule.trim();

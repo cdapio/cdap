@@ -32,8 +32,7 @@ import java.util.Map;
  * Sets preferences for instance, namespace, application, program.
  */
 public class SetPreferencesCommand extends AbstractSetPreferencesCommand {
-  protected static final String SUCCESS = "Set Preferences successfully for the '%s'";
-
+  protected static final String SUCCESS = "Set preferences successfully for the '%s'";
   private final ElementType type;
 
   protected SetPreferencesCommand(ElementType type, PreferencesClient client, CLIConfig cliConfig) {
@@ -43,7 +42,7 @@ public class SetPreferencesCommand extends AbstractSetPreferencesCommand {
 
   @Override
   public void printSuccessMessage(PrintStream printStream, ElementType type) {
-    printStream.printf(SUCCESS + "\n", type.getTitleName());
+    printStream.printf(SUCCESS + "\n", type.getName());
   }
 
   @Override
@@ -60,13 +59,12 @@ public class SetPreferencesCommand extends AbstractSetPreferencesCommand {
 
   @Override
   public String getPattern() {
-    return String.format("set preferences %s <%s> [<%s>]", type.getName(), ArgumentName.RUNTIME_ARGS,
-                         type.getArgumentName());
+    return determinePattern("set");
   }
 
   @Override
   public String getDescription() {
-    return "Sets the preferences of " + Fragment.of(Article.A, type.getTitleName()) + "." +
+    return "Sets the preferences of " + Fragment.of(Article.A, type.getName()) + "." +
       " <" + ArgumentName.RUNTIME_ARGS + "> is specified in the format \"key1=v1 key2=v2\".";
   }
 }

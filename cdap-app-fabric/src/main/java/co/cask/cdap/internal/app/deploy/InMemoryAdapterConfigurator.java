@@ -34,7 +34,6 @@ import co.cask.cdap.templates.AdapterDefinition;
 import co.cask.cdap.templates.DefaultAdapterConfigurer;
 import com.google.common.base.Preconditions;
 import com.google.common.io.CharStreams;
-import com.google.common.io.Closeables;
 import com.google.common.io.Files;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.Futures;
@@ -105,18 +104,16 @@ public final class InMemoryAdapterConfigurator implements Configurator {
                                   "Main class attribute cannot be empty");
 
       File unpackedJarDir = Files.createTempDir();
-      try {
-        Object appMain = new Archive(BundleJarUtil.unpackProgramJar(archive, unpackedJarDir),
-                                     mainClassName).getMainClass().newInstance();
+      try (Archive archive = new Archive(BundleJarUtil.unpackProgramJar(this.archive, unpackedJarDir), mainClassName)) {
+        Object appMain = archive.getMainClass().newInstance();
         if (!(appMain instanceof ApplicationTemplate)) {
           throw new IllegalStateException(String.format("Application main class is of invalid type: %s",
                                                         appMain.getClass().getName()));
         }
 
         ApplicationTemplate template = (ApplicationTemplate) appMain;
-        PluginInstantiator pluginInstantiator = new PluginInstantiator(cConf, adapterConfig.getTemplate(),
-                                                                       template.getClass().getClassLoader());
-        try {
+        try (PluginInstantiator pluginInstantiator = new PluginInstantiator(cConf, adapterConfig.getTemplate(),
+                                                                            template.getClass().getClassLoader())) {
           DefaultAdapterConfigurer configurer = new DefaultAdapterConfigurer(namespaceId, adapterName,
                                                                              adapterConfig, templateSpec,
                                                                              pluginRepository, pluginInstantiator);
@@ -134,8 +131,6 @@ public final class InMemoryAdapterConfigurator implements Configurator {
           template.configureAdapter(adapterName, decodeConfig(adapterConfig, configType), configurer);
           AdapterDefinition spec = configurer.createSpecification();
           result.set(new DefaultConfigResponse(0, CharStreams.newReaderSupplier(GSON.toJson(spec))));
-        } finally {
-          Closeables.closeQuietly(pluginInstantiator);
         }
       } finally {
         removeDir(unpackedJarDir);

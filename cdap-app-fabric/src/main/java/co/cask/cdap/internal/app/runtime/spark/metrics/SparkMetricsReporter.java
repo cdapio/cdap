@@ -16,8 +16,9 @@
 
 package co.cask.cdap.internal.app.runtime.spark.metrics;
 
-import co.cask.cdap.api.metrics.MetricsCollector;
-import co.cask.cdap.internal.app.runtime.spark.SparkProgramWrapper;
+import co.cask.cdap.api.metrics.Metrics;
+import co.cask.cdap.api.metrics.MetricsContext;
+import co.cask.cdap.internal.app.runtime.spark.SparkContextProvider;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Histogram;
@@ -26,6 +27,8 @@ import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.ScheduledReporter;
 import com.codahale.metrics.Timer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.SortedMap;
@@ -33,15 +36,18 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * A {@link ScheduledReporter} reports which reports Metrics collected by the {@link SparkMetricsSink} to
- * {@link MetricsCollector}.
+ * {@link MetricsContext}.
  */
-class SparkMetricsReporter extends ScheduledReporter {
+final class SparkMetricsReporter extends ScheduledReporter {
+
+  private final Metrics metrics;
 
   SparkMetricsReporter(MetricRegistry registry,
                        TimeUnit rateUnit,
                        TimeUnit durationUnit,
                        MetricFilter filter) {
     super(registry, "spark-reporter", filter, rateUnit, durationUnit);
+    this.metrics = SparkContextProvider.getSparkContext().getMetrics();
   }
 
   /**
@@ -70,8 +76,9 @@ class SparkMetricsReporter extends ScheduledReporter {
         if (metricNameParts.length == 2) {
           metricName = metricNameParts[1];
         }
-        SparkProgramWrapper.getBasicSparkContext().getProgramMetrics().gauge(
-          metricName, ((Number) entry.getValue().getValue()).longValue());
+
+        long value = ((Number) entry.getValue().getValue()).longValue();
+        metrics.gauge(metricName, value);
       }
     }
   }

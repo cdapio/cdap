@@ -695,16 +695,36 @@ public class KeyValue {
     SplitKeyValue() {
       this.split = new byte[6][];
     }
-    public void setRow(byte [] value) { this.split[0] = value; }
-    public void setFamily(byte [] value) { this.split[1] = value; }
-    public void setQualifier(byte [] value) { this.split[2] = value; }
-    public void setTimestamp(byte [] value) { this.split[3] = value; }
-    public void setType(byte [] value) { this.split[4] = value; }
-    public void setValue(byte [] value) { this.split[5] = value; }
-    public byte [] getRow() { return this.split[0]; }
-    public byte [] getTimestamp() { return this.split[3]; }
-    public byte [] getType() { return this.split[4]; }
-    public byte [] getValue() { return this.split[5]; }
+    public void setRow(byte [] value) {
+      this.split[0] = value;
+    }
+    public void setFamily(byte [] value) {
+      this.split[1] = value;
+    }
+    public void setQualifier(byte [] value) {
+      this.split[2] = value;
+    }
+    public void setTimestamp(byte [] value) {
+      this.split[3] = value;
+    }
+    public void setType(byte [] value) {
+      this.split[4] = value;
+    }
+    public void setValue(byte [] value) {
+      this.split[5] = value;
+    }
+    public byte [] getRow() {
+      return this.split[0];
+    }
+    public byte [] getTimestamp() {
+      return this.split[3];
+    }
+    public byte [] getType() {
+      return this.split[4];
+    }
+    public byte [] getValue() {
+      return this.split[5];
+    }
   }
 
   public SplitKeyValue split() {

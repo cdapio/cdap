@@ -13,14 +13,17 @@ angular.module(PKG.name + '.commons')
           windowClass: 'custom-loading-modal'
         }, modal, isBackendDown = false;
 
-        EventPipe.on('backendDown', function(message) {
+        EventPipe.on('backendDown', function(message, subtitle) {
           if (!isBackendDown) {
-            modal && modal.close();
+            if (modal) {
+              modal.close();
+            }
             isBackendDown = true;
             if (!message) {
               $scope.message = 'Service(s) are offline';
             } else {
               $scope.message = message;
+              $scope.subtitle = subtitle;
             }
             modal = $bootstrapModal.open(modalObj);
             modal.result.finally(function() {
@@ -46,19 +49,35 @@ angular.module(PKG.name + '.commons')
           // Just making it smooth instead of being too 'speedy'
           $timeout(function() {
             if (!isBackendDown) {
-              modal && !modal.$state && modal.close();
+              if (modal && !modal.$state) {
+                modal.close();
+              }
               modal = null;
-              isLoading = false;
             }
           }, 2000);
         });
 
-        EventPipe.on('showLoadingIcon', function() {
+        // Should use this hide when we are just loading a state
+        EventPipe.on('hideLoadingIcon.immediate', function() {
+          if (modal){
+            // This is needed if the loading icon is shown and closed even before opened.
+            // EventPipe will execute the listener immediately when the event is emitted,
+            // however $alert which internally used $modal opens up only during next tick.
+            // If the modal is opened and is closed at some point later (normal usecase),
+            // the 'opened' promise is still resolved and the alert is closed.
+            modal.opened.then(function() {
+              modal.close();
+              modal = null;
+            });
+          }
+        });
+
+        EventPipe.on('showLoadingIcon', function(message) {
           if(!modal && !isBackendDown) {
-            $scope.message = '';
+            $scope.message = message || '';
             modal = $bootstrapModal.open(modalObj);
           }
         }.bind($scope));
       }
-    }
+    };
   });

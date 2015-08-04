@@ -16,7 +16,7 @@ angular.module(PKG.name + '.feature.admin')
         .state('admin.overview', {
           url: '',
           templateUrl: '/assets/features/admin/templates/overview.html',
-          controller: 'AdminOverviewController'
+          controller: 'OverviewController'
         })
 
         .state('admin.system', {
@@ -28,43 +28,33 @@ angular.module(PKG.name + '.feature.admin')
             url: '',
             templateUrl: '/assets/features/admin/templates/system.html'
           })
-          .state('admin.system.instance', {
-            url: '/instance',
-            templateUrl: '/assets/features/admin/templates/system/instance.html',
-            controller: 'AdminInstanceController'
-          })
           .state('admin.system.configuration', {
             url: '/configuration',
             templateUrl: '/assets/features/admin/templates/system/configuration.html',
-            controller: 'ConfigurationController'
+            controller: 'SystemConfigurationController'
           })
 
           .state('admin.system.services', {
             url: '/services',
             templateUrl: '/assets/features/admin/templates/system/services.html',
-            controller: 'AdminServicesController'
+            controller: 'SystemServicesController'
           })
             .state('admin.system.services.detail', {
               parent: 'admin.system',
               url: '/services/detail/:serviceName',
               templateUrl: '/assets/features/admin/templates/system/service-detail.html',
-              controller: 'AdminServiceDetailController'
+              controller: 'SystemServiceDetailController'
             })
               .state('admin.system.services.detail.metadata', {
                 url: '/metadata',
                 templateUrl: '/assets/features/admin/templates/partials/service-detail-metadata.html'
               })
               .state('admin.system.services.detail.logs', {
-                url: '/logs?filter',
-                reloadOnSearch: false,
-                template: '<my-log-viewer data-model="logs"></my-log-viewer>',
-                controller: 'AdminServiceLogController'
+                url: '/logs',
+                templateUrl: '/assets/features/admin/templates/partials/service-detail-log.html',
+                controller: 'SystemServiceLogController'
               })
 
-          .state('admin.system.notifications', {
-            url: '/notifications',
-            templateUrl: '/assets/features/admin/templates/system/notifications.html'
-          })
           .state('admin.system.preferences', {
             url: '/preferences',
             templateUrl: '/assets/features/admin/templates/preferences.html',
@@ -74,38 +64,6 @@ angular.module(PKG.name + '.feature.admin')
                 return 'SYSTEM';
               }
             }
-          })
-
-        .state('admin.security', {
-          abstract: true,
-          url: '/security',
-          template: '<ui-view/>'
-        })
-          .state('admin.security.overview', {
-            url: '',
-            templateUrl: '/assets/features/admin/templates/security.html'
-          })
-          .state('admin.security.permissions', {
-            url: '/permissions',
-            templateUrl: '/assets/features/admin/templates/security/permissions.html'
-          })
-          .state('admin.security.tokens', {
-            url: '/tokens',
-            templateUrl: '/assets/features/admin/templates/security/tokens.html'
-          })
-            .state('admin.security.tokens.revoke', {
-              onEnter: function ($state, $modal) {
-                $modal({
-                  template: '/assets/features/admin/templates/partials/revoke-tokens.html'
-                }).$promise.then(function () {
-                  $state.go('^', $state.params);
-                });
-              }
-            })
-          .state('admin.security.logs', {
-            url: '/logs',
-            templateUrl: '/assets/features/admin/templates/security/logs.html',
-            controller: 'AdminAuditLogsController'
           })
 
         .state('admin.namespace', {
@@ -128,7 +86,7 @@ angular.module(PKG.name + '.feature.admin')
                 size: 'lg',
                 backdrop: true,
                 keyboard: true,
-                controller: 'AdminNamespaceCreateController'
+                controller: 'NamespaceCreateController'
               }).result.finally(function() {
                 myNamespace.getList(true).then(function() {
                   $state.go('admin.overview', {}, {reload: true});
@@ -159,40 +117,26 @@ angular.module(PKG.name + '.feature.admin')
             .state('admin.namespace.detail.metadata', {
               url: '/metadata',
               templateUrl: '/assets/features/admin/templates/namespace/metadata.html',
-              controller: 'AdminNamespaceMetadataController'
+              controller: 'NamespaceMetadataController'
             })
 
             .state('admin.namespace.detail.settings', {
               url: '/settings',
-              templateUrl: '/assets/features/admin/templates/namespace/settings.html'
-            })
-
-            .state('admin.namespace.detail.users', {
-              url: '/users',
-              templateUrl: '/assets/features/admin/templates/namespace/users.html'
-            })
-
-            .state('admin.namespace.detail.datatypes', {
-              url: '/datatypes',
-              templateUrl: '/assets/features/admin/templates/namespace/datatypes.html',
-              controller: 'AdminDatatypesController'
+              templateUrl: '/assets/features/admin/templates/namespace/settings.html',
+              controller: 'NamespaceSettingsController'
             })
 
             .state('admin.namespace.detail.data', {
               url: '/data',
               templateUrl: '/assets/features/admin/templates/namespace/datasets.html',
-              controller: 'AdminDatasetsController'
+              controller: 'NamespaceDatasetsController'
             })
               .state('admin.namespace.detail.data.datasetmetadata', {
                 url: '/datasets/:datasetId',
-                controller: 'AdminNamespaceDatasetMetadataController',
+                controller: 'NamespaceDatasetMetadataController',
                 templateUrl: '/assets/features/admin/templates/namespace/dataset-metadata.html'
               })
-              .state('admin.namespace.detail.data.streammetadata', {
-                url: '/streams/:streamId',
-                controller: 'StreamPropertiesController',
-                templateUrl: '/assets/features/admin/templates/namespace/stream-metadata.html'
-              })
+
               .state('admin.namespace.detail.data.streamcreate', {
                 url:'/streams/create',
                 onEnter: function($bootstrapModal, $state) {
@@ -201,7 +145,7 @@ angular.module(PKG.name + '.feature.admin')
                     size: 'lg',
                     backdrop: true,
                     keyboard: true,
-                    controller: 'StreamsCreateController'
+                    controller: 'NamespaceStreamsCreateController'
                   }).result.finally(function() {
                     $state.go('admin.namespace.detail.data', {}, { reload: true });
                   });
@@ -211,16 +155,22 @@ angular.module(PKG.name + '.feature.admin')
                 }
               })
 
+              .state('admin.namespace.detail.data.streammetadata', {
+                url: '/streams/detail/:streamId',
+                controller: 'NamespaceStreamMetadataController',
+                templateUrl: '/assets/features/admin/templates/namespace/stream-metadata.html'
+              })
+
             .state('admin.namespace.detail.apps', {
               url: '/apps',
               templateUrl: '/assets/features/admin/templates/namespace/apps.html',
-              controller: 'AdminNamespaceAppController'
+              controller: 'NamespaceAppController'
             })
               .state('admin.namespace.detail.apps.metadata', {
                 parent: 'admin.namespace.detail',
                 url: '/:appId',
                 templateUrl: '/assets/features/admin/templates/namespace/app-metadata.html',
-                controller: 'AdminNamespaceAppMetadataController'
+                controller: 'NamespaceAppMetadataController'
               })
                 .state('admin.namespace.detail.apps.metadata.preference', {
                   url: '/preferences',
@@ -228,10 +178,9 @@ angular.module(PKG.name + '.feature.admin')
                   controller: 'PreferencesController',
                   resolve: {
                     rSource: function () {
-                      return 'APPLICATION'
+                      return 'APPLICATION';
                     }
                   }
                 });
-
 
   });

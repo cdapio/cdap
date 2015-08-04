@@ -97,6 +97,7 @@ public final class Constants {
     public static final String APP_SCHEDULER_QUEUE = "apps.scheduler.queue";
     public static final String MAPREDUCE_JOB_CLIENT_CONNECT_MAX_RETRIES = "mapreduce.jobclient.connect.max.retries";
     public static final String MAPREDUCE_INCLUDE_CUSTOM_CLASSES = "mapreduce.include.custom.format.classes";
+    public static final String PROGRAM_RUNID_CORRECTOR_INTERVAL_SECONDS = "app.program.runid.corrector.interval";
 
     /**
      * Guice named bindings.
@@ -138,6 +139,10 @@ public final class Constants {
 
     public static final String SERVICE_DESCRIPTION = "Service for managing application lifecycle.";
 
+    /**
+     * Configuration setting to set the maximum size of a workflow token in MB
+     */
+    public static final String WORKFLOW_TOKEN_MAX_SIZE_MB = "workflow.token.max.size.mb";
   }
 
   /**
@@ -252,7 +257,7 @@ public final class Constants {
       //max-instances of dataset executor service
       public static final String MAX_INSTANCES = "dataset.executor.max.instances";
 
-      public static final String SERVICE_DESCRIPTION = "Service to perform Dataset operations.";
+      public static final String SERVICE_DESCRIPTION = "Service to perform dataset operations.";
     }
   }
 
@@ -497,6 +502,16 @@ public final class Constants {
         public static final String SERVICE_PROCESSED = "system.response.successful.count";
         public static final String SERVICE_EXCEPTIONS = "system.response.server.error.count";
       }
+
+      /**
+       * Dataset metrics
+       */
+      public static final class Dataset {
+        public static final String READ_COUNT = "dataset.store.reads";
+        public static final String OP_COUNT = "dataset.store.ops";
+        public static final String WRITE_COUNT = "dataset.store.writes";
+        public static final String WRITE_BYTES = "dataset.store.bytes";
+      }
     }
 
     /**
@@ -707,7 +722,7 @@ public final class Constants {
     public static final String INACTIVE_OPERATION_TIMEOUT_SECS = "explore.inactive.operation.timeout.secs";
     public static final String CLEANUP_JOB_SCHEDULE_SECS = "explore.cleanup.job.schedule.secs";
 
-    public static final String SERVICE_DESCRIPTION = "Service to run Ad-hoc queries.";
+    public static final String SERVICE_DESCRIPTION = "Service to run ad-hoc queries.";
 
     /**
      * Explore JDBC constants.

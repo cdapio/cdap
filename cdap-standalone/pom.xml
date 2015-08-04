@@ -24,7 +24,7 @@
   <parent>
     <groupId>co.cask.cdap</groupId>
     <artifactId>cdap</artifactId>
-    <version>3.0.0</version>
+    <version>3.1.0</version>
   </parent>
 
 
@@ -40,6 +40,20 @@
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
+    </dependency>
+
+    <!-- Include spark runtime in standalone -->
+    <dependency>
+      <groupId>org.apache.spark</groupId>
+      <artifactId>spark-core_2.10</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.spark</groupId>
+      <artifactId>spark-sql_2.10</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.spark</groupId>
+      <artifactId>spark-mllib_2.10</artifactId>
     </dependency>
 
     <!-- Added to override the embedded guava class in hive-exec -->
@@ -119,6 +133,10 @@
       <artifactId>cdap-ui</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+    </dependency>
   </dependencies>
 
   <build>
@@ -132,6 +150,14 @@
             <exclude>*.xml</exclude>
           </excludes>
         </configuration>
+        <executions>
+          <execution>
+            <id>test-jar</id>
+            <goals>
+              <goal>test-jar</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>
@@ -257,13 +283,6 @@
                         <include>*.dll</include>
                       </includes>
                     </resource>
-                    <!-- Copy api jars -->
-                    <resource>
-                      <directory>${project.parent.basedir}/cdap-api/target</directory>
-                      <includes>
-                        <include>cdap-api-${project.version}*.jar</include>
-                      </includes>
-                    </resource>
                     <!-- Copy cdap-ui -->
                     <resource>
                       <directory>${project.parent.basedir}/cdap-ui/server</directory>
@@ -289,12 +308,7 @@
                         <include>package.json</include>
                       </includes>
                     </resource>
-                    <!-- Copy api javadocs -->
-                    <resource>
-                      <directory>${project.parent.basedir}/cdap-api/target/apidocs</directory>
-                      <targetPath>javadocs</targetPath>
-                    </resource>
-                    <!-- Copy examples. The assume the example is already built -->
+                    <!-- Copy examples. This assumes the examples are already built -->
                     <resource>
                       <directory>${project.parent.basedir}/cdap-examples</directory>
                       <targetPath>examples</targetPath>

@@ -30,7 +30,7 @@ import java.io.PrintStream;
  * Deletes preferences for instance, namespace, application, program.
  */
 public class DeletePreferencesCommand extends AbstractCommand {
-  private static final String SUCCESS = "Deleted Preferences successfully for the '%s'";
+  private static final String SUCCESS = "Deleted preferences successfully for the '%s'";
 
   private final PreferencesClient client;
   private final ElementType type;
@@ -51,24 +51,22 @@ public class DeletePreferencesCommand extends AbstractCommand {
       programIdParts = arguments.get(type.getArgumentName().toString()).split("\\.");
     }
 
-    String programType = type.getNamePlural().toString();
-
     switch (type) {
       case INSTANCE:
         checkInputLength(programIdParts, 0);
         client.deleteInstancePreferences();
-        printStream.printf(SUCCESS + "\n", type.getTitleName());
+        printStream.printf(SUCCESS + "\n", type.getName());
         break;
 
       case NAMESPACE:
         checkInputLength(programIdParts, 0);
         client.deleteNamespacePreferences(cliConfig.getCurrentNamespace());
-        printStream.printf(SUCCESS + "\n", type.getTitleName());
+        printStream.printf(SUCCESS + "\n", type.getName());
         break;
 
       case APP:
         client.deleteApplicationPreferences(parseAppId(programIdParts));
-        printStream.printf(SUCCESS + "\n", type.getTitleName());
+        printStream.printf(SUCCESS + "\n", type.getName());
         break;
 
       case FLOW:
@@ -78,21 +76,21 @@ public class DeletePreferencesCommand extends AbstractCommand {
       case SPARK:
         checkInputLength(programIdParts, 2);
         client.deleteProgramPreferences(parseProgramId(programIdParts, type.getProgramType()));
-        printStream.printf(SUCCESS + "\n", type.getTitleName());
+        printStream.printf(SUCCESS + "\n", type.getName());
         break;
 
       default:
-        throw new IllegalArgumentException("Unrecognized Element Type for Preferences " + type.getTitleName());
+        throw new IllegalArgumentException("Unrecognized element type for preferences " + type.getName());
     }
   }
 
   @Override
   public String getPattern() {
-    return String.format("delete preferences %s [<%s>]", type.getName(), type.getArgumentName());
+    return String.format("delete preferences %s [<%s>]", type.getShortName(), type.getArgumentName());
   }
 
   @Override
   public String getDescription() {
-    return String.format("Deletes the preferences of %s.", Fragment.of(Article.A, type.getTitleName()));
+    return String.format("Deletes the preferences of %s.", Fragment.of(Article.A, type.getName()));
   }
 }

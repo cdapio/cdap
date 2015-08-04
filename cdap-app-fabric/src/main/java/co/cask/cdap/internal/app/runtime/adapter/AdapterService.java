@@ -26,13 +26,13 @@ import co.cask.cdap.app.deploy.ManagerFactory;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
+import co.cask.cdap.common.AdapterNotFoundException;
+import co.cask.cdap.common.CannotBeDeletedException;
+import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.exception.AdapterNotFoundException;
-import co.cask.cdap.common.exception.CannotBeDeletedException;
-import co.cask.cdap.common.exception.NotFoundException;
-import co.cask.cdap.common.exception.ProgramNotFoundException;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
@@ -49,6 +49,7 @@ import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
 import co.cask.cdap.internal.app.services.ApplicationLifecycleService;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.services.PropertiesResolver;
+import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.AdapterStatus;
 import co.cask.cdap.proto.Id;
@@ -56,15 +57,16 @@ import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.templates.AdapterDefinition;
-import com.clearspring.analytics.util.Preconditions;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Function;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.Hashing;
-import com.google.common.io.Closeables;
 import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -100,6 +102,15 @@ import javax.annotation.Nullable;
 public class AdapterService extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(AdapterService.class);
   private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
+
+  private static final Function<RunRecordMeta, RunRecord> CONVERT_TO_RUN_RECORD =
+    new Function<RunRecordMeta, RunRecord>() {
+      @Override
+      public RunRecord apply(RunRecordMeta input) {
+        return new RunRecord(input);
+      }
+    };
+
   private final ManagerFactory<DeploymentInfo, ApplicationWithPrograms> templateManagerFactory;
   private final ManagerFactory<AdapterDeploymentInfo, AdapterDefinition> adapterManagerFactory;
   private final CConfiguration configuration;
@@ -444,7 +455,8 @@ public class AdapterService extends AbstractIdleService {
   public List<RunRecord> getRuns(Id.Namespace namespace, String adapterName, ProgramRunStatus status,
                                  long start, long end, int limit) throws NotFoundException {
     Id.Program program = getProgramId(namespace, adapterName);
-    return store.getRuns(program, status, start, end, limit, adapterName);
+
+    return Lists.transform(store.getRuns(program, status, start, end, limit, adapterName), CONVERT_TO_RUN_RECORD);
   }
 
   /**
@@ -458,9 +470,9 @@ public class AdapterService extends AbstractIdleService {
    */
   public RunRecord getRun(Id.Namespace namespace, String adapterName, String runId) throws NotFoundException {
     Id.Program program = getProgramId(namespace, adapterName);
-    RunRecord runRecord = store.getRun(program, runId);
-    if (runRecord != null && adapterName.equals(runRecord.getAdapterName())) {
-      return runRecord;
+    RunRecordMeta runRecordMeta = store.getRun(program, runId);
+    if (runRecordMeta != null && adapterName.equals(runRecordMeta.getAdapterName())) {
+      return CONVERT_TO_RUN_RECORD.apply(runRecordMeta);
     }
     return null;
   }
@@ -501,7 +513,7 @@ public class AdapterService extends AbstractIdleService {
     try {
       scheduler.deleteSchedule(workflowId, SchedulableProgramType.WORKFLOW, scheduleName);
       //TODO: Scheduler API should also manage the MDS.
-      store.deleteSchedule(workflowId, SchedulableProgramType.WORKFLOW, scheduleName);
+      store.deleteSchedule(workflowId, scheduleName);
     } catch (NotFoundException e) {
       // its possible a stop was already called and the schedule was deleted, but then there
       // was some failure stopping the active run.  In that case, the next time stop is called
@@ -522,8 +534,8 @@ public class AdapterService extends AbstractIdleService {
     final Id.Adapter adapterId = Id.Adapter.from(namespace.getId(), adapterSpec.getName());
     final Id.Program workerId = getProgramId(namespace, adapterSpec);
     try {
-      Map<String, String> sysArgs = resolver.getSystemProperties(workerId, ProgramType.WORKER);
-      Map<String, String> userArgs = resolver.getUserProperties(workerId, ProgramType.WORKER);
+      Map<String, String> sysArgs = resolver.getSystemProperties(workerId);
+      Map<String, String> userArgs = resolver.getUserProperties(workerId);
 
       // Pass Adapter Name as a system property
       sysArgs.put(ProgramOptionConstants.ADAPTER_NAME, adapterSpec.getName());
@@ -534,8 +546,7 @@ public class AdapterService extends AbstractIdleService {
       // Override resolved preferences with adapter worker spec properties.
       userArgs.putAll(adapterSpec.getRuntimeArgs());
 
-      ProgramRuntimeService.RuntimeInfo runtimeInfo = lifecycleService.start(workerId, ProgramType.WORKER,
-                                                                             sysArgs, userArgs, false);
+      ProgramRuntimeService.RuntimeInfo runtimeInfo = lifecycleService.start(workerId, sysArgs, userArgs, false);
       final ProgramController controller = runtimeInfo.getController();
       controller.addListener(new AbstractListener() {
         @Override
@@ -577,9 +588,9 @@ public class AdapterService extends AbstractIdleService {
   private void stopWorkerAdapter(Id.Namespace namespace, AdapterDefinition adapterSpec) throws NotFoundException,
     ExecutionException, InterruptedException {
     final Id.Program workerId = getProgramId(namespace, adapterSpec);
-    List<RunRecord> runRecords = store.getRuns(workerId, ProgramRunStatus.RUNNING, 0, Long.MAX_VALUE, Integer.MAX_VALUE,
-                                               adapterSpec.getName());
-    RunRecord adapterRun = Iterables.getFirst(runRecords, null);
+    List<RunRecordMeta> runRecords = store.getRuns(workerId, ProgramRunStatus.RUNNING, 0, Long.MAX_VALUE,
+                                                   Integer.MAX_VALUE, adapterSpec.getName());
+    RunRecordMeta adapterRun = Iterables.getFirst(runRecords, null);
     if (adapterRun != null) {
       RunId runId = RunIds.fromString(adapterRun.getPid());
       lifecycleService.stopProgram(workerId, runId);
@@ -598,7 +609,7 @@ public class AdapterService extends AbstractIdleService {
     Manager<AdapterDeploymentInfo, AdapterDefinition> manager = adapterManagerFactory.create(
       new ProgramTerminator() {
         @Override
-        public void stop(Id.Namespace id, Id.Program programId, ProgramType type) throws ExecutionException {
+        public void stop(Id.Program programId) throws ExecutionException {
           // no-op
         }
       });
@@ -611,8 +622,8 @@ public class AdapterService extends AbstractIdleService {
     } catch (ExecutionException e) {
       // error handling for manager could use some work...
       Throwable cause = e.getCause();
-      if (cause instanceof IllegalArgumentException) {
-        throw (IllegalArgumentException) cause;
+      if (cause instanceof RuntimeException) {
+        throw Throwables.propagate(cause);
       }
       throw new RuntimeException(e);
     } catch (Exception e) {
@@ -627,7 +638,7 @@ public class AdapterService extends AbstractIdleService {
 
       Manager<DeploymentInfo, ApplicationWithPrograms> manager = templateManagerFactory.create(new ProgramTerminator() {
         @Override
-        public void stop(Id.Namespace id, Id.Program programId, ProgramType type) throws ExecutionException {
+        public void stop(Id.Program programId) throws ExecutionException {
           // no-op
         }
       });
@@ -635,7 +646,7 @@ public class AdapterService extends AbstractIdleService {
       DeploymentInfo deploymentInfo = new DeploymentInfo(
         applicationTemplateInfo.getFile(),
         getTemplateTempLoc(namespace, applicationTemplateInfo),
-        ApplicationDeployScope.SYSTEM);
+        ApplicationDeployScope.SYSTEM, null);
       ApplicationWithPrograms appWithPrograms =
         manager.deploy(namespace, applicationTemplateInfo.getName(), deploymentInfo).get();
       return appWithPrograms.getSpecification();
@@ -684,7 +695,7 @@ public class AdapterService extends AbstractIdleService {
       // TODO: Performance improvement to only rebuild plugin information for those that changed
       pluginRepository.inspectPlugins(newInfoMap.values());
     } catch (Exception e) {
-      LOG.warn("Unable to read the plugins directory");
+      LOG.warn("Unable to read the plugins directory", e);
     }
   }
 
@@ -698,7 +709,8 @@ public class AdapterService extends AbstractIdleService {
     }
 
     // instantiate the template application and call configure() on it to determine it's specification
-    InMemoryConfigurator configurator = new InMemoryConfigurator(new LocalLocationFactory().create(jarFile.toURI()));
+    InMemoryConfigurator configurator = new InMemoryConfigurator(new LocalLocationFactory().create(jarFile.toURI()),
+                                                                 null);
     ListenableFuture<ConfigResponse> result = configurator.config();
     ConfigResponse response = result.get(2, TimeUnit.MINUTES);
     InputSupplier<? extends Reader> configSupplier = response.get();
@@ -706,11 +718,8 @@ public class AdapterService extends AbstractIdleService {
       throw new IllegalArgumentException("Failed to get template info");
     }
     ApplicationSpecification spec;
-    Reader configReader = configSupplier.getInput();
-    try {
+    try (Reader configReader = configSupplier.getInput()) {
       spec = GSON.fromJson(configReader, ApplicationSpecification.class);
-    } finally {
-      Closeables.closeQuietly(configReader);
     }
 
     // verify that the name is ok

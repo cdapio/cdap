@@ -16,6 +16,12 @@
 
 package co.cask.cdap.test;
 
+import co.cask.cdap.StandaloneTester;
+import co.cask.cdap.client.ApplicationClient;
+import co.cask.cdap.client.config.ClientConfig;
+import co.cask.cdap.proto.Id;
+import org.junit.Assert;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 /**
@@ -23,11 +29,35 @@ import org.junit.Test;
  */
 public class IntegrationTestBaseTest extends IntegrationTestBase {
 
+  @ClassRule
+  public static final StandaloneTester STANDALONE = new StandaloneTester();
+
+  @Override
+  protected String getInstanceURI() {
+    return STANDALONE.getBaseURI().toString();
+  }
+
   @Test
   public void testFlowManager() throws Exception {
     ApplicationManager applicationManager = deployApplication(TestApplication.class);
-    FlowManager flowManager = applicationManager.startFlow(TestFlow.NAME);
+    FlowManager flowManager = applicationManager.getFlowManager(TestFlow.NAME).start();
     flowManager.stop();
   }
 
+  @Test
+  public void testDeployApplicationInNamespace() throws Exception {
+    Id.Namespace namespace = createNamespace("Test1");
+    ClientConfig clientConfig = new ClientConfig.Builder(getClientConfig()).build();
+    deployApplication(namespace, TestApplication.class);
+
+    // Check the default namespaces applications to see whether the application wasnt made in the default namespace
+    ClientConfig defaultClientConfig = new ClientConfig.Builder(getClientConfig()).build();
+    Assert.assertEquals(0, new ApplicationClient(defaultClientConfig).list(Id.Namespace.DEFAULT).size());
+
+    ApplicationClient applicationClient = new ApplicationClient(clientConfig);
+    Assert.assertEquals("TestApplication", applicationClient.list(namespace).get(0).getName());
+    applicationClient.delete(Id.Application.from(namespace, "TestApplication"));
+    Assert.assertEquals(0, new ApplicationClient(clientConfig).list(namespace).size());
+
+  }
 }

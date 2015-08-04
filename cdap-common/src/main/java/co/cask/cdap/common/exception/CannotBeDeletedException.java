@@ -20,29 +20,37 @@ import co.cask.cdap.proto.Id;
 
 /**
  * Thrown when an element cannot be deleted.
+ * @deprecated Use {@link co.cask.cdap.common.CannotBeDeletedException} instead
  */
-public class CannotBeDeletedException extends Exception {
+@Deprecated
+public class CannotBeDeletedException extends ConflictException {
 
   private final Id objectId;
+  private final String reason;
 
   public CannotBeDeletedException(Id id) {
     super(String.format("'%s' could not be deleted", id.getIdRep()));
     this.objectId = id;
+    this.reason = null;
   }
 
   public CannotBeDeletedException(Id id, String reason) {
     super(String.format("'%s' could not be deleted. Reason: %s", id.getIdRep(), reason));
     this.objectId = id;
+    this.reason = reason;
   }
 
   public CannotBeDeletedException(Id id, Throwable cause) {
     super(String.format("'%s' could not be deleted. Reason: %s", id.getIdRep(), cause.getMessage()), cause);
     this.objectId = id;
+    this.reason = cause.getMessage();
   }
 
   public Id getObjectId() {
     return objectId;
   }
 
-
+  public String getReason() {
+    return reason;
+  }
 }

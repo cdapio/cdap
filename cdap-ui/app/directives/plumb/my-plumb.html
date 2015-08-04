@@ -1,0 +1,36 @@
+<div class="my-js-plumb" ng-class="{'disabled': MyPlumbController.isDisabled }">
+  <div id="plumb-container">
+    <div ng-repeat="plugin in MyPlumbController.plugins"
+          class="box {{plugin.type}}"
+          ng-style="plugin.style"
+          data-type="{{plugin.type}}"
+          id="{{plugin.id}}"
+          ng-dblclick="MyPlumbController.onPluginClick(plugin)">
+      <div class="icon fa {{plugin.icon}}"></div>
+      <div class="plugin-name">{{plugin.name}}</div>
+      <div class="fa fa-close" ng-if="!MyPlumbController.isDisabled" ng-click="MyPlumbController.removePlugin($index, plugin.id)"></div>
+
+      <div class="error-node-notification"
+            ng-if="plugin.error"
+            tooltip="{{plugin.error}}"
+            tooltip-append-to-body="true"
+            tooltip-class="tooltip-error"
+            >
+        <span class="badge badge-danger">
+          <i class="fa fa-exclamation"></i>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <div class="error-container well" ng-if="MyPlumbController.canvasError.length > 0">
+    <div class="text-right">
+      <span class="fa fa-times error-close-icon" ng-click="MyPlumbController.closeCanvasError()"></span>
+    </div>
+    <ul>
+      <li ng-repeat="error in MyPlumbController.canvasError">
+        <span>{{ error }}</span>
+      </li>
+    </ul>
+  </div>
+</div>

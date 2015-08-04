@@ -27,7 +27,6 @@ import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
-import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.guice.LogSaverStatusServiceModule;
 import co.cask.cdap.logging.guice.LoggingModules;
@@ -49,7 +48,7 @@ import org.apache.hadoop.util.ShutdownHookManager;
 import org.apache.twill.api.AbstractTwillRunnable;
 import org.apache.twill.api.TwillContext;
 import org.apache.twill.api.TwillRunnableSpecification;
-import org.apache.twill.common.Services;
+import org.apache.twill.internal.Services;
 import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.slf4j.Logger;
@@ -206,7 +205,6 @@ public final class LogSaverTwillRunnable extends AbstractTwillRunnable {
       new IOModule(),
       new ZKClientModule(),
       new KafkaClientModule(),
-      new AuthModule(),
       new MetricsClientRuntimeModule().getDistributedModules(),
       new DiscoveryRuntimeModule().getDistributedModules(),
       new LocationRuntimeModule().getDistributedModules(),

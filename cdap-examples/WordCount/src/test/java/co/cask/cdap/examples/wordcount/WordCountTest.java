@@ -22,11 +22,13 @@ import co.cask.cdap.test.RuntimeStats;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.TestBase;
+import co.cask.cdap.test.TestConfiguration;
 import com.google.common.base.Charsets;
 import com.google.common.io.ByteStreams;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import org.junit.Assert;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -41,19 +43,24 @@ import java.util.concurrent.TimeUnit;
  */
 public class WordCountTest extends TestBase {
 
-  static Type stringMapType = new TypeToken<Map<String, String>>() { }.getType();
-  static Type objectMapType = new TypeToken<Map<String, Object>>() { }.getType();
+  @ClassRule
+  public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", false);
+
+  private static final Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+  private static final Type OBJECT_MAP_TYPE = new TypeToken<Map<String, Object>>() { }.getType();
 
   @Test
   public void testWordCount() throws Exception {
+
+    WordCount.WordCountConfig config = new WordCount.WordCountConfig("words", "stats", "counts", "unique", "assoc");
     // Deploy the Application
-    ApplicationManager appManager = deployApplication(WordCount.class);
+    ApplicationManager appManager = deployApplication(WordCount.class, config);
 
     // Start the Flow
-    appManager.startFlow("WordCounter");
+    appManager.getFlowManager("WordCounter").start();
 
     // Send a few events to the stream
-    StreamManager streamManager = getStreamManager("wordStream");
+    StreamManager streamManager = getStreamManager("words");
     streamManager.send("hello world");
     streamManager.send("a wonderful world");
     streamManager.send("the world says hello");
@@ -63,21 +70,21 @@ public class WordCountTest extends TestBase {
     metrics.waitForProcessed(3, 5, TimeUnit.SECONDS);
 
     // Start RetrieveCounts service
-    ServiceManager serviceManager = appManager.startService(RetrieveCounts.SERVICE_NAME);
+    ServiceManager serviceManager = appManager.getServiceManager(RetrieveCounts.SERVICE_NAME).start();
 
     // Wait service startup
     serviceManager.waitForStatus(true);
 
     // First verify global statistics
     String response = requestService(new URL(serviceManager.getServiceURL(15, TimeUnit.SECONDS), "stats"));
-    Map<String, String> map = new Gson().fromJson(response, stringMapType);
+    Map<String, String> map = new Gson().fromJson(response, STRING_MAP_TYPE);
     Assert.assertEquals("9", map.get("totalWords"));
     Assert.assertEquals("6", map.get("uniqueWords"));
     Assert.assertEquals(((double) 42) / 9, Double.valueOf(map.get("averageLength")), 0.001);
 
     // Now verify statistics for a specific word
     response = requestService(new URL(serviceManager.getServiceURL(15, TimeUnit.SECONDS), "count/world"));
-    Map<String, Object> omap = new Gson().fromJson(response, objectMapType);
+    Map<String, Object> omap = new Gson().fromJson(response, OBJECT_MAP_TYPE);
     Assert.assertEquals("world", omap.get("word"));
     Assert.assertEquals(3.0, omap.get("count"));
 

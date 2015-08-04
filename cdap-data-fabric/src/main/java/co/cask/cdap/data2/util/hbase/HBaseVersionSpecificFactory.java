@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data2.util.hbase;
 
+import co.cask.tephra.util.HBaseVersion;
 import com.google.inject.Provider;
 import com.google.inject.ProvisionException;
 import org.apache.twill.internal.utils.Instances;
@@ -33,13 +34,18 @@ public abstract class HBaseVersionSpecificFactory<T> implements Provider<T> {
     try {
       switch (HBaseVersion.get()) {
         case HBASE_94:
-          instance = createInstance(getHBase94Classname());
-          break;
+          throw new ProvisionException("HBase 0.94 is no longer supported.  Please upgrade to HBase 0.96 or newer.");
         case HBASE_96:
           instance = createInstance(getHBase96Classname());
           break;
         case HBASE_98:
           instance = createInstance(getHBase98Classname());
+          break;
+        case HBASE_10:
+          instance = createInstance(getHBase10Classname());
+          break;
+        case HBASE_10_CDH:
+          instance = createInstance(getHBase10CDHClassname());
           break;
         case UNKNOWN:
           throw new ProvisionException("Unknown HBase version: " + HBaseVersion.getVersionString());
@@ -51,11 +57,13 @@ public abstract class HBaseVersionSpecificFactory<T> implements Provider<T> {
   }
 
   protected T createInstance(String className) throws ClassNotFoundException {
-    Class clz = Class.forName(className);
-    return (T) Instances.newInstance(clz);
+    @SuppressWarnings("unchecked")
+    Class<T> clz = (Class<T>) Class.forName(className);
+    return Instances.newInstance(clz);
   }
 
-  protected abstract String getHBase94Classname();
   protected abstract String getHBase96Classname();
   protected abstract String getHBase98Classname();
+  protected abstract String getHBase10Classname();
+  protected abstract String getHBase10CDHClassname();
 }

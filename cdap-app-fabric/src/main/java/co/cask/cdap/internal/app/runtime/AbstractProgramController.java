@@ -52,7 +52,7 @@ public abstract class AbstractProgramController implements ProgramController {
   private Throwable failureCause;
 
   protected AbstractProgramController(String programName, RunId runId) {
-    this.state = new AtomicReference<State>(State.STARTING);
+    this.state = new AtomicReference<>(State.STARTING);
     this.programName = programName;
     this.runId = runId;
     this.listeners = Maps.newConcurrentMap();
@@ -144,6 +144,7 @@ public abstract class AbstractProgramController implements ProgramController {
       LOG.debug("Cannot transit to COMPLETED state from {} state: {} {}", state.get(), programName, runId);
       return;
     }
+    LOG.debug("Program stopped: {} {}", programName, runId);
     executor(State.COMPLETED).execute(new Runnable() {
       @Override
       public void run() {
@@ -341,7 +342,7 @@ public abstract class AbstractProgramController implements ProgramController {
       this.listener = listener;
       this.executor = executor;
       this.initState = initState;
-      this.tasks = new LinkedList<ListenerTask>();
+      this.tasks = new LinkedList<>();
     }
 
     @Override

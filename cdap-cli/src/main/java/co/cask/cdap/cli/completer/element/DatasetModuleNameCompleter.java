@@ -16,9 +16,10 @@
 
 package co.cask.cdap.cli.completer.element;
 
+import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.completer.StringsCompleter;
 import co.cask.cdap.client.DatasetModuleClient;
-import co.cask.cdap.common.exception.UnauthorizedException;
+import co.cask.cdap.common.UnauthorizedException;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
@@ -36,12 +37,13 @@ import javax.inject.Inject;
 public class DatasetModuleNameCompleter extends StringsCompleter {
 
   @Inject
-  public DatasetModuleNameCompleter(final DatasetModuleClient datasetModuleClient) {
+  public DatasetModuleNameCompleter(final DatasetModuleClient datasetModuleClient,
+                                    final CLIConfig cliConfig) {
     super(new Supplier<Collection<String>>() {
       @Override
       public Collection<String> get() {
         try {
-          List<DatasetModuleMeta> list = datasetModuleClient.list();
+          List<DatasetModuleMeta> list = datasetModuleClient.list(cliConfig.getCurrentNamespace());
           return Lists.newArrayList(
             Iterables.transform(list, new Function<DatasetModuleMeta, String>() {
               @Override

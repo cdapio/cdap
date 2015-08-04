@@ -26,9 +26,9 @@ import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.store.Store;
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.stream.notification.StreamSizeNotification;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.schedule.store.DatasetBasedStreamSizeScheduleStore;
@@ -121,7 +121,7 @@ public class StreamSizeScheduler implements Scheduler {
     this.propertiesResolver = propertiesResolver;
     this.scheduleStore = scheduleStore;
     this.streamSubscribers = Maps.newConcurrentMap();
-    this.scheduleSubscribers = new ConcurrentSkipListMap<String, StreamSubscriber>();
+    this.scheduleSubscribers = new ConcurrentSkipListMap<>();
     this.schedulerStarted = false;
   }
 

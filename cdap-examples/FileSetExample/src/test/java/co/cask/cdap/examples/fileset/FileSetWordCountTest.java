@@ -25,10 +25,12 @@ import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.MapReduceManager;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.TestBase;
+import co.cask.cdap.test.TestConfiguration;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Maps;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.io.BufferedReader;
@@ -46,6 +48,9 @@ import java.util.concurrent.TimeUnit;
  */
 public class FileSetWordCountTest extends TestBase {
 
+  @ClassRule
+  public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", false);
+
   @Test
   public void testWordCountOnFileSet() throws Exception {
 
@@ -56,7 +61,7 @@ public class FileSetWordCountTest extends TestBase {
     final String line2 = "b a b";
 
     // discover the file set service
-    ServiceManager serviceManager = applicationManager.startService("FileSetService");
+    ServiceManager serviceManager = applicationManager.getServiceManager("FileSetService").start();
     serviceManager.waitForStatus(true);
     URL serviceURL = serviceManager.getServiceURL();
 
@@ -80,7 +85,7 @@ public class FileSetWordCountTest extends TestBase {
     runtimeArguments.putAll(RuntimeArguments.addScope(Scope.DATASET, "lines", inputArgs));
     runtimeArguments.putAll(RuntimeArguments.addScope(Scope.DATASET, "counts", outputArgs));
 
-    MapReduceManager mapReduceManager = applicationManager.startMapReduce("WordCount", runtimeArguments);
+    MapReduceManager mapReduceManager = applicationManager.getMapReduceManager("WordCount").start(runtimeArguments);
     mapReduceManager.waitForFinish(5, TimeUnit.MINUTES);
 
     // retrieve the counts through the service and verify
@@ -114,7 +119,7 @@ public class FileSetWordCountTest extends TestBase {
     runtimeArguments.putAll(RuntimeArguments.addScope(Scope.DATASET, "lines", inputArgs));
     runtimeArguments.putAll(RuntimeArguments.addScope(Scope.DATASET, "counts", outputArgs));
 
-    mapReduceManager = applicationManager.startMapReduce("WordCount", runtimeArguments);
+    mapReduceManager = applicationManager.getMapReduceManager("WordCount").start(runtimeArguments);
     mapReduceManager.waitForFinish(5, TimeUnit.MINUTES);
 
     // retrieve the counts through the dataset API and verify

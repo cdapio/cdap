@@ -19,6 +19,7 @@ package co.cask.cdap.api.dataset.lib;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.dataset.lib.Partitioning.FieldType;
 
+import java.util.Iterator;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -28,13 +29,14 @@ import javax.annotation.Nullable;
 @Beta
 public class PartitionedFileSetArguments {
 
-  public static final String OUTPUT_PARTITION_KEY_PREFIX = "output.partition.";
+  public static final String OUTPUT_PARTITION_KEY_PREFIX = "output.partition.key.";
+  public static final String OUTPUT_PARTITION_METADATA_PREFIX = "output.partition.metadata.";
   public static final String INPUT_PARTITION_LOWER_PREFIX = "input.filter.lower.";
   public static final String INPUT_PARTITION_UPPER_PREFIX = "input.filter.upper.";
   public static final String INPUT_PARTITION_VALUE_PREFIX = "input.filter.value.";
 
   /**
-   * Set the partition key  of the output partition when using PartitionedFileSet as an OutputFormatProvider.
+   * Set the partition key of the output partition when using PartitionedFileSet as an OutputFormatProvider.
    * This key is used as the partition key for the new file, and also to generate an output file path - if that path
    * is not explicitly given as an argument itself.
    *
@@ -72,9 +74,29 @@ public class PartitionedFileSetArguments {
     return builder.build();
   }
 
+
+  /**
+   * Sets the metadata of the output partition with using PartitionedFileSet as an OutputFormatProvider.
+   *
+   * @param arguments the arguments to set the metadata in to
+   * @param metadata the metadata to be written to the output partition
+   */
+  public static void setOutputPartitionMetadata(Map<String, String> arguments, Map<String, String> metadata) {
+    for (Map.Entry<String, String> entry : metadata.entrySet()) {
+      arguments.put(OUTPUT_PARTITION_METADATA_PREFIX + entry.getKey(), entry.getValue());
+    }
+  }
+
+  /**
+   * @return the metadata of the output partition to be written
+   */
+  public static Map<String, String> getOutputPartitionMetadata(Map<String, String> arguments) {
+    return FileSetProperties.propertiesWithPrefix(arguments, OUTPUT_PARTITION_METADATA_PREFIX);
+  }
+
   /**
    * Set the partition filter for the input to be read.
-
+   *
    * @param arguments the runtime arguments for a partitioned dataset
    * @param filter The partition filter.
    */
@@ -97,9 +119,10 @@ public class PartitionedFileSetArguments {
 
   /**
    * Get the partition filter for the input to be read.
-
+   *
    * @param arguments the runtime arguments for a partitioned dataset
    * @param partitioning the declared partitioning for the dataset, needed for proper interpretation of values
+   * @return the PartitionFilter specified in the arguments or null if no filter is specified.
    */
   @Nullable
   public static PartitionFilter getInputPartitionFilter(Map<String, String> arguments, Partitioning partitioning) {
@@ -127,7 +150,7 @@ public class PartitionedFileSetArguments {
       @SuppressWarnings({ "unchecked", "unused" }) // we know it's type safe, but Java does not
       PartitionFilter.Builder unused = builder.addRangeCondition(fieldName, lowerValue, upperValue);
     }
-    return builder.build();
+    return builder.isEmpty() ? null : builder.build();
   }
 
   // helper to convert a string value into a field value in a partition key or filter
@@ -149,4 +172,29 @@ public class PartitionedFileSetArguments {
                       where, kind, stringValue, fieldName, fieldType.name()), e);
     }
   }
+
+  /**
+   * Sets partitions as input for a PartitionedFileSet. If both a PartitionFilter and Partition(s) are specified, the
+   * PartitionFilter takes precedence and the specified Partition(s) will be ignored.
+   *
+   * @param arguments the runtime arguments for a partitioned dataset
+   * @param partitionIterator the iterator of partitions to add as input
+   */
+  public static void addInputPartitions(Map<String, String> arguments, Iterator<Partition> partitionIterator) {
+    while (partitionIterator.hasNext()) {
+      addInputPartition(arguments, partitionIterator.next());
+    }
+  }
+
+  /**
+   * Sets a partition as input for a PartitionedFileSet. If both a PartitionFilter and Partition(s) are specified, the
+   * PartitionFilter takes precedence and the specified Partition(s) will be ignored.
+   *
+   * @param arguments the runtime arguments for a partitioned dataset
+   * @param partition the partition to add as input
+   */
+  public static void addInputPartition(Map<String, String> arguments, Partition partition) {
+    FileSetArguments.addInputPath(arguments, partition.getRelativePath());
+  }
+
 }

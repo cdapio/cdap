@@ -144,7 +144,7 @@ final class Types {
    */
   static <D extends GenericDeclaration> TypeVariable<D> newTypeVariable(
     D declaration, String name, Type... bounds) {
-    return new TypeVariableImpl<D>(
+    return new TypeVariableImpl<>(
       declaration,
       name,
       (bounds.length == 0)
@@ -504,7 +504,7 @@ final class Types {
     abstract Type newArrayType(Type componentType);
     abstract Type usedInGenericType(Type type);
 
-    final ImmutableList<Type> usedInGenericType(Type[] types) {
+    ImmutableList<Type> usedInGenericType(Type[] types) {
       ImmutableList.Builder<Type> builder = ImmutableList.builder();
       for (Type type : types) {
         builder.add(usedInGenericType(type));

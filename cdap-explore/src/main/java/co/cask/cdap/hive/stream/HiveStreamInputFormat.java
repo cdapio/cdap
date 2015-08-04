@@ -98,13 +98,11 @@ public class HiveStreamInputFormat implements InputFormat<Void, ObjectWritable> 
   private StreamInputSplitFinder<InputSplit> getSplitFinder(JobConf conf) throws IOException {
     // first get the context we are in
     ContextManager.Context context = ContextManager.getContext(conf);
-    // get the stream admin from the context, which will let us get stream information such as the path
-    StreamAdmin streamAdmin = context.getStreamAdmin();
 
     String streamName = conf.get(Constants.Explore.STREAM_NAME);
     String streamNamespace = conf.get(Constants.Explore.STREAM_NAMESPACE);
     Id.Stream streamId = Id.Stream.from(streamNamespace, streamName);
-    StreamConfig streamConfig = streamAdmin.getConfig(streamId);
+    StreamConfig streamConfig = context.getStreamConfig(streamId);
     // make sure we get the current generation so we don't read events that occurred before a truncate.
     Location streamPath = StreamUtils.createGenerationLocation(streamConfig.getLocation(),
                                                                StreamUtils.getGeneration(streamConfig));

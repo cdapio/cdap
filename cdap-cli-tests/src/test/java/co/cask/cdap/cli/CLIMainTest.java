@@ -16,39 +16,33 @@
 
 package co.cask.cdap.cli;
 
-import co.cask.cdap.StandaloneContainer;
-import co.cask.cdap.app.program.ManifestFields;
+import co.cask.cdap.StandaloneTester;
 import co.cask.cdap.cli.util.InstanceURIParser;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.CsvTableRenderer;
 import co.cask.cdap.cli.util.table.Table;
-import co.cask.cdap.client.AdapterClient;
 import co.cask.cdap.client.DatasetTypeClient;
 import co.cask.cdap.client.NamespaceClient;
 import co.cask.cdap.client.ProgramClient;
+import co.cask.cdap.client.app.ConfigTestApp;
 import co.cask.cdap.client.app.FakeApp;
 import co.cask.cdap.client.app.FakeDataset;
 import co.cask.cdap.client.app.FakeFlow;
-import co.cask.cdap.client.app.FakeSpark;
 import co.cask.cdap.client.app.FakeWorkflow;
 import co.cask.cdap.client.app.PrefixedEchoHandler;
-import co.cask.cdap.client.app.TemplateApp;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.exception.DatasetTypeNotFoundException;
-import co.cask.cdap.common.exception.ProgramNotFoundException;
-import co.cask.cdap.common.exception.UnauthorizedException;
+import co.cask.cdap.common.DatasetTypeNotFoundException;
+import co.cask.cdap.common.ProgramNotFoundException;
+import co.cask.cdap.common.UnauthorizedException;
 import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.WorkflowTokenDetail;
 import co.cask.cdap.test.XSlowTests;
-import co.cask.cdap.test.standalone.StandaloneTestBase;
 import co.cask.common.cli.CLI;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
@@ -61,13 +55,13 @@ import com.google.gson.Gson;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
-import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -76,62 +70,47 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.jar.Attributes;
-import java.util.jar.Manifest;
 import javax.annotation.Nullable;
 
 /**
  * Test for {@link CLIMain}.
  */
 @Category(XSlowTests.class)
-public class CLIMainTest extends StandaloneTestBase {
+public class CLIMainTest {
+
+  @ClassRule
+  public static final StandaloneTester STANDALONE = new StandaloneTester();
+
+  @ClassRule
+  public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
 
   private static final Logger LOG = LoggerFactory.getLogger(CLIMainTest.class);
   private static final Gson GSON = new Gson();
 
   private static final String PREFIX = "123ff1_";
-  private static final boolean START_LOCAL_STANDALONE = true;
-
-  private static final int PORT = 11000;
-  private static final String HOSTNAME = StandaloneContainer.HOSTNAME;
-  private static final URI CONNECTION = URI.create("http://" + HOSTNAME + ":" + PORT);
 
   private static ProgramClient programClient;
-  private static AdapterClient adapterClient;
-  private static ClientConfig clientConfig;
   private static CLIConfig cliConfig;
   private static CLIMain cliMain;
   private static CLI cli;
 
   @BeforeClass
   public static void setUpClass() throws Exception {
-    if (START_LOCAL_STANDALONE) {
-      File adapterDir = TMP_FOLDER.newFolder("adapter");
-      configuration = CConfiguration.create();
-      configuration.set(Constants.Router.ROUTER_PORT, Integer.toString(CONNECTION.getPort()));
-      configuration.set(Constants.Router.ADDRESS, HOSTNAME);
-      configuration.set(Constants.AppFabric.APP_TEMPLATE_DIR, adapterDir.getAbsolutePath());
-      setupAdapters(adapterDir);
-
-      StandaloneTestBase.setUpClass();
-    }
-
-    ConnectionConfig connectionConfig = InstanceURIParser.DEFAULT.parse(CONNECTION.toString());
-    clientConfig = new ClientConfig.Builder().setConnectionConfig(connectionConfig).build();
+    ConnectionConfig connectionConfig = InstanceURIParser.DEFAULT.parse(STANDALONE.getBaseURI().toString());
+    ClientConfig clientConfig = new ClientConfig.Builder().setConnectionConfig(connectionConfig).build();
     clientConfig.setAllTimeouts(60000);
     cliConfig = new CLIConfig(clientConfig, System.out, new CsvTableRenderer());
     LaunchOptions launchOptions = new LaunchOptions(LaunchOptions.DEFAULT.getUri(), true, true, false);
     cliMain = new CLIMain(launchOptions, cliConfig);
     programClient = new ProgramClient(cliConfig.getClientConfig());
-    adapterClient = new AdapterClient(cliConfig.getClientConfig());
 
     cli = cliMain.getCLI();
 
-    testCommandOutputContains(cli, "connect " + CONNECTION.toString(), "Successfully connected");
+    testCommandOutputContains(cli, "connect " + STANDALONE.getBaseURI(), "Successfully connected");
     testCommandOutputNotContains(cli, "list apps", FakeApp.NAME);
 
     File appJarFile = createAppJarFile(FakeApp.class);
@@ -144,27 +123,12 @@ public class CLIMainTest extends StandaloneTestBase {
   @AfterClass
   public static void tearDownClass() throws Exception {
     testCommandOutputContains(cli, "delete app " + FakeApp.NAME, "Successfully deleted app");
-
-    if (START_LOCAL_STANDALONE) {
-      StandaloneTestBase.tearDownClass();
-    }
-  }
-
-  @After
-  @Override
-  public void tearDownStandalone() throws Exception {
-    // NO-OP
-  }
-
-  @Before
-  public void setUp() {
-    clientConfig.setNamespace(Constants.DEFAULT_NAMESPACE_ID);
   }
 
   @Test
   public void testConnect() throws Exception {
     testCommandOutputContains(cli, "connect fakehost", "could not be reached");
-    testCommandOutputContains(cli, "connect " + CONNECTION.toString(), "Successfully connected");
+    testCommandOutputContains(cli, "connect " + STANDALONE.getBaseURI(), "Successfully connected");
   }
 
   @Test
@@ -176,21 +140,75 @@ public class CLIMainTest extends StandaloneTestBase {
   }
 
   @Test
+  public void testPrompt() throws Exception {
+    String prompt = cliMain.getPrompt(cliConfig.getConnectionConfig());
+    Assert.assertFalse(prompt.contains("@"));
+    Assert.assertTrue(prompt.contains(STANDALONE.getBaseURI().getHost()));
+    Assert.assertTrue(prompt.contains(cliConfig.getCurrentNamespace().getId()));
+
+    CLIConnectionConfig oldConnectionConfig = cliConfig.getConnectionConfig();
+    CLIConnectionConfig authConnectionConfig = new CLIConnectionConfig(
+      oldConnectionConfig, Id.Namespace.DEFAULT, "test-username");
+    cliConfig.setConnectionConfig(authConnectionConfig);
+    prompt = cliMain.getPrompt(cliConfig.getConnectionConfig());
+    Assert.assertTrue(prompt.contains("test-username@"));
+    Assert.assertTrue(prompt.contains(STANDALONE.getBaseURI().getHost()));
+    Assert.assertTrue(prompt.contains(cliConfig.getCurrentNamespace().getId()));
+    cliConfig.setConnectionConfig(oldConnectionConfig);
+  }
+
+  @Test
   public void testProgram() throws Exception {
     String flowId = FakeApp.FLOWS.get(0);
+    Id.Application app = Id.Application.from(Id.Namespace.DEFAULT, FakeApp.NAME);
+    Id.Flow flow = Id.Flow.from(app, flowId);
+
     String qualifiedFlowId = FakeApp.NAME + "." + flowId;
-    testCommandOutputContains(cli, "start flow " + qualifiedFlowId, "Successfully started Flow");
-    assertProgramStatus(programClient, FakeApp.NAME, ProgramType.FLOW, flowId, "RUNNING");
-    testCommandOutputContains(cli, "stop flow " + qualifiedFlowId, "Successfully stopped Flow");
-    assertProgramStatus(programClient, FakeApp.NAME, ProgramType.FLOW, flowId, "STOPPED");
+    testCommandOutputContains(cli, "start flow " + qualifiedFlowId, "Successfully started flow");
+    assertProgramStatus(programClient, flow, "RUNNING");
+    testCommandOutputContains(cli, "stop flow " + qualifiedFlowId, "Successfully stopped flow");
+    assertProgramStatus(programClient, flow, "STOPPED");
     testCommandOutputContains(cli, "get flow status " + qualifiedFlowId, "STOPPED");
     testCommandOutputContains(cli, "get flow runs " + qualifiedFlowId, "KILLED");
     testCommandOutputContains(cli, "get flow live " + qualifiedFlowId, flowId);
   }
 
   @Test
+  public void testAppDeploy() throws Exception {
+    testDeploy(null);
+    testDeploy(new ConfigTestApp.ConfigClass("testStream", "testTable"));
+  }
+
+  private void testDeploy(ConfigTestApp.ConfigClass config) throws Exception {
+    String streamId = ConfigTestApp.DEFAULT_STREAM;
+    String datasetId = ConfigTestApp.DEFAULT_TABLE;
+    if (config != null) {
+      streamId = config.getStreamName();
+      datasetId = config.getTableName();
+    }
+
+    File appJarFile = createAppJarFile(ConfigTestApp.class);
+    if (config != null) {
+      String appConfig = GSON.toJson(config);
+      testCommandOutputContains(cli, String.format("deploy app %s %s", appJarFile.getAbsolutePath(), appConfig),
+                                "Successfully deployed app");
+    } else {
+      testCommandOutputContains(cli, String.format("deploy app %s", appJarFile.getAbsolutePath()), "Successfully");
+    }
+
+    if (!appJarFile.delete()) {
+      LOG.warn("Failed to delete temporary app jar file: {}", appJarFile.getAbsolutePath());
+    }
+    testCommandOutputContains(cli, "list streams", streamId);
+    testCommandOutputContains(cli, "list dataset instances", datasetId);
+    testCommandOutputContains(cli, "delete app " + ConfigTestApp.NAME, "Successfully");
+  }
+
+  @Test
   public void testStream() throws Exception {
     String streamId = PREFIX + "sdf123";
+    Id.Stream stream = Id.Stream.from(Id.Namespace.DEFAULT, streamId);
+
     testCommandOutputContains(cli, "create stream " + streamId, "Successfully created stream");
     testCommandOutputContains(cli, "list streams", streamId);
     testCommandOutputNotContains(cli, "get stream " + streamId, "helloworld");
@@ -203,7 +221,7 @@ public class CLIMainTest extends StandaloneTestBase {
     testCommandOutputNotContains(cli, "get stream " + streamId, "helloworld");
     testCommandOutputContains(cli, "set stream ttl " + streamId + " 100000", "Successfully set TTL of stream");
     testCommandOutputContains(cli, "set stream notification-threshold " + streamId + " 1",
-                              "Successfully set notification threshold of Stream");
+                              "Successfully set notification threshold of stream");
     testCommandOutputContains(cli, "describe stream " + streamId, "100000");
 
     File file = new File(TMP_FOLDER.newFolder(), "test.txt");
@@ -214,20 +232,17 @@ public class CLIMainTest extends StandaloneTestBase {
                               "Not a file");
 
     // Generate a file to send
-    BufferedWriter writer = Files.newWriter(file, Charsets.UTF_8);
-    try {
+    try (BufferedWriter writer = Files.newWriter(file, Charsets.UTF_8)) {
       for (int i = 0; i < 10; i++) {
         writer.write(String.format("%s, Event %s", i, i));
         writer.newLine();
       }
-    } finally {
-      writer.close();
     }
     testCommandOutputContains(cli, "load stream " + streamId + " " + file.getAbsolutePath(),
                               "Successfully sent stream event to stream");
     testCommandOutputContains(cli, "get stream " + streamId, "9, Event 9");
     testCommandOutputContains(cli, "get stream-stats " + streamId,
-                              String.format("No schema found for Stream '%s'", streamId));
+                              String.format("No schema found for stream '%s'", streamId));
     testCommandOutputContains(cli, "set stream format " + streamId + " csv 'body string'",
                               String.format("Successfully set format of stream '%s'", streamId));
     testCommandOutputContains(cli, "execute 'show tables'", String.format("stream_%s", streamId));
@@ -252,8 +267,9 @@ public class CLIMainTest extends StandaloneTestBase {
   @Test
   public void testDataset() throws Exception {
     String datasetName = PREFIX + "sdf123lkj";
+
     DatasetTypeClient datasetTypeClient = new DatasetTypeClient(cliConfig.getClientConfig());
-    DatasetTypeMeta datasetType = datasetTypeClient.list().get(0);
+    DatasetTypeMeta datasetType = datasetTypeClient.list(Id.Namespace.DEFAULT).get(0);
     testCommandOutputContains(cli, "create dataset instance " + datasetType.getName() + " " + datasetName,
                               "Successfully created dataset");
     testCommandOutputContains(cli, "list dataset instances", FakeDataset.class.getSimpleName());
@@ -261,7 +277,7 @@ public class CLIMainTest extends StandaloneTestBase {
     NamespaceClient namespaceClient = new NamespaceClient(cliConfig.getClientConfig());
     Id.Namespace barspace = Id.Namespace.from("bar");
     namespaceClient.create(new NamespaceMeta.Builder().setName(barspace).build());
-    cliConfig.getClientConfig().setNamespace(barspace);
+    cliConfig.setNamespace(barspace);
     // list of dataset instances is different in 'foo' namespace
     testCommandOutputNotContains(cli, "list dataset instances", FakeDataset.class.getSimpleName());
 
@@ -272,55 +288,57 @@ public class CLIMainTest extends StandaloneTestBase {
 
     testCommandOutputContains(cli, "use namespace default", "Now using namespace 'default'");
     try {
-      testCommandOutputContains(cli, "truncate dataset instance " + datasetName, "Successfully truncated dataset");
+      testCommandOutputContains(cli, "truncate dataset instance " + datasetName, "Successfully truncated");
     } finally {
-      testCommandOutputContains(cli, "delete dataset instance " + datasetName, "Successfully deleted dataset");
+      testCommandOutputContains(cli, "delete dataset instance " + datasetName, "Successfully deleted");
     }
   }
 
   @Test
   public void testService() throws Exception {
+    Id.Service service = Id.Service.from(Id.Namespace.DEFAULT, FakeApp.NAME, PrefixedEchoHandler.NAME);
     String qualifiedServiceId = String.format("%s.%s", FakeApp.NAME, PrefixedEchoHandler.NAME);
-    testCommandOutputContains(cli, "start service " + qualifiedServiceId, "Successfully started Service");
-    assertProgramStatus(programClient, FakeApp.NAME, ProgramType.SERVICE, PrefixedEchoHandler.NAME, "RUNNING");
+    testCommandOutputContains(cli, "start service " + qualifiedServiceId, "Successfully started service");
+    assertProgramStatus(programClient, service, "RUNNING");
     try {
       testCommandOutputContains(cli, "get endpoints service " + qualifiedServiceId, "POST");
       testCommandOutputContains(cli, "get endpoints service " + qualifiedServiceId, "/echo");
       testCommandOutputContains(cli, "call service " + qualifiedServiceId
         + " POST /echo body \"testBody\"", ":testBody");
     } finally {
-      testCommandOutputContains(cli, "stop service " + qualifiedServiceId, "Successfully stopped Service");
-      assertProgramStatus(programClient, FakeApp.NAME, ProgramType.SERVICE, PrefixedEchoHandler.NAME, "STOPPED");
+      testCommandOutputContains(cli, "stop service " + qualifiedServiceId, "Successfully stopped service");
+      assertProgramStatus(programClient, service, "STOPPED");
     }
   }
 
   @Test
   public void testRuntimeArgs() throws Exception {
     String qualifiedServiceId = String.format("%s.%s", FakeApp.NAME, PrefixedEchoHandler.NAME);
+    Id.Service service = Id.Service.from(Id.Namespace.DEFAULT, FakeApp.NAME, PrefixedEchoHandler.NAME);
 
     Map<String, String> runtimeArgs = ImmutableMap.of("sdf", "bacon");
     String runtimeArgsKV = Joiner.on(",").withKeyValueSeparator("=").join(runtimeArgs);
     testCommandOutputContains(cli, "start service " + qualifiedServiceId + " '" + runtimeArgsKV + "'",
-                              "Successfully started Service");
+                              "Successfully started service");
     try {
-      assertProgramStatus(programClient, FakeApp.NAME, ProgramType.SERVICE, PrefixedEchoHandler.NAME, "RUNNING");
+      assertProgramStatus(programClient, service, "RUNNING");
       testCommandOutputContains(cli, "call service " + qualifiedServiceId + " POST /echo body \"testBody\"",
                                 "bacon:testBody");
-      testCommandOutputContains(cli, "stop service " + qualifiedServiceId, "Successfully stopped Service");
-      assertProgramStatus(programClient, FakeApp.NAME, ProgramType.SERVICE, PrefixedEchoHandler.NAME, "STOPPED");
+      testCommandOutputContains(cli, "stop service " + qualifiedServiceId, "Successfully stopped service");
+      assertProgramStatus(programClient, service, "STOPPED");
 
       Map<String, String> runtimeArgs2 = ImmutableMap.of("sdf", "chickenz");
       String runtimeArgs2Json = GSON.toJson(runtimeArgs2);
       String runtimeArgs2KV = Joiner.on(",").withKeyValueSeparator("=").join(runtimeArgs2);
       testCommandOutputContains(cli, "set service runtimeargs " + qualifiedServiceId + " '" + runtimeArgs2KV + "'",
                                 "Successfully set runtime args");
-      testCommandOutputContains(cli, "start service " + qualifiedServiceId, "Successfully started Service");
+      testCommandOutputContains(cli, "start service " + qualifiedServiceId, "Successfully started service");
       testCommandOutputContains(cli, "get service runtimeargs " + qualifiedServiceId, runtimeArgs2Json);
       testCommandOutputContains(cli, "call service " + qualifiedServiceId + " POST /echo body \"testBody\"",
                                 "chickenz:testBody");
     } finally {
-      testCommandOutputContains(cli, "stop service " + qualifiedServiceId, "Successfully stopped Service");
-      assertProgramStatus(programClient, FakeApp.NAME, ProgramType.SERVICE, PrefixedEchoHandler.NAME, "STOPPED");
+      testCommandOutputContains(cli, "stop service " + qualifiedServiceId, "Successfully stopped service");
+      assertProgramStatus(programClient, service, "STOPPED");
     }
   }
 
@@ -328,10 +346,12 @@ public class CLIMainTest extends StandaloneTestBase {
   public void testSpark() throws Exception {
     String sparkId = FakeApp.SPARK.get(0);
     String qualifiedSparkId = FakeApp.NAME + "." + sparkId;
+    Id.Program spark = Id.Program.from(Id.Namespace.DEFAULT, FakeApp.NAME, ProgramType.SPARK, sparkId);
+
     testCommandOutputContains(cli, "list spark", sparkId);
     testCommandOutputContains(cli, "start spark " + qualifiedSparkId, "Successfully started Spark");
-    assertProgramStatus(programClient, FakeApp.NAME, ProgramType.SPARK, FakeSpark.NAME, "RUNNING");
-    assertProgramStatus(programClient, FakeApp.NAME, ProgramType.SPARK, FakeSpark.NAME, "STOPPED");
+    assertProgramStatus(programClient, spark, "RUNNING");
+    assertProgramStatus(programClient, spark, "STOPPED");
     testCommandOutputContains(cli, "get spark status " + qualifiedSparkId, "STOPPED");
     testCommandOutputContains(cli, "get spark runs " + qualifiedSparkId, "COMPLETED");
     testCommandOutputContains(cli, "get spark logs " + qualifiedSparkId, "HelloFakeSpark");
@@ -344,7 +364,7 @@ public class CLIMainTest extends StandaloneTestBase {
     propMap.put("key", "newinstance");
     propMap.put("k1", "v1");
     testCommandOutputContains(cli, "delete preferences instance", "successfully");
-    testCommandOutputContains(cli, String.format("set preferences instance 'key=newinstance k1=v1'"),
+    testCommandOutputContains(cli, "set preferences instance 'key=newinstance k1=v1'",
                               "successfully");
     testPreferencesOutput(cli, "get preferences instance", propMap);
     testPreferencesOutput(cli, "get resolved preferences instance", propMap);
@@ -359,7 +379,7 @@ public class CLIMainTest extends StandaloneTestBase {
                               "successfully");
     propMap.clear();
     testPreferencesOutput(cli, String.format("get preferences app %s", FakeApp.NAME), propMap);
-    testPreferencesOutput(cli, String.format("get preferences namespace"), propMap);
+    testPreferencesOutput(cli, "get preferences namespace", propMap);
     testCommandOutputContains(cli, "get preferences app invalidapp", "not found");
 
     File file = new File(TMP_FOLDER.newFolder(), "prefFile.txt");
@@ -391,6 +411,14 @@ public class CLIMainTest extends StandaloneTestBase {
     }
     testCommandOutputContains(cli, "load preferences instance " + file.getAbsolutePath() + " json", "invalid");
     testCommandOutputContains(cli, "load preferences instance " + file.getAbsolutePath() + " xml", "Unsupported");
+
+    testCommandOutputContains(cli, "set preferences namespace 'k1=v1'",
+            "successfully");
+    testCommandOutputContains(cli, "set preferences namespace 'k1=v1' name",
+            "Error: Expected format: set preferences namespace <runtime-args>");
+    testCommandOutputContains(cli, "set preferences instance 'k1=v1' name",
+            "Error: Expected format: set preferences instance <runtime-args>");
+
   }
 
   @Test
@@ -452,30 +480,49 @@ public class CLIMainTest extends StandaloneTestBase {
 //    testCommandOutputContains(cli, command, String.format("Namespace '%s' deleted successfully.", name));
   }
 
-  private static void setupAdapters(File adapterDir) throws IOException {
-    setupAdapter(adapterDir, TemplateApp.class, "dummyAdapter");
-  }
+  @Test
+  public void testWorkflowToken() throws Exception {
+    Id.Application fakeAppId = Id.Application.from(Id.Namespace.DEFAULT, FakeApp.NAME);
+    Id.Workflow fakeWorkflowId = Id.Workflow.from(fakeAppId, FakeWorkflow.NAME);
+    String workflow = String.format("%s.%s", FakeApp.NAME, FakeWorkflow.NAME);
+    File doneFile = TMP_FOLDER.newFile("fake.done");
+    Map<String, String> runtimeArgs = ImmutableMap.of("done.file", doneFile.getAbsolutePath());
+    String runtimeArgsKV = Joiner.on(",").withKeyValueSeparator("=").join(runtimeArgs);
+    testCommandOutputContains(cli, "start workflow " + workflow + " '" + runtimeArgsKV + "'",
+                              "Successfully started workflow");
+    assertProgramStatus(programClient, fakeWorkflowId, "STOPPED");
+    testCommandOutputContains(cli, "cli render as csv", "Now rendering as CSV");
+    String commandOutput = getCommandOutput(cli, "get workflow runs " + workflow);
+    String [] lines = commandOutput.split("\\r?\\n");
+    Assert.assertEquals(2, lines.length);
+    String[] split = lines[1].split(",");
+    String runId = split[0];
+    // Test entire workflow token
+    List<WorkflowTokenDetail.NodeValueDetail> tokenValues = new ArrayList<>();
+    tokenValues.add(new WorkflowTokenDetail.NodeValueDetail(FakeWorkflow.FakeAction.class.getSimpleName(),
+                                                            FakeWorkflow.FakeAction.TOKEN_VALUE));
+    tokenValues.add(new WorkflowTokenDetail.NodeValueDetail(FakeWorkflow.FakeAction.ANOTHER_FAKE_NAME,
+                                                            FakeWorkflow.FakeAction.TOKEN_VALUE));
+    testCommandOutputContains(cli, String.format("get workflow token %s %s", workflow, runId),
+                              Joiner.on(",").join(FakeWorkflow.FakeAction.TOKEN_KEY, GSON.toJson(tokenValues)));
+    testCommandOutputNotContains(cli, String.format("get workflow token %s %s scope system", workflow, runId),
+                                 Joiner.on(",").join(FakeWorkflow.FakeAction.TOKEN_KEY, GSON.toJson(tokenValues)));
+    testCommandOutputContains(
+      cli, String.format("get workflow token %s %s scope user key %s", workflow, runId,
+                         FakeWorkflow.FakeAction.TOKEN_KEY),
+      Joiner.on(",").join(FakeWorkflow.FakeAction.TOKEN_KEY, GSON.toJson(tokenValues)));
 
-  private static void setupAdapter(File adapterDir, Class<?> clz, String adapterType) throws IOException {
-    Attributes attributes = new Attributes();
-    attributes.put(ManifestFields.MAIN_CLASS, clz.getName());
-    attributes.put(ManifestFields.MANIFEST_VERSION, "1.0");
-    attributes.putValue("CDAP-Source-Type", "STREAM");
-    attributes.putValue("CDAP-Sink-Type", "DATASET");
-    attributes.putValue("CDAP-Adapter-Type", adapterType);
-    attributes.putValue("CDAP-Adapter-Program-Type", ProgramType.WORKFLOW.toString());
-
-    Manifest manifest = new Manifest();
-    manifest.getMainAttributes().putAll(attributes);
-
-    File tempDir = TMP_FOLDER.newFolder();
-    try {
-      Location adapterJar = AppJarHelper.createDeploymentJar(new LocalLocationFactory(tempDir), clz, manifest);
-      File destination =  new File(String.format("%s/%s", adapterDir.getAbsolutePath(), adapterJar.getName()));
-      Files.copy(Locations.newInputSupplier(adapterJar), destination);
-    } finally {
-      DirUtils.deleteDirectoryContents(tempDir);
-    }
+    // Test with node name
+    String fakeNodeValue = Joiner.on(",").join(FakeWorkflow.FakeAction.TOKEN_KEY, FakeWorkflow.FakeAction.TOKEN_VALUE);
+    testCommandOutputContains(
+      cli, String.format("get workflow token %s %s at node %s", workflow, runId,
+                         FakeWorkflow.FakeAction.class.getSimpleName()), fakeNodeValue);
+    testCommandOutputNotContains(
+      cli, String.format("get workflow token %s %s at node %s scope system", workflow, runId,
+                         FakeWorkflow.FakeAction.ANOTHER_FAKE_NAME), fakeNodeValue);
+    testCommandOutputContains(
+      cli, String.format("get workflow token %s %s at node %s scope user key %s", workflow, runId,
+                         FakeWorkflow.FakeAction.ANOTHER_FAKE_NAME, FakeWorkflow.FakeAction.TOKEN_KEY), fakeNodeValue);
   }
 
   private static File createAppJarFile(Class<?> cls) throws IOException {
@@ -512,21 +559,25 @@ public class CLIMainTest extends StandaloneTestBase {
   }
 
   private static void testCommand(CLI cli, String command, Function<String, Void> outputValidator) throws Exception {
-    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-    PrintStream printStream = new PrintStream(outputStream);
-    cli.execute(command, printStream);
-    String output = outputStream.toString();
+    String output = getCommandOutput(cli, command);
     outputValidator.apply(output);
   }
 
-  protected void assertProgramStatus(ProgramClient programClient, String appId, ProgramType programType,
-                                     String programId, String programStatus, int tries)
+  private static String getCommandOutput(CLI cli, String command) throws Exception {
+    try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+    PrintStream printStream = new PrintStream(outputStream)) {
+      cli.execute(command, printStream);
+      return outputStream.toString();
+    }
+  }
+
+  protected void assertProgramStatus(ProgramClient programClient, Id.Program programId, String programStatus, int tries)
     throws IOException, ProgramNotFoundException, UnauthorizedException {
 
     String status;
     int numTries = 0;
     do {
-      status = programClient.getStatus(appId, programType, programId);
+      status = programClient.getStatus(programId);
       numTries++;
       try {
         TimeUnit.SECONDS.sleep(1);
@@ -537,11 +588,10 @@ public class CLIMainTest extends StandaloneTestBase {
     Assert.assertEquals(programStatus, status);
   }
 
-  protected void assertProgramStatus(ProgramClient programClient, String appId, ProgramType programType,
-                                     String programId, String programStatus)
+  protected void assertProgramStatus(ProgramClient programClient, Id.Program programId, String programStatus)
     throws IOException, ProgramNotFoundException, UnauthorizedException {
 
-    assertProgramStatus(programClient, appId, programType, programId, programStatus, 180);
+    assertProgramStatus(programClient, programId, programStatus, 180);
   }
 
   private static void testNamespacesOutput(CLI cli, String command, final List<NamespaceMeta> expected)

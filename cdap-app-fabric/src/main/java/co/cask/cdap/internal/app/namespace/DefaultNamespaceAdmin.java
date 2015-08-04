@@ -20,13 +20,13 @@ import co.cask.cdap.api.metrics.MetricDeleteQuery;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
+import co.cask.cdap.common.AdapterNotFoundException;
+import co.cask.cdap.common.NamespaceAlreadyExistsException;
+import co.cask.cdap.common.NamespaceCannotBeCreatedException;
+import co.cask.cdap.common.NamespaceCannotBeDeletedException;
+import co.cask.cdap.common.NamespaceNotFoundException;
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.exception.AdapterNotFoundException;
-import co.cask.cdap.common.exception.NamespaceAlreadyExistsException;
-import co.cask.cdap.common.exception.NamespaceCannotBeCreatedException;
-import co.cask.cdap.common.exception.NamespaceCannotBeDeletedException;
-import co.cask.cdap.common.exception.NamespaceNotFoundException;
-import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.config.DashboardStore;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -44,6 +44,7 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.templates.AdapterDefinition;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
+import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
@@ -192,7 +193,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
       dsFramework.deleteAllInstances(namespaceId);
       dsFramework.deleteAllModules(namespaceId);
       // Delete queues and streams data
-      queueAdmin.dropAllInNamespace(namespaceId.getId());
+      queueAdmin.dropAllInNamespace(namespaceId);
       streamAdmin.dropAllInNamespace(namespaceId);
       // Delete all the schedules
       scheduler.deleteAllSchedules(namespaceId);
@@ -210,10 +211,10 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
       // Another reason for not deleting the default namespace is that we do not want to call a delete on the default
       // namespace in the storage provider (Hive, HBase, etc), since we re-use their default namespace.
       if (!Constants.DEFAULT_NAMESPACE_ID.equals(namespaceId)) {
-        // Delete namespace in storage providers
-        dsFramework.deleteNamespace(namespaceId);
         // Finally delete namespace from MDS
         store.deleteNamespace(namespaceId);
+        // Delete namespace in storage providers
+        dsFramework.deleteNamespace(namespaceId);
       }
     } catch (Exception e) {
       LOG.warn("Error while deleting namespace {}", namespaceId, e);
@@ -257,20 +258,19 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
 
     if (checkProgramsRunning(namespaceId)) {
       throw new NamespaceCannotBeDeletedException(namespaceId,
-                                                  "Some programs are currently running in namespace " + namespaceId);
+                                                  String.format("Some programs are currently running in namespace " +
+                                                                  "'%s', please stop them before deleting datasets " +
+                                                                  "in the namespace.",
+                                                                namespaceId));
     }
 
-    LOG.info("Deleting data in namespace '{}'.", namespaceId);
     try {
       dsFramework.deleteAllInstances(namespaceId);
-    } catch (DatasetManagementException e) {
-      LOG.warn("Error while deleting data in namespace {}", namespaceId, e);
-      throw new NamespaceCannotBeDeletedException(namespaceId, e);
-    } catch (IOException e) {
-      LOG.warn("Error while deleting data in namespace {}", namespaceId, e);
+    } catch (DatasetManagementException | IOException e) {
+      LOG.warn("Error while deleting datasets in namespace {}", namespaceId, e);
       throw new NamespaceCannotBeDeletedException(namespaceId, e);
     }
-    LOG.info("Deleted data in namespace '{}'.", namespaceId);
+    LOG.debug("Deleted datasets in namespace '{}'.", namespaceId);
   }
 
   public synchronized void updateProperties(Id.Namespace namespaceId, NamespaceMeta namespaceMeta)
@@ -286,13 +286,8 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
       builder.setDescription(namespaceMeta.getDescription());
     }
 
-    if (namespaceMeta.getName() != null) {
-      builder.setName(namespaceMeta.getName());
-    }
-
     NamespaceConfig config = namespaceMeta.getConfig();
-
-    if (config != null && config.getSchedulerQueueName() != null && !config.getSchedulerQueueName().isEmpty()) {
+    if (config != null && !Strings.isNullOrEmpty(config.getSchedulerQueueName())) {
       builder.setSchedulerQueueName(config.getSchedulerQueueName());
     }
 

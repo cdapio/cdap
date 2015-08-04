@@ -14,12 +14,12 @@ Glossary
    :sorted:
 
    Application
-      A collection of Programs and Services that read and write through the data
+      A collection of programs and services that read and write through the data
       abstraction layer in CDAP.
 
    Stream
-      The primary means of bringing data from external systems into CDAP in realtime; an
-      ordered, time-partitioned sequences of data, usable for realtime collection and
+      The primary means of bringing data from external systems into CDAP in real time; an
+      ordered, time-partitioned sequences of data, usable for real-time collection and
       consumption of data.
       
    Dataset
@@ -27,49 +27,49 @@ Glossary
       data storage with generic reusable implementations of common data patterns.
       
    Flow
-      Flows are user-implemented realtime stream processors, comprised of one or
-      more Flowlets that are wired together into a directed acyclic graph. 
+      Flows are user-implemented real-time stream processors, comprised of one or
+      more flowlets that are wired together into a directed acyclic graph. 
       
    Flowlet
-      A Flowlet represents an individual processing node within a Flow. Flowlets consume
+      A flowlet represents an individual processing node within a flow. flowlets consume
       data objects from their inputs and execute custom logic on each data object, able to
-      perform data operations as well as emit data objects to the Flowlet’s outputs.
+      perform data operations as well as emit data objects to the flowlet’s outputs.
       
    MapReduce
       MapReduce is a processing model used to process data in batch. MapReduce programs can be
-      written as in a conventional Apache Hadoop system. CDAP Datasets can be accessed
+      written as in a conventional Apache Hadoop system. CDAP datasets can be accessed
       from MapReduce programs as both input and output.
       
    Workflow
-      A Workflow is used to execute a series of MapReduce programs, with an optional schedule
+      A workflow is used to execute a series of MapReduce programs, with an optional schedule
       to run itself periodically.
       
    Spark
       Spark is a fast and general processing engine, compatible with Hadoop data, used for
       in-memory cluster computing. It lets you load large sets of data into memory and
       query them repeatedly, making it suitable for both iterative and interactive
-      programs. Similar to :term:`MapReduce`, Spark can access Datasets as both input and output.
+      programs. Similar to :term:`MapReduce`, Spark can access datasets as both input and output.
       Spark programs in CDAP can be written in either Java or Scala.
 
    Service
-      Services can be run in a Cask Data Application Platform (CDAP) Application to serve
-      data to external clients. Similar to Flows, Services run in containers and the
+      Services can be run in a Cask Data Application Platform (CDAP) application to serve
+      data to external clients. Similar to flows, services run in containers and the
       number of running service instances can be dynamically scaled. Developers can
-      implement Custom Services to interface with a legacy system and perform additional
+      implement custom services to interface with a legacy system and perform additional
       processing beyond the CDAP processing paradigms. Examples could include running an
-      IP-to-Geo lookup and serving user-profiles.      
+      IP-to-Geo lookup and serving user-profiles.
 
    Worker
       Workers are typically long-running background programs that can be used to execute tasks.
       Each instance of a worker runs either in its own YARN container (CDAP distributed mode) or
-      a single thread (CDAP Standalone or In-Memory mode) and the number of instances may be updated
-      via RESTful APIs or the CLI. Datasets can be accessed from inside Workers.
+      a single thread (CDAP standalone or in-memory mode) and the number of instances may be updated
+      via RESTful APIs or the CLI. Datasets can be accessed from inside workers.
 
    Data Abstraction
       Abstraction of the actual representation of data in storage.
       
    Application Abstraction
-      Application abstraction allows the same application to run in multiple  environments
+      Application abstraction allows the same application to run in multiple environments
       without modification.
       
    CDAP
@@ -103,8 +103,8 @@ Glossary
       A directed acyclic graph. Flows are wired together and displayed as a DAG in the CDAP UI.
       
    CDAP UI
-      The CDAP UI is a web-based application used to deploy CDAP Applications, create 
-      :term:`ETL Adapters <ETL Adapter>`, and query and manage the Cask Data Application 
+      The CDAP UI is a web-based application used to deploy CDAP applications, create 
+      :term:`ETL adapters <ETL Adapter>`, and query and manage the Cask Data Application 
       Platform instance.
 
    CDAP Console
@@ -130,74 +130,74 @@ Glossary
       isolation.
 
    Master Services
-      CDAP system services that are run in YARN containers like Transaction Service,
+      CDAP system services that are run in YARN containers, such as the Transaction Service,
       Dataset Executor, Log Saver, Metrics Processor, etc.
 
    FileSet
-      A :term:`Dataset` composed of collections of files in the file system that share
+      A :term:`dataset` composed of collections of files in the file system that share
       some common attributes such as the format and schema, which abstracts from the
       actual underlying file system interfaces.
 
    Time-partitioned FileSet
-      A :term:`FileSet` :term:`Dataset` that uses a timestamp as the partitioning key to
+      A :term:`FileSet` :term:`dataset` that uses a timestamp as the partitioning key to
       split the data into indivividual files. Though it is not required that data in each
       partition be organized by time, each partition is assigned a logical time. Typically
       written to in batch mode, at a set time interval.
 
    Timeseries Dataset
-      A :term:`Dataset` where time is the primary means of how data is organized, and both
+      A :term:`dataset` where time is the primary means of how data is organized, and both
       the data model and the schema that represents the data are optimized for querying
       and aggregating over time ranges.
 
    Exploring
-      Streams and Datasets in CDAP can be explored through ad-hoc SQL-like queries. To
-      enable exploration, you must set several properties when creating the Stream or
-      Dataset, and the files in a Dataset must meet certain requirements.
+      Streams and datasets in CDAP can be explored through ad-hoc SQL-like queries. To
+      enable exploration, you must set several properties when creating the stream or
+      dataset, and the files in a dataset must meet certain requirements.
 
    .. ETL and Application Templates
 
    Structured Record
-      The data format used to exchange events between most of the pre-built CDAP ETL :term:`Plugins <plugin>`.
+      The data format used to exchange events between most of the pre-built CDAP ETL :term:`plugins <plugin>`.
       
    Adapter Configuration
-      A JSON String that defines an :term:`Adapter`.
+      A JSON String that defines an :term:`adapter`.
       
    Application Template
       An application that is reusable through configuration and extensible through plugins.
   
    Template
-      See :term:`Application Template`.
+      See :term:`application template`.
 
    App Template
-      See :term:`Application Template`.
+      See :term:`application template`.
 
    Adapter
-      An Adapter is an instantiation of an :term:`Application Template` that has been created
-      from a specific configuration. Adapters combine :term:`Plugins <plugin>` to access
+      An adapter is an instantiation of an :term:`application template` that has been created
+      from a specific configuration. Adapters combine :term:`plugins <plugin>` to access
       CDAP programs and resources.
    
    ETL
       Refers to the *Extract*, *Transform* and *Load* of data. 
     
    ETL Application Template
-      Also referred to as an ETL Template. A type of :term:`Application Template`,
-      designed to create an :term:`ETL Adapter`. Two ETL Templates are shipped with CDAP:
-      ``ETLBatch`` and ``ETLRealtime``, for the creation of either batch or realtime
+      Also referred to as an *ETL template.* A type of :term:`application template`,
+      designed to create an :term:`ETL adapter`. Two ETL templates are shipped with CDAP:
+      ``ETLBatch`` and ``ETLRealtime``, for the creation of either batch or real-time
       :term:`ETL` pipelines.
   
    ETL Template
-      See :term:`ETL Application Template`.
+      See :term:`ETL application template`.
 
    ETL Adapter
-      An ETL :term:`Adapter` is an Adapter created from an :term:`ETL Template`,
+      An ETL :term:`adapter` is an adapter created from an :term:`ETL template`,
       specifically for creating :term:`ETL` applications.
 
    ETL Plugin
-      A :term:`Plugin` of type BatchSource, RealtimeSource, BatchSink, RealtimeSink, or
-      Transformation, packaged in a JAR file format, for use as a :term:`Plugin`
-      in an ETL Adapter.
+      A :term:`plugin` of type *BatchSource*, *RealtimeSource*, *BatchSink*, *RealtimeSink,* or
+      *Transformation*, packaged in a JAR file format, for use as a :term:`plugin`
+      in an :term:`ETL adapter`.
 
    Plugin
-      A Plugin extends an :term:`Application Template` by implementing an interface
-      expected by the Template. One or more Plugins are packaged in a specifically
+      A plugin extends an :term:`application template` by implementing an interface
+      expected by the template. One or more plugins are packaged in a specifically
       constructed JAR file.

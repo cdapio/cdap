@@ -20,7 +20,9 @@ import co.cask.cdap.proto.Id;
 
 /**
  * Thrown when a namespace cannot be created due to errors.
+ * @deprecated Use {@link co.cask.cdap.common.NamespaceCannotBeCreatedException} instead
  */
+@Deprecated
 public class NamespaceCannotBeCreatedException extends CannotBeCreatedException {
 
   private final Id.Namespace namespaceId;

@@ -10,12 +10,12 @@ FileSet Dataset
 
 .. highlight:: java
 
-While realtime programs such as Flows normally require datasets with random access, batch-oriented
+While real-time programs such as flows normally require datasets with random access, batch-oriented
 programming paradigms such as MapReduce are more suitable for data that can be read and written sequentially.
 The most prominent form of such data is an HDFS file, and MapReduce is highly optimized for such files.
-CDAP's abstraction for files is the FileSet Dataset.
+CDAP's abstraction for files is the *FileSet* dataset.
 
-A FileSet represents a set of files on the file system that share certain properties:
+A *FileSet* represents a set of files on the file system that share certain properties:
 
 - The location in the file system. All files in a FileSet are located relative to a
   base path, which is created when the FileSet is created. Deleting the
@@ -31,12 +31,10 @@ A FileSet represents a set of files on the file system that share certain proper
   into the Hadoop configuration by the CDAP runtime system.
 
 These properties are configured at the time the FileSet is created. They apply to all
-files in the Dataset. Every time you use a FileSet in your application code, you can
-address either the entire Dataset or, by specifying its relative path as a runtime argument,
-an individual file in the Dataset. Specifying an individual file is only supported for
+files in the dataset. Every time you use a FileSet in your application code, you can
+address either the entire dataset or, by specifying its relative path as a runtime argument,
+an individual file in the dataset. Specifying an individual file is only supported for
 MapReduce programs.
-
-Support for FileSet datasets is experimental in CDAP 2.6.0.
 
 Creating a FileSet
 ==================
@@ -66,15 +64,33 @@ and
 `OutputFormat <https://hadoop.apache.org/docs/current/api/org/apache/hadoop/mapreduce/OutputFormat.html>`_
 specifications.
 
-If you do not specify a base path, the dataset framework will generate a path
-based on the dataset name. If you do not specify an input format, you will not be able
-to use this as the input for a MapReduce program; similarly, for the output format.
+If you do not specify a base path, the dataset framework will generate a path based on the dataset name.
+This path |---| and any relative base path you specify |---| is relative to the data directory of the CDAP namespace
+in which the FileSet is created. You can also specify an absolute base path (one that begins with the character ``/``).
+This path is interpreted as an absolute path in the file system. Beware that if you create two FileSets with the
+same base path |---| be it multiple FileSets in the same namespace with the same relative base path, or in different
+namespaces with the same absolute base path |---| then these multiple FileSets will use the same directory and possibly
+obstruct each other's operations.
+
+You can configure a FileSet as "external". This means that the data (the actual files) in
+the FileSet are managed by an external process. This allows you to use FileSets with
+existing locations outside of CDAP. In that case, the FileSet will not allow the writing
+or deleting of files: it treats the contents of the base path as read-only::
+
+      createDataset("lines", FileSet.class, FileSetProperties.builder()
+        .setBasePath("/existing/path")
+        .setDataExternal(true)
+        .setInputFormat(TextInputFormat.class)
+        ...
+
+If you do not specify an input format, you will not be able to use this as the input for a
+MapReduce program; similarly for the output format.
 
 
 Using a FileSet in MapReduce
 ============================
 
-Using a FileSet as input or output of a MapReduce program is the same as for any other Dataset::
+Using a FileSet as input or output of a MapReduce program is the same as for any other dataset::
 
   public class WordCount extends AbstractMapReduce {
 
@@ -86,7 +102,7 @@ Using a FileSet as input or output of a MapReduce program is the same as for any
     ...
 
 The MapReduce program only needs to specify the names of the input and output datasets.
-Whether they are FileSets or another type of Dataset is handled by the CDAP runtime system.
+Whether they are FileSets or another type of dataset is handled by the CDAP runtime system.
 
 However, you do need to tell CDAP the relative paths of the input and output files. Currently,
 this is only possible by specifying them as runtime arguments when the MapReduce program is started::
@@ -129,6 +145,12 @@ See the Apache™ Twill®
 `API documentation <http://twill.incubator.apache.org/apidocs/org/apache/twill/filesystem/Location.html>`__
 for additional information about the ``Location`` abstraction.
 
+Exploring FileSets
+==================
+
+A file set can be explored with ad-hoc queries if you enable it at creation time;
+this is described under :ref:`fileset-exploration`.
+
 ==================
 PartitionedFileSet
 ==================
@@ -140,13 +162,13 @@ the month into each file name, and share that convention across all applications
 Yet that can become tedious to manage, especially if the naming convention should ever change |---| then all
 applications would have to be changed simultaneously for proper functioning.
 
-The PartitionedFileSet Dataset relieves applications from understanding file name conventions. Instead,
-it associates a partition key with every file; for example the year and month associated with that file.
-Because different files cannot have the same partition key, this allows applications to address the
-data uniquely through its partition keys, or more broadly through conditions over the partition keys.
-For example, the months of February through June of a particular year, or the month of November in any
-year. By inheriting the attributes |---| such as format and schema |---| of FileSets, PartitionedFileSets
-are a powerful abstraction over data that is organized into files.
+The PartitionedFileSet dataset relieves applications from understanding file name conventions. Instead,
+it associates a partition key with a path. Because different paths cannot have the same partition key,
+this allows applications to address the file(s) at that path uniquely through their partition keys, or
+more broadly through conditions over the partition keys. For example, the months of February through June
+of a particular year, or the month of November in any year. By inheriting the attributes |---| such as
+format and schema |---| of FileSets, PartitionedFileSets are a powerful abstraction over data that is
+organized into files.
 
 Creating a PartitionedFileSet
 =============================
@@ -169,8 +191,14 @@ configuration, similar to FileSets. However, the partitioning has to be given as
 
 This creates a new PartitionedFileSet named *results*. Similar to FileSets, it specifies ``TextInputFormat`` and
 ``TextOutputFormat.``; for the output format, we specify that the separator between fields is a comma.
-The difference to a FileSet is that this Dataset is partitioned by league and season. This means that every file
-added to this Dataset must have a partitioning key with a unique combination of league and season.
+The difference to a FileSet is that this dataset is partitioned by league and season. This means that every file
+added to this dataset must have a partitioning key with a unique combination of league and season.
+
+Note that any of the properties that apply to FileSets can also be used for PartitionedFileSets (they apply to the
+embedded FileSet). If you configure a PartitionedFileSet as external using ``setDataExternal(true)``, then the
+embedded FileSet becomes read-only. You can still add partitions for locations that were written by an
+external process. But dropping a partition will only delete the partition's metadata, whereas the actual file
+remains intact. Similarly, if you drop or truncate an external PartitionedFileSet, its files will not be deleted.
 
 Reading and Writing PartitionedFileSets
 =======================================
@@ -181,8 +209,8 @@ partition key to obtain a Partition; you can then get a Location from that Parti
 
 For example, to read the content of a partition::
 
-      PartitionKey key = PartitionKey.builder().addStringField(...)
-                                               .addIntField(...)
+      PartitionKey key = PartitionKey.builder().addStringField("league", ...)
+                                               .addIntField("season", ...)
                                                .build());
       Partition partition = dataset.getPartition(key);
       if (partition != null) {
@@ -290,6 +318,60 @@ For example, give these arguments when starting the MapReduce through a RESTful 
     "dataset.totals.output.partition.key.league" : "nfl"
   }
 
+Incrementally Processing PartitionedFileSets
+============================================
+
+One way to process a partitioned file set is with a repeatedly-running MapReduce program that,
+in each run, reads all partitions that have been added since its previous run. This requires
+that the MapReduce program persists between runs which partitions have already been consumed.
+An easy way is to use the ``BatchPartitionConsumer``, an experimental feature introduced in CDAP 3.1.0.
+Your MapReduce program is responsible for extending this abstract consumer class with methods to
+persist and then read back its state. In this example, the state is persisted to a row in a
+KeyValue Table; however, other types of Datasets can also be used::
+
+  public static class WordCount extends AbstractMapReduce {
+
+    private final BatchPartitionConsumer batchPartitionConsumer = new BatchPartitionConsumer() {
+      private static final String STATE_KEY = "state.key";
+
+      @Nullable
+      @Override
+      protected byte[] readBytes(DatasetContext datasetContext) {
+        return ((KeyValueTable) datasetContext.getDataset("consumingState")).read(STATE_KEY);
+      }
+
+      @Override
+      protected void writeBytes(DatasetContext datasetContext, byte[] stateBytes) {
+        ((KeyValueTable) datasetContext.getDataset("consumingState")).write(STATE_KEY, stateBytes);
+      }
+    };
+
+Then, in the ``beforeSubmit()`` method of the MapReduce, specify the partitioned file set to be used as input::
+
+    @Override
+    public void beforeSubmit(MapReduceContext context) throws Exception {
+      PartitionedFileSet inputRecords = batchPartitionConsumer.getConfiguredDataset(context, "inputRecords");
+      context.setInput("inputRecords", inputRecords);
+      ...
+    }
+
+This will read back the previously persisted state, determine the new partitions to read based upon this
+state, and compute a new state to store in memory until a call to ``persist()``. The dataset it returns
+is instantiated with the set of new partitions to read as input.
+
+To save the state of partition processing, call the consumer's ``persist()`` method. This ensures that the
+next time the MapReduce job runs, it processes only the newly committed partitions::
+
+  @Override
+  public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
+    if (succeeded) {
+      batchPartitionConsumer.persist(context);
+    }
+    super.onFinish(succeeded, context);
+  }
+
+A limitation of the ``BatchPartitionConsumer`` is that there can't be concurrent runs of the MapReduce job.
+
 Exploring PartitionedFileSets
 =============================
 
@@ -328,7 +410,10 @@ format::
 
 You need to specify the SerDe, the input format, the output format, and any additional properties
 any of these may need as table properties. This is an experimental feature and only tested for
-Avro; see the :ref:`StreamConversion <examples-stream-conversion>` example for more details.
+Avro; see the :ref:`StreamConversion <examples-stream-conversion>` example and
+the :ref:`fileset-exploration` for more details.
+
+.. _datasets-timepartitioned-fileset:
 
 ======================
 TimePartitionedFileSet
@@ -387,3 +472,10 @@ the MapReduce through a RESTful call::
 
 Note that the values for these times are milliseconds since the Epoch; the two times in this example represent
 the midnight time of January 1st, 2015 and February 1st, 2015.
+
+Exploring TimePartitionedFileSets
+=================================
+
+A time-partitioned file set can be explored with ad-hoc queries if you enable it at creation time,
+similar to a FileSet, as described under :ref:`fileset-exploration`.
+

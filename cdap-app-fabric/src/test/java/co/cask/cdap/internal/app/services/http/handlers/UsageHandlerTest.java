@@ -63,7 +63,6 @@ public class UsageHandlerTest extends AppFabricTestBase {
       Assert.assertTrue(getStreamProgramUsage(stream).contains(program));
 
       Assert.assertTrue(getProgramDatasetUsage(program).contains(dataset));
-      Assert.assertTrue(getProgramDatasetUsage(program).contains(dataset));
       Assert.assertTrue(getAppDatasetUsage(app).contains(dataset));
       Assert.assertTrue(getDatasetProgramUsage(dataset).contains(program));
     } finally {
@@ -102,7 +101,6 @@ public class UsageHandlerTest extends AppFabricTestBase {
       Assert.assertTrue(getStreamProgramUsage(stream).contains(program));
 
       Assert.assertTrue(getProgramDatasetUsage(program).contains(dataset));
-      Assert.assertTrue(getProgramDatasetUsage(program).contains(dataset));
       Assert.assertTrue(getAppDatasetUsage(app).contains(dataset));
       Assert.assertTrue(getDatasetProgramUsage(dataset).contains(program));
     } finally {
@@ -139,7 +137,6 @@ public class UsageHandlerTest extends AppFabricTestBase {
       Assert.assertTrue(getStreamProgramUsage(stream).contains(program));
 
       Assert.assertTrue(getProgramDatasetUsage(program).contains(dataset));
-      Assert.assertTrue(getProgramDatasetUsage(program).contains(dataset));
       Assert.assertTrue(getAppDatasetUsage(app).contains(dataset));
       Assert.assertTrue(getDatasetProgramUsage(dataset).contains(program));
     } finally {
@@ -171,16 +168,14 @@ public class UsageHandlerTest extends AppFabricTestBase {
     deploy(AllProgramsApp.class);
 
     try {
+      // the program will run and stop by itself.
       startProgram(program);
-      waitState(program, "RUNNING");
-      stopProgram(program);
       waitState(program, "STOPPED");
 
       Assert.assertTrue(getAppStreamUsage(app).contains(stream));
       Assert.assertTrue(getProgramStreamUsage(program).contains(stream));
       Assert.assertTrue(getStreamProgramUsage(stream).contains(program));
 
-      Assert.assertTrue(getProgramDatasetUsage(program).contains(dataset));
       Assert.assertTrue(getProgramDatasetUsage(program).contains(dataset));
       Assert.assertTrue(getAppDatasetUsage(app).contains(dataset));
       Assert.assertTrue(getDatasetProgramUsage(dataset).contains(program));
@@ -190,6 +185,29 @@ public class UsageHandlerTest extends AppFabricTestBase {
       Assert.assertEquals(0, getAppStreamUsage(app).size());
       Assert.assertEquals(0, getProgramStreamUsage(program).size());
       Assert.assertEquals(0, getStreamProgramUsage(stream).size());
+
+      Assert.assertEquals(0, getAppDatasetUsage(app).size());
+      Assert.assertEquals(0, getDatasetProgramUsage(dataset).size());
+    }
+  }
+
+  @Test
+  public void testServiceUsage() throws Exception {
+    final Id.Application app = Id.Application.from("default", AllProgramsApp.NAME);
+    final Id.Program program = Id.Program.from(app, ProgramType.SERVICE, AllProgramsApp.NoOpService.NAME);
+    final Id.DatasetInstance dataset = Id.DatasetInstance.from("default", AllProgramsApp.DATASET_NAME);
+
+    Assert.assertEquals(0, getAppDatasetUsage(app).size());
+    Assert.assertEquals(0, getDatasetProgramUsage(dataset).size());
+
+    deploy(AllProgramsApp.class);
+
+    try {
+      Assert.assertTrue(getProgramDatasetUsage(program).contains(dataset));
+      Assert.assertTrue(getAppDatasetUsage(app).contains(dataset));
+      Assert.assertTrue(getDatasetProgramUsage(dataset).contains(program));
+    } finally {
+      deleteApp(app, 200);
 
       Assert.assertEquals(0, getAppDatasetUsage(app).size());
       Assert.assertEquals(0, getDatasetProgramUsage(dataset).size());

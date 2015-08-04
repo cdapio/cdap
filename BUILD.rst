@@ -40,33 +40,37 @@ Standalone and Distributed CDAP
 
 - Run App-Template tests::
 
-    MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn test -U -fae -am -amd -P templates -pl cdap-app-templates/cdap-etl
+    MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn test -fae -am -amd -P templates -pl cdap-app-templates/cdap-etl
 
   See `Surefire doc <http://maven.apache.org/surefire/maven-surefire-plugin/examples/single-test.html>`__ for details
 
 - Build all examples::
 
-    MAVEN_OPTS="-Xmx512m" mvn package -DskipTests -pl cdap-examples -am -amd -P examples
+    MAVEN_OPTS="-Xmx512m -XX:MaxPermSize=128m" mvn package -DskipTests -pl cdap-examples -am -amd -P examples
 
 - Build Standalone distribution ZIP::
 
-    MAVEN_OPTS="-Xmx1024m" mvn clean package -DskipTests -P examples,templates -pl cdap-examples,cdap-app-templates/cdap-etl -am -amd && MAVEN_OPTS="-Xmx1024m" mvn package -pl cdap-standalone -am -DskipTests -P dist,release
+    MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn package -pl cdap-standalone,cdap-app-templates/cdap-etl,cdap-examples -am -amd -DskipTests -P examples,templates,dist,release,unit-tests
     
 - Build the limited set of Javadocs used in distribution ZIP::
 
     mvn clean package javadoc:javadoc -pl cdap-api -am -DskipTests -P release
+    
+- Build the limited set of Javadocs, including the App Templates, used in documentation::
 
-- Build the complete set of Javadocs, for all modules::
+    MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn clean install -P examples,templates,release -DskipTests -Dgpg.skip=true && mvn clean site -DskipTests -P templates -DisOffline=false
 
-    MAVEN_OPTS="-Xmx512m" mvn clean site -Dmaxmemory=1024m -DskipTests
+- Build the complete set of Javadocs, for all modules (currently incomplete)::
+
+    MAVEN_OPTS="-Xmx1024m" mvn clean site -Dmaxmemory=1024m -DskipTests
     
 - Build distributions (rpm, deb, tgz)::
 
-    mvn package -DskipTests -P dist,release,rpm-prepare,rpm,deb-prepare,deb,tgz
+    MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn package -DskipTests -P examples,templates,dist,release,rpm-prepare,rpm,deb-prepare,deb,tgz,unit-tests
 
 - Build Cloudera Manager parcel::
 
-    mvn package -DskipTests -P dist,tgz && ./cdap-distributions/bin/build_parcel.sh
+    MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn package -DskipTests -P templates,dist,tgz && ./cdap-distributions/bin/build_parcel.sh
 
 - Show dependency tree::
 

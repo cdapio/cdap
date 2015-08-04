@@ -141,9 +141,10 @@ public abstract class AbstractHBaseTableUtilTest {
 
     // modify
     HTableDescriptor desc = getTableDescriptor("namespace2", "table1");
-    desc.setValue("mykey", "myvalue");
+    HTableDescriptorBuilder newDesc = getTableUtil().buildHTableDescriptor(desc);
+    newDesc.setValue("mykey", "myvalue");
     disable("namespace2", "table1");
-    getTableUtil().modifyTable(hAdmin, desc);
+    getTableUtil().modifyTable(hAdmin, newDesc.build());
     desc = getTableDescriptor("namespace2", "table1");
     Assert.assertTrue(desc.getValue("mykey").equals("myvalue"));
     enable("namespace2", "table1");
@@ -302,16 +303,13 @@ public abstract class AbstractHBaseTableUtilTest {
   }
 
   private void writeSome(String namespace, String tableName) throws IOException {
-    HTable table = getTableUtil().createHTable(testHBase.getConfiguration(), TableId.from(namespace, tableName));
-    try {
+    try (HTable table = getTableUtil().createHTable(testHBase.getConfiguration(), TableId.from(namespace, tableName))) {
       // writing at least couple megs to reflect in "megabyte"-based metrics
       for (int i = 0; i < 8; i++) {
         Put put = new Put(Bytes.toBytes("row" + i));
         put.add(Bytes.toBytes("d"), Bytes.toBytes("col" + i), new byte[1024 * 1024]);
         table.put(put);
       }
-    } finally {
-      table.close();
     }
   }
 
@@ -330,9 +328,9 @@ public abstract class AbstractHBaseTableUtilTest {
 
   private void create(TableId tableId) throws IOException {
     HBaseTableUtil tableUtil = getTableUtil();
-    HTableDescriptor desc = tableUtil.createHTableDescriptor(tableId);
+    HTableDescriptorBuilder desc = tableUtil.buildHTableDescriptor(tableId);
     desc.addFamily(new HColumnDescriptor("d"));
-    tableUtil.createTableIfNotExists(hAdmin, tableId, desc);
+    tableUtil.createTableIfNotExists(hAdmin, tableId, desc.build());
   }
 
   private boolean exists(String namespace, String tableName) throws IOException {

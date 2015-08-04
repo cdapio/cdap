@@ -32,10 +32,10 @@ import java.util.Map;
  * ReflectionStructObjectInspector works on struct data that is stored as a
  * native Java object. It will drill down into the Java class to get the fields
  * and construct ObjectInspectors for the fields, if they are not specified.
- * 
+ *
  * Always use the ObjectInspectorFactory to create new ObjectInspector objects,
  * instead of directly creating an instance of this class.
- * 
+ *
  */
 public class ReflectionStructObjectInspector extends
     SettableStructObjectInspector {
@@ -45,10 +45,13 @@ public class ReflectionStructObjectInspector extends
    *
    */
   public static class MyField implements StructField {
+
+    protected int fieldId;
     protected Field field;
     protected ObjectInspector fieldObjectInspector;
 
-    public MyField(Field field, ObjectInspector fieldObjectInspector) {
+    public MyField(int fieldId, Field field, ObjectInspector fieldObjectInspector) {
+      this.fieldId = fieldId;
       this.field = field;
       this.fieldObjectInspector = fieldObjectInspector;
     }
@@ -59,6 +62,10 @@ public class ReflectionStructObjectInspector extends
 
     public ObjectInspector getFieldObjectInspector() {
       return fieldObjectInspector;
+    }
+
+    public int getFieldID() {
+      return fieldId;
     }
 
     public String getFieldComment() {
@@ -124,7 +131,7 @@ public class ReflectionStructObjectInspector extends
 
     this.objectClass = objectClass;
     Field[] reflectionFields = ObjectInspectorUtils.getDeclaredNonStaticFields(objectClass);
-    fields = new ArrayList<MyField>(structFieldObjectInspectors.size());
+    fields = new ArrayList<>(structFieldObjectInspectors.size());
     int used = 0;
     for (int i = 0; i < reflectionFields.length; i++) {
       // Exclude transient fields and synthetic fields. The latter has the effect of excluding the implicit
@@ -134,7 +141,7 @@ public class ReflectionStructObjectInspector extends
       }
       if (!shouldIgnoreField(reflectionFields[i].getName())) {
         reflectionFields[i].setAccessible(true);
-        fields.add(new MyField(reflectionFields[i], structFieldObjectInspectors.get(used++)));
+        fields.add(new MyField(i, reflectionFields[i], structFieldObjectInspectors.get(used++)));
       }
     }
     assert (fields.size() == structFieldObjectInspectors.size());
@@ -180,7 +187,7 @@ public class ReflectionStructObjectInspector extends
       return null;
     }
     try {
-      ArrayList<Object> result = new ArrayList<Object>(fields.size());
+      ArrayList<Object> result = new ArrayList<>(fields.size());
       for (int i = 0; i < fields.size(); i++) {
         result.add(fields.get(i).field.get(data));
       }

@@ -16,8 +16,7 @@
 package co.cask.cdap.examples.wordcount;
 
 
-import co.cask.cdap.api.flow.Flow;
-import co.cask.cdap.api.flow.FlowSpecification;
+import co.cask.cdap.api.flow.AbstractFlow;
 
 /**
  * Flow that takes any arbitrary string of input and performs word statistics.
@@ -40,22 +39,25 @@ import co.cask.cdap.api.flow.FlowSpecification;
  * The last Flowlet is the UniqueCounter, which calculates and updates the
  * unique number of words seen.
  */
-public class WordCounter implements Flow {
+public class WordCounter extends AbstractFlow {
+
+  private final WordCount.WordCountConfig config;
+
+  public WordCounter(WordCount.WordCountConfig config) {
+    this.config = config;
+  }
+
   @Override
-  public FlowSpecification configure() {
-    return FlowSpecification.Builder.with()
-        .setName("WordCounter")
-        .setDescription("Example Word Count Flow")
-        .withFlowlets()
-            .add("splitter", new WordSplitter())
-            .add("associator", new WordAssociator())
-            .add("counter", new Counter())
-            .add("unique", new UniqueCounter())
-        .connect()
-            .fromStream("wordStream").to("splitter")
-            .from("splitter").to("associator")
-            .from("splitter").to("counter")
-            .from("counter").to("unique")
-        .build();
+  protected void configureFlow() {
+    setName("WordCounter");
+    setDescription("Example Word Count Flow");
+    addFlowlet("splitter", new WordSplitter(config.getWordStatsTable()));
+    addFlowlet("associator", new WordAssociator(config.getWordAssocTable()));
+    addFlowlet("counter", new Counter(config.getWordCountTable()));
+    addFlowlet("unique", new UniqueCounter(config.getUniqueCountTable()));
+    connectStream(config.getStream(), "splitter");
+    connect("splitter", "associator");
+    connect("splitter", "counter");
+    connect("counter", "unique");
   }
 }

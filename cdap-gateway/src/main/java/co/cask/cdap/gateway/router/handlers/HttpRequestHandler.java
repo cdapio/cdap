@@ -16,8 +16,8 @@
 
 package co.cask.cdap.gateway.router.handlers;
 
+import co.cask.cdap.common.HandlerException;
 import co.cask.cdap.common.discovery.EndpointStrategy;
-import co.cask.cdap.common.exception.HandlerException;
 import co.cask.cdap.gateway.router.ProxyRule;
 import co.cask.cdap.gateway.router.RouterServiceLookup;
 import com.google.common.collect.Maps;

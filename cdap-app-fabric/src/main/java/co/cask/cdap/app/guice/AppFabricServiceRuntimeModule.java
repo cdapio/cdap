@@ -59,6 +59,7 @@ import co.cask.cdap.internal.app.namespace.DefaultNamespaceAdmin;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
 import co.cask.cdap.internal.app.runtime.adapter.PluginRepository;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactStore;
 import co.cask.cdap.internal.app.runtime.batch.InMemoryTransactionServiceManager;
 import co.cask.cdap.internal.app.runtime.distributed.TransactionServiceManager;
 import co.cask.cdap.internal.app.runtime.schedule.DistributedSchedulerService;
@@ -294,6 +295,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       );
 
       bind(Store.class).to(DefaultStore.class);
+      bind(ArtifactStore.class).in(Scopes.SINGLETON);
       bind(AdapterService.class).in(Scopes.SINGLETON);
       bind(ProgramLifecycleService.class).in(Scopes.SINGLETON);
       bind(PluginRepository.class).in(Scopes.SINGLETON);
@@ -327,7 +329,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
     @Provides
     @Named(Constants.AppFabric.SERVER_ADDRESS)
-    public final InetAddress providesHostname(CConfiguration cConf) {
+    public InetAddress providesHostname(CConfiguration cConf) {
       return Networks.resolve(cConf.get(Constants.AppFabric.SERVER_ADDRESS),
                               new InetSocketAddress("localhost", 0).getAddress());
     }

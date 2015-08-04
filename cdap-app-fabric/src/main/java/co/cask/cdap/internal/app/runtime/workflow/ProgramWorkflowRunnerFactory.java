@@ -63,7 +63,6 @@ public class ProgramWorkflowRunnerFactory {
   public ProgramWorkflowRunner getProgramWorkflowRunner(WorkflowActionSpecification actionSpec, WorkflowToken token,
                                                         String nodeId) {
 
-
     if (actionSpec.getProperties().containsKey(ProgramWorkflowAction.PROGRAM_TYPE)) {
       switch (SchedulableProgramType.valueOf(actionSpec.getProperties().get(ProgramWorkflowAction.PROGRAM_TYPE))) {
         case MAPREDUCE:

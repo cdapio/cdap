@@ -32,7 +32,7 @@ public class TransformExecutorTest {
   @Test
   public void testEmptyTransforms() throws Exception {
     TransformExecutor<String, String> executor =
-      new TransformExecutor<String, String>(Lists.<Transformation>newArrayList(), Lists.<StageMetrics>newArrayList());
+      new TransformExecutor<>(Lists.<Transformation>newArrayList(), Lists.<StageMetrics>newArrayList());
     List<String> results = Lists.newArrayList(executor.runOneIteration("foo"));
     Assert.assertEquals(1, results.size());
     Assert.assertEquals("foo", results.get(0));
@@ -44,32 +44,32 @@ public class TransformExecutorTest {
     List<Transformation> transforms = Lists.<Transformation>newArrayList(
       new IntToDouble(), new Filter(100d), new DoubleToString());
     List<StageMetrics> stageMetrics = Lists.newArrayList(
-      new StageMetrics(mockMetrics, StageMetrics.Type.SOURCE, "first"),
-      new StageMetrics(mockMetrics, StageMetrics.Type.TRANSFORM, "second"),
-      new StageMetrics(mockMetrics, StageMetrics.Type.SINK, "third")
+      new StageMetrics(mockMetrics, PluginID.from(Constants.Source.PLUGINTYPE, "first", 1)),
+      new StageMetrics(mockMetrics, PluginID.from(Constants.Transform.PLUGINTYPE, "second", 2)),
+      new StageMetrics(mockMetrics, PluginID.from(Constants.Sink.PLUGINTYPE, "third", 3))
     );
-    TransformExecutor<Integer, String> executor = new TransformExecutor<Integer, String>(transforms, stageMetrics);
+    TransformExecutor<Integer, String> executor = new TransformExecutor<>(transforms, stageMetrics);
 
     List<String> results = Lists.newArrayList(executor.runOneIteration(1));
     Assert.assertTrue(results.isEmpty());
-    Assert.assertEquals(3, mockMetrics.getCount("source.first.records.out"));
-    Assert.assertEquals(0, mockMetrics.getCount("transform.second.records.out"));
-    Assert.assertEquals(0, mockMetrics.getCount("sink.third.records.out"));
+    Assert.assertEquals(3, mockMetrics.getCount("source.first.1.records.out"));
+    Assert.assertEquals(0, mockMetrics.getCount("transform.second.2.records.out"));
+    Assert.assertEquals(0, mockMetrics.getCount("sink.third.3.records.out"));
 
     results = Lists.newArrayList(executor.runOneIteration(10));
     Assert.assertEquals(1, results.size());
     Assert.assertEquals("1000.0", results.get(0));
-    Assert.assertEquals(6, mockMetrics.getCount("source.first.records.out"));
-    Assert.assertEquals(1, mockMetrics.getCount("transform.second.records.out"));
-    Assert.assertEquals(1, mockMetrics.getCount("sink.third.records.out"));
+    Assert.assertEquals(6, mockMetrics.getCount("source.first.1.records.out"));
+    Assert.assertEquals(1, mockMetrics.getCount("transform.second.2.records.out"));
+    Assert.assertEquals(1, mockMetrics.getCount("sink.third.3.records.out"));
 
     results = Lists.newArrayList(executor.runOneIteration(100));
     Assert.assertEquals(2, results.size());
     Assert.assertEquals("1000.0", results.get(0));
     Assert.assertEquals("10000.0", results.get(1));
-    Assert.assertEquals(9, mockMetrics.getCount("source.first.records.out"));
-    Assert.assertEquals(3, mockMetrics.getCount("transform.second.records.out"));
-    Assert.assertEquals(3, mockMetrics.getCount("sink.third.records.out"));
+    Assert.assertEquals(9, mockMetrics.getCount("source.first.1.records.out"));
+    Assert.assertEquals(3, mockMetrics.getCount("transform.second.2.records.out"));
+    Assert.assertEquals(3, mockMetrics.getCount("sink.third.3.records.out"));
   }
 
   private static class IntToDouble extends Transform<Integer, Double> {

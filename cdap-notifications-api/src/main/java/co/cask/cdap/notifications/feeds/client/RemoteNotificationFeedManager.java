@@ -87,7 +87,7 @@ public class RemoteNotificationFeedManager implements NotificationFeedManager {
     } else if (response.getResponseCode() == HttpURLConnection.HTTP_CONFLICT) {
       return false;
     }
-    throw new NotificationFeedException("Cannot create notification feed. Reason: " + getDetails(response));
+    throw new NotificationFeedException("Cannot create notification feed. Reason: " + response);
   }
 
   @Override
@@ -99,7 +99,7 @@ public class RemoteNotificationFeedManager implements NotificationFeedManager {
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NotificationFeedNotFoundException(feed);
     } else if (response.getResponseCode() != HttpURLConnection.HTTP_OK) {
-      throw new NotificationFeedException("Cannot delete notification feed. Reason: " + getDetails(response));
+      throw new NotificationFeedException("Cannot delete notification feed. Reason: " + response);
     }
   }
 
@@ -113,7 +113,7 @@ public class RemoteNotificationFeedManager implements NotificationFeedManager {
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NotificationFeedNotFoundException(feed);
     } else if (response.getResponseCode() != HttpURLConnection.HTTP_OK) {
-      throw new NotificationFeedException("Cannot get notification feed. Reason: " + getDetails(response));
+      throw new NotificationFeedException("Cannot get notification feed. Reason: " + response);
     }
     return ObjectResponse.fromJsonBody(response, Id.NotificationFeed.class).getResponseObject();
   }
@@ -127,15 +127,7 @@ public class RemoteNotificationFeedManager implements NotificationFeedManager {
         ObjectResponse.fromJsonBody(response, new TypeToken<List<Id.NotificationFeed>>() { }.getType());
       return r.getResponseObject();
     }
-    throw new NotificationFeedException("Cannot list notification feeds. Reason: " + getDetails(response));
-  }
-
-  private String getDetails(HttpResponse response) {
-    return String.format("Response code: %s, message:'%s', body: '%s'",
-                         response.getResponseCode(), response.getResponseMessage(),
-                         response.getResponseBody() == null ?
-                           "null" : new String(response.getResponseBody(), Charsets.UTF_8));
-
+    throw new NotificationFeedException("Cannot list notification feeds. Reason: " + response);
   }
 
   private URL resolve(String resource) throws NotificationFeedException {

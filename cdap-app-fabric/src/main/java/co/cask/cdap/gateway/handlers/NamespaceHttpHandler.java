@@ -16,19 +16,19 @@
 
 package co.cask.cdap.gateway.handlers;
 
+import co.cask.cdap.common.AlreadyExistsException;
+import co.cask.cdap.common.NamespaceCannotBeDeletedException;
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.exception.AlreadyExistsException;
-import co.cask.cdap.common.exception.NamespaceCannotBeDeletedException;
-import co.cask.cdap.common.exception.NotFoundException;
-import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceConfig;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
-import com.google.common.base.CharMatcher;
+import com.google.common.base.Strings;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -53,8 +53,7 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
   private final NamespaceAdmin namespaceAdmin;
 
   @Inject
-  public NamespaceHttpHandler(Authenticator authenticator, CConfiguration cConf, NamespaceAdmin namespaceAdmin) {
-    super(authenticator);
+  public NamespaceHttpHandler(CConfiguration cConf, NamespaceAdmin namespaceAdmin) {
     this.cConf = cConf;
     this.namespaceAdmin = namespaceAdmin;
   }
@@ -136,8 +135,15 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
     NamespaceMeta.Builder builder = new NamespaceMeta.Builder().setName(namespace);
 
     // Handle optional params
-    if (metadata != null && metadata.getDescription() != null) {
+    if (metadata != null) {
+      if (metadata.getDescription() != null) {
         builder.setDescription(metadata.getDescription());
+      }
+
+      NamespaceConfig config = metadata.getConfig();
+      if (config != null && !Strings.isNullOrEmpty(config.getSchedulerQueueName())) {
+        builder.setSchedulerQueueName(config.getSchedulerQueueName());
+      }
     }
 
     try {
@@ -152,15 +158,14 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  /**
-   * DO NOT DOCUMENT THIS API
-   */
   @DELETE
   @Path("/unrecoverable/namespaces/{namespace-id}")
   public void delete(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespace) {
-    // NOTE: DO NOT DOCUMENT
     if (!cConf.getBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, Constants.Dangerous.DEFAULT_UNRECOVERABLE_RESET)) {
-      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+      responder.sendString(HttpResponseStatus.FORBIDDEN,
+                           String.format("Namespace '%s' cannot be deleted because '%s' is not enabled. " +
+                                           "Please enable it and restart CDAP Master.",
+                                         namespace, Constants.Dangerous.UNRECOVERABLE_RESET));
       return;
     }
     Id.Namespace namespaceId = Id.Namespace.from(namespace);
@@ -177,15 +182,15 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  /**
-   * DO NOT DOCUMENT THIS API
-   */
   @DELETE
   @Path("/unrecoverable/namespaces/{namespace-id}/datasets")
   public void deleteDatasets(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") String namespace) {
     if (!cConf.getBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, Constants.Dangerous.DEFAULT_UNRECOVERABLE_RESET)) {
-      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+      responder.sendString(HttpResponseStatus.FORBIDDEN,
+                           String.format("All datasets in namespace %s cannot be deleted because '%s' is not enabled." +
+                                           " Please enable it and restart CDAP Master.",
+                                         namespace, Constants.Dangerous.UNRECOVERABLE_RESET));
       return;
     }
     Id.Namespace namespaceId = Id.Namespace.from(namespace);
@@ -195,7 +200,8 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
     } catch (NotFoundException e) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Namespace %s not found.", namespace));
     } catch (NamespaceCannotBeDeletedException e) {
-      responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
+      responder.sendString(HttpResponseStatus.CONFLICT, String.format("Datasets in namespace %s cannot be deleted. " +
+                                                                       "Reason: %s", namespace, e.getReason()));
     } catch (Exception e) {
       LOG.error("Internal error while deleting namespace.", e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());

@@ -19,16 +19,16 @@ Building Blocks
     Datasets <datasets/index>
     Flows and Flowlets <flows-flowlets/index>
     MapReduce Programs<mapreduce-programs>
-    Workflows <workflows>
     Schedules <schedules>
+    Services <services>
     Spark Programs <spark-programs>
     Workers <workers>
-    Services <services>
+    Workflows <workflows>
     Namespaces <namespaces>
     Transaction System <transaction-system>
 
 This section covers the :doc:`core abstractions <core>` in the Cask Data Application Platform
-(CDAP)—**Data** and **Applications.**
+(CDAP): **Data** and **Applications.**
 
 An :doc:`Application <applications>` is a collection of application building blocks that read and
 write data through the data abstraction layer in CDAP.
@@ -40,13 +40,13 @@ write data through the data abstraction layer in CDAP.
 
 **Applications** are composed from these building blocks:
 
-- :doc:`Flows (and Flowlets) <flows-flowlets/index>`
+- :doc:`Flows (and flowlets) <flows-flowlets/index>`
 - :doc:`MapReduce Programs <mapreduce-programs>`
-- :doc:`Workflows <workflows>`
 - :doc:`Schedules <schedules>`
-- :doc:`Workers <workers>`
-- :doc:`Spark Programs <spark-programs>`
 - :doc:`Services <services>`
+- :doc:`Spark Programs <spark-programs>`
+- :doc:`Workers <workers>`
+- :doc:`Workflows <workflows>`
 
 A :doc:`Namespace <namespaces>` is a physical grouping of application and data in CDAP.
 Conceptually, namespaces can be thought of as a partitioning of a CDAP instance.
@@ -57,9 +57,9 @@ that provides ACID (*atomicity, consistency, isolation,* and *durability*) guara
 critical in applications where data accuracy is required.
 
 For a high-level view of the concepts of the Cask Data Application Platform, see the
-platform :doc:`Overview. </overview/index>`
+platform :doc:`overview. </overview/index>`
 
 For information beyond this section, see the :ref:`Javadocs <reference:javadocs>` and
-the code in the :ref:`Examples <examples-index>` directory, both of which are available at the
+the code in the :ref:`examples <examples-index>` directory, both of which are available at the
 `Cask.co resources page, <http://cask.co/resources>`_ as well as in your CDAP SDK
 installation directory.

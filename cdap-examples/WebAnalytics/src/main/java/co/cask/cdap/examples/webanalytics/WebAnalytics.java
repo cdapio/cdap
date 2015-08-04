@@ -18,7 +18,6 @@ package co.cask.cdap.examples.webanalytics;
 
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.data.stream.Stream;
-import co.cask.cdap.api.dataset.lib.KeyValueTable;
 
 /**
  * Simple Web Analytics App that produces unique IP address visit count.

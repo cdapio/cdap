@@ -26,6 +26,7 @@ import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.ArgumentParser;
 import co.cask.cdap.client.StreamClient;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.common.cli.Arguments;
 import com.google.gson.Gson;
@@ -53,8 +54,9 @@ public class SetStreamFormatCommand extends AbstractAuthCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    String streamName = arguments.get(ArgumentName.STREAM.toString());
-    StreamProperties currentProperties = streamClient.getConfig(streamName);
+    Id.Stream streamId = Id.Stream.from(cliConfig.getCurrentNamespace(),
+                                        arguments.get(ArgumentName.STREAM.toString()));
+    StreamProperties currentProperties = streamClient.getConfig(streamId);
 
     String formatName = arguments.get(ArgumentName.FORMAT.toString());
     Schema schema = getSchema(arguments);
@@ -66,8 +68,8 @@ public class SetStreamFormatCommand extends AbstractAuthCommand {
     StreamProperties streamProperties = new StreamProperties(currentProperties.getTTL(),
                                                              formatSpecification,
                                                              currentProperties.getNotificationThresholdMB());
-    streamClient.setStreamProperties(streamName, streamProperties);
-    output.printf("Successfully set format of stream '%s'\n", streamName);
+    streamClient.setStreamProperties(streamId, streamProperties);
+    output.printf("Successfully set format of stream '%s'\n", streamId.getId());
   }
 
   private Schema getSchema(Arguments arguments) throws IOException {
@@ -99,10 +101,10 @@ public class SetStreamFormatCommand extends AbstractAuthCommand {
   public String getDescription() {
     return new StringBuilder()
       .append("Sets the format of ")
-      .append(Fragment.of(Article.A, ElementType.STREAM.getTitleName()))
+      .append(Fragment.of(Article.A, ElementType.STREAM.getName()))
       .append(". <")
       .append(ArgumentName.SCHEMA)
-      .append("> is a sql-like schema \"column_name data_type, ...\" or avro-like json schema and <")
+      .append("> is a sql-like schema \"column_name data_type, ...\" or Avro-like JSON schema and <")
       .append(ArgumentName.SETTINGS)
       .append("> is specified in the format \"key1=v1 key2=v2\".")
       .toString();

@@ -1,105 +1,99 @@
 angular.module(PKG.name + '.feature.flows')
-  .controller('FlowletDetailOutputController', function($state, $scope, MyDataSource, myHelpers) {
+  .controller('FlowletDetailOutputController', function($state, $scope, MyDataSource, MyMetricsQueryHelper, MyChartHelpers, myFlowsApi) {
 
     var dataSrc = new MyDataSource($scope);
-    var flowletid = $scope.$parent.activeFlowlet.name;
-    var runid = $scope.runs.selected.runid;
-    $scope.outputs = [];
+    var flowletid = $scope.FlowletsController.activeFlowlet.name;
+    var runid = $scope.RunsController.runs.selected.runid;
+    this.outputs = [];
 
-    // Initialize
-    dataSrc
-      .request({
-        _cdapNsPath: '/apps/' + $state.params.appId+  '/flows/' + $state.params.programId
-      })
+    this.chartSettings = {
+      chartMetadata: {
+        showx: true,
+        showy: true,
+        legend: {
+          show: false,
+          position: 'inset'
+        }
+      },
+      color: {
+        pattern: ['red']
+      },
+      isLive: true,
+      interval: 1000,
+      aggregate: 5
+    };
+
+    var metric = {
+      startTime: 'now-90s',
+      endTime: 'now',
+      resolution: '1s',
+      names: ['system.process.events.out']
+    };
+
+    var params = {
+      namespace: $state.params.namespace,
+      appId: $state.params.appId,
+      flowId: $state.params.programId,
+      scope: $scope
+    };
+
+    var flowletTags = {
+      namespace: $state.params.namespace,
+      app: $state.params.appId,
+      flow: $state.params.programId,
+      run: runid,
+      flowlet: flowletid
+    };
+
+    myFlowsApi.get(params)
+      .$promise
       .then(function (res) {
 
         // OUTPUTS
         angular.forEach(res.connections, function(v) {
           if (v.sourceName === flowletid) {
-            $scope.outputs.push(v.targetName);
+            this.outputs.push(v.targetName);
           }
-        });
+        }.bind(this));
 
-        if ($scope.outputs.length > 0) {
-          // OUTPUT METRICS
+        if (this.outputs.length > 0) {
           dataSrc
             .poll({
-              _cdapPath: '/metrics/query?context=namespace.' + $state.params.namespace
-                            + '.app.' + $state.params.appId
-                            + '.flow.' + $state.params.programId
-                            + '.run.' + runid
-                            + '.flowlet.' + flowletid
-                            + '&metric=system.process.events.out&start=now-60s&count=60',
+              _cdapPath: '/metrics/query',
+              method: 'POST',
+              interval: 5000,
+              body: MyMetricsQueryHelper.constructQuery('qid', flowletTags, metric)
+            }, function (res) {
+              var processedData = MyChartHelpers.processData(
+                res,
+                'qid',
+                metric.names,
+                metric.resolution
+              );
+
+              processedData = MyChartHelpers.c3ifyData(processedData, metric, metric.names);
+              this.chartData = {
+                x: 'x',
+                columns: processedData.columns,
+                keys: {
+                  x: 'x'
+                }
+              };
+            }.bind(this));
+
+          // Total
+          dataSrc
+            .poll({
+              _cdapPath: '/metrics/query?' + MyMetricsQueryHelper.tagsToParams(flowletTags) + '&metric=system.process.events.out',
               method: 'POST'
             }, function(res) {
               if (res.series[0]) {
-                updateOutput(res.series[0].data);
-              } else {
-                  var val = [];
-
-                  for (var i = 60; i > 0; i--) {
-                    val.push({
-                      time: Math.floor((new Date()).getTime()/1000 - (i)),
-                      y: 0
-                    });
-                  }
-
-                  if ($scope.outputHistory) {
-                    $scope.outputStream = val.slice(-1);
-                  }
-
-                  $scope.outputHistory = [{
-                    label: 'output',
-                    values: val
-                  }];
-
-                }
-            });
-
-          function updateOutput(newVal) {
-            if(angular.isObject(newVal)) {
-              var v = [];
-
-              angular.forEach(newVal, function(val) {
-                v.push({
-                  time: val.time,
-                  y: val.value
-                });
-              });
-
-              if ($scope.outputHistory) {
-                $scope.outputStream = v.slice(-1);
+                this.total = res.series[0].data[0].value;
               }
-
-              $scope.outputHistory = [
-                {
-                  label: 'output',
-                  values: v
-                }
-              ];
-
-            }
-
-            // Total
-            dataSrc
-              .poll({
-                _cdapPath: '/metrics/query?context=namespace.' + $state.params.namespace
-                              + '.app.' + $state.params.appId
-                              + '.flow.' + $state.params.programId
-                              + '.run.' + runid
-                              + '.flowlet.' + flowletid
-                              + '&metric=system.process.events.out',
-                method: 'POST'
-              }, function(res) {
-                if (res.series[0]) {
-                  $scope.total = res.series[0].data[0].value;
-                }
-              });
-
-          }
+            }.bind(this));
 
         }
 
-      });
+      }.bind(this));
 
   });

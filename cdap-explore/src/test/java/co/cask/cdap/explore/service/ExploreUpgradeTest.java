@@ -20,7 +20,7 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.api.dataset.lib.Partition;
+import co.cask.cdap.api.dataset.lib.PartitionDetail;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -85,7 +85,7 @@ public class ExploreUpgradeTest extends BaseHiveExploreServiceTest {
                                       Schema.Field.of("body", Schema.of(Schema.Type.STRING)),
                                       Schema.Field.of("ts", Schema.of(Schema.Type.LONG)));
       datasetFramework.addInstance(TimePartitionedFileSet.class.getName(), filesetID, FileSetProperties.builder()
-        .setBasePath("/my/path")
+        .setBasePath("my/path")
         .setEnableExploreOnCreate(true)
         .setSerDe("org.apache.hadoop.hive.serde2.avro.AvroSerDe")
         .setExploreInputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat")
@@ -99,7 +99,7 @@ public class ExploreUpgradeTest extends BaseHiveExploreServiceTest {
       TransactionAware txTpfs = (TransactionAware) tpfs;
       txTpfs.startTx(tx1);
       tpfs.addPartition(0L, "epoch");
-      Set<Partition> partitions = tpfs.getPartitions(null);
+      Set<PartitionDetail> partitionDetails = tpfs.getPartitions(null);
       txTpfs.commitTx();
       transactionManager.canCommit(tx1, txTpfs.getTxChanges());
       transactionManager.commit(tx1);
@@ -157,7 +157,7 @@ public class ExploreUpgradeTest extends BaseHiveExploreServiceTest {
       Assert.assertFalse(tableInfo.getParameters().containsKey(Constants.Explore.CDAP_VERSION));
 
       // check partition was added to tpfs dataset
-      Iterator<Partition> partitionIter = partitions.iterator();
+      Iterator<PartitionDetail> partitionIter = partitionDetails.iterator();
       String expected = stringify(partitionIter.next().getPartitionKey());
       runCommand(Constants.DEFAULT_NAMESPACE_ID, "show partitions dataset_myfiles", true,
                  Lists.newArrayList(new ColumnDesc("partition", "STRING", 1, "from deserializer")),

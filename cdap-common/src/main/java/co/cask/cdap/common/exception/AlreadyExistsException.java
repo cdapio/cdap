@@ -20,8 +20,10 @@ import co.cask.cdap.proto.Id;
 
 /**
  * Thrown when an element already exists.
+ * @deprecated Use {@link co.cask.cdap.common.AlreadyExistsException} instead
  */
-public class AlreadyExistsException extends Exception {
+@Deprecated
+public class AlreadyExistsException extends ConflictException {
 
   private final Id objectId;
 

@@ -16,10 +16,11 @@
 
 package co.cask.cdap.client;
 
+import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
-import co.cask.cdap.common.exception.NotFoundException;
-import co.cask.cdap.common.exception.UnauthorizedException;
+import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.UnauthorizedException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.template.ApplicationTemplateDetail;
 import co.cask.cdap.proto.template.ApplicationTemplateMeta;
@@ -38,6 +39,7 @@ import javax.inject.Inject;
 /**
  * Provides ways to interact with CDAP Application Templates.
  */
+@Beta
 public class ApplicationTemplateClient {
 
   private final RESTClient restClient;

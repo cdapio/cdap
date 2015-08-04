@@ -25,8 +25,9 @@
 
 source ../_common/common-build.sh
 
-CHECK_INCLUDES=$TRUE
 CDAP_CLIENTS_RELEASE_VERSION="1.2.0"
+CDAP_INGEST_RELEASE_VERSION="1.3.0"
+CHECK_INCLUDES=$TRUE
 
 function download_readme_file_and_test() {
   # Downloads a README.rst file to a target directory, and checks that it hasn't changed.
@@ -59,9 +60,9 @@ function download_includes() {
 
   version
 
-# For clients, current release branch is 1.2.0
   local clients_branch="release/${CDAP_CLIENTS_RELEASE_VERSION}"
-  local ingest_branch="release/cdap-${PROJECT_SHORT_VERSION}-compatible"
+  local ingest_branch="release/${CDAP_INGEST_RELEASE_VERSION}"
+
   if [ "x${GIT_BRANCH_TYPE:0:7}" == "xdevelop" ]; then
     clients_branch="develop"
     ingest_branch="develop"
@@ -85,6 +86,10 @@ function download_includes() {
 #   download_readme_file_and_test ${includes_dir} ${ingest_url} 277ded1924cb8d9b52a007f262820002 cdap-stream-clients/javascript
   download_readme_file_and_test ${includes_dir} ${ingest_url} b6dedd629c708dbc68bc918b768edda5 cdap-stream-clients/python
   download_readme_file_and_test ${includes_dir} ${ingest_url} 5fc88ec3a658062775403f5be30afbe9 cdap-stream-clients/ruby
+
+  echo_red_bold "Check included example files for changes"
+  test_an_include d90fd3f927380f7bc3d01fe0b0944364 ../../cdap-examples/WikipediaPipeline/src/main/java/co/cask/cdap/examples/wikipedia/TopNMapReduce.java
+  test_an_include 65d233492d0edb62d1cffbafac5cdc14 ../../cdap-examples/WikipediaPipeline/src/main/scala/co/cask/cdap/examples/wikipedia/ScalaSparkLDA.scala
 }
 
 function test_includes () {

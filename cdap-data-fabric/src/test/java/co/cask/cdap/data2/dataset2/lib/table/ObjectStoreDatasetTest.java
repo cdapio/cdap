@@ -105,7 +105,7 @@ public class ObjectStoreDatasetTest {
     createObjectStoreInstance(pairs, new TypeToken<ImmutablePair<Integer, String>>() { }.getType());
 
     ObjectStoreDataset<ImmutablePair<Integer, String>> pairStore = dsFrameworkUtil.getInstance(pairs);
-    ImmutablePair<Integer, String> pair = new ImmutablePair<Integer, String>(1, "second");
+    ImmutablePair<Integer, String> pair = new ImmutablePair<>(1, "second");
     pairStore.write(a, pair);
     ImmutablePair<Integer, String> result = pairStore.read(a);
     Assert.assertEquals(pair, result);
@@ -141,7 +141,7 @@ public class ObjectStoreDatasetTest {
     createObjectStoreInstance(inners, new TypeToken<CustomWithInner.Inner<Integer>>() { }.getType());
 
     ObjectStoreDataset<CustomWithInner.Inner<Integer>> innerStore = dsFrameworkUtil.getInstance(inners);
-    CustomWithInner.Inner<Integer> inner = new CustomWithInner.Inner<Integer>(42, new Integer(99));
+    CustomWithInner.Inner<Integer> inner = new CustomWithInner.Inner<>(42, new Integer(99));
     innerStore.write(a, inner);
     CustomWithInner.Inner<Integer> result = innerStore.read(a);
     Assert.assertEquals(inner, result);
@@ -177,7 +177,7 @@ public class ObjectStoreDatasetTest {
     final ObjectStoreDataset<ImmutablePair<Integer, String>> pairStore = dsFrameworkUtil.getInstance(pairs);
     TransactionExecutor pairStoreTxnl = dsFrameworkUtil.newTransactionExecutor(store);
 
-    final ImmutablePair<Integer, String> pair = new ImmutablePair<Integer, String>(1, "second");
+    final ImmutablePair<Integer, String> pair = new ImmutablePair<>(1, "second");
     pairStoreTxnl.execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
@@ -216,7 +216,7 @@ public class ObjectStoreDatasetTest {
   public void testWithCustomClassLoader() throws Exception {
     Id.DatasetInstance kv = Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "kv");
     // create a dummy class loader that records the name of the class it loaded
-    final AtomicReference<String> lastClassLoaded = new AtomicReference<String>(null);
+    final AtomicReference<String> lastClassLoaded = new AtomicReference<>(null);
     ClassLoader loader = new ClassLoader() {
       @Override
       public Class<?> loadClass(String name) throws ClassNotFoundException {
@@ -232,7 +232,7 @@ public class ObjectStoreDatasetTest {
     TypeRepresentation typeRep = new TypeRepresentation(type);
     Schema schema = new ReflectionSchemaGenerator().generate(type);
 
-    ObjectStoreDataset<Custom> objectStore = new ObjectStoreDataset<Custom>("kv", kvTable, typeRep, schema, loader);
+    ObjectStoreDataset<Custom> objectStore = new ObjectStoreDataset<>("kv", kvTable, typeRep, schema, loader);
     objectStore.write("dummy", new Custom(382, Lists.newArrayList("blah")));
     // verify the class name was recorded (the dummy class loader was used).
     Assert.assertEquals(Custom.class.getName(), lastClassLoaded.get());

@@ -6,14 +6,14 @@
 
 .. _introduction-to-cdap:
 
-==================================================
+====================
 Introduction to CDAP
-==================================================
+====================
 
 Simple Access to Powerful Technology
 ====================================
 
-The idea of CDAP is captured in our phrase, *Simple Access to Powerful Technology*. Our
+The idea of CDAP is captured in the phrase, *Simple Access to Powerful Technology*. Our
 goal is to provide access to the powerful technology of Apache Hadoop |(R)| through a
 unified big data platform for both the cloud and on-premises.
 
@@ -107,12 +107,12 @@ Installation
 
 Data Ingestion
 ==============
-- Data is ingested into CDAP using :ref:`Streams <streams>`
+- Data is ingested into CDAP using :ref:`streams <streams>`
 - Streams are abstractions over HDFS with an HTTP endpoint
-- Data in a Stream are ordered and time-partitioned
-- CDAP supports easy exploration and processing in both realtime and batch
+- Data in a stream are ordered and time-partitioned
+- CDAP supports easy exploration and processing in both real time and batch
 - Ingest using RESTful, Flume, language-specific APIs, or Tools
-- The abstraction of Streams lets you disconnect how you ingest from how you process
+- The abstraction of streams lets you disconnect how you ingest from how you process
 
 
 .. container:: table-block
@@ -121,7 +121,7 @@ Data Ingestion
      :widths: 99 1
      :stub-columns: 1
 
-     * - Create a Stream
+     * - Create a stream
        - 
        
   .. list-table::
@@ -148,7 +148,7 @@ Data Ingestion
      :widths: 80 20
      :stub-columns: 1
 
-     * - Send data to the Stream
+     * - Send data to the stream
        - 
        
   .. list-table::
@@ -212,7 +212,7 @@ Data Exploration
           | headers                          | map<string,string>               | from deserializer                 |
           | body                             | string                           | from deserializer                 |
           +=========================================================================================================+
-
+          Fetched 3 rows
 
 .. container:: table-block
 
@@ -220,7 +220,7 @@ Data Exploration
      :widths: 80 20
      :stub-columns: 1
      
-     * - Retrieve first two events from the Stream
+     * - Retrieve first two events from the stream
        - 
        
   .. list-table::
@@ -269,7 +269,7 @@ Data Exploration: Attaching A Schema
      :widths: 80 20
      :stub-columns: 1
      
-     * - Apply a *Combined log format* schema to data in the Stream
+     * - Apply a *Combined log format* schema to data in the stream
        - 
        
   .. list-table::
@@ -337,7 +337,7 @@ Data Exploration: Attaching A Schema
      :widths: 80 20
      :stub-columns: 1
      
-     * - Retrieve first two events from the Stream, in new format
+     * - Retrieve first two events from the stream, in new format
        - 
        
   .. list-table::
@@ -374,14 +374,15 @@ Data Exploration: Attaching A Schema
           |         |         | 5       |         |         | :45:38  |  HTTP/1 |         |         |         | SIE 7.0; Wind |
           |         |         |         |         |         | -0400   | .0      |         |         |         | ows NT 5.1)   |
           +===================================================================================================================+
-
+          Fetched 2 rows
+          
 .. container:: table-block
 
   .. list-table::
      :widths: 80 20
      :stub-columns: 1
      
-     * - Retrieve basic Stream statistics
+     * - Retrieve basic stream statistics
        - 
        
   .. list-table::
@@ -486,14 +487,14 @@ Data Exploration: Attaching A Schema
           column: stream_logeventstream.user_agent, type: STRING
           Unique elements: 4
 
-          Analyzing 1000 Stream events in the time range [0, 9223372036854775807]...
+          Analyzing 1000 stream events in the time range [0, 9223372036854775807]...
 
 
 Advanced Data Exploration
 =========================
-- CDAP has the ability to join multiple Streams using SQL
-- Data in a Stream can be ingested in realtime or batch
-- CDAP supports joining with other Streams using Hive SQL
+- CDAP has the ability to join multiple streams using SQL
+- Data in a stream can be ingested in real time or batch
+- CDAP supports joining with other streams using Hive SQL
 
 
 .. container:: table-block
@@ -502,7 +503,7 @@ Advanced Data Exploration
      :widths: 80 20
      :stub-columns: 1
      
-     * - Create an additional Stream
+     * - Create an additional stream
        - 
        
   .. list-table::
@@ -528,7 +529,7 @@ Advanced Data Exploration
      :widths: 80 20
      :stub-columns: 1
      
-     * - Ingest CSV-formatted "IP-to-geo location" data into Stream
+     * - Ingest CSV-formatted "IP-to-geo location" data into stream
        - 
        
   .. list-table::
@@ -556,7 +557,7 @@ Advanced Data Exploration
      :widths: 80 20
      :stub-columns: 1
      
-     * - Send individual event to Stream
+     * - Send individual event to stream
        - 
        
   .. list-table::
@@ -582,7 +583,7 @@ Advanced Data Exploration
      :widths: 80 20
      :stub-columns: 1
      
-     * - Retrieve events from the Stream
+     * - Retrieve events from the stream
        - 
        
   .. list-table::
@@ -635,7 +636,7 @@ Advanced Data Exploration
      :widths: 80 20
      :stub-columns: 1
      
-     * - Having reviewed data, set a new format for the Stream
+     * - Having reviewed data, set a new format for the stream
        - 
        
   .. list-table::
@@ -661,7 +662,7 @@ Advanced Data Exploration
      :widths: 80 20
      :stub-columns: 1
      
-     * - Retrieve events from the Stream, in new format
+     * - Retrieve events from the stream, in new format
        - 
        
   .. list-table::
@@ -715,7 +716,7 @@ Advanced Data Exploration
      :widths: 80 20
      :stub-columns: 1
      
-     * - Join data in the two Streams and retrieve selected events
+     * - Join data in the two streams and retrieve selected events
        - 
        
   .. list-table::
@@ -788,8 +789,8 @@ Transforming Your Data
 - CDAP Application Templates are applications that are reusable through configuration
 - Build your own Application Templates, using simple APIs
 - CDAP includes built-in ETL (Extract, Transform, Load) Application Templates
-- ETL Application Templates provide pre-defined transformations to be applied on Streams or other datasets
-- In this example, we will use the ETLBatch Application Template to convert data in a Stream to
+- ETL Application Templates provide pre-defined transformations to be applied on streams or other datasets
+- In this example, we will use the ETLBatch Application Template to convert data in a stream to
   Avro formatted files in a ``TimePartitionedFileSet`` that can be queried using either Hive or Impala
 
 .. container:: table-block
@@ -798,7 +799,7 @@ Transforming Your Data
      :widths: 80 20
      :stub-columns: 1
      
-     * - Create a Stream-conversion Adapter using the ETLBatch Application Template
+     * - Create a stream-conversion adapter using the ETLBatch Application Template
        - 
        
   .. list-table::
@@ -814,10 +815,10 @@ Transforming Your Data
          - Keep track of last processed times
          
      * - Using CDAP
-       - Write a configuration file::
+       - Write a configuration file, saving it to ``example/resources/adapter-config.json``::
 
           {
-              "description": "Periodically reads Stream data and writes it to a TimePartitionedFileSet",
+              "description": "Periodically reads stream data and writes it to a TimePartitionedFileSet",
               "template": "ETLBatch",
               "config": {
                   "schedule": "*/5 * * * *",
@@ -866,7 +867,7 @@ Transforming Your Data
      * - 
        - Create an adapter using that configuration through the CLI::
 
-           > create adapter logEventStreamConverter /example/adapter_config.json 
+           > create adapter logEventStreamConverter example/resources/adapter-config.json 
            Successfully created adapter 'logEventStreamConverter'
            > start adapter logEventStreamConverter
            Successfully started adapter 'logEventStreamConverter'
@@ -894,65 +895,77 @@ Transforming Your Data
      * -  
        - ::
 
-          Successfully sent stream event to stream 'logEventStream'
-          +=============================================================================================================+
-          | name              | description       | template | config            | properties                           |
-          +=============================================================================================================+
-          | logEventStreamCon | Periodically read | ETLBatch | {"schedule":"* *  | schedule={"schedule":{"name":"logEve |
-          | verter            | s Stream data and |          | * * *","source":{ | ntStreamConverter.etl.batch.adapter. |
-          |                   |  writes it to a T |          | "name":"Stream"," | logEventStreamConverter.schedule","d |
-          |                   | imePartitionedFil |          | properties":{"nam | escription":"Schedule for logEventSt |
-          |                   | eSet              |          | e":"logEventStrea | reamConverter Adapter"},"program":{" |
-          |                   |                   |          | m","duration":"1m | programName":"ETLWorkflow","programT |
-          |                   |                   |          | ","format":"clf"} | ype":"WORKFLOW"},"properties":{"tran |
-          |                   |                   |          | },"transforms":[{ | sformIds":"[\"Projection:0\"]","name |
-          |                   |                   |          | "name":"Projectio | ":"logEventStreamConverter","sinkId" |
-          |                   |                   |          | n","properties":{ | :"sink:TPFSAvro","config":"{\"schedu |
-          |                   |                   |          | "drop":"headers"} | le\":\"* * * * *\",\"source\":{\"nam |
-          |                   |                   |          | }],"sink":{"name" | e\":\"Stream\",\"properties\":{\"dur |
-          |                   |                   |          | :"TPFSAvro","prop | ation\":\"1m\",\"name\":\"logEventSt |
-          |                   |                   |          | erties":{"name":" | ream\",\"format\":\"clf\"}},\"sink\" |
-          |                   |                   |          | logEventStream.co | :{\"name\":\"TPFSAvro\",\"properties |
-          |                   |                   |          | nverted","schema" | \":{\"basePath\":\"logEventStream.co |
-          |                   |                   |          | :"{\"type\":\"rec | nverted\",\"schema\":\"{\\\"type\\\" |
-          |                   |                   |          | ord\",\"name\":\" | :\\\"record\\\",\\\"name\\\":\\\"log |
-          |                   |                   |          | logEvent\",\"fiel | Event\\\",\\\"fields\\\":[{\\\"name\ |
-          |                   |                   |          | ds\":[{\"name\":\ | \\":\\\"ts\\\",\\\"type\\\":\\\"long |
-          |                   |                   |          | "ts\",\"type\":\" | \\\"},{\\\"name\\\":\\\"remotehost\\ |
-          |                   |                   |          | long\"},{\"name\" | \",\\\"type\\\":[\\\"string\\\",\\\" |
-          |                   |                   |          | :\"remotehost\",\ | null\\\"]},{\\\"name\\\":\\\"remotel |
-          |                   |                   |          | "type\":[\"string | ogname\\\",\\\"type\\\":[\\\"string\ |
-          |                   |                   |          | \",\"null\"]},{\" | \\",\\\"null\\\"]},{\\\"name\\\":\\\ |
-          |                   |                   |          | name\":\"remotelo | "authuser\\\",\\\"type\\\":[\\\"stri |
-          |                   |                   |          | gname\",\"type\": | ng\\\",\\\"null\\\"]},{\\\"name\\\": |
-          |                   |                   |          | [\"string\",\"nul | \\\"date\\\",\\\"type\\\":[\\\"strin |
-          |                   |                   |          | l\"]},{\"name\":\ | g\\\",\\\"null\\\"]},{\\\"name\\\":\ |
-          |                   |                   |          | "authuser\",\"typ | \\"request\\\",\\\"type\\\":[\\\"str |
-          |                   |                   |          | e\":[\"string\",\ | ing\\\",\\\"null\\\"]},{\\\"name\\\" |
-          |                   |                   |          | "null\"]},{\"name | :\\\"status\\\",\\\"type\\\":[\\\"in |
-          |                   |                   |          | \":\"date\",\"typ | t\\\",\\\"null\\\"]},{\\\"name\\\":\ |
-          |                   |                   |          | e\":[\"string\",\ | \\"contentlength\\\",\\\"type\\\":[\ |
-          |                   |                   |          | "null\"]},{\"name | \\"int\\\",\\\"null\\\"]},{\\\"name\ |
-          |                   |                   |          | \":\"request\",\" | \\":\\\"referrer\\\",\\\"type\\\":[\ |
-          |                   |                   |          | type\":[\"string\ | \\"string\\\",\\\"null\\\"]},{\\\"na |
-          |                   |                   |          | ",\"null\"]},{\"n | me\\\":\\\"useragent\\\",\\\"type\\\ |
-          |                   |                   |          | ame\":\"status\", | ":[\\\"string\\\",\\\"null\\\"]}]}\" |
-          |                   |                   |          | \"type\":[\"int\" | ,\"name\":\"logEventStream.converted |
-          |                   |                   |          | ,\"null\"]},{\"na | \"}},\"transforms\":[{\"name\":\"Pro |
-          |                   |                   |          | me\":\"contentlen | jection\",\"properties\":{\"drop\":\ |
-          |                   |                   |          | gth\",\"type\":[\ | "headers\"}}]}","sourceId":"source:S |
-          |                   |                   |          | "int\",\"null\"]} | tream"}}                             |
-          |                   |                   |          | ,{\"name\":\"refe | instances=1                          |
-          |                   |                   |          | rrer\",\"type\":[ |                                      |
-          |                   |                   |          | \"string\",\"null |                                      |
-          |                   |                   |          | \"]},{\"name\":\" |                                      |
-          |                   |                   |          | useragent\",\"typ |                                      |
-          |                   |                   |          | e\":[\"string\",\ |                                      |
-          |                   |                   |          | "null\"]}]}","bas |                                      |
-          |                   |                   |          | ePath":"logEventS |                                      |
-          |                   |                   |          | tream.converted"} |                                      |
-          |                   |                   |          | }}                |                                      |
-          +=============================================================================================================+
+          +======================================================================================================================+
+          | name                | description         | template | config              | properties                              |
+          +======================================================================================================================+
+          | logEventStreamConve | Periodically reads  | ETLBatch | {"schedule":"*/5 *  | schedule={"schedule":{"name":"logEventS |
+          | rter                | stream data and wri |          | * * *","source":{"n | treamConverter.etl.batch.adapter.logEve |
+          |                     | tes it to a TimePar |          | ame":"Stream","prop | ntStreamConverter.schedule","descriptio |
+          |                     | titionedFileSet     |          | erties":{"name":"lo | n":"Schedule for logEventStreamConverte |
+          |                     |                     |          | gEventStream","dura | r Adapter"},"program":{"programName":"E |
+          |                     |                     |          | tion":"5m","format" | TLworkflow","programType":"WORKFLOW"}," |
+          |                     |                     |          | :"clf"}},"transform | properties":{"transformIds":"[\"Project |
+          |                     |                     |          | s":[{"name":"Projec | ion:0\"]","name":"logEventStreamConvert |
+          |                     |                     |          | tion","properties": | er","sinkId":"sink:TPFSAvro","config":" |
+          |                     |                     |          | {"drop":"headers"}} | {\"schedule\":\"*/5 * * * *\",\"source\ |
+          |                     |                     |          | ],"sink":{"name":"T | ":{\"name\":\"Stream\",\"properties\":{ |
+          |                     |                     |          | PFSAvro","propertie | \"duration\":\"5m\",\"name\":\"logEvent |
+          |                     |                     |          | s":{"name":"logEven | Stream\",\"format\":\"clf\"}},\"sink\": |
+          |                     |                     |          | tStream.converted", | {\"name\":\"TPFSAvro\",\"properties\":{ |
+          |                     |                     |          | "schema":"{\n       | \"basePath\":\"logEventStream.converted |
+          |                     |                     |          |               \"typ | \",\"schema\":\"{\\n                    |
+          |                     |                     |          | e\":\"record\",\n   |  \\\"type\\\":\\\"record\\\",\\n        |
+          |                     |                     |          |                   \ |              \\\"name\\\":\\\"logEvent\ |
+          |                     |                     |          | "name\":\"logEvent\ | \\",\\n                    \\\"fields\\ |
+          |                     |                     |          | ",\n                | \":[\\n                        {\\\"nam |
+          |                     |                     |          |      \"fields\":[\n | e\\\":\\\"ts\\\",\\\"type\\\":\\\"long\ |
+          |                     |                     |          |                     | \\"},\\n                        {\\\"na |
+          |                     |                     |          |      {\"name\":\"ts | me\\\":\\\"remotehost\\\",\\\"type\\\": |
+          |                     |                     |          | \",\"type\":\"long\ | [\\\"string\\\",\\\"null\\\"]},\\n      |
+          |                     |                     |          | "},\n               |                    {\\\"name\\\":\\\"re |
+          |                     |                     |          |           {\"name\" | motelogname\\\",\\\"type\\\":[\\\"strin |
+          |                     |                     |          | :\"remotehost\",\"t | g\\\",\\\"null\\\"]},\\n                |
+          |                     |                     |          | ype\":[\"string\",\ |          {\\\"name\\\":\\\"authuser\\\" |
+          |                     |                     |          | "null\"]},\n        | ,\\\"type\\\":[\\\"string\\\",\\\"null\ |
+          |                     |                     |          |                  {\ | \\"]},\\n                        {\\\"n |
+          |                     |                     |          | "name\":\"remotelog | ame\\\":\\\"date\\\",\\\"type\\\":[\\\" |
+          |                     |                     |          | name\",\"type\":[\" | string\\\",\\\"null\\\"]},\\n           |
+          |                     |                     |          | string\",\"null\"]} |               {\\\"name\\\":\\\"request |
+          |                     |                     |          | ,\n                 | \\\",\\\"type\\\":[\\\"string\\\",\\\"n |
+          |                     |                     |          |         {\"name\":\ | ull\\\"]},\\n                        {\ |
+          |                     |                     |          | "authuser\",\"type\ | \\"name\\\":\\\"status\\\",\\\"type\\\" |
+          |                     |                     |          | ":[\"string\",\"nul | :[\\\"int\\\",\\\"null\\\"]},\\n        |
+          |                     |                     |          | l\"]},\n            |                  {\\\"name\\\":\\\"cont |
+          |                     |                     |          |              {\"nam | entlength\\\",\\\"type\\\":[\\\"int\\\" |
+          |                     |                     |          | e\":\"date\",\"type | ,\\\"null\\\"]},\\n                     |
+          |                     |                     |          | \":[\"string\",\"nu |     {\\\"name\\\":\\\"referrer\\\",\\\" |
+          |                     |                     |          | ll\"]},\n           | type\\\":[\\\"string\\\",\\\"null\\\"]} |
+          |                     |                     |          |               {\"na | ,\\n                        {\\\"name\\ |
+          |                     |                     |          | me\":\"request\",\" | \":\\\"useragent\\\",\\\"type\\\":[\\\" |
+          |                     |                     |          | type\":[\"string\", | string\\\",\\\"null\\\"]}\\n            |
+          |                     |                     |          | \"null\"]},\n       |          ]\\n                }\",\"name |
+          |                     |                     |          |                   { | \":\"logEventStream.converted\"}},\"tra |
+          |                     |                     |          | \"name\":\"status\" | nsforms\":[{\"name\":\"Projection\",\"p |
+          |                     |                     |          | ,\"type\":[\"int\", | roperties\":{\"drop\":\"headers\"}}]}", |
+          |                     |                     |          | \"null\"]},\n       | "sourceId":"source:Stream"}}            |
+          |                     |                     |          |                   { | instances=1                             |
+          |                     |                     |          | \"name\":\"contentl |                                         |
+          |                     |                     |          | ength\",\"type\":[\ |                                         |
+          |                     |                     |          | "int\",\"null\"]},\ |                                         |
+          |                     |                     |          | n                   |                                         |
+          |                     |                     |          |       {\"name\":\"r |                                         |
+          |                     |                     |          | eferrer\",\"type\": |                                         |
+          |                     |                     |          | [\"string\",\"null\ |                                         |
+          |                     |                     |          | "]},\n              |                                         |
+          |                     |                     |          |            {\"name\ |                                         |
+          |                     |                     |          | ":\"useragent\",\"t |                                         |
+          |                     |                     |          | ype\":[\"string\",\ |                                         |
+          |                     |                     |          | "null\"]}\n         |                                         |
+          |                     |                     |          |             ]\n     |                                         |
+          |                     |                     |          |             }","bas |                                         |
+          |                     |                     |          | ePath":"logEventStr |                                         |
+          |                     |                     |          | eam.converted"}}}   |                                         |
+          +======================================================================================================================+
 
 .. container:: table-block
 
@@ -960,7 +973,7 @@ Transforming Your Data
      :widths: 80 20
      :stub-columns: 1
      
-     * - Load data into the Stream; it will automatically be converted  
+     * - Load data into the stream; it will automatically be converted  
        - 
        
   .. list-table::
@@ -988,7 +1001,7 @@ Transforming Your Data
      :widths: 80 20
      :stub-columns: 1
      
-     * - List available Datasets
+     * - List available datasets
        - 
        
   .. list-table::
@@ -1007,11 +1020,11 @@ Transforming Your Data
        - ``> list dataset instances``
          ::
 
-          +======================================================================================================+
-          | name                                  | type                                                         |
-          +======================================================================================================+
-          | logEventStream.converted              | co.cask.cdap.api.dataset.lib.TimePartitionedFileSet          |
-          +======================================================================================================+
+          +=================================================================================+
+          | name                      | type                                                |
+          +=================================================================================+
+          | logEventStream.converted  | co.cask.cdap.api.dataset.lib.TimePartitionedFileSet |
+          +=================================================================================+
 
 .. container:: table-block
 
@@ -1019,7 +1032,7 @@ Transforming Your Data
      :widths: 80 20
      :stub-columns: 1
      
-     * - Describe the converted Dataset
+     * - Describe the converted dataset
        - 
        
   .. list-table::
@@ -1037,35 +1050,35 @@ Transforming Your Data
      * -  
        - ::
 
-          +==========================================================================================+
-          | col_name: STRING                             | data_type: STRING   | comment: STRING     |
-          +==========================================================================================+
-          | remotehost                                   | string              | from deserializer   |
-          | remotelogname                                | string              | from deserializer   |
-          | authuser                                     | string              | from deserializer   |
-          | date                                         | string              | from deserializer   |
-          | request                                      | string              | from deserializer   |
-          | status                                       | int                 | from deserializer   |
-          | contentlength                                | int                 | from deserializer   |
-          | referrer                                     | string              | from deserializer   |
-          | useragent                                    | string              | from deserializer   |
-          | ts                                           | bigint              | from deserializer   |
-          | year                                         | int                 |                     |
-          | month                                        | int                 |                     |
-          | day                                          | int                 |                     |
-          | hour                                         | int                 |                     |
-          | minute                                       | int                 |                     |
-          |                                              |                     |                     |
-          | # Partition Information                      |                     |                     |
-          | # col_name                                   | data_type           | comment             |
-          |                                              |                     |                     |
-          | year                                         | int                 |                     |
-          | month                                        | int                 |                     |
-          | day                                          | int                 |                     |
-          | hour                                         | int                 |                     |
-          | minute                                       | int                 |                     |
-          +==========================================================================================+
-
+          +=======================================================================+
+          | col_name: STRING        | data_type: STRING    | comment: STRING      |
+          +=======================================================================+
+          | ts                      | bigint               | from deserializer    |
+          | remotehost              | string               | from deserializer    |
+          | remotelogname           | string               | from deserializer    |
+          | authuser                | string               | from deserializer    |
+          | date                    | string               | from deserializer    |
+          | request                 | string               | from deserializer    |
+          | status                  | int                  | from deserializer    |
+          | contentlength           | int                  | from deserializer    |
+          | referrer                | string               | from deserializer    |
+          | useragent               | string               | from deserializer    |
+          | year                    | int                  |                      |
+          | month                   | int                  |                      |
+          | day                     | int                  |                      |
+          | hour                    | int                  |                      |
+          | minute                  | int                  |                      |
+          |                         |                      |                      |
+          | # Partition Information |                      |                      |
+          | # col_name              | data_type            | comment              |
+          |                         |                      |                      |
+          | year                    | int                  |                      |
+          | month                   | int                  |                      |
+          | day                     | int                  |                      |
+          | hour                    | int                  |                      |
+          | minute                  | int                  |                      |
+          +=======================================================================+
+          Fetched 24 rows
 
 .. container:: table-block
 
@@ -1102,19 +1115,19 @@ Transforming Your Data
           | 1430769459594 | GET /rest/api/latest/server?_=1423341 | 200         |
           |               | 312520 HTTP/1.1                       |             |
           +=====================================================================+
-
+          Fetched 2 rows
 
 Building Real World Applications
 ================================
 - Build Data Applications using simple-to-use CDAP APIs
-- Compose complex applications consisting of Workflow, MapReduce, Realtime DAGs (Tigon) and Services
+- Compose complex applications consisting of workflow, MapReduce, real-time DAGs (Tigon) and services
 - Build using a collection of pre-defined data pattern libraries
 - Deploy and manage complex data applications such as Web Applications
 
 **Let's see how we would build a real-world application using CDAP:**
 
 - *Wise App* performs Web analytics on access logs
-- *WiseFlow* parses and computes pageview count per IP in realtime
+- *WiseFlow* parses and computes pageview count per IP in real time
 - A MapReduce computes bounce counts: percentage of pages that *don’t* go to another page before exiting
 - Service to expose the data 
 - Unified platform for different processing paradigms
@@ -1125,7 +1138,7 @@ Building Real World Applications
      :widths: 80 20
      :stub-columns: 1
      
-     * - Deploy a pre-built CDAP Application: Wise App
+     * - Deploy a pre-built CDAP application: Wise App
        - 
        
   .. list-table::
@@ -1141,12 +1154,21 @@ Building Real World Applications
          - Write an application to serve the data
          
      * - Using CDAP
-       - ``> deploy app apps/cdap-wise-``\ |literal-cdap-apps-version|\ ``.jar``
+       - Download the Wise app and unzip into the ``examples`` directory of your CDAP SDK:
+       
+         | ``$ cd $CDAP_SDK_HOME/examples``
+         | ``$ curl -O http://repository.cask.co/downloads/co/cask/cdap/apps/``\ |literal-cdap-apps-version|\ ``/cdap-wise-``\ |literal-cdap-apps-version|\ ``.zip`` 
+         | ``$ unzip cdap-wise-``\ |literal-cdap-apps-version|\ ``.zip`` 
+
+         From within the CDAP CLI:
+
+         | ``> deploy app examples/cdap-wise-``\ |literal-cdap-apps-version|\ ``/target/cdap-wise-``\ |literal-cdap-apps-version|\ ``.jar``
           
      * -  
        - ::
 
           Successfully deployed application
+
 
 .. container:: table-block
 
@@ -1175,10 +1197,10 @@ Building Real World Applications
           +=====================================================================+
           | type      | id                    | description                     |
           +=====================================================================+
-          | Flow      | WiseFlow              | Wise Flow                       |
+          | Flow      | WiseFlow              | Wise flow                       |
           | MapReduce | BounceCountsMapReduce | Bounce Counts MapReduce Program |
           | Service   | WiseService           |                                 |
-          | Workflow  | WiseWorkflow          | Wise Workflow                   |
+          | workflow  | Wiseworkflow          | Wise workflow                   |
           +=====================================================================+
 
 .. container:: table-block
@@ -1187,7 +1209,7 @@ Building Real World Applications
      :widths: 80 20
      :stub-columns: 1
      
-     * - Start the Application's Flow (for processing events)
+     * - Start the application's flow (for processing events)
        - 
        
   .. list-table::
@@ -1207,7 +1229,7 @@ Building Real World Applications
      * -  
        - ::
 
-          Successfully started Flow 'WiseFlow' of application 'Wise' with stored runtime arguments '{}
+          Successfully started flow 'WiseFlow' of application 'Wise' with stored runtime arguments '{}
 
 .. container:: table-block
 
@@ -1215,7 +1237,7 @@ Building Real World Applications
      :widths: 80 20
      :stub-columns: 1
      
-     * - Check the status of the Flow
+     * - Check the status of the flow
        - 
        
   .. list-table::
@@ -1243,7 +1265,7 @@ Building Real World Applications
      :widths: 80 20
      :stub-columns: 1
      
-     * - Ingest access log data into the Wise App Stream
+     * - Ingest access log data into the Wise App stream
        - 
        
   .. list-table::
@@ -1321,7 +1343,7 @@ Building Real World Applications
      :widths: 80 20
      :stub-columns: 1
      
-     * - Start the Wise Application Workflow to process ingested data
+     * - Start the Wise application workflow to process ingested data
        - 
        
   .. list-table::
@@ -1334,12 +1356,12 @@ Building Real World Applications
          - ``oozie job -start <arguments>``
          
      * - Using CDAP
-       - ``> start workflow Wise.WiseWorkflow``
+       - ``> start workflow Wise.Wiseworkflow``
           
      * -  
        - ::
 
-          Successfully started Workflow 'WiseWorkflow' of application 'Wise' with stored runtime arguments '{}'
+          Successfully started workflow 'Wiseworkflow' of application 'Wise' with stored runtime arguments '{}'
 
 
 .. container:: table-block
@@ -1348,7 +1370,7 @@ Building Real World Applications
      :widths: 80 20
      :stub-columns: 1
      
-     * - Check the status of the Workflow 
+     * - Check the status of the workflow 
        - 
        
   .. list-table::
@@ -1361,7 +1383,7 @@ Building Real World Applications
          - ``oozie job -info <jobid>``
          
      * - Using CDAP
-       - ``> get workflow status Wise.WiseWorkflow``
+       - ``> get workflow status Wise.Wiseworkflow``
           
      * -  
        - ::
@@ -1394,7 +1416,7 @@ Building Real World Applications
      * -  
        - ::
 
-          Successfully started Service 'WiseService' of application 'Wise' with stored runtime arguments '{}'
+          Successfully started service 'WiseService' of application 'Wise' with stored runtime arguments '{}'
 
 .. container:: table-block
 
@@ -1402,7 +1424,7 @@ Building Real World Applications
      :widths: 80 20
      :stub-columns: 1
      
-     * - Check the status of the Service
+     * - Check the status of the service
        - 
        
   .. list-table::
@@ -1433,7 +1455,7 @@ Building Real World Applications
      :widths: 80 20
      :stub-columns: 1
      
-     * - Discover the Wise Service's available endpoints for retrieving results
+     * - Discover the WiseService's available endpoints for retrieving results
        - 
        
   .. list-table::
@@ -1504,7 +1526,7 @@ Building Real World Applications
      :widths: 80 20
      :stub-columns: 1
      
-     * - List the Dataset instances
+     * - List the dataset instances
        - 
        
   .. list-table::
@@ -1517,18 +1539,19 @@ Building Real World Applications
          - ``hbase shell> list "cdap.user.*"``
          
      * - Using CDAP
-       - ``> list dataset instances``
+       - - The listing will depend on if you have run all of the previous examples
+         - ``> list dataset instances``
           
      * -  
        - ::
 
-          +=================================================================+
-          | name             | type                                         |
-          +=================================================================+
-          | pageViewStore    | co.cask.cdap.apps.wise.PageViewStore         |
-          | bounceCountStore | co.cask.cdap.apps.wise.BounceCountStore      |
-          +=================================================================+
-
+          +================================================================================+
+          | name                     | type                                                |
+          +================================================================================+
+          | pageViewStore            | co.cask.cdap.apps.wise.PageViewStore                |
+          | bounceCountStore         | co.cask.cdap.apps.wise.BounceCountStore             |
+          | logEventStream.converted | co.cask.cdap.api.dataset.lib.TimePartitionedFileSet |
+          +================================================================================+
 
 .. rubric:: View bounce count results 
 
@@ -1590,7 +1613,7 @@ Building Real World Applications
      :widths: 80 20
      :stub-columns: 1
      
-     * - Stop the Wise Service
+     * - Stop the WiseService
        - 
        
   .. list-table::
@@ -1602,7 +1625,7 @@ Building Real World Applications
        - - Find the yarn application ID from the following command
          - ``yarn application -list | grep "Wise.WiseService"``
          - Stop the application by running the following command
-         - ``yarn application -kill <Application ID>``
+         - ``yarn application -kill <application ID>``
          
      * - Using CDAP
        - ``> stop service Wise.WiseService``
@@ -1610,7 +1633,7 @@ Building Real World Applications
      * -  
        - ::
        
-          Successfully stopped Service 'WiseService' of application 'Wise'
+          Successfully stopped service 'WiseService' of application 'Wise'
 
 .. container:: table-block
 
@@ -1618,7 +1641,7 @@ Building Real World Applications
      :widths: 80 20
      :stub-columns: 1
      
-     * - Stop the Wise Flow
+     * - Stop the Wise flow
        - 
        
   .. list-table::
@@ -1630,7 +1653,7 @@ Building Real World Applications
        - - Find the yarn application ID from the following command
          - ``yarn application -list | grep "Wise.WiseFlow"``
          - Stop the application by running the following command
-         - ``yarn application -kill <Application ID>``
+         - ``yarn application -kill <application ID>``
          
      * - Using CDAP
        - ``> stop flow Wise.WiseFlow``
@@ -1638,7 +1661,7 @@ Building Real World Applications
      * -  
        - ::
        
-          Successfully stopped Flow 'WiseFlow' of application 'Wise'
+          Successfully stopped flow 'WiseFlow' of application 'Wise'
 
 .. container:: table-block
 
@@ -1646,7 +1669,7 @@ Building Real World Applications
      :widths: 80 20
      :stub-columns: 1
      
-     * - Delete the Application from the Server
+     * - Delete the application from the Server
        - 
        
   .. list-table::

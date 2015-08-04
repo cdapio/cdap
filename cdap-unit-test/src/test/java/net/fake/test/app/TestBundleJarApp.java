@@ -17,6 +17,7 @@
 package net.fake.test.app;
 
 import co.cask.cdap.api.metrics.RuntimeMetrics;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.RuntimeStats;
@@ -24,11 +25,12 @@ import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.TestBase;
+import co.cask.cdap.test.TestConfiguration;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.io.Closeables;
 import com.google.gson.Gson;
 import org.junit.Assert;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -47,11 +49,14 @@ import java.util.concurrent.TimeUnit;
 @Category(SlowTests.class)
 public class TestBundleJarApp extends TestBase {
 
+  @ClassRule
+  public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false);
+
   @Test
   public void testBundleJar() throws Exception {
     File helloWorldJar = new File(TestBundleJarApp.class.getClassLoader().getResource("helloworld.jar").toURI());
     ApplicationManager applicationManager = deployApplication(BundleJarApp.class, helloWorldJar);
-    FlowManager flowManager = applicationManager.startFlow("SimpleFlow");
+    FlowManager flowManager = applicationManager.getFlowManager("SimpleFlow").start();
     StreamManager streamManager = getStreamManager("simpleInputStream");
     for (int i = 0; i < 5; i++) {
       streamManager.send("test" + i + ":" + i);
@@ -64,7 +69,7 @@ public class TestBundleJarApp extends TestBase {
     flowManager.stop();
 
     // Query the result
-    ServiceManager serviceManager = applicationManager.startService("SimpleGetInput");
+    ServiceManager serviceManager = applicationManager.getServiceManager("SimpleGetInput").start();
 
     // Verify the query result
     String queryResult = callServiceGet(serviceManager.getServiceURL(), "/get/test1");
@@ -73,7 +78,7 @@ public class TestBundleJarApp extends TestBase {
     Assert.assertEquals(expectedQueryResult, queryResult);
     serviceManager.stop();
 
-    serviceManager = applicationManager.startService("PrintService");
+    serviceManager = applicationManager.getServiceManager("PrintService").start();
 
     String helloWorldClassName = "hello.HelloWorld";
     String result = callServiceGet(serviceManager.getServiceURL(), "/load/" + helloWorldClassName);
@@ -84,11 +89,10 @@ public class TestBundleJarApp extends TestBase {
 
   private String callServiceGet(URL serviceURL, String path) throws IOException {
     URLConnection connection = new URL(serviceURL.toString() + path).openConnection();
-    BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), Charsets.UTF_8));
-    try {
+    try (
+      BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), Charsets.UTF_8))
+    ) {
       return reader.readLine();
-    } finally {
-      Closeables.closeQuietly(reader);
     }
   }
 }

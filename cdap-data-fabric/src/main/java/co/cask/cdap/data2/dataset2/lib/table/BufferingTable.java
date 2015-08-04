@@ -23,11 +23,14 @@ import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.metrics.MeteredDataset;
 import co.cask.cdap.api.dataset.table.ConflictDetection;
 import co.cask.cdap.api.dataset.table.Filter;
+import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Result;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scan;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.TableSplit;
+import co.cask.cdap.api.metrics.MetricsCollector;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionAware;
 import com.google.common.base.Function;
@@ -37,6 +40,7 @@ import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -140,7 +144,7 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
     // we want it to be of format length+value to avoid conflicts like table="ab", row="cd" vs table="abc", row="d"
     // Default uses the above scheme. Subclasses can change it by overriding the #getNameAsTxChangePrefix method
     this.nameAsTxChangePrefix = Bytes.add(new byte[]{(byte) name.length()}, Bytes.toBytes(name));
-    this.buff = new ConcurrentSkipListMap<byte[], NavigableMap<byte[], Update>>(Bytes.BYTES_COMPARATOR);
+    this.buff = new ConcurrentSkipListMap<>(Bytes.BYTES_COMPARATOR);
   }
 
   /**
@@ -221,7 +225,26 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
    * @return instance of {@link Scanner}, never null
    * @throws Exception
    */
-  protected abstract  Scanner scanPersisted(Scan scan) throws Exception;
+  protected abstract Scanner scanPersisted(Scan scan) throws Exception;
+
+  /**
+   * Fetches a list of rows from persistent store. Subclasses should override this if they can batch multiple
+   * gets into a single request, as the default implementation simply loops through the gets and calls
+   * {@link #getPersisted(byte[], byte[][])} on each get.
+   * NOTE: persisted store can also be in-memory, it is called "persisted" to distinguish from in-memory buffer.
+   * @param gets list of gets to perform
+   * @return list of rows, one for each get
+   * @throws Exception
+   */
+  protected List<Map<byte[], byte[]>> getPersisted(List<Get> gets) throws Exception {
+    List<Map<byte[], byte[]>> results = Lists.newArrayListWithCapacity(gets.size());
+    for (Get get : gets) {
+      List<byte[]> getColumns = get.getColumns();
+      byte[][] columns = getColumns.isEmpty() ? null : getColumns.toArray(new byte[getColumns.size()][]);
+      results.add(getPersisted(get.getRow(), columns));
+    }
+    return results;
+  }
 
   @Override
   public void setMetricsCollector(MetricsCollector metricsCollector) {
@@ -229,7 +252,7 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
   }
 
   @Override
-  public void close() {
+  public void close() throws IOException {
     // releasing resources
     buff = null;
     toUndo = null;
@@ -248,6 +271,21 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
   }
 
   @Override
+  public void updateTx(Transaction transaction) {
+    // TODO: transaction checkpoints are not yet supported
+    // This is safe, since this should only be called by TransactionContext.checkpoint(),
+    // which is not exposed through the application APIs.
+    //
+    // Supporting transaction checkpoints will require:
+    //   1. providing some application API that interacts with TransactionContext.checkpoint()
+    //   2. keying the buffered edits by timestamp, so that buffered writes at different
+    //      checkpoint timestamps can be correctly ordered during merge.
+    //   3. keying toUndo by timestamp, so that persisted changes can be rolled back using the
+    //      correct timestamp
+    throw new UnsupportedOperationException("Transaction checkpoints are not supported");
+  }
+
+  @Override
   public Collection<byte[]> getTxChanges() {
     switch (conflictLevel) {
       case NONE:
@@ -263,7 +301,7 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
 
   private Collection<byte[]> getRowChanges() {
     // we resolve conflicts on row level of individual table
-    List<byte[]> changes = new ArrayList<byte[]>(buff.size());
+    List<byte[]> changes = new ArrayList<>(buff.size());
     for (byte[] changedRow : buff.keySet()) {
       changes.add(Bytes.add(getNameAsTxChangePrefix(), changedRow));
     }
@@ -272,7 +310,7 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
 
   private Collection<byte[]> getColumnChanges() {
     // we resolve conflicts on row level of individual table
-    List<byte[]> changes = new ArrayList<byte[]>(buff.size());
+    List<byte[]> changes = new ArrayList<>(buff.size());
     for (Map.Entry<byte[], NavigableMap<byte[], Update>> rowChange : buff.entrySet()) {
       if (rowChange.getValue() == null) {
         // NOTE: as of now we cannot detect conflict between delete whole row and row's column value change.
@@ -300,7 +338,7 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
       // clearing up in-memory buffer by initializing new map.
       // NOTE: we want to init map here so that if no changes are made we re-use same instance of the map in next tx
       // NOTE: we could cache two maps and swap them to avoid creation of map instances, but code would be ugly
-      buff = new ConcurrentSkipListMap<byte[], NavigableMap<byte[], Update>>(Bytes.BYTES_COMPARATOR);
+      buff = new ConcurrentSkipListMap<>(Bytes.BYTES_COMPARATOR);
       // TODO: tracking of persisted items can be optimized by returning a pair {succeededOrNot, persisted} which
       //       tells if persisting succeeded and what was persisted (i.e. what we will have to undo in case of rollback)
       persist(toUndo);
@@ -357,11 +395,6 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
     reportRead(1);
     // checking if the row was deleted inside this tx
     NavigableMap<byte[], Update> buffCols = buff.get(row);
-    boolean rowDeleted = buffCols == null && buff.containsKey(row);
-    // ANDREAS: can this ever happen?
-    if (rowDeleted) {
-      return new Result(row, Collections.<byte[], byte[]>emptyMap());
-    }
 
     // NOTE: since we cannot tell the exact column set, we always have to go to persisted store.
     //       potential improvement: do not fetch columns available in in-mem buffer (we know them at this point)
@@ -388,6 +421,47 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
     }
   }
 
+  @Override
+  public List<Row> get(List<Get> gets) {
+    try {
+      // get persisted, then overwrite with whats buffered
+      List<Map<byte[], byte[]>> persistedRows = getPersisted(gets);
+      // gets and rows lists are always of the same size
+      Preconditions.checkArgument(gets.size() == persistedRows.size(),
+        "Invalid number of rows fetched when performing multi-get. There must be one row for each get.");
+
+      List<Row> result = Lists.newArrayListWithCapacity(persistedRows.size());
+
+      Iterator<Map<byte[], byte[]>> persistedRowsIter = persistedRows.iterator();
+      Iterator<Get> getIter = gets.iterator();
+      while (persistedRowsIter.hasNext() && getIter.hasNext()) {
+        Get get = getIter.next();
+        Map<byte[], byte[]> persistedRow = persistedRowsIter.next();
+
+        // navigable copy of the persisted data. Implementation may return immutable or unmodifiable maps,
+        // so we make a copy here.
+        NavigableMap<byte[], byte[]> rowColumns = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+        rowColumns.putAll(persistedRow);
+
+        byte[] row = get.getRow();
+        NavigableMap<byte[], Update> buffCols = buff.get(row);
+
+        // merge what was in the buffer and what was persisted
+        if (buffCols != null) {
+          List<byte[]> getColumns = get.getColumns();
+          byte[][] columns = getColumns.isEmpty() ? null : getColumns.toArray(new byte[getColumns.size()][]);
+          mergeToPersisted(rowColumns, buffCols, columns);
+        }
+
+        result.add(new Result(row, unwrapDeletes(rowColumns)));
+      }
+      return result;
+    } catch (Exception e) {
+      LOG.debug("multi-get failed for table: " + getTransactionAwareName(), e);
+      throw new DataSetException("multi-get failed", e);
+    }
+  }
+
   /**
    * NOTE: if value is null corresponded column is deleted. It will not be in result set when reading.
    *
@@ -395,6 +469,12 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
    */
   @Override
   public void put(byte[] row, byte[][] columns, byte[][] values) {
+    putInternal(row, columns, values);
+    // report metrics _after_ write was performed
+    reportWrite(1, getSize(row) + getSize(columns) + getSize(values));
+  }
+
+  private void putInternal(byte[] row, byte[][] columns, byte[][] values) {
     NavigableMap<byte[], Update> colVals = buff.get(row);
     boolean newRow = false;
     if (colVals == null) {
@@ -413,8 +493,6 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
       // NOTE: we copy passed row's byte arrays to protect buffer against possible changes of this array on client
       buff.put(copy(row), colVals);
     }
-    // report metrics _after_ write was performed
-    reportWrite(1, getSize(row) + getSize(columns) + getSize(values));
   }
 
   /**
@@ -424,12 +502,12 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
    */
   @Override
   public void delete(byte[] row) {
-    // "0" because we don't know what gets deleted
-    reportWrite(1, 0);
     // this is going to be expensive, but the only we can do as delete implementation act on per-column level
     try {
       Map<byte[], byte[]> rowMap = getRowMap(row);
       delete(row, rowMap.keySet().toArray(new byte[rowMap.keySet().size()][]));
+      // "0" because we don't know what gets deleted
+      reportWrite(1, 0);
     } catch (Exception e) {
       LOG.debug("delete failed for table: " + getTransactionAwareName() + ", row: " + Bytes.toStringBinary(row), e);
       throw new DataSetException("delete failed", e);
@@ -448,17 +526,15 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
       return;
     }
 
-    // "0" because we don't know what gets deleted
-    reportWrite(1, 0);
     // same as writing null for every column
     // ANDREAS: shouldn't this be DELETE_MARKER?
-    put(row, columns, new byte[columns.length][]);
+    putInternal(row, columns, new byte[columns.length][]);
+    // "0" because we don't know what gets deleted
+    reportWrite(1, 0);
   }
 
   @Override
   public Row incrementAndGet(byte[] row, byte[][] columns, long[] amounts) {
-    reportRead(1);
-    reportWrite(1, getSize(row) + getSize(columns) + getSize(amounts));
     // Logic:
     // * fetching current values
     // * updating values
@@ -468,6 +544,7 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
     Map<byte[], byte[]> rowMap;
     try {
       rowMap = getRowMap(row, columns);
+      reportRead(1);
     } catch (Exception e) {
       LOG.debug("incrementAndGet failed for table: " + getTransactionAwareName() +
           ", row: " + Bytes.toStringBinary(row), e);
@@ -497,7 +574,8 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
       result.put(column, updatedValues[i]);
     }
 
-    put(row, columns, updatedValues);
+    putInternal(row, columns, updatedValues);
+    reportWrite(1, getSize(row) + getSize(columns) + getSize(amounts));
 
     return new Result(row, result);
   }
@@ -505,7 +583,6 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
   @Override
   public void increment(byte[] row, byte[][] columns, long[] amounts) {
     if (enableReadlessIncrements) {
-      reportWrite(1, getSize(row) + getSize(columns) + getSize(amounts));
       NavigableMap<byte[], Update> colVals = buff.get(row);
       if (colVals == null) {
         colVals = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
@@ -514,6 +591,7 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
       for (int i = 0; i < columns.length; i++) {
         colVals.put(columns[i], Updates.mergeUpdates(colVals.get(columns[i]), new IncrementValue(amounts[i])));
       }
+      reportWrite(1, getSize(row) + getSize(columns) + getSize(amounts));
     } else {
       incrementAndGet(row, columns, amounts);
     }
@@ -524,14 +602,14 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
     if (newValue != null && newValue.length == 0) {
       LOG.warn("Write of an empty value is not supported");
     }
-    reportRead(1);
-    reportWrite(1, getSize(row) + getSize(column) + getSize(newValue));
     // NOTE: there is more efficient way to do it, but for now we want more simple implementation, not over-optimizing
     byte[][] columns = new byte[][]{column};
     try {
       byte[] currentValue = getRowMap(row, columns).get(column);
+      reportRead(1);
       if (Arrays.equals(expectedValue, currentValue)) {
-        put(row, columns, new byte[][]{newValue});
+        putInternal(row, columns, new byte[][]{newValue});
+        reportWrite(1, getSize(row) + getSize(column) + getSize(newValue));
         return true;
       }
     } catch (Exception e) {
@@ -579,7 +657,7 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
     } catch (Exception e) {
       LOG.debug("scan failed for table: " + getTransactionAwareName() +
           ", scan: " + scan.toString(), e);
-      throw new DataSetException("compareAndSwap failed", e);
+      throw new DataSetException("scan failed", e);
     }
   }
 
@@ -646,10 +724,6 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
     NavigableMap<byte[], byte[]> result = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     // checking if the row was deleted inside this tx
     NavigableMap<byte[], Update> buffCols = buff.get(row);
-    boolean rowDeleted = buffCols == null && buff.containsKey(row);
-    if (rowDeleted) {
-      return Collections.emptyMap();
-    }
 
     // if nothing locally, return all from server
     if (buffCols == null) {
@@ -805,14 +879,17 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
 
   private void reportWrite(int numOps, int dataSize) {
     if (metricsCollector != null) {
-      metricsCollector.recordWrite(numOps, dataSize);
+      metricsCollector.increment(Constants.Metrics.Name.Dataset.WRITE_COUNT, numOps);
+      metricsCollector.increment(Constants.Metrics.Name.Dataset.WRITE_BYTES, dataSize);
+      metricsCollector.increment(Constants.Metrics.Name.Dataset.OP_COUNT, numOps);
     }
   }
 
   private void reportRead(int numOps) {
     if (metricsCollector != null) {
       // todo: report amount of data being read
-      metricsCollector.recordRead(numOps, 0);
+      metricsCollector.increment(Constants.Metrics.Name.Dataset.READ_COUNT, numOps);
+      metricsCollector.increment(Constants.Metrics.Name.Dataset.OP_COUNT, numOps);
     }
   }
 
@@ -864,6 +941,7 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
         // out of rows
         return null;
       }
+      reportRead(1);
       int order;
       if (currentKey == null) {
         // exhausted buffer is the same as persisted scan row coming first

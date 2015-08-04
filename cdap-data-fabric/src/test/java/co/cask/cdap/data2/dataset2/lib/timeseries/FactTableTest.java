@@ -15,10 +15,13 @@
  */
 package co.cask.cdap.data2.dataset2.lib.timeseries;
 
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.cube.DimensionValue;
 import co.cask.cdap.api.dataset.lib.cube.MeasureType;
 import co.cask.cdap.api.dataset.lib.cube.Measurement;
 import co.cask.cdap.api.dataset.lib.cube.TimeValue;
+import co.cask.cdap.api.dataset.table.Row;
+import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryMetricsTable;
 import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableService;
 import com.google.common.collect.HashBasedTable;
@@ -27,6 +30,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.common.collect.Table;
 import org.junit.Assert;
 import org.junit.Test;
@@ -269,7 +273,7 @@ public class FactTableTest {
                                      Map<String, String> sliceBy,
                                      ImmutableSet<String> expectedResuls) throws Exception {
     Collection<String> metricNames =
-      table.findMeasureNames(aggregationList , sliceBy, 0, 1);
+      table.findMeasureNames(aggregationList, sliceBy, 0, 1);
     Assert.assertEquals(expectedResuls, metricNames);
   }
 
@@ -280,6 +284,7 @@ public class FactTableTest {
       table.findSingleDimensionValue(aggregation, sliceBy, 0, 1);
     Assert.assertEquals(expectedResult, nextTags);
   }
+
   @Test
   public void testQuery() throws Exception {
     InMemoryTableService.create("QueryEntityTable");
@@ -503,6 +508,58 @@ public class FactTableTest {
 
       assertScan(table, expected, scan);
     }
+  }
+
+  @Test
+  public void testPreSplits() throws Exception {
+    InMemoryTableService.create("presplitEntityTable");
+    InMemoryTableService.create("presplitDataTable");
+    int resolution = 10;
+    int rollTimebaseInterval = 2;
+
+    InMemoryMetricsTable metricsTable = new InMemoryMetricsTable("presplitDataTable");
+    FactTable table = new FactTable(metricsTable,
+                                    new EntityTable(new InMemoryMetricsTable("presplitEntityTable")),
+                                    resolution, rollTimebaseInterval);
+
+    byte[][] splits = FactTable.getSplits(3);
+
+    long ts = System.currentTimeMillis() / 1000;
+
+    DimensionValue dimVal1 = new DimensionValue("dim1", "value1");
+    DimensionValue dimVal2 = new DimensionValue("dim2", "value2");
+    DimensionValue dimVal3 = new DimensionValue("dim3", "value3");
+
+    // first agg view: dim1
+    table.add(ImmutableList.of(new Fact(ts, ImmutableList.of(dimVal1),
+                                        new Measurement("metric1", MeasureType.COUNTER, 1))));
+    // second agg view: dim1 & dim2
+    table.add(ImmutableList.of(new Fact(ts, ImmutableList.of(dimVal1, dimVal2),
+                                        new Measurement("metric1", MeasureType.COUNTER, 1))));
+    // third agg view: dim3
+    table.add(ImmutableList.of(new Fact(ts, ImmutableList.of(dimVal3),
+                                        new Measurement("metric1", MeasureType.COUNTER, 1))));
+
+    // Verify all written records are spread across splits
+    Scanner scanner = metricsTable.scan(null, null, null);
+    Row row;
+    Set<Integer> splitsWithRows = Sets.newHashSet();
+    while ((row = scanner.next()) != null) {
+      boolean added = false;
+      for (int i = 0; i < splits.length; i++) {
+        if (Bytes.compareTo(row.getRow(), splits[i]) < 0) {
+          splitsWithRows.add(i);
+          added = true;
+          break;
+        }
+      }
+      if (!added) {
+        // falls into last split
+        splitsWithRows.add(splits.length);
+      }
+    }
+
+    Assert.assertEquals(3, splitsWithRows.size());
   }
 
   private List<TimeValue> timeValues(long ts, int resolution, long... values) {

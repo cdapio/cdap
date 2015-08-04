@@ -36,7 +36,7 @@ public class ProgramRunnableResourceReporter extends AbstractResourceReporter {
 
   public ProgramRunnableResourceReporter(Program program, MetricsCollectionService collectionService,
                                          TwillContext context) {
-    super(collectionService.getCollector(getMetricContext(program, context)));
+    super(collectionService.getContext(getMetricContext(program, context)));
     this.runContext = context;
   }
 

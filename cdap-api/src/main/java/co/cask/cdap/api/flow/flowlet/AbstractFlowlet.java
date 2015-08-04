@@ -16,6 +16,13 @@
 
 package co.cask.cdap.api.flow.flowlet;
 
+import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.dataset.Dataset;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -32,7 +39,93 @@ import javax.annotation.Nullable;
 public abstract class AbstractFlowlet implements Flowlet, Callback {
 
   private final String name;
+  private FlowletConfigurer configurer;
   private FlowletContext flowletContext;
+
+  public void configure(FlowletConfigurer configurer) {
+    this.configurer = configurer;
+    FlowletSpecification specification = configure();
+    configurer.setName(specification.getName());
+    configurer.setDescription(specification.getDescription());
+    configurer.setFailurePolicy(specification.getFailurePolicy());
+    configurer.setProperties(specification.getProperties());
+    configurer.setResources(specification.getResources());
+    configurer.useDatasets(specification.getDataSets());
+  }
+
+  /**
+   * Returns the {@link FlowletConfigurer} used for configuration. Only available during configuration time.
+   */
+  protected final FlowletConfigurer getConfigurer() {
+    return configurer;
+  }
+
+  /**
+   * Sets the name of the {@link Flowlet}.
+   *
+   * @param name the name of the flowlet
+   */
+  protected void setName(String name) {
+    configurer.setName(name);
+  }
+
+  /**
+   * Sets the description of the {@link Flowlet}.
+   *
+   * @param description the description of the flowlet
+   */
+  protected void setDescription(String description) {
+    configurer.setDescription(description);
+  }
+
+  /**
+   * Sets the resources requirements of the {@link Flowlet}.
+   *
+   * @param resources {@link Resources} requirements
+   */
+  protected void setResources(Resources resources) {
+    configurer.setResources(resources);
+  }
+
+  /**
+   * Sets the failure policy of the {@link Flowlet}.
+   *
+   * @param failurePolicy {@link FailurePolicy}
+   */
+  protected void setFailurePolicy(FailurePolicy failurePolicy) {
+    configurer.setFailurePolicy(failurePolicy);
+  }
+
+  /**
+   * Sets a set of properties that will be available through the {@link FlowletSpecification#getProperties()}.
+   *
+   * @param properties the properties to set
+   */
+  protected void setProperties(Map<String, String> properties) {
+    configurer.setProperties(properties);
+  }
+
+  /**
+   * Adds the names of {@link Dataset}s used by the Flowlet.
+   *
+   * @param dataset dataset name
+   * @param datasets more dataset names
+   */
+  protected void useDatasets(String dataset, String...datasets) {
+    List<String> datasetList = new ArrayList<>();
+    datasetList.add(dataset);
+    datasetList.addAll(Arrays.asList(datasets));
+    useDatasets(datasetList);
+  }
+
+  /**
+   * Adds the names of {@link Dataset}s used by the Flowlet.
+   *
+   * @param datasets dataset names
+   */
+  protected void useDatasets(Iterable<String> datasets) {
+    configurer.useDatasets(datasets);
+  }
 
   /**
    * Default constructor that uses {@link #getClass()}.{@link Class#getSimpleName() getSimpleName} as the
@@ -45,17 +138,18 @@ public abstract class AbstractFlowlet implements Flowlet, Callback {
   /**
    * Constructor that uses the specified name as the flowlet name.
    * @param name Name of the flowlet
+   * @deprecated Use {@link AbstractFlowlet#setName} instead.
    */
+  @Deprecated
   protected AbstractFlowlet(String name) {
     this.name = name;
   }
 
+  @Deprecated
   @Override
   public FlowletSpecification configure() {
-    return FlowletSpecification.Builder.with()
-      .setName(getName())
-      .setDescription(getDescription())
-      .build();
+    return FlowletSpecification.Builder.with().setName(getName())
+      .setDescription(getDescription()).build();
   }
 
   @Override
@@ -89,14 +183,18 @@ public abstract class AbstractFlowlet implements Flowlet, Callback {
 
   /**
    * @return {@link Class#getSimpleName() Simple classname} of this {@link Flowlet}
+   * @deprecated Use {@link AbstractFlowlet#setName} instead.
    */
+  @Deprecated
   protected String getName() {
     return name;
   }
 
   /**
    * @return A descriptive message about this {@link Flowlet}.
+   * @deprecated Use {@link AbstractFlowlet#setDescription}
    */
+  @Deprecated
   protected String getDescription() {
     return String.format("Flowlet of %s.", getName());
   }

@@ -24,6 +24,7 @@ import co.cask.cdap.common.lang.ProgramClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetDefinitionRegistry;
+import co.cask.cdap.data2.dataset2.TypeConflictException;
 import co.cask.cdap.data2.dataset2.module.lib.DatasetModules;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
@@ -86,7 +87,14 @@ class DatasetDefinitionLoader {
         }
         Class<?> moduleClass = ClassLoaders.loadClass(moduleMeta.getClassName(), classLoader, this);
         DatasetModule module = DatasetModules.getDatasetModule(moduleClass);
-        module.register(registry);
+        try {
+          module.register(registry);
+        } catch (TypeConflictException e) {
+          // A type may have multiple transitive dependencies on the same module. In that case, it would be
+          // better to avoid duplicate registering of the same module. However, we don't know what modules
+          // are registered because modules only register their types and but not the module id. So here we
+          // just assume that this may happen if the module was already loaded.
+        }
       }
     } catch (Exception e) {
       LOG.warn("Exception while loading DatasetDefinition for DatasetTypeMeta : {}", meta.getName());

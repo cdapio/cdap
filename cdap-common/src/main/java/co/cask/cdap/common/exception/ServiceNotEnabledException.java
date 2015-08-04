@@ -18,8 +18,9 @@ package co.cask.cdap.common.exception;
 
 /**
  * Thrown when the user tried to execute some service operation, but the service was not enabled.
+ * @deprecated Use {@link co.cask.cdap.common.ServiceNotEnabledException} instead
  */
-
+@Deprecated
 public class ServiceNotEnabledException extends Exception {
 
   private final String serviceName;

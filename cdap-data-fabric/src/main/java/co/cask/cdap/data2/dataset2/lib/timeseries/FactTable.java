@@ -21,6 +21,7 @@ import co.cask.cdap.api.dataset.lib.cube.MeasureType;
 import co.cask.cdap.api.dataset.lib.cube.Measurement;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
+import co.cask.cdap.api.metrics.MetricsCollector;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
@@ -78,6 +79,12 @@ public final class FactTable implements Closeable {
   // todo: should not be used outside of codec
   private final int rollTime;
 
+  private final String putCountMetric;
+  private final String incrementCountMetric;
+
+  @Nullable
+  private MetricsCollector metrics;
+
   /**
    * Creates an instance of {@link FactTable}.
    *
@@ -99,6 +106,12 @@ public final class FactTable implements Closeable {
     this.codec = new FactCodec(entityTable, resolution, rollTime);
     this.resolution = resolution;
     this.rollTime = rollTime;
+    this.putCountMetric = "factTable." + resolution + ".put.count";
+    this.incrementCountMetric = "factTable." + resolution + ".increment.count";
+  }
+
+  public void setMetricsCollector(MetricsCollector metrics) {
+    this.metrics = metrics;
   }
 
   public void add(List<Fact> facts) {
@@ -127,6 +140,10 @@ public final class FactTable implements Closeable {
     // todo: replace with single call, to be able to optimize rpcs in underlying table
     timeSeriesTable.put(convertedGaugesTable);
     timeSeriesTable.increment(convertedIncrementsTable);
+    if (metrics != null) {
+      metrics.increment(putCountMetric, convertedGaugesTable.size());
+      metrics.increment(incrementCountMetric, convertedIncrementsTable.size());
+    }
   }
 
   public FactScanner scan(FactScan scan) {
@@ -373,6 +390,10 @@ public final class FactTable implements Closeable {
     entityTable.close();
   }
 
+  public static byte[][] getSplits(int aggGroupsCount) {
+    return FactCodec.getSplits(aggGroupsCount);
+  }
+
   @Nullable
   private FuzzyRowFilter createFuzzyRowFilter(FactScan scan, byte[] startRow) {
     // we need to always use a fuzzy row filter as it is the only one to do the matching of values
@@ -382,7 +403,7 @@ public final class FactTable implements Closeable {
     String measureName = (scan.getMeasureNames().size() == 1) ? scan.getMeasureNames().iterator().next() : null;
     byte[] fuzzyRowMask = codec.createFuzzyRowMask(scan.getDimensionValues(), measureName);
     // note: we can use startRow, as it will contain all "fixed" parts of the key needed
-    return new FuzzyRowFilter(ImmutableList.of(new ImmutablePair<byte[], byte[]>(startRow, fuzzyRowMask)));
+    return new FuzzyRowFilter(ImmutableList.of(new ImmutablePair<>(startRow, fuzzyRowMask)));
   }
 
   // todo: shouldn't we aggregate "before" writing to FactTable? We could do it really efficient outside

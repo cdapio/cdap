@@ -10,10 +10,13 @@ Cloudera *Add Service* Wizard, Step-by-Step
 
 As described in :ref:`cloudera-configuring`, you can use `Cloudera Manager
 <http://www.cloudera.com/content/cloudera/en/products-and-services/cloudera-enterprise/cloudera-manager.html>`__ 
-to integrate CDAP into a Hadoop cluster by 
-:ref:`downloading and installing a CDAP CSD (Custom
-Service Descriptor) <cloudera-configuring-download>`. These instructions show you how to use that CSD with the 
-Cloudera Manager Admin Console *Add Service* Wizard to install CDAP.
+to integrate CDAP into a Hadoop cluster by:
+
+- :ref:`downloading and installing a CDAP CSD (Custom Service Descriptor) <cloudera-configuring-download>`; and
+- :ref:`download and distributing the CDAP parcel <cloudera-configuring-csd-parcel>`.
+
+Once you have done those two steps, these instructions show you how to use that CSD with
+the Cloudera Manager Admin Console *Add Service* Wizard to install CDAP.
 
 
 Add A Service
@@ -60,7 +63,7 @@ The "Add Service" Wizard
    :class: bordered-image
 
    **Add Service Wizard, Page 3:** When customizing Role Assignments, CDAP **Security
-   Auth** Service can be added later.
+   Auth** service can be added later.
 
 
 .. figure:: ../../_images/integration-cloudera/cloudera-csd-06.png

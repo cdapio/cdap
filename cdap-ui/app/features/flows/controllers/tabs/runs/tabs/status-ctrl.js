@@ -1,60 +1,74 @@
 angular.module(PKG.name + '.feature.flows')
-  .controller('FlowsRunDetailStatusController', function($state, $scope, MyDataSource, myHelpers, FlowDiagramData, $timeout, $filter) {
-    var filterFilter = $filter('filter');
-    var dataSrc = new MyDataSource($scope),
-        basePath = '/apps/' + $state.params.appId + '/flows/' + $state.params.programId;
+  .controller('FlowsRunDetailStatusController', function($state, $scope, MyDataSource, myHelpers, FlowDiagramData, $timeout, MyMetricsQueryHelper, myFlowsApi) {
+    var dataSrc = new MyDataSource($scope);
 
-    var metricStreamPath = '/metrics/query?metric=system.collect.events' +
-                           '&context=namespace.' +
-                           $state.params.namespace +
-                           '.stream.';
-    $scope.data = {};
+    this.data = {};
 
     FlowDiagramData.fetchData($state.params.appId, $state.params.programId)
       .then(function(data) {
-        $scope.data = data;
-        pollMetrics();
-      });
+        this.data = data;
+        pollMetrics.bind(this)();
+      }.bind(this));
 
-    if ($scope.runs.length) {
-      metricFlowletPath = '/metrics/query?metric=system.process.events.processed' +
-                            '&context=ns.' +
-                            $state.params.namespace +
-                            '.app.' + $state.params.appId +
-                            '.flow.' + $state.params.programId +
-                            '.run.' + $scope.runs.selected.runid +
-                            '.flowlet.';
+    function generateStreamMetricsPath(streamName) {
+      var streamTags = {
+        namespace: $state.params.namespace,
+        stream: streamName
+      };
+      return '/metrics/query?metric=system.collect.events&aggregate=true&' + MyMetricsQueryHelper.tagsToParams(streamTags);
+    }
+
+    function generateFlowletMetricsPath(flowletName) {
+      var flowletTags = {
+        namespace: $state.params.namespace,
+        app: $state.params.appId,
+        flow: $state.params.programId,
+        run: $scope.RunsController.runs.selected.runid,
+        flowlet: flowletName
+      };
+      return '/metrics/query?metric=system.process.events.processed&aggregate=true&' + MyMetricsQueryHelper.tagsToParams(flowletTags);
     }
 
     function pollMetrics() {
-      var nodes = $scope.data.nodes;
+      var nodes = this.data.nodes;
+      this.data.instances = {};
       // Requesting Metrics data
       angular.forEach(nodes, function (node) {
-        if (node.type !== 'STREAM' && !$scope.runs.length) {
+        if (node.type !== 'STREAM' && !$scope.RunsController.runs.length) {
           return;
         }
         dataSrc.poll({
-          _cdapPath: (node.type === 'STREAM' ? metricStreamPath: metricFlowletPath) + node.name + '&aggregate=true',
-          method: 'POST'
+          _cdapPath: (node.type === 'STREAM' ? generateStreamMetricsPath(node.name): generateFlowletMetricsPath(node.name)),
+          method: 'POST',
+          interval: 2000
         }, function (data) {
-            $scope.data.metrics[node.name] = myHelpers.objectQuery(data, 'series' , 0, 'data', 0, 'value') || 0;
-          });
-      });
+          this.data.metrics[node.name] = myHelpers.objectQuery(data, 'series' , 0, 'data', 0, 'value') || 0;
+        }.bind(this));
+
+        // Polling for Flowlet Instance
+        if (node.type !== 'STREAM') {
+          var params = {
+            namespace: $state.params.namespace,
+            appId: $state.params.appId,
+            flowId: $state.params.programId,
+            flowletId: node.name,
+            scope: $scope
+          };
+          myFlowsApi.pollFlowletInstance(params)
+            .$promise
+            .then(function (res) {
+              this.data.instances[node.name] = res.instances;
+            }.bind(this));
+        }
+
+      }.bind(this));
     }
 
-    $scope.stopFlow = function() {
-      dataSrc.request({
-        _cdapNsPath: basePath + '/stop',
-        method: 'POST'
-      })
-      .then(function() {
-        $timeout(function() {
-          $state.go($state.current, {}, { reload: true });
-        });
-      });
+    this.flowletClick = function(node) {
+      $scope.RunsController.selectTab($scope.RunsController.tabs[1], node);
     };
 
-    $scope.flowletClick = function(node) {
-      $scope.selectTab($scope.tabs[1], node);
-    };
+    $scope.$on('$destroy', function () {
+      FlowDiagramData.reset();
+    });
   });

@@ -23,6 +23,7 @@ import co.cask.cdap.cli.english.Article;
 import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.StreamClient;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.common.cli.Arguments;
 
@@ -45,11 +46,12 @@ public class SetStreamNotificationThresholdCommand extends AbstractAuthCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    String streamId = arguments.get(ArgumentName.STREAM.toString());
+    Id.Stream streamId = Id.Stream.from(cliConfig.getCurrentNamespace(),
+                                        arguments.get(ArgumentName.STREAM.toString()));
     int notificationThresholdMB = arguments.getInt(ArgumentName.NOTIFICATION_THRESHOLD_MB.toString());
     streamClient.setStreamProperties(streamId, new StreamProperties(null, null, notificationThresholdMB));
-    output.printf("Successfully set notification threshold of Stream '%s' to %dMB\n",
-                  streamId, notificationThresholdMB);
+    output.printf("Successfully set notification threshold of stream '%s' to %dMB\n",
+                  streamId.getId(), notificationThresholdMB);
   }
 
   @Override
@@ -60,7 +62,7 @@ public class SetStreamNotificationThresholdCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Sets the Notification Threshold of %s.",
-                         Fragment.of(Article.A, ElementType.STREAM.getTitleName()));
+    return String.format("Sets the notification threshold of %s.",
+                         Fragment.of(Article.A, ElementType.STREAM.getName()));
   }
 }

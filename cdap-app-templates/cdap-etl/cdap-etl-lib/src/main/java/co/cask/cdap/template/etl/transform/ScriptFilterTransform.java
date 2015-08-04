@@ -27,6 +27,7 @@ import co.cask.cdap.template.etl.api.Transform;
 import co.cask.cdap.template.etl.api.TransformContext;
 import co.cask.cdap.template.etl.common.StructuredRecordSerializer;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -40,13 +41,13 @@ import javax.script.ScriptException;
  */
 @Plugin(type = "transform")
 @Name("ScriptFilter")
-@Description("A transform plugin that filters records using a custom javascript provided in the plugin's config.")
+@Description("A transform plugin that filters records using a custom Javascript provided in the plugin's config.")
 public class ScriptFilterTransform extends Transform<StructuredRecord, StructuredRecord> {
-  private static final String SCRIPT_DESCRIPTION = "Javascript that must implement a shouldFilter function that " +
-    "takes a Json object representation of the input record, " +
+  private static final String SCRIPT_DESCRIPTION = "Javascript that must implement a function 'shouldFilter' that " +
+    "takes a JSON object representation of the input record, " +
     "and returns true if the input record should be filtered and false if not. " +
-    "For example, 'function shouldFilter(input) { return input.count > 100'; } " +
-    "will filter out any records whose count field is greater than 100.";
+    "For example: 'function shouldFilter(input) { return input.count > 100; }' " +
+    "will filter out any records whose 'count' field is greater than 100.";
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(StructuredRecord.class, new StructuredRecordSerializer())
     .create();
@@ -68,7 +69,7 @@ public class ScriptFilterTransform extends Transform<StructuredRecord, Structure
     ScriptEngineManager manager = new ScriptEngineManager();
     engine = manager.getEngineByName("JavaScript");
     String scriptStr = scriptFilterConfig.script;
-    Preconditions.checkArgument(!scriptStr.isEmpty(), "Filter script must be specified.");
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(scriptStr), "Filter script must be specified.");
 
     // this is pretty ugly, but doing this so that we can pass the 'input' json into the shouldFilter function.
     // that is, we want people to implement

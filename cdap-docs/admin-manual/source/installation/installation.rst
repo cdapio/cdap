@@ -110,8 +110,8 @@ You'll need this software installed:
 
 Java Runtime
 ++++++++++++
-The latest `JDK or JRE version 1.7.xx <http://www.java.com/en/download/manual.jsp>`__
-for Linux and Solaris must be installed in your environment; we recommend the Oracle JDK.
+The latest `JDK or JRE version 1.7.xx or 1.8.xx <http://www.java.com/en/download/manual.jsp>`__
+for Linux, Windows, or Mac OS X must be installed in your environment; we recommend the Oracle JDK.
 
 To check the Java version installed, run the command::
 
@@ -127,10 +127,10 @@ Once you have installed the JDK, you'll need to set the JAVA_HOME environment va
 
 Node.js Runtime
 +++++++++++++++
-You can download the appropriate version of Node.js (from |node-js-version|) from `nodejs.org <http://nodejs.org>`__:
+You can download the appropriate version of Node.js from `nodejs.org <http://nodejs.org>`__:
 
-#. The version of Node.js must be from |node-js-version|.
-#. Download the appropriate Linux or Solaris binary ``.tar.gz`` from
+#. The version of Node.js must be from |node-js-version|; we recommend |recommended-node-js-version|.
+#. Download the appropriate binary ``.tar.gz`` from
    `nodejs.org/download/ <http://nodejs.org/dist/>`__.
 
 #. Extract somewhere such as ``/opt/node-[version]/``
@@ -146,29 +146,39 @@ Hadoop/HBase Environment
 
 For a distributed enterprise, you must install these Hadoop components:
 
-+---------------+-------------------+--------------------------------------------------+
-| Component     | Source            | Required Version                                 |
-+===============+===================+==================================================+
-| **HDFS**      | Apache Hadoop     | 2.0.2-alpha through 2.5.0                        |
-+               +-------------------+--------------------------------------------------+
-|               | CDH or HDP        | (CDH) 4.2.x through 5.3.3 or (HDP) 2.0 or 2.1    |
-+---------------+-------------------+--------------------------------------------------+
-| **YARN**      | Apache Hadoop     | 2.0.2-alpha through 2.5.0                        |
-+               +-------------------+--------------------------------------------------+
-|               | CDH or HDP        | (CDH) 4.2.x through 5.3.3 or (HDP) 2.0 or 2.1    |
-+---------------+-------------------+--------------------------------------------------+
-| **HBase**     | Apache            | 0.94.2+, 0.96.x, and 0.98.x                      |
-+               +-------------------+--------------------------------------------------+
-|               | CDH or HDP        | (CDH) 4.2.x through 5.3.3 or (HDP) 2.0 or 2.1    |
-+---------------+-------------------+--------------------------------------------------+
-| **Zookeeper** | Apache            | Version 3.4.3 through 3.4.5                      |
-+               +-------------------+--------------------------------------------------+
-|               | CDH or HDP        | (CDH) 4.2.x through 5.3.3 or (HDP) 2.0 or 2.1    |
-+---------------+-------------------+--------------------------------------------------+
-| **Hive**      | Apache            | Version 0.12.0 through 0.13.1                    |
-+               +-------------------+--------------------------------------------------+
-|               | CDH or HDP        | (CDH) 4.3.x through 5.3.3 or (HDP) 2.0 or 2.1    |
-+---------------+-------------------+--------------------------------------------------+
++---------------+-------------------+-----------------------------------------------------+
+| Component     | Source            | Supported Versions                                  |
++===============+===================+=====================================================+
+| **HDFS**      | Apache Hadoop     | 2.0.2-alpha through 2.6.0                           |
++               +-------------------+-----------------------------------------------------+
+|               | CDH or HDP        | (CDH) 5.0.0 through 5.4.4 or (HDP) 2.0, 2.1, or 2.2 |
++               +-------------------+-----------------------------------------------------+
+|               | MapR              | 4.1 (with MapR-FS)                                  |
++---------------+-------------------+-----------------------------------------------------+
+| **YARN**      | Apache Hadoop     | 2.0.2-alpha through 2.6.0                           |
++               +-------------------+-----------------------------------------------------+
+|               | CDH or HDP        | (CDH) 5.0.0 through 5.4.4 or (HDP) 2.0, 2.1, or 2.2 |
++               +-------------------+-----------------------------------------------------+
+|               | MapR              | 4.1                                                 |
++---------------+-------------------+-----------------------------------------------------+
+| **HBase**     | Apache            | 0.96.x, 0.98.x, and 1.0.x                           |
++               +-------------------+-----------------------------------------------------+
+|               | CDH or HDP        | (CDH) 5.0.0 through 5.4.4 or (HDP) 2.0, 2.1, or 2.2 |
++               +-------------------+-----------------------------------------------------+
+|               | MapR              | 4.1 (with Apache HBase)                             |
++---------------+-------------------+-----------------------------------------------------+
+| **Zookeeper** | Apache            | Version 3.4.3 through 3.4.5                         |
++               +-------------------+-----------------------------------------------------+
+|               | CDH or HDP        | (CDH) 5.0.0 through 5.4.4 or (HDP) 2.0, 2.1, or 2.2 |
++               +-------------------+-----------------------------------------------------+
+|               | MapR              | 4.1                                                 |
++---------------+-------------------+-----------------------------------------------------+
+| **Hive**      | Apache            | Version 0.12.0 through 0.13.1                       |
++               +-------------------+-----------------------------------------------------+
+|               | CDH or HDP        | (CDH) 5.0.0 through 5.4.4 or (HDP) 2.0, 2.1, or 2.2 |
++               +-------------------+-----------------------------------------------------+
+|               | MapR              | 4.1                                                 |
++---------------+-------------------+-----------------------------------------------------+
 
 **Note:** Components versions shown in this table are those that we have tested and are
 confident of their suitability and compatibility. Later versions of components may work,
@@ -237,7 +247,7 @@ provide packages for *Ubuntu 12* and *CentOS 6*.
 
 Available packaging types:
 
-- RPM: YUM repo
+- RPM: Yum repo
 - Debian: APT repo
 - Tar: For specialized installations only
 
@@ -278,9 +288,11 @@ Update your Yum cache::
 
   $ sudo yum makecache
 
+.. end_install-rpm-using-yum
+
 Debian using APT
 ................
-Download the Cask Apt repo definition file:
+Download the Cask APT repo definition file:
 
 .. container:: highlight
 
@@ -302,6 +314,8 @@ Add the Cask Public GPG Key to your repository:
 Update your APT-cache::
 
   $ sudo apt-get update
+
+.. end_install-debian-using-apt
 
 Installation
 ------------
@@ -387,7 +401,7 @@ Depending on your installation, you may want to set these properties:
 
 - If you want to use **a different HDFS user** than ``yarn``:
 
-  1. Check that there is—and create if necessary—a corresponding user on all machines
+  1. Check that there is |---| and create if necessary |---| a corresponding user on all machines
      in the cluster on which YARN is running (typically, all of the machines).
   #. Create an ``hdfs.user`` property for that user in ``conf/cdap-site.xml``::
 
@@ -420,7 +434,8 @@ Depending on your installation, you may want to set these properties:
 
   This feature cannot be used unless the cluster has a correct version of Hive installed.
   See the section on :ref:`Hadoop/HBase Environment <install-hadoop-hbase>`.
-  This feature is currently not supported on secure Hadoop clusters.
+  To use this feature on secure Hadoop clusters, please see these instructions on
+  :ref:`installing secure Hadoop. <install-secure-hadoop>`
 
   **Note:** Some versions of Hive contain a bug that may prevent the CDAP Explore Service from starting
   up. See `CDAP-1865 <https://issues.cask.co/browse/CDAP-1865>`__ for more information about the issue.
@@ -444,7 +459,10 @@ authenticate with Hadoop and HBase.  In this case, the setting for ``hdfs.user``
 ``cdap-site.xml`` will be ignored and the CDAP Master process will be identified as the
 Kerberos principal it is authenticated as.
 
-In order to configure CDAP Master for Kerberos authentication:
+**Note:** CDAP support for secure Hadoop clusters is limited to CDH 5.0.0 through CDH 5.4.4, 
+and HDP 2.0 through 2.2.
+
+In order to configure **CDAP Master for Kerberos authentication:**
 
 - Create a Kerberos principal for the user running CDAP Master.  The principal name should be in
   the form ``username/hostname@REALM``, creating a separate principal for each host where the CDAP Master
@@ -459,7 +477,11 @@ In order to configure CDAP Master for Kerberos authentication:
     CDAP_PRINCIPAL="<cdap-principal>@EXAMPLE.REALM.COM"
 
 - Edit ``/etc/cdap/conf/cdap-site.xml``, substituting the Kerberos principal for
-  ``<cdap-principal>`` when adding these two properties::
+  ``CDAP_PRINCIPAL``, and your domain for ``EXAMPLE.COM``, when adding these two properties:
+  
+  .. highlight:: xml
+
+  ::
 
     <property>
       <name>cdap.master.kerberos.keytab</name>
@@ -469,13 +491,15 @@ In order to configure CDAP Master for Kerberos authentication:
     </property>
     <property>
       <name>cdap.master.kerberos.principal</name>
-      <value><cdap-principal>/_HOST@EXAMPLE.COM</value>
-      <description>The Kerberos principal name that should be used to login the CDAP Master
+      <value>CDAP_PRINCIPAL/_HOST@EXAMPLE.COM</value>
+      <description>The Kerberos principal name that should be used to login to the CDAP Master
       process. The string "_HOST" will be substituted with the local hostname.</description>
     </property>
 
 - The ``<cdap-principal>`` is shown in the commands that follow as ``cdap``; however, you
   are free to use a different appropriate name.
+
+  .. highlight:: console
 
 - The ``/cdap`` directory needs to be owned by the ``<cdap-principal>``; you can set
   that by running the following command as the ``hdfs`` user::
@@ -488,7 +512,75 @@ In order to configure CDAP Master for Kerberos authentication:
 
 - When CDAP Master is started, it will login using the configured keytab file and principal.
 
-**Note:** CDAP support for secure Hadoop clusters is limited to CDH 5.0 through CDH 5.3.x, and HDP 2.0 or higher.
+
+In order to configure **CDAP Explore Service for secure Hadoop:**
+
+.. highlight:: xml
+
+- To the configuration file ``core-site.xml``, set these properties::
+
+    <property>
+      <name>hadoop.proxyuser.hive.groups</name>
+      <value>cdap,hadoop,hive</value>
+    </property>
+    <property>
+      <name>hadoop.proxyuser.hive.hosts</name>
+      <value>*</value>
+    </property>
+
+- To the configuration file ``mapred-site.xml``, set these properties, substituting your
+  domain for ``EXAMPLE.COM``, and the hostname of the node running the JHS
+  (JobHistoryServer) for ``HOSTNAME_OF_JHS``::
+
+    <property>
+      <name>mapreduce.jobhistory.keytab</name>
+      <value>/etc/security/keytabs/jhs.service.keytab</value>
+    </property>
+    <property>
+      <name>mapreduce.jobhistory.principal</name>
+        <value>jhs/_HOST@EXAMPLE.COM</value>
+      <description>The string "_HOST" will be substituted with the local hostname.</description>
+    </property>
+    <property>
+      <name>mapreduce.jobhistory.address</name>
+        <value>HOSTNAME_OF_JHS:10020</value>
+    </property>
+
+- To the configuration file ``hive-site.xml``, set these properties, substituting your
+  domain for ``EXAMPLE.COM`` (two locations)::
+
+    <property>
+      <name>hive.metastore.sasl.enabled</name>
+      <value>true</value>
+      <description>If true, the metastore thrift interface will be secured with SASL. 
+      Clients must authenticate with Kerberos.</description>
+    </property>
+    <property>
+      <name>hive.metastore.kerberos.keytab.file</name>
+      <value>/etc/security/keytabs/hive.service.keytab</value>
+      <description>The path to the Kerberos Keytab file containing the metastore thrift 
+      server's service principal.</description>
+    </property>
+    <property>
+      <name>hive.metastore.kerberos.principal</name>
+      <value>hive/_HOST@EXAMPLE.COM</value>
+      <description>The service principal for the metastore thrift server. 
+      The string "_HOST" will be substituted with the local hostname.</description>
+    </property>
+    <property>
+      <name>hive.server2.authentication</name>
+      <value>KERBEROS</value>
+    </property>
+    <property>
+      <name>hive.server2.authentication.kerberos.principal</name>
+      <value>cdap/_HOST@EXAMPLE.COM</value>
+    </property>
+    <property>
+      <name>hive.server2.authentication.kerberos.keytab</name>
+      <value>/etc/security/keytabs/cdap.service.keytab</value>
+    </property>
+
+With all these properties set, the CDAP Explore Service will run on secure Hadoop clusters.
 
 .. _install-ulimit:
 
@@ -500,6 +592,8 @@ effect unless you make changes to the ``/etc/pam.d/common-session file``. You ca
 this setting with the command ``ulimit -n`` when logged in as the CDAP user.
 For more information, refer to the ``ulimit`` discussion in the `Apache HBase Reference
 Guide <https://hbase.apache.org/book.html#ulimit>`__.
+
+.. highlight:: console
 
 .. _install-tmp-files:
 
@@ -518,6 +612,41 @@ Configuring Security
 For instructions on enabling CDAP Security, see :doc:`CDAP Security <security>`;
 and in particular, see the instructions for 
 :ref:`configuring the properties of cdap-site.xml <enabling-security>`.
+
+Configuring Hortonworks Data Platform
+.....................................
+Beginning with `Hortonworks Data Platform (HDP) 2.2 <http://hortonworks.com>`__, the
+MapReduce libraries are in HDFS. This requires an addition be made to the file
+``cdap-env.sh`` to indicate the version of HDP::
+
+  export OPTS="${OPTS} -Dhdp.version=<version>" 
+  
+where ``<version>`` matches the HDP version of the cluster. The build iteration must be
+included, so if the cluster version of HDP is ``2.2.6.0-2800``, use::
+
+  export OPTS="${OPTS} -Dhdp.version=2.2.6.0-2800" 
+
+The file ``cdap-env.sh`` is located in the configuration directory, as described above
+under :ref:`Configuration <install-alternatives>`.
+
+.. highlight:: xml
+
+In addition, the property ``app.program.jvm.opts`` must be set in the ``cdap-site.xml``::
+
+  <property>
+    <name>app.program.jvm.opts</name>
+    <value>-XX:MaxPermSize=128M ${twill.jvm.gc.opts} -Dhdp.version=<version></value>
+    <description>Java options for all program containers</description>
+  </property>
+  
+Using the same example as above, substituting ``2.2.6.0-2800`` for ``<version>``, as::
+
+  <property>
+    <name>app.program.jvm.opts</name>
+    <value>-XX:MaxPermSize=128M ${twill.jvm.gc.opts} -Dhdp.version=2.2.6.0-2800</value>
+    <description>Java options for all program containers</description>
+  </property>
+
 
 .. _install-starting-services:
 
@@ -600,58 +729,62 @@ to make sure the CDAP table definitions in HBase are up-to-date.
 These steps will stop CDAP, update the installation, run an upgrade tool for the table definitions,
 and then restart CDAP.
 
-These steps will upgrade from CDAP 2.8.0 to 3.0.0. (**Note:** Apps need to be both
-recompiled and re-deployed.) 
+These steps will upgrade from CDAP 3.0.3 to 3.1.0. If you are on an earlier version of CDAP,
+please follow the upgrade instructions for the earlier versions and upgrade first to 3.0.3 before proceeding.
+(**Note:** Some apps need to be both recompiled and re-deployed, see below.)
 
 .. highlight:: console
 
-1. Stop all Flows, Services, and other Programs in all your applications.
+1. Stop all flows, services, and other programs in all your applications.
 
 #. Stop all CDAP processes::
 
      $ for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i stop ; done
+
+#. Update the CDAP file definition lists by running either of these methods:
+ 
+   - Using Yum:
+
+     .. include:: installation.rst 
+        :start-after: Download the Cask Yum repo definition file:
+        :end-before:  .. end_install-rpm-using-yum
+
+   - Using APT:
+
+     .. include:: installation.rst 
+        :start-after: Download the Cask APT repo definition file:
+        :end-before:  .. end_install-debian-using-apt
 
 #. Update the CDAP packages by running either of these methods:
 
    - Using Yum (on one line)::
 
        $ sudo yum install cdap cdap-gateway \
-             cdap-hbase-compat-0.94 cdap-hbase-compat-0.96 cdap-hbase-compat-0.98 \
+             cdap-hbase-compat-0.96 cdap-hbase-compat-0.98 \
+             cdap-hbase-compat-1.0 cdap-hbase-compat-1.0-cdh \
              cdap-kafka cdap-master cdap-security cdap-ui
 
    - Using APT (on one line)::
 
        $ sudo apt-get install cdap cdap-gateway \
-             cdap-hbase-compat-0.94 cdap-hbase-compat-0.96 cdap-hbase-compat-0.98 \
+             cdap-hbase-compat-0.96 cdap-hbase-compat-0.98 \
+             cdap-hbase-compat-1.0 cdap-hbase-compat-1.0-cdh \
              cdap-kafka cdap-master cdap-security cdap-ui
 
-   **Note:** We have deprecated the cdap-web-app package in favor of cdap-ui package 
-
-#. Copy the ``logback-container.xml`` into your ``conf`` directory. 
-   Please see :ref:`Configuration <install-configuration>`.
-
 #. If you are upgrading a secure Hadoop cluster, you should authenticate with ``kinit``
-   before the next step (upgrade tool)::
+   before the next step (running the upgrade tool)::
 
-     $ kinit -kt <keytab> <principle>
+     $ kinit -kt <keytab> <principal>
 
-#. Run the upgrade tool::
+#. Run the upgrade tool, as the user that runs CDAP Master (the CDAP user)::
 
      $ /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.UpgradeTool upgrade
 
 #. Restart the CDAP processes::
 
      $ for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i start ; done
-     
-#. Run the Flow Queue pending metrics corrector::
 
-     $ /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.flow.FlowQueuePendingCorrector
-
-   This will correct the pending metrics for flows. This is a new metric that was introduced in 
-   CDAP 3.0; flows that existed before the upgrade to 3.0 do not have a correct value for this
-   metric and running the tool provides a one-time correction.
-
-#. You must recompile and then redeploy your applications. 
+#. You must recompile and redeploy any applications that use either Partition Filesets or Time Partitioned Filesets.
 
 .. _install-troubleshooting:
 

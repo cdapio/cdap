@@ -1,0 +1,36 @@
+{
+  "id": "AmazonSQS",
+  "groups" : {
+    "position": [ "group1" ],
+    "group1": {
+      "display" : "SQS realtime source",
+      "position" : [ "region", "accessID", "accessKey", "queueName", "endpoint" ],
+      "fields" : {
+        "region" : {
+          "widget": "textbox",
+          "label": "Region"
+        },
+
+        "accessID" : {
+          "widget": "textbox",
+          "label": "Access ID"
+        },
+
+        "accessKey" : {
+          "widget": "textbox",
+          "label": "Access Key"
+        },
+
+        "queueName" : {
+          "widget": "textbox",
+          "label": "Queue Name"
+        },
+
+        "endpoint" : {
+          "widget": "textbox",
+          "label": "Endpoint"
+        }
+      }
+    }
+  }
+}

@@ -20,7 +20,9 @@ import co.cask.cdap.proto.Id;
 
 /**
  * Thrown when a schedule is not found.
+ * @deprecated Use {@link co.cask.cdap.common.ScheduleNotFoundException} instead
  */
+@Deprecated
 public class ScheduleNotFoundException extends NotFoundException {
 
   public ScheduleNotFoundException(Id.Schedule schedule) {

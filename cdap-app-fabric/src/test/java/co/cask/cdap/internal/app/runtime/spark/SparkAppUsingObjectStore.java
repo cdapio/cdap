@@ -20,10 +20,14 @@ import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.ObjectStores;
+import co.cask.cdap.api.dataset.table.Put;
+import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.spark.AbstractSpark;
 import co.cask.cdap.api.spark.JavaSparkProgram;
 import co.cask.cdap.api.spark.SparkContext;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.PairFunction;
@@ -33,12 +37,17 @@ import scala.Tuple2;
  * A dummy app with spark program which counts the characters in a string
  */
 public class SparkAppUsingObjectStore extends AbstractApplication {
+
+  public static final String APP_NAME = "SparkAppUsingObjectStore";
+  public static final String SPARK_NAME = "SparkCharCountProgram";
+
   @Override
   public void configure() {
     try {
-      setName("SparkAppUsingObjectStore");
+      setName(APP_NAME);
       setDescription("Application with Spark program using objectstore as dataset");
       createDataset("count", KeyValueTable.class);
+      createDataset("totals", Table.class);
       ObjectStores.createObjectStore(getConfigurer(), "keys", String.class);
       addSpark(new CharCountSpecification());
     } catch (Throwable t) {
@@ -49,16 +58,27 @@ public class SparkAppUsingObjectStore extends AbstractApplication {
   public static final class CharCountSpecification extends AbstractSpark {
     @Override
     public void configure() {
-      setName("SparkCharCountProgram");
+      setName(SPARK_NAME);
       setDescription("Use Objectstore dataset as input job");
       setMainClass(CharCountProgram.class);
+    }
+
+    @Override
+    public void beforeSubmit(SparkContext context) throws Exception {
+      context.setSparkConf(new SparkConf().set("spark.io.compression.codec",
+                                               "org.apache.spark.io.LZFCompressionCodec"));
     }
   }
 
   public static class CharCountProgram implements JavaSparkProgram {
     @Override
     public void run(SparkContext context) {
-      // read the dataset
+      JavaSparkContext sc = context.getOriginalSparkContext();
+      // Verify the codec is being set
+      Preconditions.checkArgument(
+        "org.apache.spark.io.LZFCompressionCodec".equals(sc.getConf().get("spark.io.compression.codec")));
+
+                                  // read the dataset
       JavaPairRDD<byte[], String> inputData = context.readFromDataset("keys", byte[].class, String.class);
 
       // create a new RDD with the same key but with a new value which is the length of the string
@@ -66,13 +86,17 @@ public class SparkAppUsingObjectStore extends AbstractApplication {
         byte[], byte[]>() {
         @Override
         public Tuple2<byte[], byte[]> call(Tuple2<byte[], String> stringTuple2) throws Exception {
-          return new Tuple2<byte[], byte[]>(stringTuple2._1(), Bytes.toBytes(stringTuple2._2().length()));
+          return new Tuple2<>(stringTuple2._1(), Bytes.toBytes(stringTuple2._2().length()));
         }
       });
 
+      // write a total count to a table (that emits a metric we can validate in the test case)
+      long count = stringLengths.count();
+      Table totals = context.getDataset("totals");
+      totals.put(new Put("total").add("total", count));
+
       // write the character count to dataset
       context.writeToDataset(stringLengths, "count", byte[].class, byte[].class);
-      ((JavaSparkContext) context.getOriginalSparkContext()).stop();
     }
   }
 }

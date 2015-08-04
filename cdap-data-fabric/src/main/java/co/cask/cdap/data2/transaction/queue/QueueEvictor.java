@@ -32,7 +32,7 @@ public interface QueueEvictor {
    */
   ListenableFuture<Integer> evict(Transaction transaction);
 
-  static final QueueEvictor NOOP = new QueueEvictor() {
+  QueueEvictor NOOP = new QueueEvictor() {
 
     @Override
     public ListenableFuture<Integer> evict(Transaction transaction) {

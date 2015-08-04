@@ -92,8 +92,8 @@ set_remote_dir () {
 DEBUG=${DEBUG:-no} #(optional)
 DEPLOY_TO_STG=${DEPLOY_TO_STG:-no}
 DEPLOY_TO_DOCS=${DEPLOY_TO_DOCS:-no}
-REMOTE_STG_BASE=${REMOTE_STG_BASE:-/var/www/html/${PROJECT}}
-REMOTE_DOCS_BASE=${REMOTE_DOCS_BASE:-/var/www/docs/${PROJECT}}
+REMOTE_STG_BASE=${REMOTE_STG_BASE:-/var/www/html/staging/}
+REMOTE_DOCS_BASE=${REMOTE_DOCS_BASE:-/var/www/docs/}
 
 ## bamboo global variables
 # DOCS_SERVER1
@@ -117,8 +117,8 @@ PROJECT_DOCS=${PROJECT}-docs
 ZIP_FILE=${PROJECT}-docs-${VERSION}-web.zip
 FILE_PATH=${BUILD_WORKING_DIR}/${PROJECT}/${PROJECT_DOCS}/build
 DOCS_SERVERS="${DOCS_SERVER1} ${DOCS_SERVER2}"
-REMOTE_STG_DIR="${REMOTE_STG_BASE}/${REMOTE_DIR}"
-REMOTE_DOCS_DIR="${REMOTE_DOCS_BASE}/${REMOTE_DIR}"
+REMOTE_STG_DIR="${REMOTE_STG_BASE}/${PROJECT}/${REMOTE_DIR}"		# e.g. /var/www/html/staging/cdap/develop
+REMOTE_DOCS_DIR="${REMOTE_DOCS_BASE}/${PROJECT}/${REMOTE_DIR}"		# e.g. /var/www/docs/cdap/release
 
 SSH_OPTS='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
 RSYNC_OPTS='-aPh'
@@ -203,16 +203,20 @@ decho "DEPLOY_TO_DOCS=${DEPLOY_TO_DOCS}"
 
 ### DEVELOP => Staging
 if [[ "${DEPLOY_TO_STG}" == 'yes' ]]; then
-  decho "Deploying to Staging server"
+  decho "Deploying artifacts to Staging server"
   deploy ${USER} ${STG_SERVER} ${REMOTE_STG_DIR} ${ZIP_FILE} ${FILE_PATH} ${VERSION} ${BRANCH}
 fi
 
 ### RELEASE => Docs Servers
 if [[ "${DEPLOY_TO_DOCS}" == 'yes' ]]; then
-  decho "Deploying to Docs servers"
-  for i in ${DOCS_SERVERS}; do
-    deploy ${USER} ${i} ${REMOTE_DOCS_DIR} ${ZIP_FILE} ${FILE_PATH} ${VERSION} ${BRANCH}
-  done
+  if [ "${BRANCH}" == '' ]; then
+    decho "Deploying artifacts to Docs servers"
+    for i in ${DOCS_SERVERS}; do
+      deploy ${USER} ${i} ${REMOTE_DOCS_DIR} ${ZIP_FILE} ${FILE_PATH} ${VERSION}
+    done
+  else
+    decho "Do not deploy artifacts from feature branches to Docs servers"
+  fi
 fi
-decho "####################### DEPLOYING DONE #######################"
+decho "####################### DONE DEPLOYING #######################"
 

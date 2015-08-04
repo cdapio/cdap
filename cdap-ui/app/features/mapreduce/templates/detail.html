@@ -1,4 +1,5 @@
-<div ncy-breadcrumb></div>
+<div ncy-breadcrumb ng-if="!$state.params.sourceId"></div>
+<my-breadcrumb params="$state.params" ng-if="$state.params.sourceId"></my-breadcrumb>
 
 <div class="row" program-heading>
   <div class="col-sm-6">
@@ -12,45 +13,10 @@
   </div>
   <div class="col-sm-6 text-right">
 
-    <div class="btn-group" dropdown>
-      <div ng-hide="status === 'STARTING'"
-           class="btn btn-success btn-md"
-           ng-click="toggleFlow('start')">
-        <span class="fa fa-play"></span>
-        <span>Start</span>
-      </div>
-
-      <div ng-show="status === 'STARTING' || status === 'STOPPING'"
-           ng-class="{'btn-success': status === 'STARTING', 'btn-warning': status === 'STOPPING'}"
-           class="btn btn-default btn-md">
-        <span class="fa fa-refresh fa-spin"></span>
-        <span>{{status | caskCapitalizeFilter}}</span>
-      </div>
-
-      <button class="btn btn-md dropdown-toggle" ng-class="{'btn-success': status !== 'STOPPING', 'btn-warning': status === 'STOPPING'}" dropdown-toggle>
-        <span class="caret"></span>
-      </button>
-
-      <ul class="dropdown-menu dropdown-menu-right" role="menu">
-        <li role="presentation">
-          <a role="menuitem"
-             href="#"
-             ng-click="openRuntime()">
-            <span class="fa fa-wrench pull-right"></span>
-            <span> Runtime Arguments </span>
-          </a>
-        </li>
-        <li role="presentation">
-          <a role="menuitem"
-             href="#"
-             ng-click="openPreferences()">
-            <span class="fa fa-cog pull-right"></span>
-            <span> Preferences </span>
-          </a>
-        </li>
-      </ul>
-
-    </div>
+    <my-start-stop-button
+      type="mapreduce"
+      is-stoppable="true">
+    </my-start-stop-button>
     <!-- END OF BUTTON GROUP -->
 
   </div>
@@ -63,7 +29,7 @@
     <a ui-sref="mapreduce.detail.runs" ui-sref-opts="{reload: true}" role="tab">Runs</a>
   </li>
   <li role="presentation" ui-sref-active="active">
-    <a ui-sref="mapreduce.detail.data" role="tab">Datasets</a>
+    <a ui-sref="mapreduce.detail.datasets" role="tab">Datasets</a>
   </li>
   <li role="presentation" ui-sref-active="active">
     <a ui-sref="mapreduce.detail.history" role="tab">History</a>

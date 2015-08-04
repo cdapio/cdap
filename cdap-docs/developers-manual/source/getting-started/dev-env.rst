@@ -4,18 +4,18 @@
 
 .. _dev-env:
 
-============================================
+=============================
 Development Environment Setup
-============================================
+=============================
 
 .. this file is included in others; titles need to be +
 
 .. highlight:: console
 
 Creating an Application
-----------------------------------
+-----------------------
 
-When writing a CDAP Application, it's best to use an integrated development environment that
+When writing a CDAP application, it's best to use an integrated development environment that
 understands the application interface to provide code-completion in writing interface
 methods.
 
@@ -37,7 +37,7 @@ application template for the development of your application. You can import thi
 CDAP application.
 
 Using IntelliJ
-----------------------------------
+--------------
 
 1. Open `IntelliJ <https://www.jetbrains.com/idea/>`__ and import the Maven project.
 #. Go to menu *File -> Import Project*...
@@ -47,7 +47,7 @@ Using IntelliJ
 #. Click *Next*, complete the remaining dialogs, and the new CDAP project will be created and opened.
 
 Using Eclipse
-----------------------------------
+-------------
 
 1. In your `Eclipse <https://www.eclipse.org/>`__ installation, make sure you have the
    `m2eclipse <http://m2eclipse.sonatype.org>`__ plugin installed.

@@ -103,7 +103,7 @@ public abstract class AbstractNotificationService extends AbstractIdleService im
     // This call will make sure that the feed exists
     feedManager.getFeed(feed);
 
-    NotificationCaller<N> caller = new NotificationCaller<N>(feed, handler, executor);
+    NotificationCaller<N> caller = new NotificationCaller<>(feed, handler, executor);
     subscribers.put(feed, caller);
     return caller;
   }

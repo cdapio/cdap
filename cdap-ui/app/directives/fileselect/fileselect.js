@@ -7,7 +7,7 @@ angular.module(PKG.name + '.commons')
       link: function(scope, element, attrs) {
         // Enabling Customizability.
         scope.buttonLabel = attrs.buttonLabel || 'Upload';
-        scope.buttonIcon = attrs.buttonIcon || 'fa-upload';
+        scope.buttonIcon = attrs.buttonIcon || 'fa-plus';
         scope.buttonClass = attrs.buttonClass || '';
         scope.buttonDisabled = !!attrs.buttonDisabled || false;
 
@@ -19,7 +19,7 @@ angular.module(PKG.name + '.commons')
 
         var fileElement = angular.element('<input class="sr-only" type="file" multiple="true">');
         element.append(fileElement);
-        element.bind('click', function(e) {
+        element.bind('click', function() {
           fileElement[0].click();
         });
 

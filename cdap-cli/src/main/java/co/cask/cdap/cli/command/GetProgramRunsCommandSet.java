@@ -43,7 +43,6 @@ public class GetProgramRunsCommandSet extends CommandSet<Command> {
         commands.add(new GetProgramRunsCommand(elementType, programClient, cliConfig));
       }
     }
-    commands.add(new GetWorkflowCurrentRunCommand(ElementType.WORKFLOW, programClient, cliConfig));
     return commands;
   }
 }

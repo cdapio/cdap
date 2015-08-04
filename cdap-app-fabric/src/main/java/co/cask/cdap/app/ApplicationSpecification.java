@@ -50,6 +50,12 @@ public interface ApplicationSpecification {
   String getVersion();
 
   /**
+   * @return Configuration string used during the creation of the Application.
+   */
+  @Nullable
+  String getConfiguration();
+
+  /**
    * @return Description of the Application.
    */
   String getDescription();

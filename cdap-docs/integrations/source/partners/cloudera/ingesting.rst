@@ -4,9 +4,9 @@
 
 .. _cloudera-ingesting:
 
-==================================================
+=========================
 Ingestion and Exploration
-==================================================
+=========================
 
 .. _integrations-impala:
 
@@ -24,7 +24,7 @@ When using CDAP with Impala:
 .. |stream| replace:: **Stream Exploration:**
 .. _stream: ../../../developers-manual/data-exploration/streams.html
 
-- |stream|_ It is often useful to be able to **examine data in a Stream** in an ad-hoc manner through SQL-like queries
+- |stream|_ It is often useful to be able to **examine data in a stream** in an ad-hoc manner through SQL-like queries
 
 
 .. |fileset| replace:: **Fileset Exploration:**
@@ -34,10 +34,10 @@ When using CDAP with Impala:
 
 
 Ingesting and Exploring Data with Impala
-===========================================
+========================================
 
 Streams are the primary means of bringing data from external systems into the CDAP in
-realtime. They are ordered, time-partitioned sequences of data, usable for realtime
+real time. They are ordered, time-partitioned sequences of data, usable for real-time
 collection and consumption of data.
 
 They can easily be created by using the CDAP Command Line Interface (CLI).
@@ -45,11 +45,11 @@ First, connect to your CDAP instance using the CLI::
 
   > connect <hostname>:11015
 
-Next, create a Stream::
+Next, create a stream::
 
   > create stream trades
 
-You can then add events to a Stream, one-by-one::
+You can then add events to a stream, one-by-one::
 
   > send stream trades 'NFLX,441.07,50'
   > send stream trades 'AAPL,118.63,100'
@@ -59,7 +59,7 @@ Or, you can add the entire contents of a file::
 
   > load stream trades /my/path/trades.csv
 
-Or you can use the other tools and APIs available to ingest data in real-time or batch.
+Or you can use the other tools and APIs available to ingest data in real time or batch.
 For more information on what are other ways of ingesting data into CDAP, see the links at
 the top of this page.
 
@@ -93,15 +93,15 @@ Data in CDAP is integrated with Apache Hive, and the above query above translate
 As such, it will launch two MapReduce jobs in order to calculate the query results, which
 is why it takes minutes instead of seconds. 
 
-To reduce query time, you can use Impala to query the data instead of Hive. Since Streams
+To reduce query time, you can use Impala to query the data instead of Hive. Since streams
 are written in a custom format, they cannot be directly queried through Impala. Instead,
-you can use the ETLBatch ApplicationTemplate to create an Adapter that regularly reads
-Stream events and writes those events into files on HDFS that can then be queried by Impala.
+you can use the ETLBatch application template to create an adapter that regularly reads
+stream events and writes those events into files on HDFS that can then be queried by Impala.
 
 To do this, write the following JSON to a config file::
 
   {
-      "description": "Periodically reads Stream data and writes it to a TimePartitionedFileSet",
+      "description": "Periodically reads stream data and writes it to a TimePartitionedFileSet",
       "template": "ETLBatch",
       "config": {
           "schedule": "*/10 * * * *",
@@ -150,18 +150,18 @@ To do this, write the following JSON to a config file::
       }
   }
 
-Then use your config file to create an Adapter through the CLI.
+Then use your config file to create an adapter through the CLI.
 For example, if you wrote the above JSON to a file named ``conversion.json``::
 
   > create adapter trades_conversion conversion.json
 
-This will use the Application Template to create and configure an Adapter.
-The Adapter will not run until you start it::
+This will use the application template to create and configure an adapter.
+The adapter will not run until you start it::
 
   > start adapter trades_conversion
 
-This will create a schedule that will run the Adapter every ten minutes. 
-The next time the Adapter runs, it will spawn a MapReduce job that reads all events added
+This will create a schedule that will run the adapter every ten minutes. 
+The next time the adapter runs, it will spawn a MapReduce job that reads all events added
 in the past ten minutes, writes each event to Avro encoded files, and registers a new
 partition in the Hive Metastore. We can then query the contents using Impala. On a
 cluster, use the Impala shell to connect to Impala::
@@ -183,5 +183,5 @@ about one second.
 
 Now that you have data in CDAP and are able to explore your data, you can use CDAP's many
 useful and powerful services, such as the ability to dynamically scale processing units,
-distributed transactions, and service discovery, to write Applications that meet your
+distributed transactions, and service discovery, to write applications that meet your
 business needs.

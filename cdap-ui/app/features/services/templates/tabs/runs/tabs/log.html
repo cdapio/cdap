@@ -1,0 +1,8 @@
+<div ng-controller="ServicesRunDetailLogController as LogsController">
+  <my-log-viewer
+    data-model="LogsController.logs"
+    data-next="LogsController.loadNextLogs()"
+    data-prev="LogsController.loadPrevLogs()"
+    data-loading-next="LogsController.loadingNext"
+    data-loading-prev="LogsController.loadingPrev"></my-log-viewer>
+</div>

@@ -28,6 +28,7 @@ APIDOCS="apidocs"
 APIS="apis"
 BUILD="build"
 BUILD_PDF="build-pdf"
+CDAP_DOCS="cdap-docs"
 HTML="html"
 INCLUDES="_includes"
 JAVADOCS="javadocs"
@@ -37,6 +38,7 @@ PROJECT="cdap"
 PROJECT_CAPS="CDAP"
 REFERENCE="reference-manual"
 SOURCE="source"
+SPHINX_MESSAGES="warnings.txt"
 
 FALSE="false"
 TRUE="true"
@@ -60,6 +62,7 @@ EOF`
 
 SCRIPT=`basename ${0}`
 SCRIPT_PATH=`pwd`
+MANUAL=`basename ${SCRIPT_PATH}`
 
 DOC_GEN_PY="${SCRIPT_PATH}/../tools/doc-gen.py"
 BUILD_PATH="${SCRIPT_PATH}/${BUILD}"
@@ -72,7 +75,7 @@ else
   PROJECT_PATH="${SCRIPT_PATH}/../../../${2}"
 fi
 
-SDK_JAVADOCS="${PROJECT_PATH}/${API}/target/site/${APIDOCS}"
+SDK_JAVADOCS="${PROJECT_PATH}/target/site/${APIDOCS}"
 
 CHECK_INCLUDES="false"
 TEST_INCLUDES_LOCAL="local"
@@ -92,6 +95,16 @@ function echo_red_bold() {
   echo -e "${RED}${BOLD}${1}${NC}${2}"
 }
 
+function echo_clean_colors() {
+  local c="${1//${RED}/}"
+  c="${c//${BOLD}/}"
+  c="${c//${NC}/}"
+  echo -e "${c}"
+}
+
+# Hash of file with "Not Found"; returned by GitHub
+NOT_FOUND_HASH="9d1ead73e678fa2f51a70a933b0bf017"
+
 ZIP_FILE_NAME=$HTML
 ZIP="${ZIP_FILE_NAME}.zip"
 
@@ -105,31 +118,34 @@ WEB="web"
 GOOGLE_ANALYTICS_GITHUB="UA-55081520-2"
 GITHUB="github"
 
+# BUILD.rst
+BUILD_RST="BUILD.rst"
+BUILD_RST_HASH="f54ae74bb72f9ad894766b6c0bd2d2df"
+
 
 function usage() {
   cd $PROJECT_PATH
   PROJECT_PATH=`pwd`
   echo "Build script for '${PROJECT_CAPS}' docs"
   echo "Usage: ${SCRIPT} < option > [source test_includes]"
-  echo ""
+  echo
   echo "  Options (select one)"
   echo "    build          Clean build of javadocs and HTML docs, copy javadocs and PDFs into place, zip results"
   echo "    build-github   Clean build and zip for placing on GitHub"
   echo "    build-web      Clean build and zip for placing on docs.cask.co webserver"
-  echo ""
+  echo
   echo "    docs           Clean build of docs"
   echo "    javadocs       Clean build of javadocs ($API module only) for SDK and website"
   echo "    javadocs-full  Clean build of javadocs for all modules"
   echo "    license-pdfs   Clean build of License Dependency PDFs"
-  echo ""
+  echo
   echo "    check-includes Check if included files have changed from source"
   echo "    depends        Build Site listing dependencies"
   echo "    sdk            Build SDK"
   echo "  with"
   echo "    source         Path to $PROJECT source for javadocs, if not $PROJECT_PATH"
   echo "    test_includes  local, remote or neither (default: remote); must specify source if used"
-  echo " "
-#   exit 1
+  echo
 }
 
 function clean() {
@@ -142,26 +158,32 @@ function build_docs() {
   clean
   cd ${SCRIPT_PATH}
   check_includes
-  sphinx-build -b html -d build/doctrees source build/html
+  sphinx-build -w ${BUILD}/${SPHINX_MESSAGES} -b html -d ${BUILD}/doctrees source ${BUILD}/html
+  display_any_messages
 }
 
 function build_docs_google() {
   clean
   cd ${SCRIPT_PATH}
   check_includes
-  sphinx-build -D googleanalytics_id=$1 -D googleanalytics_enabled=1 -b html -d build/doctrees source build/html
+  sphinx-build -w ${BUILD}/${SPHINX_MESSAGES} -D googleanalytics_id=$1 -D googleanalytics_enabled=1 -b html -d ${BUILD}/doctrees source ${BUILD}/html
+  display_any_messages
 }
 
 function build_javadocs_full() {
   cd ${PROJECT_PATH}
   set_mvn_environment
-  MAVEN_OPTS="-Xmx512m" mvn clean site -DskipTests
+  check_build_for_changes
+  echo "build_javadocs_full: Currently not implemented"
+  return
+  # MAVEN_OPTS="-Xmx512m" mvn clean site -DskipTests
 }
 
 function build_javadocs_api() {
   cd ${PROJECT_PATH}
   set_mvn_environment
-  MAVEN_OPTS="-Xmx512m" mvn clean package javadoc:javadoc -pl $API -am -DskipTests -P release
+  check_build_for_changes
+  MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn clean install -P examples,templates,release -DskipTests -Dgpg.skip=true && mvn clean site -DskipTests -P templates -DisOffline=false
 }
 
 function build_javadocs_sdk() {
@@ -182,21 +204,15 @@ function build_license_pdfs() {
   PROJECT_VERSION_TRIMMED=${PROJECT_VERSION%%-SNAPSHOT*}
   rm -rf ${SCRIPT_PATH}/${LICENSES_PDF}
   mkdir ${SCRIPT_PATH}/${LICENSES_PDF}
-  E_DEP="cdap-enterprise-dependencies"
-  L_DEP="cdap-level-1-dependencies"
-  S_DEP="cdap-standalone-dependencies"
   # paths are relative to location of $DOC_GEN_PY script
   LIC_PDF="../../../${REFERENCE}/${LICENSES_PDF}"
   LIC_RST="../${REFERENCE}/source/${LICENSES}"
-  echo ""
-  echo "Building ${E_DEP}"
-  python ${DOC_GEN_PY} -g pdf -o ${LIC_PDF}/${E_DEP}.pdf -b ${PROJECT_VERSION_TRIMMED} ${LIC_RST}/${E_DEP}.rst
-  echo ""
-  echo "Building $L_DEP"
-  python ${DOC_GEN_PY} -g pdf -o ${LIC_PDF}/${L_DEP}.pdf -b ${PROJECT_VERSION_TRIMMED} ${LIC_RST}/${L_DEP}.rst
-  echo ""
-  echo "Building $S_DEP"
-  python ${DOC_GEN_PY} -g pdf -o ${LIC_PDF}/${S_DEP}.pdf -b ${PROJECT_VERSION_TRIMMED} ${LIC_RST}/${S_DEP}.rst
+  PDFS="cdap-enterprise-dependencies cdap-level-1-dependencies cdap-standalone-dependencies cdap-ui-dependencies"
+  for PDF in ${PDFS}; do
+    echo ""
+    echo "Building ${PDF}"
+    python ${DOC_GEN_PY} -g pdf -o ${LIC_PDF}/${PDF}.pdf -b ${PROJECT_VERSION_TRIMMED} ${LIC_RST}/${PDF}.rst
+  done
 }
 
 function copy_license_pdfs() {
@@ -248,7 +264,7 @@ function set_mvn_environment() {
 }
 
 function check_includes() {
-  if [ "x${CHECK_INCLUDES}" == "x${TRUE}" ]; then
+  if [ "${CHECK_INCLUDES}" == "${TRUE}" ]; then
     echo "Downloading and checking includes."
     # Build includes
     BUILD_INCLUDES_DIR=${SCRIPT_PATH}/${BUILD}/${INCLUDES}
@@ -282,25 +298,36 @@ function test_an_include() {
   
   local file_name=`basename ${target}`
   
-  if [[ "x${OSTYPE}" == "xdarwin"* ]]; then
+  if [[ "${OSTYPE}" == "darwin"* ]]; then
     new_md5_hash=`md5 -q ${target}`
   else
     new_md5_hash=`md5sum ${target} | awk '{print $1}'`
   fi
   
-  if [ "x${md5_hash}" != "x${new_md5_hash}" ]; then
-    echo -e "${WARNING} MD5 Hash for ${file_name} has changed! Compare files and update hash!"  
-    echo -e "file: ${target}"  
-    echo -e "Old MD5 Hash: ${md5_hash} New MD5 Hash: ${RED}${BOLD}${new_md5_hash}${NC}" 
-  else
-    echo "MD5 Hash for ${file_name} matches"  
+  local m
+  
+  if [[ "${new_md5_hash}" == "${NOT_FOUND_HASH}" ]]; then
+    m="${WARNING} ${RED}${BOLD}${file_name} not found!${NC}"  
+    m="${m}\nfile: ${target}"  
+  elif [[ "${new_md5_hash}" != "${md5_hash}" ]]; then
+    m="${WARNING} ${RED}${BOLD}${file_name} has changed! Compare files and update hash!${NC}"   
+    m="${m}\nfile: ${target}"   
+    m="${m}\nOld MD5 Hash: ${md5_hash} New MD5 Hash: ${new_md5_hash}"   
   fi
+  if [ "x${m}" != "x" ]; then
+    set_message "${m}"
+  else
+    m="MD5 Hash for ${file_name} matches"
+  fi
+  echo -e "${m}"
 }
 
 function build_standalone() {
   cd ${PROJECT_PATH}
   set_mvn_environment
-  MAVEN_OPTS="-Xmx1024m" mvn clean package -DskipTests -P examples,templates -pl cdap-examples,cdap-app-templates/cdap-etl -am -amd && MAVEN_OPTS="-Xmx1024m" mvn package -pl cdap-standalone -am -DskipTests -P dist,release
+  check_build_for_changes
+  mvn clean
+  MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn package -pl cdap-standalone,cdap-app-templates/cdap-etl,cdap-examples -am -amd -DskipTests -P examples,templates,dist,release,unit-tests
 }
 
 function build_sdk() {
@@ -313,7 +340,13 @@ function build_dependencies() {
   mvn clean package site -am -Pjavadocs -DskipTests
 }
 
+function check_build_for_changes() {
+  BUILD_RST_PATH="${PROJECT_PATH}/${BUILD_RST}"
+  test_an_include ${BUILD_RST_HASH} ${BUILD_RST_PATH}
+}
+
 function version() {
+  OIFS="${IFS}"
   local current_directory=`pwd`
   cd ${PROJECT_PATH}
   PROJECT_VERSION=`grep "<version>" pom.xml`
@@ -321,34 +354,114 @@ function version() {
   PROJECT_VERSION=${PROJECT_VERSION%%</version>*}
   PROJECT_LONG_VERSION=`expr "${PROJECT_VERSION}" : '\([0-9]*\.[0-9]*\.[0-9]*\)'`
   PROJECT_SHORT_VERSION=`expr "${PROJECT_VERSION}" : '\([0-9]*\.[0-9]*\)'`
-  IFS=/ read -a branch <<< "`git rev-parse --abbrev-ref HEAD`"
-  # Determine branch and branch type: one of develop, master, release, develop-feature, release-feature
+  local full_branch=`git rev-parse --abbrev-ref HEAD`
+  IFS=/ read -a branch <<< "${full_branch}"
   GIT_BRANCH="${branch[1]}"
-  if [ "x${GIT_BRANCH}" == "xdevelop" -o  "x${GIT_BRANCH}" == "xmaster" ]; then
+  GIT_BRANCH_PARENT="develop"
+  # Determine branch and branch type: one of develop, master, release, develop-feature, release-feature
+  # If unable to determine type, uses develop-feature
+  if [ "${full_branch}" == "develop" -o  "${full_branch}" == "master" ]; then
+    GIT_BRANCH="${full_branch}"
     GIT_BRANCH_TYPE=${GIT_BRANCH}
-  elif [ "x${GIT_BRANCH:0:7}" == "xrelease" ]; then
+  elif [ "${GIT_BRANCH:0:7}" == "release" ]; then
     GIT_BRANCH_TYPE="release"
   else
-    local parent_branch=`git show-branch | grep '*' | grep -v "$(git rev-parse --abbrev-ref HEAD)" | head -n1 | sed 's/.*\[\(.*\)\].*/\1/' | sed 's/[\^~].*//'`
-    if [ "x${parent_branch}" == "xdevelop" ]; then
-      GIT_BRANCH_TYPE="develop-feature"
+    # We are on a feature branch: but from develop or release?
+    # This is not easy to determine. This can fail very easily.
+    local git_branch_listing=`git show-branch | grep '*' | grep -v "$(git rev-parse --abbrev-ref HEAD)" | head -n1`
+    if [ "x${git_branch_listing}" == "x" ]; then 
+      echo_red_bold "Unable to determine parent branch as git_branch_listing empty; perhaps in a new branch with no commits"
+      echo_red_bold "Using default GIT_BRANCH_PARENT: ${GIT_BRANCH_PARENT}"
     else
+      GIT_BRANCH_PARENT=`echo ${git_branch_listing} | sed 's/.*\[\(.*\)\].*/\1/' | sed 's/[\^~].*//'`
+    fi
+    if [ "${GIT_BRANCH_PARENT:0:7}" == "release" ]; then
       GIT_BRANCH_TYPE="release-feature"
+    else
+      GIT_BRANCH_TYPE="develop-feature"
     fi
   fi
-  cd $current_directory
+  cd ${current_directory}
+  IFS="${OIFS}"
 }
 
 function display_version() {
   version
-  echo ""
   echo "PROJECT_PATH: ${PROJECT_PATH}"
   echo "PROJECT_VERSION: ${PROJECT_VERSION}"
   echo "PROJECT_LONG_VERSION: ${PROJECT_LONG_VERSION}"
   echo "PROJECT_SHORT_VERSION: ${PROJECT_SHORT_VERSION}"
   echo "GIT_BRANCH: ${GIT_BRANCH}"
   echo "GIT_BRANCH_TYPE: ${GIT_BRANCH_TYPE}"
-  echo ""
+  echo "GIT_BRANCH_PARENT: ${GIT_BRANCH_PARENT}"
+}
+
+function set_messages_file() {
+  TMP_MESSAGES_FILE="/tmp/$(basename $0).$$.tmp"
+  export TMP_MESSAGES_FILE
+}
+
+function cleanup_messages_file() {
+  rm -f ${TMP_MESSAGES_FILE}
+}
+
+function clear_messages() {
+  MESSAGES=
+  set_messages_file
+}
+
+function set_message() {
+  if [ "x${MESSAGES}" == "x" ]; then
+    MESSAGES=${*}
+  else
+    MESSAGES="${MESSAGES}\n\n${*}"
+  fi
+  if [ "x${TMP_MESSAGES_FILE}" != "x" ]; then
+    local clean_m=`echo_clean_colors "${*}"`
+    if [ -e ${TMP_MESSAGES_FILE} ]; then
+      echo >> ${TMP_MESSAGES_FILE}
+    fi
+    echo -e "Warning Message for \"${MANUAL}\":\n${clean_m}" >> ${TMP_MESSAGES_FILE}
+  fi
+}
+
+function display_any_messages() {
+  if [[ "x${MESSAGES}" != "x" || -s ${SPHINX_MESSAGES} ]]; then
+    local m="Warning Messages for \"${MANUAL}\":"
+    if [ "x${MESSAGES}" != "x" ]; then
+      echo 
+      echo_red_bold "${m}"
+      echo 
+      echo -e "${MESSAGES}"
+    fi
+    if [ -s ${SPHINX_MESSAGES} ]; then
+      m="Sphinx ${m}"
+      echo
+      echo_red_bold "${m}"
+      echo ${m} >> ${TMP_MESSAGES_FILE}
+      cat ${SPHINX_MESSAGES} | while read line
+      do
+        echo ${line}
+        echo ${line} >> ${TMP_MESSAGES_FILE}
+      done
+    fi
+  fi
+}
+
+function display_messages_file() {
+  if [[ "x${TMP_MESSAGES_FILE}" != "x" && -a ${TMP_MESSAGES_FILE} ]]; then
+    echo 
+    echo "Warning Messages: ${TMP_MESSAGES_FILE}"
+    echo 
+    echo >> ${TMP_MESSAGES_FILE}
+    cat ${TMP_MESSAGES_FILE} | while read line
+    do
+      echo -e "${line}"
+    done
+    return 1 # Indicates warning messages present
+  else
+    return 0
+  fi
 }
 
 function rewrite() {
@@ -391,20 +504,20 @@ function rewrite() {
 
 function run_command() {
   case "${1}" in
-    build )             build; exit 1;;
-    build-github )      build_github; exit 1;;
-    build-web )         build_web; exit 1;;
-    check-includes )    check_includes; exit 1;;
+    build )             build;;
+    build-github )      build_github;;
+    build-web )         build_web;;
+    check-includes )    check_includes;;
     docs )              build_docs;;
-    license-pdfs )      build_license_pdfs; exit 1;;
-    build-standalone )  build_standalone; exit 1;;
-    copy-javadocs )     copy_javadocs; exit 1;;
-    copy-license-pdfs ) copy_license_pdfs; exit 1;;
-    javadocs )          build_javadocs_sdk; exit 1;;
-    javadocs-full )     build_javadocs_full; exit 1;;
-    depends )           build_dependencies; exit 1;;
-    sdk )               build_sdk; exit 1;;
-    version )           display_version; exit 1;;
-    * )                 usage; exit 1;;
+    license-pdfs )      build_license_pdfs;;
+    build-standalone )  build_standalone;;
+    copy-javadocs )     copy_javadocs;;
+    copy-license-pdfs ) copy_license_pdfs;;
+    javadocs )          build_javadocs_sdk;;
+    javadocs-full )     build_javadocs_full;;
+    depends )           build_dependencies;;
+    sdk )               build_sdk;;
+    version )           display_version;;
+    * )                 usage;;
   esac
 }

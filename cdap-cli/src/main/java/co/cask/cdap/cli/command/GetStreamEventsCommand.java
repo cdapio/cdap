@@ -26,6 +26,7 @@ import co.cask.cdap.cli.util.AbstractCommand;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.StreamClient;
+import co.cask.cdap.proto.Id;
 import co.cask.common.cli.Arguments;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
@@ -50,7 +51,8 @@ public class GetStreamEventsCommand extends AbstractCommand {
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     long currentTime = System.currentTimeMillis();
 
-    String streamId = arguments.get(ArgumentName.STREAM.toString());
+    Id.Stream streamId = Id.Stream.from(cliConfig.getCurrentNamespace(),
+                                        arguments.get(ArgumentName.STREAM.toString()));
     long startTime = getTimestamp(arguments.get(ArgumentName.START_TIME.toString(), "min"), currentTime);
     long endTime = getTimestamp(arguments.get(ArgumentName.END_TIME.toString(), "max"), currentTime);
     int limit = arguments.getInt(ArgumentName.LIMIT.toString(), Integer.MAX_VALUE);
@@ -71,7 +73,7 @@ public class GetStreamEventsCommand extends AbstractCommand {
       }).build();
     cliConfig.getTableRenderer().render(cliConfig, output, table);
 
-    output.printf("Fetched %d events from stream %s", events.size(), streamId);
+    output.printf("Fetched %d events from stream '%s'", events.size(), streamId.getId());
     output.println();
   }
 
@@ -83,7 +85,7 @@ public class GetStreamEventsCommand extends AbstractCommand {
 
   @Override
   public String getDescription() {
-    return "Gets events from " + Fragment.of(Article.A, ElementType.STREAM.getTitleName()) + ". " +
+    return "Gets events from " + Fragment.of(Article.A, ElementType.STREAM.getName()) + ". " +
       "The time format for <" + ArgumentName.START_TIME + "> and <" + ArgumentName.END_TIME + "> " +
       "can be a timestamp in milliseconds or " +
       "a relative time in the form of [+|-][0-9][d|h|m|s]. " +

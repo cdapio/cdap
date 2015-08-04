@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,7 @@
 package co.cask.cdap.api.dataset.lib;
 
 import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.api.dataset.DataSetException;
 
 import java.util.Collection;
 import java.util.Map;
@@ -48,58 +49,50 @@ public interface TimePartitionedFileSet extends PartitionedFileSet {
   /**
    * Add a partition for a given time, stored at a given path (relative to the file set's base path).
    */
-  public void addPartition(long time, String path);
+  void addPartition(long time, String path);
+
+  /**
+   * Add a partition for a given time, stored at a given path (relative to the file set's base path),
+   * with given metadata.
+   */
+  void addPartition(long time, String path, Map<String, String> metadata);
+
+  /**
+   * Adds a new metadata entry for a particular partition.
+   * Note that existing entries can not be updated.
+   * @throws DataSetException in case an attempt is made to update existing entries.
+   */
+  void addMetadata(long time, String metadataKey, String metadataValue);
+
+  /**
+   * Adds a set of new metadata entries for a particular partition
+   * Note that existing entries can not be updated.
+   * * @throws DataSetException in case an attempt is made to update existing entries.
+   */
+  void addMetadata(long time, Map<String, String> metadata);
 
   /**
    * Remove a partition for a given time.
    */
-  public void dropPartition(long time);
+  void dropPartition(long time);
 
   /**
    * Return the partition associated with the given time, rounded to the minute;
    * or null if no such partition exists.
    */
   @Nullable
-  public TimePartition getPartitionByTime(long time);
+  TimePartitionDetail getPartitionByTime(long time);
 
   /**
    * Return all partitions within the time range given by startTime (inclusive) and endTime (exclusive),
    * both rounded to the full minute.
    */
-  public Set<TimePartition> getPartitionsByTime(long startTime, long endTime);
+  Set<TimePartitionDetail> getPartitionsByTime(long startTime, long endTime);
 
   /**
    * Return a partition output for a specific time, rounded to the minute, in preparation for creating a new partition.
    * Obtain the location to write from the PartitionOutput, then call the {@link PartitionOutput#addPartition}
    * to add the partition to this dataset.
    */
-  public TimePartitionOutput getPartitionOutput(long time);
-
-  /**
-   * @return the relative path of the partition for a specific time, rounded to the minute.
-   */
-  @Deprecated
-  @Nullable
-  public String getPartition(long time);
-
-  /**
-   * @return a mapping from the partition time to the relative path, of all partitions with a time
-   *         that is between startTime (inclusive) and endTime (exclusive), both rounded to the full minute.
-   */
-  @Deprecated
-  public Map<Long, String> getPartitions(long startTime, long endTime);
-
-  /**
-   * @return the relative paths of all partitions with a time that is between startTime (inclusive)
-   *         and endTime (exclusive), both rounded to the full minute.
-   */
-  @Deprecated
-  public Collection<String> getPartitionPaths(long startTime, long endTime);
-
-  /**
-   * @return the underlying (embedded) file set.
-   * @deprecated use {@link #getEmbeddedFileSet} instead.
-   */
-  @Deprecated
-  public FileSet getUnderlyingFileSet();
+  TimePartitionOutput getPartitionOutput(long time);
 }

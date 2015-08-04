@@ -16,11 +16,12 @@
 </div>
 <div class="collapse navbar-collapse" ng-class="{in:navbarCollapsed}">
 
-  <ul class="nav navbar-nav hidden-sm" id="navbar-namespace">
-    <li class="dropdown">
+  <ul class="nav navbar-nav" id="navbar-namespace">
+    <li class="dropdown" ng-class="{one:namespaces.length<2}">
       <a href="" class="dropdown-toggle">
-        <span ng-bind="$state.params.namespace && getDisplayName($state.params.namespace) | myEllipsis: 10"></span>
-        <span class="fa fa-caret-down"></span>
+        <span ng-bind="$state.params.namespace && getDisplayName($state.params.namespace) | myEllipsis: 10" ng-if="namespaces.length > 1"></span>
+        <span ng-bind="$state.params.namespace && getDisplayName($state.params.namespace) | myEllipsis: 10" tooltip="Only one namespace to display" tooltip-placement="right" ng-if="namespaces.length < 2"></span>
+        <span class="caret"></span>
       </a>
     </li>
   </ul>
@@ -39,7 +40,7 @@
     </ul>
   </nav>
 
-  <ul class="nav navbar-nav navbar-right hidden-sm">
+  <ul class="nav navbar-nav navbar-right">
 
     <li class="hidden" id="navbar-search">
       <form class="navbar-form" ng-submit="doSearch()">

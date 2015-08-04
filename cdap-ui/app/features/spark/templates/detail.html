@@ -1,39 +1,21 @@
-<div ncy-breadcrumb></div>
+<div ncy-breadcrumb ng-if="!$state.params.sourceId"></div>
+<my-breadcrumb params="$state.params" ng-if="$state.params.sourceId"></my-breadcrumb>
 
 <div class="row" program-heading>
   <div class="col-sm-6">
     <h2 class="programTitle">
       <span ng-bind="$state.params.programId"></span>
     </h2>
-    <small ng-if="isEnterprise" class="badge text-info">
-      <span class="fa fa-exclamation-triangle"> </span>
-      <span> Spark programs are not supported in distributed yet.</span>
-    </small>
     <div class="type-block">
       <span class="icon-spark"></span>
       <small> Type: Spark </small>
     </div>
   </div>
   <div class="col-sm-6 text-right">
-    <div ng-show="status == 'RUNNING'"
-         class="btn btn-danger btn-md"
-         ng-click="stop()">
-      <span class="fa fa-stop"> </span>
-      <span>Stop</span>
-    </div>
-
-    <div ng-show="status == 'STOPPED'"
-         class="btn btn-success btn-md"
-         ng-click="start()">
-      <span class="fa fa-play"> </span>
-      <span>Start</span>
-    </div>
-    <div ng-show="status == 'STARTING' || status == 'STOPPING'"
-         class="btn btn-md"
-         ng-class="{'btn-success': status === 'STARTING', 'btn-danger': status === 'STOPPING'}">
-      <span class="fa fa-refresh fa-spin"></span>
-      <span>{{status | caskCapitalizeFilter}}</span>
-    </div>
+    <my-start-stop-button
+      type="spark"
+      is-stoppable="true">
+    </my-start-stop-button>
   </div>
 </div>
 

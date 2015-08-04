@@ -19,14 +19,21 @@ package co.cask.cdap.test.internal;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.stream.StreamEventTypeAdapter;
+import co.cask.cdap.common.utils.TimeMathParser;
 import co.cask.cdap.data.stream.service.StreamFetchHandler;
 import co.cask.cdap.data.stream.service.StreamHandler;
+import co.cask.cdap.internal.MockResponder;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.StreamManager;
+import co.cask.http.BodyConsumer;
 import com.google.common.base.Charsets;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.io.ByteProcessor;
+import com.google.common.io.ByteStreams;
+import com.google.common.io.Files;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -41,11 +48,13 @@ import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.handler.codec.http.HttpVersion;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Default implementation of {@link StreamManager} for use in tests
@@ -144,18 +153,55 @@ public class DefaultStreamManager implements StreamManager {
   }
 
   @Override
+  public void send(File file, String contentType) throws Exception {
+    String path = String.format("/v3/namespaces/%s/streams/%s/batch", streamId.getNamespaceId(), streamId.getId());
+    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, path);
+    request.setHeader(HttpHeaders.Names.CONTENT_TYPE, contentType);
+    final MockResponder responder = new MockResponder();
+    final BodyConsumer bodyConsumer = streamHandler.batch(request, responder, streamId.getNamespaceId(),
+                                                          streamId.getId());
+    Preconditions.checkNotNull(bodyConsumer, "BodyConsumer from stream batch load call should not be null");
+
+    ByteStreams.readBytes(Files.newInputStreamSupplier(file), new ByteProcessor<BodyConsumer>() {
+      @Override
+      public boolean processBytes(byte[] buf, int off, int len) throws IOException {
+        bodyConsumer.chunk(ChannelBuffers.wrappedBuffer(buf, off, len), responder);
+        return true;
+      }
+
+      @Override
+      public BodyConsumer getResult() {
+        bodyConsumer.finished(responder);
+        return bodyConsumer;
+      }
+    });
+
+    Preconditions.checkState(HttpResponseStatus.OK.equals(responder.getStatus()),
+                             "Failed to load events to stream %s in batch", streamId);
+  }
+
+  @Override
   protected void finalize() throws Throwable {
     super.finalize();
   }
 
   @Override
-  public List<StreamEvent> getEvents(long startTime, long endTime, int limit) throws IOException {
+  public List<StreamEvent> getEvents(String startTime, String endTime, int limit) throws IOException {
     return getEvents(streamId, startTime, endTime, limit);
   }
 
-  private List<StreamEvent> getEvents(Id.Stream streamId, long startTime, long endTime, int limit) throws IOException {
+  @Override
+  public List<StreamEvent> getEvents(long startTime, long endTime, int limit) throws IOException {
+    return getEvents(streamId, String.valueOf(startTime), String.valueOf(endTime), limit);
+  }
+
+  private List<StreamEvent> getEvents(Id.Stream streamId, String startTime, String endTime,
+                                      int limit) throws IOException {
+    long start = TimeMathParser.parseTime(startTime, TimeUnit.MILLISECONDS);
+    long end = TimeMathParser.parseTime(endTime, TimeUnit.MILLISECONDS);
+
     String path = String.format("/v3/namespaces/%s/streams/%s/events?start=%d&end=%d&limit=%d",
-                                streamId.getNamespaceId(), streamId.getId(), startTime, endTime, limit);
+                                streamId.getNamespaceId(), streamId.getId(), start, end, limit);
     HttpRequest httpRequest = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, path);
 
     MockResponder responder = new MockResponder();

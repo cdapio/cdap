@@ -147,7 +147,7 @@ public abstract class AbstractSnapshotCodec implements SnapshotCodec {
 
   private NavigableMap<Long, Set<ChangeId>> decodeChangeSets(BinaryDecoder decoder) throws IOException {
     int size = decoder.readInt();
-    NavigableMap<Long, Set<ChangeId>> changeSets = new TreeMap<Long, Set<ChangeId>>();
+    NavigableMap<Long, Set<ChangeId>> changeSets = new TreeMap<>();
     while (size != 0) { // zero denotes end of list as per AVRO spec
       for (int remaining = size; remaining > 0; --remaining) {
         changeSets.put(decoder.readLong(), decodeChanges(decoder));

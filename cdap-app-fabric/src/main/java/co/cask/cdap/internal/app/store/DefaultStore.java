@@ -25,15 +25,17 @@ import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletConnection;
 import co.cask.cdap.api.flow.FlowletDefinition;
-import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.worker.WorkerSpecification;
+import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.archive.ArchiveBundler;
+import co.cask.cdap.common.ApplicationNotFoundException;
+import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
@@ -48,8 +50,6 @@ import co.cask.cdap.proto.AdapterStatus;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.templates.AdapterDefinition;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
@@ -117,7 +117,6 @@ public class DefaultStore implements Store {
                                                            DatasetDefinition.NO_ARGUMENTS, null);
           return new AppMds(mdsTable);
         } catch (Exception e) {
-          LOG.error("Failed to access app.meta table", e);
           throw Throwables.propagate(e);
         }
       }
@@ -131,14 +130,15 @@ public class DefaultStore implements Store {
    */
   public static void setupDatasets(DatasetFramework framework) throws IOException, DatasetManagementException {
     framework.addInstance(Table.class.getName(), Id.DatasetInstance.from(
-                            Constants.DEFAULT_NAMESPACE_ID, (Joiner.on(".").join(Constants.SYSTEM_NAMESPACE,
-                                                                                 APP_META_TABLE))),
+                            Constants.SYSTEM_NAMESPACE_ID, APP_META_TABLE),
                           DatasetProperties.EMPTY);
   }
 
   @Nullable
   @Override
-  public Program loadProgram(final Id.Program id, ProgramType type) throws IOException {
+  public Program loadProgram(final Id.Program id)
+    throws IOException, ApplicationNotFoundException, ProgramNotFoundException {
+
     ApplicationMeta appMeta = txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, ApplicationMeta>() {
       @Override
       public ApplicationMeta apply(AppMds mds) throws Exception {
@@ -147,11 +147,17 @@ public class DefaultStore implements Store {
     });
 
     if (appMeta == null) {
-      return null;
+      throw new ApplicationNotFoundException(Id.Application.from(id.getNamespaceId(), id.getApplicationId()));
     }
 
-    Location programLocation = getProgramLocation(id, type);
-    // I guess this can happen when app is being deployed at the moment... todo: should be prevented by framework
+    if (!programExists(id, appMeta.getSpec())) {
+      throw new ProgramNotFoundException(id);
+    }
+
+    Location programLocation = getProgramLocation(id);
+    // I guess this can happen when app is being deployed at the moment...
+    // todo: should be prevented by framework
+    // todo: this should not be checked here but in start()
     Preconditions.checkArgument(appMeta.getLastUpdateTs() >= programLocation.lastModified(),
                                 "Newer program update time than the specification update time. " +
                                 "Application must be redeployed");
@@ -167,11 +173,13 @@ public class DefaultStore implements Store {
     txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
       public Void apply(AppMds mds) throws Exception {
-        RunRecord target = mds.apps.getRun(id, pid);
+        RunRecordMeta target = mds.apps.getRun(id, pid);
         if (target.getStatus() == expectedStatus) {
+          long now = System.currentTimeMillis();
+          long nowSecs = TimeUnit.MILLISECONDS.toSeconds(now);
           switch (updateStatus) {
             case RUNNING:
-              mds.apps.recordProgramResumed(id, pid);
+              mds.apps.recordProgramStart(id, pid, nowSecs, target.getAdapterName(), target.getTwillRunId());
               break;
             case SUSPENDED:
               mds.apps.recordProgramSuspend(id, pid);
@@ -179,8 +187,6 @@ public class DefaultStore implements Store {
             case COMPLETED:
             case KILLED:
             case FAILED:
-              long now = System.currentTimeMillis();
-              long nowSecs = TimeUnit.MILLISECONDS.toSeconds(now);
               mds.apps.recordProgramStop(id, pid, nowSecs, updateStatus);
               break;
             default:
@@ -247,26 +253,26 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public List<RunRecord> getRuns(final Id.Program id, final ProgramRunStatus status,
+  public List<RunRecordMeta> getRuns(final Id.Program id, final ProgramRunStatus status,
                                  final long startTime, final long endTime, final int limit, final String adapter) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, List<RunRecord>>() {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, List<RunRecordMeta>>() {
       @Override
-      public List<RunRecord> apply(AppMds mds) throws Exception {
+      public List<RunRecordMeta> apply(AppMds mds) throws Exception {
         return mds.apps.getRuns(id, status, startTime, endTime, limit, adapter);
       }
     });
   }
 
   @Override
-  public List<RunRecord> getRuns(Id.Program id, ProgramRunStatus status, long startTime, long endTime, int limit) {
+  public List<RunRecordMeta> getRuns(Id.Program id, ProgramRunStatus status, long startTime, long endTime, int limit) {
     return getRuns(id, status, startTime, endTime, limit, null);
   }
 
   @Override
-  public List<RunRecord> getRuns(final ProgramRunStatus status, final Predicate<RunRecord> filter) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, List<RunRecord>>() {
+  public List<RunRecordMeta> getRuns(final ProgramRunStatus status, final Predicate<RunRecordMeta> filter) {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, List<RunRecordMeta>>() {
       @Override
-      public List<RunRecord> apply(AppMds mds) throws Exception {
+      public List<RunRecordMeta> apply(AppMds mds) throws Exception {
         return mds.apps.getRuns(status, filter);
       }
     });
@@ -280,10 +286,10 @@ public class DefaultStore implements Store {
    * @return run record for runid
    */
   @Override
-  public RunRecord getRun(final Id.Program id, final String runid) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, RunRecord>() {
+  public RunRecordMeta getRun(final Id.Program id, final String runid) {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, RunRecordMeta>() {
       @Override
-      public RunRecord apply(AppMds mds) throws Exception {
+      public RunRecordMeta apply(AppMds mds) throws Exception {
         return mds.apps.getRun(id, runid);
       }
     });
@@ -327,15 +333,17 @@ public class DefaultStore implements Store {
                                                                       .putAll(existingAppSpec.getWorkflows())
                                                                       .putAll(existingAppSpec.getFlows())
                                                                       .putAll(existingAppSpec.getServices())
+                                                                      .putAll(existingAppSpec.getWorkers())
                                                                       .build();
 
       ImmutableMap<String, ProgramSpecification> newSpec = new ImmutableMap.Builder<String, ProgramSpecification>()
                                                                       .putAll(appSpec.getMapReduce())
-                                                                      .putAll(existingAppSpec.getSpark())
+                                                                      .putAll(appSpec.getSpark())
                                                                       .putAll(appSpec.getWorkflows())
                                                                       .putAll(appSpec.getFlows())
                                                                       .putAll(appSpec.getServices())
-                                                                      .build();
+                                                                      .putAll(appSpec.getWorkers())
+        .build();
 
 
       MapDifference<String, ProgramSpecification> mapDiff = Maps.difference(existingSpec, newSpec);
@@ -388,7 +396,7 @@ public class DefaultStore implements Store {
       public FlowSpecification apply(AppMds mds) throws Exception {
         ApplicationSpecification appSpec = getAppSpecOrFail(mds, id);
         ApplicationSpecification newAppSpec = updateFlowletInstancesInAppSpec(appSpec, id, flowletId, count);
-        replaceAppSpecInProgramJar(id, newAppSpec, ProgramType.FLOW);
+        replaceAppSpecInProgramJar(id, newAppSpec);
 
         mds.apps.updateAppSpec(id.getNamespaceId(), id.getApplicationId(), newAppSpec);
         return appSpec.getFlows().get(id.getId());
@@ -431,7 +439,7 @@ public class DefaultStore implements Store {
                                                                        workerSpec.getResources(),
                                                                        instances);
         ApplicationSpecification newAppSpec = replaceWorkerInAppSpec(appSpec, id, newSpecification);
-        replaceAppSpecInProgramJar(id, newAppSpec, ProgramType.WORKER);
+        replaceAppSpecInProgramJar(id, newAppSpec);
         mds.apps.updateAppSpec(id.getNamespaceId(), id.getApplicationId(), newAppSpec);
         return null;
       }
@@ -458,7 +466,7 @@ public class DefaultStore implements Store {
                                                serviceSpec.getResources(), instances);
 
         ApplicationSpecification newAppSpec = replaceServiceSpec(appSpec, id.getId(), serviceSpec);
-        replaceAppSpecInProgramJar(id, newAppSpec, ProgramType.SERVICE);
+        replaceAppSpecInProgramJar(id, newAppSpec);
 
         mds.apps.updateAppSpec(id.getNamespaceId(), id.getApplicationId(), newAppSpec);
         return null;
@@ -648,7 +656,7 @@ public class DefaultStore implements Store {
         FlowletDefinition newFlowletDef = new FlowletDefinition(flowletDef, oldValue, newValue);
         ApplicationSpecification newAppSpec = replaceInAppSpec(appSpec, flow, flowSpec, newFlowletDef, conns);
 
-        replaceAppSpecInProgramJar(flow, newAppSpec, ProgramType.FLOW);
+        replaceAppSpecInProgramJar(flow, newAppSpec);
 
         Id.Application app = flow.getApplication();
         mds.apps.updateAppSpec(app.getNamespaceId(), app.getId(), newAppSpec);
@@ -676,9 +684,7 @@ public class DefaultStore implements Store {
           scheduleName + "' already exists.");
         schedules.put(scheduleSpecification.getSchedule().getName(), scheduleSpecification);
         ApplicationSpecification newAppSpec = new AppSpecificationWithChangedSchedules(appSpec, schedules);
-        // TODO: double check this ProgramType.valueOf()
-        replaceAppSpecInProgramJar(program, newAppSpec,
-                                   ProgramType.valueOf(scheduleSpecification.getProgram().getProgramType().name()));
+        replaceAppSpecInProgramJar(program, newAppSpec);
         mds.apps.updateAppSpec(program.getNamespaceId(), program.getApplicationId(), newAppSpec);
         return null;
       }
@@ -686,8 +692,7 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void deleteSchedule(final Id.Program program, final SchedulableProgramType programType,
-                             final String scheduleName) {
+  public void deleteSchedule(final Id.Program program, final String scheduleName) {
     txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
       public Void apply(AppMds mds) throws Exception {
@@ -702,8 +707,7 @@ public class DefaultStore implements Store {
         }
 
         ApplicationSpecification newAppSpec = new AppSpecificationWithChangedSchedules(appSpec, schedules);
-        // TODO: double check this ProgramType.valueOf()
-        replaceAppSpecInProgramJar(program, newAppSpec, ProgramType.valueOf(programType.name()));
+        replaceAppSpecInProgramJar(program, newAppSpec);
         mds.apps.updateAppSpec(program.getNamespaceId(), program.getApplicationId(), newAppSpec);
         return null;
       }
@@ -725,9 +729,19 @@ public class DefaultStore implements Store {
     }
   }
 
+  @Override
+  public boolean applicationExists(final Id.Application id) {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Boolean>() {
+      @Override
+      public Boolean apply(AppMds mds) throws Exception {
+        ApplicationSpecification appSpec = getApplicationSpec(mds, id);
+        return appSpec != null;
+      }
+    });
+  }
 
   @Override
-  public boolean programExists(final Id.Program id, final ProgramType type) {
+  public boolean programExists(final Id.Program id) {
     return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Boolean>() {
       @Override
       public Boolean apply(AppMds mds) throws Exception {
@@ -735,33 +749,22 @@ public class DefaultStore implements Store {
         if (appSpec == null) {
           return false;
         }
-        ProgramSpecification programSpecification = null;
-        try {
-          if (type == ProgramType.FLOW) {
-            programSpecification = getFlowSpecOrFail(id, appSpec);
-          } else if (type == ProgramType.SERVICE) {
-            programSpecification = getServiceSpecOrFail(id, appSpec);
-          } else if (type == ProgramType.WORKFLOW) {
-            programSpecification = appSpec.getWorkflows().get(id.getId());
-          } else if (type == ProgramType.MAPREDUCE) {
-            programSpecification = appSpec.getMapReduce().get(id.getId());
-          } else if (type == ProgramType.SPARK) {
-            programSpecification = appSpec.getSpark().get(id.getId());
-          } else if (type == ProgramType.WORKER) {
-            programSpecification = appSpec.getWorkers().get(id.getId());
-          } else if (type == ProgramType.WEBAPP) {
-            // no-op
-          } else {
-            throw new IllegalArgumentException("Invalid ProgramType");
-          }
-        } catch (NoSuchElementException e) {
-          programSpecification = null;
-        } catch (Exception e) {
-          Throwables.propagate(e);
-        }
-        return (programSpecification != null);
+        return programExists(id, appSpec);
       }
     });
+  }
+
+  private boolean programExists(Id.Program id, ApplicationSpecification appSpec) {
+    switch (id.getType()) {
+      case FLOW:      return appSpec.getFlows().containsKey(id.getId());
+      case MAPREDUCE: return appSpec.getMapReduce().containsKey(id.getId());
+      case SERVICE:   return appSpec.getServices().containsKey(id.getId());
+      case SPARK:     return appSpec.getSpark().containsKey(id.getId());
+      case WEBAPP:    return false;
+      case WORKER:    return appSpec.getWorkers().containsKey(id.getId());
+      case WORKFLOW:  return appSpec.getWorkflows().containsKey(id.getId());
+      default:        throw new IllegalArgumentException("Unexpected ProgramType " + id.getType());
+    }
   }
 
   @Override
@@ -925,6 +928,27 @@ public class DefaultStore implements Store {
     });
   }
 
+  @Override
+  public void updateWorkflowToken(final Id.Workflow workflowId, final String workflowRunId, final WorkflowToken token) {
+    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
+      @Override
+      public Void apply(AppMds mds) throws Exception {
+        mds.apps.updateWorkflowToken(workflowId, workflowRunId, token);
+        return null;
+      }
+    });
+  }
+
+  @Override
+  public WorkflowToken getWorkflowToken(final Id.Workflow workflowId, final String workflowRunId) {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, WorkflowToken>() {
+      @Override
+      public WorkflowToken apply(AppMds mds) throws Exception {
+        return mds.apps.getWorkflowToken(workflowId, workflowRunId);
+      }
+    });
+  }
+
   @VisibleForTesting
   void clear() throws Exception {
     DatasetAdmin admin = dsFramework.getAdmin(appMetaDatasetInstanceId, null);
@@ -937,10 +961,10 @@ public class DefaultStore implements Store {
    * @return The {@link Location} of the given program.
    * @throws RuntimeException if program can't be found.
    */
-  private Location getProgramLocation(Id.Program id, ProgramType type) throws IOException {
+  private Location getProgramLocation(Id.Program id) throws IOException {
     String appFabricOutputDir = configuration.get(Constants.AppFabric.OUTPUT_DIR,
                                                   System.getProperty("java.io.tmpdir"));
-    return Programs.programLocation(namespacedLocationFactory, appFabricOutputDir, id, type);
+    return Programs.programLocation(namespacedLocationFactory, appFabricOutputDir, id);
   }
 
   private ApplicationSpecification getApplicationSpec(AppMds mds, Id.Application id) {
@@ -973,9 +997,9 @@ public class DefaultStore implements Store {
     }
   }
 
-  private void replaceAppSpecInProgramJar(Id.Program id, ApplicationSpecification appSpec, ProgramType type) {
+  private void replaceAppSpecInProgramJar(Id.Program id, ApplicationSpecification appSpec) {
     try {
-      Location programLocation = getProgramLocation(id, type);
+      Location programLocation = getProgramLocation(id);
       ArchiveBundler bundler = new ArchiveBundler(programLocation);
 
       Program program = Programs.create(programLocation);
@@ -983,7 +1007,7 @@ public class DefaultStore implements Store {
 
       Location tmpProgramLocation = programLocation.getTempFile("");
       try {
-        ProgramBundle.create(id.getApplication(), bundler, tmpProgramLocation, id.getId(), className, type, appSpec);
+        ProgramBundle.create(id, bundler, tmpProgramLocation, className, appSpec);
 
         Location movedTo = tmpProgramLocation.renameTo(programLocation);
         if (movedTo == null) {

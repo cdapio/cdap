@@ -36,6 +36,7 @@ import co.cask.cdap.gateway.handlers.log.MockLogReader;
 import co.cask.cdap.gateway.router.NettyRouter;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.app.services.AppFabricServer;
+import co.cask.cdap.internal.guice.AppFabricTestModule;
 import co.cask.cdap.logging.read.LogReader;
 import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
@@ -43,7 +44,6 @@ import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.security.guice.InMemorySecurityModule;
-import co.cask.cdap.test.internal.guice.AppFabricTestModule;
 import co.cask.tephra.TransactionManager;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -247,14 +247,22 @@ public abstract class GatewayTestBase {
     int trials = 0;
     // it may take a while for workflow/mr to start...
     while (trials++ < 20) {
-      HttpResponse response = GatewayFastTestsSuite.doGet(String.format("/v3/namespaces/default/apps/%s/%s/%s/status",
-                                                                        appId, programType, programId));
-      JsonObject status = GSON.fromJson(EntityUtils.toString(response.getEntity()), JsonObject.class);
-      if (status != null && status.has("status") && state.equals(status.get("status").getAsString())) {
+      String status = getState(programType, appId, programId);
+      if (status != null && state.equals(status)) {
         break;
       }
       TimeUnit.SECONDS.sleep(1);
     }
     Assert.assertTrue(trials < 20);
+  }
+
+  protected static String getState(String programType, String appId, String programId) throws Exception {
+    HttpResponse response = GatewayFastTestsSuite.doGet(String.format("/v3/namespaces/default/apps/%s/%s/%s/status",
+                                                                      appId, programType, programId));
+    JsonObject status = GSON.fromJson(EntityUtils.toString(response.getEntity()), JsonObject.class);
+    if (status != null && status.has("status")) {
+      return status.get("status").getAsString();
+    }
+    return null;
   }
 }

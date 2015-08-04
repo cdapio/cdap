@@ -26,10 +26,12 @@ import co.cask.tephra.persist.TransactionSnapshot;
 import co.cask.tephra.util.TxUtils;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Supplier;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
-import org.apache.hadoop.conf.Configuration;
+import com.google.common.io.InputSupplier;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.TableNotFoundException;
-import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
@@ -38,9 +40,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NavigableMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import javax.annotation.Nullable;
@@ -57,13 +62,12 @@ public class ConsumerConfigCache {
   // update interval for CConfiguration
   private static final long CONFIG_UPDATE_FREQUENCY = 300 * 1000L;
 
-  private static final ConcurrentMap<byte[], ConsumerConfigCache> INSTANCES =
-    new ConcurrentSkipListMap<byte[], ConsumerConfigCache>(Bytes.BYTES_COMPARATOR);
+  private static final ConcurrentMap<TableName, ConsumerConfigCache> INSTANCES = new ConcurrentHashMap<>();
 
-  private final byte[] queueConfigTableName;
-  private final Configuration hConf;
+  private final TableName queueConfigTableName;
   private final CConfigurationReader cConfReader;
   private final Supplier<TransactionSnapshot> transactionSnapshotSupplier;
+  private final InputSupplier<HTableInterface> hTableSupplier;
   private final TransactionCodec txCodec;
 
   private Thread refreshThread;
@@ -77,17 +81,18 @@ public class ConsumerConfigCache {
   /**
    * Constructs a new instance.
    *
-   * @param hConf configuration for HBase
    * @param queueConfigTableName table name that stores queue configuration
    * @param cConfReader reader to read the latest {@link CConfiguration}
    * @param transactionSnapshotSupplier A supplier for the latest {@link TransactionSnapshot}
+   * @param hTableSupplier A supplier for creating {@link HTableInterface}.
    */
-  ConsumerConfigCache(Configuration hConf, byte[] queueConfigTableName,
-                      CConfigurationReader cConfReader, Supplier<TransactionSnapshot> transactionSnapshotSupplier) {
-    this.hConf = hConf;
+  ConsumerConfigCache(TableName queueConfigTableName, CConfigurationReader cConfReader,
+                      Supplier<TransactionSnapshot> transactionSnapshotSupplier,
+                      InputSupplier<HTableInterface> hTableSupplier) {
     this.queueConfigTableName = queueConfigTableName;
     this.cConfReader = cConfReader;
     this.transactionSnapshotSupplier = transactionSnapshotSupplier;
+    this.hTableSupplier = hTableSupplier;
     this.txCodec = new TransactionCodec();
   }
 
@@ -142,15 +147,13 @@ public class ConsumerConfigCache {
       return;
     }
 
-    HTable table = new HTable(hConf, queueConfigTableName);
+    HTableInterface table = hTableSupplier.getInput();
     try {
       // Scan the table with the transaction snapshot
       Scan scan = new Scan();
       scan.addFamily(QueueEntryRow.COLUMN_FAMILY);
-      scan.setCacheBlocks(false);
-      scan.setCaching(1000);
       Transaction tx = TxUtils.createDummyTransaction(txSnapshot);
-      scan.setAttribute(TxConstants.TX_OPERATION_ATTRIBUTE_KEY, txCodec.encode(tx));
+      setScanAttribute(scan, TxConstants.TX_OPERATION_ATTRIBUTE_KEY, txCodec.encode(tx));
       ResultScanner scanner = table.getScanner(scan);
       int configCnt = 0;
       for (Result result : scanner) {
@@ -158,7 +161,7 @@ public class ConsumerConfigCache {
           NavigableMap<byte[], byte[]> familyMap = result.getFamilyMap(QueueEntryRow.COLUMN_FAMILY);
           if (familyMap != null) {
             configCnt++;
-            Map<ConsumerInstance, byte[]> consumerInstances = new HashMap<ConsumerInstance, byte[]>();
+            Map<ConsumerInstance, byte[]> consumerInstances = new HashMap<>();
             // Gather the startRow of all instances across all consumer groups.
             int numGroups = 0;
             Long groupId = null;
@@ -191,7 +194,7 @@ public class ConsumerConfigCache {
       try {
         table.close();
       } catch (IOException ioe) {
-        LOG.error("Error closing table {}", Bytes.toString(queueConfigTableName), ioe);
+        LOG.error("Error closing table {}", queueConfigTableName, ioe);
       }
     }
   }
@@ -210,7 +213,7 @@ public class ConsumerConfigCache {
               // This is expected when the namespace goes away since there is one config table per namespace
               // If the table is not found due to other situation, the region observer already
               // has logic to get a new one through the getInstance method
-              LOG.warn("Queue config table not found: {}", Bytes.toString(queueConfigTableName), e);
+              LOG.warn("Queue config table not found: {}", queueConfigTableName, e);
               break;
             } catch (IOException e) {
               LOG.warn("Error updating queue consumer config cache", e);
@@ -224,7 +227,7 @@ public class ConsumerConfigCache {
             break;
           }
         }
-        LOG.info("Config cache update for {} terminated.", Bytes.toString(queueConfigTableName));
+        LOG.info("Config cache update for {} terminated.", queueConfigTableName);
         INSTANCES.remove(queueConfigTableName, this);
       }
     };
@@ -232,12 +235,28 @@ public class ConsumerConfigCache {
     refreshThread.start();
   }
 
-  public static ConsumerConfigCache getInstance(Configuration hConf, byte[] tableName,
+  /**
+   * Sets an attribute to the given {@link Scan} object. Instead of calling {@link Scan#setAttribute(String, byte[])}
+   * directly, it uses reflection to call the method. This is because the return type for the setAttribute method
+   * is different in different HBase version.
+   */
+  private void setScanAttribute(Scan scan, String name, byte[] value) {
+    try {
+      Method setAttribute = scan.getClass().getMethod("setAttribute", String.class, byte[].class);
+      setAttribute.invoke(scan, name, value);
+    } catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
+      LOG.error("Failed to call Scan.setAttribute", e);
+      throw Throwables.propagate(e);
+    }
+  }
+
+  public static ConsumerConfigCache getInstance(TableName tableName,
                                                 CConfigurationReader cConfReader,
-                                                Supplier<TransactionSnapshot> txSnapshotSupplier) {
+                                                Supplier<TransactionSnapshot> txSnapshotSupplier,
+                                                InputSupplier<HTableInterface> hTableSupplier) {
     ConsumerConfigCache cache = INSTANCES.get(tableName);
     if (cache == null) {
-      cache = new ConsumerConfigCache(hConf, tableName, cConfReader, txSnapshotSupplier);
+      cache = new ConsumerConfigCache(tableName, cConfReader, txSnapshotSupplier, hTableSupplier);
       if (INSTANCES.putIfAbsent(tableName, cache) == null) {
         // if another thread created an instance for the same table, that's ok, we only init the one saved
         cache.init();

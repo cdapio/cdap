@@ -50,7 +50,7 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 public @interface ProcessInput {
 
-  static final int DEFAULT_MAX_RETRIES = 20;
+  int DEFAULT_MAX_RETRIES = 20;
 
   /**
    * Optionally tags the name of inputs to the process method.

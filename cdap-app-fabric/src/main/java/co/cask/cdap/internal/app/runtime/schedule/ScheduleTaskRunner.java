@@ -21,7 +21,8 @@ import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
-import co.cask.cdap.common.exception.ProgramNotFoundException;
+import co.cask.cdap.common.ApplicationNotFoundException;
+import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
@@ -88,20 +89,11 @@ public final class ScheduleTaskRunner {
 
     // Schedule properties are overriden by resolved preferences
     userArgs.putAll(spec.getProperties());
-    userArgs.putAll(propertiesResolver.getUserProperties(programId, programType));
+    userArgs.putAll(propertiesResolver.getUserProperties(programId));
 
-    systemArgs.putAll(propertiesResolver.getSystemProperties(programId, programType));
+    systemArgs.putAll(propertiesResolver.getSystemProperties(programId));
     systemArgs.putAll(systemOverrides);
 
-    boolean runMultipleProgramInstances =
-      Boolean.parseBoolean(userArgs.get(ProgramOptionConstants.CONCURRENT_RUNS_ENABLED));
-
-    if (!runMultipleProgramInstances) {
-      ProgramRuntimeService.RuntimeInfo existingInfo = lifecycleService.findRuntimeInfo(programId, programType);
-      if (existingInfo != null) {
-        throw new TaskExecutionException(UserMessages.getMessage(UserErrors.ALREADY_RUNNING), false);
-      }
-    }
     return execute(programId, programType, systemArgs, userArgs);
   }
 
@@ -114,8 +106,8 @@ public final class ScheduleTaskRunner {
                                       Map<String, String> userArgs) throws IOException, TaskExecutionException {
     ProgramRuntimeService.RuntimeInfo runtimeInfo;
     try {
-      runtimeInfo = lifecycleService.start(id, type, sysArgs, userArgs, false);
-    } catch (ProgramNotFoundException e) {
+      runtimeInfo = lifecycleService.start(id, sysArgs, userArgs, false);
+    } catch (ProgramNotFoundException | ApplicationNotFoundException e) {
       throw new TaskExecutionException(UserMessages.getMessage(UserErrors.PROGRAM_NOT_FOUND), e, false);
     }
 

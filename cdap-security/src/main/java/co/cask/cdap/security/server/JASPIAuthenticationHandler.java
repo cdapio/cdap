@@ -77,7 +77,7 @@ public class JASPIAuthenticationHandler extends AbstractAuthenticationHandler {
     JaspiAuthenticatorFactory jaspiAuthenticatorFactory = new JaspiAuthenticatorFactory();
     jaspiAuthenticatorFactory.setLoginService(getHandlerLoginService());
 
-    HashMap<String, ServerAuthContext> serverAuthContextMap = new HashMap<String, ServerAuthContext>();
+    HashMap<String, ServerAuthContext> serverAuthContextMap = new HashMap<>();
     ServletCallbackHandler callbackHandler = new ServletCallbackHandler(getHandlerLoginService());
     ServerAuthModule authModule = new BasicAuthModule(callbackHandler, "JAASRealm");
     serverAuthContextMap.put("authContextID", new ServerAuthContextImpl(Collections.singletonList(authModule)));
@@ -108,7 +108,7 @@ public class JASPIAuthenticationHandler extends AbstractAuthenticationHandler {
     return new Configuration() {
       @Override
       public AppConfigurationEntry[] getAppConfigurationEntry(String s) {
-        HashMap<String, String> map = new HashMap<String, String>();
+        HashMap<String, String> map = new HashMap<>();
 
 
         String configRegex = Constants.Security.AUTH_HANDLER_CONFIG_BASE.replace(".", "\\.").concat(".");

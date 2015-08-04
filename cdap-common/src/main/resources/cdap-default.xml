@@ -409,7 +409,8 @@
         <name>data.tx.snapshot.codecs</name>
         <value>
           co.cask.cdap.data2.transaction.snapshot.SnapshotCodecV1,
-          co.cask.cdap.data2.transaction.snapshot.SnapshotCodecV2
+          co.cask.cdap.data2.transaction.snapshot.SnapshotCodecV2,
+          co.cask.tephra.snapshot.SnapshotCodecV3
         </value>
         <description>Specifies the class names of all supported transaction state codecs</description>
     </property>
@@ -641,8 +642,17 @@
 
     <property>
         <name>app.program.jvm.opts</name>
-        <value>${twill.jvm.gc.opts}</value>
+        <value>-XX:MaxPermSize=128M ${twill.jvm.gc.opts}</value>
         <description>Java options for all program containers</description>
+    </property>
+
+    <property>
+        <name>app.program.runid.corrector.interval</name>
+        <value>180</value>
+        <description>
+            The interval of how often the run id corrector thread will run in seconds.
+            This value should be greater than 0.
+        </description>
     </property>
 
   <!-- Used for MapReduce Info endpoint -->
@@ -662,13 +672,22 @@
         </description>
     </property>
 
-    <!-- scheduler related changes -->
+    <!-- scheduler related configuration -->
     <property>
         <name>scheduler.max.thread.pool.size</name>
         <value>30</value>
         <description>Size of the scheduler thread pool</description>
     </property>
 
+    <!-- workflow related configuration -->
+    <property>
+        <name>workflow.token.max.size.mb</name>
+        <value>30</value>
+        <description>
+            Maximum allowed size of a Workflow Token in MB. If the workflow token exceeds this size, no further
+            updates are allowed.
+        </description>
+    </property>
 
     <!--
         Router configuration
@@ -1079,14 +1098,8 @@
     </property>
 
     <property>
-      <name>security.auth.server.address</name>
-      <value></value>
-      <description>Deprecated. Use security.auth.server.bind.address instead.</description>
-    </property>
-
-    <property>
-      <name>security.auth.server.bind.address</name>
-      <value>0.0.0.0</value>
+        <name>security.auth.server.bind.address</name>
+        <value>0.0.0.0</value>
     </property>
 
     <property>

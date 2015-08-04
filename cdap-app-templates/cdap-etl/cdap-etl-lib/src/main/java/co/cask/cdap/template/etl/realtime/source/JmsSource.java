@@ -31,9 +31,12 @@ import co.cask.cdap.template.etl.realtime.jms.JmsProvider;
 import co.cask.cdap.template.etl.realtime.jms.JndiBasedJmsProvider;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Type;
 import java.util.Hashtable;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -56,15 +59,24 @@ import javax.naming.Context;
  */
 @Plugin(type = "source")
 @Name("JMS")
-@Description("JMS Realtime Source")
+@Description("JMS Real-time Source: Emits a record with a field 'message' of type String.")
 public class JmsSource extends RealtimeSource<StructuredRecord> {
   private static final Logger LOG = LoggerFactory.getLogger(JmsSource.class);
+
+  private static final Gson GSON = new Gson();
+  private static final Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
   public static final String JMS_DESTINATION_NAME = "jms.destination.name";
   public static final String JMS_MESSAGES_TO_RECEIVE = "jms.messages.receive";
   public static final String JMS_NAMING_FACTORY_INITIAL = "jms.factory.initial";
   public static final String JMS_PROVIDER_URL = "jms.provider.url";
-  public static final String JMS_CONNECTION_FACTORY_NAME = "ConnectionFactory";
+  public static final String JMS_CONNECTION_FACTORY_NAME = "jms.jndi.connectionfactory.name";
+  public static final String JMS_PLUGIN_NAME = "jms.plugin.name";
+  public static final String JMS_PLUGIN_TYPE = "jms.plugin.type";
+  public static final String JMS_CUSTOM_PROPERTIES = "jms.plugin.custom.properties";
+
+  public static final String DEFAULT_CONNECTION_FACTORY = "ConnectionFactory";
+  public static final String JMS_PROVIDER = "JMSProvider";
 
   private static final long JMS_CONSUMER_TIMEOUT_MS = 2000;
 
@@ -106,11 +118,17 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
       runtimeArguments.putAll(config.getProperties().getProperties());
     }
 
+    // if the JMS config has custom properties lets load it
+    if (config.customProperties != null) {
+      Map<String, String> customProperties = GSON.fromJson(config.customProperties, STRING_MAP_TYPE);
+      runtimeArguments.putAll(customProperties);
+    }
+
     Integer configMessagesToReceive = config.messagesToReceive;
     messagesToReceive = configMessagesToReceive.intValue();
 
     // Get environment vars - this would be prefixed with java.naming.*
-    final Hashtable<String, String> envVars = new Hashtable<String, String>();
+    final Hashtable<String, String> envVars = new Hashtable<>();
     for (Map.Entry<String, String> entry : runtimeArguments.entrySet()) {
       envVars.put(entry.getKey(), entry.getValue());
     }
@@ -120,7 +138,7 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
     envVars.put(Context.PROVIDER_URL, config.providerUrl);
 
     // load the class to this class loader
-    Class<Object> driver = context.loadPluginClass("jmsource.JMSProvider.Context");
+    Class<Object> driver = context.loadPluginClass(getPluginId());
 
     // Bootstrap the JMS consumer
     ClassLoader driverCL = null;
@@ -171,18 +189,20 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
           LOG.warn("Exception when closing connection", ex2);
         }
       }
-      throw new RuntimeException("JMSException thrown when trying to initialize connection: " + ex.getMessage(),
-                                 ex);
+      throw new RuntimeException("JMSException thrown when trying to initialize connection", ex);
     }
   }
 
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
-    Class<Object> driver  = pipelineConfigurer.usePluginClass("JMSProvider",
-                                                              Context.INITIAL_CONTEXT_FACTORY,
-                                                              "jmsource.JMSProvider.Context",
+    String pluginId = getPluginId();
+    Class<Object> driver  = pipelineConfigurer.usePluginClass(config.jmsPluginType, config.jmsPluginName, pluginId,
                                                               PluginProperties.builder().build());
     Preconditions.checkArgument(driver != null, "JMS Initial Connection Factory Context class must be found.");
+  }
+
+  private String getPluginId() {
+    return String.format("%s.%s.%s", "jmsource", config.jmsPluginType, config.jmsPluginName);
   }
 
   @Nullable
@@ -303,22 +323,22 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
    */
   public static class JmsPluginConfig extends PluginConfig {
     @Name(JMS_DESTINATION_NAME)
-    @Description("Name of the destination to get messages")
+    @Description("Name of the destination from which to retrieve messages.")
     private String destinationName;
 
     @Name(JMS_MESSAGES_TO_RECEIVE)
-    @Description("Max number messages should be retrieved per poll. The default value is 50.")
+    @Description("Maximum number of messages that should be retrieved per poll. The default value is 50.")
     @Nullable
     private Integer messagesToReceive;
 
     @Name(JMS_NAMING_FACTORY_INITIAL)
-    @Description("The fully qualified class name of the factory class that will create an initial context. " +
-      "This will be passed to JNDI initial context as " + Context.INITIAL_CONTEXT_FACTORY)
+    @Description("The fully-qualified class name of the factory class that will be used to create an initial " +
+      "context. This will be passed to the JNDI initial context as '" + Context.INITIAL_CONTEXT_FACTORY + "'.")
     private String initialContextFactory;
 
     @Name(JMS_PROVIDER_URL)
-    @Description("This property contains information for the service provider URL to use. " +
-      "This will be passed to JNDI initial context as " + Context.PROVIDER_URL)
+    @Description("Information for the service provider URL to use. " +
+      "This will be passed to the JNDI initial context as '" + Context.PROVIDER_URL + "'.")
     private String providerUrl;
 
     @Name(JMS_CONNECTION_FACTORY_NAME)
@@ -326,13 +346,31 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
     @Nullable
     private String connectionFactoryName;
 
+    @Name(JMS_PLUGIN_NAME)
+    @Description("Name of the JMS plugin to use. This is the value of the 'name' key defined in the JSON file " +
+        "for the JMS plugin. Defaults to '" + Context.INITIAL_CONTEXT_FACTORY + "'.")
+    @Nullable
+    public String jmsPluginName;
+
+    @Name(JMS_PLUGIN_TYPE)
+    @Description("Type of the JMS plugin to use. This is the value of the 'type' key defined in the JSON file " +
+        "for the JMS plugin. Defaults to 'JMSProvider'.")
+    @Nullable
+    public String jmsPluginType;
+
+    @Name(JMS_CUSTOM_PROPERTIES)
+    @Description("Provide any required custom properties as a JSON Map.")
+    @Nullable
+    public String customProperties;
+
     public JmsPluginConfig() {
-      messagesToReceive = 50;
-      connectionFactoryName = "ConnectionFactory";
+      this(null, null, null, 50, DEFAULT_CONNECTION_FACTORY, Context.INITIAL_CONTEXT_FACTORY, JMS_PROVIDER, null);
     }
 
-    public JmsPluginConfig(String destinationName, @Nullable Integer messagesToReceive, String initialContextFactory,
-                           String providerUrl, @Nullable String connectionFactoryName) {
+    public JmsPluginConfig(String destinationName, String initialContextFactory, String providerUrl,
+                           @Nullable Integer messagesToReceive, @Nullable String connectionFactoryName,
+                           @Nullable String jmsPluginName, @Nullable String jmsPluginType,
+                           @Nullable String customProperties) {
       this.destinationName = destinationName;
       if (messagesToReceive != null) {
         this.messagesToReceive = messagesToReceive;
@@ -344,8 +382,25 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
       if (connectionFactoryName != null) {
         this.connectionFactoryName = connectionFactoryName;
       } else {
-        this.connectionFactoryName = JMS_CONNECTION_FACTORY_NAME;
+        this.connectionFactoryName = DEFAULT_CONNECTION_FACTORY;
       }
+      this.jmsPluginName = jmsPluginName;
+      if (this.jmsPluginName == null) {
+        this.jmsPluginName = Context.INITIAL_CONTEXT_FACTORY;
+      }
+      this.jmsPluginType = jmsPluginType;
+      if (this.jmsPluginType == null) {
+        this.jmsPluginType = JMS_PROVIDER;
+      }
+      this.jmsPluginName = jmsPluginName;
+      if (this.jmsPluginName == null) {
+        this.jmsPluginName = Context.INITIAL_CONTEXT_FACTORY;
+      }
+      this.jmsPluginType = jmsPluginType;
+      if (this.jmsPluginType == null) {
+        this.jmsPluginType = JMS_PROVIDER;
+      }
+      this.customProperties = customProperties;
     }
   }
 }

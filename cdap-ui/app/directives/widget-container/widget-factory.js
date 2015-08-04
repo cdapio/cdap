@@ -12,6 +12,7 @@ angular.module(PKG.name + '.commons')
         element: '<input/>',
         attributes: {
           'class': 'form-control',
+          'data-ng-trim': 'false',
           'ng-model': 'model',
           placeholder: '{{myconfig.properties.default || ""}}'
         }
@@ -20,6 +21,7 @@ angular.module(PKG.name + '.commons')
         element: '<input/>',
         attributes: {
           'class': 'form-control',
+          'data-ng-trim': 'false',
           'ng-model': 'model',
           type: 'password'
         }
@@ -48,11 +50,10 @@ angular.module(PKG.name + '.commons')
         }
       },
       'json-editor': {
-        element: '<textarea></textarea>',
+        element: '<my-json-textbox></my-json-textbox>',
         attributes: {
           'ng-model': 'model',
-          'class': 'form-control',
-          placeholder: '{{myconfig.properties.default || ""}}'
+          placeholder: 'myconfig.properties.default'
         }
       },
       'javascript-editor': {
@@ -91,6 +92,14 @@ angular.module(PKG.name + '.commons')
           'class': 'form-control',
           'ng-options': 'item as item for item in myconfig.properties.values',
           'ng-init': 'model = model.length ? model : myconfig.properties.default'
+        }
+      },
+      'stream-properties': {
+        element: '<my-stream-properties></my-stream-properties>',
+        attributes: {
+          'ng-model': 'model',
+          'data-plugins': 'properties',
+          'data-config': 'myconfig'
         }
       }
     };

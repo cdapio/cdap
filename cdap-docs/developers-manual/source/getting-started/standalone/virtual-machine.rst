@@ -24,7 +24,7 @@ The CDAP Standalone Virtual Machine is configured with the recommended settings 
 
 It has pre-installed all the software that you need to run and develop CDAP applications:
    
-- Java JDK 7 and Node.js are both installed.
+- Java JDK 7 or 8 and Node.js are both installed.
 - Maven is installed and configured to work for CDAP.
 - The Standalone CDAP SDK is installed under ``/Software/cdap-sdk-``\ |literal-release|
   and will automatically start when the virtual machine starts.
@@ -42,5 +42,4 @@ remove software, the admin user and password are both ``cdap``.
    :start-line: 4
    :end-line:   33
 
-.. include:: ../building-apps.rst
-   :start-line: 7
+.. include:: building-apps.txt

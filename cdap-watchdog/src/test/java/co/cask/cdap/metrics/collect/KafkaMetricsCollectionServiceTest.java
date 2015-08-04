@@ -97,17 +97,12 @@ public class KafkaMetricsCollectionServiceTest {
 
     MetricsCollectionService collectionService = new KafkaMetricsCollectionService(kafkaClient, "metrics",
                                                                                    KafkaPublisher.Ack.FIRE_AND_FORGET,
-                                                                                   metricRecordDatumWriter) {
-      @Override
-      protected boolean isPublishMetaMetrics() {
-        return false;
-      }
-    };
+                                                                                   metricRecordDatumWriter);
     collectionService.startAndWait();
 
     // publish metrics for different context
     for (int i = 1; i <= 3; i++) {
-      collectionService.getCollector(ImmutableMap.of("tag", "" + i)).increment("processed", i);
+      collectionService.getContext(ImmutableMap.of("tag", "" + i)).increment("processed", i);
     }
 
     // Sleep to make sure metrics get published
@@ -141,12 +136,7 @@ public class KafkaMetricsCollectionServiceTest {
 
     MetricsCollectionService collectionService = new KafkaMetricsCollectionService(kafkaClient, "metrics",
                                                                                    KafkaPublisher.Ack.FIRE_AND_FORGET,
-                                                                                   metricRecordDatumWriter) {
-      @Override
-      protected boolean isPublishMetaMetrics() {
-        return false;
-      }
-    };
+                                                                                   metricRecordDatumWriter);
     collectionService.startAndWait();
 
     // start the kafka server
@@ -158,7 +148,7 @@ public class KafkaMetricsCollectionServiceTest {
     TimeUnit.SECONDS.sleep(5);
 
     // public a metric
-    collectionService.getCollector(ImmutableMap.of("tag", "test")).increment("metric", 5);
+    collectionService.getContext(ImmutableMap.of("tag", "test")).increment("metric", 5);
 
     // Sleep to make sure metrics get published
     TimeUnit.SECONDS.sleep(2);
@@ -181,7 +171,7 @@ public class KafkaMetricsCollectionServiceTest {
     kafkaClient.getConsumer().prepare().addFromBeginning("metrics", 0)
                                        .consume(new KafkaConsumer.MessageCallback() {
 
-      ReflectionDatumReader<MetricValues> reader = new ReflectionDatumReader<MetricValues>(schema, metricRecordType);
+      ReflectionDatumReader<MetricValues> reader = new ReflectionDatumReader<>(schema, metricRecordType);
 
       @Override
       public void onReceived(Iterator<FetchedMessage> messages) {
@@ -219,13 +209,19 @@ public class KafkaMetricsCollectionServiceTest {
     Assert.assertEquals(expected.rowKeySet().size(), metrics.size());
 
     for (String expectedContext : expected.rowKeySet()) {
-      MetricValues metric = metrics.get(expectedContext);
-      Assert.assertNotNull("Missing expected value for " + expectedContext, metric);
+      MetricValues metricValues = metrics.get(expectedContext);
+      Assert.assertNotNull("Missing expected value for " + expectedContext, metricValues);
 
-      // validate metrics and their values
-      for (MetricValue metricValue : metric.getMetrics()) {
-        Assert.assertNotNull(expected.contains(expectedContext, metricValue));
-        Assert.assertEquals((long) expected.get(expectedContext, metricValue.getName()), metricValue.getValue());
+      for (Map.Entry<String, Long> entry : expected.column(expectedContext).entrySet()) {
+        boolean found = false;
+        for (MetricValue metricValue : metricValues.getMetrics()) {
+          found = true;
+          if (entry.getKey().equals(metricValue.getName())) {
+            Assert.assertEquals(entry.getValue().longValue(), metricValue.getValue());
+          }
+          break;
+        }
+        Assert.assertTrue(found);
       }
     }
 

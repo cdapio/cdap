@@ -16,13 +16,14 @@
 
 package co.cask.cdap.examples.wordcount;
 
-import co.cask.cdap.api.annotation.UseDataSet;
+import co.cask.cdap.api.annotation.Property;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
+import co.cask.cdap.api.service.http.HttpServiceContext;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import com.google.common.base.Charsets;
@@ -42,20 +43,46 @@ import javax.ws.rs.QueryParam;
  * Retrieve Counts service handler.
  */
 public class RetrieveCountsHandler extends AbstractHttpServiceHandler {
-
   private static final int WORD_COUNT_LIMIT = 10;
 
-  @UseDataSet("wordStats")
+  @Property
+  private final String wordStatsTableName;
+
+  @Property
+  private final String wordCountTableName;
+
+  @Property
+  private final String uniqueCountTableName;
+
+  @Property
+  private final String wordAssocTableName;
+
   private Table wordStatsTable;
-
-  @UseDataSet("wordCounts")
   private KeyValueTable wordCountsTable;
-
-  @UseDataSet("uniqueCount")
   private UniqueCountTable uniqueCountTable;
-
-  @UseDataSet("wordAssocs")
   private AssociationTable associationTable;
+
+  public RetrieveCountsHandler(WordCount.WordCountConfig config) {
+    this.wordStatsTableName = config.getWordStatsTable();
+    this.wordCountTableName = config.getWordCountTable();
+    this.uniqueCountTableName = config.getUniqueCountTable();
+    this.wordAssocTableName = config.getWordAssocTable();
+  }
+
+  @Override
+  protected void configure() {
+    super.configure();
+    useDatasets(wordStatsTableName, wordCountTableName, uniqueCountTableName, wordAssocTableName);
+  }
+
+  @Override
+  public void initialize(HttpServiceContext context) throws Exception {
+    super.initialize(context);
+    wordStatsTable = context.getDataset(wordStatsTableName);
+    wordCountsTable = context.getDataset(wordCountTableName);
+    uniqueCountTable = context.getDataset(uniqueCountTableName);
+    associationTable = context.getDataset(wordAssocTableName);
+  }
 
   /**
    * Returns total number of words, the number of unique words, and the average word length.
@@ -86,7 +113,7 @@ public class RetrieveCountsHandler extends AbstractHttpServiceHandler {
     }
 
     // Return a map as JSON
-    Map<String, Object> results = new HashMap<String, Object>();
+    Map<String, Object> results = new HashMap<>();
     results.put("totalWords", totalWords);
     results.put("uniqueWords", uniqueWords);
     results.put("averageLength", averageLength);
@@ -110,7 +137,7 @@ public class RetrieveCountsHandler extends AbstractHttpServiceHandler {
     Map<String, Long> wordsAssocs = associationTable.readWordAssocs(word, limit);
 
     // Build a map with results
-    Map<String, Object> results = new HashMap<String, Object>();
+    Map<String, Object> results = new HashMap<>();
     results.put("word", word);
     results.put("count", wordCount);
     results.put("assocs", wordsAssocs);
@@ -184,7 +211,7 @@ public class RetrieveCountsHandler extends AbstractHttpServiceHandler {
     long count = associationTable.getAssoc(word1, word2);
 
     // Return a map as JSON
-    Map<String, Object> results = new HashMap<String, Object>();
+    Map<String, Object> results = new HashMap<>();
     results.put("word1", word1);
     results.put("word2", word2);
     results.put("count", count);

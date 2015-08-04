@@ -12,6 +12,7 @@ angular.module(PKG.name + '.feature.userprofile')
         method: 'POST',
         url: '/accessToken',
         data: {
+          profile_view: true,
           username: credentials.username,
           password: credentials.password
         }
@@ -21,9 +22,9 @@ angular.module(PKG.name + '.feature.userprofile')
           $scope.expirationTime = Date.now() + (res.expires_in * 1000);
           $scope.reAuthenticated = true;
         })
-        .error(function(res) {
+        .error(function() {
           myAlert({
-            title: 'User Authentication Error!',
+            title: 'User Authentication Error',
             content: 'Either Username or Password is wrong. Please try again',
             type: 'danger'
           });

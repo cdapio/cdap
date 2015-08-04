@@ -27,19 +27,16 @@ import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.cli.util.AbstractCommand;
 import co.cask.cdap.cli.util.FilePathResolver;
-import co.cask.cdap.cli.util.RowMaker;
-import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.ServiceClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.conf.StringUtils;
+import co.cask.cdap.proto.Id;
 import co.cask.common.cli.Arguments;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
@@ -47,9 +44,7 @@ import com.google.inject.Inject;
 
 import java.io.PrintStream;
 import java.net.URL;
-import java.nio.ByteBuffer;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -84,6 +79,9 @@ public class CallServiceCommand extends AbstractCommand implements Categorized {
 
     String appId = appAndServiceId[0];
     String serviceId = appAndServiceId[1];
+    Id.Service service = Id.Service.from(
+      Id.Application.from(cliConfig.getCurrentNamespace(), appId), serviceId);
+
     String method = arguments.get(ArgumentName.HTTP_METHOD.toString());
     String path = arguments.get(ArgumentName.ENDPOINT.toString());
     path = path.startsWith("/") ? path.substring(1) : path;
@@ -97,9 +95,8 @@ public class CallServiceCommand extends AbstractCommand implements Categorized {
       throw new CommandInputError(this, message);
     }
 
-    Map<String, String> headerMap = GSON.fromJson(headers, new TypeToken<Map<String, String>>() {
-    }.getType());
-    URL url = new URL(serviceClient.getServiceURL(appId, serviceId), path);
+    Map<String, String> headerMap = GSON.fromJson(headers, new TypeToken<Map<String, String>>() { }.getType());
+    URL url = new URL(serviceClient.getServiceURL(service), path);
 
     HttpMethod httpMethod = HttpMethod.valueOf(method);
     HttpRequest.Builder builder = HttpRequest.builder(httpMethod, url).addHeaders(headerMap);
@@ -114,19 +111,11 @@ public class CallServiceCommand extends AbstractCommand implements Categorized {
     }
 
     HttpResponse response = restClient.execute(builder.build(), clientConfig.getAccessToken());
-
-    Table table = Table.builder()
-      .setHeader("status", "headers", "body size", "body")
-      .setRows(ImmutableList.of(response), new RowMaker<HttpResponse>() {
-        @Override
-        public List<?> makeRow(HttpResponse httpResponse) {
-          ByteBuffer byteBuffer = ByteBuffer.wrap(httpResponse.getResponseBody());
-          long bodySize = byteBuffer.remaining();
-          return Lists.newArrayList(httpResponse.getResponseCode(), formatHeaders(httpResponse),
-                                    bodySize, getBody(byteBuffer));
-        }
-      }).build();
-    cliConfig.getTableRenderer().render(cliConfig, output, table);
+    output.printf("< %s %s\n", response.getResponseCode(), response.getResponseMessage());
+    for (Map.Entry<String, String> header : response.getHeaders().entries()) {
+      output.printf("< %s: %s\n", header.getKey(), header.getValue());
+    }
+    output.print(response.getResponseBodyAsString());
   }
 
   @Override
@@ -143,7 +132,7 @@ public class CallServiceCommand extends AbstractCommand implements Categorized {
                          " The request body may be provided either as a string or a file." +
                          " To provide the body as a string, use \"body <%s>\"." +
                          " To provide the body as a file, use \"body:file <%s>\".",
-                         Fragment.of(Article.A, ElementType.SERVICE.getTitleName()),
+                         Fragment.of(Article.A, ElementType.SERVICE.getName()),
                          ArgumentName.HEADERS, ArgumentName.HTTP_BODY, ArgumentName.LOCAL_FILE_PATH);
   }
 
@@ -153,7 +142,7 @@ public class CallServiceCommand extends AbstractCommand implements Categorized {
    */
   private String formatHeaders(HttpResponse response) {
     Multimap<String, String> headers = response.getHeaders();
-    ImmutableMap.Builder<String, String> builder = new ImmutableMap.Builder<String, String>();
+    ImmutableMap.Builder<String, String> builder = new ImmutableMap.Builder<>();
     for (String key : headers.keySet()) {
       Collection<String> value = headers.get(key);
       builder.put(key, StringUtils.arrayToString(value.toArray(new String[value.size()])));

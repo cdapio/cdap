@@ -18,7 +18,9 @@ package co.cask.cdap.common.exception;
 
 /**
  * Thrown when there was a conflict.
+ * @deprecated Use {@link co.cask.cdap.common.ConflictException} instead
  */
+@Deprecated
 public class ConflictException extends Exception {
 
   public ConflictException() {

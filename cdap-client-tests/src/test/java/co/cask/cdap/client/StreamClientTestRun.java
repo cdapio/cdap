@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,11 +19,11 @@ package co.cask.cdap.client;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.client.common.ClientTestBase;
-import co.cask.cdap.common.exception.BadRequestException;
-import co.cask.cdap.common.exception.CannotBeDeletedException;
-import co.cask.cdap.common.exception.NotFoundException;
-import co.cask.cdap.common.exception.StreamNotFoundException;
-import co.cask.cdap.common.exception.UnauthorizedException;
+import co.cask.cdap.common.BadRequestException;
+import co.cask.cdap.common.CannotBeDeletedException;
+import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.StreamNotFoundException;
+import co.cask.cdap.common.UnauthorizedException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.StreamProperties;
@@ -62,31 +62,22 @@ public class StreamClientTestRun extends ClientTestBase {
     super.setUp();
     namespaceClient = new NamespaceClient(clientConfig);
     namespaceClient.create(new NamespaceMeta.Builder().setName(namespaceId).build());
-    clientConfig.setNamespace(namespaceId);
     streamClient = new StreamClient(clientConfig);
   }
 
   @Test
   public void testAll() throws Exception {
-    String testStreamId = "teststream";
+    Id.Stream streamId = Id.Stream.from(namespaceId, "testAll");
 
     LOG.info("Getting stream list");
-    int baseStreamCount = streamClient.list().size();
-    Assert.assertEquals(baseStreamCount, streamClient.list().size());
+    int baseStreamCount = streamClient.list(namespaceId).size();
+    Assert.assertEquals(baseStreamCount, streamClient.list(namespaceId).size());
     LOG.info("Creating stream");
-    streamClient.create(testStreamId);
+    streamClient.create(streamId);
     LOG.info("Checking stream list");
-    Assert.assertEquals(baseStreamCount + 1, streamClient.list().size());
-    StreamProperties config = streamClient.getConfig(testStreamId);
+    Assert.assertEquals(baseStreamCount + 1, streamClient.list(namespaceId).size());
+    StreamProperties config = streamClient.getConfig(streamId);
     Assert.assertNotNull(config);
-    // TODO: getting and setting config for stream is not supported with in-memory
-//    streamClient.setTTL(testStreamId, 123);
-//    streamClient.sendEvent(testStreamId, testStreamEvent);
-//    streamClient.truncate(testStreamId);
-//    streamClient.sendEvent(testStreamId, testStreamEvent);
-//    String consumerId = streamClient.getConsumerId(testStreamId);
-//    Assert.assertEquals(testStreamEvent, streamClient.dequeueEvent(testStreamId, consumerId));
-//    Assert.assertEquals(null, streamClient.dequeueEvent(testStreamId, consumerId));
   }
 
   /**
@@ -96,8 +87,7 @@ public class StreamClientTestRun extends ClientTestBase {
   public void testStreamEvents() throws IOException, BadRequestException,
     StreamNotFoundException, UnauthorizedException {
 
-    String streamId = "testEvents";
-
+    Id.Stream streamId = Id.Stream.from(namespaceId, "testEvents");
     streamClient.create(streamId);
 
     // Send 5000 events
@@ -137,8 +127,7 @@ public class StreamClientTestRun extends ClientTestBase {
    */
   @Test
   public void testAsyncWrite() throws Exception {
-    String streamId = "testAsync";
-
+    Id.Stream streamId = Id.Stream.from(namespaceId, "testAsync");
     streamClient.create(streamId);
 
     // Send 10 async writes
@@ -186,10 +175,47 @@ public class StreamClientTestRun extends ClientTestBase {
     testSendFile(500000);
   }
 
+  @Test
+  public void testDelete() throws Exception {
+    Id.Stream streamId = Id.Stream.from(namespaceId, "testDelete");
+    streamClient.create(streamId);
+
+    // Send an event and get it back
+    String msg = "Test Delete";
+    streamClient.sendEvent(streamId, msg);
+    List<StreamEvent> events = Lists.newArrayList();
+    streamClient.getEvents(streamId, 0, Long.MAX_VALUE, Integer.MAX_VALUE, events);
+    Assert.assertEquals(1, events.size());
+    Assert.assertEquals(msg, Charsets.UTF_8.decode(events.get(0).getBody()).toString());
+
+    // Delete the stream
+    streamClient.delete(streamId);
+    // Try to get info, it should throw a StreamNotFoundException
+    try {
+      streamClient.getConfig(streamId);
+      Assert.fail();
+    } catch (StreamNotFoundException e) {
+      // Expected
+    }
+
+    // Try to get events, it should throw a StreamNotFoundException
+    try {
+      streamClient.getEvents(streamId, 0, Long.MAX_VALUE, Integer.MAX_VALUE, events);
+      Assert.fail();
+    } catch (StreamNotFoundException e) {
+      // Expected
+    }
+
+    // Create the stream again, it should returns empty events
+    streamClient.create(streamId);
+    events.clear();
+    streamClient.getEvents(streamId, 0, Long.MAX_VALUE, Integer.MAX_VALUE, events);
+    Assert.assertTrue(events.isEmpty());
+  }
+
 
   private void testSendFile(int msgCount) throws Exception {
-    String streamId = "testSendFile";
-
+    Id.Stream streamId = Id.Stream.from(namespaceId, "testSendFile");
     streamClient.create(streamId);
 
     // Generate msgCount lines of events
@@ -217,6 +243,5 @@ public class StreamClientTestRun extends ClientTestBase {
   @After
   public void tearDown() throws CannotBeDeletedException, UnauthorizedException, NotFoundException, IOException {
     namespaceClient.delete(namespaceId.getId());
-    clientConfig.setNamespace(namespaceId);
   }
 }

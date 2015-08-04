@@ -25,15 +25,14 @@ import co.cask.cdap.app.deploy.ManagerFactory;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
+import co.cask.cdap.common.CannotBeDeletedException;
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.exception.CannotBeDeletedException;
-import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.http.AbstractBodyConsumer;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data.dataset.DatasetCreationSpec;
-import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;
@@ -104,13 +103,12 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private final AdapterService adapterService;
 
   @Inject
-  public AppLifecycleHttpHandler(Authenticator authenticator, CConfiguration configuration,
+  public AppLifecycleHttpHandler(CConfiguration configuration,
                                  ManagerFactory<DeploymentInfo, ApplicationWithPrograms> managerFactory,
                                  Scheduler scheduler, ProgramRuntimeService runtimeService, Store store,
                                  NamespaceAdmin namespaceAdmin, NamespacedLocationFactory namespacedLocationFactory,
                                  ApplicationLifecycleService applicationLifecycleService,
                                  AdapterService adapterService) {
-    super(authenticator);
     this.configuration = configuration;
     this.managerFactory = managerFactory;
     this.namespaceAdmin = namespaceAdmin;
@@ -130,9 +128,10 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public BodyConsumer deploy(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") final String namespaceId,
                              @PathParam("app-id") final String appId,
-                             @HeaderParam(ARCHIVE_NAME_HEADER) final String archiveName) {
+                             @HeaderParam(ARCHIVE_NAME_HEADER) final String archiveName,
+                             @HeaderParam(APP_CONFIG_HEADER) String configString) {
     try {
-      return deployApplication(responder, namespaceId, appId, archiveName);
+      return deployApplication(responder, namespaceId, appId, archiveName, configString);
     } catch (Exception ex) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed: {}" + ex.getMessage());
       return null;
@@ -147,10 +146,11 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps")
   public BodyConsumer deploy(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") final String namespaceId,
-                             @HeaderParam(ARCHIVE_NAME_HEADER) final String archiveName) {
+                             @HeaderParam(ARCHIVE_NAME_HEADER) final String archiveName,
+                             @HeaderParam(APP_CONFIG_HEADER) String configString) {
     // null means use name provided by app spec
     try {
-      return deployApplication(responder, namespaceId, null, archiveName);
+      return deployApplication(responder, namespaceId, null, archiveName, configString);
     } catch (Exception ex) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed: " + ex.getMessage());
       return null;
@@ -164,7 +164,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps")
   public void getAllApps(HttpRequest request, HttpResponder responder,
                          @PathParam("namespace-id") String namespaceId) {
-    getAppRecords(responder, store, namespaceId, null);
+    getAppRecords(responder, store, namespaceId);
   }
 
   /**
@@ -234,7 +234,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   private BodyConsumer deployApplication(final HttpResponder responder,
                                          final String namespaceId, final String appId,
-                                         final String archiveName) throws IOException {
+                                         final String archiveName, final String configString) throws IOException {
     Id.Namespace namespace = Id.Namespace.from(namespaceId);
     if (!namespaceAdmin.hasNamespace(namespace)) {
       LOG.warn("Namespace '{}' not found.", namespaceId);
@@ -251,7 +251,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       responder.sendString(HttpResponseStatus.NOT_FOUND, msg);
       return null;
     }
-
 
     if (archiveName == null || archiveName.isEmpty()) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, ARCHIVE_NAME_HEADER + " header not present",
@@ -279,7 +278,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       @Override
       protected void onFinish(HttpResponder responder, File uploadedFile) {
         try {
-          DeploymentInfo deploymentInfo = new DeploymentInfo(uploadedFile, archive);
+          DeploymentInfo deploymentInfo = new DeploymentInfo(uploadedFile, archive, configString);
           deploy(namespaceId, appId, deploymentInfo);
           responder.sendString(HttpResponseStatus.OK, "Deploy Complete");
         } catch (Exception e) {
@@ -297,8 +296,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
       Manager<DeploymentInfo, ApplicationWithPrograms> manager = managerFactory.create(new ProgramTerminator() {
         @Override
-        public void stop(Id.Namespace id, Id.Program programId, ProgramType type) throws ExecutionException {
-          deleteHandler(programId, type);
+        public void stop(Id.Program programId) throws ExecutionException {
+          deleteHandler(programId);
         }
       });
 
@@ -309,12 +308,11 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  private void deleteHandler(Id.Program programId, ProgramType type)
-    throws ExecutionException {
+  private void deleteHandler(Id.Program programId) throws ExecutionException {
     try {
-      switch (type) {
+      switch (programId.getType()) {
         case FLOW:
-          stopProgramIfRunning(programId, type);
+          stopProgramIfRunning(programId);
           break;
         case WORKFLOW:
           scheduler.deleteSchedules(programId, SchedulableProgramType.WORKFLOW);
@@ -323,10 +321,10 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           //no-op
           break;
         case SERVICE:
-          stopProgramIfRunning(programId, type);
+          stopProgramIfRunning(programId);
           break;
         case WORKER:
-          stopProgramIfRunning(programId, type);
+          stopProgramIfRunning(programId);
           break;
       }
     } catch (InterruptedException e) {
@@ -336,12 +334,13 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  private void stopProgramIfRunning(Id.Program programId, ProgramType type)
+  private void stopProgramIfRunning(Id.Program programId)
     throws InterruptedException, ExecutionException {
     ProgramRuntimeService.RuntimeInfo programRunInfo = findRuntimeInfo(programId.getNamespaceId(),
                                                                        programId.getApplicationId(),
                                                                        programId.getId(),
-                                                                       type, runtimeService);
+                                                                       programId.getType(),
+                                                                       runtimeService);
     if (programRunInfo != null) {
       doStop(programRunInfo);
     }
@@ -371,8 +370,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
-
-
 
   private static ApplicationDetail makeAppDetail(ApplicationSpecification spec) {
     List<ProgramRecord> programs = Lists.newArrayList();
@@ -411,6 +408,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       datasets.add(new DatasetDetail(datasetSpec.getInstanceName(), datasetSpec.getTypeName()));
     }
 
-    return new ApplicationDetail(spec.getName(), spec.getVersion(), spec.getDescription(), streams, datasets, programs);
+    return new ApplicationDetail(spec.getName(), spec.getVersion(), spec.getDescription(), spec.getConfiguration(),
+                                 streams, datasets, programs);
   }
 }

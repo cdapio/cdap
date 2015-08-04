@@ -1,0 +1,35 @@
+<!-- OUTPUT -->
+<div ng-if="DetailCtrl.activeTab === 3" ng-controller="FlowletDetailOutputController as OutputCtrl">
+  <table class="table table-responsive" ng-if="OutputCtrl.outputs.length > 0" cask-sortable>
+    <thead>
+      <tr ng-class="{'sort-enabled': OutputCtrl.outputs.length>0}">
+        <th>Rate</th>
+        <th data-predicate="total">Total</th>
+        <th data-predicate="output">Target</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr ng-repeat="output in OutputCtrl.outputs track by $index">
+        <td class="table-graph">
+
+            <c3-line
+              chart-metric="OutputCtrl.chartData"
+              chart-settings="OutputCtrl.chartSettings"
+              chart-size="{height: 150}"
+            ></c3-line>
+
+        </td>
+        <td>
+          {{ OutputCtrl.total | myNumber: 0 }} tuples
+        </td>
+        <td>
+          <a href="" ng-click="FlowletsController.selectFlowlet(output)">{{output}}</a>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="well text-center" ng-if="OutputCtrl.outputs.length === 0">
+    <h3>No Output</h3>
+  </div>
+</div>

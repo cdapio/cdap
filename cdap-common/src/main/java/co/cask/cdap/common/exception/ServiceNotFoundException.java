@@ -20,7 +20,9 @@ import co.cask.cdap.proto.Id;
 
 /**
  * Thrown when a stream is not found
+ * @deprecated Use {@link co.cask.cdap.common.ServiceNotFoundException} instead
  */
+@Deprecated
 public class ServiceNotFoundException extends NotFoundException {
 
   private final Id.Service id;

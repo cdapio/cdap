@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,11 +23,11 @@ import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.stream.GenericStreamEventData;
 import co.cask.cdap.api.stream.StreamEventData;
 import co.cask.cdap.api.stream.StreamEventDecoder;
-import co.cask.cdap.data.format.TextRecordFormat;
 import co.cask.cdap.data.stream.decoder.BytesStreamEventDecoder;
 import co.cask.cdap.data.stream.decoder.IdentityStreamEventDecoder;
 import co.cask.cdap.data.stream.decoder.StringStreamEventDecoder;
 import co.cask.cdap.data.stream.decoder.TextStreamEventDecoder;
+import co.cask.cdap.format.TextRecordFormat;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -244,7 +244,7 @@ public class StreamInputFormatTest {
     StreamEvent event = new StreamEvent(headers.build(), buffer, System.currentTimeMillis());
     StreamEventDecoder<LongWritable, StreamEvent> decoder = new IdentityStreamEventDecoder();
     StreamEventDecoder.DecodeResult<LongWritable, StreamEvent> result
-      = new StreamEventDecoder.DecodeResult<LongWritable, StreamEvent>();
+      = new StreamEventDecoder.DecodeResult<>();
     result = decoder.decode(event, result);
     Assert.assertEquals(new LongWritable(event.getTimestamp()), result.getKey());
     Assert.assertEquals(event, result.getValue());
@@ -256,7 +256,7 @@ public class StreamInputFormatTest {
     StreamEvent event = new StreamEvent(ImmutableMap.<String, String>of(), Charsets.UTF_8.encode(body));
     StreamEventDecoder<LongWritable, String> decoder = new StringStreamEventDecoder();
     StreamEventDecoder.DecodeResult<LongWritable, String> result
-      = new StreamEventDecoder.DecodeResult<LongWritable, String>();
+      = new StreamEventDecoder.DecodeResult<>();
     result = decoder.decode(event, result);
 
     Assert.assertEquals(event.getTimestamp(), result.getKey().get());
@@ -308,7 +308,7 @@ public class StreamInputFormatTest {
 
     // create a record reader for the 2nd split
     StreamRecordReader<LongWritable, StreamEvent> recordReader =
-      new StreamRecordReader<LongWritable, StreamEvent>(new IdentityStreamEventDecoder());
+      new StreamRecordReader<>(new IdentityStreamEventDecoder());
     recordReader.initialize(splits.get(1), context);
 
     // check that we read the 2nd stream event

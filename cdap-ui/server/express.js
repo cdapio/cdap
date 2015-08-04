@@ -35,6 +35,7 @@ function makeApp (authAddress, cdapConfig) {
   catch(e) { log.error('Favicon missing! Please run `gulp build`'); }
   app.use(compression());
   app.use(bodyParser.json());
+  app.use(bodyParser.urlencoded({ extended: false }));
   app.use(cookieParser());
 
   // serve the config file
@@ -60,6 +61,42 @@ function makeApp (authAddress, cdapConfig) {
               '.constant("MY_CONFIG",'+data+');');
   });
 
+  app.post('/downloadQuery', function(req, res) {
+    var fs = require('fs');
+    var StringDecoder = require('string_decoder').StringDecoder;
+    var url = req.body.backendUrl;
+    var query = req.body.queryHandle;
+
+    var path = DIST_PATH + '/assets/public';
+
+    fs.mkdir(path, function (err) {
+      if (err && err.code === 'EEXIST') {
+        // means the folder already exist. We can ignore it
+      }
+    });
+
+    var decoder = new StringDecoder('utf8');
+
+    var file = fs.createWriteStream(DIST_PATH + '/assets/public/' + query + '.csv');
+
+
+    var r = request.post({
+      method: 'POST',
+      url: url
+    });
+
+    r.on('response', function(response) {
+      response.on('data', function(chunk) {
+        file.write(decoder.write(chunk));
+      });
+
+      response.on('end', function() {
+        file.end();
+        res.send('/assets/public/' + query + '.csv');
+      });
+    });
+
+  });
 
   /*
     For now both login and accessToken APIs do the same thing.
@@ -145,17 +182,18 @@ function makeApp (authAddress, cdapConfig) {
               '/v3/namespaces';
 
       request({
-          method: 'GET',
-          url: link,
-          rejectUnauthorized: false,
-          requestCert: true,
-          agent: false
-        }, function(err) {
-          if (!err) {
-            res.status(200).send();
-          } else {
-            res.status(404).send();
-          }
+        method: 'GET',
+        url: link,
+        rejectUnauthorized: false,
+        requestCert: true,
+        agent: false,
+        headers: req.headers
+      }, function (err, response) {
+        if (err) {
+          res.status(404).send();
+        } else {
+          res.status(response.statusCode).send();
+        }
       });
     }
   ]);

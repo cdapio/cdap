@@ -47,15 +47,6 @@
   }
 }
 
-.cdap-caret(@background: #252831, @height: 18px, @width: 18px, @line-height: 18px) {
-  background-color: @background;
-  height: @height;
-  width: @width;
-  text-align: center;
-  .border-radius(10px);
-  &:before { line-height: @line-height; }
-}
-
 .dropdown-defaults() {
   + .dropdown-menu {
     background-color: transparent;
@@ -120,6 +111,21 @@
         &:hover, &:focus {
           background-color: white;
           color: @cdap-header;
+        }
+      }
+    }
+  }
+}
+
+.dropdown-white() {
+  + .dropdown-menu {
+    > li {
+      > a {
+        background-color: #ffffff;
+        color: #6a7387;
+        &:hover, &:focus {
+          background-color: @cdap-header;
+          color: white;
         }
       }
     }

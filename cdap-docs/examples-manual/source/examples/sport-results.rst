@@ -9,12 +9,13 @@
 Sport Results
 =============
 
-A Cask Data Application Platform (CDAP) Example demonstrating partitioned file sets through sport results analytics.
+A Cask Data Application Platform (CDAP) example demonstrating partitioned file sets through sport results analytics.
 
 Overview
 ========
 
-This Application demonstrates the use of the PartitionedFileSet dataset:
+This application demonstrates the use of the PartitionedFileSet datasets, 
+MapReduce with runtime arguments, and ad-hoc queries over file sets:
 
 - Game results are stored in the PartitionedFileSet ``results``. It is partitioned by league and season,
   and each partition is a CSV (comma-separated values) file containing the results in one league for a season;
@@ -25,13 +26,13 @@ This Application demonstrates the use of the PartitionedFileSet dataset:
   seasons, and writes these totals to the partitioned file set ``totals`` that is partitioned by league.
 - Both the original game results and the aggregated totals can be explored using ad-hoc SQL queries.
 
-Let's look at some of these components, and then run the Application and see the results.
+Let's look at some of these components, and then run the application and see the results.
 
 The SportResults Application
 ----------------------------
 
 As in the other :ref:`examples <examples-index>`, the components
-of the Application are tied together by the class ``SportResults``:
+of the application are tied together by the class ``SportResults``:
 
 .. literalinclude:: /../../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/SportResults.java
     :language: java
@@ -70,7 +71,7 @@ dataset as a file. It declares its use of the dataset using a ``@UseDataSet`` an
 Let's take a closer look at the upload method:
 
 - It first creates a partition key from the league and season received as path parameters in the request URL.
-- Then it obtains a ``PartitionOutput`` for that partition key from the ``results`` Dataset.
+- Then it obtains a ``PartitionOutput`` for that partition key from the ``results`` dataset.
 - It then uses the ``getLocation()`` of the PartitionOutput to obtain the location
   for writing the file, and opens an output stream for that location to write the file contents.
   ``Location`` is a file system abstraction from `Apache™ Twill® <http://twill.incubator.apache.org>`__;
@@ -83,6 +84,7 @@ Let's take a closer look at the upload method:
     :language: java
     :lines: 88-118
     :dedent: 4
+
 
 MapReduce over File Partitions
 ==============================
@@ -98,49 +100,33 @@ the ``totals`` PartitionedFileSet. The ``beforeSubmit()`` method prepares the Ma
 
 .. literalinclude:: /../../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/ScoreCounter.java
     :language: java
-    :lines: 58-84
+    :lines: 57-83
     :dedent: 2
 
 It is worth mentioning that nothing else in ``ScoreCounter`` is specifically programmed to use file partitions.
 Instead of ``results`` and ``totals``, it could use any other dataset as long as the key and value types match.
 
-Building and Starting
-=====================
-
-- You can either build the example (as described `below
-  <#building-an-example-application>`__) or use the pre-built JAR file included in the CDAP SDK.
-- Start CDAP, deploy and start the application and its component as described below in 
-  `Running CDAP Applications`_\ .
-  Make sure you start the Service as described below.
-- Once the application has been deployed and started, you can `run the example. <#running-the-example>`__
-
-Running CDAP Applications
-=========================
 
 .. |example| replace:: SportResults
+.. include:: building-starting-running-cdap.txt
 
-.. include:: /../../developers-manual/source/getting-started/building-apps.rst
-   :start-line: 11
 
 Running the Example
 ===================
-
-In the examples that follow, for brevity we will simply use ``cdap-cli.sh`` for the Command Line Interface.
-Substitute the actual path for ``bin/cdap-cli.sh``, or ``bin\cdap-cli.bat`` on Windows, as appropriate. We
-assume that you will run all commands from the example's base directory (``examples/SportResults`` under the
-Standalone CDAP SDK directory).
 
 Starting the Service
 --------------------
 
 Once the application is deployed:
 
-- Click on ``SportResults`` in the Overview page of the CDAP UI to get to the
-  Application detail page, click ``UploadService`` in the *Service* pane to get to the
-  Service detail page, then click the *Start* button;
-- Or use the Command Line Interface::
+- Go to the *SportResults* `application overview page 
+  <http://localhost:9999/ns/default/apps/SportResults/overview/status>`__,
+  click ``UploadService`` to get to the service detail page, then click the *Start* button; or
+- From the Standalone CDAP SDK directory, use the Command Line Interface::
 
     $ cdap-cli.sh start service SportResults.UploadService
+    
+    Successfully started service 'UploadService' of application 'SportResults' with stored runtime arguments '{}'
 
 Uploading Game Results
 ----------------------
@@ -148,12 +134,12 @@ Uploading Game Results
 Begin by uploading some CSV files into the ``results`` dataset. For example, to upload the results
 for the 2012 season of the NFL (National Football League)::
 
-  $ cdap-cli.sh call service SportResults.UploadService PUT leagues/nfl/seasons/2012 body:file resources/nfl-2012.csv
+  $ cdap-cli.sh call service SportResults.UploadService PUT leagues/nfl/seasons/2012 body:file examples/SportResults/resources/nfl-2012.csv
 
 Feel free to add more seasons and sport leagues::
 
-  $ cdap-cli.sh call service SportResults.UploadService PUT leagues/nfl/seasons/2013 body:file resources/nfl-2013.csv
-  $ cdap-cli.sh call service SportResults.UploadService PUT leagues/nba/seasons/2012 body:file resources/nba-2012.csv
+  $ cdap-cli.sh call service SportResults.UploadService PUT leagues/nfl/seasons/2013 body:file examples/SportResults/resources/nfl-2013.csv
+  $ cdap-cli.sh call service SportResults.UploadService PUT leagues/nba/seasons/2012 body:file examples/SportResults/resources/nba-2012.csv
 
 Starting the MapReduce
 ----------------------
@@ -200,17 +186,29 @@ The last command would produce results (reformatted to fit) such as::
   +==================================================================================================================================+
   Fetched 3 rows
 
-Stopping the Application
-------------------------
-Once done, you can stop the application as described above in `Stopping an Application
-<#stopping-an-application>`__. Here is an example-specific description of the step:
+
+Stopping and Removing the Application
+=====================================
+Once done, you can stop the application as described in :ref:`Stopping an Application 
+<cdap-building-running-stopping>`. Here is an example-specific description of the steps:
 
 **Stopping the Service**
 
-- Click on ``SportResults`` in the Overview page of the CDAP UI to get to the
-  Application detail page, click ``UploadService`` in the *Service* pane to get to the
-  Service detail page, then click the *Stop* button; or
+- Go to the *SportResults* `application overview page 
+  <http://localhost:9999/ns/default/apps/SportResults/overview/status>`__,
+  click ``UploadService`` to get to the service detail page, then click the *Stop* button; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface::
 
-    $ cdap-cli.sh stop service SportResults.UploadService
+    $ cdap-cli.sh stop service SportResults.UploadService   
 
+**Removing the Application**
+
+You can now remove the application as described in :ref:`Removing an Application <cdap-building-running-removing>`, or:
+
+- Go to the *SportResults* `application overview page 
+  <http://localhost:9999/ns/default/apps/SportResults/overview/status>`__,
+  click the *Actions* menu on the right side and select *Manage* to go to the Management pane for the application,
+  then click the *Actions* menu on the right side and select *Delete* to delete the application; or
+- From the Standalone CDAP SDK directory, use the Command Line Interface::
+
+    $ cdap-cli.sh delete app SportResults

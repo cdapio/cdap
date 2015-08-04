@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.commons')
-  .directive('myKeyValue', function($window) {
+  .directive('myKeyValue', function() {
     return {
       restrict: 'E',
       scope: {
@@ -7,7 +7,8 @@ angular.module(PKG.name + '.commons')
         config: '='
       },
       templateUrl: 'widget-container/widget-keyvalue/widget-keyvalue.html',
-      controller: function($scope) {
+      controller: function($scope, EventPipe) {
+        var modelCopy = angular.copy($scope.model);
 
         $scope.kvdelimiter = $scope.config['kv-delimiter'] || ':';
         $scope.delimiter = $scope.config.delimiter || ',';
@@ -40,6 +41,12 @@ angular.module(PKG.name + '.commons')
 
         initialize();
 
+        EventPipe.on('plugin.reset', function () {
+          $scope.model = angular.copy(modelCopy);
+
+          initialize();
+        });
+
         $scope.$watch('properties', function() {
 
           var str = '';
@@ -63,13 +70,20 @@ angular.module(PKG.name + '.commons')
         $scope.addProperty = function() {
           $scope.properties.push({
             key: '',
-            value: ''
+            value: '',
+            newField: 'add'
           });
         };
 
         $scope.removeProperty = function(property) {
           var index = $scope.properties.indexOf(property);
           $scope.properties.splice(index, 1);
+        };
+
+        $scope.enter = function (event, last) {
+          if (last && event.keyCode === 13) {
+            $scope.addProperty();
+          }
         };
       }
     };

@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.commons')
-  .controller('navbarCtrl', function (myAlert, MYAUTH_EVENT, myNamespace, $scope, $state) {
+  .controller('navbarCtrl', function (myAlert, MYAUTH_EVENT, myNamespace, $scope, EventPipe) {
 
     $scope.namespaces = [];
 
@@ -10,25 +10,25 @@ angular.module(PKG.name + '.commons')
         });
     }
 
+    // Listening for event from namespace create or namespace delete
+    EventPipe.on('namespace.update', function() {
+      updateNamespaceList();
+    });
+
     $scope.$on (MYAUTH_EVENT.loginSuccess, updateNamespaceList);
     $scope.getDisplayName = myNamespace.getDisplayName.bind(myNamespace);
 
-    $scope.$on (MYAUTH_EVENT.logoutSuccess, function (event) {
+    $scope.$on (MYAUTH_EVENT.logoutSuccess, function () {
       $scope.namespaces = [];
     });
 
-    $scope.$on('$stateChangeSuccess', function(event, toState, toParams, fromState) {
+    $scope.$on('$stateChangeSuccess', function(event, toState) {
       $scope.highlightTab = toState.data && toState.data.highlightTab;
-      // This is required when user creates a new namespace in admin section.
-      // As of now $dropdown doesn't have broadcast event for click.
-      if (fromState.name === 'admin.namespace.create') {
-        updateNamespaceList();
-      }
     });
 
     $scope.doSearch = function () {
       myAlert({
-        title: 'Sorry!',
+        title: 'Sorry',
         content: 'Search is not yet implemented.',
         type: 'danger'
       });
