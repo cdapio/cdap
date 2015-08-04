@@ -62,42 +62,6 @@ public class ScheduleClient {
     this.restClient = new RESTClient(config);
   }
 
-  /**
-   * @deprecated As of 3.1, use {@link #list(Id.Workflow)} instead.
-   */
-  @Deprecated
-  public List<ScheduleSpecification> list(String appId, String workflowId)
-    throws IOException, UnauthorizedException, NotFoundException {
-
-    return list(Id.Workflow.from(config.getNamespace(), appId, workflowId));
-  }
-
-  /**
-   * @deprecated As of 3.1, use {@link #suspend(Id.Schedule)} instead.
-   */
-  @Deprecated
-  public void suspend(String appId, String scheduleId) throws IOException, UnauthorizedException, NotFoundException {
-    suspend(Id.Schedule.from(config.getNamespace(), appId, scheduleId));
-  }
-
-  /**
-   * @deprecated As of 3.1, use {@link #resume(Id.Schedule)} instead.
-   */
-  @Deprecated
-  public void resume(String appId, String scheduleId) throws IOException, UnauthorizedException, NotFoundException {
-    resume(Id.Schedule.from(config.getNamespace(), appId, scheduleId));
-  }
-
-  /**
-   * @deprecated As of 3.1, use {@link #getStatus(Id.Schedule)} instead.
-   */
-  @Deprecated
-  public String getStatus(String appId, String scheduleId)
-    throws IOException, UnauthorizedException, NotFoundException {
-
-    return getStatus(Id.Schedule.from(config.getNamespace(), appId, scheduleId));
-  }
-
   public List<ScheduleSpecification> list(Id.Workflow workflow)
     throws IOException, UnauthorizedException, NotFoundException {
 

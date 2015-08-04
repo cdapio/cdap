@@ -57,54 +57,6 @@ public class ServiceClient {
     this.restClient = new RESTClient(config);
   }
 
-
-  /**
-   * Gets a {@link ServiceSpecification} for a {@link Service}.
-   *
-   * @param appId ID of the application that the service belongs to
-   * @param serviceId ID of the service
-   * @return {@link ServiceSpecification} representing the service
-   * @throws IOException if a network error occurred
-   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
-   * @throws NotFoundException if the app or service could not be found
-   *
-   * @deprecated As of 3.1, use {@link #get(Id.Service)}.
-   */
-  @Deprecated
-  public ServiceSpecification get(String appId, String serviceId)
-    throws IOException, UnauthorizedException, NotFoundException {
-
-    return get(Id.Service.from(config.getNamespace(), appId, serviceId));
-  }
-
-  /**
-   * Gets a list of {@link ServiceHttpEndpoint} that a {@link Service} exposes
-   * @param appId ID of the application that the service belongs to
-   * @param serviceId ID of the service
-   * @return A list of {@link ServiceHttpEndpoint}
-   * @throws IOException if a network error occurred
-   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
-   * @throws NotFoundException if the app or service could not be found
-   *
-   * @deprecated As of 3.1, use {@link #getEndpoints(Id.Service)}.
-   */
-  @Deprecated
-  public List<ServiceHttpEndpoint> getEndpoints(String appId, String serviceId)
-    throws IOException, UnauthorizedException, NotFoundException {
-
-    return getEndpoints(Id.Service.from(config.getNamespace(), appId, serviceId));
-  }
-
-  /**
-   * @deprecated As of 3.1, use {@link #getServiceURL(Id.Service)}.
-   */
-  @Deprecated
-  public URL getServiceURL(String appId, String serviceId)
-    throws NotFoundException, IOException, UnauthorizedException {
-
-    return getServiceURL(Id.Service.from(config.getNamespace(), appId, serviceId));
-  }
-
   /**
    * Gets a {@link ServiceSpecification} for a {@link Service}.
    *
