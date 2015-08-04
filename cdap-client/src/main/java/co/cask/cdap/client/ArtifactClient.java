@@ -318,9 +318,6 @@ public class ArtifactClient {
     UnauthorizedException, ArtifactRangeNotFoundException {
 
     URL url = config.resolveNamespacedURLV3(namespace, String.format("artifacts/%s", artifactName));
-    if (artifactVersion != null) {
-
-    }
     HttpRequest.Builder requestBuilder = HttpRequest.post(url);
     if (artifactVersion != null) {
       requestBuilder.addHeader("Artifact-Version", artifactVersion);

@@ -122,7 +122,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
                                   @QueryParam("isSystem") @DefaultValue("false") boolean isSystem)
     throws NamespaceNotFoundException {
 
-    Id.Namespace namespace = validateAndGetNamespace(namespaceId);
+    Id.Namespace namespace = validateAndGetNamespace(namespaceId, isSystem);
 
     try {
       responder.sendJson(HttpResponseStatus.OK, artifactRepository.getArtifacts(namespace, artifactName));
@@ -311,7 +311,6 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
       return null;
     }
 
-    // validate name and version are valid
     final Id.Artifact artifactId;
     try {
       artifactId = validateAndGetArtifactId(namespace, artifactName, artifactVersion);
@@ -320,19 +319,12 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
       return null;
     }
 
-    // find out if this artifact extends other artifacts. If so, there will be a header like
-    // 'Artifact-Extends: <name>[<lowerversion>,<upperversion>]/<name>[<lowerversion>,<upperversion>]:
-    // for example: 'Artifact-Extends: etl-batch[1.0.0,2.0.0]/etl-realtime[1.0.0:3.0.0]
-    final Set<ArtifactRange> parentArtifacts = Sets.newHashSet();
-    if (parentArtifactsStr != null) {
-      for (String parent : Splitter.on('/').split(parentArtifactsStr)) {
-        try {
-          parentArtifacts.add(ArtifactRange.parse(namespace, parent));
-        } catch (InvalidArtifactRangeException e) {
-          responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-          return null;
-        }
-      }
+    final Set<ArtifactRange> parentArtifacts;
+    try {
+      parentArtifacts = parseExtendsHeader(namespace, parentArtifactsStr);
+    } catch (BadRequestException e) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+      return null;
     }
 
     try {
@@ -392,5 +384,40 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
     } catch (Exception e) {
       throw new BadRequestException(e.getMessage());
     }
+  }
+
+  // find out if this artifact extends other artifacts. If so, there will be a header like
+  // 'Artifact-Extends: <name>[<lowerversion>,<upperversion>]/<name>[<lowerversion>,<upperversion>]:
+  // for example: 'Artifact-Extends: etl-batch[1.0.0,2.0.0]/etl-realtime[1.0.0:3.0.0]
+  private Set<ArtifactRange> parseExtendsHeader(Id.Namespace namespace, String extendsHeader)
+    throws BadRequestException {
+
+    Set<ArtifactRange> parentArtifacts = Sets.newHashSet();
+
+    if (extendsHeader != null) {
+      for (String parent : Splitter.on('/').split(extendsHeader)) {
+        parent = parent.trim();
+        ArtifactRange range;
+        // try parsing it as a namespaced range like system:etl-batch[1.0.0,2.0.0)
+        try {
+          range = ArtifactRange.parse(parent);
+          // only support extending an artifact that is in the same namespace, or system namespace
+          if (!range.getNamespace().equals(Constants.SYSTEM_NAMESPACE_ID) &&
+              !range.getNamespace().equals(namespace)) {
+            throw new BadRequestException(
+              String.format("Parent artifact %s must be in the same namespace or a system artifact.", parent));
+          }
+        } catch (InvalidArtifactRangeException e) {
+          // if this failed, try parsing as a non-namespaced range like etl-batch[1.0.0,2.0.0)
+          try {
+            range = ArtifactRange.parse(namespace, parent);
+          } catch (InvalidArtifactRangeException e1) {
+            throw new BadRequestException(String.format("Invalid artifact range %s: %s", parent, e1.getMessage()));
+          }
+        }
+        parentArtifacts.add(range);
+      }
+    }
+    return parentArtifacts;
   }
 }
