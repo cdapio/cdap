@@ -64,10 +64,6 @@ angular.module(PKG.name + '.feature.adapters')
               setGroups.bind(this, propertiesFromBackend, res)
             );
 
-            if (res.isDataset) {
-              $scope.datasetType = res.isDataset.type;
-            }
-
             // After iterating over all the groups check if the propertiesFromBackend is still empty
             // If not there are some fields from backend for which we don't have configuration from the nodejs.
             // Add them to the 'missedFieldsGroup' and show it as a separate group.
