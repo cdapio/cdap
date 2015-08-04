@@ -1465,7 +1465,10 @@ public class Bytes {
    * @param key key of the entry
    * @param value value of the entry
    * @return instance of {@link NavigableMap}
+   *
+   * @deprecated This method will be removed in future release
    */
+  @Deprecated
   public static <T> NavigableMap<byte[], T> immutableSortedMapOf(byte[] key, T value) {
     return ImmutableSortedMap.<byte[], T>orderedBy(Bytes.BYTES_COMPARATOR).put(key, value).build();
   }
@@ -1477,7 +1480,10 @@ public class Bytes {
    * @param key2 key of the second entry
    * @param value2 value of the second entry
    * @return instance of {@link NavigableMap}
+   *
+   * @deprecated This method will be removed in future release
    */
+  @Deprecated
   public static <T> NavigableMap<byte[], T> immutableSortedMapOf(byte[] key1, T value1,
                                                                   byte[] key2, T value2) {
     return ImmutableSortedMap.<byte[], T>orderedBy(Bytes.BYTES_COMPARATOR)

@@ -44,6 +44,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
+import java.util.SortedMap;
 import javax.annotation.Nullable;
 
 /**
@@ -87,9 +88,9 @@ public class HBaseMetricsTable implements MetricsTable {
   }
 
   @Override
-  public void put(NavigableMap<byte[], NavigableMap<byte[], Long>> updates) {
+  public void put(SortedMap<byte[], ? extends SortedMap<byte[], Long>> updates) {
     List<Put> puts = Lists.newArrayList();
-    for (Map.Entry<byte[], NavigableMap<byte[], Long>> row : updates.entrySet()) {
+    for (Map.Entry<byte[], ? extends SortedMap<byte[], Long>> row : updates.entrySet()) {
       PutBuilder put = tableUtil.buildPut(row.getKey());
       for (Map.Entry<byte[], Long> column : row.getValue().entrySet()) {
         put.add(columnFamily, column.getKey(), Bytes.toBytes(column.getValue()));
