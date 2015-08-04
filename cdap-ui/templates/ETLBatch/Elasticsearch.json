@@ -4,12 +4,12 @@
     "position": [ "group1" ],
     "group1": {
       "display" : "Elasticsearch Configuration",
-      "position" : [ "es.host", "es.port", "es.index", "es.type", "es.idField" ],
+      "position" : [ "es.host", "es.port", "es.index", "es.type", "es.idField", "schema", "query" ],
       "fields" : {
         "es.host": {
           "widget": "textbox",
           "label": "Elasticsearch Host",
-          "description": "Specify the hostname and port for your elasticsearch instance (e.g. localhost:9200).",
+          "description": "Specify the hostname and port for your elasticsearch instance, for example localhost:9200.",
           "properties": {
             "width": "large"
           }
@@ -17,7 +17,7 @@
         "es.index": {
           "widget": "textbox",
           "label": "Index",
-          "description": "The index name where the documents will be stored. If the index does not exist, one will be created using elasticsearch defaults",
+          "description": "The index name where the documents will be stored. If the index does not exist, one will be created using elasticsearch defaults.",
           "properties": {
             "width": "medium"
           }
@@ -37,6 +37,21 @@
           "description": "The idField will specify from which field the id of the document is derived.",
           "properties": {
             "width": "large"
+          }
+        },
+        "schema" : {
+          "widget": "schema",
+          "label": "Schema",
+          "description" : "The schema or mapping of the data in elasticsearch.",
+          "schema-types" : [ "boolean", "int", "long", "float", "double", "bytes", "string" ],
+          "schema-default-type" : "string"
+        },
+        "query" : {
+          "widget": "textbox",
+          "label": "Query",
+          "description": "The query used to select record from the specified index/type; for example, ?q=* will select all records.",
+          "properties": {
+            "width":"large"
           }
         }
       }
