@@ -32,6 +32,7 @@ import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.ScheduledRuntime;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.apache.twill.filesystem.LocationFactory;
@@ -63,6 +64,8 @@ public class SchedulerServiceTest {
     Schedules.createDataSchedule("Schedule3", "Every 1M", Schedules.Source.STREAM, STREAM_ID.getId(), 1);
   private static final Schedule dataSchedule2 =
     Schedules.createDataSchedule("Schedule4", "Every 10M", Schedules.Source.STREAM, STREAM_ID.getId(), 10);
+  private static final Schedule  updatedTimeSchedule1 =
+    Schedules.createTimeSchedule("Schedule1", "Next 10 Minutes", getCron(10, TimeUnit.MINUTES));
 
   @BeforeClass
   public static void set() throws Exception {
@@ -163,6 +166,36 @@ public class SchedulerServiceTest {
     // Check the state of the old scheduleIds
     // (which should be deleted by the call to SchedulerService#delete(Program, ProgramType)
     checkState(Scheduler.ScheduleState.NOT_FOUND, scheduleIds);
+  }
+
+  @Test
+  public void testScheduleUpdate() throws Exception {
+    AppFabricTestHelper.deployApplication(namespace, AppWithWorkflow.class);
+    ApplicationSpecification applicationSpecification = store.getApplication(appId);
+
+    schedulerService.schedule(program, programType, ImmutableList.of(timeSchedule1));
+    applicationSpecification = createNewSpecification(applicationSpecification, program, programType, timeSchedule1);
+    store.addApplication(appId, applicationSpecification, locationFactory.create("app"));
+    List<String> scheduleIds = schedulerService.getScheduleIds(program, programType);
+    Assert.assertEquals(1, scheduleIds.size());
+    checkState(Scheduler.ScheduleState.SUSPENDED, scheduleIds);
+
+    schedulerService.updateSchedule(program, programType, updatedTimeSchedule1);
+
+    schedulerService.resumeSchedule(program, programType, "Schedule1");
+    checkState(Scheduler.ScheduleState.SCHEDULED, scheduleIds);
+
+    List<ScheduledRuntime> scheduledRuntimes = schedulerService.nextScheduledRuntime(program, programType);
+
+    // the next schedule runtime should be in next 10 minutes from resume
+    Assert.assertTrue(scheduledRuntimes.get(0).getTime() > System.currentTimeMillis() &&
+                        scheduledRuntimes.get(0).getTime() < System.currentTimeMillis() +
+                          TimeUnit.MINUTES.toMillis(12));
+
+    schedulerService.deleteSchedules(program, programType);
+    Assert.assertEquals(0, schedulerService.getScheduleIds(program, programType).size());
+    applicationSpecification = deleteSchedulesFromSpec(applicationSpecification);
+    store.addApplication(appId, applicationSpecification, locationFactory.create("app"));
   }
 
   /**
