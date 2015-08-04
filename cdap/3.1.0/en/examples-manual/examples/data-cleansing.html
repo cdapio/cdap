@@ -1,0 +1,475 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Cask Data Application Platform Data Cleansing Application" name="description" />
+<meta content="Copyright © 2015 Cask Data, Inc." name="copyright" />
+<script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-55081520-2']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+    
+    <meta name="git_release" content="3.1.0">
+    <meta name="git_hash" content="ff8fcca0530489e71df1b7fb473170b59c073f41">
+    <meta name="git_timestamp" content="2015-08-03 18:00:47 -0700">
+    <title>Data Cleansing &mdash; Cask Data Application Platform 3.1.0 Documentation</title>
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.1.0 Documentation" href="../index.html" />
+    <link rel="up" title="Examples" href="index.html" />
+    <link rel="next" title="File Sets" href="fileset.html" />
+    <link rel="prev" title="Count Random" href="count-random.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="fileset.html" title="File Sets"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="count-random.html" title="Count Random"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.1.0');</script>
+       
+        <li><a href="../table-of-contents.html">CDAP Examples, Guides, and Tutorials</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Examples</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="data-cleansing">
+<span id="examples-data-cleansing"></span><h1>Data Cleansing<a class="headerlink" href="#data-cleansing" title="Permalink to this headline">¶</a></h1>
+<p>A Cask Data Application Platform (CDAP) example demonstrating incrementally consuming partitions of a partitioned fileset using MapReduce.</p>
+<div class="section" id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<p>This application has a MapReduce which processes records from one partitioned file set into another partitioned file set,
+while filtering records that do not match a particular schema.</p>
+<ul class="simple">
+<li>The <code class="docutils literal"><span class="pre">DataCleansingService</span></code> writes to the <code class="docutils literal"><span class="pre">rawRecords</span></code> partitioned file set.</li>
+<li>The <code class="docutils literal"><span class="pre">DataCleansingMapReduce</span></code> processes the records, while filtering &#8216;unclean&#8217; or invalid records.</li>
+</ul>
+<p>Let&#8217;s look at some of these components, and then run the application and see the results.</p>
+<div class="section" id="the-data-cleansing-application">
+<h3>The Data Cleansing Application<a class="headerlink" href="#the-data-cleansing-application" title="Permalink to this headline">¶</a></h3>
+<p>As in the other <a class="reference internal" href="index.html#examples-index"><span>examples</span></a>, the components
+of the application are tied together by the class <code class="docutils literal"><span class="pre">DataCleansing</span></code>:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="cm">/**</span>
+<span class="cm"> * Data Cleansing sample Application.</span>
+<span class="cm"> */</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">DataCleansing</span> <span class="kd">extends</span> <span class="n">AbstractApplication</span> <span class="o">{</span>
+  <span class="kd">protected</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">NAME</span> <span class="o">=</span> <span class="s">&quot;DataCleansing&quot;</span><span class="o">;</span>
+  <span class="kd">protected</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">RAW_RECORDS</span> <span class="o">=</span> <span class="s">&quot;rawRecords&quot;</span><span class="o">;</span>
+  <span class="kd">protected</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">CLEAN_RECORDS</span> <span class="o">=</span> <span class="s">&quot;cleanRecords&quot;</span><span class="o">;</span>
+  <span class="kd">protected</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">CONSUMING_STATE</span> <span class="o">=</span> <span class="s">&quot;consumingState&quot;</span><span class="o">;</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="n">setName</span><span class="o">(</span><span class="n">NAME</span><span class="o">);</span>
+    <span class="n">setDescription</span><span class="o">(</span><span class="s">&quot;Example Data Cleansing Application&quot;</span><span class="o">);</span>
+
+    <span class="c1">// Ingest and retrieve the data using a Service</span>
+    <span class="n">addService</span><span class="o">(</span><span class="k">new</span> <span class="n">DataCleansingService</span><span class="o">());</span>
+
+    <span class="c1">// Process the records from &quot;rawRecords&quot; partitioned file set using MapReduce</span>
+    <span class="n">addMapReduce</span><span class="o">(</span><span class="k">new</span> <span class="n">DataCleansingMapReduce</span><span class="o">());</span>
+
+    <span class="c1">// Store the state of the incrementally processing MapReduce</span>
+    <span class="n">createDataset</span><span class="o">(</span><span class="n">CONSUMING_STATE</span><span class="o">,</span> <span class="n">KeyValueTable</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+
+    <span class="c1">// Create the &quot;rawRecords&quot; partitioned file set for storing the input records, configure it to work with MapReduce</span>
+    <span class="n">createDataset</span><span class="o">(</span><span class="n">RAW_RECORDS</span><span class="o">,</span> <span class="n">PartitionedFileSet</span><span class="o">.</span><span class="na">class</span><span class="o">,</span> <span class="n">PartitionedFileSetProperties</span><span class="o">.</span><span class="na">builder</span><span class="o">()</span>
+      <span class="c1">// Properties for partitioning</span>
+      <span class="o">.</span><span class="na">setPartitioning</span><span class="o">(</span><span class="n">Partitioning</span><span class="o">.</span><span class="na">builder</span><span class="o">().</span><span class="na">addLongField</span><span class="o">(</span><span class="s">&quot;time&quot;</span><span class="o">).</span><span class="na">build</span><span class="o">())</span>
+      <span class="c1">// Properties for file set</span>
+      <span class="o">.</span><span class="na">setInputFormat</span><span class="o">(</span><span class="n">TextInputFormat</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">build</span><span class="o">());</span>
+
+    <span class="n">createDataset</span><span class="o">(</span><span class="n">CLEAN_RECORDS</span><span class="o">,</span> <span class="n">PartitionedFileSet</span><span class="o">.</span><span class="na">class</span><span class="o">,</span> <span class="n">PartitionedFileSetProperties</span><span class="o">.</span><span class="na">builder</span><span class="o">()</span>
+      <span class="c1">// Properties for partitioning</span>
+      <span class="o">.</span><span class="na">setPartitioning</span><span class="o">(</span><span class="n">Partitioning</span><span class="o">.</span><span class="na">builder</span><span class="o">().</span><span class="na">addLongField</span><span class="o">(</span><span class="s">&quot;time&quot;</span><span class="o">).</span><span class="na">build</span><span class="o">())</span>
+      <span class="c1">// Properties for file set</span>
+      <span class="o">.</span><span class="na">setOutputFormat</span><span class="o">(</span><span class="n">TextOutputFormat</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+      <span class="c1">// Properties for Explore (to create a partitioned Hive table)</span>
+      <span class="o">.</span><span class="na">setEnableExploreOnCreate</span><span class="o">(</span><span class="kc">true</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">setExploreFormat</span><span class="o">(</span><span class="s">&quot;text&quot;</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">setExploreFormatProperty</span><span class="o">(</span><span class="s">&quot;delimiter&quot;</span><span class="o">,</span> <span class="s">&quot;\n&quot;</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">setExploreSchema</span><span class="o">(</span><span class="s">&quot;record STRING&quot;</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">build</span><span class="o">());</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="data-storage">
+<h3>Data Storage<a class="headerlink" href="#data-storage" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">rawRecords</span></code> input PartitionedFileSet of the DataCleansingMapReduce, contains any ingested records.</li>
+<li><code class="docutils literal"><span class="pre">cleanRecords</span></code> output PartitionedFileSet, contains only the filtered records.</li>
+<li><code class="docutils literal"><span class="pre">consumingState</span></code> stores the state of the DataCleansingMapReduce, such that in each run,
+it processes only new partitions.</li>
+</ul>
+</div>
+<div class="section" id="datacleansingservice">
+<h3>DataCleansingService<a class="headerlink" href="#datacleansingservice" title="Permalink to this headline">¶</a></h3>
+<p>The service allows writing to the &#8216;rawRecords&#8217; PartitionedFileSet.
+It exposes the following endpoint:</p>
+<ul class="simple">
+<li>POST <code class="docutils literal"><span class="pre">/records/raw</span></code> allows for writing to a partition of the &#8216;rawRecords&#8217; dataset;</li>
+</ul>
+</div>
+<div class="section" id="mapreduce-over-partitionedfileset">
+<h3>MapReduce over PartitionedFileSet<a class="headerlink" href="#mapreduce-over-partitionedfileset" title="Permalink to this headline">¶</a></h3>
+<p><code class="docutils literal"><span class="pre">DataCleansingMapReduce</span></code> is a simple MapReduce that reads from the <code class="docutils literal"><span class="pre">rawRecords</span></code> PartitionedFileSet and writes to
+the <code class="docutils literal"><span class="pre">cleanRecords</span></code> PartitionedFileSet. The <code class="docutils literal"><span class="pre">beforeSubmit</span></code> method prepares the MapReduce program:</p>
+<ul class="simple">
+<li>It uses the <code class="docutils literal"><span class="pre">BatchPartitionConsumer</span></code> to specify the partitions to process as input, in order to only process new
+partitions since its last run.</li>
+<li>It specifies the output partition that is written to, based upon the supplied runtime arguments.</li>
+</ul>
+</div>
+</div>
+<div class="section" id="building-and-starting">
+<h2>Building and Starting<a class="headerlink" href="#building-and-starting" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p class="first">You can either build the example (as described in <a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-example" title="(in Cask Data Application Platform v3.1.0)"><span class="xref std std-ref">Building an Example Application</span></a>) or use the pre-built JAR file included in the CDAP SDK
+(as described in <a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-deploying" title="(in Cask Data Application Platform v3.1.0)"><span class="xref std std-ref">Deploying an Application</span></a>):</p>
+<pre class="literal-block">
+examples/DataCleansing/target/DataCleansing-3.1.0.jar
+</pre>
+</li>
+<li><p class="first">Start CDAP (as described in <a class="reference external" href="../source/../../developers-manual/getting-started/start-stop-cdap.html#start-stop-cdap" title="(in Cask Data Application Platform v3.1.0)"><span class="xref std std-ref">Starting and Stopping CDAP</span></a>).</p>
+</li>
+<li><p class="first">Deploy the application, as described in <a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-deploying" title="(in Cask Data Application Platform v3.1.0)"><span class="xref std std-ref">Deploying an Application</span></a>.</p>
+</li>
+<li><p class="first">Once the application has been deployed, you can start its components, as described in
+<a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-starting-application" title="(in Cask Data Application Platform v3.1.0)"><span class="xref std std-ref">Starting an Application</span></a>, and detailed at the
+start of <a class="reference external" href="#running-the-example">running the example</a>.</p>
+</li>
+<li><p class="first">Once all components are started, <a class="reference external" href="#running-the-example">run the example</a>.</p>
+</li>
+<li><p class="first">When finished, you can <a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-stopping" title="(in Cask Data Application Platform v3.1.0)"><span class="xref std std-ref">stop</span></a>
+and <a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-removing" title="(in Cask Data Application Platform v3.1.0)"><span class="xref std std-ref">remove the application</span></a>.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="running-the-example">
+<h2>Running the Example<a class="headerlink" href="#running-the-example" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="starting-the-service">
+<h3>Starting the Service<a class="headerlink" href="#starting-the-service" title="Permalink to this headline">¶</a></h3>
+<p>Once the application is deployed:</p>
+<ul>
+<li><p class="first">Go to the <em>DataCleansing</em> <a class="reference external" href="http://localhost:9999/ns/default/apps/DataCleansing/overview/status">application overview page</a>,
+click <code class="docutils literal"><span class="pre">DataCleansingService</span></code> to get to the service detail page, then click the <em>Start</em> button; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
+<div class="highlight-java"><div class="highlight"><pre>$ cdap-cli.sh start service DataCleansing.DataCleansingService
+
+Successfully started service &#39;DataCleansingService&#39; of application &#39;DataCleansing&#39; with stored runtime arguments &#39;{}&#39;
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="ingesting-records">
+<h3>Ingesting Records<a class="headerlink" href="#ingesting-records" title="Permalink to this headline">¶</a></h3>
+<p>Begin by uploading a file containing some newline-separated JSON records into the <code class="docutils literal"><span class="pre">rawRecords</span></code> dataset:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">$</span> <span class="n">cdap</span><span class="o">-</span><span class="n">cli</span><span class="o">.</span><span class="na">sh</span> <span class="n">call</span> <span class="n">service</span> <span class="n">DataCleansing</span><span class="o">.</span><span class="na">DataCleansingService</span> <span class="n">POST</span> <span class="n">v1</span><span class="o">/</span><span class="n">records</span><span class="o">/</span><span class="n">raw</span> <span class="n">body</span><span class="o">:</span><span class="n">file</span> <span class="n">examples</span><span class="o">/</span><span class="n">DataCleansing</span><span class="o">/</span><span class="n">resources</span><span class="o">/</span><span class="n">person</span><span class="o">.</span><span class="na">json</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="starting-the-mapreduce">
+<h3>Starting the MapReduce<a class="headerlink" href="#starting-the-mapreduce" title="Permalink to this headline">¶</a></h3>
+<p>The MapReduce must be started with a runtime argument <code class="docutils literal"><span class="pre">output.partition.key</span></code> in order to specify the output partition of
+the <code class="docutils literal"><span class="pre">cleanRecords</span></code> dataset to write to. In this example, we&#8217;ll simply use <code class="docutils literal"><span class="pre">1</span></code> as the value.</p>
+<ul>
+<li><p class="first">Go to the <em>DataCleansing</em> <a class="reference external" href="http://localhost:9999/ns/default/apps/DataCleansing/overview/status">application overview page</a>,
+click <code class="docutils literal"><span class="pre">DataCleansingMapReduce</span></code> to get to the MapReduce detail page, set the runtime
+arguments using <code class="docutils literal"><span class="pre">output.partition.key</span></code> as the key and <code class="docutils literal"><span class="pre">1</span></code> as the value, then click the <em>Start</em> button; or</p>
+</li>
+<li><p class="first">Use the Command Line Interface:</p>
+<div class="highlight-java"><div class="highlight"><pre>$ cdap-cli.sh start mapreduce DataCleansing.DataCleansingMapReduce output.partition.key=1
+
+Successfully started mapreduce &#39;DataCleansingMapReduce&#39; of application &#39;DataCleansing&#39;
+with provided runtime arguments &#39;output.partition.key=1&#39;
+</pre></div>
+</div>
+</li>
+</ul>
+<p>Optionally, to specify a custom schema to match records against, the JSON of the schema can be
+specified as an additional runtime argument to the MapReduce with the key &#8216;schema.key&#8217;.
+Otherwise, the default schema that is matched against the records:</p>
+<div class="highlight-java"><div class="highlight"><pre>    <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">Schema</span> <span class="n">DEFAULT_SCHEMA</span> <span class="o">=</span> <span class="n">Schema</span><span class="o">.</span><span class="na">recordOf</span><span class="o">(</span><span class="s">&quot;person&quot;</span><span class="o">,</span>
+                                                                <span class="n">Schema</span><span class="o">.</span><span class="na">Field</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="s">&quot;pid&quot;</span><span class="o">,</span> <span class="n">Schema</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="n">Schema</span><span class="o">.</span><span class="na">Type</span><span class="o">.</span><span class="na">LONG</span><span class="o">)),</span>
+                                                                <span class="n">Schema</span><span class="o">.</span><span class="na">Field</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="s">&quot;name&quot;</span><span class="o">,</span> <span class="n">Schema</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="n">Schema</span><span class="o">.</span><span class="na">Type</span><span class="o">.</span><span class="na">STRING</span><span class="o">)),</span>
+                                                                <span class="n">Schema</span><span class="o">.</span><span class="na">Field</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="s">&quot;dob&quot;</span><span class="o">,</span> <span class="n">Schema</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="n">Schema</span><span class="o">.</span><span class="na">Type</span><span class="o">.</span><span class="na">STRING</span><span class="o">)),</span>
+                                                                <span class="n">Schema</span><span class="o">.</span><span class="na">Field</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="s">&quot;zip&quot;</span><span class="o">,</span> <span class="n">Schema</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="n">Schema</span><span class="o">.</span><span class="na">Type</span><span class="o">.</span><span class="na">INT</span><span class="o">)));</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="querying-the-results">
+<h3>Querying the Results<a class="headerlink" href="#querying-the-results" title="Permalink to this headline">¶</a></h3>
+<p>To sample the <code class="docutils literal"><span class="pre">cleanRecords</span></code> PartitionedFileSet execute an explore query using the CDAP CLI:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> cdap-cli.sh execute <span class="s1">&#39;SELECT record FROM dataset_cleanRecords where TIME = 1 LIMIT 5&#39;</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li>Alternatively, go to the <em>rawRecords</em> <a class="reference external" href="http://localhost:9999/ns/default/datasets/cleanRecords/overview/explore">dataset explore page</a>,
+and execute the query from there.</li>
+</ul>
+<p>The records that are not filtered out (those that adhere to the given schema) will be displayed:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">+======================================================================+</span>
+<span class="go">| record: STRING                                                       |</span>
+<span class="go">+======================================================================+</span>
+<span class="go">| {&quot;pid&quot;:223986723,&quot;name&quot;:&quot;bob&quot;,&quot;dob&quot;:&quot;02-12-1983&quot;,&quot;zip&quot;:&quot;84125&quot;}      |</span>
+<span class="go">| {&quot;pid&quot;:001058370,&quot;name&quot;:&quot;jill&quot;,&quot;dob&quot;:&quot;12-12-1963&quot;,&quot;zip&quot;:&quot;84125&quot;}     |</span>
+<span class="go">| {&quot;pid&quot;:000150018,&quot;name&quot;:&quot;wendy&quot;,&quot;dob&quot;:&quot;06-19-1987&quot;,&quot;zip&quot;:&quot;84125&quot;}    |</span>
+<span class="go">| {&quot;pid&quot;:013587810,&quot;name&quot;:&quot;john&quot;,&quot;dob&quot;:&quot;10-10-1991&quot;,&quot;zip&quot;:&quot;84125&quot;}     |</span>
+<span class="go">| {&quot;pid&quot;:811638015,&quot;name&quot;:&quot;samantha&quot;,&quot;dob&quot;:&quot;04-20-1965&quot;,&quot;zip&quot;:&quot;84125&quot;} |</span>
+<span class="go">+======================================================================+</span>
+<span class="go">Fetched 5 rows</span>
+</pre></div>
+</div>
+<p>This process of ingesting records, running the MapReduce job with a different output partition key,
+and requesting the filtered data can be repeated. Each time, the MapReduce job will pickup and process
+only the newly ingested set of records.</p>
+</div>
+</div>
+<div class="section" id="stopping-and-removing-the-application">
+<h2>Stopping and Removing the Application<a class="headerlink" href="#stopping-and-removing-the-application" title="Permalink to this headline">¶</a></h2>
+<p>Once done, you can stop the application as described above in <a class="reference external" href="#stopping-an-application">Stopping an Application.</a> Here is an example-specific description of the steps:</p>
+<p><strong>Stopping the Service</strong></p>
+<ul>
+<li><p class="first">Go to the <em>DataCleansing</em> <a class="reference external" href="http://localhost:9999/ns/default/apps/DataCleansing/overview/status">application overview page</a>,
+click <code class="docutils literal"><span class="pre">DataCleansingService</span></code> to get to the service detail page, then click the <em>Stop</em> button; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> cdap-cli.sh stop service DataCleansing.DataCleansingService
+</pre></div>
+</div>
+</li>
+</ul>
+<p><strong>Removing the Application</strong></p>
+<p>You can now remove the application as described above, <a class="reference external" href="#removing-an-application">Removing an Application</a>, or:</p>
+<ul>
+<li><p class="first">Go to the <em>DataCleansing</em> <a class="reference external" href="http://localhost:9999/ns/default/apps/DataCleansing/overview/status">application overview page</a>,
+click the <em>Actions</em> menu on the right side and select <em>Manage</em> to go to the Management pane for the application,
+then click the <em>Actions</em> menu on the right side and select <em>Delete</em> to delete the application; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> cdap-cli.sh delete app DataCleansing
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html"
+        rel="nofollow">CDAP Documentation v3.1.0</a></h3>
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../index.html"
+            rel="nofollow">Overview</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html"
+            rel="nofollow">Introduction to CDAP</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html"
+            rel="nofollow">Developers’ Manual</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../application-templates/index.html"
+            rel="nofollow">Application Templates</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html"
+            rel="nofollow">Administration Manual</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html"
+            rel="nofollow">Integrations</a></li>
+            
+      <li><div class=""></div><b><a href="../table-of-contents/../../examples-manual/index.html"
+            rel="nofollow">Examples, Guides, and Tutorials</a></b></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html"
+            rel="nofollow">Reference Manual</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html"
+            rel="nofollow">Release Notes</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html"
+            rel="nofollow">Glossary</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/faq.html"
+            rel="nofollow">FAQ</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../search.html"
+            rel="nofollow">Search</a></li>
+    </ul>
+   </div><!--
+  Copyright © 2014-2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+
+    
+<h3 class="pagenavtitle"><a href="../table-of-contents.html">Examples, Guides, and Tutorials:<br> Table&nbsp;of&nbsp;Contents</a></h3>
+<nav class="pagenav">
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Introduction</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Examples</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="hello-world.html">Hello World</a></li>
+<li class="toctree-l2"><a class="reference internal" href="count-random.html">Count Random</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">Data Cleansing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#building-and-starting">Building and Starting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#running-the-example">Running the Example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#stopping-and-removing-the-application">Stopping and Removing the Application</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="fileset.html">File Sets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="log-analysis.html">Log Analysis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="purchase.html">Purchase</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spark-k-means.html">Spark K-Means</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spark-page-rank.html">Spark Page Rank</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sport-results.html">Sport Results</a></li>
+<li class="toctree-l2"><a class="reference internal" href="stream-conversion.html">Stream Conversion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user-profiles.html">User Profiles</a></li>
+<li class="toctree-l2"><a class="reference internal" href="web-analytics.html">Web Analytics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="wikipedia-data-pipeline.html">Wikipedia Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="word-count.html">Word Count</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../how-to-guides/index.html">How-To Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/index.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps-packs.html">Apps and Packs</a></li>
+</ul>
+
+</nav>
+  <h4>Previous Topic</h4>
+  <p class="topless"><a href="count-random.html"
+                        title="Previous Chapter">Count Random</a></p>
+  <h4>Next Topic</h4>
+  <p class="topless"><a href="fileset.html"
+                        title="Next Chapter">File Sets</a></p>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.1.0/cdap-docs-3.1.0-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tephra/index.html" target="_blank">Tephra</em></a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Count Random" href="count-random.html" />Count Random</a>&nbsp;&nbsp;
+    
+    </th>
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2015 Cask Data, Inc.
+    
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="File Sets" href="fileset.html" />File Sets</a>
+    
+    </th>
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

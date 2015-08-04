@@ -1,0 +1,324 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2015 Cask Data, Inc." name="copyright" />
+<script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-55081520-2']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+    
+    <meta name="git_release" content="3.1.0">
+    <meta name="git_hash" content="ff8fcca0530489e71df1b7fb473170b59c073f41">
+    <meta name="git_timestamp" content="2015-08-03 18:00:47 -0700">
+    <title>Sources: Batch: Stream &mdash; Cask Data Application Platform 3.1.0 Documentation</title>
+    
+    <link rel="stylesheet" href="../../../../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../../',
+        VERSION:     '3.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../../../../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.1.0 Documentation" href="../../../../index.html" />
+    <link rel="up" title="Sources: Batch" href="index.html" />
+    <link rel="next" title="Sources: Batch: Table" href="table.html" />
+    <link rel="prev" title="Sources: Batch: S3" href="s3.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="table.html" title="Sources: Batch: Table"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="s3.html" title="Sources: Batch: S3"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../../../../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.1.0');</script>
+       
+        <li><a href="../../../../table-of-contents.html">CDAP Application Templates</a> &raquo;</li>
+          <li><a href="../../index.html" >ETL Template and Plugins</a> &raquo;</li>
+          <li><a href="../index.html" >Sources</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Sources: Batch</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="sources-batch-stream">
+<h1>Sources: Batch: Stream<a class="headerlink" href="#sources-batch-stream" title="Permalink to this headline">¶</a></h1>
+<p class="rubric">Description</p>
+<p>Reads a batch of data from a stream. The source will read a configurable chunk of data from
+a stream, based on the logical start time of the workflow it runs in and the configured
+duration and delay of the source. If the format and schema of the stream are known,
+they can be specified as well. The source will return a record for each stream event it reads.
+Records will always contain a &#8216;ts&#8217; field of type &#8216;long&#8217; that contains the timestamp of the event,
+as well as a &#8216;headers&#8217; field of type &#8216;map&lt;string, string&gt;&#8217; that contains the headers for
+the event. Other fields output records are determined by the configured format and schema.</p>
+<p class="rubric">Use Case</p>
+<p>The source is used whenever you need to read from a stream in batch. For example,
+you may want to read from a stream every hour, perform some data cleansing, then write
+the cleansed data for that hour as Avro files.</p>
+<p class="rubric">Properties</p>
+<p><strong>name:</strong> Name of the stream. Must be a valid stream name. If the stream does not exist,
+it will be created.</p>
+<p><strong>duration:</strong> Size of the time window to read with each run of the pipeline. The format is
+expected to be a number followed by an &#8216;s&#8217;, &#8216;m&#8217;, &#8216;h&#8217;, or &#8216;d&#8217; specifying the time unit, with
+&#8216;s&#8217; for seconds, &#8216;m&#8217; for minutes, &#8216;h&#8217; for hours, and &#8216;d&#8217; for days. For example, a value of
+&#8216;5m&#8217; means each run of the pipeline will read 5 minutes of events from the stream.</p>
+<p><strong>delay:</strong> Optional delay for reading stream events. The value must be of the same format
+as the duration value. For example, a duration of &#8216;5m&#8217; and a delay of &#8216;10m&#8217; means each run
+of the pipeline will read events from 15 minutes before its logical start time to 10
+minutes before its logical start time. The default value is 0.</p>
+<p><strong>format:</strong> Optional format of the stream. Any format supported by CDAP is also supported.
+For example, a value of &#8216;csv&#8217; will attempt to parse stream events as comma separated
+values. If no format is given, event bodies will be treated as bytes, resulting in a three
+field schema: &#8216;ts&#8217; of type long, &#8216;headers&#8217; of type map of string to string, and &#8216;body&#8217; of
+type bytes.</p>
+<p><strong>schema:</strong> Optional schema for the body of stream events. Schema is used in conjunction
+with format to parse stream events. Some formats like the avro format require schema,
+while others do not. The schema given is for the body of the stream, so the final schema
+of records output by the source will contain an additional field named &#8216;ts&#8217; for the
+timestamp and a field named &#8216;headers&#8217; for the headers as as the first and second fields of
+the schema.</p>
+<p class="rubric">Example</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="o">{</span>
+  <span class="s">&quot;name&quot;</span><span class="o">:</span> <span class="s">&quot;Stream&quot;</span><span class="o">,</span>
+  <span class="s">&quot;properties&quot;</span><span class="o">:</span> <span class="o">{</span>
+    <span class="s">&quot;name&quot;</span><span class="o">:</span> <span class="s">&quot;accesslogs&quot;</span><span class="o">,</span>
+    <span class="s">&quot;duration&quot;</span><span class="o">:</span> <span class="s">&quot;10m&quot;</span><span class="o">,</span>
+    <span class="s">&quot;delay&quot;</span><span class="o">:</span> <span class="s">&quot;5m&quot;</span><span class="o">,</span>
+    <span class="s">&quot;format&quot;</span><span class="o">:</span> <span class="s">&quot;clf&quot;</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>This example reads from a stream named &#8216;accesslogs&#8217;. With the &#8216;duration&#8217; property set to
+&#8216;10m&#8217;, the source will read ten minutes worth of data. As the &#8216;delay&#8217; property is set to
+&#8216;5m&#8217;, the source will read data up to five minutes before the logical start time of the
+run. The &#8216;end time&#8217; of the data will then be five minutes before that logical start time.
+Combining the duration and the delay, the &#8216;start time&#8217; of the data will be 15 minutes
+before the logical start time of the run. For example, if the pipeline was scheduled to
+run at 10:00am, the source will read data from 9:45am to 9:55am. The stream contents will
+be parsed as &#8216;clf&#8217; (Combined Log Format), which will output records with this schema:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="o">+======================================+</span>
+<span class="o">|</span> <span class="n">field</span> <span class="n">name</span>     <span class="o">|</span> <span class="n">type</span>                <span class="o">|</span>
+<span class="o">+======================================+</span>
+<span class="o">|</span> <span class="n">ts</span>             <span class="o">|</span> <span class="kt">long</span>                <span class="o">|</span>
+<span class="o">|</span> <span class="n">headers</span>        <span class="o">|</span> <span class="n">map</span><span class="o">&lt;</span><span class="n">string</span><span class="o">,</span> <span class="n">string</span><span class="o">&gt;</span> <span class="o">|</span>
+<span class="o">|</span> <span class="n">remote_host</span>    <span class="o">|</span> <span class="n">nullable</span> <span class="n">string</span>     <span class="o">|</span>
+<span class="o">|</span> <span class="n">remote_login</span>   <span class="o">|</span> <span class="n">nullable</span> <span class="n">string</span>     <span class="o">|</span>
+<span class="o">|</span> <span class="n">auth_user</span>      <span class="o">|</span> <span class="n">nullable</span> <span class="n">string</span>     <span class="o">|</span>
+<span class="o">|</span> <span class="n">date</span>           <span class="o">|</span> <span class="n">nullable</span> <span class="n">string</span>     <span class="o">|</span>
+<span class="o">|</span> <span class="n">request</span>        <span class="o">|</span> <span class="n">nullable</span> <span class="n">string</span>     <span class="o">|</span>
+<span class="o">|</span> <span class="n">status</span>         <span class="o">|</span> <span class="n">nullable</span> <span class="n">string</span>     <span class="o">|</span>
+<span class="o">|</span> <span class="n">content_length</span> <span class="o">|</span> <span class="n">nullable</span> <span class="n">string</span>     <span class="o">|</span>
+<span class="o">|</span> <span class="n">referrer</span>       <span class="o">|</span> <span class="n">nullable</span> <span class="n">string</span>     <span class="o">|</span>
+<span class="o">|</span> <span class="n">user_agent</span>     <span class="o">|</span> <span class="n">nullable</span> <span class="n">string</span>     <span class="o">|</span>
+<span class="o">+======================================+</span>
+</pre></div>
+</div>
+<p>The &#8216;ts&#8217; and &#8216;headers&#8217; fields will be always be present regardless of the stream format.
+All other fields in this example come from the default schema for the &#8216;clf&#8217; format.</p>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../../../../table-of-contents/../../index.html"
+        rel="nofollow">CDAP Documentation v3.1.0</a></h3>
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../../../../table-of-contents/../../index.html"
+            rel="nofollow">Overview</a></li>
+            
+      <li><div class=""></div><a href="../../../../table-of-contents/../../introduction/index.html"
+            rel="nofollow">Introduction to CDAP</a></li>
+            
+      <li><div class=""></div><a href="../../../../table-of-contents/../../developers-manual/index.html"
+            rel="nofollow">Developers’ Manual</a></li>
+            
+      <li><div class=""></div><b><a href="../../../../table-of-contents/../../application-templates/index.html"
+            rel="nofollow">Application Templates</a></b></li>
+            
+      <li><div class=""></div><a href="../../../../table-of-contents/../../admin-manual/index.html"
+            rel="nofollow">Administration Manual</a></li>
+            
+      <li><div class=""></div><a href="../../../../table-of-contents/../../integrations/index.html"
+            rel="nofollow">Integrations</a></li>
+            
+      <li><div class=""></div><a href="../../../../table-of-contents/../../examples-manual/index.html"
+            rel="nofollow">Examples, Guides, and Tutorials</a></li>
+            
+      <li><div class=""></div><a href="../../../../table-of-contents/../../reference-manual/index.html"
+            rel="nofollow">Reference Manual</a></li>
+            
+      <li><div class=""></div><a href="../../../../table-of-contents/../../reference-manual/release-notes.html"
+            rel="nofollow">Release Notes</a></li>
+            
+      <li><div class=""></div><a href="../../../../table-of-contents/../../reference-manual/glossary.html"
+            rel="nofollow">Glossary</a></li>
+            
+      <li><div class=""></div><a href="../../../../table-of-contents/../../reference-manual/faq.html"
+            rel="nofollow">FAQ</a></li>
+            
+      <li><div class=""></div><a href="../../../../table-of-contents/../../search.html"
+            rel="nofollow">Search</a></li>
+    </ul>
+   </div><!--
+  Copyright © 2014-2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+
+    
+<h3 class="pagenavtitle"><a href="../../../../table-of-contents.html">Application Templates:<br> Table&nbsp;of&nbsp;Contents</a></h3>
+<nav class="pagenav">
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../index.html"> ETL Overview</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html"> ETL Templates and Plugins</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html"> Sources</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="index.html"> Batch</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="database.html"> Database</a></li>
+<li class="toctree-l4"><a class="reference internal" href="file.html"> File</a></li>
+<li class="toctree-l4"><a class="reference internal" href="kvtable.html"> KVTable</a></li>
+<li class="toctree-l4"><a class="reference internal" href="s3.html"> S3</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href=""> Stream</a></li>
+<li class="toctree-l4"><a class="reference internal" href="table.html"> Table</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tpfsavro.html"> TPFSAvro</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../real-time/index.html"> Real-time</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../transformations/index.html"> Transformations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../sinks/index.html"> Sinks</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../creating.html"> Creating an ETL Adapter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../operations.html"> Adapter Lifecycle Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../custom.html"> Creating Custom ETL Plugins</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../third-party.html"> Using Third-party Jars</a></li>
+</ul>
+
+</nav>
+  <h4>Previous Topic</h4>
+  <p class="topless"><a href="s3.html"
+                        title="Previous Chapter">Sources: Batch: S3</a></p>
+  <h4>Next Topic</h4>
+  <p class="topless"><a href="table.html"
+                        title="Next Chapter">Sources: Batch: Table</a></p>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.1.0/cdap-docs-3.1.0-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tephra/index.html" target="_blank">Tephra</em></a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Sources: Batch: S3" href="s3.html" />Sources: Batch: S3</a>&nbsp;&nbsp;
+    
+    </th>
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2015 Cask Data, Inc.
+    
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Sources: Batch: Table" href="table.html" />Sources: Batch: Table</a>
+    
+    </th>
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

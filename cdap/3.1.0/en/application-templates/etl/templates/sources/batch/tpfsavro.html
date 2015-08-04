@@ -1,0 +1,311 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2015 Cask Data, Inc." name="copyright" />
+<script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-55081520-2']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+    
+    <meta name="git_release" content="3.1.0">
+    <meta name="git_hash" content="ff8fcca0530489e71df1b7fb473170b59c073f41">
+    <meta name="git_timestamp" content="2015-08-03 18:00:47 -0700">
+    <title>Sources: Batch: TPFSAvro &mdash; Cask Data Application Platform 3.1.0 Documentation</title>
+    
+    <link rel="stylesheet" href="../../../../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../../',
+        VERSION:     '3.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../../../../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.1.0 Documentation" href="../../../../index.html" />
+    <link rel="up" title="Sources: Batch" href="index.html" />
+    <link rel="next" title="Sources: Real-time" href="../real-time/index.html" />
+    <link rel="prev" title="Sources: Batch: Table" href="table.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="../real-time/index.html" title="Sources: Real-time"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="table.html" title="Sources: Batch: Table"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../../../../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.1.0');</script>
+       
+        <li><a href="../../../../table-of-contents.html">CDAP Application Templates</a> &raquo;</li>
+          <li><a href="../../index.html" >ETL Template and Plugins</a> &raquo;</li>
+          <li><a href="../index.html" >Sources</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Sources: Batch</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="sources-batch-tpfsavro">
+<h1>Sources: Batch: TPFSAvro<a class="headerlink" href="#sources-batch-tpfsavro" title="Permalink to this headline">¶</a></h1>
+<p class="rubric">Description</p>
+<p>Reads from a TimePartitionedFileSet whose data is in Avro format.</p>
+<p class="rubric">Use Case</p>
+<p>The source is used when you need to read partitions of a TimePartitionedFileSet.
+For example, suppose there is an application that ingests data by writing to a TimePartitionedFileSet,
+where arrival time of the data is used as the partition key. You may want to create a pipeline that then
+reads newly arrived files, performs some data validation and cleansing, then writes to a Table.</p>
+<p class="rubric">Properties</p>
+<p><strong>name:</strong> Name of the TimePartitionedFileSet from which the records are to be read from.</p>
+<p><strong>schema:</strong> The Avro schema of the record being read from the source as a JSON Object.</p>
+<p><strong>basePath:</strong> Base path for the TimePartitionedFileSet. Defaults to the name of the
+dataset.</p>
+<p><strong>duration:</strong> Size of the time window to read with each run of the pipeline. The format is
+expected to be a number followed by an &#8216;s&#8217;, &#8216;m&#8217;, &#8216;h&#8217;, or &#8216;d&#8217; specifying the time unit, with
+&#8216;s&#8217; for seconds, &#8216;m&#8217; for minutes, &#8216;h&#8217; for hours, and &#8216;d&#8217; for days. For example, a value of
+&#8216;5m&#8217; means each run of the pipeline will read 5 minutes of events from the TPFS source.</p>
+<p><strong>delay:</strong> Optional delay for reading from TPFS source. The value must be of the same
+format as the duration value. For example, a duration of &#8216;5m&#8217; and a delay of &#8216;10m&#8217; means
+each run of the pipeline will read events 5 minutes of data from 15 minutes before its logical
+start time to 10 minutes before its logical start time. The default value is 0.</p>
+<p class="rubric">Example</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="o">{</span>
+  <span class="s">&quot;name&quot;</span><span class="o">:</span> <span class="s">&quot;TPFSAvro&quot;</span><span class="o">,</span>
+  <span class="s">&quot;properties&quot;</span><span class="o">:</span> <span class="o">{</span>
+    <span class="s">&quot;name&quot;</span><span class="o">:</span> <span class="s">&quot;webactivity&quot;</span><span class="o">,</span>
+    <span class="s">&quot;duration&quot;</span><span class="o">:</span> <span class="s">&quot;5m&quot;</span><span class="o">,</span>
+    <span class="s">&quot;delay&quot;</span><span class="o">:</span> <span class="s">&quot;1m&quot;</span><span class="o">,</span>
+    <span class="s">&quot;schema&quot;</span><span class="o">:</span> <span class="s">&quot;{</span>
+<span class="s">      \&quot;type\&quot;:\&quot;record\&quot;,</span>
+<span class="s">      \&quot;name\&quot;:\&quot;webactivity\&quot;,</span>
+<span class="s">      \&quot;fields\&quot;:[</span>
+<span class="s">        {\&quot;name\&quot;:\&quot;date\&quot;,\&quot;type\&quot;:\&quot;string\&quot;},</span>
+<span class="s">        {\&quot;name\&quot;:\&quot;userid\&quot;,\&quot;type\&quot;:\&quot;long\&quot;},</span>
+<span class="s">        {\&quot;name\&quot;:\&quot;action\&quot;,\&quot;type\&quot;:\&quot;string\&quot;},</span>
+<span class="s">        {\&quot;name\&quot;:\&quot;item\&quot;,\&quot;type\&quot;:\&quot;string\&quot;}</span>
+<span class="s">      ]</span>
+<span class="s">    }&quot;</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>This example reads from a TimePartitionedFileSet named &#8216;webactivity&#8217;, assuming the underlying
+files are in Avro format. TimePartitionedFileSets are partitioned by year, month, day, hour,
+and minute. Suppose the current run was scheduled to start at 10:00am on January 1, 2015.
+Since the &#8216;delay&#8217; property is set to one minute, only data before 9:59am January 1, 2015 will
+be read. This excludes the partition for year 2015, month 1, day 1, hour 9, and minute 59.
+Since the &#8216;duration&#8217; property is set to five minutes, a total of five partitions will be read.
+This means partitions for year 2015, month 1, day 1, hour 9, and minutes 54, 55, 56, 57, and 58
+will be read. The source will read the actual data using the given schema. This means it will output
+records with this schema:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="o">+=======================+</span>
+<span class="o">|</span> <span class="n">field</span> <span class="n">name</span>  <span class="o">|</span> <span class="n">type</span>    <span class="o">|</span>
+<span class="o">+=======================+</span>
+<span class="o">|</span> <span class="n">date</span>        <span class="o">|</span> <span class="n">string</span>  <span class="o">|</span>
+<span class="o">|</span> <span class="n">userid</span>      <span class="o">|</span> <span class="kt">long</span>    <span class="o">|</span>
+<span class="o">|</span> <span class="n">action</span>      <span class="o">|</span> <span class="n">string</span>  <span class="o">|</span>
+<span class="o">|</span> <span class="n">item</span>        <span class="o">|</span> <span class="n">string</span>  <span class="o">|</span>
+<span class="o">+=======================+</span>
+</pre></div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../../../../table-of-contents/../../index.html"
+        rel="nofollow">CDAP Documentation v3.1.0</a></h3>
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../../../../table-of-contents/../../index.html"
+            rel="nofollow">Overview</a></li>
+            
+      <li><div class=""></div><a href="../../../../table-of-contents/../../introduction/index.html"
+            rel="nofollow">Introduction to CDAP</a></li>
+            
+      <li><div class=""></div><a href="../../../../table-of-contents/../../developers-manual/index.html"
+            rel="nofollow">Developers’ Manual</a></li>
+            
+      <li><div class=""></div><b><a href="../../../../table-of-contents/../../application-templates/index.html"
+            rel="nofollow">Application Templates</a></b></li>
+            
+      <li><div class=""></div><a href="../../../../table-of-contents/../../admin-manual/index.html"
+            rel="nofollow">Administration Manual</a></li>
+            
+      <li><div class=""></div><a href="../../../../table-of-contents/../../integrations/index.html"
+            rel="nofollow">Integrations</a></li>
+            
+      <li><div class=""></div><a href="../../../../table-of-contents/../../examples-manual/index.html"
+            rel="nofollow">Examples, Guides, and Tutorials</a></li>
+            
+      <li><div class=""></div><a href="../../../../table-of-contents/../../reference-manual/index.html"
+            rel="nofollow">Reference Manual</a></li>
+            
+      <li><div class=""></div><a href="../../../../table-of-contents/../../reference-manual/release-notes.html"
+            rel="nofollow">Release Notes</a></li>
+            
+      <li><div class=""></div><a href="../../../../table-of-contents/../../reference-manual/glossary.html"
+            rel="nofollow">Glossary</a></li>
+            
+      <li><div class=""></div><a href="../../../../table-of-contents/../../reference-manual/faq.html"
+            rel="nofollow">FAQ</a></li>
+            
+      <li><div class=""></div><a href="../../../../table-of-contents/../../search.html"
+            rel="nofollow">Search</a></li>
+    </ul>
+   </div><!--
+  Copyright © 2014-2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+
+    
+<h3 class="pagenavtitle"><a href="../../../../table-of-contents.html">Application Templates:<br> Table&nbsp;of&nbsp;Contents</a></h3>
+<nav class="pagenav">
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../index.html"> ETL Overview</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html"> ETL Templates and Plugins</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html"> Sources</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="index.html"> Batch</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="database.html"> Database</a></li>
+<li class="toctree-l4"><a class="reference internal" href="file.html"> File</a></li>
+<li class="toctree-l4"><a class="reference internal" href="kvtable.html"> KVTable</a></li>
+<li class="toctree-l4"><a class="reference internal" href="s3.html"> S3</a></li>
+<li class="toctree-l4"><a class="reference internal" href="stream.html"> Stream</a></li>
+<li class="toctree-l4"><a class="reference internal" href="table.html"> Table</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href=""> TPFSAvro</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../real-time/index.html"> Real-time</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../transformations/index.html"> Transformations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../sinks/index.html"> Sinks</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../creating.html"> Creating an ETL Adapter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../operations.html"> Adapter Lifecycle Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../custom.html"> Creating Custom ETL Plugins</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../third-party.html"> Using Third-party Jars</a></li>
+</ul>
+
+</nav>
+  <h4>Previous Topic</h4>
+  <p class="topless"><a href="table.html"
+                        title="Previous Chapter">Sources: Batch: Table</a></p>
+  <h4>Next Topic</h4>
+  <p class="topless"><a href="../real-time/index.html"
+                        title="Next Chapter">Sources: Real-time</a></p>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.1.0/cdap-docs-3.1.0-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tephra/index.html" target="_blank">Tephra</em></a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Sources: Batch: Table" href="table.html" />Sources: Batch: Table</a>&nbsp;&nbsp;
+    
+    </th>
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2015 Cask Data, Inc.
+    
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Sources: Real-time" href="../real-time/index.html" />Sources: Real-time</a>
+    
+    </th>
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>
