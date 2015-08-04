@@ -401,7 +401,7 @@ Depending on your installation, you may want to set these properties:
 
 - If you want to use **a different HDFS user** than ``yarn``:
 
-  1. Check that there is—and create if necessary—a corresponding user on all machines
+  1. Check that there is |---| and create if necessary |---| a corresponding user on all machines
      in the cluster on which YARN is running (typically, all of the machines).
   #. Create an ``hdfs.user`` property for that user in ``conf/cdap-site.xml``::
 
@@ -776,7 +776,7 @@ please follow the upgrade instructions for the earlier versions and upgrade firs
 
      $ kinit -kt <keytab> <principal>
 
-#. Run the upgrade tool as the user that runs CDAP Master::
+#. Run the upgrade tool, as the user that runs CDAP Master (the CDAP user)::
 
      $ /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.UpgradeTool upgrade
 
