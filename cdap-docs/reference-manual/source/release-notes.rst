@@ -152,8 +152,19 @@ New Features
   Added ability for custom actions to access the CDAP datasets and services.
 
 - `CDAP-2758 <https://issues.cask.co/browse/CDAP-2758>`__ -
-  FileSet now support existing HDFS locations.
-
+  FileSet now support existing HDFS locations. 
+  
+  Treat base paths that start with "/" as absolute in the file system. An absolute base
+  path for a (Partitioned)FileSet was interpreted as relative to the namespace's data
+  directory. Newly created FileSets interpret absolute base paths as absolute in the file
+  system.
+  
+  Introduced a new property for (Partitioned)FileSets name "data.external". If true, the
+  base path of the FileSet is assumed to be managed by some external process. That is, the
+  FileSet will not attempt to create the directory, it will not delete any files when the
+  FileSet is dropped or truncated, and it will not allow adding or deleting files or
+  partitions. In other words, the FileSet is read-only. 
+  
 - `CDAP-2784 <https://issues.cask.co/browse/CDAP-2784>`__ -
   Added support to write to PartitionedFileSet Partition metadata from MapReduce.
 
@@ -379,19 +390,6 @@ Improvements
 
 - `CDAP-2811 <https://issues.cask.co/browse/CDAP-2811>`__ -
   Improved Hive version detection.
-
-- `CDAP-2884 <https://issues.cask.co/browse/CDAP-2884>`__ -
-  Treat base paths that start with "/" as absolute in the file system. An absolute base
-  path for a (Partitioned)FileSet was interpreted as relative to the namespace's data
-  directory. Newly created FileSets interpret absolute base paths as absolute in the file
-  system.
-  
-- `CDAP-2885 <https://issues.cask.co/browse/CDAP-2885>`__ -
-  Introduced a new property for (Partitioned)FileSets name "data.external". If true, the
-  base path of the FileSet is assumed to be managed by some external process. That is, the
-  FileSet will not attempt to create the directory, it will not delete any files when the
-  FileSet is dropped or truncated, and it will not allow adding or deleting files or
-  partitions. In other words, the FileSet is read-only. 
 
 - `CDAP-2921 <https://issues.cask.co/browse/CDAP-2921>`__ -
   Removed backward-compatibility for pre-2.8 TPFS.
