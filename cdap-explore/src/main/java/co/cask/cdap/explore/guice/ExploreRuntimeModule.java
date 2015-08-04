@@ -36,8 +36,10 @@ import co.cask.cdap.gateway.handlers.CommonHandlers;
 import co.cask.cdap.hive.datasets.DatasetStorageHandler;
 import co.cask.http.HttpHandler;
 import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 import com.google.inject.Exposed;
 import com.google.inject.Inject;
@@ -54,6 +56,7 @@ import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapreduce.MRConfig;
 import org.apache.twill.api.ClassAcceptor;
 import org.slf4j.Logger;
@@ -265,13 +268,12 @@ public class ExploreRuntimeModule extends RuntimeModule {
         * We need to remove Kryo dependency in the Explore container. Spark introduced version 2.21 version of Kryo,
         * which would be normally shipped to the Explore container. Yet, Hive requires Kryo 2.22,
         * and gets it from the Hive jars - hive-exec.jar to be precise.
-        * hive-exec is the job.jar in hive, since hive has guava-11.0.2 classes
-        * we want to exclude the hive-exec.jar from classpath.
+        * we also exclude hive jars as hive dependencies are found in job.jar.
         * */
       @Override
       public boolean accept(String className, URL classUrl, URL classPathUrl) {
         if (bootstrapClassPaths.contains(classPathUrl.getFile()) ||
-          className.startsWith("com.esotericsoftware.kryo") || classPathUrl.getFile().contains("hive-exec")) {
+          className.startsWith("com.esotericsoftware.kryo") || classPathUrl.getFile().contains("hive")) {
           return false;
         }
         return true;
@@ -304,9 +306,21 @@ public class ExploreRuntimeModule extends RuntimeModule {
     LOG.debug("Setting {} to {}", HiveConf.ConfVars.HIVEAUXJARS.toString(),
               System.getProperty(HiveConf.ConfVars.HIVEAUXJARS.toString()));
 
+    // add hive-exec.jar to the HADOOP_CLASSPATH, which is used by the local mapreduce job launched by hive ,
+    // we need to add this, otherwise when hive runs a MapRedLocalTask it cannot find
+    // "org.apache.hadoop.hive.serde2.SerDe" class in its classpath.
+    List<String> orderedDependenciesWithHiveJar = Lists.newArrayList(orderedDependenciesStr);
+    String hiveExecJar = new JobConf(org.apache.hadoop.hive.ql.exec.Task.class).getJar();
+    Preconditions.checkNotNull(hiveExecJar, "Couldn't locate hive-exec.jar to be included in HADOOP_CLASSPATH " +
+      "for MapReduce jobs launched by Hive");
+    orderedDependenciesWithHiveJar.add(hiveExecJar);
+    LOG.debug("Added hive-exec.jar {} to HADOOP_CLASSPATH to be included for MapReduce jobs launched by Hive",
+              hiveExecJar);
+
     //TODO: Setup HADOOP_CLASSPATH hack, more info on why this is needed, see CDAP-9
     LocalMapreduceClasspathSetter classpathSetter =
-      new LocalMapreduceClasspathSetter(new HiveConf(), System.getProperty("java.io.tmpdir"), orderedDependenciesStr);
+      new LocalMapreduceClasspathSetter(new HiveConf(), System.getProperty("java.io.tmpdir"),
+                                        orderedDependenciesWithHiveJar);
     for (File jar : hBaseTableDeps) {
       classpathSetter.accept(jar.getAbsolutePath());
     }

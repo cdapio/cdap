@@ -47,7 +47,7 @@ public class TruncateDatasetInstanceCommand extends AbstractAuthCommand {
     Id.DatasetInstance instance = Id.DatasetInstance.from(cliConfig.getCurrentNamespace(),
                                                           arguments.get(ArgumentName.DATASET.toString()));
     datasetClient.truncate(instance);
-    output.printf("Successfully truncated %s\n", instance);
+    output.printf("Successfully truncated dataset '%s'\n", instance.getId());
   }
 
   @Override
@@ -57,6 +57,6 @@ public class TruncateDatasetInstanceCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Truncates %s.", Fragment.of(Article.A, ElementType.DATASET.getTitleName()));
+    return String.format("Truncates %s.", Fragment.of(Article.A, ElementType.DATASET.getName()));
   }
 }

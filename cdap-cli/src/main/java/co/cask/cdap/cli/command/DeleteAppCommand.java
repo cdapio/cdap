@@ -34,7 +34,6 @@ import java.io.PrintStream;
  */
 public class DeleteAppCommand extends AbstractAuthCommand {
 
-  public static final String SUCCESS_MSG = "Successfully deleted application '%s'";
   private final ApplicationClient appClient;
 
   @Inject
@@ -49,7 +48,7 @@ public class DeleteAppCommand extends AbstractAuthCommand {
                                                arguments.get(ArgumentName.APP.toString()));
 
     appClient.delete(appId);
-    output.printf(SUCCESS_MSG + "\n", appId);
+    output.printf("Successfully deleted application '%s'\n", appId.getId());
   }
 
   @Override
@@ -59,6 +58,6 @@ public class DeleteAppCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Deletes %s.", Fragment.of(Article.A, ElementType.APP.getTitleName()));
+    return String.format("Deletes %s.", Fragment.of(Article.A, ElementType.APP.getName()));
   }
 }

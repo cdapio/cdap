@@ -27,6 +27,7 @@ import co.cask.cdap.api.dataset.lib.cube.AggregationFunction;
 import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.metrics.MetricDataQuery;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.api.metrics.RuntimeMetrics;
@@ -67,13 +68,18 @@ import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -98,6 +104,9 @@ import java.util.concurrent.TimeoutException;
 @Category(SlowTests.class)
 public class TestFrameworkTestRun extends TestFrameworkTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(TestFrameworkTestRun.class);
+
+  @ClassRule
+  public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
   private final Id.Namespace testSpace = Id.Namespace.from("testspace");
 
@@ -341,6 +350,37 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals(false, Boolean.parseBoolean(workflowToken.getTokenData().get("running").get(0).getValue()));
   }
 
+  @Test
+  public void testBatchStreamUpload() throws Exception {
+    StreamManager batchStream = getStreamManager("batchStream");
+    batchStream.createStream();
+    String event1 = "this,is,some";
+    String event2 = "test,csv,data";
+    String event3 = "that,can,be,used,to,test";
+    String event4 = "batch,upload,capability";
+    String event5 = "for,streams in testbase";
+    File testData = TEMP_FOLDER.newFile("test-stream-data.txt");
+    try (FileWriter fileWriter = new FileWriter(testData);
+         BufferedWriter out = new BufferedWriter(fileWriter)) {
+      out.write(String.format("%s\n", event1));
+      out.write(String.format("%s\n", event2));
+      out.write(String.format("%s\n", event3));
+      out.write(String.format("%s\n", event4));
+      out.write(String.format("%s\n", event5));
+    }
+
+    // batch upload file containing 10 events
+    batchStream.send(testData, "text/csv");
+    // verify upload
+    List<StreamEvent> uploadedEvents = batchStream.getEvents(0, System.currentTimeMillis(), 100);
+    Assert.assertEquals(5, uploadedEvents.size());
+    Assert.assertEquals(event1, Bytes.toString(uploadedEvents.get(0).getBody()));
+    Assert.assertEquals(event2, Bytes.toString(uploadedEvents.get(1).getBody()));
+    Assert.assertEquals(event3, Bytes.toString(uploadedEvents.get(2).getBody()));
+    Assert.assertEquals(event4, Bytes.toString(uploadedEvents.get(3).getBody()));
+    Assert.assertEquals(event5, Bytes.toString(uploadedEvents.get(4).getBody()));
+  }
+
   private void waitForWorkflowStatus(final WorkflowManager wfmanager, ProgramRunStatus expected) throws Exception {
     Tasks.waitFor(expected, new Callable<ProgramRunStatus>() {
       @Override
@@ -494,7 +534,9 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     lifecycleWorkerManager.stop();
     lifecycleWorkerManager.waitForStatus(false);
 
-    workerManager.stop();
+    if (workerManager.isRunning()) {
+      workerManager.stop();
+    }
     workerManager.waitForStatus(false);
 
     // Should be same instances after being stopped.
@@ -552,6 +594,15 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals(AppWithWorker.INITIALIZE, Bytes.toString(table.read(AppWithWorker.INITIALIZE)));
     Assert.assertEquals(AppWithWorker.RUN, Bytes.toString(table.read(AppWithWorker.RUN)));
     Assert.assertEquals(AppWithWorker.STOP, Bytes.toString(table.read(AppWithWorker.STOP)));
+  }
+
+  @Test
+  public void testWorkerStop() throws Exception {
+    // Test to make sure the worker program's status goes to stopped after the run method finishes
+    ApplicationManager manager = deployApplication(NoOpWorkerApp.class);
+    WorkerManager workerManager = manager.getWorkerManager("NoOpWorker");
+    workerManager.start();
+    workerManager.waitForStatus(false, 5, 1);
   }
 
   @Category(SlowTests.class)

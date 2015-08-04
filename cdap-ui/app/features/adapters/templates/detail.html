@@ -1,12 +1,21 @@
 <div ncy-breadcrumb></div>
 
 <div class="row" program-heading>
+
   <div class="col-sm-6">
     <h2 class="programTitle">
-      <span ng-bind="$state.params.adapterId"></span>
+      <span>
+        <!-- There is a display: block on the first span -->
+        <span tooltip="{{ $state.params.adapterId }}"
+              tooltip-placement="right"
+              tooltip-enable="$state.params.adapterId.length > 50"
+              tooltip-append-to-body="true"
+              ng-bind="$state.params.adapterId | myEllipsis: 50"></span>
+      </span>
     </h2>
     <div class="type-block">
-      <span class="icon-ETLtemplates"></span>
+      <span class="icon-ETLRealtime" ng-if="template === 'ETLRealtime'"></span>
+      <span class="icon-ETLBatch" ng-if="template === 'ETLBatch'"></span>
       <small> Type: {{template}} </small>
     </div>
   </div>

@@ -73,26 +73,57 @@
               <span class="fa fa-list-ul"></span>
                <span>All Apps</span>
             </a>
-            <a ui-sref="adapters.list" class="btn btn-default">
-              <span class="fa fa-list-ul"></span>
-               All Adapters
-            </a>
 
-            <my-file-select data-button-label="Add App"
-                            on-file-select="AppsSectionCtrl.onFileSelected($files)">
-            </my-file-select>
-
+            <div class="btn-group dropdown-right" dropdown>
+              <button type="button" class="btn btn-default dropdown-toggle white-dropdown" dropdown-toggle>
+                Add App <span class="caret"></span>
+              </button>
+              <ul class="dropdown-menu dropdown-menu-right" role="menu">
+                <li>
+                  <my-file-select dropdown="true"
+                                  data-button-label="Custom App"
+                                  on-file-select="AppsSectionCtrl.onFileSelected($files)">
+                  </my-file-select>
+                </li>
+                <li>
+                  <a ui-sref="adapters.create({type: 'ETLBatch'})" class="clearfix">
+                    <span class="pull-left">ETL Batch App</span>
+                    <i class="icon-ETLBatch pull-right"></i>
+                  </a>
+                </li>
+                <li>
+                  <a ui-sref="adapters.create({type: 'ETLRealtime'})" class="clearfix">
+                    <span class="pull-left">ETL Realtime App</span>
+                    <i class="icon-ETLRealtime pull-right"></i>
+                  </a>
+                </li>
+                <li>
+                  <a ui-sref="adapters.list"> Drafts </a>
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
       </div>
 
       <ul class="list-group">
         <li class="list-group-item" ng-repeat="app in AppsSectionCtrl.apps | orderBy:AppsSectionCtrl.MyOrderings.appOrdering | limitTo:5">
-          <a ui-sref="apps.detail.overview.status({appId: app.id})"  ng-click="AppsSectionCtrl.MyOrderings.appClicked(app.id)">
+          <a ui-sref="apps.detail.overview.status({appId: app.id})"
+              ng-if="app.type !== 'adapter'"
+              ng-click="AppsSectionCtrl.MyOrderings.appClicked(app.id)">
             <p ng-bind="app.name"> </p>
             <div class="title-type-image">
               <span class="icon-fist"></span>
-              <span> CDAP </span>
+              <span> App </span>
+            </div>
+          </a>
+          <a ui-sref="adapters.detail.runs({adapterId: app.name})"
+              ng-if="app.type === 'adapter'"
+              ng-click="AppsSectionCtrl.MyOrderings.appClicked(app.id)">
+            <p ng-bind="app.name"> </p>
+            <div class="title-type-image">
+              <span class="icon-{{app.template}}"></span>
+              <span> {{app.template}} </span>
             </div>
           </a>
         </li>
@@ -105,15 +136,33 @@
         <p> You haven't deployed any apps. Add one. </p>
       </div>
       <hr />
-      <div class="text-left">
-        <my-file-select ng-controller="AppsSectionCtrl"
-                        data-button-label="Add App"
-                        on-file-select="AppsSectionCtrl.onFileSelected($files)">
-        </my-file-select>
-        <a ui-sref="adapters.create" class="btn btn-default">
-          <span class="fa fa-plus"></span>
-          <span>Add Adapter</span>
-        </a>
+      <div class="btn-group dropdown-right" dropdown>
+        <button type="button" class="btn btn-default dropdown-toggle white-dropdown" dropdown-toggle>
+          Add App <span class="caret"></span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-right" role="menu">
+          <li>
+            <my-file-select dropdown="true"
+                            data-button-label="Custom App"
+                            on-file-select="AppsSectionCtrl.onFileSelected($files)">
+            </my-file-select>
+          </li>
+          <li>
+            <a ui-sref="adapters.create({type: 'ETLBatch'})" class="clearfix">
+              <span class="pull-left">ETL Batch App</span>
+              <i class="icon-ETLBatch pull-right"></i>
+            </a>
+          </li>
+          <li>
+            <a ui-sref="adapters.create({type: 'ETLRealtime'})" class="clearfix">
+              <span class="pull-left">ETL Realtime App</span>
+              <i class="icon-ETLRealtime pull-right"></i>
+            </a>
+          </li>
+          <li>
+            <a ui-sref="adapters.list"> Drafts </a>
+          </li>
+        </ul>
       </div>
     </div>
   </div>

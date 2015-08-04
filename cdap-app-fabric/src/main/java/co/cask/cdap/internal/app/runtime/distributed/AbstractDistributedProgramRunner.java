@@ -86,8 +86,8 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
     .create();
 
   private final TwillRunner twillRunner;
-  private final Configuration hConf;
-  private final CConfiguration cConf;
+  protected final Configuration hConf;
+  protected final CConfiguration cConf;
   protected final EventHandler eventHandler;
 
   /**
@@ -155,13 +155,16 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
         LOG.info("Setting scheduler queue to {}", schedulerQueueName);
       }
 
-      Map<String, File> localizeFiles = addAdapterPluginFiles(options, new HashMap<String, File>());
+      Map<String, LocalizeResource> localizeResources = addAdapterPluginFiles(options,
+                                                                              new HashMap<String, LocalizeResource>());
 
       // Copy config files and program jar to local temp, and ask Twill to localize it to container.
       // What Twill does is to save those files in HDFS and keep using them during the lifetime of application.
       // Twill will manage the cleanup of those files in HDFS.
-      localizeFiles.put("hConf.xml", saveHConf(hConf, File.createTempFile("hConf", ".xml", tempDir)));
-      localizeFiles.put("cConf.xml", saveCConf(cConf, File.createTempFile("cConf", ".xml", tempDir)));
+      localizeResources.put("hConf.xml",
+                            new LocalizeResource(saveHConf(hConf, File.createTempFile("hConf", ".xml", tempDir))));
+      localizeResources.put("cConf.xml",
+                            new LocalizeResource(saveCConf(cConf, File.createTempFile("cConf", ".xml", tempDir))));
       File programDir = DirUtils.createTempDir(tempDir);
       final Program copiedProgram = copyProgramJar(program, tempDir, programDir);
 
@@ -171,7 +174,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
       // Obtains and add the HBase delegation token as well (if in non-secure mode, it's a no-op)
       // Twill would also ignore it if it is not running in secure mode.
       // The HDFS token should already obtained by Twill.
-      return launch(copiedProgram, options, localizeFiles, new ApplicationLauncher() {
+      return launch(copiedProgram, options, localizeResources, new ApplicationLauncher() {
         @Override
         public TwillController launch(TwillApplication twillApplication, Iterable<String> extraClassPaths) {
           TwillPreparer twillPreparer = twillRunner.prepare(twillApplication);
@@ -216,10 +219,11 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
    * Gets plugin files that needs to be localized for the adapter. If the given run is not an adapter, no
    * modification will be done to the map.
    */
-  private Map<String, File> addAdapterPluginFiles(ProgramOptions options, Map<String, File> localizeFiles) {
+  private Map<String, LocalizeResource> addAdapterPluginFiles(ProgramOptions options,
+                                                              Map<String, LocalizeResource> localizeResources) {
     Arguments arguments = options.getArguments();
     if (!arguments.hasOption(ProgramOptionConstants.ADAPTER_SPEC)) {
-      return localizeFiles;
+      return localizeResources;
     }
 
     // Decode the adapter spec from program system argument
@@ -231,7 +235,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
 
     // If there is no plugin used by the adapter, nothing need to be localized
     if (plugins.isEmpty()) {
-      return localizeFiles;
+      return localizeResources;
     }
 
     File templateDir = new File(cConf.get(Constants.AppFabric.APP_TEMPLATE_DIR));
@@ -245,16 +249,16 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
     // The AbstractProgramTwillRunnable will set the APP_TEMPLATE_DIR correspondingly.
     for (PluginInfo plugin : plugins) {
       String localizedName = String.format("%s/%s", localizePrefix, plugin.getFileName());
-      localizeFiles.put(localizedName, new File(templatePluginDir, plugin.getFileName()));
+      localizeResources.put(localizedName, new LocalizeResource(new File(templatePluginDir, plugin.getFileName())));
     }
 
     // Localize all files under template plugin "lib" directory
     for (File libJar : DirUtils.listFiles(new File(templatePluginDir, "lib"), "jar")) {
       String localizedName = String.format("%s/lib/%s", localizePrefix, libJar.getName());
-      localizeFiles.put(localizedName, libJar);
+      localizeResources.put(localizedName, new LocalizeResource(libJar));
     }
 
-    return localizeFiles;
+    return localizeResources;
   }
 
   /**
@@ -284,7 +288,8 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
    * Sub-class overrides this method to launch the twill application.
    */
   protected abstract ProgramController launch(Program program, ProgramOptions options,
-                                              Map<String, File> localizeFiles, ApplicationLauncher launcher);
+                                              Map<String, LocalizeResource> localizeResources,
+                                              ApplicationLauncher launcher);
 
 
   private File saveHConf(Configuration conf, File file) throws IOException {

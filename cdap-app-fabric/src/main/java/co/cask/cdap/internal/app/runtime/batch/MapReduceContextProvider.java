@@ -89,6 +89,14 @@ public final class MapReduceContextProvider {
     return context;
   }
 
+  // TODO: CDAP-3160 : Refactor to remove the need for the stop method below. Provider/Builder classes should not have
+  // methods like stop(), finish() or close().
+  public synchronized void stop() {
+    if (contextBuilder != null) {
+      contextBuilder.finish();
+    }
+  }
+
   private synchronized AbstractMapReduceContextBuilder getBuilder(CConfiguration conf) {
     if (contextBuilder != null) {
       return contextBuilder;

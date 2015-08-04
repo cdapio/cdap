@@ -1,0 +1,20 @@
+<div class="modal-header">
+  <div class="col-xs-10">
+    <h3 class="modal-title"> Adapter Config </h3>
+  </div>
+  <div class="col-xs-2">
+    <div class="modal-btns">
+      <div class="pull-right">
+        <a class="btn" ng-click="$close()">
+          <span class="fa fa-remove"></span>
+          <span class="sr-only"> Close </span>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-body config-modal">
+  <fieldset disabled="true" class="view-plugin-json">
+    <my-json-textbox ng-model="config"></my-json-textbox>
+  </fieldset>
+</div>

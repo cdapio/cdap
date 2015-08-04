@@ -35,11 +35,11 @@ public class GetResolvedPreferencesCommand extends AbstractGetPreferencesCommand
 
   @Override
   public String getPattern() {
-    return String.format("get resolved preferences %s [<%s>]", type.getName(), type.getArgumentName());
+    return String.format("get resolved preferences %s [<%s>]", type.getShortName(), type.getArgumentName());
   }
 
   @Override
   public String getDescription() {
-    return String.format("Gets the resolved preferences of %s.", Fragment.of(Article.A, type.getTitleName()));
+    return String.format("Gets the resolved preferences of %s.", Fragment.of(Article.A, type.getName()));
   }
 }

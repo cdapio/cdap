@@ -104,8 +104,8 @@ public abstract class AbstractQueueUpgrader extends AbstractUpgrader {
               LOG.debug("Adding entry {} -> {} for upgrade",
                         Bytes.toString(entry.getKey()), Bytes.toString(entry.getValue()));
               put.add(QueueEntryRow.COLUMN_FAMILY, entry.getKey(), entry.getValue());
-              mutations.add(put);
             }
+            mutations.add(put);
             LOG.debug("Marking old key {} for deletion", rowKeyString);
             mutations.add(tableUtil.buildDelete(row).build());
           }

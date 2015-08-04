@@ -69,6 +69,8 @@ public class CreateDatasetInstanceCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Creates %s.", Fragment.of(Article.A, ElementType.DATASET.getTitleName()));
+    return String.format("Creates %s. <%s> is in the format \"key1=val1 key2=val2\"",
+                         Fragment.of(Article.A, ElementType.DATASET.getName()),
+                         ArgumentName.DATASET_PROPERTIES);
   }
 }

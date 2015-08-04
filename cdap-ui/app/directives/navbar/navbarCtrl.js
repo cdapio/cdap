@@ -10,9 +10,6 @@ angular.module(PKG.name + '.commons')
         });
     }
 
-    // TODO: Need to investigate why the loginSuccess event isn't triggered on refresh
-    updateNamespaceList();
-
     // Listening for event from namespace create or namespace delete
     EventPipe.on('namespace.update', function() {
       updateNamespaceList();

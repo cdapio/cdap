@@ -372,8 +372,6 @@ public class AppFabricClient {
       mockResponder = new MockResponder();
       bodyConsumer.finished(mockResponder);
       verifyResponse(HttpResponseStatus.OK, mockResponder.getStatus(), "Failed to deploy app");
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
     }
     return deployedJar;
   }
@@ -459,5 +457,13 @@ public class AppFabricClient {
       LOG.error("Error getting adapter run", e);
       throw Throwables.propagate(e);
     }
+  }
+
+  public void deleteAdapter(Id.Adapter adapterId) throws Exception {
+    String url = String.format("%s/adapters/%s", getNamespacePath(adapterId.getNamespaceId()), adapterId.getId());
+    DefaultHttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.DELETE, url);
+    MockResponder responder = new MockResponder();
+    adapterHttpHandler.deleteAdapter(request, responder, adapterId.getNamespaceId(), adapterId.getId());
+    verifyResponse(HttpResponseStatus.valueOf(200), responder.getStatus(), "Failed to delete adapter.");
   }
 }

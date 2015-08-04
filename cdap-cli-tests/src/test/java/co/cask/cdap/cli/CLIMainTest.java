@@ -164,9 +164,9 @@ public class CLIMainTest {
     Id.Flow flow = Id.Flow.from(app, flowId);
 
     String qualifiedFlowId = FakeApp.NAME + "." + flowId;
-    testCommandOutputContains(cli, "start flow " + qualifiedFlowId, "Successfully started Flow");
+    testCommandOutputContains(cli, "start flow " + qualifiedFlowId, "Successfully started flow");
     assertProgramStatus(programClient, flow, "RUNNING");
-    testCommandOutputContains(cli, "stop flow " + qualifiedFlowId, "Successfully stopped Flow");
+    testCommandOutputContains(cli, "stop flow " + qualifiedFlowId, "Successfully stopped flow");
     assertProgramStatus(programClient, flow, "STOPPED");
     testCommandOutputContains(cli, "get flow status " + qualifiedFlowId, "STOPPED");
     testCommandOutputContains(cli, "get flow runs " + qualifiedFlowId, "KILLED");
@@ -221,7 +221,7 @@ public class CLIMainTest {
     testCommandOutputNotContains(cli, "get stream " + streamId, "helloworld");
     testCommandOutputContains(cli, "set stream ttl " + streamId + " 100000", "Successfully set TTL of stream");
     testCommandOutputContains(cli, "set stream notification-threshold " + streamId + " 1",
-                              "Successfully set notification threshold of Stream");
+                              "Successfully set notification threshold of stream");
     testCommandOutputContains(cli, "describe stream " + streamId, "100000");
 
     File file = new File(TMP_FOLDER.newFolder(), "test.txt");
@@ -242,9 +242,9 @@ public class CLIMainTest {
                               "Successfully sent stream event to stream");
     testCommandOutputContains(cli, "get stream " + streamId, "9, Event 9");
     testCommandOutputContains(cli, "get stream-stats " + streamId,
-                              String.format("No schema found for %s", stream));
+                              String.format("No schema found for stream '%s'", streamId));
     testCommandOutputContains(cli, "set stream format " + streamId + " csv 'body string'",
-                              String.format("Successfully set format of %s", stream));
+                              String.format("Successfully set format of stream '%s'", streamId));
     testCommandOutputContains(cli, "execute 'show tables'", String.format("stream_%s", streamId));
     testCommandOutputContains(cli, "get stream-stats " + streamId,
                               "Analyzed 10 Stream events in the time range [0, 9223372036854775807]");
@@ -267,7 +267,6 @@ public class CLIMainTest {
   @Test
   public void testDataset() throws Exception {
     String datasetName = PREFIX + "sdf123lkj";
-    Id.DatasetInstance dataset = Id.DatasetInstance.from(Id.Namespace.DEFAULT, datasetName);
 
     DatasetTypeClient datasetTypeClient = new DatasetTypeClient(cliConfig.getClientConfig());
     DatasetTypeMeta datasetType = datasetTypeClient.list(Id.Namespace.DEFAULT).get(0);
@@ -299,7 +298,7 @@ public class CLIMainTest {
   public void testService() throws Exception {
     Id.Service service = Id.Service.from(Id.Namespace.DEFAULT, FakeApp.NAME, PrefixedEchoHandler.NAME);
     String qualifiedServiceId = String.format("%s.%s", FakeApp.NAME, PrefixedEchoHandler.NAME);
-    testCommandOutputContains(cli, "start service " + qualifiedServiceId, "Successfully started Service");
+    testCommandOutputContains(cli, "start service " + qualifiedServiceId, "Successfully started service");
     assertProgramStatus(programClient, service, "RUNNING");
     try {
       testCommandOutputContains(cli, "get endpoints service " + qualifiedServiceId, "POST");
@@ -307,7 +306,7 @@ public class CLIMainTest {
       testCommandOutputContains(cli, "call service " + qualifiedServiceId
         + " POST /echo body \"testBody\"", ":testBody");
     } finally {
-      testCommandOutputContains(cli, "stop service " + qualifiedServiceId, "Successfully stopped Service");
+      testCommandOutputContains(cli, "stop service " + qualifiedServiceId, "Successfully stopped service");
       assertProgramStatus(programClient, service, "STOPPED");
     }
   }
@@ -320,12 +319,12 @@ public class CLIMainTest {
     Map<String, String> runtimeArgs = ImmutableMap.of("sdf", "bacon");
     String runtimeArgsKV = Joiner.on(",").withKeyValueSeparator("=").join(runtimeArgs);
     testCommandOutputContains(cli, "start service " + qualifiedServiceId + " '" + runtimeArgsKV + "'",
-                              "Successfully started Service");
+                              "Successfully started service");
     try {
       assertProgramStatus(programClient, service, "RUNNING");
       testCommandOutputContains(cli, "call service " + qualifiedServiceId + " POST /echo body \"testBody\"",
                                 "bacon:testBody");
-      testCommandOutputContains(cli, "stop service " + qualifiedServiceId, "Successfully stopped Service");
+      testCommandOutputContains(cli, "stop service " + qualifiedServiceId, "Successfully stopped service");
       assertProgramStatus(programClient, service, "STOPPED");
 
       Map<String, String> runtimeArgs2 = ImmutableMap.of("sdf", "chickenz");
@@ -333,12 +332,12 @@ public class CLIMainTest {
       String runtimeArgs2KV = Joiner.on(",").withKeyValueSeparator("=").join(runtimeArgs2);
       testCommandOutputContains(cli, "set service runtimeargs " + qualifiedServiceId + " '" + runtimeArgs2KV + "'",
                                 "Successfully set runtime args");
-      testCommandOutputContains(cli, "start service " + qualifiedServiceId, "Successfully started Service");
+      testCommandOutputContains(cli, "start service " + qualifiedServiceId, "Successfully started service");
       testCommandOutputContains(cli, "get service runtimeargs " + qualifiedServiceId, runtimeArgs2Json);
       testCommandOutputContains(cli, "call service " + qualifiedServiceId + " POST /echo body \"testBody\"",
                                 "chickenz:testBody");
     } finally {
-      testCommandOutputContains(cli, "stop service " + qualifiedServiceId, "Successfully stopped Service");
+      testCommandOutputContains(cli, "stop service " + qualifiedServiceId, "Successfully stopped service");
       assertProgramStatus(programClient, service, "STOPPED");
     }
   }
@@ -490,7 +489,7 @@ public class CLIMainTest {
     Map<String, String> runtimeArgs = ImmutableMap.of("done.file", doneFile.getAbsolutePath());
     String runtimeArgsKV = Joiner.on(",").withKeyValueSeparator("=").join(runtimeArgs);
     testCommandOutputContains(cli, "start workflow " + workflow + " '" + runtimeArgsKV + "'",
-                              "Successfully started Workflow");
+                              "Successfully started workflow");
     assertProgramStatus(programClient, fakeWorkflowId, "STOPPED");
     testCommandOutputContains(cli, "cli render as csv", "Now rendering as CSV");
     String commandOutput = getCommandOutput(cli, "get workflow runs " + workflow);
@@ -524,6 +523,9 @@ public class CLIMainTest {
     testCommandOutputContains(
       cli, String.format("get workflow token %s %s at node %s scope user key %s", workflow, runId,
                          FakeWorkflow.FakeAction.ANOTHER_FAKE_NAME, FakeWorkflow.FakeAction.TOKEN_KEY), fakeNodeValue);
+
+    // stop workflow
+    testCommandOutputContains(cli, "stop workflow " + workflow, "400: Program not running");
   }
 
   private static File createAppJarFile(Class<?> cls) throws IOException {

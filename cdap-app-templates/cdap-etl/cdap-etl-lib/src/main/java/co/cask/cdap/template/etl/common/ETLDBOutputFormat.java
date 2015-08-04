@@ -116,4 +116,13 @@ public class ETLDBOutputFormat<K extends DBWritable, V>  extends DBOutputFormat<
     }
     return connection;
   }
+
+  @Override
+  public String constructQuery(String table, String[] fieldNames) {
+    String query = super.constructQuery(table, fieldNames);
+    // Strip the ';' at the end since Oracle doesn't like it.
+    // TODO: Perhaps do a conditional if we can find a way to tell that this is going to Oracle
+    // However, tested this to work on Mysql and Oracle
+    return query.substring(0, query.length() - 1);
+  }
 }

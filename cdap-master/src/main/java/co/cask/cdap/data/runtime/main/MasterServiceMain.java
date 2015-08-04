@@ -655,6 +655,9 @@ public class MasterServiceMain extends DaemonMain {
    * runnable.
    */
   private TwillPreparer prepareExploreContainer(TwillPreparer preparer) {
+    File tempDir = DirUtils.createTempDir(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
+                                                   cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile());
+
     try {
       // Put jars needed by Hive in the containers classpath. Those jars are localized in the Explore
       // container by MasterTwillApplication, so they are available for ExploreServiceTwillRunnable
@@ -681,7 +684,7 @@ public class MasterServiceMain extends DaemonMain {
       if (file.getName().matches(".*\\.xml") && !file.getName().equals("logback.xml")) {
         if (addedFiles.add(file.getName())) {
           LOG.debug("Adding config file: {}", file.getAbsolutePath());
-          preparer = preparer.withResources(ExploreServiceUtils.hijackConfFile(file).toURI());
+          preparer = preparer.withResources(ExploreServiceUtils.updateConfFileForExplore(file, tempDir).toURI());
         } else {
           LOG.warn("Ignoring duplicate config file: {}", file.getAbsolutePath());
         }

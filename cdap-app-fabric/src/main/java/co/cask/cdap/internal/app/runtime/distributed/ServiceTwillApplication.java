@@ -23,7 +23,6 @@ import co.cask.cdap.proto.ProgramType;
 import org.apache.twill.api.EventHandler;
 import org.apache.twill.api.TwillApplication;
 
-import java.io.File;
 import java.util.Map;
 
 /**
@@ -34,8 +33,9 @@ public class ServiceTwillApplication extends AbstractProgramTwillApplication {
   private final ServiceSpecification spec;
 
   public ServiceTwillApplication(Program program, ServiceSpecification spec,
-                                 Map<String, File> localizeFiles, EventHandler eventHandler) {
-    super(program, localizeFiles, eventHandler);
+                                 Map<String, LocalizeResource> localizeResources,
+                                 EventHandler eventHandler) {
+    super(program, localizeResources, eventHandler);
     this.spec = spec;
   }
 

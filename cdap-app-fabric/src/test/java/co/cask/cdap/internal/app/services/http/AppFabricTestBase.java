@@ -532,6 +532,19 @@ public abstract class AppFabricTestBase {
   }
 
   /**
+   * Tries to start the given program with the given runtime arguments and expect the call completed with the status.
+   */
+  protected void debugProgram(Id.Program program, int expectedStatusCode) throws Exception {
+    String path = String.format("apps/%s/%s/%s/debug",
+                                program.getApplicationId(),
+                                program.getType().getCategoryName(),
+                                program.getId());
+    HttpResponse response = doPost(getVersionedAPIPath(path, program.getNamespaceId()),
+                                   GSON.toJson(ImmutableMap.<String, String>of()));
+    Assert.assertEquals(expectedStatusCode, response.getStatusLine().getStatusCode());
+  }
+
+  /**
    * Stops the given program.
    */
   protected void stopProgram(Id.Program program) throws Exception {
@@ -604,12 +617,19 @@ public abstract class AppFabricTestBase {
   }
 
   protected String getProgramStatus(Id.Program program) throws Exception {
+    return getStatus(programStatus(program));
+  }
+
+  protected void programStatus(Id.Program program, int expectedStatus) throws Exception {
+    Assert.assertEquals(expectedStatus, programStatus(program).getStatusLine().getStatusCode());
+  }
+
+  protected HttpResponse programStatus(Id.Program program) throws Exception {
     String path = String.format("apps/%s/%s/%s/status",
                                 program.getApplicationId(),
                                 program.getType().getCategoryName(),
                                 program.getId());
-    HttpResponse response = doGet(getVersionedAPIPath(path, program.getNamespaceId()));
-    return getStatus(response);
+    return doGet(getVersionedAPIPath(path, program.getNamespaceId()));
   }
 
   protected String getAdapterStatus(Id.Adapter adapter) throws Exception {

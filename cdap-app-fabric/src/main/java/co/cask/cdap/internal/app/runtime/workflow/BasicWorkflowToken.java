@@ -19,11 +19,15 @@ package co.cask.cdap.internal.app.runtime.workflow;
 import co.cask.cdap.api.workflow.NodeValue;
 import co.cask.cdap.api.workflow.Value;
 import co.cask.cdap.api.workflow.WorkflowToken;
+import co.cask.cdap.common.conf.Constants;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.EnumMap;
 import java.util.HashMap;
@@ -37,14 +41,24 @@ public class BasicWorkflowToken implements WorkflowToken, Serializable {
 
   private static final long serialVersionUID = -1173500180640174909L;
 
-  private Map<String, Map<String, Long>> mapReduceCounters;
   private final Map<Scope, Map<String, List<NodeValue>>> tokenValueMap = new EnumMap<>(Scope.class);
+  private final int maxSizeBytes;
+  private Map<String, Map<String, Long>> mapReduceCounters;
   private String nodeName;
+  private boolean putAllowed = true;
+  private int bytesLeft;
 
-  public BasicWorkflowToken() {
+  /**
+   * Creates a {@link BasicWorkflowToken} with the specified maximum size.
+   *
+   * @param maxSizeMb the specified maximum size in MB for the {@link BasicWorkflowToken} to create.
+   */
+  public BasicWorkflowToken(int maxSizeMb) {
     for (Scope scope : Scope.values()) {
-      tokenValueMap.put(scope, new HashMap<String, List<NodeValue>>());
+      this.tokenValueMap.put(scope, new HashMap<String, List<NodeValue>>());
     }
+    this.maxSizeBytes = maxSizeMb * 1024 * 1024;
+    this.bytesLeft = maxSizeBytes;
   }
 
   private BasicWorkflowToken(BasicWorkflowToken other) {
@@ -62,10 +76,19 @@ public class BasicWorkflowToken implements WorkflowToken, Serializable {
     if (other.mapReduceCounters != null) {
       this.mapReduceCounters = copyHadoopCounters(other.mapReduceCounters);
     }
+    this.maxSizeBytes = other.maxSizeBytes;
+    this.bytesLeft = other.bytesLeft;
   }
 
   void setCurrentNode(String nodeName) {
     this.nodeName = nodeName;
+  }
+
+  /**
+   * Method to disable the put operation on the {@link WorkflowToken} form Mapper and Reducer classes.
+   */
+  public void disablePut() {
+    putAllowed = false;
   }
 
   /**
@@ -78,8 +101,9 @@ public class BasicWorkflowToken implements WorkflowToken, Serializable {
       Map<String, List<NodeValue>> thisTokenValueMapForScope = this.tokenValueMap.get(entry.getKey());
 
       for (Map.Entry<String, List<NodeValue>> otherTokenValueMapForScopeEntry : entry.getValue().entrySet()) {
-        if (!thisTokenValueMapForScope.containsKey(otherTokenValueMapForScopeEntry.getKey())) {
-          thisTokenValueMapForScope.put(otherTokenValueMapForScopeEntry.getKey(), Lists.<NodeValue>newArrayList());
+        String otherKey = otherTokenValueMapForScopeEntry.getKey();
+        if (!thisTokenValueMapForScope.containsKey(otherKey)) {
+          thisTokenValueMapForScope.put(otherKey, Lists.<NodeValue>newArrayList());
         }
 
         // Iterate over the list of NodeValue corresponding to the current key.
@@ -87,15 +111,14 @@ public class BasicWorkflowToken implements WorkflowToken, Serializable {
 
         for (NodeValue otherNodeValue : otherTokenValueMapForScopeEntry.getValue()) {
           boolean otherNodeValueExist = false;
-          for (NodeValue thisNodeValue :
-            thisTokenValueMapForScope.get(otherTokenValueMapForScopeEntry.getKey())) {
+          for (NodeValue thisNodeValue : thisTokenValueMapForScope.get(otherKey)) {
             if (thisNodeValue.equals(otherNodeValue)) {
               otherNodeValueExist = true;
               break;
             }
           }
           if (!otherNodeValueExist) {
-            thisTokenValueMapForScope.get(otherTokenValueMapForScopeEntry.getKey()).add(otherNodeValue);
+            addOrUpdate(otherKey, otherNodeValue, thisTokenValueMapForScope.get(otherKey), -1);
           }
         }
       }
@@ -117,6 +140,12 @@ public class BasicWorkflowToken implements WorkflowToken, Serializable {
   }
 
   void put(String key, Value value, Scope scope) {
+    if (!putAllowed) {
+      String msg = String.format("Failed to put key '%s' from node '%s' in the WorkflowToken. Put operation is not " +
+                                 "allowed from the Mapper and Reducer classes and from Spark executor.", key, nodeName);
+      throw new UnsupportedOperationException(msg);
+    }
+
     Preconditions.checkNotNull(key, "Null key cannot be added in the WorkflowToken.");
     Preconditions.checkNotNull(value, String.format("Null value provided for the key '%s'.", key));
     Preconditions.checkNotNull(value.toString(), String.format("Null value provided for the key '%s'.", key));
@@ -128,16 +157,18 @@ public class BasicWorkflowToken implements WorkflowToken, Serializable {
       tokenValueMap.get(scope).put(key, nodeValueList);
     }
 
+    NodeValue nodeValueToAddUpdate = new NodeValue(nodeName, value);
     // Check if the current node already added the key to the token.
     // In that case replace that entry with the new one
     for (int i = 0; i < nodeValueList.size(); i++) {
-      if (nodeValueList.get(i).getNodeName().equals(nodeName)) {
-        nodeValueList.set(i, new NodeValue(nodeName, value));
+      NodeValue existingNodeValue = nodeValueList.get(i);
+      if (existingNodeValue.getNodeName().equals(nodeName)) {
+        addOrUpdate(key, nodeValueToAddUpdate, nodeValueList, i);
         return;
       }
     }
 
-    nodeValueList.add(new NodeValue(nodeName, value));
+    addOrUpdate(key, nodeValueToAddUpdate, nodeValueList, -1);
   }
 
   @Override
@@ -246,5 +277,49 @@ public class BasicWorkflowToken implements WorkflowToken, Serializable {
       builder.put(entry.getKey(), ImmutableMap.copyOf(entry.getValue()));
     }
     return builder.build();
+  }
+  
+  /**
+   * Updates a key in the workflow token. Used to either add or update the {@link NodeValue} for a key, depending on
+   * whether it exists already.
+   *
+   * @param key the key whose value is to be added or updated.
+   * @param nodeValue the {@link NodeValue} to add or update
+   * @param nodeValues the existing, non-null list of {@link NodeValue} for the specified key
+   * @param index the index at which to add or update. For adding, use a number less than 0, for replacing,
+   */
+  private void addOrUpdate(String key, NodeValue nodeValue, List<NodeValue> nodeValues, int index) {
+    int oldValueLen = (index < 0) ? 0 : nodeValues.get(index).getValue().toString().length();
+    int valueLen = nodeValue.getValue().toString().length();
+
+    int left = bytesLeft - valueLen + oldValueLen;
+    left = (left < 0 || index >= 0) ? left : left - key.length();
+    if (left < 0) {
+      throw new IllegalStateException(String.format("Exceeded maximum permitted size of workflow token '%sMB' while " +
+                                                      "adding key '%s' with value '%s'. Current size is '%sMB'. " +
+                                                      "Please increase the maximum permitted size by setting the " +
+                                                      "parameter '%s' in cdap-site.xml to add more values.",
+                                                    maxSizeBytes / (1024 * 1024), key, nodeValue,
+                                                    (maxSizeBytes - bytesLeft) / (1024 * 1024),
+                                                    Constants.AppFabric.WORKFLOW_TOKEN_MAX_SIZE_MB));
+    }
+    if (index >= 0) {
+      nodeValues.set(index, nodeValue);
+    } else {
+      nodeValues.add(nodeValue);
+    }
+    bytesLeft = left;
+  }
+
+  // Serialize the WorkflowToken content for passing it to the Spark executor.
+  private void writeObject(ObjectOutputStream out) throws IOException {
+    out.defaultWriteObject();
+  }
+
+  // Deserialize the WorkflowToken for using it inside the Spark executor. Set the putAllowed
+  // flag to false so that we do not allow putting the values inside the Spark executor.
+  private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+    in.defaultReadObject();
+    putAllowed = false;
   }
 }

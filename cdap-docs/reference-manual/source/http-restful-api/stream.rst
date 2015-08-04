@@ -343,7 +343,7 @@ A stream can be deleted with an HTTP DELETE method to the URL::
 Setting Stream Properties
 -------------------------
 There are a number of stream properties that can be specified.
-The Time-To-Live (TTL) property governs how long an event is valid for consumption since 
+The Time-To-Live (TTL, specified in seconds) property governs how long an event is valid for consumption since 
 it was written to the stream.
 The default TTL for all streams is infinite, meaning that events will never expire.
 The format property defines how stream event bodies should be read for data exploration.

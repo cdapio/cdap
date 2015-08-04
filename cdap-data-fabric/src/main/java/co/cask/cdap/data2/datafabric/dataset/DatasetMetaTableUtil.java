@@ -74,9 +74,11 @@ public class DatasetMetaTableUtil {
     }
 
     datasetFramework.addInstance(DatasetTypeMDS.class.getName(), Id.DatasetInstance.from(
-                                   Constants.SYSTEM_NAMESPACE_ID, META_TABLE_NAME), DatasetProperties.EMPTY);
+                                   Constants.SYSTEM_NAMESPACE_ID, META_TABLE_NAME),
+                                 DatasetProperties.EMPTY);
     datasetFramework.addInstance(DatasetInstanceMDS.class.getName(), Id.DatasetInstance.from(
-                                   Constants.SYSTEM_NAMESPACE_ID, INSTANCE_TABLE_NAME), DatasetProperties.EMPTY);
+                                   Constants.SYSTEM_NAMESPACE_ID, INSTANCE_TABLE_NAME),
+                                 DatasetProperties.EMPTY);
   }
 
   /**

@@ -47,10 +47,10 @@ public final class ContainerLauncherGenerator {
    * <ul>
    *   <li>{@link MRAppMaster}</li>
    *   <li>{@link org.apache.hadoop.mapred.YarnChild YarnChild}</li>
-   *   <li>{@link MRContainerLauncher}</li>
+   *   <li>{@link MapReduceContainerLauncher}</li>
    * </ul>
    *
-   * @see MRContainerLauncher
+   * @see MapReduceContainerLauncher
    */
   public static void generateLauncherJar(String launcherClassPath, String classLoaderName,
                                          OutputSupplier<? extends OutputStream> outputSupplier) throws IOException {
@@ -60,7 +60,7 @@ public final class ContainerLauncherGenerator {
 
       // Includes the launcher class in the JAR as well. No need to trace dependency as the launcher
       // class must be dependency free.
-      String containerLauncherName = Type.getInternalName(MRContainerLauncher.class) + ".class";
+      String containerLauncherName = Type.getInternalName(MapReduceContainerLauncher.class) + ".class";
       output.putNextEntry(new JarEntry(containerLauncherName));
       URL launcherURL = ContainerLauncherGenerator.class.getClassLoader().getResource(containerLauncherName);
 
@@ -77,7 +77,7 @@ public final class ContainerLauncherGenerator {
    * <pre>{@code
    * class className {
    *   public static void main(String[] args) {
-   *     MRContainerLauncher.launch(launcherClassPath, classLoaderName, className, args);
+   *     MapReduceContainerLauncher.launch(launcherClassPath, classLoaderName, className, args);
    *   }
    * }
    * }
@@ -107,7 +107,7 @@ public final class ContainerLauncherGenerator {
 
     // Main method.
     // public static void main(String[] args) {
-    //   MRContainerLauncher.launch(launcherClassPath, classLoaderName, className, args);
+    //   MapReduceContainerLauncher.launch(launcherClassPath, classLoaderName, className, args);
     // }
     Method mainMethod = Methods.getMethod(void.class, "main", String[].class);
     mg = new GeneratorAdapter(Opcodes.ACC_PUBLIC + Opcodes.ACC_STATIC, mainMethod, null,
@@ -122,7 +122,7 @@ public final class ContainerLauncherGenerator {
     mg.visitLdcInsn(classLoaderName);
     mg.visitLdcInsn(className);
     mg.loadArg(0);
-    mg.invokeStatic(Type.getType(MRContainerLauncher.class),
+    mg.invokeStatic(Type.getType(MapReduceContainerLauncher.class),
                     Methods.getMethod(void.class, "launch", String.class, String.class, String.class, String[].class));
     mg.returnValue();
     mg.endMethod();

@@ -71,6 +71,6 @@ public class DescribeAppCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Shows information about %s.", Fragment.of(Article.A, ElementType.APP.getTitleName()));
+    return String.format("Shows information about %s.", Fragment.of(Article.A, ElementType.APP.getName()));
   }
 }

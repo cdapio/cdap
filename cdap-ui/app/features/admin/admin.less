@@ -183,6 +183,18 @@ body.theme-cdap {
       resize: none;
     }
   }
+  &.state-admin-namespace-detail-apps {
+    main.container {
+      .btn-group.open button.dropdown-toggle {
+        .box-shadow(none);
+      }
+      .table-responsive {
+        @media (max-width: @screen-sm-max) {
+          border: 0;
+        }
+      }
+    }
+  }
   &.state-admin-system-services-detail {
     main.container {
       // This is required to steal the focus from an already clicked button on previous state.

@@ -25,7 +25,7 @@ CDAP Software Development Kit (SDK)
 
 The CDAP SDK runs on Linux, MacOS and Windows, and has three requirements:
 
-- `JDK 7 <http://www.oracle.com/technetwork/java/javase/downloads/index.html>`__ 
+- `JDK 7 or 8 <http://www.oracle.com/technetwork/java/javase/downloads/index.html>`__ 
   (required to run CDAP; note that $JAVA_HOME should be set)
 - `Node.js <http://nodejs.org/dist/>`__ (|node-js-version|; required to run the CDAP UI; we recommend |recommended-node-js-version|)
 - `Apache Maven 3.0+ <http://maven.apache.org>`__ (required to build CDAP applications)

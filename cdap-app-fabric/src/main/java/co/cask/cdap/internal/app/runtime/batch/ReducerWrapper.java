@@ -36,7 +36,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Wraps user-defined implementation of {@link Reducer} class which allows perform extra configuration.
@@ -66,6 +65,7 @@ public class ReducerWrapper extends Reducer {
     MapReduceContextProvider mrContextProvider =
       new MapReduceContextProvider(context, MapReduceMetrics.TaskType.Reducer);
     final BasicMapReduceContext basicMapReduceContext = mrContextProvider.get();
+    LoggingContextAccessor.setLoggingContext(basicMapReduceContext.getLoggingContext());
     basicMapReduceContext.getMetricsCollectionService().startAndWait();
 
     try {
@@ -83,8 +83,6 @@ public class ReducerWrapper extends Reducer {
         LOG.error("Failed to inject fields to {}.", delegate.getClass(), t);
         throw Throwables.propagate(t);
       }
-
-      LoggingContextAccessor.setLoggingContext(basicMapReduceContext.getLoggingContext());
 
       // this is a hook for periodic flushing of changes buffered by datasets (to avoid OOME)
       WrappedReducer.Context flushingContext = createAutoFlushingContext(context, basicMapReduceContext);
@@ -135,7 +133,7 @@ public class ReducerWrapper extends Reducer {
       try {
         basicMapReduceContext.close(); // closes all datasets
       } finally {
-        basicMapReduceContext.getMetricsCollectionService().stop();
+        mrContextProvider.stop();
       }
     }
   }

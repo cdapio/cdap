@@ -1,0 +1,21 @@
+@import "../../styles/variables.less";
+
+body.state-services {
+  table.endpoints {
+    th, td {
+      &:last-child {
+        border-left: 0;
+        text-align: center;
+        vertical-align: middle;
+      }
+    }
+    th {
+      &:hover, &:focus {
+        cursor: default;
+      }
+    }
+  }
+  td.endpoint-path {
+    word-wrap: break-word;
+  }
+}

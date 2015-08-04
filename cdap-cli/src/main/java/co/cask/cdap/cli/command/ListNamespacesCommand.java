@@ -64,6 +64,6 @@ public class ListNamespacesCommand extends AbstractCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Lists all %s.", ElementType.NAMESPACE.getTitleNamePlural());
+    return String.format("Lists all %s.", ElementType.NAMESPACE.getNamePlural());
   }
 }

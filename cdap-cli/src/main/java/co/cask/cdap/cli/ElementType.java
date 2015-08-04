@@ -28,70 +28,72 @@ import java.util.Set;
  */
 public enum ElementType {
 
-  ADAPTER(new Noun("adapter"), new Noun("Adapter"), null, null,
+  ADAPTER("adapter", new Noun("adapter"), new Noun("Adapter"), null, null,
           ArgumentName.ADAPTER),
 
-  INSTANCE(new Noun("instance"), new Noun("Instance"), null, null,
+  INSTANCE("instance", new Noun("instance"), new Noun("Instance"), null, null,
            ArgumentName.INSTANCE, Capability.PREFERENCES),
 
-  NAMESPACE(new Noun("namespace"), new Noun("Namespace"), null, null,
+  NAMESPACE("namespace", new Noun("namespace"), new Noun("Namespace"), null, null,
             ArgumentName.NAMESPACE_NAME, Capability.PREFERENCES),
 
-  APP(new Noun("app"), new Noun("Application"), null, null,
+  APP("app", new Noun("application"), new Noun("Application"), null, null,
       ArgumentName.APP, Capability.LIST, Capability.PREFERENCES),
 
-  APP_TEMPLATE(new Noun("app-template"), new Noun("Application Template"), null, null,
+  APP_TEMPLATE("app-template", new Noun("application template"), new Noun("Application Template"), null, null,
       ArgumentName.APP_TEMPLATE, Capability.LIST),
 
-  DATASET(new Noun("dataset"), new Noun("Dataset"), null, null,
+  DATASET("dataset", new Noun("dataset"), new Noun("Dataset"), null, null,
           ArgumentName.DATASET, Capability.LIST),
 
-  DATASET_MODULE(new Noun("dataset module"), new Noun("Dataset module"), null, null,
+  DATASET_MODULE("dataset module", new Noun("dataset module"), new Noun("Dataset module"), null, null,
                  ArgumentName.DATASET_MODULE, Capability.LIST),
 
-  DATASET_TYPE(new Noun("dataset type"), new Noun("Dataset type"), null, null,
+  DATASET_TYPE("dataset type", new Noun("dataset type"), new Noun("Dataset type"), null, null,
                ArgumentName.DATASET_TYPE, Capability.LIST),
 
-  QUERY(new Noun("query"), new Noun("Query"), null, null, ArgumentName.QUERY),
+  QUERY("query", new Noun("query"), new Noun("Query"), null, null, ArgumentName.QUERY),
 
-  STREAM(new Noun("stream"), new Noun("Stream"), null, null, ArgumentName.STREAM, Capability.LIST),
+  STREAM("stream", new Noun("stream"), new Noun("Stream"), null, null, ArgumentName.STREAM, Capability.LIST),
 
-  PROGRAM(new Noun("program"), new Noun("Program"), null, null, ArgumentName.PROGRAM),
+  PROGRAM("program", new Noun("program"), new Noun("Program"), null, null, ArgumentName.PROGRAM),
 
-  FLOW(new Noun("flow"), new Noun("Flow"), ProgramType.FLOW, null, ArgumentName.FLOW,
+  FLOW("flow", new Noun("flow"), new Noun("Flow"), ProgramType.FLOW, null, ArgumentName.FLOW,
        Capability.RUNS, Capability.LOGS, Capability.LIVE_INFO, Capability.STATUS, Capability.START, Capability.STOP,
        Capability.LIST, Capability.RUNTIME_ARGS, Capability.PREFERENCES),
 
-  WORKFLOW(new Noun("workflow"), new Noun("Workflow"), ProgramType.WORKFLOW, null,
+  WORKFLOW("workflow", new Noun("workflow"), new Noun("Workflow"), ProgramType.WORKFLOW, null,
            ArgumentName.WORKFLOW,
-           Capability.RUNS, Capability.STATUS, Capability.START,
+           Capability.RUNS, Capability.STATUS, Capability.START, Capability.STOP,
            Capability.LIST, Capability.RUNTIME_ARGS, Capability.PREFERENCES),
 
-  FLOWLET(new Noun("flowlet"), new Noun("Flowlet"), null, ProgramType.FLOW,
+  FLOWLET("flowlet", new Noun("flowlet"), new Noun("Flowlet"), null, ProgramType.FLOW,
           ArgumentName.FLOWLET,
           Capability.SCALE),
 
-  WORKER(new Noun("worker"), new Noun("Worker"), ProgramType.WORKER, null, ArgumentName.WORKER,
+  WORKER("worker", new Noun("worker"), new Noun("Worker"), ProgramType.WORKER, null, ArgumentName.WORKER,
          Capability.RUNS, Capability.SCALE, Capability.LOGS, Capability.LIVE_INFO, Capability.STATUS,
          Capability.START, Capability.STOP, Capability.LIST, Capability.RUNTIME_ARGS, Capability.PREFERENCES),
 
-  SERVICE(new Noun("service"), new Noun("Service"), ProgramType.SERVICE, null,
+  SERVICE("service", new Noun("service"), new Noun("Service"), ProgramType.SERVICE, null,
           ArgumentName.SERVICE,
           Capability.START, Capability.STOP, Capability.STATUS, Capability.LIST,
           Capability.RUNTIME_ARGS, Capability.PREFERENCES, Capability.RUNS, Capability.SCALE),
 
-  MAPREDUCE(new Noun("mapreduce", "mapreduce programs"), new Noun("MapReduce Program", "MapReduce Programs"),
+  MAPREDUCE("mapreduce", new Noun("MapReduce program", "MapReduce programs"),
+            new Noun("MapReduce Program", "MapReduce Programs"),
             ProgramType.MAPREDUCE, null,
             ArgumentName.MAPREDUCE,
             Capability.LOGS, Capability.RUNS, Capability.STATUS, Capability.START, Capability.STOP, Capability.LIST,
             Capability.RUNTIME_ARGS, Capability.PREFERENCES),
 
-  SPARK(new Noun("spark", "spark programs"), new Noun("Spark Program", "Spark Programs"),
+  SPARK("spark", new Noun("Spark program", "Spark programs"), new Noun("Spark Program", "Spark Programs"),
             ProgramType.SPARK, null,
             ArgumentName.SPARK,
             Capability.LOGS, Capability.RUNS, Capability.STATUS, Capability.START, Capability.STOP, Capability.LIST,
             Capability.RUNTIME_ARGS, Capability.PREFERENCES);
 
+  private final String shortName;
   private final Noun name;
   private final ProgramType programType;
   private final ProgramType parentType;
@@ -99,15 +101,20 @@ public enum ElementType {
   private final ArgumentName argumentName;
   private final Noun titleName;
 
-  ElementType(Noun name, Noun titleName, ProgramType programType, ProgramType parentType,
+  ElementType(String shortName, Noun name, Noun titleName, ProgramType programType, ProgramType parentType,
               ArgumentName argumentName,
               Capability... capabilities) {
+    this.shortName = shortName;
     this.name = name;
     this.titleName = titleName;
     this.programType = programType;
     this.parentType = parentType;
     this.argumentName = argumentName;
     this.capabilities = Sets.newHashSet(capabilities);
+  }
+
+  public String getShortName() {
+    return shortName;
   }
 
   public boolean isTopLevel() {

@@ -116,3 +116,18 @@
     }
   }
 }
+
+.dropdown-white() {
+  + .dropdown-menu {
+    > li {
+      > a {
+        background-color: #ffffff;
+        color: #6a7387;
+        &:hover, &:focus {
+          background-color: @cdap-header;
+          color: white;
+        }
+      }
+    }
+  }
+}

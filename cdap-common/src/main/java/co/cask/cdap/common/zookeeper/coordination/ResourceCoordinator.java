@@ -41,7 +41,6 @@ import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Executor;
@@ -246,7 +245,7 @@ public final class ResourceCoordinator extends AbstractService {
             // If it is the first time it subscribes, no need to trigger assignment logic here as the first call
             // to listener.onChange would do so.
           } else {
-            performAssignment(requirement, ImmutableSortedSet.copyOf(DiscoverableComparator.COMPARATOR, discovered));
+            performAssignment(requirement, discovered.serviceDiscovered);
           }
 
         } catch (Exception e) {
@@ -268,17 +267,20 @@ public final class ResourceCoordinator extends AbstractService {
    * This method should only be called from the single thread executor owned by this class.
    * 
    * @param requirement The resource requirement that needs to be fulfilled.
-   * @param handlers The set of handlers available.
+   * @param serviceDiscovered The set of handlers available.
    */
-  private void performAssignment(ResourceRequirement requirement, Set<Discoverable> handlers) {
+  private void performAssignment(ResourceRequirement requirement, ServiceDiscovered serviceDiscovered) {
     ResourceAssignment oldAssignment = assignments.get(requirement.getName());
 
     if (oldAssignment == null) {
       // Try to fetch it from ZK.
       // This is the penalty to pay for the first time this coordinator instance sees a given requirement.
-      fetchAndPerformAssignment(requirement, handlers);
+      fetchAndPerformAssignment(requirement, serviceDiscovered);
       return;
     }
+
+    Set<Discoverable> handlers = ImmutableSortedSet.copyOf(DiscoverableComparator.COMPARATOR, serviceDiscovered);
+    LOG.info("Perform assign for requirement {}. Number of handlers is {}", requirement, handlers.size());
 
     // Build a map from partition name to number of replicas
     Map<String, Integer> partitions = Maps.newHashMap();
@@ -317,9 +319,10 @@ public final class ResourceCoordinator extends AbstractService {
    * existing assignment.
    *
    * @param requirement The resource requirement that needs to be fulfilled.
-   * @param handlers The set of handlers available.
+   * @param serviceDiscovered The set of handlers available.
    */
-  private void fetchAndPerformAssignment(final ResourceRequirement requirement, final Set<Discoverable> handlers) {
+  private void fetchAndPerformAssignment(final ResourceRequirement requirement,
+                                         final ServiceDiscovered serviceDiscovered) {
     final String name = requirement.getName();
     String zkPath = CoordinationConstants.ASSIGNMENTS_PATH + "/" + name;
     Futures.addCallback(zkClient.getData(zkPath), new FutureCallback<NodeData>() {
@@ -341,7 +344,7 @@ public final class ResourceCoordinator extends AbstractService {
         }
 
         assignments.put(name, resourceAssignment);
-        performAssignment(requirement, handlers);
+        performAssignment(requirement, serviceDiscovered);
       }
 
       @Override
@@ -351,7 +354,7 @@ public final class ResourceCoordinator extends AbstractService {
           LOG.warn("Failed to fetch current assignment. Perform assignment as if no assignment existed.", t);
         }
         assignments.put(name, new ResourceAssignment(name));
-        performAssignment(requirement, handlers);
+        performAssignment(requirement, serviceDiscovered);
       }
     }, executor);
   }
@@ -374,7 +377,7 @@ public final class ResourceCoordinator extends AbstractService {
           @Override
           public void onSuccess(ResourceAssignment result) {
             // Done. Just log for debugging.
-            LOG.debug("Resource assignment updated for {}. {}", result.getName(), Bytes.toString(data));
+            LOG.info("Resource assignment updated for {}. {}", result.getName(), Bytes.toString(data));
           }
 
           @Override
@@ -505,12 +508,12 @@ public final class ResourceCoordinator extends AbstractService {
     public void onChange(ServiceDiscovered serviceDiscovered) {
       ResourceRequirement requirement = requirements.get(serviceDiscovered.getName());
       if (requirement != null) {
-        performAssignment(requirement, ImmutableSortedSet.copyOf(DiscoverableComparator.COMPARATOR, serviceDiscovered));
+        performAssignment(requirement, serviceDiscovered);
       }
     }
   }
 
-  private static final class CancellableServiceDiscovered implements Iterable<Discoverable>, Cancellable {
+  private static final class CancellableServiceDiscovered implements Cancellable {
 
     private final Cancellable cancellable;
     private final ServiceDiscovered serviceDiscovered;
@@ -524,11 +527,6 @@ public final class ResourceCoordinator extends AbstractService {
     @Override
     public void cancel() {
       cancellable.cancel();
-    }
-
-    @Override
-    public Iterator<Discoverable> iterator() {
-      return serviceDiscovered.iterator();
     }
   }
 }

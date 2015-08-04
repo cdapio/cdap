@@ -48,7 +48,7 @@ public class DeleteDatasetModuleCommand extends AbstractAuthCommand {
                                                     arguments.get(ArgumentName.DATASET_MODULE.toString()));
 
     datasetClient.delete(module);
-    output.printf("Successfully deleted %s\n", module);
+    output.printf("Successfully deleted dataset module '%s'\n", module.getId());
   }
 
   @Override
@@ -58,6 +58,6 @@ public class DeleteDatasetModuleCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Deletes %s.", Fragment.of(Article.A, ElementType.DATASET_MODULE.getTitleName()));
+    return String.format("Deletes %s.", Fragment.of(Article.A, ElementType.DATASET_MODULE.getName()));
   }
 }
