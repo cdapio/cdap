@@ -96,7 +96,7 @@ Yes. You can install CDAP on your Hadoop cluster. See :ref:`install`.
 
 .. rubric:: What Hadoop distributions can CDAP run on?
 
-CDAP |version| has been tested on and supports CDH 5.0.0 through 5.4.4; HDP 2.0, 2.0, and 2.1; 
+CDAP |version| has been tested on and supports CDH 5.0.0 through 5.4.4; HDP 2.0, 2.1, and 2.2; 
 MapR 4.1, and Apache Bigtop 0.8.0. 
 
 
