@@ -43,7 +43,17 @@ angular.module(PKG.name + '.commons')
           resource.get(params)
             .$promise
             .then(function (res) {
-              var schema = JSON.stringify(res.format.schema);
+              console.log('res', res);
+
+              var schema;
+
+              if ($scope.datasetType === 'stream') {
+                schema = JSON.stringify(res.format.schema);
+              } else if ($scope.datasetType === 'dataset') {
+                schema = res.spec.properties.schema;
+              }
+
+              // var schema = JSON.stringify(res.format.schema);
               EventPipe.emit('dataset.selected', schema);
             });
         });
