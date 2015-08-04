@@ -102,7 +102,7 @@ angular.module(PKG.name + '.commons')
           'data-config': 'myconfig'
         }
       },
-      'dataset-selector': {
+      'stream-selector': {
         element: '<my-dataset-selector></my-dataset-selector>',
         attributes: {
           'ng-model': 'model',

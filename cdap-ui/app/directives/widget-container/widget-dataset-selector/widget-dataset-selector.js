@@ -3,6 +3,7 @@ angular.module(PKG.name + '.commons')
     return {
       restrict: 'E',
       scope: {
+        model: '=ngModel',
         datasetType: '@'
       },
       templateUrl: 'widget-container/widget-dataset-selector/widget-dataset-selector.html',
@@ -20,19 +21,23 @@ angular.module(PKG.name + '.commons')
           namespace: $state.params.namespace
         };
 
+        var dataMap = [];
+
         resource.list(params)
           .$promise
           .then(function (res) {
             $scope.list = res;
+
+            dataMap = res.map(function (d) { return d.name; });
           });
 
-        $scope.$watch('selected', function () {
-          if (!$scope.selected) { return; }
+        $scope.$watch('model', function () {
+          if (!$scope.model || dataMap.indexOf($scope.model) === -1 ) { return; }
 
           if ($scope.datasetType === 'stream') {
-            params.streamId = $scope.selected.name;
+            params.streamId = $scope.model;
           } else if ($scope.datasetType === 'dataset') {
-            params.datasetId = $scope.selected.name;
+            params.datasetId = $scope.model;
           }
 
           resource.get(params)
@@ -41,8 +46,6 @@ angular.module(PKG.name + '.commons')
               var schema = JSON.stringify(res.format.schema);
               EventPipe.emit('dataset.selected', schema);
             });
-
-
         });
 
 
