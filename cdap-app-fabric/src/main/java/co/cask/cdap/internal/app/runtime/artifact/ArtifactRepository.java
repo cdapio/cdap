@@ -26,12 +26,14 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
+import com.google.common.io.InputSupplier;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.Location;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -177,7 +179,7 @@ public class ArtifactRepository {
   }
 
   /**
-   * Inspects and builds plugin information for the given artifact.
+   * Inspects and builds plugin and application information for the given artifact.
    *
    * @param artifactId the id of the artifact to inspect and store
    * @param artifactFile the artifact to inspect and store
@@ -186,7 +188,7 @@ public class ArtifactRepository {
    * @throws IOException if there was an exception reading from the artifact store
    * @throws ArtifactRangeNotFoundException if none of the parent artifacts could be found
    */
-  public void addArtifact(Id.Artifact artifactId, File artifactFile, @Nullable Set<ArtifactRange> parentArtifacts)
+  public void addArtifact(Id.Artifact artifactId, final File artifactFile, @Nullable Set<ArtifactRange> parentArtifacts)
     throws IOException, ArtifactRangeNotFoundException, WriteConflictException,
     ArtifactAlreadyExistsException, InvalidArtifactException {
 
@@ -213,7 +215,12 @@ public class ArtifactRepository {
     try {
       ArtifactClasses artifactClasses = artifactInspector.inspectArtifact(artifactId, artifactFile, parentClassLoader);
       ArtifactMeta meta = new ArtifactMeta(artifactClasses, parentArtifacts);
-      artifactStore.write(artifactId, meta, new FileInputStream(artifactFile));
+      artifactStore.write(artifactId, meta, new InputSupplier<InputStream>() {
+        @Override
+        public InputStream getInput() throws IOException {
+          return new FileInputStream(artifactFile);
+        }
+      });
     } finally {
       parentClassLoader.close();
     }
