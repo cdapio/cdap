@@ -27,4 +27,8 @@ public final class Formats {
   public static final String COMBINED_LOG_FORMAT = "clf";
   public static final String GROK = "grok";
   public static final String SYSLOG = "syslog";
+
+  public static final String[] ALL = {
+    AVRO, CSV, TSV, TEXT, COMBINED_LOG_FORMAT, GROK, SYSLOG
+  };
 }
