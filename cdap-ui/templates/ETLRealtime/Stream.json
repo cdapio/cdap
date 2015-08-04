@@ -22,7 +22,7 @@
         },
         "name": {
           "widget": "textbox",
-          "label" : "Name",
+          "label" : "stream-selector",
           "description" : "Name of the stream to which we write to. If the stream is present, then data will be written to it. If it's not present then one would be created.",
           "properties": {
             "width": "medium"

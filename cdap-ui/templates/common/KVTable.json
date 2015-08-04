@@ -7,7 +7,7 @@
        "position" : [ "name" ],
        "fields" : {
           "name" : {
-            "widget": "textbox",
+            "widget": "dataset-selector",
             "label": "Table Name",
             "description" : "Specifies the name of the table the data will be written to"
           },

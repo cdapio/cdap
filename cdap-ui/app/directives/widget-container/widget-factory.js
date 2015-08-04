@@ -108,6 +108,13 @@ angular.module(PKG.name + '.commons')
           'ng-model': 'model',
           'data-dataset-type': 'stream'
         }
+      },
+      'dataset-selector': {
+        element: '<my-dataset-selector></my-dataset-selector>',
+        attributes: {
+          'ng-model': 'model',
+          'data-dataset-type': 'dataset'
+        }
       }
     };
     this.registry['__default__'] = this.registry['textbox'];
