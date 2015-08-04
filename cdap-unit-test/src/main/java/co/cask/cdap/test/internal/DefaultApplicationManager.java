@@ -158,7 +158,7 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
   @Override
   public <T> DataSetManager<T> getDataSet(String dataSetName) {
     @SuppressWarnings("unchecked")
-    final T dataSet = (T) datasetInstantiator.getDataset(dataSetName);
+    final T dataSet = datasetInstantiator.getDataset(dataSetName);
 
     try {
       final TransactionContext txContext =
