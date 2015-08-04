@@ -35,17 +35,15 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.io.ByteStreams;
 import com.google.common.io.CharStreams;
-import com.google.common.io.InputSupplier;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Collections;
 import java.util.List;
@@ -666,13 +664,8 @@ public class ArtifactStoreTest {
       new InputStreamReader(actual.getDescriptor().getLocation().getInputStream(), Charsets.UTF_8)));
   }
 
-  private void writeArtifact(Id.Artifact artifactId, ArtifactMeta meta, final String contents)
+  private void writeArtifact(Id.Artifact artifactId, ArtifactMeta meta, String contents)
     throws ArtifactAlreadyExistsException, IOException, WriteConflictException {
-    artifactStore.write(artifactId, meta, new InputSupplier<InputStream>() {
-      @Override
-      public InputStream getInput() throws IOException {
-        return new ByteArrayInputStream(Bytes.toBytes(contents));
-      }
-    });
+    artifactStore.write(artifactId, meta, ByteStreams.newInputStreamSupplier(Bytes.toBytes(contents)));
   }
 }

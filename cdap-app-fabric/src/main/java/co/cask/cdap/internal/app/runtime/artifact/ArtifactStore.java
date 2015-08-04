@@ -60,7 +60,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -203,7 +202,8 @@ public class ArtifactStore {
           if (range.versionIsInRange(new ArtifactVersion(version))) {
             ArtifactData data = gson.fromJson(Bytes.toString(columnEntry.getValue()), ArtifactData.class);
             Id.Artifact artifactId = Id.Artifact.from(artifactKey.namespace, artifactKey.name, version);
-            artifacts.add(new ArtifactDetail(getDescriptor(artifactId, toLocation(data.locationURI)), data.meta));
+            artifacts.add(
+              new ArtifactDetail(getDescriptor(artifactId, locationFactory.create(data.locationURI)), data.meta));
           }
         }
         return Collections.unmodifiableList(artifacts);
@@ -265,7 +265,7 @@ public class ArtifactStore {
     if (data == null) {
       throw new ArtifactNotExistsException(artifactId);
     }
-    return new ArtifactDetail(getDescriptor(artifactId, toLocation(data.locationURI)), data.meta);
+    return new ArtifactDetail(getDescriptor(artifactId, locationFactory.create(data.locationURI)), data.meta);
   }
 
   /**
@@ -357,7 +357,7 @@ public class ArtifactStore {
               // filter out plugins that don't extend this version of the parent artifact
               if (matches(pluginData, parentArtifactId.getVersion())) {
                 ArtifactDescriptor artifactInfo =
-                  getDescriptor(artifactColumn.artifactId, toLocation(pluginData.artifactLocationURI));
+                  getDescriptor(artifactColumn.artifactId, locationFactory.create(pluginData.artifactLocationURI));
                 result.put(artifactInfo, pluginData.pluginClass);
               }
             }
@@ -384,7 +384,6 @@ public class ArtifactStore {
    * @param artifactId the id of the artifact to add
    * @param artifactMeta the metadata for the artifact
    * @param artifactContentSupplier the supplier for the input stream of the contents of the artifact
-   * @return detail about the newly added artifact
    * @throws WriteConflictException if the artifact is already currently being written
    * @throws ArtifactAlreadyExistsException if a non-snapshot version of the artifact already exists
    * @throws IOException if there was an exception persisting the artifact contents to the filesystem,
@@ -392,7 +391,7 @@ public class ArtifactStore {
    */
   public void write(final Id.Artifact artifactId,
                     final ArtifactMeta artifactMeta,
-                    final InputSupplier<InputStream> artifactContentSupplier)
+                    final InputSupplier<? extends InputStream> artifactContentSupplier)
     throws WriteConflictException, ArtifactAlreadyExistsException, IOException {
 
     // if we're not a snapshot version, check that the artifact doesn't exist already.
@@ -536,7 +535,7 @@ public class ArtifactStore {
           artifactRange.getNamespace(), artifactRange.getName(), pluginClass.getType(), pluginClass.getName());
 
         byte[] pluginDataBytes = Bytes.toBytes(
-          gson.toJson(new PluginData(pluginClass, artifactRange, toLocation(data.locationURI))));
+          gson.toJson(new PluginData(pluginClass, artifactRange, locationFactory.create(data.locationURI))));
         table.put(pluginKey.getRowKey(), artifactColumn.getColumn(), pluginDataBytes);
       }
     }
@@ -568,7 +567,7 @@ public class ArtifactStore {
     // TODO: delete appClass metadata
 
     // delete the old jar file
-    toLocation(oldMeta.locationURI).delete();
+    locationFactory.create(oldMeta.locationURI).delete();
   }
 
   private void addArtifactsToList(List<ArtifactDetail> artifactDetails, Row row) throws IOException {
@@ -579,7 +578,7 @@ public class ArtifactStore {
       ArtifactData data = gson.fromJson(Bytes.toString(columnVal.getValue()), ArtifactData.class);
       Id.Artifact artifactId = Id.Artifact.from(artifactKey.namespace, artifactKey.name, version);
       artifactDetails.add(new ArtifactDetail(
-        getDescriptor(artifactId, toLocation(data.locationURI)), data.meta));
+        getDescriptor(artifactId, locationFactory.create(data.locationURI)), data.meta));
     }
   }
 
@@ -595,7 +594,7 @@ public class ArtifactStore {
       // filter out plugins that don't extend this version of the parent artifact
       if (matches(pluginData, parentArtifactId.getVersion())) {
         ArtifactDescriptor artifactDescriptor =
-          getDescriptor(artifactColumn.artifactId, toLocation(pluginData.artifactLocationURI));
+          getDescriptor(artifactColumn.artifactId, locationFactory.create(pluginData.artifactLocationURI));
 
         if (!map.containsKey(artifactDescriptor)) {
           map.put(artifactDescriptor, Lists.<PluginClass>newArrayList());
@@ -608,16 +607,6 @@ public class ArtifactStore {
   private ArtifactDescriptor getDescriptor(Id.Artifact artifactId, Location location) {
     return new ArtifactDescriptor(artifactId.getName(), artifactId.getVersion(),
       Constants.SYSTEM_NAMESPACE_ID.equals(artifactId.getNamespace()), location);
-  }
-
-  private Location toLocation(String locationURI) {
-    try {
-      return locationFactory.create(new URI(locationURI));
-    } catch (URISyntaxException e) {
-      // should never happen
-      throw new IllegalStateException(
-        String.format("Invalid location URI '%s'.", locationURI), e);
-    }
   }
 
   private Scan scanArtifacts(Id.Namespace namespace) {
@@ -718,11 +707,11 @@ public class ArtifactStore {
 
   // Data that will be stored for an artifact. Same as ArtifactDetail, expected without the id since that is redundant.
   private static class ArtifactData {
-    private final String locationURI;
+    private final URI locationURI;
     private final ArtifactMeta meta;
 
     public ArtifactData(Location location, ArtifactMeta meta) {
-      this.locationURI = location.toURI().toString();
+      this.locationURI = location.toURI();
       this.meta = meta;
     }
   }
@@ -732,13 +721,13 @@ public class ArtifactStore {
     private final PluginClass pluginClass;
     private final String parentVersionLower;
     private final String parentVersionUpper;
-    private final String artifactLocationURI;
+    private final URI artifactLocationURI;
 
     public PluginData(PluginClass pluginClass, ArtifactRange usableBy, Location artifactLocation) {
       this.pluginClass = pluginClass;
       this.parentVersionLower = usableBy.getLower().getVersion();
       this.parentVersionUpper = usableBy.getUpper().getVersion();
-      this.artifactLocationURI = artifactLocation.toURI().toString();
+      this.artifactLocationURI = artifactLocation.toURI();
     }
   }
 }
