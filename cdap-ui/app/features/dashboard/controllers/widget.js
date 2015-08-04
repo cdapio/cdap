@@ -17,7 +17,7 @@ angular.module(PKG.name+'.feature.dashboard')
       // Dimensions and Attributes of a widget
       this.settings = {};
       opts.settings = opts.settings || {}; // Not a required paramter.
-      this.settings.color = opts.settings.color || generateColors(this.metric.names);
+      this.settings.color = opts.settings.color || generateColors(this.metric.names || []);
 
       if (myHelpers.objectQuery(opts, 'settings', 'size')) {
         this.width = opts.settings.size.width;

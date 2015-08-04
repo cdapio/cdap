@@ -5,5 +5,25 @@
       <span>Clone</span>
     </div>
   </div>
+
   <my-plumb data-is-disabled="true" ng-if="nodes.length > 0" data-reloaddag="true" data-config="nodes"></my-plumb>
+
+  <table class="table table-responsive" ng-if="formattedData.length > 0">
+    <thead>
+      <tr>
+        <th> Metric </th>
+        <th> Count </th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr ng-repeat="data in formattedData">
+        <td>
+          {{data.name}}
+        </td>
+        <td>
+          {{data.value}}
+        </td>
+      </tr>
+    </tbody>
+  </table>
 </div>

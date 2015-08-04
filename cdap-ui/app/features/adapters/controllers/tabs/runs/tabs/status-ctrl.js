@@ -1,6 +1,8 @@
 angular.module(PKG.name + '.feature.adapters')
   // TODO: We should use rAdapterDetail here since this data is already resolved at adapter.detail state
-  .controller('AdapterRunDetailStatusController', function($scope, $state, myAdapterApi, CanvasFactory, MyPlumbService) {
+  .controller('AdapterRunDetailStatusController', function($scope, $state, myAdapterApi, CanvasFactory, MyPlumbService, DashboardHelper, MyDataSource, MyMetricsQueryHelper) {
+
+    var datasrc = new MyDataSource($scope);
 
     $scope.nodes = [];
     var params = {
@@ -57,4 +59,61 @@ angular.module(PKG.name + '.feature.adapters')
 
 
       });
+
+    var context = 'namespace.' + $state.params.namespace +
+                  '.adapter.' + $state.params.adapterId;
+    var tagQueryParams = MyMetricsQueryHelper
+                          .tagsToParams(
+                            MyMetricsQueryHelper.contextToTags(context)
+                          );
+    widget = {
+      metric: {
+        context: context,
+        names: []
+      },
+      settings: {
+        aggregate: 61
+      },
+      metricAlias: {
+
+      }
+    };
+
+    datasrc.request(
+      {
+        method: 'POST',
+        _cdapPath: '/metrics/search?target=metric&' + tagQueryParams
+      })
+        .then(
+          function onMetricsDiscoverySuccess(res) {
+            widget.metric.names = res;
+            if (res.length > 0) {
+              return DashboardHelper.fetchData(widget);
+            } else {
+              $scope.formattedData = [];
+            }
+          },
+          function onMetricsDiscoveryError() {
+            console.error('Error on Metrics fetch');
+          })
+        .then(
+          function onMetricsFetchSuccess(metrics) {
+            if (!widget.formattedData || !widget.formattedData.columns) {
+              return;
+            }
+            $scope.data = widget.formattedData.columns;
+            $scope.formattedData = [];
+            $scope.data.map(function(metric) {
+              var obj = {};
+              if (metric[0].indexOf('records.in') !== -1 ||
+                  metric[0].indexOf('records.out') !== -1) {
+                    obj.name = metric[0];
+                    obj.value = metric[1];
+                    $scope.formattedData.push(obj);
+                  }
+            });
+          },
+          function onMetricsFetchError() {
+            console.log('Error in fetching values for metrics: ', widget.metric.names);
+          });
   });

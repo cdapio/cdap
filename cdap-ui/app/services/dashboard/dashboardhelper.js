@@ -36,8 +36,8 @@ angular.module(PKG.name + '.services')
       });
     }
 
-    function fetchData (widget) {
-      dataSrc.request({
+    function fetchData (widget, isAggregate) {
+      return dataSrc.request({
         _cdapPath: '/metrics/query',
         method: 'POST',
         body: MyMetricsQueryHelper.constructQuery(
