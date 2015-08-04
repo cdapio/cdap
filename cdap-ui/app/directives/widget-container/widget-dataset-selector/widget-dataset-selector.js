@@ -43,8 +43,6 @@ angular.module(PKG.name + '.commons')
           resource.get(params)
             .$promise
             .then(function (res) {
-              console.log('res', res);
-
               var schema;
 
               if ($scope.datasetType === 'stream') {
