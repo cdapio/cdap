@@ -80,8 +80,9 @@ module.service('myAuth', function myAuthService (MYAUTH_EVENT, MyAuthUser, myAut
       function loginSuccess(data) {
         var user = new MyAuthUser(data);
         persist(user);
-        $cookies['CDAP_Auth_Token'] = user.token;
-        $cookies['CDAP_Auth_User'] = user.username;
+
+        $cookies.put('CDAP_Auth_Token', user.token);
+        $cookies.put('CDAP_Auth_User', user.username);
         $localStorage.remember = cred.remember && user.storable();
         $rootScope.$broadcast(MYAUTH_EVENT.loginSuccess);
       },
@@ -97,8 +98,8 @@ module.service('myAuth', function myAuthService (MYAUTH_EVENT, MyAuthUser, myAut
   this.logout = function () {
     if (this.currentUser){
       persist(null);
-      delete $cookies['CDAP_Auth_Token'];
-      delete $cookies['CDAP_Auth_User'];
+      $cookies.remove('CDAP_Auth_Token');
+      $cookies.remove('CDAP_Auth_User');
       $rootScope.$broadcast(MYAUTH_EVENT.logoutSuccess);
     }
   };
@@ -112,10 +113,10 @@ module.service('myAuth', function myAuthService (MYAUTH_EVENT, MyAuthUser, myAut
       return !!this.currentUser;
     }
 
-    if ($cookies['CDAP_Auth_Token'] && $cookies['CDAP_Auth_User']) {
+    if ($cookies.get('CDAP_Auth_Token') && $cookies.get('CDAP_Auth_User')) {
       var user = new MyAuthUser({
-        access_token: $cookies['CDAP_Auth_Token'],
-        username: $cookies['CDAP_Auth_User']
+        access_token: $cookies.get('CDAP_Auth_Token'),
+        username: $cookies.get('CDAP_Auth_User')
       });
       persist(user);
       return !!this.currentUser;
