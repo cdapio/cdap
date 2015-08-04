@@ -48,7 +48,7 @@ public class SetStreamTTLCommand extends AbstractAuthCommand {
                                         arguments.get(ArgumentName.STREAM.toString()));
     long ttlInSeconds = arguments.getLong(ArgumentName.TTL_IN_SECONDS.toString());
     streamClient.setTTL(streamId, ttlInSeconds);
-    output.printf("Successfully set TTL of stream '%s' to %d\n", streamId, ttlInSeconds);
+    output.printf("Successfully set TTL of stream '%s' to %d\n", streamId.getId(), ttlInSeconds);
   }
 
   @Override
@@ -59,6 +59,6 @@ public class SetStreamTTLCommand extends AbstractAuthCommand {
   @Override
   public String getDescription() {
     return String.format("Sets the time-to-live (TTL) of %s.",
-                         Fragment.of(Article.A, ElementType.STREAM.getTitleName()));
+                         Fragment.of(Article.A, ElementType.STREAM.getName()));
   }
 }

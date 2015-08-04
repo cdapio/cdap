@@ -35,13 +35,13 @@ public class StartDebugProgramCommand extends StartProgramCommand {
 
   @Override
   public String getPattern() {
-    return String.format("start-debug %s <%s> [<%s>]", elementType.getName(), elementType.getArgumentName(),
+    return String.format("start-debug %s <%s> [<%s>]", elementType.getShortName(), elementType.getArgumentName(),
                          ArgumentName.RUNTIME_ARGS);
   }
 
   @Override
   public String getDescription() {
-    return "Starts " + Fragment.of(Article.A, elementType.getTitleName()) + " in debug mode." +
+    return "Starts " + Fragment.of(Article.A, elementType.getName()) + " in debug mode." +
       " <" + ArgumentName.RUNTIME_ARGS + "> is specified in the format \"key1=a key2=b\".";
   }
 }

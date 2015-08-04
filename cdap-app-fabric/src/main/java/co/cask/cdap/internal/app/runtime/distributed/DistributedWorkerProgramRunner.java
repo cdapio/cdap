@@ -39,7 +39,6 @@ import org.apache.twill.api.TwillRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.util.Map;
 
 /**
@@ -57,7 +56,8 @@ public class DistributedWorkerProgramRunner extends AbstractDistributedProgramRu
 
   @Override
   protected ProgramController launch(Program program, ProgramOptions options,
-                                     Map<String, File> localizeFiles, ApplicationLauncher launcher) {
+                                     Map<String, LocalizeResource> localizeResources,
+                                     ApplicationLauncher launcher) {
     ApplicationSpecification appSpec = program.getApplicationSpecification();
     Preconditions.checkNotNull(appSpec, "Missing application specification.");
 
@@ -84,7 +84,7 @@ public class DistributedWorkerProgramRunner extends AbstractDistributedProgramRu
     LOG.info("Launching distributed worker {}", program.getName());
 
     TwillController controller = launcher.launch(new WorkerTwillApplication(program, newWorkerSpec,
-                                                                            localizeFiles, eventHandler));
+                                                                            localizeResources, eventHandler));
     RunId runId = RunIds.fromString(options.getArguments().getOption(ProgramOptionConstants.RUN_ID));
     return new WorkerTwillProgramController(program.getName(), controller, runId).startListen();
   }

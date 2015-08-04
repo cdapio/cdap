@@ -50,6 +50,7 @@ public class DistributedMapReduceContextBuilder extends AbstractMapReduceContext
   private ZKClientService zkClientService;
   private KafkaClientService kafkaClientService;
   private MetricsCollectionService metricsCollectionService;
+  private LogAppenderInitializer logAppenderInitializer;
 
   public DistributedMapReduceContextBuilder(CConfiguration cConf, Configuration hConf) {
     this.cConf = cConf;
@@ -90,7 +91,7 @@ public class DistributedMapReduceContextBuilder extends AbstractMapReduceContext
 
     // Initialize log appender in distributed mode.
     // In single node the log appender is initialized during process startup.
-    LogAppenderInitializer logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
+    logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
     logAppenderInitializer.initialize();
 
     return injector;
@@ -98,6 +99,7 @@ public class DistributedMapReduceContextBuilder extends AbstractMapReduceContext
 
   @Override
   protected void finish() {
+    logAppenderInitializer.close();
     metricsCollectionService.stop();
     kafkaClientService.stop();
     zkClientService.stop();

@@ -72,6 +72,6 @@ public class DeployDatasetModuleCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Deploys %s.", Fragment.of(Article.A, ElementType.DATASET_MODULE.getTitleName()));
+    return String.format("Deploys %s.", Fragment.of(Article.A, ElementType.DATASET_MODULE.getName()));
   }
 }

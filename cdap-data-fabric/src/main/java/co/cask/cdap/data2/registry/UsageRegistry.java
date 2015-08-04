@@ -23,6 +23,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.tx.Transactional;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionExecutor;
@@ -34,6 +35,7 @@ import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Set;
@@ -332,18 +334,21 @@ public class UsageRegistry {
    */
   public void upgrade(DatasetInstanceManager datasetInstanceManager) {
     DatasetSpecification oldDatasetSpecification = datasetInstanceManager.get(USAGE_INSTANCE_ID);
-
-    if (!oldDatasetSpecification.getType().equals(UsageDataset.class.getSimpleName())) {
-      LOG.info("Upgrading {} dataset from Table to UsageDataset type", USAGE_INSTANCE_ID);
-      DatasetSpecification newDatasetSpecification = DatasetSpecification.builder(oldDatasetSpecification.getName(),
-                                                                                  UsageDataset.class.getSimpleName())
-        .properties(oldDatasetSpecification.getProperties())
-        .datasets(oldDatasetSpecification.getSpecifications().values())
-        .build();
-      datasetInstanceManager.delete(USAGE_INSTANCE_ID);
-      datasetInstanceManager.add(Constants.SYSTEM_NAMESPACE_ID, newDatasetSpecification);
-    } else {
-      LOG.info("{} dataset is of type UsageDataset. No upgrade required.", USAGE_INSTANCE_ID);
+    // the usage.registry table will only be created if something runs on a cluster and creates a usage record.
+    // on a fresh cluster the dataset will not be present and in this case no upgrade is required.
+    if (oldDatasetSpecification != null) {
+      if (!oldDatasetSpecification.getType().equals(UsageDataset.class.getSimpleName())) {
+        LOG.info("Upgrading {} dataset from Table to UsageDataset type", USAGE_INSTANCE_ID);
+        DatasetSpecification newDatasetSpecification = DatasetSpecification.builder(oldDatasetSpecification.getName(),
+                                                                                    UsageDataset.class.getSimpleName())
+          .properties(oldDatasetSpecification.getProperties())
+          .datasets(oldDatasetSpecification.getSpecifications().values())
+          .build();
+        datasetInstanceManager.delete(USAGE_INSTANCE_ID);
+        datasetInstanceManager.add(Constants.SYSTEM_NAMESPACE_ID, newDatasetSpecification);
+      } else {
+        LOG.info("{} dataset is of type UsageDataset. No upgrade required.", USAGE_INSTANCE_ID);
+      }
     }
   }
 
@@ -366,4 +371,14 @@ public class UsageRegistry {
       return Iterators.singletonIterator(usageDataset);
     }
   }
+
+  /**
+   * Adds datasets and types to the given {@link DatasetFramework} used by usage registry.
+   *
+   * @param datasetFramework framework to add types and datasets to
+   */
+  public static void setupDatasets(DatasetFramework datasetFramework) throws IOException, DatasetManagementException {
+    datasetFramework.addInstance(Table.class.getName(), USAGE_INSTANCE_ID, DatasetProperties.EMPTY);
+  }
+
 }

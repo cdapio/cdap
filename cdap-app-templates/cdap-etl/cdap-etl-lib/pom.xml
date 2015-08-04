@@ -166,6 +166,11 @@
     <!-- End for JMS Source -->
     <!-- Start for Kafka Source -->
     <dependency>
+      <groupId>org.apache.zookeeper</groupId>
+      <artifactId>zookeeper</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
       <groupId>org.apache.twill</groupId>
       <artifactId>twill-core</artifactId>
       <exclusions>
@@ -215,6 +220,28 @@
       <artifactId>uadetector-resources</artifactId>
       <version>2014.04</version>
     </dependency>
+    <dependency>
+      <groupId>org.elasticsearch</groupId>
+      <artifactId>elasticsearch-hadoop-mr</artifactId>
+      <version>${es-hadoop.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>it.unimi.dsi</groupId>
+      <artifactId>fastutil</artifactId>
+      <version>${fastutil.version}</version>
+    </dependency>
+    <!-- elasticsearch-hadoop-mr includes a class, StringUtils, which requires commons-httpclient-->
+    <dependency>
+      <groupId>commons-httpclient</groupId>
+      <artifactId>commons-httpclient</artifactId>
+      <version>${commons-httpclient.version}</version>
+      <exclusions>
+        <exclusion>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
   </dependencies>
 
   <build>
@@ -233,7 +260,8 @@
               <instructions>
                 <!-- build bundle jar for batch. excluding realtime-->
                 <Export-Package>co.cask.cdap.template.etl.batch.*;co.cask.cdap.template.etl.transform.*;
-                  co.cask.cdap.template.etl.common;org.apache.avro.mapreduce;parquet.avro;</Export-Package>
+                  co.cask.cdap.template.etl.common;org.apache.avro.mapreduce;parquet.avro;
+                  org.elasticsearch.hadoop.mr.*</Export-Package>
                 <Embed-Dependency>*;inline=false;scope=compile</Embed-Dependency>
                 <Embed-Transitive>true</Embed-Transitive>
                 <Embed-Directory>lib</Embed-Directory>

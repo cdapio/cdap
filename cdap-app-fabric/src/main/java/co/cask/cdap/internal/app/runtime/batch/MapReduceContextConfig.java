@@ -138,7 +138,9 @@ public final class MapReduceContextConfig {
     if (tokenJson == null) {
       return null;
     }
-    return GSON.fromJson(tokenJson, BasicWorkflowToken.class);
+    BasicWorkflowToken token = GSON.fromJson(tokenJson, BasicWorkflowToken.class);
+    token.disablePut();
+    return token;
   }
 
   private void setAdapterSpec(@Nullable AdapterDefinition adapterSpec) {

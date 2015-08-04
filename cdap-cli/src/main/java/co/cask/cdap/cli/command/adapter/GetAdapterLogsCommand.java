@@ -59,6 +59,6 @@ public class GetAdapterLogsCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Gets the logs of %s.", Fragment.of(Article.A, ElementType.ADAPTER.getTitleName()));
+    return String.format("Gets the logs of %s.", Fragment.of(Article.A, ElementType.ADAPTER.getName()));
   }
 }

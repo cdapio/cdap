@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,8 +24,7 @@ import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.lib.ObjectStore;
 import co.cask.cdap.api.dataset.lib.ObjectStores;
-import co.cask.cdap.api.flow.Flow;
-import co.cask.cdap.api.flow.FlowSpecification;
+import co.cask.cdap.api.flow.AbstractFlow;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.service.AbstractService;
@@ -34,8 +33,8 @@ import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.api.spark.AbstractSpark;
-import co.cask.cdap.api.spark.SparkSpecification;
 import com.google.common.base.Charsets;
+import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,7 +69,7 @@ public class SparkKMeansApp extends AbstractApplication {
 
     // Store input and processed data in ObjectStore Datasets
     try {
-      ObjectStores.createObjectStore(getConfigurer(), "points", String.class);
+      ObjectStores.createObjectStore(getConfigurer(), "points", Point.class);
       ObjectStores.createObjectStore(getConfigurer(), "centers", String.class);
     } catch (UnsupportedTypeException e) {
       // This exception is thrown by ObjectStore if its parameter type cannot be
@@ -87,12 +86,10 @@ public class SparkKMeansApp extends AbstractApplication {
   public static final class SparkKMeansSpecification extends AbstractSpark {
 
     @Override
-    public SparkSpecification configure() {
-      return SparkSpecification.Builder.with()
-        .setName("SparkKMeansProgram")
-        .setDescription("Spark KMeans Program")
-        .setMainClassName(SparkKMeansProgram.class.getName())
-        .build();
+    public void configure() {
+      setName("SparkKMeansProgram");
+      setDescription("Spark KMeans Program");
+      setMainClass(SparkKMeansProgram.class);
     }
   }
 
@@ -104,38 +101,40 @@ public class SparkKMeansApp extends AbstractApplication {
     private static final Logger LOG = LoggerFactory.getLogger(PointsReader.class);
 
     @UseDataSet("points")
-    private ObjectStore<String> pointsStore;
+    private ObjectStore<Point> pointsStore;
 
     @ProcessInput
     public void process(StreamEvent event) {
       String body = Bytes.toString(event.getBody());
       LOG.trace("Points info: {}", body);
-      pointsStore.write(getIdAsByte(UUID.randomUUID()), body);
+      pointsStore.write(getIdAsByte(UUID.randomUUID()), parseEvent(event));
     }
 
-    private static byte[] getIdAsByte(UUID uuid) {
+    private byte[] getIdAsByte(UUID uuid) {
       ByteBuffer bb = ByteBuffer.wrap(new byte[16]);
       bb.putLong(uuid.getMostSignificantBits());
       bb.putLong(uuid.getLeastSignificantBits());
       return bb.array();
+    }
+
+    private Point parseEvent(StreamEvent event) {
+      String[] parts = Bytes.toString(event.getBody()).split(" ");
+      Preconditions.checkArgument(parts.length == 3);
+      return new Point(Double.parseDouble(parts[0]), Double.parseDouble(parts[1]), Double.parseDouble(parts[2]));
     }
   }
 
   /**
    * This is a simple Flow that consumes points from a Stream and stores them in a dataset.
    */
-  public static final class PointsFlow implements Flow {
+  public static final class PointsFlow extends AbstractFlow {
 
     @Override
-    public FlowSpecification configure() {
-      return FlowSpecification.Builder.with()
-        .setName("PointsFlow")
-        .setDescription("Reads points information and stores in dataset")
-        .withFlowlets()
-        .add("reader", new PointsReader())
-        .connect()
-        .fromStream("pointsStream").to("reader")
-        .build();
+    protected void configureFlow() {
+      setName("PointsFlow");
+      setDescription("Reads points information and stores in dataset");
+      addFlowlet("reader", new PointsReader());
+      connectStream("pointsStream", "reader");
     }
   }
 

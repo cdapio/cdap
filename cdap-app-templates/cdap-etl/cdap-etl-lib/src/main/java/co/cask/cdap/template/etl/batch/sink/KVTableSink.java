@@ -38,10 +38,10 @@ import javax.annotation.Nullable;
  */
 @Plugin(type = "sink")
 @Name("KVTable")
-@Description("CDAP Key Value Table Dataset Batch Sink")
+@Description("Writes records to a KeyValueTable, using configurable fields from input records as the key and value.")
 public class KVTableSink extends BatchWritableSink<StructuredRecord, byte[], byte[]> {
 
-  private static final String NAME_DESC = "Name of the dataset. If it does not already exist, one will be created";
+  private static final String NAME_DESC = "Name of the dataset. If it does not already exist, one will be created.";
   private static final String KEY_FIELD_DESC = "The name of the field to use as the key. Defaults to 'key'.";
   private static final String VALUE_FIELD_DESC = "The name of the field to use as the value. Defaults to 'value'.";
 

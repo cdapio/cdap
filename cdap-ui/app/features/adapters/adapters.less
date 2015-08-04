@@ -1,0 +1,85 @@
+@import "../../styles/variables.less";
+@import "../../../bower_components/bootstrap/less/mixins.less";
+@import "../../styles/themes/cdap/mixins.less";
+body.theme-cdap {
+  &.state-adapters-list {
+    [apps-drafts-list] {
+      [class*="col-"] {
+        padding-left: 5px;
+        padding-right: 5px;
+      }
+      .drafts-list-container {
+        margin-left: 10px;
+        margin-right: 10px;
+      }
+    }
+  }
+  &.state-adapters {
+
+    .adapter-name {
+      position: absolute;
+      left: 167px;
+      z-index: 1019;
+      > div {
+        background-color: white;
+        cursor: pointer;
+        margin-top: 20px;
+        min-width: 300px;
+        max-width: 450px;
+        padding: 10px 15px;
+        position: relative;
+        .box-shadow(0px 6px 17px -6px rgba(0,0,0,0.75));
+      }
+      h1 {
+        display: inline-block;
+        font-size: 20px;
+        margin-top: 0;
+        margin-right: 10px;
+      }
+      a, p {
+        color: @cdap-header;
+      }
+      a {
+        text-decoration: none;
+        &.fa-pencil {
+          position: absolute;
+          top: 10px;
+          right: 10px;
+        }
+      }
+      p {
+        word-wrap: break-word;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      h1 {
+        width: 100%;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .application-type {
+        line-height: 15px;
+        margin-bottom: 10px;
+        color: @cdap-lightgray;
+
+        span {
+          vertical-align: middle;
+        }
+      }
+    }
+    fieldset.view-plugin-json {
+      textarea {
+        resize: none;
+        height: 60vh;
+      }
+    }
+  }
+
+  .name-error {
+    background-color: @brand-danger;
+  }
+
+}

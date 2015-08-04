@@ -25,6 +25,7 @@ import co.cask.cdap.PauseResumeWorklowApp;
 import co.cask.cdap.WorkflowAppWithErrorRuns;
 import co.cask.cdap.WorkflowAppWithFork;
 import co.cask.cdap.WorkflowAppWithScopedParameters;
+import co.cask.cdap.WorkflowTokenTestPutApp;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.workflow.WorkflowActionNode;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
@@ -1196,5 +1197,119 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
       output.append(String.format("?key=%s", key));
     }
     return output.toString();
+  }
+
+  private String createInputForRecordVerification(String folderName) throws IOException {
+    File inputDir = tmpFolder.newFolder(folderName);
+
+    File inputFile = new File(inputDir.getPath() + "/words.txt");
+    try (BufferedWriter writer = Files.newBufferedWriter(inputFile.toPath(), Charsets.UTF_8)) {
+      writer.write("id1:value1");
+      writer.newLine();
+      writer.write("id2:value2");
+      writer.newLine();
+      writer.write("id3:value3");
+    }
+    return inputDir.getAbsolutePath();
+  }
+
+  @Test
+  public void testWorkflowTokenPut() throws Exception {
+    Assert.assertEquals(200, deploy(WorkflowTokenTestPutApp.class).getStatusLine().getStatusCode());
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, WorkflowTokenTestPutApp.NAME);
+    Id.Workflow workflowId = Id.Workflow.from(appId, WorkflowTokenTestPutApp.WorkflowTokenTestPut.NAME);
+    Id.Program mapReduceId = Id.Program.from(appId, ProgramType.MAPREDUCE, WorkflowTokenTestPutApp.RecordCounter.NAME);
+    Id.Program sparkId = Id.Program.from(appId, ProgramType.SPARK, WorkflowTokenTestPutApp.SparkTestApp.NAME);
+
+    // Start program with "put.in.mapper.initialize" argument.
+    // It will perform put operation on the WorkflowToken in the Initialize method of the Mapper class.
+    // This should fail.
+    String outputPath = new File(tmpFolder.newFolder(), "output").getAbsolutePath();
+    startProgram(workflowId, ImmutableMap.of("inputPath", createInputForRecordVerification("firstInput"),
+                                             "outputPath", outputPath, "put.in.mapper.initialize", "true"));
+    waitState(workflowId, ProgramRunStatus.RUNNING.name());
+    waitState(workflowId, "STOPPED");
+
+    List<RunRecord> workflowProgramRuns = getProgramRuns(workflowId, ProgramRunStatus.FAILED.name());
+    Assert.assertEquals(1, workflowProgramRuns.size());
+
+    List<RunRecord> mapReduceProgramRuns = getProgramRuns(mapReduceId, ProgramRunStatus.FAILED.name());
+    Assert.assertEquals(1, mapReduceProgramRuns.size());
+
+    // Start program with "put.in.map" argument.
+    // It will perform put operation on the WorkflowToken in the map method of the Mapper class.
+    // This should fail.
+    outputPath = new File(tmpFolder.newFolder(), "output").getAbsolutePath();
+    startProgram(workflowId, ImmutableMap.of("inputPath", createInputForRecordVerification("secondInput"),
+                                             "outputPath", outputPath, "put.in.map", "true"));
+    waitState(workflowId, ProgramRunStatus.RUNNING.name());
+    waitState(workflowId, "STOPPED");
+
+    workflowProgramRuns = getProgramRuns(workflowId, ProgramRunStatus.FAILED.name());
+    Assert.assertEquals(2, workflowProgramRuns.size());
+
+    mapReduceProgramRuns = getProgramRuns(mapReduceId, ProgramRunStatus.FAILED.name());
+    Assert.assertEquals(2, mapReduceProgramRuns.size());
+
+    // Start program with "put.in.reducer.initialize" argument.
+    // It will perform put operation on the WorkflowToken in the Initialize method of the Reducer class.
+    // This should fail.
+    outputPath = new File(tmpFolder.newFolder(), "output").getAbsolutePath();
+    startProgram(workflowId, ImmutableMap.of("inputPath", createInputForRecordVerification("thirdInput"),
+                                             "outputPath", outputPath, "put.in.reducer.initialize", "true"));
+    waitState(workflowId, ProgramRunStatus.RUNNING.name());
+    waitState(workflowId, "STOPPED");
+
+    workflowProgramRuns = getProgramRuns(workflowId, ProgramRunStatus.FAILED.name());
+    Assert.assertEquals(3, workflowProgramRuns.size());
+
+    mapReduceProgramRuns = getProgramRuns(mapReduceId, ProgramRunStatus.FAILED.name());
+    Assert.assertEquals(3, mapReduceProgramRuns.size());
+
+    // Start program with "put.in.reduce" argument.
+    // It will perform put operation on the WorkflowToken in the reduce method of the Reducer class.
+    // This should fail.
+    outputPath = new File(tmpFolder.newFolder(), "output").getAbsolutePath();
+    startProgram(workflowId, ImmutableMap.of("inputPath", createInputForRecordVerification("fourthInput"),
+                                             "outputPath", outputPath, "put.in.reduce", "true"));
+    waitState(workflowId, ProgramRunStatus.RUNNING.name());
+    waitState(workflowId, "STOPPED");
+
+    workflowProgramRuns = getProgramRuns(workflowId, ProgramRunStatus.FAILED.name());
+    Assert.assertEquals(4, workflowProgramRuns.size());
+
+    mapReduceProgramRuns = getProgramRuns(mapReduceId, ProgramRunStatus.FAILED.name());
+    Assert.assertEquals(4, mapReduceProgramRuns.size());
+
+    // Start program with closurePutToken parameter, so that put will be tried from the closure
+    outputPath = new File(tmpFolder.newFolder(), "output").getAbsolutePath();
+    startProgram(workflowId, ImmutableMap.of("inputPath", createInputForRecordVerification("fifthInput"),
+                                             "outputPath", outputPath, "closurePutToken", "true"));
+    waitState(workflowId, ProgramRunStatus.RUNNING.name());
+    waitState(workflowId, "STOPPED");
+
+    workflowProgramRuns = getProgramRuns(workflowId, ProgramRunStatus.FAILED.name());
+    Assert.assertEquals(5, workflowProgramRuns.size());
+
+    mapReduceProgramRuns = getProgramRuns(mapReduceId, ProgramRunStatus.COMPLETED.name());
+    Assert.assertEquals(1, mapReduceProgramRuns.size());
+
+    List<RunRecord> sparkProgramRuns = getProgramRuns(sparkId, ProgramRunStatus.FAILED.name());
+    Assert.assertEquals(1, sparkProgramRuns.size());
+
+    // Start program with only inputPath and outputPath arguments.
+    // This should succeed.
+    outputPath = new File(tmpFolder.newFolder(), "output").getAbsolutePath();
+    startProgram(workflowId, ImmutableMap.of("inputPath", createInputForRecordVerification("sixthInput"),
+                                             "outputPath", outputPath));
+
+    waitState(workflowId, ProgramRunStatus.RUNNING.name());
+    waitState(workflowId, "STOPPED");
+
+    workflowProgramRuns = getProgramRuns(workflowId, ProgramRunStatus.COMPLETED.name());
+    Assert.assertEquals(1, workflowProgramRuns.size());
+
+    workflowProgramRuns = getProgramRuns(sparkId, ProgramRunStatus.COMPLETED.name());
+    Assert.assertEquals(1, workflowProgramRuns.size());
   }
 }

@@ -69,6 +69,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Writer;
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
@@ -161,10 +163,14 @@ public class PluginTest {
   }
 
   @Test
-  public void testExternalConfig() throws IOException {
+  public void testExternalConfig() throws IOException, URISyntaxException {
     // For testing plugins that are configure externally through a json file.
     // Create a jar, without any export package information
     createPluginJar(TestPlugin.class, new File(templatePluginDir, "external-plugin-1.0.jar"), new Manifest());
+    URL externalJar = getClass().getClassLoader().getResource("invalid_plugin.jar");
+    if (externalJar != null) {
+      Files.copy(new File(externalJar.toURI()), new File(templatePluginDir, "invalid-plugin-1.0.jar"));
+    }
 
     // Create a config json file that expose two plugins (to the same class).
     // One of the plugin has no property field

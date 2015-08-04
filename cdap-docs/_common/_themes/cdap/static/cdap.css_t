@@ -454,3 +454,13 @@ div.table-block-example.container table.triple-table.docutils tr:first-of-type {
 div.table-block-example.container table.triple-table.docutils tr:first-of-type th.stub {
   border-bottom: 1px solid #aaa;
 }
+
+/* -- Styles to hide navigation --- */
+
+div.documentwrapper-hidden {
+    margin-top: 0px;
+}
+
+div.bodywrapper-hidden {
+    margin: 0 0 0 0;
+}

@@ -14,7 +14,8 @@ A Cask Data Application Platform (CDAP) example demonstrating partitioned file s
 Overview
 ========
 
-This application demonstrates the use of the PartitionedFileSet dataset:
+This application demonstrates the use of the PartitionedFileSet datasets, 
+MapReduce with runtime arguments, and ad-hoc queries over file sets:
 
 - Game results are stored in the PartitionedFileSet ``results``. It is partitioned by league and season,
   and each partition is a CSV (comma-separated values) file containing the results in one league for a season;
@@ -106,19 +107,8 @@ It is worth mentioning that nothing else in ``ScoreCounter`` is specifically pro
 Instead of ``results`` and ``totals``, it could use any other dataset as long as the key and value types match.
 
 
-Building and Starting
-=====================
-
-.. include:: building-and-starting.txt
-
-
-Running CDAP Applications
-=========================
-
 .. |example| replace:: SportResults
-
-.. include:: /../../developers-manual/source/getting-started/building-apps.rst
-   :start-line: 11
+.. include:: building-starting-running-cdap.txt
 
 
 Running the Example
@@ -199,8 +189,8 @@ The last command would produce results (reformatted to fit) such as::
 
 Stopping and Removing the Application
 =====================================
-Once done, you can stop the application as described above in `Stopping an Application. 
-<#stopping-an-application>`__ Here is an example-specific description of the steps:
+Once done, you can stop the application as described in :ref:`Stopping an Application 
+<cdap-building-running-stopping>`. Here is an example-specific description of the steps:
 
 **Stopping the Service**
 
@@ -213,7 +203,7 @@ Once done, you can stop the application as described above in `Stopping an Appli
 
 **Removing the Application**
 
-You can now remove the application as described above, `Removing an Application <#removing-an-application>`__, or:
+You can now remove the application as described in :ref:`Removing an Application <cdap-building-running-removing>`, or:
 
 - Go to the *SportResults* `application overview page 
   <http://localhost:9999/ns/default/apps/SportResults/overview/status>`__,

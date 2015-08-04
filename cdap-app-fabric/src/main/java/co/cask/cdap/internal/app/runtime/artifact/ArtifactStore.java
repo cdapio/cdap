@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.artifact;
 
+import co.cask.cdap.api.artifact.ArtifactDescriptor;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.DatasetDefinition;
@@ -74,7 +75,7 @@ import java.util.SortedMap;
  * Several metadata writes are then performed.
  *
  * The first adds metadata about the artifact, with
- * rowkey r:{namespace}:{artifact-name}, column {artifact-version}, and ArtifactDetail as the value
+ * rowkey r:{namespace}:{artifact-name}, column {artifact-version}, and ArtifactData as the value
  *
  * TODO: (CDAP-2764) add this part when we have a better idea of what needs to be in AppClass.
  * The second adds metadata about any Application Class contained in the artifact, with
@@ -83,7 +84,7 @@ import java.util.SortedMap;
  * The third adds metadata about any Plugin contained in the artifact, with
  * rowkey p:{parent-namespace}:{parent-name}:{plugin-type}:{plugin-name},
  * column {artifact-namespace}:{artifact-name}:{artifact-version},
- * and PluginDetailCodec as the value
+ * and PluginData as the value
  *
  * For example, suppose we add a system artifact etlbatch-3.1.0, which contains an ETLBatch application class.
  * The meta table will look like:
@@ -459,17 +460,21 @@ public class ArtifactStore {
    */
   @VisibleForTesting
   void clear(final Id.Namespace namespace) throws IOException {
-    locationFactory.get(namespace, ARTIFACTS_PATH).delete();
+    locationFactory.get(namespace, ARTIFACTS_PATH).delete(true);
 
     metaTable.executeUnchecked(new TransactionExecutor.Function<DatasetContext<Table>, Void>() {
       @Override
       public Void apply(DatasetContext<Table> context) throws Exception {
         Table table = context.get();
+
+        // delete all rows about artifacts in the namespace
         Scanner scanner = table.scan(scanArtifacts(namespace));
         Row row;
         while ((row = scanner.next()) != null) {
           table.delete(row.getRow());
         }
+
+        // delete all rows about artifacts in the namespace and the plugins they have access to
         Scan pluginsScan = new Scan(
           Bytes.toBytes(String.format("%s:%s:", PLUGIN_PREFIX, namespace.getId())),
           Bytes.toBytes(String.format("%s:%s;", PLUGIN_PREFIX, namespace.getId()))
@@ -478,6 +483,25 @@ public class ArtifactStore {
         while ((row = scanner.next()) != null) {
           table.delete(row.getRow());
         }
+
+        // delete plugins in this namespace from system artifacts
+        // for example, if there was an artifact in this namespace that extends a system artifact
+        Scan systemPluginsScan = new Scan(
+          Bytes.toBytes(String.format("%s:%s:", PLUGIN_PREFIX, Constants.SYSTEM_NAMESPACE)),
+          Bytes.toBytes(String.format("%s:%s;", PLUGIN_PREFIX, Constants.SYSTEM_NAMESPACE))
+        );
+        scanner = table.scan(systemPluginsScan);
+        while ((row = scanner.next()) != null) {
+          for (Map.Entry<byte[], byte[]> columnVal : row.getColumns().entrySet()) {
+            // the column is the id of the artifact the plugin is from
+            ArtifactColumn column = ArtifactColumn.parse(columnVal.getKey());
+            // if the plugin artifact is in the namespace we're deleting, delete this column.
+            if (column.artifactId.getNamespace().equals(namespace)) {
+              table.delete(row.getRow(), column.getColumn());
+            }
+          }
+        }
+
         return null;
       }
     });

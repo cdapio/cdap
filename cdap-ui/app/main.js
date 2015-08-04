@@ -46,7 +46,7 @@ angular
       'mgcrea.ngStrap.timepicker',
 
       'mgcrea.ngStrap.alert',
-      'mgcrea.ngStrap.tooltip',
+
       'mgcrea.ngStrap.popover',
       'mgcrea.ngStrap.dropdown',
       'mgcrea.ngStrap.typeahead',
@@ -129,6 +129,8 @@ angular
       newHttp.save = $delegate.save;
       newHttp.query = $delegate.query;
       newHttp.remove = $delegate.remove;
+      newHttp.post = $delegate.post;
+      newHttp.put = $delegate.put;
       return newHttp;
     });
   })
@@ -143,6 +145,7 @@ angular
             angular.extend(config, {
               user: $rootScope.currentUser || null,
               headers: {
+                'Content-Type': 'application/json',
                 // Accessing stuff from $rootScope is bad. This is done as to resolve circular dependency.
                 // $http <- myAuthPromise <- myAuth <- $http <- $templateFactory <- $view <- $state
                 Authorization: ($rootScope.currentUser.token ? 'Bearer ' + $rootScope.currentUser.token: null)
@@ -159,7 +162,13 @@ angular
     angular.extend($alertProvider.defaults, {
       animation: 'am-fade-and-scale',
       container: '#alerts > .container',
-      duration: 5
+      duration: 3
+    });
+  })
+
+  .config(function ($bootstrapTooltipProvider) {
+    $bootstrapTooltipProvider.setTriggers({
+      'customShow': 'customHide'
     });
   })
 
@@ -189,7 +198,7 @@ angular
     });
 
     $rootScope.$on(MYSOCKET_EVENT.message, function (angEvent, data) {
-      if(data.statusCode > 399) {
+      if(data.statusCode > 399 && !data.resource.suppressErrors) {
         myAlert({
           title: data.statusCode.toString(),
           content: data.response || 'Server had an issue, please try refreshing the page',
@@ -232,6 +241,7 @@ angular
       })
         .then(function(res) {
           $scope.version = res.version;
+          $rootScope.cdapVersion = $scope.version;
         });
     }
 
@@ -272,7 +282,7 @@ angular
       );
     });
 
-    $rootScope.$on('$stateChangeError', function (event, state) {
+    $rootScope.$on('$stateChangeError', function () {
       $state.go('login');
     });
 

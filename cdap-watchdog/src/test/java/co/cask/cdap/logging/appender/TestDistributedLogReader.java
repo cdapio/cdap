@@ -21,6 +21,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -31,6 +32,7 @@ import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.appender.file.FileLogAppender;
 import co.cask.cdap.logging.appender.kafka.KafkaLogAppender;
 import co.cask.cdap.logging.appender.kafka.KafkaTopic;
+import co.cask.cdap.logging.appender.kafka.StringPartitioner;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
 import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.guice.LoggingModules;
@@ -73,9 +75,17 @@ public class TestDistributedLogReader extends KafkaTestBase {
   @ClassRule
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
 
-  private static final FlowletLoggingContext LOGGING_CONTEXT =
+  private static final FlowletLoggingContext LOGGING_CONTEXT_BOTH =
     new FlowletLoggingContext("TDL_NS_1", "APP_1", "FLOW_1", "FLOWLET_1", "RUN1", "INSTANCE1");
 
+  // Note: LOGGING_CONTEXT_FILE should be the only logging context in partition 0
+  private static final FlowletLoggingContext LOGGING_CONTEXT_FILE =
+    new FlowletLoggingContext("TDL_NS_2", "APP_2", "FLOW_2", "FLOWLET_2", "RUN2", "INSTANCE2");
+
+  private static final FlowletLoggingContext LOGGING_CONTEXT_KAFKA =
+    new FlowletLoggingContext("TDL_NS_3", "APP_3", "FLOW_3", "FLOWLET_3", "RUN3", "INSTANCE3");
+
+  private static StringPartitioner stringPartitioner;
   private static Injector injector;
   private static TransactionManager txManager;
 
@@ -86,7 +96,7 @@ public class TestDistributedLogReader extends KafkaTestBase {
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TMP_FOLDER.newFolder().getAbsolutePath());
     cConf.setInt(LoggingConfiguration.LOG_MAX_FILE_SIZE_BYTES, 20 * 1024);
     cConf.set(LoggingConfiguration.KAFKA_SEED_BROKERS, "localhost:" + KafkaTestBase.getKafkaPort());
-    cConf.set(LoggingConfiguration.NUM_PARTITIONS, "1");
+    cConf.set(LoggingConfiguration.NUM_PARTITIONS, "2");
     cConf.set(LoggingConfiguration.KAFKA_PRODUCER_TYPE, "sync");
     String logBaseDir = cConf.get(LoggingConfiguration.LOG_BASE_DIR) + "/" +
       TestDistributedLogReader.class.getSimpleName();
@@ -107,16 +117,24 @@ public class TestDistributedLogReader extends KafkaTestBase {
       }
     );
 
+    stringPartitioner = new StringPartitioner(cConf);
+    // NOTE: this test relies on LOGGING_CONTEXT_FILE going into its own kafka partition.
+    // Unless the partitioner has changed, or more logging contexts added there should be no issue.
+    Assert.assertEquals(1, stringPartitioner.partition(LOGGING_CONTEXT_BOTH.getLogPartition(), -1));
+    Assert.assertEquals(0, stringPartitioner.partition(LOGGING_CONTEXT_FILE.getLogPartition(), -1));
+    Assert.assertEquals(1, stringPartitioner.partition(LOGGING_CONTEXT_KAFKA.getLogPartition(), -1));
+
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
 
-    LoggingContextAccessor.setLoggingContext(LOGGING_CONTEXT);
+    // Generate logs for LOGGING_CONTEXT_BOTH, that contains logs in file, both file and kafka, and only in kafka
+    LoggingContextAccessor.setLoggingContext(LOGGING_CONTEXT_BOTH);
 
     LogAppender fileAppender = injector.getInstance(FileLogAppender.class);
 
     new LogAppenderInitializer(fileAppender).initialize("TestDistributedLogReader-file");
     Logger fileLogger = LoggerFactory.getLogger("TestDistributedLogReader-file");
-    generateLogs(fileLogger, 0, 20);
+    generateLogs(fileLogger, "Log message1", 0, 20);
     fileAppender.stop();
 
     fileAppender = injector.getInstance(FileLogAppender.class);
@@ -124,18 +142,37 @@ public class TestDistributedLogReader extends KafkaTestBase {
     new LogAppenderInitializer(fileAppender).initialize("TestDistributedLogReader-both");
     new LogAppenderInitializer(kafkaAppender).initialize("TestDistributedLogReader-both");
     Logger bothLogger = LoggerFactory.getLogger("TestDistributedLogReader-both");
-    generateLogs(bothLogger, 20, 10);
+    generateLogs(bothLogger, "Log message1", 20, 10);
     fileAppender.stop();
     kafkaAppender.stop();
 
-    generateCheckpointTime(30);
+    generateCheckpointTime(LOGGING_CONTEXT_BOTH, 30);
 
     kafkaAppender = injector.getInstance(KafkaLogAppender.class);
     new LogAppenderInitializer(kafkaAppender).initialize("TestDistributedLogReader-kafka");
     Logger kafkaLogger = LoggerFactory.getLogger("TestDistributedLogReader-kafka");
-    generateLogs(kafkaLogger, 30, 30);
+    generateLogs(kafkaLogger, "Log message1", 30, 30);
 
     kafkaAppender.stop();
+
+    // Generate logs for LOGGING_CONTEXT_FILE, logs only in file
+    LoggingContextAccessor.setLoggingContext(LOGGING_CONTEXT_FILE);
+    fileAppender = injector.getInstance(FileLogAppender.class);
+    new LogAppenderInitializer(fileAppender).initialize("TestDistributedLogReader-file-2");
+    fileLogger = LoggerFactory.getLogger("TestDistributedLogReader-file-2");
+    generateLogs(fileLogger, "Log message2", 0, 40);
+    fileAppender.stop();
+
+    generateCheckpointTime(LOGGING_CONTEXT_FILE, 40);
+
+    // Generate logs for LOGGING_CONTEXT_KAFKA, logs only in kafka
+    LoggingContextAccessor.setLoggingContext(LOGGING_CONTEXT_KAFKA);
+    kafkaAppender = injector.getInstance(KafkaLogAppender.class);
+    new LogAppenderInitializer(kafkaAppender).initialize("TestDistributedLogReader-kafka-3");
+    kafkaLogger = LoggerFactory.getLogger("TestDistributedLogReader-kafka-3");
+    generateLogs(kafkaLogger, "Log message3", 0, 30);
+    kafkaAppender.stop();
+
   }
 
   @AfterClass
@@ -145,57 +182,132 @@ public class TestDistributedLogReader extends KafkaTestBase {
   }
 
   @Test
-  public void testDistributedLogPrev() throws Exception {
+  public void testDistributedLogPrevBoth() throws Exception {
+    ReadRange readRange = new ReadRange(0, Long.MAX_VALUE, LogOffset.INVALID_KAFKA_OFFSET);
+    testDistributedLogPrev(readRange, LOGGING_CONTEXT_BOTH, 16, 4, "TestDistributedLogReader Log message1 ", 60);
+
+    readRange = new ReadRange(System.currentTimeMillis() - TimeUnit.DAYS.toMillis(1),
+                                        System.currentTimeMillis(), LogOffset.INVALID_KAFKA_OFFSET);
+    testDistributedLogPrev(readRange, LOGGING_CONTEXT_BOTH, 16, 4, "TestDistributedLogReader Log message1 ", 60);
+
+    testDistributedLogPrev(ReadRange.LATEST, LOGGING_CONTEXT_BOTH, 9, 8, "TestDistributedLogReader Log message1 ", 60);
+  }
+
+  @Test
+  public void testDistributedLogNextBoth() throws Exception {
+    ReadRange readRange = new ReadRange(0, Long.MAX_VALUE, LogOffset.INVALID_KAFKA_OFFSET);
+    testDistributedLogNext(readRange, LOGGING_CONTEXT_BOTH, 20, 3, "TestDistributedLogReader Log message1 ", 60, 0);
+
+    readRange = new ReadRange(System.currentTimeMillis() - TimeUnit.DAYS.toMillis(1),
+                              System.currentTimeMillis(), LogOffset.INVALID_KAFKA_OFFSET);
+    testDistributedLogNext(readRange, LOGGING_CONTEXT_BOTH, 20, 3, "TestDistributedLogReader Log message1 ", 60, 0);
+
+    testDistributedLogNext(ReadRange.LATEST, LOGGING_CONTEXT_BOTH, 1, 3,
+                           "TestDistributedLogReader Log message1 ", 3, 57);
+  }
+
+  @Test
+  public void testDistributedLogPrevFile() throws Exception {
+    ReadRange readRange = new ReadRange(0, Long.MAX_VALUE, LogOffset.INVALID_KAFKA_OFFSET);
+    testDistributedLogPrev(readRange, LOGGING_CONTEXT_FILE, 7, 6, "TestDistributedLogReader Log message2 ", 40);
+
+    readRange = new ReadRange(System.currentTimeMillis() - TimeUnit.DAYS.toMillis(1),
+                                        System.currentTimeMillis(), LogOffset.INVALID_KAFKA_OFFSET);
+
+    testDistributedLogPrev(readRange, LOGGING_CONTEXT_FILE, 7, 6, "TestDistributedLogReader Log message2 ", 40);
+
+    testDistributedLogPrev(ReadRange.LATEST, LOGGING_CONTEXT_FILE, 7, 6, "TestDistributedLogReader Log message2 ", 40);
+  }
+
+  @Test
+  public void testDistributedLogNextFile() throws Exception {
+    ReadRange readRange = new ReadRange(0, Long.MAX_VALUE, LogOffset.INVALID_KAFKA_OFFSET);
+
+    testDistributedLogNext(readRange, LOGGING_CONTEXT_FILE, 14, 3, "TestDistributedLogReader Log message2 ", 40, 0);
+
+    readRange = new ReadRange(System.currentTimeMillis() - TimeUnit.DAYS.toMillis(1),
+                              System.currentTimeMillis(), LogOffset.INVALID_KAFKA_OFFSET);
+    testDistributedLogNext(readRange, LOGGING_CONTEXT_FILE, 14, 3, "TestDistributedLogReader Log message2 ", 40, 0);
+
+    testDistributedLogNext(ReadRange.LATEST, LOGGING_CONTEXT_FILE, 1, 5,
+                           "TestDistributedLogReader Log message2 ", 5, 35);
+  }
+
+  @Test
+  public void testDistributedLogPrevKafka() throws Exception {
+    ReadRange readRange = new ReadRange(0, Long.MAX_VALUE, LogOffset.INVALID_KAFKA_OFFSET);
+    testDistributedLogPrev(readRange, LOGGING_CONTEXT_KAFKA, 5, 6, "TestDistributedLogReader Log message3 ", 30);
+
+    readRange = new ReadRange(System.currentTimeMillis() - TimeUnit.DAYS.toMillis(1),
+                                        System.currentTimeMillis(), LogOffset.INVALID_KAFKA_OFFSET);
+
+    testDistributedLogPrev(readRange, LOGGING_CONTEXT_KAFKA, 5, 6, "TestDistributedLogReader Log message3 ", 30);
+
+    testDistributedLogPrev(ReadRange.LATEST, LOGGING_CONTEXT_KAFKA, 5, 6, "TestDistributedLogReader Log message3 ", 30);
+  }
+
+  @Test
+  public void testDistributedLogNextKafka() throws Exception {
+    ReadRange readRange = new ReadRange(0, Long.MAX_VALUE, LogOffset.INVALID_KAFKA_OFFSET);
+    testDistributedLogNext(readRange, LOGGING_CONTEXT_KAFKA, 10, 3, "TestDistributedLogReader Log message3 ", 30, 0);
+
+    readRange = new ReadRange(System.currentTimeMillis() - TimeUnit.DAYS.toMillis(1),
+                              System.currentTimeMillis(), LogOffset.INVALID_KAFKA_OFFSET);
+    testDistributedLogNext(readRange, LOGGING_CONTEXT_KAFKA, 10, 3, "TestDistributedLogReader Log message3 ", 30, 0);
+
+    testDistributedLogNext(ReadRange.LATEST, LOGGING_CONTEXT_KAFKA, 1, 8,
+                           "TestDistributedLogReader Log message3 ", 8, 22);
+  }
+
+  private void testDistributedLogPrev(ReadRange readRange, LoggingContext loggingContext, int numCalls, int step,
+                                      String assertMesssage, int assertCount) throws Exception {
     DistributedLogReader distributedLogReader = injector.getInstance(DistributedLogReader.class);
-    int count = 60;
-    ReadRange readRange = ReadRange.LATEST;
-    for (int i = 0; i < 15; ++i) {
+    for (int i = 0; i < numCalls; ++i) {
       LoggingTester.LogCallback callback = new LoggingTester.LogCallback();
-      distributedLogReader.getLogPrev(LOGGING_CONTEXT, readRange, 4, Filter.EMPTY_FILTER, callback);
+      distributedLogReader.getLogPrev(loggingContext, readRange, step, Filter.EMPTY_FILTER, callback);
       List<LogEvent> events = callback.getEvents();
       Assert.assertFalse(events.isEmpty());
       readRange = ReadRange.createToRange(events.get(0).getOffset());
 
       Collections.reverse(events);
       for (LogEvent event : events) {
-        Assert.assertEquals("TestDistributedLogReader Log message " + --count,
+        Assert.assertEquals(assertMesssage + --assertCount,
                             event.getLoggingEvent().getFormattedMessage());
       }
     }
-    Assert.assertEquals(0, count);
+    Assert.assertEquals(0, assertCount);
   }
 
-  @Test
-  public void testDistributedLogNext() throws Exception {
+  public void testDistributedLogNext(ReadRange readRange, LoggingContext loggingContext, int numCalls, int step,
+                                     String assertMesssage, int assertCount, int startIndex) throws Exception {
     DistributedLogReader distributedLogReader = injector.getInstance(DistributedLogReader.class);
     int count = 0;
-    ReadRange readRange = new ReadRange(0, Long.MAX_VALUE, LogOffset.INVALID_KAFKA_OFFSET);
-    for (int i = 0; i < 20; ++i) {
+    for (int i = 0; i < numCalls; ++i) {
       LoggingTester.LogCallback callback = new LoggingTester.LogCallback();
-      distributedLogReader.getLogNext(LOGGING_CONTEXT, readRange, 3, Filter.EMPTY_FILTER, callback);
+      distributedLogReader.getLogNext(loggingContext, readRange, step, Filter.EMPTY_FILTER, callback);
       List<LogEvent> events = callback.getEvents();
       Assert.assertFalse(events.isEmpty());
       readRange = ReadRange.createFromRange(events.get(events.size() - 1).getOffset());
 
       for (LogEvent event : events) {
-        Assert.assertEquals("TestDistributedLogReader Log message " + count++,
+        Assert.assertEquals(assertMesssage + (startIndex + count++),
                             event.getLoggingEvent().getFormattedMessage());
       }
     }
-    Assert.assertEquals(60, count);
+    Assert.assertEquals(assertCount, count);
   }
 
-  private static void generateLogs(Logger logger, int start, int max) throws InterruptedException {
+  private static void generateLogs(Logger logger, String baseMessage, int start, int max) throws InterruptedException {
     for (int i = start; i < start + max; ++i) {
-      logger.warn("TestDistributedLogReader Log message {}", i);
+      logger.warn("TestDistributedLogReader {} {}", baseMessage, i);
       TimeUnit.MILLISECONDS.sleep(1);
     }
   }
 
-  private static void generateCheckpointTime(int numExpectedEvents) throws Exception {
+  private static void generateCheckpointTime(LoggingContext loggingContext, int numExpectedEvents) throws Exception {
     FileLogReader logReader = injector.getInstance(FileLogReader.class);
     LoggingTester.LogCallback logCallback = new LoggingTester.LogCallback();
-    logReader.getLog(LOGGING_CONTEXT, 0, Long.MAX_VALUE, Filter.EMPTY_FILTER, logCallback);
+    logReader.getLog(loggingContext, 0, Long.MAX_VALUE, Filter.EMPTY_FILTER, logCallback);
     Assert.assertEquals(numExpectedEvents, logCallback.getEvents().size());
 
     // Save checkpoint (time of last event)
@@ -203,6 +315,7 @@ public class TestDistributedLogReader extends KafkaTestBase {
     CheckpointManager checkpointManager =
       checkpointManagerFactory.create(KafkaTopic.getTopic(), KafkaLogWriterPlugin.CHECKPOINT_ROW_KEY_PREFIX);
     long checkpointTime = logCallback.getEvents().get(numExpectedEvents - 1).getLoggingEvent().getTimeStamp();
-    checkpointManager.saveCheckpoint(0, new Checkpoint(numExpectedEvents, checkpointTime));
+    checkpointManager.saveCheckpoint(stringPartitioner.partition(loggingContext.getLogPartition(), -1),
+                                     new Checkpoint(numExpectedEvents, checkpointTime));
   }
 }

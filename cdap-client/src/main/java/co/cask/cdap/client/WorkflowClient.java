@@ -52,7 +52,7 @@ public class WorkflowClient {
   private final RESTClient restClient;
 
   @Inject
-  private WorkflowClient(ClientConfig config, RESTClient restClient) {
+  public WorkflowClient(ClientConfig config, RESTClient restClient) {
     this.config = config;
     this.restClient = restClient;
   }

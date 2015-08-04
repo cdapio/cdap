@@ -71,12 +71,12 @@ public class GetProgramLogsCommand extends AbstractAuthCommand {
 
   @Override
   public String getPattern() {
-    return String.format("get %s logs <%s> [<%s>] [<%s>]", elementType.getName(), elementType.getArgumentName(),
+    return String.format("get %s logs <%s> [<%s>] [<%s>]", elementType.getShortName(), elementType.getArgumentName(),
                          ArgumentName.START_TIME, ArgumentName.END_TIME);
   }
 
   @Override
   public String getDescription() {
-    return String.format("Gets the logs of %s.", Fragment.of(Article.A, elementType.getTitleName()));
+    return String.format("Gets the logs of %s.", Fragment.of(Article.A, elementType.getName()));
   }
 }

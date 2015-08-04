@@ -16,10 +16,12 @@
 package co.cask.cdap.examples.wordcount;
 
 import co.cask.cdap.api.annotation.ProcessInput;
-import co.cask.cdap.api.annotation.UseDataSet;
+import co.cask.cdap.api.annotation.Property;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
+import co.cask.cdap.api.flow.flowlet.FlowletConfigurer;
+import co.cask.cdap.api.flow.flowlet.FlowletContext;
 import co.cask.cdap.api.flow.flowlet.OutputEmitter;
 import co.cask.cdap.api.metrics.Metrics;
 
@@ -27,11 +29,30 @@ import co.cask.cdap.api.metrics.Metrics;
  * Counter Flowlet.
  */
 public class Counter extends AbstractFlowlet {
-  @UseDataSet("wordCounts")
+
+  @Property
+  private final String wordCountTableName;
+
   private KeyValueTable wordCountsTable;
   private OutputEmitter<String> wordOutput;
   private Metrics metrics;
   int longestWordLength = 0;
+
+  public Counter(String wordCountTableName) {
+    this.wordCountTableName = wordCountTableName;
+  }
+
+  @Override
+  public void configure(FlowletConfigurer configurer) {
+    super.configure(configurer);
+    useDatasets(wordCountTableName);
+  }
+
+  @Override
+  public void initialize(FlowletContext context) throws Exception {
+    super.initialize(context);
+    wordCountsTable = context.getDataset(wordCountTableName);
+  }
 
   @ProcessInput("wordOut")
   public void process(String word) {

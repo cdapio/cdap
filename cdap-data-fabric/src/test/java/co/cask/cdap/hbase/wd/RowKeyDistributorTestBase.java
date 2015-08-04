@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.hbase.wd;
 
+import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.test.XSlowTests;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
@@ -74,6 +75,18 @@ public abstract class RowKeyDistributorTestBase {
     testingUtility = new HBaseTestingUtility();
     Configuration hConf = testingUtility.getConfiguration();
     hConf.set("yarn.is.minicluster", "true");
+    // Tune down the connection thread pool size
+    hConf.setInt("hbase.hconnection.threads.core", 5);
+    hConf.setInt("hbase.hconnection.threads.max", 10);
+    // Tunn down handler threads in regionserver
+    hConf.setInt("hbase.regionserver.handler.count", 10);
+
+    // Set to random port
+    hConf.setInt("hbase.master.port", Networks.getRandomPort());
+    hConf.setInt("hbase.master.info.port", Networks.getRandomPort());
+    hConf.setInt("hbase.regionserver.port", Networks.getRandomPort());
+    hConf.setInt("hbase.regionserver.info.port", Networks.getRandomPort());
+
 
     // Set the JAVA_HOME env for MapReduce. In case it is missing from the host.
     String javaHomeEnv = "JAVA_HOME=" + System.getProperty("java.home");

@@ -20,11 +20,10 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.explore.guice.ExploreRuntimeModule;
+import co.cask.cdap.explore.service.hive.Hive12CDH5ExploreService;
 import co.cask.cdap.explore.service.hive.Hive12ExploreService;
 import co.cask.cdap.explore.service.hive.Hive13ExploreService;
 import co.cask.cdap.explore.service.hive.Hive14ExploreService;
-import co.cask.cdap.explore.service.hive.HiveCDH4ExploreService;
-import co.cask.cdap.explore.service.hive.HiveCDH5ExploreService;
 import co.cask.cdap.format.RecordFormats;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
@@ -34,7 +33,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
-import com.google.common.io.Files;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.MRJobConfig;
@@ -65,9 +63,11 @@ public class ExploreServiceUtils {
    * Hive support enum.
    */
   public enum HiveSupport {
-    HIVE_CDH4(Pattern.compile("^.*cdh4\\..*$"), HiveCDH4ExploreService.class),
-    HIVE_CDH5_4(Pattern.compile("^.*cdh5.4\\..*$"), Hive14ExploreService.class),
-    HIVE_CDH5(Pattern.compile("^.*cdh5\\..*$"), HiveCDH5ExploreService.class),
+    // CDH 5.0 to 5.1 uses Hive 0.12
+    // CDH >5.1 uses Hive >=0.13.1 (aka 1.0, which Hive14ExploreService supports)
+    HIVE_CDH5_0(Pattern.compile("^.*cdh5.0\\..*$"), Hive12CDH5ExploreService.class),
+    HIVE_CDH5_1(Pattern.compile("^.*cdh5.1\\..*$"), Hive12CDH5ExploreService.class),
+    HIVE_CDH5(Pattern.compile("^.*cdh5\\..*$"), Hive14ExploreService.class),
 
     HIVE_12(null, Hive12ExploreService.class),
     HIVE_13(null, Hive13ExploreService.class),
@@ -99,6 +99,7 @@ public class ExploreServiceUtils {
 
   private static final Pattern HIVE_SITE_FILE_PATTERN = Pattern.compile("^.*/hive-site\\.xml$");
   private static final Pattern YARN_SITE_FILE_PATTERN = Pattern.compile("^.*/yarn-site\\.xml$");
+  private static final Pattern MAPRED_SITE_FILE_PATTERN = Pattern.compile("^.*/mapred-site\\.xml$");
 
   /**
    * Get all the files contained in a class path.
@@ -344,21 +345,30 @@ public class ExploreServiceUtils {
     return jarFiles;
   }
 
-  public static File hijackConfFile(File confFile) {
+  /**
+   * Updates environment variables in hive-site.xml, mapred-site.xml and yarn-site.xml for explore.
+   * All other conf files are returned without any update.
+   * @param confFile conf file to update
+   * @param tempDir temp dir to create files if necessary
+   * @return the new conf file to use in place of confFile
+   */
+  public static File updateConfFileForExplore(File confFile, File tempDir) {
     if (HIVE_SITE_FILE_PATTERN.matcher(confFile.getAbsolutePath()).matches()) {
-      return hijackHiveConfFile(confFile);
+      return updateHiveConfFile(confFile, tempDir);
     } else if (YARN_SITE_FILE_PATTERN.matcher(confFile.getAbsolutePath()).matches()) {
-      return hijackYarnConfFile(confFile);
+      return updateYarnConfFile(confFile, tempDir);
+    } else if (MAPRED_SITE_FILE_PATTERN.matcher(confFile.getAbsolutePath()).matches()) {
+      return updateMapredConfFile(confFile, tempDir);
     } else {
       return confFile;
     }
   }
 
   /**
-   * Check that the file is a yarn-site.xml file, and return a temp copy of it to which are added
-   * necessary options. If it is not a yarn-site.xml file, return it as is.
+   * Change yarn-site.xml file, and return a temp copy of it to which are added
+   * necessary options.
    */
-  private static File hijackYarnConfFile(File confFile) {
+  private static File updateYarnConfFile(File confFile, File tempDir) {
     Configuration conf = new Configuration(false);
     try {
       conf.addResource(confFile.toURI().toURL());
@@ -371,13 +381,13 @@ public class ExploreServiceUtils {
                                        Joiner.on(",").join(YarnConfiguration.DEFAULT_YARN_APPLICATION_CLASSPATH));
 
     // add the pwd/* at the beginning of classpath. so user's jar will take precedence and without this change,
-    // job.jar will be at the begging of the classpath, since job.jar has old guava version classes,
+    // job.jar will be at the beginning of the classpath, since job.jar has old guava version classes,
     // we want to add pwd/* before
     yarnAppClassPath = "$PWD/*," + yarnAppClassPath;
 
     conf.set(YarnConfiguration.YARN_APPLICATION_CLASSPATH, yarnAppClassPath);
 
-    File newYarnConfFile = new File(Files.createTempDir(), "yarn-site.xml");
+    File newYarnConfFile = new File(tempDir, "yarn-site.xml");
     try (FileOutputStream os = new FileOutputStream(newYarnConfFile)) {
       conf.writeXml(os);
     } catch (IOException e) {
@@ -389,10 +399,43 @@ public class ExploreServiceUtils {
   }
 
   /**
-   * Check that the file is a hive-site.xml file, and return a temp copy of it to which are added
-   * necessary options. If it is not a hive-site.xml file, return it as is.
+   * Change mapred-site.xml file, and return a temp copy of it to which are added
+   * necessary options.
    */
-  private static File hijackHiveConfFile(File confFile) {
+  private static File updateMapredConfFile(File confFile, File tempDir) {
+    Configuration conf = new Configuration(false);
+    try {
+      conf.addResource(confFile.toURI().toURL());
+    } catch (MalformedURLException e) {
+      LOG.error("File {} is malformed.", confFile, e);
+      throw Throwables.propagate(e);
+    }
+
+    String mrAppClassPath = conf.get(MRJobConfig.MAPREDUCE_APPLICATION_CLASSPATH,
+                                       MRJobConfig.DEFAULT_MAPREDUCE_APPLICATION_CLASSPATH);
+
+    // Add the pwd/* at the beginning of classpath. Without this change, old jars from mr framework classpath
+    // get into classpath.
+    mrAppClassPath = "$PWD/*," + mrAppClassPath;
+
+    conf.set(MRJobConfig.MAPREDUCE_APPLICATION_CLASSPATH, mrAppClassPath);
+
+    File newMapredConfFile = new File(tempDir, "mapred-site.xml");
+    try (FileOutputStream os = new FileOutputStream(newMapredConfFile)) {
+      conf.writeXml(os);
+    } catch (IOException e) {
+      LOG.error("Problem creating and writing to temporary mapred-site.xml conf file at {}", newMapredConfFile, e);
+      throw Throwables.propagate(e);
+    }
+
+    return newMapredConfFile;
+  }
+
+  /**
+   * Change hive-site.xml file, and return a temp copy of it to which are added
+   * necessary options.
+   */
+  private static File updateHiveConfFile(File confFile, File tempDir) {
     Configuration conf = new Configuration(false);
     try {
       conf.addResource(confFile.toURI().toURL());
@@ -403,13 +446,13 @@ public class ExploreServiceUtils {
 
     // we prefer jars at container's root directory before job.jar,
     // we edit the YARN_APPLICATION_CLASSPATH in yarn-site.xml using
-    // co.cask.cdap.explore.service.ExploreServiceUtils.hijackYarnConfFile and
+    // co.cask.cdap.explore.service.ExploreServiceUtils.updateYarnConfFile and
     // setting the MAPREDUCE_JOB_CLASSLOADER and MAPREDUCE_JOB_USER_CLASSPATH_FIRST to false will put
     // YARN_APPLICATION_CLASSPATH before job.jar for container's classpath.
     conf.setBoolean(Job.MAPREDUCE_JOB_USER_CLASSPATH_FIRST, false);
     conf.setBoolean(MRJobConfig.MAPREDUCE_JOB_CLASSLOADER, false);
 
-    File newHiveConfFile = new File(Files.createTempDir(), "hive-site.xml");
+    File newHiveConfFile = new File(tempDir, "hive-site.xml");
 
     try (FileOutputStream os = new FileOutputStream(newHiveConfFile)) {
       conf.writeXml(os);

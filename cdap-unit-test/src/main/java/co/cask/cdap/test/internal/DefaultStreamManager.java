@@ -26,9 +26,14 @@ import co.cask.cdap.internal.MockResponder;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.StreamManager;
+import co.cask.http.BodyConsumer;
 import com.google.common.base.Charsets;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.io.ByteProcessor;
+import com.google.common.io.ByteStreams;
+import com.google.common.io.Files;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -43,6 +48,7 @@ import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.handler.codec.http.HttpVersion;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
@@ -144,6 +150,34 @@ public class DefaultStreamManager implements StreamManager {
     if (responder.getStatus() != HttpResponseStatus.OK) {
       throw new IOException("Failed to write to stream. Status = " + responder.getStatus());
     }
+  }
+
+  @Override
+  public void send(File file, String contentType) throws Exception {
+    String path = String.format("/v3/namespaces/%s/streams/%s/batch", streamId.getNamespaceId(), streamId.getId());
+    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, path);
+    request.setHeader(HttpHeaders.Names.CONTENT_TYPE, contentType);
+    final MockResponder responder = new MockResponder();
+    final BodyConsumer bodyConsumer = streamHandler.batch(request, responder, streamId.getNamespaceId(),
+                                                          streamId.getId());
+    Preconditions.checkNotNull(bodyConsumer, "BodyConsumer from stream batch load call should not be null");
+
+    ByteStreams.readBytes(Files.newInputStreamSupplier(file), new ByteProcessor<BodyConsumer>() {
+      @Override
+      public boolean processBytes(byte[] buf, int off, int len) throws IOException {
+        bodyConsumer.chunk(ChannelBuffers.wrappedBuffer(buf, off, len), responder);
+        return true;
+      }
+
+      @Override
+      public BodyConsumer getResult() {
+        bodyConsumer.finished(responder);
+        return bodyConsumer;
+      }
+    });
+
+    Preconditions.checkState(HttpResponseStatus.OK.equals(responder.getStatus()),
+                             "Failed to load events to stream %s in batch", streamId);
   }
 
   @Override

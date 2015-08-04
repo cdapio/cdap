@@ -34,9 +34,9 @@ import com.google.common.collect.Maps;
 import com.google.common.net.HttpHeaders;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
-import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
 import java.io.File;
 import java.io.IOException;
@@ -101,7 +101,7 @@ public class DefaultStreamWriter implements StreamWriter {
   private void writeToStream(Id.Stream stream, HttpRequest request) throws IOException {
     HttpResponse response = HttpRequests.execute(request);
     int responseCode = response.getResponseCode();
-    if (responseCode == HttpResponseStatus.NOT_FOUND.code()) {
+    if (responseCode == HttpResponseStatus.NOT_FOUND.getCode()) {
       throw new IOException(String.format("Stream %s not found", stream));
     }
 
@@ -119,8 +119,11 @@ public class DefaultStreamWriter implements StreamWriter {
 
   private void write(String stream, ByteBuffer data, Map<String, String> headers) throws IOException {
     URL streamURL = getStreamURL(stream);
-    HttpRequest request = HttpRequest.post(streamURL).withBody(data).addHeaders(headers).build();
-    writeToStream(Id.Stream.from(namespace, stream), request);
+    HttpRequest.Builder requestBuilder = HttpRequest.post(streamURL).withBody(data);
+    for (Map.Entry<String, String> header : headers.entrySet()) {
+      requestBuilder.addHeader(stream + "." + header.getKey(), header.getValue());
+    }
+    writeToStream(Id.Stream.from(namespace, stream), requestBuilder.build());
   }
 
   @Override

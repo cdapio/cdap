@@ -31,6 +31,7 @@ import co.cask.cdap.template.etl.api.PipelineConfigurer;
 import co.cask.cdap.template.etl.api.batch.BatchSource;
 import co.cask.cdap.template.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.template.etl.common.BatchFileFilter;
+import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -38,6 +39,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.lib.input.CombineTextInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,7 +58,7 @@ import javax.annotation.Nullable;
  * A {@link BatchSource} to use any distributed file system as a Source.
  */
 @Plugin(type = "source")
-@Name("FileBatchSource")
+@Name("File")
 @Description("Batch source for File Systems")
 public class FileBatchSource extends BatchSource<LongWritable, Object, StructuredRecord> {
 
@@ -70,28 +72,30 @@ public class FileBatchSource extends BatchSource<LongWritable, Object, Structure
     Schema.Field.of("ts", Schema.of(Schema.Type.LONG)),
     Schema.Field.of("body", Schema.of(Schema.Type.STRING))
   );
-
-  private static final String REGEX_DESCRIPTION = "Regex to filter out filenames in the path. " +
+  protected static final String MAX_SPLIT_SIZE_DESCRIPTION = "Maximum split-size for each mapper in the MapReduce " +
+    "Job. Defaults to 128MB.";
+  protected static final String PATH_DESCRIPTION = "Path to file(s) to be read. If a directory is specified, " +
+    "terminate the path name with a \'/\'.";
+  protected static final String TABLE_DESCRIPTION = "Name of the Table that keeps track of the last time files " +
+    "were read in.";
+  protected static final String INPUT_FORMAT_CLASS_DESCRIPTION = "Name of the input format class, which must be a " +
+    "subclass of FileInputFormat. Defaults to CombineTextInputFormat.";
+  protected static final String REGEX_DESCRIPTION = "Regex to filter out filenames in the path. " +
     "To use the TimeFilter, input \"timefilter\". The TimeFilter assumes that it " +
-    "is reading in files with the File log naming convention of YYYY-MM-DD-HH-mm-SS-Tag. The TimeFilter " +
-    "reads in files from the previous hour if the timeTable field is left blank. So if it's currently " +
+    "is reading in files with the File log naming convention of 'YYYY-MM-DD-HH-mm-SS-Tag'. The TimeFilter " +
+    "reads in files from the previous hour if the field 'timeTable' is left blank. So if it's currently " +
     "2015-06-16-15 (June 16th 2015, 3pm), it will read in files that contain 2015-06-16-14 in the filename. " +
-    "If the field timeTable is present, then it will read files in that haven't been read yet.";
+    "If the field 'timeTable' is present, then it will read files in that haven't been read yet.";
   private static final String FILESYSTEM_PROPERTIES_DESCRIPTION = "JSON of the properties needed for the " +
     "distributed file system. The formatting needs to be as follows:\n{\n\t\"<property name>\" : " +
     "\"<property value>\", ...\n}. For example, the property names needed for S3 are \"fs.s3n.awsSecretAccessKey\" " +
     "and \"fs.s3n.awsAccessKeyId\".";
-  private static final String PATH_DESCRIPTION = "Path to file(s) to be read. If a directory is specified, " +
-    "terminate the path name with a \'/\'";
-  private static final String TABLE_DESCRIPTION = "Name of the Table that keeps track of the last time files " +
-    "were read in.";
-  private static final String INPUT_FORMAT_CLASS_DESCRIPTION = "Name of the input format class, which must be a " +
-    "subclass of FileInputFormat. Defaults to TextInputFormat";
   private static final String FILESYSTEM_DESCRIPTION = "Distributed file system to read in from.";
   private static final Gson GSON = new Gson();
   private static final Logger LOG = LoggerFactory.getLogger(FileBatchSource.class);
   private static final Type ARRAYLIST_DATE_TYPE  = new TypeToken<ArrayList<Date>>() { }.getType();
   private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+  private static final int DEFAULT_SPLIT_SIZE = 134217728;
 
   private final FileBatchConfig config;
   private KeyValueTable table;
@@ -139,7 +143,7 @@ public class FileBatchSource extends BatchSource<LongWritable, Object, Structure
 
     if (config.timeTable != null) {
       table = context.getDataset(config.timeTable);
-      String datesToRead = Bytes.toString(table.read(LAST_TIME_READ));
+      datesToRead = Bytes.toString(table.read(LAST_TIME_READ));
       if (datesToRead == null) {
         List<Date> firstRun = Lists.newArrayList(new Date(0));
         datesToRead = GSON.toJson(firstRun, ARRAYLIST_DATE_TYPE);
@@ -153,14 +157,23 @@ public class FileBatchSource extends BatchSource<LongWritable, Object, Structure
     }
 
     conf.set(CUTOFF_READ_TIME, dateFormat.format(prevHour));
-    if (config.inputFormatClass != null) {
+    if (!Strings.isNullOrEmpty(config.inputFormatClass)) {
       ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
       Class<? extends FileInputFormat> classType = (Class<? extends FileInputFormat>)
         classLoader.loadClass(config.inputFormatClass);
       job.setInputFormatClass(classType);
+    } else {
+      job.setInputFormatClass(CombineTextInputFormat.class);
     }
     FileInputFormat.setInputPathFilter(job, BatchFileFilter.class);
     FileInputFormat.addInputPath(job, new Path(config.path));
+    long maxSplitSize;
+    try {
+      maxSplitSize = Long.parseLong(config.maxSplitSize);
+    } catch (NumberFormatException e) {
+      maxSplitSize = DEFAULT_SPLIT_SIZE;
+    }
+    CombineTextInputFormat.setMaxInputSplitSize(job, maxSplitSize);
   }
 
   @Override
@@ -216,14 +229,21 @@ public class FileBatchSource extends BatchSource<LongWritable, Object, Structure
     @Description(INPUT_FORMAT_CLASS_DESCRIPTION)
     private String inputFormatClass;
 
+    @Name("maxSplitSize")
+    @Nullable
+    @Description(MAX_SPLIT_SIZE_DESCRIPTION)
+    private String maxSplitSize;
+
     public FileBatchConfig(String fileSystem, String path, @Nullable String regex, @Nullable String timeTable,
-                           @Nullable String inputFormatClass, @Nullable String fileSystemProperties) {
+                           @Nullable String inputFormatClass, @Nullable String fileSystemProperties,
+                           @Nullable String maxSplitSize) {
       this.fileSystem = fileSystem;
       this.fileSystemProperties = fileSystemProperties;
       this.path = path;
       this.fileRegex = regex;
       this.timeTable = timeTable;
       this.inputFormatClass = inputFormatClass;
+      this.maxSplitSize = maxSplitSize;
     }
   }
 }

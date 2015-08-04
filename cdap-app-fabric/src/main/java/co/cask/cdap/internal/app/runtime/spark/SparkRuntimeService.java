@@ -22,6 +22,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.CombineClassLoader;
+import co.cask.cdap.common.lang.WeakReferenceDelegatorClassLoader;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.twill.HadoopClassExcluder;
 import co.cask.cdap.common.utils.DirUtils;
@@ -35,6 +36,7 @@ import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
+import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -157,7 +159,8 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
   @Override
   protected void run() throws Exception {
     SparkClassLoader sparkClassLoader = new SparkClassLoader(executionContext);
-    ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(sparkClassLoader);
+    ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(
+      new WeakReferenceDelegatorClassLoader(sparkClassLoader));
     try {
       LOG.debug("Submitting to spark with arguments: {}", Arrays.toString(sparkSubmitArgs));
       SparkSubmit.main(sparkSubmitArgs);
@@ -415,6 +418,14 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
 
       @Override
       public void run() {
+        // Cleanup all system properties setup by SparkSubmit
+        Iterable<String> sparkKeys = Iterables.filter(System.getProperties().stringPropertyNames(),
+                                                      Predicates.containsPattern("^spark\\."));
+        for (String key : sparkKeys) {
+          LOG.debug("Removing Spark system property: {}", key);
+          System.clearProperty(key);
+        }
+
         try {
           DirUtils.deleteDirectoryContents(directory);
         } catch (IOException e) {

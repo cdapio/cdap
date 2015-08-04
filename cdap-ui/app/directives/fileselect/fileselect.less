@@ -22,6 +22,23 @@ body.theme-cdap {
         &:only-child my-file-select > a { .border-radius(4px 0 4px 4px); }
       }
     }
+    .dropdown-toggle.white-dropdown + .dropdown-menu.dropdown-menu-right {
+      > li {
+        my-file-select > a {
+          cursor: pointer;
+          display: block;
+          padding: 10px;
+          background-color: #ffffff;
+          color: #6a7387;
+          &:hover, &:focus {
+            background: @cdap-header;
+            color: white;
+            text-decoration: none;
+          }
+        }
+        &:only-child my-file-select > a { .border-radius(4px 0 4px 4px); }
+      }
+    }
 
   }
 }

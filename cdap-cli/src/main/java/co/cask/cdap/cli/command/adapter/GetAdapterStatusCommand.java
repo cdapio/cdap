@@ -56,6 +56,6 @@ public class GetAdapterStatusCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Gets the status of %s.", Fragment.of(Article.A, ElementType.ADAPTER.getTitleName()));
+    return String.format("Gets the status of %s.", Fragment.of(Article.A, ElementType.ADAPTER.getName()));
   }
 }

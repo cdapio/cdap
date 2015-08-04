@@ -45,7 +45,6 @@ import org.apache.twill.api.TwillRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.util.Map;
 
 /**
@@ -71,7 +70,8 @@ public final class DistributedFlowProgramRunner extends AbstractDistributedProgr
 
   @Override
   protected ProgramController launch(Program program, ProgramOptions options,
-                                     Map<String, File> localizeFiles, ApplicationLauncher launcher) {
+                                     Map<String, LocalizeResource> localizeResources,
+                                     ApplicationLauncher launcher) {
     // Extract and verify parameters
     ApplicationSpecification appSpec = program.getApplicationSpecification();
     Preconditions.checkNotNull(appSpec, "Missing application specification.");
@@ -92,7 +92,7 @@ public final class DistributedFlowProgramRunner extends AbstractDistributedProgr
       LOG.info("Launching distributed flow: " + program.getName() + ":" + flowSpec.getName());
 
       TwillController controller = launcher.launch(new FlowTwillApplication(program, flowSpec,
-                                                                            localizeFiles, eventHandler));
+                                                                            localizeResources, eventHandler));
       DistributedFlowletInstanceUpdater instanceUpdater =
         new DistributedFlowletInstanceUpdater(program, controller, queueAdmin,
                                               streamAdmin, flowletQueues, txExecutorFactory);

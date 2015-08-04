@@ -48,7 +48,7 @@ import java.util.Map;
  * {@link co.cask.cdap.data2.dataset2.lib.cube.CubeDatasetDefinition}.
  * <p/>
  * To configure transformation from {@link StructuredRecord} to a {@link CubeFact} the
- * mapping configuration is required, as per {@link StructuredRecordToCubeFact} documentation.
+ * mapping configuration is required, following {@link StructuredRecordToCubeFact} documentation.
  */
 // todo: add unit-test once CDAP-2156 is resolved
 @Plugin(type = "sink")

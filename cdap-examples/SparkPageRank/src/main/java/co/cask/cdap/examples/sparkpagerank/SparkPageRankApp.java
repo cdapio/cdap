@@ -16,6 +16,7 @@
 
 package co.cask.cdap.examples.sparkpagerank;
 
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
@@ -52,8 +53,8 @@ import javax.ws.rs.PathParam;
 public class SparkPageRankApp extends AbstractApplication {
 
   public static final String RANKS_SERVICE_NAME = "RanksService";
-  public static final String GOOGLE_TYPE_PR_SERVICE_NAME = "GoogleTypePR";
-  public static final String TOTAL_PAGES_PR_SERVICE_NAME = "TotalPagesPR";
+  public static final String GOOGLE_TYPE_PR_SERVICE_NAME = "GoogleTypePRService";
+  public static final String TOTAL_PAGES_PR_SERVICE_NAME = "TotalPagesPRService";
   public static final String BACKLINK_URL_STREAM = "backlinkURLStream";
 
   @Override
@@ -119,6 +120,8 @@ public class SparkPageRankApp extends AbstractApplication {
       setName(SparkPageRankProgram.class.getSimpleName());
       setDescription("Spark Page Rank Program");
       setMainClass(SparkPageRankProgram.class);
+      setDriverResources(new Resources(1024));
+      setExecutorResources(new Resources(1024));
     }
   }
 

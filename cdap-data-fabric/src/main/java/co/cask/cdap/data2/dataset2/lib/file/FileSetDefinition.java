@@ -28,6 +28,7 @@ import com.google.inject.Inject;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -61,7 +62,12 @@ public class FileSetDefinition implements DatasetDefinition<FileSet, FileSetAdmi
 
   @Override
   public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
-    return DatasetSpecification.builder(instanceName, getName()).properties(properties.getProperties()).build();
+    Map<String, String> newProperties = new HashMap<>(properties.getProperties());
+    newProperties.put(FileSetDataset.FILESET_VERSION_PROPERTY, FileSetDataset.FILESET_VERSION);
+    return DatasetSpecification
+      .builder(instanceName, getName())
+      .properties(newProperties)
+      .build();
   }
 
   @Override

@@ -50,7 +50,7 @@ public class SendStreamEventCommand extends AbstractAuthCommand implements Categ
                                         arguments.get(ArgumentName.STREAM.toString()));
     String streamEvent = arguments.get(ArgumentName.STREAM_EVENT.toString());
     streamClient.sendEvent(streamId, streamEvent);
-    output.printf("Successfully sent stream event to stream '%s'\n", streamId);
+    output.printf("Successfully sent stream event to stream '%s'\n", streamId.getId());
   }
 
   @Override
@@ -60,7 +60,7 @@ public class SendStreamEventCommand extends AbstractAuthCommand implements Categ
 
   @Override
   public String getDescription() {
-    return String.format("Sends an event to %s.", Fragment.of(Article.A, ElementType.STREAM.getTitleName()));
+    return String.format("Sends an event to %s.", Fragment.of(Article.A, ElementType.STREAM.getName()));
   }
 
   @Override

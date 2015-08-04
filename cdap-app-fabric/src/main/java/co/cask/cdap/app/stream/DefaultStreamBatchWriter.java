@@ -19,7 +19,7 @@ package co.cask.cdap.app.stream;
 import co.cask.cdap.api.data.stream.StreamBatchWriter;
 import co.cask.cdap.common.io.ByteBuffers;
 import co.cask.cdap.proto.Id;
-import io.netty.handler.codec.http.HttpResponseStatus;
+import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -66,7 +66,7 @@ public class DefaultStreamBatchWriter implements StreamBatchWriter {
       connection.disconnect();
     }
 
-    if (responseCode == HttpResponseStatus.NOT_FOUND.code()) {
+    if (responseCode == HttpResponseStatus.NOT_FOUND.getCode()) {
       throw new IOException(String.format("Stream %s not found", stream));
     }
 

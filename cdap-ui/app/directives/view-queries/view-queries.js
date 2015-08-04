@@ -7,7 +7,9 @@ angular.module(PKG.name + '.commons')
         panel: '='
       },
       templateUrl: 'view-queries/view-queries.html',
-      controller: function ($scope, MyDataSource, $state, EventPipe, myExploreApi) {
+      controller: function ($scope, MyDataSource, $state, EventPipe, myExploreApi, $http, myCdapUrl) {
+        $scope.downloading = {};
+
         var dataSrc = new MyDataSource($scope);
         $scope.queries = [];
         var params = {
@@ -93,22 +95,31 @@ angular.module(PKG.name + '.commons')
         };
 
         $scope.download = function(query) {
+          $scope.downloading[query] = true;
 
           // Cannot use $resource: http://stackoverflow.com/questions/24876593/resource-query-return-split-strings-array-of-char-instead-of-a-string
 
-          dataSrc
-            .request({
-              _cdapPath: '/data/explore/queries/' +
-                              query.query_handle + '/download',
-              method: 'POST'
-            })
-            .then(function (res) {
+          // The files are being store in the node proxy
+
+          $http.post('/downloadQuery', {
+            'backendUrl': myCdapUrl.constructUrl({_cdapPath: '/data/explore/queries/' + query.query_handle + '/download'}),
+            'queryHandle': query.query_handle
+          })
+            .success(function(res) {
+
+              var url = 'http://' + window.location.host + res;
+
               var element = angular.element('<a/>');
               element.attr({
-                href: 'data:atachment/csv,' + encodeURIComponent(res),
-                target: '_self',
-                download: 'result.csv'
+                href: url,
+                target: '_self'
               })[0].click();
+
+              $scope.downloading[query] = false;
+            })
+            .error(function() {
+              console.info('Error downloading query');
+              $scope.downloading[query] = false;
             });
 
         };

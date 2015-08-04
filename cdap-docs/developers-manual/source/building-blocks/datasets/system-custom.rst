@@ -110,7 +110,7 @@ Passing Properties
 You can also pass ``DatasetProperties`` as a third parameter to the ``createDataset`` method.
 These properties will be used by embedded datasets during creation and will be available via the
 ``DatasetSpecification`` passed to the dataset constructor. For example, to create a dataset with
-a TTL (time-to-live) property, you can use::
+a TTL (time-to-live, specified in seconds) property, you can use::
 
   createDataset("frequentCustomers", KeyValueTable.class,
     DatasetProperties.builder()

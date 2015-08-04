@@ -21,6 +21,8 @@ import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletConnection;
 import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
+import co.cask.cdap.api.service.ServiceSpecification;
+import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.Constants;
@@ -49,8 +51,16 @@ public class ApplicationRegistrationStage extends AbstractStage<ApplicationWithP
   @Override
   public void process(ApplicationWithPrograms input) throws Exception {
     store.addApplication(input.getId(), input.getSpecification(), input.getLocation());
+    registerDatasets(input);
+    emit(input);
+  }
 
-    // register usage
+  // Register dataset usage, based upon the program specifications.
+  // Note that worker specifications' datasets are not registered upon app deploy because the useDataset of the
+  // WorkerConfigurer is deprecated. Workers' access to datasets is aimed to be completely dynamic. Other programs are
+  // moving in this direction.
+  // Also, SparkSpecifications are the same in that a Spark program's dataset access is completely dynamic.
+  private void registerDatasets(ApplicationWithPrograms input) {
     ApplicationSpecification app = input.getSpecification();
     Id.Application appId = input.getId();
     Id.Namespace namespace = appId.getNamespace();
@@ -83,6 +93,13 @@ public class ApplicationRegistrationStage extends AbstractStage<ApplicationWithP
       }
     }
 
-    emit(input);
+    for (ServiceSpecification serviceSpecification : app.getServices().values()) {
+      Id.Service serviceId = Id.Service.from(appId, serviceSpecification.getName());
+      for (HttpServiceHandlerSpecification handlerSpecification : serviceSpecification.getHandlers().values()) {
+        for (String dataset : handlerSpecification.getDatasets()) {
+          usageRegistry.register(serviceId, Id.DatasetInstance.from(namespace, dataset));
+        }
+      }
+    }
   }
 }

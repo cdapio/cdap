@@ -17,9 +17,14 @@
 package co.cask.cdap.test;
 
 import co.cask.cdap.api.schedule.ScheduleSpecification;
+import co.cask.cdap.api.workflow.WorkflowToken;
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.proto.WorkflowTokenDetail;
+import co.cask.cdap.proto.WorkflowTokenNodeDetail;
 
 import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  * Workflow manager interface for managing the workflow and its schedules
@@ -44,4 +49,27 @@ public interface WorkflowManager extends ProgramManager<WorkflowManager> {
    * @return list of {@link RunRecord} workflow history
    */
   List<RunRecord> getHistory();
+
+  /**
+   * Get the {@link WorkflowTokenDetail} for the specified workflow run.
+   *
+   * @param runId the specified workflow run id
+   * @param scope the {@link WorkflowToken.Scope}. Defaults to {@link WorkflowToken.Scope#USER}
+   * @param key the specified key. If null, returns all key-value pairs
+   * @return the {@link WorkflowTokenDetail} for the specified workflow run
+   */
+  WorkflowTokenDetail getToken(String runId, @Nullable WorkflowToken.Scope scope,
+                               @Nullable String key) throws NotFoundException;
+
+  /**
+   * Returns the {@link WorkflowTokenNodeDetail} for the specified workflow run at the specified node.
+   *
+   * @param runId the specified workflow run id
+   * @param nodeName the specified node name
+   * @param scope the {@link WorkflowToken.Scope}. Defaults to {@link WorkflowToken.Scope#USER}
+   * @param key the specified key. If null, returns all key-value pairs emitted by the specified node
+   * @return the {@link WorkflowTokenNodeDetail} for the specified workflow run at the specified node.
+   */
+  WorkflowTokenNodeDetail getTokenAtNode(String runId, String nodeName, @Nullable WorkflowToken.Scope scope,
+                                         @Nullable String key) throws NotFoundException;
 }

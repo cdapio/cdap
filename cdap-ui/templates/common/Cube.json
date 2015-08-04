@@ -20,13 +20,15 @@
          "dataset.cube.resolutions" : {
            "widget" : "csv",
            "label" : "Cube Resolution",
+           "description": "Aggregation resolutions to be used if a new Cube dataset needs to be created. See Cube dataset configuration details available at http://docs.cask.co/cdap/current/en/ for more information.",
            "properties": {
               "delimiter": ","
            }
          },
          "dataset.cube.properties" : {
            "widget" : "json-editor",
-           "label"  : "Other Dataset Properties"
+           "label"  : "Other Dataset Properties",
+           "description": "Provides any dataset properties to be used if a new Cube dataset needs to be created; provided as a JSON Map. For example, if aggregations are desired on fields 'abc' and 'xyz', the property should have the value: \"{\"dataset.cube.aggregation.agg1.dimensions\":\"abc\", \"dataset.cube.aggregation.agg2.dimensions\":\"xyz\"}\". See Cube dataset configuration details available at http://docs.cask.co/cdap/current/en/ for more information."
          }
       }
     },
