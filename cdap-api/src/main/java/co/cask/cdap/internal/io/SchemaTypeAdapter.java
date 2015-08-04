@@ -17,14 +17,15 @@
 package co.cask.cdap.internal.io;
 
 import co.cask.cdap.api.data.schema.Schema;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Sets;
 import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -52,13 +53,13 @@ public final class SchemaTypeAdapter extends TypeAdapter<Schema> {
       writer.nullValue();
       return;
     }
-    Set<String> knownRecords = Sets.newHashSet();
+    Set<String> knownRecords = new HashSet<>();
     write(writer, schema, knownRecords);
   }
 
   @Override
   public Schema read(JsonReader reader) throws IOException {
-    return read(reader, Sets.<String>newHashSet());
+    return read(reader, new HashSet<String>());
   }
 
   /**
@@ -126,13 +127,13 @@ public final class SchemaTypeAdapter extends TypeAdapter<Schema> {
    * @throws IOException When fails to construct a valid schema from the input.
    */
   private Schema readUnion(JsonReader reader, Set<String> knownRecords) throws IOException {
-    ImmutableList.Builder<Schema> unionSchemas = ImmutableList.builder();
+    List<Schema> unionSchemas = new ArrayList<>();
     reader.beginArray();
     while (reader.peek() != JsonToken.END_ARRAY) {
       unionSchemas.add(read(reader, knownRecords));
     }
     reader.endArray();
-    return Schema.unionOf(unionSchemas.build());
+    return Schema.unionOf(unionSchemas);
   }
 
   /**
@@ -146,13 +147,13 @@ public final class SchemaTypeAdapter extends TypeAdapter<Schema> {
     if (!"symbols".equals(reader.nextName())) {
       throw new IOException("Property \"symbols\" missing for enum.");
     }
-    ImmutableList.Builder<String> enumValues = ImmutableList.builder();
+    List<String> enumValues = new ArrayList<>();
     reader.beginArray();
     while (reader.peek() != JsonToken.END_ARRAY) {
       enumValues.add(reader.nextString());
     }
     reader.endArray();
-    return Schema.enumWith(enumValues.build());
+    return Schema.enumWith(enumValues);
   }
 
   /**
@@ -202,7 +203,7 @@ public final class SchemaTypeAdapter extends TypeAdapter<Schema> {
 
     knownRecords.add(recordName);
 
-    ImmutableList.Builder<Schema.Field> fieldBuilder = ImmutableList.builder();
+    List<Schema.Field> fieldBuilder = new ArrayList<>();
     reader.beginArray();
     while (reader.peek() != JsonToken.END_ARRAY) {
       reader.beginObject();
@@ -214,7 +215,7 @@ public final class SchemaTypeAdapter extends TypeAdapter<Schema> {
       reader.endObject();
     }
     reader.endArray();
-    return Schema.recordOf(recordName, fieldBuilder.build());
+    return Schema.recordOf(recordName, fieldBuilder);
   }
 
   /**

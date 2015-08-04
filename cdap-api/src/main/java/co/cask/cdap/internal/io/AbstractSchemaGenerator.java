@@ -18,11 +18,7 @@ package co.cask.cdap.internal.io;
 
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.TypeToken;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -30,6 +26,8 @@ import java.net.URI;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -40,40 +38,44 @@ import java.util.UUID;
  * it delegates to child class.
  */
 public abstract class AbstractSchemaGenerator implements SchemaGenerator {
-  private static final Logger LOG = LoggerFactory.getLogger(AbstractSchemaGenerator.class);
 
   /**
    * Mapping Java types into Schemas for simple data types.
    */
-  private static final Map<Class<?>, Schema> SIMPLE_SCHEMAS =
-    ImmutableMap.<Class<?>, Schema>builder()
-      .put(Boolean.TYPE, Schema.of(Schema.Type.BOOLEAN))
-      .put(Byte.TYPE, Schema.of(Schema.Type.INT))
-      .put(Character.TYPE, Schema.of(Schema.Type.INT))
-      .put(Short.TYPE, Schema.of(Schema.Type.INT))
-      .put(Integer.TYPE, Schema.of(Schema.Type.INT))
-      .put(Long.TYPE, Schema.of(Schema.Type.LONG))
-      .put(Float.TYPE, Schema.of(Schema.Type.FLOAT))
-      .put(Double.TYPE, Schema.of(Schema.Type.DOUBLE))
+  private static final Map<Class<?>, Schema> SIMPLE_SCHEMAS;
 
-      .put(Boolean.class, Schema.of(Schema.Type.BOOLEAN))
-      .put(Byte.class, Schema.of(Schema.Type.INT))
-      .put(Character.class, Schema.of(Schema.Type.INT))
-      .put(Short.class, Schema.of(Schema.Type.INT))
-      .put(Integer.class, Schema.of(Schema.Type.INT))
-      .put(Long.class, Schema.of(Schema.Type.LONG))
-      .put(Float.class, Schema.of(Schema.Type.FLOAT))
-      .put(Double.class, Schema.of(Schema.Type.DOUBLE))
+  static {
+    Map<Class<?>, Schema> simpleSchemas = new HashMap<>();
 
-      .put(String.class, Schema.of(Schema.Type.STRING))
-      .put(byte[].class, Schema.of(Schema.Type.BYTES))
-      .put(ByteBuffer.class, Schema.of(Schema.Type.BYTES))
+    simpleSchemas.put(Boolean.TYPE, Schema.of(Schema.Type.BOOLEAN));
+    simpleSchemas.put(Byte.TYPE, Schema.of(Schema.Type.INT));
+    simpleSchemas.put(Character.TYPE, Schema.of(Schema.Type.INT));
+    simpleSchemas.put(Short.TYPE, Schema.of(Schema.Type.INT));
+    simpleSchemas.put(Integer.TYPE, Schema.of(Schema.Type.INT));
+    simpleSchemas.put(Long.TYPE, Schema.of(Schema.Type.LONG));
+    simpleSchemas.put(Float.TYPE, Schema.of(Schema.Type.FLOAT));
+    simpleSchemas.put(Double.TYPE, Schema.of(Schema.Type.DOUBLE));
 
-      // Some extra ones for some common build-in types. Need corresponding handling in DatumReader/Writer
-      .put(URI.class, Schema.of(Schema.Type.STRING))
-      .put(URL.class, Schema.of(Schema.Type.STRING))
-      .put(UUID.class, Schema.of(Schema.Type.BYTES))
-      .build();
+    simpleSchemas.put(Boolean.class, Schema.of(Schema.Type.BOOLEAN));
+    simpleSchemas.put(Byte.class, Schema.of(Schema.Type.INT));
+    simpleSchemas.put(Character.class, Schema.of(Schema.Type.INT));
+    simpleSchemas.put(Short.class, Schema.of(Schema.Type.INT));
+    simpleSchemas.put(Integer.class, Schema.of(Schema.Type.INT));
+    simpleSchemas.put(Long.class, Schema.of(Schema.Type.LONG));
+    simpleSchemas.put(Float.class, Schema.of(Schema.Type.FLOAT));
+    simpleSchemas.put(Double.class, Schema.of(Schema.Type.DOUBLE));
+
+    simpleSchemas.put(String.class, Schema.of(Schema.Type.STRING));
+    simpleSchemas.put(byte[].class, Schema.of(Schema.Type.BYTES));
+    simpleSchemas.put(ByteBuffer.class, Schema.of(Schema.Type.BYTES));
+
+        // Some extra ones for some common build-in types. Need corresponding handling in DatumReader/Writer
+    simpleSchemas.put(URI.class, Schema.of(Schema.Type.STRING));
+    simpleSchemas.put(URL.class, Schema.of(Schema.Type.STRING));
+    simpleSchemas.put(UUID.class, Schema.of(Schema.Type.BYTES));
+
+    SIMPLE_SCHEMAS = Collections.unmodifiableMap(simpleSchemas);
+  }
 
   @Override
   public final Schema generate(Type type) throws UnsupportedTypeException {
@@ -82,7 +84,7 @@ public abstract class AbstractSchemaGenerator implements SchemaGenerator {
 
   @Override
   public final Schema generate(Type type, boolean acceptRecursiveTypes) throws UnsupportedTypeException {
-    Set<String> knownRecords = ImmutableSet.of();
+    Set<String> knownRecords = Collections.emptySet();
     return doGenerate(TypeToken.of(type), knownRecords, acceptRecursiveTypes);
   }
 
