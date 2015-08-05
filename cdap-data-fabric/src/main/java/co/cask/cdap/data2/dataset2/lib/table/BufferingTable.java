@@ -162,7 +162,9 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
     // Default uses the above scheme. Subclasses can change it by overriding the #getNameAsTxChangePrefix method
     this.nameAsTxChangePrefix = Bytes.add(new byte[]{(byte) name.length()}, Bytes.toBytes(name));
     this.buff = new ConcurrentSkipListMap<>(Bytes.BYTES_COMPARATOR);
-    this.snapshotVersion = properties == null ? null : Long.valueOf(properties.get("version"));
+    this.snapshotVersion = (properties == null || properties.get("version") == null)
+      ? null : Long.parseLong(properties.get("version"));
+    LOG.info("Yaojie in BufferingTable, snapshotVersion: {}", snapshotVersion);
   }
 
   /**

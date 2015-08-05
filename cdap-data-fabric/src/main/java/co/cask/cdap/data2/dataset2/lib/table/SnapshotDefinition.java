@@ -44,6 +44,7 @@ import org.slf4j.LoggerFactory;
 
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -124,51 +125,72 @@ public class SnapshotDefinition extends AbstractDatasetDefinition<SnapshotDatase
 //            return co.cask.cdap.data2.dataset2.tx.DatasetContext.of(metadataTable);
 //          } catch (Exception e) {
 //            LOG.info("Yaojie - get exception");
-//            // there's nothing much we can do here
+//            // there's nothing much we can do
 //            throw Throwables.propagate(e);
 //          }
 //        }
 //      });
     Long version = null;
     try {
-      version = getVersion(co.cask.cdap.data2.dataset2.tx.DatasetContext.of(metadataTable));
+      version = getVersion(metadataTable);
       LOG.info("Yaojie in snapshotDefinition - transaction id is {}", version);
     } catch (Exception e) {
       e.printStackTrace();
     }
     Map<String, String> copyOfArguments = new HashMap<>(arguments);
     // metadataTable.get(Bytes.toBytes(METADATA_PROPERTY_ROW_FIELD)).getLong(Bytes.toBytes(METADATA_PROPERTY_COLUMN));
-    copyOfArguments.put(METADATA_PROPERTY_ROW_FIELD, String.valueOf(version));
+    if (version != null) {
+      copyOfArguments.put(METADATA_PROPERTY_ROW_FIELD, String.valueOf(version));
+    }
     Table mainTable = mainTableDef.getDataset(datasetContext, spec.getSpecification(MAIN_TABLE_NAME),
                                               copyOfArguments, classLoader);
     return new SnapshotDataset(spec.getName(), metadataTable, mainTable);
   }
 
-  private Long getVersion(final co.cask.cdap.data2.dataset2.tx.DatasetContext metaDatasetContext) throws Exception {
-    Iterable<TransactionAware> txAwares = Iterables.transform(
-      Iterables.filter(metaDatasetContext, Predicates.instanceOf(TransactionAware.class)),
-      new Function<co.cask.cdap.data2.dataset2.tx.DatasetContext<Table>, TransactionAware>() {
-        @Override
-        public TransactionAware apply(co.cask.cdap.data2.dataset2.tx.DatasetContext<Table> input) {
-          return (TransactionAware) input;
-        }
-      });
-    return txExecutorFactory.createExecutor(txAwares).execute(
-      new TransactionExecutor.Function<co.cask.cdap.data2.dataset2.tx.DatasetContext<Table>, Long>() {
-        @Override
-        public Long apply(co.cask.cdap.data2.dataset2.tx.DatasetContext<Table> ctx) throws Exception {
-          Table table = (Table) metaDatasetContext.get();
-          return table.get(Bytes.toBytes(METADATA_PROPERTY_ROW_FIELD)).getLong(Bytes.toBytes(METADATA_PROPERTY_COLUMN));
-        }
-      }, metaDatasetContext);
-//    return (Long) transactional.execute(
+//  private Long getVersion(final co.cask.cdap.data2.dataset2.tx.DatasetContext metaDatasetContext) throws Exception {
+//    Iterable<TransactionAware> txAwares = Iterables.transform(
+//      Iterables.filter(metaDatasetContext, Predicates.instanceOf(TransactionAware.class)),
+//      new Function<co.cask.cdap.data2.dataset2.tx.DatasetContext<Table>, TransactionAware>() {
+//        @Override
+//        public TransactionAware apply(co.cask.cdap.data2.dataset2.tx.DatasetContext<Table> input) {
+//          return (TransactionAware) input;
+//        }
+//      });
+//    return txExecutorFactory.createExecutor(txAwares).execute(
 //      new TransactionExecutor.Function<co.cask.cdap.data2.dataset2.tx.DatasetContext<Table>, Long>() {
 //        @Override
 //        public Long apply(co.cask.cdap.data2.dataset2.tx.DatasetContext<Table> ctx) throws Exception {
-//          Table table = ctx.get();
-//          LOG.info("Yaojie - in the transaction");
-//          ret table.get(Bytes.toBytes(METADATA_PROPERTY_ROW_FIELD)).getLong(Bytes.toBytes(METADATA_PROPERTY_COLUMN));
+//          Table table = (Table) metaDatasetContext.get();
+//          return table.get(Bytes.toBytes(METADATA_PROPERTY_ROW_FIELD)).ge(Bytes.toBytes(METADATA_PROPERTY_COLUMN));
 //        }
-//      });
+//      }, metaDatasetContext);
+////    return (Long) transactional.execute(
+////      new TransactionExecutor.Function<co.cask.cdap.data2.dataset2.tx.DatasetContext<Table>, Long>() {
+////        @Override
+////        public Long apply(co.cask.cdap.data2.dataset2.tx.DatasetContext<Table> ctx) throws Exception {
+////          Table table = ctx.get();
+////          LOG.info("Yaojie - in the transaction");
+////          ret table.get(Bytes.toBytes(METADATA_PROPERTY_ROW_FIELD)).(Bytes.toBytes(METADATA_PROPERTY_COLUMN));
+////        }
+////      });
+//  }
+  @SuppressWarnings("unchecked")
+  private Long getVersion(Table metaDataTable) throws Exception {
+    if (!(metaDataTable instanceof TransactionAware)) {
+      LOG.info("metaDataTable is not TxAware");
+     return null;
+    }
+    LOG.info("metaDataTable is TxAware");
+    Iterable<TransactionAware> txAwares =
+      Collections.singletonList(
+        (TransactionAware) co.cask.cdap.data2.dataset2.tx.DatasetContext.of(metaDataTable)
+      );
+    return txExecutorFactory.createExecutor(txAwares).execute(
+      new TransactionExecutor.Function<Table, Long>() {
+        @Override
+        public Long apply(Table table) throws Exception {
+          return table.get(Bytes.toBytes(METADATA_PROPERTY_ROW_FIELD)).getLong(Bytes.toBytes(METADATA_PROPERTY_COLUMN));
+        }
+      }, metaDataTable);
   }
 }

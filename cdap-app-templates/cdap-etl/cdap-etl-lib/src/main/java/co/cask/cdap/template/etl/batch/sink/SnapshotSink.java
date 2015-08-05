@@ -102,16 +102,14 @@ public class SnapshotSink extends BatchWritableSink<StructuredRecord, byte[], Pu
     emitter.emit(new KeyValue<>(put.getRow(), put));
   }
 
-//  @Override
-//  public void onRunFinish(boolean succeeded, BatchSinkContext batchSinkContext) {
-//    LOG.info("Yaojie in onRunFinish - transaction id in meta is {}", transactionId);
-////    if (succeeded) {
-////      Map<String, String> sinkArgs = Maps.newHashMap();
-////      snapshotDataset = batchSinkContext.getDataset(snapshotSinkConfig.name, sinkArgs);
-////      snapshotDataset.updateMetaDataTable(transactionId);
-////      LOG.info("Yaojie in onRunFinish - transaction id in meta is {}", snapshotDataset.getCurrentVersion());
-////    }
-//  }
+  @Override
+  public void onRunFinish(boolean succeeded, BatchSinkContext batchSinkContext) {
+    if (succeeded) {
+      Map<String, String> sinkArgs = Maps.newHashMap();
+      snapshotDataset = batchSinkContext.getDataset(snapshotSinkConfig.name, sinkArgs);
+      LOG.info("Yaojie in onRunFinish - transaction id in meta is {}", snapshotDataset.getCurrentVersion());
+    }
+  }
 
   @Override
   public void destroy() {
