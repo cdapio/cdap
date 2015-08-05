@@ -79,7 +79,7 @@ angular.module(PKG.name + '.feature.adapters')
       }
     };
 
-    datasrc.poll(
+    datasrc.request(
       {
         method: 'POST',
         _cdapPath: '/metrics/search?target=metric&' + tagQueryParams
@@ -88,14 +88,17 @@ angular.module(PKG.name + '.feature.adapters')
           function onMetricsDiscoverySuccess(res) {
             widget.metric.names = res;
             if (res.length > 0) {
-              return DashboardHelper.fetchData(widget);
+              pollForMetricsData(widget);
             } else {
               $scope.formattedData = [];
             }
           },
           function onMetricsDiscoveryError() {
             console.error('Error on Metrics fetch');
-          })
+          }
+        );
+    function pollForMetricsData(widget) {
+      DashboardHelper.pollData(widget)
         .then(
           function onMetricsFetchSuccess(metrics) {
             if (!widget.formattedData || !widget.formattedData.columns) {
@@ -115,8 +118,9 @@ angular.module(PKG.name + '.feature.adapters')
           },
           function onMetricsFetchError() {
             console.log('Error in fetching values for metrics: ', widget.metric.names);
-          });
-
+          }
+        );
+    }
 
     function orderMetricsForDisplay(data) {
       var source = {};

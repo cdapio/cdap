@@ -51,6 +51,21 @@ angular.module(PKG.name + '.services')
       });
     }
 
+    function pollData (widget, isAggregate) {
+      return dataSrc.poll({
+        _cdapPath: '/metrics/query',
+        method: 'POST',
+        body: MyMetricsQueryHelper.constructQuery(
+          'qid',
+          MyMetricsQueryHelper.contextToTags(widget.metric.context),
+          widget.metric
+        )
+      })
+      .then(function (res) {
+        widget.formattedData = formatData(res, widget);
+      });
+    }
+
     function fetchDataDashboard (dashboard) {
       angular.forEach(dashboard.columns, function (widget) {
         fetchData(widget);
@@ -84,6 +99,7 @@ angular.module(PKG.name + '.services')
       startPollDashboard: startPollDashboard,
       stopPollDashboard: stopPollDashboard,
       fetchData: fetchData,
+      pollData: pollData,
       fetchDataDashboard: fetchDataDashboard
     };
 
