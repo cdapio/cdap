@@ -283,13 +283,18 @@ public class AppFabricClient {
     return workflowTokenDetail;
   }
 
-  public List<RunRecord> getHistory(String namespaceId, String appId, String wflowId) {
+  public List<RunRecord> getHistory(Id.Program programId) {
+    String namespaceId = programId.getNamespaceId();
+    String appId = programId.getApplicationId();
+    String programName = programId.getId();
+    String categoryName = programId.getType().getCategoryName();
+
     MockResponder responder = new MockResponder();
-    String uri = String.format("%s/apps/%s/workflows/%s/runs?status=completed",
-                               getNamespacePath(namespaceId), appId, wflowId);
+    String uri = String.format("%s/apps/%s/%s/%s/runs",
+                               getNamespacePath(namespaceId), appId, categoryName, programName);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
     programLifecycleHttpHandler.programHistory(request, responder, namespaceId, appId,
-                                               "workflows", wflowId, null, null, null, 100);
+                                               categoryName, programName, null, null, null, 100);
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Getting workflow history failed");
 
     return responder.decodeResponseContent(RUN_RECORDS_TYPE);

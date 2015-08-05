@@ -244,6 +244,6 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
 
   @Override
   public List<RunRecord> getHistory(Id.Program programId) {
-    return appFabricClient.getHistory(programId.getNamespaceId(), programId.getApplicationId(), programId.getId());
+    return appFabricClient.getHistory(programId);
   }
 }
