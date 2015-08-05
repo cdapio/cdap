@@ -74,8 +74,10 @@ public final class LogSaver extends AbstractIdleService {
     this.kafkaCancelCallbackLatchMap = new HashMap<>();
     this.messageProcessors = messageProcessors;
 
+    // TODO: add instance id of the log saver as a tag, when CDAP-3265 is fixed
     this.metricsContext = metricsCollectionService.getContext(
-      ImmutableMap.of(Constants.Metrics.Tag.COMPONENT, Constants.Service.LOGSAVER));
+      ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE,
+                      Constants.Metrics.Tag.COMPONENT, Constants.Service.LOGSAVER));
   }
 
   @Override
