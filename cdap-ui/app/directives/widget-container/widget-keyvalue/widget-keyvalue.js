@@ -13,6 +13,11 @@ angular.module(PKG.name + '.commons')
         $scope.kvdelimiter = $scope.config['kv-delimiter'] || ':';
         $scope.delimiter = $scope.config.delimiter || ',';
 
+        $scope.showDelimiter = true;
+        if ($scope.config.properties && $scope.config.properties.showDelimiter === 'false') {
+          $scope.showDelimiter = false;
+        }
+
         // initializing
         function initialize() {
           var str = $scope.model;
