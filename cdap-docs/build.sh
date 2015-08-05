@@ -303,7 +303,7 @@ function zip_extras() {
   cd ${SCRIPT_PATH}
   rewrite ${COMMON_SOURCE}/${HTACCESS} ${BUILD}/${PROJECT_VERSION}/.${HTACCESS} "<version>" "${PROJECT_VERSION}"
   cd ${SCRIPT_PATH}/${BUILD}
-  zip -qr ${ZIP_DIR_NAME}.zip ${PROJECT_VERSION}/${JSON_FILE} ${PROJECT_VERSION}/.${HTACCESS}
+  zip -qr ${ZIP_DIR_NAME}.zip ${PROJECT_VERSION}/.${HTACCESS}
 }
 
 function build_sdk() {
