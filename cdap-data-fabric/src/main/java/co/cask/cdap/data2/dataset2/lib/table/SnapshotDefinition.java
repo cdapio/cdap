@@ -129,7 +129,8 @@ public class SnapshotDefinition extends AbstractDatasetDefinition<SnapshotDatase
         new TransactionExecutor.Function<Table, Long>() {
           @Override
           public Long apply(Table table) throws Exception {
-            return table.get(Bytes.toBytes(METADATA_PROPERTY_ROW_FIELD)).getLong(Bytes.toBytes(METADATA_PROPERTY_COLUMN));
+            return table.get(Bytes.toBytes(METADATA_PROPERTY_ROW_FIELD))
+              .getLong(Bytes.toBytes(METADATA_PROPERTY_COLUMN));
           }
         }, metaDataTable);
     } catch (Throwable t) {
