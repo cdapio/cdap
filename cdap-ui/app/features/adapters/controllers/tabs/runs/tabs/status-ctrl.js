@@ -79,7 +79,7 @@ angular.module(PKG.name + '.feature.adapters')
       }
     };
 
-    datasrc.request(
+    datasrc.poll(
       {
         method: 'POST',
         _cdapPath: '/metrics/search?target=metric&' + tagQueryParams
