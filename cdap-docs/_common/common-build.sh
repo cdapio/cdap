@@ -475,7 +475,7 @@ function rewrite() {
   echo "    $rewrite_source"
   if [ "x${3}" == "x" ]; then
     local sub_string=${2}
-    echo "  $sub_string"
+  echo "    $sub_string"
     if [ "$(uname)" == "Darwin" ]; then
       sed -i '.bak' "${sub_string}" ${rewrite_source}
       rm ${rewrite_source}.bak
@@ -485,7 +485,7 @@ function rewrite() {
   elif [ "x${4}" == "x" ]; then
     local sub_string=${2}
     local new_sub_string=${3}
-    echo "  ${sub_string} -> ${new_sub_string} "
+    echo "    ${sub_string} -> ${new_sub_string} "
     if [ "$(uname)" == "Darwin" ]; then
       sed -i '.bak' "s|${sub_string}|${new_sub_string}|g" ${rewrite_source}
       rm ${rewrite_source}.bak
@@ -498,7 +498,7 @@ function rewrite() {
     local new_sub_string=${4}
     echo "  to"
     echo "    ${rewrite_target}"
-    echo "  ${sub_string} -> ${new_sub_string} "
+    echo "    ${sub_string} -> ${new_sub_string} "
     sed -e "s|${sub_string}|${new_sub_string}|g" ${rewrite_source} > ${rewrite_target}
   fi
 }
