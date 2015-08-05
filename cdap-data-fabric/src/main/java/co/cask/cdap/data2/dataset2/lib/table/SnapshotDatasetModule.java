@@ -18,21 +18,15 @@ package co.cask.cdap.data2.dataset2.lib.table;
 
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetDefinition;
-import co.cask.cdap.api.dataset.lib.IndexedTable;
 import co.cask.cdap.api.dataset.lib.SnapshotDataset;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseTable;
-import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseTableAdmin;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  *
  */
 public class SnapshotDatasetModule implements DatasetModule {
-  private static final Logger LOG = LoggerFactory.getLogger(SnapshotDataset.class);
 
   @Override
   public void register(DatasetDefinitionRegistry registry) {

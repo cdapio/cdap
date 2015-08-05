@@ -164,7 +164,6 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
     this.buff = new ConcurrentSkipListMap<>(Bytes.BYTES_COMPARATOR);
     this.snapshotVersion = (properties == null || properties.get("version") == null)
       ? null : Long.parseLong(properties.get("version"));
- //x``   LOG.info("Yaojie in BufferingTable, snapshotVersion: {}", snapshotVersion);
   }
 
   /**

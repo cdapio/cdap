@@ -297,10 +297,7 @@ public class LevelDBTableCore {
       // it is safe to consume this entry, advance the iterator
       iterator.next();
 
-     // LOG.info("Yaojie in levelDB core before the check, snapshotversion is: {}, kv ts is: {}",
-      //  snapshotVersion, kv.getTimestamp());
       if (snapshotVersion != null && kv.getTimestamp() != snapshotVersion) {
-       // LOG.info("Yao jie in levelDB core, sversion is: {}", snapshotVersion);
         continue;
       } else {
         // Determine if this KV is visible
