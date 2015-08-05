@@ -22,6 +22,7 @@ import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRecord;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.test.AbstractApplicationManager;
@@ -154,9 +155,9 @@ public class RemoteApplicationManager extends AbstractApplicationManager {
   }
 
   @Override
-  public List<RunRecord> getHistory(Id.Program programId) {
+  public List<RunRecord> getHistory(Id.Program programId, ProgramRunStatus status) {
     try {
-      return programClient.getProgramRuns(programId, "ALL", 0, Long.MAX_VALUE, Integer.MAX_VALUE);
+      return programClient.getProgramRuns(programId, status.name(), 0, Long.MAX_VALUE, Integer.MAX_VALUE);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

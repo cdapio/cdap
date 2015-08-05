@@ -22,6 +22,7 @@ import co.cask.cdap.data.dataset.DatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.AppFabricClient;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.test.AbstractApplicationManager;
@@ -243,7 +244,7 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
   }
 
   @Override
-  public List<RunRecord> getHistory(Id.Program programId) {
-    return appFabricClient.getHistory(programId);
+  public List<RunRecord> getHistory(Id.Program programId, ProgramRunStatus status) {
+    return appFabricClient.getHistory(programId, status);
   }
 }

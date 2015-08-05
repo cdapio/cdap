@@ -17,6 +17,7 @@
 package co.cask.cdap.test;
 
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.RunRecord;
 import com.google.common.collect.ImmutableMap;
 
@@ -107,6 +108,11 @@ public abstract class AbstractProgramManager<T extends ProgramManager> implement
 
   @Override
   public List<RunRecord> getHistory() {
-    return applicationManager.getHistory(programId);
+    return getHistory(ProgramRunStatus.ALL);
+  }
+
+  @Override
+  public List<RunRecord> getHistory(ProgramRunStatus status) {
+    return applicationManager.getHistory(programId, status);
   }
 }
