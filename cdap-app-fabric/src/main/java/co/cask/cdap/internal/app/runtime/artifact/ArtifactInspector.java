@@ -37,6 +37,7 @@ import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.artifact.InvalidArtifactException;
 import com.google.common.base.Throwables;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.ImmutableList;

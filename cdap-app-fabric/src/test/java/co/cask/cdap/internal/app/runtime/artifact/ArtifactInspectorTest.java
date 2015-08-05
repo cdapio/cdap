@@ -29,6 +29,7 @@ import co.cask.cdap.internal.app.runtime.artifact.app.InspectionApp;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.artifact.InvalidArtifactException;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Files;

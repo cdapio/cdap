@@ -16,7 +16,7 @@
 
 package co.cask.cdap.proto;
 
-import co.cask.cdap.internal.artifact.ArtifactVersion;
+import co.cask.cdap.api.artifact.ArtifactVersion;
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Charsets;
 import com.google.common.base.Objects;
@@ -150,6 +150,7 @@ public abstract class Id {
    */
   public static final class Namespace extends Id {
     public static final Namespace DEFAULT = Id.Namespace.from("default");
+    public static final Namespace SYSTEM = Id.Namespace.from("system");
 
     private final String id;
 
@@ -1278,10 +1279,11 @@ public abstract class Id {
     private final ArtifactVersion version;
 
     public Artifact(Namespace namespace, String name, ArtifactVersion version) {
-      // TODO: enforce name, version characters
       Preconditions.checkNotNull(namespace, "Namespace cannot be null.");
       Preconditions.checkNotNull(name, "Name cannot be null.");
+      Preconditions.checkArgument(isValidId(name), "Invalid artifact name.");
       Preconditions.checkNotNull(version, "Version cannot be null.");
+      Preconditions.checkNotNull(version.getVersion(), "Invalid artifact version.");
       this.namespace = namespace;
       this.name = name;
       this.version = version;
@@ -1342,6 +1344,10 @@ public abstract class Id {
 
     public static Artifact from(Namespace namespace, String name, String version) {
       return new Artifact(namespace, name, new ArtifactVersion(version));
+    }
+
+    public static boolean isValidName(String name) {
+      return isValidId(name);
     }
   }
 

@@ -19,11 +19,16 @@ package co.cask.cdap.internal.app.runtime.artifact;
 import co.cask.cdap.api.artifact.ArtifactClasses;
 import co.cask.cdap.api.artifact.ArtifactDescriptor;
 import co.cask.cdap.api.templates.plugins.PluginClass;
+import co.cask.cdap.common.ArtifactAlreadyExistsException;
+import co.cask.cdap.common.ArtifactNotFoundException;
+import co.cask.cdap.common.ArtifactRangeNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
+import co.cask.cdap.proto.artifact.InvalidArtifactException;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
@@ -93,10 +98,10 @@ public class ArtifactRepository {
    * @param name the name of artifacts to get
    * @return an unmodifiable list of artifacts in the given namespace of the given name
    * @throws IOException if there as an exception reading from the meta store
-   * @throws ArtifactNotExistsException if no artifacts of the given name in the given namespace exist
+   * @throws ArtifactNotFoundException if no artifacts of the given name in the given namespace exist
    */
   public List<ArtifactSummary> getArtifacts(Id.Namespace namespace, String name)
-    throws IOException, ArtifactNotExistsException {
+    throws IOException, ArtifactNotFoundException {
     List<ArtifactSummary> summaries = Lists.newArrayList();
     return Collections.unmodifiableList(convertAndAdd(summaries, artifactStore.getArtifacts(namespace, name)));
   }
@@ -108,9 +113,9 @@ public class ArtifactRepository {
    * @param artifactId the id of the artifact to get
    * @return details about the given artifact
    * @throws IOException if there as an exception reading from the meta store
-   * @throws ArtifactNotExistsException if the given artifact does not exist
+   * @throws ArtifactNotFoundException if the given artifact does not exist
    */
-  public ArtifactDetail getArtifact(Id.Artifact artifactId) throws IOException, ArtifactNotExistsException {
+  public ArtifactDetail getArtifact(Id.Artifact artifactId) throws IOException, ArtifactNotFoundException {
     return artifactStore.getArtifact(artifactId);
   }
 

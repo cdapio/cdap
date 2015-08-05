@@ -14,20 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.artifact;
-
-import co.cask.cdap.common.NotFoundException;
-import com.google.common.base.Joiner;
-
-import java.util.Collection;
+package co.cask.cdap.proto.artifact;
 
 /**
- * Thrown when a range of artifacts are not found.
+ * Thrown when an artifact range is invalid.
  */
-public class ArtifactRangeNotFoundException extends NotFoundException {
+public class InvalidArtifactRangeException extends Exception {
 
-  public ArtifactRangeNotFoundException(Collection<ArtifactRange> artifactRanges) {
-    super("artifacts", Joiner.on(',').join(artifactRanges).toString());
+  public InvalidArtifactRangeException(String message) {
+    super(message);
   }
 
 }

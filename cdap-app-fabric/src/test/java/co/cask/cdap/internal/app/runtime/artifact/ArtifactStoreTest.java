@@ -19,15 +19,18 @@ package co.cask.cdap.internal.app.runtime.artifact;
 import co.cask.cdap.api.artifact.ApplicationClass;
 import co.cask.cdap.api.artifact.ArtifactClasses;
 import co.cask.cdap.api.artifact.ArtifactDescriptor;
+import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.templates.plugins.PluginClass;
 import co.cask.cdap.api.templates.plugins.PluginPropertyField;
+import co.cask.cdap.common.ArtifactAlreadyExistsException;
+import co.cask.cdap.common.ArtifactNotFoundException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.app.runtime.artifact.app.InspectionApp;
-import co.cask.cdap.internal.artifact.ArtifactVersion;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.test.SlowTests;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
@@ -87,7 +90,7 @@ public class ArtifactStoreTest {
     try {
       artifactStore.getArtifacts(namespace, "something");
       Assert.fail();
-    } catch (ArtifactNotExistsException e) {
+    } catch (ArtifactNotFoundException e) {
       // expected
     }
 
@@ -95,7 +98,7 @@ public class ArtifactStoreTest {
     try {
       artifactStore.getArtifact(Id.Artifact.from(namespace, "something", "1.0.0"));
       Assert.fail();
-    } catch (ArtifactNotExistsException e) {
+    } catch (ArtifactNotFoundException e) {
       // expected
     }
   }

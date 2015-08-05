@@ -16,9 +16,10 @@
 
 package co.cask.cdap.internal.app.runtime.artifact;
 
+import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.internal.artifact.ArtifactVersion;
-import com.google.common.base.Splitter;
+import co.cask.cdap.proto.artifact.ArtifactRange;
+import co.cask.cdap.proto.artifact.InvalidArtifactRangeException;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -61,6 +62,9 @@ public class ArtifactRangeTest {
       new ArtifactVersion("0.1.0-SNAPSHOT"), false, new ArtifactVersion("1.0.0"), true);
     actual = ArtifactRange.parse(Constants.DEFAULT_NAMESPACE_ID, "test(0.1.0-SNAPSHOT,1.0.0]");
     Assert.assertEquals(expected, actual);
+
+    // test compatible with toString
+    Assert.assertEquals(expected, ArtifactRange.parse(expected.toString()));
   }
 
   @Test
@@ -105,6 +109,22 @@ public class ArtifactRangeTest {
     }
     try {
       ArtifactRange.parse(Constants.DEFAULT_NAMESPACE_ID, "test(1.0.0,)");
+      Assert.fail();
+    } catch (InvalidArtifactRangeException e) {
+      // expected
+    }
+
+    // test invalid name
+    try {
+      ArtifactRange.parse(Constants.DEFAULT_NAMESPACE_ID, "te$t[1.0.0,2.0.0)");
+      Assert.fail();
+    } catch (InvalidArtifactRangeException e) {
+      // expected
+    }
+
+    // test namespace only in InvalidArtifactRangeException and not an out of bounds exception
+    try {
+      ArtifactRange.parse("default:");
       Assert.fail();
     } catch (InvalidArtifactRangeException e) {
       // expected

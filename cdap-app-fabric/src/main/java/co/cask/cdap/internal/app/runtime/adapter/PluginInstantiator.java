@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.runtime.adapter;
 import co.cask.cdap.api.Config;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.artifact.ArtifactDescriptor;
+import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.templates.plugins.PluginClass;
 import co.cask.cdap.api.templates.plugins.PluginConfig;
@@ -31,7 +32,6 @@ import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
-import co.cask.cdap.internal.artifact.ArtifactVersion;
 import co.cask.cdap.internal.lang.FieldVisitor;
 import co.cask.cdap.internal.lang.Fields;
 import co.cask.cdap.internal.lang.Reflections;
@@ -59,7 +59,7 @@ import java.util.concurrent.ExecutionException;
 
 /**
  * This class helps creating new instances of plugins. It also contains a ClassLoader cache to
- * save ClassLaoder creation.
+ * save ClassLoader creation.
  *
  * This class implements {@link Closeable} as well for cleanup of temporary directories created for the ClassLoaders.
  */
