@@ -26,11 +26,11 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
+import com.google.common.io.Files;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.Location;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
@@ -177,7 +177,7 @@ public class ArtifactRepository {
   }
 
   /**
-   * Inspects and builds plugin information for the given artifact.
+   * Inspects and builds plugin and application information for the given artifact.
    *
    * @param artifactId the id of the artifact to inspect and store
    * @param artifactFile the artifact to inspect and store
@@ -213,7 +213,7 @@ public class ArtifactRepository {
     try {
       ArtifactClasses artifactClasses = artifactInspector.inspectArtifact(artifactId, artifactFile, parentClassLoader);
       ArtifactMeta meta = new ArtifactMeta(artifactClasses, parentArtifacts);
-      artifactStore.write(artifactId, meta, new FileInputStream(artifactFile));
+      artifactStore.write(artifactId, meta, Files.newInputStreamSupplier(artifactFile));
     } finally {
       parentClassLoader.close();
     }
