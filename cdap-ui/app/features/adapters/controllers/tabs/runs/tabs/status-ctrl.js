@@ -66,7 +66,7 @@ angular.module(PKG.name + '.feature.adapters')
                           .tagsToParams(
                             MyMetricsQueryHelper.contextToTags(context)
                           );
-    widget = {
+    var widget = {
       metric: {
         context: context,
         names: []
@@ -101,19 +101,71 @@ angular.module(PKG.name + '.feature.adapters')
             if (!widget.formattedData || !widget.formattedData.columns) {
               return;
             }
-            $scope.data = widget.formattedData.columns;
-            $scope.formattedData = [];
-            $scope.data.map(function(metric) {
-              var obj = {};
-              if (metric[0].indexOf('records.in') !== -1 ||
-                  metric[0].indexOf('records.out') !== -1) {
-                    obj.name = metric[0];
-                    obj.value = metric[1];
-                    $scope.formattedData.push(obj);
-                  }
-            });
+            $scope.formattedData = {};
+            $scope.isMetrics = false;
+            $scope.formattedData = {};
+            widget.formattedData.columns
+                  .map(extractMetricsFromData.bind(null, $scope.formattedData));
+            $scope.isMetrics = Object.keys($scope.formattedData).length > 0 ? true: false;
+            $scope.formattedData = Object.keys($scope.formattedData)
+              .map(function(key) {
+                return $scope.formattedData[key];
+              });
+            $scope.formattedData = orderMetricsForDisplay($scope.formattedData);
           },
           function onMetricsFetchError() {
             console.log('Error in fetching values for metrics: ', widget.metric.names);
           });
+
+
+    function orderMetricsForDisplay(data) {
+      var source = {};
+      var transforms = [];
+      var sink = {};
+      var returnArray = [];
+      source = data.filter(function(metric) {
+        return metric.type === 'source';
+      });
+      source = source[0];
+      sink = data.filter(function(metric) {
+        return metric.type === 'sink';
+      });
+      sink = sink[0];
+      transform = data.filter(function(metric) {
+        return metric.type === 'transform';
+      });
+      returnArray = returnArray.concat(transform);
+      if (source) {returnArray.unshift(source);}
+      if (sink) {returnArray.push(sink);}
+      return returnArray;
+    }
+
+
+    function extractMetricsFromData(obj, metric) {
+      var matches = ['records.in', 'records.out'];
+      var match = matches.filter(function(m) {
+        return metric[0].indexOf(m);
+      });
+      if (match.length > 0) {
+        var metricNameArray = metric[0].split('.');
+        var metricKey = metric[0].substring(0, metric[0].lastIndexOf('.'));
+        var inOut = metric[0].substring(
+          metric[0].lastIndexOf('.') + 1,
+          metric[0].length
+        );
+        obj[metricKey] =obj[metricKey] || {};
+        if (metricNameArray.length === 5) {
+          // No stage
+          obj[metricKey].type = metricNameArray[1];
+          obj[metricKey].stage = 0;
+          obj[metricKey].node = metricNameArray[2];
+        } else if (metricNameArray.length === 6) {
+          obj[metricKey].type = metricNameArray[1];
+          obj[metricKey].stage = metricNameArray[3];
+          obj[metricKey].node = metricNameArray[2];
+        }
+        obj[metricKey].value = obj[metricKey].value || {};
+        obj[metricKey].value[inOut] = metric[1];
+      }
+    }
   });

@@ -8,20 +8,39 @@
 
   <my-plumb data-is-disabled="true" ng-if="nodes.length > 0" data-reloaddag="true" data-config="nodes"></my-plumb>
 
-  <table class="table table-responsive" ng-if="formattedData.length > 0">
+  <table class="table table-responsive adapter-metrics-table" ng-if="isMetrics">
     <thead>
       <tr>
+        <th> Type </th>
+        <th> Node </th>
+        <th> Stage </th>
         <th> Metric </th>
-        <th> Count </th>
       </tr>
     </thead>
     <tbody>
-      <tr ng-repeat="data in formattedData">
+      <tr ng-repeat="value in formattedData">
+        <td>{{value.type}}</td>
+        <td>{{value.node}}</td>
+        <td>{{value.stage}}</td>
         <td>
-          {{data.name}}
-        </td>
-        <td>
-          {{data.value}}
+          <table class="table table-bordered">
+            <tr>
+              <td>
+                IN
+              </td>
+              <td>
+                {{value.value.in}}
+              </td>
+            </tr>
+            <tr>
+              <td>
+                OUT
+              </td>
+              <td>
+                {{value.value.out}}
+              </td>
+            </tr>
+          </table>
         </td>
       </tr>
     </tbody>
