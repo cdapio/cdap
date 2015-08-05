@@ -7,7 +7,7 @@
        "position" : [ "name", "duration", "delay"],
        "fields" : {
           "name" : {
-             "widget": "textbox",
+             "widget": "stream-selector",
              "label": "Stream Name"
           },
 

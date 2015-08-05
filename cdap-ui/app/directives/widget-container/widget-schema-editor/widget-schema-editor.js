@@ -30,20 +30,24 @@ angular.module(PKG.name + '.commons')
 
         EventPipe.on('plugin.reset', function () {
           $scope.model = angular.copy(modelCopy);
-          initialize();
+          initialize($scope.model);
+        });
+
+        EventPipe.on('dataset.selected', function (schema) {
+          initialize(schema);
         });
 
         var filledCount;
 
         // Format model
-        function initialize() {
+        function initialize(jsonString) {
           filledCount = 0;
 
           var schema = {};
           $scope.error = null;
-          if ($scope.model) {
+          if (jsonString) {
             try {
-              schema = JSON.parse($scope.model);
+              schema = JSON.parse(jsonString);
             } catch (e) {
               $scope.error = 'Invalid JSON string';
             }
@@ -108,10 +112,10 @@ angular.module(PKG.name + '.commons')
 
         } // End of initialize
 
-        initialize();
+        initialize($scope.model);
 
         $scope.$watch('disabled', function () {
-          initialize();
+          initialize($scope.model);
         });
 
 
