@@ -76,6 +76,8 @@ public class SnapshotSink extends BatchWritableSink<StructuredRecord, byte[], Pu
     Map<String, String> sinkArgs = new HashMap<>();
     this.snapshotDataset = batchSinkContext.getDataset(snapshotSinkConfig.name, sinkArgs);
     transactionId = snapshotDataset.getTransactionId();
+    snapshotDataset.updateMetaDataTable(transactionId);
+    LOG.info("Yaojie in Initialize - transaction id in meta is {}", snapshotDataset.getCurrentVersion());
     LOG.info("Yaojie - transaction id in initialize is {}", transactionId);
     recordPutTransformer = new RecordPutTransformer(snapshotSinkConfig.rowField,
       Schema.parseJson(snapshotSinkConfig.schemaStr), true);
@@ -113,10 +115,10 @@ public class SnapshotSink extends BatchWritableSink<StructuredRecord, byte[], Pu
 
   @Override
   public void destroy() {
-    Map<String, String> sinkArgs = Maps.newHashMap();
-    snapshotDataset = batchSinkContext.getDataset(snapshotSinkConfig.name, sinkArgs);
-    snapshotDataset.updateMetaDataTable(transactionId);
-    LOG.info("Yaojie in Destroy - transaction id in meta is {}", snapshotDataset.getCurrentVersion());
+//    Map<String, String> sinkArgs = Maps.newHashMap();
+//    snapshotDataset = batchSinkContext.getDataset(snapshotSinkConfig.name, sinkArgs);
+//    snapshotDataset.updateMetaDataTable(transactionId);
+//    LOG.info("Yaojie in Destroy - transaction id in meta is {}", snapshotDataset.getCurrentVersion());
   }
 
   /**

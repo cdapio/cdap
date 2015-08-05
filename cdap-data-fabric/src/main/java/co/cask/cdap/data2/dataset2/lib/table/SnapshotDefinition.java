@@ -177,10 +177,10 @@ public class SnapshotDefinition extends AbstractDatasetDefinition<SnapshotDatase
   @SuppressWarnings("unchecked")
   private Long getVersion(Table metaDataTable) throws Exception {
     if (!(metaDataTable instanceof TransactionAware)) {
-      LOG.info("metaDataTable is not TxAware");
+    //  LOG.info("metaDataTable is not TxAware");
      return null;
     }
-    LOG.info("metaDataTable is TxAware");
+ //   LOG.info("metaDataTable is TxAware");
     Iterable<TransactionAware> txAwares =
       Collections.singletonList(
         (TransactionAware) co.cask.cdap.data2.dataset2.tx.DatasetContext.of(metaDataTable)
@@ -189,6 +189,8 @@ public class SnapshotDefinition extends AbstractDatasetDefinition<SnapshotDatase
       new TransactionExecutor.Function<Table, Long>() {
         @Override
         public Long apply(Table table) throws Exception {
+          LOG.info("Yaojie - snapshotDefinition transaction:{}",
+            table.get(Bytes.toBytes(METADATA_PROPERTY_ROW_FIELD)).getLong(Bytes.toBytes(METADATA_PROPERTY_COLUMN)));
           return table.get(Bytes.toBytes(METADATA_PROPERTY_ROW_FIELD)).getLong(Bytes.toBytes(METADATA_PROPERTY_COLUMN));
         }
       }, metaDataTable);

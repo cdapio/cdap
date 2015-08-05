@@ -29,6 +29,8 @@ import co.cask.cdap.api.dataset.table.Scan;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.tephra.Transaction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -39,6 +41,8 @@ import javax.annotation.Nullable;
  *
  */
 public class SnapshotDataset extends AbstractDataset implements Table {
+
+  private static final Logger LOG = LoggerFactory.getLogger(SnapshotDataset.class);
 
   private static final byte[] METADATA_ROW_KEY = { 'v', 'e', 'r', 's', 'i', 'o', 'n' };
   private static final byte[] METADATA_KEY_COLUMN = { 'v', 'a', 'l', 'u', 'e' };
@@ -69,17 +73,20 @@ public class SnapshotDataset extends AbstractDataset implements Table {
   @Override
   public void startTx(Transaction tx) {
     super.startTx(tx);
+    LOG.info("Yaojie in snapshotDataset startTx - txid: {}", tx.getTransactionId());
     this.tx = tx;
   }
 
   @Override
   public boolean rollbackTx() throws Exception {
+    LOG.info("Yaojie in snapshotDataset rollbackTx - txid: {}", tx.getTransactionId());
     this.tx = null;
     return super.rollbackTx();
   }
 
   @Override
   public boolean commitTx() throws Exception {
+    LOG.info("Yaojie in snapshotDataset - commitTx - txid: {}", tx.getTransactionId());
     this.tx = null;
     return super.commitTx();
   }
