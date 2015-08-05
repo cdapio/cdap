@@ -42,6 +42,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.Type;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -178,6 +179,12 @@ public class SystemArtifactConfig implements Comparable<SystemArtifactConfig> {
     Builder addPlugins(PluginClass pluginClass, PluginClass... plugins) {
       this.plugins.add(pluginClass);
       Collections.addAll(this.plugins, plugins);
+      return this;
+    }
+
+    @VisibleForTesting
+    Builder addPlugins(Collection<PluginClass> plugins) {
+      this.plugins.addAll(plugins);
       return this;
     }
 
