@@ -17,8 +17,8 @@
 package co.cask.cdap.api.dataset.table;
 
 import co.cask.cdap.api.common.Bytes;
-import com.google.common.collect.Lists;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -43,7 +43,7 @@ public abstract class RowColumns<T> {
 
   public RowColumns(byte[] row) {
     this.row = row;
-    this.columns = Lists.newArrayList();
+    this.columns = new ArrayList<>();
   }
 
   public RowColumns(byte[] row, byte[]... columns) {

@@ -16,12 +16,11 @@
 
 package co.cask.cdap.api.dataset.lib;
 
+import co.cask.cdap.api.common.Bytes;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
-import com.google.common.primitives.Longs;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -47,7 +46,7 @@ public class PartitionConsumerState {
   public PartitionConsumerState(long startVersion, List<Long> versionsToCheck) {
     Preconditions.checkNotNull(versionsToCheck);
     this.startVersion = startVersion;
-    this.versionsToCheck = ImmutableList.copyOf(versionsToCheck);
+    this.versionsToCheck = Collections.unmodifiableList(new ArrayList<>(versionsToCheck));
   }
 
   public long getStartVersion() {
@@ -59,14 +58,14 @@ public class PartitionConsumerState {
   }
 
   public static PartitionConsumerState fromBytes(byte[] bytes) {
-    Preconditions.checkArgument((bytes.length - 1) % Longs.BYTES == 0,
-                                "bytes does not have length divisible by Longs.BYTES");
+    Preconditions.checkArgument((bytes.length - 1) % Bytes.SIZEOF_LONG == 0,
+                                "bytes does not have length divisible by %s", Bytes.SIZEOF_LONG);
     ByteBuffer bb = ByteBuffer.wrap(bytes);
     byte serializationFormatVersion = bb.get();
     Preconditions.checkArgument(serializationFormatVersion == 0,
                                 "Unsupported serialization format: {}", serializationFormatVersion);
     long startVersion = bb.getLong();
-    List<Long> versionsToCheck = Lists.newArrayList();
+    List<Long> versionsToCheck = new ArrayList<>();
     while (bb.hasRemaining()) {
       versionsToCheck.add(bb.getLong());
     }
@@ -76,7 +75,7 @@ public class PartitionConsumerState {
   public byte[] toBytes() {
     int numLongs = 1 + versionsToCheck.size();
     // first byte for serialization format version
-    ByteBuffer bb = ByteBuffer.allocate(1 + Longs.BYTES * numLongs);
+    ByteBuffer bb = ByteBuffer.allocate(1 + Bytes.SIZEOF_LONG * numLongs);
     // currently, serialization format is 0
     bb.put((byte) 0);
     bb.putLong(startVersion);

@@ -17,8 +17,8 @@
 package co.cask.cdap.api.dataset.lib.cube;
 
 import co.cask.cdap.api.annotation.Beta;
-import com.google.common.collect.ImmutableList;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -49,7 +49,7 @@ public class CubeDeleteQuery {
     this.startTs = startTs;
     this.endTs = endTs;
     this.resolution = resolution;
-    this.measureNames = measureNames;
+    this.measureNames = Collections.unmodifiableCollection(new ArrayList<>(measureNames));
     this.dimensionValues = Collections.unmodifiableMap(new HashMap<>(dimensionValues));
   }
 
@@ -66,7 +66,7 @@ public class CubeDeleteQuery {
                          Map<String, String> dimensionValues, @Nullable String measureName) {
 
     this(startTs, endTs, resolution, dimensionValues,
-         measureName == null ? ImmutableList.<String>of() : ImmutableList.of(measureName));
+         measureName == null ? Collections.<String>emptyList() : Collections.singletonList(measureName));
   }
 
   /**
@@ -78,8 +78,7 @@ public class CubeDeleteQuery {
    */
   public CubeDeleteQuery(long startTs, long endTs, int resolution,
                          Map<String, String> dimensionValues) {
-
-    this(startTs, endTs, resolution, dimensionValues, ImmutableList.<String>of());
+    this(startTs, endTs, resolution, dimensionValues, (String) null);
   }
 
   public long getStartTs() {

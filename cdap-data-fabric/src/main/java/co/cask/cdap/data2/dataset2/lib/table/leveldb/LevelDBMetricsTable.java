@@ -31,6 +31,7 @@ import com.google.common.collect.Maps;
 import java.io.IOException;
 import java.util.Map;
 import java.util.NavigableMap;
+import java.util.SortedMap;
 import javax.annotation.Nullable;
 
 /**
@@ -44,10 +45,10 @@ public class LevelDBMetricsTable implements MetricsTable {
       return Bytes.toBytes(input);
     }
   };
-  private static final Function<NavigableMap<byte[], Long>, NavigableMap<byte[], byte[]>>
-    TRANSFORM_MAP_LONG_TO_BYTE_ARRAY = new Function<NavigableMap<byte[], Long>, NavigableMap<byte[], byte[]>>() {
+  private static final Function<SortedMap<byte[], Long>, SortedMap<byte[], byte[]>>
+    TRANSFORM_MAP_LONG_TO_BYTE_ARRAY = new Function<SortedMap<byte[], Long>, SortedMap<byte[], byte[]>>() {
     @Override
-    public NavigableMap<byte[], byte[]> apply(NavigableMap<byte[], Long> input) {
+    public SortedMap<byte[], byte[]> apply(SortedMap<byte[], Long> input) {
       return Maps.transformValues(input, LONG_TO_BYTES);
     }
   };
@@ -76,8 +77,8 @@ public class LevelDBMetricsTable implements MetricsTable {
   }
 
   @Override
-  public void put(NavigableMap<byte[], NavigableMap<byte[], Long>> updates) {
-    NavigableMap<byte[], NavigableMap<byte[], byte[]>> convertedUpdates =
+  public void put(SortedMap<byte[], ? extends SortedMap<byte[], Long>> updates) {
+    SortedMap<byte[], ? extends SortedMap<byte[], byte[]>> convertedUpdates =
       Maps.transformValues(updates, TRANSFORM_MAP_LONG_TO_BYTE_ARRAY);
     try {
       core.persist(convertedUpdates, System.currentTimeMillis());

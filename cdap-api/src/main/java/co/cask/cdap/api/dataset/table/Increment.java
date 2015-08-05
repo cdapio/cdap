@@ -17,9 +17,9 @@
 package co.cask.cdap.api.dataset.table;
 
 import co.cask.cdap.api.common.Bytes;
-import com.google.common.collect.Maps;
 
 import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * An Increment interprets the values of columns as 8-byte integers and
@@ -68,7 +68,7 @@ public class Increment {
    */
   public Increment(byte[] row) {
     this.row = row;
-    this.values = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    this.values = new TreeMap<>(Bytes.BYTES_COMPARATOR);
   }
 
   /**

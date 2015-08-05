@@ -15,8 +15,8 @@
  */
 package co.cask.cdap.api.stream;
 
-import com.google.common.collect.ImmutableMap;
-
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nonnull;
 
@@ -39,7 +39,7 @@ public class GenericStreamEventData<T> {
    */
   public GenericStreamEventData(Map<String, String> headers, T body) {
     this.body = body;
-    this.headers = ImmutableMap.copyOf(headers);
+    this.headers = Collections.unmodifiableMap(new HashMap<>(headers));
   }
 
   /**

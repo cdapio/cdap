@@ -17,9 +17,9 @@
 package co.cask.cdap.api.dataset.table;
 
 import co.cask.cdap.api.common.Bytes;
-import com.google.common.collect.Maps;
 
 import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * Writes the specified value(s) in one or more columns of a row -- this overrides existing values.
@@ -53,7 +53,7 @@ public class Put {
    */
   public Put(byte[] row) {
     this.row = row;
-    this.values = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    this.values = new TreeMap<>(Bytes.BYTES_COMPARATOR);
   }
 
   /**

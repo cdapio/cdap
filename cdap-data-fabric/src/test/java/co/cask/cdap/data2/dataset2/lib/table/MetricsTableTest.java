@@ -33,6 +33,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -55,9 +57,9 @@ public abstract class MetricsTableTest {
   public void testGetPutSwap() throws Exception {
     MetricsTable table = getTable("testGetPutSwap");
     // put two rows
-    table.put(ImmutableSortedMap.<byte[], NavigableMap<byte[], Long>>orderedBy(Bytes.BYTES_COMPARATOR)
-              .put(A, Bytes.immutableSortedMapOf(P, Bytes.toLong(X), Q, Bytes.toLong(Y)))
-              .put(B, Bytes.immutableSortedMapOf(P, Bytes.toLong(X), R, Bytes.toLong(Z))).build());
+    table.put(ImmutableSortedMap.<byte[], SortedMap<byte[], Long>>orderedBy(Bytes.BYTES_COMPARATOR)
+              .put(A, mapOf(P, Bytes.toLong(X), Q, Bytes.toLong(Y)))
+              .put(B, mapOf(P, Bytes.toLong(X), R, Bytes.toLong(Z))).build());
     Assert.assertEquals(Bytes.toLong(X), Bytes.toLong(table.get(A, P)));
     Assert.assertEquals(Bytes.toLong(Y), Bytes.toLong(table.get(A, Q)));
     Assert.assertNull(table.get(A, R));
@@ -66,8 +68,8 @@ public abstract class MetricsTableTest {
     Assert.assertNull(table.get(B, Q));
 
     // put one row again, with overlapping key set
-    table.put(ImmutableSortedMap.<byte[], NavigableMap<byte[], Long>>orderedBy(Bytes.BYTES_COMPARATOR)
-              .put(A, Bytes.immutableSortedMapOf(P, Bytes.toLong(A), R, Bytes.toLong(C))).build());
+    table.put(ImmutableSortedMap.<byte[], SortedMap<byte[], Long>>orderedBy(Bytes.BYTES_COMPARATOR)
+              .put(A, mapOf(P, Bytes.toLong(A), R, Bytes.toLong(C))).build());
     Assert.assertEquals(Bytes.toLong(A), Bytes.toLong(table.get(A, P)));
     Assert.assertEquals(Bytes.toLong(Y), Bytes.toLong(table.get(A, Q)));
     Assert.assertEquals(Bytes.toLong(C), Bytes.toLong(table.get(A, R)));
@@ -218,8 +220,8 @@ public abstract class MetricsTableTest {
   public void testConcurrentSwap() throws Exception {
     MetricsTable table = getTable("testConcurrentSwap");
     final long rounds = 500;
-    table.put(ImmutableSortedMap.<byte[], NavigableMap<byte[], Long>>orderedBy(Bytes.BYTES_COMPARATOR)
-                .put(A, Bytes.immutableSortedMapOf(B, 0L)).build());
+    table.put(ImmutableSortedMap.<byte[], SortedMap<byte[], Long>>orderedBy(Bytes.BYTES_COMPARATOR)
+                .put(A, mapOf(B, 0L)).build());
     AtomicInteger[] counts = { new AtomicInteger(), new AtomicInteger() }; // [0] for success, [1] for failures
     Thread t1 = new SwapThread(table, A, B, counts, rounds);
     Thread t2 = new SwapThread(table, A, B, counts, rounds);
@@ -235,9 +237,9 @@ public abstract class MetricsTableTest {
   @Test
   public void testDelete() throws Exception {
     MetricsTable table = getTable("testDelete");
-    NavigableMap<byte[], NavigableMap<byte[], Long>> writes = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    NavigableMap<byte[], SortedMap<byte[], Long>> writes = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     for (int i = 0; i < 1024; i++) {
-      writes.put(Bytes.toBytes(i << 22), Bytes.immutableSortedMapOf(A, Bytes.toLong(X)));
+      writes.put(Bytes.toBytes(i << 22), mapOf(A, Bytes.toLong(X)));
     }
     table.put(writes);
     // verify the first and last are there (sanity test for correctness of test logic)
@@ -286,14 +288,14 @@ public abstract class MetricsTableTest {
   @Test
   public void testFuzzyScan() throws Exception {
     MetricsTable table = getTable("testFuzzyScan");
-    NavigableMap<byte[], NavigableMap<byte[], Long>> writes = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    NavigableMap<byte[], SortedMap<byte[], Long>> writes = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     byte[] abc = { 'a', 'b', 'c' };
     for (byte b1 : abc) {
       for (byte b2 : abc) {
         for (byte b3 : abc) {
           for (byte b4 : abc) {
             // we put two columns, but will scan only one column
-            writes.put(new byte[] { b1, b2, b3, b4 }, Bytes.immutableSortedMapOf(A, Bytes.toLong(X)));
+            writes.put(new byte[] { b1, b2, b3, b4 }, mapOf(A, Bytes.toLong(X)));
           }
         }
       }
@@ -318,5 +320,18 @@ public abstract class MetricsTableTest {
       count++;
     }
     Assert.assertEquals(9, count);
+  }
+
+  private <T> SortedMap<byte[], T> mapOf(byte[] key, T value) {
+    SortedMap<byte[], T> map = new TreeMap<>(Bytes.BYTES_COMPARATOR);
+    map.put(key, value);
+    return map;
+  }
+
+  private <T> SortedMap<byte[], T> mapOf(byte[] firstKey, T firstValue, byte[] secondKey, T secondValue) {
+    SortedMap<byte[], T> map = new TreeMap<>(Bytes.BYTES_COMPARATOR);
+    map.put(firstKey, firstValue);
+    map.put(secondKey, secondValue);
+    return map;
   }
 }

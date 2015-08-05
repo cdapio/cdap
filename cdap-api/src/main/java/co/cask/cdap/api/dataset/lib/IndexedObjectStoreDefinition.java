@@ -24,7 +24,6 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.table.Table;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
 
 import java.io.IOException;
 import java.util.Map;
@@ -61,10 +60,10 @@ public class IndexedObjectStoreDefinition
   @Override
   public DatasetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
                                ClassLoader classLoader) throws IOException {
-    return new CompositeDatasetAdmin(Lists.newArrayList(
+    return new CompositeDatasetAdmin(
       tableDef.getAdmin(datasetContext, spec.getSpecification("index"), classLoader),
       objectStoreDef.getAdmin(datasetContext, spec.getSpecification("data"), classLoader)
-    ));
+    );
   }
 
   @Override
