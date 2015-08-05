@@ -280,7 +280,7 @@ function _build_docs() {
   echo "========================================================"
   echo "Building target \"${1}\"..."
   echo "--------------------------------------------------------"
-  clear_messages
+  clear_messages_set_messages_file
   build_docs_inner_level ${1}
   build_docs_outer_level ${2}
   copy_docs_lower_level
