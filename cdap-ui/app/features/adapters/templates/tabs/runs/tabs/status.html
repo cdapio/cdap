@@ -23,7 +23,23 @@
         <td>{{value.node}}</td>
         <td>{{value.stage}}</td>
         <td>
-          <table class="table table-bordered">
+          <div class="row text-left">
+            <div class="col-sm-3 col-xs-12">
+              IN
+            </div>
+            <div class="col-sm-4 col-xs-12">
+              {{value.value.in}}
+            </div>
+          </div>
+          <div class="row text-left">
+            <div class="col-sm-3 col-xs-12">
+              OUT
+            </div>
+            <div class="col-sm-4 col-xs-12">
+              {{value.value.out}}
+            </div>
+          </div>
+          <!-- <table class="table table-bordered">
             <tr>
               <td>
                 IN
@@ -40,7 +56,7 @@
                 {{value.value.out}}
               </td>
             </tr>
-          </table>
+          </table> -->
         </td>
       </tr>
     </tbody>

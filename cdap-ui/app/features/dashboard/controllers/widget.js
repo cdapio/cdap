@@ -48,14 +48,14 @@ angular.module(PKG.name+'.feature.dashboard')
     function generateColors(metrics) {
       var colorPatterns = [];
       for (var i=0; i <metrics.length; i++) {
-        colorPatterns.push(stringToColour(metrics[i]));
+        colorPatterns.push(stringToColor(metrics[i]));
       }
       return {
         pattern: colorPatterns
       };
     }
 
-    var stringToColour = function(str) {
+    var stringToColor = function(str) {
 
       // str to hash
       for (var i = 0, hash = 0;
@@ -64,12 +64,12 @@ angular.module(PKG.name+'.feature.dashboard')
           );
 
       // int/hash to hex
-      for (var i = 0, colour = "#";
+      for (var i = 0, color = "#";
             i < 3;
-            colour += ("00" + ((hash >> i++ * 8) & 0xFF).toString(16)).slice(-2)
+            color += ("00" + ((hash >> i++ * 8) & 0xFF).toString(16)).slice(-2)
           );
 
-      return colour;
+      return color;
     }
 
     return Widget;
