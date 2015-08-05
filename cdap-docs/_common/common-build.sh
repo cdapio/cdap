@@ -373,6 +373,8 @@ function version() {
     if [ "x${git_branch_listing}" == "x" ]; then 
       echo_red_bold "Unable to determine parent branch as git_branch_listing empty; perhaps in a new branch with no commits"
       echo_red_bold "Using default GIT_BRANCH_PARENT: ${GIT_BRANCH_PARENT}"
+      echo "DEBUGING:"
+      git show-branch
     else
       GIT_BRANCH_PARENT=`echo ${git_branch_listing} | sed 's/.*\[\(.*\)\].*/\1/' | sed 's/[\^~].*//'`
     fi
