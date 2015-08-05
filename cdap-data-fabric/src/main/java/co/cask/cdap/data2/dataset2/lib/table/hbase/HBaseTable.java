@@ -267,7 +267,6 @@ public class HBaseTable extends BufferingTable {
     hScan.addFamily(columnFamily);
     if (snapshotVersion == null) {
       List<Long> timeFilter = new ArrayList<>();
-      LOG.info("Yaojie in HBase scan - snapshotVersion: {}", snapshotVersion);
       timeFilter.add(snapshotVersion);
       hScan.setFilter(new TimestampsFilter(timeFilter));
     }
@@ -314,7 +313,6 @@ public class HBaseTable extends BufferingTable {
     GetBuilder get = tableUtil.buildGet(row);
     get.addFamily(columnFamily);
     if (snapshotVersion == null) {
-      LOG.info("Yaojie in HBase get - snapshotVersion: {}", snapshotVersion);
       List<Long> timeFilter = new ArrayList<>();
       timeFilter.add(snapshotVersion);
       get.setFilter(new TimestampsFilter(timeFilter));
