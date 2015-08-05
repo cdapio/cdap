@@ -40,7 +40,7 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- *
+ *  CDAP Snapshot Dataset Batch Sink.
  */
 @Plugin(type = "sink")
 @Name("SnapshotSink")

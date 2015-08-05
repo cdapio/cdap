@@ -33,8 +33,11 @@ import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -45,6 +48,8 @@ import java.util.Map;
  *
  */
 public class SnapshotDefinition extends AbstractDatasetDefinition<SnapshotDataset, DatasetAdmin> {
+
+  private static final Logger LOG = LoggerFactory.getLogger(SnapshotDefinition.class);
 
   private static final String METADATA_TABLE_NAME = "metadata";
   private static final String MAIN_TABLE_NAME = "maindata";
@@ -103,12 +108,7 @@ public class SnapshotDefinition extends AbstractDatasetDefinition<SnapshotDatase
                                     Map<String, String> arguments, ClassLoader classLoader) throws IOException {
     Table metadataTable = metadataTableDef.getDataset(datasetContext, spec.getSpecification(METADATA_TABLE_NAME),
       arguments, classLoader);
-    Long version = null;
-    try {
-      version = getVersion(metadataTable);
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
+    Long version = getVersion(metadataTable);
     Map<String, String> copyOfArguments = new HashMap<>(arguments);
     if (version != null) {
       copyOfArguments.put(METADATA_PROPERTY_ROW_FIELD, String.valueOf(version));
@@ -119,17 +119,22 @@ public class SnapshotDefinition extends AbstractDatasetDefinition<SnapshotDatase
   }
 
   @SuppressWarnings("unchecked")
-  private Long getVersion(Table metaDataTable) throws Exception {
+  private Long getVersion(Table metaDataTable) {
     if (!(metaDataTable instanceof TransactionAware)) {
      return null;
     }
     Iterable<TransactionAware> txAwares = Collections.singletonList((TransactionAware) metaDataTable);
-    return txExecutorFactory.createExecutor(txAwares).execute(
-      new TransactionExecutor.Function<Table, Long>() {
-        @Override
-        public Long apply(Table table) throws Exception {
-          return table.get(Bytes.toBytes(METADATA_PROPERTY_ROW_FIELD)).getLong(Bytes.toBytes(METADATA_PROPERTY_COLUMN));
-        }
-      }, metaDataTable);
+    try {
+      return txExecutorFactory.createExecutor(txAwares).execute(
+        new TransactionExecutor.Function<Table, Long>() {
+          @Override
+          public Long apply(Table table) throws Exception {
+            return table.get(Bytes.toBytes(METADATA_PROPERTY_ROW_FIELD)).getLong(Bytes.toBytes(METADATA_PROPERTY_COLUMN));
+          }
+        }, metaDataTable);
+    } catch (Throwable t) {
+      LOG.error("Exception raised when getting the version from the metadata table.");
+      throw Throwables.propagate(t);
+    }
   }
 }

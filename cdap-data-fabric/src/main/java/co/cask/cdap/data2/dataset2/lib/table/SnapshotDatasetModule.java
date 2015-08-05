@@ -24,7 +24,7 @@ import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.dataset.table.Table;
 
 /**
- *
+ *  {@link co.cask.cdap.api.dataset.module.DatasetModule} for {@link co.cask.cdap.api.dataset.lib.SnapshotDataset}
  */
 public class SnapshotDatasetModule implements DatasetModule {
 

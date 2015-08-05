@@ -36,7 +36,7 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 /**
- *
+ *  Dataset client for snapshot datasets.
  */
 public class SnapshotDataset extends AbstractDataset implements Table {
 
