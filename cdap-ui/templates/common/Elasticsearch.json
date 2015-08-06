@@ -1,15 +1,31 @@
 {
-  "id": "ElasticsearchSink",
+  "id": "Elasticsearch",
   "groups" : {
     "position": [ "group1" ],
     "group1": {
       "display" : "Elasticsearch Configuration",
-      "position" : [ "es.host", "es.port", "es.index", "es.type", "es.idField", "schema", "query" ],
+      "position" : [ "es.host", "es.transportAddresses", "es.cluster", "es.index", "es.type", "es.idField", "schema", "query" ],
       "fields" : {
         "es.host": {
           "widget": "textbox",
           "label": "Elasticsearch Host",
           "description": "Specify the hostname and port for your elasticsearch instance, for example localhost:9200.",
+          "properties": {
+            "width": "large"
+          }
+        },
+        "es.transportAddresses": {
+          "widget": "textbox",
+          "label": "Transport Addresses",
+          "description": "The addresses for nodes. Specify the address for at least one node, and separate by commas. Other nodes will be sniffed out. For example, host1:9300,host2:9300.",
+          "properties": {
+            "width": "large"
+          }
+        },
+        "es.cluster": {
+          "widget": "textbox",
+          "label": "Cluster Name",
+          "description": "The name of the cluster to connect to. Defaults to elasticsearch",
           "properties": {
             "width": "large"
           }

@@ -25,7 +25,7 @@ import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.template.etl.batch.config.ETLBatchConfig;
-import co.cask.cdap.template.etl.batch.sink.ElasticsearchSink;
+import co.cask.cdap.template.etl.batch.sink.BatchElasticsearchSink;
 import co.cask.cdap.template.etl.batch.source.ElasticsearchSource;
 import co.cask.cdap.template.etl.common.ETLStage;
 import co.cask.cdap.template.etl.common.Properties;
@@ -59,7 +59,7 @@ import static org.elasticsearch.index.query.QueryBuilders.matchQuery;
 import static org.elasticsearch.node.NodeBuilder.nodeBuilder;
 
 /**
- *  Unit test for batch {@link ElasticsearchSink} and {@link ElasticsearchSource} classes.
+ *  Unit test for batch {@link BatchElasticsearchSink} and {@link ElasticsearchSource} classes.
  */
 public class ETLESTest extends BaseETLBatchTest {
   private static final Gson GSON = new Gson();
@@ -78,7 +78,6 @@ public class ETLESTest extends BaseETLBatchTest {
   private Client client;
   private Node node;
   private int port;
-  private Schema schema;
 
 
   @Before

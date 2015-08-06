@@ -36,7 +36,7 @@ import org.elasticsearch.hadoop.mr.EsOutputFormat;
 /**
  * A {@link BatchSink} that writes data to a Elasticsearch.
  * <p/>
- * This {@link ElasticsearchSink} takes a {@link StructuredRecord} in,
+ * This {@link BatchElasticsearchSink} takes a {@link StructuredRecord} in,
  * converts it to a json per {@link StructuredRecordStringConverter},
  * and writes it to the Elasticsearch server.
  * <p/>
@@ -50,7 +50,7 @@ import org.elasticsearch.hadoop.mr.EsOutputFormat;
 @Description("CDAP Elasticsearch Batch Sink takes the structured record from the input source" +
   " and converts it to a json, then indexes it in elasticsearch using the index, type, and id specified by the user." +
   "The elasticsearch server should be running prior to creating the adapter.")
-public class ElasticsearchSink extends BatchSink<StructuredRecord, Writable, Writable> {
+public class BatchElasticsearchSink extends BatchSink<StructuredRecord, Writable, Writable> {
   private static final String INDEX_DESC = "The name of the index where the data will be stored. " +
     "If the index does not already exist, it will be created using elasticsearch's default properties";
   private static final String TYPE_DESC = "The name of the type where the data will be stored." +
@@ -61,7 +61,7 @@ public class ElasticsearchSink extends BatchSink<StructuredRecord, Writable, Wri
 
   private final ESConfig config;
 
-  public ElasticsearchSink(ESConfig config) {
+  public BatchElasticsearchSink(ESConfig config) {
     this.config = config;
   }
 
@@ -89,7 +89,7 @@ public class ElasticsearchSink extends BatchSink<StructuredRecord, Writable, Wri
   }
 
   /**
-   * Config class for Batch ElasticsearchSink
+   * Config class for Batch BatchElasticsearchSink
    */
   public static class ESConfig extends PluginConfig {
     @Name(Properties.Elasticsearch.HOST)
