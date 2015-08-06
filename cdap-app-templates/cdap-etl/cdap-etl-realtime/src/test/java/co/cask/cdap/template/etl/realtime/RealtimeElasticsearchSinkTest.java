@@ -70,7 +70,7 @@ import static org.elasticsearch.node.NodeBuilder.nodeBuilder;
  * Test for {@link RealtimeElasticsearchSink}
  */
 public class RealtimeElasticsearchSinkTest extends TestBase {
-  private static final Id.Namespace NAMESPACE = Constants.DEFAULT_NAMESPACE_ID;
+  private static final Id.Namespace NAMESPACE = Id.Namespace.DEFAULT;
   private static final Id.ApplicationTemplate TEMPLATE_ID = Id.ApplicationTemplate.from("ETLRealtime");
   private static final Gson GSON = new Gson();
 
