@@ -33,7 +33,6 @@ import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
@@ -52,12 +51,12 @@ public class SnapshotDefinition extends AbstractDatasetDefinition<SnapshotDatase
 
   private static final String METADATA_TABLE_NAME = "metadata";
   private static final String MAIN_TABLE_NAME = "maindata";
-  private static final String METADATA_PROPERTY_ROW_FIELD = "version";
-  private static final String METADATA_PROPERTY_COLUMN = "value";
   private static final String METADATA_PROPERTY_SCHEMA = Schema.recordOf(
     "record",
     Schema.Field.of("version", Schema.of(Schema.Type.STRING)),
     Schema.Field.of("value", Schema.of(Schema.Type.LONG))).toString();
+  private static final String METADATA_PROPERTY_ROW_FIELD = "version";
+  private static final String METADATA_PROPERTY_COLUMN = "value";
 
   private final DatasetDefinition<? extends Table, ?> metadataTableDef;
   private final DatasetDefinition<? extends Table, ?> mainTableDef;
@@ -111,8 +110,7 @@ public class SnapshotDefinition extends AbstractDatasetDefinition<SnapshotDatase
     try {
       version = getVersion(metadataTable);
     } catch (Throwable e) {
-      LOG.info("Exception raised when getting the version from the metadata table.", e);
-      Throwables.propagate(e);
+      LOG.info("Exception raised when getting the version from the metadata table.");
     }
     Map<String, String> copyOfArguments = new HashMap<>(arguments);
     if (version != null) {
@@ -123,14 +121,15 @@ public class SnapshotDefinition extends AbstractDatasetDefinition<SnapshotDatase
     return new SnapshotDataset(spec.getName(), metadataTable, mainTable);
   }
 
-
   @SuppressWarnings("unchecked")
   private Long getVersion(Table metaDataTable) throws Exception {
     if (!(metaDataTable instanceof TransactionAware)) {
      return null;
     }
     Iterable<TransactionAware> txAwares =
-      Collections.singletonList((TransactionAware) (metaDataTable));
+      Collections.singletonList(
+        (TransactionAware) (metaDataTable)
+      );
     return txExecutorFactory.createExecutor(txAwares).execute(
       new TransactionExecutor.Function<Table, Long>() {
         @Override
