@@ -169,6 +169,8 @@ angular.module(PKG.name + '.feature.adapters')
             );
           break;
         case 'Settings':
+
+          MyPlumbService.isConfigTouched = true;
           $bootstrapModal.open({
             templateUrl: '/assets/features/adapters/templates/create/settings.html',
             size: 'lg',
