@@ -51,14 +51,13 @@ angular.module(PKG.name+'.feature.login')
         .then(
           function onValidToken() {
             var next = $state.is('login') && $state.params.next;
-            if(next && next.path) {
-              next = angular.fromJson(next);
+            var nextParams = $state.params.nextParams;
+
+            if(next) {
               console.log('After login, will redirect to:', next);
-              $location
-              .path(next.path);
-              // FIXME: This has un-certain behavior. Need to fix this
-              // .search(next.search)
-              // .replace();
+
+              $state.go(next, nextParams);
+
             } else {
               $state.go('overview');
             }
