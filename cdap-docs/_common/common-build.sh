@@ -305,12 +305,13 @@ function test_an_include() {
   fi
   
   local m
+  local m_display
   
   if [[ "${new_md5_hash}" == "${NOT_FOUND_HASH}" ]]; then
-    m="${WARNING} ${RED}${BOLD}${file_name} not found!${NC}"  
+    m="${WARNING} ${RED}${BOLD}${file_name} not found!${NC} "  
     m="${m}\nfile: ${target}"  
   elif [[ "${new_md5_hash}" != "${md5_hash}" ]]; then
-    m="${WARNING} ${RED}${BOLD}${file_name} has changed! Compare files and update hash!${NC}"   
+    m="${WARNING} ${RED}${BOLD}${file_name} has changed! Compare files and update hash!${NC} "   
     m="${m}\nfile: ${target}"   
     m="${m}\nOld MD5 Hash: ${md5_hash} New MD5 Hash: ${new_md5_hash}"   
   fi
@@ -396,18 +397,14 @@ function display_version() {
   echo "GIT_BRANCH_PARENT: ${GIT_BRANCH_PARENT}"
 }
 
-function set_messages_file() {
+function clear_messages_set_messages_file() {
+  MESSAGES=
   TMP_MESSAGES_FILE="/tmp/$(basename $0).$$.tmp"
   export TMP_MESSAGES_FILE
 }
 
 function cleanup_messages_file() {
   rm -f ${TMP_MESSAGES_FILE}
-}
-
-function clear_messages() {
-  MESSAGES=
-  set_messages_file
 }
 
 function set_message() {
@@ -419,9 +416,11 @@ function set_message() {
   if [ "x${TMP_MESSAGES_FILE}" != "x" ]; then
     local clean_m=`echo_clean_colors "${*}"`
     if [ -e ${TMP_MESSAGES_FILE} ]; then
+      # As TMP_MESSAGES_FILE exists, add a blank line to start new message
       echo >> ${TMP_MESSAGES_FILE}
     fi
-    echo -e "Warning Message for \"${MANUAL}\":\n${clean_m}" >> ${TMP_MESSAGES_FILE}
+    echo "Warning Message for \"${MANUAL}\":" >> ${TMP_MESSAGES_FILE}
+    echo "${clean_m}" >> ${TMP_MESSAGES_FILE}
   fi
 }
 
@@ -451,7 +450,9 @@ function display_any_messages() {
 function display_messages_file() {
   if [[ "x${TMP_MESSAGES_FILE}" != "x" && -a ${TMP_MESSAGES_FILE} ]]; then
     echo 
-    echo "Warning Messages: ${TMP_MESSAGES_FILE}"
+    echo "--------------------------------------------------------"
+    echo_red_bold "Warning Messages: ${TMP_MESSAGES_FILE}"
+    echo "--------------------------------------------------------"
     echo 
     echo >> ${TMP_MESSAGES_FILE}
     cat ${TMP_MESSAGES_FILE} | while read line
@@ -474,7 +475,7 @@ function rewrite() {
   echo "    $rewrite_source"
   if [ "x${3}" == "x" ]; then
     local sub_string=${2}
-    echo "  $sub_string"
+  echo "    $sub_string"
     if [ "$(uname)" == "Darwin" ]; then
       sed -i '.bak' "${sub_string}" ${rewrite_source}
       rm ${rewrite_source}.bak
@@ -484,7 +485,7 @@ function rewrite() {
   elif [ "x${4}" == "x" ]; then
     local sub_string=${2}
     local new_sub_string=${3}
-    echo "  ${sub_string} -> ${new_sub_string} "
+    echo "    ${sub_string} -> ${new_sub_string} "
     if [ "$(uname)" == "Darwin" ]; then
       sed -i '.bak' "s|${sub_string}|${new_sub_string}|g" ${rewrite_source}
       rm ${rewrite_source}.bak
@@ -497,7 +498,7 @@ function rewrite() {
     local new_sub_string=${4}
     echo "  to"
     echo "    ${rewrite_target}"
-    echo "  ${sub_string} -> ${new_sub_string} "
+    echo "    ${sub_string} -> ${new_sub_string} "
     sed -e "s|${sub_string}|${new_sub_string}|g" ${rewrite_source} > ${rewrite_target}
   fi
 }
