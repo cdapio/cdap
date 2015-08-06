@@ -84,7 +84,7 @@ public final class FileSetDataset implements FileSet {
     this.spec = spec;
     this.runtimeArguments = runtimeArguments;
     this.isExternal = FileSetProperties.isDataExternal(spec.getProperties());
-    this.baseLocation = determineBaseLocation(datasetContext, cConf, spec,
+    this.baseLocation = determineBaseLocation(datasetContext, cConf, spec, isExternal,
                                               absoluteLocationFactory, namespacedLocationFactory);
     this.outputLocation = determineOutputLocation();
     this.inputLocations = determineInputLocations();
@@ -103,8 +103,10 @@ public final class FileSetDataset implements FileSet {
    * TODO: Ideally, this should be done in configure(), but currently it cannot because of CDAP-1721
    */
   static Location determineBaseLocation(DatasetContext datasetContext, CConfiguration cConf,
-                                        DatasetSpecification spec, LocationFactory rootLocationFactory,
-                                        NamespacedLocationFactory namespacedLocationFactory) throws IOException {
+                                        DatasetSpecification spec, boolean readOnly,
+                                        LocationFactory rootLocationFactory,
+                                        NamespacedLocationFactory namespacedLocationFactory)
+    throws IOException {
 
     // older versions of file set incorrectly interpret absolute paths as relative to the namespace's
     // data directory. These file sets do not have the file set version property.
@@ -114,6 +116,8 @@ public final class FileSetDataset implements FileSet {
     if (basePath == null) {
       basePath = spec.getName().replace('.', '/');
     }
+
+    Location baseLocation = null;
     // for absolute paths, get the location from the file system's root.
     if (basePath.startsWith("/")) {
       // but only if it is not a legacy dataset that interprets absolute paths as relative
@@ -124,17 +128,19 @@ public final class FileSetDataset implements FileSet {
       } else {
         String topLevelPath = namespacedLocationFactory.getBaseLocation().toURI().getPath();
         topLevelPath = topLevelPath.endsWith("/") ? topLevelPath : topLevelPath + "/";
-        Location baseLocation = rootLocationFactory.create(basePath);
+        baseLocation = rootLocationFactory.create(basePath);
         if (baseLocation.toURI().getPath().startsWith(topLevelPath)) {
           throw new DataSetException("Invalid base path '" + basePath + "' for dataset '" + spec.getName() + "'. " +
                                        "It must not be inside the CDAP base path '" + topLevelPath + "'.");
         }
-        return baseLocation;
       }
     }
-    Id.Namespace namespaceId = Id.Namespace.from(datasetContext.getNamespaceId());
-    String dataDir = cConf.get(Constants.Dataset.DATA_DIR, Constants.Dataset.DEFAULT_DATA_DIR);
-    return namespacedLocationFactory.get(namespaceId).append(dataDir).append(basePath);
+    if (baseLocation == null) {
+      Id.Namespace namespaceId = Id.Namespace.from(datasetContext.getNamespaceId());
+      String dataDir = cConf.get(Constants.Dataset.DATA_DIR, Constants.Dataset.DEFAULT_DATA_DIR);
+      baseLocation = namespacedLocationFactory.get(namespaceId).append(dataDir).append(basePath);
+    }
+    return new LimitedLocation(baseLocation, readOnly);
   }
 
   private Location determineOutputLocation() {
@@ -161,13 +167,11 @@ public final class FileSetDataset implements FileSet {
 
   @Override
   public Location getBaseLocation() {
-    // TODO: if the file set is external, we could return a ReadOnlyLocation that prevents writing [CDAP-2934]
     return baseLocation;
   }
 
   @Override
   public List<Location> getInputLocations() {
-    // TODO: if the file set is external, we could return a ReadOnlyLocation that prevents writing [CDAP-2934]
     return Lists.newLinkedList(inputLocations);
   }
 
@@ -182,7 +186,6 @@ public final class FileSetDataset implements FileSet {
 
   @Override
   public Location getLocation(String relativePath) {
-    // TODO: if the file set is external, we could return a ReadOnlyLocation that prevents writing [CDAP-2934]
     return createLocation(relativePath);
   }
 

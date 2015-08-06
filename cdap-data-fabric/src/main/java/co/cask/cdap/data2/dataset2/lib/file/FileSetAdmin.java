@@ -43,7 +43,7 @@ public class FileSetAdmin implements DatasetAdmin {
 
     this.name = spec.getName();
     this.isExternal = FileSetProperties.isDataExternal(spec.getProperties());
-    this.baseLocation = FileSetDataset.determineBaseLocation(datasetContext, cConf, spec,
+    this.baseLocation = FileSetDataset.determineBaseLocation(datasetContext, cConf, spec, isExternal,
                                                              absoluteLocationFactory, namespacedLocationFactory);
   }
 
