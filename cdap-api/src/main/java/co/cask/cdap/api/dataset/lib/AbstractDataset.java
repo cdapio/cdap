@@ -1,18 +1,18 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
+* Copyright © 2014 Cask Data, Inc.
+*
+* Licensed under the Apache License, Version 2.0 (the "License"); you may not
+* use this file except in compliance with the License. You may obtain a copy of
+* the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+* WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+* License for the specific language governing permissions and limitations under
+* the License.
+*/
 
 package co.cask.cdap.api.dataset.lib;
 
@@ -26,6 +26,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 
 /**
@@ -36,11 +37,20 @@ import java.util.Collection;
 public abstract class AbstractDataset implements Dataset, MeteredDataset, TransactionAware {
   private final String instanceName;
   private final Collection<Dataset> underlying;
-  private final TransactionAware txAwares;
+  private TransactionAware txAwares;
 
   public AbstractDataset(String instanceName, Dataset embedded, Dataset... otherEmbedded) {
     this.instanceName = instanceName;
-    this.underlying = Lists.asList(embedded, otherEmbedded);
+    this.underlying = Lists.newArrayList(Lists.asList(embedded, otherEmbedded));
+    setup();
+  }
+
+  protected void addToUnderlyingDatasets(Dataset embedded) {
+    underlying.add(embedded);
+    setup();
+  }
+
+  private void setup() {
     ImmutableList.Builder<TransactionAware> builder = ImmutableList.builder();
     for (Dataset dataset : underlying) {
       if (dataset instanceof TransactionAware) {

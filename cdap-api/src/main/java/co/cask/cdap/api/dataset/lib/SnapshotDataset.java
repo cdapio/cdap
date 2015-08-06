@@ -1,18 +1,18 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
+* Copyright © 2015 Cask Data, Inc.
+*
+* Licensed under the Apache License, Version 2.0 (the "License"); you may not
+* use this file except in compliance with the License. You may obtain a copy of
+* the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+* WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+* License for the specific language governing permissions and limitations under
+* the License.
+*/
 
 package co.cask.cdap.api.dataset.lib;
 
@@ -20,6 +20,9 @@ import co.cask.cdap.api.data.batch.RecordScanner;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.batch.SplitReader;
 import co.cask.cdap.api.data.format.StructuredRecord;
+import co.cask.cdap.api.dataset.DatasetContext;
+import co.cask.cdap.api.dataset.DatasetDefinition;
+import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.table.Delete;
 import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Increment;
@@ -29,10 +32,17 @@ import co.cask.cdap.api.dataset.table.Scan;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.tephra.Transaction;
+import co.cask.tephra.TransactionAware;
+import co.cask.tephra.TransactionAwares;
+import com.google.common.collect.ImmutableList;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -40,17 +50,30 @@ import javax.annotation.Nullable;
  */
 public class SnapshotDataset extends AbstractDataset implements Table {
 
+  private static final Logger LOG = LoggerFactory.getLogger(SnapshotDataset.class);
+
   private static final byte[] METADATA_ROW_KEY = { 'v', 'e', 'r', 's', 'i', 'o', 'n' };
   private static final byte[] METADATA_KEY_COLUMN = { 'v', 'a', 'l', 'u', 'e' };
 
   private Table metadataTable;
   private Table mainTable;
   private Transaction tx;
+  private final DatasetDefinition<? extends Table, ?> mainTableDef;
+  private final DatasetContext datasetContext;
+  private final DatasetSpecification spec;
+  private final Map<String, String> arguments;
+  private final ClassLoader classLoader;
 
-  public SnapshotDataset(String name, Table metadataTable, Table mainTable) {
-    super(name, metadataTable, mainTable);
+  public SnapshotDataset(String name, Table metadataTable, DatasetDefinition<? extends Table, ?> mainTableDef,
+                         DatasetContext datasetContext, DatasetSpecification spec, Map<String, String> arguments,
+                         ClassLoader classLoader) {
+    super(name, metadataTable);
     this.metadataTable = metadataTable;
-    this.mainTable = mainTable;
+    this.mainTableDef = mainTableDef;
+    this.datasetContext = datasetContext;
+    this.spec = spec;
+    this.arguments = arguments;
+    this.classLoader = classLoader;
   }
 
   public Long getCurrentVersion() {
@@ -68,8 +91,28 @@ public class SnapshotDataset extends AbstractDataset implements Table {
 
   @Override
   public void startTx(Transaction tx) {
+    LOG.info("YAOJIE: Started Tx");
     super.startTx(tx);
     this.tx = tx;
+
+    // Get the version from the metadataTable
+    Map<String, String> copyOfArguments = new HashMap<>(arguments);
+    Long version = getCurrentVersion();
+    if (version != null) {
+      copyOfArguments.put("version", String.valueOf(version));
+    }
+    try {
+      mainTable = mainTableDef.getDataset(datasetContext, spec.getSpecification("maindata"), copyOfArguments,
+        classLoader);
+
+    } catch (Throwable t) {
+      LOG.info("YAOJIE: Error creating mainTable", t);
+    }
+    addToUnderlyingDatasets(mainTable);
+    if (mainTable instanceof TransactionAware) {
+      TransactionAwares.of(ImmutableList.of((TransactionAware) mainTable)).startTx(tx);
+    }
+    LOG.info("YAOJIE: Started Tx DONE");
   }
 
   @Override
