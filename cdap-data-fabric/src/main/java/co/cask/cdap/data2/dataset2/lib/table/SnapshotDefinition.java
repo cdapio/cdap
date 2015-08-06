@@ -35,7 +35,7 @@ import java.io.IOException;
 import java.util.Map;
 
 /**
- */
+*/
 public class SnapshotDefinition extends AbstractDatasetDefinition<SnapshotDataset, DatasetAdmin> {
 
   private static final Logger LOG = LoggerFactory.getLogger(SnapshotDefinition.class);
@@ -53,13 +53,13 @@ public class SnapshotDefinition extends AbstractDatasetDefinition<SnapshotDatase
   private final DatasetDefinition<? extends Table, ?> mainTableDef;
 
   /**
-   * Ctor that takes in name of this dataset type.
-   *
-   * @param name this dataset type name
-   */
+  * Ctor that takes in name of this dataset type.
+  *
+  * @param name this dataset type name
+  */
   protected SnapshotDefinition(String name,
-                               DatasetDefinition<? extends Table, ?> metadataTableDef,
-                               DatasetDefinition<? extends Table, ?> mainTableDef) {
+                              DatasetDefinition<? extends Table, ?> metadataTableDef,
+                              DatasetDefinition<? extends Table, ?> mainTableDef) {
     super(name);
     Preconditions.checkArgument(metadataTableDef != null, "Metadata table definition is required");
     Preconditions.checkArgument(mainTableDef != null, "Main table definition is required");
@@ -76,13 +76,13 @@ public class SnapshotDefinition extends AbstractDatasetDefinition<SnapshotDatase
     return DatasetSpecification.builder(instanceName, getName())
       .properties(properties.getProperties())
       .datasets(metadataTableDef.configure(METADATA_TABLE_NAME, metadataProperties),
-        mainTableDef.configure(MAIN_TABLE_NAME, properties))
+                mainTableDef.configure(MAIN_TABLE_NAME, properties))
       .build();
   }
 
   @Override
   public DatasetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
-                               ClassLoader classLoader) throws IOException {
+                                ClassLoader classLoader) throws IOException {
     return new CompositeDatasetAdmin(Lists.newArrayList(
       metadataTableDef.getAdmin(datasetContext, spec.getSpecification(METADATA_TABLE_NAME), classLoader),
       mainTableDef.getAdmin(datasetContext, spec.getSpecification(MAIN_TABLE_NAME), classLoader)
@@ -93,9 +93,9 @@ public class SnapshotDefinition extends AbstractDatasetDefinition<SnapshotDatase
   public SnapshotDataset getDataset(DatasetContext datasetContext, DatasetSpecification spec,
                                     Map<String, String> arguments, ClassLoader classLoader) throws IOException {
     final Table metadataTable = metadataTableDef.getDataset(datasetContext, spec.getSpecification(METADATA_TABLE_NAME),
-      arguments, classLoader);
+                                                      arguments, classLoader);
 
     return new SnapshotDataset(spec.getName(), metadataTable, mainTableDef, datasetContext, spec, arguments,
-      classLoader);
+                                classLoader);
   }
 }

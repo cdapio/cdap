@@ -20,9 +20,11 @@ import co.cask.cdap.api.data.batch.RecordScanner;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.batch.SplitReader;
 import co.cask.cdap.api.data.format.StructuredRecord;
+import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.api.dataset.metrics.MeteredDataset;
 import co.cask.cdap.api.dataset.table.Delete;
 import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Increment;
@@ -31,15 +33,18 @@ import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scan;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.api.metrics.MetricsCollector;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionAwares;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,7 +53,7 @@ import javax.annotation.Nullable;
 /**
  *  Dataset client for snapshot datasets.
  */
-public class SnapshotDataset extends AbstractDataset implements Table {
+public class SnapshotDataset implements Table, Dataset, MeteredDataset, TransactionAware {
 
   private static final Logger LOG = LoggerFactory.getLogger(SnapshotDataset.class);
 
@@ -57,6 +62,9 @@ public class SnapshotDataset extends AbstractDataset implements Table {
 
   private Table metadataTable;
   private Table mainTable;
+  private final String instanceName;
+  private final Collection<Dataset> underlying;
+  private TransactionAware txAwares;
   private Transaction tx;
   private final DatasetDefinition<? extends Table, ?> mainTableDef;
   private final DatasetContext datasetContext;
@@ -67,17 +75,16 @@ public class SnapshotDataset extends AbstractDataset implements Table {
   public SnapshotDataset(String name, Table metadataTable, DatasetDefinition<? extends Table, ?> mainTableDef,
                          DatasetContext datasetContext, DatasetSpecification spec, Map<String, String> arguments,
                          ClassLoader classLoader) {
-    super(name, metadataTable);
+    this.instanceName = name;
+    this.underlying = Lists.newArrayList();
+    this.underlying.add(metadataTable);
     this.metadataTable = metadataTable;
     this.mainTableDef = mainTableDef;
     this.datasetContext = datasetContext;
     this.spec = spec;
     this.arguments = arguments;
     this.classLoader = classLoader;
-  }
-
-  public Long getCurrentVersion() {
-    return metadataTable.get(METADATA_ROW_KEY).getLong(METADATA_KEY_COLUMN);
+    setup();
   }
 
   public long getTransactionId() {
@@ -92,9 +99,8 @@ public class SnapshotDataset extends AbstractDataset implements Table {
   @Override
   public void startTx(Transaction tx) {
     LOG.info("YAOJIE: Started Tx");
-    super.startTx(tx);
+    txAwares.startTx(tx);
     this.tx = tx;
-
     // Get the version from the metadataTable
     Map<String, String> copyOfArguments = new HashMap<>(arguments);
     Long version = getCurrentVersion();
@@ -116,15 +122,54 @@ public class SnapshotDataset extends AbstractDataset implements Table {
   }
 
   @Override
+  public void updateTx(Transaction tx) {
+    txAwares.updateTx(tx);
+  }
+
+  @Override
+  public Collection<byte[]> getTxChanges() {
+    return txAwares.getTxChanges();
+  }
+
+  @Override
   public boolean rollbackTx() throws Exception {
     this.tx = null;
-    return super.rollbackTx();
+    return txAwares.rollbackTx();
+  }
+
+  @Override
+  public String getTransactionAwareName() {
+    return instanceName;
   }
 
   @Override
   public boolean commitTx() throws Exception {
     this.tx = null;
-    return super.commitTx();
+    return txAwares.commitTx();
+  }
+
+  @Override
+  public void postTxCommit() {
+    txAwares.postTxCommit();
+  }
+
+  private Long getCurrentVersion() {
+    return metadataTable.get(METADATA_ROW_KEY).getLong(METADATA_KEY_COLUMN);
+  }
+
+  private void addToUnderlyingDatasets(Dataset embedded) {
+    underlying.add(embedded);
+    setup();
+  }
+
+  private void setup() {
+    ImmutableList.Builder<TransactionAware> builder = ImmutableList.builder();
+    for (Dataset dataset : underlying) {
+      if (dataset instanceof TransactionAware) {
+        builder.add((TransactionAware) dataset);
+      }
+    }
+    this.txAwares = TransactionAwares.of(builder.build());
   }
 
   @Override
@@ -271,5 +316,14 @@ public class SnapshotDataset extends AbstractDataset implements Table {
   public void close() throws IOException {
     metadataTable.close();
     mainTable.close();
+  }
+
+  @Override
+  public void setMetricsCollector(MetricsCollector metricsCollector) {
+    for (Dataset dataset : underlying) {
+      if (dataset instanceof MeteredDataset) {
+        ((MeteredDataset) dataset).setMetricsCollector(metricsCollector);
+      }
+    }
   }
 }
