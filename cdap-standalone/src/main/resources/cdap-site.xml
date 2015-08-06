@@ -119,4 +119,13 @@
       <description>Directory where all archives for app templates are stored</description>
     </property>
 
+    <!--
+        Artifact configuration
+    -->
+    <property>
+        <name>app.artifact.dir</name>
+        <value>artifacts</value>
+        <description>Directory where system artifacts are stored</description>
+    </property>
+
 </configuration>

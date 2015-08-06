@@ -26,6 +26,10 @@ import java.util.Collection;
  */
 public class ArtifactRangeNotFoundException extends NotFoundException {
 
+  public ArtifactRangeNotFoundException(String message) {
+    super(message);
+  }
+
   public ArtifactRangeNotFoundException(Collection<ArtifactRange> artifactRanges) {
     super("artifacts", Joiner.on(',').join(artifactRanges).toString());
   }
