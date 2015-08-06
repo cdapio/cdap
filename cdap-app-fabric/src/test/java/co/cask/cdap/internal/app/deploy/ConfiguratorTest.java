@@ -21,6 +21,8 @@ import co.cask.cdap.WordCountApp;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.deploy.ConfigResponse;
 import co.cask.cdap.app.deploy.Configurator;
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.internal.test.AppJarHelper;
@@ -30,10 +32,13 @@ import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -48,13 +53,21 @@ public class ConfiguratorTest {
   @ClassRule
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
 
+  private static CConfiguration conf;
+
+  @BeforeClass
+  public static void setup() throws IOException {
+    conf = CConfiguration.create();
+    conf.set(Constants.CFG_LOCAL_DATA_DIR, TMP_FOLDER.newFolder().getAbsolutePath());
+  }
+
   @Test
   public void testInMemoryConfigurator() throws Exception {
     LocationFactory locationFactory = new LocalLocationFactory(TMP_FOLDER.newFolder());
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, WordCountApp.class);
 
     // Create a configurator that is testable. Provide it a application.
-    Configurator configurator = new InMemoryConfigurator(appJar, "");
+    Configurator configurator = new InMemoryConfigurator(conf, appJar, "");
 
     // Extract response from the configurator.
     ListenableFuture<ConfigResponse> result = configurator.config();
@@ -75,7 +88,8 @@ public class ConfiguratorTest {
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, ConfigTestApp.class);
 
     ConfigTestApp.ConfigClass config = new ConfigTestApp.ConfigClass("myStream", "myTable");
-    Configurator configuratorWithConfig = new InMemoryConfigurator(appJar, new Gson().toJson(config));
+    Configurator configuratorWithConfig =
+      new InMemoryConfigurator(conf, appJar, new Gson().toJson(config));
 
     ListenableFuture<ConfigResponse> result = configuratorWithConfig.config();
     ConfigResponse response = result.get(10, TimeUnit.SECONDS);
@@ -89,7 +103,7 @@ public class ConfiguratorTest {
     Assert.assertTrue(specification.getDatasets().size() == 1);
     Assert.assertTrue(specification.getDatasets().containsKey("myTable"));
 
-    Configurator configuratorWithoutConfig = new InMemoryConfigurator(appJar, null);
+    Configurator configuratorWithoutConfig = new InMemoryConfigurator(conf, appJar, null);
     result = configuratorWithoutConfig.config();
     response = result.get(10, TimeUnit.SECONDS);
     Assert.assertNotNull(response);

@@ -23,7 +23,7 @@ import java.io.IOException;
  * A {@link ClassLoader} that implements {@link Closeable} for resource cleanup. All classloading is done
  * by the delegate {@link ClassLoader}.
  */
-class CloseableClassLoader extends ClassLoader implements Closeable {
+public class CloseableClassLoader extends ClassLoader implements Closeable {
 
   private final Closeable closeable;
 

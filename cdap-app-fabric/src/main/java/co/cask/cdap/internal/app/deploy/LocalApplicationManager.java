@@ -35,7 +35,7 @@ import co.cask.cdap.internal.app.deploy.pipeline.CreateSchedulesStage;
 import co.cask.cdap.internal.app.deploy.pipeline.CreateStreamsStage;
 import co.cask.cdap.internal.app.deploy.pipeline.DeletedProgramHandlerStage;
 import co.cask.cdap.internal.app.deploy.pipeline.DeployDatasetModulesStage;
-import co.cask.cdap.internal.app.deploy.pipeline.LocalArchiveLoaderStage;
+import co.cask.cdap.internal.app.deploy.pipeline.LocalArtifactLoaderStage;
 import co.cask.cdap.internal.app.deploy.pipeline.ProgramGenerationStage;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
@@ -104,7 +104,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
   @Override
   public ListenableFuture<O> deploy(Id.Namespace namespace, @Nullable String appId, I input) throws Exception {
     Pipeline<O> pipeline = pipelineFactory.getPipeline();
-    pipeline.addLast(new LocalArchiveLoaderStage(store, configuration, namespace, appId));
+    pipeline.addLast(new LocalArtifactLoaderStage(configuration, store, namespace, appId));
     pipeline.addLast(new ApplicationVerificationStage(store, datasetFramework, adapterService));
     pipeline.addLast(new DeployDatasetModulesStage(configuration, namespace, datasetFramework,
                                                    inMemoryDatasetFramework));

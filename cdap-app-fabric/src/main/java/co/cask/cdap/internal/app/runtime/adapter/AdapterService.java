@@ -709,8 +709,8 @@ public class AdapterService extends AbstractIdleService {
     }
 
     // instantiate the template application and call configure() on it to determine it's specification
-    InMemoryConfigurator configurator = new InMemoryConfigurator(new LocalLocationFactory().create(jarFile.toURI()),
-                                                                 null);
+    InMemoryConfigurator configurator = new InMemoryConfigurator(
+      configuration, new LocalLocationFactory().create(jarFile.toURI()), null);
     ListenableFuture<ConfigResponse> result = configurator.config();
     ConfigResponse response = result.get(2, TimeUnit.MINUTES);
     InputSupplier<? extends Reader> configSupplier = response.get();

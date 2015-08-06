@@ -354,7 +354,7 @@ public class AppFabricClient {
     Location deployedJar = AppJarHelper.createDeploymentJar(locationFactory, applicationClz, bundleEmbeddedJars);
     LOG.info("Created deployedJar at {}", deployedJar.toURI().toASCIIString());
 
-    String archiveName = appName + ".jar";
+    String archiveName = String.format("%s-1.0.%d.jar", appName, System.currentTimeMillis());
     DefaultHttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST,
                                                         String.format("/v3/namespaces/%s/apps", namespace.getId()));
     request.setHeader(Constants.Gateway.API_KEY, "api-key-example");

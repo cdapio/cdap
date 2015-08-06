@@ -26,6 +26,7 @@ import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.data.dataset.DatasetCreationSpec;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.codec.AbstractSpecificationCodec;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
@@ -53,6 +54,7 @@ final class ApplicationSpecificationCodec extends AbstractSpecificationCodec<App
     if (src.getConfiguration() != null) {
       jsonObj.add("configuration", new JsonPrimitive(src.getConfiguration()));
     }
+    jsonObj.add("artifactId", context.serialize(src.getArtifactId()));
     jsonObj.add("description", new JsonPrimitive(src.getDescription()));
     jsonObj.add("streams", serializeMap(src.getStreams(), context, StreamSpecification.class));
     jsonObj.add("datasetModules", serializeMap(src.getDatasetModules(), context, String.class));
@@ -85,6 +87,8 @@ final class ApplicationSpecificationCodec extends AbstractSpecificationCodec<App
       configuration = jsonObj.get("configuration").getAsString();
     }
 
+    Id.Artifact artifactId = context.deserialize(jsonObj.get("artifactId"), Id.Artifact.class);
+
     Map<String, StreamSpecification> streams = deserializeMap(jsonObj.get("streams"),
                                                               context, StreamSpecification.class);
     Map<String, String> datasetModules = deserializeMap(jsonObj.get("datasetModules"), context, String.class);
@@ -109,7 +113,7 @@ final class ApplicationSpecificationCodec extends AbstractSpecificationCodec<App
     Map<String, WorkerSpecification> workers = deserializeMap(jsonObj.get("workers"), context,
                                                               WorkerSpecification.class);
 
-    return new DefaultApplicationSpecification(name, version, description, configuration, streams,
+    return new DefaultApplicationSpecification(name, version, description, configuration, artifactId, streams,
                                                datasetModules, datasetInstances,
                                                flows, mapReduces, sparks,
                                                workflows, services, schedules, workers);
