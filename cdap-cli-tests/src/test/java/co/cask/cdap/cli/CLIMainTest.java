@@ -529,9 +529,11 @@ public class CLIMainTest {
   }
 
   private static File createAppJarFile(Class<?> cls) throws IOException {
-    LocationFactory locationFactory = new LocalLocationFactory(TMP_FOLDER.newFolder());
+    File tmpFolder = TMP_FOLDER.newFolder();
+    LocationFactory locationFactory = new LocalLocationFactory(tmpFolder);
     Location deploymentJar = AppJarHelper.createDeploymentJar(locationFactory, cls);
-    File appJarFile = TMP_FOLDER.newFile();
+    File appJarFile =
+      new File(tmpFolder, String.format("%s-1.0.%d.jar", cls.getSimpleName(), System.currentTimeMillis()));
     Files.copy(Locations.newInputSupplier(deploymentJar), appJarFile);
     return appJarFile;
   }

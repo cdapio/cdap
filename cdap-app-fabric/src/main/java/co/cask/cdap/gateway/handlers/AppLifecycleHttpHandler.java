@@ -272,12 +272,15 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       return null;
     }
 
-    // error handling needs to be refactored here, should be able just to throw the exception, but the caller
-    // catches all exceptions and responds with a 500
+
+    // TODO: (CDAP-3258) error handling needs to be refactored here, should be able just to throw the exception,
+    // but the caller catches all exceptions and responds with a 500
     final Id.Artifact artifactId;
     try {
       artifactId = parseArchiveName(namespace, archiveName);
     } catch (InvalidArtifactException e) {
+      // TODO: (CDAP-3310) if id can't be parsed from archiveName,
+      //                   pick up version from manifest and use archive name as artifact name
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
       return null;
     }

@@ -37,7 +37,7 @@ import java.util.concurrent.TimeoutException;
 import javax.annotation.Nullable;
 
 /**
- * LocalArchiveLoaderStage gets a {@link Location} and emits a {@link ApplicationDeployable}.
+ * LocalArtifactLoaderStage gets a {@link Location} and emits a {@link ApplicationDeployable}.
  * <p>
  * This stage is responsible for reading the JAR and generating an ApplicationSpecification
  * that is forwarded to the next stage of processing.

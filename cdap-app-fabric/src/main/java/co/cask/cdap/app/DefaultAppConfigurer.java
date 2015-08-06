@@ -88,8 +88,7 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   }
 
   public DefaultAppConfigurer(Id.Artifact artifactId, Application app, String configuration) {
-    this(app);
-    this.configuration = configuration;
+    this(app, configuration);
     this.artifactId = artifactId;
   }
 

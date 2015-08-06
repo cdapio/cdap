@@ -182,8 +182,7 @@ public class IntegrationTestBase {
 
   protected TestManager getTestManager() {
     try {
-      return new IntegrationTestManager(getClientConfig(), getRestClient(),
-                                        new LocalLocationFactory(TEMP_FOLDER.newFolder()));
+      return new IntegrationTestManager(getClientConfig(), getRestClient(), TEMP_FOLDER.newFolder());
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }
