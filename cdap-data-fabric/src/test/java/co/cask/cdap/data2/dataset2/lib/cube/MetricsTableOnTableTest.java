@@ -48,7 +48,7 @@ public class MetricsTableOnTableTest extends MetricsTableTest {
     if (dsFrameworkUtil.getInstance(id) == null) {
       dsFrameworkUtil.createInstance(Table.class.getName(), id, DatasetProperties.EMPTY);
     }
-    Table table = (Table) dsFrameworkUtil.getInstance(id);
+    Table table = dsFrameworkUtil.getInstance(id);
     return new MetricsTableTxnlWrapper(new MetricsTableOnTable(table), table);
   }
 

@@ -17,7 +17,10 @@
 package co.cask.cdap.test;
 
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.RunRecord;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -76,4 +79,16 @@ public interface ProgramManager<T extends ProgramManager> {
    * @throws InterruptedException if the method is interrupted while waiting for the status.
    */
   void waitForStatus(boolean status, int retries, int timeout) throws InterruptedException;
+
+  /**
+   * Gets the history of the program
+   * @return list of {@link RunRecord} history
+   */
+  List<RunRecord> getHistory();
+
+  /**
+   * Gets the history of the program
+   * @return list of {@link RunRecord} history
+   */
+  List<RunRecord> getHistory(ProgramRunStatus status);
 }

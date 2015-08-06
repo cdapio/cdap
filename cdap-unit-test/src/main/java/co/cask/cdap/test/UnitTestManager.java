@@ -276,10 +276,9 @@ public class UnitTestManager implements TestManager {
   @Beta
   @Override
   public final <T> DataSetManager<T> getDataset(Id.Namespace namespace, String datasetInstanceName) throws Exception {
-    //TODO: Expose namespaces later. Hardcoding to default right now.
     Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(namespace, datasetInstanceName);
     @SuppressWarnings("unchecked")
-    final T dataSet = (T) datasetFramework.getDataset(datasetInstanceId, new HashMap<String, String>(), null);
+    final T dataSet = datasetFramework.getDataset(datasetInstanceId, new HashMap<String, String>(), null);
     try {
       final TransactionContext txContext;
       // not every dataset is TransactionAware. FileSets for example, are not transactional.

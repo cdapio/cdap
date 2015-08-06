@@ -159,9 +159,26 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals(0, countService.getProvisionedInstances());
     Assert.assertEquals(2, countService.getRequestedInstances());
     Assert.assertFalse(countService.isRunning());
+
+    List<RunRecord> history = countService.getHistory();
+    Assert.assertEquals(0, history.size());
+
     countService.start();
     Assert.assertTrue(countService.isRunning());
     Assert.assertEquals(2, countService.getProvisionedInstances());
+
+    // requesting with ProgramRunStatus.KILLED returns empty list
+    history = countService.getHistory(ProgramRunStatus.KILLED);
+    Assert.assertEquals(0, history.size());
+
+    // requesting with either RUNNING or ALL will return one record
+    history = countService.getHistory(ProgramRunStatus.RUNNING);
+    Assert.assertEquals(1, history.size());
+    Assert.assertEquals(ProgramRunStatus.RUNNING, history.get(0).getStatus());
+
+    history = countService.getHistory(ProgramRunStatus.ALL);
+    Assert.assertEquals(1, history.size());
+    Assert.assertEquals(ProgramRunStatus.RUNNING, history.get(0).getStatus());
   }
 
   @Test

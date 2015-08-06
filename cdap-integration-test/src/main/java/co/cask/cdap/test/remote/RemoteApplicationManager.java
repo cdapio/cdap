@@ -22,7 +22,9 @@ import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRecord;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.test.AbstractApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.DefaultMapReduceManager;
@@ -37,6 +39,7 @@ import co.cask.cdap.test.WorkflowManager;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -52,8 +55,8 @@ public class RemoteApplicationManager extends AbstractApplicationManager {
     super(application);
 
     this.clientConfig = clientConfig;
-    this.programClient = new ProgramClient(clientConfig);
-    this.applicationClient = new ApplicationClient(clientConfig);
+    this.programClient = new ProgramClient(clientConfig, restClient);
+    this.applicationClient = new ApplicationClient(clientConfig, restClient);
     this.restClient = restClient;
   }
 
@@ -146,6 +149,15 @@ public class RemoteApplicationManager extends AbstractApplicationManager {
       String status = programClient.getStatus(programId);
       // comparing to hardcoded string is ugly, but this is how appFabricServer works now to support legacy UI
       return "STARTING".equals(status) || "RUNNING".equals(status);
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  @Override
+  public List<RunRecord> getHistory(Id.Program programId, ProgramRunStatus status) {
+    try {
+      return programClient.getProgramRuns(programId, status.name(), 0, Long.MAX_VALUE, Integer.MAX_VALUE);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
