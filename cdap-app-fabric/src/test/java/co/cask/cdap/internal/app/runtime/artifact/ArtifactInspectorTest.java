@@ -72,7 +72,7 @@ public class ArtifactInspectorTest {
     File appFile =
       createJar(InspectionApp.class, new File(TMP_FOLDER.newFolder(), "InspectionApp-1.0.0.jar"), manifest);
 
-    Id.Artifact artifactId = Id.Artifact.from(Constants.DEFAULT_NAMESPACE_ID, "InspectionApp", "1.0.0");
+    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "InspectionApp", "1.0.0");
     Location artifactLocation = Locations.toLocation(appFile);
     try (CloseableClassLoader artifactClassLoader = classLoaderFactory.createClassLoader(artifactLocation)) {
 
@@ -98,7 +98,7 @@ public class ArtifactInspectorTest {
   public void badAppMainClassThrowsException() throws Exception {
     File appFile = createJar(InspectionApp.AppPlugin.class,
       new File(TMP_FOLDER.newFolder(), "InspectionApp-1.0.0.jar"), new Manifest());
-    Id.Artifact artifactId = Id.Artifact.from(Constants.DEFAULT_NAMESPACE_ID, "InspectionApp", "1.0.0");
+    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "InspectionApp", "1.0.0");
     Location artifactLocation = Locations.toLocation(appFile);
     try (CloseableClassLoader artifactClassLoader = classLoaderFactory.createClassLoader(artifactLocation)) {
       artifactInspector.inspectArtifact(artifactId, appFile, artifactClassLoader);

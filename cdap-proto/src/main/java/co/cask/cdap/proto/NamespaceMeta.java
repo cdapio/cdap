@@ -24,9 +24,12 @@ import com.google.common.base.Preconditions;
  */
 public final class NamespaceMeta {
 
+  public static final NamespaceMeta DEFAULT =
+    new NamespaceMeta.Builder().setName(Id.Namespace.DEFAULT).setDescription("Default Namespace").build();
+
   private final String name;
   private final String description;
-  private NamespaceConfig config;
+  private final NamespaceConfig config;
 
   private NamespaceMeta(String name, String description, NamespaceConfig config) {
     this.name = name;

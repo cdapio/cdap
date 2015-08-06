@@ -284,7 +284,7 @@ public class LogHandler extends AbstractHttpHandler {
       }
 
       Filter filter = FilterParser.parse(filterStr);
-      LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(Constants.SYSTEM_NAMESPACE, componentId,
+      LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(Id.Namespace.SYSTEM.getId(), componentId,
                                                                              serviceId);
       ChunkedLogReaderCallback logCallback = new ChunkedLogReaderCallback(responder, logPattern, escape);
       logReader.getLog(loggingContext, timeRange.getFromMillis(), timeRange.getToMillis(), filter, logCallback);
@@ -307,7 +307,7 @@ public class LogHandler extends AbstractHttpHandler {
     try {
       Filter filter = FilterParser.parse(filterStr);
 
-      LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(Constants.SYSTEM_NAMESPACE, componentId,
+      LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(Id.Namespace.SYSTEM.getId(), componentId,
                                                                              serviceId);
       LogReaderCallback logCallback = new LogReaderCallback(responder, logPattern, escape);
       LogOffset logOffset = FormattedLogEvent.parseLogOffset(fromOffsetStr);
@@ -333,7 +333,7 @@ public class LogHandler extends AbstractHttpHandler {
     try {
       Filter filter = FilterParser.parse(filterStr);
 
-      LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(Constants.SYSTEM_NAMESPACE, componentId,
+      LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(Id.Namespace.SYSTEM.getId(), componentId,
                                                                              serviceId);
       LogReaderCallback logCallback = new LogReaderCallback(responder, logPattern, escape);
       LogOffset logOffset = FormattedLogEvent.parseLogOffset(fromOffsetStr);

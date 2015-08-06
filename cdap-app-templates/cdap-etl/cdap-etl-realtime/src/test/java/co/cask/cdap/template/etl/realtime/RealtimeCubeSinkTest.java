@@ -20,7 +20,6 @@ import co.cask.cdap.api.dataset.lib.cube.AggregationFunction;
 import co.cask.cdap.api.dataset.lib.cube.Cube;
 import co.cask.cdap.api.dataset.lib.cube.CubeQuery;
 import co.cask.cdap.api.dataset.lib.cube.TimeSeries;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.lib.cube.CubeDatasetDefinition;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
@@ -67,7 +66,6 @@ public class RealtimeCubeSinkTest extends TestBase {
   public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", false);
 
   private static final Gson GSON = new Gson();
-  private static final Id.Namespace NAMESPACE = Constants.DEFAULT_NAMESPACE_ID;
   private static final Id.ApplicationTemplate TEMPLATE_ID = Id.ApplicationTemplate.from("ETLRealtime");
 
   @BeforeClass
@@ -81,7 +79,7 @@ public class RealtimeCubeSinkTest extends TestBase {
     addTemplatePlugins(TEMPLATE_ID, "transforms-1.0.0.jar",
                        ProjectionTransform.class, ScriptFilterTransform.class,
                        StructuredRecordToGenericRecordTransform.class);
-    deployTemplate(NAMESPACE, TEMPLATE_ID, ETLRealtimeTemplate.class,
+    deployTemplate(Id.Namespace.DEFAULT, TEMPLATE_ID, ETLRealtimeTemplate.class,
                    PipelineConfigurable.class.getPackage().getName(),
                    ETLStage.class.getPackage().getName(),
                    RealtimeSource.class.getPackage().getName());
@@ -104,7 +102,7 @@ public class RealtimeCubeSinkTest extends TestBase {
                                                  Properties.Cube.MEASUREMENTS, new Gson().toJson(measurementsProps)));
     ETLRealtimeConfig etlConfig = new ETLRealtimeConfig(source, sink, Lists.<ETLStage>newArrayList());
     AdapterConfig adapterConfig = new AdapterConfig("", TEMPLATE_ID.getId(), GSON.toJsonTree(etlConfig));
-    Id.Adapter adapterId = Id.Adapter.from(NAMESPACE, "testCubeSink");
+    Id.Adapter adapterId = Id.Adapter.from(Id.Namespace.DEFAULT, "testCubeSink");
 
     AdapterManager manager = createAdapter(adapterId, adapterConfig);
 

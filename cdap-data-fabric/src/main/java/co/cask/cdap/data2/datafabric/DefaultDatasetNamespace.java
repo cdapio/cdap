@@ -38,7 +38,7 @@ public class DefaultDatasetNamespace implements DatasetNamespace {
 
   @Override
   public Id.DatasetInstance namespace(String datasetInstanceName) {
-    return namespace(Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE, datasetInstanceName));
+    return namespace(Id.DatasetInstance.from(Id.Namespace.SYSTEM, datasetInstanceName));
   }
 
   @Override

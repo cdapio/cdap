@@ -27,7 +27,6 @@ import co.cask.cdap.api.dataset.lib.PartitionedFileSetProperties;
 import co.cask.cdap.api.dataset.lib.Partitioning;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import co.cask.cdap.data2.dataset2.lib.partitioned.PartitionedFileSetDefinition;
@@ -143,7 +142,7 @@ public class PFSUpgraderTest {
 
     Multimap<Id.Namespace, DatasetSpecification> datasetInstances = HashMultimap.create();
     DatasetSpecification convertedSpec =
-      pfsUpgrader.recursivelyMigrateSpec(Constants.DEFAULT_NAMESPACE_ID, embeddingDsSpec.getName(),
+      pfsUpgrader.recursivelyMigrateSpec(Id.Namespace.DEFAULT, embeddingDsSpec.getName(),
                                          embeddingDsSpec, datasetInstances);
     DatasetSpecification migratedEmbeddedPfsSpec = convertedSpec.getSpecification("results");
     DatasetSpecification newPartitionsSpec =

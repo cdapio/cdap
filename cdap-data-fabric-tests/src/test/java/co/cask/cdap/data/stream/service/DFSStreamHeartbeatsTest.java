@@ -166,12 +166,12 @@ public class DFSStreamHeartbeatsTest {
     hostname = streamHttpService.getBindAddress().getHostName();
     port = streamHttpService.getBindAddress().getPort();
 
-    Locations.mkdirsIfNotExists(namespacedLocationFactory.get(Constants.DEFAULT_NAMESPACE_ID));
+    Locations.mkdirsIfNotExists(namespacedLocationFactory.get(Id.Namespace.DEFAULT));
   }
 
   @AfterClass
   public static void afterClass() throws IOException {
-    Locations.deleteQuietly(namespacedLocationFactory.get(Constants.DEFAULT_NAMESPACE_ID), true);
+    Locations.deleteQuietly(namespacedLocationFactory.get(Id.Namespace.DEFAULT), true);
 
     notificationService.startAndWait();
     datasetService.startAndWait();
@@ -193,7 +193,7 @@ public class DFSStreamHeartbeatsTest {
   public void streamPublishesHeartbeatTest() throws Exception {
     final int entries = 10;
     final String streamName = "test_stream";
-    final Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, streamName);
+    final Id.Stream streamId = Id.Stream.from(Id.Namespace.DEFAULT, streamName);
     // Create a new stream.
     streamAdmin.create(streamId);
 

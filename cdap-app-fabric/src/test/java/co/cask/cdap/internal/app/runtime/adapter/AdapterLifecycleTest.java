@@ -64,7 +64,7 @@ public class AdapterLifecycleTest extends AppFabricTestBase {
 
   @Test
   public void testRealtimeAdapterLifeCycle() throws Exception {
-    String namespaceId = Constants.DEFAULT_NAMESPACE;
+    String namespaceId = Id.Namespace.DEFAULT.getId();
     String adapterName = "realtimeAdapter";
     String templateId = DummyWorkerTemplate.NAME;
     DummyWorkerTemplate.Config config = new DummyWorkerTemplate.Config(2);
@@ -74,7 +74,7 @@ public class AdapterLifecycleTest extends AppFabricTestBase {
 
   @Test
   public void testBatchAdapterLifeCycle() throws Exception {
-    String namespaceId = Constants.DEFAULT_NAMESPACE;
+    String namespaceId = Id.Namespace.DEFAULT.getId();
     String adapterName = "myStreamConverter";
     String templateId = DummyBatchTemplate.NAME;
     DummyBatchTemplate.Config config = new DummyBatchTemplate.Config("somesource", "0 0 1 1 *");
@@ -173,7 +173,7 @@ public class AdapterLifecycleTest extends AppFabricTestBase {
   public void testRestrictUserApps() throws Exception {
     // Testing that users can not deploy an application
     HttpResponse response = deploy(AppWithServices.class, Constants.Gateway.API_VERSION_3_TOKEN,
-      Constants.DEFAULT_NAMESPACE, DummyBatchTemplate.NAME);
+      Id.Namespace.DEFAULT.getId(), DummyBatchTemplate.NAME);
     Assert.assertEquals(400, response.getStatusLine().getStatusCode());
     String responseString = readResponse(response);
     Assert.assertTrue(String.format("Response String: %s", responseString),
@@ -184,7 +184,7 @@ public class AdapterLifecycleTest extends AppFabricTestBase {
   public void testMissingTemplateReturns404() throws Exception {
     Map<String, Object> config = ImmutableMap.<String, Object>of("field1", "someval", "field2", "otherval");
     AdapterConfig badConfig = new AdapterConfig("description", "badtemplate", GSON.toJsonTree(config));
-    HttpResponse response = createAdapter(Constants.DEFAULT_NAMESPACE, "badAdapter", badConfig);
+    HttpResponse response = createAdapter(Id.Namespace.DEFAULT.getId(), "badAdapter", badConfig);
     Assert.assertEquals(404, response.getStatusLine().getStatusCode());
   }
 
@@ -192,7 +192,7 @@ public class AdapterLifecycleTest extends AppFabricTestBase {
   public void testInvalidJsonBodyReturns400() throws Exception {
     HttpResponse response = doPut(
       String.format("%s/namespaces/%s/adapters/%s",
-                    Constants.Gateway.API_VERSION_3, Constants.DEFAULT_NAMESPACE, "myadapter"), "[]");
+                    Constants.Gateway.API_VERSION_3, Id.Namespace.DEFAULT.getId(), "myadapter"), "[]");
     Assert.assertEquals(400, response.getStatusLine().getStatusCode());
   }
 
@@ -200,7 +200,7 @@ public class AdapterLifecycleTest extends AppFabricTestBase {
   public void testNoTemplateFieldReturns400() throws Exception {
     HttpResponse response = doPut(
       String.format("%s/namespaces/%s/adapters/%s",
-                    Constants.Gateway.API_VERSION_3, Constants.DEFAULT_NAMESPACE, "myadapter"), "{}");
+                    Constants.Gateway.API_VERSION_3, Id.Namespace.DEFAULT.getId(), "myadapter"), "{}");
     Assert.assertEquals(400, response.getStatusLine().getStatusCode());
   }
 
@@ -211,16 +211,16 @@ public class AdapterLifecycleTest extends AppFabricTestBase {
     AdapterConfig adapterConfig = new AdapterConfig("description", DummyBatchTemplate.NAME, GSON.toJsonTree(config));
     HttpResponse response = doPut(
       String.format("%s/namespaces/%s/adapters/%s",
-        Constants.Gateway.API_VERSION_3, Constants.DEFAULT_NAMESPACE, adapterName), GSON.toJson(adapterConfig));
+        Constants.Gateway.API_VERSION_3, Id.Namespace.DEFAULT.getId(), adapterName), GSON.toJson(adapterConfig));
     Assert.assertEquals(400, response.getStatusLine().getStatusCode());
 
-    deleteApp(Id.Application.from(Constants.DEFAULT_NAMESPACE, DummyBatchTemplate.NAME), 200, 60, TimeUnit.SECONDS);
+    deleteApp(Id.Application.from(Id.Namespace.DEFAULT.getId(), DummyBatchTemplate.NAME), 200, 60, TimeUnit.SECONDS);
   }
 
   @Test
   public void testGetAllAdapters() throws Exception {
     // create first adapter
-    String namespaceId = Constants.DEFAULT_NAMESPACE;
+    String namespaceId = Id.Namespace.DEFAULT.getId();
     String adapter1 = "adapter1";
     DummyWorkerTemplate.Config config1 = new DummyWorkerTemplate.Config(2);
     createAdapter(namespaceId, adapter1,
@@ -256,8 +256,8 @@ public class AdapterLifecycleTest extends AppFabricTestBase {
     deleteAdapter(namespaceId, adapter2);
     // deleting the adaprer should have deleted the app too and they should not be found
     // deleting the adaprer should have deleted the app too and they should not be found
-    deleteApp(Id.Application.from(Constants.DEFAULT_NAMESPACE, DummyBatchTemplate.NAME), 404, 60, TimeUnit.SECONDS);
-    deleteApp(Id.Application.from(Constants.DEFAULT_NAMESPACE, DummyWorkerTemplate.NAME), 404, 60, TimeUnit.SECONDS);
+    deleteApp(Id.Application.from(Id.Namespace.DEFAULT.getId(), DummyBatchTemplate.NAME), 404, 60, TimeUnit.SECONDS);
+    deleteApp(Id.Application.from(Id.Namespace.DEFAULT.getId(), DummyWorkerTemplate.NAME), 404, 60, TimeUnit.SECONDS);
 
     // check there are none
     response = listAdapters(namespaceId);

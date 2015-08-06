@@ -74,8 +74,6 @@ public class InMemoryExploreServiceTest {
   private static DatasetOpExecutor dsOpService;
   private static DatasetService datasetService;
 
-  private final String otherNamespace = "otherNamespace";
-
   @BeforeClass
   public static void start() throws Exception {
     CConfiguration configuration = CConfiguration.create();
@@ -125,14 +123,15 @@ public class InMemoryExploreServiceTest {
 
   @Test
   public void testHiveIntegration() throws Exception {
+    String otherNamespace = "otherNamespace";
     waitForCompletionStatus(exploreService.createNamespace(Id.Namespace.from(otherNamespace)));
 
-    runCleanup(ImmutableList.of(Constants.DEFAULT_NAMESPACE, otherNamespace));
+    runCleanup(ImmutableList.of(Id.Namespace.DEFAULT.getId(), otherNamespace));
 
-    runNamespacedTest(Constants.DEFAULT_NAMESPACE);
+    runNamespacedTest(Id.Namespace.DEFAULT.getId());
     runNamespacedTest(otherNamespace);
 
-    runCleanup(ImmutableList.of(Constants.DEFAULT_NAMESPACE, otherNamespace));
+    runCleanup(ImmutableList.of(Id.Namespace.DEFAULT.getId(), otherNamespace));
 
     waitForCompletionStatus(exploreService.deleteNamespace(Id.Namespace.from(otherNamespace)));
   }

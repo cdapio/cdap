@@ -33,22 +33,21 @@ public class InstanceURIParserTest {
     CConfiguration cConf = CConfiguration.create();
     int defaultSSLPort = cConf.getInt(Constants.Router.ROUTER_SSL_PORT);
     int defaultPort = cConf.getInt(Constants.Router.ROUTER_PORT);
-    Id.Namespace defaultNamespace = Id.Namespace.from(Constants.DEFAULT_NAMESPACE);
     Id.Namespace someNamespace = Id.Namespace.from("nsx");
     InstanceURIParser parser = new InstanceURIParser(cConf);
 
-    Assert.assertEquals(new CLIConnectionConfig(defaultNamespace, "somehost", defaultPort, false),
+    Assert.assertEquals(new CLIConnectionConfig(Id.Namespace.DEFAULT, "somehost", defaultPort, false),
                         parser.parse("somehost"));
-    Assert.assertEquals(new CLIConnectionConfig(defaultNamespace, "somehost", defaultPort, false),
+    Assert.assertEquals(new CLIConnectionConfig(Id.Namespace.DEFAULT, "somehost", defaultPort, false),
                         parser.parse("http://somehost"));
-    Assert.assertEquals(new CLIConnectionConfig(defaultNamespace, "somehost", defaultSSLPort, true),
+    Assert.assertEquals(new CLIConnectionConfig(Id.Namespace.DEFAULT, "somehost", defaultSSLPort, true),
                         parser.parse("https://somehost"));
 
-    Assert.assertEquals(new CLIConnectionConfig(defaultNamespace, "somehost", 1234, false),
+    Assert.assertEquals(new CLIConnectionConfig(Id.Namespace.DEFAULT, "somehost", 1234, false),
                         parser.parse("somehost:1234"));
-    Assert.assertEquals(new CLIConnectionConfig(defaultNamespace, "somehost", 1234, false),
+    Assert.assertEquals(new CLIConnectionConfig(Id.Namespace.DEFAULT, "somehost", 1234, false),
                         parser.parse("http://somehost:1234"));
-    Assert.assertEquals(new CLIConnectionConfig(defaultNamespace, "somehost", 1234, true),
+    Assert.assertEquals(new CLIConnectionConfig(Id.Namespace.DEFAULT, "somehost", 1234, true),
                         parser.parse("https://somehost:1234"));
 
     Assert.assertEquals(new CLIConnectionConfig(someNamespace, "somehost", 1234, false),
@@ -62,10 +61,9 @@ public class InstanceURIParserTest {
   @Test
   public void testParseTrailingSlash() {
     CConfiguration cConf = CConfiguration.create();
-    Id.Namespace defaultNamespace = Id.Namespace.from(Constants.DEFAULT_NAMESPACE);
     InstanceURIParser parser = new InstanceURIParser(cConf);
 
-    Assert.assertEquals(new CLIConnectionConfig(defaultNamespace, "somehost", 1234, true),
+    Assert.assertEquals(new CLIConnectionConfig(Id.Namespace.DEFAULT, "somehost", 1234, true),
                         parser.parse("https://somehost:1234/"));
   }
 

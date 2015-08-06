@@ -21,7 +21,6 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.template.etl.api.PipelineConfigurable;
@@ -80,7 +79,6 @@ import java.util.concurrent.TimeUnit;
  */
 public class ETLWorkerTest extends TestBase {
   private static final Gson GSON = new Gson();
-  private static final Id.Namespace NAMESPACE = Constants.DEFAULT_NAMESPACE_ID;
   private static final Id.ApplicationTemplate TEMPLATE_ID = Id.ApplicationTemplate.from("ETLRealtime");
 
   private static ZKClientService zkClient;
@@ -98,8 +96,6 @@ public class ETLWorkerTest extends TestBase {
   protected static EmbeddedKafkaServer kafkaServer;
   protected static int kafkaPort;
 
-  private KafkaSource kafkaSource;
-
   @BeforeClass
   public static void setupTests() throws IOException {
     addTemplatePlugins(TEMPLATE_ID, "realtime-sources-1.0.0.jar",
@@ -110,7 +106,7 @@ public class ETLWorkerTest extends TestBase {
     addTemplatePlugins(TEMPLATE_ID, "transforms-1.0.0.jar",
                        ProjectionTransform.class, ScriptFilterTransform.class, 
                        StructuredRecordToGenericRecordTransform.class);
-    deployTemplate(NAMESPACE, TEMPLATE_ID, ETLRealtimeTemplate.class,
+    deployTemplate(Id.Namespace.DEFAULT, TEMPLATE_ID, ETLRealtimeTemplate.class,
                    PipelineConfigurable.class.getPackage().getName(),
                    ETLStage.class.getPackage().getName(),
                    RealtimeSource.class.getPackage().getName());
@@ -125,7 +121,7 @@ public class ETLWorkerTest extends TestBase {
 
     AdapterConfig adapterConfig = new AdapterConfig("null properties", TEMPLATE_ID.getId(),
                                                     GSON.toJsonTree(etlConfig));
-    Id.Adapter adapterId = Id.Adapter.from(NAMESPACE, "testAdap");
+    Id.Adapter adapterId = Id.Adapter.from(Id.Namespace.DEFAULT, "testAdap");
     AdapterManager adapterManager = createAdapter(adapterId, adapterConfig);
     Assert.assertNotNull(adapterManager);
   }
@@ -140,7 +136,7 @@ public class ETLWorkerTest extends TestBase {
     ETLRealtimeConfig etlConfig = new ETLRealtimeConfig(source, sink);
 
     AdapterConfig adapterConfig = new AdapterConfig("test adapter", TEMPLATE_ID.getId(), GSON.toJsonTree(etlConfig));
-    Id.Adapter adapterId = Id.Adapter.from(NAMESPACE, "testToStream");
+    Id.Adapter adapterId = Id.Adapter.from(Id.Namespace.DEFAULT, "testToStream");
     AdapterManager adapterManager = createAdapter(adapterId, adapterConfig);
 
     adapterManager.start();
@@ -154,7 +150,7 @@ public class ETLWorkerTest extends TestBase {
     TimeUnit.SECONDS.sleep(2);
     adapterManager.stop();
 
-    StreamManager streamManager = getStreamManager(NAMESPACE, "testStream");
+    StreamManager streamManager = getStreamManager(Id.Namespace.DEFAULT, "testStream");
     long currentDiff = System.currentTimeMillis() - startTime;
     List<StreamEvent> streamEvents = streamManager.getEvents("now-" + Long.toString(currentDiff) + "ms", "now",
                                                              Integer.MAX_VALUE);
@@ -181,7 +177,7 @@ public class ETLWorkerTest extends TestBase {
                                    Properties.Table.PROPERTY_SCHEMA_ROW_FIELD, "binary"));
     ETLRealtimeConfig etlConfig = new ETLRealtimeConfig(source, sink, Lists.<ETLStage>newArrayList());
     AdapterConfig adapterConfig = new AdapterConfig("", TEMPLATE_ID.getId(), GSON.toJsonTree(etlConfig));
-    Id.Adapter adapterId = Id.Adapter.from(NAMESPACE, "testTableSink");
+    Id.Adapter adapterId = Id.Adapter.from(Id.Namespace.DEFAULT, "testTableSink");
 
     AdapterManager manager = createAdapter(adapterId, adapterConfig);
 
@@ -205,9 +201,8 @@ public class ETLWorkerTest extends TestBase {
   }
 
   @Test
+  @SuppressWarnings("ConstantConditions")
   public void testKafkaSource() throws Exception {
-    long startTime = System.currentTimeMillis();
-
     Schema schema = Schema.recordOf("student",
                                     Schema.Field.of("NAME", Schema.of(Schema.Type.STRING)),
                                     Schema.Field.of("ID", Schema.of(Schema.Type.INT)),
@@ -234,7 +229,7 @@ public class ETLWorkerTest extends TestBase {
     ETLRealtimeConfig etlConfig = new ETLRealtimeConfig(source, sink);
 
     AdapterConfig adapterConfig = new AdapterConfig("test adapter", TEMPLATE_ID.getId(), GSON.toJsonTree(etlConfig));
-    Id.Adapter adapterId = Id.Adapter.from(NAMESPACE, "testToKafka");
+    Id.Adapter adapterId = Id.Adapter.from(Id.Namespace.DEFAULT, "testToKafka");
     AdapterManager adapterManager = createAdapter(adapterId, adapterConfig);
 
     adapterManager.start();

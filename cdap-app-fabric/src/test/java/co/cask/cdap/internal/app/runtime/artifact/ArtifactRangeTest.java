@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime.artifact;
 
 import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.artifact.InvalidArtifactRangeException;
 import org.junit.Assert;
@@ -29,7 +30,7 @@ public class ArtifactRangeTest {
 
   @Test
   public void testIsInRange() {
-    ArtifactRange range = new ArtifactRange(Constants.DEFAULT_NAMESPACE_ID, "test",
+    ArtifactRange range = new ArtifactRange(Id.Namespace.DEFAULT, "test",
       new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0"));
 
     Assert.assertFalse(range.versionIsInRange(new ArtifactVersion("0.0.9")));
@@ -53,14 +54,14 @@ public class ArtifactRangeTest {
 
   @Test
   public void testVersionParse() throws InvalidArtifactRangeException {
-    ArtifactRange expected = new ArtifactRange(Constants.DEFAULT_NAMESPACE_ID, "test",
+    ArtifactRange expected = new ArtifactRange(Id.Namespace.DEFAULT, "test",
       new ArtifactVersion("1.0.0"), true, new ArtifactVersion("2.0.0-SNAPSHOT"), false);
-    ArtifactRange actual = ArtifactRange.parse(Constants.DEFAULT_NAMESPACE_ID, "test[1.0.0,2.0.0-SNAPSHOT)");
+    ArtifactRange actual = ArtifactRange.parse(Id.Namespace.DEFAULT, "test[1.0.0,2.0.0-SNAPSHOT)");
     Assert.assertEquals(expected, actual);
 
-    expected = new ArtifactRange(Constants.DEFAULT_NAMESPACE_ID, "test",
+    expected = new ArtifactRange(Id.Namespace.DEFAULT, "test",
       new ArtifactVersion("0.1.0-SNAPSHOT"), false, new ArtifactVersion("1.0.0"), true);
-    actual = ArtifactRange.parse(Constants.DEFAULT_NAMESPACE_ID, "test(0.1.0-SNAPSHOT,1.0.0]");
+    actual = ArtifactRange.parse(Id.Namespace.DEFAULT, "test(0.1.0-SNAPSHOT,1.0.0]");
     Assert.assertEquals(expected, actual);
 
     // test compatible with toString
@@ -71,7 +72,7 @@ public class ArtifactRangeTest {
   public void testParseInvalid() {
     // test can't find '[' or '('
     try {
-      ArtifactRange.parse(Constants.DEFAULT_NAMESPACE_ID, "test-1.0.0,2.0.0]");
+      ArtifactRange.parse(Id.Namespace.DEFAULT, "test-1.0.0,2.0.0]");
       Assert.fail();
     } catch (InvalidArtifactRangeException e) {
       // expected
@@ -79,7 +80,7 @@ public class ArtifactRangeTest {
 
     // test can't find ',' between versions
     try {
-      ArtifactRange.parse(Constants.DEFAULT_NAMESPACE_ID, "test[1.0.0:2.0.0]");
+      ArtifactRange.parse(Id.Namespace.DEFAULT, "test[1.0.0:2.0.0]");
       Assert.fail();
     } catch (InvalidArtifactRangeException e) {
       // expected
@@ -87,7 +88,7 @@ public class ArtifactRangeTest {
 
     // test no ending ']' or ')'
     try {
-      ArtifactRange.parse(Constants.DEFAULT_NAMESPACE_ID, "test[1.0.0,2.0.0");
+      ArtifactRange.parse(Id.Namespace.DEFAULT, "test[1.0.0,2.0.0");
       Assert.fail();
     } catch (InvalidArtifactRangeException e) {
       // expected
@@ -95,20 +96,20 @@ public class ArtifactRangeTest {
 
     // test invalid lower version
     try {
-      ArtifactRange.parse(Constants.DEFAULT_NAMESPACE_ID, "tes[t1.0.0,2.0.0]");
+      ArtifactRange.parse(Id.Namespace.DEFAULT, "tes[t1.0.0,2.0.0]");
       Assert.fail();
     } catch (InvalidArtifactRangeException e) {
       // expected
     }
 
     try {
-      ArtifactRange.parse(Constants.DEFAULT_NAMESPACE_ID, "test(,1.0.0)");
+      ArtifactRange.parse(Id.Namespace.DEFAULT, "test(,1.0.0)");
       Assert.fail();
     } catch (InvalidArtifactRangeException e) {
       // expected
     }
     try {
-      ArtifactRange.parse(Constants.DEFAULT_NAMESPACE_ID, "test(1.0.0,)");
+      ArtifactRange.parse(Id.Namespace.DEFAULT, "test(1.0.0,)");
       Assert.fail();
     } catch (InvalidArtifactRangeException e) {
       // expected
@@ -116,7 +117,7 @@ public class ArtifactRangeTest {
 
     // test invalid name
     try {
-      ArtifactRange.parse(Constants.DEFAULT_NAMESPACE_ID, "te$t[1.0.0,2.0.0)");
+      ArtifactRange.parse(Id.Namespace.DEFAULT, "te$t[1.0.0,2.0.0)");
       Assert.fail();
     } catch (InvalidArtifactRangeException e) {
       // expected
