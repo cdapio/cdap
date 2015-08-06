@@ -20,6 +20,7 @@ import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
+import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.proto.ApplicationRecord;
@@ -171,22 +172,19 @@ public abstract class AbstractAppFabricHttpHandler extends AbstractHttpHandler {
     }
   }
 
-  protected final void getAppRecords(HttpResponder responder, Store store, String namespaceId) {
-    try {
-      Id.Namespace namespace = Id.Namespace.from(namespaceId);
-      List<ApplicationRecord> appRecords = Lists.newArrayList();
-      for (ApplicationSpecification appSpec : store.getAllApplications(namespace)) {
-        appRecords.add(new ApplicationRecord(appSpec.getName(), appSpec.getVersion(), appSpec.getDescription()));
-      }
-
-      responder.sendJson(HttpResponseStatus.OK, appRecords);
-    } catch (SecurityException e) {
-      LOG.debug("Security Exception while retrieving app details: ", e);
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception : ", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+  protected final void getAppRecords(HttpResponder responder, Store store,
+                                     String namespaceId) throws NamespaceNotFoundException {
+    Id.Namespace namespace = Id.Namespace.from(namespaceId);
+    if (store.getNamespace(namespace) == null) {
+      throw new NamespaceNotFoundException(namespace);
     }
+
+    List<ApplicationRecord> appRecords = Lists.newArrayList();
+    for (ApplicationSpecification appSpec : store.getAllApplications(namespace)) {
+      appRecords.add(new ApplicationRecord(appSpec.getName(), appSpec.getVersion(), appSpec.getDescription()));
+    }
+
+    responder.sendJson(HttpResponseStatus.OK, appRecords);
   }
 
   protected final void programList(HttpResponder responder, String namespaceId, ProgramType type, Store store) {
