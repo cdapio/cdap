@@ -17,7 +17,7 @@
         "es.transportAddresses": {
           "widget": "textbox",
           "label": "Transport Addresses",
-          "description": "The addresses for nodes. Specify the address for at least one node, and separate by commas. Other nodes will be sniffed out. For example, host1:9300,host2:9300.",
+          "description": "The addresses for nodes. Specify the address for at least one node, and separate others by commas. Other nodes will be sniffed out. For example: host1:9300,host2:9300.",
           "properties": {
             "width": "large"
           }

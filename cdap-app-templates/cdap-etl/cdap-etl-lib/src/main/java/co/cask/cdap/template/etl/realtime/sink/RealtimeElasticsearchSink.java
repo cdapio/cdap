@@ -16,22 +16,6 @@
 
 package co.cask.cdap.template.etl.realtime.sink;
 
-/*
- * Copyright © 2015 Cask Data, Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
-
 import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
@@ -61,19 +45,20 @@ import javax.annotation.Nullable;
  */
 @Plugin(type = "sink")
 @Name("Elasticsearch")
-@Description("Real-time sink that outputs to the elasticsearch instance.")
+@Description("Real-time sink that outputs to the Elasticsearch server.")
 public class RealtimeElasticsearchSink extends RealtimeSink<StructuredRecord> {
   private static final Logger LOG = LoggerFactory.getLogger(RealtimeElasticsearchSink.class);
   private static final String INDEX_DESCRIPTION = "The name of the index where the data will be stored. " +
-    "If the index does not already exist, it will be created using elasticsearch's default properties.";
-  private static final String TYPE_DESCRIPTION = "The name of the type where the data will be stored." +
+    "If the index does not already exist, it will be created using Elasticsearch's default properties.";
+  private static final String TYPE_DESCRIPTION = "The name of the type where the data will be stored. " +
     "If it does not already exist, it will be created.";
   private static final String ID_DESCRIPTION = "The field that will determine the id for the document. " +
     "It should match a field name in the structured record of the input.";
   private static final String TRANSPORT_ADDRESS_DESCRIPTION = "The addresses for nodes. " +
-    "Specify the address for at least one node, and separate by commas. Other nodes will be sniffed out. " +
-    "For example, host1:9300,host2:9300.";
-  private static final String CLUSTER_DESCRIPTION = "The name of the cluster to connect to. Defaults to elasticsearch.";
+    "Specify the address for at least one node, and separate others by commas. Other nodes will be sniffed out. " +
+    "For example: host1:9300,host2:9300.";
+  private static final String CLUSTER_DESCRIPTION = "The name of the cluster to connect to. " +
+    "Defaults to \'elasticsearch\'.";
 
   private final RealtimeESSinkConfig realtimeESSinkConfig;
   private TransportClient client;

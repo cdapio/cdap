@@ -17,7 +17,6 @@
 package co.cask.cdap.template.etl.realtime;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.template.etl.api.PipelineConfigurable;
@@ -97,7 +96,7 @@ public class RealtimeElasticsearchSinkTest extends TestBase {
 
   @BeforeClass
   public static void setupTests() throws IOException {
-    // todo: should only deploy test source and cube sink
+    // TODO: should only deploy test source and Elasticsearch sink
     addTemplatePlugins(TEMPLATE_ID, "realtime-sources-1.0.0.jar",
                        DataGeneratorSource.class, JmsSource.class, KafkaSource.class,
                        TwitterSource.class, SqsSource.class);
