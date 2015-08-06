@@ -522,7 +522,7 @@ public class LevelDBTableCore {
       try {
         while (true) {
           ImmutablePair<byte[], NavigableMap<byte[], byte[]>> result = getRow(iterator, endKey, tx, true, columns, -1,
-            snapshotVersion);
+                                                                              snapshotVersion);
           if (result.getFirst() == null) {
             return null;
           }

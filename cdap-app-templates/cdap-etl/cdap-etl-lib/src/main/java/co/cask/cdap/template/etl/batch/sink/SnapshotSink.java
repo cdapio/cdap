@@ -51,7 +51,7 @@ public class SnapshotSink extends BatchWritableSink<StructuredRecord, byte[], Pu
     "created.";
   private static final String PROPERTY_SCHEMA_DESC = "Optional schema of the snapshot dataset as a JSON Object. " +
     "If the dataset does not already exist, one will be created with this schema, which will allow the table to be " +
-    "explored through Hive.\"";
+    "explored through Hive.";
   private static final String PROPERTY_SCHEMA_ROW_FIELD_DESC = "The name of the record field that should be used as " +
     "the row key when writing to the snapshot dataset.";
 
@@ -68,8 +68,12 @@ public class SnapshotSink extends BatchWritableSink<StructuredRecord, byte[], Pu
     Map<String, String> sinkArgs = new HashMap<>();
     SnapshotDataset snapshotDataset = context.getDataset(snapshotSinkConfig.name, sinkArgs);
     snapshotDataset.updateMetaDataTable(snapshotDataset.getTransactionId());
-    recordPutTransformer = new RecordPutTransformer(snapshotSinkConfig.rowField,
-      Schema.parseJson(snapshotSinkConfig.schemaStr), true);
+    Schema outputSchema = null;
+    String schemaString = snapshotSinkConfig.schemaStr;
+    if (schemaString != null) {
+      outputSchema = Schema.parseJson(schemaString);
+    }
+    recordPutTransformer = new RecordPutTransformer(snapshotSinkConfig.rowField, outputSchema, true);
   }
 
   @Override
@@ -84,7 +88,7 @@ public class SnapshotSink extends BatchWritableSink<StructuredRecord, byte[], Pu
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     super.configurePipeline(pipelineConfigurer);
     Preconditions.checkArgument(!Strings.isNullOrEmpty(snapshotSinkConfig.rowField),
-      "Row field must be given as a property.");
+                                "Row field must be given as a property.");
   }
 
   @Override

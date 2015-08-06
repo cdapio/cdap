@@ -57,7 +57,7 @@ public class LevelDBTable extends BufferingTable {
                       LevelDBTableService service, CConfiguration cConf,
                       Schema schema, String schemaRowField, Map<String, String> arguments) throws IOException {
     super(PrefixedNamespaces.namespace(cConf, datasetContext.getNamespaceId(), tableName), level,
-      false, schema, schemaRowField, arguments);
+          false, schema, schemaRowField, arguments);
     this.core = new LevelDBTableCore(getTableName(), service, snapshotVersion);
   }
 
