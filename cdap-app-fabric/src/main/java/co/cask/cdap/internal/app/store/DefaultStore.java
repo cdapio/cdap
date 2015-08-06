@@ -85,10 +85,10 @@ import javax.annotation.Nullable;
  * Implementation of the Store that ultimately places data into MetaDataTable.
  */
 public class DefaultStore implements Store {
-  public static final String APP_META_TABLE = "app.meta";
   private static final Logger LOG = LoggerFactory.getLogger(DefaultStore.class);
-  private static final Id.DatasetInstance appMetaDatasetInstanceId =
-    Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE, APP_META_TABLE);
+  public static final String APP_META_TABLE = "app.meta";
+  private static final Id.DatasetInstance APP_META_INSTANCE_ID =
+    Id.DatasetInstance.from(Id.Namespace.SYSTEM, APP_META_TABLE);
 
   private final LocationFactory locationFactory;
   private final NamespacedLocationFactory namespacedLocationFactory;
@@ -112,7 +112,7 @@ public class DefaultStore implements Store {
       @Override
       public AppMds get() {
         try {
-          Table mdsTable = DatasetsUtil.getOrCreateDataset(dsFramework, appMetaDatasetInstanceId, "table",
+          Table mdsTable = DatasetsUtil.getOrCreateDataset(dsFramework, APP_META_INSTANCE_ID, "table",
                                                            DatasetProperties.EMPTY,
                                                            DatasetDefinition.NO_ARGUMENTS, null);
           return new AppMds(mdsTable);
@@ -129,8 +129,7 @@ public class DefaultStore implements Store {
    * @param framework framework to add types and datasets to
    */
   public static void setupDatasets(DatasetFramework framework) throws IOException, DatasetManagementException {
-    framework.addInstance(Table.class.getName(), Id.DatasetInstance.from(
-                            Constants.SYSTEM_NAMESPACE_ID, APP_META_TABLE),
+    framework.addInstance(Table.class.getName(), Id.DatasetInstance.from(Id.Namespace.SYSTEM, APP_META_TABLE),
                           DatasetProperties.EMPTY);
   }
 
@@ -951,7 +950,7 @@ public class DefaultStore implements Store {
 
   @VisibleForTesting
   void clear() throws Exception {
-    DatasetAdmin admin = dsFramework.getAdmin(appMetaDatasetInstanceId, null);
+    DatasetAdmin admin = dsFramework.getAdmin(APP_META_INSTANCE_ID, null);
     if (admin != null) {
       admin.truncate();
     }

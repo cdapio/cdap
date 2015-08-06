@@ -145,7 +145,7 @@ public class ExploreFacade {
   }
 
   private boolean isDatasetExplorable(Id.DatasetInstance datasetInstance) {
-    return !datasetInstance.getNamespace().equals(Constants.SYSTEM_NAMESPACE_ID);
+    return !Id.Namespace.SYSTEM.equals(datasetInstance.getNamespace());
   }
 
   // wait for the enable/disable operation to finish and log and throw exceptions as appropriate if there was an error.

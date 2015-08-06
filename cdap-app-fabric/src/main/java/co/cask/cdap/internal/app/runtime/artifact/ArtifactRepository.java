@@ -85,7 +85,7 @@ public class ArtifactRepository {
   public List<ArtifactSummary> getArtifacts(Id.Namespace namespace, boolean includeSystem) throws IOException {
     List<ArtifactSummary> summaries = Lists.newArrayList();
     if (includeSystem) {
-      convertAndAdd(summaries, artifactStore.getArtifacts(Constants.SYSTEM_NAMESPACE_ID));
+      convertAndAdd(summaries, artifactStore.getArtifacts(Id.Namespace.SYSTEM));
     }
     return Collections.unmodifiableList(convertAndAdd(summaries, artifactStore.getArtifacts(namespace)));
   }

@@ -244,7 +244,7 @@ public class PluginRepository {
 
     PluginInfo pluginInfo = pluginFile.getPluginInfo();
     Id.Artifact artifactId = Id.Artifact.from(
-      Constants.SYSTEM_NAMESPACE_ID, pluginInfo.getName(), pluginInfo.getVersion().getVersion());
+      Id.Namespace.SYSTEM, pluginInfo.getName(), pluginInfo.getVersion().getVersion());
 
     try {
       ArtifactClasses artifactClasses =

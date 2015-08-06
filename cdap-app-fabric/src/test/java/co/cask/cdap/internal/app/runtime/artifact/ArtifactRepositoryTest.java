@@ -71,7 +71,7 @@ public class ArtifactRepositoryTest {
 
   private static final String TEST_EMPTY_CLASS = EmptyClass.class.getName();
   private static final Id.Artifact APP_ARTIFACT_ID =
-    Id.Artifact.from(Constants.DEFAULT_NAMESPACE_ID, "PluginTest", "1.0.0");
+    Id.Artifact.from(Id.Namespace.DEFAULT, "PluginTest", "1.0.0");
 
   private static CConfiguration cConf;
   private static File tmpDir;
@@ -90,7 +90,7 @@ public class ArtifactRepositoryTest {
 
   @Before
   public void setupData() throws Exception {
-    artifactRepository.clear(Constants.DEFAULT_NAMESPACE_ID);
+    artifactRepository.clear(Id.Namespace.DEFAULT);
     File appArtifactFile = createAppJar(PluginTestAppTemplate.class, new File(tmpDir, "PluginTest-1.0.0.jar"),
       createManifest(ManifestFields.EXPORT_PACKAGE,
         PluginTestRunnable.class.getPackage().getName()));
@@ -118,7 +118,7 @@ public class ArtifactRepositoryTest {
     Set<ArtifactRange> parents = ImmutableSet.of(
       new ArtifactRange(APP_ARTIFACT_ID.getNamespace(), APP_ARTIFACT_ID.getName(),
       new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
-    Id.Artifact artifactId = Id.Artifact.from(Constants.DEFAULT_NAMESPACE_ID, "myPlugin", "1.0");
+    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "myPlugin", "1.0");
     artifactRepository.addArtifact(artifactId, jarFile, parents);
 
     // check the parent can see the plugins
@@ -153,7 +153,7 @@ public class ArtifactRepositoryTest {
     }
 
     // Create a plugin jar. It contains two plugins, TestPlugin and TestPlugin2 inside.
-    Id.Artifact artifact1Id = Id.Artifact.from(Constants.DEFAULT_NAMESPACE_ID, "myPlugin", "1.0");
+    Id.Artifact artifact1Id = Id.Artifact.from(Id.Namespace.DEFAULT, "myPlugin", "1.0");
     Manifest manifest = createManifest(ManifestFields.EXPORT_PACKAGE, TestPlugin.class.getPackage().getName());
     File jarFile = createPluginJar(TestPlugin.class, new File(tmpDir, "myPlugin-1.0.jar"), manifest);
 
@@ -171,7 +171,7 @@ public class ArtifactRepositoryTest {
     Assert.assertEquals("TestPlugin2", plugin.getValue().getName());
 
     // Create another plugin jar with later version and update the repository
-    Id.Artifact artifact2Id = Id.Artifact.from(Constants.DEFAULT_NAMESPACE_ID, "myPlugin", "2.0");
+    Id.Artifact artifact2Id = Id.Artifact.from(Id.Namespace.DEFAULT, "myPlugin", "2.0");
     jarFile = createPluginJar(TestPlugin.class, new File(tmpDir, "myPlugin-2.0.jar"), manifest);
     artifactRepository.addArtifact(artifact2Id, jarFile, parents);
 

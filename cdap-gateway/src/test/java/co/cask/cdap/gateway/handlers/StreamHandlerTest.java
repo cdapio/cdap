@@ -72,7 +72,7 @@ public class StreamHandlerTest extends GatewayTestBase {
 
 
   protected URL createURL(String path) throws URISyntaxException, MalformedURLException {
-    return createURL(Constants.DEFAULT_NAMESPACE, path);
+    return createURL(Id.Namespace.DEFAULT.getId(), path);
   }
 
   protected URL createStreamInfoURL(String streamName) throws URISyntaxException, MalformedURLException {

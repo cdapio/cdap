@@ -83,10 +83,9 @@ public class DatasetUpgrader extends AbstractUpgrader {
   }
 
   private void upgradeSystemDatasets() throws Exception {
-    for (DatasetSpecificationSummary spec : dsFramework.getInstances(Constants.SYSTEM_NAMESPACE_ID)) {
+    for (DatasetSpecificationSummary spec : dsFramework.getInstances(Id.Namespace.SYSTEM)) {
       LOG.info("Upgrading dataset in system namespace: {}, spec: {}", spec.getName(), spec.toString());
-      DatasetAdmin admin = dsFramework.getAdmin(Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE_ID, spec.getName()),
-                                                null);
+      DatasetAdmin admin = dsFramework.getAdmin(Id.DatasetInstance.from(Id.Namespace.SYSTEM, spec.getName()), null);
       // we know admin is not null, since we are looping over existing datasets
       //noinspection ConstantConditions
       admin.upgrade();
@@ -141,7 +140,7 @@ public class DatasetUpgrader extends AbstractUpgrader {
     String tableName = desc.getNameAsString();
     // If table is in system namespace: (starts with <tablePrefix>_system
     // or if it is not created by CDAP it is not user table
-    if (tableName.startsWith(String.format("%s_%s", this.datasetTablePrefix, Constants.SYSTEM_NAMESPACE)) ||
+    if (tableName.startsWith(String.format("%s_%s", this.datasetTablePrefix, Id.Namespace.SYSTEM.getId())) ||
        (!isTableCreatedByCDAP(desc))) {
       return false;
     }

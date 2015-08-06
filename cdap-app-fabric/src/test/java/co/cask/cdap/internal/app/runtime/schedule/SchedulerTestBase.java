@@ -26,12 +26,11 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.NamespaceCannotBeDeletedException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Predicate;
@@ -58,13 +57,13 @@ public abstract class SchedulerTestBase {
   protected static MetricStore metricStore;
   protected static Injector injector;
 
-  private static final Id.Application APP_ID = new Id.Application(Constants.DEFAULT_NAMESPACE_ID,
+  private static final Id.Application APP_ID = new Id.Application(Id.Namespace.DEFAULT,
                                                                   "AppWithStreamSizeSchedule");
   private static final Id.Program PROGRAM_ID = new Id.Program(APP_ID, ProgramType.WORKFLOW, "SampleWorkflow");
   private static final String SCHEDULE_NAME_1 = "SampleSchedule1";
   private static final String SCHEDULE_NAME_2 = "SampleSchedule2";
   private static final SchedulableProgramType PROGRAM_TYPE = SchedulableProgramType.WORKFLOW;
-  private static final Id.Stream STREAM_ID = Id.Stream.from(Constants.DEFAULT_NAMESPACE_ID, "stream");
+  private static final Id.Stream STREAM_ID = Id.Stream.from(Id.Namespace.DEFAULT, "stream");
   private static final Schedule UPDATE_SCHEDULE_2 =
     Schedules.createDataSchedule(SCHEDULE_NAME_2, "Every 1M", Schedules.Source.STREAM, STREAM_ID.getId(), 1);
 
@@ -77,12 +76,11 @@ public abstract class SchedulerTestBase {
   @BeforeClass
   public static void init() throws Exception {
     injector = AppFabricTestHelper.getInjector(CCONF);
-    PreferencesStore preferencesStore = injector.getInstance(PreferencesStore.class);
     streamSizeScheduler = injector.getInstance(StreamSizeScheduler.class);
     store = injector.getInstance(Store.class);
     metricStore = injector.getInstance(MetricStore.class);
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
-    namespaceAdmin.createNamespace(Constants.DEFAULT_NAMESPACE_META);
+    namespaceAdmin.createNamespace(NamespaceMeta.DEFAULT);
     runtimeService = injector.getInstance(ProgramRuntimeService.class);
   }
 
@@ -149,7 +147,7 @@ public abstract class SchedulerTestBase {
 
   @AfterClass
   public static void tearDown() throws NotFoundException, NamespaceCannotBeDeletedException {
-    namespaceAdmin.deleteNamespace(Constants.DEFAULT_NAMESPACE_ID);
+    namespaceAdmin.deleteNamespace(Id.Namespace.DEFAULT);
   }
 
   /**

@@ -80,13 +80,13 @@ public class HBaseMetricsTableTest extends MetricsTableTest {
 
     dsFramework = injector.getInstance(DatasetFramework.class);
     tableUtil = injector.getInstance(HBaseTableUtil.class);
-    tableUtil.createNamespaceIfNotExists(testHBase.getHBaseAdmin(), Constants.SYSTEM_NAMESPACE_ID);
+    tableUtil.createNamespaceIfNotExists(testHBase.getHBaseAdmin(), Id.Namespace.SYSTEM);
   }
 
   @AfterClass
   public static void tearDown() throws Exception {
-    tableUtil.deleteAllInNamespace(testHBase.getHBaseAdmin(), Constants.SYSTEM_NAMESPACE_ID);
-    tableUtil.deleteNamespaceIfExists(testHBase.getHBaseAdmin(), Constants.SYSTEM_NAMESPACE_ID);
+    tableUtil.deleteAllInNamespace(testHBase.getHBaseAdmin(), Id.Namespace.SYSTEM);
+    tableUtil.deleteNamespaceIfExists(testHBase.getHBaseAdmin(), Id.Namespace.SYSTEM);
     testHBase.stopHBase();
   }
 
@@ -123,7 +123,7 @@ public class HBaseMetricsTableTest extends MetricsTableTest {
 
   @Override
   protected MetricsTable getTable(String name) throws Exception {
-    Id.DatasetInstance metricsDatasetInstanceId = Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE_ID, name);
+    Id.DatasetInstance metricsDatasetInstanceId = Id.DatasetInstance.from(Id.Namespace.SYSTEM, name);
     DatasetProperties props = DatasetProperties.builder().add(Table.PROPERTY_READLESS_INCREMENT, "true").build();
     return DatasetsUtil.getOrCreateDataset(dsFramework, metricsDatasetInstanceId,
                                            MetricsTable.class.getName(), props, null, null);

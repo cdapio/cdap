@@ -27,6 +27,7 @@ import co.cask.cdap.logging.filter.AndFilter;
 import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.filter.MdcExpression;
 import co.cask.cdap.logging.filter.OrFilter;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -294,7 +295,7 @@ public final class LoggingContextHelper {
 
   private static Map<String, String> getMetricsTagsFromSystemContext(ServiceLoggingContext context) {
     ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
-    builder.put(Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE);
+    builder.put(Constants.Metrics.Tag.NAMESPACE, Id.Namespace.SYSTEM.getId());
     builder.put(Constants.Metrics.Tag.COMPONENT,
                 context.getSystemTagsMap().get(ServiceLoggingContext.TAG_SERVICE_ID).getValue());
     return builder.build();

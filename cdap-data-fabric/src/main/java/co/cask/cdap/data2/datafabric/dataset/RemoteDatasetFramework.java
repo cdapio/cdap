@@ -152,7 +152,7 @@ public class RemoteDatasetFramework implements DatasetFramework {
 
   @Override
   public boolean hasSystemType(String typeName) throws DatasetManagementException {
-    return hasType(Id.DatasetType.from(Constants.SYSTEM_NAMESPACE, typeName));
+    return hasType(Id.DatasetType.from(Id.Namespace.SYSTEM, typeName));
   }
 
   @Override

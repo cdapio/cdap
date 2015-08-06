@@ -723,7 +723,7 @@ public class AdapterService extends AbstractIdleService {
     }
 
     // verify that the name is ok
-    Id.Application.from(Constants.DEFAULT_NAMESPACE_ID, spec.getName());
+    Id.Application.from(Id.Namespace.DEFAULT, spec.getName());
 
     // determine the program type of the template
     ProgramType programType;

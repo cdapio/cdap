@@ -116,7 +116,7 @@ public class AppFabricTestHelper {
   }
 
   public static void deployApplication(Class<?> application) throws Exception {
-    deployApplication(Constants.DEFAULT_NAMESPACE_ID, application);
+    deployApplication(Id.Namespace.DEFAULT, application);
   }
 
   public static void deployApplication(Id.Namespace namespace, Class<?> applicationClz,
@@ -144,7 +144,7 @@ public class AppFabricTestHelper {
   }
 
   public static void deployApplication(Class<?> applicationClz, String appName, String config) throws Exception {
-    deployApplication(Constants.DEFAULT_NAMESPACE_ID, applicationClz, appName, config);
+    deployApplication(Id.Namespace.DEFAULT, applicationClz, appName, config);
   }
 
   public static ApplicationWithPrograms deployApplicationWithManager(Class<?> appClass,

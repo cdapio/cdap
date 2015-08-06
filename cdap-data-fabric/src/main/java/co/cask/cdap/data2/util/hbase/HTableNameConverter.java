@@ -16,7 +16,6 @@
 
 package co.cask.cdap.data2.util.hbase;
 
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Joiner;
@@ -46,12 +45,12 @@ public abstract class HTableNameConverter {
   private String getBackwardCompatibleTableName(String tablePrefix, TableId tableId) {
     String tableName = tableId.getTableName();
     // handle table names in default namespace so we do not have to worry about upgrades
-    if (Constants.DEFAULT_NAMESPACE_ID.equals(tableId.getNamespace())) {
+    if (Id.Namespace.DEFAULT.equals(tableId.getNamespace())) {
       // if the table name starts with 'system.', then its a queue or stream table. Do not add namespace to table name
       // e.g. namespace = default, tableName = system.queue.config. Resulting table name = cdap.system.queue.config
       // also no need to prepend the table name if it already starts with 'user'.
       // TODO: the 'user' should be prepended by the HBaseTableAdmin.
-      if (tableName.startsWith(String.format("%s.", Constants.SYSTEM_NAMESPACE))) {
+      if (tableName.startsWith(String.format("%s.", Id.Namespace.SYSTEM.getId()))) {
         return Joiner.on(".").join(tablePrefix, tableName);
       }
       // if the table name does not start with 'system.', then its a user dataset. Add 'user' to the table name to
@@ -95,7 +94,7 @@ public abstract class HTableNameConverter {
   protected String toHBaseNamespace(String hBaseNamespacePrefix, Id.Namespace namespace) {
     // Handle backward compatibility to not add the prefix for default namespace
     // TODO: CDAP-1601 - Conditional should be removed when we have a way to upgrade user datasets
-    return getHBaseTableName(Constants.DEFAULT_NAMESPACE_ID.equals(namespace) ? namespace.getId() :
+    return getHBaseTableName(Id.Namespace.DEFAULT.equals(namespace) ? namespace.getId() :
                                hBaseNamespacePrefix + "_" + namespace.getId());
   }
 
@@ -104,7 +103,7 @@ public abstract class HTableNameConverter {
     Preconditions.checkArgument(qualifier != null, "Table qualifier should not be null.");
 
     // Handle backward compatibility to not add the prefix for default namespace
-    if (Constants.DEFAULT_NAMESPACE.equals(namespace)) {
+    if (Id.Namespace.DEFAULT.getId().equals(namespace)) {
       // in Default namespace, qualifier is something like 'cdap.foo.table'
       @SuppressWarnings("ConstantConditions")
       String[] parts = qualifier.split("\\.", 2);

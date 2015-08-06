@@ -21,6 +21,7 @@ import co.cask.cdap.common.NamespaceCannotBeCreatedException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.service.RetryOnStartFailureService;
 import co.cask.cdap.common.service.RetryStrategies;
+import co.cask.cdap.proto.NamespaceMeta;
 import com.google.common.base.Supplier;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.Service;
@@ -48,7 +49,7 @@ public final class DefaultNamespaceEnsurer extends AbstractService {
           @Override
           protected void doStart() {
             try {
-              namespaceAdmin.createNamespace(Constants.DEFAULT_NAMESPACE_META);
+              namespaceAdmin.createNamespace(NamespaceMeta.DEFAULT);
               // if there is no exception, assume successfully created and break
               LOG.info("Created default namespace successfully.");
               notifyStarted();

@@ -23,6 +23,7 @@ import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.logging.appender.kafka.KafkaTopic;
 import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.logging.kafka.KafkaLogEvent;
+import co.cask.cdap.proto.Id;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
@@ -104,7 +105,7 @@ public class LogMetricsPlugin extends AbstractKafkaLogProcessor {
   }
 
   private String getMetricName(String namespace, String logLevel) {
-    return namespace.equals(Constants.SYSTEM_NAMESPACE) ?
+    return namespace.equals(Id.Namespace.SYSTEM.getId()) ?
            String.format("%s.%s", SYSTEM_METRIC_PREFIX, logLevel) :
            String.format("%s.%s", APP_METRIC_PREFIX, logLevel);
   }

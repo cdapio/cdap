@@ -67,7 +67,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     ConfigTestApp.ConfigClass config = new ConfigTestApp.ConfigClass("abc", "def");
     HttpResponse response = deploy(ConfigTestApp.class, "ConfigApp", config);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    JsonObject appDetails = getAppDetails(Constants.DEFAULT_NAMESPACE, "ConfigApp");
+    JsonObject appDetails = getAppDetails(Id.Namespace.DEFAULT.getId(), "ConfigApp");
     Assert.assertEquals(GSON.toJson(config), appDetails.get("configuration").getAsString());
   }
 

@@ -149,8 +149,9 @@ public abstract class Id {
    * Uniquely identifies a Namespace.
    */
   public static final class Namespace extends Id {
-    public static final Namespace DEFAULT = Id.Namespace.from("default");
-    public static final Namespace SYSTEM = Id.Namespace.from("system");
+    public static final Namespace DEFAULT = from("default");
+    public static final Namespace SYSTEM = from("system");
+    public static final Namespace CDAP = from("cdap");
 
     private final String id;
 

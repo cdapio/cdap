@@ -18,13 +18,13 @@ package co.cask.cdap.internal.app.deploy;
 
 import co.cask.cdap.ConfigTestApp;
 import co.cask.cdap.ToyApp;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.DefaultId;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.deploy.pipeline.DeploymentInfo;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.test.AppJarHelper;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import com.google.gson.Gson;
 import org.apache.twill.filesystem.LocalLocationFactory;
@@ -58,7 +58,7 @@ public class LocalApplicationManagerTest {
     lf = new LocalLocationFactory(TMP_FOLDER.newFolder());
 
     NamespaceAdmin namespaceAdmin = AppFabricTestHelper.getInjector().getInstance(NamespaceAdmin.class);
-    namespaceAdmin.createNamespace(Constants.DEFAULT_NAMESPACE_META);
+    namespaceAdmin.createNamespace(NamespaceMeta.DEFAULT);
   }
 
   /**
@@ -68,11 +68,8 @@ public class LocalApplicationManagerTest {
   public void testImproperOrNoManifestFile() throws Exception {
     // Create an JAR without the MainClass set.
     File deployFile = TMP_FOLDER.newFile();
-    JarOutputStream output = new JarOutputStream(new FileOutputStream(deployFile), new Manifest());
-    try {
+    try (JarOutputStream output = new JarOutputStream(new FileOutputStream(deployFile), new Manifest())) {
       output.putNextEntry(new JarEntry("dummy"));
-    } finally {
-      output.close();
     }
 
     Location destination = new LocalLocationFactory().create(new File(TMP_FOLDER.newFolder(), "deploy.jar").toURI());
