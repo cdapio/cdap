@@ -193,19 +193,19 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     response = createNamespace(METADATA_VALID, "my-namespace");
     assertResponseCode(400, response);
     // 'default' and 'system' are reserved namespaces
-    response = createNamespace(METADATA_VALID, Constants.DEFAULT_NAMESPACE);
+    response = createNamespace(METADATA_VALID, Id.Namespace.DEFAULT.getId());
     assertResponseCode(400, response);
-    response = createNamespace(METADATA_VALID, Constants.SYSTEM_NAMESPACE);
+    response = createNamespace(METADATA_VALID, Id.Namespace.SYSTEM.getId());
     assertResponseCode(400, response);
     // we allow deleting the contents in default namespace. However, the namespace itself should never be deleted
-    deploy(AppWithDataset.class, Constants.Gateway.API_VERSION_3_TOKEN, Constants.DEFAULT_NAMESPACE, "AppWithDataSet");
-    response = deleteNamespace(Constants.DEFAULT_NAMESPACE);
+    deploy(AppWithDataset.class, Constants.Gateway.API_VERSION_3_TOKEN, Id.Namespace.DEFAULT.getId(), "AppWithDataSet");
+    response = deleteNamespace(Id.Namespace.DEFAULT.getId());
     assertResponseCode(200, response);
-    response = getNamespace(Constants.DEFAULT_NAMESPACE);
-    Assert.assertEquals(0, getAppList(Constants.DEFAULT_NAMESPACE).size());
+    response = getNamespace(Id.Namespace.DEFAULT.getId());
+    Assert.assertEquals(0, getAppList(Id.Namespace.DEFAULT.getId()).size());
     assertResponseCode(200, response);
     // there is no system namespace
-    response = deleteNamespace(Constants.SYSTEM_NAMESPACE);
+    response = deleteNamespace(Id.Namespace.SYSTEM.getId());
     assertResponseCode(404, response);
   }
 
@@ -380,7 +380,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     // test setup creates two namespaces in @BeforeClass, apart from the default namespace which always exists.
     List<NamespaceMeta> namespaces = namespaceClient.list();
     Assert.assertEquals(3, namespaces.size());
-    Set<NamespaceMeta> expectedNamespaces = ImmutableSet.of(Constants.DEFAULT_NAMESPACE_META, TEST_NAMESPACE_META1,
+    Set<NamespaceMeta> expectedNamespaces = ImmutableSet.of(NamespaceMeta.DEFAULT, TEST_NAMESPACE_META1,
                                                             TEST_NAMESPACE_META2);
     Assert.assertEquals(expectedNamespaces, Sets.newHashSet(namespaces));
 
@@ -391,6 +391,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
       namespaceClient.get("nonExistentNamespace");
       Assert.fail("Did not expect namespace 'nonExistentNamespace' to exist.");
     } catch (NotFoundException expected) {
+      // expected
     }
 
     // test create and get
@@ -406,6 +407,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
       namespaceClient.get(fooNamespace);
       Assert.fail("Did not expect namespace '" + fooNamespace + "' to exist after deleting it.");
     } catch (NotFoundException expected) {
+      // expected
     }
   }
 

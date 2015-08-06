@@ -158,7 +158,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
 
     startLatch.await(5, TimeUnit.SECONDS);
 
-    framework.createNamespace(Constants.SYSTEM_NAMESPACE_ID);
+    framework.createNamespace(Id.Namespace.SYSTEM);
     framework.createNamespace(NAMESPACE_ID);
   }
 
@@ -170,22 +170,25 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     DatasetFramework framework = getFramework();
     // Adding module to system namespace should fail
     try {
-      framework.addModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE_ID, "keyValue"),
+      framework.addModule(Id.DatasetModule.from(Id.Namespace.SYSTEM, "keyValue"),
                           new SingleTypeModule(SimpleKVTable.class));
       Assert.fail("Should not be able to add a module to system namespace");
     } catch (DatasetManagementException e) {
+      // expected
     }
     Assert.assertTrue(framework.hasSystemType("orderedTable"));
     Assert.assertTrue(framework.hasSystemType(OrderedTable.class.getName()));
     try {
-      framework.deleteModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE_ID, "orderedTable-memory"));
+      framework.deleteModule(Id.DatasetModule.from(Id.Namespace.SYSTEM, "orderedTable-memory"));
       Assert.fail("Should not be able to delete a default module.");
     } catch (DatasetManagementException e) {
+      // expected
     }
     try {
-      framework.deleteAllModules(Constants.SYSTEM_NAMESPACE_ID);
+      framework.deleteAllModules(Id.Namespace.SYSTEM);
       Assert.fail("Should not be able to delete modules from system namespace");
     } catch (DatasetManagementException e) {
+      // expected
     }
   }
 
@@ -193,7 +196,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
   public void after() throws DatasetManagementException {
     Services.chainStop(service, opExecutorService, txManager);
     framework.deleteNamespace(NAMESPACE_ID);
-    framework.deleteNamespace(Constants.SYSTEM_NAMESPACE_ID);
+    framework.deleteNamespace(Id.Namespace.SYSTEM);
   }
 
   @Override

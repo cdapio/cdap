@@ -280,7 +280,7 @@ public abstract class AbstractHBaseTableUtilTest {
     create(tableIdInOtherNamespace);
 
     Assert.assertEquals(4, hAdmin.listTables().length);
-    tableUtil.deleteAllInNamespace(hAdmin, Constants.DEFAULT_NAMESPACE_ID);
+    tableUtil.deleteAllInNamespace(hAdmin, Id.Namespace.DEFAULT);
     Assert.assertEquals(1, hAdmin.listTables().length);
 
     drop(tableIdInOtherNamespace);
@@ -319,13 +319,6 @@ public abstract class AbstractHBaseTableUtilTest {
     Assert.assertEquals(0, hAdmin.listTables().length);
     deleteNamespace("foonamespace");
     deleteNamespace("barnamespace");
-  }
-
-  private void waitForMetricsToUpdate() throws InterruptedException {
-    // Wait for a bit to allow changes reflect in metrics: metrics updated on master with the heartbeat which
-    // by default happens ~every 3 sec
-    LOG.info("Waiting for metrics to reflect changes");
-    TimeUnit.SECONDS.sleep(4);
   }
 
   private void writeSome(String namespace, String tableName) throws IOException {

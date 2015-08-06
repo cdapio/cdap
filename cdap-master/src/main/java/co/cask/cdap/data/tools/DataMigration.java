@@ -17,7 +17,6 @@ package co.cask.cdap.data.tools;
 
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.utils.ProjectInfo;
@@ -210,12 +209,11 @@ public class DataMigration {
     DatasetFramework datasetFramework =
       new InMemoryDatasetFramework(registryFactory, injector.getInstance(CConfiguration.class));
     // TODO: this doesn't sound right. find out why its needed.
-    datasetFramework.addModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE, "table"),
-                               new HBaseTableModule());
-    datasetFramework.addModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE, "metricsTable"),
+    datasetFramework.addModule(Id.DatasetModule.from(Id.Namespace.SYSTEM, "table"), new HBaseTableModule());
+    datasetFramework.addModule(Id.DatasetModule.from(Id.Namespace.SYSTEM, "metricsTable"),
                                new HBaseMetricsTableModule());
-    datasetFramework.addModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE, "core"), new CoreDatasetsModule());
-    datasetFramework.addModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE, "fileSet"), new FileSetModule());
+    datasetFramework.addModule(Id.DatasetModule.from(Id.Namespace.SYSTEM, "core"), new CoreDatasetsModule());
+    datasetFramework.addModule(Id.DatasetModule.from(Id.Namespace.SYSTEM, "fileSet"), new FileSetModule());
     return datasetFramework;
   }
 }

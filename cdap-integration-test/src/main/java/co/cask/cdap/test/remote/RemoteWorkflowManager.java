@@ -26,7 +26,6 @@ import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.UnauthorizedException;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.WorkflowTokenDetail;
 import co.cask.cdap.proto.WorkflowTokenNodeDetail;
 import co.cask.cdap.test.AbstractProgramManager;
@@ -61,15 +60,6 @@ public class RemoteWorkflowManager extends AbstractProgramManager<WorkflowManage
   public List<ScheduleSpecification> getSchedules() {
     try {
       return scheduleClient.list(workflowId);
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
-  }
-
-  @Override
-  public List<RunRecord> getHistory() {
-    try {
-      return programClient.getProgramRuns(workflowId, "ALL", 0, Long.MAX_VALUE, Integer.MAX_VALUE);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

@@ -59,6 +59,7 @@ import co.cask.cdap.internal.DefaultId;
 import co.cask.cdap.internal.app.Specifications;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.templates.AdapterDefinition;
@@ -103,9 +104,9 @@ public class DefaultStoreTest {
     store.clear();
     NamespacedLocationFactory namespacedLocationFactory =
       AppFabricTestHelper.getInjector().getInstance(NamespacedLocationFactory.class);
-    namespacedLocationFactory.get(Constants.DEFAULT_NAMESPACE_ID).delete(true);
+    namespacedLocationFactory.get(Id.Namespace.DEFAULT).delete(true);
     NamespaceAdmin admin = AppFabricTestHelper.getInjector().getInstance(NamespaceAdmin.class);
-    admin.createNamespace(Constants.DEFAULT_NAMESPACE_META);
+    admin.createNamespace(NamespaceMeta.DEFAULT);
   }
 
   @Test
@@ -802,8 +803,7 @@ public class DefaultStoreTest {
     Assert.assertEquals(0, specsToBeDeleted.size());
   }
 
-  private static final Id.Namespace account = new Id.Namespace(Constants.DEFAULT_NAMESPACE);
-  private static final Id.Application appId = new Id.Application(account, AppWithWorkflow.NAME);
+  private static final Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, AppWithWorkflow.NAME);
   private static final Id.Program program = new Id.Program(appId, ProgramType.WORKFLOW,
                                                            AppWithWorkflow.SampleWorkflow.NAME);
   private static final SchedulableProgramType programType = SchedulableProgramType.WORKFLOW;
@@ -827,7 +827,7 @@ public class DefaultStoreTest {
   @Test
   public void testDynamicScheduling() throws Exception {
     AppFabricTestHelper.deployApplication(AppWithWorkflow.class);
-    Id.Application appId = Id.Application.from(Constants.DEFAULT_NAMESPACE, AppWithWorkflow.NAME);
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, AppWithWorkflow.NAME);
 
     Map<String, ScheduleSpecification> schedules = getSchedules(appId);
     Assert.assertEquals(0, schedules.size());

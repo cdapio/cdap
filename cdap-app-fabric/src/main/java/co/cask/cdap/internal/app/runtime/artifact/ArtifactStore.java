@@ -127,8 +127,7 @@ public class ArtifactStore {
   private static final String ARTIFACTS_PATH = "artifacts";
   private static final String ARTIFACT_PREFIX = "r";
   private static final String PLUGIN_PREFIX = "p";
-  private static final Id.DatasetInstance META_ID =
-    Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE, "artifact.meta");
+  private static final Id.DatasetInstance META_ID = Id.DatasetInstance.from(Id.Namespace.SYSTEM, "artifact.meta");
 
   private final LocationFactory locationFactory;
   private final NamespacedLocationFactory namespacedLocationFactory;
@@ -500,8 +499,8 @@ public class ArtifactStore {
         // delete plugins in this namespace from system artifacts
         // for example, if there was an artifact in this namespace that extends a system artifact
         Scan systemPluginsScan = new Scan(
-          Bytes.toBytes(String.format("%s:%s:", PLUGIN_PREFIX, Constants.SYSTEM_NAMESPACE)),
-          Bytes.toBytes(String.format("%s:%s;", PLUGIN_PREFIX, Constants.SYSTEM_NAMESPACE))
+          Bytes.toBytes(String.format("%s:%s:", PLUGIN_PREFIX, Id.Namespace.SYSTEM.getId())),
+          Bytes.toBytes(String.format("%s:%s;", PLUGIN_PREFIX, Id.Namespace.SYSTEM.getId()))
         );
         scanner = table.scan(systemPluginsScan);
         while ((row = scanner.next()) != null) {
@@ -609,7 +608,7 @@ public class ArtifactStore {
 
   private ArtifactDescriptor getDescriptor(Id.Artifact artifactId, Location location) {
     return new ArtifactDescriptor(artifactId.getName(), artifactId.getVersion(),
-      Constants.SYSTEM_NAMESPACE_ID.equals(artifactId.getNamespace()), location);
+                                  Id.Namespace.SYSTEM.equals(artifactId.getNamespace()), location);
   }
 
   private Scan scanArtifacts(Id.Namespace namespace) {

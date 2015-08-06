@@ -374,7 +374,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
       throw new NamespaceNotFoundException(namespace);
     }
 
-    return isSystem ? Constants.SYSTEM_NAMESPACE_ID : namespace;
+    return isSystem ? Id.Namespace.SYSTEM : namespace;
   }
 
   private Id.Artifact validateAndGetArtifactId(Id.Namespace namespace, String name,
@@ -402,7 +402,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
         try {
           range = ArtifactRange.parse(parent);
           // only support extending an artifact that is in the same namespace, or system namespace
-          if (!range.getNamespace().equals(Constants.SYSTEM_NAMESPACE_ID) &&
+          if (!range.getNamespace().equals(Id.Namespace.SYSTEM) &&
               !range.getNamespace().equals(namespace)) {
             throw new BadRequestException(
               String.format("Parent artifact %s must be in the same namespace or a system artifact.", parent));

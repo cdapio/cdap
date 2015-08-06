@@ -25,6 +25,6 @@ import co.cask.cdap.proto.Id;
 public class DefaultId {
   private static final String DEFAULT_APPLICATION_ID = "myapp";
 
-  public static final Id.Namespace NAMESPACE = Constants.DEFAULT_NAMESPACE_ID;
+  public static final Id.Namespace NAMESPACE = Id.Namespace.DEFAULT;
   public static final Id.Application APPLICATION = Id.Application.from(NAMESPACE, DEFAULT_APPLICATION_ID);
 }

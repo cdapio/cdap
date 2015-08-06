@@ -17,13 +17,13 @@
 package co.cask.cdap.data2.increment.hbase;
 
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data.hbase.HBaseTestFactory;
 import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseTable;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
+import co.cask.cdap.proto.Id;
 import co.cask.tephra.TxConstants;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -82,11 +82,10 @@ public abstract class AbstractIncrementHandlerTest {
 
   @Test
   public void testIncrements() throws Exception {
-    TableId tableId = TableId.from(Constants.DEFAULT_NAMESPACE, "incrementTest");
+    TableId tableId = TableId.from(Id.Namespace.DEFAULT, "incrementTest");
     createTable(tableId);
 
-    HTable table = new HBaseTableUtilFactory(cConf).get().createHTable(conf, tableId);
-    try {
+    try (HTable table = new HBaseTableUtilFactory(cConf).get().createHTable(conf, tableId)) {
       byte[] colA = Bytes.toBytes("a");
       byte[] row1 = Bytes.toBytes("row1");
 
@@ -124,9 +123,7 @@ public abstract class AbstractIncrementHandlerTest {
       // overwrite B with a new put
       table.put(tableUtil.buildPut(row2).add(FAMILY, colB, ts++, Bytes.toBytes(10L)).build());
 
-      assertColumns(table, row2, new byte[][]{ colA, colB }, new long[]{ 3, 10 });
-    } finally {
-      table.close();
+      assertColumns(table, row2, new byte[][]{colA, colB}, new long[]{3, 10});
     }
   }
 
@@ -134,7 +131,7 @@ public abstract class AbstractIncrementHandlerTest {
   public void testIncrementsCompaction() throws Exception {
     // In this test we verify that squashing delta-increments during flush or compaction works as designed.
 
-    TableId tableId = TableId.from(Constants.DEFAULT_NAMESPACE, "incrementCompactTest");
+    TableId tableId = TableId.from(Id.Namespace.DEFAULT, "incrementCompactTest");
 
     HTable table = createTable(tableId);
     byte[] tableBytes = table.getTableName();
@@ -210,12 +207,10 @@ public abstract class AbstractIncrementHandlerTest {
 
   @Test
   public void testIncrementsCompactionUnlimBound() throws Exception {
-    RegionWrapper region =
-      createRegion(TableId.from(Constants.DEFAULT_NAMESPACE, "testIncrementsCompactionsUnlimBound"),
-                   ImmutableMap.<String, String>builder()
-                     .put(IncrementHandlerState.PROPERTY_TRANSACTIONAL, "false").build());
 
-    try {
+    try (RegionWrapper region = createRegion(TableId.from(Id.Namespace.DEFAULT, "testIncrementsCompactionsUnlimBound"),
+                                             ImmutableMap.<String, String>builder()
+                                               .put(IncrementHandlerState.PROPERTY_TRANSACTIONAL, "false").build())) {
       region.initialize();
 
       byte[] colA = Bytes.toBytes("a");
@@ -241,8 +236,6 @@ public abstract class AbstractIncrementHandlerTest {
 
       // verify increments merged well into hstores
       assertSingleVersionColumn(region, row1, colA, 6);
-    } finally {
-      region.close();
     }
   }
 
@@ -250,12 +243,11 @@ public abstract class AbstractIncrementHandlerTest {
   public void testNonTransactionalMixed() throws Exception {
     // test mix of increment, put and delete operations
 
-    TableId tableId = TableId.from(Constants.DEFAULT_NAMESPACE, "testNonTransactionalMixed");
-    HTable table = createTable(tableId);
+    TableId tableId = TableId.from(Id.Namespace.DEFAULT, "testNonTransactionalMixed");
 
     byte[] row1 = Bytes.toBytes("r1");
     byte[] col = Bytes.toBytes("c");
-    try {
+    try (HTable table = createTable(tableId)) {
       // perform 100 increments on a column
       for (int i = 0; i < 100; i++) {
         table.put(newIncrement(row1, col, 1));
@@ -322,8 +314,6 @@ public abstract class AbstractIncrementHandlerTest {
       }
 
       assertColumn(table, row1, col, 100);
-    } finally {
-      table.close();
     }
   }
 
@@ -338,15 +328,14 @@ public abstract class AbstractIncrementHandlerTest {
    */
   @Test
   public void testNonTransactionalTTL() throws Exception {
-    RegionWrapper region = createRegion(TableId.from(Constants.DEFAULT_NAMESPACE, "testNonTransactionalTTL"),
-                                        ImmutableMap.<String, String>builder()
-                                          .put(IncrementHandlerState.PROPERTY_TRANSACTIONAL, "false")
-                                          .put(TxConstants.PROPERTY_TTL, "50")
-                                          .build());
 
     byte[] row = Bytes.toBytes("r1");
     byte[] col = Bytes.toBytes("c");
-    try {
+    try (RegionWrapper region = createRegion(TableId.from(Id.Namespace.DEFAULT, "testNonTransactionalTTL"),
+                                             ImmutableMap.<String, String>builder()
+                                               .put(IncrementHandlerState.PROPERTY_TRANSACTIONAL, "false")
+                                               .put(TxConstants.PROPERTY_TTL, "50")
+                                               .build())) {
       region.initialize();
 
       SettableTimestampOracle timeOracle = new SettableTimestampOracle();
@@ -465,8 +454,6 @@ public abstract class AbstractIncrementHandlerTest {
       results.clear();
       assertFalse(region.scanRegion(results, row3));
       assertEquals(0, results.size());
-    } finally {
-      region.close();
     }
   }
 

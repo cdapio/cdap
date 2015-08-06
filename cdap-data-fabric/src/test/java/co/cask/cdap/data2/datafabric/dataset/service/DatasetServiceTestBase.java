@@ -47,6 +47,7 @@ import co.cask.cdap.explore.client.DiscoveryExploreClient;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.DatasetModuleMeta;
+import co.cask.cdap.proto.Id;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.ObjectResponse;
@@ -208,13 +209,13 @@ public abstract class DatasetServiceTestBase {
 
     startLatch.await(5, TimeUnit.SECONDS);
     // this usually happens while creating a namespace, however not doing that in data fabric tests
-    Locations.mkdirsIfNotExists(namespacedLocationFactory.get(Constants.DEFAULT_NAMESPACE_ID));
+    Locations.mkdirsIfNotExists(namespacedLocationFactory.get(Id.Namespace.DEFAULT));
   }
 
   @After
   public void after() {
     Services.chainStop(service, opExecutorService, txManager);
-    Locations.deleteQuietly(locationFactory.create(Constants.DEFAULT_NAMESPACE));
+    Locations.deleteQuietly(locationFactory.create(Id.Namespace.DEFAULT.getId()));
   }
 
   private synchronized int getPort() {
@@ -233,7 +234,7 @@ public abstract class DatasetServiceTestBase {
 
   protected URL getUrl(String path) throws MalformedURLException {
     return new URL(String.format("http://localhost:%d/%s/namespaces/%s%s",
-                                 getPort(), Constants.Gateway.API_VERSION_3_TOKEN, Constants.DEFAULT_NAMESPACE, path));
+                                 getPort(), Constants.Gateway.API_VERSION_3_TOKEN, Id.Namespace.DEFAULT.getId(), path));
   }
 
   protected URL getUnderlyingNamespaceAdminUrl(String namespace, String operation) throws MalformedURLException {

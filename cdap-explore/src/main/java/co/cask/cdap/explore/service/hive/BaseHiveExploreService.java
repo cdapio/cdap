@@ -641,12 +641,10 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     startAndWait();
 
     try {
-      String namespaceId = namespace.getId();
-
       // Even with the "IF NOT EXISTS" in the create command, Hive still logs a non-fatal warning internally
       // when attempting to create the "default" namsepace (since it already exists in Hive).
       // This check prevents the extra warn log.
-      if (namespaceId.equals(Constants.DEFAULT_NAMESPACE)) {
+      if (Id.Namespace.DEFAULT.equals(namespace)) {
         return QueryHandle.NO_OP;
       }
 
@@ -658,7 +656,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       String statement = String.format("CREATE DATABASE IF NOT EXISTS %s", database);
       OperationHandle operationHandle = doExecute(sessionHandle, statement);
       QueryHandle handle = saveOperationInfo(operationHandle, sessionHandle, sessionConf, statement, database);
-      LOG.info("Creating database {} with handle {}", namespaceId, handle);
+      LOG.info("Creating database {} with handle {}", namespace, handle);
       return handle;
     } catch (HiveSQLException e) {
       throw getSqlException(e);
@@ -996,7 +994,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     LOG.info("Waiting for dataset service to come up before upgrading Explore.");
     while (count < secondsToWait) {
       try {
-        datasetFramework.getInstances(Constants.DEFAULT_NAMESPACE_ID);
+        datasetFramework.getInstances(Id.Namespace.DEFAULT);
         LOG.info("Dataset service is up and running, proceding with explore upgrade.");
         return;
       } catch (Exception e) {
@@ -1012,7 +1010,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     String dsName = tableInfo.getParameters().get(Constants.Explore.CDAP_NAME);
     // except the name was always prefixed by cdap.user.<name>
     dsName = dsName.substring("cdap.user.".length(), dsName.length());
-    Id.DatasetInstance datasetID = Id.DatasetInstance.from(Constants.DEFAULT_NAMESPACE_ID, dsName);
+    Id.DatasetInstance datasetID = Id.DatasetInstance.from(Id.Namespace.DEFAULT, dsName);
     DatasetSpecification spec = datasetFramework.getDatasetSpec(datasetID);
 
     // enable the new table
@@ -1046,7 +1044,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     String datasetName = serdeProperties.get(Constants.Explore.DATASET_NAME);
     // except the name was always prefixed by cdap.user.<name>
     datasetName = datasetName.substring("cdap.user.".length(), datasetName.length());
-    Id.DatasetInstance datasetID = Id.DatasetInstance.from(Constants.DEFAULT_NAMESPACE_ID, datasetName);
+    Id.DatasetInstance datasetID = Id.DatasetInstance.from(Id.Namespace.DEFAULT, datasetName);
     DatasetSpecification spec = datasetFramework.getDatasetSpec(datasetID);
 
     // if there are no partitions, we can just enable the new table and drop the old one.
@@ -1067,7 +1065,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
   private void dropTable(String tableName) throws Exception {
     LOG.info("Dropping old upgraded table {}", tableName);
-    QueryHandle disableHandle = execute(Constants.DEFAULT_NAMESPACE_ID, "DROP TABLE IF EXISTS " + tableName);
+    QueryHandle disableHandle = execute(Id.Namespace.DEFAULT, "DROP TABLE IF EXISTS " + tableName);
     // make sure disable finished
     QueryStatus status = waitForCompletion(disableHandle);
     if (status.getStatus() != QueryStatus.OpStatus.FINISHED) {
@@ -1079,7 +1077,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     // get the stream name from the serde properties.
     Map<String, String> serdeProperties = tableInfo.getSerdeParameters();
     String streamName = serdeProperties.get(Constants.Explore.STREAM_NAME);
-    Id.Stream streamID = Id.Stream.from(Constants.DEFAULT_NAMESPACE_ID, streamName);
+    Id.Stream streamID = Id.Stream.from(Id.Namespace.DEFAULT, streamName);
 
     // enable the table in the default namespace
     LOG.info("Enabling exploration on stream {}", streamID);
@@ -1157,7 +1155,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       return null;
     }
     String tablePrefix = cConf.get(Constants.Dataset.TABLE_PREFIX);
-    return namespace.equals(Constants.DEFAULT_NAMESPACE) ? namespace : String.format("%s_%s", tablePrefix, namespace);
+    return namespace.equals(Id.Namespace.DEFAULT.getId()) ? namespace : String.format("%s_%s", tablePrefix, namespace);
   }
 
   /**

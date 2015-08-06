@@ -102,7 +102,7 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
   @Path("/data/modules")
   public void deleteModules(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId) {
-    if (Constants.SYSTEM_NAMESPACE.equals(namespaceId)) {
+    if (Id.Namespace.SYSTEM.getId().equals(namespaceId)) {
       responder.sendString(HttpResponseStatus.FORBIDDEN,
                            String.format("Cannot delete modules from '%s' namespace.", namespaceId));
       return;
@@ -120,7 +120,7 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
   public BodyConsumer addModule(HttpRequest request, HttpResponder responder,
                                 @PathParam("namespace-id") String namespaceId, @PathParam("name") final String name,
                                 @HeaderParam(HEADER_CLASS_NAME) final String className) throws IOException {
-    if (Constants.SYSTEM_NAMESPACE.equals(namespaceId)) {
+    if (Id.Namespace.SYSTEM.getId().equals(namespaceId)) {
       responder.sendString(HttpResponseStatus.FORBIDDEN,
                            String.format("Cannot add module to '%s' namespace.", namespaceId));
       return null;
@@ -217,7 +217,7 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
   @Path("/data/modules/{name}")
   public void deleteModule(HttpRequest request, HttpResponder responder,
                            @PathParam("namespace-id") String namespaceId, @PathParam("name") String name) {
-    if (Constants.SYSTEM_NAMESPACE.equals(namespaceId)) {
+    if (Id.Namespace.SYSTEM.getId().equals(namespaceId)) {
       responder.sendString(HttpResponseStatus.FORBIDDEN,
                            String.format("Cannot delete module '%s' from '%s' namespace.", name, namespaceId));
       return;

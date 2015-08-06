@@ -49,7 +49,6 @@ public class HBaseDatasetMetricsReporter extends AbstractScheduledService implem
   private final int reportIntervalInSec;
   private final MetricsCollectionService metricsService;
   private final Configuration hConf;
-  private final CConfiguration conf;
   private final HBaseTableUtil hBaseTableUtil;
   private final DatasetFramework dsFramework;
 
@@ -63,7 +62,6 @@ public class HBaseDatasetMetricsReporter extends AbstractScheduledService implem
     this.metricsService = metricsService;
     this.hBaseTableUtil = hBaseTableUtil;
     this.hConf = hConf;
-    this.conf = conf;
     this.reportIntervalInSec = conf.getInt(Constants.Metrics.Dataset.HBASE_STATS_REPORT_INTERVAL);
     this.dsFramework = dsFramework;
   }
@@ -112,7 +110,7 @@ public class HBaseDatasetMetricsReporter extends AbstractScheduledService implem
       String namespace = statEntry.getKey().getNamespace().getId();
       // emit metrics for only user datasets, namespaces in system and
       // tableNames that doesn't start with user are ignored
-      if (namespace.equals(Constants.SYSTEM_NAMESPACE)) {
+      if (Id.Namespace.SYSTEM.getId().equals(namespace)) {
         continue;
       }
       String tableName = statEntry.getKey().getTableName();

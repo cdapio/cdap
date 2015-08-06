@@ -17,7 +17,6 @@
 package co.cask.cdap.data2.increment.hbase10cdh;
 
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.hbase.HBase10CDHTest;
 import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseTable;
 import co.cask.cdap.data2.increment.hbase.IncrementHandlerState;
@@ -25,13 +24,13 @@ import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.data2.util.hbase.HTableDescriptorBuilder;
+import co.cask.cdap.proto.Id;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
-import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -85,7 +84,7 @@ public class IncrementSummingScannerTest {
 
   @Test
   public void testIncrementScanning() throws Exception {
-    TableId tableId = TableId.from(Constants.DEFAULT_NAMESPACE, "TestIncrementSummingScanner");
+    TableId tableId = TableId.from(Id.Namespace.DEFAULT, "TestIncrementSummingScanner");
     byte[] familyBytes = Bytes.toBytes("f");
     byte[] columnBytes = Bytes.toBytes("c");
     HRegion region = createRegion(tableId, familyBytes);
@@ -225,7 +224,7 @@ public class IncrementSummingScannerTest {
 
   @Test
   public void testFlushAndCompact() throws Exception {
-    TableId tableId = TableId.from(Constants.DEFAULT_NAMESPACE, "TestFlushAndCompact");
+    TableId tableId = TableId.from(Id.Namespace.DEFAULT, "TestFlushAndCompact");
     byte[] familyBytes = Bytes.toBytes("f");
     byte[] columnBytes = Bytes.toBytes("c");
     HRegion region = createRegion(tableId, familyBytes);
@@ -318,7 +317,7 @@ public class IncrementSummingScannerTest {
 
   @Test
   public void testIncrementScanningWithBatchAndUVB() throws Exception {
-    TableId tableId = TableId.from(Constants.DEFAULT_NAMESPACE, "TestIncrementSummingScannerWithUpperVisibilityBound");
+    TableId tableId = TableId.from(Id.Namespace.DEFAULT, "TestIncrementSummingScannerWithUpperVisibilityBound");
     byte[] familyBytes = Bytes.toBytes("f");
     byte[] columnBytes = Bytes.toBytes("c");
     HRegion region = createRegion(tableId, familyBytes);

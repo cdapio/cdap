@@ -109,7 +109,6 @@ public abstract class AppFabricTestBase {
   protected static final Gson GSON = new Gson();
   private static final String API_KEY = "SampleTestApiKey";
   private static final Header AUTH_HEADER = new BasicHeader(Constants.Gateway.API_KEY, API_KEY);
-  private static final String CLUSTER = "SampleTestClusterName";
 
   protected static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
   protected static final Type LIST_MAP_STRING_STRING_TYPE = new TypeToken<List<Map<String, String>>>() { }.getType();
@@ -286,7 +285,6 @@ public abstract class AppFabricTestBase {
   }
 
   protected static HttpResponse doPut(String resource) throws Exception {
-    DefaultHttpClient client = new DefaultHttpClient();
     HttpPut put = new HttpPut(AppFabricTestBase.getEndPoint(resource));
     put.setHeader(AUTH_HEADER);
     return doPut(resource, null);
@@ -359,7 +357,7 @@ public abstract class AppFabricTestBase {
   protected HttpResponse deploy(Class<?> application, @Nullable String apiVersion, @Nullable String namespace,
                                 @Nullable String appName, @Nullable String appVersion,
                                 @Nullable Config appConfig) throws Exception {
-    namespace = namespace == null ? Constants.DEFAULT_NAMESPACE : namespace;
+    namespace = namespace == null ? Id.Namespace.DEFAULT.getId() : namespace;
     apiVersion = apiVersion == null ? Constants.Gateway.API_VERSION_3_TOKEN : apiVersion;
 
     Manifest manifest = new Manifest();
@@ -370,11 +368,10 @@ public abstract class AppFabricTestBase {
     }
 
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    final JarOutputStream jarOut = new JarOutputStream(bos, manifest);
     final String pkgName = application.getPackage().getName();
 
     // Grab every classes under the application class package.
-    try {
+    try (JarOutputStream jarOut = new JarOutputStream(bos, manifest)) {
       ClassLoader classLoader = application.getClassLoader();
       if (classLoader == null) {
         classLoader = ClassLoader.getSystemClassLoader();
@@ -385,11 +382,8 @@ public abstract class AppFabricTestBase {
           try {
             if (className.startsWith(pkgName)) {
               jarOut.putNextEntry(new JarEntry(className.replace('.', '/') + ".class"));
-              InputStream in = classUrl.openStream();
-              try {
+              try (InputStream in = classUrl.openStream()) {
                 ByteStreams.copy(in, jarOut);
-              } finally {
-                in.close();
               }
               return true;
             }
@@ -403,8 +397,6 @@ public abstract class AppFabricTestBase {
       // Add webapp
       jarOut.putNextEntry(new ZipEntry("webapp/default/netlens/src/1.txt"));
       ByteStreams.copy(new ByteArrayInputStream("dummy data".getBytes(Charsets.UTF_8)), jarOut);
-    } finally {
-      jarOut.close();
     }
 
     HttpEntityEnclosingRequestBase request;

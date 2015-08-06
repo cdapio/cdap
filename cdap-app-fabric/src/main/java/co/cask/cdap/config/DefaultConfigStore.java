@@ -31,7 +31,6 @@ import co.cask.cdap.data2.dataset2.tx.Transactional;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
-import com.google.common.base.Joiner;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterators;
@@ -56,8 +55,8 @@ public class DefaultConfigStore implements ConfigStore {
   private static final Gson GSON = new Gson();
   private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
   private static final String PROPERTY_COLUMN = "properties";
-  private static final Id.DatasetInstance configStoreDatasetInstanceId =
-    Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE, Constants.ConfigStore.CONFIG_TABLE);
+  private static final Id.DatasetInstance CONFIG_STORE_DATASET_INSTANCE_ID =
+    Id.DatasetInstance.from(Id.Namespace.SYSTEM, Constants.ConfigStore.CONFIG_TABLE);
 
   private final Transactional<ConfigTable, Table> txnl;
 
@@ -68,7 +67,7 @@ public class DefaultConfigStore implements ConfigStore {
       @Override
       public ConfigTable get() {
         try {
-          Table table = DatasetsUtil.getOrCreateDataset(datasetFramework, configStoreDatasetInstanceId,
+          Table table = DatasetsUtil.getOrCreateDataset(datasetFramework, CONFIG_STORE_DATASET_INSTANCE_ID,
                                                         "table", DatasetProperties.EMPTY,
                                                         DatasetDefinition.NO_ARGUMENTS, null);
           return new ConfigTable(table);
@@ -81,8 +80,8 @@ public class DefaultConfigStore implements ConfigStore {
   }
 
   public static void setupDatasets(DatasetFramework dsFramework) throws DatasetManagementException, IOException {
-    dsFramework.addInstance(Table.class.getName(), Id.DatasetInstance.from(
-                              Constants.SYSTEM_NAMESPACE_ID, Constants.ConfigStore.CONFIG_TABLE),
+    dsFramework.addInstance(Table.class.getName(),
+                            Id.DatasetInstance.from(Id.Namespace.SYSTEM, Constants.ConfigStore.CONFIG_TABLE),
                             DatasetProperties.EMPTY);
   }
 

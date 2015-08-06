@@ -165,7 +165,7 @@ public abstract class HBaseQueueTest extends QueueTest {
     //create HBase namespace
     hbaseAdmin = testHBase.getHBaseAdmin();
     tableUtil = injector.getInstance(HBaseTableUtil.class);
-    tableUtil.createNamespaceIfNotExists(hbaseAdmin, Constants.SYSTEM_NAMESPACE_ID);
+    tableUtil.createNamespaceIfNotExists(hbaseAdmin, Id.Namespace.SYSTEM);
     tableUtil.createNamespaceIfNotExists(hbaseAdmin, NAMESPACE_ID);
     tableUtil.createNamespaceIfNotExists(hbaseAdmin, NAMESPACE_ID1);
 
@@ -196,11 +196,11 @@ public abstract class HBaseQueueTest extends QueueTest {
   // TODO: CDAP-1177 Should move to QueueTest after making getApplicationName() etc instance methods in a base class
   @Test
   public void testQueueTableNameFormat() throws Exception {
-    QueueName queueName = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "application1", "flow1", "flowlet1",
+    QueueName queueName = QueueName.fromFlowlet(Id.Namespace.DEFAULT.getId(), "application1", "flow1", "flowlet1",
                                                 "output1");
     HBaseQueueAdmin hbaseQueueAdmin = (HBaseQueueAdmin) queueAdmin;
     TableId tableId = hbaseQueueAdmin.getDataTableId(queueName);
-    Assert.assertEquals(Constants.DEFAULT_NAMESPACE_ID, tableId.getNamespace());
+    Assert.assertEquals(Id.Namespace.DEFAULT, tableId.getNamespace());
     Assert.assertEquals("system." + hbaseQueueAdmin.getType() + ".application1.flow1", tableId.getTableName());
     String tableName = tableUtil.buildHTableDescriptor(tableId).build().getNameAsString();
     Assert.assertEquals("application1", HBaseQueueAdmin.getApplicationName(tableName));
@@ -217,7 +217,7 @@ public abstract class HBaseQueueTest extends QueueTest {
 
   @Test
   public void testHTablePreSplitted() throws Exception {
-    testHTablePreSplitted((HBaseQueueAdmin) queueAdmin, QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "app",
+    testHTablePreSplitted((HBaseQueueAdmin) queueAdmin, QueueName.fromFlowlet(Id.Namespace.DEFAULT.getId(), "app",
                                                                               "flow", "flowlet", "out"));
   }
 
@@ -235,7 +235,7 @@ public abstract class HBaseQueueTest extends QueueTest {
 
   @Test
   public void configTest() throws Exception {
-    final QueueName queueName = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE,
+    final QueueName queueName = QueueName.fromFlowlet(Id.Namespace.DEFAULT.getId(),
                                                       "app", "flow", "flowlet", "configure");
     queueAdmin.create(queueName);
 
@@ -405,14 +405,15 @@ public abstract class HBaseQueueTest extends QueueTest {
         }
       });
     } finally {
-      queueAdmin.dropAllInNamespace(Constants.DEFAULT_NAMESPACE_ID);
+      queueAdmin.dropAllInNamespace(Id.Namespace.DEFAULT);
     }
   }
 
   // This test upgrade from old queue (salted base) to new queue (sharded base)
   @Test (timeout = 30000L)
   public void testQueueUpgrade() throws Exception {
-    final QueueName queueName = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "app", "flow", "flowlet", "upgrade");
+    final QueueName queueName = QueueName.fromFlowlet(Id.Namespace.DEFAULT.getId(), "app",
+                                                      "flow", "flowlet", "upgrade");
     HBaseQueueAdmin hbaseQueueAdmin = (HBaseQueueAdmin) queueAdmin;
     HBaseQueueClientFactory hBaseQueueClientFactory = (HBaseQueueClientFactory) queueClientFactory;
 
@@ -429,7 +430,7 @@ public abstract class HBaseQueueTest extends QueueTest {
       final HBaseQueueProducer oldProducer = hBaseQueueClientFactory.createProducer(
         oldQueueAdmin, queueName, QueueConstants.QueueType.QUEUE,
         QueueMetrics.NOOP_QUEUE_METRICS, new SaltedHBaseQueueStrategy(tableUtil, buckets),
-        new ArrayList<ConsumerGroupConfig>());
+        new ArrayList<ConsumerGroupConfig>())
     ) {
       // Enqueue 10 items to old queue table
       Transactions.createTransactionExecutor(executorFactory, oldProducer)
@@ -496,7 +497,7 @@ public abstract class HBaseQueueTest extends QueueTest {
 
   @Test (timeout = 30000L)
   public void testReconfigure() throws Exception {
-    final QueueName queueName = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE,
+    final QueueName queueName = QueueName.fromFlowlet(Id.Namespace.DEFAULT.getId(),
                                                       "app", "flow", "flowlet", "changeinstances");
     ConsumerGroupConfig groupConfig = new ConsumerGroupConfig(0L, 2, DequeueStrategy.HASH, "key");
     configureGroups(queueName, ImmutableList.of(groupConfig));

@@ -187,7 +187,7 @@ public class JAASLoginService extends AbstractLifeCycle implements LoginService 
               if (callback instanceof NameCallback) {
                 ((NameCallback) callback).setName(username);
               } else if (callback instanceof PasswordCallback) {
-                ((PasswordCallback) callback).setPassword((char[]) credentials.toString().toCharArray());
+                ((PasswordCallback) callback).setPassword(credentials.toString().toCharArray());
               } else if (callback instanceof ObjectCallback) {
                 ((ObjectCallback) callback).setObject(credentials);
               } else if (callback instanceof RequestParameterCallback) {

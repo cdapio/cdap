@@ -18,7 +18,6 @@ package co.cask.cdap.template.etl.batch;
 
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.template.etl.api.PipelineConfigurable;
 import co.cask.cdap.template.etl.api.batch.BatchSource;
@@ -71,7 +70,7 @@ public class BaseETLBatchTest extends TestBase {
   @ClassRule
   public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", false);
 
-  protected static final Id.Namespace NAMESPACE = Constants.DEFAULT_NAMESPACE_ID;
+  protected static final Id.Namespace NAMESPACE = Id.Namespace.DEFAULT;
   protected static final Id.ApplicationTemplate TEMPLATE_ID = Id.ApplicationTemplate.from("ETLBatch");
   protected static final Gson GSON = new Gson();
 

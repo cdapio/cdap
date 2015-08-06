@@ -18,7 +18,6 @@ package co.cask.cdap.test.app;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.AdapterManager;
@@ -49,14 +48,14 @@ public class TestAdapterFrameworkTestRun extends TestFrameworkTestBase {
   public void testWorkflowAdapter() throws Exception {
     Id.ApplicationTemplate templateId = Id.ApplicationTemplate.from(WorkflowTemplate.NAME);
     addTemplatePlugins(templateId, "flip-1.0.jar", FlipPlugin.class);
-    deployTemplate(Constants.DEFAULT_NAMESPACE_ID, templateId, WorkflowTemplate.class);
+    deployTemplate(Id.Namespace.DEFAULT, templateId, WorkflowTemplate.class);
 
     WorkflowTemplate.Config config = new WorkflowTemplate.Config("flip");
-    Id.Adapter adapterId = Id.Adapter.from(Constants.DEFAULT_NAMESPACE_ID, "workflowX");
+    Id.Adapter adapterId = Id.Adapter.from(Id.Namespace.DEFAULT, "workflowX");
     AdapterConfig adapterConfig = new AdapterConfig("description", WorkflowTemplate.NAME, GSON.toJsonTree(config));
     AdapterManager manager = createAdapter(adapterId, adapterConfig);
 
-    DataSetManager<KeyValueTable> inputManager = getDataset(Constants.DEFAULT_NAMESPACE_ID, WorkflowTemplate.INPUT);
+    DataSetManager<KeyValueTable> inputManager = getDataset(Id.Namespace.DEFAULT, WorkflowTemplate.INPUT);
     inputManager.get().write(Bytes.toBytes(1L), Bytes.toBytes(10L));
     inputManager.flush();
     
@@ -66,7 +65,7 @@ public class TestAdapterFrameworkTestRun extends TestFrameworkTestBase {
     manager.waitForOneRunToFinish(4, TimeUnit.MINUTES);
     manager.stop();
 
-    DataSetManager<KeyValueTable> outputManager = getDataset(Constants.DEFAULT_NAMESPACE_ID, WorkflowTemplate.OUTPUT);
+    DataSetManager<KeyValueTable> outputManager = getDataset(Id.Namespace.DEFAULT, WorkflowTemplate.OUTPUT);
     long outputVal = Bytes.toLong(outputManager.get().read(Bytes.toBytes(1L)));
     Assert.assertEquals(-10L, outputVal);
   }
@@ -76,18 +75,18 @@ public class TestAdapterFrameworkTestRun extends TestFrameworkTestBase {
   public void testWorkerAdapter() throws Exception {
     Id.ApplicationTemplate templateId = Id.ApplicationTemplate.from(WorkerTemplate.NAME);
     addTemplatePlugins(templateId, "square-1.0.jar", SquarePlugin.class);
-    deployTemplate(Constants.DEFAULT_NAMESPACE_ID, templateId, WorkerTemplate.class);
+    deployTemplate(Id.Namespace.DEFAULT, templateId, WorkerTemplate.class);
 
     String tableName = "kvoutput";
     WorkerTemplate.Config config = new WorkerTemplate.Config(tableName, "square", 5L);
-    Id.Adapter adapterId = Id.Adapter.from(Constants.DEFAULT_NAMESPACE_ID, "workerX");
+    Id.Adapter adapterId = Id.Adapter.from(Id.Namespace.DEFAULT, "workerX");
     AdapterConfig adapterConfig = new AdapterConfig("description", WorkerTemplate.NAME, GSON.toJsonTree(config));
     AdapterManager manager = createAdapter(adapterId, adapterConfig);
 
     manager.start();
 
     byte[] key = Bytes.toBytes(5L);
-    DataSetManager<KeyValueTable> kvTableManager = getDataset(Constants.DEFAULT_NAMESPACE_ID, tableName);
+    DataSetManager<KeyValueTable> kvTableManager = getDataset(Id.Namespace.DEFAULT, tableName);
     byte[] valBytes = kvTableManager.get().read(key);
     while (valBytes == null) {
       TimeUnit.MILLISECONDS.sleep(200);

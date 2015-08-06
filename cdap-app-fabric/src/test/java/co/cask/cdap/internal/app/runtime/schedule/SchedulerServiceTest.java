@@ -26,7 +26,6 @@ import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.NamespaceCannotBeDeletedException;
 import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.app.DefaultApplicationSpecification;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
@@ -72,13 +71,13 @@ public class SchedulerServiceTest {
     locationFactory = AppFabricTestHelper.getInjector().getInstance(LocationFactory.class);
     namespaceAdmin = AppFabricTestHelper.getInjector().getInstance(NamespaceAdmin.class);
     namespaceAdmin.createNamespace(new NamespaceMeta.Builder().setName(namespace).build());
-    namespaceAdmin.createNamespace(Constants.DEFAULT_NAMESPACE_META);
+    namespaceAdmin.createNamespace(NamespaceMeta.DEFAULT);
   }
 
   @AfterClass
   public static void finish() throws NotFoundException, NamespaceCannotBeDeletedException {
     namespaceAdmin.deleteNamespace(namespace);
-    namespaceAdmin.deleteDatasets(Constants.DEFAULT_NAMESPACE_ID);
+    namespaceAdmin.deleteDatasets(Id.Namespace.DEFAULT);
     schedulerService.stopAndWait();
   }
 
