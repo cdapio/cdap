@@ -22,7 +22,7 @@ angular.module(PKG.name + '.services')
     };
 
   })
-  .controller('FlowStreamDetailController', function($scope, myStreamApi, $state) {
+  .controller('FlowStreamDetailController', function($scope, myStreamApi, $state, myFileUploader, $alert) {
 
     $scope.doInject = function () {
       if(!$scope.userInput) {
@@ -47,5 +47,22 @@ angular.module(PKG.name + '.services')
 
     $scope.dismiss = function() {
       $scope.$dismiss();
+    };
+
+    $scope.uploadFile = function (files) {
+      var path = '/namespaces/' + $state.params.namespace + '/streams/' + $scope.streamId + '/batch';
+
+      for (var i = 0; i < files.length; i++) {
+        myFileUploader.uploadCSV(files[i], path)
+          .then(function () {
+            $alert({
+              type: 'success',
+              title: 'Upload success',
+              content: 'The csv has been uploaded successfully'
+            });
+          });
+      }
+
+
     };
   });

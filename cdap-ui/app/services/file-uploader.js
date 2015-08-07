@@ -36,7 +36,48 @@ angular.module(PKG.name + '.services')
       }
       return deferred.promise;
     }
+
+    function uploadCSV(fileObj, path) {
+      var deferred = $q.defer();
+
+      if (!myAuth.currentUser) {
+        deferred.reject(400);
+        myAlert({
+          title: 'Must specify user: ',
+          content: 'Could not find user.',
+          type: 'danger'
+        });
+      } else {
+        var xhr = new $window.XMLHttpRequest();
+        xhr.upload.addEventListener('progress', function (e) {
+          if (e.type === 'progress') {
+            console.info('CSV upload in progress');
+          }
+        });
+
+        xhr.open('POST', path, true);
+        xhr.setRequestHeader('Content-type', 'text/csv');
+        xhr.setRequestHeader('X-Archive-Name', fileObj.name);
+        xhr.setRequestHeader('Authorization', 'Bearer ' + myAuth.currentUser.token);
+        xhr.send(fileObj);
+        cfpLoadingBar.start();
+        xhr.onreadystatechange = function () {
+          if (xhr.readyState === 4) {
+            if (xhr.status > 399){
+              deferred.reject(xhr.response);
+            } else {
+              deferred.resolve();
+            }
+            cfpLoadingBar.complete();
+          }
+        };
+      }
+      return deferred.promise;
+
+    }
+
     return {
-      upload: upload
+      upload: upload,
+      uploadCSV: uploadCSV
     };
   });
