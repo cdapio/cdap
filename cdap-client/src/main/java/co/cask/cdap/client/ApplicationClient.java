@@ -28,6 +28,7 @@ import co.cask.cdap.proto.ApplicationRecord;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.artifact.CreateAppRequest;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
@@ -43,6 +44,7 @@ import com.google.gson.Gson;
 import java.io.File;
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
@@ -51,6 +53,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import javax.inject.Inject;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
 
 /**
  * Provides ways to interact with CDAP applications.
@@ -221,10 +225,31 @@ public class ApplicationClient {
     deploy(namespace, jarFile, GSON.toJson(appConfig));
   }
 
+  /**
+   * Deploys an application using an existing artifact.
+   *
+   * @param appId the id of the application to add
+   * @param createRequest the request body, which contains the artifact to use and any application config
+   * @throws IOException if a network error occurred
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   */
+  public void deploy(Id.Application appId,
+                     CreateAppRequest<? extends Config> createRequest) throws IOException, UnauthorizedException {
+    URL url = config.resolveNamespacedURLV3(appId.getNamespace(), "apps/" + appId.getId());
+    HttpRequest request = HttpRequest.put(url)
+      .addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+      .withBody(GSON.toJson(createRequest))
+      .build();
+    restClient.upload(request, config.getAccessToken());
+  }
+
   private void deployApp(Id.Namespace namespace, File jarFile, Map<String, String> headers)
     throws IOException, UnauthorizedException {
     URL url = config.resolveNamespacedURLV3(namespace, "apps");
-    HttpRequest request = HttpRequest.post(url).addHeaders(headers).withBody(jarFile).build();
+    HttpRequest request = HttpRequest.post(url)
+      .addHeaders(headers)
+      .addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_OCTET_STREAM)
+      .withBody(jarFile).build();
     restClient.upload(request, config.getAccessToken());
   }
 
