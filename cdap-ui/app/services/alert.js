@@ -5,10 +5,13 @@ angular.module(PKG.name+'.services')
       if (angular.isObject(item) && Object.keys(item).length) {
         if (__list.length > 0 && __list[0].content === item.content && __list[0].title === item.title) {
           __list[__list.length - 1].count++;
+          __list[__list.length - 1].time = Date.now();
+
         } else {
           __list.unshift({
             content: item.content,
             title: item.title,
+            time: Date.now(),
             count: 1
           });
         }
