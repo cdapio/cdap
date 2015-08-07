@@ -320,7 +320,7 @@ public interface FlowSpecification extends ProgramSpecification {
       @Override
       public ConnectTo from(String flowlet) {
         Preconditions.checkArgument(flowlets.containsKey(flowlet),
-                UserMessages.getMessage(UserErrors.INVALID_FLOWLET_NAME), flowlet);
+                                    UserMessages.getMessage(UserErrors.INVALID_FLOWLET_NAME), flowlet);
         fromFlowlet = flowlets.get(flowlet);
         fromStream = null;
         return this;
@@ -344,7 +344,7 @@ public interface FlowSpecification extends ProgramSpecification {
       public MoreConnect to(String flowlet) {
         Preconditions.checkArgument(flowlet != null, UserMessages.getMessage(UserErrors.INVALID_FLOWLET_NULL));
         Preconditions.checkArgument(flowlets.containsKey(flowlet),
-                UserMessages.getMessage(UserErrors.INVALID_FLOWLET_NAME), flowlet);
+                                    UserMessages.getMessage(UserErrors.INVALID_FLOWLET_NAME), flowlet);
 
         FlowletConnection.Type sourceType;
         String sourceName;

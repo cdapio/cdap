@@ -243,8 +243,8 @@ public class AppMetadataStore extends MetadataStoreDataset {
   }
 
   public List<RunRecordMeta> getRuns(@Nullable Id.Program program, ProgramRunStatus status,
-                                 long startTime, long endTime, int limit, String adapter,
-                                 @Nullable Predicate<RunRecordMeta> filter) {
+                                     long startTime, long endTime, int limit, String adapter,
+                                     @Nullable Predicate<RunRecordMeta> filter) {
     if (status.equals(ProgramRunStatus.ALL)) {
       List<RunRecordMeta> resultRecords = Lists.newArrayList();
       resultRecords.addAll(getSuspendedRuns(program, startTime, endTime, limit, adapter, filter));
@@ -261,7 +261,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
   }
 
   public List<RunRecordMeta> getRuns(@Nullable Id.Program program, ProgramRunStatus status,
-                                 long startTime, long endTime, int limit, String adapter) {
+                                     long startTime, long endTime, int limit, String adapter) {
     return getRuns(program, status, startTime, endTime, limit, adapter, null);
   }
 
@@ -338,18 +338,18 @@ public class AppMetadataStore extends MetadataStoreDataset {
   }
 
   private List<RunRecordMeta> getSuspendedRuns(Id.Program program, long startTime, long endTime, int limit,
-                                           final String adapter, @Nullable Predicate<RunRecordMeta> filter) {
+                                               final String adapter, @Nullable Predicate<RunRecordMeta> filter) {
     return getNonCompleteRuns(program, TYPE_RUN_RECORD_SUSPENDED, startTime, endTime, limit, adapter, filter);
   }
 
   private List<RunRecordMeta> getActiveRuns(Id.Program program, final long startTime, final long endTime, int limit,
-                                        final String adapter, @Nullable Predicate<RunRecordMeta> filter) {
+                                            final String adapter, @Nullable Predicate<RunRecordMeta> filter) {
     return getNonCompleteRuns(program, TYPE_RUN_RECORD_STARTED, startTime, endTime, limit, adapter, filter);
     }
 
   private List<RunRecordMeta> getNonCompleteRuns(Id.Program program, String recordType,
-                                             final long startTime, final long endTime, int limit,
-                                             final String adapter, Predicate<RunRecordMeta> filter) {
+                                                 final long startTime, final long endTime, int limit,
+                                                 final String adapter, Predicate<RunRecordMeta> filter) {
     MDSKey activeKey = getProgramKeyBuilder(recordType, program).build();
 
     return list(activeKey, null, RunRecordMeta.class, limit, andPredicate(new Predicate<RunRecordMeta>() {
@@ -366,8 +366,8 @@ public class AppMetadataStore extends MetadataStoreDataset {
   }
 
   private List<RunRecordMeta> getHistoricalRuns(Id.Program program, ProgramRunStatus status,
-                                            final long startTime, final long endTime, int limit, final String adapter,
-                                            @Nullable Predicate<RunRecordMeta> filter) {
+                                                final long startTime, final long endTime, int limit,
+                                                final String adapter, @Nullable Predicate<RunRecordMeta> filter) {
     MDSKey historyKey = getProgramKeyBuilder(TYPE_RUN_RECORD_COMPLETED, program).build();
 
     MDSKey start = new MDSKey.Builder(historyKey).add(getInvertedTsScanKeyPart(endTime)).build();

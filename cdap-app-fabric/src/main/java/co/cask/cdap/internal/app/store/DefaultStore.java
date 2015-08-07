@@ -253,7 +253,7 @@ public class DefaultStore implements Store {
 
   @Override
   public List<RunRecordMeta> getRuns(final Id.Program id, final ProgramRunStatus status,
-                                 final long startTime, final long endTime, final int limit, final String adapter) {
+                                     final long startTime, final long endTime, final int limit, final String adapter) {
     return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, List<RunRecordMeta>>() {
       @Override
       public List<RunRecordMeta> apply(AppMds mds) throws Exception {
