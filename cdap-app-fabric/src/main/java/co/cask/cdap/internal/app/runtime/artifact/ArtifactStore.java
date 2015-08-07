@@ -386,14 +386,15 @@ public class ArtifactStore {
    * @param artifactId the id of the artifact to add
    * @param artifactMeta the metadata for the artifact
    * @param artifactContentSupplier the supplier for the input stream of the contents of the artifact
+   * @return detail about the newly added artifact
    * @throws WriteConflictException if the artifact is already currently being written
    * @throws ArtifactAlreadyExistsException if a non-snapshot version of the artifact already exists
    * @throws IOException if there was an exception persisting the artifact contents to the filesystem,
    *                     of persisting the artifact metadata to the metastore
    */
-  public void write(final Id.Artifact artifactId,
-                    final ArtifactMeta artifactMeta,
-                    final InputSupplier<? extends InputStream> artifactContentSupplier)
+  public ArtifactDetail write(final Id.Artifact artifactId,
+                              final ArtifactMeta artifactMeta,
+                              final InputSupplier<? extends InputStream> artifactContentSupplier)
     throws WriteConflictException, ArtifactAlreadyExistsException, IOException {
 
     // if we're not a snapshot version, check that the artifact doesn't exist already.
@@ -462,6 +463,7 @@ public class ArtifactStore {
       destination.delete();
       throw new IOException(e);
     }
+    return new ArtifactDetail(getDescriptor(artifactId, destination), artifactMeta);
   }
 
   /**

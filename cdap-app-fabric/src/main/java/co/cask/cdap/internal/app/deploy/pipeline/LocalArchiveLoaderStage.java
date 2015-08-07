@@ -46,6 +46,7 @@ import javax.annotation.Nullable;
  * This stage is responsible for reading the JAR and generating an ApplicationSpecification
  * that is forwarded to the next stage of processing.
  * </p>
+ * TODO: (CDAP-2662) remove after application templates can be removed
  */
 public class LocalArchiveLoaderStage extends AbstractStage<DeploymentInfo> {
   private final Store store;
@@ -97,8 +98,8 @@ public class LocalArchiveLoaderStage extends AbstractStage<DeploymentInfo> {
       throw e;
     }
 
-    InMemoryConfigurator inMemoryConfigurator =
-      new InMemoryConfigurator(new LocalLocationFactory().create(input.toURI()), deploymentInfo.getConfigString());
+    InMemoryConfigurator inMemoryConfigurator = new InMemoryConfigurator(cConf,
+      new LocalLocationFactory().create(input.toURI()), deploymentInfo.getConfigString());
     ListenableFuture<ConfigResponse> result = inMemoryConfigurator.config();
     ConfigResponse response = result.get(120, TimeUnit.SECONDS);
     if (response.getExitCode() != 0) {

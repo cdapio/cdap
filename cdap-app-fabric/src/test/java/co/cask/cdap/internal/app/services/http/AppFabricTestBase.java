@@ -359,13 +359,12 @@ public abstract class AppFabricTestBase {
                                 @Nullable Config appConfig) throws Exception {
     namespace = namespace == null ? Id.Namespace.DEFAULT.getId() : namespace;
     apiVersion = apiVersion == null ? Constants.Gateway.API_VERSION_3_TOKEN : apiVersion;
+    appVersion = appVersion == null ? String.format("1.0.%d", System.currentTimeMillis()) : appVersion;
 
     Manifest manifest = new Manifest();
     manifest.getMainAttributes().put(ManifestFields.MANIFEST_VERSION, "1.0");
     manifest.getMainAttributes().put(ManifestFields.MAIN_CLASS, application.getName());
-    if (appVersion != null) {
-      manifest.getMainAttributes().put(ManifestFields.BUNDLE_VERSION, appVersion);
-    }
+    manifest.getMainAttributes().put(ManifestFields.BUNDLE_VERSION, appVersion);
 
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
     final String pkgName = application.getPackage().getName();
@@ -407,7 +406,7 @@ public abstract class AppFabricTestBase {
       request = getPut(versionedApiPath + appName);
     }
     request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
-    request.setHeader("X-Archive-Name", application.getSimpleName() + ".jar");
+    request.setHeader("X-Archive-Name", String.format("%s-%s.jar", application.getSimpleName(), appVersion));
     if (appConfig != null) {
       request.setHeader("X-App-Config", GSON.toJson(appConfig));
     }
