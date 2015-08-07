@@ -69,12 +69,6 @@ public class RealtimeElasticsearchSink extends RealtimeSink<StructuredRecord> {
 
   @Override
   public void initialize(RealtimeContext context) {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(realtimeESSinkConfig.index),
-                                "Index name should be non-null, non-empty.");
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(realtimeESSinkConfig.type),
-                                "Type name should be non-null, non-empty.");
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(realtimeESSinkConfig.transportAddresses),
-                                "You must specify at least one transport address.");
     realtimeESSinkConfig.cluster = Strings.isNullOrEmpty(realtimeESSinkConfig.cluster) ?
       "elasticsearch" : realtimeESSinkConfig.cluster;
 
@@ -155,7 +149,8 @@ public class RealtimeElasticsearchSink extends RealtimeSink<StructuredRecord> {
     @Nullable
     private String cluster;
 
-    public RealtimeESSinkConfig(String index, String type, String idField, String transportAddresses, String cluster) {
+    public RealtimeESSinkConfig(String index, String type, @Nullable String idField,
+                                String transportAddresses, @Nullable String cluster) {
       this.index = index;
       this.type = type;
       this.idField = idField;

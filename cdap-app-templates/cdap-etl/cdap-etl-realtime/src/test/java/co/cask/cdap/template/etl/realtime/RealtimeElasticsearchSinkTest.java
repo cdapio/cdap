@@ -16,7 +16,6 @@
 
 package co.cask.cdap.template.etl.realtime;
 
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.template.etl.api.PipelineConfigurable;
@@ -48,6 +47,7 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.node.Node;
+import org.elasticsearch.search.SearchHit;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -96,7 +96,7 @@ public class RealtimeElasticsearchSinkTest extends TestBase {
 
   @BeforeClass
   public static void setupTests() throws IOException {
-    // TODO: should only deploy test source and Elasticsearch sink
+    // TODO: should only deploy test source and Elasticsearch sink (JIRA CDAP-3322)
     addTemplatePlugins(TEMPLATE_ID, "realtime-sources-1.0.0.jar",
                        DataGeneratorSource.class, JmsSource.class, KafkaSource.class,
                        TwitterSource.class, SqsSource.class);
@@ -138,24 +138,25 @@ public class RealtimeElasticsearchSinkTest extends TestBase {
 
       SearchResponse searchResponse = client.prepareSearch("Bob").execute().actionGet();
       Assert.assertEquals(1, searchResponse.getHits().getTotalHits());
+      SearchHit result = searchResponse.getHits().getAt(0);
 
-      Assert.assertEquals(1, (int) searchResponse.getHits().getAt(0).field("id").getValue());
-      Assert.assertEquals("Bob", searchResponse.getHits().getAt(0).field("name").getValue().toString());
-      Assert.assertEquals(3.4, (double) searchResponse.getHits().getAt(0).field("score").getValue(), 0.000001);
-      Assert.assertEquals(false, searchResponse.getHits().getAt(0).field("graduated").getValue());
-      Assert.assertNotNull(searchResponse.getHits().getAt(0).field("time").getValue());
+      Assert.assertEquals(1, (int) result.field("id").getValue());
+      Assert.assertEquals("Bob", result.field("name").getValue().toString());
+      Assert.assertEquals(3.4, (double) result.field("score").getValue(), 0.000001);
+      Assert.assertEquals(false, result.field("graduated").getValue());
+      Assert.assertNotNull(result.field("time").getValue());
+
       searchResponse = client.prepareSearch().setQuery(matchQuery("score", "3.4")).execute().actionGet();
       Assert.assertEquals(1, searchResponse.getHits().getTotalHits());
-      Assert.assertEquals("test", searchResponse.getHits().getAt(0).getIndex());
-      Assert.assertEquals("testing", searchResponse.getHits().getAt(0).getType());
-      Assert.assertEquals("Bob", searchResponse.getHits().getAt(0).getId());
+      result = searchResponse.getHits().getAt(0);
+      Assert.assertEquals("test", result.getIndex());
+      Assert.assertEquals("testing", result.getType());
+      Assert.assertEquals("Bob", result.getId());
       searchResponse = client.prepareSearch().setQuery(matchQuery("name", "ABCD")).execute().actionGet();
       Assert.assertEquals(0, searchResponse.getHits().getTotalHits());
 
       DeleteResponse response = client.prepareDelete("test", "testing", "Bob").execute().actionGet();
       Assert.assertTrue(response.isFound());
-    } catch (Exception e) {
-      System.out.println(e.getMessage());
     } finally {
       DeleteIndexResponse delete = client.admin().indices().delete(new DeleteIndexRequest("test")).actionGet();
       Assert.assertTrue(delete.isAcknowledged());
