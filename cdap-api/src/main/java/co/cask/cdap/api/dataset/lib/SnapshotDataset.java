@@ -46,10 +46,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import javax.annotation.Nullable;
 
 /**
@@ -78,7 +75,7 @@ public class SnapshotDataset implements Table, Dataset, MeteredDataset, Transact
                          DatasetContext datasetContext, DatasetSpecification spec, Map<String, String> arguments,
                          ClassLoader classLoader) {
     this.instanceName = name;
-    this.underlying = Lists.newArrayList();
+    this.underlying = new ArrayList<>();
     this.underlying.add(metadataTable);
     this.metadataTable = metadataTable;
     this.mainTableDef = mainTableDef;

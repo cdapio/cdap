@@ -54,10 +54,10 @@ public class SnapshotDefinition extends AbstractDatasetDefinition<SnapshotDatase
   private final DatasetDefinition<? extends Table, ?> mainTableDef;
 
   /**
-  * Constructor that takes in name of this dataset type.
-  *
-  * @param name this dataset type name
-  */
+   * Constructor that takes in name of this dataset type.
+   *
+   * @param name this dataset type name
+   */
   protected SnapshotDefinition(String name,
                               DatasetDefinition<? extends Table, ?> metadataTableDef,
                               DatasetDefinition<? extends Table, ?> mainTableDef) {
@@ -83,7 +83,7 @@ public class SnapshotDefinition extends AbstractDatasetDefinition<SnapshotDatase
 
   @Override
   public DatasetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
-                                ClassLoader classLoader) throws IOException {
+                               ClassLoader classLoader) throws IOException {
     return new CompositeDatasetAdmin(Lists.newArrayList(
       metadataTableDef.getAdmin(datasetContext, spec.getSpecification(METADATA_TABLE_NAME), classLoader),
       mainTableDef.getAdmin(datasetContext, spec.getSpecification(MAIN_TABLE_NAME), classLoader)
@@ -97,6 +97,6 @@ public class SnapshotDefinition extends AbstractDatasetDefinition<SnapshotDatase
                                                             arguments, classLoader);
 
     return new SnapshotDataset(spec.getName(), metadataTable, mainTableDef, datasetContext, spec, arguments,
-                                classLoader);
+                               classLoader);
   }
 }
