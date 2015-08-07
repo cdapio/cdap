@@ -16,6 +16,7 @@
 
 package co.cask.cdap.api.dataset.lib;
 
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.batch.RecordScanner;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.batch.SplitReader;
@@ -37,6 +38,7 @@ import co.cask.cdap.api.metrics.MetricsCollector;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionAwares;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import org.slf4j.Logger;
@@ -57,10 +59,10 @@ public class SnapshotDataset implements Table, Dataset, MeteredDataset, Transact
 
   private static final Logger LOG = LoggerFactory.getLogger(SnapshotDataset.class);
 
-  private static final byte[] METADATA_ROW_KEY = { 'v', 'e', 'r', 's', 'i', 'o', 'n' };
-  private static final byte[] METADATA_KEY_COLUMN = { 'v', 'a', 'l', 'u', 'e' };
+  private static final byte[] METADATA_ROW_KEY = Bytes.toBytes("k");
+  private static final byte[] METADATA_KEY_COLUMN = Bytes.toBytes("v");
 
-  private Table metadataTable;
+  private final Table metadataTable;
   private Table mainTable;
   private final String instanceName;
   private final Collection<Dataset> underlying;
@@ -87,10 +89,18 @@ public class SnapshotDataset implements Table, Dataset, MeteredDataset, Transact
     setup();
   }
 
+  /**
+   * Get the transaction id
+   * @return id of the current transaction
+   */
   public long getTransactionId() {
     return tx.getTransactionId();
   }
 
+  /**
+   * Update the metadata table with the new version
+   * @param newVersion the value to be put in the meta data table
+   */
   public void updateMetaDataTable(long newVersion) {
     Put put = new Put(METADATA_ROW_KEY, METADATA_KEY_COLUMN, newVersion);
     metadataTable.put(put);
@@ -98,9 +108,9 @@ public class SnapshotDataset implements Table, Dataset, MeteredDataset, Transact
 
   @Override
   public void startTx(Transaction tx) {
-    LOG.info("YAOJIE: Started Tx");
     txAwares.startTx(tx);
     this.tx = tx;
+
     // Get the version from the metadataTable
     Map<String, String> copyOfArguments = new HashMap<>(arguments);
     Long version = getCurrentVersion();
@@ -109,16 +119,16 @@ public class SnapshotDataset implements Table, Dataset, MeteredDataset, Transact
     }
     try {
       mainTable = mainTableDef.getDataset(datasetContext, spec.getSpecification("maindata"), copyOfArguments,
-        classLoader);
+                                          classLoader);
 
     } catch (Throwable t) {
-      LOG.info("YAOJIE: Error creating mainTable", t);
+      LOG.info("Error happens when creating mainTable", t);
+      Throwables.propagate(t);
     }
     addToUnderlyingDatasets(mainTable);
     if (mainTable instanceof TransactionAware) {
       TransactionAwares.of(ImmutableList.of((TransactionAware) mainTable)).startTx(tx);
     }
-    LOG.info("YAOJIE: Started Tx DONE");
   }
 
   @Override
@@ -151,25 +161,6 @@ public class SnapshotDataset implements Table, Dataset, MeteredDataset, Transact
   @Override
   public void postTxCommit() {
     txAwares.postTxCommit();
-  }
-
-  private Long getCurrentVersion() {
-    return metadataTable.get(METADATA_ROW_KEY).getLong(METADATA_KEY_COLUMN);
-  }
-
-  private void addToUnderlyingDatasets(Dataset embedded) {
-    underlying.add(embedded);
-    setup();
-  }
-
-  private void setup() {
-    ImmutableList.Builder<TransactionAware> builder = ImmutableList.builder();
-    for (Dataset dataset : underlying) {
-      if (dataset instanceof TransactionAware) {
-        builder.add((TransactionAware) dataset);
-      }
-    }
-    this.txAwares = TransactionAwares.of(builder.build());
   }
 
   @Override
@@ -325,5 +316,24 @@ public class SnapshotDataset implements Table, Dataset, MeteredDataset, Transact
         ((MeteredDataset) dataset).setMetricsCollector(metricsCollector);
       }
     }
+  }
+
+  private Long getCurrentVersion() {
+    return metadataTable.get(METADATA_ROW_KEY).getLong(METADATA_KEY_COLUMN);
+  }
+
+  private void addToUnderlyingDatasets(Dataset embedded) {
+    underlying.add(embedded);
+    setup();
+  }
+
+  private void setup() {
+    ImmutableList.Builder<TransactionAware> builder = ImmutableList.builder();
+    for (Dataset dataset : underlying) {
+      if (dataset instanceof TransactionAware) {
+        builder.add((TransactionAware) dataset);
+      }
+    }
+    this.txAwares = TransactionAwares.of(builder.build());
   }
 }

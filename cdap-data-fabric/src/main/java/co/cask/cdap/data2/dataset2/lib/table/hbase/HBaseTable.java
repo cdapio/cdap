@@ -266,9 +266,7 @@ public class HBaseTable extends BufferingTable {
     ScanBuilder hScan = tableUtil.buildScan();
     hScan.addFamily(columnFamily);
     if (snapshotVersion != null) {
-      List<Long> timeFilter = new ArrayList<>();
-      timeFilter.add(snapshotVersion);
-      hScan.setFilter(new TimestampsFilter(timeFilter));
+      hScan.setFilter(getTimestampFilter());
     }
     // todo: should be configurable
     // NOTE: by default we assume scanner is used in mapreduce job, hence no cache blocks
@@ -313,9 +311,7 @@ public class HBaseTable extends BufferingTable {
     GetBuilder get = tableUtil.buildGet(row);
     get.addFamily(columnFamily);
     if (snapshotVersion != null) {
-      List<Long> timeFilter = new ArrayList<>();
-      timeFilter.add(snapshotVersion);
-      get.setFilter(new TimestampsFilter(timeFilter));
+      get.setFilter(getTimestampFilter());
     }
     if (columns != null && columns.length > 0) {
       for (byte[] column : columns) {
@@ -351,7 +347,11 @@ public class HBaseTable extends BufferingTable {
     return getRowMap(result, columnFamily);
   }
 
-
+  private TimestampsFilter getTimestampFilter() {
+    List<Long> timeFilter = new ArrayList<>();
+    timeFilter.add(snapshotVersion);
+    return new TimestampsFilter(timeFilter);
+  }
 
   static NavigableMap<byte[], byte[]> getRowMap(Result result, byte[] columnFamily) {
     if (result.isEmpty()) {

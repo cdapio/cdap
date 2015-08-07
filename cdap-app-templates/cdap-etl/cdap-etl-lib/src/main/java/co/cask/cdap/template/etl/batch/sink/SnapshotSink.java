@@ -21,7 +21,6 @@ import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.SnapshotDataset;
 import co.cask.cdap.api.dataset.table.Put;
@@ -47,11 +46,11 @@ import javax.annotation.Nullable;
 @Description("CDAP Snapshot Dataset Batch Sink")
 public class SnapshotSink extends BatchWritableSink<StructuredRecord, byte[], Put> {
 
-  private static final String NAME_DESC = "Name of the snapshot dataset. If it does not already exist, one will be " +
-    "created.";
-  private static final String PROPERTY_SCHEMA_DESC = "Optional schema of the snapshot dataset as a JSON Object. " +
-    "If the dataset does not already exist, one will be created with this schema, which will allow the table to be " +
-    "explored through Hive.";
+  private static final String NAME_DESCRIPTION = "Name of the snapshot dataset. If it does not already exist, one " +
+    "will be created.";
+  private static final String PROPERTY_SCHEMA_DESCRIPTION = "Optional schema of the snapshot dataset as a JSON " +
+    "Object. If the dataset does not already exist, one will be created with this schema, which will allow the " +
+    "table to be explored through Hive.";
   private static final String PROPERTY_SCHEMA_ROW_FIELD_DESC = "The name of the record field that should be used as " +
     "the row key when writing to the snapshot dataset.";
 
@@ -101,11 +100,11 @@ public class SnapshotSink extends BatchWritableSink<StructuredRecord, byte[], Pu
    *  Config for the snapshot sink
    */
   public static class SnapshotSinkConfig extends PluginConfig {
-    @Description(NAME_DESC)
+    @Description(NAME_DESCRIPTION)
     private String name;
 
     @Name(Properties.Table.PROPERTY_SCHEMA)
-    @Description(PROPERTY_SCHEMA_DESC)
+    @Description(PROPERTY_SCHEMA_DESCRIPTION)
     @Nullable
     String schemaStr;
 

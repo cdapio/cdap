@@ -35,7 +35,8 @@ import java.io.IOException;
 import java.util.Map;
 
 /**
-*/
+ * Defines the snapshot dataset type.
+ */
 public class SnapshotDefinition extends AbstractDatasetDefinition<SnapshotDataset, DatasetAdmin> {
 
   private static final Logger LOG = LoggerFactory.getLogger(SnapshotDefinition.class);
@@ -46,14 +47,14 @@ public class SnapshotDefinition extends AbstractDatasetDefinition<SnapshotDatase
   private static final String METADATA_PROPERTY_COLUMN = "value";
   private static final String METADATA_PROPERTY_SCHEMA = Schema.recordOf(
     "record",
-    Schema.Field.of("version", Schema.of(Schema.Type.STRING)),
-    Schema.Field.of("value", Schema.of(Schema.Type.LONG))).toString();
+    Schema.Field.of(METADATA_PROPERTY_ROW_FIELD, Schema.of(Schema.Type.STRING)),
+    Schema.Field.of(METADATA_PROPERTY_COLUMN, Schema.of(Schema.Type.LONG))).toString();
 
   private final DatasetDefinition<? extends Table, ?> metadataTableDef;
   private final DatasetDefinition<? extends Table, ?> mainTableDef;
 
   /**
-  * Ctor that takes in name of this dataset type.
+  * Constructor that takes in name of this dataset type.
   *
   * @param name this dataset type name
   */
@@ -93,7 +94,7 @@ public class SnapshotDefinition extends AbstractDatasetDefinition<SnapshotDatase
   public SnapshotDataset getDataset(DatasetContext datasetContext, DatasetSpecification spec,
                                     Map<String, String> arguments, ClassLoader classLoader) throws IOException {
     final Table metadataTable = metadataTableDef.getDataset(datasetContext, spec.getSpecification(METADATA_TABLE_NAME),
-                                                      arguments, classLoader);
+                                                            arguments, classLoader);
 
     return new SnapshotDataset(spec.getName(), metadataTable, mainTableDef, datasetContext, spec, arguments,
                                 classLoader);
