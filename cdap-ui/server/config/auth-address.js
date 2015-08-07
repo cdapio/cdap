@@ -20,7 +20,7 @@ var log = log4js.getLogger('default');
 
 var PING_INTERVAL = 1000,
     PING_MAX_RETRIES = 1000,
-    PING_PATH = '/v3/ping';
+    PING_PATH = '/ping';
 
 
 function AuthAddress () {
@@ -98,4 +98,3 @@ AuthAddress.prototype.get = function () {
   }
   return this.addresses[Math.floor(Math.random() * this.addresses.length)];
 };
-

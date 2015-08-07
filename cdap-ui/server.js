@@ -6,18 +6,19 @@ var express = require('./server/express.js'),
     parser = require('./server/config/parser.js'),
     sockjs = require('sockjs'),
     http = require('http'),
+    fs = require('fs'),
     log4js = require('log4js'),
     https = require('https');
-  
+
 var cdapConfig, securityConfig;
 
 /**
- * Configuring the logger. In order to use the logger anywhere 
+ * Configuring the logger. In order to use the logger anywhere
  * in the BE, include the following:
  *    var log4js = require('log4js');
  *    var logger = log4js.getLogger();
- * 
- * We configure using LOG4JS_CONFIG specified file or we use 
+ *
+ * We configure using LOG4JS_CONFIG specified file or we use
  * the default provided in the conf/log4js.json file.
  */
 if(process.env.LOG4JS_CONFIG) {
@@ -55,10 +56,14 @@ parser.extractConfig('cdap')
         process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
       }
 
-      server = https.createServer({
-        key: fs.readFileSync(securityConfig['dashboard.ssl.cert']),
-        cert: fs.readFileSync(securityConfig['dashboard.ssl.key'])
-      }, app);
+      try {
+        server = https.createServer({
+          key: fs.readFileSync(securityConfig['dashboard.ssl.key']),
+          cert: fs.readFileSync(securityConfig['dashboard.ssl.cert'])
+        }, app);
+      } catch(e) {
+        log.debug('SSL key/cert files read failed. Pleas fix the key/ssl certificate files and restart node server -  ', e);
+      }
       port = cdapConfig['dashboard.ssl.bind.port'];
     }
     else {
