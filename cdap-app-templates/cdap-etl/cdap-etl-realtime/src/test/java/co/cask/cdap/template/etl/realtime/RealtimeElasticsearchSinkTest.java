@@ -61,6 +61,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static org.elasticsearch.index.query.QueryBuilders.matchQuery;
@@ -136,22 +137,22 @@ public class RealtimeElasticsearchSinkTest extends TestBase {
       TimeUnit.SECONDS.sleep(5);
       adapterManager.stop();
 
-      SearchResponse searchResponse = client.prepareSearch("Bob").execute().actionGet();
+      SearchResponse searchResponse = client.prepareSearch("test").execute().actionGet();
       Assert.assertEquals(1, searchResponse.getHits().getTotalHits());
-      SearchHit result = searchResponse.getHits().getAt(0);
+      Map<String, Object> result = searchResponse.getHits().getAt(0).getSource();
 
-      Assert.assertEquals(1, (int) result.field("id").getValue());
-      Assert.assertEquals("Bob", result.field("name").getValue().toString());
-      Assert.assertEquals(3.4, (double) result.field("score").getValue(), 0.000001);
-      Assert.assertEquals(false, result.field("graduated").getValue());
-      Assert.assertNotNull(result.field("time").getValue());
+      Assert.assertEquals(1, (int) result.get("id"));
+      Assert.assertEquals("Bob", result.get("name"));
+      Assert.assertEquals(3.4, (double) result.get("score"), 0.000001);
+      Assert.assertEquals(false, result.get("graduated"));
+      Assert.assertNotNull(result.get("time"));
 
       searchResponse = client.prepareSearch().setQuery(matchQuery("score", "3.4")).execute().actionGet();
       Assert.assertEquals(1, searchResponse.getHits().getTotalHits());
-      result = searchResponse.getHits().getAt(0);
-      Assert.assertEquals("test", result.getIndex());
-      Assert.assertEquals("testing", result.getType());
-      Assert.assertEquals("Bob", result.getId());
+      SearchHit hit = searchResponse.getHits().getAt(0);
+      Assert.assertEquals("test", hit.getIndex());
+      Assert.assertEquals("testing", hit.getType());
+      Assert.assertEquals("Bob", hit.getId());
       searchResponse = client.prepareSearch().setQuery(matchQuery("name", "ABCD")).execute().actionGet();
       Assert.assertEquals(0, searchResponse.getHits().getTotalHits());
 
