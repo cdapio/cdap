@@ -34,7 +34,6 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import com.google.common.io.Closeables;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
@@ -49,6 +48,7 @@ import org.slf4j.LoggerFactory;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -179,7 +179,7 @@ public abstract class AbstractAppFabricHttpHandler extends AbstractHttpHandler {
       throw new NamespaceNotFoundException(namespace);
     }
 
-    List<ApplicationRecord> appRecords = Lists.newArrayList();
+    List<ApplicationRecord> appRecords = new ArrayList<>();
     for (ApplicationSpecification appSpec : store.getAllApplications(namespace)) {
       appRecords.add(new ApplicationRecord(appSpec.getName(), appSpec.getVersion(), appSpec.getDescription()));
     }
@@ -229,7 +229,7 @@ public abstract class AbstractAppFabricHttpHandler extends AbstractHttpHandler {
 
   protected final List<ProgramRecord> listPrograms(Collection<ApplicationSpecification> appSpecs,
                                                    ProgramType type) throws Exception {
-    List<ProgramRecord> programRecords = Lists.newArrayList();
+    List<ProgramRecord> programRecords = new ArrayList<>();
     for (ApplicationSpecification appSpec : appSpecs) {
       switch (type) {
         case FLOW:
