@@ -114,6 +114,8 @@ public abstract class AppFabricTestBase {
   protected static final Type LIST_MAP_STRING_STRING_TYPE = new TypeToken<List<Map<String, String>>>() { }.getType();
   protected static final Type LIST_RUNRECORD_TYPE = new TypeToken<List<RunRecord>>() { }.getType();
 
+  protected static final String NONEXISTENT_NAMESPACE = "12jr0j90jf3foieoi33";
+
   protected static final String TEST_NAMESPACE1 = "testnamespace1";
   protected static final NamespaceMeta TEST_NAMESPACE_META1 = new NamespaceMeta.Builder()
     .setName(TEST_NAMESPACE1)
