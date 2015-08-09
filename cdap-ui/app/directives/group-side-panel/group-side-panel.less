@@ -148,6 +148,12 @@ my-side-panel {
               color: @adapter-sink;
             }
           }
+          &.templates {
+            background-color: @cdap-header;
+            + .item-body .plugin-item {
+              color: @cdap-header;
+            }
+          }
         }
         .name, .description {
           display: none;
