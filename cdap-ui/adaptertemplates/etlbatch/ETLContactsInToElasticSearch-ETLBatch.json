@@ -1,0 +1,43 @@
+{
+    "template": "ETLBatch",
+    "description": "Contacts Ingested are transformed in-flight and written to AVRO Time partitioned fileset.",
+    "config": {
+        "source": {
+            "name": "Stream",
+            "properties": {
+                "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"first\",\"type\":\"string\"},{\"name\":\"last\",\"type\":\"string\"},{\"name\":\"gender\",\"type\":\"string\"},{\"name\":\"state\",\"type\":\"string\"},{\"name\":\"street\",\"type\":\"string\"},{\"name\":\"zip\",\"type\":\"int\"},{\"name\":\"city\",\"type\":\"string\"},{\"name\":\"birthday\",\"type\":\"string\"},{\"name\":\"email\",\"type\":\"string\"},{\"name\":\"phone\",\"type\":\"string\"},{\"name\":\"price\",\"type\":\"string\"},{\"name\":\"paragraph\",\"type\":\"string\"}]}",
+                "duration": "1h",
+                "name": "extendedcontacts",
+                "format": "csv"
+            }
+        },
+        "sink": {
+            "name": "Elasticsearch",
+            "properties": {}
+        },
+        "transforms": [
+            {
+                "name": "Script",
+                "properties": {
+                    "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"first\",\"type\":\"string\"},{\"name\":\"last\",\"type\":\"string\"},{\"name\":\"gender\",\"type\":\"string\"},{\"name\":\"state\",\"type\":\"string\"},{\"name\":\"street\",\"type\":\"string\"},{\"name\":\"zip\",\"type\":\"int\"},{\"name\":\"city\",\"type\":\"string\"},{\"name\":\"email\",\"type\":\"string\"},{\"name\":\"phone\",\"type\":\"string\"},{\"name\":\"cost\",\"type\":\"double\"},{\"name\":\"paragraph\",\"type\":\"string\"},{\"name\":\"domain\",\"type\":\"string\"},{\"name\":\"paralength\",\"type\":\"int\"},{\"name\":\"by\",\"type\":\"int\"},{\"name\":\"bm\",\"type\":\"int\"},{\"name\":\"bd\",\"type\":\"int\"}]}",
+                    "script": "function transform(input) {\n    var output = input;\n\n    // Compute Age of the person.\n    if (input.birthday !== null) {\n      var birthday = new Date(input.birthday);\n      output.by = birthday.getFullYear();\n      output.bm = birthday.getMonth();\n      output.bd = birthday.getDate();\n    }\n    \n    // Add the Email Domain\n    if (input.email !== null) {\n      var domain = input.email.split(\"@\");\n      output.domain = domain[1];\n    }\n    \n    // Remove $ and , from dollar ammount specified. \n    if(input.price !== null) {\n        var price = input.price.replace(\"$\", \"\");\n        price = price.replace(\",\", \"\");\n        output.cost = parseFloat(price);\n    }\n    \n    // Length of Paragraph\n    output.paralength = parseInt(input.paragraph.length);\n    \n    return output;\n}"
+                }
+            },
+            {
+                "name": "ScriptFilter",
+                "properties": {
+                    "script": "function shouldFilter(input) {\n    \n  // If the length of last name is greater than 9, record should be removed. \n  if(input.last.length > 9) {\n      return true;\n  }\n  \n  // If gender is not Male or Female, then record should be removed. \n  if (input.gender !== 'Male' && input.gender !== 'Female') {\n      return true;\n  }\n  \n  // Remove invalid Zip codes. Ignore all record that have zipcode characters less \n  // than 5. \n  if (input.zip < 1000) {\n    return true;    \n  }\n  \n  if (input.by > 2020) {\n      return true;\n  }\n  \n  // Remove records that have paralength less than 60\n  if (input.paralength < 60) {\n      return true;\n  }\n  \n  return false;\n  \n}"
+                }
+            },
+            {
+                "name": "Script",
+                "properties": {
+                    "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"name\",\"type\":\"string\"},{\"name\":\"gender\",\"type\":\"string\"},{\"name\":\"address\",\"type\":\"string\"},{\"name\":\"phone\",\"type\":\"string\"},{\"name\":\"cost\",\"type\":\"double\"},{\"name\":\"domain\",\"type\":\"string\"},{\"name\":\"paralength\",\"type\":\"int\"},{\"name\":\"birthday\",\"type\":\"string\"}]}",
+                    "script": "function transform(input) {\n  var gender = 'M';\n  if (input.gender !== null) {\n      if (input.gender === 'Female') {\n          gender = 'F';\n      } \n  }\n  return { \n      name  : input.last + ',' + input.first,\n      gender : gender,\n      address : input.street + ', ' + input.state + ', ' + input.city + ', ' + input.zip,\n      phone : input.phone,\n      cost : input.cost,\n      domain : input.domain,\n      paralength : input.paralength,\n      birthday : input.bm + '/' + input.bd + '/' + input.by\n  }  \n}"
+                }
+            }
+        ],
+        "schedule": "* * * * *"
+    },
+    "name": "ETLContactsInToElasticSearch"
+}
