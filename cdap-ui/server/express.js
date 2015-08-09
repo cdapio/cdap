@@ -22,7 +22,8 @@ var pkg = require('../package.json'),
     bodyParser = require('body-parser'),
     DIST_PATH = require('path').normalize(
       __dirname + '/../dist'
-    );
+    ),
+    fs = require('fs');;
 
 var log = log4js.getLogger('default');
 
@@ -195,6 +196,62 @@ function makeApp (authAddress, cdapConfig) {
           res.status(response.statusCode).send();
         }
       });
+    }
+  ]);
+
+  app.get('/adaptertemplates/:templatetype', [
+      function (req, res) {
+        var templatetype = req.params.templatetype;
+        var dirPath = __dirname + '/../adaptertemplates/' + templatetype;
+        fs.readdir( dirPath ,function(err,files){
+            if (err) {
+              res.status(404).send({
+                error: err.code,
+                message: 'Unable to file template type: ' + templatetype
+              });
+              log.debug('Unable to file template type: ' + templatetype);
+            }
+            files = files.map(function(file) {
+              var config = {
+                name: file.substr(0, file.indexOf('.'))
+              }, fileJson;
+              try {
+                fileJson = JSON.parse(fs.readFileSync( dirPath +'/' + file, 'utf8'));
+              } catch(e) {
+                fileJson = {};
+              }
+              config.description = fileJson.description;
+              return config;
+            });
+            res.send(files);
+        });
+      }
+  ]);
+
+  app.get('/adaptertemplates/:templatetype/:templatename', [
+    function (req, res) {
+      var templatetype = req.params.templatetype;
+      var templatename = req.params.templatename;
+
+      var filePath = __dirname
+        + '/../adaptertemplates/'
+        + templatetype
+        + '/'
+        + templatename
+        + '.json';
+      var config = {};
+      try {
+        config = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+        res.send(config);
+      } catch(e) {
+        config.error = e.code;
+        config.message = 'Error reading template - '
+          + templatename
+          + ' of type - '
+          + templatetype ;
+        log.debug(config.message);
+        res.status(404).send(config);
+      }
     }
   ]);
 
