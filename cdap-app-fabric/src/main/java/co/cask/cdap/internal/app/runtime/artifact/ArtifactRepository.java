@@ -27,6 +27,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 import com.google.common.collect.ImmutableSet;
@@ -197,8 +198,10 @@ public class ArtifactRepository {
   public ArtifactDetail addArtifact(Id.Artifact artifactId, File artifactFile)
     throws IOException, WriteConflictException, ArtifactAlreadyExistsException, InvalidArtifactException {
 
+    // use spark program type in case the app contains spark, in which case we'll need access to spark
+    // packages when doing plugin inspection
     try (CloseableClassLoader parentClassLoader =
-           artifactClassLoaderFactory.createClassLoader(Locations.toLocation(artifactFile))) {
+           artifactClassLoaderFactory.createClassLoader(Locations.toLocation(artifactFile), ProgramType.SPARK)) {
       ArtifactClasses artifactClasses = artifactInspector.inspectArtifact(artifactId, artifactFile, parentClassLoader);
       ArtifactMeta meta = new ArtifactMeta(artifactClasses, ImmutableSet.<ArtifactRange>of());
       return artifactStore.write(artifactId, meta, Files.newInputStreamSupplier(artifactFile));
@@ -224,21 +227,14 @@ public class ArtifactRepository {
     throws IOException, ArtifactRangeNotFoundException, WriteConflictException,
     ArtifactAlreadyExistsException, InvalidArtifactException {
 
-    CloseableClassLoader parentClassLoader;
-    parentArtifacts = parentArtifacts == null ? ImmutableSet.<ArtifactRange>of() : parentArtifacts;
-    if (parentArtifacts.isEmpty()) {
-      // if this artifact doesn't extend another, use itself to create the parent classloader
-      parentClassLoader = artifactClassLoaderFactory.createClassLoader(Locations.toLocation(artifactFile));
-    } else {
-      parentClassLoader = createParentClassLoader(artifactId, parentArtifacts);
+    if (parentArtifacts == null || parentArtifacts.isEmpty()) {
+      return addArtifact(artifactId, artifactFile);
     }
 
-    try {
+    try (CloseableClassLoader parentClassLoader = createParentClassLoader(artifactId, parentArtifacts)) {
       ArtifactClasses artifactClasses = artifactInspector.inspectArtifact(artifactId, artifactFile, parentClassLoader);
       ArtifactMeta meta = new ArtifactMeta(artifactClasses, parentArtifacts);
       return artifactStore.write(artifactId, meta, Files.newInputStreamSupplier(artifactFile));
-    } finally {
-      parentClassLoader.close();
     }
   }
 
@@ -300,6 +296,9 @@ public class ArtifactRepository {
 
     // assumes any of the parents will do
     Location parentLocation = parents.get(0).getDescriptor().getLocation();
-    return artifactClassLoaderFactory.createClassLoader(parentLocation);
+
+    // use spark program type in case the app contains spark, in which case we'll need access to spark
+    // packages when doing plugin inspection
+    return artifactClassLoaderFactory.createClassLoader(parentLocation, ProgramType.SPARK);
   }
 }
