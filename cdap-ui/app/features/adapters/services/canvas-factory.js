@@ -95,48 +95,52 @@ angular.module(PKG.name + '.feature.adapters')
       return defer.promise;
     }
 
+    function parseImportedJson(configJson, type) {
+      var errorMessage;
+      var result;
+      try {
+        result = JSON.parse(configJson);
+      } catch(e) {
+        return {
+          message: 'The imported config json is incorrect. Please check the JSON content',
+          error: true
+        };
+      }
+
+      if (result.template !== type) {
+        return {
+          message: 'Template imported is for ' + result.template + '. Please switch to ' + result.template + ' creation to import.',
+          error: true
+        };
+      }
+      // We need to perform more validations on the uploaded json.
+      if (!result.config.source ||
+          !result.config.sink ||
+          !result.config.transforms) {
+        return {
+          message: 'The structure of imported config is incorrect. To the base structure of the config please try creating a new adpater and viewing the config.',
+          error: true
+        };
+      }
+      return result;
+    }
+
     function importAdapter(files, type) {
       var defer = $q.defer();
       var reader = new FileReader();
       reader.readAsText(files[0], "UTF-8");
 
       reader.onload = function (evt) {
-        var errorMessage;
-        var result;
-        try {
-          result = JSON.parse(evt.target.result);
-        } catch(e) {
-          errorMessage = 'The imported config json is incorrect. Please check the JSON content'
+        var result = parseImportedJson(evt.target.result, MyPlumbService.metadata.template.type);
+        if (result.error) {
           $alert({
             type: 'danger',
-            content: errorMessage
+            content: result.message
           });
-          defer.reject(errorMessage);
-          return;
+          defer.reject(result.message);
+        } else {
+          defer.resolve(result);
         }
-
-        if (result.template !== type) {
-          errorMessage = 'Template imported is for ' + result.template + '. Please switch to ' + result.template + ' creation to import.';
-          $alert({
-            type: 'danger',
-            content: errorMessage
-          });
-          defer.reject(errorMessage);
-          return;
-        }
-        // We need to perform more validations on the uploaded json.
-        if (!result.config.source ||
-            !result.config.sink ||
-            !result.config.transforms) {
-          errorMessage = 'The structure of imported config is incorrect. To the base structure of the config please try creating a new adpater and viewing the config.';
-          $alert({
-            type: 'danger',
-            content: errorMessage
-          });
-          defer.reject(errorMessage);
-          return;
-        }
-        defer.resolve(result);
       };
 
       reader.onerror = function (evt) {
@@ -150,6 +154,7 @@ angular.module(PKG.name + '.feature.adapters')
       extractMetadataFromDraft: extractMetadataFromDraft,
       getConnectionsBasedOnNodes: getConnectionsBasedOnNodes,
       exportAdapter: exportAdapter,
-      importAdapter: importAdapter
+      importAdapter: importAdapter,
+      parseImportedJson: parseImportedJson
     }
   });

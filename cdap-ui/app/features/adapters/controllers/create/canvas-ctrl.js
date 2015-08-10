@@ -53,22 +53,24 @@ angular.module(PKG.name + '.feature.adapters')
       }
     ];
 
+    this.onImportSuccess = function(result) {
+      $scope.config = JSON.stringify(result);
+      this.reloadDAG = true;
+      MyPlumbService.resetToDefaults(true);
+      setNodesAndConnectionsFromDraft.call(this, result);
+      if ($scope.config.name) {
+        MyPlumbService.metadata.name = $scope.config.name;
+      }
+
+      MyPlumbService.notifyError({});
+      MyPlumbService.notifyResetListners();
+    }
+
     this.importFile = function(files) {
       CanvasFactory
         .importAdapter(files, MyPlumbService.metadata.template.type)
         .then(
-          function success(result) {
-            $scope.config = JSON.stringify(result);
-            this.reloadDAG = true;
-            MyPlumbService.resetToDefaults(true);
-            setNodesAndConnectionsFromDraft.call(this, result);
-            if ($scope.config.name) {
-              MyPlumbService.metadata.name = $scope.config.name;
-            }
-
-            MyPlumbService.notifyError({});
-            MyPlumbService.notifyResetListners();
-          }.bind(this),
+          this.onImportSuccess.bind(this),
           function error(errorEvent) {
             console.error('Upload config failed', errorEvent);
           }
@@ -252,7 +254,15 @@ angular.module(PKG.name + '.feature.adapters')
         })
           .$promise
           .then(function(res) {
-            this.applyImportedConfig(JSON.stringify(res));
+            var result = CanvasFactory.parseImportedJson(JSON.stringify(res), MyPlumbService.metadata.template.type)
+            if (result.error) {
+              $alert({
+                type: 'danger',
+                content: 'Imported pre-defined app has issues. Please check the JSON of the imported pre-defined app'
+              });
+            } else {
+              this.onImportSuccess(result);
+            }
           }.bind(this));
         return;
       }
