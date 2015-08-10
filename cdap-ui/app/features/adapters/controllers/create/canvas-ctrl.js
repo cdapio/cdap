@@ -71,7 +71,7 @@ angular.module(PKG.name + '.feature.adapters')
         )
     }
 
-    this.onLeftSidePanelItemsClicked = function(group) {
+    this.onRightSideGroupItemClicked = function(group) {
       var config;
       switch(group.name) {
         case 'Export':
@@ -107,7 +107,7 @@ angular.module(PKG.name + '.feature.adapters')
             size: 'lg',
             windowClass: 'adapter-modal',
             keyboard: true,
-            controller: ['$scope', 'config', '$timeout', function($scope, config, $timeout) {
+            controller: ['$scope', 'config', function($scope, config) {
               $scope.config = JSON.stringify(config);
             }],
             resolve: {
@@ -190,7 +190,7 @@ angular.module(PKG.name + '.feature.adapters')
       items: []
     };
 
-    this.onPluginTypesClicked = function(group) {
+    this.onLeftSideGroupItemClicked = function(group) {
       var prom;
       switch(group.name) {
         case 'source':
@@ -219,7 +219,7 @@ angular.module(PKG.name + '.feature.adapters')
       }.bind(this));
     };
 
-    this.onPluginItemClicked = function(event, item) {
+    this.onLeftSidePanelItemClicked = function(event, item) {
       if (item.type === 'source' && this.pluginTypes[0].error) {
         delete this.pluginTypes[0].error;
       } else if (item.type === 'sink' && this.pluginTypes[2].error) {
