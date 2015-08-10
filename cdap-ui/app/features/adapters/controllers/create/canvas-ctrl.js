@@ -49,85 +49,50 @@ angular.module(PKG.name + '.feature.adapters')
       }
     ];
 
-    // Utterly naive. We need to be more efficient and this code should look better.
-    // Pushing for functionality for now. Will revisit this back.
     this.importFile = function(files) {
-      var reader = new FileReader();
-      var config = MyPlumbService.getConfigForBackend();
-      reader.readAsText(files[0], "UTF-8");
-      reader.onload = function (evt) {
-        var result;
-        try {
-          result = JSON.parse(evt.target.result);
-        } catch(e) {
-          result = null;
-          $alert({
-            type: 'danger',
-            content: 'The imported config json is incorrect. Please check the JSON content'
-          });
-          return;
-        }
+      CanvasFactory
+        .importAdapter(files, MyPlumbService.metadata.template.type)
+        .then(
+          function success(result) {
+            $scope.config = JSON.stringify(result);
+            this.reloadDAG = true;
+            MyPlumbService.resetToDefaults(true);
+            setNodesAndConnectionsFromDraft.call(this, result);
+            if ($scope.config.name) {
+              MyPlumbService.metadata.name = $scope.config.name;
+            }
 
-        if (result.template !== MyPlumbService.metadata.template.type) {
-          $alert({
-            type: 'danger',
-            content: 'Template imported is for ' + result.template + '. Please switch to ' + result.template + ' creation to import.'
-          });
-          return;
-        }
-        // We need to perform more validations on the uploaded json.
-        if (!result.config.source ||
-            !result.config.sink ||
-            !result.config.transforms) {
-          $alert({
-            type: 'danger',
-            content: 'The structure of imported config is incorrect. To the base structure of the config please try creating a new adpater and viewing the config.'
-          });
-          return;
-        }
-        $scope.config = JSON.stringify(result);
-        this.reloadDAG = true;
-        MyPlumbService.resetToDefaults(true);
-        setNodesAndConnectionsFromDraft.call(this, result);
-        if ($scope.config.name) {
-          MyPlumbService.metadata.name = $scope.config.name;
-        }
+            MyPlumbService.notifyError({});
+            MyPlumbService.notifyResetListners();
+          }.bind(this),
+          function error(errorEvent) {
+            console.error('Upload config failed', errorEvent);
+          }
+        )
+    }
 
-        MyPlumbService.notifyError({});
-        MyPlumbService.notifyResetListners();
-      }.bind(this)
-      reader.onerror = function (evt) {
-        console.error('Upload config failed', evt);
-      };
-    };
-
-    this.onCanvasOperationsClicked = function(group) {
+    this.onRightSideGroupItemClicked = function(group) {
       var config;
       switch(group.name) {
         case 'Export':
-          var detailedConfig = MyPlumbService.getConfigForBackend();
-          if (!MyPlumbService.metadata.name || MyPlumbService.metadata.name === '') {
-            detailedConfig.name = 'noname';
-          } else {
-            detailedConfig.name =  MyPlumbService.metadata.name;
-          }
-
-          detailedConfig.ui = {
-            nodes: MyPlumbService.nodes,
-            connections: MyPlumbService.connections
-          };
-          var content = JSON.stringify(detailedConfig, null, 4);
-          var blob = new Blob([content], { type: 'application/json'});
-          this.exportFileName = detailedConfig.name + '-' + detailedConfig.template;
-          this.url = URL.createObjectURL(blob);
-
-          $scope.$on('$destroy', function () {
-            URL.revokeObjectURL(this.url);
-          });
-          // Clicking on the hidden download button. #hack.
-          $timeout(function() {
-            document.getElementById('adapter-export-config-link').click();
-          });
+          CanvasFactory
+            .exportAdapter(MyPlumbService.getConfigForBackend(), MyPlumbService.metadata.name)
+            .then(
+              function success(result) {
+                this.exportFileName = result.name;
+                this.url = result.url;
+                $scope.$on('$destroy', function () {
+                  URL.revokeObjectURL(this.url);
+                }.bind(this));
+                // Clicking on the hidden download button. #hack.
+                $timeout(function() {
+                  document.getElementById('adapter-export-config-link').click();
+                });
+              }.bind(this),
+              function error() {
+                console.log('ERROR: ' + 'exporting adapter failed');
+              }
+            )
           break;
         case 'Import':
           // Clicking on the hidden upload button. #hack.
@@ -142,7 +107,7 @@ angular.module(PKG.name + '.feature.adapters')
             size: 'lg',
             windowClass: 'adapter-modal',
             keyboard: true,
-            controller: ['$scope', 'config', '$timeout', function($scope, config, $timeout) {
+            controller: ['$scope', 'config', function($scope, config) {
               $scope.config = JSON.stringify(config);
             }],
             resolve: {
@@ -225,7 +190,7 @@ angular.module(PKG.name + '.feature.adapters')
       items: []
     };
 
-    this.onPluginTypesClicked = function(group) {
+    this.onLeftSideGroupItemClicked = function(group) {
       var prom;
       switch(group.name) {
         case 'source':
@@ -254,7 +219,7 @@ angular.module(PKG.name + '.feature.adapters')
       }.bind(this));
     };
 
-    this.onPluginItemClicked = function(event, item) {
+    this.onLeftSidePanelItemClicked = function(event, item) {
       if (item.type === 'source' && this.pluginTypes[0].error) {
         delete this.pluginTypes[0].error;
       } else if (item.type === 'sink' && this.pluginTypes[2].error) {
