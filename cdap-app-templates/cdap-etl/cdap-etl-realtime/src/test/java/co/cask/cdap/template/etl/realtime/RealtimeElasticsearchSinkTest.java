@@ -16,6 +16,7 @@
 
 package co.cask.cdap.template.etl.realtime;
 
+import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.template.etl.api.PipelineConfigurable;
@@ -77,15 +78,18 @@ public class RealtimeElasticsearchSinkTest extends TestBase {
 
   private Client client;
   private Node node;
+  private int port;
 
   @ClassRule
   public static TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Before
   public void beforeTest() throws Exception {
+    port = Networks.getRandomPort();
     ImmutableSettings.Builder elasticsearchSettings = ImmutableSettings.settingsBuilder()
       .put("path.data", tmpFolder.newFolder("data"))
-      .put("cluster.name", "testcluster");
+      .put("cluster.name", "testcluster")
+      .put("transport.tcp.port", port);
     node = nodeBuilder().settings(elasticsearchSettings.build()).client(false).node();
     client = node.client();
   }
@@ -121,7 +125,7 @@ public class RealtimeElasticsearchSinkTest extends TestBase {
     try {
       ETLStage sink = new ETLStage("Elasticsearch",
                                    ImmutableMap.of(Properties.Elasticsearch.TRANSPORT_ADDRESSES,
-                                                   InetAddress.getLocalHost().getHostName() + ":9300",
+                                                   InetAddress.getLocalHost().getHostName() + ":" + port,
                                                    Properties.Elasticsearch.CLUSTER, "testcluster",
                                                    Properties.Elasticsearch.INDEX_NAME, "test",
                                                    Properties.Elasticsearch.TYPE_NAME, "testing",
