@@ -180,17 +180,22 @@ public class SchedulerServiceTest {
     Assert.assertEquals(1, scheduleIds.size());
     checkState(Scheduler.ScheduleState.SUSPENDED, scheduleIds);
 
+    List<ScheduledRuntime> oldScheduledRuntimes = schedulerService.nextScheduledRuntime(program, programType);
+
     schedulerService.updateSchedule(program, programType, updatedTimeSchedule1);
 
     schedulerService.resumeSchedule(program, programType, "Schedule1");
     checkState(Scheduler.ScheduleState.SCHEDULED, scheduleIds);
 
-    List<ScheduledRuntime> scheduledRuntimes = schedulerService.nextScheduledRuntime(program, programType);
+    List<ScheduledRuntime> updatedScheduledRuntimes = schedulerService.nextScheduledRuntime(program, programType);
 
     // the next schedule runtime should be in next 10 minutes from resume
-    Assert.assertTrue(scheduledRuntimes.get(0).getTime() > System.currentTimeMillis() &&
-                        scheduledRuntimes.get(0).getTime() < System.currentTimeMillis() +
+    Assert.assertTrue(updatedScheduledRuntimes.get(0).getTime() > System.currentTimeMillis() &&
+                        updatedScheduledRuntimes.get(0).getTime() < System.currentTimeMillis() +
                           TimeUnit.MINUTES.toMillis(12));
+
+    // the updated next schedule runtime must be less than the old one
+    Assert.assertTrue(updatedScheduledRuntimes.get(0).getTime() < oldScheduledRuntimes.get(0).getTime());
 
     schedulerService.deleteSchedules(program, programType);
     Assert.assertEquals(0, schedulerService.getScheduleIds(program, programType).size());

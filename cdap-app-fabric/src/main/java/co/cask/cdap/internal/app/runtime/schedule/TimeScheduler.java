@@ -262,7 +262,6 @@ final class TimeScheduler implements Scheduler {
   }
 
   @Override
-
   public void updateSchedule(Id.Program program, SchedulableProgramType programType, Schedule schedule,
                              Map<String, String> properties) throws NotFoundException, SchedulerException {
     checkInitialized();
