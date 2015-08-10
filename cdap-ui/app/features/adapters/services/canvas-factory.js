@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.adapters')
-  .factory('CanvasFactory', function(myHelpers) {
+  .factory('CanvasFactory', function(myHelpers, MyPlumbService, $q, $alert) {
     function getNodes(config) {
       var nodes = [];
       var i =0;
@@ -66,9 +66,90 @@ angular.module(PKG.name + '.feature.adapters')
       return connections;
     }
 
+    function exportAdapter(detailedConfig, name) {
+      var defer = $q.defer();
+      if (!name || name === '') {
+        detailedConfig.name = 'noname';
+      } else {
+        detailedConfig.name =  name;
+      }
+
+      detailedConfig.ui = {
+        nodes: angular.copy(MyPlumbService.nodes),
+        connections: angular.copy(MyPlumbService.connections)
+      };
+
+      angular.forEach(detailedConfig.ui.nodes, function(node) {
+        delete node._backendProperties;
+      });
+      detailedConfig.ui.connections.forEach(function(conn) {
+        delete conn.visited;
+      });
+
+      var content = JSON.stringify(detailedConfig, null, 4);
+      var blob = new Blob([content], { type: 'application/json'});
+      defer.resolve({
+        name:  detailedConfig.name + '-' + detailedConfig.template,
+        url: URL.createObjectURL(blob)
+      });
+      return defer.promise;
+    }
+
+    function importAdapter(files, type) {
+      var defer = $q.defer();
+      var reader = new FileReader();
+      reader.readAsText(files[0], "UTF-8");
+
+      reader.onload = function (evt) {
+        var errorMessage;
+        var result;
+        try {
+          result = JSON.parse(evt.target.result);
+        } catch(e) {
+          errorMessage = 'The imported config json is incorrect. Please check the JSON content'
+          $alert({
+            type: 'danger',
+            content: errorMessage
+          });
+          defer.reject(errorMessage);
+          return;
+        }
+
+        if (result.template !== type) {
+          errorMessage = 'Template imported is for ' + result.template + '. Please switch to ' + result.template + ' creation to import.';
+          $alert({
+            type: 'danger',
+            content: errorMessage
+          });
+          defer.reject(errorMessage);
+          return;
+        }
+        // We need to perform more validations on the uploaded json.
+        if (!result.config.source ||
+            !result.config.sink ||
+            !result.config.transforms) {
+          errorMessage = 'The structure of imported config is incorrect. To the base structure of the config please try creating a new adpater and viewing the config.';
+          $alert({
+            type: 'danger',
+            content: errorMessage
+          });
+          defer.reject(errorMessage);
+          return;
+        }
+        defer.resolve(result);
+      };
+
+      reader.onerror = function (evt) {
+        defer.reject(evt);
+      };
+      return defer.promise;
+    }
+
     return {
       getNodes: getNodes,
       extractMetadataFromDraft: extractMetadataFromDraft,
-      getConnectionsBasedOnNodes: getConnectionsBasedOnNodes
+      getConnectionsBasedOnNodes: getConnectionsBasedOnNodes,
+      exportAdapter: exportAdapter,
+      importAdapter: importAdapter
     }
   });
