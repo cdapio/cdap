@@ -1315,11 +1315,7 @@ public abstract class Id {
 
     @Override
     public String toString() {
-      return Objects.toStringHelper(this)
-        .add("namespace", namespace)
-        .add("name", name)
-        .add("version", version)
-        .toString();
+      return String.format("%s:%s-%s", namespace.getId(), name, version.getVersion());
     }
 
     @Override
