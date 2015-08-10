@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.adapters')
-  .controller('CanvasController', function (myAdapterApi, MyPlumbService, $bootstrapModal, $state, $scope, $alert, myHelpers, CanvasFactory, MyPlumbFactory, $modalStack, $timeout, ModalConfirm) {
+  .controller('CanvasController', function (myAdapterApi, MyPlumbService, $bootstrapModal, $state, $scope, $alert, CanvasFactory, MyPlumbFactory, $modalStack, $timeout, ModalConfirm, myAdapterTemplatesApi, $q) {
     this.nodes = [];
     this.reloadDAG = false;
     if ($scope.AdapterCreateController.data) {
@@ -19,6 +19,10 @@ angular.module(PKG.name + '.feature.adapters')
       {
         name: 'sink',
         icon: 'icon-ETLsinks'
+      },
+      {
+        name: 'templates',
+        icon: 'icon-ETLtemplates'
       }
     ];
 
@@ -49,22 +53,24 @@ angular.module(PKG.name + '.feature.adapters')
       }
     ];
 
+    this.onImportSuccess = function(result) {
+      $scope.config = JSON.stringify(result);
+      this.reloadDAG = true;
+      MyPlumbService.resetToDefaults(true);
+      setNodesAndConnectionsFromDraft.call(this, result);
+      if ($scope.config.name) {
+        MyPlumbService.metadata.name = $scope.config.name;
+      }
+
+      MyPlumbService.notifyError({});
+      MyPlumbService.notifyResetListners();
+    }
+
     this.importFile = function(files) {
       CanvasFactory
         .importAdapter(files, MyPlumbService.metadata.template.type)
         .then(
-          function success(result) {
-            $scope.config = JSON.stringify(result);
-            this.reloadDAG = true;
-            MyPlumbService.resetToDefaults(true);
-            setNodesAndConnectionsFromDraft.call(this, result);
-            if ($scope.config.name) {
-              MyPlumbService.metadata.name = $scope.config.name;
-            }
-
-            MyPlumbService.notifyError({});
-            MyPlumbService.notifyResetListners();
-          }.bind(this),
+          this.onImportSuccess.bind(this),
           function error(errorEvent) {
             console.error('Upload config failed', errorEvent);
           }
@@ -194,6 +200,7 @@ angular.module(PKG.name + '.feature.adapters')
 
     this.onLeftSideGroupItemClicked = function(group) {
       var prom;
+      var templatedefer = $q.defer();
       switch(group.name) {
         case 'source':
           prom = myAdapterApi.fetchSources({ adapterType: MyPlumbService.metadata.template.type }).$promise;
@@ -204,6 +211,22 @@ angular.module(PKG.name + '.feature.adapters')
         case 'sink':
           prom = myAdapterApi.fetchSinks({ adapterType: MyPlumbService.metadata.template.type }).$promise;
           break;
+        case 'templates':
+          prom = myAdapterTemplatesApi.list({
+              apptype: MyPlumbService.metadata.template.type.toLowerCase()
+            })
+              .$promise
+              .then(function(res) {
+                var plugins = res.map(function(plugin) {
+                  return {
+                    name: plugin.name,
+                    description: plugin.description,
+                    icon: 'icon-ETLtemplates'
+                  };
+                });
+                templatedefer.resolve(plugins);
+                return templatedefer.promise;
+              });
       }
       prom.then(function(res) {
         this.plugins.items = [];
@@ -226,6 +249,24 @@ angular.module(PKG.name + '.feature.adapters')
         delete this.pluginTypes[0].error;
       } else if (item.type === 'sink' && this.pluginTypes[2].error) {
         delete this.pluginTypes[2].error;
+      } else if (item.type === 'templates') {
+        myAdapterTemplatesApi.get({
+          apptype: MyPlumbService.metadata.template.type.toLowerCase(),
+          appname: item.name
+        })
+          .$promise
+          .then(function(res) {
+            var result = CanvasFactory.parseImportedJson(JSON.stringify(res), MyPlumbService.metadata.template.type)
+            if (result.error) {
+              $alert({
+                type: 'danger',
+                content: 'Imported pre-defined app has issues. Please check the JSON of the imported pre-defined app'
+              });
+            } else {
+              this.onImportSuccess(result);
+            }
+          }.bind(this));
+        return;
       }
 
       // TODO: Better UUID?

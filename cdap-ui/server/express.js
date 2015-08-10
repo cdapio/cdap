@@ -22,7 +22,8 @@ var pkg = require('../package.json'),
     bodyParser = require('body-parser'),
     DIST_PATH = require('path').normalize(
       __dirname + '/../dist'
-    );
+    ),
+    fs = require('fs');;
 
 var log = log4js.getLogger('default');
 
@@ -202,6 +203,62 @@ function makeApp (authAddress, cdapConfig) {
           res.status(response.statusCode).send();
         }
       });
+    }
+  ]);
+
+  app.get('/predefinedapps/:apptype', [
+      function (req, res) {
+        var apptype = req.params.apptype;
+        var dirPath = __dirname + '/../templates/apps/predefined/' + apptype;
+        fs.readdir( dirPath ,function(err,files){
+            if (err) {
+              res.status(404).send({
+                error: err.code,
+                message: 'Unable to file template type: ' + apptype
+              });
+              log.debug('Unable to file template type: ' + apptype);
+            }
+            files = files.map(function(file) {
+              var config = {
+                name: file.substr(0, file.indexOf('.'))
+              }, fileJson;
+              try {
+                fileJson = JSON.parse(fs.readFileSync( dirPath +'/' + file, 'utf8'));
+              } catch(e) {
+                fileJson = {};
+              }
+              config.description = fileJson.description;
+              return config;
+            });
+            res.send(files);
+        });
+      }
+  ]);
+
+  app.get('/predefinedapps/:apptype/:appname', [
+    function (req, res) {
+      var apptype = req.params.apptype;
+      var appname = req.params.appname;
+
+      var filePath = __dirname
+        + '/../templates/apps/predefined/'
+        + apptype
+        + '/'
+        + appname
+        + '.json';
+      var config = {};
+      try {
+        config = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+        res.send(config);
+      } catch(e) {
+        config.error = e.code;
+        config.message = 'Error reading template - '
+          + appname
+          + ' of type - '
+          + apptype ;
+        log.debug(config.message);
+        res.status(404).send(config);
+      }
     }
   ]);
 
