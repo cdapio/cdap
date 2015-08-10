@@ -47,8 +47,10 @@ function makeApp (authAddress, cdapConfig) {
       authorization: req.headers.authorization,
       cdap: {
         routerServerUrl: cdapConfig['router.server.address'],
-        routerServerPort: cdapConfig['router.server.port']
+        routerServerPort: cdapConfig['router.server.port'],
+        routerSSLServerPort: cdapConfig['router.ssl.bind.port']
       },
+      sslEnabled: cdapConfig['ssl.enabled'] === 'true',
       securityEnabled: authAddress.enabled,
       isEnterprise: process.env.NODE_ENV === 'production'
     });
@@ -114,12 +116,15 @@ function makeApp (authAddress, cdapConfig) {
     For now it handles file upload POST /namespaces/:namespace/apps API
   */
   app.post('/namespaces/:namespace/:path(*)', function (req, res) {
-    var url = 'http://' + cdapConfig['router.server.address'] +
-              ':' +
-              cdapConfig['router.server.port'] +
-              '/v3/namespaces/' +
-              req.param('namespace') +
-              '/' + req.param('path');
+    var url = (cdapConfig['ssl.enabled'] === 'true'? 'https://': 'http://')
+              + cdapConfig['router.server.address']
+              + ':'
+              + (cdapConfig['ssl.enabled'] === 'true'?
+                  cdapConfig['router.ssl.bind.port'] :  cdapConfig['router.server.port'])
+              + '/v3/namespaces/'
+              + req.param('namespace')
+              + '/'
+              + req.param('path');
 
     var opts = {
       method: 'POST',
@@ -176,10 +181,12 @@ function makeApp (authAddress, cdapConfig) {
   app.get('/backendstatus', [
     function (req, res) {
 
-      var link = 'http://' + cdapConfig['router.server.address'] +
-              ':' +
-              cdapConfig['router.server.port'] +
-              '/v3/namespaces';
+      var link = (cdapConfig['ssl.enabled'] === 'true'? 'https://': 'http://')
+                + cdapConfig['router.server.address']
+                + ':'
+                + (cdapConfig['ssl.enabled'] === 'true'?
+                    cdapConfig['router.ssl.bind.port']: cdapConfig['router.server.port'])
+                + '/v3/namespaces';
 
       request({
         method: 'GET',

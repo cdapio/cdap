@@ -475,7 +475,7 @@ function rewrite() {
   echo "    $rewrite_source"
   if [ "x${3}" == "x" ]; then
     local sub_string=${2}
-  echo "    $sub_string"
+    echo "    $sub_string"
     if [ "$(uname)" == "Darwin" ]; then
       sed -i '.bak' "${sub_string}" ${rewrite_source}
       rm ${rewrite_source}.bak
