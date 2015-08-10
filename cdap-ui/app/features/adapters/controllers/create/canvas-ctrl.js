@@ -210,7 +210,7 @@ angular.module(PKG.name + '.feature.adapters')
           prom = myAdapterApi.fetchSinks({ adapterType: MyPlumbService.metadata.template.type }).$promise;
           break;
         case 'templates':
-          prom = myAdapterTemplatesApi.query({
+          prom = myAdapterTemplatesApi.list({
               apptype: MyPlumbService.metadata.template.type.toLowerCase()
             })
               .$promise

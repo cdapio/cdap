@@ -7,7 +7,7 @@ angular.module(PKG.name + '.services')
         appname: '@appname'
       },
       {
-        query: {
+        list: {
           url:'/predefinedapps/:apptype',
           method: 'GET',
           isArray: true
