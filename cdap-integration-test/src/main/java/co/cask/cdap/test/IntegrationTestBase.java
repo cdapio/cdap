@@ -93,8 +93,7 @@ public class IntegrationTestBase {
     assertIsClear();
   }
 
-  private void checkSystemServices() throws ServiceUnavailableException {
-
+  protected void checkSystemServices() throws ServiceUnavailableException {
     Callable<Boolean> monitorCallable = new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {
