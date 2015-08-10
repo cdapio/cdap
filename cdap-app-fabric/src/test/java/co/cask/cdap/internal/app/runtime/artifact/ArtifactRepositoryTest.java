@@ -21,6 +21,7 @@ import co.cask.cdap.api.artifact.ArtifactDescriptor;
 import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.templates.plugins.PluginClass;
 import co.cask.cdap.api.templates.plugins.PluginProperties;
+import co.cask.cdap.api.templates.plugins.PluginPropertyField;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.common.InvalidArtifactException;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -44,6 +45,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ArtifactRange;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.common.io.Files;
@@ -103,6 +105,20 @@ public class ArtifactRepositoryTest {
       createManifest(ManifestFields.EXPORT_PACKAGE, PluginTestRunnable.class.getPackage().getName()));
     artifactRepository.addArtifact(APP_ARTIFACT_ID, appArtifactFile, null);
     appClassLoader = createAppClassLoader(appArtifactFile);
+  }
+
+  @Test(expected = InvalidArtifactException.class)
+  public void testMultipleParentVersions() throws InvalidArtifactException {
+    ArtifactRepository.validateParentSet(ImmutableSet.of(
+      new ArtifactRange(Id.Namespace.SYSTEM, "r1", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")),
+      new ArtifactRange(Id.Namespace.SYSTEM, "r1", new ArtifactVersion("3.0.0"), new ArtifactVersion("4.0.0"))));
+  }
+
+  @Test(expected = InvalidArtifactException.class)
+  public void testMultiplePluginClasses() throws InvalidArtifactException {
+    ArtifactRepository.validatePluginSet(ImmutableSet.of(
+      new PluginClass("t1", "n1", "", "co.cask.test1", "cfg", ImmutableMap.<String, PluginPropertyField>of()),
+      new PluginClass("t1", "n1", "", "co.cask.test2", "cfg", ImmutableMap.<String, PluginPropertyField>of())));
   }
 
   @Test

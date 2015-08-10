@@ -50,7 +50,7 @@ public class PluginClassDeserializer implements JsonDeserializer<PluginClass> {
 
     String type = jsonObj.has("type") ? jsonObj.get("type").getAsString() : Plugin.DEFAULT_TYPE;
     String name = getRequired(jsonObj, "name").getAsString();
-    String description = getRequired(jsonObj, "description").getAsString();
+    String description = jsonObj.has("description") ? jsonObj.get("description").getAsString() : "";
     String className = getRequired(jsonObj, "className").getAsString();
 
     Map<String, PluginPropertyField> properties = jsonObj.has("properties")

@@ -18,7 +18,6 @@ package co.cask.cdap.internal.app.runtime.artifact;
 
 import co.cask.cdap.api.templates.plugins.PluginClass;
 import co.cask.cdap.common.InvalidArtifactException;
-import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.internal.app.runtime.adapter.PluginClassDeserializer;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ArtifactRange;
@@ -48,7 +47,9 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Represents json config file that can be placed in the system artifacts directory. Comparable so that we
+ * Represents a system artifact along with metadata about that artifact. The metadata can come from a json config file
+ * that is placed in the system artifacts directory. Metadata includes other artifacts that this artifact extends,
+ * as well as plugin information for the artifact. It is comparable so that we
  * can order collections of configs such that artifacts that extends other artifacts are later in the collection.
  */
 public class SystemArtifactConfig implements Comparable<SystemArtifactConfig> {
@@ -176,27 +177,20 @@ public class SystemArtifactConfig implements Comparable<SystemArtifactConfig> {
     @VisibleForTesting
     Builder addPlugins(PluginClass pluginClass, PluginClass... plugins) {
       this.plugins.add(pluginClass);
-      for (PluginClass plugin : plugins) {
-        this.plugins.add(plugin);
-      }
+      Collections.addAll(this.plugins, plugins);
       return this;
     }
 
     @VisibleForTesting
     Builder addParents(ArtifactRange parent, ArtifactRange... parents) {
       this.parents.add(parent);
-      for (ArtifactRange parentRange : parents) {
-        this.parents.add(parentRange);
-      }
+      Collections.addAll(this.parents, parents);
       return this;
     }
 
-    SystemArtifactConfig build() throws InvalidArtifactException {
-      validateParentList(parents);
-      validatePluginList(plugins);
-      SystemArtifactConfig config = new SystemArtifactConfig(artifactId, artifactFile,
+    SystemArtifactConfig build() {
+      return new SystemArtifactConfig(artifactId, artifactFile,
         Collections.unmodifiableSet(parents), Collections.unmodifiableSet(plugins));
-      return config;
     }
   }
 
@@ -228,9 +222,8 @@ public class SystemArtifactConfig implements Comparable<SystemArtifactConfig> {
   }
 
   /**
-   * Deserializer for SystemArtifactConfig. Used to check validity of an artifact config. For example,
-   * a plugin class should not appear more than once in the list of plugins, and a parent artifact should not
-   * appear more than once in the list of parents.
+   * Serializer and Deserializer for SystemArtifactConfig. Used to make sure collections are set to empty collections
+   * instead of null, and to prevent some fields from being serialized.
    */
   private static final class SystemArtifactConfigDeserializer
     implements JsonDeserializer<SystemArtifactConfig>, JsonSerializer<SystemArtifactConfig> {
@@ -251,13 +244,6 @@ public class SystemArtifactConfig implements Comparable<SystemArtifactConfig> {
       Set<PluginClass> plugins = context.deserialize(obj.get("plugins"), PLUGINS_TYPE);
       plugins = plugins == null ? Collections.<PluginClass>emptySet() : plugins;
 
-      try {
-        validateParentList(parents);
-        validatePluginList(plugins);
-      } catch (InvalidArtifactException e) {
-        throw new JsonParseException(e.getMessage());
-      }
-
       return new SystemArtifactConfig(parents, plugins);
     }
 
@@ -267,58 +253,6 @@ public class SystemArtifactConfig implements Comparable<SystemArtifactConfig> {
       obj.add("parents", context.serialize(src.getParents()));
       obj.add("plugins", context.serialize(src.getPlugins()));
       return obj;
-    }
-  }
-
-  private static void validateParentList(Set<ArtifactRange> parents) throws InvalidArtifactException {
-    boolean isInvalid = false;
-    StringBuilder errMsg = new StringBuilder("Invalid parents field.");
-
-    // check for multiple version ranges for the same artifact.
-    // ex: "parents": [ "etlbatch[1.0.0,2.0.0)", "etlbatch[3.0.0,4.0.0)" ]
-    Set<String> parentNames = new HashSet<>();
-    // keep track of dupes so that we don't have repeat error messages if there are more than 2 ranges for a name
-    Set<String> dupes = new HashSet<>();
-    for (ArtifactRange parent : parents) {
-      String parentName = parent.getName();
-      if (!parentNames.add(parentName) && !dupes.contains(parentName)) {
-        errMsg.append(" Only one version range for parent '");
-        errMsg.append(parentName);
-        errMsg.append("' can be present.");
-        dupes.add(parentName);
-        isInvalid = true;
-      }
-    }
-
-    // final err message should look something like:
-    // "Invalid parents. Only one version range for parent 'etlbatch' can be present."
-    if (isInvalid) {
-      throw new InvalidArtifactException(errMsg.toString());
-    }
-  }
-
-  private static void validatePluginList(Set<PluginClass> plugins) throws InvalidArtifactException {
-    boolean isInvalid = false;
-    StringBuilder errMsg = new StringBuilder("Invalid plugins field.");
-    Set<ImmutablePair<String, String>> existingPlugins = new HashSet<>();
-    Set<ImmutablePair<String, String>> dupes = new HashSet<>();
-    for (PluginClass plugin : plugins) {
-      ImmutablePair<String, String> typeAndName = ImmutablePair.of(plugin.getType(), plugin.getName());
-      if (!existingPlugins.add(typeAndName) && !dupes.contains(typeAndName)) {
-        errMsg.append(" Only one plugin with type '");
-        errMsg.append(typeAndName.getFirst());
-        errMsg.append("' and name '");
-        errMsg.append(typeAndName.getSecond());
-        errMsg.append("' can be present.");
-        dupes.add(typeAndName);
-        isInvalid = true;
-      }
-    }
-
-    // final err message should look something like:
-    // "Invalid plugins. Only one plugin with type 'source' and name 'table' can be present."
-    if (isInvalid) {
-      throw new InvalidArtifactException(errMsg.toString());
     }
   }
 }

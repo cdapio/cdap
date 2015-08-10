@@ -40,25 +40,6 @@ public class SystemArtifactConfigTest {
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
   @Test(expected = InvalidArtifactException.class)
-  public void testMultipleParentVersions() throws InvalidArtifactException {
-    SystemArtifactConfig.builder(null, null)
-      .addParents(
-        new ArtifactRange(Id.Namespace.SYSTEM, "r1", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")),
-        new ArtifactRange(Id.Namespace.SYSTEM, "r1", new ArtifactVersion("3.0.0"), new ArtifactVersion("4.0.0")))
-      .build();
-  }
-
-  @Test(expected = InvalidArtifactException.class)
-  public void testMultiplePluginClasses() throws InvalidArtifactException {
-    SystemArtifactConfig.builder(null, null)
-      .addPlugins(
-        new PluginClass("t1", "n1", "", "co.cask.test1", "cfg", ImmutableMap.<String, PluginPropertyField>of()),
-        new PluginClass("t1", "n1", "", "co.cask.test2", "cfg", ImmutableMap.<String, PluginPropertyField>of())
-      )
-      .build();
-  }
-
-  @Test(expected = InvalidArtifactException.class)
   public void testBadJsonSyntax() throws IOException, InvalidArtifactException {
     File configFile = new File(tmpFolder.newFolder(), "r1-1.0.0.jar");
     try (BufferedWriter writer = Files.newWriter(configFile, Charsets.UTF_8)) {

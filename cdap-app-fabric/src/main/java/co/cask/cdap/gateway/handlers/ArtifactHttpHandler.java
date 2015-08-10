@@ -99,8 +99,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
 
   @POST
   @Path("/namespaces/system/artifacts")
-  public void refreshSystemArtifacts(HttpRequest request, HttpResponder responder,
-                                     @PathParam("namespace-id") String namespaceId) {
+  public void refreshSystemArtifacts(HttpRequest request, HttpResponder responder) {
     try {
       artifactRepository.addSystemArtifacts();
       responder.sendStatus(HttpResponseStatus.OK);

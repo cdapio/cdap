@@ -28,6 +28,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.utils.DirUtils;
+import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
@@ -44,6 +45,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -192,7 +194,6 @@ public class ArtifactRepository {
 
   /**
    * Inspects and builds plugin and application information for the given artifact.
-   * TODO (CDAP-3319) check parents don't have parents
    *
    * @param artifactId the id of the artifact to inspect and store
    * @param artifactFile the artifact to inspect and store
@@ -209,6 +210,7 @@ public class ArtifactRepository {
     try (CloseableClassLoader parentClassLoader =
            artifactClassLoaderFactory.createClassLoader(Locations.toLocation(artifactFile))) {
       ArtifactClasses artifactClasses = artifactInspector.inspectArtifact(artifactId, artifactFile, parentClassLoader);
+      validatePluginSet(artifactClasses.getPlugins());
       ArtifactMeta meta = new ArtifactMeta(artifactClasses, ImmutableSet.<ArtifactRange>of());
       return artifactStore.write(artifactId, meta, Files.newInputStreamSupplier(artifactFile));
     }
@@ -243,9 +245,11 @@ public class ArtifactRepository {
     } else {
       parentClassLoader = createParentClassLoader(artifactId, parentArtifacts);
     }
+    validateParentSet(parentArtifacts);
 
     try {
       ArtifactClasses artifactClasses = artifactInspector.inspectArtifact(artifactId, artifactFile, parentClassLoader);
+      validatePluginSet(artifactClasses.getPlugins());
       ArtifactMeta meta = new ArtifactMeta(artifactClasses, parentArtifacts);
       return artifactStore.write(artifactId, meta, Files.newInputStreamSupplier(artifactFile));
     } finally {
@@ -279,22 +283,25 @@ public class ArtifactRepository {
       String artifactFileName = jarFile.getName();
       String configFileName = artifactFileName.substring(0, artifactFileName.length() - ".jar".length()) + ".json";
       File configFile = new File(systemArtifactDir, configFileName);
+
       try {
-        if (configFile.isFile()) {
-          // if a config file exists, parse it and add it to the list
-          systemArtifacts.add(SystemArtifactConfig.read(artifactId, configFile, jarFile));
-        } else {
-          // otherwise, don't parse it
-          systemArtifacts.add(SystemArtifactConfig.builder(artifactId, jarFile).build());
-        }
+        // read and parse the config file if it exists. Otherwise use an empty config with the artifact filename
+        SystemArtifactConfig systemArtifactConfig = configFile.isFile() ?
+          SystemArtifactConfig.read(artifactId, configFile, jarFile) :
+          SystemArtifactConfig.builder(artifactId, jarFile).build();
+
+        validateParentSet(systemArtifactConfig.getParents());
+        validatePluginSet(systemArtifactConfig.getPlugins());
+        systemArtifacts.add(systemArtifactConfig);
       } catch (InvalidArtifactException e) {
         LOG.warn(String.format("Could not add system artifact '%s' because it is invalid.", artifactFileName), e);
       }
     }
 
-
     // Need to be sure to add parent artifacts before artifacts that extend them.
+    // Sorting will accomplish this because SystemArtifactConfig is comparable based on parents
     Collections.sort(systemArtifacts);
+
     for (SystemArtifactConfig systemArtifactConfig : systemArtifacts) {
       String fileName = systemArtifactConfig.getFile().getName();
       try {
@@ -416,5 +423,70 @@ public class ArtifactRepository {
     // assumes any of the parents will do
     Location parentLocation = parents.get(0).getDescriptor().getLocation();
     return artifactClassLoaderFactory.createClassLoader(parentLocation);
+  }
+
+  /**
+   * Validates the parents of an artifact. Checks that each artifact only appears with a single version range.
+   *
+   * @param parents the set of parent ranges to validate
+   * @throws InvalidArtifactException if there is more than one version range for an artifact
+   */
+  static void validateParentSet(Set<ArtifactRange> parents) throws InvalidArtifactException {
+    boolean isInvalid = false;
+    StringBuilder errMsg = new StringBuilder("Invalid parents field.");
+
+    // check for multiple version ranges for the same artifact.
+    // ex: "parents": [ "etlbatch[1.0.0,2.0.0)", "etlbatch[3.0.0,4.0.0)" ]
+    Set<String> parentNames = new HashSet<>();
+    // keep track of dupes so that we don't have repeat error messages if there are more than 2 ranges for a name
+    Set<String> dupes = new HashSet<>();
+    for (ArtifactRange parent : parents) {
+      String parentName = parent.getName();
+      if (!parentNames.add(parentName) && !dupes.contains(parentName)) {
+        errMsg.append(" Only one version range for parent '");
+        errMsg.append(parentName);
+        errMsg.append("' can be present.");
+        dupes.add(parentName);
+        isInvalid = true;
+      }
+    }
+
+    // final err message should look something like:
+    // "Invalid parents. Only one version range for parent 'etlbatch' can be present."
+    if (isInvalid) {
+      throw new InvalidArtifactException(errMsg.toString());
+    }
+  }
+
+  /**
+   * Validates the set of plugins for an artifact. Checks that the pair of plugin type and name are unique among
+   * all plugins in an artifact.
+   *
+   * @param plugins the set of plugins to validate
+   * @throws InvalidArtifactException if there is more than one class with the same type and name
+   */
+  static void validatePluginSet(Set<PluginClass> plugins) throws InvalidArtifactException {
+    boolean isInvalid = false;
+    StringBuilder errMsg = new StringBuilder("Invalid plugins field.");
+    Set<ImmutablePair<String, String>> existingPlugins = new HashSet<>();
+    Set<ImmutablePair<String, String>> dupes = new HashSet<>();
+    for (PluginClass plugin : plugins) {
+      ImmutablePair<String, String> typeAndName = ImmutablePair.of(plugin.getType(), plugin.getName());
+      if (!existingPlugins.add(typeAndName) && !dupes.contains(typeAndName)) {
+        errMsg.append(" Only one plugin with type '");
+        errMsg.append(typeAndName.getFirst());
+        errMsg.append("' and name '");
+        errMsg.append(typeAndName.getSecond());
+        errMsg.append("' can be present.");
+        dupes.add(typeAndName);
+        isInvalid = true;
+      }
+    }
+
+    // final err message should look something like:
+    // "Invalid plugins. Only one plugin with type 'source' and name 'table' can be present."
+    if (isInvalid) {
+      throw new InvalidArtifactException(errMsg.toString());
+    }
   }
 }
