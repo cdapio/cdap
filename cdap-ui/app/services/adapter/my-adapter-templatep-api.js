@@ -3,17 +3,17 @@ angular.module(PKG.name + '.services')
     return $resource(
       '',
       {
-        templatetype: '@templatetype',
-        templatename: '@templatename'
+        apptype: '@apptype',
+        appname: '@appname'
       },
       {
         query: {
-          url:'/adaptertemplates/:templatetype',
+          url:'/predefinedapps/:apptype',
           method: 'GET',
           isArray: true
         },
         get: {
-          url: '/adaptertemplates/:templatetype/:templatename',
+          url: '/predefinedapps/:apptype/:appname',
           method: 'GET'
         }
       }

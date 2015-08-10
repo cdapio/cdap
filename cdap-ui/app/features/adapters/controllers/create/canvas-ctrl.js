@@ -209,7 +209,7 @@ angular.module(PKG.name + '.feature.adapters')
           break;
         case 'templates':
           prom = myAdapterTemplatesApi.query({
-              templatetype: MyPlumbService.metadata.template.type.toLowerCase()
+              apptype: MyPlumbService.metadata.template.type.toLowerCase()
             })
               .$promise
               .then(function(res) {
@@ -247,8 +247,8 @@ angular.module(PKG.name + '.feature.adapters')
         delete this.pluginTypes[2].error;
       } else if (item.type === 'templates') {
         myAdapterTemplatesApi.get({
-          templatetype: MyPlumbService.metadata.template.type.toLowerCase(),
-          templatename: item.name
+          apptype: MyPlumbService.metadata.template.type.toLowerCase(),
+          appname: item.name
         })
           .$promise
           .then(function(res) {
