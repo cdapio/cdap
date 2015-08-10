@@ -172,4 +172,8 @@ angular.module(PKG.name + '.feature.adapters')
       EventPipe.emit('plugin.reset');
     };
 
+    this.schemaClear = function () {
+      EventPipe.emit('schema.clear');
+    };
+
   });
