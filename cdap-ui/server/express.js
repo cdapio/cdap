@@ -199,17 +199,17 @@ function makeApp (authAddress, cdapConfig) {
     }
   ]);
 
-  app.get('/adaptertemplates/:templatetype', [
+  app.get('/predefinedapps/:apptype', [
       function (req, res) {
-        var templatetype = req.params.templatetype;
-        var dirPath = __dirname + '/../adaptertemplates/' + templatetype;
+        var apptype = req.params.apptype;
+        var dirPath = __dirname + '/../templates/apps/predefined/' + apptype;
         fs.readdir( dirPath ,function(err,files){
             if (err) {
               res.status(404).send({
                 error: err.code,
-                message: 'Unable to file template type: ' + templatetype
+                message: 'Unable to file template type: ' + apptype
               });
-              log.debug('Unable to file template type: ' + templatetype);
+              log.debug('Unable to file template type: ' + apptype);
             }
             files = files.map(function(file) {
               var config = {
@@ -228,16 +228,16 @@ function makeApp (authAddress, cdapConfig) {
       }
   ]);
 
-  app.get('/adaptertemplates/:templatetype/:templatename', [
+  app.get('/predefinedapps/:apptype/:appname', [
     function (req, res) {
-      var templatetype = req.params.templatetype;
-      var templatename = req.params.templatename;
+      var apptype = req.params.apptype;
+      var appname = req.params.appname;
 
       var filePath = __dirname
-        + '/../adaptertemplates/'
-        + templatetype
+        + '/../templates/apps/predefined/'
+        + apptype
         + '/'
-        + templatename
+        + appname
         + '.json';
       var config = {};
       try {
@@ -246,9 +246,9 @@ function makeApp (authAddress, cdapConfig) {
       } catch(e) {
         config.error = e.code;
         config.message = 'Error reading template - '
-          + templatename
+          + appname
           + ' of type - '
-          + templatetype ;
+          + apptype ;
         log.debug(config.message);
         res.status(404).send(config);
       }
