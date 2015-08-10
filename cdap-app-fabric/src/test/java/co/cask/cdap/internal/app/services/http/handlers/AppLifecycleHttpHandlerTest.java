@@ -109,6 +109,13 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
   }
 
   @Test
+  public void testListNonExistentNamespace() throws Exception {
+    HttpResponse response = doGet(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN,
+                                                      NONEXISTENT_NAMESPACE));
+    Assert.assertEquals(404, response.getStatusLine().getStatusCode());
+  }
+
+  @Test
   public void testListAndGet() throws Exception {
     final String appName = "AppWithDatasetName";
     //deploy without name to testnamespace1

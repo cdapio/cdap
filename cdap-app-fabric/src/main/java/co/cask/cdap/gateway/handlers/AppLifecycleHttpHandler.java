@@ -30,6 +30,7 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.ArtifactAlreadyExistsException;
 import co.cask.cdap.common.CannotBeDeletedException;
 import co.cask.cdap.common.InvalidArtifactException;
+import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -175,7 +176,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/apps")
   public void getAllApps(HttpRequest request, HttpResponder responder,
-                         @PathParam("namespace-id") String namespaceId) {
+                         @PathParam("namespace-id") String namespaceId) throws NamespaceNotFoundException {
     getAppRecords(responder, store, namespaceId);
   }
 
