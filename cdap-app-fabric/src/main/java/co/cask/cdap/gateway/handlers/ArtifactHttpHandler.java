@@ -36,6 +36,8 @@ import co.cask.cdap.internal.app.runtime.artifact.PluginNotExistsException;
 import co.cask.cdap.internal.app.runtime.artifact.WriteConflictException;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.artifact.ApplicationClassInfo;
+import co.cask.cdap.proto.artifact.ApplicationClassSummary;
 import co.cask.cdap.proto.artifact.ArtifactInfo;
 import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
@@ -90,6 +92,8 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
   private static final String VERSION_HEADER = "Artifact-Version";
   private static final String EXTENDS_HEADER = "Artifact-Extends";
   private static final String PLUGINS_HEADER = "Artifact-Plugins";
+  private static final Type APPCLASS_SUMMARIES_TYPE = new TypeToken<List<ApplicationClassSummary>>() { }.getType();
+  private static final Type APPCLASS_INFOS_TYPE = new TypeToken<List<ApplicationClassInfo>>() { }.getType();
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .registerTypeAdapter(PluginClass.class, new PluginClassDeserializer())
@@ -240,8 +244,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
       // flatten the map
       for (Map.Entry<ArtifactDescriptor, List<PluginClass>> pluginsEntry : plugins.entrySet()) {
         ArtifactDescriptor pluginArtifact = pluginsEntry.getKey();
-        ArtifactSummary pluginArtifactSummary = new ArtifactSummary(
-          pluginArtifact.getName(), pluginArtifact.getVersion().getVersion(), pluginArtifact.isSystem());
+        ArtifactSummary pluginArtifactSummary = ArtifactSummary.from(pluginArtifact);
 
         for (PluginClass pluginClass : pluginsEntry.getValue()) {
           pluginSummaries.add(new PluginSummary(
@@ -280,8 +283,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
       // flatten the map
       for (Map.Entry<ArtifactDescriptor, PluginClass> pluginsEntry : plugins.entrySet()) {
         ArtifactDescriptor pluginArtifact = pluginsEntry.getKey();
-        ArtifactSummary pluginArtifactSummary = new ArtifactSummary(
-          pluginArtifact.getName(), pluginArtifact.getVersion().getVersion(), pluginArtifact.isSystem());
+        ArtifactSummary pluginArtifactSummary = ArtifactSummary.from(pluginArtifact);
 
         PluginClass pluginClass = pluginsEntry.getValue();
         pluginInfos.add(new PluginInfo(
@@ -307,8 +309,14 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
 
     Id.Namespace namespace = validateAndGetNamespace(namespaceId);
 
-    // TODO: implement
-    responder.sendJson(HttpResponseStatus.OK, Lists.newArrayList());
+    try {
+      responder.sendJson(HttpResponseStatus.OK, artifactRepository.getApplicationClasses(namespace, includeSystem),
+        APPCLASS_SUMMARIES_TYPE, GSON);
+    } catch (IOException e) {
+      LOG.error("Error getting app classes for namespace {}.", namespaceId, e);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
+                           "Error reading app class information from store, please try again.");
+    }
   }
 
   @GET
@@ -316,13 +324,19 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
   public void getApplicationClasses(HttpRequest request, HttpResponder responder,
                                     @PathParam("namespace-id") String namespaceId,
                                     @PathParam("classname") String className,
-                                    @QueryParam("includeSystem") @DefaultValue("true") boolean includeSystem)
+                                    @QueryParam("isSystem") @DefaultValue("true") boolean isSystem)
     throws NamespaceNotFoundException {
 
-    Id.Namespace namespace = validateAndGetNamespace(namespaceId);
+    Id.Namespace namespace = validateAndGetNamespace(namespaceId, isSystem);
 
-    // TODO: implement
-    responder.sendJson(HttpResponseStatus.OK, Lists.newArrayList());
+    try {
+      responder.sendJson(HttpResponseStatus.OK, artifactRepository.getApplicationClasses(namespace, className),
+        APPCLASS_INFOS_TYPE, GSON);
+    } catch (IOException e) {
+      LOG.error("Error getting app classes for namespace {}.", namespaceId, e);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
+        "Error reading app class information from store, please try again.");
+    }
   }
 
   @POST

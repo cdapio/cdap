@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.artifact;
 
+import co.cask.cdap.api.artifact.ApplicationClass;
 import co.cask.cdap.api.artifact.ArtifactClasses;
 import co.cask.cdap.api.artifact.ArtifactDescriptor;
 import co.cask.cdap.api.artifact.ArtifactVersion;
@@ -31,6 +32,8 @@ import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.artifact.ApplicationClassInfo;
+import co.cask.cdap.proto.artifact.ApplicationClassSummary;
 import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 import com.google.common.annotations.VisibleForTesting;
@@ -130,6 +133,47 @@ public class ArtifactRepository {
    */
   public ArtifactDetail getArtifact(Id.Artifact artifactId) throws IOException, ArtifactNotFoundException {
     return artifactStore.getArtifact(artifactId);
+  }
+
+  /**
+   * Get all application classes in the given namespace, optionally including classes from system artifacts as well.
+   * Will never return null. If no artifacts exist, an empty list is returned. Namespace existence is not checked.
+   *
+   * @param namespace the namespace to get application classes from
+   * @param includeSystem whether classes from system artifacts should be included in the results
+   * @return an unmodifiable list of application classes that belong to the given namespace
+   * @throws IOException if there as an exception reading from the meta store
+   */
+  public List<ApplicationClassSummary> getApplicationClasses(Id.Namespace namespace,
+                                                             boolean includeSystem) throws IOException {
+    List<ApplicationClassSummary> summaries = Lists.newArrayList();
+    if (includeSystem) {
+      addAppSummaries(summaries, Id.Namespace.SYSTEM);
+    }
+    addAppSummaries(summaries, namespace);
+
+    return Collections.unmodifiableList(summaries);
+  }
+
+  /**
+   * Get all application classes in the given namespace of the given class name.
+   * Will never return null. If no artifacts exist, an empty list is returned. Namespace existence is not checked.
+   *
+   * @param namespace the namespace to get application classes from
+   * @param className the application class to get
+   * @return an unmodifiable list of application classes that belong to the given namespace
+   * @throws IOException if there as an exception reading from the meta store
+   */
+  public List<ApplicationClassInfo> getApplicationClasses(Id.Namespace namespace,
+                                                             String className) throws IOException {
+    List<ApplicationClassInfo> infos = Lists.newArrayList();
+    for (Map.Entry<ArtifactDescriptor, ApplicationClass> entry :
+      artifactStore.getApplicationClasses(namespace, className).entrySet()) {
+      ArtifactSummary artifactSummary = ArtifactSummary.from(entry.getKey());
+      ApplicationClass appClass = entry.getValue();
+      infos.add(new ApplicationClassInfo(artifactSummary, appClass.getClassName(), appClass.getConfigSchema()));
+    }
+    return Collections.unmodifiableList(infos);
   }
 
   /**
@@ -421,9 +465,7 @@ public class ArtifactRepository {
   // convert details to summaries (to hide location and other unnecessary information)
   private List<ArtifactSummary> convertAndAdd(List<ArtifactSummary> summaries, Iterable<ArtifactDetail> details) {
     for (ArtifactDetail detail : details) {
-      ArtifactDescriptor descriptor = detail.getDescriptor();
-      summaries.add(
-        new ArtifactSummary(descriptor.getName(), descriptor.getVersion().getVersion(), descriptor.isSystem()));
+      summaries.add(ArtifactSummary.from(detail.getDescriptor()));
     }
     return summaries;
   }
@@ -479,6 +521,17 @@ public class ArtifactRepository {
     Location parentLocation = parents.get(0).getDescriptor().getLocation();
 
     return artifactClassLoaderFactory.createClassLoader(parentLocation);
+  }
+
+  private void addAppSummaries(List<ApplicationClassSummary> summaries, Id.Namespace namespace) {
+    for (Map.Entry<ArtifactDescriptor, List<ApplicationClass>> classInfo :
+      artifactStore.getApplicationClasses(namespace).entrySet()) {
+      ArtifactSummary artifactSummary = ArtifactSummary.from(classInfo.getKey());
+
+      for (ApplicationClass appClass : classInfo.getValue()) {
+        summaries.add(new ApplicationClassSummary(artifactSummary, appClass.getClassName()));
+      }
+    }
   }
 
   /**

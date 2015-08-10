@@ -16,6 +16,8 @@
 
 package co.cask.cdap.proto;
 
+import co.cask.cdap.proto.artifact.ArtifactSummary;
+
 import java.util.List;
 
 /**
@@ -29,27 +31,35 @@ public class ApplicationDetail {
   private final List<StreamDetail> streams;
   private final List<DatasetDetail> datasets;
   private final List<ProgramRecord> programs;
+  private final ArtifactSummary artifact;
 
   public ApplicationDetail(String name,
-                           String version,
                            String description,
                            String configuration,
                            List<StreamDetail> streams,
                            List<DatasetDetail> datasets,
-                           List<ProgramRecord> programs) {
+                           List<ProgramRecord> programs,
+                           ArtifactSummary artifact) {
     this.name = name;
-    this.version = version;
+    this.version = artifact.getVersion();
     this.description = description;
     this.configuration = configuration;
     this.streams = streams;
     this.datasets = datasets;
     this.programs = programs;
+    this.artifact = artifact;
   }
 
   public String getName() {
     return name;
   }
 
+  /**
+   * @deprecated use {@link #getArtifact()} instead
+   *
+   * @return the version of the artifact used to create the application
+   */
+  @Deprecated
   public String getVersion() {
     return version;
   }
@@ -72,5 +82,9 @@ public class ApplicationDetail {
 
   public List<ProgramRecord> getPrograms() {
     return programs;
+  }
+
+  public ArtifactSummary getArtifact() {
+    return artifact;
   }
 }

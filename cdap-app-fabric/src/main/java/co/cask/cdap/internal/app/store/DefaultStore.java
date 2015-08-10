@@ -65,6 +65,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
@@ -702,6 +703,15 @@ public class DefaultStore implements Store {
     });
   }
 
+  @Override
+  public Collection<ApplicationSpecification> getApplications(final Id.Namespace namespace,
+                                                              @Nullable final String artifactName,
+                                                              @Nullable final String artifactVersion) {
+    Collection<ApplicationSpecification> allApps = getAllApplications(namespace);
+    Predicate<ApplicationSpecification> filterPredicate = getAppPredicate(artifactName, artifactVersion);
+    return filterPredicate == null ? allApps : Collections2.filter(allApps, filterPredicate);
+  }
+
   @Nullable
   @Override
   public Location getApplicationArchiveLocation(final Id.Application id) {
@@ -1322,6 +1332,36 @@ public class DefaultStore implements Store {
     @Override
     public Iterator<WorkflowDataset> iterator() {
       return Iterators.singletonIterator(workflowDataset);
+    }
+  }
+
+  // get filter for app specs by artifact name and version. if they are null, it means don't filter.
+  private Predicate<ApplicationSpecification> getAppPredicate(@Nullable final String artifactName,
+                                                              @Nullable final String artifactVersion) {
+    if (artifactName == null && artifactVersion == null) {
+      return null;
+    } else if (artifactName == null) {
+      return new Predicate<ApplicationSpecification>() {
+        @Override
+        public boolean apply(ApplicationSpecification input) {
+          return artifactVersion.equals(input.getArtifactId().getVersion().getVersion());
+        }
+      };
+    } else if (artifactVersion == null) {
+      return new Predicate<ApplicationSpecification>() {
+        @Override
+        public boolean apply(ApplicationSpecification input) {
+          return artifactName.equals(input.getArtifactId().getName());
+        }
+      };
+    } else {
+      return new Predicate<ApplicationSpecification>() {
+        @Override
+        public boolean apply(ApplicationSpecification input) {
+          Id.Artifact artifact = input.getArtifactId();
+          return artifactVersion.equals(artifact.getVersion().getVersion()) && artifactName.equals(artifact.getName());
+        }
+      };
     }
   }
 }

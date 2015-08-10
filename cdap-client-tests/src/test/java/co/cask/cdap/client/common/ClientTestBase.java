@@ -123,11 +123,14 @@ public abstract class ClientTestBase {
   }
 
   protected File createAppJarFile(Class<?> cls) throws IOException {
+    return createAppJarFile(cls, cls.getSimpleName(), String.format("1.0.%d-SNAPSHOT", System.currentTimeMillis()));
+  }
+
+  protected File createAppJarFile(Class<?> cls, String name, String version) throws IOException {
     File tmpJarFolder = TMP_FOLDER.newFolder();
     LocationFactory locationFactory = new LocalLocationFactory(tmpJarFolder);
     Location deploymentJar = AppJarHelper.createDeploymentJar(locationFactory, cls);
-    File appJarFile =
-      new File(tmpJarFolder, String.format("%s-1.0.%d-SNAPSHOT.jar", cls.getSimpleName(), System.currentTimeMillis()));
+    File appJarFile = new File(tmpJarFolder, String.format("%s-%s.jar", name, version));
     Files.copy(Locations.newInputSupplier(deploymentJar), appJarFile);
     return appJarFile;
   }
