@@ -77,12 +77,6 @@
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
     </dependency>
-    <dependency>
-      <groupId>org.elasticsearch</groupId>
-      <artifactId>elasticsearch</artifactId>
-      <version>${es.version}</version>
-      <scope>test</scope>
-    </dependency>
   </dependencies>
 
   <build>
