@@ -24,7 +24,7 @@ module.constant('MYAUTH_ROLE', {
 
 module.run(function ($location, $state, $rootScope, myAuth, MYAUTH_EVENT, MYAUTH_ROLE) {
 
-  $rootScope.$on('$stateChangeStart', function (event, next) {
+  $rootScope.$on('$stateChangeStart', function (event, next, nextParams) {
 
     var authorizedRoles = next.data && next.data.authorizedRoles;
     if (!authorizedRoles) { return; } // no role required, anyone can access
@@ -38,16 +38,10 @@ module.run(function ($location, $state, $rootScope, myAuth, MYAUTH_EVENT, MYAUTH
     // in all other cases, prevent going to this state
     event.preventDefault();
 
-    // FIXME: THIS IS FLAKY/WRONG. We need to change this.
-    // and go to login instead
-    // $state.go('login', {
-    //   next: angular.toJson({
-    //     path: $location.path(),
-    //     search: $location.search()
-    //   })
-    // });
-
-    $state.go('login');
+    $state.go('login', {
+      next: next.name,
+      nextParams: nextParams
+    });
 
     $rootScope.$broadcast(user ? MYAUTH_EVENT.notAuthorized : MYAUTH_EVENT.notAuthenticated);
   });
