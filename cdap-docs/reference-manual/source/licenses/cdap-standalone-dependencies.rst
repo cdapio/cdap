@@ -23,7 +23,7 @@ Cask Data Application Platform Standalone Dependencies
 
    "antlr.antlr-2.7.7.jar","2.7.7","\-","ANTLR 3 License (BSD License)","http://www.antlr2.org/license.html"
    "aopalliance.aopalliance-1.0.jar","1.0","\-","Public Domain","http://aopalliance.sourceforge.net/"
-   "c3p0.c3p0-0.9.1.1.jar","0.9.1.1","\-","EPL, LGPLv2",""
+   "c3p0.c3p0-0.9.1.1.jar","0.9.1.1","\-","EPL or LGPLv2","http://www.eclipse.org/legal/epl-v10.html"
    "ch.qos.logback.logback-classic-1.0.9.jar","1.0.9","\-","EPL","http://www.eclipse.org/legal/epl-v10.html"
    "ch.qos.logback.logback-core-1.0.9.jar","1.0.9","\-","EPL","http://www.eclipse.org/legal/epl-v10.html"
    "com.clearspring.analytics.stream-2.7.0.jar","2.7.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"

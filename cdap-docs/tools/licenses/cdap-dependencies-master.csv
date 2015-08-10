@@ -45,7 +45,7 @@
 # dependency,version,type,license,license_url
 "antlr.antlr-2.7.7.jar","2.7.7","","ANTLR 3 License (BSD License)","http://www.antlr2.org/license.html"
 "aopalliance.aopalliance-1.0.jar","1.0","","Public Domain","http://aopalliance.sourceforge.net/"
-"c3p0.c3p0-0.9.1.1.jar","0.9.1.1","","EPL, LGPLv2",""
+"c3p0.c3p0-0.9.1.1.jar","0.9.1.1","","EPL or LGPLv2","http://www.eclipse.org/legal/epl-v10.html"
 "cdap-etl-batch-3.1.0.jar","3.1.0","","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
 "cdap-etl-lib-3.1.0-batch.jar","3.1.0","batch","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
 "cdap-etl-lib-3.1.0-realtime.jar","3.1.0","realtime","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
