@@ -116,6 +116,14 @@ angular.module(PKG.name + '.feature.adapters')
             nodes: MyPlumbService.nodes,
             connections: MyPlumbService.connections
           };
+
+          angular.forEach(detailedConfig.ui.nodes, function(node) {
+            delete node._backendProperties;
+          });
+          detailedConfig.ui.connections.forEach(function(conn) {
+            delete conn.visited;
+          });
+
           var content = JSON.stringify(detailedConfig, null, 4);
           var blob = new Blob([content], { type: 'application/json'});
           this.exportFileName = detailedConfig.name + '-' + detailedConfig.template;
