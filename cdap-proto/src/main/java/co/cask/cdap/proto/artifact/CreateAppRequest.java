@@ -16,6 +16,8 @@
 
 package co.cask.cdap.proto.artifact;
 
+import javax.annotation.Nullable;
+
 /**
  * Request body when creating an app
  *
@@ -25,7 +27,11 @@ public class CreateAppRequest<T> {
   private final ArtifactSummary artifact;
   private final T config;
 
-  public CreateAppRequest(ArtifactSummary artifact, T config) {
+  public CreateAppRequest(ArtifactSummary artifact) {
+    this(artifact, null);
+  }
+
+  public CreateAppRequest(ArtifactSummary artifact, @Nullable T config) {
     this.artifact = artifact;
     this.config = config;
   }
@@ -34,6 +40,7 @@ public class CreateAppRequest<T> {
     return artifact;
   }
 
+  @Nullable
   public T getConfig() {
     return config;
   }

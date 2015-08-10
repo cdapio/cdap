@@ -265,6 +265,10 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     responder.sendString(status.getCode(), status.getMessage());
   }
 
+  // normally we wouldn't want to use a body consumer but would just want to read the request body directly
+  // since it wont be big. But the deploy app API has one path with different behavior based on content type
+  // the other behavior requires a BodyConsumer and only have one method per path is allowed,
+  // so we have to use a BodyConsumer
   private BodyConsumer deployAppFromArtifact(final Id.Namespace namespace, final String appId) throws IOException {
 
     return new AbstractBodyConsumer(File.createTempFile(appId, ".json", tmpDir)) {
