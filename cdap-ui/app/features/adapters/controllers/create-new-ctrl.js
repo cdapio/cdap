@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.adapters')
-  .controller('_AdapterCreateController', function(MyPlumbService, myAdapterApi, $bootstrapModal, $scope, rConfig, $stateParams, $alert, $modalStack, ModalConfirm, EventPipe) {
+  .controller('_AdapterCreateController', function(MyPlumbService, myAdapterApi, $bootstrapModal, $scope, rConfig, $stateParams, $alert, $modalStack, ModalConfirm, EventPipe, $window) {
     this.metadata = MyPlumbService['metadata'];
     function resetMetadata() {
       this.metadata = MyPlumbService['metadata'];
@@ -83,7 +83,7 @@ angular.module(PKG.name + '.feature.adapters')
 
       if (!MyPlumbService.isConfigTouched) { return; }
       // If we haven't been passed the event get the window.event
-      e = e || window.event;
+      e = e || $window.event;
       var message = 'You have unsaved changes.';
       // For IE6-8 and Firefox prior to version 4
       if (e) {
@@ -92,7 +92,7 @@ angular.module(PKG.name + '.feature.adapters')
       // For Chrome, Safari, IE8+ and Opera 12+
       return message;
     };
-    window.onbeforeunload = confirmOnPageExit;
+    $window.onbeforeunload = confirmOnPageExit;
 
     $scope.$on('$stateChangeStart', function (event) {
       if (MyPlumbService.isConfigTouched) {
