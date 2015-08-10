@@ -28,6 +28,7 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.ArtifactAlreadyExistsException;
+import co.cask.cdap.common.ArtifactNotFoundException;
 import co.cask.cdap.common.CannotBeDeletedException;
 import co.cask.cdap.common.InvalidArtifactException;
 import co.cask.cdap.common.NamespaceNotFoundException;
@@ -58,12 +59,15 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.StreamDetail;
+import co.cask.cdap.proto.artifact.ArtifactSummary;
+import co.cask.cdap.proto.artifact.CreateAppRequest;
 import co.cask.http.BodyConsumer;
 import co.cask.http.HttpResponder;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Lists;
+import com.google.gson.Gson;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.apache.twill.filesystem.Location;
@@ -74,6 +78,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.List;
 import java.util.Set;
@@ -85,6 +90,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.core.MediaType;
 
 /**
  * {@link co.cask.http.HttpHandler} for managing application lifecycle.
@@ -92,6 +98,7 @@ import javax.ws.rs.PathParam;
 @Singleton
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
 public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
+  private static final Gson GSON = new Gson();
   private static final Logger LOG = LoggerFactory.getLogger(AppLifecycleHttpHandler.class);
 
   /**
@@ -112,6 +119,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private final ApplicationLifecycleService applicationLifecycleService;
   private final AdapterService adapterService;
   private final ArtifactRepository artifactRepository;
+  private final File tmpDir;
 
   @Inject
   public AppLifecycleHttpHandler(CConfiguration configuration,
@@ -131,6 +139,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     this.applicationLifecycleService = applicationLifecycleService;
     this.adapterService = adapterService;
     this.artifactRepository = artifactRepository;
+    this.tmpDir = new File(new File(configuration.get(Constants.CFG_LOCAL_DATA_DIR)),
+                           configuration.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
   }
 
   /**
@@ -142,14 +152,25 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                              @PathParam("namespace-id") final String namespaceId,
                              @PathParam("app-id") final String appId,
                              @HeaderParam(ARCHIVE_NAME_HEADER) final String archiveName,
-                             @HeaderParam(APP_CONFIG_HEADER) String configString) {
+                             @HeaderParam(APP_CONFIG_HEADER) String configString,
+                             @HeaderParam(HttpHeaders.Names.CONTENT_TYPE) String contentType) {
+
+    Id.Namespace namespace = Id.Namespace.from(namespaceId);
+
+    // yes this is weird... here for backwards compatibility. If content type is json, use the preferred method
+    // of creating an app from an artifact. Otherwise use the old method where the body is the jar contents.
+    boolean createFromArtifact = MediaType.APPLICATION_JSON.equals(contentType);
+
     try {
-      return deployApplication(responder, namespaceId, appId, archiveName, configString);
+      if (createFromArtifact) {
+        return deployAppFromArtifact(namespace, appId);
+      } else {
+        return deployApplication(responder, namespaceId, appId, archiveName, configString);
+      }
     } catch (Exception ex) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed: {}" + ex.getMessage());
       return null;
     }
-
   }
 
   /**
@@ -245,6 +266,58 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     responder.sendString(status.getCode(), status.getMessage());
   }
 
+  // normally we wouldn't want to use a body consumer but would just want to read the request body directly
+  // since it wont be big. But the deploy app API has one path with different behavior based on content type
+  // the other behavior requires a BodyConsumer and only have one method per path is allowed,
+  // so we have to use a BodyConsumer
+  private BodyConsumer deployAppFromArtifact(final Id.Namespace namespace, final String appId) throws IOException {
+
+    return new AbstractBodyConsumer(File.createTempFile(appId, ".json", tmpDir)) {
+
+      @Override
+      protected void onFinish(HttpResponder responder, File uploadedFile) {
+        try (FileReader fileReader = new FileReader(uploadedFile)) {
+
+          CreateAppRequest<?> createAppRequest = GSON.fromJson(fileReader, CreateAppRequest.class);
+          ArtifactSummary artifactSummary = createAppRequest.getArtifact();
+          Id.Namespace artifactNamespace = artifactSummary.isSystem() ? Id.Namespace.SYSTEM : namespace;
+          Id.Artifact artifactId =
+            Id.Artifact.from(artifactNamespace, artifactSummary.getName(), artifactSummary.getVersion());
+
+          ArtifactDetail artifactDetail;
+          try {
+            artifactDetail = artifactRepository.getArtifact(artifactId);
+          } catch (ArtifactNotFoundException e) {
+            responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
+            return;
+          }
+
+          Set<ApplicationClass> appClasses = artifactDetail.getMeta().getClasses().getApps();
+          if (appClasses.isEmpty()) {
+            responder.sendString(HttpResponseStatus.BAD_REQUEST, String.format(
+              "No application classes found in artifact %s.", artifactId));
+            return;
+          }
+          String className = appClasses.iterator().next().getClassName();
+          Location location = artifactDetail.getDescriptor().getLocation();
+
+          // if we don't null check, it get serialized to "null"
+          String configString = createAppRequest.getConfig() == null ? null : GSON.toJson(createAppRequest.getConfig());
+          AppDeploymentInfo deploymentInfo = new AppDeploymentInfo(artifactId, className, location, configString);
+          deploy(namespace.getId(), appId, deploymentInfo);
+          responder.sendString(HttpResponseStatus.OK, "Deploy Complete");
+        } catch (IOException e) {
+          LOG.error("Error reading request body for creating app {}.", appId);
+          responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, String.format(
+            "Error while reading json request body for app %s.", appId));
+        } catch (Exception e) {
+          LOG.error("Deploy failure", e);
+          responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+        }
+      }
+    };
+  }
+
   private BodyConsumer deployApplication(final HttpResponder responder,
                                          final String namespaceId,
                                          final String appId,
@@ -272,7 +345,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                            ImmutableMultimap.of(HttpHeaders.Names.CONNECTION, HttpHeaders.Values.CLOSE));
       return null;
     }
-
 
     // TODO: (CDAP-3258) error handling needs to be refactored here, should be able just to throw the exception,
     // but the caller catches all exceptions and responds with a 500
