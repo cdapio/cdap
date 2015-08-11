@@ -44,7 +44,7 @@ import javax.annotation.Nullable;
  * A {@link RealtimeSink} that writes data to an Elasticsearch server.
  * <p>
  * This {@link RealtimeElasticsearchSink} takes in a {@link StructuredRecord},
- * converts it to a JSON string per {@link StructuredRecordStringConverter},
+ * converts it to a JSON string with {@link StructuredRecordStringConverter},
  * and writes it to the Elasticsearch server.
  * </p>
  * <p>
