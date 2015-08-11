@@ -32,7 +32,6 @@
     "angular-moment": "0.10.1",
     "angular-bootstrap": "0.13.2",
     "node-uuid": "1.4.3",
-    "angular-ui-select": "0.11.2",
     "c3": "0.4.10",
     "angular-ui-ace": "bower",
     "jsPlumb": "1.7.5",
