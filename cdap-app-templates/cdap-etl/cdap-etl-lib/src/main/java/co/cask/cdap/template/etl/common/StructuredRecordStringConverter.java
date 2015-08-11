@@ -27,9 +27,8 @@ import com.google.common.collect.Iterables;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
-import it.unimi.dsi.fastutil.bytes.ByteArrayList;
-import it.unimi.dsi.fastutil.bytes.ByteList;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
@@ -175,13 +174,13 @@ public final class StructuredRecordStringConverter {
   }
 
   private static byte[] readBytes(JsonReader reader) throws IOException {
-    ByteList bytes = new ByteArrayList();
+    ByteArrayOutputStream os = new ByteArrayOutputStream(128);
     reader.beginArray();
     while (reader.peek() != JsonToken.END_ARRAY) {
-      bytes.add((byte) reader.nextInt());
+      os.write(reader.nextInt());
     }
     reader.endArray();
-    return bytes.toByteArray();
+    return os.toByteArray();
   }
 
   private static List<Object> readArray(JsonReader reader, Schema elementSchema) throws IOException {
