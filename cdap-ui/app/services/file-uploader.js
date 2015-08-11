@@ -1,6 +1,6 @@
 angular.module(PKG.name + '.services')
   .factory('myFileUploader', function($q, $window, $alert, cfpLoadingBar, myAuth, myAlert) {
-    function upload(fileObj){
+    function upload(fileObj, contentType){
       var deferred = $q.defer();
       if (!myAuth.currentUser) {
         deferred.reject(400);
@@ -18,7 +18,7 @@ angular.module(PKG.name + '.services')
         });
         var path = fileObj.path;
         xhr.open('POST', path, true);
-        xhr.setRequestHeader('Content-type', 'application/octet-stream');
+        xhr.setRequestHeader('Content-type', contentType);
         xhr.setRequestHeader('X-Archive-Name', fileObj.file.name);
         xhr.setRequestHeader('Authorization', 'Bearer ' + myAuth.currentUser.token);
         xhr.send(fileObj.file);
@@ -36,6 +36,8 @@ angular.module(PKG.name + '.services')
       }
       return deferred.promise;
     }
+
+
     return {
       upload: upload
     };
