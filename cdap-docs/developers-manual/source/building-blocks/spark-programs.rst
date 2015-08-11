@@ -8,6 +8,8 @@
 Spark Programs
 ==============
 
+.. rubric:: Beta, on Standalone and insecure Clusters only
+
 *Apache Spark* is used for in-memory cluster computing. It lets you load large sets of
 data into memory and query them repeatedly. This makes it suitable for both iterative and
 interactive programs. Similar to MapReduce, Spark can access **datasets** as both input
