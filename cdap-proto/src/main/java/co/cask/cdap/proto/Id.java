@@ -1274,7 +1274,7 @@ public abstract class Id {
   /**
    * Artifact Id identifies an artifact by its namespace, name, and version.
    */
-  public static class Artifact extends NamespacedId {
+  public static class Artifact extends NamespacedId implements Comparable<Artifact> {
     private final Namespace namespace;
     private final String name;
     private final ArtifactVersion version;
@@ -1329,9 +1329,7 @@ public abstract class Id {
 
       Artifact that = (Artifact) o;
 
-      return Objects.equal(namespace, that.namespace) &&
-        Objects.equal(name, that.name)
-        && Objects.equal(version, that.version);
+      return this.compareTo(that) == 0;
     }
 
     @Override
@@ -1345,6 +1343,20 @@ public abstract class Id {
 
     public static boolean isValidName(String name) {
       return isValidId(name);
+    }
+
+    @Override
+    public int compareTo(Artifact o) {
+      int code = namespace.getId().compareTo(o.namespace.getId());
+      if (code != 0) {
+        return code;
+      }
+      code = name.compareTo(o.name);
+      if (code != 0) {
+        return code;
+      }
+      code = version.compareTo(o.version);
+      return code;
     }
   }
 

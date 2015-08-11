@@ -24,6 +24,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.internal.app.namespace.DefaultNamespaceEnsurer;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
+import co.cask.cdap.internal.app.runtime.artifact.SystemArtifactLoader;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.cdap.notifications.service.NotificationService;
@@ -62,10 +63,12 @@ public class StandaloneAppFabricServer extends AppFabricServer {
                                    @Named("appfabric.services.names") Set<String> servicesNames,
                                    @Named("appfabric.handler.hooks") Set<String> handlerHookNames,
                                    DefaultNamespaceEnsurer defaultNamespaceEnsurer,
-                                   MetricStore metricStore) {
+                                   MetricStore metricStore,
+                                   SystemArtifactLoader systemArtifactLoader) {
     super(configuration, discoveryService, schedulerService, notificationService, hostname, handlers,
           metricsCollectionService, programRuntimeService, adapterService, applicationLifecycleService,
-          programLifecycleService, streamCoordinatorClient, servicesNames, handlerHookNames, defaultNamespaceEnsurer);
+          programLifecycleService, streamCoordinatorClient, servicesNames, handlerHookNames, defaultNamespaceEnsurer,
+          systemArtifactLoader);
     this.metricStore = metricStore;
   }
 

@@ -21,8 +21,11 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.artifact.InvalidArtifactRangeException;
+import com.google.common.collect.Lists;
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.util.List;
 
 /**
  */
@@ -69,66 +72,53 @@ public class ArtifactRangeTest {
   }
 
   @Test
+  public void testLowerVersionGreaterThanUpper() {
+    List<String> invalidRanges = Lists.newArrayList(
+      "test[1.0.0,0.9.9]",
+      "test[1.0.0,1.0.0-SNAPSHOT]",
+      "test[1.0.0,1.0.0)",
+      "test(1.0.0,0.9.9)",
+      "test(1.0.0,1.0.0-SNAPSHOT)",
+      "test(1.0.2,1.0.0]"
+    );
+
+    for (String invalidRange : invalidRanges) {
+      try {
+        ArtifactRange.parse(invalidRange);
+        Assert.fail();
+      } catch (InvalidArtifactRangeException e) {
+        // expected
+      }
+    }
+  }
+
+  @Test
   public void testParseInvalid() {
-    // test can't find '[' or '('
-    try {
-      ArtifactRange.parse(Id.Namespace.DEFAULT, "test-1.0.0,2.0.0]");
-      Assert.fail();
-    } catch (InvalidArtifactRangeException e) {
-      // expected
-    }
+    List<String> invalidRanges = Lists.newArrayList(
+      // can't find '[' or '('
+      "test-1.0.0,2.0.0]",
+      // can't find ',' between versions
+      "test[1.0.0:2.0.0]",
+      // no ending ']' or ')'
+      "test[1.0.0,2.0.0",
+      // invalid lower version
+      "tes[t1.0.0,2.0.0]",
+      // missing versions
+      "test(,1.0.0)",
+      "test(1.0.0,)",
+      // invalid name
+      "te$t[1.0.0,2.0.0)",
+      // namespace only is InvalidArtifactRangeException and not an out of bounds exception
+      "default:"
+    );
 
-    // test can't find ',' between versions
-    try {
-      ArtifactRange.parse(Id.Namespace.DEFAULT, "test[1.0.0:2.0.0]");
-      Assert.fail();
-    } catch (InvalidArtifactRangeException e) {
-      // expected
-    }
-
-    // test no ending ']' or ')'
-    try {
-      ArtifactRange.parse(Id.Namespace.DEFAULT, "test[1.0.0,2.0.0");
-      Assert.fail();
-    } catch (InvalidArtifactRangeException e) {
-      // expected
-    }
-
-    // test invalid lower version
-    try {
-      ArtifactRange.parse(Id.Namespace.DEFAULT, "tes[t1.0.0,2.0.0]");
-      Assert.fail();
-    } catch (InvalidArtifactRangeException e) {
-      // expected
-    }
-
-    try {
-      ArtifactRange.parse(Id.Namespace.DEFAULT, "test(,1.0.0)");
-      Assert.fail();
-    } catch (InvalidArtifactRangeException e) {
-      // expected
-    }
-    try {
-      ArtifactRange.parse(Id.Namespace.DEFAULT, "test(1.0.0,)");
-      Assert.fail();
-    } catch (InvalidArtifactRangeException e) {
-      // expected
-    }
-
-    // test invalid name
-    try {
-      ArtifactRange.parse(Id.Namespace.DEFAULT, "te$t[1.0.0,2.0.0)");
-      Assert.fail();
-    } catch (InvalidArtifactRangeException e) {
-      // expected
-    }
-
-    // test namespace only in InvalidArtifactRangeException and not an out of bounds exception
-    try {
-      ArtifactRange.parse("default:");
-      Assert.fail();
-    } catch (InvalidArtifactRangeException e) {
-      // expected
+    for (String invalidRange : invalidRanges) {
+      try {
+        ArtifactRange.parse(invalidRange);
+        Assert.fail();
+      } catch (InvalidArtifactRangeException e) {
+        // expected
+      }
     }
   }
 }

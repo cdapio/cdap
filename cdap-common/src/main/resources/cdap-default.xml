@@ -579,6 +579,14 @@
         <final>true</final>
     </property>
 
+    <!-- Artifact configuration -->
+
+    <property>
+        <name>app.artifact.dir</name>
+        <value>/opt/cdap/master/artifacts</value>
+        <description>Directory where all archives for app templates are stored</description>
+    </property>
+
     <!-- App Fabric related changes -->
 
     <property>
