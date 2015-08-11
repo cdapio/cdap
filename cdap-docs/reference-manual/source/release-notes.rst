@@ -23,6 +23,30 @@ Cask Data Application Platform Release Notes
    :backlinks: none
    :depth: 2
 
+`Release 3.2.0 <http://docs.cask.co/cdap/3.2.0/index.html>`__
+=============================================================
+
+New Features
+------------
+
+Improvements
+------------
+
+Bug Fixes
+---------
+
+API Changes
+-----------
+
+Deprecated and Removed Features
+-------------------------------
+- `CDAP-3356 <https://issues.cask.co/browse/CDAP-3356>`__ -
+  Removed deprecated "id" field from GET /apps RESTful API.
+
+Known Issues
+------------
+
+
 `Release 3.1.0 <http://docs.cask.co/cdap/3.1.0/index.html>`__
 =============================================================
 
