@@ -21,19 +21,12 @@ package co.cask.cdap.proto;
  */
 public class ApplicationRecord {
   private final String type;
-  private final String id;
   private final String name;
   private final String version;
   private final String description;
 
   public ApplicationRecord(String name, String version, String description) {
-    this("App", name, name, version, description);
-  }
-
-  @Deprecated
-  public ApplicationRecord(String type, String id, String name, String version, String description) {
-    this.type = type;
-    this.id = id;
+    this.type = "App";
     this.name = name;
     this.version = version;
     this.description = description;
@@ -45,11 +38,6 @@ public class ApplicationRecord {
 
   public String getType() {
     return type;
-  }
-
-  @Deprecated
-  public String getId() {
-    return id;
   }
 
   public String getName() {

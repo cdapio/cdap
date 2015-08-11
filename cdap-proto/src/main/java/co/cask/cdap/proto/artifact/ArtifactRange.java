@@ -94,11 +94,22 @@ public class ArtifactRange {
     return Objects.hash(namespace, name, lower, isLowerInclusive, upper, isUpperInclusive);
   }
 
+  /**
+   * Return the range as a string without the namespace. For example, 'my-functions[1.0.0,2.0.0)'.
+   *
+   * @return the range as a string without the namespace.
+   */
+  public String toNonNamespacedString() {
+    return toString(new StringBuilder());
+  }
+
   @Override
   public String toString() {
-    return new StringBuilder()
-      .append(namespace.getId())
-      .append(':')
+    return toString(new StringBuilder().append(namespace.getId()).append(':'));
+  }
+
+  private String toString(StringBuilder builder) {
+    return builder
       .append(name)
       .append(isLowerInclusive ? '[' : '(')
       .append(lower.getVersion())
@@ -116,6 +127,7 @@ public class ArtifactRange {
    *
    * @param artifactRangeStr the string representation to parse
    * @return the ArtifactRange corresponding to the given string
+   * @throws InvalidArtifactRangeException if the string is malformed, or if the lower version is higher than the upper
    */
   public static ArtifactRange parse(String artifactRangeStr) throws InvalidArtifactRangeException {
     // get the namespace
@@ -194,6 +206,12 @@ public class ArtifactRange {
         "Invalid artifact range %s. Upper version %s is invalid.", artifactRangeStr, upperStr));
     }
     boolean isUpperInclusive = artifactRangeStr.charAt(versionEndIndex) == ']';
+
+    if (lower.compareTo(upper) > 0) {
+      throw new InvalidArtifactRangeException(String.format(
+        "Invalid artifact range %s. Lower version %s is greater than upper version %s.",
+        artifactRangeStr, lowerStr, upperStr));
+    }
 
     // for example: 'Artifact-Extends: etl-batch-1.0.0:2.0.0,etl-realtime-1.0.0:3.0.0
     return new ArtifactRange(namespace, name, lower, isLowerInclusive, upper, isUpperInclusive);

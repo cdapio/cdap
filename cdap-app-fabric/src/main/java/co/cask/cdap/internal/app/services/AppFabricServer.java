@@ -28,6 +28,7 @@ import co.cask.cdap.common.metrics.MetricsReporterHook;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.internal.app.namespace.DefaultNamespaceEnsurer;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
+import co.cask.cdap.internal.app.runtime.artifact.SystemArtifactLoader;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.proto.Id;
@@ -72,6 +73,7 @@ public class AppFabricServer extends AbstractIdleService {
   private final StreamCoordinatorClient streamCoordinatorClient;
   private final ProgramLifecycleService programLifecycleService;
   private final DefaultNamespaceEnsurer defaultNamespaceEnsurer;
+  private final SystemArtifactLoader systemArtifactLoader;
 
   private NettyHttpService httpService;
   private Set<HttpHandler> handlers;
@@ -93,7 +95,8 @@ public class AppFabricServer extends AbstractIdleService {
                          StreamCoordinatorClient streamCoordinatorClient,
                          @Named("appfabric.services.names") Set<String> servicesNames,
                          @Named("appfabric.handler.hooks") Set<String> handlerHookNames,
-                         DefaultNamespaceEnsurer defaultNamespaceEnsurer) {
+                         DefaultNamespaceEnsurer defaultNamespaceEnsurer,
+                         SystemArtifactLoader systemArtifactLoader) {
     this.hostname = hostname;
     this.discoveryService = discoveryService;
     this.schedulerService = schedulerService;
@@ -109,6 +112,7 @@ public class AppFabricServer extends AbstractIdleService {
     this.streamCoordinatorClient = streamCoordinatorClient;
     this.programLifecycleService = programLifecycleService;
     this.defaultNamespaceEnsurer = defaultNamespaceEnsurer;
+    this.systemArtifactLoader = systemArtifactLoader;
   }
 
   /**
@@ -123,6 +127,7 @@ public class AppFabricServer extends AbstractIdleService {
     schedulerService.start();
     applicationLifecycleService.start();
     adapterService.start();
+    systemArtifactLoader.start();
     programRuntimeService.start();
     streamCoordinatorClient.start();
     programLifecycleService.start();
@@ -208,6 +213,7 @@ public class AppFabricServer extends AbstractIdleService {
     programRuntimeService.stopAndWait();
     schedulerService.stopAndWait();
     applicationLifecycleService.stopAndWait();
+    systemArtifactLoader.stopAndWait();
     adapterService.stopAndWait();
     notificationService.stopAndWait();
     programLifecycleService.stopAndWait();

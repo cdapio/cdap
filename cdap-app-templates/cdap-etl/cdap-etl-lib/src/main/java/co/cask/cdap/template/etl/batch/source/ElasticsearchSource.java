@@ -43,21 +43,22 @@ import java.io.IOException;
  * This {@link ElasticsearchSource} reads from an Elasticsearch index and type and converts the MapWritable
  * into a {@link StructuredRecord} and emits the StructuredRecord.
  * </p>
- * An exception will be thrown if the type of any of the fields does not match the type stated by the user.
+ * An exception will be thrown if the type of any of the fields do not match the type specified by the user.
  */
 @Plugin(type = "source")
 @Name("Elasticsearch")
-@Description("CDAP Elasticsearch Batch Sink takes the structured record from the input source " +
-  "and converts it to a JSON, then indexes it in elasticsearch using the index, type, and id specified by the user. " +
-  "The elasticsearch server should be running prior to creating the adapter.")
+@Description("CDAP Elasticsearch Batch Source pulls documents from Elasticsearch " +
+  "according to the query specified by the user and converts each document to a structured record " +
+  "with the fields and schema specified by the user. " +
+  "The Elasticsearch server should be running prior to creating the adapter.")
 public class ElasticsearchSource extends BatchSource<Text, MapWritable, StructuredRecord> {
   private static final String INDEX_DESCRIPTION = "The name of the index to query.";
   private static final String TYPE_DESCRIPTION = "The name of the type where the data is stored.";
   private static final String QUERY_DESCRIPTION = "The query to use to import data from the specified index. " +
-    "See elasticsearch for query examples.";
-  private static final String HOST_DESCRIPTION = "The hostname and port for the elasticsearch instance;" +
-    " for example, localhost:9200.";
-  private static final String SCHEMA_DESCRIPTION = "The schema or mapping of the data in elasticsearch.";
+    "See Elasticsearch for query examples.";
+  private static final String HOST_DESCRIPTION = "The hostname and port for the Elasticsearch instance; " +
+    "for example, localhost:9200.";
+  private static final String SCHEMA_DESCRIPTION = "The schema or mapping of the data in Elasticsearch.";
 
   private final ESConfig config;
   private Schema schema;
