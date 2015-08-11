@@ -340,18 +340,68 @@ A stream can be deleted with an HTTP DELETE method to the URL::
 
 .. _http-restful-api-stream-setting-properties:
 
-Setting Stream Properties
--------------------------
-There are a number of stream properties that can be specified.
-The Time-To-Live (TTL, specified in seconds) property governs how long an event is valid for consumption since 
+Getting and Setting Stream Properties
+-------------------------------------
+There are a number of stream properties that can be retrieved and specified.
+
+The **Time-To-Live** (TTL, specified in seconds) property governs how long an event is valid for consumption since 
 it was written to the stream.
 The default TTL for all streams is infinite, meaning that events will never expire.
-The format property defines how stream event bodies should be read for data exploration.
+
+The **format** property defines how stream event bodies should be read for data exploration.
 Different formats support different types of schemas. Schemas are used to determine
 the table schema used for running ad-hoc SQL-like queries on the stream.
 See :ref:`stream-exploration` for more information about formats and schemas.
-The notification threshold defines the increment of data that a stream has to receive before
+
+The **notification threshold** defines the increment of data that a stream has to receive before
 publishing a notification.
+
+.. rubric:: Getting Stream Properties
+
+Stream properties can be retrieved with an HTTP PUT method to the URL::
+
+  GET <base-url>/namespaces/<namespace>/streams/<stream-id>/
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<namespace>``
+     - Namespace ID
+   * - ``<stream-id>``
+     - Name of an existing stream
+
+.. rubric:: Example
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
+
+   * - HTTP Method
+     - ``GET <base-url>/namespaces/default/streams/who``
+       ::
+
+         { 
+           "ttl" : 9223372036854775,
+           "format": {
+             "name": "text",
+             "schema": {
+               "type": "record",
+               "name": "stringBody",
+               "fields": [
+                 { "name": "body", "type": "string" }
+               ]
+             },
+             "settings": {}
+           },
+           "notification.threshold.mb" : 1024
+         }
+     
+   * - Description
+     - Retrieves the properties of the ``who`` stream of the :ref:`HelloWorld example <examples-hello-world>`. 
+
+.. rubric:: Setting Stream Properties
 
 Stream properties can be changed with an HTTP PUT method to the URL::
 
@@ -412,7 +462,8 @@ the stream and re-create it with the new schema.
    :stub-columns: 1
 
    * - HTTP Method
-     - ``PUT <base-url>/namespaces/default/streams/mystream/properties``::
+     - ``PUT <base-url>/namespaces/default/streams/mystream/properties``
+       ::
 
          { 
            "ttl" : 86400,
