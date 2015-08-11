@@ -41,11 +41,22 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nullable;
 
 /**
- * Realtime sink for elasticsearch.
+ * A {@link RealtimeSink} that writes data to an Elasticsearch server.
+ * <p/>
+ * This {@link RealtimeElasticsearchSink} takes a {@link StructuredRecord} in,
+ * converts it to a JSON string per {@link StructuredRecordStringConverter},
+ * and writes it to the Elasticsearch server.
+ * <p/>
+ * If the Elasticsearch index does not exist, it will be created using the default properties
+ * specified by Elasticsearch. See more information at
+ * https://www.elastic.co/guide/en/elasticsearch/guide/current/_index_settings.html.
+ * <p/>
  */
 @Plugin(type = "sink")
 @Name("Elasticsearch")
-@Description("Real-time sink that outputs to the Elasticsearch server.")
+@Description("CDAP Elasticsearch Realtime Sink takes the structured record from the input source and converts it " +
+  "to a JSON string, then indexes it in Elasticsearch using the index, type, and id specified by the user. " +
+  "The Elasticsearch server should be running prior to creating the adapter.")
 public class RealtimeElasticsearchSink extends RealtimeSink<StructuredRecord> {
   private static final Logger LOG = LoggerFactory.getLogger(RealtimeElasticsearchSink.class);
   private static final String INDEX_DESCRIPTION = "The name of the index where the data will be stored. " +
