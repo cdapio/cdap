@@ -107,7 +107,7 @@ public class AdapterLifecycleTest extends AppFabricTestBase {
     List<JsonObject> deployedApps = getAppList(namespaceId);
     Assert.assertEquals(1, deployedApps.size());
     JsonObject deployedApp = deployedApps.get(0);
-    Assert.assertEquals(templateId, deployedApp.get("id").getAsString());
+    Assert.assertEquals(templateId, deployedApp.get("name").getAsString());
 
     String status = getAdapterStatus(Id.Adapter.from(namespaceId, adapterName));
     Assert.assertEquals("STOPPED", status);
