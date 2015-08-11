@@ -5,7 +5,7 @@ angular.module(PKG.name + '.commons')
       ConnectionsDetachable: true
     };
     var connectorStyle = {
-      strokeStyle: "#666e82",
+      strokeStyle: '#666e82',
       fillStyle: '#666e82',
       radius: 7,
       lineWidth: 2
@@ -95,13 +95,13 @@ angular.module(PKG.name + '.commons')
       });
       dagre.layout(graph);
       return graph;
-    };
+    }
 
     return {
       getSettings: getSettings,
       getIcon: getIcon,
       generateStyles: generateStyles,
       getGraph: getGraph
-    }
+    };
 
   });

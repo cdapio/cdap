@@ -11,8 +11,6 @@ angular.module(PKG.name + '.feature.adapters')
       scope: $scope
     };
 
-    var template;
-
     $scope.cloneAdapter = function() {
       if ($scope.config) {
         $state.go('adapters.create', {
@@ -100,7 +98,7 @@ angular.module(PKG.name + '.feature.adapters')
     function pollForMetricsData(widget) {
       DashboardHelper.pollData(widget)
         .then(
-          function onMetricsFetchSuccess(metrics) {
+          function onMetricsFetchSuccess() {
             if (!widget.formattedData || !widget.formattedData.columns) {
               return;
             }
