@@ -17,34 +17,29 @@
 package co.cask.cdap.proto;
 
 /**
- * Represents a program in an HTTP response.
+ * Represents a dataset in an HTTP response.
  */
-public class ProgramRecord {
-  private final ProgramType type;
-  private final String app;
+public class DatasetRecord {
+
+  private final String type;
   private final String id;
   private final String name;
-  private final String description;
+  private final String classname;
 
-  public ProgramRecord(ProgramType type, String app, String name, String description) {
-    this(type, app, name, name, description);
+  public DatasetRecord(String name, String classname) {
+    this("Dataset", name, name, classname);
   }
 
   @Deprecated
-  public ProgramRecord(ProgramType type, String app, String id, String name, String description) {
+  public DatasetRecord(String type, String id, String name, String classname) {
     this.type = type;
-    this.app = app;
     this.id = id;
     this.name = name;
-    this.description = description;
+    this.classname = classname;
   }
 
-  public ProgramType getType() {
+  public String getType() {
     return type;
-  }
-
-  public String getApp() {
-    return app;
   }
 
   @Deprecated
@@ -56,7 +51,7 @@ public class ProgramRecord {
     return name;
   }
 
-  public String getDescription() {
-    return description;
+  public String getClassname() {
+    return classname;
   }
 }

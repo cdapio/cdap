@@ -30,6 +30,7 @@ import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.StreamDetail;
 import co.cask.cdap.proto.StreamProperties;
+import co.cask.cdap.proto.StreamRecord;
 import co.cask.cdap.security.authentication.client.AccessToken;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
@@ -273,7 +274,7 @@ public class StreamClient {
   /**
    * Lists all streams.
    *
-   * @return list of {@link StreamDetail StreamDetails}
+   * @return list of {@link StreamRecord}s
    * @throws IOException if a network error occurred
    */
   public List<StreamDetail> list(Id.Namespace namespace) throws IOException, UnauthorizedException {
@@ -282,7 +283,6 @@ public class StreamClient {
     return ObjectResponse.fromJsonBody(response, new TypeToken<List<StreamDetail>>() {
     }).getResponseObject();
   }
-
   /**
    * Reads events from a stream
    *
