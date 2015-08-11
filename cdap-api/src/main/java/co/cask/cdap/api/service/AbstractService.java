@@ -17,6 +17,12 @@
 package co.cask.cdap.api.service;
 
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.api.data.stream.Stream;
+import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.api.flow.flowlet.FlowletConfigurer;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 
 import java.util.Arrays;
@@ -49,6 +55,70 @@ public abstract class AbstractService implements Service {
    */
   protected void setDescription(String description) {
     configurer.setDescription(description);
+  }
+
+  /**
+   * @see FlowletConfigurer#addStream(Stream)
+   */
+  protected final void addStream(Stream stream) {
+    configurer.addStream(stream);
+  }
+
+  /**
+   * @see ServiceConfigurer#addDatasetModule(String, Class)
+   */
+  @Beta
+  protected final void addDatasetModule(String moduleName, Class<? extends DatasetModule> moduleClass) {
+    configurer.addDatasetModule(moduleName, moduleClass);
+  }
+
+  /**
+   * @see ServiceConfigurer#addDatasetType(Class)
+   */
+  @Beta
+  protected final void addDatasetType(Class<? extends Dataset> datasetClass) {
+    configurer.addDatasetType(datasetClass);
+  }
+
+  /**
+   * Calls {@link ServiceConfigurer#createDataset(String, String, DatasetProperties)}, passing empty properties.
+   *
+   * @see ServiceConfigurer#createDataset(String, String, DatasetProperties)
+   */
+  @Beta
+  protected final void createDataset(String datasetName, String typeName) {
+    configurer.createDataset(datasetName, typeName, DatasetProperties.EMPTY);
+  }
+
+  /**
+   * Calls {@link ServiceConfigurer#createDataset(String, String, DatasetProperties)}, passing the type name and
+   * properties.
+   *
+   * @see ServiceConfigurer#createDataset(String, String, co.cask.cdap.api.dataset.DatasetProperties)
+   */
+  @Beta
+  protected final void createDataset(String datasetName, String typeName, DatasetProperties properties) {
+    configurer.createDataset(datasetName, typeName, properties);
+  }
+
+  /**
+   * Calls {@link ServiceConfigurer#createDataset(String, String, DatasetProperties)}, passing the dataset class
+   * and properties.
+   *
+   * @see ServiceConfigurer#createDataset(String, Class, co.cask.cdap.api.dataset.DatasetProperties)
+   */
+  protected final void createDataset(String datasetName, Class<? extends Dataset> datasetClass,
+                                     DatasetProperties properties) {
+    configurer.createDataset(datasetName, datasetClass, properties);
+  }
+
+  /**
+   * Calls {@link ServiceConfigurer#createDataset(String, Class, DatasetProperties)}, passing empty properties.
+   *
+   * @see ServiceConfigurer#createDataset(String, Class, DatasetProperties)
+   */
+  protected final void createDataset(String datasetName, Class<? extends Dataset> datasetClass) {
+    configurer.createDataset(datasetName, datasetClass, DatasetProperties.EMPTY);
   }
 
   /**

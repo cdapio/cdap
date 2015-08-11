@@ -53,7 +53,6 @@ public class FilterAppWithNewFlowAPI extends AbstractApplication {
   public void configure() {
     setName("FilterApp");
     setDescription("Application for filtering numbers. Test runtimeargs.");
-    addStream(new Stream("input"));
     addFlow(new FilterFlow());
     addService(new BasicService("CountService", new CountHandler()));
   }
@@ -67,6 +66,7 @@ public class FilterAppWithNewFlowAPI extends AbstractApplication {
     public void configureFlow() {
       setName("FilterFlow");
       setDescription("Flow for counting words");
+      addStream(new Stream("input"));
       addFlowlet("pass", new PassFlowlet());
       addFlowlet("filter", new Filter());
       connectStream("input", "pass");

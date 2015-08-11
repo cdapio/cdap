@@ -17,6 +17,11 @@
 package co.cask.cdap.internal.app.services;
 
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.data.stream.Stream;
+import co.cask.cdap.api.data.stream.StreamSpecification;
+import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.ServiceConfigurer;
@@ -27,6 +32,7 @@ import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.internal.app.runtime.service.http.DelegatorContext;
 import co.cask.cdap.internal.app.runtime.service.http.HttpHandlerFactory;
+import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.http.HttpHandler;
 import co.cask.http.NettyHttpService;
 import com.google.common.base.Preconditions;
@@ -46,6 +52,10 @@ import java.util.Map;
  */
 public class DefaultServiceConfigurer implements ServiceConfigurer {
   private final String className;
+  private final Map<String, StreamSpecification> streams;
+  private final Map<String, String> datasetModules;
+  private final Map<String, DatasetCreationSpec> datasetSpecs;
+
   private String name;
   private String description;
   private List<HttpServiceHandler> handlers;
@@ -63,6 +73,9 @@ public class DefaultServiceConfigurer implements ServiceConfigurer {
     this.handlers = Lists.newArrayList();
     this.resources = new Resources();
     this.instances = 1;
+    this.streams = Maps.newHashMap();
+    this.datasetModules = Maps.newHashMap();
+    this.datasetSpecs = Maps.newHashMap();
   }
 
   @Override
@@ -94,7 +107,8 @@ public class DefaultServiceConfigurer implements ServiceConfigurer {
 
   public ServiceSpecification createSpecification() {
     Map<String, HttpServiceHandlerSpecification> handleSpecs = createHandlerSpecs(handlers);
-    return new ServiceSpecification(className, name, description, handleSpecs, resources, instances);
+    return new ServiceSpecification(className, name, description, handleSpecs, resources, instances, streams,
+                                    datasetModules, datasetSpecs);
   }
 
   /**
@@ -111,6 +125,9 @@ public class DefaultServiceConfigurer implements ServiceConfigurer {
       Preconditions.checkArgument(!handleSpecs.containsKey(spec.getName()),
                                   "Handler with name %s already existed.", spec.getName());
       handleSpecs.put(spec.getName(), spec);
+      streams.putAll(spec.getStreams());
+      datasetModules.putAll(spec.getDatasetModules());
+      datasetSpecs.putAll(spec.getDatasetSpecs());
     }
     return handleSpecs;
   }
@@ -132,7 +149,6 @@ public class DefaultServiceConfigurer implements ServiceConfigurer {
       LOG.error(errMessage, t);
       throw new IllegalArgumentException(errMessage, t);
     }
-
   }
 
   private <T extends HttpServiceHandler> HttpHandler createHttpHandler(T handler) {
@@ -142,6 +158,45 @@ public class DefaultServiceConfigurer implements ServiceConfigurer {
     @SuppressWarnings("unchecked")
     TypeToken<T> type = (TypeToken<T>) TypeToken.of(handler.getClass());
     return factory.createHttpHandler(type, new VerificationDelegateContext<>(handler));
+  }
+
+  @Override
+  public void addStream(Stream stream) {
+    Preconditions.checkArgument(stream != null, "Stream cannot be null.");
+    StreamSpecification spec = stream.configure();
+    streams.put(spec.getName(), spec);
+  }
+
+  @Override
+  public void addDatasetModule(String moduleName, Class<? extends DatasetModule> moduleClass) {
+    Preconditions.checkArgument(moduleName != null, "Dataset module name cannot be null.");
+    Preconditions.checkArgument(moduleClass != null, "Dataset module class cannot be null.");
+    datasetModules.put(moduleName, moduleClass.getName());
+  }
+
+  @Override
+  public void addDatasetType(Class<? extends Dataset> datasetClass) {
+    Preconditions.checkArgument(datasetClass != null, "Dataset class cannot be null.");
+    datasetModules.put(datasetClass.getName(), datasetClass.getName());
+  }
+
+  @Override
+  public void createDataset(String datasetInstanceName, String typeName, DatasetProperties properties) {
+    Preconditions.checkArgument(datasetInstanceName != null, "Dataset instance name cannot be null.");
+    Preconditions.checkArgument(typeName != null, "Dataset type name cannot be null.");
+    Preconditions.checkArgument(properties != null, "Instance properties name cannot be null.");
+    datasetSpecs.put(datasetInstanceName, new DatasetCreationSpec(datasetInstanceName, typeName, properties));
+  }
+
+  @Override
+  public void createDataset(String datasetInstanceName, Class<? extends Dataset> datasetClass,
+                            DatasetProperties properties) {
+    Preconditions.checkArgument(datasetInstanceName != null, "Dataset instance name cannot be null.");
+    Preconditions.checkArgument(datasetClass != null, "Dataset class name cannot be null.");
+    Preconditions.checkArgument(properties != null, "Instance properties name cannot be null.");
+    datasetSpecs.put(datasetInstanceName,
+                     new DatasetCreationSpec(datasetInstanceName, datasetClass.getName(), properties));
+    datasetModules.put(datasetClass.getName(), datasetClass.getName());
   }
 
   private static final class VerificationDelegateContext<T extends HttpServiceHandler> implements DelegatorContext<T> {

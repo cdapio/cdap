@@ -18,9 +18,11 @@ package co.cask.cdap.api.flow;
 
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.data.stream.Stream;
+import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.flow.flowlet.Flowlet;
 import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;
+import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.internal.flow.DefaultFlowSpecification;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
@@ -72,6 +74,21 @@ public interface FlowSpecification extends ProgramSpecification {
    * @return Immutable list of {@link FlowletConnection}s.
    */
   List<FlowletConnection> getConnections();
+
+  /**
+   * @return Map of streams and {@link StreamSpecification} created in this flow.
+   */
+  Map<String, StreamSpecification> getStreams();
+
+  /**
+   * @return Map of dataset modules created in this flow.
+   */
+  Map<String, String> getDatasetModules();
+
+  /**
+   * @return Map of dataset instances and {@link DatasetCreationSpec} created in this flow.
+   */
+  Map<String, DatasetCreationSpec> getDatasetSpecs();
 
   /**
    * Defines a builder for building connections or topology for a flow.

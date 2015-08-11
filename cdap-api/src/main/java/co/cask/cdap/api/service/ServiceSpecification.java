@@ -18,7 +18,9 @@ package co.cask.cdap.api.service;
 
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
+import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -32,18 +34,25 @@ public final class ServiceSpecification implements ProgramSpecification {
   private final String name;
   private final String description;
   private final Map<String, HttpServiceHandlerSpecification> handlers;
+  private final Map<String, StreamSpecification> streams;
+  private final Map<String, String> datasetModules;
+  private final Map<String, DatasetCreationSpec> datasetSpecs;
   private final Resources resources;
   private final int instances;
 
   public ServiceSpecification(String className, String name, String description,
                               Map<String, HttpServiceHandlerSpecification> handlers,
-                              Resources resources, int instances) {
+                              Resources resources, int instances, Map<String, StreamSpecification> streams,
+                              Map<String, String> datasetModules, Map<String, DatasetCreationSpec> datasetSpecs) {
     this.className = className;
     this.name = name;
     this.description = description;
     this.handlers = Collections.unmodifiableMap(new HashMap<>(handlers));
     this.resources = resources;
     this.instances = instances;
+    this.streams = streams;
+    this.datasetModules = datasetModules;
+    this.datasetSpecs = datasetSpecs;
   }
 
   @Override
@@ -80,5 +89,18 @@ public final class ServiceSpecification implements ProgramSpecification {
    */
   public Resources getResources() {
     return resources;
+  }
+
+
+  public Map<String, StreamSpecification> getStreams() {
+    return streams;
+  }
+
+  public Map<String, String> getDatasetModules() {
+    return datasetModules;
+  }
+
+  public Map<String, DatasetCreationSpec> getDatasetSpecs() {
+    return datasetSpecs;
   }
 }

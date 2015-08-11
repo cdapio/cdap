@@ -16,6 +16,11 @@
 
 package co.cask.cdap.internal.app.runtime.flow;
 
+import co.cask.cdap.api.data.stream.Stream;
+import co.cask.cdap.api.data.stream.StreamSpecification;
+import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.flow.FlowConfigurer;
 import co.cask.cdap.api.flow.FlowSpecification;
@@ -24,6 +29,7 @@ import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.api.flow.flowlet.Flowlet;
 import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;
+import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.internal.flow.DefaultFlowSpecification;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
@@ -37,6 +43,10 @@ import java.util.Map;
  */
 public class DefaultFlowConfigurer implements FlowConfigurer {
 
+  private final Map<String, StreamSpecification> streams;
+  private final Map<String, String> datasetModules;
+  private final Map<String, DatasetCreationSpec> datasetInstances;
+
   private String className;
   private String name;
   private String description;
@@ -49,6 +59,9 @@ public class DefaultFlowConfigurer implements FlowConfigurer {
     this.description = "";
     this.flowlets = Maps.newHashMap();
     this.connections = Lists.newArrayList();
+    this.streams = Maps.newHashMap();
+    this.datasetModules = Maps.newHashMap();
+    this.datasetInstances = Maps.newHashMap();
   }
 
   @Override
@@ -91,6 +104,9 @@ public class DefaultFlowConfigurer implements FlowConfigurer {
     Preconditions.checkArgument(!flowlets.containsKey(flowletName),
                                 UserMessages.getMessage(UserErrors.INVALID_FLOWLET_EXISTS), flowletName);
     flowlets.put(flowletName, flowletDef);
+    streams.putAll(flowletDef.getFlowletSpec().getStreams());
+    datasetInstances.putAll(flowletDef.getFlowletSpec().getDatasetSpecs());
+    datasetModules.putAll(flowletDef.getFlowletSpec().getDatasetModules());
   }
 
   @Override
@@ -137,6 +153,44 @@ public class DefaultFlowConfigurer implements FlowConfigurer {
   }
 
   public FlowSpecification createSpecification() {
-    return new DefaultFlowSpecification(className, name, description, flowlets, connections);
+    return new DefaultFlowSpecification(className, name, description, flowlets, connections, streams,
+                                        datasetModules, datasetInstances);
+  }
+
+  @Override
+  public void addStream(Stream stream) {
+    Preconditions.checkArgument(stream != null, "Stream cannot be null.");
+    StreamSpecification spec = stream.configure();
+    streams.put(spec.getName(), spec);
+  }
+
+  @Override
+  public void addDatasetModule(String moduleName, Class<? extends DatasetModule> moduleClass) {
+    Preconditions.checkArgument(moduleName != null, "Dataset modoule name cannot be null.");
+    Preconditions.checkArgument(moduleClass != null, "Dataset module class cannot be null.");
+    datasetModules.put(moduleName, moduleClass.getName());
+  }
+
+  @Override
+  public void addDatasetType(Class<? extends Dataset> datasetClass) {
+    Preconditions.checkArgument(datasetClass != null, "Dataset class cannot be null.");
+    datasetModules.put(datasetClass.getName(), datasetClass.getName());
+  }
+
+  @Override
+  public void createDataset(String datasetName, String typeName, DatasetProperties properties) {
+    Preconditions.checkArgument(datasetName != null, "Dataset instance name cannot be null.");
+    Preconditions.checkArgument(typeName != null, "Dataset type name cannot be null.");
+    Preconditions.checkArgument(properties != null, "Instance properties name cannot be null.");
+    datasetInstances.put(datasetName, new DatasetCreationSpec(datasetName, typeName, properties));
+  }
+
+  @Override
+  public void createDataset(String datasetName, Class<? extends Dataset> datasetClass, DatasetProperties props) {
+    Preconditions.checkArgument(datasetName != null, "Dataset instance name cannot be null.");
+    Preconditions.checkArgument(datasetClass != null, "Dataset class name cannot be null.");
+    Preconditions.checkArgument(props != null, "Instance properties name cannot be null.");
+    datasetInstances.put(datasetName, new DatasetCreationSpec(datasetName, datasetClass.getName(), props));
+    datasetModules.put(datasetClass.getName(), datasetClass.getName());
   }
 }

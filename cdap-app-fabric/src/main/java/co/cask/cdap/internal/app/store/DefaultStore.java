@@ -465,7 +465,8 @@ public class DefaultStore implements Store {
         // Create a new spec copy from the old one, except with updated instances number
         serviceSpec = new ServiceSpecification(serviceSpec.getClassName(), serviceSpec.getName(),
                                                serviceSpec.getDescription(), serviceSpec.getHandlers(),
-                                               serviceSpec.getResources(), instances);
+                                               serviceSpec.getResources(), instances, serviceSpec.getStreams(),
+                                               serviceSpec.getDatasetModules(), serviceSpec.getDatasetSpecs());
 
         ApplicationSpecification newAppSpec = replaceServiceSpec(appSpec, id.getId(), serviceSpec);
         replaceAppSpecInProgramJar(id, newAppSpec);

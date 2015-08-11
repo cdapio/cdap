@@ -157,8 +157,8 @@ public abstract class AbstractWorker implements Worker {
    * @see WorkerConfigurer#createDataset(String, Class, co.cask.cdap.api.dataset.DatasetProperties)
    */
   protected final void createDataset(String datasetName,
-                               Class<? extends Dataset> datasetClass,
-                               DatasetProperties properties) {
+                                     Class<? extends Dataset> datasetClass,
+                                     DatasetProperties properties) {
     configurer.createDataset(datasetName, datasetClass, properties);
   }
 

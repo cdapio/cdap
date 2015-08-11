@@ -48,8 +48,8 @@ public class DefaultFlowletConfigurer implements FlowletConfigurer {
   private final String className;
   private final Map<String, String> propertyFields;
   private final Map<String, StreamSpecification> streams;
-  private final Map<String, String> dataSetModules;
-  private final Map<String, DatasetCreationSpec> dataSetInstances;
+  private final Map<String, String> datasetModules;
+  private final Map<String, DatasetCreationSpec> datasetSpecs;
 
   private String name;
   private String description;
@@ -68,8 +68,8 @@ public class DefaultFlowletConfigurer implements FlowletConfigurer {
     this.properties = ImmutableMap.of();
     this.datasets = Sets.newHashSet();
     this.streams = Maps.newHashMap();
-    this.dataSetModules = Maps.newHashMap();
-    this.dataSetInstances = Maps.newHashMap();
+    this.datasetModules = Maps.newHashMap();
+    this.datasetSpecs = Maps.newHashMap();
 
     // Grab all @Property fields
     Reflections.visit(flowlet, TypeToken.of(flowlet.getClass()), new PropertyFieldExtractor(propertyFields));
@@ -112,7 +112,7 @@ public class DefaultFlowletConfigurer implements FlowletConfigurer {
     properties.putAll(propertyFields);
     return new DefaultFlowletSpecification(this.className, this.name, this.description, this.failurePolicy,
                                            this.datasets, this.properties, this.resources, this.streams,
-                                           this.dataSetModules, this.dataSetInstances);
+                                           this.datasetModules, this.datasetSpecs);
   }
 
   //TODO: CDAP-2943 Use DefaultDatasetConfigurer after moving this class to cdap-app-fabric.
@@ -127,13 +127,13 @@ public class DefaultFlowletConfigurer implements FlowletConfigurer {
   public void addDatasetModule(String moduleName, Class<? extends DatasetModule> moduleClass) {
     Preconditions.checkArgument(moduleName != null, "Dataset module name cannot be null.");
     Preconditions.checkArgument(moduleClass != null, "Dataset module class cannot be null.");
-    dataSetModules.put(moduleName, moduleClass.getName());
+    datasetModules.put(moduleName, moduleClass.getName());
   }
 
   @Override
   public void addDatasetType(Class<? extends Dataset> datasetClass) {
     Preconditions.checkArgument(datasetClass != null, "Dataset class cannot be null.");
-    dataSetModules.put(datasetClass.getName(), datasetClass.getName());
+    datasetModules.put(datasetClass.getName(), datasetClass.getName());
   }
 
   @Override
@@ -141,8 +141,7 @@ public class DefaultFlowletConfigurer implements FlowletConfigurer {
     Preconditions.checkArgument(datasetInstanceName != null, "Dataset instance name cannot be null.");
     Preconditions.checkArgument(typeName != null, "Dataset type name cannot be null.");
     Preconditions.checkArgument(properties != null, "Instance properties name cannot be null.");
-    dataSetInstances.put(datasetInstanceName,
-                         new DatasetCreationSpec(datasetInstanceName, typeName, properties));
+    datasetSpecs.put(datasetInstanceName, new DatasetCreationSpec(datasetInstanceName, typeName, properties));
   }
 
   @Override
@@ -151,8 +150,8 @@ public class DefaultFlowletConfigurer implements FlowletConfigurer {
     Preconditions.checkArgument(datasetInstanceName != null, "Dataset instance name cannot be null.");
     Preconditions.checkArgument(datasetClass != null, "Dataset class name cannot be null.");
     Preconditions.checkArgument(properties != null, "Instance properties name cannot be null.");
-    dataSetInstances.put(datasetInstanceName,
+    datasetSpecs.put(datasetInstanceName,
                          new DatasetCreationSpec(datasetInstanceName, datasetClass.getName(), properties));
-    dataSetModules.put(datasetClass.getName(), datasetClass.getName());
+    datasetModules.put(datasetClass.getName(), datasetClass.getName());
   }
 }

@@ -73,7 +73,6 @@ public class AppWithServices extends AbstractApplication {
     @Override
     public void configure() {
       setName(APP_NAME);
-      addStream(new Stream("text"));
       addService(new BasicService("NoOpService", new NoOpHandler()));
       addService(new BasicService(SERVICE_NAME, new ServerService()));
       addService(new DatasetUpdateService());
@@ -195,6 +194,7 @@ public class AppWithServices extends AbstractApplication {
     protected void configure() {
       setName(DATASET_WORKER_SERVICE_NAME);
       addHandler(new NoOpHandler());
+      addStream(new Stream("text"));
     }
 
     private static final class NoOpHandler extends AbstractHttpServiceHandler {

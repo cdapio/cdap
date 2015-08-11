@@ -22,8 +22,6 @@ import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.flow.AbstractFlow;
 import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.flow.FlowSpecification;
-import co.cask.cdap.api.flow.FlowletDefinition;
-import co.cask.cdap.api.flow.flowlet.FlowletSpecification;
 import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
@@ -32,7 +30,6 @@ import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.ServiceSpecification;
-import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.worker.Worker;
@@ -66,8 +63,8 @@ public class DefaultAppConfigurer extends DefaultDatasetConfigurer implements Ap
   private String configuration;
   private Id.Artifact artifactId;
   private final Map<String, StreamSpecification> streams = Maps.newHashMap();
-  private final Map<String, String> dataSetModules = Maps.newHashMap();
-  private final Map<String, DatasetCreationSpec> dataSetInstances = Maps.newHashMap();
+  private final Map<String, String> datasetModules = Maps.newHashMap();
+  private final Map<String, DatasetCreationSpec> datasetSpecs = Maps.newHashMap();
   private final Map<String, FlowSpecification> flows = Maps.newHashMap();
   private final Map<String, MapReduceSpecification> mapReduces = Maps.newHashMap();
   private final Map<String, SparkSpecification> sparks = Maps.newHashMap();
@@ -115,12 +112,9 @@ public class DefaultAppConfigurer extends DefaultDatasetConfigurer implements Ap
       spec = new DefaultFlowSpecification(flow.getClass().getName(), spec);
     }
 
-    for (Map.Entry<String, FlowletDefinition> flowletEntry : spec.getFlowlets().entrySet()) {
-      FlowletSpecification flowletSpec = flowletEntry.getValue().getFlowletSpec();
-      streams.putAll(flowletSpec.getStreams());
-      dataSetModules.putAll(flowletSpec.getDatasetModules());
-      dataSetInstances.putAll(flowletSpec.getDatasetSpecs());
-    }
+    streams.putAll(spec.getStreams());
+    datasetModules.putAll(spec.getDatasetModules());
+    datasetSpecs.putAll(spec.getDatasetSpecs());
     flows.put(spec.getName(), spec);
   }
 
@@ -132,8 +126,8 @@ public class DefaultAppConfigurer extends DefaultDatasetConfigurer implements Ap
 
     MapReduceSpecification spec = configurer.createSpecification();
     streams.putAll(spec.getStreams());
-    dataSetModules.putAll(spec.getDatasetModules());
-    dataSetInstances.putAll(spec.getDatasetSpecs());
+    datasetModules.putAll(spec.getDatasetModules());
+    datasetSpecs.putAll(spec.getDatasetSpecs());
     mapReduces.put(spec.getName(), spec);
   }
 
@@ -145,8 +139,8 @@ public class DefaultAppConfigurer extends DefaultDatasetConfigurer implements Ap
 
     SparkSpecification spec = configurer.createSpecification();
     streams.putAll(spec.getStreams());
-    dataSetModules.putAll(spec.getDatasetModules());
-    dataSetInstances.putAll(spec.getDatasetSpecs());
+    datasetModules.putAll(spec.getDatasetModules());
+    datasetSpecs.putAll(spec.getDatasetSpecs());
     sparks.put(spec.getName(), spec);
   }
 
@@ -165,13 +159,10 @@ public class DefaultAppConfigurer extends DefaultDatasetConfigurer implements Ap
     service.configure(configurer);
 
     ServiceSpecification spec = configurer.createSpecification();
-    for (Map.Entry<String, HttpServiceHandlerSpecification> handlerSpecEntry : spec.getHandlers().entrySet()) {
-      HttpServiceHandlerSpecification handlerSpec = handlerSpecEntry.getValue();
-      streams.putAll(handlerSpec.getStreams());
-      dataSetModules.putAll(handlerSpec.getDatasetModules());
-      dataSetInstances.putAll(handlerSpec.getDatasetSpecs());
-    }
     services.put(spec.getName(), spec);
+    streams.putAll(spec.getStreams());
+    datasetModules.putAll(spec.getDatasetModules());
+    datasetSpecs.putAll(spec.getDatasetSpecs());
   }
 
   @Override
@@ -181,8 +172,8 @@ public class DefaultAppConfigurer extends DefaultDatasetConfigurer implements Ap
     worker.configure(configurer);
     WorkerSpecification spec = configurer.createSpecification();
     streams.putAll(spec.getStreams());
-    dataSetModules.putAll(spec.getDatasetModules());
-    dataSetInstances.putAll(spec.getDatasetSpecs());
+    datasetModules.putAll(spec.getDatasetModules());
+    datasetSpecs.putAll(spec.getDatasetSpecs());
     workers.put(spec.getName(), spec);
   }
 
@@ -214,7 +205,7 @@ public class DefaultAppConfigurer extends DefaultDatasetConfigurer implements Ap
 
   public ApplicationSpecification createSpecification(String version) {
     return new DefaultApplicationSpecification(name, version, description, configuration, artifactId, streams,
-                                               dataSetModules, dataSetInstances,
+                                               datasetModules, datasetSpecs,
                                                flows, mapReduces, sparks, workflows, services,
                                                schedules, workers);
   }
