@@ -126,14 +126,15 @@ public class ApplicationClientTestRun extends ClientTestBase {
   public void testAppConfig() throws Exception {
     ConfigTestApp.ConfigClass config = new ConfigTestApp.ConfigClass("testStream", "testDataset");
     appClient.deploy(Id.Namespace.DEFAULT, createAppJarFile(ConfigTestApp.class), config);
-    Assert.assertEquals(1, appClient.list().size());
+    Assert.assertEquals(1, appClient.list(Id.Namespace.DEFAULT).size());
 
+    Id.Application app = Id.Application.from(Id.Namespace.DEFAULT, ConfigTestApp.NAME);
     try {
-      appClient.exists(ConfigTestApp.NAME);
+      appClient.exists(app);
     } finally {
-      appClient.delete(ConfigTestApp.NAME);
-      appClient.waitForDeleted(ConfigTestApp.NAME, 30, TimeUnit.SECONDS);
-      Assert.assertEquals(0, appClient.list().size());
+      appClient.delete(app);
+      appClient.waitForDeleted(app, 30, TimeUnit.SECONDS);
+      Assert.assertEquals(0, appClient.list(Id.Namespace.DEFAULT).size());
     }
   }
 

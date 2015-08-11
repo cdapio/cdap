@@ -47,6 +47,7 @@ import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.runtime.app.PendingMetricTestApp;
 import co.cask.cdap.test.SlowTests;
@@ -115,7 +116,7 @@ public class FlowTest {
   @BeforeClass
   public static void init() throws AlreadyExistsException, NamespaceCannotBeCreatedException {
     NamespaceAdmin namespaceAdmin = AppFabricTestHelper.getInjector().getInstance(NamespaceAdmin.class);
-    namespaceAdmin.createNamespace(Constants.DEFAULT_NAMESPACE_META);
+    namespaceAdmin.createNamespace(NamespaceMeta.DEFAULT);
     metricStore = AppFabricTestHelper.getInjector().getInstance(MetricStore.class);
   }
 

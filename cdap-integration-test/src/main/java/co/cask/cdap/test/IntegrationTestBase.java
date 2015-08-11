@@ -182,8 +182,7 @@ public class IntegrationTestBase {
 
   protected TestManager getTestManager() {
     try {
-      return new IntegrationTestManager(getClientConfig(), getRestClient(),
-                                        new LocalLocationFactory(TEMP_FOLDER.newFolder()));
+      return new IntegrationTestManager(getClientConfig(), getRestClient(), TEMP_FOLDER.newFolder());
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }
@@ -211,7 +210,7 @@ public class IntegrationTestBase {
     NamespaceClient namespaceClient = getNamespaceClient();
     List<NamespaceMeta> list = namespaceClient.list();
     Assert.assertEquals(1, list.size());
-    Assert.assertEquals(Constants.DEFAULT_NAMESPACE_META, list.get(0));
+    Assert.assertEquals(NamespaceMeta.DEFAULT, list.get(0));
 
     assertNoApps(namespace);
     assertNoUserDatasets(namespace);
@@ -291,7 +290,7 @@ public class IntegrationTestBase {
 
   private boolean isUserDataset(DatasetSpecificationSummary specification) {
     final DefaultDatasetNamespace dsNamespace = new DefaultDatasetNamespace(CConfiguration.create());
-    return !dsNamespace.contains(specification.getName(), Constants.SYSTEM_NAMESPACE);
+    return !dsNamespace.contains(specification.getName(), Id.Namespace.SYSTEM.getId());
   }
 
   private void assertNoUserDatasets(Id.Namespace namespace) throws Exception {

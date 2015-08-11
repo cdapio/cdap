@@ -32,6 +32,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.NavigableMap;
+import java.util.SortedMap;
 import java.util.concurrent.ConcurrentNavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import javax.annotation.Nullable;
@@ -70,12 +71,12 @@ public class InMemoryTableService {
 
   // no nulls
   public static synchronized void merge(String tableName,
-                                        NavigableMap<byte[], ? extends NavigableMap<byte[], ? extends Update>> changes,
+                                        SortedMap<byte[], ? extends SortedMap<byte[], ? extends Update>> changes,
                                         long version) {
     // todo: handle nulls
     ConcurrentNavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, Update>>> table = tables.get(tableName);
-    NavigableMap<byte[], NavigableMap<byte[], Update>> changesCopy = deepCopyUpdates(changes);
-    for (Map.Entry<byte[], NavigableMap<byte[], Update>> change : changesCopy.entrySet()) {
+    SortedMap<byte[], ? extends SortedMap<byte[], Update>> changesCopy = deepCopyUpdates(changes);
+    for (Map.Entry<byte[], ? extends SortedMap<byte[], Update>> change : changesCopy.entrySet()) {
       merge(table, change.getKey(), change.getValue(), version);
     }
   }
@@ -306,18 +307,13 @@ public class InMemoryTableService {
     return map;
   }
 
-  @Nullable
-  private static NavigableMap<byte[], NavigableMap<byte[], Update>> deepCopyUpdates(
-    @Nullable NavigableMap<byte[], ? extends NavigableMap<byte[], ? extends Update>> src) {
+  private static SortedMap<byte[], SortedMap<byte[], Update>> deepCopyUpdates(
+    SortedMap<byte[], ? extends SortedMap<byte[], ? extends Update>> src) {
 
-    if (src == null) {
-      return null;
-    }
-
-    NavigableMap<byte[], NavigableMap<byte[], Update>> copy = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
-    for (Map.Entry<byte[], ? extends NavigableMap<byte[], ? extends Update>> entry : src.entrySet()) {
+    SortedMap<byte[], SortedMap<byte[], Update>> copy = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    for (Map.Entry<byte[], ? extends SortedMap<byte[], ? extends Update>> entry : src.entrySet()) {
       byte[] key = copy(entry.getKey());
-      NavigableMap<byte[], Update> columnUpdates = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+      SortedMap<byte[], Update> columnUpdates = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
       copy.put(key, columnUpdates);
       for (Map.Entry<byte[], ? extends Update> updateEntry : entry.getValue().entrySet()) {
         byte[] col = copy(updateEntry.getKey());

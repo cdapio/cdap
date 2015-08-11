@@ -35,6 +35,7 @@ import co.cask.cdap.data.runtime.TransactionManagerProvider;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
+import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.distributed.TransactionService;
 import co.cask.tephra.persist.TransactionStateStorage;
@@ -78,7 +79,7 @@ public class TransactionServiceTwillRunnable extends AbstractMasterTwillRunnable
 
       Injector injector = createGuiceInjector(getCConfiguration(), getConfiguration());
       injector.getInstance(LogAppenderInitializer.class).initialize();
-      LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Constants.SYSTEM_NAMESPACE,
+      LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Id.Namespace.SYSTEM.getId(),
                                                                          Constants.Logging.COMPONENT_NAME,
                                                                          Constants.Service.TRANSACTION));
 

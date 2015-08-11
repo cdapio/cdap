@@ -13,6 +13,7 @@ angular.module(PKG.name + '.services')
     },
     {
       list: myHelpers.getConfig('GET', 'REQUEST', listPath, true),
+      get: myHelpers.getConfig('GET', 'REQUEST', basepath),
       delete: myHelpers.getConfig('DELETE', 'REQUEST', basepath),
       truncate: myHelpers.getConfig('POST', 'REQUEST', basepath + '/admin/truncate'),
       programsList: myHelpers.getConfig('GET', 'REQUEST', basepath + '/programs', true)

@@ -18,6 +18,7 @@ package co.cask.cdap.cli.completer;
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
+import com.google.common.collect.ImmutableList;
 import jline.console.completer.Completer;
 
 import java.util.Collection;
@@ -43,6 +44,11 @@ public class StringsCompleter implements Completer {
   public StringsCompleter(Collection<String> strings) {
     checkNotNull(strings);
     this.strings = Suppliers.ofInstance(strings);
+  }
+
+  public StringsCompleter(String[] strings) {
+    checkNotNull(strings);
+    this.strings = Suppliers.<Collection<String>>ofInstance(ImmutableList.copyOf(strings));
   }
 
   public TreeSet<String> getStrings() {

@@ -23,16 +23,18 @@ import co.cask.cdap.app.DefaultAppConfigurer;
 import co.cask.cdap.app.DefaultApplicationContext;
 import co.cask.cdap.app.deploy.ConfigResponse;
 import co.cask.cdap.app.deploy.Configurator;
-import co.cask.cdap.app.program.Archive;
 import co.cask.cdap.app.program.ManifestFields;
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
-import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactClassLoaderFactory;
+import co.cask.cdap.internal.app.runtime.artifact.CloseableClassLoader;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
+import co.cask.cdap.proto.Id;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.io.CharStreams;
-import com.google.common.io.Files;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -60,18 +62,32 @@ public final class InMemoryConfigurator implements Configurator {
   /**
    * JAR file path.
    */
-  private final Location archive;
+  private final Location artifact;
   private final String configString;
+  private final ArtifactClassLoaderFactory artifactClassLoaderFactory;
 
-  /**
-   * Constructor that accepts archive file as input to invoke configure.
-   *
-   * @param archive name of the archive file for which configure is invoked in-memory.
-   */
-  public InMemoryConfigurator(Location archive, @Nullable String configString) {
-    Preconditions.checkNotNull(archive);
-    this.archive = archive;
+  // these field provided if going through artifact code path, but not through template code path
+  // this is temporary until we can remove templates. (CDAP-2662).
+  private String appClassName;
+  private String version;
+  private Id.Artifact artifactId;
+
+  public InMemoryConfigurator(CConfiguration cConf, Id.Artifact artifactId, String appClassName,
+                              Location artifact, @Nullable String configString) {
+    this(cConf, artifact, configString);
+    this.artifactId = artifactId;
+    this.appClassName = appClassName;
+    this.version = artifactId.getVersion().getVersion();
+  }
+
+  // remove once app templates are gone
+  public InMemoryConfigurator(CConfiguration cConf, Location artifact, @Nullable String configString) {
+    Preconditions.checkNotNull(artifact);
+    this.artifact = artifact;
     this.configString = configString;
+    this.artifactClassLoaderFactory = new ArtifactClassLoaderFactory(
+      new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
+               cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile());
   }
 
   /**
@@ -87,31 +103,20 @@ public final class InMemoryConfigurator implements Configurator {
     SettableFuture<ConfigResponse> result = SettableFuture.create();
 
     try {
-      // Load the JAR using the JAR class load and load the manifest file.
-      Manifest manifest = BundleJarUtil.getManifest(archive);
-      Preconditions.checkArgument(manifest != null, "Failed to load manifest from %s", archive.toURI());
-      Preconditions.checkArgument(manifest.getMainAttributes() != null,
-                                  "Failed to load manifest attributes from %s", archive.toURI());
+      if (appClassName == null) {
+        readAppClassName();
+      }
 
-      String mainClassName = manifest.getMainAttributes().getValue(ManifestFields.MAIN_CLASS);
-      Preconditions.checkArgument(mainClassName != null && !mainClassName.isEmpty(),
-                                  "Main class attribute cannot be empty");
-
-      File unpackedJarDir = Files.createTempDir();
-      try (Archive archive = new Archive(BundleJarUtil.unpackProgramJar(this.archive, unpackedJarDir), mainClassName)) {
-        Object appMain = archive.getMainClass().newInstance();
+      try (CloseableClassLoader artifactClassLoader = artifactClassLoaderFactory.createClassLoader(artifact)) {
+        Object appMain = artifactClassLoader.loadClass(appClassName).newInstance();
         if (!(appMain instanceof Application)) {
           throw new IllegalStateException(String.format("Application main class is of invalid type: %s",
-                                                        appMain.getClass().getName()));
+            appMain.getClass().getName()));
         }
 
-        String bundleVersion = manifest.getMainAttributes().getValue(ManifestFields.BUNDLE_VERSION);
-
         Application app = (Application) appMain;
-        ConfigResponse response = createResponse(app, bundleVersion);
+        ConfigResponse response = createResponse(app, version);
         result.set(response);
-      } finally {
-        removeDir(unpackedJarDir);
       }
 
       return result;
@@ -121,16 +126,31 @@ public final class InMemoryConfigurator implements Configurator {
     }
   }
 
+  // remove once app templates are gone
+  private void readAppClassName() throws IOException {
+    // Load the JAR using the JAR class load and load the manifest file.
+    Manifest manifest = BundleJarUtil.getManifest(artifact);
+    Preconditions.checkArgument(manifest != null, "Failed to load manifest from %s", artifact.toURI());
+    Preconditions.checkArgument(manifest.getMainAttributes() != null,
+      "Failed to load manifest attributes from %s", artifact.toURI());
+
+    appClassName = manifest.getMainAttributes().getValue(ManifestFields.MAIN_CLASS);
+    Preconditions.checkArgument(appClassName != null && !appClassName.isEmpty(),
+      "Main class attribute cannot be empty");
+    version = manifest.getMainAttributes().getValue(ManifestFields.BUNDLE_VERSION);
+  }
+
   private ConfigResponse createResponse(Application app, String bundleVersion)
     throws InstantiationException, IllegalAccessException {
     String specJson = getSpecJson(app, bundleVersion, configString);
     return new DefaultConfigResponse(0, CharStreams.newReaderSupplier(specJson));
   }
 
-  private static String getSpecJson(Application app, final String bundleVersion, final String configString)
+  private String getSpecJson(Application app, final String bundleVersion, final String configString)
     throws IllegalAccessException, InstantiationException {
     // Now, we call configure, which returns application specification.
-    DefaultAppConfigurer configurer = new DefaultAppConfigurer(app, configString);
+    DefaultAppConfigurer configurer = artifactId == null ?
+      new DefaultAppConfigurer(app, configString) : new DefaultAppConfigurer(artifactId, app, configString);
 
     Config appConfig;
     TypeToken typeToken = TypeToken.of(app.getClass());
@@ -152,11 +172,4 @@ public final class InMemoryConfigurator implements Configurator {
     return ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator()).toJson(specification);
   }
 
-  private void removeDir(File dir) {
-    try {
-      DirUtils.deleteDirectoryContents(dir);
-    } catch (IOException e) {
-      LOG.warn("Failed to delete directory {}", dir, e);
-    }
-  }
 }

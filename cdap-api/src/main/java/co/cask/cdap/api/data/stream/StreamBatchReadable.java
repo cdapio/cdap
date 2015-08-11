@@ -26,12 +26,10 @@ import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.stream.GenericStreamEventData;
 import co.cask.cdap.api.stream.StreamEventDecoder;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
-import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.gson.Gson;
@@ -149,11 +147,11 @@ public class StreamBatchReadable implements BatchReadable<Long, String> {
         public String apply(Map.Entry<String, Object> entry) {
           try {
             return String.format("%s=%s",
-                                 URLEncoder.encode(entry.getKey(), Charsets.UTF_8.name()),
-                                 URLEncoder.encode(entry.getValue().toString(), Charsets.UTF_8.name()));
+                                 URLEncoder.encode(entry.getKey(), "UTF-8"),
+                                 URLEncoder.encode(entry.getValue().toString(), "UTF-8"));
           } catch (UnsupportedEncodingException e) {
             // Shouldn't happen as UTF-8 should always supported.
-            throw Throwables.propagate(e);
+            throw new RuntimeException(e);
           }
         }
       }));
@@ -303,7 +301,7 @@ public class StreamBatchReadable implements BatchReadable<Long, String> {
       return URLEncoder.encode(asJson, "UTF-8");
     } catch (UnsupportedEncodingException e) {
       // this should never happen
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -316,7 +314,7 @@ public class StreamBatchReadable implements BatchReadable<Long, String> {
       return GSON.fromJson(decodedFormatSpecification, FormatSpecification.class);
     } catch (UnsupportedEncodingException e) {
       // this should never happen
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 }

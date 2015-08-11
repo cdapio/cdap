@@ -133,6 +133,8 @@ public final class Properties {
     public static final String TYPE_NAME = "es.type";
     public static final String HOST = "es.host";
     public static final String ID_FIELD = "es.idField";
+    public static final String QUERY = "query";
+    public static final String SCHEMA = "schema";
   }
 
   /**

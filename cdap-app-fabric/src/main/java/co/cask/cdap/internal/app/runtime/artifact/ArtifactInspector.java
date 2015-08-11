@@ -29,6 +29,7 @@ import co.cask.cdap.api.templates.plugins.PluginClass;
 import co.cask.cdap.api.templates.plugins.PluginConfig;
 import co.cask.cdap.api.templates.plugins.PluginPropertyField;
 import co.cask.cdap.app.program.ManifestFields;
+import co.cask.cdap.common.InvalidArtifactException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
@@ -204,7 +205,7 @@ public class ArtifactInspector {
     // Load the plugin class and inspect the config field.
     ArtifactDescriptor artifactDescriptor = new ArtifactDescriptor(
       artifactId.getName(), artifactId.getVersion(),
-      Constants.SYSTEM_NAMESPACE_ID.equals(artifactId.getNamespace()),
+      Id.Namespace.SYSTEM.equals(artifactId.getNamespace()),
       Locations.toLocation(artifactFile));
 
     try {

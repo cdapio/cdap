@@ -15,7 +15,6 @@
  */
 package co.cask.cdap.api.common;
 
-import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableSortedMap;
 
 import java.io.DataOutput;
@@ -81,6 +80,7 @@ public class Bytes {
   public static final int SIZEOF_SHORT = Short.SIZE / Byte.SIZE;
 
   private static final char[] hexDigits = "0123456789abcdef".toCharArray();
+  private static final Charset UTF_8 = Charset.forName("UTF-8");
 
   /**
    * Byte array comparator class.
@@ -208,7 +208,7 @@ public class Bytes {
    * @return String made from <code>buf</code> or null
    */
   public static String toString(ByteBuffer buf) {
-    return toString(buf, Charsets.UTF_8);
+    return toString(buf, UTF_8);
   }
 
   /**
@@ -1465,7 +1465,10 @@ public class Bytes {
    * @param key key of the entry
    * @param value value of the entry
    * @return instance of {@link NavigableMap}
+   *
+   * @deprecated This method will be removed in future release
    */
+  @Deprecated
   public static <T> NavigableMap<byte[], T> immutableSortedMapOf(byte[] key, T value) {
     return ImmutableSortedMap.<byte[], T>orderedBy(Bytes.BYTES_COMPARATOR).put(key, value).build();
   }
@@ -1477,7 +1480,10 @@ public class Bytes {
    * @param key2 key of the second entry
    * @param value2 value of the second entry
    * @return instance of {@link NavigableMap}
+   *
+   * @deprecated This method will be removed in future release
    */
+  @Deprecated
   public static <T> NavigableMap<byte[], T> immutableSortedMapOf(byte[] key1, T value1,
                                                                   byte[] key2, T value2) {
     return ImmutableSortedMap.<byte[], T>orderedBy(Bytes.BYTES_COMPARATOR)

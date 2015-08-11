@@ -32,15 +32,15 @@ import java.io.IOException;
  * Given an artifact, creates a {@link CloseableClassLoader} from it. Takes care of unpacking the artifact and
  * cleaning up the directory when the classloader is closed.
  */
-class ArtifactClassLoaderFactory {
+public class ArtifactClassLoaderFactory {
   private static final Logger LOG = LoggerFactory.getLogger(ArtifactClassLoaderFactory.class);
   private final File baseUnpackDir;
 
-  ArtifactClassLoaderFactory(File baseUnpackDir) {
+  public ArtifactClassLoaderFactory(File baseUnpackDir) {
     this.baseUnpackDir = baseUnpackDir;
   }
 
-  CloseableClassLoader createClassLoader(Location artifactLocation) throws IOException {
+  public CloseableClassLoader createClassLoader(Location artifactLocation) throws IOException {
     final File unpackDir = DirUtils.createTempDir(baseUnpackDir);
     BundleJarUtil.unpackProgramJar(artifactLocation, unpackDir);
     final ProgramClassLoader programClassLoader = ProgramClassLoader.create(unpackDir, getClass().getClassLoader());

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,10 +14,18 @@
  * the License.
  */
 
+package co.cask.cdap.common;
+
 /**
- * This package contains internal classes for supporting the CDAP API.
- * <p>
- * These should not be used directly by users of the CDAP API, as they may change in a later release without warning.
- * </p>
+ * Thrown when an artifact is invalid.
  */
-package co.cask.cdap.internal.service;
+public class InvalidArtifactException extends BadRequestException {
+
+  public InvalidArtifactException(String message) {
+    super(message);
+  }
+
+  public InvalidArtifactException(String message, Throwable cause) {
+    super(message, cause);
+  }
+}

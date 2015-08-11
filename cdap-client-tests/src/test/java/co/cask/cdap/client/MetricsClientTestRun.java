@@ -71,7 +71,7 @@ public class MetricsClientTestRun extends ClientTestBase {
       // TODO: remove arbitrary sleep
       TimeUnit.SECONDS.sleep(5);
 
-      Id.Application appId = Id.Application.from(Constants.DEFAULT_NAMESPACE_ID, FakeApp.NAME);
+      Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, FakeApp.NAME);
       Id.Program programId = Id.Program.from(appId, ProgramType.FLOW, FakeFlow.NAME);
       String flowlet = FakeFlow.FLOWLET_NAME;
 

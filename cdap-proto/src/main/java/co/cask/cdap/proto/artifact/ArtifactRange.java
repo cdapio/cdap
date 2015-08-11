@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.artifact;
+package co.cask.cdap.proto.artifact;
 
-import co.cask.cdap.internal.artifact.ArtifactVersion;
+import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.proto.Id;
 
 import java.util.Objects;
@@ -97,6 +97,8 @@ public class ArtifactRange {
   @Override
   public String toString() {
     return new StringBuilder()
+      .append(namespace.getId())
+      .append(':')
       .append(name)
       .append(isLowerInclusive ? '[' : '(')
       .append(lower.getVersion())
@@ -107,7 +109,40 @@ public class ArtifactRange {
   }
 
   /**
-   * Parses a string representation of an artifact range. It is expected to be of the form:
+   * Parses the string representation of an artifact range, which is of the form:
+   * {namespace}:{name}[{lower-version},{upper-version}]. This is what is returned by {@link #toString()}.
+   * For example, default:my-functions[1.0.0,2.0.0) will correspond to an artifact name of my-functions with a
+   * lower version of 1.0.0 and an upper version of 2.0.0 in the default namespace.
+   *
+   * @param artifactRangeStr the string representation to parse
+   * @return the ArtifactRange corresponding to the given string
+   */
+  public static ArtifactRange parse(String artifactRangeStr) throws InvalidArtifactRangeException {
+    // get the namespace
+    int nameStartIndex = artifactRangeStr.indexOf(':');
+    if (nameStartIndex < 0) {
+      throw new InvalidArtifactRangeException(String.format("Invalid artifact range %s. " +
+        "Could not find ':' separating namespace from artifact name.", artifactRangeStr));
+    }
+    String namespaceStr = artifactRangeStr.substring(0, nameStartIndex);
+    Id.Namespace namespace;
+    try {
+      namespace = Id.Namespace.from(namespaceStr);
+    } catch (Exception e) {
+      throw new InvalidArtifactRangeException(String.format("Invalid namespace %s: %s", namespaceStr, e.getMessage()));
+    }
+
+    // check not at the end of the string
+    if (nameStartIndex == artifactRangeStr.length()) {
+      throw new InvalidArtifactRangeException(
+        String.format("Invalid artifact range %s. Nothing found after namespace.", artifactRangeStr));
+    }
+
+    return parse(namespace, artifactRangeStr.substring(nameStartIndex + 1));
+  }
+
+  /**
+   * Parses an unnamespaced string representation of an artifact range. It is expected to be of the form:
    * {name}[{lower-version},{upper-version}]. Square brackets are inclusive, and parantheses are exclusive.
    * For example, my-functions[1.0.0,2.0.0) will correspond to an artifact name of my-functions with a
    * lower version of 1.0.0 and an upper version of 2.0.0.
@@ -119,41 +154,44 @@ public class ArtifactRange {
    */
   public static ArtifactRange parse(Id.Namespace namespace,
                                     String artifactRangeStr) throws InvalidArtifactRangeException {
-    artifactRangeStr = artifactRangeStr.trim();
-
     // search for the '[' or '(' between the artifact name and lower version
     int versionStartIndex = indexOf(artifactRangeStr, '[', '(', 0);
     if (versionStartIndex < 0) {
-      throw new InvalidArtifactRangeException(String.format("Malformed artifact range %s. " +
+      throw new InvalidArtifactRangeException(String.format("Invalid artifact range %s. " +
         "Could not find '[' or '(' indicating start of artifact lower version.", artifactRangeStr));
     }
     String name = artifactRangeStr.substring(0, versionStartIndex);
+    if (!Id.Artifact.isValidName(name)) {
+      throw new InvalidArtifactRangeException(String.format("Invalid artifact range %s. " +
+        "Artifact name '%s' is invalid.", artifactRangeStr, name));
+    }
+
     boolean isLowerInclusive = artifactRangeStr.charAt(versionStartIndex) == '[';
 
     // search for the comma separating versions
     int commaIndex = artifactRangeStr.indexOf(',', versionStartIndex + 1);
     if (commaIndex < 0) {
-      throw new InvalidArtifactRangeException(String.format("Malformed artifact range %s. " +
+      throw new InvalidArtifactRangeException(String.format("Invalid artifact range %s. " +
         "Could not find ',' separating lower and upper verions.", artifactRangeStr));
     }
     String lowerStr = artifactRangeStr.substring(versionStartIndex + 1, commaIndex);
     ArtifactVersion lower = new ArtifactVersion(lowerStr);
     if (lower.getVersion() == null) {
       throw new InvalidArtifactRangeException(String.format(
-        "Malformed artifact range %s. Lower version %s is invalid.", artifactRangeStr, lowerStr));
+        "Invalid artifact range %s. Lower version %s is invalid.", artifactRangeStr, lowerStr));
     }
 
     // search for the ']' or ')' marking the end of the upper version
     int versionEndIndex = indexOf(artifactRangeStr, ']', ')', commaIndex + 1);
     if (versionEndIndex < 0) {
       throw new InvalidArtifactRangeException(String.format(
-        "Malformed artifact range %s. Could not find enclosing ']' or ')'.", artifactRangeStr));
+        "Invalid artifact range %s. Could not find enclosing ']' or ')'.", artifactRangeStr));
     }
     String upperStr = artifactRangeStr.substring(commaIndex + 1, versionEndIndex);
     ArtifactVersion upper = new ArtifactVersion(upperStr);
     if (upper.getVersion() == null) {
       throw new InvalidArtifactRangeException(String.format(
-        "Malformed artifact range %s. Upper version %s is invalid.", artifactRangeStr, upperStr));
+        "Invalid artifact range %s. Upper version %s is invalid.", artifactRangeStr, upperStr));
     }
     boolean isUpperInclusive = artifactRangeStr.charAt(versionEndIndex) == ']';
 

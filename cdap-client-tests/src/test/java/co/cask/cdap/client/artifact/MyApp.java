@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,10 +14,24 @@
  * the License.
  */
 
+package co.cask.cdap.client.artifact;
+
+import co.cask.cdap.api.Config;
+import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.data.stream.Stream;
+
 /**
- * This package contains internal classes for supporting the CDAP API.
- * <p>
- * These should not be used directly by users of the CDAP API, as they may change in a later release without warning.
- * </p>
+ * App for testing ArtifactClient.
  */
-package co.cask.cdap.internal.service.http;
+public class MyApp extends AbstractApplication<MyApp.Conf> {
+
+  public static class Conf extends Config {
+    private String stream;
+  }
+
+  @Override
+  public void configure() {
+    Conf conf = getConfig();
+    addStream(new Stream(conf.stream));
+  }
+}

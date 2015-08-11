@@ -70,17 +70,17 @@ public class ExploreUpgradeTest extends BaseHiveExploreServiceTest {
     // create a stream and some datasets that will be upgraded. Need to create the actual instances
     // so that upgrade can find them, but we will manually create the Hive tables for them in the old style.
 
-    Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, "purchases");
+    Id.Stream streamId = Id.Stream.from(Id.Namespace.DEFAULT, "purchases");
     // add a stream
     createStream(streamId);
 
     try {
       // add a key-value table for record scannables
-      Id.DatasetInstance kvID = Id.DatasetInstance.from(Constants.DEFAULT_NAMESPACE_ID, "kvtable");
+      Id.DatasetInstance kvID = Id.DatasetInstance.from(Id.Namespace.DEFAULT, "kvtable");
       datasetFramework.addInstance(KeyValueTable.class.getName(), kvID, DatasetProperties.EMPTY);
 
       // add a time partitioned fileset
-      Id.DatasetInstance filesetID = Id.DatasetInstance.from(Constants.DEFAULT_NAMESPACE_ID, "myfiles");
+      Id.DatasetInstance filesetID = Id.DatasetInstance.from(Id.Namespace.DEFAULT, "myfiles");
       Schema schema = Schema.recordOf("rec",
                                       Schema.Field.of("body", Schema.of(Schema.Type.STRING)),
                                       Schema.Field.of("ts", Schema.of(Schema.Type.LONG)));
@@ -138,10 +138,10 @@ public class ExploreUpgradeTest extends BaseHiveExploreServiceTest {
       // the next tables will call initialize on DatasetStorageHandler...
       // TODO: find out why the above is true
       waitForCompletion(Lists.newArrayList(
-        exploreService.execute(Constants.DEFAULT_NAMESPACE_ID, createNonCDAP),
-        exploreService.execute(Constants.DEFAULT_NAMESPACE_ID, createOldFileset),
-        exploreService.execute(Constants.DEFAULT_NAMESPACE_ID, createOldRecordScannable),
-        exploreService.execute(Constants.DEFAULT_NAMESPACE_ID, createOldStream)
+        exploreService.execute(Id.Namespace.DEFAULT, createNonCDAP),
+        exploreService.execute(Id.Namespace.DEFAULT, createOldFileset),
+        exploreService.execute(Id.Namespace.DEFAULT, createOldRecordScannable),
+        exploreService.execute(Id.Namespace.DEFAULT, createOldStream)
       ));
 
       exploreService.upgrade();
@@ -159,7 +159,7 @@ public class ExploreUpgradeTest extends BaseHiveExploreServiceTest {
       // check partition was added to tpfs dataset
       Iterator<PartitionDetail> partitionIter = partitionDetails.iterator();
       String expected = stringify(partitionIter.next().getPartitionKey());
-      runCommand(Constants.DEFAULT_NAMESPACE_ID, "show partitions dataset_myfiles", true,
+      runCommand(Id.Namespace.DEFAULT, "show partitions dataset_myfiles", true,
                  Lists.newArrayList(new ColumnDesc("partition", "STRING", 1, "from deserializer")),
                  Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList(expected)))
       );

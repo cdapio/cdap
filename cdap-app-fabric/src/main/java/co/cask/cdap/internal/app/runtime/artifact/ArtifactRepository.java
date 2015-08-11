@@ -19,18 +19,23 @@ package co.cask.cdap.internal.app.runtime.artifact;
 import co.cask.cdap.api.artifact.ArtifactClasses;
 import co.cask.cdap.api.artifact.ArtifactDescriptor;
 import co.cask.cdap.api.templates.plugins.PluginClass;
+import co.cask.cdap.common.ArtifactAlreadyExistsException;
+import co.cask.cdap.common.ArtifactNotFoundException;
+import co.cask.cdap.common.ArtifactRangeNotFoundException;
+import co.cask.cdap.common.InvalidArtifactException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
+import com.google.common.io.Files;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.Location;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
@@ -80,7 +85,7 @@ public class ArtifactRepository {
   public List<ArtifactSummary> getArtifacts(Id.Namespace namespace, boolean includeSystem) throws IOException {
     List<ArtifactSummary> summaries = Lists.newArrayList();
     if (includeSystem) {
-      convertAndAdd(summaries, artifactStore.getArtifacts(Constants.SYSTEM_NAMESPACE_ID));
+      convertAndAdd(summaries, artifactStore.getArtifacts(Id.Namespace.SYSTEM));
     }
     return Collections.unmodifiableList(convertAndAdd(summaries, artifactStore.getArtifacts(namespace)));
   }
@@ -93,10 +98,10 @@ public class ArtifactRepository {
    * @param name the name of artifacts to get
    * @return an unmodifiable list of artifacts in the given namespace of the given name
    * @throws IOException if there as an exception reading from the meta store
-   * @throws ArtifactNotExistsException if no artifacts of the given name in the given namespace exist
+   * @throws ArtifactNotFoundException if no artifacts of the given name in the given namespace exist
    */
   public List<ArtifactSummary> getArtifacts(Id.Namespace namespace, String name)
-    throws IOException, ArtifactNotExistsException {
+    throws IOException, ArtifactNotFoundException {
     List<ArtifactSummary> summaries = Lists.newArrayList();
     return Collections.unmodifiableList(convertAndAdd(summaries, artifactStore.getArtifacts(namespace, name)));
   }
@@ -108,9 +113,9 @@ public class ArtifactRepository {
    * @param artifactId the id of the artifact to get
    * @return details about the given artifact
    * @throws IOException if there as an exception reading from the meta store
-   * @throws ArtifactNotExistsException if the given artifact does not exist
+   * @throws ArtifactNotFoundException if the given artifact does not exist
    */
-  public ArtifactDetail getArtifact(Id.Artifact artifactId) throws IOException, ArtifactNotExistsException {
+  public ArtifactDetail getArtifact(Id.Artifact artifactId) throws IOException, ArtifactNotFoundException {
     return artifactStore.getArtifact(artifactId);
   }
 
@@ -177,7 +182,30 @@ public class ArtifactRepository {
   }
 
   /**
-   * Inspects and builds plugin information for the given artifact.
+   * Inspects and builds plugin and application information for the given artifact.
+   *
+   * @param artifactId the id of the artifact to inspect and store
+   * @param artifactFile the artifact to inspect and store
+   * @return detail about the newly added artifact
+   * @throws IOException if there was an exception reading from the artifact store
+   * @throws WriteConflictException if there was a write conflict writing to the ArtifactStore
+   * @throws ArtifactAlreadyExistsException if the artifact already exists
+   * @throws InvalidArtifactException if the artifact is invalid. For example, if it is not a zip file,
+   *                                  or the application class given is not an Application.
+   */
+  public ArtifactDetail addArtifact(Id.Artifact artifactId, File artifactFile)
+    throws IOException, WriteConflictException, ArtifactAlreadyExistsException, InvalidArtifactException {
+
+    try (CloseableClassLoader parentClassLoader =
+           artifactClassLoaderFactory.createClassLoader(Locations.toLocation(artifactFile))) {
+      ArtifactClasses artifactClasses = artifactInspector.inspectArtifact(artifactId, artifactFile, parentClassLoader);
+      ArtifactMeta meta = new ArtifactMeta(artifactClasses, ImmutableSet.<ArtifactRange>of());
+      return artifactStore.write(artifactId, meta, Files.newInputStreamSupplier(artifactFile));
+    }
+  }
+
+  /**
+   * Inspects and builds plugin and application information for the given artifact.
    *
    * @param artifactId the id of the artifact to inspect and store
    * @param artifactFile the artifact to inspect and store
@@ -185,8 +213,13 @@ public class ArtifactRepository {
    *                        If null, the given artifact does not extend another artifact
    * @throws IOException if there was an exception reading from the artifact store
    * @throws ArtifactRangeNotFoundException if none of the parent artifacts could be found
+   * @throws WriteConflictException if there was a write conflict writing to the ArtifactStore
+   * @throws ArtifactAlreadyExistsException if the artifact already exists
+   * @throws InvalidArtifactException if the artifact is invalid. For example, if it is not a zip file,
+   *                                  or the application class given is not an Application.
    */
-  public void addArtifact(Id.Artifact artifactId, File artifactFile, @Nullable Set<ArtifactRange> parentArtifacts)
+  public ArtifactDetail addArtifact(Id.Artifact artifactId, File artifactFile,
+                                    @Nullable Set<ArtifactRange> parentArtifacts)
     throws IOException, ArtifactRangeNotFoundException, WriteConflictException,
     ArtifactAlreadyExistsException, InvalidArtifactException {
 
@@ -196,24 +229,13 @@ public class ArtifactRepository {
       // if this artifact doesn't extend another, use itself to create the parent classloader
       parentClassLoader = artifactClassLoaderFactory.createClassLoader(Locations.toLocation(artifactFile));
     } else {
-      // otherwise, use any of the parent artifacts to create the parent classloader.
-      Location parentLocation = null;
-      for (ArtifactRange parentRange : parentArtifacts) {
-        List<ArtifactDetail> parents = artifactStore.getArtifacts(parentRange);
-        if (!parents.isEmpty()) {
-          parentLocation = parents.get(0).getDescriptor().getLocation();
-        }
-      }
-      if (parentLocation == null) {
-        throw new ArtifactRangeNotFoundException(parentArtifacts);
-      }
-      parentClassLoader = artifactClassLoaderFactory.createClassLoader(parentLocation);
+      parentClassLoader = createClassLoader(parentArtifacts);
     }
 
     try {
       ArtifactClasses artifactClasses = artifactInspector.inspectArtifact(artifactId, artifactFile, parentClassLoader);
       ArtifactMeta meta = new ArtifactMeta(artifactClasses, parentArtifacts);
-      artifactStore.write(artifactId, meta, new FileInputStream(artifactFile));
+      return artifactStore.write(artifactId, meta, Files.newInputStreamSupplier(artifactFile));
     } finally {
       parentClassLoader.close();
     }
@@ -227,5 +249,22 @@ public class ArtifactRepository {
         new ArtifactSummary(descriptor.getName(), descriptor.getVersion().getVersion(), descriptor.isSystem()));
     }
     return summaries;
+  }
+
+  // create a classloader using an artifact from one of the artifacts in the specified parents.
+  private CloseableClassLoader createClassLoader(Set<ArtifactRange> parentArtifacts)
+    throws ArtifactRangeNotFoundException, IOException {
+
+    Location parentLocation = null;
+    for (ArtifactRange parentRange : parentArtifacts) {
+      List<ArtifactDetail> parents = artifactStore.getArtifacts(parentRange);
+      if (!parents.isEmpty()) {
+        parentLocation = parents.get(0).getDescriptor().getLocation();
+      }
+    }
+    if (parentLocation == null) {
+      throw new ArtifactRangeNotFoundException(parentArtifacts);
+    }
+    return artifactClassLoaderFactory.createClassLoader(parentLocation);
   }
 }

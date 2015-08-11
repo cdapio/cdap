@@ -116,7 +116,7 @@ public class InMemoryDatasetFramework implements DatasetFramework {
     });
 
     // add default dataset modules to system namespace
-    namespaces.add(Constants.SYSTEM_NAMESPACE_ID);
+    namespaces.add(Id.Namespace.SYSTEM);
     DatasetDefinitionRegistry systemRegistry = registryFactory.create();
     for (Map.Entry<String, DatasetModule> entry : defaultModules.entrySet()) {
       LOG.info("Adding Default module {} to system namespace", entry.getKey());
@@ -126,10 +126,10 @@ public class InMemoryDatasetFramework implements DatasetFramework {
       // keep track of default module classes. These are used when creating registries for other namespaces,
       // which need to register system classes too.
       String moduleClassName = DatasetModules.getDatasetModuleClass(module).getName();
-      Id.DatasetModule moduleId = Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE_ID, moduleName);
-      moduleClasses.put(Constants.SYSTEM_NAMESPACE_ID, moduleId, moduleClassName);
+      Id.DatasetModule moduleId = Id.DatasetModule.from(Id.Namespace.SYSTEM, moduleName);
+      moduleClasses.put(Id.Namespace.SYSTEM, moduleId, moduleClassName);
     }
-    registries.put(Constants.SYSTEM_NAMESPACE_ID, systemRegistry);
+    registries.put(Id.Namespace.SYSTEM, systemRegistry);
 
     ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
     readLock = readWriteLock.readLock();
@@ -285,7 +285,7 @@ public class InMemoryDatasetFramework implements DatasetFramework {
 
   @Override
   public boolean hasSystemType(String typeName) {
-    return hasType(Id.DatasetType.from(Constants.SYSTEM_NAMESPACE, typeName));
+    return hasType(Id.DatasetType.from(Id.Namespace.SYSTEM, typeName));
   }
 
   @VisibleForTesting
@@ -427,7 +427,7 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   public void deleteNamespace(Id.Namespace namespaceId) throws DatasetManagementException {
     writeLock.lock();
     try {
-      Preconditions.checkArgument(!Constants.SYSTEM_NAMESPACE_ID.equals(namespaceId),
+      Preconditions.checkArgument(!Id.Namespace.SYSTEM.equals(namespaceId),
                                   "Cannot delete system namespace.");
       if (!namespaces.remove(namespaceId)) {
         throw new DatasetManagementException(String.format("Namespace %s does not exist", namespaceId.getId()));
@@ -477,7 +477,7 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   protected LinkedHashSet<String> getAvailableModuleClasses(Id.Namespace namespace) {
     // order is important, system
     LinkedHashSet<String> availableModuleClasses = Sets.newLinkedHashSet();
-    availableModuleClasses.addAll(moduleClasses.row(Constants.SYSTEM_NAMESPACE_ID).values());
+    availableModuleClasses.addAll(moduleClasses.row(Id.Namespace.SYSTEM).values());
     availableModuleClasses.addAll(moduleClasses.row(namespace).values());
     return availableModuleClasses;
   }
@@ -488,7 +488,7 @@ public class InMemoryDatasetFramework implements DatasetFramework {
     if (registry != null && registry.hasType(datasetType)) {
       return registry;
     }
-    registry = registries.get(Constants.SYSTEM_NAMESPACE_ID);
+    registry = registries.get(Id.Namespace.SYSTEM);
     if (registry != null && registry.hasType(datasetType)) {
       return registry;
     }
@@ -525,8 +525,8 @@ public class InMemoryDatasetFramework implements DatasetFramework {
       // namespace.
       if (delegate.hasType(datasetTypeName)) {
         return delegate.get(datasetTypeName);
-      } else if (registries.containsKey(Constants.SYSTEM_NAMESPACE_ID)) {
-        return registries.get(Constants.SYSTEM_NAMESPACE_ID).get(datasetTypeName);
+      } else if (registries.containsKey(Id.Namespace.SYSTEM)) {
+        return registries.get(Id.Namespace.SYSTEM).get(datasetTypeName);
       } else {
         throw new IllegalStateException(String.format("Dataset type %s not found.", datasetTypeName));
       }

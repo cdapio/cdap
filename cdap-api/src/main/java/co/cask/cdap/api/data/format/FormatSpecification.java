@@ -18,10 +18,10 @@ package co.cask.cdap.api.data.format;
 
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.data.schema.Schema;
-import com.google.common.base.Objects;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Specification for a {@link RecordFormat}, including the class, schema, and settings to use for the format.
@@ -66,22 +66,22 @@ public final class FormatSpecification {
 
     FormatSpecification that = (FormatSpecification) o;
 
-    return Objects.equal(name, that.name) &&
-      Objects.equal(schema, that.schema) &&
-      Objects.equal(settings, that.settings);
+    return Objects.equals(name, that.name) &&
+      Objects.equals(schema, that.schema) &&
+      Objects.equals(settings, that.settings);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(name, schema, settings);
+    return Objects.hash(name, schema, settings);
   }
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
-      .add("name", name)
-      .add("schema", schema)
-      .add("settings", settings)
-      .toString();
+    return "FormatSpecification{" +
+      "name='" + name + '\'' +
+      ", schema=" + schema +
+      ", settings=" + settings +
+      '}';
   }
 }

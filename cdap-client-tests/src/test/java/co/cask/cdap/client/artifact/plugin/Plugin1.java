@@ -14,20 +14,31 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.artifact;
+package co.cask.cdap.client.artifact.plugin;
 
-import co.cask.cdap.common.NotFoundException;
-import com.google.common.base.Joiner;
+import co.cask.cdap.api.annotation.Description;
+import co.cask.cdap.api.annotation.Name;
+import co.cask.cdap.api.annotation.Plugin;
+import co.cask.cdap.api.templates.plugins.PluginConfig;
 
-import java.util.Collection;
+import java.util.concurrent.Callable;
 
 /**
- * Thrown when a range of artifacts are not found.
+ * Plugin for ArtifactClient test
  */
-public class ArtifactRangeNotFoundException extends NotFoundException {
+@Plugin(type = "callable")
+@Name("plugin1")
+@Description("p1 description")
+public class Plugin1 implements Callable<Integer> {
+  private P1Config conf;
 
-  public ArtifactRangeNotFoundException(Collection<ArtifactRange> artifactRanges) {
-    super("artifacts", Joiner.on(',').join(artifactRanges).toString());
+  @Override
+  public Integer call() throws Exception {
+    return conf.x;
+  }
+
+  public static class P1Config extends PluginConfig {
+    private int x;
   }
 
 }

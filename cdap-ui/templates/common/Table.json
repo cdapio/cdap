@@ -7,7 +7,7 @@
        "position" : [ "name", "schema", "schema.row.field", "case.sensitive.row.field" ],
        "fields" : {
           "name" : {
-             "widget": "textbox",
+             "widget": "dataset-selector",
              "label": "Name",
              "description" : "Specifies the name of the table to which data will be written to"
           },

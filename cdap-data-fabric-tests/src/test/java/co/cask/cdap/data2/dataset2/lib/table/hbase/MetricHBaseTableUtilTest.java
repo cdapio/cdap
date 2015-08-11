@@ -21,12 +21,12 @@ import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data.hbase.HBaseTestFactory;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
+import co.cask.cdap.proto.Id;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
@@ -55,7 +55,7 @@ public class MetricHBaseTableUtilTest {
     testHBase.startHBase();
     cConf = CConfiguration.create();
     hBaseTableUtil = new HBaseTableUtilFactory(cConf).get();
-    hBaseTableUtil.createNamespaceIfNotExists(testHBase.getHBaseAdmin(), Constants.SYSTEM_NAMESPACE_ID);
+    hBaseTableUtil.createNamespaceIfNotExists(testHBase.getHBaseAdmin(), Id.Namespace.SYSTEM);
   }
 
   @AfterClass
@@ -71,13 +71,13 @@ public class MetricHBaseTableUtilTest {
                                       new LocalLocationFactory(tmpFolder.newFolder()), cConf);
     DatasetSpecification spec = definition.configure("metricV2.8", DatasetProperties.EMPTY);
 
-    DatasetAdmin admin = definition.getAdmin(DatasetContext.from(Constants.SYSTEM_NAMESPACE), spec, null);
+    DatasetAdmin admin = definition.getAdmin(DatasetContext.from(Id.Namespace.SYSTEM.getId()), spec, null);
     admin.create();
 
     MetricHBaseTableUtil util = new MetricHBaseTableUtil(hBaseTableUtil);
     HBaseAdmin hAdmin = testHBase.getHBaseAdmin();
     HTableDescriptor desc =
-      hBaseTableUtil.getHTableDescriptor(hAdmin, TableId.from(Constants.SYSTEM_NAMESPACE, spec.getName()));
+      hBaseTableUtil.getHTableDescriptor(hAdmin, TableId.from(Id.Namespace.SYSTEM.getId(), spec.getName()));
     Assert.assertEquals(MetricHBaseTableUtil.Version.VERSION_2_8_OR_HIGHER, util.getVersion(desc));
 
     // Verify HBase table without coprocessor is properly recognized as 2.6- version

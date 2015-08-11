@@ -23,13 +23,13 @@ import co.cask.cdap.api.templates.plugins.PluginInfo;
 import co.cask.cdap.api.templates.plugins.PluginPropertyField;
 import co.cask.cdap.api.templates.plugins.PluginSelector;
 import co.cask.cdap.api.templates.plugins.PluginVersion;
+import co.cask.cdap.common.InvalidArtifactException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.ProgramClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactInspector;
-import co.cask.cdap.internal.app.runtime.artifact.InvalidArtifactException;
 import co.cask.cdap.proto.Id;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
@@ -244,7 +244,7 @@ public class PluginRepository {
 
     PluginInfo pluginInfo = pluginFile.getPluginInfo();
     Id.Artifact artifactId = Id.Artifact.from(
-      Constants.SYSTEM_NAMESPACE_ID, pluginInfo.getName(), pluginInfo.getVersion().getVersion());
+      Id.Namespace.SYSTEM, pluginInfo.getName(), pluginInfo.getVersion().getVersion());
 
     try {
       ArtifactClasses artifactClasses =

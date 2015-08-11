@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.internal.artifact;
+package co.cask.cdap.api.artifact;
 
 import co.cask.cdap.api.annotation.Beta;
 
@@ -30,7 +30,6 @@ import javax.annotation.Nullable;
  * parse version string in format of [major].[minor].[fix](-|.)[suffix]
  * }
  * </pre>
- * TODO: move this into cdap-api once everything is ready
  */
 @Beta
 public final class ArtifactVersion implements Comparable<ArtifactVersion> {
@@ -44,7 +43,8 @@ public final class ArtifactVersion implements Comparable<ArtifactVersion> {
   private final String suffix;
 
   /**
-   * Constructs an instance by parsing the given string.
+   * Constructs an instance by parsing the given string. If the string does not match the version pattern,
+   * {@link #getVersion()} will return null.
    *
    * @param str the version string. The whole string needs to match with the version pattern supported by this class.
    */
@@ -53,7 +53,8 @@ public final class ArtifactVersion implements Comparable<ArtifactVersion> {
   }
 
   /**
-   * Constructs an instance by parsing the given string.
+   * Constructs an instance by parsing the given string. If the string does not match the version pattern,
+   * {@link #getVersion()} will return null.
    *
    * @param str the version string.
    * @param matchSuffix if {@code true}, try to match the version pattern by the suffix of the string. Otherwise match

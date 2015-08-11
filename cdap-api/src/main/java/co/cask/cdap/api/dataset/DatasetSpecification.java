@@ -15,15 +15,11 @@
  */
 package co.cask.cdap.api.dataset;
 
-import com.google.common.base.Joiner;
-import com.google.common.base.Objects;
-import com.google.common.collect.ImmutableSortedMap;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
@@ -78,8 +74,8 @@ public final class DatasetSpecification {
                                SortedMap<String, DatasetSpecification> datasetSpecs) {
     this.name = name;
     this.type = type;
-    this.properties = ImmutableSortedMap.copyOfSorted(properties);
-    this.datasetSpecs = ImmutableSortedMap.copyOfSorted(datasetSpecs);
+    this.properties = Collections.unmodifiableSortedMap(new TreeMap<>(properties));
+    this.datasetSpecs = Collections.unmodifiableSortedMap(new TreeMap<>(datasetSpecs));
   }
 
   /**
@@ -163,21 +159,25 @@ public final class DatasetSpecification {
     return datasetSpecs;
   }
 
-  /**
-   * Equality.
-   */
+  @Override
   public boolean equals(Object other) {
-    if (other == this) {
+    if (this == other) {
       return true;
     }
     if (!(other instanceof DatasetSpecification)) {
       return false;
     }
-    DatasetSpecification ds = (DatasetSpecification) other;
-    return this.getName().equals(ds.getName())
-        && this.type.equals(ds.type)
-        && this.properties.equals(ds.properties)
-        && this.datasetSpecs.equals(ds.datasetSpecs);
+
+    DatasetSpecification that = (DatasetSpecification) other;
+    return Objects.equals(name, that.name) &&
+      Objects.equals(type, that.type) &&
+      Objects.equals(properties, that.properties) &&
+      Objects.equals(datasetSpecs, that.datasetSpecs);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(name, type, properties, datasetSpecs);
   }
 
   /**
@@ -207,22 +207,14 @@ public final class DatasetSpecification {
     return  false;
   }
 
-  /**
-   * Hash value.
-   */
-  @Override
-  public int hashCode() {
-    return Objects.hashCode(this.name, this.type, this.properties, this.datasetSpecs);
-  }
-
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
-      .add("name", name)
-      .add("type", type)
-      .add("properties", properties == null ? null : Joiner.on(",").withKeyValueSeparator("=").join(properties))
-      .add("datasetSpecs", datasetSpecs == null ? null : Joiner.on(",").withKeyValueSeparator("=").join(datasetSpecs))
-      .toString();
+    return "DatasetSpecification{" +
+      "datasetSpecs=" + datasetSpecs +
+      ", name='" + name + '\'' +
+      ", type='" + type + '\'' +
+      ", properties=" + properties +
+      '}';
   }
 
   /**
@@ -238,8 +230,8 @@ public final class DatasetSpecification {
     private Builder(String name, String typeName) {
       this.name = name;
       this.type = typeName;
-      this.properties = Maps.newTreeMap();
-      this.dataSetSpecs = Maps.newTreeMap();
+      this.properties = new TreeMap<>();
+      this.dataSetSpecs = new TreeMap<>();
     }
 
     /**
@@ -248,7 +240,7 @@ public final class DatasetSpecification {
      * @return this builder object to allow chaining
      */
     public Builder datasets(DatasetSpecification... specs) {
-      return datasets(Lists.newArrayList(specs));
+      return datasets(Arrays.asList(specs));
     }
 
     /**
@@ -319,7 +311,7 @@ public final class DatasetSpecification {
       // If no namespace is given, starts with using the DataSet name.
       namespace = (namespace == null) ? spec.getName() : namespace;
 
-      TreeMap<String, DatasetSpecification> specifications = Maps.newTreeMap();
+      TreeMap<String, DatasetSpecification> specifications = new TreeMap<>();
       for (Map.Entry<String, DatasetSpecification> entry : spec.datasetSpecs.entrySet()) {
         specifications.put(entry.getKey(), namespace(namespace, entry.getValue()));
       }

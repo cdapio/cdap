@@ -17,7 +17,6 @@
 package co.cask.cdap.api.artifact;
 
 import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.internal.artifact.ArtifactVersion;
 import org.apache.twill.filesystem.Location;
 
 import java.util.Objects;

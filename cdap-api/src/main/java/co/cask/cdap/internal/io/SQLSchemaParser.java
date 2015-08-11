@@ -17,10 +17,9 @@
 package co.cask.cdap.internal.io;
 
 import co.cask.cdap.api.data.schema.Schema;
-import com.google.common.base.Throwables;
-import com.google.common.collect.Lists;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -44,7 +43,7 @@ public final class SQLSchemaParser {
   // name type, name type, ...
   public Schema parse() throws IOException {
     try {
-      List<Schema.Field> fields = Lists.newArrayList();
+      List<Schema.Field> fields = new ArrayList<>();
 
       while (pos < end) {
         String name = nextToken();
@@ -61,7 +60,9 @@ public final class SQLSchemaParser {
 
       return Schema.recordOf("rec", fields);
     } catch (Exception e) {
-      Throwables.propagateIfInstanceOf(e, IOException.class);
+      if (e instanceof IOException) {
+        throw e;
+      }
       // can happen if, for example, there are multiple fields in a record with the same name
       throw new IOException(e);
     }
@@ -114,7 +115,7 @@ public final class SQLSchemaParser {
     skipWhitespace();
     String recordName = "rec" + recordNum;
     recordNum++;
-    List<Schema.Field> fields = Lists.newArrayList();
+    List<Schema.Field> fields = new ArrayList<>();
 
     // keep going until we get to the enclosing '>'
     while (true) {
@@ -151,7 +152,7 @@ public final class SQLSchemaParser {
   private Schema parseUnion() throws IOException {
     expectChar('<', "union must be followed by a '<'");
     skipWhitespace();
-    List<Schema> unionTypes = Lists.newArrayList();
+    List<Schema> unionTypes = new ArrayList<>();
 
     // keep going until we see the closing '>'
     while (true) {

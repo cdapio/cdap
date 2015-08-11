@@ -17,8 +17,11 @@
 package co.cask.cdap.test;
 
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.RunRecord;
 import com.google.common.collect.ImmutableMap;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -101,5 +104,15 @@ public abstract class AbstractProgramManager<T extends ProgramManager> implement
     if (!statusMatched) {
       throw new IllegalStateException("Program state not as expected. Expected " + status);
     }
+  }
+
+  @Override
+  public List<RunRecord> getHistory() {
+    return getHistory(ProgramRunStatus.ALL);
+  }
+
+  @Override
+  public List<RunRecord> getHistory(ProgramRunStatus status) {
+    return applicationManager.getHistory(programId, status);
   }
 }

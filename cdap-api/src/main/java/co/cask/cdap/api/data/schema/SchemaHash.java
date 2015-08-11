@@ -17,15 +17,14 @@
 package co.cask.cdap.api.data.schema;
 
 import co.cask.cdap.api.annotation.Beta;
-import com.google.common.base.Charsets;
-import com.google.common.base.Throwables;
-import com.google.common.collect.Sets;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Formatter;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -33,6 +32,8 @@ import java.util.Set;
  */
 @Beta
 public final class SchemaHash {
+
+  private static final Charset UTF_8 = Charset.forName("UTF-8");
 
   private final byte[] hash;
   private String hashStr;
@@ -91,11 +92,11 @@ public final class SchemaHash {
 
   private byte[] computeHash(Schema schema) {
     try {
-      Set<String> knownRecords = Sets.newHashSet();
+      Set<String> knownRecords = new HashSet<>();
       MessageDigest md5 = updateHash(MessageDigest.getInstance("MD5"), schema, knownRecords);
       return md5.digest();
     } catch (NoSuchAlgorithmException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -137,7 +138,7 @@ public final class SchemaHash {
       case ENUM:
         md5.update((byte) 8);
         for (String value : schema.getEnumValues()) {
-          md5.update(Charsets.UTF_8.encode(value));
+          md5.update(UTF_8.encode(value));
         }
         break;
       case ARRAY:
@@ -153,7 +154,7 @@ public final class SchemaHash {
         md5.update((byte) 11);
         boolean notKnown = knownRecords.add(schema.getRecordName());
         for (Schema.Field field : schema.getFields()) {
-          md5.update(Charsets.UTF_8.encode(field.getName()));
+          md5.update(UTF_8.encode(field.getName()));
           if (notKnown) {
             updateHash(md5, field.getSchema(), knownRecords);
           }

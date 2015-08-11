@@ -61,7 +61,7 @@
                 {{event.timestamp | amDateFormat: 'MM/DD/YY h:mm:ss a'}}
               </td>
               <td>{{event.timestamp | amTimeAgo}}</td>
-              <td>{{event.body | json | myEllipsis: 80 }}</td>
+              <td>{{event.body | myEllipsis: 80 }}</td>
             </tr>
           </tbody>
         </table>

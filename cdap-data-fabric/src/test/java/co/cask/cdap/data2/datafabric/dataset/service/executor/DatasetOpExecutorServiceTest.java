@@ -93,7 +93,7 @@ public class DatasetOpExecutorServiceTest {
     CConfiguration cConf = CConfiguration.create();
 
     File datasetDir = new File(tmpFolder.newFolder(), "datasetUser");
-    datasetDir.mkdirs();
+    Assert.assertTrue(datasetDir.mkdirs());
 
     cConf.set(Constants.Dataset.Manager.OUTPUT_DIR, datasetDir.getAbsolutePath());
     cConf.set(Constants.Dataset.Manager.ADDRESS, "localhost");
@@ -206,7 +206,7 @@ public class DatasetOpExecutorServiceTest {
 
   private void testAdminOp(String instanceName, String opName, int expectedStatus, Object expectedResult)
     throws URISyntaxException, IOException {
-    testAdminOp(Id.DatasetInstance.from(Constants.DEFAULT_NAMESPACE, instanceName), opName, expectedStatus,
+    testAdminOp(Id.DatasetInstance.from(Id.Namespace.DEFAULT, instanceName), opName, expectedStatus,
                 expectedResult);
   }
 
@@ -224,6 +224,7 @@ public class DatasetOpExecutorServiceTest {
   }
 
   private URL resolve(String path) throws URISyntaxException, MalformedURLException {
+    @SuppressWarnings("ConstantConditions")
     InetSocketAddress socketAddress = endpointStrategy.pick(1, TimeUnit.SECONDS).getSocketAddress();
     return new URL(String.format("http://%s:%d%s%s", socketAddress.getHostName(),
                                  socketAddress.getPort(), Constants.Gateway.API_VERSION_3, path));

@@ -19,7 +19,6 @@ package co.cask.cdap.proto.codec;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
-import co.cask.cdap.internal.batch.DefaultMapReduceSpecification;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import com.google.common.collect.Maps;
 import com.google.gson.JsonDeserializationContext;
@@ -31,6 +30,7 @@ import com.google.gson.JsonSerializationContext;
 import java.lang.reflect.Type;
 import java.util.Map;
 import java.util.Set;
+import javax.ws.rs.HEAD;
 
 /**
  *
@@ -97,7 +97,7 @@ public final class MapReduceSpecificationCodec extends AbstractSpecificationCode
       Maps.<String, DatasetCreationSpec>newHashMap() : deserializeMap(dataSetInstElement, context,
                                                                       DatasetCreationSpec.class);
 
-    return new DefaultMapReduceSpecification(className, name, description, inputDataSet, outputDataSet,
+    return new MapReduceSpecification(className, name, description, inputDataSet, outputDataSet,
                                              dataSets, properties, mapperResources, reducerResources, streams,
                                              dataSetModules, dataSetInstances);
   }

@@ -98,7 +98,7 @@ public final class FlowUtils {
     // to support backwards compatibility for queues and streams.
     String namespace = program.getNamespaceId();
     String backwardsCompatibleNamespace =
-      Constants.DEFAULT_NAMESPACE.equals(namespace) ? Constants.DEVELOPER_ACCOUNT : namespace;
+      Id.Namespace.DEFAULT.getId().equals(namespace) ? Constants.DEVELOPER_ACCOUNT : namespace;
     return Hashing.md5().newHasher()
                   .putString(backwardsCompatibleNamespace)
                   .putString(program.getApplicationId())

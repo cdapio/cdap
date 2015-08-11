@@ -35,7 +35,12 @@ angular.module(PKG.name + '.services')
         streamId: $scope.streamId,
         scope: $scope
       };
-      myStreamApi.sendEvent(params, $scope.userInput);
+
+      var lines = $scope.userInput.replace(/\r\n/g, '\n').split('\n');
+
+      angular.forEach(lines, function (line) {
+        myStreamApi.sendEvent(params, line);
+      });
 
       $scope.userInput = null;
     };

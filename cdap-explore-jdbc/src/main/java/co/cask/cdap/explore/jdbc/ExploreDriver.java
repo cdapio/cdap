@@ -19,6 +19,7 @@ package co.cask.cdap.explore.jdbc;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.client.FixedAddressExploreClient;
+import co.cask.cdap.proto.Id;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Lists;
@@ -76,7 +77,7 @@ public class ExploreDriver implements Driver {
     if (!namespaceParams.isEmpty() && !namespaceParams.get(0).isEmpty()) {
       namespace = namespaceParams.get(0);
     } else {
-      namespace = Constants.DEFAULT_NAMESPACE;
+      namespace = Id.Namespace.DEFAULT.getId();
     }
 
     ExploreClient exploreClient = new FixedAddressExploreClient(params.getHost(), params.getPort(), authToken);

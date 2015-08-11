@@ -1,12 +1,12 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
- *  
+ * Copyright © 2015 Cask Data, Inc.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *  
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -14,10 +14,20 @@
  * the License.
  */
 
+package co.cask.cdap.common;
+
+import co.cask.cdap.proto.Id;
+
 /**
- * This package contains internal classes for supporting the CDAP API.
- * <p>
- * These should not be used directly by users of the CDAP API, as they may change in a later release without warning.
- * </p>
+ * Thrown when an artifact does not exist.
  */
-package co.cask.cdap.internal.spark;
+public class ArtifactNotFoundException extends NotFoundException {
+
+  public ArtifactNotFoundException(Id.Namespace namespace, String name) {
+    super("artifact", namespace.getId() + ":" + name);
+  }
+
+  public ArtifactNotFoundException(Id.Artifact artifactId) {
+    super("artifact", artifactId.toString());
+  }
+}

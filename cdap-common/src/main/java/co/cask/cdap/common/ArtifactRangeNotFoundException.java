@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,10 +14,20 @@
  * the License.
  */
 
+package co.cask.cdap.common;
+
+import co.cask.cdap.proto.artifact.ArtifactRange;
+import com.google.common.base.Joiner;
+
+import java.util.Collection;
+
 /**
- * This package contains internal classes for supporting the CDAP API.
- * <p>
- * These should not be used directly by users of the CDAP API, as they may change in a later release without warning.
- * </p>
+ * Thrown when a range of artifacts are not found.
  */
-package co.cask.cdap.internal.builder;
+public class ArtifactRangeNotFoundException extends NotFoundException {
+
+  public ArtifactRangeNotFoundException(Collection<ArtifactRange> artifactRanges) {
+    super("artifacts", Joiner.on(',').join(artifactRanges).toString());
+  }
+
+}

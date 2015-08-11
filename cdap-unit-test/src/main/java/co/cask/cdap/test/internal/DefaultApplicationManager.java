@@ -22,7 +22,9 @@ import co.cask.cdap.data.dataset.DatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.AppFabricClient;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.test.AbstractApplicationManager;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
@@ -52,6 +54,7 @@ import org.junit.rules.TemporaryFolder;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -156,7 +159,7 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
   @Override
   public <T> DataSetManager<T> getDataSet(String dataSetName) {
     @SuppressWarnings("unchecked")
-    final T dataSet = (T) datasetInstantiator.getDataset(dataSetName);
+    final T dataSet = datasetInstantiator.getDataset(dataSetName);
 
     try {
       final TransactionContext txContext =
@@ -238,5 +241,10 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
+  }
+
+  @Override
+  public List<RunRecord> getHistory(Id.Program programId, ProgramRunStatus status) {
+    return appFabricClient.getHistory(programId, status);
   }
 }

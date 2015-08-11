@@ -247,7 +247,7 @@ public class DatasetInstanceService {
     DatasetTypeMeta typeMeta = implManager.getTypeInfo(datasetTypeId);
     if (typeMeta == null) {
       // Type not found in the instance's namespace. Now try finding it in the system namespace
-      Id.DatasetType systemDatasetTypeId = Id.DatasetType.from(Constants.SYSTEM_NAMESPACE_ID, typeName);
+      Id.DatasetType systemDatasetTypeId = Id.DatasetType.from(Id.Namespace.SYSTEM, typeName);
       typeMeta = implManager.getTypeInfo(systemDatasetTypeId);
     }
     return typeMeta;

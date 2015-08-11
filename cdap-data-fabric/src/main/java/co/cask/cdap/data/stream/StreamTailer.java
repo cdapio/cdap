@@ -17,7 +17,6 @@ package co.cask.cdap.data.stream;
 
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
@@ -64,7 +63,7 @@ public class StreamTailer {
     StreamAdmin streamAdmin = injector.getInstance(StreamAdmin.class);
 
     //TODO: get namespace from commandline arguments
-    Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, streamName);
+    Id.Stream streamId = Id.Stream.from(Id.Namespace.DEFAULT, streamName);
     StreamConfig streamConfig = streamAdmin.getConfig(streamId);
     Location streamLocation = streamConfig.getLocation();
     List<Location> eventFiles = Lists.newArrayList();

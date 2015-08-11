@@ -20,6 +20,37 @@ body.theme-cdap.state-adapters {
   }
   .text-success { color: @brand-success; }
   .text-danger { color: @brand-danger; }
+  .table.adapter-metrics-table {
+    tbody tr td .row {
+      margin: 0;
+      [class*="col-xs-"] {
+        padding: 0px 5px;
+        border: 1px solid #dddddd;
+        border-bottom: 0;
+        min-height: 21px;
+
+        &:last-child {
+          border-left: 0;
+        }
+      }
+
+      &:last-child {
+        [class*="col-xs-"] {
+          border-bottom: 1px solid #dddddd;
+        }
+      }
+      @media (max-width: @screen-sm-max) {
+        [class*="col-xs-"] {
+          border: 1px solid #dddddd;
+          border-bottom: 0;
+
+          &:last-child {
+            border: 1px solid #dddddd;
+          }
+        }
+      }
+    }
+  }
 }
 body.theme-cdap.state-adapters-detail,
 body.theme-cdap.state-adapters-create {

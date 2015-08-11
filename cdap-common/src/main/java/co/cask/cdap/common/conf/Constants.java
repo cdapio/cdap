@@ -816,30 +816,10 @@ public final class Constants {
   public static final String CFG_APPFABRIC_ENVIRONMENT = "appfabric.environment";
   public static final String DEFAULT_APPFABRIC_ENVIRONMENT = "devsuite";
 
-
-  /**
-   * Default namespace to be used by v2 APIs
-   */
-  public static final String DEFAULT_NAMESPACE = "default";
-  public static final Id.Namespace DEFAULT_NAMESPACE_ID = Id.Namespace.from(DEFAULT_NAMESPACE);
-  public static final NamespaceMeta DEFAULT_NAMESPACE_META =
-    new NamespaceMeta.Builder().setName(Constants.DEFAULT_NAMESPACE_ID).setDescription("Default Namespace").build();
-
   /**
    * Used for upgrade and backwards compatability
    */
   public static final String DEVELOPER_ACCOUNT = "developer";
-
-  /**
-   * 'system' reserved namespace name
-   */
-  public static final String SYSTEM_NAMESPACE = "system";
-  public static final Id.Namespace SYSTEM_NAMESPACE_ID = Id.Namespace.from(SYSTEM_NAMESPACE);
-
-  /**
-   * 'cdap' reserved namespace name. Unused right now (other than in logging. Reserved in case we need it in future.
-   */
-  public static final String CDAP_NAMESPACE = "cdap";
 
   /**
    * Constants related to external systems.
