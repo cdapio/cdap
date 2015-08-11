@@ -108,7 +108,8 @@ public class CLIMain {
   private final LaunchOptions options;
   private final FilePathResolver filePathResolver;
 
-  public CLIMain(final LaunchOptions options, final CLIConfig cliConfig) throws URISyntaxException, IOException {
+  public CLIMain(final LaunchOptions options,
+                 final CLIConfig cliConfig) throws URISyntaxException, IOException {
     this.options = options;
     this.cliConfig = cliConfig;
 
@@ -171,19 +172,26 @@ public class CLIMain {
   /**
    * Tries to autoconnect to the provided URI in options.
    */
-  public void tryAutoconnect() {
+  public boolean tryAutoconnect(CommandLine command) {
+    if (!options.isAutoconnect()) {
+      return true;
+    }
+
     InstanceURIParser instanceURIParser = injector.getInstance(InstanceURIParser.class);
-    if (options.isAutoconnect()) {
-      try {
-        CLIConnectionConfig connection = instanceURIParser.parse(options.getUri());
-        cliConfig.tryConnect(connection, cliConfig.getOutput(), options.isDebug());
-      } catch (Exception e) {
-        if (options.isDebug()) {
-          e.printStackTrace(cliConfig.getOutput());
-        } else {
-          cliConfig.getOutput().println(e.getMessage());
-        }
+    try {
+      CLIConnectionConfig connection = instanceURIParser.parse(options.getUri());
+      cliConfig.tryConnect(connection, cliConfig.getOutput(), options.isDebug());
+      return true;
+    } catch (Exception e) {
+      if (options.isDebug()) {
+        e.printStackTrace(cliConfig.getOutput());
+      } else {
+        cliConfig.getOutput().println(e.getMessage());
       }
+      if (!command.hasOption(URI_OPTION.getOpt())) {
+        cliConfig.getOutput().printf("Specify the CDAP instance URI with the -u command line argument.\n");
+      }
+      return false;
     }
   }
 
@@ -268,7 +276,9 @@ public class CLIMain {
         CLIMain cliMain = new CLIMain(launchOptions, cliConfig);
         CLI cli = cliMain.getCLI();
 
-        cliMain.tryAutoconnect();
+        if (!cliMain.tryAutoconnect(command)) {
+          System.exit(0);
+        }
 
         CLIConnectionConfig connectionConfig = new CLIConnectionConfig(
           cliConfig.getClientConfig().getConnectionConfig(), Id.Namespace.DEFAULT, null);
@@ -292,6 +302,8 @@ public class CLIMain {
         } else {
           cli.execute(Joiner.on(" ").join(commandArgs), output);
         }
+      } catch (DisconnectedException e) {
+        output.printf("Couldn't reach the CDAP instance at '%s'.", e.getConnectionConfig().getURI().toString());
       } catch (Exception e) {
         e.printStackTrace(output);
       }
