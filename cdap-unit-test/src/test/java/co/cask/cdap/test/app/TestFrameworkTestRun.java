@@ -603,14 +603,30 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     ApplicationManager applicationManager = deployApplication(testSpace, AppWithWorker.class);
     LOG.info("Deployed.");
     WorkerManager manager = applicationManager.getWorkerManager(AppWithWorker.WORKER).start();
-    TimeUnit.MILLISECONDS.sleep(200);
+
+    // Wait for initialize and run states
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        DataSetManager<KeyValueTable> dataSetManager = getDataset(testSpace, AppWithWorker.DATASET);
+        KeyValueTable table = dataSetManager.get();
+        return AppWithWorker.INITIALIZE.equals(Bytes.toString(table.read(AppWithWorker.INITIALIZE))) &&
+          AppWithWorker.RUN.equals(Bytes.toString(table.read(AppWithWorker.RUN)));
+      }
+    }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+
     manager.stop();
     applicationManager.stopAll();
-    DataSetManager<KeyValueTable> dataSetManager = getDataset(testSpace, AppWithWorker.DATASET);
-    KeyValueTable table = dataSetManager.get();
-    Assert.assertEquals(AppWithWorker.INITIALIZE, Bytes.toString(table.read(AppWithWorker.INITIALIZE)));
-    Assert.assertEquals(AppWithWorker.RUN, Bytes.toString(table.read(AppWithWorker.RUN)));
-    Assert.assertEquals(AppWithWorker.STOP, Bytes.toString(table.read(AppWithWorker.STOP)));
+
+    // Wait for stop state
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        DataSetManager<KeyValueTable> dataSetManager = getDataset(testSpace, AppWithWorker.DATASET);
+        KeyValueTable table = dataSetManager.get();
+        return AppWithWorker.STOP.equals(Bytes.toString(table.read(AppWithWorker.STOP)));
+      }
+    }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
   }
 
   @Test

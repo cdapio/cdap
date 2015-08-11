@@ -27,6 +27,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 import com.google.common.collect.ImmutableSet;
@@ -37,6 +38,7 @@ import org.apache.twill.filesystem.Location;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -196,8 +198,10 @@ public class ArtifactRepository {
   public ArtifactDetail addArtifact(Id.Artifact artifactId, File artifactFile)
     throws IOException, WriteConflictException, ArtifactAlreadyExistsException, InvalidArtifactException {
 
+    // use spark program type in case the app contains spark, in which case we'll need access to spark
+    // packages when doing plugin inspection
     try (CloseableClassLoader parentClassLoader =
-           artifactClassLoaderFactory.createClassLoader(Locations.toLocation(artifactFile))) {
+           artifactClassLoaderFactory.createClassLoader(Locations.toLocation(artifactFile), ProgramType.SPARK)) {
       ArtifactClasses artifactClasses = artifactInspector.inspectArtifact(artifactId, artifactFile, parentClassLoader);
       ArtifactMeta meta = new ArtifactMeta(artifactClasses, ImmutableSet.<ArtifactRange>of());
       return artifactStore.write(artifactId, meta, Files.newInputStreamSupplier(artifactFile));
@@ -223,21 +227,14 @@ public class ArtifactRepository {
     throws IOException, ArtifactRangeNotFoundException, WriteConflictException,
     ArtifactAlreadyExistsException, InvalidArtifactException {
 
-    CloseableClassLoader parentClassLoader;
-    parentArtifacts = parentArtifacts == null ? ImmutableSet.<ArtifactRange>of() : parentArtifacts;
-    if (parentArtifacts.isEmpty()) {
-      // if this artifact doesn't extend another, use itself to create the parent classloader
-      parentClassLoader = artifactClassLoaderFactory.createClassLoader(Locations.toLocation(artifactFile));
-    } else {
-      parentClassLoader = createClassLoader(parentArtifacts);
+    if (parentArtifacts == null || parentArtifacts.isEmpty()) {
+      return addArtifact(artifactId, artifactFile);
     }
 
-    try {
+    try (CloseableClassLoader parentClassLoader = createParentClassLoader(artifactId, parentArtifacts)) {
       ArtifactClasses artifactClasses = artifactInspector.inspectArtifact(artifactId, artifactFile, parentClassLoader);
       ArtifactMeta meta = new ArtifactMeta(artifactClasses, parentArtifacts);
       return artifactStore.write(artifactId, meta, Files.newInputStreamSupplier(artifactFile));
-    } finally {
-      parentClassLoader.close();
     }
   }
 
@@ -251,20 +248,57 @@ public class ArtifactRepository {
     return summaries;
   }
 
-  // create a classloader using an artifact from one of the artifacts in the specified parents.
-  private CloseableClassLoader createClassLoader(Set<ArtifactRange> parentArtifacts)
-    throws ArtifactRangeNotFoundException, IOException {
+  /**
+   * Create a parent classloader using an artifact from one of the artifacts in the specified parents.
+   *
+   * @param artifactId the id of the artifact to create the parent classloader for
+   * @param parentArtifacts the ranges of parents to create the classloader from
+   * @return a classloader based off a parent artifact
+   * @throws ArtifactRangeNotFoundException if none of the parents could be found
+   * @throws InvalidArtifactException if one of the parents also has parents
+   * @throws IOException if there was some error reading from the store
+   */
+  private CloseableClassLoader createParentClassLoader(Id.Artifact artifactId, Set<ArtifactRange> parentArtifacts)
+    throws ArtifactRangeNotFoundException, IOException, InvalidArtifactException {
 
-    Location parentLocation = null;
+    List<ArtifactDetail> parents = new ArrayList<>();
     for (ArtifactRange parentRange : parentArtifacts) {
-      List<ArtifactDetail> parents = artifactStore.getArtifacts(parentRange);
-      if (!parents.isEmpty()) {
-        parentLocation = parents.get(0).getDescriptor().getLocation();
-      }
+      parents.addAll(artifactStore.getArtifacts(parentRange));
     }
-    if (parentLocation == null) {
+
+    if (parents.isEmpty()) {
       throw new ArtifactRangeNotFoundException(parentArtifacts);
     }
-    return artifactClassLoaderFactory.createClassLoader(parentLocation);
+
+    // check if any of the parents also have parents, which is not allowed. This is to simplify things
+    // so that we don't have to chain a bunch of classloaders, and also to keep it simple for users to avoid
+    // complicated dependency trees that are hard to manage.
+    boolean isInvalid = false;
+    StringBuilder errMsg = new StringBuilder("Invalid artifact '")
+      .append(artifactId)
+      .append("'.")
+      .append(" Artifact parents cannot have parents.");
+    for (ArtifactDetail parent : parents) {
+      Set<ArtifactRange> grandparents = parent.getMeta().getUsableBy();
+      if (!grandparents.isEmpty()) {
+        isInvalid = true;
+        errMsg
+          .append(" Parent '")
+          .append(parent.getDescriptor().getName())
+          .append("-")
+          .append(parent.getDescriptor().getVersion().getVersion())
+          .append("' has parents.");
+      }
+    }
+    if (isInvalid) {
+      throw new InvalidArtifactException(errMsg.toString());
+    }
+
+    // assumes any of the parents will do
+    Location parentLocation = parents.get(0).getDescriptor().getLocation();
+
+    // use spark program type in case the app contains spark, in which case we'll need access to spark
+    // packages when doing plugin inspection
+    return artifactClassLoaderFactory.createClassLoader(parentLocation, ProgramType.SPARK);
   }
 }

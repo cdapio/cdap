@@ -16,11 +16,19 @@
 
   </div>
 
-  <div class="modal-footer text-right">
-    <button type="submit"
-      ng-disabled="injectStreamForm.$invalid"
-      class="btn btn-primary"
-    >Inject</button>
+  <div class="modal-footer">
+    <div class="pull-left">
+      <my-file-select button-disabled="{{loading}}"
+                      data-button-label="Upload"
+                      on-file-select="uploadFile($files)">
+    </div>
+
+    <div class="pull-right">
+      <button type="submit"
+        ng-disabled="injectStreamForm.$invalid || loading"
+        class="btn btn-primary"
+      >Inject</button>
+    </div>
   </div>
 
 </form>

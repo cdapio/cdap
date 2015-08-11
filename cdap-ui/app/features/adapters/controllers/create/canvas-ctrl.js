@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.adapters')
-  .controller('CanvasController', function (myAdapterApi, MyPlumbService, $bootstrapModal, $state, $scope, $alert, myHelpers, CanvasFactory, MyPlumbFactory, $modalStack, $timeout, ModalConfirm) {
+  .controller('CanvasController', function (myAdapterApi, MyPlumbService, $bootstrapModal, $state, $scope, $alert, CanvasFactory, MyPlumbFactory, $modalStack, $timeout, ModalConfirm, myAdapterTemplatesApi, $q) {
     this.nodes = [];
     this.reloadDAG = false;
     if ($scope.AdapterCreateController.data) {
@@ -19,6 +19,10 @@ angular.module(PKG.name + '.feature.adapters')
       {
         name: 'sink',
         icon: 'icon-ETLsinks'
+      },
+      {
+        name: 'templates',
+        icon: 'icon-ETLtemplates'
       }
     ];
 
@@ -49,85 +53,52 @@ angular.module(PKG.name + '.feature.adapters')
       }
     ];
 
-    // Utterly naive. We need to be more efficient and this code should look better.
-    // Pushing for functionality for now. Will revisit this back.
+    this.onImportSuccess = function(result) {
+      $scope.config = JSON.stringify(result);
+      this.reloadDAG = true;
+      MyPlumbService.resetToDefaults(true);
+      setNodesAndConnectionsFromDraft.call(this, result);
+      if ($scope.config.name) {
+        MyPlumbService.metadata.name = $scope.config.name;
+      }
+
+      MyPlumbService.notifyError({});
+      MyPlumbService.notifyResetListners();
+    }
+
     this.importFile = function(files) {
-      var reader = new FileReader();
-      var config = MyPlumbService.getConfigForBackend();
-      reader.readAsText(files[0], "UTF-8");
-      reader.onload = function (evt) {
-        var result;
-        try {
-          result = JSON.parse(evt.target.result);
-        } catch(e) {
-          result = null;
-          $alert({
-            type: 'danger',
-            content: 'The imported config json is incorrect. Please check the JSON content'
-          });
-          return;
-        }
+      CanvasFactory
+        .importAdapter(files, MyPlumbService.metadata.template.type)
+        .then(
+          this.onImportSuccess.bind(this),
+          function error(errorEvent) {
+            console.error('Upload config failed', errorEvent);
+          }
+        )
+    }
 
-        if (result.template !== MyPlumbService.metadata.template.type) {
-          $alert({
-            type: 'danger',
-            content: 'Template imported is for ' + result.template + '. Please switch to ' + result.template + ' creation to import.'
-          });
-          return;
-        }
-        // We need to perform more validations on the uploaded json.
-        if (!result.config.source ||
-            !result.config.sink ||
-            !result.config.transforms) {
-          $alert({
-            type: 'danger',
-            content: 'The structure of imported config is incorrect. To the base structure of the config please try creating a new adpater and viewing the config.'
-          });
-          return;
-        }
-        $scope.config = JSON.stringify(result);
-        this.reloadDAG = true;
-        MyPlumbService.resetToDefaults(true);
-        setNodesAndConnectionsFromDraft.call(this, result);
-        if ($scope.config.name) {
-          MyPlumbService.metadata.name = $scope.config.name;
-        }
-
-        MyPlumbService.notifyError({});
-        MyPlumbService.notifyResetListners();
-      }.bind(this)
-      reader.onerror = function (evt) {
-        console.error('Upload config failed', evt);
-      };
-    };
-
-    this.onCanvasOperationsClicked = function(group) {
+    this.onRightSideGroupItemClicked = function(group) {
       var config;
       switch(group.name) {
         case 'Export':
-          var detailedConfig = MyPlumbService.getConfigForBackend();
-          if (!MyPlumbService.metadata.name || MyPlumbService.metadata.name === '') {
-            detailedConfig.name = 'noname';
-          } else {
-            detailedConfig.name =  MyPlumbService.metadata.name;
-          }
-
-          detailedConfig.ui = {
-            nodes: MyPlumbService.nodes,
-            connections: MyPlumbService.connections
-          };
-          var content = JSON.stringify(detailedConfig, null, 4);
-          var blob = new Blob([content], { type: 'application/json'});
-          this.exportFileName = detailedConfig.name + '-' + detailedConfig.template;
-          this.url = URL.createObjectURL(blob);
-
-          $scope.$on('$destroy', function () {
-            URL.revokeObjectURL(this.url);
-          });
-          // Clicking on the hidden download button. #hack.
-          $timeout(function() {
-            document.getElementById('adapter-export-config-link').click();
-          });
+          CanvasFactory
+            .exportAdapter(MyPlumbService.getConfigForBackend(), MyPlumbService.metadata.name)
+            .then(
+              function success(result) {
+                this.exportFileName = result.name;
+                this.url = result.url;
+                $scope.$on('$destroy', function () {
+                  URL.revokeObjectURL(this.url);
+                }.bind(this));
+                // Clicking on the hidden download button. #hack.
+                $timeout(function() {
+                  document.getElementById('adapter-export-config-link').click();
+                });
+              }.bind(this),
+              function error() {
+                console.log('ERROR: ' + 'exporting adapter failed');
+              }
+            )
           break;
         case 'Import':
           // Clicking on the hidden upload button. #hack.
@@ -142,7 +113,7 @@ angular.module(PKG.name + '.feature.adapters')
             size: 'lg',
             windowClass: 'adapter-modal',
             keyboard: true,
-            controller: ['$scope', 'config', '$timeout', function($scope, config, $timeout) {
+            controller: ['$scope', 'config', function($scope, config) {
               $scope.config = JSON.stringify(config);
             }],
             resolve: {
@@ -169,6 +140,8 @@ angular.module(PKG.name + '.feature.adapters')
             );
           break;
         case 'Settings':
+
+          MyPlumbService.isConfigTouched = true;
           $bootstrapModal.open({
             templateUrl: '/assets/features/adapters/templates/create/settings.html',
             size: 'lg',
@@ -225,8 +198,9 @@ angular.module(PKG.name + '.feature.adapters')
       items: []
     };
 
-    this.onPluginTypesClicked = function(group) {
+    this.onLeftSideGroupItemClicked = function(group) {
       var prom;
+      var templatedefer = $q.defer();
       switch(group.name) {
         case 'source':
           prom = myAdapterApi.fetchSources({ adapterType: MyPlumbService.metadata.template.type }).$promise;
@@ -237,6 +211,22 @@ angular.module(PKG.name + '.feature.adapters')
         case 'sink':
           prom = myAdapterApi.fetchSinks({ adapterType: MyPlumbService.metadata.template.type }).$promise;
           break;
+        case 'templates':
+          prom = myAdapterTemplatesApi.list({
+              apptype: MyPlumbService.metadata.template.type.toLowerCase()
+            })
+              .$promise
+              .then(function(res) {
+                var plugins = res.map(function(plugin) {
+                  return {
+                    name: plugin.name,
+                    description: plugin.description,
+                    icon: 'icon-ETLtemplates'
+                  };
+                });
+                templatedefer.resolve(plugins);
+                return templatedefer.promise;
+              });
       }
       prom.then(function(res) {
         this.plugins.items = [];
@@ -254,11 +244,29 @@ angular.module(PKG.name + '.feature.adapters')
       }.bind(this));
     };
 
-    this.onPluginItemClicked = function(event, item) {
+    this.onLeftSidePanelItemClicked = function(event, item) {
       if (item.type === 'source' && this.pluginTypes[0].error) {
         delete this.pluginTypes[0].error;
       } else if (item.type === 'sink' && this.pluginTypes[2].error) {
         delete this.pluginTypes[2].error;
+      } else if (item.type === 'templates') {
+        myAdapterTemplatesApi.get({
+          apptype: MyPlumbService.metadata.template.type.toLowerCase(),
+          appname: item.name
+        })
+          .$promise
+          .then(function(res) {
+            var result = CanvasFactory.parseImportedJson(JSON.stringify(res), MyPlumbService.metadata.template.type)
+            if (result.error) {
+              $alert({
+                type: 'danger',
+                content: 'Imported pre-defined app has issues. Please check the JSON of the imported pre-defined app'
+              });
+            } else {
+              this.onImportSuccess(result);
+            }
+          }.bind(this));
+        return;
       }
 
       // TODO: Better UUID?

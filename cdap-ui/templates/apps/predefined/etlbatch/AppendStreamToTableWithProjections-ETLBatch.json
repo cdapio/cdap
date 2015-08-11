@@ -1,0 +1,125 @@
+{
+    "template": "ETLBatch",
+    "description": "Periodically appends data from stream to Table.",
+    "config": {
+        "source": {
+            "name": "Stream",
+            "properties": {
+                "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"fname\",\"type\":\"string\"},{\"name\":\"lname\",\"type\":\"string\"},{\"name\":\"address\",\"type\":\"string\"},{\"name\":\"city\",\"type\":\"string\"},{\"name\":\"state\",\"type\":\"string\"},{\"name\":\"country\",\"type\":\"string\"},{\"name\":\"zipcode\",\"type\":\"int\"}]}",
+                "duration": "1h",
+                "name": "contacts",
+                "format": "csv"
+            }
+        },
+        "sink": {
+            "name": "Table",
+            "properties": {
+                "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"fname\",\"type\":\"string\"},{\"name\":\"lname\",\"type\":\"string\"},{\"name\":\"address\",\"type\":\"string\"},{\"name\":\"city\",\"type\":\"string\"},{\"name\":\"state\",\"type\":\"string\"},{\"name\":\"country\",\"type\":\"string\"},{\"name\":\"zipcode\",\"type\":\"int\"}]}",
+                "case.sensitive.row.field": "true",
+                "name": "contacts_hbase",
+                "schema.row.field": "fname"
+            }
+        },
+        "transforms": [],
+        "schedule": "* * * * *"
+    },
+    "name": "AppendStreamToTableWithProjections",
+    "ui": {
+        "nodes": {
+            "Stream-source-1": {
+                "id": "Stream-source-1",
+                "name": "Stream",
+                "style": "",
+                "description": "Batch source for a stream.",
+                "outputSchema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"fname\",\"type\":\"string\"},{\"name\":\"lname\",\"type\":\"string\"},{\"name\":\"address\",\"type\":\"string\"},{\"name\":\"city\",\"type\":\"string\"},{\"name\":\"state\",\"type\":\"string\"},{\"name\":\"country\",\"type\":\"string\"},{\"name\":\"zipcode\",\"type\":\"int\"}]}",
+                "properties": {
+                    "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"fname\",\"type\":\"string\"},{\"name\":\"lname\",\"type\":\"string\"},{\"name\":\"address\",\"type\":\"string\"},{\"name\":\"city\",\"type\":\"string\"},{\"name\":\"state\",\"type\":\"string\"},{\"name\":\"country\",\"type\":\"string\"},{\"name\":\"zipcode\",\"type\":\"int\"}]}",
+                    "duration": "1h",
+                    "name": "contacts",
+                    "format": "csv",
+                    "delay": ""
+                },
+                "_backendProperties": {
+                    "schema": {
+                        "name": "schema",
+                        "description": "Optional schema for the body of stream events. Schema is used in conjunction with format to parse stream events. Some formats like the avro format require schema, while others do not. The schema given is for the body of the stream, so the final schema of records output by the source will contain an additional field named 'ts' for the timestamp and a field named 'headers' for the headers as as the first and second fields of the schema.",
+                        "type": "string",
+                        "required": false
+                    },
+                    "duration": {
+                        "name": "duration",
+                        "description": "Size of the time window to read with each run of the pipeline. The format is expected to be a number followed by an 's', 'm', 'h', or 'd' specifying the time unit, with 's' for seconds, 'm' for minutes, 'h' for hours, and 'd' for days. For example, a value of '5m' means each run of the pipeline will read 5 minutes of events from the stream.",
+                        "type": "string",
+                        "required": true
+                    },
+                    "name": {
+                        "name": "name",
+                        "description": "Name of the stream. Must be a valid stream name. If it doesn't exist, it will be created.",
+                        "type": "string",
+                        "required": true
+                    },
+                    "format": {
+                        "name": "format",
+                        "description": "Optional format of the stream. Any format supported by CDAP is also supported. For example, a value of 'csv' will attempt to parse stream events as comma separated values. If no format is given, event bodies will be treated as bytes, resulting in a three field schema: 'ts' of type long, 'headers' of type map of string to string, and 'body' of type bytes.",
+                        "type": "string",
+                        "required": false
+                    },
+                    "delay": {
+                        "name": "delay",
+                        "description": "Optional delay for reading stream events. The value must be of the same format as the duration value. For example, a duration of '5m' and a delay of '10m' means each run of the pipeline will read events from 15 minutes before its logical start time to 10 minutes before its logical start time. The default value is 0.",
+                        "type": "string",
+                        "required": false
+                    }
+                },
+                "type": "source"
+            },
+            "Table-sink-2": {
+                "id": "Table-sink-2",
+                "name": "Table",
+                "style": "",
+                "description": "Writes records to a Table with one record field mapping to the Table rowkey, and all other record fields mapping to Table columns.",
+                "outputSchema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"fname\",\"type\":\"string\"},{\"name\":\"lname\",\"type\":\"string\"},{\"name\":\"address\",\"type\":\"string\"},{\"name\":\"city\",\"type\":\"string\"},{\"name\":\"state\",\"type\":\"string\"},{\"name\":\"country\",\"type\":\"string\"},{\"name\":\"zipcode\",\"type\":\"int\"}]}",
+                "properties": {
+                    "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"fname\",\"type\":\"string\"},{\"name\":\"lname\",\"type\":\"string\"},{\"name\":\"address\",\"type\":\"string\"},{\"name\":\"city\",\"type\":\"string\"},{\"name\":\"state\",\"type\":\"string\"},{\"name\":\"country\",\"type\":\"string\"},{\"name\":\"zipcode\",\"type\":\"int\"}]}",
+                    "case.sensitive.row.field": "true",
+                    "name": "contacts_hbase",
+                    "schema.row.field": "fname"
+                },
+                "_backendProperties": {
+                    "schema": {
+                        "name": "schema",
+                        "description": "Optional schema of the table as a JSON Object. If the table does not already exist, one will be created with this schema, which will allow the table to be explored through Hive.",
+                        "type": "string",
+                        "required": false
+                    },
+                    "case.sensitive.row.field": {
+                        "name": "case.sensitive.row.field",
+                        "description": "Whether the schema.row.field is case sensitive, defaults to true.",
+                        "type": "boolean",
+                        "required": false
+                    },
+                    "name": {
+                        "name": "name",
+                        "description": "Name of the table. If the table does not already exist, one will be created.",
+                        "type": "string",
+                        "required": true
+                    },
+                    "schema.row.field": {
+                        "name": "schema.row.field",
+                        "description": "The name of the record field that should be used as the row key when writing to the table.",
+                        "type": "string",
+                        "required": true
+                    }
+                },
+                "type": "sink"
+            }
+        },
+        "connections": [
+            {
+                "source": "Stream-source-1",
+                "target": "Table-sink-2",
+                "visited": true
+            }
+        ]
+    }
+}

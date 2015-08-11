@@ -22,6 +22,7 @@ import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.templates.plugins.PluginClass;
 import co.cask.cdap.api.templates.plugins.PluginProperties;
 import co.cask.cdap.app.program.ManifestFields;
+import co.cask.cdap.common.InvalidArtifactException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
@@ -35,6 +36,8 @@ import co.cask.cdap.internal.app.plugins.test.TestPlugin;
 import co.cask.cdap.internal.app.plugins.test.TestPlugin2;
 import co.cask.cdap.internal.app.runtime.adapter.EmptyClass;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
+import co.cask.cdap.internal.app.runtime.artifact.plugin.Plugin1;
+import co.cask.cdap.internal.app.runtime.artifact.plugin.Plugin2;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.internal.test.PluginJarHelper;
 import co.cask.cdap.proto.Id;
@@ -212,6 +215,29 @@ public class ArtifactRepositoryTest {
     cls = pluginClassLoader.loadClass(Application.class.getName());
     // The Application class should be the same as the one in the system classloader
     Assert.assertSame(Application.class, cls);
+  }
+
+  @Test(expected = InvalidArtifactException.class)
+  public void testGrandparentsAreInvalid() throws Exception {
+    // create child artifact
+    Id.Artifact childId = Id.Artifact.from(Id.Namespace.DEFAULT, "child", "1.0.0");
+    Manifest manifest = createManifest(ManifestFields.EXPORT_PACKAGE, Plugin1.class.getPackage().getName());
+    File jarFile = createPluginJar(Plugin1.class, new File(tmpDir, "child-1.0.0.jar"), manifest);
+
+    // add the artifact
+    Set<ArtifactRange> parents = ImmutableSet.of(new ArtifactRange(
+      APP_ARTIFACT_ID.getNamespace(), APP_ARTIFACT_ID.getName(),
+      new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
+    artifactRepository.addArtifact(childId, jarFile, parents);
+
+    // try and create grandchild, should throw exception
+    Id.Artifact grandchildId = Id.Artifact.from(Id.Namespace.DEFAULT, "grandchild", "1.0.0");
+    manifest = createManifest(ManifestFields.EXPORT_PACKAGE, Plugin2.class.getPackage().getName());
+    jarFile = createPluginJar(Plugin2.class, new File(tmpDir, "grandchild-1.0.0.jar"), manifest);
+    parents = ImmutableSet.of(new ArtifactRange(
+      childId.getNamespace(), childId.getName(),
+      new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
+    artifactRepository.addArtifact(grandchildId, jarFile, parents);
   }
 
   private static ClassLoader createAppClassLoader(File jarFile) throws IOException {

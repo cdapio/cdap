@@ -29,6 +29,7 @@ import co.cask.cdap.template.etl.common.ETLStage;
 import co.cask.cdap.template.etl.common.Properties;
 import co.cask.cdap.template.etl.realtime.config.ETLRealtimeConfig;
 import co.cask.cdap.template.etl.realtime.sink.RealtimeCubeSink;
+import co.cask.cdap.template.etl.realtime.sink.RealtimeElasticsearchSink;
 import co.cask.cdap.template.etl.realtime.sink.RealtimeTableSink;
 import co.cask.cdap.template.etl.realtime.sink.StreamSink;
 import co.cask.cdap.template.etl.realtime.source.DataGeneratorSource;
@@ -102,7 +103,8 @@ public class ETLWorkerTest extends TestBase {
                        DataGeneratorSource.class, JmsSource.class, KafkaSource.class,
                        TwitterSource.class, SqsSource.class);
     addTemplatePlugins(TEMPLATE_ID, "realtime-sinks-1.0.0.jar",
-                       RealtimeCubeSink.class, RealtimeTableSink.class, StreamSink.class);
+                       RealtimeCubeSink.class, RealtimeTableSink.class,
+                       StreamSink.class, RealtimeElasticsearchSink.class);
     addTemplatePlugins(TEMPLATE_ID, "transforms-1.0.0.jar",
                        ProjectionTransform.class, ScriptFilterTransform.class, 
                        StructuredRecordToGenericRecordTransform.class);

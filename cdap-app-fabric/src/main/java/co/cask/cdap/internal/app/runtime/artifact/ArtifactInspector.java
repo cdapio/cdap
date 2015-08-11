@@ -227,9 +227,10 @@ public class ArtifactInspector {
         }
       }
     } catch (Throwable t) {
-      throw new InvalidArtifactException(
-        "Class could not be found while inspecting artifact for plugins. Please check dependencies are available, " +
-          "and that the correct parent artifact was specified.", t);
+      throw new InvalidArtifactException(String.format(
+        "Class could not be found while inspecting artifact for plugins. " +
+        "Please check dependencies are available, and that the correct parent artifact was specified. " +
+        "Error class: %s, message: %s.", t.getClass(), t.getMessage()), t);
     }
 
     return builder;
