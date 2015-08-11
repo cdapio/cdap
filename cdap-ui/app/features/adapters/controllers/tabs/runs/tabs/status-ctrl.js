@@ -135,10 +135,10 @@ angular.module(PKG.name + '.feature.adapters')
         return metric.type === 'sink';
       });
       sink = sink[0];
-      transform = data.filter(function(metric) {
+      transforms = data.filter(function(metric) {
         return metric.type === 'transform';
       });
-      returnArray = returnArray.concat(transform);
+      returnArray = returnArray.concat(transforms);
       if (source) {returnArray.unshift(source);}
       if (sink) {returnArray.push(sink);}
       return returnArray;
