@@ -118,7 +118,9 @@ public class WikipediaPipelineAppTest extends TestBase {
     if (threshold == null) {
       workflowManager.start();
     } else {
-      workflowManager.start(ImmutableMap.of("min.page.threshold", String.valueOf(threshold), "mode", "online"));
+      workflowManager.start(ImmutableMap.of(
+        WikipediaPipelineWorkflow.MIN_PAGES_THRESHOLD_KEY, String.valueOf(threshold),
+        WikipediaPipelineWorkflow.MODE_KEY, WikipediaPipelineWorkflow.ONLINE_MODE));
     }
     workflowManager.waitForFinish(5, TimeUnit.MINUTES);
     String pid = getLatestPid(workflowManager.getHistory());
