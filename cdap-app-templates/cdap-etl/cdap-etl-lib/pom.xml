@@ -163,6 +163,11 @@
       <groupId>org.elasticsearch</groupId>
       <artifactId>elasticsearch</artifactId>
     </dependency>
+    <!-- Need to add ASM explicitly to override the ASM4 dependency from elasticsearch -->
+    <dependency>
+      <groupId>org.ow2.asm</groupId>
+      <artifactId>asm-all</artifactId>
+    </dependency>
   </dependencies>
 
   <build>
