@@ -42,15 +42,16 @@ import javax.annotation.Nullable;
 
 /**
  * A {@link RealtimeSink} that writes data to an Elasticsearch server.
- * <p/>
- * This {@link RealtimeElasticsearchSink} takes a {@link StructuredRecord} in,
+ * <p>
+ * This {@link RealtimeElasticsearchSink} takes in a {@link StructuredRecord},
  * converts it to a JSON string per {@link StructuredRecordStringConverter},
  * and writes it to the Elasticsearch server.
- * <p/>
+ * </p>
+ * <p>
  * If the Elasticsearch index does not exist, it will be created using the default properties
  * specified by Elasticsearch. See more information at
  * https://www.elastic.co/guide/en/elasticsearch/guide/current/_index_settings.html.
- * <p/>
+ * </p>
  */
 @Plugin(type = "sink")
 @Name("Elasticsearch")

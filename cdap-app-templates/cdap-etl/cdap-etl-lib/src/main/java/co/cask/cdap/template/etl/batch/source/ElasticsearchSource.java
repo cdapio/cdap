@@ -43,12 +43,12 @@ import java.io.IOException;
  * This {@link ElasticsearchSource} reads from an Elasticsearch index and type and converts the MapWritable
  * into a {@link StructuredRecord} and emits the StructuredRecord.
  * </p>
- * An exception will be thrown if the type of any of the fields do not match the type stated by the user.
+ * An exception will be thrown if the type of any of the fields do not match the type specified by the user.
  */
 @Plugin(type = "source")
 @Name("Elasticsearch")
 @Description("CDAP Elasticsearch Batch Source pulls documents from Elasticsearch " +
-  "according to the query specified by the user, then converts each document to a structured record " +
+  "according to the query specified by the user and converts each document to a structured record " +
   "with the fields and schema specified by the user. " +
   "The Elasticsearch server should be running prior to creating the adapter.")
 public class ElasticsearchSource extends BatchSource<Text, MapWritable, StructuredRecord> {
