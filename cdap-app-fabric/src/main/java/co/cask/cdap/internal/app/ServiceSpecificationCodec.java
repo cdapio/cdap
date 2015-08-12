@@ -84,12 +84,12 @@ public class ServiceSpecificationCodec extends AbstractSpecificationCodec<Servic
     Map<String, String> datasetModules = (datasetModElement == null) ? Maps.<String, String>newHashMap() :
       deserializeMap(datasetModElement, context, String.class);
 
-    JsonElement datasetInstElement = jsonObj.get("datasetSpecs");
-    Map<String, DatasetCreationSpec> datasetInstances = (datasetInstElement == null) ?
-      Maps.<String, DatasetCreationSpec>newHashMap() : deserializeMap(datasetInstElement, context,
+    JsonElement datasetSpecsElement = jsonObj.get("datasetSpecs");
+    Map<String, DatasetCreationSpec> datasetSpecs = (datasetSpecsElement == null) ?
+      Maps.<String, DatasetCreationSpec>newHashMap() : deserializeMap(datasetSpecsElement, context,
                                                                       DatasetCreationSpec.class);
     return new ServiceSpecification(className, name, description, handlers, resources, instances, streams,
-                                    datasetModules, datasetInstances);
+                                    datasetModules, datasetSpecs);
   }
 
   @Override

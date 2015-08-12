@@ -44,14 +44,14 @@ public class MapReduceSpecification implements ProgramSpecification, PropertyPro
   private final Resources mapperResources;
   private final Resources reducerResources;
   private final Map<String, StreamSpecification> streams;
-  private final Map<String, DatasetCreationSpec> datasetInstances;
+  private final Map<String, DatasetCreationSpec> datasetSpecs;
   private final Map<String, String> datasetModules;
 
   public MapReduceSpecification(String className, String name, String description, String inputDataSet,
                                 String outputDataSet, Set<String> dataSets, Map<String, String> properties,
                                 Resources mapperResources, Resources reducerResources,
                                 Map<String, StreamSpecification> streams, Map<String, String> datasetModules,
-                                Map<String, DatasetCreationSpec> datasetInstances) {
+                                Map<String, DatasetCreationSpec> datasetSpecs) {
     this.className = className;
     this.name = name;
     this.description = description;
@@ -62,9 +62,9 @@ public class MapReduceSpecification implements ProgramSpecification, PropertyPro
     this.mapperResources = mapperResources;
     this.reducerResources = reducerResources;
     this.dataSets = getAllDatasets(dataSets, inputDataSet, outputDataSet);
-    this.streams = streams;
-    this.datasetInstances = datasetInstances;
-    this.datasetModules = datasetModules;
+    this.streams = Collections.unmodifiableMap(streams);
+    this.datasetSpecs = Collections.unmodifiableMap(datasetSpecs);
+    this.datasetModules = Collections.unmodifiableMap(datasetModules);
   }
 
   @Override
@@ -152,7 +152,7 @@ public class MapReduceSpecification implements ProgramSpecification, PropertyPro
    * @return Map of dataset instances and {@link DatasetCreationSpec} created in this program.
    */
   public Map<String, DatasetCreationSpec> getDatasetSpecs() {
-    return datasetInstances;
+    return datasetSpecs;
   }
 
   private Set<String> getAllDatasets(Set<String> dataSets, String inputDataSet, String outputDataSet) {

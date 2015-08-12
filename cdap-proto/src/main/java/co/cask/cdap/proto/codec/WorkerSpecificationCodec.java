@@ -47,8 +47,8 @@ public final class WorkerSpecificationCodec extends AbstractSpecificationCodec<W
     object.add("datasets", serializeSet(spec.getDatasets(), context, String.class));
     object.addProperty("instances", spec.getInstances());
     object.add("streams", serializeMap(spec.getStreams(), context, StreamSpecification.class));
-    object.add("dataSetModules", serializeMap(spec.getDatasetModules(), context, String.class));
-    object.add("dataSetInstances", serializeMap(spec.getDatasetSpecs(), context, DatasetCreationSpec.class));
+    object.add("datasetModules", serializeMap(spec.getDatasetModules(), context, String.class));
+    object.add("datasetSpecs", serializeMap(spec.getDatasetSpecs(), context, DatasetCreationSpec.class));
     return object;
   }
 
@@ -70,16 +70,16 @@ public final class WorkerSpecificationCodec extends AbstractSpecificationCodec<W
       Maps.<String, StreamSpecification>newHashMap() : deserializeMap(streamElement, context,
                                                                       StreamSpecification.class);
 
-    JsonElement dataSetModElement = jsonObj.get("dataSetModules");
-    Map<String, String> dataSetModules = (dataSetModElement == null) ? Maps.<String, String>newHashMap() :
-      deserializeMap(dataSetModElement, context, String.class);
+    JsonElement datasetModElement = jsonObj.get("datasetModules");
+    Map<String, String> datasetModules = (datasetModElement == null) ? Maps.<String, String>newHashMap() :
+      deserializeMap(datasetModElement, context, String.class);
 
-    JsonElement dataSetInstElement = jsonObj.get("dataSetInstances");
-    Map<String, DatasetCreationSpec> dataSetInstances = (dataSetInstElement == null) ?
-      Maps.<String, DatasetCreationSpec>newHashMap() : deserializeMap(dataSetInstElement, context,
+    JsonElement datasetSpecsElement = jsonObj.get("datasetSpecs");
+    Map<String, DatasetCreationSpec> datasetSpecs = (datasetSpecsElement == null) ?
+      Maps.<String, DatasetCreationSpec>newHashMap() : deserializeMap(datasetSpecsElement, context,
                                                                       DatasetCreationSpec.class);
 
     return new WorkerSpecification(className, name, description, properties, datasets, resources, instances,
-                                   streams, dataSetModules, dataSetInstances);
+                                   streams, datasetModules, datasetSpecs);
   }
 }

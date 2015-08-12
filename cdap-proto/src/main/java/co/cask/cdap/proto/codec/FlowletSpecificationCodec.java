@@ -51,8 +51,8 @@ public final class FlowletSpecificationCodec extends AbstractSpecificationCodec<
     jsonObj.add("properties", serializeMap(src.getProperties(), context, String.class));
     jsonObj.add("resources", context.serialize(src.getResources(), Resources.class));
     jsonObj.add("streams", serializeMap(src.getStreams(), context, StreamSpecification.class));
-    jsonObj.add("dataSetModules", serializeMap(src.getDatasetModules(), context, String.class));
-    jsonObj.add("dataSetInstances", serializeMap(src.getDatasetSpecs(), context, DatasetCreationSpec.class));
+    jsonObj.add("datasetModules", serializeMap(src.getDatasetModules(), context, String.class));
+    jsonObj.add("datasetSpecs", serializeMap(src.getDatasetSpecs(), context, DatasetCreationSpec.class));
 
     return jsonObj;
   }
@@ -74,16 +74,16 @@ public final class FlowletSpecificationCodec extends AbstractSpecificationCodec<
     Map<String, StreamSpecification> streams = (streamElement == null) ?
       Maps.<String, StreamSpecification>newHashMap() : deserializeMap(streamElement, context,
                                                                       StreamSpecification.class);
-    JsonElement dataSetModElement = jsonObj.get("dataSetModules");
-    Map<String, String> dataSetModules = (dataSetModElement == null) ? Maps.<String, String>newHashMap() :
-      deserializeMap(dataSetModElement, context, String.class);
+    JsonElement datasetModElement = jsonObj.get("datasetModules");
+    Map<String, String> datasetModules = (datasetModElement == null) ? Maps.<String, String>newHashMap() :
+      deserializeMap(datasetModElement, context, String.class);
 
-    JsonElement dataSetInstElement = jsonObj.get("dataSetInstances");
-    Map<String, DatasetCreationSpec> dataSetInstances = (dataSetInstElement == null) ?
-      Maps.<String, DatasetCreationSpec>newHashMap() : deserializeMap(dataSetInstElement, context,
+    JsonElement datasetSpecsElement = jsonObj.get("datasetSpecs");
+    Map<String, DatasetCreationSpec> datasetSpecs = (datasetSpecsElement == null) ?
+      Maps.<String, DatasetCreationSpec>newHashMap() : deserializeMap(datasetSpecsElement, context,
                                                                       DatasetCreationSpec.class);
 
     return new DefaultFlowletSpecification(className, name, description, policy, dataSets, properties, resources,
-                                           streams, dataSetModules, dataSetInstances);
+                                           streams, datasetModules, datasetSpecs);
   }
 }

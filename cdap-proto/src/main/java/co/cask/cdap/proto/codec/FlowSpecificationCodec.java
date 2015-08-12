@@ -50,7 +50,7 @@ public final class FlowSpecificationCodec extends AbstractSpecificationCodec<Flo
     jsonObj.add("connections", serializeList(src.getConnections(), context, FlowletConnection.class));
     jsonObj.add("streams", serializeMap(src.getStreams(), context, StreamSpecification.class));
     jsonObj.add("datasetModules", serializeMap(src.getDatasetModules(), context, String.class));
-    jsonObj.add("datasetInstances", serializeMap(src.getDatasetSpecs(), context, DatasetCreationSpec.class));
+    jsonObj.add("datasetSpecs", serializeMap(src.getDatasetSpecs(), context, DatasetCreationSpec.class));
 
     return jsonObj;
   }
@@ -75,11 +75,11 @@ public final class FlowSpecificationCodec extends AbstractSpecificationCodec<Flo
     Map<String, String> datasetModules = (datasetModElement == null) ?
       Maps.<String, String>newHashMap() : deserializeMap(datasetModElement, context, String.class);
 
-    JsonElement datasetInstElement = jsonObj.get("datasetInstances");
-    Map<String, DatasetCreationSpec> datasetInstances = (datasetInstElement == null) ?
-      Maps.<String, DatasetCreationSpec>newHashMap() : deserializeMap(datasetInstElement, context,
+    JsonElement datasetSpecsElement = jsonObj.get("datasetSpecs");
+    Map<String, DatasetCreationSpec> datasetSpecs = (datasetSpecsElement == null) ?
+      Maps.<String, DatasetCreationSpec>newHashMap() : deserializeMap(datasetSpecsElement, context,
                                                                       DatasetCreationSpec.class);
     return new DefaultFlowSpecification(className, name, description, flowlets, connections, streams, datasetModules,
-                                        datasetInstances);
+                                        datasetSpecs);
   }
 }

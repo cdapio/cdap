@@ -42,8 +42,8 @@ public final class HttpServiceHandlerSpecification implements PropertyProvider, 
   private final Set<String> datasets;
   private final List<ServiceHttpEndpoint> endpoints;
   private final Map<String, StreamSpecification> streams;
-  private final Map<String, String> dataSetModules;
-  private final Map<String, DatasetCreationSpec> dataSetInstances;
+  private final Map<String, String> datasetModules;
+  private final Map<String, DatasetCreationSpec> datasetSpecs;
 
   /**
    * Create an instance of {@link HttpServiceHandlerSpecification}.
@@ -52,8 +52,8 @@ public final class HttpServiceHandlerSpecification implements PropertyProvider, 
                                          String description, Map<String, String> properties,
                                          Set<String> datasets, List<ServiceHttpEndpoint> endpoints,
                                          Map<String, StreamSpecification> streams,
-                                         Map<String, String> dataSetModules,
-                                         Map<String, DatasetCreationSpec> dataSetInstances) {
+                                         Map<String, String> datasetModules,
+                                         Map<String, DatasetCreationSpec> datasetSpecs) {
     this.className = className;
     this.name = name;
     this.description = description;
@@ -61,8 +61,8 @@ public final class HttpServiceHandlerSpecification implements PropertyProvider, 
     this.datasets = Collections.unmodifiableSet(new HashSet<>(datasets));
     this.endpoints = Collections.unmodifiableList(new ArrayList<>(endpoints));
     this.streams = Collections.unmodifiableMap(streams);
-    this.dataSetModules = Collections.unmodifiableMap(dataSetModules);
-    this.dataSetInstances = Collections.unmodifiableMap(dataSetInstances);
+    this.datasetModules = Collections.unmodifiableMap(datasetModules);
+    this.datasetSpecs = Collections.unmodifiableMap(datasetSpecs);
   }
 
   /**
@@ -125,10 +125,10 @@ public final class HttpServiceHandlerSpecification implements PropertyProvider, 
   }
 
   public Map<String, String> getDatasetModules() {
-    return dataSetModules;
+    return datasetModules;
   }
 
   public Map<String, DatasetCreationSpec> getDatasetSpecs() {
-    return dataSetInstances;
+    return datasetSpecs;
   }
 }

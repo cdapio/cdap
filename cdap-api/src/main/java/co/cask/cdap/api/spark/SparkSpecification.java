@@ -41,14 +41,14 @@ public final class SparkSpecification implements ProgramSpecification, PropertyP
   private final Resources driverResources;
   private final Resources executorResources;
   private final Map<String, StreamSpecification> streams;
-  private final Map<String, String> dataSetModules;
-  private final Map<String, DatasetCreationSpec> dataSetInstances;
+  private final Map<String, String> datasetModules;
+  private final Map<String, DatasetCreationSpec> datasetSpecs;
 
   public SparkSpecification(String className, String name, String description,
                             String mainClassName, Map<String, String> properties,
                             @Nullable Resources driverResources, @Nullable Resources executorResources,
-                            Map<String, StreamSpecification> streams, Map<String, String> dataSetModules,
-                            Map<String, DatasetCreationSpec> dataSetInstances) {
+                            Map<String, StreamSpecification> streams, Map<String, String> datasetModules,
+                            Map<String, DatasetCreationSpec> datasetSpecs) {
     this.className = className;
     this.name = name;
     this.description = description;
@@ -57,8 +57,8 @@ public final class SparkSpecification implements ProgramSpecification, PropertyP
     this.driverResources = driverResources;
     this.executorResources = executorResources;
     this.streams = Collections.unmodifiableMap(streams);
-    this.dataSetInstances = Collections.unmodifiableMap(dataSetInstances);
-    this.dataSetModules = Collections.unmodifiableMap(dataSetModules);
+    this.datasetSpecs = Collections.unmodifiableMap(datasetSpecs);
+    this.datasetModules = Collections.unmodifiableMap(datasetModules);
   }
 
   @Override
@@ -111,10 +111,10 @@ public final class SparkSpecification implements ProgramSpecification, PropertyP
   }
 
   public Map<String, String> getDatasetModules() {
-    return dataSetModules;
+    return datasetModules;
   }
 
   public Map<String, DatasetCreationSpec> getDatasetSpecs() {
-    return dataSetInstances;
+    return datasetSpecs;
   }
 }

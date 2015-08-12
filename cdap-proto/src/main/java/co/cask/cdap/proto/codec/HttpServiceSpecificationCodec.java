@@ -58,17 +58,17 @@ public class HttpServiceSpecificationCodec extends AbstractSpecificationCodec<Ht
     Map<String, StreamSpecification> streams = (streamElement == null) ?
       Maps.<String, StreamSpecification>newHashMap() : deserializeMap(streamElement, context,
                                                                       StreamSpecification.class);
-    JsonElement dataSetModElement = jsonObj.get("dataSetModules");
-    Map<String, String> dataSetModules = (dataSetModElement == null) ? Maps.<String, String>newHashMap() :
-      deserializeMap(dataSetModElement, context, String.class);
+    JsonElement datasetModElement = jsonObj.get("datasetModules");
+    Map<String, String> datasetModules = (datasetModElement == null) ? Maps.<String, String>newHashMap() :
+      deserializeMap(datasetModElement, context, String.class);
 
-    JsonElement dataSetInstElement = jsonObj.get("dataSetInstances");
-    Map<String, DatasetCreationSpec> dataSetInstances = (dataSetInstElement == null) ?
-      Maps.<String, DatasetCreationSpec>newHashMap() : deserializeMap(dataSetInstElement, context,
+    JsonElement datasetSpecsElement = jsonObj.get("datasetSpecs");
+    Map<String, DatasetCreationSpec> datasetSpecs = (datasetSpecsElement == null) ?
+      Maps.<String, DatasetCreationSpec>newHashMap() : deserializeMap(datasetSpecsElement, context,
                                                                       DatasetCreationSpec.class);
 
     return new HttpServiceHandlerSpecification(className, name, description, properties, datasets, endpointsExposed,
-                                               streams, dataSetModules, dataSetInstances);
+                                               streams, datasetModules, datasetSpecs);
   }
 
   private boolean isOldSpec(JsonObject json) {
@@ -85,8 +85,8 @@ public class HttpServiceSpecificationCodec extends AbstractSpecificationCodec<Ht
     json.add("datasets", serializeSet(src.getDatasets(), context, String.class));
     json.add("endpoints", serializeList(src.getEndpoints(), context, ServiceHttpEndpoint.class));
     json.add("streams", serializeMap(src.getStreams(), context, StreamSpecification.class));
-    json.add("dataSetModules", serializeMap(src.getDatasetModules(), context, String.class));
-    json.add("dataSetInstances", serializeMap(src.getDatasetSpecs(), context, DatasetCreationSpec.class));
+    json.add("datasetModules", serializeMap(src.getDatasetModules(), context, String.class));
+    json.add("datasetSpecs", serializeMap(src.getDatasetSpecs(), context, DatasetCreationSpec.class));
     return json;
   }
 }

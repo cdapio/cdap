@@ -41,13 +41,13 @@ public final class WorkerSpecification implements ProgramSpecification, Property
   private final Resources resources;
   private final int instances;
   private final Map<String, StreamSpecification> streams;
-  private final Map<String, String> dataSetModules;
-  private final Map<String, DatasetCreationSpec> dataSetInstances;
+  private final Map<String, String> datasetModules;
+  private final Map<String, DatasetCreationSpec> datasetSpecs;
 
   public WorkerSpecification(String className, String name, String description, Map<String, String> properties,
                              Set<String> datasets, Resources resources, int instances,
-                             Map<String, StreamSpecification> streams, Map<String, String> dataSetModules,
-                             Map<String, DatasetCreationSpec> dataSetInstances) {
+                             Map<String, StreamSpecification> streams, Map<String, String> datasetModules,
+                             Map<String, DatasetCreationSpec> datasetSpecs) {
     this.className = className;
     this.name = name;
     this.description = description;
@@ -56,8 +56,8 @@ public final class WorkerSpecification implements ProgramSpecification, Property
     this.resources = resources;
     this.instances = instances;
     this.streams = Collections.unmodifiableMap(streams);
-    this.dataSetModules = Collections.unmodifiableMap(dataSetModules);
-    this.dataSetInstances = Collections.unmodifiableMap(dataSetInstances);
+    this.datasetModules = Collections.unmodifiableMap(datasetModules);
+    this.datasetSpecs = Collections.unmodifiableMap(datasetSpecs);
   }
 
   @Override
@@ -111,10 +111,10 @@ public final class WorkerSpecification implements ProgramSpecification, Property
   }
 
   public Map<String, String> getDatasetModules() {
-    return dataSetModules;
+    return datasetModules;
   }
 
   public Map<String, DatasetCreationSpec> getDatasetSpecs() {
-    return dataSetInstances;
+    return datasetSpecs;
   }
 }

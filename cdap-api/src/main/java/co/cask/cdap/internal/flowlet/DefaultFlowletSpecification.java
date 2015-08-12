@@ -41,24 +41,24 @@ public final class DefaultFlowletSpecification implements FlowletSpecification {
   private final Map<String, String> properties;
   private final Resources resources;
   private final Map<String, StreamSpecification> streams;
-  private final Map<String, String> dataSetModules;
-  private final Map<String, DatasetCreationSpec> dataSetInstances;
+  private final Map<String, String> datasetModules;
+  private final Map<String, DatasetCreationSpec> datasetSpecs;
 
   public DefaultFlowletSpecification(String name, String description,
                                      FailurePolicy failurePolicy, Set<String> dataSets,
                                      Map<String, String> properties, Resources resources,
-                                     Map<String, StreamSpecification> streams, Map<String, String> dataSetModules,
-                                     Map<String, DatasetCreationSpec> dataSetInstances) {
-    this(null, name, description, failurePolicy, dataSets, properties, resources, streams, dataSetModules,
-         dataSetInstances);
+                                     Map<String, StreamSpecification> streams, Map<String, String> datasetModules,
+                                     Map<String, DatasetCreationSpec> datasetSpecs) {
+    this(null, name, description, failurePolicy, dataSets, properties, resources, streams, datasetModules,
+         datasetSpecs);
   }
 
   public DefaultFlowletSpecification(String className, String name,
                                      String description, FailurePolicy failurePolicy,
                                      Set<String> dataSets, Map<String, String> properties,
                                      Resources resources, Map<String, StreamSpecification> streams,
-                                     Map<String, String> dataSetModules,
-                                     Map<String, DatasetCreationSpec> dataSetInstances) {
+                                     Map<String, String> datasetModules,
+                                     Map<String, DatasetCreationSpec> datasetSpecs) {
     this.className = className;
     this.name = name;
     this.description = description;
@@ -67,8 +67,8 @@ public final class DefaultFlowletSpecification implements FlowletSpecification {
     this.properties = properties == null ? ImmutableMap.<String, String>of() : ImmutableMap.copyOf(properties);
     this.resources = resources;
     this.streams = Collections.unmodifiableMap(streams);
-    this.dataSetModules = Collections.unmodifiableMap(dataSetModules);
-    this.dataSetInstances = Collections.unmodifiableMap(dataSetInstances);
+    this.datasetModules = Collections.unmodifiableMap(datasetModules);
+    this.datasetSpecs = Collections.unmodifiableMap(datasetSpecs);
   }
 
   @Override
@@ -118,12 +118,12 @@ public final class DefaultFlowletSpecification implements FlowletSpecification {
 
   @Override
   public Map<String, String> getDatasetModules() {
-    return dataSetModules;
+    return datasetModules;
   }
 
   @Override
   public Map<String, DatasetCreationSpec> getDatasetSpecs() {
-    return dataSetInstances;
+    return datasetSpecs;
   }
 
 }

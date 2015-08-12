@@ -50,9 +50,9 @@ public final class ServiceSpecification implements ProgramSpecification {
     this.handlers = Collections.unmodifiableMap(new HashMap<>(handlers));
     this.resources = resources;
     this.instances = instances;
-    this.streams = streams;
-    this.datasetModules = datasetModules;
-    this.datasetSpecs = datasetSpecs;
+    this.streams = Collections.unmodifiableMap(streams);
+    this.datasetModules = Collections.unmodifiableMap(datasetModules);
+    this.datasetSpecs = Collections.unmodifiableMap(datasetSpecs);
   }
 
   @Override

@@ -39,7 +39,7 @@ public final class DefaultFlowSpecification implements FlowSpecification {
   private final List<FlowletConnection> connections;
   private final Map<String, StreamSpecification> streams;
   private final Map<String, String> datasetModules;
-  private final Map<String, DatasetCreationSpec> datasetInstances;
+  private final Map<String, DatasetCreationSpec> datasetSpecs;
 
   public DefaultFlowSpecification(String name, String description,
                                   Map<String, FlowletDefinition> flowlets, List<FlowletConnection> connections) {
@@ -56,7 +56,7 @@ public final class DefaultFlowSpecification implements FlowSpecification {
   public DefaultFlowSpecification(String className, String name, String description,
                                   Map<String, FlowletDefinition> flowlets, List<FlowletConnection> connections,
                                   Map<String, StreamSpecification> streams, Map<String, String> datasetModules,
-                                  Map<String, DatasetCreationSpec> datasetInstances) {
+                                  Map<String, DatasetCreationSpec> datasetSpecs) {
     this.className = className;
     this.name = name;
     this.description = description;
@@ -64,7 +64,7 @@ public final class DefaultFlowSpecification implements FlowSpecification {
     this.connections = ImmutableList.copyOf(connections);
     this.streams = ImmutableMap.copyOf(streams);
     this.datasetModules = ImmutableMap.copyOf(datasetModules);
-    this.datasetInstances = ImmutableMap.copyOf(datasetInstances);
+    this.datasetSpecs = ImmutableMap.copyOf(datasetSpecs);
   }
 
   @Override
@@ -104,6 +104,6 @@ public final class DefaultFlowSpecification implements FlowSpecification {
 
   @Override
   public Map<String, DatasetCreationSpec> getDatasetSpecs() {
-    return datasetInstances;
+    return datasetSpecs;
   }
 }
