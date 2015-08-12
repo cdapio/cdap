@@ -20,7 +20,7 @@ import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkConfigurer;
 import co.cask.cdap.api.spark.SparkSpecification;
-import co.cask.cdap.internal.app.program.DefaultDatasetConfigurer;
+import co.cask.cdap.internal.api.DefaultDatasetConfigurer;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.internal.specification.PropertyFieldExtractor;
 import com.google.common.base.Preconditions;
@@ -86,6 +86,6 @@ public final class DefaultSparkConfigurer extends DefaultDatasetConfigurer imple
     Reflections.visit(spark, TypeToken.of(spark.getClass()), new PropertyFieldExtractor(properties));
     return new SparkSpecification(spark.getClass().getName(), name, description,
                                   mainClassName, properties, driverResources, executorResources, streams,
-                                  dataSetModules, dataSetInstances);
+                                  datasetModules, datasetSpecs);
   }
 }

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.program;
+package co.cask.cdap.internal.api;
 
 import co.cask.cdap.api.DatasetConfigurer;
 import co.cask.cdap.api.data.stream.Stream;
@@ -24,8 +24,8 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Maps;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -33,9 +33,9 @@ import java.util.Map;
  */
 public class DefaultDatasetConfigurer implements DatasetConfigurer {
 
-  protected final Map<String, StreamSpecification> streams = Maps.newHashMap();
-  protected final Map<String, DatasetCreationSpec> dataSetInstances = Maps.newHashMap();
-  protected final Map<String, String> dataSetModules = Maps.newHashMap();
+  protected final Map<String, StreamSpecification> streams = new HashMap<>();
+  protected final Map<String, DatasetCreationSpec> datasetSpecs = new HashMap<>();
+  protected final Map<String, String> datasetModules = new HashMap<>();
 
   @Override
   public void addStream(Stream stream) {
@@ -48,13 +48,13 @@ public class DefaultDatasetConfigurer implements DatasetConfigurer {
   public void addDatasetModule(String moduleName, Class<? extends DatasetModule> moduleClass) {
     Preconditions.checkArgument(moduleName != null, "Dataset module name cannot be null.");
     Preconditions.checkArgument(moduleClass != null, "Dataset module class cannot be null.");
-    dataSetModules.put(moduleName, moduleClass.getName());
+    datasetModules.put(moduleName, moduleClass.getName());
   }
 
   @Override
   public void addDatasetType(Class<? extends Dataset> datasetClass) {
     Preconditions.checkArgument(datasetClass != null, "Dataset class cannot be null.");
-    dataSetModules.put(datasetClass.getName(), datasetClass.getName());
+    datasetModules.put(datasetClass.getName(), datasetClass.getName());
   }
 
   @Override
@@ -62,7 +62,7 @@ public class DefaultDatasetConfigurer implements DatasetConfigurer {
     Preconditions.checkArgument(datasetInstanceName != null, "Dataset instance name cannot be null.");
     Preconditions.checkArgument(typeName != null, "Dataset type name cannot be null.");
     Preconditions.checkArgument(properties != null, "Instance properties name cannot be null.");
-    dataSetInstances.put(datasetInstanceName,
+    datasetSpecs.put(datasetInstanceName,
                          new DatasetCreationSpec(datasetInstanceName, typeName, properties));
   }
 
@@ -72,8 +72,8 @@ public class DefaultDatasetConfigurer implements DatasetConfigurer {
     Preconditions.checkArgument(datasetInstanceName != null, "Dataset instance name cannot be null.");
     Preconditions.checkArgument(datasetClass != null, "Dataset class name cannot be null.");
     Preconditions.checkArgument(properties != null, "Instance properties name cannot be null.");
-    dataSetInstances.put(datasetInstanceName,
+    datasetSpecs.put(datasetInstanceName,
                          new DatasetCreationSpec(datasetInstanceName, datasetClass.getName(), properties));
-    dataSetModules.put(datasetClass.getName(), datasetClass.getName());
+    datasetModules.put(datasetClass.getName(), datasetClass.getName());
   }
 }

@@ -20,7 +20,7 @@ import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.api.worker.WorkerConfigurer;
 import co.cask.cdap.api.worker.WorkerSpecification;
-import co.cask.cdap.internal.app.program.DefaultDatasetConfigurer;
+import co.cask.cdap.internal.api.DefaultDatasetConfigurer;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.internal.specification.PropertyFieldExtractor;
 import com.google.common.base.Preconditions;
@@ -98,6 +98,6 @@ public class DefaultWorkerConfigurer extends DefaultDatasetConfigurer implements
     Map<String, String> properties = Maps.newHashMap(this.properties);
     properties.putAll(propertyFields);
     return new WorkerSpecification(className, name, description, properties, datasets, resource, instances,
-                                   streams, dataSetModules, dataSetInstances);
+                                   streams, datasetModules, datasetSpecs);
   }
 }

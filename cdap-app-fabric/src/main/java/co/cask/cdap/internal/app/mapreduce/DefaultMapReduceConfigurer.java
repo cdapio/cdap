@@ -20,7 +20,7 @@ import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceConfigurer;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
-import co.cask.cdap.internal.app.program.DefaultDatasetConfigurer;
+import co.cask.cdap.internal.api.DefaultDatasetConfigurer;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
@@ -91,7 +91,7 @@ public final class DefaultMapReduceConfigurer extends DefaultDatasetConfigurer i
 
   public MapReduceSpecification createSpecification() {
     return new MapReduceSpecification(className, name, description, inputDataset, outputDataset, datasets,
-                                      properties, mapperResources, reducerResources, streams, dataSetModules,
-                                      dataSetInstances);
+                                      properties, mapperResources, reducerResources, streams, datasetModules,
+                                      datasetSpecs);
   }
 }

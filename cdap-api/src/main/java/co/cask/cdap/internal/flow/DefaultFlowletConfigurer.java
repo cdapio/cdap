@@ -17,39 +17,31 @@
 package co.cask.cdap.internal.flow;
 
 import co.cask.cdap.api.Resources;
-import co.cask.cdap.api.data.stream.Stream;
-import co.cask.cdap.api.data.stream.StreamSpecification;
-import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.flow.flowlet.FailurePolicy;
 import co.cask.cdap.api.flow.flowlet.Flowlet;
 import co.cask.cdap.api.flow.flowlet.FlowletConfigurer;
 import co.cask.cdap.api.flow.flowlet.FlowletSpecification;
-import co.cask.cdap.internal.dataset.DatasetCreationSpec;
+import co.cask.cdap.internal.api.DefaultDatasetConfigurer;
 import co.cask.cdap.internal.flowlet.DefaultFlowletSpecification;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.internal.specification.PropertyFieldExtractor;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 /**
  * Default implementation of {@link FlowletConfigurer}.
  */
-public class DefaultFlowletConfigurer implements FlowletConfigurer {
+public class DefaultFlowletConfigurer extends DefaultDatasetConfigurer implements FlowletConfigurer {
 
   private final String className;
   private final Map<String, String> propertyFields;
-  private final Map<String, StreamSpecification> streams;
-  private final Map<String, String> datasetModules;
-  private final Map<String, DatasetCreationSpec> datasetSpecs;
 
   private String name;
   private String description;
@@ -62,14 +54,11 @@ public class DefaultFlowletConfigurer implements FlowletConfigurer {
     this.name = flowlet.getClass().getSimpleName();
     this.className = flowlet.getClass().getName();
     this.failurePolicy = FailurePolicy.RETRY;
-    this.propertyFields = Maps.newHashMap();
+    this.propertyFields = new HashMap<>();
     this.description = "";
     this.resources = new Resources();
     this.properties = ImmutableMap.of();
-    this.datasets = Sets.newHashSet();
-    this.streams = Maps.newHashMap();
-    this.datasetModules = Maps.newHashMap();
-    this.datasetSpecs = Maps.newHashMap();
+    this.datasets = new HashSet<>();
 
     // Grab all @Property fields
     Reflections.visit(flowlet, TypeToken.of(flowlet.getClass()), new PropertyFieldExtractor(propertyFields));
@@ -108,50 +97,10 @@ public class DefaultFlowletConfigurer implements FlowletConfigurer {
   }
 
   public FlowletSpecification createSpecification() {
-    Map<String, String> properties = Maps.newHashMap(this.properties);
+    Map<String, String> properties = new HashMap<>(this.properties);
     properties.putAll(propertyFields);
     return new DefaultFlowletSpecification(this.className, this.name, this.description, this.failurePolicy,
                                            this.datasets, this.properties, this.resources, this.streams,
                                            this.datasetModules, this.datasetSpecs);
-  }
-
-  //TODO: CDAP-2943 Use DefaultDatasetConfigurer after moving this class to cdap-app-fabric.
-  @Override
-  public void addStream(Stream stream) {
-    Preconditions.checkArgument(stream != null, "Stream cannot be null.");
-    StreamSpecification spec = stream.configure();
-    streams.put(spec.getName(), spec);
-  }
-
-  @Override
-  public void addDatasetModule(String moduleName, Class<? extends DatasetModule> moduleClass) {
-    Preconditions.checkArgument(moduleName != null, "Dataset module name cannot be null.");
-    Preconditions.checkArgument(moduleClass != null, "Dataset module class cannot be null.");
-    datasetModules.put(moduleName, moduleClass.getName());
-  }
-
-  @Override
-  public void addDatasetType(Class<? extends Dataset> datasetClass) {
-    Preconditions.checkArgument(datasetClass != null, "Dataset class cannot be null.");
-    datasetModules.put(datasetClass.getName(), datasetClass.getName());
-  }
-
-  @Override
-  public void createDataset(String datasetInstanceName, String typeName, DatasetProperties properties) {
-    Preconditions.checkArgument(datasetInstanceName != null, "Dataset instance name cannot be null.");
-    Preconditions.checkArgument(typeName != null, "Dataset type name cannot be null.");
-    Preconditions.checkArgument(properties != null, "Instance properties name cannot be null.");
-    datasetSpecs.put(datasetInstanceName, new DatasetCreationSpec(datasetInstanceName, typeName, properties));
-  }
-
-  @Override
-  public void createDataset(String datasetInstanceName, Class<? extends Dataset> datasetClass,
-                            DatasetProperties properties) {
-    Preconditions.checkArgument(datasetInstanceName != null, "Dataset instance name cannot be null.");
-    Preconditions.checkArgument(datasetClass != null, "Dataset class name cannot be null.");
-    Preconditions.checkArgument(properties != null, "Instance properties name cannot be null.");
-    datasetSpecs.put(datasetInstanceName,
-                         new DatasetCreationSpec(datasetInstanceName, datasetClass.getName(), properties));
-    datasetModules.put(datasetClass.getName(), datasetClass.getName());
   }
 }
