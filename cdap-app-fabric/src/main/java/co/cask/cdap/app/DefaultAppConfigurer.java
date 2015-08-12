@@ -153,10 +153,10 @@ public class DefaultAppConfigurer extends DefaultDatasetConfigurer implements Ap
     DefaultServiceConfigurer configurer = new DefaultServiceConfigurer(service);
     service.configure(configurer);
 
+    ServiceSpecification spec = configurer.createSpecification();
     addStreams(configurer.getStreams());
     addDatasetModules(configurer.getDatasetModules());
     addDatasetSpecs(configurer.getDatasetSpecs());
-    ServiceSpecification spec = configurer.createSpecification();
     services.put(spec.getName(), spec);
   }
 
