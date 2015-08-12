@@ -76,21 +76,6 @@ public interface FlowSpecification extends ProgramSpecification {
   List<FlowletConnection> getConnections();
 
   /**
-   * @return Map of streams and {@link StreamSpecification} created in this flow.
-   */
-  Map<String, StreamSpecification> getStreams();
-
-  /**
-   * @return Map of dataset modules created in this flow.
-   */
-  Map<String, String> getDatasetModules();
-
-  /**
-   * @return Map of dataset instances and {@link DatasetCreationSpec} created in this flow.
-   */
-  Map<String, DatasetCreationSpec> getDatasetSpecs();
-
-  /**
    * Defines a builder for building connections or topology for a flow.
    */
   static final class Builder {

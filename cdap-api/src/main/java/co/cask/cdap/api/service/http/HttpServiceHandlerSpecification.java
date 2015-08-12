@@ -18,9 +18,7 @@ package co.cask.cdap.api.service.http;
 
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.common.PropertyProvider;
-import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -41,28 +39,19 @@ public final class HttpServiceHandlerSpecification implements PropertyProvider, 
   private final Map<String, String> properties;
   private final Set<String> datasets;
   private final List<ServiceHttpEndpoint> endpoints;
-  private final Map<String, StreamSpecification> streams;
-  private final Map<String, String> datasetModules;
-  private final Map<String, DatasetCreationSpec> datasetSpecs;
 
   /**
    * Create an instance of {@link HttpServiceHandlerSpecification}.
    */
   public HttpServiceHandlerSpecification(String className, String name,
                                          String description, Map<String, String> properties,
-                                         Set<String> datasets, List<ServiceHttpEndpoint> endpoints,
-                                         Map<String, StreamSpecification> streams,
-                                         Map<String, String> datasetModules,
-                                         Map<String, DatasetCreationSpec> datasetSpecs) {
+                                         Set<String> datasets, List<ServiceHttpEndpoint> endpoints) {
     this.className = className;
     this.name = name;
     this.description = description;
     this.properties = Collections.unmodifiableMap(new HashMap<>(properties));
     this.datasets = Collections.unmodifiableSet(new HashSet<>(datasets));
     this.endpoints = Collections.unmodifiableList(new ArrayList<>(endpoints));
-    this.streams = Collections.unmodifiableMap(streams);
-    this.datasetModules = Collections.unmodifiableMap(datasetModules);
-    this.datasetSpecs = Collections.unmodifiableMap(datasetSpecs);
   }
 
   /**
@@ -118,17 +107,5 @@ public final class HttpServiceHandlerSpecification implements PropertyProvider, 
    */
   public List<ServiceHttpEndpoint> getEndpoints() {
     return endpoints;
-  }
-
-  public Map<String, StreamSpecification> getStreams() {
-    return streams;
-  }
-
-  public Map<String, String> getDatasetModules() {
-    return datasetModules;
-  }
-
-  public Map<String, DatasetCreationSpec> getDatasetSpecs() {
-    return datasetSpecs;
   }
 }

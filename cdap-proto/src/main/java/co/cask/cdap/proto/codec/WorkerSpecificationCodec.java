@@ -17,9 +17,7 @@
 package co.cask.cdap.proto.codec;
 
 import co.cask.cdap.api.Resources;
-import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.worker.WorkerSpecification;
-import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -45,9 +43,6 @@ public final class WorkerSpecificationCodec extends AbstractSpecificationCodec<W
     object.add("resources", context.serialize(spec.getResources(), Resources.class));
     object.add("datasets", serializeSet(spec.getDatasets(), context, String.class));
     object.addProperty("instances", spec.getInstances());
-    object.add("streams", serializeMap(spec.getStreams(), context, StreamSpecification.class));
-    object.add("datasetModules", serializeMap(spec.getDatasetModules(), context, String.class));
-    object.add("datasetSpecs", serializeMap(spec.getDatasetSpecs(), context, DatasetCreationSpec.class));
     return object;
   }
 
@@ -64,13 +59,6 @@ public final class WorkerSpecificationCodec extends AbstractSpecificationCodec<W
     Set<String> datasets = deserializeSet(jsonObj.get("datasets"), context, String.class);
     int instances = jsonObj.get("instances").getAsInt();
 
-    Map<String, StreamSpecification> streams = deserializeMap(jsonObj.get("streams"), context,
-                                                              StreamSpecification.class);
-    Map<String, String> datasetModules = deserializeMap(jsonObj.get("datasetModules"), context, String.class);
-    Map<String, DatasetCreationSpec> datasetSpecs = deserializeMap(jsonObj.get("datasetSpecs"), context,
-                                                                   DatasetCreationSpec.class);
-
-    return new WorkerSpecification(className, name, description, properties, datasets, resources, instances,
-                                   streams, datasetModules, datasetSpecs);
+    return new WorkerSpecification(className, name, description, properties, datasets, resources, instances);
   }
 }

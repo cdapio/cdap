@@ -17,9 +17,7 @@
 package co.cask.cdap.proto.codec;
 
 import co.cask.cdap.api.Resources;
-import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.spark.SparkSpecification;
-import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -52,9 +50,6 @@ public final class SparkSpecificationCodec extends AbstractSpecificationCodec<Sp
     if (src.getExecutorResources() != null) {
       jsonObj.add("executorResources", context.serialize(src.getExecutorResources()));
     }
-    jsonObj.add("streams", serializeMap(src.getStreams(), context, StreamSpecification.class));
-    jsonObj.add("datasetModules", serializeMap(src.getDatasetModules(), context, String.class));
-    jsonObj.add("datasetSpecs", serializeMap(src.getDatasetSpecs(), context, DatasetCreationSpec.class));
 
     return jsonObj;
   }
@@ -73,15 +68,8 @@ public final class SparkSpecificationCodec extends AbstractSpecificationCodec<Sp
     Resources driverResources = deserializeResources(jsonObj, "driver", context);
     Resources executorResources = deserializeResources(jsonObj, "executor", context);
 
-    Map<String, StreamSpecification> streams = deserializeMap(jsonObj.get("streams"), context,
-                                                              StreamSpecification.class);
-    Map<String, String> datasetModules = deserializeMap(jsonObj.get("datasetModules"), context, String.class);
-    Map<String, DatasetCreationSpec> datasetSpecs = deserializeMap(jsonObj.get("datasetSpecs"), context,
-                                                                   DatasetCreationSpec.class);
-
     return new SparkSpecification(className, name, description, mainClassName,
-                                  properties, driverResources, executorResources,
-                                  streams, datasetModules, datasetSpecs);
+                                  properties, driverResources, executorResources);
   }
 
   /**

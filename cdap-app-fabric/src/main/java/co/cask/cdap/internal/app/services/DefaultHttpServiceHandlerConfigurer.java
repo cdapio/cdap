@@ -91,7 +91,6 @@ public class DefaultHttpServiceHandlerConfigurer extends DefaultDatasetConfigure
   public HttpServiceHandlerSpecification createSpecification() {
     Map<String, String> properties = Maps.newHashMap(this.properties);
     properties.putAll(propertyFields);
-    return new HttpServiceHandlerSpecification(className, name, "", properties, datasets, endpoints,
-                                               streams, datasetModules, datasetSpecs);
+    return new HttpServiceHandlerSpecification(className, name, "", properties, datasets, endpoints);
   }
 }

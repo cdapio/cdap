@@ -38,7 +38,7 @@ public interface ProgramConfigurer {
   void setDescription(String description);
 
   /**
-   * Sets a set of properties that will be available through the {@link ProgramSpecification's getProperties()}
+   * Sets a set of properties that will be available through the Program specification's getProperties() method
    * at runtime.
    *
    * @param properties the properties to set

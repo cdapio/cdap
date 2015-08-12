@@ -91,9 +91,9 @@ public class DefaultFlowConfigurer extends DefaultDatasetConfigurer implements F
     Preconditions.checkArgument(!flowlets.containsKey(flowletName),
                                 UserMessages.getMessage(UserErrors.INVALID_FLOWLET_EXISTS), flowletName);
     flowlets.put(flowletName, flowletDef);
-    streams.putAll(flowletDef.getFlowletSpec().getStreams());
-    datasetSpecs.putAll(flowletDef.getFlowletSpec().getDatasetSpecs());
-    datasetModules.putAll(flowletDef.getFlowletSpec().getDatasetModules());
+    addStreams(flowletDef.getStreams());
+    addDatasetSpecs(flowletDef.getDatasetSpecs());
+    addDatasetModules(flowletDef.getDatasetModules());
   }
 
   @Override
@@ -140,7 +140,6 @@ public class DefaultFlowConfigurer extends DefaultDatasetConfigurer implements F
   }
 
   public FlowSpecification createSpecification() {
-    return new DefaultFlowSpecification(className, name, description, flowlets, connections, streams,
-                                        datasetModules, datasetSpecs);
+    return new DefaultFlowSpecification(className, name, description, flowlets, connections);
   }
 }

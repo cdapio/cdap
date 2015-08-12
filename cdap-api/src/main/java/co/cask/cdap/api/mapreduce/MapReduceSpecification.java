@@ -19,8 +19,6 @@ package co.cask.cdap.api.mapreduce;
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.common.PropertyProvider;
-import co.cask.cdap.api.data.stream.StreamSpecification;
-import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -43,15 +41,10 @@ public class MapReduceSpecification implements ProgramSpecification, PropertyPro
   private final String outputDataSet;
   private final Resources mapperResources;
   private final Resources reducerResources;
-  private final Map<String, StreamSpecification> streams;
-  private final Map<String, DatasetCreationSpec> datasetSpecs;
-  private final Map<String, String> datasetModules;
 
   public MapReduceSpecification(String className, String name, String description, String inputDataSet,
                                 String outputDataSet, Set<String> dataSets, Map<String, String> properties,
-                                Resources mapperResources, Resources reducerResources,
-                                Map<String, StreamSpecification> streams, Map<String, String> datasetModules,
-                                Map<String, DatasetCreationSpec> datasetSpecs) {
+                                Resources mapperResources, Resources reducerResources) {
     this.className = className;
     this.name = name;
     this.description = description;
@@ -62,9 +55,6 @@ public class MapReduceSpecification implements ProgramSpecification, PropertyPro
     this.mapperResources = mapperResources;
     this.reducerResources = reducerResources;
     this.dataSets = getAllDatasets(dataSets, inputDataSet, outputDataSet);
-    this.streams = Collections.unmodifiableMap(streams);
-    this.datasetSpecs = Collections.unmodifiableMap(datasetSpecs);
-    this.datasetModules = Collections.unmodifiableMap(datasetModules);
   }
 
   @Override
@@ -132,27 +122,6 @@ public class MapReduceSpecification implements ProgramSpecification, PropertyPro
   @Nullable
   public Resources getReducerResources() {
     return reducerResources;
-  }
-
-  /**
-   * @return Map of streams and {@link StreamSpecification} created in this program.
-   */
-  public Map<String, StreamSpecification> getStreams() {
-    return streams;
-  }
-
-  /**
-   * @return Map of dataset modules created in this program.
-   */
-  public Map<String, String> getDatasetModules() {
-    return datasetModules;
-  }
-
-  /**
-   * @return Map of dataset instances and {@link DatasetCreationSpec} created in this program.
-   */
-  public Map<String, DatasetCreationSpec> getDatasetSpecs() {
-    return datasetSpecs;
   }
 
   private Set<String> getAllDatasets(Set<String> dataSets, String inputDataSet, String outputDataSet) {

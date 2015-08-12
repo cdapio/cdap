@@ -16,11 +16,9 @@
 
 package co.cask.cdap.internal.app;
 
-import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletConnection;
 import co.cask.cdap.api.flow.FlowletDefinition;
-import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 
 import java.util.List;
 import java.util.Map;
@@ -59,20 +57,5 @@ public abstract class ForwardingFlowSpecification implements FlowSpecification {
   @Override
   public List<FlowletConnection> getConnections() {
     return delegate.getConnections();
-  }
-
-  @Override
-  public Map<String, StreamSpecification> getStreams() {
-    return delegate.getStreams();
-  }
-
-  @Override
-  public Map<String, String> getDatasetModules() {
-    return delegate.getDatasetModules();
-  }
-
-  @Override
-  public Map<String, DatasetCreationSpec> getDatasetSpecs() {
-    return delegate.getDatasetSpecs();
   }
 }

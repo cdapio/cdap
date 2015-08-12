@@ -95,8 +95,7 @@ public class DefaultServiceConfigurer extends DefaultDatasetConfigurer implement
 
   public ServiceSpecification createSpecification() {
     Map<String, HttpServiceHandlerSpecification> handleSpecs = createHandlerSpecs(handlers);
-    return new ServiceSpecification(className, name, description, handleSpecs, resources, instances, streams,
-                                    datasetModules, datasetSpecs);
+    return new ServiceSpecification(className, name, description, handleSpecs, resources, instances);
   }
 
   /**
@@ -113,9 +112,9 @@ public class DefaultServiceConfigurer extends DefaultDatasetConfigurer implement
       Preconditions.checkArgument(!handleSpecs.containsKey(spec.getName()),
                                   "Handler with name %s already existed.", spec.getName());
       handleSpecs.put(spec.getName(), spec);
-      streams.putAll(spec.getStreams());
-      datasetModules.putAll(spec.getDatasetModules());
-      datasetSpecs.putAll(spec.getDatasetSpecs());
+      addStreams(configurer.getStreams());
+      addDatasetModules(configurer.getDatasetModules());
+      addDatasetSpecs(configurer.getDatasetSpecs());
     }
     return handleSpecs;
   }

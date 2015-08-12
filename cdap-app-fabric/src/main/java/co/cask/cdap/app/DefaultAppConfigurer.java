@@ -107,9 +107,9 @@ public class DefaultAppConfigurer extends DefaultDatasetConfigurer implements Ap
       spec = new DefaultFlowSpecification(flow.getClass().getName(), spec);
     }
 
-    streams.putAll(spec.getStreams());
-    datasetModules.putAll(spec.getDatasetModules());
-    datasetSpecs.putAll(spec.getDatasetSpecs());
+    addStreams(configurer.getStreams());
+    addDatasetModules(configurer.getDatasetModules());
+    addDatasetSpecs(configurer.getDatasetSpecs());
     flows.put(spec.getName(), spec);
   }
 
@@ -119,10 +119,10 @@ public class DefaultAppConfigurer extends DefaultDatasetConfigurer implements Ap
     DefaultMapReduceConfigurer configurer = new DefaultMapReduceConfigurer(mapReduce);
     mapReduce.configure(configurer);
 
+    addStreams(configurer.getStreams());
+    addDatasetModules(configurer.getDatasetModules());
+    addDatasetSpecs(configurer.getDatasetSpecs());
     MapReduceSpecification spec = configurer.createSpecification();
-    streams.putAll(spec.getStreams());
-    datasetModules.putAll(spec.getDatasetModules());
-    datasetSpecs.putAll(spec.getDatasetSpecs());
     mapReduces.put(spec.getName(), spec);
   }
 
@@ -132,10 +132,10 @@ public class DefaultAppConfigurer extends DefaultDatasetConfigurer implements Ap
     DefaultSparkConfigurer configurer = new DefaultSparkConfigurer(spark);
     spark.configure(configurer);
 
+    addStreams(configurer.getStreams());
+    addDatasetModules(configurer.getDatasetModules());
+    addDatasetSpecs(configurer.getDatasetSpecs());
     SparkSpecification spec = configurer.createSpecification();
-    streams.putAll(spec.getStreams());
-    datasetModules.putAll(spec.getDatasetModules());
-    datasetSpecs.putAll(spec.getDatasetSpecs());
     sparks.put(spec.getName(), spec);
   }
 
@@ -153,11 +153,11 @@ public class DefaultAppConfigurer extends DefaultDatasetConfigurer implements Ap
     DefaultServiceConfigurer configurer = new DefaultServiceConfigurer(service);
     service.configure(configurer);
 
+    addStreams(configurer.getStreams());
+    addDatasetModules(configurer.getDatasetModules());
+    addDatasetSpecs(configurer.getDatasetSpecs());
     ServiceSpecification spec = configurer.createSpecification();
     services.put(spec.getName(), spec);
-    streams.putAll(spec.getStreams());
-    datasetModules.putAll(spec.getDatasetModules());
-    datasetSpecs.putAll(spec.getDatasetSpecs());
   }
 
   @Override
@@ -165,10 +165,11 @@ public class DefaultAppConfigurer extends DefaultDatasetConfigurer implements Ap
     Preconditions.checkArgument(worker != null, "Worker cannot be null.");
     DefaultWorkerConfigurer configurer = new DefaultWorkerConfigurer(worker);
     worker.configure(configurer);
+
+    addStreams(configurer.getStreams());
+    addDatasetModules(configurer.getDatasetModules());
+    addDatasetSpecs(configurer.getDatasetSpecs());
     WorkerSpecification spec = configurer.createSpecification();
-    streams.putAll(spec.getStreams());
-    datasetModules.putAll(spec.getDatasetModules());
-    datasetSpecs.putAll(spec.getDatasetSpecs());
     workers.put(spec.getName(), spec);
   }
 
@@ -199,8 +200,8 @@ public class DefaultAppConfigurer extends DefaultDatasetConfigurer implements Ap
   }
 
   public ApplicationSpecification createSpecification(String version) {
-    return new DefaultApplicationSpecification(name, version, description, configuration, artifactId, streams,
-                                               datasetModules, datasetSpecs,
+    return new DefaultApplicationSpecification(name, version, description, configuration, artifactId, getStreams(),
+                                               getDatasetModules(), getDatasetSpecs(),
                                                flows, mapReduces, sparks, workflows, services,
                                                schedules, workers);
   }

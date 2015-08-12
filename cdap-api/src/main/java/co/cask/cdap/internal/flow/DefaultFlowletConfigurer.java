@@ -100,7 +100,6 @@ public class DefaultFlowletConfigurer extends DefaultDatasetConfigurer implement
     Map<String, String> properties = new HashMap<>(this.properties);
     properties.putAll(propertyFields);
     return new DefaultFlowletSpecification(this.className, this.name, this.description, this.failurePolicy,
-                                           this.datasets, this.properties, this.resources, this.streams,
-                                           this.datasetModules, this.datasetSpecs);
+                                           this.datasets, this.properties, this.resources);
   }
 }

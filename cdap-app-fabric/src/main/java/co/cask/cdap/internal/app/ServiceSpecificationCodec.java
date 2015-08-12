@@ -24,7 +24,6 @@ import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.proto.codec.AbstractSpecificationCodec;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
@@ -81,8 +80,7 @@ public class ServiceSpecificationCodec extends AbstractSpecificationCodec<Servic
     Map<String, String> datasetModules = deserializeMap(jsonObj.get("datasetModules"), context, String.class);
     Map<String, DatasetCreationSpec> datasetSpecs = deserializeMap(jsonObj.get("datasetSpecs"), context,
                                                                    DatasetCreationSpec.class);
-    return new ServiceSpecification(className, name, description, handlers, resources, instances, streams,
-                                    datasetModules, datasetSpecs);
+    return new ServiceSpecification(className, name, description, handlers, resources, instances);
   }
 
   @Override
@@ -94,9 +92,6 @@ public class ServiceSpecificationCodec extends AbstractSpecificationCodec<Servic
     object.add("handlers", serializeMap(spec.getHandlers(), context, HttpServiceHandlerSpecification.class));
     object.add("resources", context.serialize(spec.getResources(), Resources.class));
     object.addProperty("instances", spec.getInstances());
-    object.add("streams", serializeMap(spec.getStreams(), context, StreamSpecification.class));
-    object.add("datasetModules", serializeMap(spec.getDatasetModules(), context, String.class));
-    object.add("datasetSpecs", serializeMap(spec.getDatasetSpecs(), context, DatasetCreationSpec.class));
     return object;
   }
 
@@ -131,16 +126,12 @@ public class ServiceSpecificationCodec extends AbstractSpecificationCodec<Servic
                                                        spec.get("name").getAsString(),
                                                        spec.get("description").getAsString(),
                                                        properties, ImmutableSet.<String>of(),
-                                                       ImmutableList.<ServiceHttpEndpoint>of(),
-                                                       Maps.<String, StreamSpecification>newHashMap(),
-                                                       Maps.<String, String>newHashMap(),
-                                                       Maps.<String, DatasetCreationSpec>newHashMap()));
+                                                       ImmutableList.<ServiceHttpEndpoint>of()));
     }
 
     ResourceSpecification resourceSpec = handlerSpec.getResourceSpecification();
     return new ServiceSpecification(className, twillSpec.getName(), twillSpec.getName(), handlers,
                                     new Resources(resourceSpec.getMemorySize(), resourceSpec.getVirtualCores()),
-                                    resourceSpec.getInstances(), ImmutableMap.<String, StreamSpecification>of(),
-                                    ImmutableMap.<String, String>of(), ImmutableMap.<String, DatasetCreationSpec>of());
+                                    resourceSpec.getInstances());
   }
 }

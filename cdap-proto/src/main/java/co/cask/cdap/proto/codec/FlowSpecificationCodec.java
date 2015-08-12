@@ -16,11 +16,9 @@
 
 package co.cask.cdap.proto.codec;
 
-import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletConnection;
 import co.cask.cdap.api.flow.FlowletDefinition;
-import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.internal.flow.DefaultFlowSpecification;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
@@ -47,9 +45,6 @@ public final class FlowSpecificationCodec extends AbstractSpecificationCodec<Flo
     jsonObj.add("description", new JsonPrimitive(src.getDescription()));
     jsonObj.add("flowlets", serializeMap(src.getFlowlets(), context, FlowletDefinition.class));
     jsonObj.add("connections", serializeList(src.getConnections(), context, FlowletConnection.class));
-    jsonObj.add("streams", serializeMap(src.getStreams(), context, StreamSpecification.class));
-    jsonObj.add("datasetModules", serializeMap(src.getDatasetModules(), context, String.class));
-    jsonObj.add("datasetSpecs", serializeMap(src.getDatasetSpecs(), context, DatasetCreationSpec.class));
 
     return jsonObj;
   }
@@ -65,12 +60,6 @@ public final class FlowSpecificationCodec extends AbstractSpecificationCodec<Flo
     Map<String, FlowletDefinition> flowlets = deserializeMap(jsonObj.get("flowlets"), context, FlowletDefinition.class);
     List<FlowletConnection> connections = deserializeList(jsonObj.get("connections"), context, FlowletConnection.class);
 
-    Map<String, StreamSpecification> streams = deserializeMap(jsonObj.get("streams"), context,
-                                                              StreamSpecification.class);
-    Map<String, String> datasetModules = deserializeMap(jsonObj.get("datasetModules"), context, String.class);
-    Map<String, DatasetCreationSpec> datasetSpecs = deserializeMap(jsonObj.get("datasetSpecs"), context,
-                                                                   DatasetCreationSpec.class);
-    return new DefaultFlowSpecification(className, name, description, flowlets, connections, streams, datasetModules,
-                                        datasetSpecs);
+    return new DefaultFlowSpecification(className, name, description, flowlets, connections);
   }
 }

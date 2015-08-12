@@ -91,7 +91,6 @@ public final class DefaultMapReduceConfigurer extends DefaultDatasetConfigurer i
 
   public MapReduceSpecification createSpecification() {
     return new MapReduceSpecification(className, name, description, inputDataset, outputDataset, datasets,
-                                      properties, mapperResources, reducerResources, streams, datasetModules,
-                                      datasetSpecs);
+                                      properties, mapperResources, reducerResources);
   }
 }

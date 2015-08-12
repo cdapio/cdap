@@ -67,7 +67,6 @@ final class SparkContextFactory {
   private SparkSpecification updateSpecExecutorResources(SparkSpecification originalSpec, Resources executorResources) {
     return new SparkSpecification(originalSpec.getClassName(), originalSpec.getName(), originalSpec.getDescription(),
                                   originalSpec.getMainClassName(), originalSpec.getProperties(),
-                                  originalSpec.getDriverResources(), executorResources, originalSpec.getStreams(),
-                                  originalSpec.getDatasetModules(), originalSpec.getDatasetSpecs());
+                                  originalSpec.getDriverResources(), executorResources);
   }
 }

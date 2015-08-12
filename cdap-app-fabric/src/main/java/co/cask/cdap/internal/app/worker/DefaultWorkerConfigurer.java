@@ -97,7 +97,6 @@ public class DefaultWorkerConfigurer extends DefaultDatasetConfigurer implements
   public WorkerSpecification createSpecification() {
     Map<String, String> properties = Maps.newHashMap(this.properties);
     properties.putAll(propertyFields);
-    return new WorkerSpecification(className, name, description, properties, datasets, resource, instances,
-                                   streams, datasetModules, datasetSpecs);
+    return new WorkerSpecification(className, name, description, properties, datasets, resource, instances);
   }
 }

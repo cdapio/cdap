@@ -18,14 +18,11 @@ package co.cask.cdap.api.flow.flowlet;
 
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.common.PropertyProvider;
-import co.cask.cdap.api.data.stream.StreamSpecification;
-import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.internal.flowlet.DefaultFlowletSpecification;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -77,21 +74,6 @@ public interface FlowletSpecification extends PropertyProvider {
    * @return The {@link Resources} requirements for the flowlet.
    */
   Resources getResources();
-
-  /**
-   * @return Map of streams and {@link StreamSpecification} created in this flowlet
-   */
-  Map<String, StreamSpecification> getStreams();
-
-  /**
-   * @return Map of dataset modules created in this flowlet.
-   */
-  Map<String, String> getDatasetModules();
-
-  /**
-   * @return Map of dataset instances and {@link DatasetCreationSpec} created in this flowlet.
-   */
-  Map<String, DatasetCreationSpec> getDatasetSpecs();
 
   /**
    * Builder for creating instance of {@link FlowletSpecification}. The builder instance is
@@ -196,10 +178,7 @@ public interface FlowletSpecification extends PropertyProvider {
        */
       public FlowletSpecification build() {
         return new DefaultFlowletSpecification(name, description, failurePolicy,
-                                               dataSets.build(), arguments, resources,
-                                               new HashMap<String, StreamSpecification>(),
-                                               new HashMap<String, String>(),
-                                               new HashMap<String, DatasetCreationSpec>());
+                                               dataSets.build(), arguments, resources);
       }
     }
 

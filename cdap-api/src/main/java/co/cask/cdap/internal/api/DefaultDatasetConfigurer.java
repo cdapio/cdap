@@ -33,9 +33,33 @@ import java.util.Map;
  */
 public class DefaultDatasetConfigurer implements DatasetConfigurer {
 
-  protected final Map<String, StreamSpecification> streams = new HashMap<>();
-  protected final Map<String, DatasetCreationSpec> datasetSpecs = new HashMap<>();
-  protected final Map<String, String> datasetModules = new HashMap<>();
+  private final Map<String, StreamSpecification> streams = new HashMap<>();
+  private final Map<String, DatasetCreationSpec> datasetSpecs = new HashMap<>();
+  private final Map<String, String> datasetModules = new HashMap<>();
+
+  public Map<String, StreamSpecification> getStreams() {
+    return streams;
+  }
+
+  public Map<String, DatasetCreationSpec> getDatasetSpecs() {
+    return datasetSpecs;
+  }
+
+  public Map<String, String> getDatasetModules() {
+    return datasetModules;
+  }
+
+  public void addStreams(Map<String, StreamSpecification> streams) {
+    this.streams.putAll(streams);
+  }
+
+  public void addDatasetSpecs(Map<String, DatasetCreationSpec> datasetSpecs) {
+    this.datasetSpecs.putAll(datasetSpecs);
+  }
+
+  public void addDatasetModules(Map<String, String> datasetModules) {
+    this.datasetModules.putAll(datasetModules);
+  }
 
   @Override
   public void addStream(Stream stream) {

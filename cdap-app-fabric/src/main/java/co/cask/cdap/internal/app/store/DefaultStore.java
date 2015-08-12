@@ -436,10 +436,7 @@ public class DefaultStore implements Store {
                                                                        workerSpec.getProperties(),
                                                                        workerSpec.getDatasets(),
                                                                        workerSpec.getResources(),
-                                                                       instances,
-                                                                       workerSpec.getStreams(),
-                                                                       workerSpec.getDatasetModules(),
-                                                                       workerSpec.getDatasetSpecs());
+                                                                       instances);
         ApplicationSpecification newAppSpec = replaceWorkerInAppSpec(appSpec, id, newSpecification);
         replaceAppSpecInProgramJar(id, newAppSpec);
         mds.apps.updateAppSpec(id.getNamespaceId(), id.getApplicationId(), newAppSpec);
@@ -465,8 +462,7 @@ public class DefaultStore implements Store {
         // Create a new spec copy from the old one, except with updated instances number
         serviceSpec = new ServiceSpecification(serviceSpec.getClassName(), serviceSpec.getName(),
                                                serviceSpec.getDescription(), serviceSpec.getHandlers(),
-                                               serviceSpec.getResources(), instances, serviceSpec.getStreams(),
-                                               serviceSpec.getDatasetModules(), serviceSpec.getDatasetSpecs());
+                                               serviceSpec.getResources(), instances);
 
         ApplicationSpecification newAppSpec = replaceServiceSpec(appSpec, id.getId(), serviceSpec);
         replaceAppSpecInProgramJar(id, newAppSpec);

@@ -17,9 +17,7 @@
 package co.cask.cdap.proto.codec;
 
 import co.cask.cdap.api.Resources;
-import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
-import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -57,9 +55,6 @@ public final class MapReduceSpecificationCodec extends AbstractSpecificationCode
     }
     jsonObj.add("datasets", serializeSet(src.getDataSets(), context, String.class));
     jsonObj.add("properties", serializeMap(src.getProperties(), context, String.class));
-    jsonObj.add("streams", serializeMap(src.getStreams(), context, StreamSpecification.class));
-    jsonObj.add("datasetModules", serializeMap(src.getDatasetModules(), context, String.class));
-    jsonObj.add("datasetSpecs", serializeMap(src.getDatasetSpecs(), context, DatasetCreationSpec.class));
 
     return jsonObj;
   }
@@ -82,15 +77,8 @@ public final class MapReduceSpecificationCodec extends AbstractSpecificationCode
     Set<String> dataSets = deserializeSet(jsonObj.get("datasets"), context, String.class);
     Map<String, String> properties = deserializeMap(jsonObj.get("properties"), context, String.class);
 
-    Map<String, StreamSpecification> streams = deserializeMap(jsonObj.get("streams"), context,
-                                                              StreamSpecification.class);
-    Map<String, String> datasetModules = deserializeMap(jsonObj.get("datasetModules"), context, String.class);
-    Map<String, DatasetCreationSpec> datasetSpecs = deserializeMap(jsonObj.get("datasetSpecs"), context,
-                                                                   DatasetCreationSpec.class);
-
     return new MapReduceSpecification(className, name, description, inputDataSet, outputDataSet,
-                                             dataSets, properties, mapperResources, reducerResources, streams,
-                                             datasetModules, datasetSpecs);
+                                             dataSets, properties, mapperResources, reducerResources);
   }
 
   /**

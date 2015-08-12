@@ -16,10 +16,8 @@
 
 package co.cask.cdap.proto.codec;
 
-import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
-import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
@@ -53,14 +51,7 @@ public class HttpServiceSpecificationCodec extends AbstractSpecificationCodec<Ht
       endpointsExposed = deserializeList(jsonObj.get("endpoints"), context, ServiceHttpEndpoint.class);
     }
 
-    Map<String, StreamSpecification> streams = deserializeMap(jsonObj.get("streams"), context,
-                                                              StreamSpecification.class);
-    Map<String, String> datasetModules = deserializeMap(jsonObj.get("datasetModules"), context, String.class);
-    Map<String, DatasetCreationSpec> datasetSpecs = deserializeMap(jsonObj.get("datasetSpecs"), context,
-                                                                   DatasetCreationSpec.class);
-
-    return new HttpServiceHandlerSpecification(className, name, description, properties, datasets, endpointsExposed,
-                                               streams, datasetModules, datasetSpecs);
+    return new HttpServiceHandlerSpecification(className, name, description, properties, datasets, endpointsExposed);
   }
 
   private boolean isOldSpec(JsonObject json) {
@@ -76,9 +67,6 @@ public class HttpServiceSpecificationCodec extends AbstractSpecificationCodec<Ht
     json.add("properties", serializeMap(src.getProperties(), context, String.class));
     json.add("datasets", serializeSet(src.getDatasets(), context, String.class));
     json.add("endpoints", serializeList(src.getEndpoints(), context, ServiceHttpEndpoint.class));
-    json.add("streams", serializeMap(src.getStreams(), context, StreamSpecification.class));
-    json.add("datasetModules", serializeMap(src.getDatasetModules(), context, String.class));
-    json.add("datasetSpecs", serializeMap(src.getDatasetSpecs(), context, DatasetCreationSpec.class));
     return json;
   }
 }

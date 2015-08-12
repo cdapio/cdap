@@ -85,7 +85,6 @@ public final class DefaultSparkConfigurer extends DefaultDatasetConfigurer imple
     // Grab all @Property fields
     Reflections.visit(spark, TypeToken.of(spark.getClass()), new PropertyFieldExtractor(properties));
     return new SparkSpecification(spark.getClass().getName(), name, description,
-                                  mainClassName, properties, driverResources, executorResources, streams,
-                                  datasetModules, datasetSpecs);
+                                  mainClassName, properties, driverResources, executorResources);
   }
 }

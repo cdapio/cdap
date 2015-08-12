@@ -16,11 +16,9 @@
 
 package co.cask.cdap.internal.flow;
 
-import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletConnection;
 import co.cask.cdap.api.flow.FlowletDefinition;
-import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
@@ -37,34 +35,23 @@ public final class DefaultFlowSpecification implements FlowSpecification {
   private final String description;
   private final Map<String, FlowletDefinition> flowlets;
   private final List<FlowletConnection> connections;
-  private final Map<String, StreamSpecification> streams;
-  private final Map<String, String> datasetModules;
-  private final Map<String, DatasetCreationSpec> datasetSpecs;
 
   public DefaultFlowSpecification(String name, String description,
                                   Map<String, FlowletDefinition> flowlets, List<FlowletConnection> connections) {
-    this(null, name, description, flowlets, connections, ImmutableMap.<String, StreamSpecification>of(),
-      ImmutableMap.<String, String>of(), ImmutableMap.<String, DatasetCreationSpec>of());
+    this(null, name, description, flowlets, connections);
   }
 
   public DefaultFlowSpecification(String className, FlowSpecification other) {
-    this(className, other.getName(), other.getDescription(), other.getFlowlets(), other.getConnections(),
-         ImmutableMap.<String, StreamSpecification>of(),
-         ImmutableMap.<String, String>of(), ImmutableMap.<String, DatasetCreationSpec>of());
+    this(className, other.getName(), other.getDescription(), other.getFlowlets(), other.getConnections());
   }
 
   public DefaultFlowSpecification(String className, String name, String description,
-                                  Map<String, FlowletDefinition> flowlets, List<FlowletConnection> connections,
-                                  Map<String, StreamSpecification> streams, Map<String, String> datasetModules,
-                                  Map<String, DatasetCreationSpec> datasetSpecs) {
+                                  Map<String, FlowletDefinition> flowlets, List<FlowletConnection> connections) {
     this.className = className;
     this.name = name;
     this.description = description;
     this.flowlets = ImmutableMap.copyOf(flowlets);
     this.connections = ImmutableList.copyOf(connections);
-    this.streams = ImmutableMap.copyOf(streams);
-    this.datasetModules = ImmutableMap.copyOf(datasetModules);
-    this.datasetSpecs = ImmutableMap.copyOf(datasetSpecs);
   }
 
   @Override
@@ -90,20 +77,5 @@ public final class DefaultFlowSpecification implements FlowSpecification {
   @Override
   public List<FlowletConnection> getConnections() {
     return connections;
-  }
-
-  @Override
-  public Map<String, StreamSpecification> getStreams() {
-    return streams;
-  }
-
-  @Override
-  public Map<String, String> getDatasetModules() {
-    return datasetModules;
-  }
-
-  @Override
-  public Map<String, DatasetCreationSpec> getDatasetSpecs() {
-    return datasetSpecs;
   }
 }
