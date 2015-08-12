@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.admin')
-  .controller('NamespaceTemplatesController', function ($scope, myAdapterApi, PluginConfigFactory, myHelpers, mySettings, $stateParams) {
+  .controller('NamespaceTemplatesController', function ($scope, myAdapterApi, PluginConfigFactory, myHelpers, mySettings, $stateParams, $alert, $state) {
 
     var vm = this;
 
@@ -62,12 +62,30 @@ angular.module(PKG.name + '.feature.admin')
     });
 
     this.save = function () {
+
+      if (!vm.pluginConfig.templateName) {
+        $alert({
+          type: 'danger',
+          title: 'Error!',
+          content: 'Please enter template name'
+        });
+
+        return;
+      }
+
+      vm.loading = true;
+
+      if (vm.pluginConfig._backendProperties.schema) {
+        vm.pluginConfig.properties.schema = vm.pluginConfig.outputSchema;
+      }
+
       var properties = {
         templateName: vm.pluginConfig.templateName,
         properties: vm.pluginConfig.properties,
         type: vm.pluginType,
         templateType: vm.template,
-        pluginName: vm.plugin
+        pluginName: vm.plugin,
+        outputSchema: vm.pluginConfig.outputSchema
       };
 
       var namespace = $stateParams.nsadmin;
@@ -86,8 +104,14 @@ angular.module(PKG.name + '.feature.admin')
           res[namespace][properties.templateName] = properties;
           return mySettings.set('pluginTemplates', res);
         })
-        .then(function (asd) {
-          mySettings.get('pluginTemplates').then(function (aaaa) { console.log('aaa', aaaa); } );
+        .then(function () {
+          $alert({
+            type: 'success',
+            content: 'Success saving template'
+          });
+          this.loading = false;
+
+          $state.go('admin.namespace.detail.templateslist');
         });
     };
 
