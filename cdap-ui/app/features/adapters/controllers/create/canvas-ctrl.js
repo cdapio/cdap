@@ -1,5 +1,31 @@
 angular.module(PKG.name + '.feature.adapters')
-  .controller('CanvasController', function (myAdapterApi, MyPlumbService, $bootstrapModal, $state, $scope, $alert, CanvasFactory, MyPlumbFactory, $modalStack, $timeout, ModalConfirm, myAdapterTemplatesApi, $q) {
+  .controller('CanvasController', function (myAdapterApi, MyPlumbService, $bootstrapModal, $state, $scope, $alert, CanvasFactory, MyPlumbFactory, $modalStack, $timeout, ModalConfirm, myAdapterTemplatesApi, $q, mySettings) {
+
+    var sourceTemplates = [],
+        transformTemplates = [],
+        sinkTemplates = [];
+
+    mySettings.get('pluginTemplates')
+      .then(function (res) {
+        var templates = res[$state.params.namespace];
+
+        angular.forEach(templates, function (template) {
+          if (template.templateType === MyPlumbService.metadata.template.type) {
+            template.icon = 'fa-plug';
+            template.name = template.templateName;
+            if (template.type === 'source') {
+              sourceTemplates.push(template);
+            } else if (template.type === 'transform') {
+              transformTemplates.push(template);
+            } else if (template.type === 'sink') {
+              sinkTemplates.push(template);
+            }
+          }
+        });
+
+      });
+
+
     this.nodes = [];
     this.reloadDAG = false;
     if ($scope.AdapterCreateController.data) {
@@ -201,15 +227,19 @@ angular.module(PKG.name + '.feature.adapters')
     this.onLeftSideGroupItemClicked = function(group) {
       var prom;
       var templatedefer = $q.defer();
+      var savedTemplates;
       switch(group.name) {
         case 'source':
           prom = myAdapterApi.fetchSources({ adapterType: MyPlumbService.metadata.template.type }).$promise;
+          savedTemplates = sourceTemplates;
           break;
         case 'transform':
           prom = myAdapterApi.fetchTransforms({ adapterType: MyPlumbService.metadata.template.type }).$promise;
+          savedTemplates = transformTemplates;
           break;
         case 'sink':
           prom = myAdapterApi.fetchSinks({ adapterType: MyPlumbService.metadata.template.type }).$promise;
+          savedTemplates = sinkTemplates;
           break;
         case 'templates':
           prom = myAdapterTemplatesApi.list({
@@ -231,6 +261,7 @@ angular.module(PKG.name + '.feature.adapters')
       prom.then(function(res) {
         this.plugins.items = [];
         res.forEach(function(plugin) {
+          console.log('plugin', plugin);
           this.plugins.items.push(
             angular.extend(
               {
@@ -241,6 +272,10 @@ angular.module(PKG.name + '.feature.adapters')
             )
           );
         }.bind(this));
+
+        this.plugins.items = this.plugins.items.concat(savedTemplates);
+
+        console.log('plugins', this.plugins.items);
       }.bind(this));
     };
 
@@ -271,17 +306,31 @@ angular.module(PKG.name + '.feature.adapters')
           }.bind(this));
         return;
       }
-
+console.log('item', item);
       // TODO: Better UUID?
       var id = item.name + '-' + item.type + '-' + Date.now();
       event.stopPropagation();
-      var config = {
-        id: id,
-        name: item.name,
-        icon: item.icon,
-        description: item.description,
-        type: item.type
-      };
+
+      var config;
+
+      if (item.templateName) {
+        config = {
+          id: id,
+          name: item.pluginName,
+          icon: MyPlumbFactory.getIcon(item.pluginName),
+          type: item.type,
+          properties: item.properties
+        };
+      } else {
+        config = {
+          id: id,
+          name: item.name,
+          icon: item.icon,
+          description: item.description,
+          type: item.type
+        };
+      }
+
       MyPlumbService.addNodes(config, config.type, true);
     };
 
