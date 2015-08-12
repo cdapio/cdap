@@ -40,7 +40,6 @@ angular.module(PKG.name + '.feature.admin')
 
     // Fetching backend properties
     $scope.$watch(function () { return vm.plugin; }, function () {
-      console.log('vm.plugin', vm.plugin);
       if (!vm.plugin) { return; }
 
       plugin = {
@@ -66,18 +65,15 @@ angular.module(PKG.name + '.feature.admin')
       var properties = {
         templateName: vm.pluginConfig.templateName,
         properties: vm.pluginConfig.properties,
-        type: vm.template,
-        pluginType: vm.pluginType,
+        type: vm.pluginType,
+        templateType: vm.template,
         pluginName: vm.plugin
       };
-
-      console.log('PROPERTIES', properties);
 
       var namespace = $stateParams.nsadmin;
 
       mySettings.get('pluginTemplates')
         .then(function(res) {
-          console.log('res', res);
 
           if (!angular.isObject(res)) {
             res = {};
