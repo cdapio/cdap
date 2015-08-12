@@ -68,12 +68,12 @@ public class SparkMetricsSink implements Sink {
   }
 
   /**
-   * Generate a properties file which is used to config Spark Metrics in {@link SparkConf}
+   * Writes a properties file which is used to config Spark Metrics in {@link SparkConf}.
    *
    * @param file the {@link File} where this file should be generated
    * @return the same File argument provided.
    */
-  public static File generateSparkMetricsConfig(File file) throws IOException {
+  public static File writeConfig(File file) throws IOException {
     Properties properties = new Properties();
     properties.setProperty("*.sink.cdap.class", SparkMetricsSink.class.getName());
 

@@ -30,7 +30,11 @@ public final class LocalizeResource {
   private final boolean archive;
 
   public LocalizeResource(File file) {
-    this(file.toURI(), false);
+    this(file, false);
+  }
+
+  public LocalizeResource(File file, boolean archive) {
+    this(file.toURI(), archive);
   }
 
   public LocalizeResource(URI uri, boolean archive) {
