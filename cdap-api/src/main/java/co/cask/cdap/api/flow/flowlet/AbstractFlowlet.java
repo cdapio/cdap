@@ -17,11 +17,8 @@
 package co.cask.cdap.api.flow.flowlet;
 
 import co.cask.cdap.api.Resources;
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.internal.api.ProgramDataset;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -40,7 +37,7 @@ import javax.annotation.Nullable;
  *   for more control over customizing the {@link FlowletSpecification}.
  * </p>
  */
-public abstract class AbstractFlowlet implements Flowlet, Callback {
+public abstract class AbstractFlowlet extends ProgramDataset implements Flowlet, Callback {
 
   private final String name;
   private FlowletConfigurer configurer;
@@ -48,6 +45,7 @@ public abstract class AbstractFlowlet implements Flowlet, Callback {
 
   public void configure(FlowletConfigurer configurer) {
     this.configurer = configurer;
+    this.datasetConfigurer = configurer;
     FlowletSpecification specification = configure();
     configurer.setName(specification.getName());
     configurer.setDescription(specification.getDescription());
@@ -107,70 +105,6 @@ public abstract class AbstractFlowlet implements Flowlet, Callback {
    */
   protected void setProperties(Map<String, String> properties) {
     configurer.setProperties(properties);
-  }
-
-  /**
-   * @see FlowletConfigurer#addStream(Stream)
-   */
-  protected final void addStream(Stream stream) {
-    configurer.addStream(stream);
-  }
-
-  /**
-   * @see FlowletConfigurer#addDatasetModule(String, Class)
-   */
-  @Beta
-  protected final void addDatasetModule(String moduleName, Class<? extends DatasetModule> moduleClass) {
-    configurer.addDatasetModule(moduleName, moduleClass);
-  }
-
-  /**
-   * @see FlowletConfigurer#addDatasetType(Class)
-   */
-  @Beta
-  protected final void addDatasetType(Class<? extends Dataset> datasetClass) {
-    configurer.addDatasetType(datasetClass);
-  }
-
-  /**
-   * Calls {@link FlowletConfigurer#createDataset(String, String, DatasetProperties)}, passing empty properties.
-   *
-   * @see FlowletConfigurer#createDataset(String, String, DatasetProperties)
-   */
-  @Beta
-  protected final void createDataset(String datasetName, String typeName) {
-    configurer.createDataset(datasetName, typeName, DatasetProperties.EMPTY);
-  }
-
-  /**
-   * Calls {@link FlowletConfigurer#createDataset(String, String, DatasetProperties)}, passing the type name and
-   * properties.
-   *
-   * @see FlowletConfigurer#createDataset(String, String, co.cask.cdap.api.dataset.DatasetProperties)
-   */
-  @Beta
-  protected final void createDataset(String datasetName, String typeName, DatasetProperties properties) {
-    configurer.createDataset(datasetName, typeName, properties);
-  }
-
-  /**
-   * Calls {@link FlowletConfigurer#createDataset(String, String, DatasetProperties)}, passing the dataset class
-   * and properties.
-   *
-   * @see FlowletConfigurer#createDataset(String, Class, co.cask.cdap.api.dataset.DatasetProperties)
-   */
-  protected final void createDataset(String datasetName, Class<? extends Dataset> datasetClass,
-                                     DatasetProperties properties) {
-    configurer.createDataset(datasetName, datasetClass, properties);
-  }
-
-  /**
-   * Calls {@link FlowletConfigurer#createDataset(String, Class, DatasetProperties)}, passing empty properties.
-   *
-   * @see FlowletConfigurer#createDataset(String, Class, DatasetProperties)
-   */
-  protected final void createDataset(String datasetName, Class<? extends Dataset> datasetClass) {
-    configurer.createDataset(datasetName, datasetClass, DatasetProperties.EMPTY);
   }
 
   /**

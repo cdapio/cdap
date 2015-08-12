@@ -17,12 +17,8 @@
 package co.cask.cdap.api.mapreduce;
 
 import co.cask.cdap.api.Resources;
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
-import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.internal.api.ProgramDataset;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -32,13 +28,14 @@ import java.util.Map;
 /**
  * This abstract class provides a default implementation of {@link MapReduce} methods for easy extension.
  */
-public abstract class AbstractMapReduce implements MapReduce {
+public abstract class AbstractMapReduce extends ProgramDataset implements MapReduce {
 
   private MapReduceConfigurer configurer;
 
   @Override
   public final void configure(MapReduceConfigurer configurer) {
     this.configurer = configurer;
+    this.datasetConfigurer = configurer;
     configure();
   }
 
@@ -92,70 +89,6 @@ public abstract class AbstractMapReduce implements MapReduce {
    */
   protected final void setReducerResources(Resources resources) {
     configurer.setReducerResources(resources);
-  }
-
-  /**
-   * @see MapReduceConfigurer#addStream(Stream)
-   */
-  protected final void addStream(Stream stream) {
-    configurer.addStream(stream);
-  }
-
-  /**
-   * @see MapReduceConfigurer#addDatasetModule(String, Class)
-   */
-  @Beta
-  protected final void addDatasetModule(String moduleName, Class<? extends DatasetModule> moduleClass) {
-    configurer.addDatasetModule(moduleName, moduleClass);
-  }
-
-  /**
-   * @see MapReduceConfigurer#addDatasetType(Class)
-   */
-  @Beta
-  protected final void addDatasetType(Class<? extends Dataset> datasetClass) {
-    configurer.addDatasetType(datasetClass);
-  }
-
-  /**
-   * Calls {@link MapReduceConfigurer#createDataset(String, String, DatasetProperties)}, passing empty properties.
-   *
-   * @see MapReduceConfigurer#createDataset(String, String, DatasetProperties)
-   */
-  @Beta
-  protected final void createDataset(String datasetName, String typeName) {
-    configurer.createDataset(datasetName, typeName, DatasetProperties.EMPTY);
-  }
-
-  /**
-   * Calls {@link MapReduceConfigurer#createDataset(String, String, DatasetProperties)}, passing the type name and
-   * properties.
-   *
-   * @see MapReduceConfigurer#createDataset(String, String, co.cask.cdap.api.dataset.DatasetProperties)
-   */
-  @Beta
-  protected final void createDataset(String datasetName, String typeName, DatasetProperties properties) {
-    configurer.createDataset(datasetName, typeName, properties);
-  }
-
-  /**
-   * Calls {@link MapReduceConfigurer#createDataset(String, String, DatasetProperties)}, passing the dataset class
-   * and properties.
-   *
-   * @see MapReduceConfigurer#createDataset(String, Class, co.cask.cdap.api.dataset.DatasetProperties)
-   */
-  protected final void createDataset(String datasetName, Class<? extends Dataset> datasetClass,
-                                     DatasetProperties properties) {
-    configurer.createDataset(datasetName, datasetClass, properties);
-  }
-
-  /**
-   * Calls {@link MapReduceConfigurer#createDataset(String, Class, DatasetProperties)}, passing empty properties.
-   *
-   * @see MapReduceConfigurer#createDataset(String, Class, DatasetProperties)
-   */
-  protected final void createDataset(String datasetName, Class<? extends Dataset> datasetClass) {
-    configurer.createDataset(datasetName, datasetClass, DatasetProperties.EMPTY);
   }
 
   /**

@@ -16,18 +16,15 @@
 
 package co.cask.cdap.api.flow;
 
-import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.data.stream.Stream;
-import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.flow.flowlet.Flowlet;
 import co.cask.cdap.api.flow.flowlet.FlowletConfigurer;
+import co.cask.cdap.internal.api.ProgramDataset;
 
 /**
  * This abstract class provides a default implementation of {@link Flow} methods for easy extension.
  */
-public class AbstractFlow implements Flow {
+public class AbstractFlow extends ProgramDataset implements Flow {
 
   private FlowConfigurer configurer;
 
@@ -39,6 +36,7 @@ public class AbstractFlow implements Flow {
 
   public final void configure(FlowConfigurer configurer) {
     this.configurer = configurer;
+    this.datasetConfigurer = configurer;
     configureFlow();
   }
 
@@ -74,70 +72,6 @@ public class AbstractFlow implements Flow {
    */
   protected void setDescription(String description) {
     configurer.setDescription(description);
-  }
-
-  /**
-   * @see FlowConfigurer#addStream(Stream)
-   */
-  protected final void addStream(Stream stream) {
-    configurer.addStream(stream);
-  }
-
-  /**
-   * @see FlowConfigurer#addDatasetModule(String, Class)
-   */
-  @Beta
-  protected final void addDatasetModule(String moduleName, Class<? extends DatasetModule> moduleClass) {
-    configurer.addDatasetModule(moduleName, moduleClass);
-  }
-
-  /**
-   * @see FlowConfigurer#addDatasetType(Class)
-   */
-  @Beta
-  protected final void addDatasetType(Class<? extends Dataset> datasetClass) {
-    configurer.addDatasetType(datasetClass);
-  }
-
-  /**
-   * Calls {@link FlowConfigurer#createDataset(String, String, DatasetProperties)}, passing empty properties.
-   *
-   * @see FlowConfigurer#createDataset(String, String, DatasetProperties)
-   */
-  @Beta
-  protected final void createDataset(String datasetName, String typeName) {
-    configurer.createDataset(datasetName, typeName, DatasetProperties.EMPTY);
-  }
-
-  /**
-   * Calls {@link FlowConfigurer#createDataset(String, String, DatasetProperties)}, passing the type name and
-   * properties.
-   *
-   * @see FlowConfigurer#createDataset(String, String, co.cask.cdap.api.dataset.DatasetProperties)
-   */
-  @Beta
-  protected final void createDataset(String datasetName, String typeName, DatasetProperties properties) {
-    configurer.createDataset(datasetName, typeName, properties);
-  }
-
-  /**
-   * Calls {@link FlowConfigurer#createDataset(String, String, DatasetProperties)}, passing the dataset class
-   * and properties.
-   *
-   * @see FlowConfigurer#createDataset(String, Class, co.cask.cdap.api.dataset.DatasetProperties)
-   */
-  protected final void createDataset(String datasetName, Class<? extends Dataset> datasetClass,
-                                     DatasetProperties properties) {
-    configurer.createDataset(datasetName, datasetClass, properties);
-  }
-
-  /**
-   * Calls {@link FlowConfigurer#createDataset(String, Class, DatasetProperties)}, passing empty properties.
-   *
-   * @see FlowConfigurer#createDataset(String, Class, DatasetProperties)
-   */
-  protected final void createDataset(String datasetName, Class<? extends Dataset> datasetClass) {
-    configurer.createDataset(datasetName, datasetClass, DatasetProperties.EMPTY);
   }
 
   /**

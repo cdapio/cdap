@@ -16,11 +16,7 @@
 
 package co.cask.cdap.api.service.http;
 
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.data.stream.Stream;
-import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.internal.api.ProgramDataset;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -31,7 +27,7 @@ import java.util.Map;
  * An abstract implementation of {@link HttpServiceHandler}. Classes that extend this class only
  * have to implement a configure method which can be used to add optional arguments.
  */
-public abstract class AbstractHttpServiceHandler implements HttpServiceHandler {
+public abstract class AbstractHttpServiceHandler extends ProgramDataset implements HttpServiceHandler {
   private HttpServiceConfigurer configurer;
   private HttpServiceContext context;
 
@@ -51,73 +47,8 @@ public abstract class AbstractHttpServiceHandler implements HttpServiceHandler {
   @Override
   public final void configure(HttpServiceConfigurer configurer) {
     this.configurer = configurer;
+    this.datasetConfigurer = configurer;
     configure();
-  }
-
-  /**
-   * @see HttpServiceConfigurer#addStream(Stream)
-   */
-  protected final void addStream(Stream stream) {
-    configurer.addStream(stream);
-  }
-
-  /**
-   * @see HttpServiceConfigurer#addDatasetModule(String, Class)
-   */
-  @Beta
-  protected final void addDatasetModule(String moduleName, Class<? extends DatasetModule> moduleClass) {
-    configurer.addDatasetModule(moduleName, moduleClass);
-  }
-
-  /**
-   * @see HttpServiceConfigurer#addDatasetType(Class)
-   */
-  @Beta
-  protected final void addDatasetType(Class<? extends Dataset> datasetClass) {
-    configurer.addDatasetType(datasetClass);
-  }
-
-  /**
-   * Calls {@link HttpServiceConfigurer#createDataset(String, String, DatasetProperties)}, passing empty properties.
-   *
-   * @see HttpServiceConfigurer#createDataset(String, String, DatasetProperties)
-   */
-  @Beta
-  protected final void createDataset(String datasetName, String typeName) {
-    configurer.createDataset(datasetName, typeName, DatasetProperties.EMPTY);
-  }
-
-  /**
-   * Calls {@link HttpServiceConfigurer#createDataset(String, String, DatasetProperties)}, passing the type name and
-   * properties.
-   *
-   * @see HttpServiceConfigurer#createDataset(String, String, co.cask.cdap.api.dataset.DatasetProperties)
-   */
-  @Beta
-  protected final void createDataset(String datasetName, String typeName, DatasetProperties properties) {
-    configurer.createDataset(datasetName, typeName, properties);
-  }
-
-  /**
-   * Calls {@link HttpServiceConfigurer#createDataset(String, String, DatasetProperties)}, passing the dataset class
-   * and properties.
-   *
-   * @see HttpServiceConfigurer#createDataset(String, Class, co.cask.cdap.api.dataset.DatasetProperties)
-   */
-  protected final void createDataset(String datasetName,
-                                     Class<? extends Dataset> datasetClass,
-                                     DatasetProperties properties) {
-    configurer.createDataset(datasetName, datasetClass, properties);
-  }
-
-  /**
-   * Calls {@link HttpServiceConfigurer#createDataset(String, Class, DatasetProperties)}, passing empty properties.
-   *
-   * @see HttpServiceConfigurer#createDataset(String, Class, DatasetProperties)
-   */
-  protected final void createDataset(String datasetName,
-                                     Class<? extends Dataset> datasetClass) {
-    configurer.createDataset(datasetName, datasetClass, DatasetProperties.EMPTY);
   }
 
   /**
