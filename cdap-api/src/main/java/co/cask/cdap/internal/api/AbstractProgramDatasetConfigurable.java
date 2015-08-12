@@ -33,6 +33,13 @@ public abstract class AbstractProgramDatasetConfigurable<T extends DatasetConfig
   protected abstract T getConfigurer();
 
   /**
+   * @see DatasetConfigurer#addStream(String)
+   */
+  protected final void addStream(String stream) {
+    getConfigurer().addStream(stream);
+  }
+
+  /**
    * @see DatasetConfigurer#addStream(Stream)
    */
   protected final void addStream(Stream stream) {
@@ -93,7 +100,7 @@ public abstract class AbstractProgramDatasetConfigurable<T extends DatasetConfig
    * @see DatasetConfigurer#createDataset(String, Class, DatasetProperties)
    */
   protected final void createDataset(String datasetName, Class<? extends Dataset> datasetClass) {
-    getConfigurer().createDataset(datasetName, datasetClass, DatasetProperties.EMPTY);
+    getConfigurer().createDataset(datasetName, datasetClass);
   }
 
 }
