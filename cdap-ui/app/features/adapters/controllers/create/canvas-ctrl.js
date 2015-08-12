@@ -261,7 +261,6 @@ angular.module(PKG.name + '.feature.adapters')
       prom.then(function(res) {
         this.plugins.items = [];
         res.forEach(function(plugin) {
-          console.log('plugin', plugin);
           this.plugins.items.push(
             angular.extend(
               {
@@ -275,7 +274,6 @@ angular.module(PKG.name + '.feature.adapters')
 
         this.plugins.items = this.plugins.items.concat(savedTemplates);
 
-        console.log('plugins', this.plugins.items);
       }.bind(this));
     };
 
@@ -306,7 +304,7 @@ angular.module(PKG.name + '.feature.adapters')
           }.bind(this));
         return;
       }
-console.log('item', item);
+
       // TODO: Better UUID?
       var id = item.name + '-' + item.type + '-' + Date.now();
       event.stopPropagation();
@@ -319,7 +317,8 @@ console.log('item', item);
           name: item.pluginName,
           icon: MyPlumbFactory.getIcon(item.pluginName),
           type: item.type,
-          properties: item.properties
+          properties: item.properties,
+          outputSchema: item.outputSchema
         };
       } else {
         config = {

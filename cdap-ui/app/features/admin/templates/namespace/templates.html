@@ -1,6 +1,6 @@
 <div class="row">
   <div class="col-xs-6">
-    <h2>Create Templates</h2>
+    <h2>Create Template</h2>
   </div>
   <div class="col-xs-6 text-right">
     <button class="btn btn-success" ng-click="TemplatesController.save()">Save</button>
@@ -64,9 +64,29 @@
       </div>
     </div>
   </div>
+
+  <div>
+    <div class="output-schema">
+      <h4>Output Schema</h4>
+
+      <fieldset ng-disabled="isDisabled" ng-if="TemplatesController.pluginConfig.outputSchema || !isDisabled || plugin.properties.format === 'clf' || TemplatesController.pluginConfig.properties.format === 'syslog'">
+        <my-schema-editor
+          ng-model="TemplatesController.pluginConfig.outputSchema"
+          data-disabled="TemplatesController.pluginConfig.implicitSchema"
+          ng-if="TemplatesController.plugin !== 'Stream' && TemplatesController.plugin !== 'Kafka'"></my-schema-editor>
+        <my-stream-properties
+          ng-model="TemplatesController.pluginConfig.outputSchema"
+          plugins="TemplatesController.pluginConfig.properties"
+          ng-if="TemplatesController.plugin === 'Stream' || TemplatesController.plugin === 'Kafka'"
+        ></my-stream-properties>
+      </fieldset>
+
+      <div ng-if="!TemplatesController.pluginConfig.outputSchema && isDisabled && TemplatesController.pluginConfig.properties.format !== 'clf' && TemplatesController.pluginConfig.properties.format !== 'syslog'">
+        <div class="well well-lg">
+          <h4>There is no output schema</h4>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </div>
-
-<pre>
-  {{ TemplatesController.pluginConfig | json:4}}
-</pre>
-
