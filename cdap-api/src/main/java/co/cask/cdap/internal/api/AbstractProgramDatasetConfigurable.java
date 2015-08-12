@@ -24,17 +24,19 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 
 /**
+ * Helper methods to help add stream/dataset to Programs.
  *
+ * @param <T> Program's configurer
  */
-public abstract class AbstractProgramDatasetConfigurable {
+public abstract class AbstractProgramDatasetConfigurable<T extends DatasetConfigurer> {
 
-  protected DatasetConfigurer datasetConfigurer;
+  protected abstract T getConfigurer();
 
   /**
    * @see DatasetConfigurer#addStream(Stream)
    */
   protected final void addStream(Stream stream) {
-    datasetConfigurer.addStream(stream);
+    getConfigurer().addStream(stream);
   }
 
   /**
@@ -42,7 +44,7 @@ public abstract class AbstractProgramDatasetConfigurable {
    */
   @Beta
   protected final void addDatasetModule(String moduleName, Class<? extends DatasetModule> moduleClass) {
-    datasetConfigurer.addDatasetModule(moduleName, moduleClass);
+    getConfigurer().addDatasetModule(moduleName, moduleClass);
   }
 
   /**
@@ -50,7 +52,7 @@ public abstract class AbstractProgramDatasetConfigurable {
    */
   @Beta
   protected final void addDatasetType(Class<? extends Dataset> datasetClass) {
-    datasetConfigurer.addDatasetType(datasetClass);
+    getConfigurer().addDatasetType(datasetClass);
   }
 
   /**
@@ -60,7 +62,7 @@ public abstract class AbstractProgramDatasetConfigurable {
    */
   @Beta
   protected final void createDataset(String datasetName, String typeName) {
-    datasetConfigurer.createDataset(datasetName, typeName, DatasetProperties.EMPTY);
+    getConfigurer().createDataset(datasetName, typeName, DatasetProperties.EMPTY);
   }
 
   /**
@@ -71,7 +73,7 @@ public abstract class AbstractProgramDatasetConfigurable {
    */
   @Beta
   protected final void createDataset(String datasetName, String typeName, DatasetProperties properties) {
-    datasetConfigurer.createDataset(datasetName, typeName, properties);
+    getConfigurer().createDataset(datasetName, typeName, properties);
   }
 
   /**
@@ -82,7 +84,7 @@ public abstract class AbstractProgramDatasetConfigurable {
    */
   protected final void createDataset(String datasetName, Class<? extends Dataset> datasetClass,
                                      DatasetProperties properties) {
-    datasetConfigurer.createDataset(datasetName, datasetClass, properties);
+    getConfigurer().createDataset(datasetName, datasetClass, properties);
   }
 
   /**
@@ -91,7 +93,7 @@ public abstract class AbstractProgramDatasetConfigurable {
    * @see DatasetConfigurer#createDataset(String, Class, DatasetProperties)
    */
   protected final void createDataset(String datasetName, Class<? extends Dataset> datasetClass) {
-    datasetConfigurer.createDataset(datasetName, datasetClass, DatasetProperties.EMPTY);
+    getConfigurer().createDataset(datasetName, datasetClass, DatasetProperties.EMPTY);
   }
 
 }

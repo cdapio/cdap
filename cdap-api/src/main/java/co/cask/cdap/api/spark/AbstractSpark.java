@@ -26,14 +26,13 @@ import java.util.Map;
  * This abstract class provides a default implementation of {@link Spark} methods for easy extension.
  */
 @Beta
-public abstract class AbstractSpark extends AbstractProgramDatasetConfigurable implements Spark {
+public abstract class AbstractSpark extends AbstractProgramDatasetConfigurable<SparkConfigurer> implements Spark {
 
   private SparkConfigurer configurer;
 
   @Override
   public final void configure(SparkConfigurer configurer) {
     this.configurer = configurer;
-    this.datasetConfigurer = configurer;
     configure();
   }
 
@@ -47,6 +46,7 @@ public abstract class AbstractSpark extends AbstractProgramDatasetConfigurable i
   /**
    * Returns the {@link SparkConfigurer}, only available at configuration time.
    */
+  @Override
   protected final SparkConfigurer getConfigurer() {
     return configurer;
   }

@@ -45,6 +45,12 @@ public class DefaultDatasetConfigurer implements DatasetConfigurer {
   }
 
   @Override
+  public void addStream(String streamName) {
+    Preconditions.checkArgument(streamName != null && !streamName.isEmpty(), "Stream Name cannot be null or empty");
+    addStream(new Stream(streamName));
+  }
+
+  @Override
   public void addDatasetModule(String moduleName, Class<? extends DatasetModule> moduleClass) {
     Preconditions.checkArgument(moduleName != null, "Dataset module name cannot be null.");
     Preconditions.checkArgument(moduleClass != null, "Dataset module class cannot be null.");
@@ -67,6 +73,11 @@ public class DefaultDatasetConfigurer implements DatasetConfigurer {
   }
 
   @Override
+  public void createDataset(String datasetName, String typeName) {
+    createDataset(datasetName, typeName, DatasetProperties.EMPTY);
+  }
+
+  @Override
   public void createDataset(String datasetInstanceName, Class<? extends Dataset> datasetClass,
                             DatasetProperties properties) {
     Preconditions.checkArgument(datasetInstanceName != null, "Dataset instance name cannot be null.");
@@ -75,5 +86,10 @@ public class DefaultDatasetConfigurer implements DatasetConfigurer {
     datasetSpecs.put(datasetInstanceName,
                          new DatasetCreationSpec(datasetInstanceName, datasetClass.getName(), properties));
     datasetModules.put(datasetClass.getName(), datasetClass.getName());
+  }
+
+  @Override
+  public void createDataset(String datasetName, Class<? extends Dataset> datasetClass) {
+    createDataset(datasetName, datasetClass, DatasetProperties.EMPTY);
   }
 }

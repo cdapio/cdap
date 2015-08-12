@@ -28,14 +28,14 @@ import java.util.Map;
 /**
  * This abstract class provides a default implementation of {@link MapReduce} methods for easy extension.
  */
-public abstract class AbstractMapReduce extends AbstractProgramDatasetConfigurable implements MapReduce {
+public abstract class AbstractMapReduce extends AbstractProgramDatasetConfigurable<MapReduceConfigurer>
+  implements MapReduce {
 
   private MapReduceConfigurer configurer;
 
   @Override
   public final void configure(MapReduceConfigurer configurer) {
     this.configurer = configurer;
-    this.datasetConfigurer = configurer;
     configure();
   }
 
@@ -49,6 +49,7 @@ public abstract class AbstractMapReduce extends AbstractProgramDatasetConfigurab
   /**
    * Returns the {@link MapReduceConfigurer}, only available at configuration time.
    */
+  @Override
   protected final MapReduceConfigurer getConfigurer() {
     return configurer;
   }

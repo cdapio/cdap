@@ -28,7 +28,7 @@ import java.util.Map;
 /**
  * Extend this class to add workers.
  */
-public abstract class AbstractWorker extends AbstractProgramDatasetConfigurable implements Worker {
+public abstract class AbstractWorker extends AbstractProgramDatasetConfigurable<WorkerConfigurer> implements Worker {
 
   private WorkerConfigurer configurer;
   private WorkerContext context;
@@ -36,7 +36,6 @@ public abstract class AbstractWorker extends AbstractProgramDatasetConfigurable 
   @Override
   public final void configure(WorkerConfigurer configurer) {
     this.configurer = configurer;
-    this.datasetConfigurer = configurer;
     configure();
   }
 
@@ -107,6 +106,7 @@ public abstract class AbstractWorker extends AbstractProgramDatasetConfigurable 
   /**
    * Returns the {@link WorkerConfigurer} used for configuration. Only available during configuration time.
    */
+  @Override
   protected final WorkerConfigurer getConfigurer() {
     return configurer;
   }

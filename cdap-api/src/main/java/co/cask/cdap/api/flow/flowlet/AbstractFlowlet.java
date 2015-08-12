@@ -37,7 +37,8 @@ import javax.annotation.Nullable;
  *   for more control over customizing the {@link FlowletSpecification}.
  * </p>
  */
-public abstract class AbstractFlowlet extends AbstractProgramDatasetConfigurable implements Flowlet, Callback {
+public abstract class AbstractFlowlet extends AbstractProgramDatasetConfigurable<FlowletConfigurer>
+  implements Flowlet, Callback {
 
   private final String name;
   private FlowletConfigurer configurer;
@@ -45,7 +46,6 @@ public abstract class AbstractFlowlet extends AbstractProgramDatasetConfigurable
 
   public void configure(FlowletConfigurer configurer) {
     this.configurer = configurer;
-    this.datasetConfigurer = configurer;
     FlowletSpecification specification = configure();
     configurer.setName(specification.getName());
     configurer.setDescription(specification.getDescription());
@@ -58,6 +58,7 @@ public abstract class AbstractFlowlet extends AbstractProgramDatasetConfigurable
   /**
    * Returns the {@link FlowletConfigurer} used for configuration. Only available during configuration time.
    */
+  @Override
   protected final FlowletConfigurer getConfigurer() {
     return configurer;
   }

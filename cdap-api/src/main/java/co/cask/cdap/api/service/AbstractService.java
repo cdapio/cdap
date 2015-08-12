@@ -27,13 +27,12 @@ import java.util.Arrays;
  *
  * The default no-op constructor must be implemented.
  */
-public abstract class AbstractService extends AbstractProgramDatasetConfigurable implements Service {
+public abstract class AbstractService extends AbstractProgramDatasetConfigurable<ServiceConfigurer> implements Service {
   private ServiceConfigurer configurer;
 
   @Override
   public final void configure(ServiceConfigurer serviceConfigurer) {
     this.configurer = serviceConfigurer;
-    this.datasetConfigurer = serviceConfigurer;
     configure();
   }
 
@@ -88,6 +87,7 @@ public abstract class AbstractService extends AbstractProgramDatasetConfigurable
   /**
    * Returns the {@link ServiceConfigurer}, only available at configuration time.
    */
+  @Override
   protected final ServiceConfigurer getConfigurer() {
     return configurer;
   }

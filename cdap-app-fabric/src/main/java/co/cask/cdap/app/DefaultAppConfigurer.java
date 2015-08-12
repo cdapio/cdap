@@ -48,8 +48,8 @@ import co.cask.cdap.internal.flow.DefaultFlowSpecification;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Maps;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -60,13 +60,13 @@ public class DefaultAppConfigurer extends DefaultDatasetConfigurer implements Ap
   private String description;
   private String configuration;
   private Id.Artifact artifactId;
-  private final Map<String, FlowSpecification> flows = Maps.newHashMap();
-  private final Map<String, MapReduceSpecification> mapReduces = Maps.newHashMap();
-  private final Map<String, SparkSpecification> sparks = Maps.newHashMap();
-  private final Map<String, WorkflowSpecification> workflows = Maps.newHashMap();
-  private final Map<String, ServiceSpecification> services = Maps.newHashMap();
-  private final Map<String, ScheduleSpecification> schedules = Maps.newHashMap();
-  private final Map<String, WorkerSpecification> workers = Maps.newHashMap();
+  private final Map<String, FlowSpecification> flows = new HashMap<>();
+  private final Map<String, MapReduceSpecification> mapReduces = new HashMap<>();
+  private final Map<String, SparkSpecification> sparks = new HashMap<>();
+  private final Map<String, WorkflowSpecification> workflows = new HashMap<>();
+  private final Map<String, ServiceSpecification> services = new HashMap<>();
+  private final Map<String, ScheduleSpecification> schedules = new HashMap<>();
+  private final Map<String, WorkerSpecification> workers = new HashMap<>();
 
   // passed app to be used to resolve default name and description
   public DefaultAppConfigurer(Application app) {

@@ -27,7 +27,7 @@ import java.util.Map;
  * An abstract implementation of {@link HttpServiceHandler}. Classes that extend this class only
  * have to implement a configure method which can be used to add optional arguments.
  */
-public abstract class AbstractHttpServiceHandler extends AbstractProgramDatasetConfigurable
+public abstract class AbstractHttpServiceHandler extends AbstractProgramDatasetConfigurable<HttpServiceConfigurer>
   implements HttpServiceHandler {
   private HttpServiceConfigurer configurer;
   private HttpServiceContext context;
@@ -48,7 +48,6 @@ public abstract class AbstractHttpServiceHandler extends AbstractProgramDatasetC
   @Override
   public final void configure(HttpServiceConfigurer configurer) {
     this.configurer = configurer;
-    this.datasetConfigurer = configurer;
     configure();
   }
 
@@ -82,6 +81,7 @@ public abstract class AbstractHttpServiceHandler extends AbstractProgramDatasetC
   /**
    * @return the {@link HttpServiceConfigurer} used to configure this class
    */
+  @Override
   protected final HttpServiceConfigurer getConfigurer() {
     return configurer;
   }

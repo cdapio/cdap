@@ -24,7 +24,7 @@ import co.cask.cdap.internal.api.AbstractProgramDatasetConfigurable;
 /**
  * This abstract class provides a default implementation of {@link Flow} methods for easy extension.
  */
-public class AbstractFlow extends AbstractProgramDatasetConfigurable implements Flow {
+public class AbstractFlow extends AbstractProgramDatasetConfigurable<FlowConfigurer> implements Flow {
 
   private FlowConfigurer configurer;
 
@@ -36,7 +36,6 @@ public class AbstractFlow extends AbstractProgramDatasetConfigurable implements 
 
   public final void configure(FlowConfigurer configurer) {
     this.configurer = configurer;
-    this.datasetConfigurer = configurer;
     configureFlow();
   }
 
@@ -52,6 +51,7 @@ public class AbstractFlow extends AbstractProgramDatasetConfigurable implements 
    *
    * @return {@link FlowConfigurer}
    */
+  @Override
   protected final FlowConfigurer getConfigurer() {
     return configurer;
   }
