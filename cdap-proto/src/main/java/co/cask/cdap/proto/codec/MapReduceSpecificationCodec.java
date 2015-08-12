@@ -20,7 +20,6 @@ import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
-import com.google.common.collect.Maps;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -83,18 +82,11 @@ public final class MapReduceSpecificationCodec extends AbstractSpecificationCode
     Set<String> dataSets = deserializeSet(jsonObj.get("datasets"), context, String.class);
     Map<String, String> properties = deserializeMap(jsonObj.get("properties"), context, String.class);
 
-    JsonElement streamElement = jsonObj.get("streams");
-    Map<String, StreamSpecification> streams = (streamElement == null) ?
-      Maps.<String, StreamSpecification>newHashMap() : deserializeMap(streamElement, context,
-                                                                      StreamSpecification.class);
-    JsonElement datasetModElement = jsonObj.get("datasetModules");
-    Map<String, String> datasetModules = (datasetModElement == null) ? Maps.<String, String>newHashMap() :
-      deserializeMap(datasetModElement, context, String.class);
-
-    JsonElement datasetSpecsElement = jsonObj.get("datasetSpecs");
-    Map<String, DatasetCreationSpec> datasetSpecs = (datasetSpecsElement == null) ?
-      Maps.<String, DatasetCreationSpec>newHashMap() : deserializeMap(datasetSpecsElement, context,
-                                                                      DatasetCreationSpec.class);
+    Map<String, StreamSpecification> streams = deserializeMap(jsonObj.get("streams"), context,
+                                                              StreamSpecification.class);
+    Map<String, String> datasetModules = deserializeMap(jsonObj.get("datasetModules"), context, String.class);
+    Map<String, DatasetCreationSpec> datasetSpecs = deserializeMap(jsonObj.get("datasetSpecs"), context,
+                                                                   DatasetCreationSpec.class);
 
     return new MapReduceSpecification(className, name, description, inputDataSet, outputDataSet,
                                              dataSets, properties, mapperResources, reducerResources, streams,

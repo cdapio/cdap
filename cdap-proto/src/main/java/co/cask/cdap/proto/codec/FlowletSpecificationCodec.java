@@ -22,7 +22,6 @@ import co.cask.cdap.api.flow.flowlet.FailurePolicy;
 import co.cask.cdap.api.flow.flowlet.FlowletSpecification;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.internal.flowlet.DefaultFlowletSpecification;
-import com.google.common.collect.Maps;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -70,18 +69,11 @@ public final class FlowletSpecificationCodec extends AbstractSpecificationCodec<
     Map<String, String> properties = deserializeMap(jsonObj.get("properties"), context, String.class);
     Resources resources = context.deserialize(jsonObj.get("resources"), Resources.class);
 
-    JsonElement streamElement = jsonObj.get("streams");
-    Map<String, StreamSpecification> streams = (streamElement == null) ?
-      Maps.<String, StreamSpecification>newHashMap() : deserializeMap(streamElement, context,
-                                                                      StreamSpecification.class);
-    JsonElement datasetModElement = jsonObj.get("datasetModules");
-    Map<String, String> datasetModules = (datasetModElement == null) ? Maps.<String, String>newHashMap() :
-      deserializeMap(datasetModElement, context, String.class);
-
-    JsonElement datasetSpecsElement = jsonObj.get("datasetSpecs");
-    Map<String, DatasetCreationSpec> datasetSpecs = (datasetSpecsElement == null) ?
-      Maps.<String, DatasetCreationSpec>newHashMap() : deserializeMap(datasetSpecsElement, context,
-                                                                      DatasetCreationSpec.class);
+    Map<String, StreamSpecification> streams = deserializeMap(jsonObj.get("streams"), context,
+                                                              StreamSpecification.class);
+    Map<String, String> datasetModules = deserializeMap(jsonObj.get("datasetModules"), context, String.class);
+    Map<String, DatasetCreationSpec> datasetSpecs = deserializeMap(jsonObj.get("datasetSpecs"), context,
+                                                                   DatasetCreationSpec.class);
 
     return new DefaultFlowletSpecification(className, name, description, policy, dataSets, properties, resources,
                                            streams, datasetModules, datasetSpecs);

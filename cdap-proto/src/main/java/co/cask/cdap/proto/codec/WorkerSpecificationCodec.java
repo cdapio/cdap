@@ -20,7 +20,6 @@ import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
-import com.google.common.collect.Maps;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -65,19 +64,11 @@ public final class WorkerSpecificationCodec extends AbstractSpecificationCodec<W
     Set<String> datasets = deserializeSet(jsonObj.get("datasets"), context, String.class);
     int instances = jsonObj.get("instances").getAsInt();
 
-    JsonElement streamElement = jsonObj.get("streams");
-    Map<String, StreamSpecification> streams = (streamElement == null) ?
-      Maps.<String, StreamSpecification>newHashMap() : deserializeMap(streamElement, context,
-                                                                      StreamSpecification.class);
-
-    JsonElement datasetModElement = jsonObj.get("datasetModules");
-    Map<String, String> datasetModules = (datasetModElement == null) ? Maps.<String, String>newHashMap() :
-      deserializeMap(datasetModElement, context, String.class);
-
-    JsonElement datasetSpecsElement = jsonObj.get("datasetSpecs");
-    Map<String, DatasetCreationSpec> datasetSpecs = (datasetSpecsElement == null) ?
-      Maps.<String, DatasetCreationSpec>newHashMap() : deserializeMap(datasetSpecsElement, context,
-                                                                      DatasetCreationSpec.class);
+    Map<String, StreamSpecification> streams = deserializeMap(jsonObj.get("streams"), context,
+                                                              StreamSpecification.class);
+    Map<String, String> datasetModules = deserializeMap(jsonObj.get("datasetModules"), context, String.class);
+    Map<String, DatasetCreationSpec> datasetSpecs = deserializeMap(jsonObj.get("datasetSpecs"), context,
+                                                                   DatasetCreationSpec.class);
 
     return new WorkerSpecification(className, name, description, properties, datasets, resources, instances,
                                    streams, datasetModules, datasetSpecs);

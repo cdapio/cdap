@@ -16,7 +16,7 @@
 
 package co.cask.cdap.api.service.http;
 
-import co.cask.cdap.internal.api.ProgramDataset;
+import co.cask.cdap.internal.api.AbstractProgramDatasetConfigurable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,7 +27,8 @@ import java.util.Map;
  * An abstract implementation of {@link HttpServiceHandler}. Classes that extend this class only
  * have to implement a configure method which can be used to add optional arguments.
  */
-public abstract class AbstractHttpServiceHandler extends ProgramDataset implements HttpServiceHandler {
+public abstract class AbstractHttpServiceHandler extends AbstractProgramDatasetConfigurable
+  implements HttpServiceHandler {
   private HttpServiceConfigurer configurer;
   private HttpServiceContext context;
 

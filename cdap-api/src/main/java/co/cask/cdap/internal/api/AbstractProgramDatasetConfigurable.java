@@ -26,7 +26,7 @@ import co.cask.cdap.api.dataset.module.DatasetModule;
 /**
  *
  */
-public class ProgramDataset {
+public abstract class AbstractProgramDatasetConfigurable {
 
   protected DatasetConfigurer datasetConfigurer;
 

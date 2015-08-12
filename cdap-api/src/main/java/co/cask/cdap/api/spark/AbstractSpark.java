@@ -18,7 +18,7 @@ package co.cask.cdap.api.spark;
 
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.internal.api.ProgramDataset;
+import co.cask.cdap.internal.api.AbstractProgramDatasetConfigurable;
 
 import java.util.Map;
 
@@ -26,7 +26,7 @@ import java.util.Map;
  * This abstract class provides a default implementation of {@link Spark} methods for easy extension.
  */
 @Beta
-public abstract class AbstractSpark extends ProgramDataset implements Spark {
+public abstract class AbstractSpark extends AbstractProgramDatasetConfigurable implements Spark {
 
   private SparkConfigurer configurer;
 

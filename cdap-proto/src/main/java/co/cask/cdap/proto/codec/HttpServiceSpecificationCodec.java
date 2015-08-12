@@ -21,7 +21,6 @@ import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Maps;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -54,18 +53,11 @@ public class HttpServiceSpecificationCodec extends AbstractSpecificationCodec<Ht
       endpointsExposed = deserializeList(jsonObj.get("endpoints"), context, ServiceHttpEndpoint.class);
     }
 
-    JsonElement streamElement = jsonObj.get("streams");
-    Map<String, StreamSpecification> streams = (streamElement == null) ?
-      Maps.<String, StreamSpecification>newHashMap() : deserializeMap(streamElement, context,
-                                                                      StreamSpecification.class);
-    JsonElement datasetModElement = jsonObj.get("datasetModules");
-    Map<String, String> datasetModules = (datasetModElement == null) ? Maps.<String, String>newHashMap() :
-      deserializeMap(datasetModElement, context, String.class);
-
-    JsonElement datasetSpecsElement = jsonObj.get("datasetSpecs");
-    Map<String, DatasetCreationSpec> datasetSpecs = (datasetSpecsElement == null) ?
-      Maps.<String, DatasetCreationSpec>newHashMap() : deserializeMap(datasetSpecsElement, context,
-                                                                      DatasetCreationSpec.class);
+    Map<String, StreamSpecification> streams = deserializeMap(jsonObj.get("streams"), context,
+                                                              StreamSpecification.class);
+    Map<String, String> datasetModules = deserializeMap(jsonObj.get("datasetModules"), context, String.class);
+    Map<String, DatasetCreationSpec> datasetSpecs = deserializeMap(jsonObj.get("datasetSpecs"), context,
+                                                                   DatasetCreationSpec.class);
 
     return new HttpServiceHandlerSpecification(className, name, description, properties, datasets, endpointsExposed,
                                                streams, datasetModules, datasetSpecs);
