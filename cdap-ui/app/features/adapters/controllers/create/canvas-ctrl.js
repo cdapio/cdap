@@ -213,7 +213,7 @@ angular.module(PKG.name + '.feature.adapters')
           break;
         case 'templates':
           prom = myAdapterTemplatesApi.list({
-              apptype: MyPlumbService.metadata.template.type.toLowerCase()
+              apptype: MyPlumbService.metadata.template.type
             })
               .$promise
               .then(function(res) {
@@ -251,7 +251,7 @@ angular.module(PKG.name + '.feature.adapters')
         delete this.pluginTypes[2].error;
       } else if (item.type === 'templates') {
         myAdapterTemplatesApi.get({
-          apptype: MyPlumbService.metadata.template.type.toLowerCase(),
+          apptype: MyPlumbService.metadata.template.type,
           appname: item.name
         })
           .$promise
