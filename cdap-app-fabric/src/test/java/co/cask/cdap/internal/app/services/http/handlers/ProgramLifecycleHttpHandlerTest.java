@@ -47,7 +47,6 @@ import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.ServiceInstances;
-import co.cask.cdap.proto.codec.HttpServiceSpecificationCodec;
 import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
 import co.cask.cdap.proto.codec.WorkflowActionSpecificationCodec;
 import co.cask.cdap.test.SlowTests;
@@ -615,7 +614,6 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     GsonBuilder gsonBuilder = new GsonBuilder();
     gsonBuilder.registerTypeAdapter(ServiceSpecification.class, new ServiceSpecificationCodec());
-    gsonBuilder.registerTypeAdapter(HttpServiceHandlerSpecification.class, new HttpServiceSpecificationCodec());
     Gson gson = gsonBuilder.create();
     ServiceSpecification specification = readResponse(response, ServiceSpecification.class, gson);
 
