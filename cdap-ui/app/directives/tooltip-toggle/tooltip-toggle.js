@@ -19,7 +19,7 @@ angular.module(PKG.name + '.commons')
     };
   })
 
-  .directive('tooltipEllipsis', function ($timeout) {
+  .directive('tooltipEllipsis', function () {
     return {
       restrict: 'A',
       scope: {

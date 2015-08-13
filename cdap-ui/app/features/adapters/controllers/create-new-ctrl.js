@@ -43,7 +43,7 @@ angular.module(PKG.name + '.feature.adapters')
           size: 'lg',
           windowClass: 'adapter-modal',
           keyboard: true,
-          controller: ['$scope', 'metadata', 'MyPlumbService', function($scope, metadata, MyPlumbService) {
+          controller: ['$scope', 'metadata', function($scope, metadata) {
             $scope.modelCopy = angular.copy(this.metadata);
             $scope.metadata = metadata;
             $scope.reset = function () {

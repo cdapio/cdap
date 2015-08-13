@@ -1,5 +1,5 @@
 angular.module(PKG.name+'.commons')
-.directive('infiniteScroll', function ($timeout, EventPipe) {
+.directive('infiniteScroll', function ($timeout) {
   return {
     restrict: 'A',
     link: function (scope, elem, attrs) {

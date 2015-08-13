@@ -29,17 +29,27 @@ angular.module(PKG.name + '.feature.adapters')
     this.infoPluginName = $scope.plugin.name.toLowerCase();
     if (this.infoPluginCategory === 'transforms') {
       this.infoPluginCategory = 'transformations';
-      this.infoUrl =
-      'http://docs.cask.co/cdap/'
-                      + $rootScope.cdapVersion + '/en/application-templates/etl/templates/'
-                      + this.infoPluginCategory + '/'
-                      + this.infoPluginName + '.html?hidenav';
+      this.infoUrl = [
+        'http://docs.cask.co/cdap/',
+        $rootScope.cdapVersion,
+        '/en/application-templates/etl/templates/',
+        this.infoPluginCategory,
+        '/',
+        this.infoPluginName,
+        '.html?hidenav'
+      ].join('');
     } else {
-      this.infoUrl = 'http://docs.cask.co/cdap/'
-                      + $rootScope.cdapVersion +'/en/application-templates/etl/templates/'
-                      + this.infoPluginCategory + '/'
-                      + this.infoPluginType + '/'
-                      + this.infoPluginName + '.html?hidenav';
+      this.infoUrl = [
+        'http://docs.cask.co/cdap/',
+        $rootScope.cdapVersion ,
+        '/en/application-templates/etl/templates/',
+        this.infoPluginCategory,
+        '/',
+        this.infoPluginType,
+        '/',
+        this.infoPluginName,
+        '.html?hidenav'
+      ].join('');
     }
 
     this.trustSrc = function(src) {

@@ -55,6 +55,16 @@ angular.module(PKG.name + '.services')
       $scope.loading = true;
       var path = '/namespaces/' + $state.params.namespace + '/streams/' + $scope.streamId + '/batch';
 
+      function uploadSuccess() {
+        $alert({
+          type: 'success',
+          title: 'Upload success',
+          content: 'The file has been uploaded successfully'
+        });
+
+        $scope.loading = false;
+      }
+
       for (var i = 0; i < files.length; i++) {
         // TODO: support other file types
 
@@ -62,15 +72,7 @@ angular.module(PKG.name + '.services')
           path: path,
           file: files[i]
         }, 'text/csv')
-          .then(function () {
-            $alert({
-              type: 'success',
-              title: 'Upload success',
-              content: 'The file has been uploaded successfully'
-            });
-
-            $scope.loading = false;
-          });
+          .then(uploadSuccess);
       }
 
 
