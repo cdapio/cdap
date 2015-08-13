@@ -90,7 +90,7 @@ class Item:
         v1 = "%s" % value
         if name == 'value':
             v = "\n".join(v1.split())
-        if name == 'description' and v1 == 'None':
+        elif name == 'description' and v1 == 'None':
             v = ''
         else:
             v = " ".join(v1.split())
