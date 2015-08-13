@@ -105,6 +105,7 @@ angular.module(PKG.name + '.feature.adapters')
 
     $scope.$on('$destroy', function() {
       $modalStack.dismissAll();
+      $window.onbeforeunload = null;
       EventPipe.cancelEvent('plugin.reset');
       EventPipe.cancelEvent('schema.clear');
     });

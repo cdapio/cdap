@@ -80,7 +80,7 @@ angular.module(PKG.name + '.feature.admin')
         })
           .state('admin.namespace.create', {
             url: '/create',
-            onEnter: function($bootstrapModal, $state, myNamespace) {
+            onEnter: function($bootstrapModal, $state) {
               var modal = $bootstrapModal.open({
                 templateUrl: '/assets/features/admin/templates/namespace/create.html',
                 size: 'lg',

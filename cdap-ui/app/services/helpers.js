@@ -31,7 +31,6 @@ angular.module(PKG.name+'.services')
     } else {
       obj[key] = val;
     }
-
     return obj;
   }
 

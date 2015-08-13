@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.admin')
-  .controller('NamespaceCreateController', function ($scope, $alert, $modalInstance, MyDataSource, myNamespace, EventPipe, $timeout, $state) {
+  .controller('NamespaceCreateController', function ($scope, $alert, $modalInstance, MyDataSource, myNamespace, EventPipe) {
     $scope.model = {
       name: '',
       description: ''
