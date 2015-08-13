@@ -55,10 +55,11 @@ RST_HEADER = """
 
 class Item:
 
-    def __init__(self, name='', value='', description =''):
+    def __init__(self, name='', value='', description ='', final=''):
         self.name = name
         self.value = value
         self.description = description
+        self.final = final
     
     def __str__(self):
         return "%s:\n%s\n%s" % (self.name, self.value, self.description)
@@ -68,11 +69,6 @@ class Item:
             self.__dict__[name] = "%s\n%s" % (self.__dict__[name], value)
         else:
             self.__dict__[name] = value
-
-    def _split_value(self, name, value):
-        v = "%s" % value
-        v = "\n".join(v.split())
-        self.__dict__[name] = v
     
     def rst(self):
         NAME_START  = '   * - '
@@ -91,12 +87,14 @@ class Item:
         return rst
     
     def set_attribute(self, name, value):
-        v = "%s" % value
-        v = " ".join(v.split())
+        v1 = "%s" % value
         if name == 'value':
-            self._split_value(name, v)
+            v = "\n".join(v1.split())
+        if name == 'description' and v1 == 'None':
+            v = ''
         else:
-            self.__dict__[name] = v
+            v = " ".join(v1.split())
+        self.__dict__[name] = v
             
     def get_attribute(self, name):
         if name == 'rst':

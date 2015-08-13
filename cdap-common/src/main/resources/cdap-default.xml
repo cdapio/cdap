@@ -641,7 +641,7 @@
     <property>
         <name>app.temp.dir</name>
         <value>/tmp</value>
-        <description>Temp directory temp</description>
+        <description>Temp directory</description>
     </property>
 
     <property>
@@ -665,7 +665,7 @@
         <value>2</value>
         <description>
             Indicates the maximum number of retries JobClient will make to establish
-            a server connection when retrieving job status and history.
+            a server connection when retrieving job status and history
         </description>
     </property>
 
@@ -673,8 +673,9 @@
         <name>mapreduce.include.custom.format.classes</name>
         <value>true</value>
         <description>
-            Indicates whether to include custom input/output format classes in the job.jar or not; if set to true,
-            custom format classes will be added to the job.jar and available as part of the MR system classpath
+            Indicates whether to include custom input/output format classes in the job.jar
+            or not; if set to true, custom format classes will be added to the job.jar and
+            available as part of the MapReduce system classpath
         </description>
     </property>
 
@@ -690,8 +691,8 @@
         <name>workflow.token.max.size.mb</name>
         <value>30</value>
         <description>
-            Maximum allowed size of a Workflow Token in megabytes. If the workflow token exceeds this size, no further
-            updates are allowed.
+            Maximum allowed size of a Workflow Token, in megabytes; if the workflow token
+            exceeds this size, no further updates are allowed
         </description>
     </property>
 
@@ -1015,25 +1016,25 @@
     <property>
         <name>dashboard.bind.address</name>
         <value>0.0.0.0</value>
-        <description>CDAP UI bind address<description>
+        <description>CDAP UI bind address</description>
     </property>
 
     <property>
         <name>dashboard.bind.port</name>
         <value>9999</value>
-        <description>CDAP UI bind port<description>
+        <description>CDAP UI bind port</description>
     </property>
 
     <property>
         <name>dashboard.ssl.bind.port</name>
         <value>9443</value>
-        <description>CDAP UI bind port for HTTPS<description>
+        <description>CDAP UI bind port for HTTPS</description>
     </property>
 
     <property>
         <name>dashboard.ssl.disable.cert.check</name>
         <value>false</value>
-        <description>True to disable SSL certificate check from the CDAP UI<description>
+        <description>True to disable SSL certificate check from the CDAP UI</description>
     </property>
 
     <property>
