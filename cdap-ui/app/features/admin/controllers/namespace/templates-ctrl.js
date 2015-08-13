@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.admin')
-  .controller('NamespaceTemplatesController', function ($scope, myAdapterApi, PluginConfigFactory, myHelpers, mySettings, $stateParams, $alert, $state, $timeout) {
+  .controller('NamespaceTemplatesController', function ($scope, myAdapterApi, PluginConfigFactory, myHelpers, mySettings, $stateParams, $alert, $state) {
 
     var vm = this;
 
@@ -7,11 +7,24 @@ angular.module(PKG.name + '.feature.admin')
     vm.isEdit = false;
     vm.isDisabled = false;
 
-    var fetchApi;
+
     var plugin;
 
     function initialize() {
       if (!vm.plugin) { return; }
+
+      var fetchApi;
+      switch (vm.pluginType) {
+        case 'source':
+          fetchApi = myAdapterApi.fetchSourceProperties;
+          break;
+        case 'transform':
+          fetchApi = myAdapterApi.fetchTransformProperties;
+          break;
+        case 'sink':
+          fetchApi = myAdapterApi.fetchSinkProperties;
+          break;
+      }
 
       plugin = {
         name: vm.plugin
@@ -45,15 +58,12 @@ angular.module(PKG.name + '.feature.admin')
         switch (vm.pluginType) {
           case 'source':
             prom = myAdapterApi.fetchSources({ adapterType: vm.template }).$promise;
-            fetchApi = myAdapterApi.fetchSourceProperties;
             break;
           case 'transform':
             prom = myAdapterApi.fetchTransforms({ adapterType: vm.template }).$promise;
-            fetchApi = myAdapterApi.fetchTransformProperties;
             break;
           case 'sink':
             prom = myAdapterApi.fetchSinks({ adapterType: vm.template }).$promise;
-            fetchApi = myAdapterApi.fetchSinkProperties;
             break;
         }
         prom.then(function (res) {
@@ -77,18 +87,6 @@ angular.module(PKG.name + '.feature.admin')
           vm.template = template.templateType;
           vm.pluginType = template.type;
           vm.plugin = template.pluginName;
-
-          switch (vm.pluginType) {
-            case 'source':
-              fetchApi = myAdapterApi.fetchSourceProperties;
-              break;
-            case 'transform':
-              fetchApi = myAdapterApi.fetchTransformProperties;
-              break;
-            case 'sink':
-              fetchApi = myAdapterApi.fetchSinkProperties;
-              break;
-          }
 
           vm.pluginConfig = {
             templateName: template.templateName,
