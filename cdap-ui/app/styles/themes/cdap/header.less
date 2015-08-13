@@ -2,7 +2,7 @@
 @import "../../../../bower_components/bootstrap/less/mixins.less";
 
 body {
-  header.navbar {
+  header {
 
     [my-navbar] {
       padding-top: 10px;
@@ -54,162 +54,33 @@ body {
           }
         }
 
-        > ul.navbar-nav {
-
-          // Namespace dropdown
-          &:first-child {
-            @media (min-width: @screen-sm-min) { float: left; }
-            @media (max-width: @screen-md-max) {
-              max-width: 140px;
-            }
-            li.dropdown {
-              @media (max-width: @screen-md-max) {
-                &.one {
-                  a.dropdown-toggle {
-                    cursor: default;
-                    .caret { display: none; }
-                  }
-                  &.open {
-                    ul.dropdown-menu { padding: 0; }
-                  }
-                }
-                &.open {
-                  ul.dropdown-menu {
-                    max-height: 200px;
-                    overflow: auto;
-                  }
-                }
-              }
-              @media (min-width: @screen-lg-min) {
-                &.one {
-                  &.open {
-                    .border-radius(4px);
-                  }
-                }
-              }
-            }
-
-            @media (min-width: @screen-lg-min) {
-              margin-left: 10px;
-              visibility: visible;
-              width: 160px;
-
-              ul.dropdown-menu {
-                .border-radius(0 0 4px 4px);
-                left: 0;
-                width: 160px;
-                max-height: 500px;
-                overflow-y: auto;
-                float: none;
-                li:nth-last-child(2) { border-bottom: 0; }
-              }
-
-              li.dropdown {
-                width: 100%;
-                a.dropdown-toggle {
-                  white-space: nowrap;
-                  span:first-child { padding-right: 5px; }
-                  .tooltip.right {
-                    display: none!important;
-                    visibility: hidden;
-                  }
-                }
-
-                &.open {
-                  width: 160px;
-                  z-index: 10;
-                  a.dropdown-toggle {
-                    margin: 7px;
-                    padding: 10px;
-                    overflow: auto;
-                    .border-radius(4px);
-                    span {
-                      &:first-child { float: left; }
-                      &:last-child { display: none; }
-                    }
-                  }
-                }
-              }
-            }
+        ul.navbar-nav {
+          @media (max-width: @screen-md-max) {
+            display: none;
+            visibility: hidden;
           }
+        }
+
+        > ul.navbar-right {
 
           // Settings dropdown
-          &.navbar-right {
-            @media (min-width: @screen-sm-min) {
-              float: left;
-              padding-left: 20px;
-            }
-            @media (min-width: @screen-lg-min) {
-              padding-left: 0;
-              span.caret {
-                display: none;
-              }
-            }
-            li.dropdown {
-              @media (max-width: @screen-xs-max) { padding-top: 0; }
-              @media (min-width: @screen-sm-min) {
-                padding: 11px 5px 0;
-              }
-              @media (min-width: @screen-lg-min) {
-                padding: 0;
-                height: 51px;
-                width: 40px;
-                .border-radius(4px 4px 0 0);
-              }
-
-              &.open {
-                a.dropdown-toggle {
-                  @media (min-width: @screen-lg-min) {
-                    .border-radius(4px 4px 0 0);
-                    font-size: 14px;
-                  }
-                }
-              }
-
-              a.dropdown-toggle {
-                height: auto;
-                .fa-cog:before { font-size: 17px; }
-                @media (max-width: @screen-md-max) {
-                  padding-top: 0;
-                  padding-left: 15px;
-                  span.fa-cog { display: none; }
-                  &:before {
-                    content: 'Settings';
-                    padding-right: 5px;
-                  }
-                }
-                @media (min-width: @screen-lg-min) {
-                  display: inline-block;
-                  line-height: 51px;
-                  padding: 0;
-                  text-align: center;
-                  width: 100%;
-                }
-              }
-
-              ul.dropdown-menu {
-                @media (min-width: @screen-sm-min) {
-                  .border-radius(4px 0 4px 4px);
-                  li.nav-subsection { border: 0; }
-                }
-                @media (max-width: @screen-md-max) {
-                  > li > a {
-                    padding-left: 10px;
-                    padding-top: 5px;
-                    padding-bottom: 5px;
-                  }
-                  li.nav-subsection { padding-left: 10px; }
-                }
-                @media (min-width: @screen-lg-min) {
-                  > li > a { padding-left: 14px; }
-                  li.nav-subsection { margin: 10px 0 0 10px; }
-                }
-              }
+          @media (min-width: @screen-sm-min) {
+            float: left;
+            padding-left: 20px;
+          }
+          @media (min-width: @screen-lg-min) {
+            padding-left: 0;
+            span.caret {
+              display: none;
             }
           }
-
-          // Namespace and Settings dropdowns
           li.dropdown {
+            @media (max-width: @screen-xs-max) {
+              padding-top: 0;
+            }
+            @media (min-width: @screen-sm-min) {
+              padding: 11px 5px 0;
+            }
             @media (max-width: @screen-md-max) {
               min-width: 140px;
               a.dropdown-toggle {
@@ -232,9 +103,10 @@ body {
               }
             }
             @media (min-width: @screen-lg-min) {
-              background-color: transparent;
+              padding: 0;
+              height: 51px;
+              width: 40px;
               .border-radius(4px 4px 0 0);
-              .transition(background-color 0.2s ease-in);
               &.open {
                 height: 51px;
                 a.dropdown-toggle {
@@ -263,19 +135,59 @@ body {
                 }
               }
             }
-          }
-        }
 
-        ul.navbar-nav {
-          @media (max-width: @screen-md-max) {
-            display: none;
-            visibility: hidden;
+            &.open {
+              a.dropdown-toggle {
+                @media (min-width: @screen-lg-min) {
+                  .border-radius(4px 4px 0 0);
+                  font-size: 14px;
+                }
+              }
+            }
+
+            a.dropdown-toggle {
+              height: auto;
+              .fa-cog:before { font-size: 17px; }
+              @media (max-width: @screen-md-max) {
+                padding-top: 0;
+                padding-left: 15px;
+                span.fa-cog { display: none; }
+                &:before {
+                  content: 'Settings';
+                  padding-right: 5px;
+                }
+              }
+              @media (min-width: @screen-lg-min) {
+                display: inline-block;
+                line-height: 51px;
+                padding: 0;
+                text-align: center;
+                width: 100%;
+              }
+            }
+
             ul.dropdown-menu {
-              min-width: 140px;
-              &.am-flip-x {
-                .transition(none);
-                -webkit-animation-duration: 0s;
-                animation-duration: 0s;
+              @media (min-width: @screen-sm-min) {
+                .border-radius(4px 0 4px 4px);
+                li.nav-subsection { border: 0; }
+              }
+              @media (max-width: @screen-md-max) {
+                min-width: 140px;
+                &.am-flip-x {
+                  .transition(none);
+                  -webkit-animation-duration: 0s;
+                  animation-duration: 0s;
+                }
+                > li > a {
+                  padding-left: 10px;
+                  padding-top: 5px;
+                  padding-bottom: 5px;
+                }
+                li.nav-subsection { padding-left: 10px; }
+              }
+              @media (min-width: @screen-lg-min) {
+                > li > a { padding-left: 14px; }
+                li.nav-subsection { margin: 10px 0 0 10px; }
               }
             }
           }
@@ -332,15 +244,16 @@ body {
   }
 
   &.theme-cdap {
-    header.navbar {
+    header {
       background-color: @cdap-header;
 
       [my-navbar] {
-
         // Mobile nav menu
         button.navbar-toggle {
           @media (max-width: @screen-md-max) {
-            &:hover, &:focus { background-color: lighten(@cdap-header, 10%); }
+            &:hover, &:focus {
+              background-color: lighten(@cdap-header, 10%);
+            }
           }
         }
 
@@ -350,105 +263,6 @@ body {
         }
 
         div.navbar-collapse {
-
-          > ul.navbar-nav {
-
-            // Namespace dropdown
-            &:first-child {
-              li.dropdown {
-                @media (max-width: @screen-md-max) {
-                  &.one {
-                    &.open {
-                      a.dropdown-toggle { color: #9d9d9d; }
-                    }
-                  }
-                }
-                @media (min-width: @screen-lg-min) {
-                  li.dropdown {
-                    a.dropdown-toggle span { color: lightgray; }
-                    &.open {
-                      a.droptown-toggle span:first-child { color: @cdap-darkness; }
-                    }
-                  }
-                }
-              }
-            }
-
-            // Settings dropdown
-            &.navbar-right {
-              margin-right: 0;
-              li.dropdown {
-
-                &.open {
-                  span.fa-cog { color: @cdap-darkness; }
-                }
-                @media (max-width: @screen-md-max) {
-                  ul.dropdown-menu {
-                    li.nav-subsection { color: #9d9d9d; }
-                  }
-                }
-                @media (min-width: @screen-lg-min) {
-                  &.open {
-                    a.dropdown-toggle {
-                      background-color: @cdap-white;
-                      color: @cdap-header;
-                    }
-                  }
-                  a.dropdown-toggle { color: white; }
-                  ul.dropdown-menu {
-                    background-color: @brand-primary;
-                    li:not(:last-child) { border-bottom: 1px solid rgba(0,0,0,0.1); }
-                    a {
-                      color: white;
-                      &:hover, &:focus {
-                        background-color: white;
-                        color: @cdap-darkness;
-
-                        span { color: @cdap-darkness; }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-
-            // Namespace and Settings dropdowns
-            li.dropdown {
-              @media (max-width: @screen-md-max) {
-                a.dropdown-toggle { color: #9d9d9d; }
-              }
-              @media (min-width: @screen-lg-min) {
-                &.open {
-                  background-color: @brand-primary;
-                  a.dropdown-toggle {
-                    background-color: @cdap-white;
-                    color: @cdap-header;
-                  }
-                }
-                ul.dropdown-menu {
-                  background-color: @brand-primary;
-                  li:not(:last-child) { border-bottom: 1px solid rgba(0,0,0,0.1); }
-                  a {
-                    color: white;
-                    &:hover, &:focus {
-                      background-color: white;
-                      color: @cdap-darkness;
-
-                      span { color: @cdap-darkness; }
-                    }
-                  }
-                }
-              }
-            }
-          }
-
-          ul.navbar-nav {
-            ul.dropdown-menu {
-              li.nav-subsection { color: lightgray; }
-              a:disabled { color: lightgray; }
-            }
-          }
-
           // Main nav
           nav {
             @media (min-width: @screen-sm-min) {
@@ -470,6 +284,52 @@ body {
               ul.navbar-nav {
                 > .active > a { color: @cdap-orange; }
               }
+            }
+          }
+          // Settings dropdown
+          > ul.navbar-right {
+            margin-right: 0;
+            li.dropdown {
+              &.open {
+                span.fa-cog { color: @cdap-darkness; }
+              }
+              @media (max-width: @screen-md-max) {
+                a.dropdown-toggle {
+                  color: #9d9d9d;
+                }
+                ul.dropdown-menu {
+                  li.nav-subsection { color: #9d9d9d; }
+                }
+              }
+              @media (min-width: @screen-lg-min) {
+                background-color: transparent;
+                .transition(background-color 0.2s ease-in);
+                &.open {
+                  background-color: @brand-primary;
+                  a.dropdown-toggle {
+                    background-color: @cdap-white;
+                    color: @cdap-header;
+                  }
+                }
+                a.dropdown-toggle { color: white; }
+                ul.dropdown-menu {
+                  background-color: @brand-primary;
+                  li:not(:last-child) { border-bottom: 1px solid rgba(0,0,0,0.1); }
+                  a {
+                    color: white;
+                    &:hover, &:focus {
+                      background-color: white;
+                      color: @cdap-darkness;
+
+                      span { color: @cdap-darkness; }
+                    }
+                  }
+                }
+              }
+            }
+            ul.dropdown-menu {
+              li.nav-subsection { color: lightgray; }
+              a:disabled { color: lightgray; }
             }
           }
         }

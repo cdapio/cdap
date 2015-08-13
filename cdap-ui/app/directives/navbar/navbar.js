@@ -13,15 +13,8 @@ function myNavbarDirective ($dropdown, myAuth, caskTheme, MY_CONFIG) {
 
       var toggles = element[0].querySelectorAll('a.dropdown-toggle');
 
-      // namespace dropdown
+      // Settings dropdown
       $dropdown(angular.element(toggles[0]), {
-        template: 'navbar/namespace.html',
-        animation: 'am-flip-x',
-        scope: scope
-      });
-
-      // right dropdown
-      $dropdown(angular.element(toggles[1]), {
         template: 'navbar/dropdown.html',
         animation: 'am-flip-x',
         placement: 'bottom-right',
