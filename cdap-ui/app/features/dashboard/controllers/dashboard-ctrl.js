@@ -31,6 +31,7 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG, $alert, $timeo
       $scope.unknownBoard = true;
       $state.go('dashboard.user', {tab: index});
       $scope.dashboards.activeIndex = index;
+      $state.params.activeDashboard = $scope.dashboards[index].title;
       return;
     }
 
