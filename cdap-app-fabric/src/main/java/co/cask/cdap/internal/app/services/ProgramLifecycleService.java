@@ -38,6 +38,7 @@ import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import com.google.common.base.Predicate;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
@@ -236,9 +237,30 @@ public class ProgramLifecycleService extends AbstractIdleService {
   private void validateAndCorrectRunningRunRecords() {
     Set<String> processedInvalidRunRecordIds = Sets.newHashSet();
 
+    final List<RunRecordMeta> invalidRunRecords = store.getRuns(ProgramRunStatus.RUNNING, null);
+    if (!invalidRunRecords.isEmpty()) {
+      LOG.warn("Found {} RunRecords with RUNNING status but the program not actually running",
+               invalidRunRecords.size());
+    } else {
+      return;
+    }
+
     // Lets update the running programs run records
     for (ProgramType programType : ProgramType.values()) {
-      validateAndCorrectRunningRunRecords(programType, processedInvalidRunRecordIds);
+      final Map<RunId, RuntimeInfo> runIdToRuntimeInfo = runtimeService.list(programType);
+      Iterable<RunRecordMeta> invalidRunRecordsForProgramType =
+        Iterables.filter(invalidRunRecords, new Predicate<RunRecordMeta>() {
+          @Override
+          public boolean apply(@Nullable RunRecordMeta input) {
+            if (input == null) {
+              return false;
+            }
+            // Check if it is actually running
+            String runId = input.getPid();
+            return !runIdToRuntimeInfo.containsKey(RunIds.fromString(runId));
+          }
+        });
+      validateAndCorrectRunningRunRecords(programType, processedInvalidRunRecordIds, invalidRunRecordsForProgramType);
     }
 
     if (!processedInvalidRunRecordIds.isEmpty()) {
@@ -253,27 +275,10 @@ public class ProgramLifecycleService extends AbstractIdleService {
    *
    * @param programType The type of program the run records need to validate and update.
    * @param processedInvalidRunRecordIds the {@link Set} of processed invalid run record ids.
+   * @param invalidRunRecords the {@link Iterable} of invalid run records.
    */
-  void validateAndCorrectRunningRunRecords(ProgramType programType, Set<String> processedInvalidRunRecordIds) {
-    final Map<RunId, RuntimeInfo> runIdToRuntimeInfo = runtimeService.list(programType);
-
-    List<RunRecordMeta> invalidRunRecords = store.getRuns(ProgramRunStatus.RUNNING, new Predicate<RunRecordMeta>() {
-      @Override
-      public boolean apply(@Nullable RunRecordMeta input) {
-        if (input == null) {
-          return false;
-        }
-        // Check if it is actually running
-        String runId = input.getPid();
-        return !runIdToRuntimeInfo.containsKey(RunIds.fromString(runId));
-      }
-    });
-
-    if (!invalidRunRecords.isEmpty()) {
-      LOG.warn("Found {} RunRecords with RUNNING status but the program not actually running",
-               invalidRunRecords.size());
-    }
-
+  void validateAndCorrectRunningRunRecords(ProgramType programType, Set<String> processedInvalidRunRecordIds,
+                                           final Iterable<RunRecordMeta> invalidRunRecords) {
     // Now lets correct the invalid RunRecords
     for (RunRecordMeta invalidRunRecordMeta : invalidRunRecords) {
       String runId = invalidRunRecordMeta.getPid();

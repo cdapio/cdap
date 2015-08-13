@@ -107,7 +107,10 @@ public class ProgramLifecycleServiceTest extends AppFabricTestBase {
 
     // Lets fix it
     Set<String> processedInvalidRunRecordIds = Sets.newHashSet();
-    programLifecycleService.validateAndCorrectRunningRunRecords(ProgramType.FLOW, processedInvalidRunRecordIds);
+
+    final List<RunRecordMeta> invalidRunRecords = store.getRuns(ProgramRunStatus.RUNNING, null);
+    programLifecycleService.validateAndCorrectRunningRunRecords(ProgramType.FLOW, processedInvalidRunRecordIds,
+                                                                invalidRunRecords);
 
     // Verify there is one FAILED run record for the application
     runRecords = getProgramRuns(wordcountFlow1, ProgramRunStatus.FAILED.toString());
