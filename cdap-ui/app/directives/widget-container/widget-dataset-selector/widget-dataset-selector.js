@@ -18,7 +18,7 @@ angular.module(PKG.name + '.commons')
         }
 
         var params = {
-          namespace: $state.params.namespace
+          namespace: $state.params.namespace || $state.params.nsadmin
         };
 
         var dataMap = [];
