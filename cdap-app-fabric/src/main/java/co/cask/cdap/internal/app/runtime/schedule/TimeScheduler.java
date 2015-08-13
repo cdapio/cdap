@@ -267,8 +267,7 @@ final class TimeScheduler implements Scheduler {
     checkInitialized();
     try {
       Trigger trigger = getTrigger(program, programType, schedule.getName());
-      @SuppressWarnings("unchecked")
-      TriggerBuilder<Trigger> triggerBuilder = (TriggerBuilder<Trigger>) trigger.getTriggerBuilder();
+      TriggerBuilder triggerBuilder = trigger.getTriggerBuilder();
       String cronEntry =  ((TimeSchedule) schedule).getCronEntry();
 
       // create the new trigger with the new schedule schedule all other fields will remain unmodified
