@@ -207,6 +207,7 @@ public final class FlowletDefinition {
   /**
    * @return Map of Stream name and {@link StreamSpecification} created in this Flowlet.
    */
+  @Deprecated
   public Map<String, StreamSpecification> getStreams() {
     return streams;
   }
@@ -214,6 +215,7 @@ public final class FlowletDefinition {
   /**
    * @return Dataset modules added in this Flowlet.
    */
+  @Deprecated
   public Map<String, String> getDatasetModules() {
     return datasetModules;
   }
@@ -221,6 +223,7 @@ public final class FlowletDefinition {
   /**
    * @return Map of Dataset names and {@link DatasetCreationSpec} created in this Flowlet.
    */
+  @Deprecated
   public Map<String, DatasetCreationSpec> getDatasetSpecs() {
     return datasetSpecs;
   }

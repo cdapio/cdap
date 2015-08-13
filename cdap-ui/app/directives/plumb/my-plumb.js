@@ -11,7 +11,7 @@ commonModule.directive('myPlumb', function() {
       isDisabled: '=',
       reloaddag: '='
     },
-    link: function(scope, element, attrs) {
+    link: function(scope, element) {
       scope.element = element;
       scope.getGraphMargins = function (plugins) {
         // Very simple logic for centering the DAG.
@@ -19,7 +19,6 @@ commonModule.directive('myPlumb', function() {
         var margins = this.element[0].parentElement.getBoundingClientRect();
         var parentWidth = margins.width;
         var noOfNodes = plugins.length;
-        var widthOfEachNode = 174;
         var marginLeft = parentWidth - (noOfNodes * 174);
         if (marginLeft < 100){
           marginLeft = -20;

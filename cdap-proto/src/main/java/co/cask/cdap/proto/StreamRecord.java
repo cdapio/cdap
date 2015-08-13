@@ -17,34 +17,29 @@
 package co.cask.cdap.proto;
 
 /**
- * Represents a program in an HTTP response.
+ * Represents a stream in an HTTP response.
  */
-public class ProgramRecord {
-  private final ProgramType type;
-  private final String app;
-  private final String id;
-  private final String name;
-  private final String description;
+public class StreamRecord {
 
-  public ProgramRecord(ProgramType type, String app, String name, String description) {
-    this(type, app, name, name, description);
+  private String type;
+  private String id;
+  private String name;
+  private String specification;
+
+  public StreamRecord(String name, String specification) {
+    this("Stream", name, name, specification);
   }
 
   @Deprecated
-  public ProgramRecord(ProgramType type, String app, String id, String name, String description) {
+  public StreamRecord(String type, String id, String name, String specification) {
     this.type = type;
-    this.app = app;
     this.id = id;
     this.name = name;
-    this.description = description;
+    this.specification = specification;
   }
 
-  public ProgramType getType() {
+  public String getType() {
     return type;
-  }
-
-  public String getApp() {
-    return app;
   }
 
   @Deprecated
@@ -56,7 +51,8 @@ public class ProgramRecord {
     return name;
   }
 
-  public String getDescription() {
-    return description;
+  public String getSpecification() {
+    return specification;
   }
+
 }

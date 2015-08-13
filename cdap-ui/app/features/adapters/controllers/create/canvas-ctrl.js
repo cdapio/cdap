@@ -64,7 +64,7 @@ angular.module(PKG.name + '.feature.adapters')
 
       MyPlumbService.notifyError({});
       MyPlumbService.notifyResetListners();
-    }
+    };
 
     this.importFile = function(files) {
       CanvasFactory
@@ -74,8 +74,8 @@ angular.module(PKG.name + '.feature.adapters')
           function error(errorEvent) {
             console.error('Upload config failed', errorEvent);
           }
-        )
-    }
+        );
+    };
 
     this.onRightSideGroupItemClicked = function(group) {
       var config;
@@ -98,7 +98,7 @@ angular.module(PKG.name + '.feature.adapters')
               function error() {
                 console.log('ERROR: ' + 'exporting adapter failed');
               }
-            )
+            );
           break;
         case 'Import':
           // Clicking on the hidden upload button. #hack.
@@ -108,7 +108,7 @@ angular.module(PKG.name + '.feature.adapters')
           break;
         case 'Config':
           config = angular.copy(MyPlumbService.getConfigForBackend());
-          modalInstance = $bootstrapModal.open({
+          $bootstrapModal.open({
             templateUrl: '/assets/features/adapters/templates/create/viewconfig.html',
             size: 'lg',
             windowClass: 'adapter-modal',
@@ -187,10 +187,10 @@ angular.module(PKG.name + '.feature.adapters')
                 });
                 $state.go('adapters.list');
               },
-              function error(message) {
+              function error() {
                 console.info('Failed saving as draft');
               }
-            )
+            );
       }
     };
 
@@ -213,7 +213,7 @@ angular.module(PKG.name + '.feature.adapters')
           break;
         case 'templates':
           prom = myAdapterTemplatesApi.list({
-              apptype: MyPlumbService.metadata.template.type.toLowerCase()
+              apptype: MyPlumbService.metadata.template.type
             })
               .$promise
               .then(function(res) {
@@ -251,12 +251,15 @@ angular.module(PKG.name + '.feature.adapters')
         delete this.pluginTypes[2].error;
       } else if (item.type === 'templates') {
         myAdapterTemplatesApi.get({
-          apptype: MyPlumbService.metadata.template.type.toLowerCase(),
+          apptype: MyPlumbService.metadata.template.type,
           appname: item.name
         })
           .$promise
           .then(function(res) {
-            var result = CanvasFactory.parseImportedJson(JSON.stringify(res), MyPlumbService.metadata.template.type)
+            var result = CanvasFactory.parseImportedJson(
+              JSON.stringify(res),
+              MyPlumbService.metadata.template.type
+            );
             if (result.error) {
               $alert({
                 type: 'danger',
