@@ -22,6 +22,7 @@ gulp.task('css:lib', ['fonts'], function() {
     ].concat(mainBowerFiles({
       filter: /cask\-angular\-[^\/]+\/.*\.(css|less)$/
     })))
+    .pipe(plug.plumber())
     .pipe(plug.if('*.less', plug.less()))
     .pipe(plug.concat('lib.css'))
     .pipe(gulp.dest('./dist/assets/bundle'));
@@ -51,6 +52,7 @@ gulp.task('css:app', function() {
       './app/directives/**/*.{less,css}',
       './app/features/**/*.{less,css}'
     ])
+    .pipe(plug.plumber())
     .pipe(plug.if('*.less', plug.less()))
     .pipe(plug.concat('app.css'))
     .pipe(plug.autoprefixer(["> 1%"], {cascade:true}))
@@ -197,6 +199,7 @@ gulp.task('watch:js:app', function() {
         '!./app/**/*-test.js'
       ].concat(getEs6Features(true))
     )
+    .pipe(plug.plumber())
     .pipe(plug.ngAnnotate())
     .pipe(plug.wrapper({
        header: '\n(function (PKG){ /* ${filename} */\n',
@@ -212,6 +215,7 @@ gulp.task('watch:js:app:babel', function() {
     v: pkg.version
   });
   return gulp.src(getEs6Features())
+    .pipe(plug.plumber())
     .pipe(plug.ngAnnotate())
     .pipe(plug.sourcemaps.init())
     .pipe(plug.wrapper({
@@ -236,6 +240,7 @@ gulp.task('js:app', function() {
     './app/**/*.js',
     '!./app/**/*-test.js'
   ])
+    .pipe(plug.plumber())
     .pipe(plug.ngAnnotate())
     .pipe(plug.sourcemaps.init())
     .pipe(plug.wrapper({
@@ -270,6 +275,7 @@ gulp.task('tpl', function() {
     gulp.src([
       './app/directives/**/*.html'
     ])
+      .pipe(plug.plumber())
       .pipe(plug.angularTemplatecache({
         module: pkg.name + '.commons'
       })),
@@ -277,6 +283,7 @@ gulp.task('tpl', function() {
     gulp.src([
       './app/features/home/home.html'
     ])
+      .pipe(plug.plumber())
       .pipe(plug.angularTemplatecache({
         module: pkg.name + '.features',
         base: __dirname + '/app',
@@ -314,6 +321,7 @@ gulp.task('html', ['html:main', 'html:partials']);
  */
 gulp.task('lint', function() {
   return gulp.src(['./app/**/*.js', './server/*.js'])
+    .pipe(plug.plumber())
     .pipe(plug.jshint())
     .pipe(plug.jshint.reporter())
     .pipe(plug.jshint.reporter('fail'));
