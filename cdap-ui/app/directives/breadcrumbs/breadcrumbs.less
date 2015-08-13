@@ -1,3 +1,186 @@
-[my-breadcrumbs] {
+@import "../../styles/variables.less";
+@import "../../styles/themes/cdap/mixins.less";
+
+my-breadcrumbs {
+  background-color: white;
+  border-bottom: 1px solid @panel-default-border;
+  position: absolute;
+  top: 76px;
+  right: 0;
+  left: 0;
+  height: 40px;
+  line-height: 40px;
+  .crumbs {
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: center;
+    width: 100%;
+  }
+  .nav {
+    height: 40px;
+    margin: 0;
+    white-space: nowrap;
+    order: 1;
+    .open {
+      > a, > a:hover, > a:focus {
+        background-color: transparent;
+      }
+    }
+  }
+  a.temp-dropdown-toggle {
+    border-right: 1px solid white;
+    color: @cdap-gray;
+    font-weight: 500;
+    padding: 0;
+    height: 40px;
+    position: relative;
+    &:hover, &:focus {
+      background-color: transparent;
+    }
+    &:after {
+      content: url('@{img-path}/breadcrumb_arrow.png');
+      position: absolute;
+      width: 11px;
+      height: 40px;
+      z-index: 99;
+    }
+    > span {
+      display: inline-block;
+      line-height: 40px;
+      vertical-align: top;
+      &:first-child {
+        padding-right: 5px;
+      }
+      &:last-child {
+        margin-right: 7px;
+      }
+    }
+  }
+  ul.dropdown-menu {
+    min-width: 0;
+    width: 120px;
+    max-height: 290px;
+  }
+  li.dropdown.open {
+    ul.dropdown-menu {
+      background-color: white;
+      border-color: white;
+      overflow-x: hidden;
+      overflow-y: auto;
+      padding: 10px 0;
+      .border-radius(4px);
+      @media (max-width: @screen-md-max) {
+        position: absolute;
+      }
+      > li {
+        background-color: white;
+        padding: 0;
+        width: 120px;
+        &:focus {
+          outline: 0;
+        }
+        > a {
+          color: @cdap-header;
+          font-weight: 500;
+          background-color: white;
+          padding-right: 10px;
+          padding-left: 10px;
+          &:hover, &:focus {
+            color: @cdap-orange;
+            cursor: pointer;
+          }
+          &:focus {
+            outline: 0;
+          }
+        }
+        i {
+          display: inline-block;
+          width: 13px;
+        }
+        .active {
+          color: #c4c4c4;
+          pointer-events: none;
+        }
+      }
+
+    }
+  }
+  .crumbs {
+    position: relative;
+    height: 40px;
+    &:after{
+      position: absolute;
+      width: 15%;
+      height: 100%;
+      right: 0;
+      top: 0;
+      content: '';
+    }
+  }
+  .breadcrumb {
+    background-color: transparent;
+    font-weight: 500;
+    height: 40px;
+    order: 2;
+    position: relative;
+    white-space: nowrap;
+    overflow-x: scroll;
+    overflow-y: hidden;
+
+    > li {
+      border-right: 1px solid white;
+      display: inline-block;
+      height: 40px;
+      line-height: 40px;
+      position: relative;
+      &:before {
+        content: none;
+      }
+      &:not(:last-child) {
+        &:after {
+          content: url('@{img-path}/breadcrumb_arrow.png');
+        }
+      }
+      &:after {
+        position: absolute;
+        width: 11px;
+        height: 40px;
+        z-index: 99;
+      }
+      &:last-child, &:only-child {
+        background-color: rgb(208, 208, 208);
+        &:after {
+          content: url('@{img-path}/breadcrumb_arrow_last.png');
+          right: 0;
+          top: -1px;
+          height: 39px;
+        }
+        span {
+          padding-right: 7px;
+        }
+      }
+      a, span {
+        display: inline-block;
+        vertical-align: top;
+        margin-right: 7px;
+        padding-left: 7px;
+        margin-left: 14px;
+      }
+      &:first-child {
+        a {
+          margin-left: 0;
+        }
+      }
+      a {
+        color: @cdap-gray;
+        &:hover, &:focus {
+          text-decoration: none;
+        }
+      }
+      span {
+        color: @cdap-header;
+      }
+    }
+  }
 
 }

@@ -1,0 +1,17 @@
+<div class="container">
+  <div class="crumbs">
+<!--     <div class="crumbs-inner"> -->
+      <ul class="nav navbar-nav" id="navbar-namespace" ng-class="{'hide': hideNsDropdown === true}">
+        <li class="dropdown" ng-class="{one:namespaces.length<2}">
+          <a href="" class="temp-dropdown-toggle">
+            <span class="fa fa-align-justify"></span>
+            <span ng-bind="namespace| myEllipsis: 10" ng-if="namespaces.length > 1"></span>
+            <span ng-bind="namespace | myEllipsis: 10" tooltip="Only one namespace to display" tooltip-placement="right" ng-if="namespaces.length < 2"></span>
+          </a>
+        </li>
+      </ul>
+
+      <div ncy-breadcrumb></div>
+<!--     </div> -->
+  </div>
+</div>

@@ -2,27 +2,20 @@
  * Namespace dropdown + breadcrumbs
  */
 
-angular.module(PKG.name+'.commons').directive('myBreadcrumbs',
-
-function myBreadcrumbsDirective ($dropdown, myAuth, MY_CONFIG) {
+angular.module(PKG.name+'.commons')
+.directive('myBreadcrumbs', function ($dropdown, myAuth, MY_CONFIG) {
   return {
     restrict: 'E',
     templateUrl: 'breadcrumbs/breadcrumbs.html',
     controller: 'breadcrumbsCtrl',
-    link: function (scope, element) {
+    scope: {
+      hideNsDropdown: '=?'
+    },
+    link: function (scope, element, attrs) {
 
-      var toggles = element[0].querySelectorAll('a.dropdown-toggle');
-
-      // namespace dropdown
-      $dropdown(angular.element(toggles[0]), {
-        template: 'navbar/namespace.html',
-        animation: 'am-flip-x',
-        scope: scope
-      });
-
-      scope.logout = myAuth.logout;
-
-      scope.securityEnabled = MY_CONFIG.securityEnabled;
+      scope.hideNsDropdown = attrs.hideNsDropdown === 'true';
+      scope.element = element;
     }
   };
+
 });
