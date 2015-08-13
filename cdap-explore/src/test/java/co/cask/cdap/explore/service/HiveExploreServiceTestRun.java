@@ -24,7 +24,6 @@ import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.explore.jdbc.ExploreDriver;
 import co.cask.cdap.explore.service.datasets.KeyStructValueTableDefinition;
 import co.cask.cdap.explore.service.datasets.NotRecordScannableTableDefinition;
-import co.cask.cdap.hive.datasets.DatasetInputFormat;
 import co.cask.cdap.hive.datasets.DatasetSerDe;
 import co.cask.cdap.hive.datasets.DatasetStorageHandler;
 import co.cask.cdap.proto.ColumnDesc;

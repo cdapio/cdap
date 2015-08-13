@@ -20,7 +20,6 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.stream.StreamInputSplitFactory;
 import co.cask.cdap.data.stream.StreamInputSplitFinder;
 import co.cask.cdap.data.stream.StreamUtils;
-import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.hive.context.ContextManager;
 import co.cask.cdap.proto.Id;

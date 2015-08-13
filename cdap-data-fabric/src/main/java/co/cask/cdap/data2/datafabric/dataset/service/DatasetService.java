@@ -27,7 +27,6 @@ import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.MDSDatasetsRegistry;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
 import co.cask.cdap.data2.metrics.DatasetMetricsReporter;
-import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.http.NettyHttpService;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;

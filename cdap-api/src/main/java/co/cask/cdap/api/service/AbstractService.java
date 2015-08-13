@@ -18,6 +18,7 @@ package co.cask.cdap.api.service;
 
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
+import co.cask.cdap.internal.api.AbstractProgramDatasetConfigurable;
 
 import java.util.Arrays;
 
@@ -26,7 +27,7 @@ import java.util.Arrays;
  *
  * The default no-op constructor must be implemented.
  */
-public abstract class AbstractService implements Service {
+public abstract class AbstractService extends AbstractProgramDatasetConfigurable<ServiceConfigurer> implements Service {
   private ServiceConfigurer configurer;
 
   @Override
@@ -86,6 +87,7 @@ public abstract class AbstractService implements Service {
   /**
    * Returns the {@link ServiceConfigurer}, only available at configuration time.
    */
+  @Override
   protected final ServiceConfigurer getConfigurer() {
     return configurer;
   }

@@ -78,7 +78,7 @@ public final class MapReduceSpecificationCodec extends AbstractSpecificationCode
     Map<String, String> properties = deserializeMap(jsonObj.get("properties"), context, String.class);
 
     return new MapReduceSpecification(className, name, description, inputDataSet, outputDataSet,
-                                      dataSets, properties, mapperResources, reducerResources);
+                                             dataSets, properties, mapperResources, reducerResources);
   }
 
   /**
