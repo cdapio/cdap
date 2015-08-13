@@ -18,11 +18,9 @@ package co.cask.cdap.api.flow;
 
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.data.stream.Stream;
-import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.flow.flowlet.Flowlet;
 import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;
-import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.internal.flow.DefaultFlowSpecification;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
