@@ -202,6 +202,8 @@ public final class FlowletDefinition {
     return outputs;
   }
 
+  // TODO: Remove the getStreams, getDatasetModules, getDatasetSpecs methods once
+  // https://issues.cask.co/browse/CDAP-2943 is fixed and the classes are moved to cdap-app-fabric
   /**
    * @return Map of Stream name and {@link StreamSpecification} created in this Flowlet.
    */
