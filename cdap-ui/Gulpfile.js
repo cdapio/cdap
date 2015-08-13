@@ -399,14 +399,14 @@ gulp.task('default', ['lint', 'build']);
 /*
   watch
  */
-gulp.task('watch', ['watch:build'], function() {
+gulp.task('watch', ['jshint', 'watch:build'], function() {
   plug.livereload.listen();
 
   gulp.watch('./dist/**/*')
     .on('change', plug.livereload.changed);
 
-  gulp.watch(['./app/**/*.js', '!./app/features/workflows/**/*.js', '!./app/**/*-test.js'], ['watch:js:app']);
-  gulp.watch(['./app/features/workflows/**/*.js'], ['watch:js:app:babel']);
+  gulp.watch(['./app/**/*.js', '!./app/features/workflows/**/*.js', '!./app/**/*-test.js'], ['jshint', 'watch:js:app']);
+  gulp.watch(['./app/features/workflows/**/*.js'], ['jshint', 'watch:js:app:babel']);
 
   gulp.watch('./app/**/*.{less,css}', ['css']);
   gulp.watch(['./app/directives/**/*.html', './app/features/home/home.html'], ['tpl']);

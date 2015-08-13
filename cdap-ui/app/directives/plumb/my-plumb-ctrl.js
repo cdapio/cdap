@@ -114,12 +114,12 @@ angular.module(PKG.name + '.commons')
         var returnResult = true;
         if (e.pos[1] < 0) {
           e.e.preventDefault();
-          e.el.style.top = "10px";
+          e.el.style.top = '10px';
           returnResult = false;
         }
         if (e.pos[0] < 0) {
           e.e.preventDefault();
-          e.el.style.left = "10px";
+          e.el.style.left = '10px';
           returnResult = false;
         }
         MyPlumbService.nodes[e.el.id].style = {top: e.el.style.top, left: e.el.style.left};
@@ -129,7 +129,7 @@ angular.module(PKG.name + '.commons')
 
     function drawConnections() {
       var i;
-      var prev, curr, next;
+      var curr, next;
 
       var connections = MyPlumbService.connections;
       for(i=0; i<connections.length; i++) {

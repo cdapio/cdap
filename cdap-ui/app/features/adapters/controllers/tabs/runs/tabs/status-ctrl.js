@@ -11,8 +11,6 @@ angular.module(PKG.name + '.feature.adapters')
       scope: $scope
     };
 
-    var template;
-
     $scope.cloneAdapter = function() {
       if ($scope.config) {
         $state.go('adapters.create', {
@@ -100,7 +98,7 @@ angular.module(PKG.name + '.feature.adapters')
     function pollForMetricsData(widget) {
       DashboardHelper.pollData(widget)
         .then(
-          function onMetricsFetchSuccess(metrics) {
+          function onMetricsFetchSuccess() {
             if (!widget.formattedData || !widget.formattedData.columns) {
               return;
             }
@@ -135,10 +133,10 @@ angular.module(PKG.name + '.feature.adapters')
         return metric.type === 'sink';
       });
       sink = sink[0];
-      transform = data.filter(function(metric) {
+      transforms = data.filter(function(metric) {
         return metric.type === 'transform';
       });
-      returnArray = returnArray.concat(transform);
+      returnArray = returnArray.concat(transforms);
       if (source) {returnArray.unshift(source);}
       if (sink) {returnArray.push(sink);}
       return returnArray;

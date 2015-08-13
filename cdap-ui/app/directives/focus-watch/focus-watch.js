@@ -1,10 +1,10 @@
 angular.module(PKG.name + '.commons')
-  .directive('myFocusWatch', function($timeout, $parse) {
+  .directive('myFocusWatch', function($timeout) {
     return {
       scope: {
         model: '=myFocusWatch'
       },
-      link: function (scope, element, attrs) {
+      link: function (scope, element) {
 
         scope.$watch('model', function () {
           if (scope.model) {

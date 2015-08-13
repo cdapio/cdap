@@ -135,13 +135,14 @@ angular.module(PKG.name + '.services')
 
     function findTransformThatIsSource(originalConnections) {
       var transformAsSource = {};
+      function isSource (c) {
+        if (c.target === connection.source) {
+          return c;
+        }
+      }
       for (var i =0; i<originalConnections.length; i++) {
         var connection = originalConnections[i];
-        var isSoureATarget = originalConnections.filter(function (c) {
-          if (c.target === connection.source) {
-            return c;
-          }
-        });
+        var isSoureATarget = originalConnections.filter(isSource);
         if (!isSoureATarget.length) {
           transformAsSource = connection;
           break;
@@ -172,7 +173,7 @@ angular.module(PKG.name + '.services')
           finalConnections = finalConnections.concat(parallelConnections);
         }
       } else {
-        var source = findTransformThatIsSource(originalConnections);
+        source = findTransformThatIsSource(originalConnections);
         addConnectionsInOrder(source, finalConnections, originalConnections);
       }
       return finalConnections;
@@ -189,7 +190,7 @@ angular.module(PKG.name + '.services')
           target: con.targetId
         });
       });
-      var localConnections = orderConnections.call(this, angular.copy(localConnections), angular.copy(localConnections));
+      localConnections = orderConnections.call(this, angular.copy(localConnections), angular.copy(localConnections));
       this.connections = localConnections;
     };
 

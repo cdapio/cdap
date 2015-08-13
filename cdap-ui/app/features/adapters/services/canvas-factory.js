@@ -30,25 +30,25 @@ angular.module(PKG.name + '.feature.adapters')
       var returnConfig = {};
       // Too many ORs. Should be removed when all drafts eventually are
       // resaved in the new format. This is temporary
-      returnConfig.name = myHelpers.objectQuery(config, 'metadata', 'name')
-      || myHelpers.objectQuery(data, 'name');
+      returnConfig.name =
+        myHelpers.objectQuery(config, 'metadata', 'name') || myHelpers.objectQuery(data, 'name');
 
-      returnConfig.description = myHelpers.objectQuery(config, 'metadata', 'description')
-      || myHelpers.objectQuery(data, 'description');
+      returnConfig.description =
+      myHelpers.objectQuery(config, 'metadata', 'description') || myHelpers.objectQuery(data, 'description');
 
-      var template = myHelpers.objectQuery(config, 'metadata', 'type')
-      || myHelpers.objectQuery(data, 'template');
+      var template =
+      myHelpers.objectQuery(config, 'metadata', 'type') || myHelpers.objectQuery(data, 'template');
 
       returnConfig.template = {
         type: template
       };
       if (template === 'ETLBatch') {
         returnConfig.template.schedule = {};
-        returnConfig.template.schedule.cron = myHelpers.objectQuery(config, 'schedule', 'cron')
-        || myHelpers.objectQuery(config, 'schedule');
+        returnConfig.template.schedule.cron =
+        myHelpers.objectQuery(config, 'schedule', 'cron') || myHelpers.objectQuery(config, 'schedule');
       } else if (template === 'ETLRealtime') {
-        returnConfig.template.instance = myHelpers.objectQuery(config, 'instance')
-        || myHelpers.objectQuery(config, 'metadata', 'template', 'instance');
+        returnConfig.template.instance =
+        myHelpers.objectQuery(config, 'instance') || myHelpers.objectQuery(config, 'metadata', 'template', 'instance');
       }
 
       return returnConfig;
@@ -96,7 +96,6 @@ angular.module(PKG.name + '.feature.adapters')
     }
 
     function parseImportedJson(configJson, type) {
-      var errorMessage;
       var result;
       try {
         result = JSON.parse(configJson);
@@ -114,9 +113,11 @@ angular.module(PKG.name + '.feature.adapters')
         };
       }
       // We need to perform more validations on the uploaded json.
-      if (!result.config.source ||
+      if (
+          !result.config.source ||
           !result.config.sink ||
-          !result.config.transforms) {
+          !result.config.transforms
+        ) {
         return {
           message: 'The structure of imported config is incorrect. To the base structure of the config please try creating a new adpater and viewing the config.',
           error: true
@@ -125,10 +126,10 @@ angular.module(PKG.name + '.feature.adapters')
       return result;
     }
 
-    function importAdapter(files, type) {
+    function importAdapter(files) {
       var defer = $q.defer();
       var reader = new FileReader();
-      reader.readAsText(files[0], "UTF-8");
+      reader.readAsText(files[0], 'UTF-8');
 
       reader.onload = function (evt) {
         var result = parseImportedJson(evt.target.result, MyPlumbService.metadata.template.type);
@@ -156,5 +157,5 @@ angular.module(PKG.name + '.feature.adapters')
       exportAdapter: exportAdapter,
       importAdapter: importAdapter,
       parseImportedJson: parseImportedJson
-    }
+    };
   });

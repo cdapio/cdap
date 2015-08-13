@@ -36,7 +36,7 @@ angular.module(PKG.name + '.services')
       });
     }
 
-    function fetchData (widget, isAggregate) {
+    function fetchData (widget) {
       return dataSrc.request({
         _cdapPath: '/metrics/query',
         method: 'POST',
@@ -51,7 +51,7 @@ angular.module(PKG.name + '.services')
       });
     }
 
-    function pollData (widget, isAggregate) {
+    function pollData (widget) {
       return dataSrc.poll({
         _cdapPath: '/metrics/query',
         method: 'POST',
