@@ -352,8 +352,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     try {
       artifactId = parseArchiveName(namespace, archiveName);
     } catch (InvalidArtifactException e) {
-      // TODO: (CDAP-3310) if id can't be parsed from archiveName,
-      //                   pick up version from manifest and use archive name as artifact name
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
       return null;
     }

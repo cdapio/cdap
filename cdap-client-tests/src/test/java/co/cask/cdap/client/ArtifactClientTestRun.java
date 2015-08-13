@@ -143,7 +143,9 @@ public class ArtifactClientTestRun extends ClientTestBase {
     Id.Artifact myapp1Id = Id.Artifact.from(Id.Namespace.DEFAULT, "myapp", "1.0.0");
     Id.Artifact myapp2Id = Id.Artifact.from(Id.Namespace.DEFAULT, "myapp", "2.0.0");
     LocalLocationFactory locationFactory = new LocalLocationFactory(tmpFolder.newFolder());
-    final Location appJarLoc = AppJarHelper.createDeploymentJar(locationFactory, MyApp.class);
+    Manifest manifest = new Manifest();
+    manifest.getMainAttributes().put(ManifestFields.BUNDLE_VERSION, "2.0.0");
+    final Location appJarLoc = AppJarHelper.createDeploymentJar(locationFactory, MyApp.class, manifest);
 
     InputSupplier<InputStream> inputSupplier = new InputSupplier<InputStream>() {
       @Override
@@ -153,12 +155,12 @@ public class ArtifactClientTestRun extends ClientTestBase {
     };
     artifactClient.add(myapp1Id.getNamespace(), myapp1Id.getName(),
                        myapp1Id.getVersion().getVersion(), null, inputSupplier);
-    artifactClient.add(myapp2Id.getNamespace(), myapp2Id.getName(),
-                       myapp2Id.getVersion().getVersion(), null, inputSupplier);
+    // let it derive version from jar manifest, which has bundle-version at 2.0.0
+    artifactClient.add(myapp2Id.getNamespace(), myapp2Id.getName(), null, null, inputSupplier);
 
     // add an artifact that contains a plugin, but only extends myapp-2.0.0
     Id.Artifact pluginId = Id.Artifact.from(Id.Namespace.DEFAULT, "myapp-plugins", "2.0.0");
-    Manifest manifest = new Manifest();
+    manifest = new Manifest();
     manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE, Plugin1.class.getPackage().getName());
     final Location pluginJarLoc = PluginJarHelper.createPluginJar(locationFactory, manifest, Plugin1.class);
     inputSupplier = new InputSupplier<InputStream>() {

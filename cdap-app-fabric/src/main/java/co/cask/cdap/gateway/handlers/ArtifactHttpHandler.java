@@ -19,11 +19,11 @@ package co.cask.cdap.gateway.handlers;
 import co.cask.cdap.api.artifact.ArtifactDescriptor;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.templates.plugins.PluginClass;
+import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.common.ArtifactAlreadyExistsException;
 import co.cask.cdap.common.ArtifactNotFoundException;
 import co.cask.cdap.common.ArtifactRangeNotFoundException;
 import co.cask.cdap.common.BadRequestException;
-import co.cask.cdap.common.InvalidArtifactException;
 import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -62,6 +62,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
+import java.util.jar.Attributes;
+import java.util.jar.JarFile;
+import java.util.jar.Manifest;
+import java.util.zip.ZipException;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
@@ -316,33 +320,20 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
   @Path("/namespaces/{namespace-id}/artifacts/{artifact-name}")
   public BodyConsumer addArtifact(HttpRequest request, HttpResponder responder,
                                   @PathParam("namespace-id") String namespaceId,
-                                  @PathParam("artifact-name") String artifactName,
-                                  @HeaderParam(VERSION_HEADER) String artifactVersion,
-                                  @HeaderParam(EXTENDS_HEADER) final String parentArtifactsStr) {
+                                  @PathParam("artifact-name") final String artifactName,
+                                  @HeaderParam(VERSION_HEADER) final String artifactVersion,
+                                  @HeaderParam(EXTENDS_HEADER) final String parentArtifactsStr)
+    throws NamespaceNotFoundException, BadRequestException {
 
-    Id.Namespace namespace;
-    try {
-      namespace = validateAndGetNamespace(namespaceId);
-    } catch (NamespaceNotFoundException e) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
-      return null;
+    final Id.Namespace namespace = validateAndGetNamespace(namespaceId);
+
+    // if version is explicitly given, validate the id now. otherwise version will be derived from the manifest
+    // and validated there
+    if (artifactVersion != null && !artifactVersion.isEmpty()) {
+      validateAndGetArtifactId(namespace, artifactName, artifactVersion);
     }
 
-    final Id.Artifact artifactId;
-    try {
-      artifactId = validateAndGetArtifactId(namespace, artifactName, artifactVersion);
-    } catch (BadRequestException e) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-      return null;
-    }
-
-    final Set<ArtifactRange> parentArtifacts;
-    try {
-      parentArtifacts = parseExtendsHeader(namespace, parentArtifactsStr);
-    } catch (BadRequestException e) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-      return null;
-    }
+    final Set<ArtifactRange> parentArtifacts = parseExtendsHeader(namespace, parentArtifactsStr);
 
     try {
       // copy the artifact contents to local tmp directory
@@ -353,27 +344,55 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
         @Override
         protected void onFinish(HttpResponder responder, File uploadedFile) {
           try {
+            String version = (artifactVersion == null || artifactVersion.isEmpty()) ?
+              getBundleVersion(uploadedFile) : artifactVersion;
+            Id.Artifact artifactId = validateAndGetArtifactId(namespace, artifactName, version);
+
             // add the artifact to the repo
             artifactRepository.addArtifact(artifactId, uploadedFile, parentArtifacts);
             responder.sendString(HttpResponseStatus.OK, "Artifact added successfully");
-          } catch (InvalidArtifactException e) {
-            responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
           } catch (ArtifactRangeNotFoundException e) {
             responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
           } catch (ArtifactAlreadyExistsException e) {
-            responder.sendString(HttpResponseStatus.CONFLICT, "Artifact " + artifactId + " already exists.");
+            responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
           } catch (WriteConflictException e) {
             responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
-              "Conflict while writing artifact, please try again");
+              "Conflict while writing artifact, please try again.");
           } catch (IOException e) {
-            LOG.error("Exception while trying to write artifact {}.", artifactId, e);
+            LOG.error("Exception while trying to write artifact {}-{}.", artifactName, artifactVersion, e);
             responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
-              "Error performing IO while writing artifact");
+              "Error performing IO while writing artifact.");
+          } catch (BadRequestException e) {
+            responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
           }
         }
+
+        private String getBundleVersion(File file) throws BadRequestException, IOException {
+          try {
+            JarFile jarFile = new JarFile(file);
+
+            Manifest manifest = jarFile.getManifest();
+            if (manifest == null) {
+              throw new BadRequestException(
+                "Unable to derive version from artifact because it does not contain a manifest. " +
+                  "Please package the jar with a manifest, or explicitly specify the artifact version.");
+            }
+            Attributes attributes = manifest.getMainAttributes();
+            String version = attributes == null ? null : attributes.getValue(ManifestFields.BUNDLE_VERSION);
+            if (version == null) {
+              throw new BadRequestException(
+                "Unable to derive version from artifact because manifest does not contain Bundle-Version attribute. " +
+                  "Please include Bundle-Version in the manifest, or explicitly specify the artifact version.");
+            }
+            return version;
+          } catch (ZipException e) {
+            throw new BadRequestException("Artifact is not in zip format. Please make sure it is a jar file.");
+          }
+        }
+
       };
     } catch (IOException e) {
-      LOG.error("Exception creating temp file to place artifact {} contents", artifactId, e);
+      LOG.error("Exception creating temp file to place artifact {} contents", artifactName, e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Server error creating temp file for artifact.");
       return null;
     }
