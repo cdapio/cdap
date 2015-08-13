@@ -1,31 +1,34 @@
 <div class="row">
   <div class="col-xs-6">
-    <h2>Create Template</h2>
+    <h2 ng-if="!TemplatesController.isEdit">Create Template</h2>
+    <h2 ng-if="TemplatesController.isEdit">Edit Template</h2>
   </div>
   <div class="col-xs-6 text-right">
     <button class="btn btn-success" ng-click="TemplatesController.save()">Save</button>
   </div>
 </div>
-<label class="label-control">Choose Templates</label>
-<select ng-model="TemplatesController.template" class="form-control">
-  <option value="ETLBatch">ETL Batch</option>
-  <option value="ETLRealtime">ETL Realtime</option>
-</select>
-
-<div ng-if="TemplatesController.template">
-  <label class="label-control">Choose Plugin Type</label>
-  <select ng-model="TemplatesController.pluginType" class="form-control">
-    <option value="source">Source</option>
-    <option value="transform">Transform</option>
-    <option value="sink">Sink</option>
+<div ng-if="!TemplatesController.isEdit">
+  <label class="label-control">Choose Templates</label>
+  <select ng-model="TemplatesController.template" class="form-control">
+    <option value="ETLBatch">ETL Batch</option>
+    <option value="ETLRealtime">ETL Realtime</option>
   </select>
-</div>
 
-<div ng-if="TemplatesController.pluginList.length > 0">
-  <label class="label-control">Choose Plugin</label>
-  <select ng-model="TemplatesController.plugin" class="form-control">
-    <option ng-repeat="plugin in TemplatesController.pluginList" value="{{plugin.name}}">{{plugin.name}}</option>
-  </select>
+  <div ng-if="TemplatesController.template">
+    <label class="label-control">Choose Plugin Type</label>
+    <select ng-model="TemplatesController.pluginType" class="form-control">
+      <option value="source">Source</option>
+      <option value="transform">Transform</option>
+      <option value="sink">Sink</option>
+    </select>
+  </div>
+
+  <div ng-if="TemplatesController.pluginList.length > 0">
+    <label class="label-control">Choose Plugin</label>
+    <select ng-model="TemplatesController.plugin" class="form-control">
+      <option ng-repeat="plugin in TemplatesController.pluginList" value="{{plugin.name}}">{{plugin.name}}</option>
+    </select>
+  </div>
 </div>
 
 <div ng-if="TemplatesController.plugin">
@@ -68,8 +71,8 @@
   <div>
     <div class="output-schema">
       <h4>Output Schema</h4>
-
-      <fieldset ng-disabled="isDisabled" ng-if="TemplatesController.pluginConfig.outputSchema || !isDisabled || plugin.properties.format === 'clf' || TemplatesController.pluginConfig.properties.format === 'syslog'">
+{{TemplatesController.isDisabled}}
+      <fieldset ng-disabled="TemplatesController.isDisabled" ng-if="TemplatesController.pluginConfig.outputSchema || !TemplatesController.isDisabled || TemplatesController.pluginConfig.properties.format === 'clf' || TemplatesController.pluginConfig.properties.format === 'syslog'">
         <my-schema-editor
           ng-model="TemplatesController.pluginConfig.outputSchema"
           data-disabled="TemplatesController.pluginConfig.implicitSchema"
@@ -81,7 +84,7 @@
         ></my-stream-properties>
       </fieldset>
 
-      <div ng-if="!TemplatesController.pluginConfig.outputSchema && isDisabled && TemplatesController.pluginConfig.properties.format !== 'clf' && TemplatesController.pluginConfig.properties.format !== 'syslog'">
+      <div ng-if="!TemplatesController.pluginConfig.outputSchema && TemplatesController.isDisabled && TemplatesController.pluginConfig.properties.format !== 'clf' && TemplatesController.pluginConfig.properties.format !== 'syslog'">
         <div class="well well-lg">
           <h4>There is no output schema</h4>
         </div>
