@@ -16,13 +16,12 @@
 
 package co.cask.cdap.internal.app.runtime.adapter;
 
-import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.artifact.ArtifactClasses;
 import co.cask.cdap.api.templates.plugins.PluginClass;
 import co.cask.cdap.api.templates.plugins.PluginInfo;
-import co.cask.cdap.api.templates.plugins.PluginPropertyField;
 import co.cask.cdap.api.templates.plugins.PluginSelector;
 import co.cask.cdap.api.templates.plugins.PluginVersion;
+import co.cask.cdap.common.InvalidArtifactException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.ProgramClassLoader;
@@ -30,12 +29,10 @@ import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactInspector;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.artifact.InvalidArtifactException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Predicates;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
@@ -46,11 +43,6 @@ import com.google.common.io.Files;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -244,7 +236,7 @@ public class PluginRepository {
 
     PluginInfo pluginInfo = pluginFile.getPluginInfo();
     Id.Artifact artifactId = Id.Artifact.from(
-      Constants.SYSTEM_NAMESPACE_ID, pluginInfo.getName(), pluginInfo.getVersion().getVersion());
+      Id.Namespace.SYSTEM, pluginInfo.getName(), pluginInfo.getVersion().getVersion());
 
     try {
       ArtifactClasses artifactClasses =
@@ -328,40 +320,4 @@ public class PluginRepository {
     }
   }
 
-  /**
-   * A Gson deserialization for creating {@link PluginClass} object from external plugin config file.
-   */
-  private static final class PluginClassDeserializer implements JsonDeserializer<PluginClass> {
-
-    // Type for the PluginClass.properties map.
-    private static final Type PROPERTIES_TYPE = new TypeToken<Map<String, PluginPropertyField>>() { }.getType();
-
-    @Override
-    public PluginClass deserialize(JsonElement json, Type typeOfT,
-                                   JsonDeserializationContext context) throws JsonParseException {
-      if (!json.isJsonObject()) {
-        throw new JsonParseException("Expects json object");
-      }
-
-      JsonObject jsonObj = json.getAsJsonObject();
-
-      String type = jsonObj.has("type") ? jsonObj.get("type").getAsString() : Plugin.DEFAULT_TYPE;
-      String name = getRequired(jsonObj, "name").getAsString();
-      String description = getRequired(jsonObj, "description").getAsString();
-      String className = getRequired(jsonObj, "className").getAsString();
-
-      Map<String, PluginPropertyField> properties = jsonObj.has("properties")
-        ? context.<Map<String, PluginPropertyField>>deserialize(jsonObj.get("properties"), PROPERTIES_TYPE)
-        : ImmutableMap.<String, PluginPropertyField>of();
-
-      return new PluginClass(type, name, description, className, null, properties);
-    }
-
-    private JsonElement getRequired(JsonObject jsonObj, String name) {
-      if (!jsonObj.has(name)) {
-        throw new JsonParseException("Property '" + name + "' is missing");
-      }
-      return jsonObj.get(name);
-    }
-  }
 }

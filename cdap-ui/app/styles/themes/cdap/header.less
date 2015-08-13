@@ -10,15 +10,6 @@ body {
 
       // Logo
       a.navbar-brand {
-        position: relative;
-        top: 1px;
-
-        &.first {
-          background-image: none;
-          font-size: 40px;
-          top: -8px;
-        }
-
         > strong {
           display: inline-block;
           visibility: hidden;
@@ -258,8 +249,7 @@ body {
         }
 
         a.navbar-brand {
-          &.first { color: @cdap-orange; }
-          &:last-of-type { background: url('@{img-path}/cdap.png') 15px center / 100px auto no-repeat; }
+          background: url('@{img-path}/cdap.png') 15px center / 100px auto no-repeat;
         }
 
         div.navbar-collapse {

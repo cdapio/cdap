@@ -123,9 +123,11 @@ public abstract class ClientTestBase {
   }
 
   protected File createAppJarFile(Class<?> cls) throws IOException {
-    LocationFactory locationFactory = new LocalLocationFactory(TMP_FOLDER.newFolder());
+    File tmpJarFolder = TMP_FOLDER.newFolder();
+    LocationFactory locationFactory = new LocalLocationFactory(tmpJarFolder);
     Location deploymentJar = AppJarHelper.createDeploymentJar(locationFactory, cls);
-    File appJarFile = TMP_FOLDER.newFile();
+    File appJarFile =
+      new File(tmpJarFolder, String.format("%s-1.0.%d-SNAPSHOT.jar", cls.getSimpleName(), System.currentTimeMillis()));
     Files.copy(Locations.newInputSupplier(deploymentJar), appJarFile);
     return appJarFile;
   }

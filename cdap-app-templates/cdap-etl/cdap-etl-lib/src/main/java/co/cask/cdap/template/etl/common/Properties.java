@@ -135,6 +135,8 @@ public final class Properties {
     public static final String ID_FIELD = "es.idField";
     public static final String QUERY = "query";
     public static final String SCHEMA = "schema";
+    public static final String TRANSPORT_ADDRESSES = "es.transportAddresses";
+    public static final String CLUSTER = "es.cluster";
   }
 
   /**

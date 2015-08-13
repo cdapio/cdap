@@ -149,8 +149,9 @@ public abstract class Id {
    * Uniquely identifies a Namespace.
    */
   public static final class Namespace extends Id {
-    public static final Namespace DEFAULT = Id.Namespace.from("default");
-    public static final Namespace SYSTEM = Id.Namespace.from("system");
+    public static final Namespace DEFAULT = from("default");
+    public static final Namespace SYSTEM = from("system");
+    public static final Namespace CDAP = from("cdap");
 
     private final String id;
 
@@ -1273,7 +1274,7 @@ public abstract class Id {
   /**
    * Artifact Id identifies an artifact by its namespace, name, and version.
    */
-  public static class Artifact extends NamespacedId {
+  public static class Artifact extends NamespacedId implements Comparable<Artifact> {
     private final Namespace namespace;
     private final String name;
     private final ArtifactVersion version;
@@ -1314,11 +1315,7 @@ public abstract class Id {
 
     @Override
     public String toString() {
-      return Objects.toStringHelper(this)
-        .add("namespace", namespace)
-        .add("name", name)
-        .add("version", version)
-        .toString();
+      return String.format("%s:%s-%s", namespace.getId(), name, version.getVersion());
     }
 
     @Override
@@ -1332,9 +1329,7 @@ public abstract class Id {
 
       Artifact that = (Artifact) o;
 
-      return Objects.equal(namespace, that.namespace) &&
-        Objects.equal(name, that.name)
-        && Objects.equal(version, that.version);
+      return this.compareTo(that) == 0;
     }
 
     @Override
@@ -1348,6 +1343,20 @@ public abstract class Id {
 
     public static boolean isValidName(String name) {
       return isValidId(name);
+    }
+
+    @Override
+    public int compareTo(Artifact o) {
+      int code = namespace.getId().compareTo(o.namespace.getId());
+      if (code != 0) {
+        return code;
+      }
+      code = name.compareTo(o.name);
+      if (code != 0) {
+        return code;
+      }
+      code = version.compareTo(o.version);
+      return code;
     }
   }
 

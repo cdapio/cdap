@@ -241,7 +241,7 @@ These are the available commands:
    ``set service instances <app-id.service-id> <num-instances>``,"Sets the instances of a service."
    ``set service runtimeargs <app-id.service-id> <runtime-args>``,"Sets the runtime arguments of a service. <runtime-args> is specified in the format ""key1=a key2=b""."
    ``set spark runtimeargs <app-id.spark-id> <runtime-args>``,"Sets the runtime arguments of a Spark program. <runtime-args> is specified in the format ""key1=a key2=b""."
-   ``set stream format <stream-id> <format> [<schema>] [<settings>]``,"Sets the format of a stream. <schema> is a sql-like schema ""column_name data_type, ..."" or Avro-like JSON schema and <settings> is specified in the format ""key1=v1 key2=v2""."
+   ``set stream format <stream-id> <format> [<schema>] [<settings>]``,"Sets the format of a stream. Valid <format>s are avro, csv, tsv, text, clf, grok, syslog. <schema> is a sql-like schema ""column_name data_type, ..."" or Avro-like JSON schema and <settings> is specified in the format ""key1=v1 key2=v2""."
    ``set stream notification-threshold <stream-id> <notification-threshold-mb>``,"Sets the notification threshold of a stream."
    ``set stream properties <stream-id> <local-file-path>``,"Sets the properties of a stream, such as TTL, format, and notification threshold."
    ``set stream ttl <stream-id> <ttl-in-seconds>``,"Sets the time-to-live (TTL) of a stream."
@@ -265,6 +265,7 @@ These are the available commands:
    ``stop service <app-id.service-id>``,"Stops a service."
    ``stop spark <app-id.spark-id>``,"Stops a Spark program."
    ``stop worker <app-id.worker-id>``,"Stops a worker."
+   ``stop workflow <app-id.workflow-id>``,"Stops a workflow."
    ``suspend schedule <app-id.schedule-id>``,"Suspends a schedule"
    ``truncate stream <stream-id>``,"Truncates a stream."
    **Adapter Lifecycle**

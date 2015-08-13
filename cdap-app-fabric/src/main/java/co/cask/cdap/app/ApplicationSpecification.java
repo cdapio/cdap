@@ -29,6 +29,7 @@ import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.data.dataset.DatasetCreationSpec;
+import co.cask.cdap.proto.Id;
 
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -44,9 +45,11 @@ public interface ApplicationSpecification {
   String getName();
 
   /**
+   * @deprecated Use {@link #getArtifactId()} instead.
    * @return Version of the Application, according to the Bundle-Version in the jar manifest.
    */
   @Nullable
+  @Deprecated
   String getVersion();
 
   /**
@@ -59,6 +62,11 @@ public interface ApplicationSpecification {
    * @return Description of the Application.
    */
   String getDescription();
+
+  /**
+   * @return ID of the artifact used to create the application.
+   */
+  Id.Artifact getArtifactId();
 
   /**
    * @return An immutable {@link Map} from {@link Stream} name to {@link StreamSpecification}

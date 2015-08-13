@@ -186,7 +186,7 @@ abstract class BaseExploreResultSet implements ResultSet {
     } else if (Number.class.isInstance(obj)) {
       return ((Number) obj).intValue() != 0;
     } else if (String.class.isInstance(obj)) {
-      return !((String) obj).equals("0");
+      return !obj.equals("0");
     }
     throw new SQLException("Cannot convert column " + columnIndex + " to boolean");
   }

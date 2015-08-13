@@ -37,7 +37,22 @@ angular.module(PKG.name + '.services')
     }
 
     function fetchData (widget) {
-      dataSrc.request({
+      return dataSrc.request({
+        _cdapPath: '/metrics/query',
+        method: 'POST',
+        body: MyMetricsQueryHelper.constructQuery(
+          'qid',
+          MyMetricsQueryHelper.contextToTags(widget.metric.context),
+          widget.metric
+        )
+      })
+      .then(function (res) {
+        widget.formattedData = formatData(res, widget);
+      });
+    }
+
+    function pollData (widget) {
+      return dataSrc.poll({
         _cdapPath: '/metrics/query',
         method: 'POST',
         body: MyMetricsQueryHelper.constructQuery(
@@ -84,6 +99,7 @@ angular.module(PKG.name + '.services')
       startPollDashboard: startPollDashboard,
       stopPollDashboard: stopPollDashboard,
       fetchData: fetchData,
+      pollData: pollData,
       fetchDataDashboard: fetchDataDashboard
     };
 

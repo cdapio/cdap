@@ -34,10 +34,10 @@ import org.apache.hadoop.mapreduce.Job;
 import org.elasticsearch.hadoop.mr.EsOutputFormat;
 
 /**
- * A {@link BatchSink} that writes data to a Elasticsearch.
+ * A {@link BatchSink} that writes data to an Elasticsearch server.
  * <p/>
- * This {@link ElasticsearchSink} takes a {@link StructuredRecord} in,
- * converts it to a json per {@link StructuredRecordStringConverter},
+ * This {@link BatchElasticsearchSink} takes a {@link StructuredRecord} in,
+ * converts it to a JSON string per {@link StructuredRecordStringConverter},
  * and writes it to the Elasticsearch server.
  * <p/>
  * If the Elasticsearch index does not exist, it will be created using the default properties
@@ -47,21 +47,22 @@ import org.elasticsearch.hadoop.mr.EsOutputFormat;
  */
 @Plugin(type = "sink")
 @Name("Elasticsearch")
-@Description("CDAP Elasticsearch Batch Sink takes the structured record from the input source" +
-  " and converts it to a json, then indexes it in elasticsearch using the index, type, and id specified by the user." +
-  "The elasticsearch server should be running prior to creating the adapter.")
-public class ElasticsearchSink extends BatchSink<StructuredRecord, Writable, Writable> {
-  private static final String INDEX_DESC = "The name of the index where the data will be stored. " +
-    "If the index does not already exist, it will be created using elasticsearch's default properties";
-  private static final String TYPE_DESC = "The name of the type where the data will be stored." +
+@Description("CDAP Elasticsearch Batch Sink takes the structured record from the input source and converts it " +
+  "to a JSON string, then indexes it in Elasticsearch using the index, type, and id specified by the user. " +
+  "The Elasticsearch server should be running prior to creating the adapter.")
+public class BatchElasticsearchSink extends BatchSink<StructuredRecord, Writable, Writable> {
+  private static final String INDEX_DESCRIPTION = "The name of the index where the data will be stored. " +
+    "If the index does not already exist, it will be created using Elasticsearch's default properties.";
+  private static final String TYPE_DESCRIPTION = "The name of the type where the data will be stored. " +
     "If it does not already exist, it will be created.";
-  private static final String ID_DESC = "The field that will determine the id for the document. " +
-    "It should match a fieldname in the structured record of the input";
-  private static final String HOST_DESC = "The hostname and port for the elasticsearch instance, e.g. localhost:9200";
+  private static final String ID_DESCRIPTION = "The field that will determine the id for the document. " +
+    "It should match a fieldname in the structured record of the input.";
+  private static final String HOST_DESCRIPTION = "The hostname and port for the Elasticsearch server; " +
+    "such as localhost:9200.";
 
   private final ESConfig config;
 
-  public ElasticsearchSink(ESConfig config) {
+  public BatchElasticsearchSink(ESConfig config) {
     this.config = config;
   }
 
@@ -89,23 +90,23 @@ public class ElasticsearchSink extends BatchSink<StructuredRecord, Writable, Wri
   }
 
   /**
-   * Config class for Batch ElasticsearchSink
+   * Config class for Batch BatchElasticsearchSink
    */
   public static class ESConfig extends PluginConfig {
     @Name(Properties.Elasticsearch.HOST)
-    @Description(HOST_DESC)
+    @Description(HOST_DESCRIPTION)
     private String hostname;
 
     @Name(Properties.Elasticsearch.INDEX_NAME)
-    @Description(INDEX_DESC)
+    @Description(INDEX_DESCRIPTION)
     private String index;
 
     @Name(Properties.Elasticsearch.TYPE_NAME)
-    @Description(TYPE_DESC)
+    @Description(TYPE_DESCRIPTION)
     private String type;
 
     @Name(Properties.Elasticsearch.ID_FIELD)
-    @Description(ID_DESC)
+    @Description(ID_DESCRIPTION)
     private String idField;
 
     public ESConfig(String hostname, String index, String type, String idField) {

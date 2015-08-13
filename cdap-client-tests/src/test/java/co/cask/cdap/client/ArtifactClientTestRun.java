@@ -30,7 +30,6 @@ import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.ArtifactNotFoundException;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.internal.test.PluginJarHelper;
@@ -95,14 +94,14 @@ public class ArtifactClientTestRun extends ClientTestBase {
     }
 
     try {
-      artifactClient.getArtifactInfo(Id.Artifact.from(Constants.DEFAULT_NAMESPACE_ID, "ghost", "1.0.0"));
+      artifactClient.getArtifactInfo(Id.Artifact.from(Id.Namespace.DEFAULT, "ghost", "1.0.0"));
       Assert.fail();
     } catch (ArtifactNotFoundException e) {
       // expected
     }
 
     try {
-      artifactClient.listVersions(Constants.DEFAULT_NAMESPACE_ID, "ghost");
+      artifactClient.listVersions(Id.Namespace.DEFAULT, "ghost");
       Assert.fail();
     } catch (ArtifactNotFoundException e) {
       // expected
@@ -110,9 +109,9 @@ public class ArtifactClientTestRun extends ClientTestBase {
 
     // test adding an artifact that extends a non-existent artifact
     Set<ArtifactRange> parents = Sets.newHashSet(
-      new ArtifactRange(Constants.DEFAULT_NAMESPACE_ID, "ghost", new ArtifactVersion("1"), new ArtifactVersion("2")));
+      new ArtifactRange(Id.Namespace.DEFAULT, "ghost", new ArtifactVersion("1"), new ArtifactVersion("2")));
     try {
-      artifactClient.add(Constants.DEFAULT_NAMESPACE_ID, "abc", "1.0.0", parents, DUMMY_SUPPLIER);
+      artifactClient.add(Id.Namespace.DEFAULT, "abc", "1.0.0", parents, DUMMY_SUPPLIER);
       Assert.fail();
     } catch (NotFoundException e) {
       // expected
@@ -123,7 +122,7 @@ public class ArtifactClientTestRun extends ClientTestBase {
   public void testAddArtifactBadIds() throws Exception {
     // test bad version
     try {
-      artifactClient.add(Constants.DEFAULT_NAMESPACE_ID, "abc", "1/0.0", null, DUMMY_SUPPLIER);
+      artifactClient.add(Id.Namespace.DEFAULT, "abc", "1/0.0", null, DUMMY_SUPPLIER);
       Assert.fail();
     } catch (BadRequestException e) {
       // expected
@@ -131,7 +130,7 @@ public class ArtifactClientTestRun extends ClientTestBase {
 
     // test bad name
     try {
-      artifactClient.add(Constants.DEFAULT_NAMESPACE_ID, "ab:c", "1.0.0", null, DUMMY_SUPPLIER);
+      artifactClient.add(Id.Namespace.DEFAULT, "ab:c", "1.0.0", null, DUMMY_SUPPLIER);
       Assert.fail();
     } catch (BadRequestException e) {
       // expected
@@ -141,8 +140,8 @@ public class ArtifactClientTestRun extends ClientTestBase {
   @Test
   public void testArtifacts() throws Exception {
     // add 2 versions of an artifact with an application
-    Id.Artifact myapp1Id = Id.Artifact.from(Constants.DEFAULT_NAMESPACE_ID, "myapp", "1.0.0");
-    Id.Artifact myapp2Id = Id.Artifact.from(Constants.DEFAULT_NAMESPACE_ID, "myapp", "2.0.0");
+    Id.Artifact myapp1Id = Id.Artifact.from(Id.Namespace.DEFAULT, "myapp", "1.0.0");
+    Id.Artifact myapp2Id = Id.Artifact.from(Id.Namespace.DEFAULT, "myapp", "2.0.0");
     LocalLocationFactory locationFactory = new LocalLocationFactory(tmpFolder.newFolder());
     final Location appJarLoc = AppJarHelper.createDeploymentJar(locationFactory, MyApp.class);
 
@@ -158,7 +157,7 @@ public class ArtifactClientTestRun extends ClientTestBase {
                        myapp2Id.getVersion().getVersion(), null, inputSupplier);
 
     // add an artifact that contains a plugin, but only extends myapp-2.0.0
-    Id.Artifact pluginId = Id.Artifact.from(Constants.DEFAULT_NAMESPACE_ID, "myapp-plugins", "2.0.0");
+    Id.Artifact pluginId = Id.Artifact.from(Id.Namespace.DEFAULT, "myapp-plugins", "2.0.0");
     Manifest manifest = new Manifest();
     manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE, Plugin1.class.getPackage().getName());
     final Location pluginJarLoc = PluginJarHelper.createPluginJar(locationFactory, manifest, Plugin1.class);
@@ -178,16 +177,18 @@ public class ArtifactClientTestRun extends ClientTestBase {
     ArtifactSummary pluginArtifactSummary =
       new ArtifactSummary(pluginId.getName(), pluginId.getVersion().getVersion(), false);
 
-    // list all artifacts, should get all 3 back
-    Assert.assertEquals(ImmutableList.of(myapp1Summary, myapp2Summary, pluginArtifactSummary),
-                        artifactClient.list(Constants.DEFAULT_NAMESPACE_ID));
+    // no way to delete artifacts yet... when run in a suite will see other artifacts from app deployments.
+    // so just test that these expected ones are in the list returned.
+    Set<ArtifactSummary> artifacts = Sets.newHashSet(artifactClient.list(Id.Namespace.DEFAULT));
+
+    Assert.assertTrue(artifacts.containsAll(ImmutableList.of(myapp1Summary, myapp2Summary, pluginArtifactSummary)));
 
     // list all artifacts named 'myapp'
     Assert.assertEquals(ImmutableList.of(myapp1Summary, myapp2Summary),
-                        artifactClient.listVersions(Constants.DEFAULT_NAMESPACE_ID, myapp1Id.getName()));
+                        artifactClient.listVersions(Id.Namespace.DEFAULT, myapp1Id.getName()));
     // list all artifacts named 'myapp-plugins'
     Assert.assertEquals(ImmutableList.of(pluginArtifactSummary),
-                        artifactClient.listVersions(Constants.DEFAULT_NAMESPACE_ID, pluginId.getName()));
+                        artifactClient.listVersions(Id.Namespace.DEFAULT, pluginId.getName()));
 
     // get info about specific artifacts
     Schema myAppConfigSchema = new ReflectionSchemaGenerator().generate(MyApp.Conf.class);

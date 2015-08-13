@@ -19,7 +19,6 @@ package co.cask.cdap.data2.registry;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -50,7 +49,7 @@ public class UsageRegistry {
   private static final Logger LOG = LoggerFactory.getLogger(UsageRegistry.class);
 
   private static final Id.DatasetInstance USAGE_INSTANCE_ID =
-    Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE_ID, "usage.registry");
+    Id.DatasetInstance.from(Id.Namespace.SYSTEM, "usage.registry");
 
   private final Transactional<UsageDatasetIterable, UsageDataset> txnl;
 
@@ -345,7 +344,7 @@ public class UsageRegistry {
           .datasets(oldDatasetSpecification.getSpecifications().values())
           .build();
         datasetInstanceManager.delete(USAGE_INSTANCE_ID);
-        datasetInstanceManager.add(Constants.SYSTEM_NAMESPACE_ID, newDatasetSpecification);
+        datasetInstanceManager.add(Id.Namespace.SYSTEM, newDatasetSpecification);
       } else {
         LOG.info("{} dataset is of type UsageDataset. No upgrade required.", USAGE_INSTANCE_ID);
       }

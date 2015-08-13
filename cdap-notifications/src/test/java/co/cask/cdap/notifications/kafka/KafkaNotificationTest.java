@@ -20,18 +20,15 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.KafkaConstants;
 import co.cask.cdap.common.guice.KafkaClientModule;
+import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.notifications.NotificationTest;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import com.google.common.base.Preconditions;
-import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
-import com.google.inject.Provides;
-import com.google.inject.Singleton;
 import org.apache.twill.internal.kafka.EmbeddedKafkaServer;
 import org.apache.twill.internal.utils.Networks;
 import org.apache.twill.internal.zookeeper.InMemoryZKServer;
 import org.apache.twill.kafka.client.KafkaClientService;
-import org.apache.twill.zookeeper.ZKClient;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -56,34 +53,20 @@ public class KafkaNotificationTest extends NotificationTest {
 
   @BeforeClass
   public static void start() throws Exception {
+    zkServer = InMemoryZKServer.builder().setDataDir(tmpFolder.newFolder()).build();
+    zkServer.startAndWait();
+
     CConfiguration cConf = CConfiguration.create();
     cConf.unset(KafkaConstants.ConfigKeys.ZOOKEEPER_NAMESPACE_CONFIG);
+    cConf.set(Constants.Zookeeper.QUORUM, zkServer.getConnectionStr());
     cConf.set(Constants.Notification.TRANSPORT_SYSTEM, "kafka");
 
     Injector injector = createInjector(
       cConf,
+      new ZKClientModule(),
       new KafkaClientModule(),
-      new NotificationServiceRuntimeModule().getDistributedModules(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          InMemoryZKServer zkServer = InMemoryZKServer.builder().build();
-          bind(InMemoryZKServer.class).toInstance(zkServer);
-          bind(ZKClient.class).to(ZKClientService.class);
-        }
-
-        @Provides
-        @Singleton
-        @SuppressWarnings("unused")
-        private ZKClientService providesZkClientService(InMemoryZKServer zkServer) {
-          zkServer.startAndWait();
-          ZKClientService clientService = ZKClientService.Builder.of(zkServer.getConnectionStr()).build();
-          return clientService;
-        }
-      }
+      new NotificationServiceRuntimeModule().getDistributedModules()
     );
-
-    zkServer = injector.getInstance(InMemoryZKServer.class);
 
     zkClient = injector.getInstance(ZKClientService.class);
     zkClient.startAndWait();

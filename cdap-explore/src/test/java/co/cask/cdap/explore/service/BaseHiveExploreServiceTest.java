@@ -185,7 +185,7 @@ public class BaseHiveExploreServiceTest {
     streamMetaStore = injector.getInstance(StreamMetaStore.class);
 
     // This usually happens during namespace create, but adding it here instead of explicitly creating a namespace
-    Locations.mkdirsIfNotExists(namespacedLocationFactory.get(Constants.DEFAULT_NAMESPACE_ID));
+    Locations.mkdirsIfNotExists(namespacedLocationFactory.get(Id.Namespace.DEFAULT));
     Locations.mkdirsIfNotExists(namespacedLocationFactory.get(NAMESPACE_ID));
     Locations.mkdirsIfNotExists(namespacedLocationFactory.get(OTHER_NAMESPACE_ID));
 

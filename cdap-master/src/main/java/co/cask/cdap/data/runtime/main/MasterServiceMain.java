@@ -53,6 +53,7 @@ import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
+import co.cask.cdap.proto.Id;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
@@ -451,7 +452,7 @@ public class MasterServiceMain extends DaemonMain {
   private void createSystemHBaseNamespace() {
     HBaseTableUtil tableUtil = baseInjector.getInstance(HBaseTableUtil.class);
     try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
-      tableUtil.createNamespaceIfNotExists(admin, Constants.SYSTEM_NAMESPACE_ID);
+      tableUtil.createNamespaceIfNotExists(admin, Id.Namespace.SYSTEM);
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }
@@ -584,7 +585,7 @@ public class MasterServiceMain extends DaemonMain {
                                                                                 getSystemServiceInstances()))
           .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)));
         // Add logback xml
-        if (logbackFile.toFile().isFile()) {
+        if (Files.exists(logbackFile)) {
           preparer.withResources().withResources(logbackFile.toUri());
         }
 

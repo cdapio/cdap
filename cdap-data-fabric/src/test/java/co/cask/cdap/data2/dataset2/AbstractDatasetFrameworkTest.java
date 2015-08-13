@@ -27,7 +27,6 @@ import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.data2.dataset2.lib.file.FileSetModule;
@@ -129,7 +128,7 @@ public abstract class AbstractDatasetFrameworkTest {
     // verify it got added to the right namespace
     Assert.assertTrue(framework.hasInstance(MY_TABLE));
     // and not to the system namespace
-    Assert.assertFalse(framework.hasInstance(Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE, "my_table")));
+    Assert.assertFalse(framework.hasInstance(Id.DatasetInstance.from(Id.Namespace.SYSTEM, "my_table")));
 
     // Doing some admin and data ops
     DatasetAdmin admin = framework.getAdmin(MY_TABLE, null);
@@ -359,6 +358,7 @@ public abstract class AbstractDatasetFrameworkTest {
   }
 
   @Test
+  @SuppressWarnings("ConstantConditions")
   public void testNamespaceInstanceIsolation() throws Exception {
     DatasetFramework framework = getFramework();
 

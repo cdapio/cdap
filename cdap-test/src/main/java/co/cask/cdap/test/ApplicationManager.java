@@ -17,7 +17,10 @@
 package co.cask.cdap.test;
 
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.RunRecord;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -235,4 +238,10 @@ public interface ApplicationManager {
    * @return true if the program is running; false otherwise.
    */
   boolean isRunning(Id.Program programId);
+
+  /**
+   * Gets the history of the program
+   * @return list of {@link RunRecord} history
+   */
+  List<RunRecord> getHistory(Id.Program programId, ProgramRunStatus status);
 }

@@ -22,23 +22,7 @@ class WorkflowsRunsController {
     }
 
     if (rRuns.length) {
-      startPollingCurrentRun.call(this);
-    }
-
-    function startPollingCurrentRun() {
-      params = {
-        namespace: this.$state.params.namespace,
-        appId: this.$state.params.appId,
-        workflowId: this.$state.params.programId,
-        scope: this.$scope,
-        runId: this.runs.selected.runid
-      };
-      this.myWorkFlowApi
-        .pollRunDetail(params)
-        .$promise
-        .then( response => {
-          this.runStatus = response.status;
-        });
+      this.startPollingCurrentRun();
     }
 
     $scope.$watch(
@@ -49,7 +33,7 @@ class WorkflowsRunsController {
           this.myWorkFlowApi
               .stopPollRunDetail(params)
               .$promise
-              .then(startPollingCurrentRun.bind(this));
+              .then(this.startPollingCurrentRun.bind(this));
           return;
         } else {
           if (rRuns.length) {
@@ -75,6 +59,22 @@ class WorkflowsRunsController {
       this.myWorkFlowApi.stopPollRunDetail(params);
     });
     this.activeTab = this.tabs[0];
+  }
+
+  startPollingCurrentRun() {
+    params = {
+      namespace: this.$state.params.namespace,
+      appId: this.$state.params.appId,
+      workflowId: this.$state.params.programId,
+      scope: this.$scope,
+      runId: this.runs.selected.runid
+    };
+    this.myWorkFlowApi
+      .pollRunDetail(params)
+      .$promise
+      .then( response => {
+        this.runStatus = response.status;
+      });
   }
 
   selectTab(tab) {

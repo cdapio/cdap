@@ -32,6 +32,7 @@ import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.ServiceInstances;
@@ -283,13 +284,18 @@ public class AppFabricClient {
     return workflowTokenDetail;
   }
 
-  public List<RunRecord> getHistory(String namespaceId, String appId, String wflowId) {
+  public List<RunRecord> getHistory(Id.Program programId, ProgramRunStatus status) {
+    String namespaceId = programId.getNamespaceId();
+    String appId = programId.getApplicationId();
+    String programName = programId.getId();
+    String categoryName = programId.getType().getCategoryName();
+
     MockResponder responder = new MockResponder();
-    String uri = String.format("%s/apps/%s/workflows/%s/runs?status=completed",
-                               getNamespacePath(namespaceId), appId, wflowId);
+    String uri = String.format("%s/apps/%s/%s/%s/runs?status=" + status.name(),
+                               getNamespacePath(namespaceId), appId, categoryName, programName);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
     programLifecycleHttpHandler.programHistory(request, responder, namespaceId, appId,
-                                               "workflows", wflowId, null, null, null, 100);
+                                               categoryName, programName, status.name(), null, null, 100);
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Getting workflow history failed");
 
     return responder.decodeResponseContent(RUN_RECORDS_TYPE);
@@ -348,7 +354,7 @@ public class AppFabricClient {
     Location deployedJar = AppJarHelper.createDeploymentJar(locationFactory, applicationClz, bundleEmbeddedJars);
     LOG.info("Created deployedJar at {}", deployedJar.toURI().toASCIIString());
 
-    String archiveName = appName + ".jar";
+    String archiveName = String.format("%s-1.0.%d.jar", appName, System.currentTimeMillis());
     DefaultHttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST,
                                                         String.format("/v3/namespaces/%s/apps", namespace.getId()));
     request.setHeader(Constants.Gateway.API_KEY, "api-key-example");

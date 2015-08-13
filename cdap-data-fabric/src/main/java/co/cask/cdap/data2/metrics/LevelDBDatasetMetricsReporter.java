@@ -31,8 +31,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import org.apache.twill.common.Threads;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.Map;
@@ -45,15 +43,12 @@ import java.util.concurrent.TimeUnit;
  */
 // todo: consider extracting base class from HBaseDatasetMetricsReporter and LevelDBDatasetMetricsReporter
 public class LevelDBDatasetMetricsReporter extends AbstractScheduledService implements DatasetMetricsReporter {
-  private static final Logger LOG = LoggerFactory.getLogger(LevelDBDatasetMetricsReporter.class);
   private static final int BYTES_IN_MB = 1024 * 1024;
 
   private final int reportIntervalInSec;
-
   private final MetricsCollectionService metricsService;
   private final LevelDBTableService ldbService;
   private final DatasetFramework dsFramework;
-
   private ScheduledExecutorService executor;
 
   @Inject
@@ -102,7 +97,7 @@ public class LevelDBDatasetMetricsReporter extends AbstractScheduledService impl
     for (Map.Entry<TableId, LevelDBTableService.TableStats> statEntry : datasetStat.entrySet()) {
       String namespace = statEntry.getKey().getNamespace().getId();
       // emit metrics for only user datasets, tables in system namespace are ignored
-      if (namespace.equals(Constants.SYSTEM_NAMESPACE)) {
+      if (Id.Namespace.SYSTEM.getId().equals(namespace)) {
         continue;
       }
       String tableName = statEntry.getKey().getTableName();

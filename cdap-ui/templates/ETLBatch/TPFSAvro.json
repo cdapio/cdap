@@ -7,7 +7,7 @@
        "position" : [ "name", "basePath",  "duration", "delay", "schema"],
        "fields" : {
           "name" : {
-             "widget": "textbox",
+             "widget": "dataset-selector",
              "label": "Dataset Name"
           },
 

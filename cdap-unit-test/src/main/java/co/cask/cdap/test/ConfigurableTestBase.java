@@ -279,7 +279,7 @@ public class ConfigurableTestBase {
     // we use MetricStore directly, until RuntimeStats API changes
     RuntimeStats.metricStore = injector.getInstance(MetricStore.class);
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
-    namespaceAdmin.createNamespace(Constants.DEFAULT_NAMESPACE_META);
+    namespaceAdmin.createNamespace(NamespaceMeta.DEFAULT);
   }
 
   private static CConfiguration createCConf(File localDataDir,
@@ -352,7 +352,7 @@ public class ConfigurableTestBase {
       return;
     }
 
-    namespaceAdmin.deleteNamespace(Constants.DEFAULT_NAMESPACE_ID);
+    namespaceAdmin.deleteNamespace(Id.Namespace.DEFAULT);
     streamCoordinatorClient.stopAndWait();
     metricsQueryService.stopAndWait();
     metricsCollectionService.startAndWait();
@@ -419,12 +419,12 @@ public class ConfigurableTestBase {
    */
   protected static ApplicationManager deployApplication(Class<? extends Application> applicationClz,
                                                         File... bundleEmbeddedJars) {
-    return deployApplication(Constants.DEFAULT_NAMESPACE_ID, applicationClz, bundleEmbeddedJars);
+    return deployApplication(Id.Namespace.DEFAULT, applicationClz, bundleEmbeddedJars);
   }
 
   protected static ApplicationManager deployApplication(Class<? extends Application> applicationClz, Config appConfig,
                                                         File... bundleEmbeddedJars) {
-    return deployApplication(Constants.DEFAULT_NAMESPACE_ID, applicationClz, appConfig, bundleEmbeddedJars);
+    return deployApplication(Id.Namespace.DEFAULT, applicationClz, appConfig, bundleEmbeddedJars);
   }
 
   /**
@@ -537,7 +537,7 @@ public class ConfigurableTestBase {
    */
   protected static void deployDatasetModule(String moduleName,
                                             Class<? extends DatasetModule> datasetModule) throws Exception {
-    deployDatasetModule(Constants.DEFAULT_NAMESPACE_ID, moduleName, datasetModule);
+    deployDatasetModule(Id.Namespace.DEFAULT, moduleName, datasetModule);
   }
 
   /**
@@ -566,7 +566,7 @@ public class ConfigurableTestBase {
   protected static <T extends DatasetAdmin> T addDatasetInstance(String datasetTypeName,
                                                                  String datasetInstanceName,
                                                                  DatasetProperties props) throws Exception {
-    return addDatasetInstance(Constants.DEFAULT_NAMESPACE_ID, datasetTypeName, datasetInstanceName, props);
+    return addDatasetInstance(Id.Namespace.DEFAULT, datasetTypeName, datasetInstanceName, props);
   }
 
   /**
@@ -590,7 +590,7 @@ public class ConfigurableTestBase {
    */
   protected final <T extends DatasetAdmin> T addDatasetInstance(String datasetTypeName,
                                                                 String datasetInstanceName) throws Exception {
-    return addDatasetInstance(Constants.DEFAULT_NAMESPACE_ID, datasetTypeName, datasetInstanceName,
+    return addDatasetInstance(Id.Namespace.DEFAULT, datasetTypeName, datasetInstanceName,
                               DatasetProperties.EMPTY);
   }
 
@@ -614,7 +614,7 @@ public class ConfigurableTestBase {
    * @throws Exception
    */
   protected final <T> DataSetManager<T> getDataset(String datasetInstanceName) throws Exception {
-    return getDataset(Constants.DEFAULT_NAMESPACE_ID, datasetInstanceName);
+    return getDataset(Id.Namespace.DEFAULT, datasetInstanceName);
   }
 
   /**
@@ -631,7 +631,7 @@ public class ConfigurableTestBase {
    * Returns a JDBC connection that allows to run SQL queries over data sets.
    */
   protected final Connection getQueryClient() throws Exception {
-    return getQueryClient(Constants.DEFAULT_NAMESPACE_ID);
+    return getQueryClient(Id.Namespace.DEFAULT);
   }
 
   /**
@@ -641,7 +641,7 @@ public class ConfigurableTestBase {
    * @return {@link StreamManager} for the specified stream in the default namespace
    */
   protected final StreamManager getStreamManager(String streamName) {
-    return getStreamManager(Constants.DEFAULT_NAMESPACE_ID, streamName);
+    return getStreamManager(Id.Namespace.DEFAULT, streamName);
   }
 
   /**

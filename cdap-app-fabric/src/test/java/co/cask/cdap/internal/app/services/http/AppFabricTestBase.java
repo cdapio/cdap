@@ -37,13 +37,17 @@ import co.cask.cdap.gateway.handlers.UsageHandler;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.internal.guice.AppFabricTestModule;
 import co.cask.cdap.internal.test.AppJarHelper;
+import co.cask.cdap.internal.test.PluginJarHelper;
 import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.proto.artifact.ArtifactRange;
+import co.cask.cdap.proto.artifact.CreateAppRequest;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Charsets;
+import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -93,6 +97,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.jar.JarEntry;
@@ -100,6 +105,7 @@ import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 import javax.annotation.Nullable;
+import javax.ws.rs.core.MediaType;
 
 /**
  * AppFabric HttpHandler Test classes can extend this class, this will allow the HttpService be setup before
@@ -109,11 +115,12 @@ public abstract class AppFabricTestBase {
   protected static final Gson GSON = new Gson();
   private static final String API_KEY = "SampleTestApiKey";
   private static final Header AUTH_HEADER = new BasicHeader(Constants.Gateway.API_KEY, API_KEY);
-  private static final String CLUSTER = "SampleTestClusterName";
 
   protected static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
   protected static final Type LIST_MAP_STRING_STRING_TYPE = new TypeToken<List<Map<String, String>>>() { }.getType();
   protected static final Type LIST_RUNRECORD_TYPE = new TypeToken<List<RunRecord>>() { }.getType();
+
+  protected static final String NONEXISTENT_NAMESPACE = "12jr0j90jf3foieoi33";
 
   protected static final String TEST_NAMESPACE1 = "testnamespace1";
   protected static final NamespaceMeta TEST_NAMESPACE_META1 = new NamespaceMeta.Builder()
@@ -286,7 +293,6 @@ public abstract class AppFabricTestBase {
   }
 
   protected static HttpResponse doPut(String resource) throws Exception {
-    DefaultHttpClient client = new DefaultHttpClient();
     HttpPut put = new HttpPut(AppFabricTestBase.getEndPoint(resource));
     put.setHeader(AUTH_HEADER);
     return doPut(resource, null);
@@ -322,6 +328,48 @@ public abstract class AppFabricTestBase {
     return gson.fromJson(readResponse(response), type);
   }
 
+  protected HttpResponse addAppArtifact(Id.Artifact artifactId, Class<?> cls) throws Exception {
+
+    Location appJar = AppJarHelper.createDeploymentJar(locationFactory, cls, new Manifest());
+
+    try (InputStream artifactInputStream = appJar.getInputStream()) {
+      return addArtifact(artifactId, artifactInputStream, null);
+    } finally {
+      appJar.delete();
+    }
+  }
+
+  protected HttpResponse addPluginArtifact(Id.Artifact artifactId, Class<?> cls,
+                                           Manifest manifest,
+                                           Set<ArtifactRange> parents) throws Exception {
+
+    Location appJar = PluginJarHelper.createPluginJar(locationFactory, manifest, cls);
+
+    try (InputStream artifactInputStream = appJar.getInputStream()) {
+      return addArtifact(artifactId, artifactInputStream, parents);
+    } finally {
+      appJar.delete();
+    }
+  }
+
+  // add an artifact and return the response code
+  protected HttpResponse addArtifact(Id.Artifact artifactId, InputStream artifactContents,
+                                     Set<ArtifactRange> parents) throws Exception {
+    String path = getVersionedAPIPath("artifacts/" + artifactId.getName(), artifactId.getNamespace().getId());
+    HttpEntityEnclosingRequestBase request = getPost(path);
+    request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
+    request.setHeader("Artifact-Version", artifactId.getVersion().getVersion());
+    if (parents != null && !parents.isEmpty()) {
+      request.setHeader("Artifact-Extends", Joiner.on('/').join(parents));
+    }
+
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    ByteStreams.copy(artifactContents, bos);
+    bos.close();
+    request.setEntity(new ByteArrayEntity(bos.toByteArray()));
+    return execute(request);
+  }
+
   /**
    * Deploys an application.
    */
@@ -353,28 +401,37 @@ public abstract class AppFabricTestBase {
     return deploy(application, apiVersion, namespace, appName, appVersion, null);
   }
 
+  protected HttpResponse deploy(Id.Application appId,
+                                CreateAppRequest<? extends Config> createAppRequest) throws Exception {
+    HttpEntityEnclosingRequestBase request;
+    String deployPath = getVersionedAPIPath("apps/" + appId.getId(), appId.getNamespaceId());
+    request = getPut(deployPath);
+    request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
+    request.setHeader(HttpHeaders.Names.CONTENT_TYPE, MediaType.APPLICATION_JSON);
+    request.setEntity(new StringEntity(GSON.toJson(createAppRequest)));
+    return execute(request);
+  }
+
   /**
    * Deploys an application with (optionally) a defined app name and app version
    */
   protected HttpResponse deploy(Class<?> application, @Nullable String apiVersion, @Nullable String namespace,
                                 @Nullable String appName, @Nullable String appVersion,
                                 @Nullable Config appConfig) throws Exception {
-    namespace = namespace == null ? Constants.DEFAULT_NAMESPACE : namespace;
+    namespace = namespace == null ? Id.Namespace.DEFAULT.getId() : namespace;
     apiVersion = apiVersion == null ? Constants.Gateway.API_VERSION_3_TOKEN : apiVersion;
+    appVersion = appVersion == null ? String.format("1.0.%d", System.currentTimeMillis()) : appVersion;
 
     Manifest manifest = new Manifest();
     manifest.getMainAttributes().put(ManifestFields.MANIFEST_VERSION, "1.0");
     manifest.getMainAttributes().put(ManifestFields.MAIN_CLASS, application.getName());
-    if (appVersion != null) {
-      manifest.getMainAttributes().put(ManifestFields.BUNDLE_VERSION, appVersion);
-    }
+    manifest.getMainAttributes().put(ManifestFields.BUNDLE_VERSION, appVersion);
 
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    final JarOutputStream jarOut = new JarOutputStream(bos, manifest);
     final String pkgName = application.getPackage().getName();
 
     // Grab every classes under the application class package.
-    try {
+    try (JarOutputStream jarOut = new JarOutputStream(bos, manifest)) {
       ClassLoader classLoader = application.getClassLoader();
       if (classLoader == null) {
         classLoader = ClassLoader.getSystemClassLoader();
@@ -385,11 +442,8 @@ public abstract class AppFabricTestBase {
           try {
             if (className.startsWith(pkgName)) {
               jarOut.putNextEntry(new JarEntry(className.replace('.', '/') + ".class"));
-              InputStream in = classUrl.openStream();
-              try {
+              try (InputStream in = classUrl.openStream()) {
                 ByteStreams.copy(in, jarOut);
-              } finally {
-                in.close();
               }
               return true;
             }
@@ -403,8 +457,6 @@ public abstract class AppFabricTestBase {
       // Add webapp
       jarOut.putNextEntry(new ZipEntry("webapp/default/netlens/src/1.txt"));
       ByteStreams.copy(new ByteArrayInputStream("dummy data".getBytes(Charsets.UTF_8)), jarOut);
-    } finally {
-      jarOut.close();
     }
 
     HttpEntityEnclosingRequestBase request;
@@ -415,7 +467,7 @@ public abstract class AppFabricTestBase {
       request = getPut(versionedApiPath + appName);
     }
     request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
-    request.setHeader("X-Archive-Name", application.getSimpleName() + ".jar");
+    request.setHeader("X-Archive-Name", String.format("%s-%s.jar", application.getSimpleName(), appVersion));
     if (appConfig != null) {
       request.setHeader("X-App-Config", GSON.toJson(appConfig));
     }

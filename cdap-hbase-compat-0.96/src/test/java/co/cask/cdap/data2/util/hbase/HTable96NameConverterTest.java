@@ -19,6 +19,7 @@ package co.cask.cdap.data2.util.hbase;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.util.TableId;
+import co.cask.cdap.proto.Id;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -33,7 +34,7 @@ public class HTable96NameConverterTest {
 
     HTableDescriptorBuilder htd = tableUtil.buildHTableDescriptor(TableId.from("user", "some_table"));
     Assert.assertEquals(tablePrefix + "_system:", hBaseNameConversionUtil.getSysConfigTablePrefix(htd.build()));
-    htd = tableUtil.buildHTableDescriptor(TableId.from(Constants.DEFAULT_NAMESPACE_ID, "table_in_default_ns"));
+    htd = tableUtil.buildHTableDescriptor(TableId.from(Id.Namespace.DEFAULT, "table_in_default_ns"));
     Assert.assertEquals(tablePrefix + "_system:", hBaseNameConversionUtil.getSysConfigTablePrefix(htd.build()));
   }
 }

@@ -3,7 +3,7 @@
  */
 
 angular.module(PKG.name+'.feature.dashboard').controller('DashboardCtrl',
-function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG, $alert, $timeout) {
+function ($scope, $state, rDashboardsModel, MY_CONFIG, $alert, $timeout) {
 
   $scope.unknownBoard = false;
   $scope.isEnterprise = MY_CONFIG.isEnterprise;
@@ -14,13 +14,12 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG, $alert, $timeo
   } else {
     $scope.dashboards.activeIndex = tab;
   }
-  var dropdown;
   /**
    * show a dropdown when clicking on the tab of active dashboard
    * @TODO make a directive instead
    */
   $scope.activeTabClick = function (event, index) {
-    if (index == 'system') {
+    if (index === 'system') {
       $scope.unknownBoard = true;
       $state.go('dashboard.standard.cdap');
       $scope.dashboards.activeIndex = 'system';

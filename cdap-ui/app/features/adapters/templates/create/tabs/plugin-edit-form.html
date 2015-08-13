@@ -120,6 +120,7 @@
       <!-- MAIN WIDGET -->
       <div ng-class="{'col-lg-8': isSource, 'col-lg-5': isTransform }" ng-if="!isSink">
         <div class="modal-content-scroll" ng-class="{'padding-offset-right': isSource, 'padding-offset-left': isTransform}">
+
           <form plugin-property-edit-view>
             <fieldset ng-disabled="isDisabled">
 
@@ -166,9 +167,17 @@
       <!-- OUTPUT EDITOR -->
       <div class="col-lg-4" ng-if="!isSink">
         <div class="modal-content-scroll output-schema">
-          <h4>Output Schema</h4>
 
-          <fieldset ng-disabled="isDisabled" ng-if="plugin.outputSchema || !isDisabled || plugin.properties.format === 'clf' || plugin.properties.format === 'syslog'">
+          <h4>
+            <span>Output Schema</span>
+            <button
+              class="btn btn-sm btn-default pull-right"
+              ng-click="PluginEditController.schemaClear()"
+              ng-if="!plugin.implicitSchema && !isDisabled">
+              Clear</button>
+          </h4>
+
+          <fieldset class="clearfix" ng-disabled="isDisabled" ng-if="plugin.outputSchema || !isDisabled || plugin.properties.format === 'clf' || plugin.properties.format === 'syslog'">
             <my-schema-editor
               ng-model="plugin.outputSchema"
               data-disabled="plugin.implicitSchema"
@@ -267,7 +276,15 @@
             <div class="col-xs-12">
               <div class="padding-offset-right padding-offset-left">
 
-                <h4>Schema</h4>
+                <h4 class="sink-schema">
+                  <span>Schema</span>
+                  <button
+                    class="btn btn-sm btn-default pull-right"
+                    ng-click="PluginEditController.schemaClear()"
+                    ng-if="!plugin.implicitSchema && !isDisabled">
+                    Clear
+                  </button>
+                </h4>
 
                 <fieldset ng-disabled="isDisabled">
                   <my-schema-editor

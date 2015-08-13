@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.adapters')
-  .controller('_AdapterCreateController', function(MyPlumbService, myAdapterApi, $bootstrapModal, $scope, rConfig, $stateParams, $alert, $modalStack, ModalConfirm) {
+  .controller('_AdapterCreateController', function(MyPlumbService, myAdapterApi, $bootstrapModal, $scope, rConfig, $stateParams, $alert, $modalStack, ModalConfirm, EventPipe, $window) {
     this.metadata = MyPlumbService['metadata'];
     function resetMetadata() {
       this.metadata = MyPlumbService['metadata'];
@@ -36,14 +36,14 @@ angular.module(PKG.name + '.feature.adapters')
       if (this.metadata.error) {
         delete this.metadata.error;
       }
-
+      MyPlumbService.isConfigTouched = true;
       $bootstrapModal
         .open({
           templateUrl: '/assets/features/adapters/templates/create/metadata.html',
           size: 'lg',
           windowClass: 'adapter-modal',
           keyboard: true,
-          controller: ['$scope', 'metadata', 'MyPlumbService', function($scope, metadata, MyPlumbService) {
+          controller: ['$scope', 'metadata', function($scope, metadata) {
             $scope.modelCopy = angular.copy(this.metadata);
             $scope.metadata = metadata;
             $scope.reset = function () {
@@ -78,7 +78,34 @@ angular.module(PKG.name + '.feature.adapters')
         }.bind(this));
     };
 
+
+    var confirmOnPageExit = function (e) {
+
+      if (!MyPlumbService.isConfigTouched) { return; }
+      // If we haven't been passed the event get the window.event
+      e = e || $window.event;
+      var message = 'You have unsaved changes.';
+      // For IE6-8 and Firefox prior to version 4
+      if (e) {
+        e.returnValue = message;
+      }
+      // For Chrome, Safari, IE8+ and Opera 12+
+      return message;
+    };
+    $window.onbeforeunload = confirmOnPageExit;
+
+    $scope.$on('$stateChangeStart', function (event) {
+      if (MyPlumbService.isConfigTouched) {
+        var response = confirm('You have unsaved changes. Are you sure you want to exit this page?');
+        if (!response) {
+          event.preventDefault();
+        }
+      }
+    });
+
     $scope.$on('$destroy', function() {
       $modalStack.dismissAll();
+      EventPipe.cancelEvent('plugin.reset');
+      EventPipe.cancelEvent('schema.clear');
     });
   });

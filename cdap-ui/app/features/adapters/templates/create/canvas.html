@@ -1,7 +1,7 @@
 <my-side-panel
   data-panel-groups="PlumbController.pluginTypes"
   data-on-group-click-context="PlumbController"
-  data-on-group-click="PlumbController.onPluginTypesClicked"
+  data-on-group-click="PlumbController.onLeftSideGroupItemClicked"
 
   data-placement="left"
   data-is-sub-menu="true"
@@ -9,7 +9,7 @@
 
   data-panel="PlumbController.plugins"
   data-on-panel-item-click-context="PlumbController"
-  data-on-panel-item-click="PlumbController.onPluginItemClicked">
+  data-on-panel-item-click="PlumbController.onLeftSidePanelItemClicked">
 </my-side-panel>
 
 <my-plumb data-reloaddag="PlumbController.reloadDAG"
@@ -20,11 +20,11 @@
 <my-side-panel
   data-panel-groups="PlumbController.canvasOperations"
   data-on-group-click-context="PlumbController"
-  data-on-group-click="PlumbController.onCanvasOperationsClicked"
+  data-on-group-click="PlumbController.onRightSideGroupItemClicked"
 
   data-placement="right"
   data-is-expanded="true"
-  
+
   data-is-sub-menu="false">
 </my-side-panel>
 

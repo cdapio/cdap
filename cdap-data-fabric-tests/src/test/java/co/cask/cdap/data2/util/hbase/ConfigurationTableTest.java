@@ -17,10 +17,10 @@
 package co.cask.cdap.data2.util.hbase;
 
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data.hbase.HBaseTestFactory;
 import co.cask.cdap.data2.util.TableId;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.SlowTests;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -45,13 +45,13 @@ public class ConfigurationTableTest {
   public static void setupBeforeClass() throws Exception {
     testHBase.startHBase();
     tableUtil = new HBaseTableUtilFactory(cConf).get();
-    tableUtil.createNamespaceIfNotExists(testHBase.getHBaseAdmin(), Constants.SYSTEM_NAMESPACE_ID);
+    tableUtil.createNamespaceIfNotExists(testHBase.getHBaseAdmin(), Id.Namespace.SYSTEM);
   }
 
   @AfterClass
   public static void teardownAfterClass() throws Exception {
-    tableUtil.deleteAllInNamespace(testHBase.getHBaseAdmin(), Constants.SYSTEM_NAMESPACE_ID);
-    tableUtil.deleteNamespaceIfExists(testHBase.getHBaseAdmin(), Constants.SYSTEM_NAMESPACE_ID);
+    tableUtil.deleteAllInNamespace(testHBase.getHBaseAdmin(), Id.Namespace.SYSTEM);
+    tableUtil.deleteNamespaceIfExists(testHBase.getHBaseAdmin(), Id.Namespace.SYSTEM);
     testHBase.stopHBase();
   }
 
@@ -61,7 +61,7 @@ public class ConfigurationTableTest {
     configTable.write(ConfigurationTable.Type.DEFAULT, cConf);
 
     String configTableQualifier = "configuration";
-    TableId configTableId = TableId.from(Constants.SYSTEM_NAMESPACE_ID, configTableQualifier);
+    TableId configTableId = TableId.from(Id.Namespace.SYSTEM, configTableQualifier);
     String configTableName = tableUtil.buildHTableDescriptor(configTableId).build().getNameAsString();
     // the config table name minus the qualifier ('configuration'). Example: 'cdap.system.'
     String configTablePrefix = configTableName.substring(0, configTableName.length()  - configTableQualifier.length());

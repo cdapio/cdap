@@ -45,6 +45,7 @@ import com.google.common.io.Files;
 import com.google.common.io.Resources;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
+import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
@@ -72,11 +73,13 @@ public class IntegrationTestManager implements TestManager {
   private final ProgramClient programClient;
   private final NamespaceClient namespaceClient;
   private final AdapterClient adapterClient;
+  private final File tmpFolder;
 
-  public IntegrationTestManager(ClientConfig clientConfig, RESTClient restClient, LocationFactory locationFactory) {
+  public IntegrationTestManager(ClientConfig clientConfig, RESTClient restClient, File tmpFolder) {
     this.clientConfig = clientConfig;
     this.restClient = restClient;
-    this.locationFactory = locationFactory;
+    this.tmpFolder = tmpFolder;
+    this.locationFactory = new LocalLocationFactory(tmpFolder);
     this.applicationClient = new ApplicationClient(clientConfig, restClient);
     this.programClient = new ProgramClient(clientConfig, restClient);
     this.namespaceClient = new NamespaceClient(clientConfig, restClient);
@@ -112,7 +115,7 @@ public class IntegrationTestManager implements TestManager {
       }
 
       // Create and deploy application jar
-      File appJarFile = File.createTempFile(applicationClz.getSimpleName(), ".jar");
+      File appJarFile = new File(tmpFolder, String.format("%s-1.0.0-SNAPSHOT.jar", applicationClz.getSimpleName()));
       try {
         if ("jar".equals(appClassURL.getProtocol())) {
           copyJarFile(appClassURL, appJarFile);

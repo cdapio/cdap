@@ -522,6 +522,9 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     // Stop the program while in fork
     stopProgram(programId, 200);
 
+    // Wait till the program stop
+    waitState(programId, "STOPPED");
+
     // Current endpoint would return 404
     response = getWorkflowCurrentStatus(programId, runId);
     Assert.assertEquals(404, response.getStatusLine().getStatusCode());

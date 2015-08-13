@@ -127,8 +127,7 @@ public class ArtifactStore {
   private static final String ARTIFACTS_PATH = "artifacts";
   private static final String ARTIFACT_PREFIX = "r";
   private static final String PLUGIN_PREFIX = "p";
-  private static final Id.DatasetInstance META_ID =
-    Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE, "artifact.meta");
+  private static final Id.DatasetInstance META_ID = Id.DatasetInstance.from(Id.Namespace.SYSTEM, "artifact.meta");
 
   private final LocationFactory locationFactory;
   private final NamespacedLocationFactory namespacedLocationFactory;
@@ -387,14 +386,15 @@ public class ArtifactStore {
    * @param artifactId the id of the artifact to add
    * @param artifactMeta the metadata for the artifact
    * @param artifactContentSupplier the supplier for the input stream of the contents of the artifact
+   * @return detail about the newly added artifact
    * @throws WriteConflictException if the artifact is already currently being written
    * @throws ArtifactAlreadyExistsException if a non-snapshot version of the artifact already exists
    * @throws IOException if there was an exception persisting the artifact contents to the filesystem,
    *                     of persisting the artifact metadata to the metastore
    */
-  public void write(final Id.Artifact artifactId,
-                    final ArtifactMeta artifactMeta,
-                    final InputSupplier<? extends InputStream> artifactContentSupplier)
+  public ArtifactDetail write(final Id.Artifact artifactId,
+                              final ArtifactMeta artifactMeta,
+                              final InputSupplier<? extends InputStream> artifactContentSupplier)
     throws WriteConflictException, ArtifactAlreadyExistsException, IOException {
 
     // if we're not a snapshot version, check that the artifact doesn't exist already.
@@ -463,6 +463,7 @@ public class ArtifactStore {
       destination.delete();
       throw new IOException(e);
     }
+    return new ArtifactDetail(getDescriptor(artifactId, destination), artifactMeta);
   }
 
   /**
@@ -500,8 +501,8 @@ public class ArtifactStore {
         // delete plugins in this namespace from system artifacts
         // for example, if there was an artifact in this namespace that extends a system artifact
         Scan systemPluginsScan = new Scan(
-          Bytes.toBytes(String.format("%s:%s:", PLUGIN_PREFIX, Constants.SYSTEM_NAMESPACE)),
-          Bytes.toBytes(String.format("%s:%s;", PLUGIN_PREFIX, Constants.SYSTEM_NAMESPACE))
+          Bytes.toBytes(String.format("%s:%s:", PLUGIN_PREFIX, Id.Namespace.SYSTEM.getId())),
+          Bytes.toBytes(String.format("%s:%s;", PLUGIN_PREFIX, Id.Namespace.SYSTEM.getId()))
         );
         scanner = table.scan(systemPluginsScan);
         while ((row = scanner.next()) != null) {
@@ -609,7 +610,7 @@ public class ArtifactStore {
 
   private ArtifactDescriptor getDescriptor(Id.Artifact artifactId, Location location) {
     return new ArtifactDescriptor(artifactId.getName(), artifactId.getVersion(),
-      Constants.SYSTEM_NAMESPACE_ID.equals(artifactId.getNamespace()), location);
+                                  Id.Namespace.SYSTEM.equals(artifactId.getNamespace()), location);
   }
 
   private Scan scanArtifacts(Id.Namespace namespace) {

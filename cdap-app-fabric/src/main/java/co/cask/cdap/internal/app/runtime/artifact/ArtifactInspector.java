@@ -29,6 +29,7 @@ import co.cask.cdap.api.templates.plugins.PluginClass;
 import co.cask.cdap.api.templates.plugins.PluginConfig;
 import co.cask.cdap.api.templates.plugins.PluginPropertyField;
 import co.cask.cdap.app.program.ManifestFields;
+import co.cask.cdap.common.InvalidArtifactException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
@@ -37,7 +38,6 @@ import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.artifact.InvalidArtifactException;
 import com.google.common.base.Throwables;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.ImmutableList;
@@ -121,7 +121,7 @@ public class ArtifactInspector {
   public ArtifactClasses inspectArtifact(Id.Artifact artifactId, File artifactFile,
                                          ClassLoader parentClassLoader) throws IOException, InvalidArtifactException {
 
-    ArtifactClasses.Builder builder = inspectApplications(ArtifactClasses.builder(), artifactFile);
+    ArtifactClasses.Builder builder = inspectApplications(artifactId, ArtifactClasses.builder(), artifactFile);
 
     try (PluginInstantiator pluginInstantiator = new PluginInstantiator(cConf, parentClassLoader)) {
       inspectPlugins(builder, artifactId, artifactFile, pluginInstantiator);
@@ -130,7 +130,8 @@ public class ArtifactInspector {
     return builder.build();
   }
 
-  private ArtifactClasses.Builder inspectApplications(ArtifactClasses.Builder builder,
+  private ArtifactClasses.Builder inspectApplications(Id.Artifact artifactId,
+                                                      ArtifactClasses.Builder builder,
                                                       File artifactFile) throws IOException, InvalidArtifactException {
 
     Location artifactLocation = Locations.toLocation(artifactFile);
@@ -151,7 +152,8 @@ public class ArtifactInspector {
       }
       mainClassName = manifestAttributes.getValue(ManifestFields.MAIN_CLASS);
     } catch (ZipException e) {
-      throw new InvalidArtifactException("Couldn't unzip artifact, please check it is a valid jar file.", e);
+      throw new InvalidArtifactException(String.format(
+        "Couldn't unzip artifact %s, please check it is a valid jar file.", artifactId), e);
     }
 
     if (mainClassName != null) {
@@ -176,13 +178,14 @@ public class ArtifactInspector {
         }
         builder.addApp(new ApplicationClass(mainClassName, "", configSchema));
       } catch (ClassNotFoundException e) {
-        throw new InvalidArtifactException(String.format("Could not find Application main class %s.", mainClassName));
+        throw new InvalidArtifactException(String.format(
+          "Could not find Application main class %s in artifact %s.", mainClassName, artifactId));
       } catch (UnsupportedTypeException e) {
-        throw new InvalidArtifactException(
-          String.format("Config for Application %s has an unsupported schema.", mainClassName));
+        throw new InvalidArtifactException(String.format(
+          "Config for Application %s in artifact %s has an unsupported schema.", mainClassName, artifactId));
       } catch (InstantiationException | IllegalAccessException e) {
-        throw new InvalidArtifactException(
-          String.format("Could not instantiate Application class %s.", mainClassName), e);
+        throw new InvalidArtifactException(String.format(
+          "Could not instantiate Application class %s in artifact %s.", mainClassName, artifactId), e);
       }
     }
 
@@ -205,7 +208,7 @@ public class ArtifactInspector {
     // Load the plugin class and inspect the config field.
     ArtifactDescriptor artifactDescriptor = new ArtifactDescriptor(
       artifactId.getName(), artifactId.getVersion(),
-      Constants.SYSTEM_NAMESPACE_ID.equals(artifactId.getNamespace()),
+      Id.Namespace.SYSTEM.equals(artifactId.getNamespace()),
       Locations.toLocation(artifactFile));
 
     try {
@@ -227,9 +230,10 @@ public class ArtifactInspector {
         }
       }
     } catch (Throwable t) {
-      throw new InvalidArtifactException(
-        "Class could not be found while inspecting artifact for plugins. Please check dependencies are available, " +
-          "and that the correct parent artifact was specified.", t);
+      throw new InvalidArtifactException(String.format(
+        "Class could not be found while inspecting artifact for plugins. " +
+        "Please check dependencies are available, and that the correct parent artifact was specified. " +
+        "Error class: %s, message: %s.", t.getClass(), t.getMessage()), t);
     }
 
     return builder;

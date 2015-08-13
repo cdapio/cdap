@@ -72,6 +72,7 @@ gulp.task('js:lib', function() {
 
       './bower_components/angular-ui-router/release/angular-ui-router.js',
 
+      './bower_components/angular-strap/dist/modules/compiler.js',
       './bower_components/angular-strap/dist/modules/dimensions.js',
       './bower_components/angular-strap/dist/modules/tooltip.js',
       './bower_components/angular-strap/dist/modules/tooltip.tpl.js',
@@ -127,6 +128,7 @@ gulp.task('js:lib', function() {
       './bower_components/angular-ui-ace/ui-ace.js',
       './bower_components/jsPlumb/dist/js/dom.jsPlumb-1.7.5-min.js',
       './bower_components/angular-gridster/dist/angular-gridster.min.js'
+
 
     ].concat([
       './bower_components/cask-angular-*/*/module.js'
@@ -397,14 +399,14 @@ gulp.task('default', ['lint', 'build']);
 /*
   watch
  */
-gulp.task('watch', ['watch:build'], function() {
+gulp.task('watch', ['jshint', 'watch:build'], function() {
   plug.livereload.listen();
 
   gulp.watch('./dist/**/*')
     .on('change', plug.livereload.changed);
 
-  gulp.watch(['./app/**/*.js', '!./app/features/workflows/**/*.js', '!./app/**/*-test.js'], ['watch:js:app']);
-  gulp.watch(['./app/features/workflows/**/*.js'], ['watch:js:app:babel']);
+  gulp.watch(['./app/**/*.js', '!./app/features/workflows/**/*.js', '!./app/**/*-test.js'], ['jshint', 'watch:js:app']);
+  gulp.watch(['./app/features/workflows/**/*.js'], ['jshint', 'watch:js:app:babel']);
 
   gulp.watch('./app/**/*.{less,css}', ['css']);
   gulp.watch(['./app/directives/**/*.html', './app/features/home/home.html'], ['tpl']);

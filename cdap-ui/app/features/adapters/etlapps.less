@@ -20,6 +20,37 @@ body.theme-cdap.state-adapters {
   }
   .text-success { color: @brand-success; }
   .text-danger { color: @brand-danger; }
+  .table.adapter-metrics-table {
+    tbody tr td .row {
+      margin: 0;
+      [class*="col-xs-"] {
+        padding: 0px 5px;
+        border: 1px solid #dddddd;
+        border-bottom: 0;
+        min-height: 21px;
+
+        &:last-child {
+          border-left: 0;
+        }
+      }
+
+      &:last-child {
+        [class*="col-xs-"] {
+          border-bottom: 1px solid #dddddd;
+        }
+      }
+      @media (max-width: @screen-sm-max) {
+        [class*="col-xs-"] {
+          border: 1px solid #dddddd;
+          border-bottom: 0;
+
+          &:last-child {
+            border: 1px solid #dddddd;
+          }
+        }
+      }
+    }
+  }
 }
 body.theme-cdap.state-adapters-detail,
 body.theme-cdap.state-adapters-create {
@@ -349,6 +380,13 @@ body.theme-cdap.state-adapters-create {
             margin-left: -15px;
             > h4 {
               padding-left: 10px;
+              padding-right: 10px;
+              line-height: 30px;
+              margin-bottom: 15px;
+
+              span, button {
+                vertical-align: middle;
+              }
             }
             .table {
               margin-bottom: 0;
@@ -373,6 +411,11 @@ body.theme-cdap.state-adapters-create {
           font-weight: 400;
           margin-top: 0;
         }
+
+        h4.sink-schema {
+          margin-bottom: 15px;
+        }
+
         .well {
           background-color: @body-bg;
           border: 1px solid @modal-table-border-color;

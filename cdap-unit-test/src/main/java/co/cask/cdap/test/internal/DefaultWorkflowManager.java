@@ -21,7 +21,6 @@ import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.internal.AppFabricClient;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.WorkflowTokenDetail;
 import co.cask.cdap.proto.WorkflowTokenNodeDetail;
 import co.cask.cdap.test.AbstractProgramManager;
@@ -48,11 +47,6 @@ public class DefaultWorkflowManager extends AbstractProgramManager<WorkflowManag
   @Override
   public List<ScheduleSpecification> getSchedules() {
     return appFabricClient.getSchedules(programId.getNamespaceId(), programId.getApplicationId(), programId.getId());
-  }
-
-  @Override
-  public List<RunRecord> getHistory() {
-    return appFabricClient.getHistory(programId.getNamespaceId(), programId.getApplicationId(), programId.getId());
   }
 
   @Override

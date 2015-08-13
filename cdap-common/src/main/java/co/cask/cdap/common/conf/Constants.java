@@ -98,6 +98,7 @@ public final class Constants {
     public static final String MAPREDUCE_JOB_CLIENT_CONNECT_MAX_RETRIES = "mapreduce.jobclient.connect.max.retries";
     public static final String MAPREDUCE_INCLUDE_CUSTOM_CLASSES = "mapreduce.include.custom.format.classes";
     public static final String PROGRAM_RUNID_CORRECTOR_INTERVAL_SECONDS = "app.program.runid.corrector.interval";
+    public static final String SYSTEM_ARTIFACTS_DIR = "app.artifact.dir";
 
     /**
      * Guice named bindings.
@@ -816,30 +817,10 @@ public final class Constants {
   public static final String CFG_APPFABRIC_ENVIRONMENT = "appfabric.environment";
   public static final String DEFAULT_APPFABRIC_ENVIRONMENT = "devsuite";
 
-
-  /**
-   * Default namespace to be used by v2 APIs
-   */
-  public static final String DEFAULT_NAMESPACE = Id.Namespace.DEFAULT.getId();
-  public static final Id.Namespace DEFAULT_NAMESPACE_ID = Id.Namespace.DEFAULT;
-  public static final NamespaceMeta DEFAULT_NAMESPACE_META =
-    new NamespaceMeta.Builder().setName(Constants.DEFAULT_NAMESPACE_ID).setDescription("Default Namespace").build();
-
   /**
    * Used for upgrade and backwards compatability
    */
   public static final String DEVELOPER_ACCOUNT = "developer";
-
-  /**
-   * 'system' reserved namespace name
-   */
-  public static final String SYSTEM_NAMESPACE = Id.Namespace.SYSTEM.getId();
-  public static final Id.Namespace SYSTEM_NAMESPACE_ID = Id.Namespace.SYSTEM;
-
-  /**
-   * 'cdap' reserved namespace name. Unused right now (other than in logging. Reserved in case we need it in future.
-   */
-  public static final String CDAP_NAMESPACE = "cdap";
 
   /**
    * Constants related to external systems.

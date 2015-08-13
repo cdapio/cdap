@@ -79,17 +79,17 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
 
   @Test
   public void testMapReduceNext() throws Exception {
-    testNext("testApp3", "mapreduce", "testMapReduce1", true, Constants.DEFAULT_NAMESPACE, null);
+    testNext("testApp3", "mapreduce", "testMapReduce1", true, Id.Namespace.DEFAULT.getId(), null);
     try {
       testNext("testApp3", "mapreduce", "testMapReduce1", true, MockLogReader.TEST_NAMESPACE, null);
       Assert.fail();
     } catch (AssertionError e) {
       // this must fail
     }
-    testNextNoMax("testApp3", "mapreduce", "testMapReduce1", Constants.DEFAULT_NAMESPACE, null);
-    testNextFilter("testApp3", "mapreduce", "testMapReduce1", Constants.DEFAULT_NAMESPACE, null);
-    testNextNoFrom("testApp3", "mapreduce", "testMapReduce1", Constants.DEFAULT_NAMESPACE, null);
-    testNextRunId("testApp3", "mapreduce", "testMapReduce1", Constants.DEFAULT_NAMESPACE, null);
+    testNextNoMax("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId(), null);
+    testNextFilter("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId(), null);
+    testNextNoFrom("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId(), null);
+    testNextRunId("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId(), null);
   }
 
   @Test
@@ -112,11 +112,11 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
 
   @Test
   public void testMapReducePrev() throws Exception {
-    testPrev("testApp3", "mapreduce", "testMapReduce1", Constants.DEFAULT_NAMESPACE, null);
-    testPrevNoMax("testApp3", "mapreduce", "testMapReduce1", Constants.DEFAULT_NAMESPACE, null);
-    testPrevFilter("testApp3", "mapreduce", "testMapReduce1", Constants.DEFAULT_NAMESPACE, null);
-    testPrevNoFrom("testApp3", "mapreduce", "testMapReduce1", Constants.DEFAULT_NAMESPACE, null);
-    testPrevRunId("testApp3", "mapreduce", "testMapReduce1", Constants.DEFAULT_NAMESPACE, null);
+    testPrev("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId(), null);
+    testPrevNoMax("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId(), null);
+    testPrevFilter("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId(), null);
+    testPrevNoFrom("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId(), null);
+    testPrevRunId("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId(), null);
     try {
       testPrevNoMax("testApp3", "mapreduce", "testMapReduce1", MockLogReader.TEST_NAMESPACE, null);
     } catch (AssertionError e) {
@@ -132,7 +132,7 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     testLogsFilter("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE, null);
     testLogsRunId("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE, null);
     try {
-      testLogs("testApp1", "flows", "testFlow1", Constants.DEFAULT_NAMESPACE, null);
+      testLogs("testApp1", "flows", "testFlow1", Id.Namespace.DEFAULT.getId(), null);
     } catch (AssertionError e) {
       // should fail
       return;
@@ -149,9 +149,9 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
 
   @Test
   public void testMapReduceLogs() throws Exception {
-    testLogs("testApp3", "mapreduce", "testMapReduce1", Constants.DEFAULT_NAMESPACE, null);
-    testLogsFilter("testApp3", "mapreduce", "testMapReduce1", Constants.DEFAULT_NAMESPACE, null);
-    testLogsRunId("testApp3", "mapreduce", "testMapReduce1", Constants.DEFAULT_NAMESPACE, null);
+    testLogs("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId(), null);
+    testLogsFilter("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId(), null);
+    testLogsRunId("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId(), null);
     try {
       testLogsFilter("testApp3", "mapreduce", "testMapReduce1", MockLogReader.TEST_NAMESPACE, null);
     } catch (AssertionError e) {
@@ -171,7 +171,7 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     testLogsRunId("testTemplate1", "mapreduce", "testMapReduce1", MockLogReader.TEST_NAMESPACE, "testAdapter1");
     try {
       // in default namespace, mapreduce was run outside of adapter, so shouldn't find adapter logs
-      testLogs("testTemplate1", "mapreduce", "testMapReduce1", Constants.DEFAULT_NAMESPACE, "testAdapter1");
+      testLogs("testTemplate1", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId(), "testAdapter1");
     } catch (AssertionError e) {
       // Expected exception
       return;
@@ -186,7 +186,7 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     testNextFilter("testTemplate1", "mapreduce", "testMapReduce1", MockLogReader.TEST_NAMESPACE, "testAdapter1");
     testNextNoFrom("testTemplate1", "mapreduce", "testMapReduce1", MockLogReader.TEST_NAMESPACE, "testAdapter1");
     try {
-      testNext("testTemplate1", "mapreduce", "testMapReduce1", true, Constants.DEFAULT_NAMESPACE, "testAdapter1");
+      testNext("testTemplate1", "mapreduce", "testMapReduce1", true, Id.Namespace.DEFAULT.getId(), "testAdapter1");
     } catch (AssertionError e) {
       // this must fail
       return;
@@ -201,7 +201,7 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     testPrevFilter("testTemplate1", "mapreduce", "testMapReduce1", MockLogReader.TEST_NAMESPACE, "testAdapter1");
     testPrevNoFrom("testTemplate1", "mapreduce", "testMapReduce1", MockLogReader.TEST_NAMESPACE, "testAdapter1");
     try {
-      testPrevNoMax("testTemplate1", "mapreduce", "testMapReduce1", Constants.DEFAULT_NAMESPACE, "testAdapter1");
+      testPrevNoMax("testTemplate1", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId(), "testAdapter1");
     } catch (AssertionError e) {
       // this must fail.
       return;
@@ -215,7 +215,7 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     testLogsFilter("testTemplate1", "workflows", "testWorkflow1", MockLogReader.TEST_NAMESPACE, "testAdapter1");
     try {
       // in default namespace, we did not produce logs through adapters
-      testNext("testTemplate1", "workflows", "testWorkflow1", true, Constants.DEFAULT_NAMESPACE, "testAdapter1");
+      testNext("testTemplate1", "workflows", "testWorkflow1", true, Id.Namespace.DEFAULT.getId(), "testAdapter1");
     } catch (AssertionError e) {
       // this must fail
       return;
@@ -231,7 +231,7 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     testNextNoFrom("testTemplate1", "workflows", "testWorkflow1", MockLogReader.TEST_NAMESPACE, "testAdapter1");
     try {
       // in default namespace, we did not produce logs through adapters
-      testNext("testTemplate1", "workflows", "testWorkflow1", true, Constants.DEFAULT_NAMESPACE, "testAdapter1");
+      testNext("testTemplate1", "workflows", "testWorkflow1", true, Id.Namespace.DEFAULT.getId(), "testAdapter1");
     } catch (AssertionError e) {
       // this must fail
       return;
@@ -248,7 +248,7 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     testPrevRunId("testTemplate1", "workflows", "testWorkflow1", MockLogReader.TEST_NAMESPACE, "testAdapter1");
     try {
       // in default namespace, we did not produce logs through adapters
-      testPrevNoMax("testTemplate1", "workflows", "testWorkflow1", Constants.DEFAULT_NAMESPACE, "testAdapter1");
+      testPrevNoMax("testTemplate1", "workflows", "testWorkflow1", Id.Namespace.DEFAULT.getId(), "testAdapter1");
     } catch (AssertionError e) {
       // this should fail.
       return;

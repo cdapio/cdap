@@ -60,6 +60,8 @@ angular.module(PKG.name + '.services')
         }
       };
 
+      this.isConfigTouched = false;
+
       countSink = 0;
       countSource = 0;
       countTransform = 0;
@@ -133,13 +135,14 @@ angular.module(PKG.name + '.services')
 
     function findTransformThatIsSource(originalConnections) {
       var transformAsSource = {};
+      function isSource (c) {
+        if (c.target === connection.source) {
+          return c;
+        }
+      }
       for (var i =0; i<originalConnections.length; i++) {
         var connection = originalConnections[i];
-        var isSoureATarget = originalConnections.filter(function (c) {
-          if (c.target === connection.source) {
-            return c;
-          }
-        });
+        var isSoureATarget = originalConnections.filter(isSource);
         if (!isSoureATarget.length) {
           transformAsSource = connection;
           break;
@@ -170,7 +173,7 @@ angular.module(PKG.name + '.services')
           finalConnections = finalConnections.concat(parallelConnections);
         }
       } else {
-        var source = findTransformThatIsSource(originalConnections);
+        source = findTransformThatIsSource(originalConnections);
         addConnectionsInOrder(source, finalConnections, originalConnections);
       }
       return finalConnections;
@@ -178,6 +181,7 @@ angular.module(PKG.name + '.services')
 
 
     this.setConnections = function(connections) {
+      this.isConfigTouched = true;
       this.connections = [];
       var localConnections = [];
       connections.forEach(function(con) {
@@ -186,11 +190,13 @@ angular.module(PKG.name + '.services')
           target: con.targetId
         });
       });
-      var localConnections = orderConnections.call(this, angular.copy(localConnections), angular.copy(localConnections));
+      localConnections = orderConnections.call(this, angular.copy(localConnections), angular.copy(localConnections));
       this.connections = localConnections;
     };
 
     this.addNodes = function(conf, type, inCreationMode) {
+      this.isConfigTouched = true;
+
       var config = {
         id: conf.id,
         name: conf.name,
@@ -286,6 +292,7 @@ angular.module(PKG.name + '.services')
     };
 
     this.removeNode = function (nodeId) {
+      this.isConfigTouched = true;
       var type = this.nodes[nodeId].type;
 
       switch (type) {
@@ -340,6 +347,7 @@ angular.module(PKG.name + '.services')
     }
 
     this.editPluginProperties = function (scope, pluginId) {
+      this.isConfigTouched = true;
       var sourceConn = $filter('filter')(this.connections, { target: pluginId });
       var sourceSchema = null;
       var isStreamSource = false;
@@ -626,6 +634,7 @@ angular.module(PKG.name + '.services')
       return data;
     };
     this.save = function() {
+      this.isConfigTouched = false;
       var defer = $q.defer();
       var config = this.getConfig();
       var errors = AdapterErrorFactory.isModelValid(this.nodes, this.connections, this.metadata, config);
@@ -670,6 +679,7 @@ angular.module(PKG.name + '.services')
     };
 
     this.saveAsDraft = function() {
+      this.isConfigTouched = false;
       var defer = $q.defer();
       var config = this.getConfigForBackend();
       var error = {};

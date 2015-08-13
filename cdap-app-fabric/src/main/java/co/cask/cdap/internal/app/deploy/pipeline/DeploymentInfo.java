@@ -23,6 +23,7 @@ import javax.annotation.Nullable;
 
 /**
  * Contains information about input and output locations for deployment.
+ * TODO: (CDAP-2662) remove after ApplicationTemplates are removed
  */
 public class DeploymentInfo {
 

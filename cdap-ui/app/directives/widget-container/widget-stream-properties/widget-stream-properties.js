@@ -172,6 +172,14 @@ angular.module(PKG.name + '.commons')
           initialize($scope.model);
         });
 
+        EventPipe.on('schema.clear', function () {
+          initialize();
+        });
+
+        EventPipe.on('dataset.selected', function (schema) {
+          initialize(schema);
+        });
+
         function formatSchema() {
 
           if (['clf', 'syslog'].indexOf($scope.plugins.format) !== -1) {

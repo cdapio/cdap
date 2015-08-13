@@ -20,6 +20,7 @@ import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.logging.appender.kafka.KafkaTopic;
+import co.cask.cdap.proto.Id;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -74,8 +75,10 @@ public final class LogSaver extends AbstractIdleService {
     this.kafkaCancelCallbackLatchMap = new HashMap<>();
     this.messageProcessors = messageProcessors;
 
+    // TODO: add instance id of the log saver as a tag, when CDAP-3265 is fixed
     this.metricsContext = metricsCollectionService.getContext(
-      ImmutableMap.of(Constants.Metrics.Tag.COMPONENT, Constants.Service.LOGSAVER));
+      ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Id.Namespace.SYSTEM.getId(),
+                      Constants.Metrics.Tag.COMPONENT, Constants.Service.LOGSAVER));
   }
 
   @Override

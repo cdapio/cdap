@@ -18,13 +18,15 @@ package co.cask.cdap.internal.app.deploy;
 
 import co.cask.cdap.ConfigTestApp;
 import co.cask.cdap.ToyApp;
-import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.DefaultId;
+import co.cask.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
-import co.cask.cdap.internal.app.deploy.pipeline.DeploymentInfo;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.test.AppJarHelper;
+import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import com.google.gson.Gson;
 import org.apache.twill.filesystem.LocalLocationFactory;
@@ -58,7 +60,7 @@ public class LocalApplicationManagerTest {
     lf = new LocalLocationFactory(TMP_FOLDER.newFolder());
 
     NamespaceAdmin namespaceAdmin = AppFabricTestHelper.getInjector().getInstance(NamespaceAdmin.class);
-    namespaceAdmin.createNamespace(Constants.DEFAULT_NAMESPACE_META);
+    namespaceAdmin.createNamespace(NamespaceMeta.DEFAULT);
   }
 
   /**
@@ -68,15 +70,13 @@ public class LocalApplicationManagerTest {
   public void testImproperOrNoManifestFile() throws Exception {
     // Create an JAR without the MainClass set.
     File deployFile = TMP_FOLDER.newFile();
-    JarOutputStream output = new JarOutputStream(new FileOutputStream(deployFile), new Manifest());
-    try {
+    try (JarOutputStream output = new JarOutputStream(new FileOutputStream(deployFile), new Manifest())) {
       output.putNextEntry(new JarEntry("dummy"));
-    } finally {
-      output.close();
     }
 
-    Location destination = new LocalLocationFactory().create(new File(TMP_FOLDER.newFolder(), "deploy.jar").toURI());
-    DeploymentInfo info = new DeploymentInfo(deployFile, destination, null);
+    Location jarLoc = Locations.toLocation(deployFile);
+    Id.Artifact artifactId = Id.Artifact.from(DefaultId.NAMESPACE, "dummy", "1.0.0-SNAPSHOT");
+    AppDeploymentInfo info = new AppDeploymentInfo(artifactId, "some.class.name", jarLoc, null);
 
     AppFabricTestHelper.getLocalManager().deploy(DefaultId.NAMESPACE, null, info).get();
   }
@@ -87,8 +87,8 @@ public class LocalApplicationManagerTest {
   @Test
   public void testGoodPipeline() throws Exception {
     Location deployedJar = AppJarHelper.createDeploymentJar(lf, ToyApp.class);
-    Location destination = new LocalLocationFactory().create(new File(TMP_FOLDER.newFolder(), "deploy.jar").toURI());
-    DeploymentInfo info = new DeploymentInfo(new File(deployedJar.toURI()), destination, null);
+    Id.Artifact artifactId = Id.Artifact.from(DefaultId.NAMESPACE, "toyapp", "1.0.0-SNAPSHOT");
+    AppDeploymentInfo info = new AppDeploymentInfo(artifactId, ToyApp.class.getName(), deployedJar, null);
 
     ApplicationWithPrograms input = AppFabricTestHelper.getLocalManager().deploy(DefaultId.NAMESPACE,
                                                                                  null, info).get();
@@ -100,10 +100,10 @@ public class LocalApplicationManagerTest {
   @Test
   public void testValidConfigPipeline() throws Exception {
     Location deployedJar = AppJarHelper.createDeploymentJar(lf, ConfigTestApp.class);
-    Location destination = new LocalLocationFactory().create(new File(TMP_FOLDER.newFolder(), "deploy.jar").toURI());
-
+    Id.Artifact artifactId = Id.Artifact.from(DefaultId.NAMESPACE, "configtest", "1.0.0-SNAPSHOT");
     ConfigTestApp.ConfigClass config = new ConfigTestApp.ConfigClass("myStream", "myTable");
-    DeploymentInfo info = new DeploymentInfo(new File(deployedJar.toURI()), destination, GSON.toJson(config));
+    AppDeploymentInfo info =
+      new AppDeploymentInfo(artifactId, ConfigTestApp.class.getName(), deployedJar, GSON.toJson(config));
 
     AppFabricTestHelper.getLocalManager().deploy(DefaultId.NAMESPACE, "MyApp", info).get();
   }
@@ -111,9 +111,10 @@ public class LocalApplicationManagerTest {
   @Test(expected = ExecutionException.class)
   public void testInvalidConfigPipeline() throws Exception {
     Location deployedJar = AppJarHelper.createDeploymentJar(lf, ConfigTestApp.class);
-    Location destination = new LocalLocationFactory().create(new File(TMP_FOLDER.newFolder(), "deploy.jar").toURI());
+    Id.Artifact artifactId = Id.Artifact.from(DefaultId.NAMESPACE, "configtest", "1.0.0-SNAPSHOT");
+    AppDeploymentInfo info =
+      new AppDeploymentInfo(artifactId, ConfigTestApp.class.getName(), deployedJar, GSON.toJson("invalid"));
 
-    DeploymentInfo info = new DeploymentInfo(new File(deployedJar.toURI()), destination, GSON.toJson("invalid"));
     AppFabricTestHelper.getLocalManager().deploy(DefaultId.NAMESPACE, "BadApp", info).get();
   }
 }

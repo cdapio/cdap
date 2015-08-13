@@ -23,6 +23,7 @@ import co.cask.cdap.common.ArtifactAlreadyExistsException;
 import co.cask.cdap.common.ArtifactNotFoundException;
 import co.cask.cdap.common.ArtifactRangeNotFoundException;
 import co.cask.cdap.common.BadRequestException;
+import co.cask.cdap.common.InvalidArtifactException;
 import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -37,7 +38,6 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ArtifactInfo;
 import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
-import co.cask.cdap.proto.artifact.InvalidArtifactException;
 import co.cask.cdap.proto.artifact.InvalidArtifactRangeException;
 import co.cask.cdap.proto.artifact.PluginInfo;
 import co.cask.cdap.proto.artifact.PluginSummary;
@@ -74,7 +74,7 @@ import javax.ws.rs.QueryParam;
  * {@link co.cask.http.HttpHandler} for managing adapter lifecycle.
  */
 @Singleton
-@Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
+@Path(Constants.Gateway.API_VERSION_3)
 public class ArtifactHttpHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(ArtifactHttpHandler.class);
   private static final String VERSION_HEADER = "Artifact-Version";
@@ -97,8 +97,24 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
       cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
   }
 
+  @POST
+  @Path("/namespaces/system/artifacts")
+  public void refreshSystemArtifacts(HttpRequest request, HttpResponder responder) {
+    try {
+      artifactRepository.addSystemArtifacts();
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (IOException e) {
+      LOG.error("Error while refreshing system artifacts.", e);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
+        "There was an IO error while refreshing system artifacts, please try again.");
+    } catch (WriteConflictException e) {
+      LOG.error("Error while refreshing system artifacts.", e);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    }
+  }
+
   @GET
-  @Path("/artifacts")
+  @Path("/namespaces/{namespace-id}/artifacts")
   public void getArtifacts(HttpRequest request, HttpResponder responder,
                            @PathParam("namespace-id") String namespaceId,
                            @QueryParam("includeSystem") @DefaultValue("true") boolean includeSystem)
@@ -115,7 +131,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
   }
 
   @GET
-  @Path("/artifacts/{artifact-name}")
+  @Path("/namespaces/{namespace-id}/artifacts/{artifact-name}")
   public void getArtifactVersions(HttpRequest request, HttpResponder responder,
                                   @PathParam("namespace-id") String namespaceId,
                                   @PathParam("artifact-name") String artifactName,
@@ -135,7 +151,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
   }
 
   @GET
-  @Path("/artifacts/{artifact-name}/versions/{artifact-version}")
+  @Path("/namespaces/{namespace-id}/artifacts/{artifact-name}/versions/{artifact-version}")
   public void getArtifactInfo(HttpRequest request, HttpResponder responder,
                               @PathParam("namespace-id") String namespaceId,
                               @PathParam("artifact-name") String artifactName,
@@ -165,7 +181,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
   }
 
   @GET
-  @Path("/artifacts/{artifact-name}/versions/{artifact-version}/extensions")
+  @Path("/namespaces/{namespace-id}/artifacts/{artifact-name}/versions/{artifact-version}/extensions")
   public void getArtifactPluginTypes(HttpRequest request, HttpResponder responder,
                                      @PathParam("namespace-id") String namespaceId,
                                      @PathParam("artifact-name") String artifactName,
@@ -193,7 +209,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
   }
 
   @GET
-  @Path("/artifacts/{artifact-name}/versions/{artifact-version}/extensions/{plugin-type}")
+  @Path("/namespaces/{namespace-id}/artifacts/{artifact-name}/versions/{artifact-version}/extensions/{plugin-type}")
   public void getArtifactPlugins(HttpRequest request, HttpResponder responder,
                                  @PathParam("namespace-id") String namespaceId,
                                  @PathParam("artifact-name") String artifactName,
@@ -229,7 +245,8 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
   }
 
   @GET
-  @Path("/artifacts/{artifact-name}/versions/{artifact-version}/extensions/{plugin-type}/plugins/{plugin-name}")
+  @Path("/namespaces/{namespace-id}/artifacts/{artifact-name}/" +
+        "versions/{artifact-version}/extensions/{plugin-type}/plugins/{plugin-name}")
   public void getArtifactPlugin(HttpRequest request, HttpResponder responder,
                                 @PathParam("namespace-id") String namespaceId,
                                 @PathParam("artifact-name") String artifactName,
@@ -269,7 +286,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
   }
 
   @GET
-  @Path("/classes/apps")
+  @Path("/namespaces/{namespace-id}/classes/apps")
   public void getApplicationClasses(HttpRequest request, HttpResponder responder,
                                     @PathParam("namespace-id") String namespaceId,
                                     @QueryParam("includeSystem") @DefaultValue("true") boolean includeSystem)
@@ -282,7 +299,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
   }
 
   @GET
-  @Path("/classes/apps/{classname}")
+  @Path("/namespaces/{namespace-id}/classes/apps/{classname}")
   public void getApplicationClasses(HttpRequest request, HttpResponder responder,
                                     @PathParam("namespace-id") String namespaceId,
                                     @PathParam("classname") String className,
@@ -296,7 +313,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
   }
 
   @POST
-  @Path("/artifacts/{artifact-name}")
+  @Path("/namespaces/{namespace-id}/artifacts/{artifact-name}")
   public BodyConsumer addArtifact(HttpRequest request, HttpResponder responder,
                                   @PathParam("namespace-id") String namespaceId,
                                   @PathParam("artifact-name") String artifactName,
@@ -374,7 +391,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
       throw new NamespaceNotFoundException(namespace);
     }
 
-    return isSystem ? Constants.SYSTEM_NAMESPACE_ID : namespace;
+    return isSystem ? Id.Namespace.SYSTEM : namespace;
   }
 
   private Id.Artifact validateAndGetArtifactId(Id.Namespace namespace, String name,
@@ -402,7 +419,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
         try {
           range = ArtifactRange.parse(parent);
           // only support extending an artifact that is in the same namespace, or system namespace
-          if (!range.getNamespace().equals(Constants.SYSTEM_NAMESPACE_ID) &&
+          if (!range.getNamespace().equals(Id.Namespace.SYSTEM) &&
               !range.getNamespace().equals(namespace)) {
             throw new BadRequestException(
               String.format("Parent artifact %s must be in the same namespace or a system artifact.", parent));

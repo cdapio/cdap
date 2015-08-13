@@ -93,7 +93,7 @@ also defined in the
 `schedule <../../reference-manual/javadocs/co/cask/cdap/api/schedule/Schedules.html#createDataSchedule(java.lang.String,%20java.lang.String,%20co.cask.cdap.api.schedule.Source,%20java.lang.String,%20int)>`__.
 
 When a stream-size schedule is first created, during the deployment of an application, it will wait for the
-increment of data that it defined, starting from the current size of the Stream as given by the Metric system.
+increment of data that it defined, starting from the current size of the stream as given by the Metric system.
 
 These actions can be performed on a schedule:
 
@@ -112,7 +112,7 @@ These actions can be performed on a schedule:
 
 .. rubric:: Special Runtime Arguments
 
-When a stream-size schedule executes a workflow, it passes in its these runtime arguments:
+When a stream-size schedule executes a workflow, it passes in these runtime arguments:
 
 - ``logicalStartTime``: the timestamp, in milliseconds, at which the schedule received the information that the Stream
   had ingested enough data for the workflow to be executed;
