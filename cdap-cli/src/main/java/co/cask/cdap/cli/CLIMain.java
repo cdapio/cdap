@@ -16,6 +16,8 @@
 
 package co.cask.cdap.cli;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
 import co.cask.cdap.cli.command.system.HelpCommand;
 import co.cask.cdap.cli.command.system.SearchCommandsCommand;
 import co.cask.cdap.cli.commandset.DefaultCommands;
@@ -53,6 +55,7 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -237,6 +240,10 @@ public class CLIMain {
   }
 
   public static void main(String[] args) {
+    // disable logback logging
+    Logger root = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+    root.setLevel(Level.OFF);
+
     final PrintStream output = System.out;
 
     Options options = getOptions();
