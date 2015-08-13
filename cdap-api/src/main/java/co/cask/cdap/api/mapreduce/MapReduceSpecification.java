@@ -43,8 +43,8 @@ public class MapReduceSpecification implements ProgramSpecification, PropertyPro
   private final Resources reducerResources;
 
   public MapReduceSpecification(String className, String name, String description, String inputDataSet,
-                                       String outputDataSet, Set<String> dataSets, Map<String, String> properties,
-                                       Resources mapperResources, Resources reducerResources) {
+                                String outputDataSet, Set<String> dataSets, Map<String, String> properties,
+                                Resources mapperResources, Resources reducerResources) {
     this.className = className;
     this.name = name;
     this.description = description;
