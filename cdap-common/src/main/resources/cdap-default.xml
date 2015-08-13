@@ -26,13 +26,13 @@
     <property>
         <name>zookeeper.quorum</name>
         <value>127.0.0.1:2181/${root.namespace}</value>
-        <description>Zookeeper address host:port</description>
+        <description>ZooKeeper quorum string</description>
     </property>
 
     <property>
         <name>zookeeper.session.timeout.millis</name>
         <value>40000</value>
-        <description>Zookeeper session time-out in milliseconds</description>
+        <description>ZooKeeper session time-out in milliseconds</description>
     </property>
 
     <property>
@@ -69,7 +69,7 @@
         <value>-verbose:gc -Xloggc:&lt;LOG_DIR&gt;/gc.log -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=10 -XX:GCLogFileSize=1M</value>
         <description>
             Java garbage collection options for all Apache Twill containers; &lt;LOG_DIR&gt;
-            is the location of the log directory on each machine; note that the special
+            is the location of the log directory in the container; note that the special
             characters are replaced with entity equivalents so they can be included in the
             XML
         </description>
