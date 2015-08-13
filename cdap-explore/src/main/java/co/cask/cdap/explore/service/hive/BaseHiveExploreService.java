@@ -339,7 +339,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
         String database = getHiveDatabase(schemaPattern);
         operationHandle = cliService.getColumns(sessionHandle, catalog, database,
-                                                                tableNamePattern, columnNamePattern);
+                                                tableNamePattern, columnNamePattern);
         QueryHandle handle = saveReadOnlyOperation(operationHandle, sessionHandle, sessionConf, "", database);
         LOG.trace("Retrieving columns: catalog {}, schemaPattern {}, tableNamePattern {}, columnNamePattern {}",
                   catalog, database, tableNamePattern, columnNamePattern);
@@ -497,7 +497,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
         sessionHandle = openHiveSession(sessionConf);
         String database = getHiveDatabase(schemaPattern);
         operationHandle = cliService.getTables(sessionHandle, catalog, database,
-                                                               tableNamePattern, tableTypes);
+                                               tableNamePattern, tableTypes);
         QueryHandle handle = saveReadOnlyOperation(operationHandle, sessionHandle, sessionConf, "", database);
         LOG.trace("Retrieving tables: catalog {}, schemaNamePattern {}, tableNamePattern {}, tableTypes {}",
                   catalog, database, tableNamePattern, tableTypes);
