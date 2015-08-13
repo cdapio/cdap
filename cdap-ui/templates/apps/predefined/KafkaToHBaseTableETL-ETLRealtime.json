@@ -31,5 +31,6 @@
                 }
             }
         ]
-    }
+    },
+    "name": "KafkaToHbaseTable"
 }
