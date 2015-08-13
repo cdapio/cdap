@@ -8,6 +8,9 @@ angular.module(PKG.name+'.feature.login')
 
       .state('login', {
         url: '/login?next',
+        params: {
+          nextParams: null
+        },
         templateUrl: '/assets/features/login/login.html',
         controller: 'LoginCtrl',
         onEnter: function(MY_CONFIG, myLoadingService, myAuth, $rootScope, MYAUTH_EVENT) {
