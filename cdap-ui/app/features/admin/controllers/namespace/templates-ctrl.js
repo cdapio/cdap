@@ -1,45 +1,16 @@
 angular.module(PKG.name + '.feature.admin')
-  .controller('NamespaceTemplatesController', function ($scope, myAdapterApi, PluginConfigFactory, myHelpers, mySettings, $stateParams, $alert, $state) {
+  .controller('NamespaceTemplatesController', function ($scope, myAdapterApi, PluginConfigFactory, myHelpers, mySettings, $stateParams, $alert, $state, $timeout) {
 
     var vm = this;
 
     vm.pluginList = [];
+    vm.isEdit = false;
+    vm.isDisabled = false;
 
     var fetchApi;
-
     var plugin;
 
-    // Obtaining list of plugins
-    $scope.$watch(function () { return vm.pluginType; }, function () {
-      if (!vm.pluginType) { return; }
-
-      vm.plugin = null;
-      plugin = null;
-      vm.pluginConfig = null;
-
-      var prom;
-      switch (vm.pluginType) {
-        case 'source':
-          prom = myAdapterApi.fetchSources({ adapterType: vm.template }).$promise;
-          fetchApi = myAdapterApi.fetchSourceProperties;
-          break;
-        case 'transform':
-          prom = myAdapterApi.fetchTransforms({ adapterType: vm.template }).$promise;
-          fetchApi = myAdapterApi.fetchTransformProperties;
-          break;
-        case 'sink':
-          prom = myAdapterApi.fetchSinks({ adapterType: vm.template }).$promise;
-          fetchApi = myAdapterApi.fetchSinkProperties;
-          break;
-      }
-      prom.then(function (res) {
-        vm.pluginList = res;
-      });
-    });
-
-
-    // Fetching backend properties
-    $scope.$watch(function () { return vm.plugin; }, function () {
+    function initialize() {
       if (!vm.plugin) { return; }
 
       plugin = {
@@ -59,7 +30,76 @@ angular.module(PKG.name + '.feature.admin')
 
           fetchConfig();
         });
-    });
+    }
+
+    if (!$stateParams.templateName) {
+      // Obtaining list of plugins
+      $scope.$watch(function () { return vm.pluginType; }, function () {
+        if (!vm.pluginType) { return; }
+
+        vm.plugin = null;
+        plugin = null;
+        vm.pluginConfig = null;
+
+        var prom;
+        switch (vm.pluginType) {
+          case 'source':
+            prom = myAdapterApi.fetchSources({ adapterType: vm.template }).$promise;
+            fetchApi = myAdapterApi.fetchSourceProperties;
+            break;
+          case 'transform':
+            prom = myAdapterApi.fetchTransforms({ adapterType: vm.template }).$promise;
+            fetchApi = myAdapterApi.fetchTransformProperties;
+            break;
+          case 'sink':
+            prom = myAdapterApi.fetchSinks({ adapterType: vm.template }).$promise;
+            fetchApi = myAdapterApi.fetchSinkProperties;
+            break;
+        }
+        prom.then(function (res) {
+          vm.pluginList = res;
+        });
+      });
+
+      // Fetching backend properties
+      $scope.$watch(function () { return vm.plugin; }, initialize);
+    }
+
+
+
+    if ($stateParams.templateName) {
+      vm.isEdit = true;
+
+      mySettings.get('pluginTemplates')
+        .then(function (res) {
+          var template = res[$stateParams.nsadmin][$stateParams.templateName];
+
+          vm.template = template.templateType;
+          vm.pluginType = template.type;
+          vm.plugin = template.pluginName;
+
+          switch (vm.pluginType) {
+            case 'source':
+              fetchApi = myAdapterApi.fetchSourceProperties;
+              break;
+            case 'transform':
+              fetchApi = myAdapterApi.fetchTransformProperties;
+              break;
+            case 'sink':
+              fetchApi = myAdapterApi.fetchSinkProperties;
+              break;
+          }
+
+          vm.pluginConfig = {
+            templateName: template.templateName,
+            properties: template.properties,
+            outputSchema: template.outputSchema
+          };
+
+          initialize();
+
+        });
+    }
 
     this.save = function () {
 
@@ -154,6 +194,7 @@ angular.module(PKG.name + '.feature.admin')
             }
 
             if (res.implicit) {
+              vm.isDisabled = true;
               var schema = res.implicit.schema;
               var keys = Object.keys(schema);
 
@@ -171,6 +212,12 @@ angular.module(PKG.name + '.feature.admin')
             }
 
             plugin.properties = {};
+
+            if (vm.isEdit) {
+              plugin.properties = vm.pluginConfig.properties;
+              plugin.templateName = vm.pluginConfig.templateName;
+              plugin.outputSchema = vm.pluginConfig.outputSchema;
+            }
 
             vm.pluginConfig = plugin;
           }
