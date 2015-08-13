@@ -214,6 +214,11 @@ public final class MapReduceContainerHelper {
       }, launcherName, portFinderName, symLinkerName);
 
       addClassPaths(Constants.CLASSPATH, classPaths, jarOut);
+
+      String yarnAppClassPath = hConf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH,
+                                          Joiner.on(",").join(YarnConfiguration.DEFAULT_YARN_APPLICATION_CLASSPATH));
+
+      addClassPaths(Constants.APPLICATION_CLASSPATH, Splitter.on(",").trimResults().split(yarnAppClassPath), jarOut);
     }
   }
 
@@ -281,8 +286,8 @@ public final class MapReduceContainerHelper {
   }
 
   private static void addClassPaths(String classpathId,
-                                    List<String> classPaths, JarOutputStream jarOut) throws IOException {
-    if (!classPaths.isEmpty()) {
+                                    Iterable<String> classPaths, JarOutputStream jarOut) throws IOException {
+    if (!Iterables.isEmpty(classPaths)) {
       jarOut.putNextEntry(new JarEntry(classpathId));
       jarOut.write(Joiner.on(':').join(classPaths).getBytes(Charsets.UTF_8));
     }
