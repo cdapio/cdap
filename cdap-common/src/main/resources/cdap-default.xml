@@ -20,41 +20,40 @@
     <property>
         <name>root.namespace</name>
         <value>cdap</value>
-        <description>Specifies the root namespace</description>
+        <description>Namespace for this CDAP instance</description>
     </property>
 
     <property>
         <name>zookeeper.quorum</name>
         <value>127.0.0.1:2181/${root.namespace}</value>
-        <description>Specifies the zookeeper quorum string</description>
+        <description>Zookeeper address host:port</description>
     </property>
 
     <property>
         <name>zookeeper.session.timeout.millis</name>
         <value>40000</value>
-        <description>Specifies the zookeeper session time out; time unit milliseconds</description>
+        <description>Zookeeper session time-out in milliseconds</description>
     </property>
 
     <property>
         <name>thrift.max.read.buffer</name>
         <value>16777216</value>
         <description>
-            Specifies the max read buffer size used by
-            thrift server. Value should be set to something greater
-            than max frame that is sent on RPC channel.
+            Specifies the maximum read buffer size in bytes used by the Thrift server;
+            value should be set to greater than the maximum frame sent on the RPC channel
         </description>
     </property>
 
     <property>
         <name>twill.zookeeper.namespace</name>
         <value>/twill</value>
-        <description>Zookeeper namespace prefix for Apache Twill</description>
+        <description>ZooKeeper namespace prefix for Apache Twill</description>
     </property>
 
     <property>
         <name>twill.java.reserved.memory.mb</name>
         <value>250</value>
-        <description>Reserved non-heap memory in MB for Apache Twill container.</description>
+        <description>Reserved non-heap memory in megabytes for Apache Twill container</description>
     </property>
 
     <property>
@@ -68,13 +67,18 @@
     <property>
         <name>twill.jvm.gc.opts</name>
         <value>-verbose:gc -Xloggc:&lt;LOG_DIR&gt;/gc.log -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=10 -XX:GCLogFileSize=1M</value>
-        <description>Java GC options for all Apache Twill containers</description>
+        <description>
+            Java garbage collection options for all Apache Twill containers; &lt;LOG_DIR&gt;
+            is the location of the log directory on each machine; note that the special
+            characters are replaced with entity equivalents so they can be included in the
+            XML
+        </description>
     </property>
 
     <property>
         <name>hdfs.namespace</name>
         <value>/${root.namespace}</value>
-        <description>Namespace for HDFS files</description>
+        <description>Namespace for HDFS files written by CDAP</description>
     </property>
 
     <property>
@@ -92,20 +96,20 @@
     <property>
         <name>namespaces.dir</name>
         <value>namespaces</value>
-        <description>The sub-directory of ${hdfs.namespace} in which namespaces are stored.</description>
+        <description>The sub-directory of ${hdfs.namespace} in which namespaces are stored</description>
     </property>
 
     <property>
         <name>local.data.dir</name>
         <value>data</value>
-        <description>Data directory for local mode</description>
+        <description>Data directory for standalone mode</description>
     </property>
 
     <property>
         <name>hdfs.lib.dir</name>
         <value>${hdfs.namespace}/lib</value>
-        <description>Common directory in HDFS for jar files for coprocessors,
-        etc.</description>
+        <description>Common directory in HDFS for, among others, JAR files for coprocessors
+        </description>
     </property>
 
     <!-- Gateway configuration -->
@@ -113,7 +117,7 @@
     <property>
         <name>app.connection.backlog</name>
         <value>20000</value>
-        <description>Max connection backlog of AppFabricServer</description>
+        <description>Max connection backlog of app fabric server</description>
     </property>
 
     <property>
@@ -153,7 +157,7 @@
     <property>
         <name>master.service.memory.mb</name>
         <value>512</value>
-        <description>Size of Memory in MB for Master Service instance</description>
+        <description>Size of Memory in megabytes for Master Service instance</description>
     </property>
 
     <property>
@@ -193,11 +197,13 @@
     <property>
         <name>stream.flume.port</name>
         <value>10004</value>
+        <description></description>
     </property>
 
     <property>
         <name>stream.flume.threads</name>
         <value>100</value>
+        <description></description>
     </property>
 
     <property>
@@ -209,20 +215,20 @@
     <property>
         <name>stream.partition.duration</name>
         <value>3600000</value>
-        <description>The default duration of a Stream partition in milliseconds</description>
+        <description>The default duration of a stream partition in milliseconds</description>
     </property>
 
     <property>
         <name>stream.index.interval</name>
         <value>10000</value>
-        <description>Default time interval in milliseconds for emitting new index entry in Stream file</description>
+        <description>Default time interval in milliseconds for emitting new index entry in stream file</description>
     </property>
 
     <property>
         <name>stream.event.ttl</name>
         <!-- Long.MAX_VALUE !-->
         <value>9223372036854775807</value>
-        <description>Default time to live in milliseconds for Stream events</description>
+        <description>Default time to live in milliseconds for stream events</description>
     </property>
 
     <property>
@@ -237,7 +243,7 @@
     <property>
         <name>stream.notification.threshold</name>
         <value>1024</value>
-        <description>Default size of data, in MB, to be ingested by a Stream before a notification is published</description>
+        <description>Size of data, in megabytes, to be ingested by a stream before a notification is published</description>
     </property>
 
     <property>
@@ -249,56 +255,56 @@
     <property>
         <name>stream.file.prefix</name>
         <value>file</value>
-        <description>Prefix of file name for Stream file</description>
+        <description>Prefix of file name for stream file</description>
     </property>
 
     <property>
         <name>stream.instance.file.prefix</name>
         <value>${stream.file.prefix}.${stream.container.instance.id}</value>
-        <description>Prefix of file name for Stream file per writer instance.</description>
+        <description>Prefix of file name for stream file per writer instance</description>
         <final>true</final>
     </property>
 
     <property>
         <name>stream.consumer.table.presplits</name>
         <value>16</value>
-        <description>Number of splits for the Stream consumer table</description>
+        <description>Number of splits for the stream consumer table</description>
     </property>
 
     <property>
         <name>stream.bind.address</name>
         <value>0.0.0.0</value>
-        <description>Default inet address for binding Stream http service</description>
+        <description>Default inet address for binding stream HTTP service</description>
     </property>
 
     <property>
         <name>stream.worker.threads</name>
         <value>${http.service.worker.threads}</value>
-        <description>Default number of IO worker threads for the Stream http service</description>
+        <description>Default number of IO worker threads for the stream HTTP service</description>
     </property>
 
     <property>
         <name>stream.container.num.cores</name>
         <value>2</value>
-        <description>Number of virtual core for the YARN container that runs the Stream handler</description>
+        <description>Number of virtual core for the YARN container that runs the stream handler</description>
     </property>
 
     <property>
         <name>stream.container.memory.mb</name>
         <value>512</value>
-        <description>Amount of memory in MB for the YARN container that runs the Stream handler</description>
+        <description>Amount of memory in megabytes for the YARN container that runs the stream handler</description>
     </property>
 
     <property>
         <name>stream.container.instances</name>
         <value>1</value>
-        <description>Number of YARN container instances for the Stream handler</description>
+        <description>Number of YARN container instances for the stream handler</description>
     </property>
 
     <property>
         <name>stream.file.cleanup.period</name>
         <value>300000</value>
-        <description>How often to run Stream file cleanup process in milliseconds</description>
+        <description>How often to run stream file cleanup process in milliseconds</description>
     </property>
 
     <property>
@@ -324,43 +330,43 @@
     <property>
         <name>data.local.storage</name>
         <value>${local.data.dir}/ldb</value>
-        <description>Specifies the database directory</description>
+        <description>Database directory for data fabric when in standalone mode</description>
     </property>
 
     <property>
         <name>data.local.storage.blocksize</name>
         <value>1024</value>
-        <description>Specifies block size (in bytes)</description>
+        <description>Block size in bytes for data fabric when in standalone mode</description>
     </property>
 
     <property>
         <name>data.local.storage.cachesize</name>
         <value>104857600</value>
-        <description>Specifies cache size (in bytes)</description>
+        <description>Cache size in bytes for data fabric when in standalone mode</description>
     </property>
 
     <property>
         <name>data.tx.bind.port</name>
         <value>15165</value>
-        <description>The port number for the transaction service</description>
+        <description>Transaction service bind port</description>
     </property>
 
     <property>
         <name>data.tx.bind.address</name>
         <value>0.0.0.0</value>
-        <description>The inet address for the transaction service</description>
+        <description>Transaction service inet address</description>
     </property>
 
     <property>
         <name>data.tx.server.io.threads</name>
         <value>2</value>
-        <description>The number of IO threads for the transaction service</description>
+        <description>Number of IO threads for the transaction service</description>
     </property>
 
     <property>
         <name>data.tx.server.threads</name>
         <value>25</value>
-        <description>The number of threads for the transaction service</description>
+        <description>Number of threads for the transaction service</description>
     </property>
 
     <property>
@@ -372,13 +378,13 @@
     <property>
         <name>data.tx.client.count</name>
         <value>5</value>
-        <description>The number of pooled instanced of the transaction client</description>
+        <description>Number of pooled instances of the transaction client</description>
     </property>
 
     <property>
         <name>data.tx.client.provider</name>
         <value>thread-local</value>
-        <description>The provider strategy for transaction clients;
+        <description>Provider strategy for transaction clients;
             valid values are "pool" and "thread-local"</description>
     </property>
 
@@ -386,16 +392,16 @@
         <name>data.tx.thrift.max.read.buffer</name>
         <value>${thrift.max.read.buffer}</value>
         <description>
-            Specifies the max read buffer size used by
-            transaction server. Value should be set to something greater
-            than max frame that is sent on RPC channel.
+            Maximum read buffer size (in bytes) used by the transaction server; the value
+            should be set to something greater than the maximum frame sent on the RPC
+            channel
         </description>
     </property>
 
     <property>
         <name>data.tx.hdfs.user</name>
         <value>${hdfs.user}</value>
-        <description>User name for accessing HDFS if not running in secure HDFS</description>
+        <description>User name for accessing HDFS (if not running in secure HDFS)</description>
     </property>
 
     <property>
@@ -418,15 +424,14 @@
     <property>
         <name>data.tx.snapshot.local.dir</name>
         <value>${local.data.dir}/tx.snapshot</value>
-        <description>Directory on the local filesystem used to store snapshots
-        and logs of transaction state for single-node operation</description>
+        <description>Storage directory on the local filesystem of snapshot and logs 
+        of transaction state when in standalone mode</description>
     </property>
 
     <property>
         <name>data.tx.snapshot.interval</name>
         <value>60</value>
-        <description>Frequency, in seconds, at which snapshots of transaction
-            state should be written</description>
+        <description>Frequency of transaction snapshots in seconds</description>
     </property>
 
     <property>
@@ -446,29 +451,33 @@
         <name>data.tx.timeout</name>
         <value>30</value>
         <description>
-            The timeout for a transaction, in seconds.
-            If the transaction is not finished in that time, it is marked invalid.
+            Timeout value in seconds for a transaction; if the transaction is not finished
+            in that time, it is marked invalid
         </description>
     </property>
 
     <property>
         <name>data.tx.num.instances</name>
         <value>1</value>
+        <description>Requested number of transaction client instances</description>
     </property>
 
     <property>
         <name>data.tx.max.instances</name>
         <value>${master.service.max.instances}</value>
+        <description>Maximum number of transaction client instances</description>
     </property>
 
     <property>
         <name>data.tx.num.cores</name>
         <value>${master.service.num.cores}</value>
+        <description>Maximum number of transaction client cores</description>
     </property>
 
     <property>
         <name>data.tx.memory.mb</name>
         <value>${master.service.memory.mb}</value>
+        <description>Memory in megabytes of the transaction clients</description>
     </property>
 
     <property>
@@ -482,15 +491,15 @@
     <property>
         <name>data.queue.table.name</name>
         <value>queues</value>
-        <description>Specifies the name of the table for queues</description>
+        <description>Table name for queues</description>
     </property>
 
     <property>
         <name>data.queue.dequeue.tx.percent</name>
         <value>30</value>
         <description>
-            Percentage of transaction time allowed to spend in dequeue. It should be an integer
-            between 1-100.
+            Percentage of transaction time allowed to spend in dequeue; it should be an integer
+            between 1-100
         </description>
     </property>
 
@@ -505,7 +514,7 @@
     <property>
         <name>data.queue.table.presplits</name>
         <value>16</value>
-        <description>Number of splits in the queue table.</description>
+        <description>Number of splits in the queue table</description>
     </property>
 
     <!-- Metadata Service Configuration -->
@@ -513,21 +522,19 @@
     <property>
         <name>metadata.bind.address</name>
         <value>0.0.0.0</value>
-        <description>Specifies the server address of metadata server</description>
+        <description>Metadata server address</description>
     </property>
 
     <property>
         <name>metadata.bind.port</name>
         <value>45004</value>
-        <description>Specifies the port on which metdata server
-            is started on</description>
+        <description>Metadata server bind port</description>
     </property>
 
     <property>
         <name>metadata.program.run.history.keepdays</name>
         <value>30</value>
-        <description>Specifies the number of days to keep
-            program run run-history in metadata</description>
+        <description>Number of days to keep metadata of program run history</description>
     </property>
 
     <!-- Log collection service configuration -->
@@ -561,7 +568,7 @@
     <property>
         <name>log.collection.root</name>
         <value>${local.data.dir}/logs</value>
-        <description>Root location for collecting logs</description>
+        <description>Root location for collecting logs when in standalone mode</description>
     </property>
 
     <!-- Template configuration -->
@@ -569,13 +576,13 @@
     <property>
         <name>app.template.dir</name>
         <value>/opt/cdap/master/templates</value>
-        <description>Directory where all archives for app templates are stored</description>
+        <description>Directory where all archives for application templates are stored</description>
     </property>
 
     <property>
         <name>app.template.plugin.dir</name>
         <value>${app.template.dir}/plugins</value>
-        <description>Directory where template plugins are stored</description>
+        <description>Directory where application template plugins are stored</description>
         <final>true</final>
     </property>
 
@@ -584,7 +591,7 @@
     <property>
         <name>app.artifact.dir</name>
         <value>/opt/cdap/master/artifacts</value>
-        <description>Directory where all archives for app templates are stored</description>
+        <description>Directory where all archives for application templates are stored</description>
     </property>
 
     <!-- App Fabric related changes -->
@@ -616,25 +623,25 @@
     <property>
         <name>dataset.service.bind.address</name>
         <value>0.0.0.0</value>
-        <description>DataSet service hostname</description>
+        <description>Dataset service hostname</description>
     </property>
 
     <property>
         <name>dataset.executor.max.instances</name>
         <value>${master.service.max.instances}</value>
-        <description>Maximum Number of DataSet Executor Instances</description>
+        <description>Maximum number of dataset executor instances</description>
     </property>
 
     <property>
         <name>dataset.executor.container.instances</name>
         <value>1</value>
-        <description>Number of DataSet Executor Instances</description>
+        <description>Number of dataset executor instances</description>
     </property>
 
     <property>
         <name>app.temp.dir</name>
         <value>/tmp</value>
-        <description>Directory temp</description>
+        <description>Temp directory temp</description>
     </property>
 
     <property>
@@ -647,8 +654,8 @@
         <name>app.program.runid.corrector.interval</name>
         <value>180</value>
         <description>
-            The interval of how often the run id corrector thread will run in seconds.
-            This value should be greater than 0.
+            The interval of how often the run id corrector thread will run in seconds;
+            this value should be greater than 0
         </description>
     </property>
 
@@ -666,8 +673,8 @@
         <name>mapreduce.include.custom.format.classes</name>
         <value>true</value>
         <description>
-            Indicates to include custom input / output format classes in the job.jar or not. If set to true,
-            custom format classes will be added to the job.jar and available as part of the MR system classpath.
+            Indicates whether to include custom input/output format classes in the job.jar or not; if set to true,
+            custom format classes will be added to the job.jar and available as part of the MR system classpath
         </description>
     </property>
 
@@ -683,7 +690,7 @@
         <name>workflow.token.max.size.mb</name>
         <value>30</value>
         <description>
-            Maximum allowed size of a Workflow Token in MB. If the workflow token exceeds this size, no further
+            Maximum allowed size of a Workflow Token in megabytes. If the workflow token exceeds this size, no further
             updates are allowed.
         </description>
     </property>
@@ -694,24 +701,25 @@
     <property>
         <name>router.bind.address</name>
         <value>0.0.0.0</value>
-        <description>Specifies the address for router server to bind to</description>
+        <description>Router server address</description>
     </property>
 
     <property>
         <name>router.webapp.enabled</name>
         <value>false</value>
-        <description>Specifies if webapp listening service should be started at Router</description>
+        <description>Specifies if webapp listening service should be started at router</description>
     </property>
 
     <property>
         <name>router.bind.port</name>
         <value>10000</value>
-        <description>Router listening port for gateway</description>
+        <description>Port number that the CDAP router should bind to for HTTP connections</description>
     </property>
 
     <property>
         <name>router.server.port</name>
         <value>${router.bind.port}</value>
+        <description>Router port to which CDAP UI connects</description>
     </property>
 
     <property>
@@ -723,7 +731,7 @@
     <property>
         <name>router.ssl.bind.port</name>
         <value>10443</value>
-        <description>Secure router listening port for gateway</description>
+        <description>Port number that the CDAP router should bind to for HTTPS connections</description>
     </property>
 
     <property>
@@ -742,7 +750,7 @@
     <property>
         <name>appfabric.environment</name>
         <value>devsuite</value>
-        <description>Sets the environment the appfabric is in</description>
+        <description>Sets the environment that the app fabric server is in</description>
     </property>
 
     <!-- New Metrics system settings -->
@@ -750,43 +758,43 @@
     <property>
         <name>metrics.query.bind.address</name>
         <value>0.0.0.0</value>
-        <description>Host address where the metrics query server is started</description>
+        <description>Metrics query server host address</description>
     </property>
 
     <property>
         <name>metrics.query.bind.port</name>
         <value>45005</value>
-        <description>Port for metrics query server to listen on</description>
+        <description>Metrics query server bind port</description>
     </property>
 
     <property>
         <name>metrics.data.table.retention.resolution.1.seconds</name>
         <value>7200</value>
-        <description>Retention resolution 1 sec table in seconds</description>
+        <description>Retention resolution of the 1 second table in seconds; default retention period is 2 hours</description>
     </property>
 
     <property>
         <name>metrics.data.table.retention.resolution.60.seconds</name>
         <value>2592000</value>
-        <description>Retention resolution for 1 minute table (in seconds). Default retention period is 30 days</description>
+        <description>Retention resolution for 1 minute table (in seconds); default retention period is 30 days</description>
     </property>
 
     <property>
         <name>metrics.data.table.retention.resolution.3600.seconds</name>
         <value>2592000</value>
-        <description>Retention resolution 1 hour table (in seconds). Default retention period is 30 days</description>
+        <description>Retention resolution 1 hour table (in seconds); default retention period is 30 days</description>
     </property>
 
     <property>
         <name>metrics.data.table.ts.rollTime.60</name>
         <value>60</value>
-        <description>Number of columns in a 1 minute time series table</description>
+        <description>Number of columns in a 1 minute timeseries table</description>
     </property>
 
     <property>
         <name>metrics.data.table.ts.rollTime.3600</name>
         <value>24</value>
-        <description>Number of columns in 1 hour time series table</description>
+        <description>Number of columns in a 1 hour timeseries table</description>
     </property>
 
     <property>
@@ -822,21 +830,25 @@
     <property>
         <name>metrics.num.instances</name>
         <value>1</value>
+        <description></description>
     </property>
 
     <property>
         <name>metrics.max.instances</name>
         <value>${master.service.max.instances}</value>
+        <description></description>
     </property>
 
     <property>
         <name>metrics.num.cores</name>
         <value>${master.service.num.cores}</value>
+        <description></description>
     </property>
 
     <property>
         <name>metrics.memory.mb</name>
         <value>${master.service.memory.mb}</value>
+        <description></description>
     </property>
 
     <!-- Metrics Processor Configuration -->
@@ -850,6 +862,7 @@
     <property>
         <name>metrics.processor.max.instances</name>
         <value>${master.service.max.instances}</value>
+        <description></description>
     </property>
 
     <property>
@@ -861,25 +874,25 @@
     <property>
         <name>metrics.processor.memory.mb</name>
         <value>512</value>
-        <description>Size of Memory in MB for Metrics Processor Service Apache Twill Runnable</description>
+        <description>Size of Memory in megabytes for Metrics Processor Service Apache Twill Runnable</description>
     </property>
 
     <property>
         <name>metrics.processor.status.bind.address</name>
         <value>0.0.0.0</value>
-        <description>Default inet address for binding metrics processor http service</description>
+        <description>Default inet address for binding metrics processor HTTP service</description>
     </property>
 
     <property>
         <name>metrics.dataset.hbase.stats.report.interval</name>
         <value>60</value>
-        <description>Report interval for hbase stats, in seconds.</description>
+        <description>Report interval for hbase stats, in seconds</description>
     </property>
 
     <property>
         <name>metrics.dataset.leveldb.stats.report.interval</name>
         <value>60</value>
-        <description>Report interval for leveldb stats, in seconds.</description>
+        <description>Report interval for leveldb stats, in seconds</description>
     </property>
 
     <!-- Logging Configuration -->
@@ -905,36 +918,37 @@
     <property>
         <name>log.retention.duration.days</name>
         <value>7</value>
-        <description>Log file hdfs retention duration in days</description>
+        <description>Log file HDFS retention duration in days</description>
     </property>
 
     <property>
         <name>log.cleanup.run.interval.mins</name>
         <value>1440</value>
-        <description>Interval at which to run log cleanup</description>
+        <description>Log cleanup interval in minutes</description>
     </property>
 
     <property>
         <name>log.saver.num.instances</name>
         <value>1</value>
-        <description>Number of log saver instances to run in yarn</description>
+        <description>Number of log saver instances to run in YARN</description>
     </property>
 
     <property>
         <name>log.saver.max.instances</name>
         <value>${master.service.max.instances}</value>
+        <description>Maximum number of log saver instances to run in YARN</description>
     </property>
 
     <property>
         <name>log.saver.run.memory.megs</name>
         <value>1024</value>
-        <description>Memory in MB for log saver instances to run in yarn</description>
+        <description>Memory in megabytes allocated for log saver instances to run in YARN</description>
     </property>
 
     <property>
         <name>log.saver.status.bind.address</name>
         <value>0.0.0.0</value>
-        <description>Default inet address for binding logsaver http service</description>
+        <description>Default inet address for binding log saver HTTP service</description>
     </property>
 
     <!-- Kafka Server Configuration -->
@@ -942,13 +956,13 @@
     <property>
         <name>kafka.bind.address</name>
         <value>0.0.0.0</value>
-        <description>Kafka server hostname to bind to</description>
+        <description>Kafka server hostname address</description>
     </property>
 
     <property>
         <name>kafka.bind.port</name>
         <value>9092</value>
-        <description>Kafka server port</description>
+        <description>Kafka server bind port</description>
     </property>
 
     <property>
@@ -960,19 +974,19 @@
     <property>
         <name>kafka.log.dir</name>
         <value>/tmp/kafka-logs</value>
-        <description>Directory to store Kafka logs</description>
+        <description>Kafka log storage directory</description>
     </property>
 
     <property>
         <name>kafka.zookeeper.namespace</name>
         <value>kafka</value>
-        <description>ZK namespace for Kafka</description>
+        <description>Kafka ZooKeeper namespace</description>
     </property>
 
     <property>
         <name>kafka.default.replication.factor</name>
         <value>1</value>
-        <description>Kafka replication factor</description>
+        <description>Kafka replication factor [See Note 1]</description>
     </property>
 
     <!-- Global Configuration -->
@@ -981,8 +995,8 @@
         <name>enable.unrecoverable.reset</name>
         <value>false</value>
         <description>
-            WARNING! - Enabling this option enables the deletion of all applications and data;
-            NO RECOVERY IS POSSIBLE!
+            **WARNING: Enabling this option makes it possible to delete all applications
+            and data; NO RECOVERY IS POSSIBLE!**
         </description>
     </property>
 
@@ -990,8 +1004,9 @@
         <name>dataset.unchecked.upgrade</name>
         <value>false</value>
         <description>
-            By default, any changes made to existing datasets are not deployed when an app is redeployed.
-            Setting this value to true allows the dataset changes to be deployed upon app redeployment.
+            By default, any changes made to existing datasets are not deployed when an app
+            is redeployed; setting this value to true allows the dataset changes to be
+            deployed upon app redeployment.
         </description>
     </property>
 
@@ -1000,26 +1015,31 @@
     <property>
         <name>dashboard.bind.address</name>
         <value>0.0.0.0</value>
+        <description>CDAP UI bind address<description>
     </property>
 
     <property>
         <name>dashboard.bind.port</name>
         <value>9999</value>
+        <description>CDAP UI bind port<description>
     </property>
 
     <property>
         <name>dashboard.ssl.bind.port</name>
         <value>9443</value>
+        <description>CDAP UI bind port for HTTPS<description>
     </property>
 
     <property>
         <name>dashboard.ssl.disable.cert.check</name>
         <value>false</value>
+        <description>True to disable SSL certificate check from the CDAP UI<description>
     </property>
 
     <property>
         <name>router.server.address</name>
         <value>127.0.0.1</value>
+        <description>Router address to which CDAP UI connects</description>
     </property>
 
     <!-- Explore Service Settings -->
@@ -1027,7 +1047,7 @@
     <property>
         <name>explore.enabled</name>
         <value>false</value>
-        <description>Whether ad-hoc SQL queries are enabled</description>
+        <description>Determines if the CDAP Explore Service (ad-hoc SQL queries) is enabled</description>
     </property>
 
     <property>
@@ -1039,11 +1059,13 @@
     <property>
         <name>explore.start.on.demand</name>
         <value>false</value>
+        <description></description>
     </property>
 
     <property>
         <name>explore.local.data.dir</name>
         <value>${local.data.dir}/explore</value>
+        <description>Data directory for explore service when in standalone mode</description>
     </property>
 
     <property>
@@ -1061,20 +1083,24 @@
     <property>
         <name>explore.active.operation.timeout.secs</name>
         <value>86400</value>
-        <description>Timeout value in seconds for a SQL operation whose result is not fetched completely</description>
+        <description>
+            Timeout value in seconds for an SQL operation whose result was not fetched completely
+        </description>
     </property>
 
     <property>
         <name>explore.inactive.operation.timeout.secs</name>
         <value>3600</value>
-        <description>Timeout value in seconds for a SQL operation which does not have any more results
-            to be fetched</description>
+        <description>
+            Timeout value in seconds for an SQL operation which does not have any more results
+            to be fetched
+        </description>
     </property>
 
     <property>
         <name>explore.cleanup.job.schedule.secs</name>
         <value>60</value>
-        <description>Time in secs to schedule clean up job to timeout operations</description>
+        <description>Time in seconds to schedule clean-up job to timeout operations</description>
     </property>
 
     <!-- Notification System Settings -->
@@ -1090,26 +1116,35 @@
     <property>
         <name>security.token.digest.algorithm</name>
         <value>HmacSHA256</value>
+        <description>Algorithm used for generating MAC of access tokens</description>
     </property>
 
     <property>
         <name>security.token.digest.keylength</name>
         <value>128</value>
+        <description>
+            Key length used in generating the secret keys for generating MAC of access tokens
+        </description>
     </property>
 
     <property>
         <name>security.auth.server.bind.address</name>
         <value>0.0.0.0</value>
+        <description>IP address that the CDAP Authentication Server should bind to</description>
     </property>
 
     <property>
         <name>security.auth.server.ssl.bind.port</name>
         <value>10010</value>
+        <description>Port to bind to for HTTPS on the CDAP Authentication Server</description>
     </property>
 
     <property>
         <name>security.server.maxthreads</name>
         <value>100</value>
+        <description>
+            Maximum number of threads that the CDAP Authentication Server should use for handling HTTP requests
+        </description>
     </property>
 
     <property>
@@ -1121,6 +1156,7 @@
     <property>
         <name>security.data.keyfile.path</name>
         <value>${local.data.dir}/security/keyfile</value>
+        <description>Path to the secret key file (only used in standalone mode)</description>
     </property>
 
     <!-- External Authentication login module Settings -->
@@ -1128,16 +1164,23 @@
     <property>
         <name>security.authentication.handlerClassName</name>
         <value></value>
+        <description>Name of the authentication implementation to use to validate user credentials</description>
     </property>
 
     <property>
         <name>security.authentication.loginmodule.className</name>
         <value></value>
+        <description>
+            JAAS LoginModule implementation to use when 
+            co.cask.security.server.JAASAuthenticationHandler is configured for 
+            security.authentication.handlerClassName
+        </description>
     </property>
 
     <property>
         <name>security.authentication.basic.realmfile</name>
         <value></value>
+        <description>Username / password file to use when basic authentication is configured</description>
     </property>
 
     <property>
@@ -1150,8 +1193,8 @@
     <property>
         <name>security.server.extended.token.expiration.ms</name>
         <value>604800000</value>
-        <description>Admin Tools AccessToken expiration time in milliseconds (defaults to
-            1 week) (internal)</description>
+        <description>Admin tool access token expiration time in milliseconds; defaults to
+            1 week (internal)</description>
     </property>
 
     <property>
@@ -1165,7 +1208,10 @@
   <property>
       <name>security.enabled</name>
       <value>false</value>
-      <description>If this is set to true, security layer will be up and active</description>
+      <description>
+          Enables authentication for CDAP; when set to true, all requests to CDAP must
+          provide a valid access token
+      </description>
   </property>
 
   <property>
@@ -1183,7 +1229,10 @@
   <property>
       <name>security.realm</name>
       <value>cdap</value>
-      <description>Security realm used for authentication</description>
+      <description>
+          Authentication realm used for scoping security; this value should be unique for
+          each installation of CDAP
+      </description>
   </property>
 
   <!-- Security configurations for Kerberos authentication -->
@@ -1192,17 +1241,17 @@
       <name>cdap.master.kerberos.keytab</name>
       <value></value>
       <description>The full path to the Kerberos keytab file containing the CDAP Master's
-          credentials.</description>
+          credentials</description>
   </property>
 
   <property>
       <name>cdap.master.kerberos.principal</name>
       <value></value>
       <description>
-          Example: "cdap/_HOST@EXAMPLE.COM".
-          The Kerberos principal name that should be used to login the CDAP Master process.
-          The principal name should be in the form "user/hostname@REALM".  If the hostname portion
-          contains the string "_HOST", it will be substituted with the local hostname.
+          Example: "CDAP_PRINCIPAL/_HOST@EXAMPLE.COM".
+          The Kerberos principal name that should be used to login to the CDAP Master process.
+          Substitute the Kerberos principal for CDAP_PRINCIPAL, and your domain for EXAMPLE.COM.
+          The string "_HOST" will be substituted with the local hostname.
       </description>
   </property>
 
@@ -1211,6 +1260,7 @@
   <property>
       <name>ssl.enabled</name>
       <value>false</value>
+      <description>True to enable SSL</description>
   </property>
 
 </configuration>
