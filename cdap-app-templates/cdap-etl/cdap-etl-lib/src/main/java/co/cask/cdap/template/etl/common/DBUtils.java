@@ -52,7 +52,7 @@ public final class DBUtils {
     if (pluginClassLoader == null) {
       // This could only be null if the classLoader is the Bootstrap/Primordial classloader. This should never be the
       // case since the driver class is always loaded from the plugin classloader.
-      LOG.warn("PluginClassLoader is null. This should never happen. Aborting cleanup.");
+      LOG.warn("PluginClassLoader is null. Cleanup not necessary.");
       return;
     }
     shutDownMySQLAbandonedConnectionCleanupThread(pluginClassLoader);
@@ -122,7 +122,7 @@ public final class DBUtils {
       classLoader.loadClass("oracle.jdbc.driver.OracleDriver");
     } catch (ClassNotFoundException e) {
       LOG.debug("Oracle JDBC Driver not found. Presuming that the DB Adapter is not being run with an Oracle DB. " +
-                  "Not attempting to cleanup.");
+                  "Not attempting to cleanup Oracle MBean.");
       return;
     }
     MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
@@ -135,7 +135,7 @@ public final class DBUtils {
       oracleJdbcMBeanName = new ObjectName("com.oracle.jdbc", keys);
     } catch (MalformedObjectNameException e) {
       // This should never happen, since we're constructing the ObjectName correctly
-      LOG.debug("Exception while constructing Oracle JDBC MBean Name - {}. Aborting cleanup.", e.getMessage());
+      LOG.debug("Exception while constructing Oracle JDBC MBean Name. Aborting cleanup.", e);
       return;
     }
     try {
@@ -144,7 +144,7 @@ public final class DBUtils {
       LOG.debug("Oracle JDBC MBean not found. No cleanup necessary.");
       return;
     } catch (IntrospectionException | ReflectionException e) {
-      LOG.debug("Exception while attempting to retrieve Oracle JDBC MBean - {}. Aborting cleanup.", e.getMessage());
+      LOG.debug("Exception while attempting to retrieve Oracle JDBC MBean. Aborting cleanup.", e);
       return;
     }
 
@@ -152,7 +152,7 @@ public final class DBUtils {
       mbs.unregisterMBean(oracleJdbcMBeanName);
       LOG.debug("Oracle MBean unregistered successfully.");
     } catch (InstanceNotFoundException | MBeanRegistrationException e) {
-      LOG.debug("Exception while attempting to cleanup Oracle JDBCMBean - {}. Aborting cleanup.", e.getMessage());
+      LOG.debug("Exception while attempting to cleanup Oracle JDBCMBean. Aborting cleanup.", e);
     }
   }
 
