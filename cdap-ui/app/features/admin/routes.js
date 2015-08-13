@@ -113,18 +113,27 @@ angular.module(PKG.name + '.feature.admin')
               }
             })
 
-            .state('admin.namespace.detail.templates', {
-              url: '/templates/create',
-              templateUrl: '/assets/features/admin/templates/namespace/templates.html',
-              controller: 'NamespaceTemplatesController',
-              controllerAs: 'TemplatesController'
-            })
             .state('admin.namespace.detail.templateslist', {
               url: '/templates',
               templateUrl: '/assets/features/admin/templates/namespace/templates-list.html',
               controller: 'NamespaceTemplatesListController',
               controllerAs: 'TemplatesListController'
             })
+
+            .state('admin.namespace.detail.templates', {
+              url: '/templates/create',
+              templateUrl: '/assets/features/admin/templates/namespace/templates.html',
+              controller: 'NamespaceTemplatesController',
+              controllerAs: 'TemplatesController'
+            })
+
+            .state('admin.namespace.detail.templateedit', {
+              url: '/templates/edit/:templateName',
+              templateUrl: '/assets/features/admin/templates/namespace/templates.html',
+              controller: 'NamespaceTemplatesController',
+              controllerAs: 'TemplatesController'
+            })
+
 
             .state('admin.namespace.detail.metadata', {
               url: '/metadata',
