@@ -6,9 +6,11 @@
 @cdap-header:           rgb(60, 67, 85);
 @cdap-darkness:         rgb(102, 110, 130);
 @cdap-bluegray:         rgb(111, 124, 157);
-@cdap-gray:             rgb(157, 157, 157);
+@cdap-gray:             rgb(111, 124, 159);
 @cdap-lightgray:        rgb(102, 110, 131);
 @cdap-darkblue:         rgb(44, 73, 138);
+
+@ns-dropdown:           rgb(42, 46, 55);
 
 // overrides from default bootstrap
 // @TODO: get sean to customize
@@ -44,6 +46,10 @@
 @nav-tabs-justified-link-border-color:        #ddd;
 @nav-tabs-justified-active-link-border-color: @body-bg;
 
+// Tooltips
+@tooltip-bg:            rgb(255,255,255);
+@tooltip-color:         #333;
+@tooltip-arrow-color:   rgb(255,255,255);
 
 @font-size-base:            13px;
 @headings-font-weight:      300; // thin headers
@@ -62,6 +68,7 @@
 // Tables
 @table-bg:                  rgb(246, 246, 246);
 @table-border-color:        @panel-default-border;
+@modal-table-border-color:  rgb(201, 204, 214); // #c9ccd6
 @table-radius:              8px;
 
 // Mapreduce components
@@ -69,5 +76,9 @@
 
 // Adapters when plugin added
 @selected-plugin-bg:           #2c498b;
+
+@adapter-source:            @brand-success;
+@adapter-transform:         rgb(68, 150, 232);
+@adapter-sink:              rgb(12, 172, 196);
 
 @grid-float-breakpoint:     @screen-lg-min;

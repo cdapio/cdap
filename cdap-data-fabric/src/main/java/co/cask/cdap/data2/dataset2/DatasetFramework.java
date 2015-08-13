@@ -176,7 +176,9 @@ public interface DatasetFramework {
   void deleteAllInstances(Id.Namespace namespaceId) throws DatasetManagementException, IOException;
 
   /**
-   * Gets dataset instance admin to be used to perform administrative operations.
+   * Gets dataset instance admin to be used to perform administrative operations. The given classloader must
+   * be able to load all classes needed to instantiate the dataset admin. This means if the system classloader is
+   * used, only system dataset admins can fetched.
    *
    * @param <T> dataset admin type
    * @param datasetInstanceId dataset instance name
@@ -187,6 +189,25 @@ public interface DatasetFramework {
    */
   @Nullable
   <T extends DatasetAdmin> T getAdmin(Id.DatasetInstance datasetInstanceId, @Nullable ClassLoader classLoader)
+    throws DatasetManagementException, IOException;
+
+  /**
+   * Gets dataset instance admin to be used to perform administrative operations. The class loader provider
+   * is used get classloaders for any dataset modules used by the specified dataset admin. This is because
+   * the classloader(s) for a dataset admin may create some resources that need to be cleaned up on close.
+   *
+   * @param <T> dataset admin type
+   * @param datasetInstanceId dataset instance name
+   * @param classLoader parent classLoader to be used to load classes or {@code null} to use system classLoader
+   * @param classLoaderProvider provider to get classloaders for different dataset modules
+   * @return instance of dataset admin or {@code null} if dataset instance of this name doesn't exist.
+   * @throws DatasetManagementException when there's trouble getting dataset meta info
+   * @throws IOException when there's trouble to instantiate {@link DatasetAdmin}
+   */
+  @Nullable
+  <T extends DatasetAdmin> T getAdmin(Id.DatasetInstance datasetInstanceId,
+                                      @Nullable ClassLoader classLoader,
+                                      DatasetClassLoaderProvider classLoaderProvider)
     throws DatasetManagementException, IOException;
 
   /**

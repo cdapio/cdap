@@ -22,7 +22,7 @@
 
   <groupId>co.cask.cdap</groupId>
   <artifactId>cdap</artifactId>
-  <version>3.1.0-SNAPSHOT</version>
+  <version>3.2.0-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Cask Data Application Platform (CDAP)</name>
   <description>Data Application Platform for Hadoop</description>
@@ -60,10 +60,6 @@
     <repository>
       <id>sonatype</id>
       <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
-    </repository>
-    <repository>
-      <id>continuuity-public</id>
-      <url>https://repository.continuuity.com/content/repositories/public</url>
     </repository>
   </repositories>
 
@@ -109,7 +105,9 @@
     <hadoop.version>2.3.0</hadoop.version>
     <hbase96.version>0.96.2-hadoop2</hbase96.version>
     <hbase98.version>0.98.6.1-hadoop2</hbase98.version>
-    <hive.version>1.0.0</hive.version>
+    <hbase10cdh.version>1.0.0-cdh5.4.4</hbase10cdh.version>
+    <hbase10.version>1.0.1.1</hbase10.version>
+    <hive.version>1.1.0</hive.version>
     <hsql.version>2.2.4</hsql.version>
     <http.component.version>4.2.5</http.component.version>
     <jetty.version>6.1.22</jetty.version>
@@ -122,7 +120,7 @@
     <mockito.version>1.9.5</mockito.version>
     <mysql.version>5.1.21</mysql.version>
     <netty.version>3.6.6.Final</netty.version>
-    <netty.http.version>0.11.0</netty.http.version>
+    <netty.http.version>0.12.0</netty.http.version>
     <rs-api.version>2.0</rs-api.version>
     <quartz.version>2.2.0</quartz.version>
     <resteasy.version>3.0.8.Final</resteasy.version>
@@ -130,12 +128,12 @@
     <snappy.version>1.1.1.7</snappy.version>
     <shiro.version>1.2.1</shiro.version>
     <slf4j.version>1.7.5</slf4j.version>
-    <tephra.version>0.4.2</tephra.version>
+    <tephra.version>0.6.0</tephra.version>
     <thrift.version>0.9.0</thrift.version>
-    <twill.version>0.5.0-incubating</twill.version>
+    <twill.version>0.6.0-incubating</twill.version>
     <unboundid.version>2.3.6</unboundid.version>
     <zookeeper.version>3.4.5</zookeeper.version>
-    <spark.version>1.2.0</spark.version>
+    <spark.version>1.3.1</spark.version>
     <cdap.client.version>1.2.0</cdap.client.version>
     <twitter4j.version>4.0.3</twitter4j.version>
     <cask.packages.snapshot.repo>http://cask.invalid.snapshot.repo.co</cask.packages.snapshot.repo>
@@ -206,6 +204,28 @@
       <dependency>
         <groupId>co.cask.tephra</groupId>
         <artifactId>tephra-hbase-compat-0.98</artifactId>
+        <version>${tephra.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>co.cask.tephra</groupId>
+        <artifactId>tephra-hbase-compat-1.0-cdh</artifactId>
+        <version>${tephra.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>co.cask.tephra</groupId>
+        <artifactId>tephra-hbase-compat-1.0</artifactId>
         <version>${tephra.version}</version>
         <exclusions>
           <exclusion>
@@ -374,6 +394,7 @@
         <groupId>org.apache.zookeeper</groupId>
         <artifactId>zookeeper</artifactId>
         <version>${zookeeper.version}</version>
+        <scope>provided</scope>
         <exclusions>
           <exclusion>
             <artifactId>slf4j-api</artifactId>
@@ -394,6 +415,10 @@
           <exclusion>
             <groupId>org.jboss.netty</groupId>
             <artifactId>netty</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>jline</groupId>
+            <artifactId>jline</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
@@ -434,6 +459,10 @@
             <groupId>com.sun.jmx</groupId>
             <artifactId>jmxri</artifactId>
           </exclusion>
+          <exclusion>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-compiler</artifactId>
+          </exclusion>
         </exclusions>
       </dependency>
       <dependency>
@@ -470,6 +499,12 @@
         <groupId>org.apache.twill</groupId>
         <artifactId>twill-core</artifactId>
         <version>${twill.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-compiler</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.apache.twill</groupId>
@@ -679,28 +714,32 @@
       <dependency>
         <groupId>org.apache.hbase</groupId>
         <artifactId>hbase-common</artifactId>
-        <version>${hbase96.version}</version>
+        <version>${hbase98.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.hbase</groupId>
         <artifactId>hbase-client</artifactId>
-        <version>${hbase96.version}</version>
+        <version>${hbase98.version}</version>
         <exclusions>
           <exclusion>
             <groupId>io.netty</groupId>
             <artifactId>netty</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
       <dependency>
         <groupId>org.apache.hbase</groupId>
         <artifactId>hbase-protocol</artifactId>
-        <version>${hbase96.version}</version>
+        <version>${hbase98.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.hbase</groupId>
         <artifactId>hbase-server</artifactId>
-        <version>${hbase96.version}</version>
+        <version>${hbase98.version}</version>
         <exclusions>
           <exclusion>
             <groupId>org.mortbay.jetty</groupId>
@@ -1006,7 +1045,7 @@
       <dependency>
         <groupId>org.apache.hbase</groupId>
         <artifactId>hbase-testing-util</artifactId>
-        <version>${hbase96.version}</version>
+        <version>${hbase98.version}</version>
         <scope>test</scope>
         <exclusions>
           <exclusion>
@@ -1037,6 +1076,10 @@
             <artifactId>slf4j-log4j12</artifactId>
           </exclusion>
           <exclusion>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+          </exclusion>
+          <exclusion>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-client</artifactId>
           </exclusion>
@@ -1044,7 +1087,43 @@
             <groupId>com.esotericsoftware.reflectasm</groupId>
             <artifactId>reflectasm</artifactId>
           </exclusion>
+          <exclusion>
+            <groupId>org.apache.curator</groupId>
+            <artifactId>curator-recipes</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.tachyonproject</groupId>
+            <artifactId>tachyon-client</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-compiler</artifactId>
+          </exclusion>
+          <!--
+            Need to exclude this since Spark brings in an older version that makes
+            S3 not work in standalone. This doesn't affect distributed mode.
+          -->
+          <exclusion>
+            <groupId>net.java.dev.jets3t</groupId>
+            <artifactId>jets3t</artifactId>
+          </exclusion>
         </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.spark</groupId>
+        <artifactId>spark-sql_2.10</artifactId>
+        <version>${spark.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-compiler</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.spark</groupId>
+        <artifactId>spark-mllib_2.10</artifactId>
+        <version>${spark.version}</version>
       </dependency>
       <dependency>
         <groupId>co.cask.cdap</groupId>
@@ -1102,7 +1181,7 @@
           <artifactId>maven-surefire-plugin</artifactId>
           <version>2.14.1</version>
           <configuration>
-            <argLine>-Xmx5000m -Djava.awt.headless=true -XX:MaxPermSize=256m -XX:+UseConcMarkSweepGC -XX:OnOutOfMemoryError="kill -9 %p"</argLine>
+            <argLine>-Xmx5000m -Djava.awt.headless=true -XX:MaxPermSize=256m -XX:+UseConcMarkSweepGC -XX:OnOutOfMemoryError="kill -9 %p" -Djava.net.preferIPv4Stack=true</argLine>
             <redirectTestOutputToFile>${surefire.redirectTestOutputToFile}</redirectTestOutputToFile>
             <reuseForks>false</reuseForks>
             <reportFormat>plain</reportFormat>
@@ -1467,7 +1546,8 @@
                     <overWriteReleases>false</overWriteReleases>
                     <overWriteSnapshots>false</overWriteSnapshots>
                     <overWriteIfNewer>true</overWriteIfNewer>
-                    <excludeGroupIds>org.apache.hadoop,org.apache.hbase,org.apache.hive,com.google.protobuf,org.datanucleus,asm,org.apache.spark</excludeGroupIds>
+                    <excludeGroupIds>org.apache.hadoop,org.apache.hbase,org.apache.hive,com.google.protobuf,\
+                      org.datanucleus,asm,org.apache.spark,slf4j-log4j12,org.codehaus.jackson</excludeGroupIds>
                     <excludeArtifactIds>hive-exec</excludeArtifactIds>
                     <prependGroupId>true</prependGroupId>
                     <silent>true</silent>
@@ -2033,12 +2113,15 @@
       <modules>
         <module>cdap-common-unit-test</module>
         <module>cdap-api</module>
+        <module>cdap-formats</module>
+        <module>cdap-hbase-compat-0.96</module>
+        <module>cdap-hbase-compat-0.98</module>
+        <module>cdap-hbase-compat-1.0-cdh</module>
+        <module>cdap-hbase-compat-1.0</module>
         <module>cdap-common</module>
         <module>cdap-watchdog-api</module>
         <module>cdap-kafka</module>
         <module>cdap-data-fabric</module>
-        <module>cdap-hbase-compat-0.96</module>
-        <module>cdap-hbase-compat-0.98</module>
         <module>cdap-watchdog</module>
         <module>cdap-app-fabric</module>
         <module>cdap-security</module>

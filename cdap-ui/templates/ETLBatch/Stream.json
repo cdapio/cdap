@@ -7,20 +7,13 @@
        "position" : [ "name", "duration", "delay"],
        "fields" : {
           "name" : {
-             "widget": "textbox",
+             "widget": "stream-selector",
              "label": "Stream Name"
           },
 
           "duration" : {
              "widget": "textbox",
              "label": "Process Time Window"
-          },
-
-          "schema" : {
-             "widget": "schema",
-             "label" : "Schema",
-             "schema-types" : [ "boolean", "int", "long", "float", "double", "bytes", "string" ],
-             "schema-default-type" : "string"
           },
 
           "delay" : {
@@ -38,8 +31,8 @@
              "widget" : "select",
              "label"  : "Format",
              "properties" : {
-               "values" : [ "", "avro", "clf", "csv", "grok", "syslog", "text", "tsv" ],
-               "default" : ""
+               "values" : [ "avro", "clf", "csv", "grok", "syslog", "text", "tsv" ],
+               "default" : "text"
              }
           },
           "schema" : {

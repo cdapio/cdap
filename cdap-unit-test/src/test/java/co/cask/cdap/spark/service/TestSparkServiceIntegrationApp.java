@@ -27,12 +27,12 @@ import co.cask.cdap.api.spark.AbstractSpark;
 import co.cask.cdap.api.spark.JavaSparkProgram;
 import co.cask.cdap.api.spark.SparkContext;
 import com.google.common.io.Closeables;
-import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.commons.io.Charsets;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.PairFunction;
+import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import scala.Tuple2;
 
 import java.io.BufferedReader;
@@ -102,9 +102,9 @@ public class TestSparkServiceIntegrationApp extends AbstractApplication {
     @GET
     public void square(HttpServiceRequest request, HttpServiceResponder responder, @PathParam("num") String num) {
       if (num.isEmpty()) {
-        responder.sendError(HttpResponseStatus.NO_CONTENT.code(), "No number provided");
+        responder.sendError(HttpResponseStatus.NO_CONTENT.getCode(), "No number provided");
       } else {
-        responder.sendString(HttpResponseStatus.OK.code(), String.valueOf(Integer.parseInt(num) *
+        responder.sendString(HttpResponseStatus.OK.getCode(), String.valueOf(Integer.parseInt(num) *
                                                                             Integer.parseInt(num)), Charsets.UTF_8);
       }
     }

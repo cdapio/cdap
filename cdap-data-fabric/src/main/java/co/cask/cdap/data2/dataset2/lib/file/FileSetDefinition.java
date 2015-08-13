@@ -22,17 +22,22 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.io.RootLocationFactory;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import com.google.inject.Inject;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
  * Dataset definition for File datasets.
  */
 public class FileSetDefinition implements DatasetDefinition<FileSet, FileSetAdmin> {
+
+  @Inject
+  private RootLocationFactory absoluteLocationFactory;
 
   @Inject
   private NamespacedLocationFactory namespacedLocationFactory;
@@ -57,19 +62,24 @@ public class FileSetDefinition implements DatasetDefinition<FileSet, FileSetAdmi
 
   @Override
   public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
-    return DatasetSpecification.builder(instanceName, getName()).properties(properties.getProperties()).build();
+    Map<String, String> newProperties = new HashMap<>(properties.getProperties());
+    newProperties.put(FileSetDataset.FILESET_VERSION_PROPERTY, FileSetDataset.FILESET_VERSION);
+    return DatasetSpecification
+      .builder(instanceName, getName())
+      .properties(newProperties)
+      .build();
   }
 
   @Override
   public FileSetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
-                            ClassLoader classLoader) throws IOException {
-    return new FileSetAdmin(datasetContext, cConf, namespacedLocationFactory, spec);
+                               ClassLoader classLoader) throws IOException {
+    return new FileSetAdmin(datasetContext, cConf, absoluteLocationFactory, namespacedLocationFactory, spec);
   }
 
   @Override
   public FileSet getDataset(DatasetContext datasetContext, DatasetSpecification spec, Map<String, String> arguments,
                             ClassLoader classLoader) throws IOException {
-    return new FileSetDataset(datasetContext, cConf, spec, namespacedLocationFactory,
+    return new FileSetDataset(datasetContext, cConf, spec, absoluteLocationFactory, namespacedLocationFactory,
                               arguments == null ? Collections.<String, String>emptyMap() : arguments);
   }
 }

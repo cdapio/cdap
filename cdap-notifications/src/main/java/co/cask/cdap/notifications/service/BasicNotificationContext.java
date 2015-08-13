@@ -17,20 +17,14 @@
 package co.cask.cdap.notifications.service;
 
 import co.cask.cdap.api.TxRunnable;
-import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.data2.dataset2.DatasetCacheKey;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DynamicDatasetContext;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionFailureException;
 import co.cask.tephra.TransactionSystemClient;
-import com.google.common.cache.LoadingCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Map;
-import javax.annotation.Nullable;
 
 /**
  * Implementation of {@link NotificationContext}.
@@ -57,14 +51,9 @@ public final class BasicNotificationContext implements NotificationContext {
         final TransactionContext context = new TransactionContext(transactionSystemClient);
         try {
           context.start();
-          runnable.run(new DynamicDatasetContext(namespaceId, context, dsFramework,
-                                                 context.getClass().getClassLoader()) {
-            @Nullable
-            @Override
-            protected LoadingCache<Long, Map<DatasetCacheKey, Dataset>> getDatasetsCache() {
-              return null;
-            }
-          });
+          // TODO this dataset context needs a metrics context [CDAP-3114]
+          runnable.run(new DynamicDatasetContext(namespaceId, context, null, dsFramework,
+                                                 context.getClass().getClassLoader()));
           context.finish();
           return true;
         } catch (TransactionFailureException e) {

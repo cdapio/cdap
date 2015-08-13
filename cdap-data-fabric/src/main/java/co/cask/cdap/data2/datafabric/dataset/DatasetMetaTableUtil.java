@@ -18,14 +18,12 @@ package co.cask.cdap.data2.datafabric.dataset;
 
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.DatasetInstanceMDS;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.DatasetTypeMDS;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.SingleTypeModule;
 import co.cask.cdap.proto.Id;
-import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 
 import java.io.IOException;
@@ -38,10 +36,10 @@ public class DatasetMetaTableUtil {
   public static final String META_TABLE_NAME = "datasets.type";
   public static final String INSTANCE_TABLE_NAME = "datasets.instance";
 
-  private static final Id.DatasetInstance metaTableInstanceId =
-    Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE_ID, META_TABLE_NAME);
-  private static final Id.DatasetInstance instanceTableInstanceId =
-    Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE_ID, INSTANCE_TABLE_NAME);
+  private static final Id.DatasetInstance META_TABLE_INSTANCE_ID =
+    Id.DatasetInstance.from(Id.Namespace.SYSTEM, META_TABLE_NAME);
+  private static final Id.DatasetInstance INSTANCE_TABLE_INSTANCE_ID =
+    Id.DatasetInstance.from(Id.Namespace.SYSTEM, INSTANCE_TABLE_NAME);
 
   private final DatasetFramework framework;
 
@@ -50,13 +48,13 @@ public class DatasetMetaTableUtil {
   }
 
   public DatasetTypeMDS getTypeMetaTable() throws DatasetManagementException, IOException {
-    return (DatasetTypeMDS) DatasetsUtil.getOrCreateDataset(framework, metaTableInstanceId,
+    return (DatasetTypeMDS) DatasetsUtil.getOrCreateDataset(framework, META_TABLE_INSTANCE_ID,
                                                             DatasetTypeMDS.class.getName(),
                                                             DatasetProperties.EMPTY, null, null);
   }
 
   public DatasetInstanceMDS getInstanceMetaTable() throws DatasetManagementException, IOException {
-    return (DatasetInstanceMDS) DatasetsUtil.getOrCreateDataset(framework, instanceTableInstanceId,
+    return (DatasetInstanceMDS) DatasetsUtil.getOrCreateDataset(framework, INSTANCE_TABLE_INSTANCE_ID,
                                                                 DatasetInstanceMDS.class.getName(),
                                                                 DatasetProperties.EMPTY, null, null);
   }
@@ -69,17 +67,15 @@ public class DatasetMetaTableUtil {
   public static void setupDatasets(DatasetFramework datasetFramework) throws IOException, DatasetManagementException {
     for (Map.Entry<String, ? extends DatasetModule> entry : getModules().entrySet()) {
       // meta tables should be in the system namespace
-      Id.DatasetModule moduleId = Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE_ID, entry.getKey());
+      Id.DatasetModule moduleId = Id.DatasetModule.from(Id.Namespace.SYSTEM, entry.getKey());
       datasetFramework.addModule(moduleId, entry.getValue());
     }
 
     datasetFramework.addInstance(DatasetTypeMDS.class.getName(), Id.DatasetInstance.from(
-                                   Constants.DEFAULT_NAMESPACE_ID, Joiner.on(".").join(Constants.SYSTEM_NAMESPACE,
-                                                                                       META_TABLE_NAME)),
+                                   Id.Namespace.SYSTEM, META_TABLE_NAME),
                                  DatasetProperties.EMPTY);
     datasetFramework.addInstance(DatasetInstanceMDS.class.getName(), Id.DatasetInstance.from(
-                                   Constants.DEFAULT_NAMESPACE_ID, Joiner.on(".").join(Constants.SYSTEM_NAMESPACE,
-                                                                                       INSTANCE_TABLE_NAME)),
+                                   Id.Namespace.SYSTEM, INSTANCE_TABLE_NAME),
                                  DatasetProperties.EMPTY);
   }
 

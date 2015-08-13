@@ -89,14 +89,14 @@ For more details, refer to :ref:`custom datasets. <custom-datasets>`
 
 Datasets, like :ref:`streams <streams>`, can have a Time-To-Live (TTL) property that
 governs how long data will be persisted in a specific dataset. TTL is configured as the
-maximum age (in milliseconds) that data should be retained.
+maximum age (in seconds) that data should be retained.
 
 When you create a dataset, you can configure its TTL as part of the creation::
 
   public void configure() {
       createDataset("myCounters", Table.class, 
                     DatasetProperties.builder().add(Table.PROPERTY_TTL, 
-                                                    "<age in milliseconds>").build());
+                                                    "<age in seconds>").build());
       ...
   }
 

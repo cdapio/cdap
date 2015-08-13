@@ -136,7 +136,7 @@ public class DirectoryClassLoaderProvider implements DatasetClassLoaderProvider 
       BundleJarUtil.unpackProgramJar(jarLocation, unpackedDir);
       LOG.trace("unpacking dataset jar from {} to {}.", key.uri.toString(), unpackedDir.getAbsolutePath());
 
-      return new DirectoryClassLoader(unpackedDir, key.parentClassLoader);
+      return new DirectoryClassLoader(unpackedDir, key.parentClassLoader, "lib");
     }
   }
 }

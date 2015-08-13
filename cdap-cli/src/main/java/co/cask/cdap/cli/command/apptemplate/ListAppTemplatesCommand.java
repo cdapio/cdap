@@ -65,6 +65,6 @@ public class ListAppTemplatesCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Lists all %s.", ElementType.APP_TEMPLATE.getTitleNamePlural());
+    return String.format("Lists all %s.", ElementType.APP_TEMPLATE.getNamePlural());
   }
 }

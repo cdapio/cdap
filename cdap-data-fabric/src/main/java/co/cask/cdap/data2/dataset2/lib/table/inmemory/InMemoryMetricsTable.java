@@ -30,6 +30,7 @@ import com.google.common.collect.Maps;
 
 import java.util.Map;
 import java.util.NavigableMap;
+import java.util.SortedMap;
 import javax.annotation.Nullable;
 
 /**
@@ -67,9 +68,9 @@ public class InMemoryMetricsTable implements MetricsTable {
   }
 
   @Override
-  public void put(NavigableMap<byte[], NavigableMap<byte[], Long>> updates) {
-    NavigableMap<byte[], NavigableMap<byte[], Update>> convertedUpdates = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
-    for (NavigableMap.Entry<byte[], NavigableMap<byte[], Long>> entry : updates.entrySet()) {
+  public void put(SortedMap<byte[], ? extends SortedMap<byte[], Long>> updates) {
+    SortedMap<byte[], SortedMap<byte[], Update>> convertedUpdates = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    for (NavigableMap.Entry<byte[], ? extends SortedMap<byte[], Long>> entry : updates.entrySet()) {
       convertedUpdates.put(entry.getKey(), Maps.transformValues(entry.getValue(), Updates.LONG_TO_PUTS));
     }
     InMemoryTableService.merge(tableName, convertedUpdates, System.currentTimeMillis());

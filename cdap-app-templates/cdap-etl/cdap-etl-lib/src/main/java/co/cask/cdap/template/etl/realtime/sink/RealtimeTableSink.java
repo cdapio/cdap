@@ -20,21 +20,21 @@ import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.api.templates.plugins.PluginConfig;
 import co.cask.cdap.template.etl.api.PipelineConfigurer;
 import co.cask.cdap.template.etl.api.realtime.DataWriter;
 import co.cask.cdap.template.etl.api.realtime.RealtimeContext;
 import co.cask.cdap.template.etl.api.realtime.RealtimeSink;
 import co.cask.cdap.template.etl.common.Properties;
 import co.cask.cdap.template.etl.common.RecordPutTransformer;
+import co.cask.cdap.template.etl.common.TableSinkConfig;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 
 import java.util.Map;
-import javax.annotation.Nullable;
 
 /**
  * Real-time sink for Table
@@ -44,52 +44,21 @@ import javax.annotation.Nullable;
 @Description("Real Time Sink for CDAP Table dataset")
 public class RealtimeTableSink extends RealtimeSink<StructuredRecord> {
 
-  private static final String NAME_DESC = "Name of the table. If the table does not already exist, one will be " +
-    "created.";
-  private static final String PROPERTY_SCHEMA_DESC = "Optional schema of the table as a JSON Object. If the table " +
-    "does not already exist, one will be created with this schema, which will allow the table to be explored " +
-    "through Hive.\"";
-  private static final String PROPERTY_SCHEMA_ROW_FIELD_DESC = "The name of the record field that should be used as " +
-    "the row key when writing to the table.";
-
   private RecordPutTransformer recordPutTransformer;
 
-  /**
-   * Config class for RealtimeTableSink
-   */
-  public static class TableConfig extends PluginConfig {
-    @Description(NAME_DESC)
-    private String name;
+  private final TableSinkConfig tableSinkConfig;
 
-    @Name(Properties.Table.PROPERTY_SCHEMA)
-    @Description(PROPERTY_SCHEMA_DESC)
-    @Nullable
-    String schemaStr;
-
-    @Name(Properties.Table.PROPERTY_SCHEMA_ROW_FIELD)
-    @Description(PROPERTY_SCHEMA_ROW_FIELD_DESC)
-    String rowField;
-
-    public TableConfig(String name, String schemaStr, String rowField) {
-      this.name = name;
-      this.schemaStr = schemaStr;
-      this.rowField = rowField;
-    }
-  }
-
-  private final TableConfig tableConfig;
-
-  public RealtimeTableSink(TableConfig tableConfig) {
-    this.tableConfig = tableConfig;
+  public RealtimeTableSink(TableSinkConfig tableSinkConfig) {
+    this.tableSinkConfig = tableSinkConfig;
   }
 
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
-    Map<String, String> properties = tableConfig.getProperties().getProperties();
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(tableConfig.name), "Dataset name must be given.");
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(tableConfig.rowField),
+    Map<String, String> properties = tableSinkConfig.getProperties().getProperties();
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(tableSinkConfig.getName()), "Dataset name must be given.");
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(tableSinkConfig.getRowField()),
                                 "Field to be used as rowkey must be given.");
-    pipelineConfigurer.createDataset(tableConfig.name, Table.class.getName(), DatasetProperties.builder()
+    pipelineConfigurer.createDataset(tableSinkConfig.getName(), Table.class.getName(), DatasetProperties.builder()
       .addAll(properties)
       .build());
   }
@@ -97,12 +66,20 @@ public class RealtimeTableSink extends RealtimeSink<StructuredRecord> {
   @Override
   public void initialize(RealtimeContext context) throws Exception {
     super.initialize(context);
-    recordPutTransformer = new RecordPutTransformer(tableConfig.rowField);
+    Schema outputSchema = null;
+    // If a schema string is present in the properties, use that to construct the outputSchema and pass it to the
+    // recordPutTransformer
+    String schemaString = context.getPluginProperties().getProperties().get(Properties.Table.PROPERTY_SCHEMA);
+    if (schemaString != null) {
+      outputSchema = Schema.parseJson(schemaString);
+    }
+    recordPutTransformer = new RecordPutTransformer(tableSinkConfig.getRowField(), outputSchema,
+                                                    tableSinkConfig.isRowFieldCaseInsensitive());
   }
 
   @Override
   public int write(Iterable<StructuredRecord> records, DataWriter writer) throws Exception {
-    Table table = writer.getDataset(tableConfig.name);
+    Table table = writer.getDataset(tableSinkConfig.getName());
     int numRecords = 0;
     for (StructuredRecord record : records) {
       Put put = recordPutTransformer.toPut(record);

@@ -16,14 +16,21 @@
 
 package co.cask.cdap.api.spark;
 
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.ServiceDiscoverer;
+import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.stream.StreamEventDecoder;
+import co.cask.cdap.api.workflow.Workflow;
+import co.cask.cdap.api.workflow.WorkflowToken;
 
 import java.io.Serializable;
+import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Spark job execution context. This context is shared between CDAP and User's Spark job.
@@ -37,7 +44,8 @@ import java.io.Serializable;
  * Classes implementing this interface should also have a Spark Context member of appropriate type on which these
  * method acts.
  */
-public interface SparkContext extends RuntimeContext {
+@Beta
+public interface SparkContext extends RuntimeContext, DatasetContext {
   /**
    * @return The specification used to configure this {@link Spark} job instance.
    */
@@ -65,6 +73,19 @@ public interface SparkContext extends RuntimeContext {
   <T> T readFromDataset(String datasetName, Class<?> kClass, Class<?> vClass);
 
   /**
+   * Create a Spark RDD that uses {@link Dataset} instantiated using the provided arguments as an input source.
+   *
+   * @param datasetName the name of the {@link Dataset} to be read as an RDD
+   * @param kClass      the key class
+   * @param vClass      the value class
+   * @param datasetArgs arguments for the dataset
+   * @param <T>         type of RDD
+   * @return the RDD created from Dataset
+   * @throws UnsupportedOperationException if the SparkContext is not yet initialized
+   */
+  <T> T readFromDataset(String datasetName, Class<?> kClass, Class<?> vClass, Map<String, String> datasetArgs);
+
+  /**
    * Writes a Spark RDD to {@link Dataset}
    *
    * @param rdd         the rdd to be stored
@@ -75,6 +96,19 @@ public interface SparkContext extends RuntimeContext {
    * @throws UnsupportedOperationException if the SparkContext is not yet initialized
    */
   <T> void writeToDataset(T rdd, String datasetName, Class<?> kClass, Class<?> vClass);
+
+  /**
+   * Writes a Spark RDD to {@link Dataset} instantiated using the provided arguments.
+   *
+   * @param rdd         the rdd to be stored
+   * @param datasetName the name of the {@link Dataset} where the RDD should be stored
+   * @param kClass      the key class
+   * @param vClass      the value class
+   * @param datasetArgs arguments for the dataset
+   * @param <T>         type of RDD
+   * @throws UnsupportedOperationException if the SparkContext is not yet initialized
+   */
+  <T> void writeToDataset(T rdd, String datasetName, Class<?> kClass, Class<?> vClass, Map<String, String> datasetArgs);
 
   /**
    * Create a Spark RDD that uses complete {@link Stream} as input source
@@ -129,14 +163,6 @@ public interface SparkContext extends RuntimeContext {
   <T> T getOriginalSparkContext();
 
   /**
-   * Returns value of the given argument key as a String[]
-   *
-   * @param argsKey {@link String} which is the key for the argument
-   * @return String[] containing all the arguments which is indexed by their position as they were supplied
-   */
-  String[] getRuntimeArguments(String argsKey);
-
-  /**
    * Returns a {@link Serializable} {@link ServiceDiscoverer} for Service Discovery in Spark Program which can be
    * passed in Spark program's closures.
    *
@@ -151,4 +177,29 @@ public interface SparkContext extends RuntimeContext {
    * @return {@link Serializable} {@link Metrics} for {@link Spark} programs
    */
   Metrics getMetrics();
+
+  /**
+   * Override the resources, such as memory and virtual cores, to use for each executor process for the Spark program.
+   * This method should be called in {@link Spark#beforeSubmit(SparkContext)} to take effect.
+   *
+   * @param resources Resources that each executor should use
+   */
+  void setExecutorResources(Resources resources);
+
+  /**
+   * Sets a
+   * <a href="http://spark.apache.org/docs/latest/api/scala/index.html#org.apache.spark.SparkConf">SparkConf</a>
+   * to be used for the Spark execution. Only configurations set inside the
+   * {@link Spark#beforeSubmit(SparkContext)} call will affect the Spark execution.
+   *
+   * @param <T> the SparkConf type
+   */
+  <T> void setSparkConf(T sparkConf);
+
+  /**
+   * @return the {@link WorkflowToken} associated with the current {@link Workflow},
+   * if the {@link Spark} program is executed as a part of the Workflow.
+   */
+  @Nullable
+  WorkflowToken getWorkflowToken();
 }

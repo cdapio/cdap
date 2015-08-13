@@ -77,7 +77,7 @@ SparkKMeans
 
 SparkPageRank
 -------------
-- An application that demonstrates streaming text analysis using a Spark program.
+- An application that demonstrates text analysis using Spark and MapReduce programs.
 - It computes the page rank of URLs from an input stream.
 
 Sports

@@ -7,7 +7,10 @@ angular.module(PKG.name + '.services')
     function beginPolling() {
 
       _.debounce(function() {
-        $http.get('http://' + window.location.host + '/backendstatus', {ignoreLoadingBar: true})
+        $http.get(
+          (MY_CONFIG.sslEnabled? 'https://': 'http://') + window.location.host + '/backendstatus',
+          {ignoreLoadingBar: true}
+        )
              .success(success.bind(this))
              .error(error.bind(this));
       }.bind(this), 2000)();

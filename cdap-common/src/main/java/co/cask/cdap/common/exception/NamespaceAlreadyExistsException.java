@@ -20,7 +20,9 @@ import co.cask.cdap.proto.Id;
 
 /**
  * Thrown when a namespace already exists.
+ * @deprecated Use {@link co.cask.cdap.common.NamespaceAlreadyExistsException} instead
  */
+@Deprecated
 public class NamespaceAlreadyExistsException extends AlreadyExistsException {
 
   private final Id.Namespace id;

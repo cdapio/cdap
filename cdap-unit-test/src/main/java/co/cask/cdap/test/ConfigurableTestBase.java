@@ -16,6 +16,7 @@
 
 package co.cask.cdap.test;
 
+import co.cask.cdap.api.Config;
 import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.app.ApplicationConfigurer;
 import co.cask.cdap.api.app.ApplicationContext;
@@ -29,10 +30,10 @@ import co.cask.cdap.api.templates.plugins.PluginPropertyField;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.InMemoryProgramRunnerModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
+import co.cask.cdap.common.NamespaceCannotBeDeletedException;
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.exception.NamespaceCannotBeDeletedException;
-import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
@@ -101,7 +102,6 @@ import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.util.Modules;
-import org.apache.hadoop.conf.Configuration;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -117,11 +117,16 @@ import java.net.URL;
 import java.sql.Connection;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Base class to inherit from, provides testing functionality for {@link co.cask.cdap.api.app.Application}.
  * To clean App Fabric state, you can use the {@link #clear} method.
+ *
+ * @deprecated Unit-test classes should inherit from {@link TestBase}.
+ * @see TestBase
  */
+@Deprecated
 public class ConfigurableTestBase {
 
   private static final Logger LOG = LoggerFactory.getLogger(ConfigurableTestBase.class);
@@ -129,6 +134,7 @@ public class ConfigurableTestBase {
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
+  private static CConfiguration cConf;
   private static int startCount;
   private static MetricsQueryService metricsQueryService;
   private static MetricsCollectionService metricsCollectionService;
@@ -169,34 +175,23 @@ public class ConfigurableTestBase {
 
   /**
    * This should be called by the subclasses to initialize the test base.
+   *
+   * @deprecated Use {@link TestConfiguration} instead.
    */
-  protected static void initTestBase(Map<String, String> additionalConfiguration) throws Exception {
+  @Deprecated
+  protected static void initTestBase(@Nullable Map<String, String> additionalConfiguration) throws Exception {
+    initialize(additionalConfiguration);
+  }
+
+  private static void initialize(@Nullable Map<String, String> additionalConfiguration) throws Exception {
     if (startCount++ > 0) {
       return;
     }
     File localDataDir = tmpFolder.newFolder();
-    CConfiguration cConf = CConfiguration.create();
 
-    cConf.set(Constants.Dataset.Manager.ADDRESS, "localhost");
-    cConf.set(Constants.Metrics.SERVER_PORT, Integer.toString(Networks.getRandomPort()));
+    cConf = createCConf(localDataDir, additionalConfiguration);
 
-    cConf.set(Constants.CFG_LOCAL_DATA_DIR, localDataDir.getAbsolutePath());
-    cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
-    cConf.setBoolean(Constants.Explore.EXPLORE_ENABLED, true);
-    cConf.setBoolean(Constants.Explore.START_ON_DEMAND, true);
-    cConf.setBoolean(Constants.Scheduler.SCHEDULERS_LAZY_START, true);
-    cConf.set(Constants.Explore.LOCAL_DATA_DIR,
-              tmpFolder.newFolder("hive").getAbsolutePath());
-    cConf.set(Constants.AppFabric.APP_TEMPLATE_DIR, tmpFolder.newFolder("templates").getAbsolutePath());
-
-    if (additionalConfiguration != null) {
-      for (Map.Entry<String, String> entry : additionalConfiguration.entrySet()) {
-        cConf.set(entry.getKey(), entry.getValue());
-        LOG.info("Additional configuration set: " + entry.getKey() + " = " + entry.getValue());
-      }
-    }
-
-    Configuration hConf = new Configuration();
+    org.apache.hadoop.conf.Configuration hConf = new org.apache.hadoop.conf.Configuration();
     hConf.addResource("mapred-site-local.xml");
     hConf.reloadConfiguration();
     hConf.set(Constants.CFG_LOCAL_DATA_DIR, localDataDir.getAbsolutePath());
@@ -272,9 +267,11 @@ public class ConfigurableTestBase {
     metricsCollectionService.startAndWait();
     schedulerService = injector.getInstance(SchedulerService.class);
     schedulerService.startAndWait();
-    exploreExecutorService = injector.getInstance(ExploreExecutorService.class);
-    exploreExecutorService.startAndWait();
-    exploreClient = injector.getInstance(ExploreClient.class);
+    if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
+      exploreExecutorService = injector.getInstance(ExploreExecutorService.class);
+      exploreExecutorService.startAndWait();
+      exploreClient = injector.getInstance(ExploreClient.class);
+    }
     streamCoordinatorClient = injector.getInstance(StreamCoordinatorClient.class);
     streamCoordinatorClient.startAndWait();
     testManager = injector.getInstance(UnitTestManager.class);
@@ -282,7 +279,47 @@ public class ConfigurableTestBase {
     // we use MetricStore directly, until RuntimeStats API changes
     RuntimeStats.metricStore = injector.getInstance(MetricStore.class);
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
-    namespaceAdmin.createNamespace(Constants.DEFAULT_NAMESPACE_META);
+    namespaceAdmin.createNamespace(NamespaceMeta.DEFAULT);
+  }
+
+  private static CConfiguration createCConf(File localDataDir,
+                                            Map<String, String> additionalConfiguration) throws IOException {
+    CConfiguration cConf = CConfiguration.create();
+
+    // Setup defaults that can be overridden by user
+    cConf.setBoolean(Constants.Explore.EXPLORE_ENABLED, true);
+    cConf.setBoolean(Constants.Explore.START_ON_DEMAND, true);
+
+    // This is the deprecated way where configurations are passed to the initTestBase method.
+    // Have it here for backward compatibility.
+    if (additionalConfiguration != null) {
+      for (Map.Entry<String, String> entry : additionalConfiguration.entrySet()) {
+        cConf.set(entry.getKey(), entry.getValue());
+        LOG.info("Additional configuration set: {} = {}", entry.getKey(), entry.getValue());
+      }
+    }
+
+    // Setup test case specific configurations.
+    // The system properties are usually setup by TestConfiguration class using @ClassRule
+    for (String key : System.getProperties().stringPropertyNames()) {
+      if (key.startsWith(TestConfiguration.PROPERTY_PREFIX)) {
+        String value = System.getProperty(key);
+        cConf.set(key.substring(TestConfiguration.PROPERTY_PREFIX.length()), System.getProperty(key));
+        LOG.info("Custom configuration set: {} = {}", key, value);
+      }
+    }
+
+    // These configurations cannot be overridden by user
+    cConf.set(Constants.Dataset.Manager.ADDRESS, "localhost");
+    cConf.set(Constants.Metrics.SERVER_PORT, Integer.toString(Networks.getRandomPort()));
+
+    cConf.set(Constants.CFG_LOCAL_DATA_DIR, localDataDir.getAbsolutePath());
+    cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
+    cConf.setBoolean(Constants.Scheduler.SCHEDULERS_LAZY_START, true);
+    cConf.set(Constants.Explore.LOCAL_DATA_DIR,
+              tmpFolder.newFolder("hive").getAbsolutePath());
+    cConf.set(Constants.AppFabric.APP_TEMPLATE_DIR, tmpFolder.newFolder("templates").getAbsolutePath());
+    return cConf;
   }
 
   private static Module createDataFabricModule() {
@@ -315,13 +352,17 @@ public class ConfigurableTestBase {
       return;
     }
 
-    namespaceAdmin.deleteNamespace(Constants.DEFAULT_NAMESPACE_ID);
+    namespaceAdmin.deleteNamespace(Id.Namespace.DEFAULT);
     streamCoordinatorClient.stopAndWait();
     metricsQueryService.stopAndWait();
     metricsCollectionService.startAndWait();
     schedulerService.stopAndWait();
-    Closeables.closeQuietly(exploreClient);
-    exploreExecutorService.stopAndWait();
+    if (exploreClient != null) {
+      Closeables.closeQuietly(exploreClient);
+    }
+    if (exploreExecutorService != null) {
+      exploreExecutorService.stopAndWait();
+    }
     datasetService.stopAndWait();
     dsOpService.stopAndWait();
     txService.stopAndWait();
@@ -357,7 +398,13 @@ public class ConfigurableTestBase {
   protected static ApplicationManager deployApplication(Id.Namespace namespace,
                                                         Class<? extends Application> applicationClz,
                                                         File... bundleEmbeddedJars) {
-    ApplicationManager applicationManager = getTestManager().deployApplication(namespace, applicationClz,
+    return deployApplication(namespace, applicationClz, null, bundleEmbeddedJars);
+  }
+
+  protected static ApplicationManager deployApplication(Id.Namespace namespace,
+                                                        Class<? extends Application> applicationClz, Config appConfig,
+                                                        File... bundleEmbeddedJars) {
+    ApplicationManager applicationManager = getTestManager().deployApplication(namespace, applicationClz, appConfig,
                                                                                bundleEmbeddedJars);
     applicationManagers.add(applicationManager);
     return applicationManager;
@@ -372,7 +419,12 @@ public class ConfigurableTestBase {
    */
   protected static ApplicationManager deployApplication(Class<? extends Application> applicationClz,
                                                         File... bundleEmbeddedJars) {
-    return deployApplication(Constants.DEFAULT_NAMESPACE_ID, applicationClz, bundleEmbeddedJars);
+    return deployApplication(Id.Namespace.DEFAULT, applicationClz, bundleEmbeddedJars);
+  }
+
+  protected static ApplicationManager deployApplication(Class<? extends Application> applicationClz, Config appConfig,
+                                                        File... bundleEmbeddedJars) {
+    return deployApplication(Id.Namespace.DEFAULT, applicationClz, appConfig, bundleEmbeddedJars);
   }
 
   /**
@@ -485,7 +537,7 @@ public class ConfigurableTestBase {
    */
   protected static void deployDatasetModule(String moduleName,
                                             Class<? extends DatasetModule> datasetModule) throws Exception {
-    deployDatasetModule(Constants.DEFAULT_NAMESPACE_ID, moduleName, datasetModule);
+    deployDatasetModule(Id.Namespace.DEFAULT, moduleName, datasetModule);
   }
 
   /**
@@ -514,7 +566,7 @@ public class ConfigurableTestBase {
   protected static <T extends DatasetAdmin> T addDatasetInstance(String datasetTypeName,
                                                                  String datasetInstanceName,
                                                                  DatasetProperties props) throws Exception {
-    return addDatasetInstance(Constants.DEFAULT_NAMESPACE_ID, datasetTypeName, datasetInstanceName, props);
+    return addDatasetInstance(Id.Namespace.DEFAULT, datasetTypeName, datasetInstanceName, props);
   }
 
   /**
@@ -538,7 +590,7 @@ public class ConfigurableTestBase {
    */
   protected final <T extends DatasetAdmin> T addDatasetInstance(String datasetTypeName,
                                                                 String datasetInstanceName) throws Exception {
-    return addDatasetInstance(Constants.DEFAULT_NAMESPACE_ID, datasetTypeName, datasetInstanceName,
+    return addDatasetInstance(Id.Namespace.DEFAULT, datasetTypeName, datasetInstanceName,
                               DatasetProperties.EMPTY);
   }
 
@@ -562,13 +614,16 @@ public class ConfigurableTestBase {
    * @throws Exception
    */
   protected final <T> DataSetManager<T> getDataset(String datasetInstanceName) throws Exception {
-    return getDataset(Constants.DEFAULT_NAMESPACE_ID, datasetInstanceName);
+    return getDataset(Id.Namespace.DEFAULT, datasetInstanceName);
   }
 
   /**
    * Returns a JDBC connection that allows to run SQL queries over data sets.
    */
   protected final Connection getQueryClient(Id.Namespace namespace) throws Exception {
+    if (!cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
+      throw new UnsupportedOperationException("Explore service is disabled. QueryClient not supported.");
+    }
     return getTestManager().getQueryClient(namespace);
   }
 
@@ -576,7 +631,7 @@ public class ConfigurableTestBase {
    * Returns a JDBC connection that allows to run SQL queries over data sets.
    */
   protected final Connection getQueryClient() throws Exception {
-    return getQueryClient(Constants.DEFAULT_NAMESPACE_ID);
+    return getQueryClient(Id.Namespace.DEFAULT);
   }
 
   /**
@@ -585,8 +640,8 @@ public class ConfigurableTestBase {
    * @param streamName the specified stream
    * @return {@link StreamManager} for the specified stream in the default namespace
    */
-  protected final StreamManager getStreamManager(String streamName) throws Exception {
-    return getStreamManager(Constants.DEFAULT_NAMESPACE_ID, streamName);
+  protected final StreamManager getStreamManager(String streamName) {
+    return getStreamManager(Id.Namespace.DEFAULT, streamName);
   }
 
   /**
@@ -595,7 +650,7 @@ public class ConfigurableTestBase {
    * @param streamName the specified stream
    * @return {@link StreamManager} for the specified stream in the specified namespace
    */
-  protected final StreamManager getStreamManager(Id.Namespace namespace, String streamName) throws Exception {
+  protected final StreamManager getStreamManager(Id.Namespace namespace, String streamName) {
     return getTestManager().getStreamManager(Id.Stream.from(namespace, streamName));
   }
 

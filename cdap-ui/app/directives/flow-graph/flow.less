@@ -1,4 +1,5 @@
 @import "../../styles/variables.less";
+@import "../../styles/themes/cdap/mixins.less";
 
 my-flow-graph {
 
@@ -109,7 +110,6 @@ my-workflow-graph {
     font-family: "Helvetica Neue", Helvetica, Arial, sans-serf;
     font-size: 14px;
     font-weight: bold;
-    cursor: pointer;
     fill: @cdap-header;
   }
 
@@ -129,10 +129,26 @@ my-workflow-graph {
     fill: white;
     stroke: @cdap-darkness;
     stroke-width: 5px;
-    cursor: pointer;
+    cursor: not-allowed;
+
+    + .label text {
+      cursor: not-allowed;
+    }
+
+    &.running, &.failed, &.completed, &.killed {
+      cursor: pointer;
+
+      + .label text {
+        cursor: pointer;
+      }
+    }
 
     &.running {
       stroke: @brand-success;
+    }
+
+    &.killed {
+      stroke: @brand-danger;
     }
 
     &.completed, &.failed {
@@ -163,7 +179,7 @@ my-workflow-graph {
 
   .conditional-svg {
     fill: white;
-    cursor: pointer;
+    cursor: default;
     stroke: @cdap-orange;
     stroke-width: 5px;
   }
@@ -185,12 +201,13 @@ my-workflow-graph {
 
 .d3-tip {
   line-height: 1;
-  font-weight: bold;
-  padding: 12px;
-  background: rgba(0, 0, 0, 0.8);
+  font-size: 11px;
+  padding: 7px;
+  background: @cdap-header;
+  border: 1px solid @cdap-header;
   color: white;
-  border-radius: 2px;
   pointer-events: none;
+  .border-radius(3px);
 }
 
 /* Creates a small triangle extender for the tooltip */
@@ -200,7 +217,7 @@ my-workflow-graph {
   font-size: 10px;
   width: 100%;
   line-height: 1;
-  color: rgba(0, 0, 0, 0.8);
+  color: @cdap-header;
   position: absolute;
   pointer-events: none;
 }
@@ -208,7 +225,7 @@ my-workflow-graph {
 /* Style northward tooltips differently */
 .d3-tip.n:after {
   content: "\25BC";
-  margin: -1px 0 0 0;
+  margin: -3px 0 0 0;
   top: 100%;
   left: 0;
   text-align: center;

@@ -23,7 +23,7 @@
   <parent>
     <groupId>co.cask.cdap</groupId>
     <artifactId>cdap</artifactId>
-    <version>3.1.0-SNAPSHOT</version>
+    <version>3.2.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>cdap-ui</artifactId>
@@ -98,7 +98,7 @@
               <excludeGroupIds>org.apache.hbase,asm,org.apache.zookeeper,org.apache.kafka,org.apache.twill,\
                 org.apache.httpcomponents,org.apache.thrift,org.apache.flume,org.apache.avro,org.ow2.asm,\
                 com.google.inject,org.apache.hadoop,commons-codec,com.google.inject.extensions,\
-                co.cask.http</excludeGroupIds>
+                co.cask.http,org.codehaus.jackson</excludeGroupIds>
               <excludeArtifactIds>cdap-proto,tephra,zkclient,servlet-api,common-http,\
                 common-lang,common-io</excludeArtifactIds>
               <prependGroupId>true</prependGroupId>

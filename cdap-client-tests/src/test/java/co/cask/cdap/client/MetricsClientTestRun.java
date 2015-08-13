@@ -58,16 +58,20 @@ public class MetricsClientTestRun extends ClientTestBase {
 
   @Test
   public void testAll() throws Exception {
-    appClient.deploy(createAppJarFile(FakeApp.class));
+    appClient.deploy(Id.Namespace.DEFAULT, createAppJarFile(FakeApp.class));
+
+    Id.Application app = Id.Application.from(Id.Namespace.DEFAULT, FakeApp.NAME);
+    Id.Program flow = Id.Program.from(app, ProgramType.FLOW, FakeFlow.NAME);
+    Id.Stream stream = Id.Stream.from(Id.Namespace.DEFAULT, FakeApp.STREAM_NAME);
 
     try {
-      programClient.start(FakeApp.NAME, ProgramType.FLOW, FakeFlow.NAME);
-      streamClient.sendEvent(FakeApp.STREAM_NAME, "hello world");
+      programClient.start(flow);
+      streamClient.sendEvent(stream, "hello world");
 
       // TODO: remove arbitrary sleep
       TimeUnit.SECONDS.sleep(5);
 
-      Id.Application appId = Id.Application.from(Constants.DEFAULT_NAMESPACE_ID, FakeApp.NAME);
+      Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, FakeApp.NAME);
       Id.Program programId = Id.Program.from(appId, ProgramType.FLOW, FakeFlow.NAME);
       String flowlet = FakeFlow.FLOWLET_NAME;
 
@@ -92,8 +96,8 @@ public class MetricsClientTestRun extends ClientTestBase {
       List<String> metrics = metricsClient.searchMetrics(MetricsTags.flowlet(programId, flowlet));
       Assert.assertTrue(metrics.contains(Constants.Metrics.Name.Flow.FLOWLET_INPUT));
     } finally {
-      programClient.stop(FakeApp.NAME, ProgramType.FLOW, FakeFlow.NAME);
-      appClient.delete(FakeApp.NAME);
+      programClient.stop(flow);
+      appClient.delete(app);
     }
   }
 }

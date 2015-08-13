@@ -19,12 +19,13 @@
           <strong ng-bind="input.total | myNumber: 1"></strong> events/s
         </td>
         <td class="table-graph" ng-if="input.type === 'FLOWLET'">
-          <epoch-line
-            data-history="input.history"
-            data-stream="input.stream"
-            chart-height="100"
-            chart-axes="['left', 'bottom']"
-            ></epoch-line>
+
+          <c3-line
+            chart-metric="input.chartData"
+            chart-settings="InputCtrl.chartSettings"
+            chart-size="{height: 150}"
+          ></c3-line>
+
         </td>
         <td ng-if="input.type === 'STREAM'">Not Available</td>
         <td>

@@ -70,6 +70,6 @@ public class DescribeNamespaceCommand extends AbstractCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Describes %s.", Fragment.of(Article.A, ElementType.NAMESPACE.getTitleName()));
+    return String.format("Describes %s.", Fragment.of(Article.A, ElementType.NAMESPACE.getName()));
   }
 }

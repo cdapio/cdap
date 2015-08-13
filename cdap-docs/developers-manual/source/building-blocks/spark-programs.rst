@@ -219,9 +219,15 @@ Spark in Workflows
 ------------------
 Spark programs in CDAP can also be added to a :ref:`workflow <workflows>`, similar to a :ref:`MapReduce <mapreduce>`.
 
-.. rubric::  Examples of Using Spark Programs
+
+Examples of Using Spark Programs
+--------------------------------
 
 - For an example of **a Spark program,** see the :ref:`Spark K-Means <examples-spark-k-means>`
   and :ref:`Spark Page Rank <examples-spark-page-rank>` examples.
 
 - For a longer example, the how-to guide :ref:`cdap-spark-guide` gives another demonstration.
+
+- If you have problems with resolving methods when developing Spark problems in an IDE 
+  or running Spark programs, see :ref:`these hints <development-troubleshooting-spark>`.
+  

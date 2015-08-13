@@ -102,6 +102,7 @@ var Documentation = {
     this.fixFirefoxAnchorBug();
     this.highlightSearchWords();
     this.initIndexTable();
+    this.hidePageNavigation();
   },
 
   /**
@@ -229,7 +230,21 @@ var Documentation = {
     });
     var url = parts.join('/');
     return path.substring(url.lastIndexOf('/') + 1, path.length - 1);
-  }
+  },
+  
+  /**
+   * Hide page navigation if requested
+   */
+  hidePageNavigation : function() {
+    var params = $.getQueryParameters();
+    if (params.hidenav) {
+      $(".related").hide();
+      $(".sphinxsidebar").hide();
+      $(".footer").hide();
+      $(".documentwrapper").addClass("documentwrapper-hidden");
+      $(".bodywrapper").addClass("bodywrapper-hidden");
+    }
+  }  
 };
 
 // quick alias for translations
@@ -244,39 +259,37 @@ $(document).ready(function() {
  # Takes into account height of header bar and space between header bar and first heading.
  */
 
-function anchor_alert(msg){
-	alert('anchor_alert\n'+msg);
-}
-
 function anchor_scroll(hash){
-// 	anchor_alert('hash:'+hash);
-	var fromTop = 32 + 20 - 2; // Top bar height + space - overlap
-	var $toElement = jQuery("[id="+hash+"]");
-	var toPosition = $toElement.position().top - fromTop;
-	// Scroll to element
-	$('html, body').animate({ scrollTop: toPosition });
-	// Update URL in browser
-	if(history && "pushState" in history) {
-		history.pushState({}, document.title, window.location.pathname + "#" + hash);
-	}
+//   console.log('hash: '+hash);
+  var fromTop = 32 + 20 - 2; // Top bar height + space - overlap
+  var $toElement = jQuery("[id="+hash+"]");
+  if($toElement){
+    var toPosition = $toElement.position().top - fromTop;
+    // Scroll to element
+    $('html, body').animate({ scrollTop: toPosition });
+    // Update URL in browser
+    if(history && "pushState" in history) {
+      history.pushState({}, document.title, window.location.pathname + "#" + hash);
+    }
+  }
 }
 
 jQuery(function() {
-	// Catch all clicks on a tags
-	jQuery("a").click(function(){
-		// Check if it has a hash (i.e. if it's an anchor link)
-		if(this.hash){
-			var hash = this.hash.substr(1);
-			anchor_scroll(hash);
-			return false;
-		}
-	});
-	// Do the same with urls with hash (so on page load it will slide nicely)
-	if(location.hash){
-  		window.scroll(0,0);
- 		var hash = location.hash.substr(1);
-		anchor_scroll(hash);
-		return false;
-	}
-	return true;
+  // Catch all clicks on a tags
+  jQuery("a").click(function(){
+    // Check if it has a hash (i.e. if it's an anchor link)
+    if(this.hash){
+      var hash = this.hash.substr(1);
+      anchor_scroll(hash);
+      return false;
+    }
+  });
+  // Do the same with urls with hash (so on page load it will slide nicely)
+  if(location.hash){
+      window.scroll(0,0);
+    var hash = location.hash.substr(1);
+    anchor_scroll(hash);
+    return false;
+  }
+  return true;
 });

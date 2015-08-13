@@ -18,11 +18,11 @@ package co.cask.cdap.template.etl.batch;
 
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.template.etl.api.PipelineConfigurable;
 import co.cask.cdap.template.etl.api.batch.BatchSource;
 import co.cask.cdap.template.etl.batch.sink.BatchCubeSink;
+import co.cask.cdap.template.etl.batch.sink.BatchElasticsearchSink;
 import co.cask.cdap.template.etl.batch.sink.DBSink;
 import co.cask.cdap.template.etl.batch.sink.KVTableSink;
 import co.cask.cdap.template.etl.batch.sink.TableSink;
@@ -34,12 +34,14 @@ import co.cask.cdap.template.etl.batch.source.StreamBatchSource;
 import co.cask.cdap.template.etl.batch.source.TableSource;
 import co.cask.cdap.template.etl.batch.source.TimePartitionedFileSetDatasetAvroSource;
 import co.cask.cdap.template.etl.common.DBRecord;
+import co.cask.cdap.template.etl.common.ETLConfig;
 import co.cask.cdap.template.etl.transform.ProjectionTransform;
 import co.cask.cdap.template.etl.transform.ScriptFilterTransform;
 import co.cask.cdap.template.etl.transform.StructuredRecordToGenericRecordTransform;
 import co.cask.cdap.template.test.sink.MetaKVTableSink;
 import co.cask.cdap.template.test.source.MetaKVTableSource;
 import co.cask.cdap.test.TestBase;
+import co.cask.cdap.test.TestConfiguration;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
@@ -53,6 +55,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.twill.filesystem.Location;
 import org.hsqldb.jdbc.JDBCDriver;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import parquet.avro.AvroParquetOutputFormat;
 import parquet.avro.AvroParquetReader;
 
@@ -63,7 +66,11 @@ import java.util.List;
  * Base test class that sets up plugins and the batch template.
  */
 public class BaseETLBatchTest extends TestBase {
-  protected static final Id.Namespace NAMESPACE = Constants.DEFAULT_NAMESPACE_ID;
+
+  @ClassRule
+  public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", false);
+
+  protected static final Id.Namespace NAMESPACE = Id.Namespace.DEFAULT;
   protected static final Id.ApplicationTemplate TEMPLATE_ID = Id.ApplicationTemplate.from("ETLBatch");
   protected static final Gson GSON = new Gson();
 
@@ -74,7 +81,7 @@ public class BaseETLBatchTest extends TestBase {
       TimePartitionedFileSetDatasetAvroSource.class,
       BatchCubeSink.class, DBSink.class, KVTableSink.class, TableSink.class,
       TimePartitionedFileSetDatasetAvroSink.class, AvroKeyOutputFormat.class, AvroKey.class,
-      TimePartitionedFileSetDatasetParquetSink.class, AvroParquetOutputFormat.class);
+      TimePartitionedFileSetDatasetParquetSink.class, AvroParquetOutputFormat.class, BatchElasticsearchSink.class);
     addTemplatePlugins(TEMPLATE_ID, "test-sources-1.0.0.jar", MetaKVTableSource.class);
     addTemplatePlugins(TEMPLATE_ID, "test-sinks-1.0.0.jar", MetaKVTableSink.class);
     addTemplatePlugins(TEMPLATE_ID, "transforms-1.0.0.jar",
@@ -84,7 +91,8 @@ public class BaseETLBatchTest extends TestBase {
       JDBCDriver.class.getName());
     deployTemplate(NAMESPACE, TEMPLATE_ID, ETLBatchTemplate.class,
       PipelineConfigurable.class.getPackage().getName(),
-      BatchSource.class.getPackage().getName());
+      BatchSource.class.getPackage().getName(),
+      ETLConfig.class.getPackage().getName());
   }
 
   protected List<GenericRecord> readOutput(TimePartitionedFileSet fileSet, Schema schema) throws IOException {

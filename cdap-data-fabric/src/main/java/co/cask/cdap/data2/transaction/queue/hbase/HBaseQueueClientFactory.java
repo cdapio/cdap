@@ -92,20 +92,21 @@ public class HBaseQueueClientFactory implements QueueClientFactory {
   public QueueProducer createProducer(QueueName queueName, QueueMetrics queueMetrics) throws IOException {
     HBaseQueueAdmin admin = ensureTableExists(queueName);
     try {
-      final HBaseConsumerStateStore stateStore = admin.getConsumerStateStore(queueName);
       final List<ConsumerGroupConfig> groupConfigs = Lists.newArrayList();
-      Transactions.createTransactionExecutor(txExecutorFactory, stateStore).execute(new Subroutine() {
-        @Override
-        public void apply() throws Exception {
-          stateStore.getLatestConsumerGroups(groupConfigs);
-        }
-      });
+      try (final HBaseConsumerStateStore stateStore = admin.getConsumerStateStore(queueName)) {
+        Transactions.createTransactionExecutor(txExecutorFactory, stateStore).execute(new Subroutine() {
+          @Override
+          public void apply() throws Exception {
+            stateStore.getLatestConsumerGroups(groupConfigs);
+          }
+        });
+      }
       Preconditions.checkState(!groupConfigs.isEmpty(), "Missing consumer group information for queue %s", queueName);
 
       HTable hTable = createHTable(admin.getDataTableId(queueName, queueAdmin.getType()));
       int distributorBuckets = getDistributorBuckets(hTable.getTableDescriptor());
       return createProducer(hTable, queueName, queueMetrics,
-                            new ShardedHBaseQueueStrategy(distributorBuckets), groupConfigs);
+                            new ShardedHBaseQueueStrategy(hBaseTableUtil, distributorBuckets), groupConfigs);
     } catch (Exception e) {
       Throwables.propagateIfPossible(e);
       throw new IOException(e);
@@ -174,8 +175,8 @@ public class HBaseQueueClientFactory implements QueueClientFactory {
             int distributorBuckets = getDistributorBuckets(hTable.getTableDescriptor());
 
             HBaseQueueStrategy strategy = (state.getPreviousBarrier() == null)
-                                          ? new SaltedHBaseQueueStrategy(distributorBuckets)
-                                          : new ShardedHBaseQueueStrategy(distributorBuckets);
+                                          ? new SaltedHBaseQueueStrategy(hBaseTableUtil, distributorBuckets)
+                                          : new ShardedHBaseQueueStrategy(hBaseTableUtil, distributorBuckets);
             consumers.add(queueUtil.getQueueConsumer(cConf, hTable, queueName, state,
                                                      admin.getConsumerStateStore(queueName),
                                                      strategy));

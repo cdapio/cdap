@@ -25,11 +25,10 @@ import co.cask.cdap.api.app.ApplicationContext;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.templates.ApplicationTemplate;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
+import co.cask.cdap.common.AdapterNotFoundException;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.exception.AdapterNotFoundException;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.config.PreferencesStore;
-import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.AdapterStatus;
@@ -39,8 +38,8 @@ import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.templates.AdapterDefinition;
 import com.google.common.collect.Iterables;
 import com.google.gson.JsonObject;
-import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.http.HttpResponse;
+import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -117,13 +116,13 @@ public class AdapterServiceTest extends AppFabricTestBase {
     HttpResponse response = doPost(String.format("%s/namespaces/%s/apps/%s/workflows/%s/start",
                                                  Constants.Gateway.API_VERSION_3, TEST_NAMESPACE1,
                                                  adapterConfig.getTemplate(), DummyBatchTemplate.AdapterWorkflow.NAME));
-    Assert.assertEquals(HttpResponseStatus.FORBIDDEN.code(), response.getStatusLine().getStatusCode());
+    Assert.assertEquals(HttpResponseStatus.FORBIDDEN.getCode(), response.getStatusLine().getStatusCode());
 
     // the deletion of the only adapter using the application should have deleted the app and an attempt to delete the
     // application should reutrn not found
     response = doDelete(String.format("%s/namespaces/%s/apps/%s", Constants.Gateway.API_VERSION_3, TEST_NAMESPACE1,
                                       adapterConfig.getTemplate()));
-    Assert.assertEquals(HttpResponseStatus.NOT_FOUND.code(), response.getStatusLine().getStatusCode());
+    Assert.assertEquals(HttpResponseStatus.NOT_FOUND.getCode(), response.getStatusLine().getStatusCode());
 
     String workerAdapter = "workAdapter";
     DummyWorkerTemplate.Config config1 = new DummyWorkerTemplate.Config(2);
@@ -136,7 +135,7 @@ public class AdapterServiceTest extends AppFabricTestBase {
     response = doPost(String.format("%s/namespaces/%s/apps/%s/workers/%s/stop",
                                     Constants.Gateway.API_VERSION_3, TEST_NAMESPACE1,
                                     adapterConfig1.getTemplate(), DummyWorkerTemplate.TWorker.NAME));
-    Assert.assertEquals(HttpResponseStatus.FORBIDDEN.code(), response.getStatusLine().getStatusCode());
+    Assert.assertEquals(HttpResponseStatus.FORBIDDEN.getCode(), response.getStatusLine().getStatusCode());
     adapterService.removeAdapter(NAMESPACE, workerAdapter);
   }
 

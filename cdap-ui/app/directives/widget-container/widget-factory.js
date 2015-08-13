@@ -12,6 +12,7 @@ angular.module(PKG.name + '.commons')
         element: '<input/>',
         attributes: {
           'class': 'form-control',
+          'data-ng-trim': 'false',
           'ng-model': 'model',
           placeholder: '{{myconfig.properties.default || ""}}'
         }
@@ -20,6 +21,7 @@ angular.module(PKG.name + '.commons')
         element: '<input/>',
         attributes: {
           'class': 'form-control',
+          'data-ng-trim': 'false',
           'ng-model': 'model',
           type: 'password'
         }
@@ -98,6 +100,20 @@ angular.module(PKG.name + '.commons')
           'ng-model': 'model',
           'data-plugins': 'properties',
           'data-config': 'myconfig'
+        }
+      },
+      'stream-selector': {
+        element: '<my-dataset-selector></my-dataset-selector>',
+        attributes: {
+          'ng-model': 'model',
+          'data-dataset-type': 'stream'
+        }
+      },
+      'dataset-selector': {
+        element: '<my-dataset-selector></my-dataset-selector>',
+        attributes: {
+          'ng-model': 'model',
+          'data-dataset-type': 'dataset'
         }
       }
     };

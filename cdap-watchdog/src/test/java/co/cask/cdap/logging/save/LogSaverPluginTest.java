@@ -47,9 +47,9 @@ import co.cask.cdap.logging.read.LogEvent;
 import co.cask.cdap.logging.serialize.LogSchema;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.test.SlowTests;
-import co.cask.cdap.watchdog.election.MultiLeaderElection;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.runtime.TransactionModules;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -60,7 +60,9 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
+import com.google.inject.PrivateModule;
 import com.google.inject.TypeLiteral;
+import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.name.Names;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.hadoop.conf.Configuration;
@@ -73,7 +75,6 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
@@ -95,10 +96,9 @@ import static co.cask.cdap.logging.appender.LoggingTester.LogCallback;
 
 /**
  * Test LogSaver plugin.
+ * TODO (CDAP-3128) This class needs to be refactor with LogSaverTest.
  */
 @Category(SlowTests.class)
-// TODO: This test will be fixed as part of https://issues.cask.co/browse/CDAP-2177
-@Ignore
 public class LogSaverPluginTest extends KafkaTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(LogSaverTest.class);
 
@@ -110,7 +110,6 @@ public class LogSaverPluginTest extends KafkaTestBase {
   private static ZKClientService zkClientService;
   private static KafkaClientService kafkaClientService;
   private static LogSaver logSaver;
-  private static MultiLeaderElection multiElection;
   private static String namespaceDir;
 
   @BeforeClass
@@ -143,8 +142,15 @@ public class LogSaverPluginTest extends KafkaTestBase {
                           new DataSetsModules().getInMemoryModules(),
                           new SystemDatasetRuntimeModule().getInMemoryModules(),
                           new MetricsClientRuntimeModule().getNoopModules(),
-                          new LoggingModules().getDistributedModules()
-                        );
+                          new LoggingModules().getDistributedModules(),
+                          new PrivateModule() {
+                            @Override
+                            protected void configure() {
+                              install(new FactoryModuleBuilder().build(LogSaverFactory.class));
+                              expose(LogSaverFactory.class);
+                            }
+                          }
+    );
     namespaceDir = cConf.get(Constants.Namespace.NAMESPACES_DIR);
   }
 
@@ -158,12 +164,9 @@ public class LogSaverPluginTest extends KafkaTestBase {
     kafkaClientService = injector.getInstance(KafkaClientService.class);
     kafkaClientService.startAndWait();
 
-    logSaver = injector.getInstance(LogSaver.class);
+    LogSaverFactory factory = injector.getInstance(LogSaverFactory.class);
+    logSaver = factory.create(ImmutableSet.of(0));
     logSaver.startAndWait();
-
-    multiElection = new MultiLeaderElection(zkClientService, "log-saver", 2, logSaver);
-    multiElection.setLeaderElectionSleepMs(1);
-    multiElection.startAndWait();
 
     // Sleep a while to let Kafka server fully initialized.
     TimeUnit.SECONDS.sleep(5);
@@ -171,7 +174,6 @@ public class LogSaverPluginTest extends KafkaTestBase {
 
   private void stopLogSaver() {
     logSaver.stopAndWait();
-    multiElection.stopAndWait();
     kafkaClientService.stopAndWait();
     zkClientService.stopAndWait();
   }
@@ -200,8 +202,8 @@ public class LogSaverPluginTest extends KafkaTestBase {
                                 0, Long.MAX_VALUE, Filter.EMPTY_FILTER, logCallback);
     Assert.assertEquals(60, logCallback.getEvents().size());
 
-    // Reset checkpoint for metrics plugin
-    resetMetricsPluginCheckPoint();
+    // Reset checkpoint for log saver plugin
+    resetLogSaverPluginCheckpoint();
 
     // reset the logsaver to start reading from reset offset
     Set<Integer> partitions = Sets.newHashSet(0, 1);
@@ -211,22 +213,24 @@ public class LogSaverPluginTest extends KafkaTestBase {
     waitTillLogSaverDone(ns1LogBaseDir, "APP_1/flow-FLOW_1/%s", "Test log message 59 arg1 arg2");
     stopLogSaver();
 
-    //Verify that no more records are processed by LogWriter plugin
+    LogCallback callbackAfterReset = new LogCallback();
+
+    //Verify that more records are processed by LogWriter plugin
     distributedLogReader.getLog(new FlowletLoggingContext("NS_1", "APP_1", "FLOW_1", "", null, "INSTANCE"),
-                                0, Long.MAX_VALUE, Filter.EMPTY_FILTER, logCallback);
+                                0, Long.MAX_VALUE, Filter.EMPTY_FILTER, callbackAfterReset);
     Assert.assertEquals(60, logCallback.getEvents().size());
     // Checkpoint should read 60 for both processor
     verifyCheckpoint();
   }
 
-  private void resetMetricsPluginCheckPoint() throws Exception {
+  private void resetLogSaverPluginCheckpoint() throws Exception {
     TypeLiteral<Set<KafkaLogProcessor>> type = new TypeLiteral<Set<KafkaLogProcessor>>() { };
     Set<KafkaLogProcessor> processors =
       injector.getInstance(Key.get(type, Names.named(Constants.LogSaver.MESSAGE_PROCESSORS)));
 
     for (KafkaLogProcessor processor : processors) {
-      if (processor instanceof  LogMetricsPlugin) {
-        LogMetricsPlugin plugin = (LogMetricsPlugin) processor;
+      if (processor instanceof  KafkaLogWriterPlugin) {
+        KafkaLogWriterPlugin plugin = (KafkaLogWriterPlugin) processor;
         CheckpointManager manager = plugin.getCheckPointManager();
         manager.saveCheckpoint(0, new Checkpoint(10, -1));
         Set<Integer> partitions = Sets.newHashSet(0, 1);

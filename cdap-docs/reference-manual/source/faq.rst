@@ -79,7 +79,7 @@ CDAP currently supports Java for developing applications.
 
 .. rubric:: What Version of Java SDK is Required by CDAP?
 
-The latest version of the JDK or JRE version 7 (JDK/JRE 1.7) must be installed
+The latest version of the JDK or JRE version 7 or version 8 must be installed
 in your environment; we recommend the Oracle JDK.
 
 .. rubric:: What Version of Node.JS is Required by CDAP?
@@ -96,8 +96,8 @@ Yes. You can install CDAP on your Hadoop cluster. See :ref:`install`.
 
 .. rubric:: What Hadoop distributions can CDAP run on?
 
-CDAP has been tested on and supports CDH 4.2.x through 5.3.x, HDP 2.0 through 2.1, and
-Apache Bigtop 0.8.0. 
+CDAP |version| has been tested on and supports CDH 5.0.0 through 5.4.4; HDP 2.0, 2.1, and 2.2; 
+MapR 4.1, and Apache Bigtop 0.8.0. 
 
 
 .. _faq-cdap-user-groups:

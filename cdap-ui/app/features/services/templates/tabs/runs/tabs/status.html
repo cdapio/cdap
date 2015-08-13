@@ -5,34 +5,29 @@
   </div>
 
   <div class="row">
-    <div class="col-xs-9">
-      <h2> Endpoints [{{StatusController.endPoints.length}}] </h2>
-        <table class="table table-curved">
-          <thead>
-            <tr>
-              <th> Method </th>
-              <th> Path </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr ng-repeat="ep in StatusController.endPoints">
-              <td ng-bind="ep.method"></td>
-              <td>
-                <div class="row">
-                  <div class="col-xs-6">
-                    {{ep.path}}
-                  </div>
-                  <div class="col-xs-6">
-                      <a class="btn btn-default"
-                        ng-disabled="StatusController.status !== 'RUNNING'"
-                        ui-sref="services.detail.runs.makerequest({ requestUrl: ep.path, requestMethod: ep.method})">
-                      Make Request </a>
-                  </div>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+    <div class="col-md-9">
+      <h3> Endpoints [{{StatusController.endPoints.length}}] </h3>
+      <table class="table table-curved endpoints">
+        <thead>
+          <tr>
+            <th> Method </th>
+            <th> Path </th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr ng-repeat="ep in StatusController.endPoints">
+            <td ng-bind="ep.method"></td>
+            <td class="endpoint-path"> {{ep.path}} </td>
+            <td>
+              <a class="btn btn-default"
+                ng-disabled="StatusController.status !== 'RUNNING'"
+                ui-sref="services.detail.runs.makerequest({ requestUrl: ep.path, requestMethod: ep.method})">
+              Make Request </a>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </div>
 

@@ -19,10 +19,9 @@ package co.cask.cdap.api.dataset.lib;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.table.Table;
-import com.google.common.base.Function;
-import com.google.common.collect.Iterators;
 
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 /**
  * A Dataset for incrementing counts over time periods. This Dataset provides an extension to {@link TimeseriesTable}
@@ -82,14 +81,25 @@ public class CounterTimeseriesTable extends TimeseriesDataset {
    * @return an iterator over entries that satisfy provided conditions
    */
   public Iterator<Counter> read(byte[] counter, long startTime, long endTime, byte[]... tags) {
-    return Iterators.transform(readInternal(counter, startTime, endTime, tags),
-                               new Function<Entry, Counter>() {
-                                 @Override
-                                 public Counter apply(Entry input) {
-                                   return new Counter(input.getKey(), Bytes.toLong(input.getValue()),
-                                                      input.getTimestamp(), input.getTags());
-                                 }
-                               });
+    final Iterator<Entry> internalItor = readInternal(counter, startTime, endTime, tags);
+    return new Iterator<Counter>() {
+      @Override
+      public boolean hasNext() {
+        return internalItor.hasNext();
+      }
+
+      @Override
+      public Counter next() {
+        Entry entry = internalItor.next();
+        return new Counter(entry.getKey(), Bytes.toLong(entry.getValue()),
+                           entry.getTimestamp(), entry.getTags());
+      }
+
+      @Override
+      public void remove() {
+        throw new UnsupportedOperationException();
+      }
+    };
   }
 
   /**
@@ -107,11 +117,45 @@ public class CounterTimeseriesTable extends TimeseriesDataset {
    *             entry is only returned if it contains all of these tags.
    * @return an iterator over entries that satisfy provided conditions
    */
-  public Iterator<Counter> read(byte[] counter, long startTime, long endTime, int offset, int limit, byte[]... tags) {
-    Iterator<Counter> iterator = read(counter, startTime, endTime, tags);
-    iterator = Iterators.limit(iterator, limit + offset);
-    Iterators.advance(iterator, offset);
-    return iterator;
+  public Iterator<Counter> read(byte[] counter, long startTime, long endTime,
+                                int offset, final int limit, byte[]... tags) {
+    if (offset < 0) {
+      throw new IllegalArgumentException("Offset cannot be < 0");
+    }
+    if (limit < 0) {
+      throw new IllegalArgumentException("Limit cannot be < 0");
+    }
+
+    final Iterator<Counter> iterator = read(counter, startTime, endTime, tags);
+    // Move to offset
+    for (int i = 0; i < offset && iterator.hasNext(); i++) {
+      iterator.next();
+    }
+
+    // Returns a limiting Iterator
+    return new Iterator<Counter>() {
+
+      private int count = 0;
+
+      @Override
+      public boolean hasNext() {
+        return count < limit && iterator.hasNext();
+      }
+
+      @Override
+      public Counter next() {
+        if (!hasNext()) {
+          throw new NoSuchElementException();
+        }
+        count++;
+        return iterator.next();
+      }
+
+      @Override
+      public void remove() {
+        iterator.remove();
+      }
+    };
   }
 
   /**

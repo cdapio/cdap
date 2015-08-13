@@ -2,7 +2,7 @@
     "maxerr"        : 50,       // {int} Maximum error before stopping
 
     // Enforcing
-    "bitwise"       : true,     // true: Prohibit bitwise operators (&, |, ^, etc.)
+    "bitwise"       : false,     // true: Prohibit bitwise operators (&, |, ^, etc.)
     "camelcase"     : false,    // true: Identifiers must be in camelCase
     "curly"         : true,     // true: Require {} for every new block or scope
     "eqeqeq"        : true,     // true: Require triple equals (===) for comparison
@@ -78,6 +78,7 @@
       "angular": true,
       "d3": true,
       "c3": true,
+      "dagre": true,
       "dagreD3": true,
       "_": true,
       "uuid": true,

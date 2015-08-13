@@ -57,7 +57,7 @@ public class HBase98Test extends HBaseTestBase {
   }
 
   @Override
-  public void startHBase() throws Exception {
+  public void doStartHBase() throws Exception {
     testUtil.startMiniCluster();
   }
 
@@ -92,42 +92,6 @@ public class HBase98Test extends HBaseTestBase {
       }
     }
     return HRegion.createHRegion(info, path, conf, htd);
-  }
-
-  @Override
-  public void forceRegionFlush(byte[] tableName) throws IOException {
-    MiniHBaseCluster hbaseCluster = getHBaseCluster();
-    if (hbaseCluster != null) {
-      TableName qualifiedTableName = TableName.valueOf(tableName);
-      for (JVMClusterUtil.RegionServerThread t : hbaseCluster.getRegionServerThreads()) {
-        List<HRegion> serverRegions = t.getRegionServer().getOnlineRegions(qualifiedTableName);
-        int cnt = 0;
-        for (HRegion region : serverRegions) {
-          region.flushcache();
-          cnt++;
-        }
-        LOG.info("RegionServer {}: Flushed {} regions for table {}", t.getRegionServer().getServerName().toString(),
-                 cnt, Bytes.toStringBinary(tableName));
-      }
-    }
-  }
-
-  @Override
-  public void forceRegionCompact(byte[] tableName, boolean majorCompact) throws IOException {
-    MiniHBaseCluster hbaseCluster = getHBaseCluster();
-    if (hbaseCluster != null) {
-      TableName qualifiedTableName = TableName.valueOf(tableName);
-      for (JVMClusterUtil.RegionServerThread t : hbaseCluster.getRegionServerThreads()) {
-        List<HRegion> serverRegions = t.getRegionServer().getOnlineRegions(qualifiedTableName);
-        int cnt = 0;
-        for (HRegion region : serverRegions) {
-          region.compactStores(majorCompact);
-          cnt++;
-        }
-        LOG.info("RegionServer {}: Compacted {} regions for table {}", t.getRegionServer().getServerName().toString(),
-                 cnt, Bytes.toStringBinary(tableName));
-      }
-    }
   }
 
   @Override

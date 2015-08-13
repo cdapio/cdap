@@ -1,0 +1,36 @@
+{
+    "template": "ETLRealtime",
+    "description": "Realtime ETL from Kafka with in-flight transformation into HBase Table.",
+    "config": {
+        "source": {
+            "name": "Kafka",
+            "properties": {
+                "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"fname\",\"type\":\"string\"},{\"name\":\"lname\",\"type\":\"string\"},{\"name\":\"address\",\"type\":\"string\"},{\"name\":\"city\",\"type\":\"string\"},{\"name\":\"state\",\"type\":\"string\"},{\"name\":\"country\",\"type\":\"string\"},{\"name\":\"zipcode\",\"type\":\"int\"}]}",
+                "kafka.topic": "logs",
+                "kafka.brokers": "localhost:9092",
+                "kafka.zookeeper": "",
+                "format": "csv",
+                "kafka.partitions": 2
+            }
+        },
+        "sink": {
+            "name": "Table",
+            "properties": {
+                "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"name\",\"type\":\"string\"},{\"name\":\"address\",\"type\":\"string\"},{\"name\":\"city\",\"type\":\"string\"},{\"name\":\"state\",\"type\":\"string\"},{\"name\":\"country\",\"type\":\"string\"},{\"name\":\"zipcode\",\"type\":\"int\"}]}",
+                "case.sensitive.row.field": "yes",
+                "name": "logs",
+                "schema.row.field": "name"
+            }
+        },
+        "transforms": [
+            {
+                "name": "Script",
+                "properties": {
+                    "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"name\",\"type\":\"string\"},{\"name\":\"address\",\"type\":\"string\"},{\"name\":\"city\",\"type\":\"string\"},{\"name\":\"state\",\"type\":\"string\"},{\"name\":\"country\",\"type\":\"string\"},{\"name\":\"zipcode\",\"type\":\"int\"}]}",
+                    "script": "function transform(input) {\n return {\n     name : input.fname + ' ' + input.lname,\n     address : input.address,\n     city : input.city,\n     state : input.state,\n     country : input.country,\n     zipcode : input.zipcode\n }\n}"
+                }
+            }
+        ]
+    },
+    "name": "KafkaToHbaseTable"
+}

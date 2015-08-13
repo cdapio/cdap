@@ -22,7 +22,8 @@ var pkg = require('../package.json'),
     bodyParser = require('body-parser'),
     DIST_PATH = require('path').normalize(
       __dirname + '/../dist'
-    );
+    ),
+    fs = require('fs');
 
 var log = log4js.getLogger('default');
 
@@ -35,6 +36,7 @@ function makeApp (authAddress, cdapConfig) {
   catch(e) { log.error('Favicon missing! Please run `gulp build`'); }
   app.use(compression());
   app.use(bodyParser.json());
+  app.use(bodyParser.urlencoded({ extended: false }));
   app.use(cookieParser());
 
   // serve the config file
@@ -46,8 +48,10 @@ function makeApp (authAddress, cdapConfig) {
       authorization: req.headers.authorization,
       cdap: {
         routerServerUrl: cdapConfig['router.server.address'],
-        routerServerPort: cdapConfig['router.server.port']
+        routerServerPort: cdapConfig['router.server.port'],
+        routerSSLServerPort: cdapConfig['router.ssl.bind.port']
       },
+      sslEnabled: cdapConfig['ssl.enabled'] === 'true',
       securityEnabled: authAddress.enabled,
       isEnterprise: process.env.NODE_ENV === 'production'
     });
@@ -60,6 +64,43 @@ function makeApp (authAddress, cdapConfig) {
               '.constant("MY_CONFIG",'+data+');');
   });
 
+  app.post('/downloadQuery', function(req, res) {
+    var fs = require('fs');
+    var StringDecoder = require('string_decoder').StringDecoder;
+    var url = req.body.backendUrl;
+    var query = req.body.queryHandle;
+
+    var path = DIST_PATH + '/assets/public';
+
+    fs.mkdir(path, function (err) {
+      if (err && err.code === 'EEXIST') {
+        console.log('Suppressing "folder aleady exists" error for download query');
+        // means the folder already exist. We can ignore it
+      }
+    });
+
+    var decoder = new StringDecoder('utf8');
+
+    var file = fs.createWriteStream(DIST_PATH + '/assets/public/' + query + '.csv');
+
+
+    var r = request.post({
+      method: 'POST',
+      url: url
+    });
+
+    r.on('response', function(response) {
+      response.on('data', function(chunk) {
+        file.write(decoder.write(chunk));
+      });
+
+      response.on('end', function() {
+        file.end();
+        res.send('/assets/public/' + query + '.csv');
+      });
+    });
+
+  });
 
   /*
     For now both login and accessToken APIs do the same thing.
@@ -77,12 +118,29 @@ function makeApp (authAddress, cdapConfig) {
     For now it handles file upload POST /namespaces/:namespace/apps API
   */
   app.post('/namespaces/:namespace/:path(*)', function (req, res) {
-    var url = 'http://' + cdapConfig['router.server.address'] +
-              ':' +
-              cdapConfig['router.server.port'] +
-              '/v3/namespaces/' +
-              req.param('namespace') +
-              '/' + req.param('path');
+    var protocol,
+        port;
+    if (cdapConfig['ssl.enabled'] === 'true') {
+      protocol = 'https://';
+    } else {
+      protocol = 'http://';
+    }
+    if (cdapConfig['ssl.enabled'] === 'true') {
+      port = cdapConfig['router.ssl.bind.port'];
+    } else {
+      port = cdapConfig['router.server.port'];
+    }
+
+    var url = [
+      protocol,
+      cdapConfig['router.server.address'],
+      ':',
+      port,
+      '/v3/namespaces/',
+      req.param('namespace'),
+      '/',
+      req.param('path')
+    ];
 
     var opts = {
       method: 'POST',
@@ -138,22 +196,106 @@ function makeApp (authAddress, cdapConfig) {
 
   app.get('/backendstatus', [
     function (req, res) {
+      var protocol,
+          port;
+      if (cdapConfig['ssl.enabled'] === 'true') {
+        protocol = 'https://';
+      } else {
+        protocol = 'http://';
+      }
 
-      var link = 'http://' + cdapConfig['router.server.address'] +
-              ':' +
-              cdapConfig['router.server.port'] +
-              '/v3/namespaces';
+      if (cdapConfig['ssl.enabled'] === 'true') {
+        port = cdapConfig['router.ssl.bind.port'];
+      } else {
+        port = cdapConfig['router.server.port'];
+      }
 
-      req.pipe(
-        request({
-          method: 'GET',
-          url: link,
-          rejectUnauthorized: false,
-          requestCert: true,
-          agent: false,
-          headers: req.headers
-        })
-      ).pipe(res);
+      var link = [
+        protocol,
+        cdapConfig['router.server.address'],
+        ':',
+        port,
+        '/v3/namespaces'
+      ].join('');
+
+      request({
+        method: 'GET',
+        url: link,
+        rejectUnauthorized: false,
+        requestCert: true,
+        agent: false,
+        headers: req.headers
+      }, function (err, response) {
+        if (err) {
+          res.status(404).send();
+        } else {
+          res.status(response.statusCode).send();
+        }
+      });
+    }
+  ]);
+
+  app.get('/predefinedapps/:apptype', [
+      function (req, res) {
+        var apptype = req.params.apptype;
+        var config = {};
+        var fileConfig = {}
+        var filesToMetadataMap = [];
+        var filePath = __dirname + '/../templates/apps/predefined/config.json';
+        try {
+          fileConfig = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+          filesToMetadataMap = fileConfig[apptype] || [];
+          if (filesToMetadataMap.length === 0) {
+            throw {code: 404};
+          }
+          filesToMetadataMap = filesToMetadataMap.map(function(metadata) {
+            return {
+              name: metadata.name,
+              description: metadata.description
+            };
+          });
+          res.send(filesToMetadataMap);
+        } catch(e) {
+          config.error = e.code;
+          config.message = 'Error reading template - '+ apptype ;
+          log.debug(config.message);
+          res.status(404).send(config);
+        }
+      }
+  ]);
+
+  app.get('/predefinedapps/:apptype/:appname', [
+    function (req, res) {
+      var apptype = req.params.apptype;
+      var appname = req.params.appname;
+      var filesToMetadataMap = [];
+      var appConfig = {};
+
+      var dirPath = __dirname + '/../templates/apps/predefined/';
+      var filePath = dirPath + 'config.json';
+      var config = {};
+      var fileConfig = {}
+      try {
+        fileConfig = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+        filesToMetadataMap = fileConfig[apptype] || [];
+        filesToMetadataMap = filesToMetadataMap.filter(function(metadata) {
+          if (metadata.name === appname) {
+            return metadata.file;
+          };
+        });
+        if (filesToMetadataMap.length === 0) {
+          throw {code: 404};
+        }
+        appConfig = JSON.parse(
+          fs.readFileSync(dirPath + '/' + filesToMetadataMap[0].file)
+        );
+        res.send(appConfig);
+      } catch(e) {
+        config.error = e.code;
+        config.message = 'Error reading template - ' + appname + ' of type - ' + apptype ;
+        log.debug(config.message);
+        res.status(404).send(config);
+      }
     }
   ]);
 

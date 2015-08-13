@@ -17,9 +17,12 @@
 package co.cask.cdap.test.internal;
 
 import co.cask.cdap.api.schedule.ScheduleSpecification;
+import co.cask.cdap.api.workflow.WorkflowToken;
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.internal.AppFabricClient;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.proto.WorkflowTokenDetail;
+import co.cask.cdap.proto.WorkflowTokenNodeDetail;
 import co.cask.cdap.test.AbstractProgramManager;
 import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.ScheduleManager;
@@ -27,6 +30,7 @@ import co.cask.cdap.test.WorkflowManager;
 import com.google.common.base.Throwables;
 
 import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  * A default implementation of {@link FlowManager}.
@@ -46,8 +50,17 @@ public class DefaultWorkflowManager extends AbstractProgramManager<WorkflowManag
   }
 
   @Override
-  public List<RunRecord> getHistory() {
-    return appFabricClient.getHistory(programId.getNamespaceId(), programId.getApplicationId(), programId.getId());
+  public WorkflowTokenDetail getToken(String runId, @Nullable WorkflowToken.Scope scope,
+                                      @Nullable String key) throws NotFoundException {
+    return appFabricClient.getWorkflowToken(programId.getNamespaceId(), programId.getApplicationId(), programId.getId(),
+                                            runId, scope, key);
+  }
+
+  @Override
+  public WorkflowTokenNodeDetail getTokenAtNode(String runId, String nodeName, @Nullable WorkflowToken.Scope scope,
+                                                @Nullable String key) throws NotFoundException {
+    return appFabricClient.getWorkflowToken(programId.getNamespaceId(), programId.getApplicationId(), programId.getId(),
+                                            runId, nodeName, scope, key);
   }
 
   public ScheduleManager getSchedule(final String schedName) {

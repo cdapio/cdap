@@ -16,26 +16,15 @@
 
 package co.cask.cdap.api.worker;
 
+import co.cask.cdap.api.DatasetConfigurer;
+import co.cask.cdap.api.ProgramConfigurer;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.dataset.Dataset;
-
-import java.util.Map;
 
 /**
  * Interface for configuring {@link Worker}.
  */
-public interface WorkerConfigurer {
-
-  /**
-   * Sets the name of the {@link Worker}.
-   */
-  void setName(String name);
-
-  /**
-   * Set description of the {@link Worker}.
-   * @param description the description
-   */
-  void setDescription(String description);
+public interface WorkerConfigurer extends DatasetConfigurer, ProgramConfigurer {
 
   /**
    * Sets the resources requirements for the the {@link Worker}.
@@ -48,12 +37,6 @@ public interface WorkerConfigurer {
    * @param instances number of instances, must be > 0
    */
   void setInstances(int instances);
-
-  /**
-   * Sets a set of properties that will be available through the {@link WorkerSpecification#getProperties()} at runtime.
-   * @param properties the properties to set
-   */
-  void setProperties(Map<String, String> properties);
 
   /**
    * Adds the names of {@link Dataset Datasets} used by the worker.

@@ -75,6 +75,11 @@ public abstract class AbstractQueueProducer implements QueueProducer, Transactio
   }
 
   @Override
+  public void updateTx(Transaction transaction) {
+    this.transaction = transaction;
+  }
+
+  @Override
   public Collection<byte[]> getTxChanges() {
     // Always empty changes, as enqueue is append only, nothing could be conflict.
     return ImmutableList.of();

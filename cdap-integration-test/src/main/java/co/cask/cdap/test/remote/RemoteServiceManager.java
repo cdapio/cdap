@@ -34,24 +34,25 @@ import java.util.concurrent.TimeUnit;
  * Remote implementation of {@link ServiceManager}.
  */
 public class RemoteServiceManager extends AbstractProgramManager<ServiceManager> implements ServiceManager {
+
   private final MetricsClient metricsClient;
   private final ProgramClient programClient;
   private final ServiceClient serviceClient;
+  private final Id.Service serviceId;
 
-  public RemoteServiceManager(Id.Program programId, ClientConfig clientConfig, RESTClient restClient,
+  public RemoteServiceManager(Id.Service programId, ClientConfig clientConfig, RESTClient restClient,
                               RemoteApplicationManager remoteApplicationManager) {
     super(programId, remoteApplicationManager);
-    ClientConfig namespacedClientConfig = new ClientConfig.Builder(clientConfig).build();
-    namespacedClientConfig.setNamespace(programId.getNamespace());
-    this.metricsClient = new MetricsClient(namespacedClientConfig, restClient);
-    this.programClient = new ProgramClient(namespacedClientConfig, restClient);
-    this.serviceClient = new ServiceClient(namespacedClientConfig, restClient);
+    this.serviceId = programId;
+    this.metricsClient = new MetricsClient(clientConfig, restClient);
+    this.programClient = new ProgramClient(clientConfig, restClient);
+    this.serviceClient = new ServiceClient(clientConfig, restClient);
   }
 
   @Override
   public void setInstances(int instances) {
     try {
-      programClient.setServiceInstances(programId.getApplicationId(), programId.getId(), instances);
+      programClient.setServiceInstances(serviceId, instances);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -65,7 +66,7 @@ public class RemoteServiceManager extends AbstractProgramManager<ServiceManager>
   @Override
   public int getProvisionedInstances() {
     try {
-      return programClient.getServiceInstances(programId.getApplicationId(), programId.getId());
+      return programClient.getServiceInstances(serviceId);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -74,7 +75,7 @@ public class RemoteServiceManager extends AbstractProgramManager<ServiceManager>
   @Override
   public URL getServiceURL() {
     try {
-      return serviceClient.getServiceURL(programId.getApplicationId(), programId.getId());
+      return serviceClient.getServiceURL(serviceId);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

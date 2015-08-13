@@ -18,9 +18,14 @@ package co.cask.cdap.client.app;
 
 import co.cask.cdap.api.workflow.AbstractWorkflowAction;
 import co.cask.cdap.api.workflow.Workflow;
+import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.api.workflow.WorkflowConfigurer;
+import co.cask.cdap.api.workflow.WorkflowContext;
+import co.cask.cdap.api.workflow.WorkflowToken;
+import com.google.common.base.Preconditions;
 
 import java.io.File;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -34,15 +39,37 @@ public class FakeWorkflow implements Workflow {
   public void configure(WorkflowConfigurer configurer) {
     configurer.setName(NAME);
     configurer.addAction(new FakeAction());
+    configurer.addAction(new FakeAction(FakeAction.ANOTHER_FAKE_NAME));
   }
 
   /**
    * DummyAction
    */
   public static class FakeAction extends AbstractWorkflowAction {
+    public static final String TOKEN_KEY = "tokenKey";
+    public static final String TOKEN_VALUE = "tokenValue";
+    public static final String ANOTHER_FAKE_NAME = "NotQuiteFakeActionName";
+
+    public FakeAction() {
+      this(FakeAction.class.getSimpleName());
+    }
+
+    public FakeAction(String actionName) {
+      super(actionName);
+    }
+
+    @Override
+    @SuppressWarnings("ConstantConditions")
+    public void initialize(WorkflowContext context) throws Exception {
+      super.initialize(context);
+      WorkflowToken token = context.getToken();
+      Preconditions.checkArgument(token != null, "Workflow actions should always have a workflow token available");
+      token.put(TOKEN_KEY, TOKEN_VALUE);
+    }
+
     @Override
     public void run() {
-      File doneFile = new File("/tmp/fakeworkflow.done");
+      File doneFile = new File(getContext().getRuntimeArguments().get("done.file"));
       while (!doneFile.exists()) {
         try {
           TimeUnit.SECONDS.sleep(1);

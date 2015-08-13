@@ -19,6 +19,7 @@ package co.cask.cdap.template.etl.realtime;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.template.etl.api.realtime.DataWriter;
 import co.cask.cdap.template.etl.api.realtime.RealtimeSink;
+import co.cask.cdap.template.etl.common.PluginID;
 import co.cask.cdap.template.etl.common.StageMetrics;
 
 /**
@@ -30,9 +31,9 @@ public class TrackedRealtimeSink<T> extends RealtimeSink<T> {
   private final RealtimeSink<T> sink;
   private final Metrics metrics;
 
-  public TrackedRealtimeSink(RealtimeSink<T> sink, Metrics metrics, String name) {
+  public TrackedRealtimeSink(RealtimeSink<T> sink, Metrics metrics, PluginID id) {
     this.sink = sink;
-    this.metrics = new StageMetrics(metrics, StageMetrics.Type.SINK, name);
+    this.metrics = new StageMetrics(metrics, id);
   }
 
   @Override

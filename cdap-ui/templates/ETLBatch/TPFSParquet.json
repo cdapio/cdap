@@ -7,7 +7,7 @@
        "position" : [ "name", "basePath", "schema"],
        "fields" : {
           "name" : {
-             "widget": "textbox",
+             "widget": "dataset-selector",
              "label": "Dataset Name"
           },
 

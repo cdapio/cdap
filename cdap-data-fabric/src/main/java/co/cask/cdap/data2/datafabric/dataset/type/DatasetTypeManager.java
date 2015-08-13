@@ -291,7 +291,7 @@ public class DatasetTypeManager extends AbstractIdleService {
             DatasetModuleMeta usedModule = datasets.getTypeMDS().getModule(usedModuleId);
             // if the usedModule is not found in the current namespace, try finding it in the system namespace
             if (usedModule == null) {
-              usedModuleId = Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE_ID, usedModuleName);
+              usedModuleId = Id.DatasetModule.from(Id.Namespace.SYSTEM, usedModuleName);
               usedModule = datasets.getTypeMDS().getModule(usedModuleId);
               Preconditions.checkState(usedModule != null, "Could not find a module %s that the module %s uses.",
                                        usedModuleName, datasetModuleId.getId());
@@ -328,7 +328,7 @@ public class DatasetTypeManager extends AbstractIdleService {
    * @param namespaceId the {@link Id.Namespace} to delete modules from.
    */
   public void deleteModules(final Id.Namespace namespaceId) throws DatasetModuleConflictException {
-    Preconditions.checkArgument(namespaceId != null && !Constants.SYSTEM_NAMESPACE_ID.equals(namespaceId),
+    Preconditions.checkArgument(namespaceId != null && !Id.Namespace.SYSTEM.equals(namespaceId),
                                 "Cannot delete modules from system namespace");
     LOG.warn("Deleting all modules from namespace {}", namespaceId);
     try {
@@ -380,7 +380,7 @@ public class DatasetTypeManager extends AbstractIdleService {
       try {
         // NOTE: we assume default modules are always in classpath, hence passing null for jar location
         // NOTE: we add default modules in the system namespace
-        Id.DatasetModule defaultModule = Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE_ID, module.getKey());
+        Id.DatasetModule defaultModule = Id.DatasetModule.from(Id.Namespace.SYSTEM, module.getKey());
         addModule(defaultModule, module.getValue().getClass().getName(), null);
       } catch (DatasetModuleConflictException e) {
         // perfectly fine: we need to add default modules only the very first time service is started
@@ -398,11 +398,11 @@ public class DatasetTypeManager extends AbstractIdleService {
         @Override
         public Void call(MDSDatasets context) throws Exception {
           DatasetTypeMDS typeMDS = context.getTypeMDS();
-          Collection<DatasetModuleMeta> allDatasets = typeMDS.getModules(Constants.SYSTEM_NAMESPACE_ID);
+          Collection<DatasetModuleMeta> allDatasets = typeMDS.getModules(Id.Namespace.SYSTEM);
           for (DatasetModuleMeta ds : allDatasets) {
             if (ds.getJarLocation() == null) {
               LOG.info("Deleting system dataset module: {}", ds.toString());
-              typeMDS.deleteModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE_ID, ds.getName()));
+              typeMDS.deleteModule(Id.DatasetModule.from(Id.Namespace.SYSTEM, ds.getName()));
             }
           }
           return null;
@@ -460,7 +460,7 @@ public class DatasetTypeManager extends AbstractIdleService {
       DatasetTypeMeta typeMeta = datasets.getTypeMDS().getType(datasetTypeId);
       if (typeMeta == null) {
         // not found in the user namespace. Try finding in the system namespace
-        datasetTypeId = Id.DatasetType.from(Constants.SYSTEM_NAMESPACE_ID, datasetTypeName);
+        datasetTypeId = Id.DatasetType.from(Id.Namespace.SYSTEM, datasetTypeName);
         typeMeta = datasets.getTypeMDS().getType(datasetTypeId);
         if (typeMeta == null) {
           // not found in the user namespace as well as system namespace. Bail out.

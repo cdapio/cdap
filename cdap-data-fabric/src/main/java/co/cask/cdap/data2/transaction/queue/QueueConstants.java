@@ -15,6 +15,8 @@
  */
 package co.cask.cdap.data2.transaction.queue;
 
+import co.cask.cdap.proto.Id;
+
 /**
  * Constants for queue implementation in HBase.
  */
@@ -43,6 +45,7 @@ public final class QueueConstants {
 
   // Key for HBase table meta that records the value of number of queue table buckets
   public static final String DISTRIBUTOR_BUCKETS = "cdap.distributor.buckets";
+  public static final String STATE_STORE_NAME = Id.Namespace.SYSTEM.getId() + "." + QueueType.QUEUE;
 
   /**
    * whether a queue is a queue or a stream.

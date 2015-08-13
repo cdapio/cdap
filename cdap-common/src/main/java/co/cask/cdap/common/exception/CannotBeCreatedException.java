@@ -20,7 +20,9 @@ import co.cask.cdap.proto.Id;
 
 /**
  * Thrown when an element cannot be created.
+ * @deprecated Use {@link co.cask.cdap.common.CannotBeCreatedException} instead
  */
+@Deprecated
 public class CannotBeCreatedException extends Exception {
 
   private final Id objectId;

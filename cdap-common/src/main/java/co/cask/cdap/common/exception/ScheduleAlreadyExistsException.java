@@ -20,7 +20,9 @@ import co.cask.cdap.proto.Id;
 
 /**
  * Thrown when the user tries to create a schedule that already exists.
+ * @deprecated Use {@link co.cask.cdap.common.ScheduleAlreadyExistsException} instead
  */
+@Deprecated
 public class ScheduleAlreadyExistsException extends AlreadyExistsException {
 
   private final Id.Schedule schedule;

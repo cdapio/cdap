@@ -17,9 +17,9 @@
 package co.cask.cdap.api.dataset.lib;
 
 import co.cask.cdap.api.dataset.DatasetProperties;
-import com.google.common.collect.Maps;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -31,6 +31,11 @@ public class FileSetProperties {
    * The base path of the dataset.
    */
   public static final String BASE_PATH = "base.path";
+
+  /**
+   * Whether the files in the dataset are "external", that is, managed by an external process.
+   */
+  public static final String DATA_EXTERNAL = "data.external";
 
   /**
    * The name of the input format class.
@@ -94,35 +99,42 @@ public class FileSetProperties {
   }
 
   /**
-   * @return The base path configured in the properties.
+   * @return the base path configured in the properties.
    */
   public static String getBasePath(Map<String, String> properties) {
     return properties.get(BASE_PATH);
   }
 
   /**
-   * @return The input format configured in the properties.
+   * @return the input format configured in the properties.
    */
   public static String getInputFormat(Map<String, String> properties) {
     return properties.get(INPUT_FORMAT);
   }
 
   /**
-   * @return The output format configured in the properties.
+   * @return whether the data (the files) in this dataset are considered external.
+   */
+  public static boolean isDataExternal(Map<String, String> properties) {
+    return Boolean.valueOf(properties.get(DATA_EXTERNAL));
+  }
+
+  /**
+   * @return the output format configured in the properties.
    */
   public static String getOutputFormat(Map<String, String> properties) {
     return properties.get(OUTPUT_FORMAT);
   }
 
   /**
-   * @return The input format properties configured in the properties.
+   * @return the input format properties configured in the properties.
    */
   public static Map<String, String> getInputProperties(Map<String, String> properties) {
     return propertiesWithPrefix(properties, INPUT_PROPERTIES_PREFIX);
   }
 
   /**
-   * @return The output format properties configured in the properties.
+   * @return the output format properties configured in the properties.
    */
   public static Map<String, String> getOutputProperties(Map<String, String> properties) {
     return propertiesWithPrefix(properties, OUTPUT_PROPERTIES_PREFIX);
@@ -197,7 +209,7 @@ public class FileSetProperties {
    * @return a map of all properties whose key begins with the given prefix, without that prefix.
    */
   public static Map<String, String> propertiesWithPrefix(Map<String, String> properties, String prefix) {
-    Map<String, String> result = Maps.newHashMap();
+    Map<String, String> result = new HashMap<>();
     for (Map.Entry<String, String> entry : properties.entrySet()) {
       if (entry.getKey().startsWith(prefix)) {
         result.put(entry.getKey().substring(prefix.length()), entry.getValue());
@@ -223,6 +235,14 @@ public class FileSetProperties {
      */
     public Builder setBasePath(String path) {
       add(BASE_PATH, path);
+      return this;
+    }
+
+    /**
+     * Configures whether the files (the data) in this fileset are managed externally.
+     */
+    public Builder setDataExternal(boolean isExternal) {
+      add(DATA_EXTERNAL, Boolean.toString(isExternal));
       return this;
     }
 

@@ -1,10 +1,34 @@
 angular.module(PKG.name + '.feature.flows')
-  .controller('FlowletDetailInputController', function($state, $scope, MyDataSource, MyMetricsQueryHelper, myFlowsApi) {
+  .controller('FlowletDetailInputController', function($state, $scope, MyDataSource, MyMetricsQueryHelper, MyChartHelpers, myFlowsApi) {
 
     var dataSrc = new MyDataSource($scope);
     var flowletid = $scope.FlowletsController.activeFlowlet.name;
 
+    var metric = {
+      startTime: 'now-60s',
+      endTime: 'now',
+      resolution: '1s',
+      names: ['system.queue.pending']
+    };
+
     this.inputs = [];
+
+    this.chartSettings = {
+      chartMetadata: {
+        showx: true,
+        showy: true,
+        legend: {
+          show: false,
+          position: 'inset'
+        }
+      },
+      color: {
+        pattern: ['red']
+      },
+      isLive: true,
+      interval: 1000,
+      aggregate: 5
+    };
 
     var params = {
       namespace: $state.params.namespace,
@@ -53,77 +77,40 @@ angular.module(PKG.name + '.feature.flows')
         });
     }
 
-    function formatInitialTimeseries(aggregate, initial, input) {
-      var v = [],
-          i;
+    function formatTimeseries(aggregate, series, input) {
+      var processedData = MyChartHelpers.processData(
+        series,
+        'qid',
+        metric.names,
+        metric.resolution
+      );
+      processedData = MyChartHelpers.c3ifyData(processedData, metric, metric.names);
 
-      if (initial.series[0]) {
-        var response = initial.series[0].data;
+      var data = processedData.columns[0].slice(1);
+      var format = [];
 
-        response[response.length - 1].value = aggregate - response[response.length - 1].value;
-        for (i = response.length - 2; i >= 0; i--) {
-          response[i].value = response[i+1].value - response[i].value;
-          v.unshift({
-            time: response[i].time,
-            y: response[i].value
-          });
-        }
-      } else {
-        // when there is no data
-        for (i = 60; i > 0; i--) {
-          v.push({
-            time: Math.floor((new Date()).getTime()/1000 - (i)),
-            y: 0
-          });
-        }
+      format.unshift(aggregate - data[data.length-1]);
+      for (var i = data.length - 2; i >= 0; i--) {
+        format.unshift(format[0] - data[i]);
       }
 
-      input.stream = v.slice(-1);
+      format.unshift(processedData.columns[0][0]);
+      processedData.columns[0] = format;
 
-      input.history = [{
-        label: 'output',
-        values: v
-      }];
-    }
-
-    function pollAggregateQueue(path, input) {
-      dataSrc.poll({
-        _cdapPath: path + '&start=now-60s&end=now&aggregate=true',
-        method: 'POST',
-        interval: 1000
-      }, function(streamData) {
-        var stream = {};
-
-        if (streamData.series[0]) {
-          stream = {
-            time: Math.floor((new Date()).getTime()/1000),
-            y: streamData.series[0].data[0].value
-          };
-        } else {
-          stream = {
-            time: Math.floor((new Date()).getTime()/1000),
-            y: 0
-          };
+      input.chartData = {
+        x: 'x',
+        columns: processedData.columns,
+        keys: {
+          x: 'x'
         }
+      };
 
-        var array = input.history[0].values;
-        array.shift();
-        array.push(stream);
+      input.max = Math.max.apply(Math, format.slice(1));
 
-        input.history = [
-          {
-            label: 'output',
-            values: array
-          }
-        ];
-
-        input.stream = array.slice(-1);
-        input.max = Math.max.apply(Math, array.map(function(o){return o.y;}));
-
-      });
     }
 
     function formatInput() {
+
       angular.forEach(this.inputs, function (input) {
         var flowletTags = {
           namespace: $state.params.namespace,
@@ -136,27 +123,24 @@ angular.module(PKG.name + '.feature.flows')
         var path = '/metrics/query?' + MyMetricsQueryHelper.tagsToParams(flowletTags) + '&metric=system.queue.pending';
 
         var aggregate = 0;
-        // Get Aggregate
-        dataSrc.request({
-          _cdapPath: path + '&start=now-60s&end=now&aggregate=true',
-          method: 'POST'
-        }).then(function(res) {
 
+        dataSrc.poll({
+          _cdapPath: path + '&start=now-60s&end=now&aggregate=true',
+          method: 'POST',
+          interval: 2000
+        }, function (res) {
           // Get initial aggregate
           aggregate = res.series[0] ? res.series[0].data[0].value : 0;
 
-          // Get timeseries
-          return dataSrc.request({
-            _cdapPath: path + '&start=now-60s&end=now',
-            method: 'POST'
+          dataSrc.request({
+            _cdapPath: '/metrics/query',
+            method: 'POST',
+            body: MyMetricsQueryHelper.constructQuery('qid', flowletTags, metric)
+          })
+          .then(function (seriesResult) {
+            formatTimeseries(aggregate, seriesResult, input);
+
           });
-
-        }).then(function(initial) {
-          formatInitialTimeseries(aggregate, initial, input);
-
-          // start polling aggregate
-          pollAggregateQueue(path, input);
-
         });
 
         pollArrivalRate(input);

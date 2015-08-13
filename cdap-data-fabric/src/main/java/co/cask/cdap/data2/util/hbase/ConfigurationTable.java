@@ -18,13 +18,12 @@ package co.cask.cdap.data2.util.hbase;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.util.TableId;
+import co.cask.cdap.proto.Id;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
-import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
@@ -70,15 +69,15 @@ public class ConfigurationTable {
    * @throws IOException If an error occurs while writing the configuration
    */
   public void write(Type type, CConfiguration cConf) throws IOException {
-    TableId tableId = TableId.from(Constants.SYSTEM_NAMESPACE, TABLE_NAME);
+    TableId tableId = TableId.from(Id.Namespace.SYSTEM, TABLE_NAME);
     // must create the table if it doesn't exist
     HBaseAdmin admin = new HBaseAdmin(hbaseConf);
     HTable table = null;
     try {
       HBaseTableUtil tableUtil = new HBaseTableUtilFactory(cConf).get();
-      HTableDescriptor htd = tableUtil.createHTableDescriptor(tableId);
+      HTableDescriptorBuilder htd = tableUtil.buildHTableDescriptor(tableId);
       htd.addFamily(new HColumnDescriptor(FAMILY));
-      tableUtil.createTableIfNotExists(admin, tableId, htd);
+      tableUtil.createTableIfNotExists(admin, tableId, htd.build());
 
       long now = System.currentTimeMillis();
       long previous = now - 1;

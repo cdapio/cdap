@@ -51,7 +51,7 @@ angular.module(PKG.name + '.feature.admin')
               })
               .state('admin.system.services.detail.logs', {
                 url: '/logs',
-                template: '<my-log-viewer data-model="logs"></my-log-viewer>',
+                templateUrl: '/assets/features/admin/templates/partials/service-detail-log.html',
                 controller: 'SystemServiceLogController'
               })
 
@@ -81,17 +81,16 @@ angular.module(PKG.name + '.feature.admin')
           .state('admin.namespace.create', {
             url: '/create',
             onEnter: function($bootstrapModal, $state, myNamespace) {
-              $bootstrapModal.open({
+              var modal = $bootstrapModal.open({
                 templateUrl: '/assets/features/admin/templates/namespace/create.html',
                 size: 'lg',
                 backdrop: true,
                 keyboard: true,
                 controller: 'NamespaceCreateController'
-              }).result.finally(function() {
-                myNamespace.getList(true).then(function() {
-                  $state.go('admin.overview', {}, {reload: true});
-                });
+              });
 
+              modal.result.then(function() {
+                $state.go('admin.overview', {}, { reload: true });
               });
             },
             onExit: function($modalStack) {

@@ -17,51 +17,70 @@
 package co.cask.cdap.test.remote;
 
 import co.cask.cdap.api.schedule.ScheduleSpecification;
+import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.ScheduleClient;
+import co.cask.cdap.client.WorkflowClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
+import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.UnauthorizedException;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.proto.WorkflowTokenDetail;
+import co.cask.cdap.proto.WorkflowTokenNodeDetail;
 import co.cask.cdap.test.AbstractProgramManager;
 import co.cask.cdap.test.ScheduleManager;
 import co.cask.cdap.test.WorkflowManager;
 import com.google.common.base.Throwables;
 
+import java.io.IOException;
 import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  * Remote implementation of {@link WorkflowManager}.
  */
 public class RemoteWorkflowManager extends AbstractProgramManager<WorkflowManager> implements WorkflowManager {
+
   private final ScheduleClient scheduleClient;
   private final ProgramClient programClient;
+  private final WorkflowClient workflowClient;
+  private final Id.Workflow workflowId;
 
-  public RemoteWorkflowManager(Id.Program programId, ClientConfig clientConfig, RESTClient restClient,
+  public RemoteWorkflowManager(Id.Workflow programId, ClientConfig clientConfig, RESTClient restClient,
                                RemoteApplicationManager applicationManager) {
     super(programId, applicationManager);
-    ClientConfig namespacedClientConfig = new ClientConfig.Builder(clientConfig).build();
-    namespacedClientConfig.setNamespace(programId.getNamespace());
-    this.programClient = new ProgramClient(namespacedClientConfig, restClient);
-    this.scheduleClient = new ScheduleClient(namespacedClientConfig, restClient);
+    this.workflowId = programId;
+    this.programClient = new ProgramClient(clientConfig, restClient);
+    this.workflowClient = new WorkflowClient(clientConfig, restClient);
+    this.scheduleClient = new ScheduleClient(clientConfig, restClient);
   }
 
   @Override
   public List<ScheduleSpecification> getSchedules() {
     try {
-      return scheduleClient.list(programId.getApplicationId(), programId.getId());
+      return scheduleClient.list(workflowId);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
   }
 
   @Override
-  public List<RunRecord> getHistory() {
+  public WorkflowTokenDetail getToken(String runId, @Nullable WorkflowToken.Scope scope,
+                                      @Nullable String key) throws NotFoundException {
     try {
-      return programClient.getProgramRuns(programId.getApplicationId(), ProgramType.WORKFLOW,
-                                          programId.getId(), "ALL", 0, Long.MAX_VALUE, Integer.MAX_VALUE);
-    } catch (Exception e) {
+      return workflowClient.getWorkflowToken(new Id.Run(workflowId, runId), scope, key);
+    } catch (IOException | UnauthorizedException e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  @Override
+  public WorkflowTokenNodeDetail getTokenAtNode(String runId, String nodeName, @Nullable WorkflowToken.Scope scope,
+                                                @Nullable String key) throws NotFoundException {
+    try {
+      return workflowClient.getWorkflowTokenAtNode(new Id.Run(workflowId, runId), nodeName, scope, key);
+    } catch (IOException | UnauthorizedException e) {
       throw Throwables.propagate(e);
     }
   }
@@ -71,7 +90,7 @@ public class RemoteWorkflowManager extends AbstractProgramManager<WorkflowManage
       @Override
       public void suspend() {
         try {
-          scheduleClient.suspend(programId.getApplicationId(), schedName);
+          scheduleClient.suspend(Id.Schedule.from(programId.getApplication(), schedName));
         } catch (Exception e) {
           throw Throwables.propagate(e);
         }
@@ -80,7 +99,7 @@ public class RemoteWorkflowManager extends AbstractProgramManager<WorkflowManage
       @Override
       public void resume() {
         try {
-          scheduleClient.resume(programId.getApplicationId(), schedName);
+          scheduleClient.resume(Id.Schedule.from(programId.getApplication(), schedName));
         } catch (Exception e) {
           throw Throwables.propagate(e);
         }
@@ -89,7 +108,7 @@ public class RemoteWorkflowManager extends AbstractProgramManager<WorkflowManage
       @Override
       public String status(int expectedCode) {
         try {
-          return scheduleClient.getStatus(programId.getApplicationId(), schedName);
+          return scheduleClient.getStatus(Id.Schedule.from(programId.getApplication(), schedName));
         } catch (Exception e) {
           throw Throwables.propagate(e);
         }

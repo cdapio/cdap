@@ -82,7 +82,7 @@ module.directive('myFlowGraph', function ($filter, $state, $alert, myStreamServi
       scope.getShapes = function() {
         var shapes = {};
         shapes.flowlet = function(parent, bbox, node) {
-          var instances = scope.model.instances[node.elem.__data__] || 0;
+          var instances = scope.model.instances[node.elem.__data__] || 1;
 
           // Pushing labels down
           parent.select('.label')
@@ -191,7 +191,7 @@ module.directive('myFlowGraph', function ($filter, $state, $alert, myStreamServi
       scope.handleTooltip = function(tip, nodeId) {
         tip
           .html(function() {
-            return '<strong>' + nodeId + '</strong>';
+            return '<span>' + nodeId + '</span>';
           })
           .show();
       };
@@ -289,6 +289,9 @@ module.directive('myWorkflowGraph', function ($filter, $location) {
               break;
             case 'FAILED':
               shapeSvg.attr('class', 'workflow-shapes foundation-shape job-svg failed');
+              break;
+            case 'KILLED':
+              shapeSvg.attr('class', 'workflow-shapes foundation-shape job-svg killed');
               break;
             default:
               shapeSvg.attr('class', 'workflow-shapes foundation-shape job-svg');
@@ -422,7 +425,7 @@ module.directive('myWorkflowGraph', function ($filter, $location) {
         if (['Start', 'End'].indexOf(nodeId) === -1) {
           tip
             .html(function() {
-              return '<strong>'+ scope.instanceMap[nodeId].nodeId + ' : ' + scope.instanceMap[nodeId].program.programName +'</strong>';
+              return '<span>'+ scope.instanceMap[nodeId].nodeId + ' : ' + scope.instanceMap[nodeId].program.programName +'</span>';
             })
             .show();
         }
@@ -487,6 +490,7 @@ function genericRender(scope, filter, location) {
     selector += scope.parentSelector;
   }
   selector += ' svg';
+
   // Set up an SVG group so that we can translate the final graph and tooltip.
   var svg = d3.select(selector).attr('fill', 'white');
   var svgGroup = d3.select(selector + ' g');
@@ -513,18 +517,21 @@ function genericRender(scope, filter, location) {
     scope.translateX = scope.translateX + d3.event.dx;
     scope.translateY = scope.translateY + d3.event.dy;
 
-    if (scope.translateX > svg.width()) {
-      scope.translateX = svg.width();
+    var boundingClient = svg.node().getBoundingClientRect(),
+        gGraph = g.graph();
+
+    if (scope.translateX > boundingClient.width) {
+      scope.translateX = boundingClient.width;
     }
-    if (scope.translateX < -(g.graph().width * scope.currentScale)) {
-      scope.translateX = -(g.graph().width * scope.currentScale);
+    if (scope.translateX < -(gGraph.width * scope.currentScale)) {
+      scope.translateX = -(gGraph.width * scope.currentScale);
     }
 
-    if (scope.translateY > svg.height()) {
-      scope.translateY = svg.height();
+    if (scope.translateY > boundingClient.height) {
+      scope.translateY = boundingClient.height;
     }
-    if (scope.translateY < -(g.graph().height * scope.currentScale)) {
-      scope.translateY = -(g.graph().height * scope.currentScale);
+    if (scope.translateY < -(gGraph.height * scope.currentScale)) {
+      scope.translateY = -(gGraph.height * scope.currentScale);
     }
 
     var arr = [scope.translateX, scope.translateY];
@@ -599,7 +606,7 @@ function genericRender(scope, filter, location) {
     var initialScale = 1.1;
     var svgWidth = svg.node().getBoundingClientRect().width;
     if (svgWidth - g.graph().width <= 0) {
-      scope.currentScale = svg.width()/g.graph().width;
+      scope.currentScale = svgWidth / g.graph().width;
       scope.translateX = 0;
       scope.translateY = 0;
 

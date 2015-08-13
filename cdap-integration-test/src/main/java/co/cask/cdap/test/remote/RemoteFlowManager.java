@@ -31,23 +31,24 @@ import com.google.common.base.Throwables;
  * Remote implementation of {@link FlowManager}.
  */
 public class RemoteFlowManager extends AbstractProgramManager<FlowManager> implements FlowManager {
+
   private final ProgramClient programClient;
   private final MetricsClient metricsClient;
+  private final Id.Flow flowId;
 
-  public RemoteFlowManager(Id.Program programId, ClientConfig clientConfig, RESTClient restClient,
+  public RemoteFlowManager(Id.Flow programId, ClientConfig clientConfig, RESTClient restClient,
                            RemoteApplicationManager applicationManager) {
     super(programId, applicationManager);
-    ClientConfig namespacedClientConfig = new ClientConfig.Builder(clientConfig).build();
-    namespacedClientConfig.setNamespace(programId.getNamespace());
-    this.programClient = new ProgramClient(namespacedClientConfig, restClient);
-    this.metricsClient = new MetricsClient(namespacedClientConfig, restClient);
+    this.flowId = programId;
+    this.programClient = new ProgramClient(clientConfig, restClient);
+    this.metricsClient = new MetricsClient(clientConfig, restClient);
   }
 
   @Override
   public void setFlowletInstances(String flowletName, int instances) {
     Preconditions.checkArgument(instances > 0, "Instance counter should be > 0.");
     try {
-      programClient.setFlowletInstances(programId.getApplicationId(), programId.getId(), flowletName, instances);
+      programClient.setFlowletInstances(Id.Flow.Flowlet.from(flowId, flowletName), instances);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -56,7 +57,7 @@ public class RemoteFlowManager extends AbstractProgramManager<FlowManager> imple
   @Override
   public int getFlowletInstances(String flowletName) {
     try {
-      return programClient.getFlowletInstances(programId.getApplicationId(), programId.getId(), flowletName);
+      return programClient.getFlowletInstances(Id.Flow.Flowlet.from(flowId, flowletName));
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

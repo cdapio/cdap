@@ -22,7 +22,6 @@ import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -35,6 +34,7 @@ import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import co.cask.cdap.data2.util.hbase.HTableDescriptorBuilder;
 import co.cask.cdap.hbase.wd.AbstractRowKeyDistributor;
 import co.cask.cdap.hbase.wd.RowKeyDistributorByHashPrefix;
 import co.cask.cdap.proto.Id;
@@ -123,7 +123,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
   }
 
   public static TableId getConfigTableId(String namespace) {
-    return TableId.from(namespace, HBaseQueueDatasetModule.STATE_STORE_NAME + "."
+    return TableId.from(namespace, QueueConstants.STATE_STORE_NAME + "."
                                   + HBaseQueueDatasetModule.STATE_STORE_EMBEDDED_TABLE_NAME);
   }
 
@@ -258,7 +258,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
   }
 
   private Id.DatasetInstance getStateStoreId(String namespaceId) {
-    return Id.DatasetInstance.from(namespaceId, HBaseQueueDatasetModule.STATE_STORE_NAME);
+    return Id.DatasetInstance.from(namespaceId, QueueConstants.STATE_STORE_NAME);
   }
 
   private Id.DatasetInstance createStateStoreDataset(String namespace) throws IOException {
@@ -295,13 +295,15 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
     if (!datasetFramework.hasInstance(id)) {
       return;
     }
-    final HBaseConsumerStateStore stateStore = getConsumerStateStore(queueName);
-    Transactions.createTransactionExecutor(txExecutorFactory, stateStore).execute(new TransactionExecutor.Subroutine() {
-      @Override
-      public void apply() throws Exception {
-        stateStore.clear();
-      }
-    });
+    try (final HBaseConsumerStateStore stateStore = getConsumerStateStore(queueName)) {
+      Transactions.createTransactionExecutor(txExecutorFactory, stateStore)
+        .execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          stateStore.clear();
+        }
+      });
+    }
   }
 
   private void deleteFlowConfigs(Id.Flow flowId) throws Exception {
@@ -318,25 +320,29 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
       return;
     }
 
-    final Table table = stateStore.getInternalTable();
-    Transactions.createTransactionExecutor(txExecutorFactory, (TransactionAware) table)
-      .execute(new TransactionExecutor.Subroutine() {
-        @Override
-        public void apply() throws Exception {
-          // Prefix name is "/" terminated ("queue:///namespace/app/flow/"), hence the scan is unique for the flow
-          byte[] startRow = Bytes.toBytes(prefixName.toString());
-          Scanner scanner = table.scan(startRow, Bytes.stopKeyForPrefix(startRow));
-          try {
-            Row row = scanner.next();
-            while (row != null) {
-              table.delete(row.getRow());
-              row = scanner.next();
+    try {
+      final Table table = stateStore.getInternalTable();
+      Transactions.createTransactionExecutor(txExecutorFactory, (TransactionAware) table)
+        .execute(new TransactionExecutor.Subroutine() {
+          @Override
+          public void apply() throws Exception {
+            // Prefix name is "/" terminated ("queue:///namespace/app/flow/"), hence the scan is unique for the flow
+            byte[] startRow = Bytes.toBytes(prefixName.toString());
+            Scanner scanner = table.scan(startRow, Bytes.stopKeyForPrefix(startRow));
+            try {
+              Row row = scanner.next();
+              while (row != null) {
+                table.delete(row.getRow());
+                row = scanner.next();
+              }
+            } finally {
+              scanner.close();
             }
-          } finally {
-            scanner.close();
           }
-        }
-      });
+        });
+    } finally {
+      stateStore.close();
+    }
   }
 
   /**
@@ -354,7 +360,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
     for (QueueConstants.QueueType queueType : queueTypes) {
       // Note: The trailing "." is crucial, since otherwise nsId could match nsId1, nsIdx etc
       // It's important to keep config table enabled while disabling and dropping  queue tables.
-      final String queueTableNamePrefix = String.format("%s.%s.", Constants.SYSTEM_NAMESPACE, queueType);
+      final String queueTableNamePrefix = String.format("%s.%s.", Id.Namespace.SYSTEM.getId(), queueType);
       final TableId configTableId = getConfigTableId(namespaceId.getId());
       tableUtil.deleteAllInNamespace(getHBaseAdmin(), namespaceId, new Predicate<TableId>() {
         @Override
@@ -393,7 +399,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
   }
 
   public TableId getDataTableId(Id.Flow flowId, QueueConstants.QueueType queueType) {
-    String tableName = String.format("%s.%s.%s.%s", Constants.SYSTEM_NAMESPACE, queueType, flowId.getApplicationId(),
+    String tableName = String.format("%s.%s.%s.%s", Id.Namespace.SYSTEM.getId(), queueType, flowId.getApplicationId(),
                                      flowId.getId());
     return TableId.from(flowId.getNamespaceId(), tableName);
   }
@@ -419,7 +425,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
     Set<QueueConstants.QueueType> queueTypes = EnumSet.of(QueueConstants.QueueType.QUEUE,
                                                           QueueConstants.QueueType.SHARDED_QUEUE);
     for (QueueConstants.QueueType queueType : queueTypes) {
-      String prefix = Constants.SYSTEM_NAMESPACE + "." + queueType.toString();
+      String prefix = Id.Namespace.SYSTEM.getId() + "." + queueType.toString();
       if (tableName.startsWith(prefix)) {
         return true;
       }
@@ -476,7 +482,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
     @Override
     public void create() throws IOException {
       // Create the queue table
-      HTableDescriptor htd = tableUtil.createHTableDescriptor(tableId);
+      HTableDescriptorBuilder htd = tableUtil.buildHTableDescriptor(tableId);
       for (String key : properties.stringPropertyNames()) {
         htd.setValue(key, properties.getProperty(key));
       }
@@ -501,12 +507,12 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
       createQueueTable(tableId, htd, splitKeys);
     }
 
-    private void createQueueTable(TableId tableId, HTableDescriptor htd, byte[][] splitKeys) throws IOException {
+    private void createQueueTable(TableId tableId, HTableDescriptorBuilder htd, byte[][] splitKeys) throws IOException {
       int prefixBytes = (type == QueueConstants.QueueType.SHARDED_QUEUE) ? ShardedHBaseQueueStrategy.PREFIX_BYTES
                                                                          : SaltedHBaseQueueStrategy.SALT_BYTES;
       htd.setValue(HBaseQueueAdmin.PROPERTY_PREFIX_BYTES, Integer.toString(prefixBytes));
       LOG.info("Create queue table with prefix bytes {}", htd.getValue(HBaseQueueAdmin.PROPERTY_PREFIX_BYTES));
-      tableUtil.createTableIfNotExists(getHBaseAdmin(), tableId, htd, splitKeys);
+      tableUtil.createTableIfNotExists(getHBaseAdmin(), tableId, htd.build(), splitKeys);
     }
   }
 }

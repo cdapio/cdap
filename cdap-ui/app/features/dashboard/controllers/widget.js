@@ -17,7 +17,7 @@ angular.module(PKG.name+'.feature.dashboard')
       // Dimensions and Attributes of a widget
       this.settings = {};
       opts.settings = opts.settings || {}; // Not a required paramter.
-      this.settings.color = opts.settings.color;
+      this.settings.color = opts.settings.color || generateColors(this.metric.names || []);
 
       if (myHelpers.objectQuery(opts, 'settings', 'size')) {
         this.width = opts.settings.size.width;
@@ -43,6 +43,33 @@ angular.module(PKG.name+'.feature.dashboard')
 
     Widget.prototype.getPartial = function () {
       return '/assets/features/dashboard/templates/widgets/' + this.type + '.html';
+    };
+
+    function generateColors(metrics) {
+      var colorPatterns = [];
+      for (var i=0; i <metrics.length; i++) {
+        colorPatterns.push(stringToColor(metrics[i]));
+      }
+      return {
+        pattern: colorPatterns
+      };
+    }
+
+    var stringToColor = function(str) {
+      var i,
+          hash,
+          color;
+      // str to hash
+      for (i = 0, hash = 0; i < str.length; ) {
+        hash = str.charCodeAt(i++) + ((hash << 100) - hash);
+      }
+
+      // int/hash to hex
+      for (i = 0, color = '#'; i < 3; ) {
+        color += ('00' + ((hash >> i++ * 8) & 0xFF).toString(16)).slice(-2);
+      }
+
+      return color;
     };
 
     return Widget;
@@ -72,97 +99,4 @@ angular.module(PKG.name+'.feature.dashboard')
         dd.destroy();
       });
     };
-  })
-
-  // Probably should be renamed or refactored. This is not doing anything apart
-  // from handling size changes to the widget.
-  .controller('C3WidgetTimeseriesCtrl', function ($scope, myHelpers, $timeout) {
-    $scope.chartSize = { height: 200 };
-    var widget = myHelpers.objectQuery($scope, 'gridsterItem', '$element', 0),
-        widgetHeight,
-        widgetWidth;
-    if (widget) {
-      widgetHeight = parseInt(widget.style.height, 10);
-      widgetWidth = parseInt(widget.style.width, 10);
-      if (widgetHeight > 300) {
-        $scope.wdgt.height = widgetHeight - 70;
-      }
-      $scope.wdgt.width = widgetWidth - 32;
-    }
-
-    $scope.$on('gridster-resized', function() {
-      $timeout(function() {
-        $scope.chartSize.height = parseInt($scope.gridsterItem.$element[0].style.height, 10) - 70;
-        $scope.chartSize.width = parseInt($scope.gridsterItem.$element[0].style.width, 10) - 32;
-      });
-    });
-
-    $scope.$watch('wdgt.height', function(newVal) {
-      $scope.chartSize.height = newVal;
-    });
-    $scope.$watch('wdgt.width', function(newVal) {
-      if (!newVal) {
-        return;
-      }
-      $scope.chartSize.width = newVal;
-    });
-  })
-
-  .controller('WidgetTableCtrl', function ($scope, MyDataSource, MyChartHelpers, MyMetricsQueryHelper) {
-
-    $scope.metrics = $scope.wdgt.metric;
-    var dataSrc = new MyDataSource($scope);
-
-    dataSrc.request(
-      {
-        _cdapPath: '/metrics/query',
-        method: 'POST',
-        body: MyMetricsQueryHelper.constructQuery(
-          'qid',
-          MyMetricsQueryHelper.contextToTags($scope.metrics.context),
-          $scope.metrics
-        )
-      }
-    )
-      .then(function(res) {
-        var processedData = MyChartHelpers.processData(
-          res,
-          'qid',
-          $scope.metrics.names,
-          $scope.metrics.resolution
-        );
-        processedData = MyChartHelpers.c3ifyData(processedData, $scope.metrics, {});
-        var tableData = [];
-        processedData.xCoords.forEach(function(timestamp, index) {
-          if (index === 0) {
-            // the first index of each column is just 'x' or the metric name
-            return;
-          }
-          var rowData = [timestamp];
-          processedData.columns.forEach(function(column) {
-            // If it begins with 'x', it is timestamps
-            if (column.length && column[0] !== 'x') {
-              rowData.push(column[index]);
-            }
-          });
-          tableData.push(rowData);
-        });
-        $scope.tableData = tableData;
-      });
-  })
-
-  .controller('WidgetPieCtrl', function ($scope, $alert) {
-
-    $alert({
-      content: 'pie chart using fake data',
-      type: 'warning'
-    });
-
-    $scope.pieChartData = [
-      { label: 'Slice 1', value: 10 },
-      { label: 'Slice 2', value: 20 },
-      { label: 'Slice 3', value: 40 },
-      { label: 'Slice 4', value: 30 }
-    ];
-
   });

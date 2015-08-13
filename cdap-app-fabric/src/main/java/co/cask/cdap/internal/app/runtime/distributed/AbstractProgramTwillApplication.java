@@ -20,6 +20,7 @@ import co.cask.cdap.api.Resources;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.apache.twill.api.EventHandler;
 import org.apache.twill.api.ResourceSpecification;
@@ -29,7 +30,6 @@ import org.apache.twill.api.TwillSpecification;
 import org.apache.twill.api.TwillSpecification.Builder;
 import org.apache.twill.filesystem.Location;
 
-import java.io.File;
 import java.util.Map;
 
 /**
@@ -38,13 +38,22 @@ import java.util.Map;
 public abstract class AbstractProgramTwillApplication implements TwillApplication {
 
   private final Program program;
-  private final Map<String, File> localizeFiles;
+  private final Map<String, LocalizeResource> localizeResources;
   private final EventHandler eventHandler;
 
+  /**
+   * Constructor.
+   *
+   * @param program represents the program to be launched in Twill
+   * @param localizeResources set of resources to be localized to the Twill container
+   * @param eventHandler An {@link EventHandler} for the Twill application which will be set to the
+   *                     Twill application specification
+   */
   protected AbstractProgramTwillApplication(Program program,
-                                            Map<String, File> localizeFiles, EventHandler eventHandler) {
+                                            Map<String, LocalizeResource> localizeResources,
+                                            EventHandler eventHandler) {
     this.program = program;
-    this.localizeFiles = localizeFiles;
+    this.localizeResources = ImmutableMap.copyOf(localizeResources);
     this.eventHandler = eventHandler;
   }
 
@@ -108,8 +117,8 @@ public abstract class AbstractProgramTwillApplication implements TwillApplicatio
     Location programLocation = program.getJarLocation();
 
     Builder.MoreFile moreFile = fileAdder.add(programLocation.getName(), programLocation.toURI());
-    for (Map.Entry<String, File> entry : localizeFiles.entrySet()) {
-      moreFile.add(entry.getKey(), entry.getValue().toURI());
+    for (Map.Entry<String, LocalizeResource> entry : localizeResources.entrySet()) {
+      moreFile.add(entry.getKey(), entry.getValue().getURI(), entry.getValue().isArchive());
     }
     return moreFile.apply();
   }

@@ -24,8 +24,11 @@ see the :ref:`configuration-security` section.
      - Default Value
      - Description
    * - ``app.template.dir``
-     - ``/opt/cdap/master/plugins``
+     - ``/opt/cdap/master/templates``
      - Directory where all archives for application templates are stored
+   * - ``app.template.plugin.dir``
+     - ``${app.template.dir}/plugins``
+     - Directory where template plugins are stored
    * - ``app.bind.address``
      - ``127.0.0.1``
      - App-Fabric server host address
@@ -223,8 +226,8 @@ see the :ref:`configuration-security` section.
    * - ``log.saver.event.bucket.interval.ms``
      - ``1000``
      - Log events published in this interval (in milliseconds) will be put in one
-       in-memory bucket and processed in a batch. Smaller values will increase the odds of
-       log events going out-of-order.
+       in-memory bucket and processed in a batch; smaller values will increase the odds of
+       log events going out-of-order
    * - ``log.saver.event.max.inmemory.buckets``
      - ``8``
      - Maximum number of event buckets in memory.
@@ -316,12 +319,12 @@ see the :ref:`configuration-security` section.
      - Path to the secret key file (only used in single-node operation)
    * - ``security.enabled``
      - ``false``
-     - Enables authentication for CDAP.  When set to ``true`` all requests to CDAP must
-       provide a valid access token.
+     - Enables authentication for CDAP; when set to ``true`` all requests to CDAP must
+       provide a valid access token
    * - ``security.realm``
      - ``cask``
-     - Authentication realm used for scoping security.  This value should be unique for each
-       installation of CDAP.
+     - Authentication realm used for scoping security; this value should be unique for each
+       installation of CDAP
    * - ``security.server.extended.token.expiration.ms``
      - ``604800000``
      - Admin tool access token expiration time in milliseconds (defaults to 1 week) (internal)
@@ -365,14 +368,15 @@ see the :ref:`configuration-security` section.
      - Reserved non-heap memory in MB for Twill container
    * - ``twill.jvm.gc.opts``
      - | ``-verbose:gc``
-       | ``-Xloggc:<log-dir>/gc.log``
+       | ``-Xloggc:&lt;LOG_DIR&gt;/gc.log``
        | ``-XX:+PrintGCDetails``
        | ``-XX:+PrintGCTimeStamps``
        | ``-XX:+UseGCLogFileRotation``
        | ``-XX:NumberOfGCLogFiles=10``
        | ``-XX:GCLogFileSize=1M``
-     - Java garbage collection options for all Twill containers; ``<log-dir>`` is the location
-       of the log directory on each machine
+     - Java garbage collection options for all Twill containers; ``<LOG_DIR>`` is the location
+       of the log directory on each machine; note that the special characters are replaced with
+       entity equivalents so they can be included in the XML
    * - ``twill.no.container.timeout``
      - ``120000``
      - Amount of time in milliseconds to wait for at least one container for Twill runnable

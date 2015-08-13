@@ -20,7 +20,9 @@ import co.cask.cdap.proto.Id;
 
 /**
  * Thrown when the user tries to create a dataset, but a dataset already exists by that name.
+ * @deprecated Use {@link co.cask.cdap.common.DatasetAlreadyExistsException} instead
  */
+@Deprecated
 public class DatasetAlreadyExistsException extends AlreadyExistsException {
 
   private final Id.DatasetInstance id;

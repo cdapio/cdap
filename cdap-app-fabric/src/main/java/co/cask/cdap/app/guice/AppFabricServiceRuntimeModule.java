@@ -36,6 +36,7 @@ import co.cask.cdap.gateway.handlers.AdapterHttpHandler;
 import co.cask.cdap.gateway.handlers.AppFabricDataHttpHandler;
 import co.cask.cdap.gateway.handlers.AppLifecycleHttpHandler;
 import co.cask.cdap.gateway.handlers.ApplicationTemplateHandler;
+import co.cask.cdap.gateway.handlers.ArtifactHttpHandler;
 import co.cask.cdap.gateway.handlers.CommonHandlers;
 import co.cask.cdap.gateway.handlers.ConfigHandler;
 import co.cask.cdap.gateway.handlers.ConsoleSettingsHttpHandler;
@@ -52,6 +53,7 @@ import co.cask.cdap.gateway.handlers.WorkflowHttpHandler;
 import co.cask.cdap.internal.app.deploy.LocalAdapterManager;
 import co.cask.cdap.internal.app.deploy.LocalApplicationManager;
 import co.cask.cdap.internal.app.deploy.LocalApplicationTemplateManager;
+import co.cask.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.deploy.pipeline.DeploymentInfo;
 import co.cask.cdap.internal.app.deploy.pipeline.adapter.AdapterDeploymentInfo;
@@ -275,9 +277,9 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
       install(
         new FactoryModuleBuilder()
-          .implement(new TypeLiteral<Manager<DeploymentInfo, ApplicationWithPrograms>>() { },
-                     new TypeLiteral<LocalApplicationManager<DeploymentInfo, ApplicationWithPrograms>>() { })
-          .build(new TypeLiteral<ManagerFactory<DeploymentInfo, ApplicationWithPrograms>>() { })
+          .implement(new TypeLiteral<Manager<AppDeploymentInfo, ApplicationWithPrograms>>() { },
+                     new TypeLiteral<LocalApplicationManager<AppDeploymentInfo, ApplicationWithPrograms>>() { })
+          .build(new TypeLiteral<ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms>>() { })
       );
       install(
         new FactoryModuleBuilder()
@@ -321,6 +323,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       handlerBinder.addBinding().to(AdapterHttpHandler.class);
       handlerBinder.addBinding().to(ApplicationTemplateHandler.class);
       handlerBinder.addBinding().to(WorkflowHttpHandler.class);
+      handlerBinder.addBinding().to(ArtifactHttpHandler.class);
 
       for (Class<? extends HttpHandler> handlerClass : handlerClasses) {
         handlerBinder.addBinding().to(handlerClass);

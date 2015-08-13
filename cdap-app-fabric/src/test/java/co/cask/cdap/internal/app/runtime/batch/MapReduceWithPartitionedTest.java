@@ -24,6 +24,7 @@ import co.cask.cdap.api.dataset.lib.PartitionFilter;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
+import co.cask.cdap.api.dataset.lib.TimePartitionDetail;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
 import co.cask.cdap.api.dataset.table.Row;
@@ -160,6 +161,10 @@ public class MapReduceWithPartitionedTest {
     Map<String, String> runtimeArguments = Maps.newHashMap();
     Map<String, String> outputArgs = Maps.newHashMap();
     TimePartitionedFileSetArguments.setOutputPartitionTime(outputArgs, time);
+    final ImmutableMap<String, String> assignedMetadata = ImmutableMap.of("region", "13",
+                                                                          "data.source.name", "input",
+                                                                          "data.source.type", "table");
+    TimePartitionedFileSetArguments.setOutputPartitionMetadata(outputArgs, assignedMetadata);
     runtimeArguments.putAll(RuntimeArguments.addScope(Scope.DATASET, TIME_PARTITIONED, outputArgs));
     runProgram(app, AppWithTimePartitionedFileSet.PartitionWriter.class, new BasicArguments(runtimeArguments));
 
@@ -169,11 +174,12 @@ public class MapReduceWithPartitionedTest {
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() {
-          Partition partition = tpfs.getPartitionByTime(time);
+          TimePartitionDetail partition = tpfs.getPartitionByTime(time);
           Assert.assertNotNull(partition);
           String path = partition.getRelativePath();
           Assert.assertNotNull(path);
           Assert.assertTrue(path.contains("2015-01-15/11-15"));
+          Assert.assertEquals(assignedMetadata, partition.getMetadata().asMap());
         }
       });
 
@@ -245,6 +251,23 @@ public class MapReduceWithPartitionedTest {
           Assert.assertNull(row.get("y"));
         }
       });
+
+    // now run a map/reduce that reads no partitions (because the range matches nothing)
+    TimePartitionedFileSetArguments.setInputStartTime(inputArgs, time - TimeUnit.MINUTES.toMillis(10));
+    TimePartitionedFileSetArguments.setInputEndTime(inputArgs, time - TimeUnit.MINUTES.toMillis(9));
+    runtimeArguments.putAll(RuntimeArguments.addScope(Scope.DATASET, TIME_PARTITIONED, inputArgs));
+    runtimeArguments.put(AppWithTimePartitionedFileSet.ROW_TO_WRITE, "n");
+    runProgram(app, AppWithTimePartitionedFileSet.PartitionReader.class, new BasicArguments(runtimeArguments));
+
+    // this should have read no partitions - and written nothing to row n
+    txExecutorFactory.createExecutor(datasetInstantiator.getTransactionAware()).execute(
+      new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() {
+          Row row = output.get(Bytes.toBytes("n"));
+          Assert.assertTrue(row.isEmpty());
+        }
+      });
   }
 
   @Test
@@ -263,7 +286,7 @@ public class MapReduceWithPartitionedTest {
         }
       });
 
-    // a partition kye for the map/reduce output
+    // a partition key for the map/reduce output
     final PartitionKey keyX = PartitionKey.builder()
       .addStringField("type", "x")
       .addLongField("time", 150000L)
@@ -371,6 +394,28 @@ public class MapReduceWithPartitionedTest {
           Row row = output.get(Bytes.toBytes("b"));
           Assert.assertEquals("1", row.getString("x"));
           Assert.assertNull(row.get("y"));
+        }
+      });
+
+    // a partition filter that matches no key
+    PartitionFilter filterMT = PartitionFilter.builder()
+      .addValueCondition("type", "nosuchthing")
+      .build();
+
+    // now run a map/reduce that reads an empty range of partitions (the filter matches nothing)
+    inputArgs.clear();
+    PartitionedFileSetArguments.setInputPartitionFilter(inputArgs, filterMT);
+    runtimeArguments.putAll(RuntimeArguments.addScope(Scope.DATASET, PARTITIONED, inputArgs));
+    runtimeArguments.put(AppWithPartitionedFileSet.ROW_TO_WRITE, "n");
+    runProgram(app, AppWithPartitionedFileSet.PartitionReader.class, new BasicArguments(runtimeArguments));
+
+    // this should have read no partitions - and written nothing to row n
+    txExecutorFactory.createExecutor(datasetInstantiator.getTransactionAware()).execute(
+      new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() {
+          Row row = output.get(Bytes.toBytes("n"));
+          Assert.assertTrue(row.isEmpty());
         }
       });
   }

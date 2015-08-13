@@ -1,7 +1,7 @@
 <div class="container">
   <div class="row">
     <div class="col-xs-8 h2">
-      <h2><span> Schema </span></h2>
+      <h3>Schema</h2>
     </div>
     <div class="col-xs-4">
         <table class="table table-curved table-status">
@@ -11,9 +11,9 @@
           </thead>
           <tbody>
             <td ng-if="StatusController.storage"> {{StatusController.storage | bytes}} </td>
-            <td ng-if="StatusController.storage == null"> &mdash; </td>
+            <td ng-if="StatusController.storage == null"> 0b </td>
             <td ng-if="StatusController.events"> {{StatusController.events | number}} </td>
-            <td ng-if="StatusController.events == null"> &mdash; </td>
+            <td ng-if="StatusController.events == null"> 0 </td>
           </tbody>
         </table>
     </div>

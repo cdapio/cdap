@@ -24,6 +24,7 @@ import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.metrics.MetricsReporterHook;
+import co.cask.cdap.proto.Id;
 import co.cask.http.HttpHandler;
 import co.cask.http.NettyHttpService;
 import com.google.common.base.Objects;
@@ -65,11 +66,12 @@ public class MetricsProcessorStatusService extends AbstractIdleService {
 
   @Override
   protected void startUp() throws Exception {
-    LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Constants.SYSTEM_NAMESPACE,
+    LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Id.Namespace.SYSTEM.getId(),
                                                                        Constants.Logging.COMPONENT_NAME,
                                                                        Constants.Service.METRICS_PROCESSOR));
+    LOG.info("Starting MetricsProcessor Status Service...");
+
     httpService.startAndWait();
-    LOG.info("MetricsProcessor Service started");
 
     cancellable = discoveryService.register(ResolvingDiscoverable.of(new Discoverable() {
       @Override
@@ -82,18 +84,22 @@ public class MetricsProcessorStatusService extends AbstractIdleService {
         return httpService.getBindAddress();
       }
     }));
+
+    LOG.info("Started MetricsProcessor Status Service.");
   }
 
   @Override
   protected void shutDown() throws Exception {
+    LOG.info("Stopping MetricsProcessor Status Service...");
     try {
       if (cancellable != null) {
         cancellable.cancel();
       }
     } finally {
       httpService.stopAndWait();
-      LOG.info("Metrics Processor Service Stopped");
+      LOG.info("MetricsProcessor Status Service Stopped");
     }
+    LOG.info("Stopped MetricsProcessor Status Service.");
   }
 
   @Override

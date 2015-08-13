@@ -1,5 +1,7 @@
 angular.module(PKG.name + '.feature.adapters')
-  .controller('PluginEditController', function($scope, PluginConfigFactory, myHelpers) {
+  .controller('PluginEditController', function($scope, PluginConfigFactory, myHelpers, EventPipe, $timeout, MyPlumbService, $sce, $rootScope) {
+    var pluginCopy;
+
     var propertiesFromBackend = Object.keys($scope.plugin._backendProperties);
     // Make a local copy that is a mix of properties from backend + config from nodejs
     this.groups = {
@@ -13,9 +15,47 @@ angular.module(PKG.name + '.feature.adapters')
       }
     };
 
-    this.configfetched = false;
+    this.configfetched = null;
     this.properties = [];
-    this.noconfig = false;
+    this.noconfig = null;
+    if (MyPlumbService.metadata.template.type === 'ETLBatch') {
+      this.infoPluginType = 'batch';
+    } else if (MyPlumbService.metadata.template.type === 'ETLRealtime') {
+      this.infoPluginType = 'real-time';
+    }
+
+    this.infoPluginCategory = $scope.plugin.type + 's';
+
+    this.infoPluginName = $scope.plugin.name.toLowerCase();
+    if (this.infoPluginCategory === 'transforms') {
+      this.infoPluginCategory = 'transformations';
+      this.infoUrl = [
+        'http://docs.cask.co/cdap/',
+        $rootScope.cdapVersion,
+        '/en/application-templates/etl/templates/',
+        this.infoPluginCategory,
+        '/',
+        this.infoPluginName,
+        '.html?hidenav'
+      ].join('');
+    } else {
+      this.infoUrl = [
+        'http://docs.cask.co/cdap/',
+        $rootScope.cdapVersion ,
+        '/en/application-templates/etl/templates/',
+        this.infoPluginCategory,
+        '/',
+        this.infoPluginType,
+        '/',
+        this.infoPluginName,
+        '.html?hidenav'
+      ].join('');
+    }
+
+    this.trustSrc = function(src) {
+      return $sce.trustAsResourceUrl(src);
+    };
+
     this.noproperty = Object.keys(
       $scope.plugin._backendProperties || {}
     ).length;
@@ -23,7 +63,7 @@ angular.module(PKG.name + '.feature.adapters')
     if (this.noproperty) {
       PluginConfigFactory.fetch(
         $scope,
-        $scope.AdapterCreateController.model.metadata.type,
+        $scope.type,
         $scope.plugin.name
       )
         .then(
@@ -46,15 +86,44 @@ angular.module(PKG.name + '.feature.adapters')
               this.groups['generic'] = missedFieldsGroup;
             }
 
-            // Mark the configfetched to show that configurations have been received.
-            this.configfetched = true;
-            this.config = res;
+            if (res.implicit) {
+              var schema = res.implicit.schema;
+              var keys = Object.keys(schema);
+
+              var formattedSchema = [];
+              angular.forEach(keys, function (key) {
+                formattedSchema.push({
+                  name: key,
+                  type: schema[key]
+                });
+              });
+
+              var obj = { fields: formattedSchema };
+              $scope.plugin.outputSchema = JSON.stringify(obj);
+              $scope.plugin.implicitSchema = true;
+            }
+
+            // TODO: Hacky. Need to fix this for am-fade-top animation for modals.
+            $timeout(function() {
+              pluginCopy = angular.copy($scope.plugin);
+              // Mark the configfetched to show that configurations have been received.
+              this.configfetched = true;
+              this.config = res;
+              this.noconfig = false;
+            }.bind(this), 1000);
           }.bind(this),
           function error() {
-            // Didn't receive a configuration from the backend. Fallback to all textboxes.
-            this.noconfig = true;
+            // TODO: Hacky. Need to fix this for am-fade-top animation for modals.
+            $timeout(function() {
+              pluginCopy = angular.copy($scope.plugin);
+              // Didn't receive a configuration from the backend. Fallback to all textboxes.
+              this.noconfig = true;
+              this.configfetched = true;
+            }.bind(this), 1000);
           }.bind(this)
         );
+    } else {
+      this.configfetched = true;
     }
 
     function setGroups(propertiesFromBackend, res, group) {
@@ -107,4 +176,14 @@ angular.module(PKG.name + '.feature.adapters')
         description: myHelpers.objectQuery($scope, 'plugin', '_backendProperties', property, 'description') || 'No Description Available'
       };
     }
+
+    this.reset = function () {
+      $scope.plugin.properties = angular.copy(pluginCopy.properties);
+      EventPipe.emit('plugin.reset');
+    };
+
+    this.schemaClear = function () {
+      EventPipe.emit('schema.clear');
+    };
+
   });

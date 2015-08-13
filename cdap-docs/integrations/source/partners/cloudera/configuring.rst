@@ -8,6 +8,8 @@ Configuring and Installing CDAP using Cloudera Manager
 Overview
 =======================================
 
+.. highlight:: console
+
 You can use `Cloudera Manager
 <http://www.cloudera.com/content/cloudera/en/products-and-services/cloudera-enterprise/cloudera-manager.html>`__ 
 to integrate CDAP into a Hadoop cluster by downloading and installing a CDAP CSD (Custom
@@ -55,10 +57,10 @@ Prerequisites
 
 #. For Kerberos-enabled Hadoop clusters:
 
-   - The 'cdap' user needs to be granted Hbase permissions to create tables.
-     In an Hbase shell, enter::
+   - The 'cdap' user needs to be granted HBase permissions to create tables.
+     In an HBase shell, enter::
      
-      grant 'cdap', 'ACRW'
+      > grant 'cdap', 'ACRW'
 
    - The 'cdap' user must be able to launch YARN containers, either by adding it to the YARN
      ``allowed.system.users`` or by adjusting ``min.user.id``.
@@ -75,7 +77,8 @@ Prerequisites
 Download
 =======================================
 
-Download the CDAP CSD (Custom Service Descriptor): `download JAR file <http://cask.co/resources/#cdap-integrations>`__.
+Download the CDAP CSD (Custom Service Descriptor): `download the JAR file <http://cask.co/resources/#cdap-integrations>`__.
+The source code is available `here <https://github.com/caskdata/cm_csd>`__.
 
 Details on CSDs and Cloudera Manager Extensions are `available online 
 <https://github.com/cloudera/cm_ext/wiki>`__.
@@ -84,11 +87,26 @@ Details on CSDs and Cloudera Manager Extensions are `available online
 Install, Setup, and Startup
 =======================================
 
-.. rubric:: Install the CSD
+.. _cloudera-configuring-csd-parcel:
+
+.. rubric:: Install the CSD, Download and Distribute Parcel
 
 #. `Install the CSD <http://www.cloudera.com/content/cloudera/en/documentation/core/latest/topics/cm_mc_addon_services.html>`__.
-#. Download and distribute the CDAP-|version| parcel. If the Cask parcel repo is
-   inaccessible to your cluster, please see :ref:`these suggestions <cloudera-direct-parcel-access>`.
+#. Download and distribute the CDAP-|version| parcel. Complete instructions on parcels are available at
+   `Cloudera's website <http://www.cloudera.com/content/cloudera/en/documentation/core/latest/topics/cm_ig_parcels.html>`__,
+   but in summary there are four steps:
+   
+   1. Add the repository (installing the CSD adds the corresponding CDAP repository for you, but you can 
+      `customize the list of repositories <http://www.cloudera.com/content/cloudera/en/documentation/core/latest/topics/cm_ig_parcels.html#cmug_topic_7_11_5_unique_1>`__
+      searched by Cloudera Manager if you need to);
+   #. `Download <http://www.cloudera.com/content/cloudera/en/documentation/core/latest/topics/cm_ig_parcels.html#concept_vwq_421_yk_unique_1__section_cnx_b3y_bm_unique_1>`__
+      the parcel to the Cloudera Manager server;
+   #. `Distribute <http://www.cloudera.com/content/cloudera/en/documentation/core/latest/topics/cm_ig_parcels.html#concept_vwq_421_yk_unique_1__section_sty_b3y_bm_unique_1>`__
+      the parcel to all the servers in the cluster; and
+   #. `Activate <http://www.cloudera.com/content/cloudera/en/documentation/core/latest/topics/cm_ig_parcels.html#concept_vwq_421_yk_unique_1__section_ug1_c3y_bm_unique_1>`__
+      the parcel.
+
+   If the Cask parcel repo is inaccessible to your cluster, please see :ref:`these suggestions <cloudera-direct-parcel-access>`.
 
 .. rubric:: Setup using the Cloudera Manager Admin Console *Add Service* Wizard
 
@@ -110,62 +128,18 @@ When completing the Wizard, these notes may help:
    - *Add Service* Wizard, Page 5: **Router Server Port:** This should match the "Router Bind
      Port"; it’s used by the CDAP UI to connect to the Router service.
 
+   - *Add Service* Wizard, Page 5: **App Template Dir:** This should initially point to the bundled templates included in
+     the CDAP parcel directory. If you have modified ``${PARCELS_ROOT}``, please update this setting to match.  Advanced
+     users will want to customize this directory to a location outside of the CDAP Parcel.
+
 Complete instructions, step-by-step, for using the Admin Console *Add Service* Wizard to install CDAP
 :ref:`are available <step-by-step-cloudera-add-service>`.
 
 .. _cloudera-verification:
 
-Verification
-=======================================
-
-After CDAP has started up, the best way to verify the installation is to deploy an application,
-ingest some data, run a MapReduce program on it, and then query the results out.  The following
-procedure describes how to do this primarily, via the CDAP UI, though this can all be done via
-command line.
-
-We provide in our SDK pre-built ``.JAR`` files for convenience.
-
-#. Download and install the latest `CDAP Software Development Kit (SDK)
-   <http://cask.co/downloads/#cdap>`__. The version should match the version you have installed.
-#. Extract to a folder (``CDAP_HOME``).
-#. Open a command prompt and navigate to ``CDAP_HOME/examples``.
-#. Each example folder has a ``.jar`` file in its ``target`` directory.
-   For verification, we'll use the ``Purchase`` example and its jar, located in 
-   ``CDAP_HOME/examples/Purchase-``\ |literal-release|\ ``.jar``. The ``Purchase`` example is documented 
-   in the CDAP :ref:`examples manual <examples-purchase>`.
-
-#. Open a web browser to the CDAP UI. It is located on port ``9999`` of the box where
-   you installed CDAP.
-
-#. From the CDAP UI Development tab, under "Apps" click "Add App” and navigate to the jar.
-
-#. Once it is deployed, click on it in the list of applications (*PurchaseHistory*), then click on
-   *PurchaseFlow* in the list of programs to get to the *Flow* detail page, then click the *Start*
-   button.  (This will launch additional YARN containers.)
-
-#. Once the flow is *RUNNING*, inject data by clicking on the *purchaseStream* icon in
-   the flow diagram.  In the dialog that pops up, type ``Tom bought 5 apples for $3`` and click
-   *Inject*.  You should see activity in the graphs and the flowlet counters increment.
-
-#. Run a MapReduce program against this data by navigating back to the *PurchaseHistory* list of 
-   programs, select *PurchaseHistoryBuilder*, and click the *Start* button.  This will launch an
-   additional container and a MapReduce job in YARN.  After it starts you should see the Map and
-   Reduce progress bars complete.  Failures at this stage are often due to YARN MapReduce misconfiguration
-   or a lack of YARN capacity.
-
-#. After the MapReduce job is complete, we can startup a query service which will read
-   from the processed dataset.  Navigate to Application -> PurchaseHistory ->
-   PurchaseHistoryService.  Click the Start button to start the service.  (This will launch another YARN container.)
-
-#. From the *PurchaseHistoryService* page, click *Make Request* for the */history/{customer}* endpoint listed.
-   In the dialog that pops up, enter ``Tom`` in the *Path Params* field and click *Make Request*.
-
-#. You should get back a response similar to::
-
-     {"customer":"Tom","purchases":[{"customer":"Tom","product":"apple","quantity":5,"price":3,
-      "purchaseTime":1421470224780}]}
-
-#. You have now completed verification of the installation.
+.. include:: ../../../../admin-manual/source/installation/installation.rst
+   :start-after: .. _install-verification:
+   :end-before:  .. _install-upgrade:
 
 Upgrading an Existing Version
 =======================================
@@ -184,7 +158,11 @@ When a new compatible CDAP parcel is released, it will be available via the Parc
 
 .. rubric:: Upgrading Major/Minor Release versions
 
-These steps will upgrade from CDAP 2.8.0 to CDAP 3.0.0. (**Note:** Apps need to be both recompiled and re-deployed.)
+Upgrading between major versions of CDAP involves the additional steps of upgrading the CSD, and running the included
+CDAP Upgrade Tool. Upgrades between multiple Major/Minor versions must be done consecutively, and a version cannot be
+skipped unless otherwise noted.
+
+The following is the generic procedure for Major/Minor version upgrades:
 
 #. Stop all flows, services, and other programs in all your applications.
 
@@ -193,23 +171,105 @@ These steps will upgrade from CDAP 2.8.0 to CDAP 3.0.0. (**Note:** Apps need to 
 #. Ensure your installed version of the CSD matches the target version of CDAP. For example, CSD version 3.0.* is compatible
    with CDAP version 3.0.*.  Download the latest version of the CSD `here <http://cask.co/resources/#cdap-integrations>`__.
 
-#. Use the Cloudera Manager UI to download, distribute, and activate the parcel on all cluster hosts.
+#. Use the Cloudera Manager UI to download, distribute, and activate the corresponding CDAP parcel version on all cluster
+   hosts.
 
-#. Before starting services, run the Upgrade Tool to update any necessary CDAP table definitions.  From the CDAP Service page,
-   select "Run CDAP Upgrade Tool" from the Actions menu.
+#. Before starting services, run the Upgrade Tool to update any necessary CDAP table definitions. From the CDAP Service
+   page, select "Run CDAP Upgrade Tool" from the Actions menu.
 
 #. Start the CDAP services.  At this point it may be necessary to correct for any changes in the CSD.  For example, if new CDAP services
-   were added or removed, you must add or remove role instances as necessary.  When upgrading from 2.8.0 to 3.0.0, the CDAP Web-App role has
-   been replaced by the CDAP-UI role:
-
-   - From the CDAP Instances page, select Add Role Instances, and choose a host for the CDAP-UI role.
-
-   - From the CDAP Instances page, check the CDAP-Web-App role, and select Delete from the Actions menu.
+   were added or removed, you must add or remove role instances as necessary. Check the
+   :ref:`release-specific upgrade notes <cloudera-release-specific-upgrade-notes>` below for any specific instructions.
 
 #. After CDAP services have started, run the Post-Upgrade tool to perform any necessary upgrade steps against the running services.  From the
    CDAP Service page, select "Run CDAP Post-Upgrade Tasks."
 
 #. You must recompile and then redeploy your applications.
+
+.. _cloudera-release-specific-upgrade-notes:
+
+.. rubric:: Upgrading CDAP 3.0 to 3.1 and Upgrading CDH 5.3 to 5.4
+
+**Background:** CDH 5.3 ships with HBase 0.98 while CDH 5.4 ships with HBase 1.0. We support
+CDH 5.4 as of CDAP 3.1.0. Upgrading from CDH 5.3 to CDH 5.4 includes an HBase upgrade in
+addition to a CDAP upgrade. 
+
+**It is important to perform these steps as described, otherwise the coprocessors may not
+get upgraded correctly and HBase regionservers may crash.** In the case where something
+goes wrong, see these troubleshooting instructions for :ref:`problems while upgrading CDH
+<cloudera-troubleshooting-upgrade-cdh>`.
+
+In the future, we intend to automate all these steps. The issue that tracks that work is
+`CDAP-3179 <https://issues.cask.co/browse/CDAP-3179>`__.
+
+**Upgrade Steps**
+
+1. If using Cloudera Manager, :ref:`stop all CDAP application and services
+   <install-upgrade>`, as Cloudera Manager will have auto-started CDAP
+#. Disable all CDAP tables; from an HBase shell, run this command::
+
+    > disable_all 'cdap.*'
+    
+#. Upgrade to CDH 5.4
+#. :ref:`Stop CDAP application and services <install-upgrade>`, as CDH will have auto-started CDAP
+#. Upgrade to CDAP 3.1
+#. Run the CDAP Upgrade Tool, as the user that runs CDAP Master (the CDAP user)::
+
+    $ /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.UpgradeTool upgrade
+    
+   If using Cloudera Manager, this can be done by selecting ``Run CDAP Upgrade Tool`` from
+   the *CDAP Service Actions* menu
+    
+#. Check if the coprocessor JARs for these tables have been upgraded to CDH HBase 1.0:
+
+    - ``cdap_system:app.meta``
+    - ``cdap_system:datasets.instance``
+    - ``cdap_system:datasets.type``
+    
+   by checking that the coprocessor classnames are using the ``hbase10cdh`` package |---|
+   for example, ``co.cask.cdap.data2.transaction.coprocessor.hbase10cdh.DefaultTransactionProcessor``
+  
+   Running this command in an HBase shell will give you table attributes::
+  
+    > describe 'cdap_system:app.meta'
+    
+   The resulting output will show the coprocessor classname::
+  
+    'cdap_system:app.meta', {TABLE_ATTRIBUTES => {coprocessor$1 =>
+    'hdfs://server.example.com/cdap/cdap/lib/
+    coprocessorb5cb1b69834de686a84d513dff009908.jar|co.cask.cdap.data2.transaction.
+    coprocessor.hbase10cdh.DefaultTransactionProcessor|1073741823|', METADATA =>
+    {'cdap.version' => '3.1.0...
+
+#. Enable these tables; from an HBase shell, run these commands::
+   
+    > enable 'cdap_system:app.meta'
+    > enable 'cdap_system:datasets.instance'
+    > enable 'cdap_system:datasets.type'
+
+#. Run the CDAP Upgrade Tool (again), as the user that runs CDAP Master (the CDAP user)
+#. Before starting CDAP, check that all tables have coprocessors upgraded, as described above
+#. Enable all CDAP tables; from an HBase shell, run this command::
+
+    > enable_all 'cdap.*'
+    
+#. Start CDAP
+
+**Note:** Any apps will need to be both recompiled and re-deployed if they use either a
+PartitionedFileSet or a TimePartitionedFileSet.
+
+
+.. rubric:: Upgrading CDAP 2.8 to 3.0
+
+**Note:** Apps need to be both recompiled and re-deployed.
+
+When upgrading from 2.8.0 to 3.0.0, the CDAP Web-App role has been replaced by the CDAP-UI
+role.  After starting the 3.0 services for the first time:
+
+   - From the CDAP Instances page, select "Add Role Instances", and choose a host for the CDAP-UI role.
+
+   - From the CDAP Instances page, check the CDAP-Web-App role, and select "Delete" from the Actions menu.
+
 
 Troubleshooting
 =======================================
@@ -223,6 +283,17 @@ query, try setting ``hive.exec.stagingdir`` in your Hive configuration to
 
 This can be done in Cloudera Manager using the *Hive Client
 Advanced Configuration Snippet (Safety Valve) for hive-site.xml* configuration field.
+
+.. rubric:: Missing Application Templates
+
+The bundled application templates are included in the CDAP parcel, located in a subdirectory
+of Cloudera's ``${PARCELS_ROOT}`` directory, for example::
+
+  /opt/cloudera/parcels/CDAP/master/templates
+
+Ensure that the ``App Template Dir`` configuration option points to this path on disk. Since this
+directory can change when CDAP parcels are upgraded, advanced users are encouraged to place
+these templates in a static directory outside the parcel root, and configure accordingly.
 
 .. _cloudera-direct-parcel-access:
 
@@ -253,3 +324,29 @@ Previously released parcels can also be accessed from their version-specific URL
   |http:|//repository.cask.co/parcels/cdap/2.8/CDAP-2.8.0-1-precise.parcel
   |http:|//repository.cask.co/parcels/cdap/2.8/CDAP-2.8.0-1-trusty.parcel
   |http:|//repository.cask.co/parcels/cdap/2.8/CDAP-2.8.0-1-wheezy.parcel
+  
+
+.. _cloudera-troubleshooting-upgrade-cdh:
+
+.. rubric:: Problems While Upgrading CDH
+
+If you miss a step in the upgrade process and something goes wrong, it's possible that the
+tables will get re-enabled before the coprocessors are upgraded. This could cause the
+regionservers to abort and may make it very difficult to get the cluster back to a stable
+state where the tables can be disabled again and complete the upgrade process.
+
+.. highlight:: xml
+
+In that case, set this configuration property in ``hbase-site.xml``::
+
+  <property>
+    <name>hbase.coprocessor.abortonerror</name>
+    <value>false</value>
+  </property>
+
+and restart the HBase regionservers. This will allow the regionservers to start up
+despite the coprocessor version mismatch. At this point, you should be able to run through
+the upgrade steps successfully. 
+
+At the end, remove the entry for ``hbase.coprocessor.abortonerror`` in order to ensure
+that data correctness is maintained.

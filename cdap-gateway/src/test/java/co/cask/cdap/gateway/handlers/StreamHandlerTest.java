@@ -23,8 +23,8 @@ import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.stream.StreamEventTypeAdapter;
 import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.data.format.TextRecordFormat;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
+import co.cask.cdap.format.TextRecordFormat;
 import co.cask.cdap.gateway.GatewayFastTestsSuite;
 import co.cask.cdap.gateway.GatewayTestBase;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
@@ -72,7 +72,7 @@ public class StreamHandlerTest extends GatewayTestBase {
 
 
   protected URL createURL(String path) throws URISyntaxException, MalformedURLException {
-    return createURL(Constants.DEFAULT_NAMESPACE, path);
+    return createURL(Id.Namespace.DEFAULT.getId(), path);
   }
 
   protected URL createStreamInfoURL(String streamName) throws URISyntaxException, MalformedURLException {

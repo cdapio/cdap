@@ -23,15 +23,24 @@
         <div class="results">
           <div class="row">
             <div class="col-xs-6">
-              <h3>Results</h3>
+              <h3>Preview</h3>
             </div>
 
             <div class="col-xs-6 text-right">
             <a
               class="btn btn-default download"
               ng-click="download(responses.request)"
+              ng-if="!downloading[responses.request]"
             >
-              <i class="fa fa-download"></i> Download All
+              <i class="fa fa-download"></i>
+              <span> Download All </span>
+            </a>
+
+            <a class="btn btn-default download"
+              ng-if="downloading[responses.request]"
+              disabled>
+              <i class="fa fa-spinner fa-spin"></i>
+              <span>Downloading</span>
             </a>
           </div>
 

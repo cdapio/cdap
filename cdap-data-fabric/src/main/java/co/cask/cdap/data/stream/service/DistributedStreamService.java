@@ -304,7 +304,7 @@ public class DistributedStreamService extends AbstractStreamService {
   private Cancellable subscribeToHeartbeatsFeed() throws NotificationFeedNotFoundException {
     LOG.debug("Subscribing to stream heartbeats notification feed");
     final Id.NotificationFeed heartbeatsFeed = new Id.NotificationFeed.Builder()
-      .setNamespaceId(Constants.SYSTEM_NAMESPACE)
+      .setNamespaceId(Id.Namespace.SYSTEM.getId())
       .setCategory(Constants.Notification.Stream.STREAM_INTERNAL_FEED_CATEGORY)
       .setName(Constants.Notification.Stream.STREAM_HEARTBEAT_FEED_NAME)
       .build();
@@ -363,7 +363,7 @@ public class DistributedStreamService extends AbstractStreamService {
    */
   private void createHeartbeatsFeed() throws NotificationFeedException {
     Id.NotificationFeed streamHeartbeatsFeed = new Id.NotificationFeed.Builder()
-      .setNamespaceId(Constants.SYSTEM_NAMESPACE)
+      .setNamespaceId(Id.Namespace.SYSTEM.getId())
       .setCategory(Constants.Notification.Stream.STREAM_INTERNAL_FEED_CATEGORY)
       .setName(Constants.Notification.Stream.STREAM_HEARTBEAT_FEED_NAME)
       .setDescription("Stream heartbeats feed.")
@@ -436,7 +436,8 @@ public class DistributedStreamService extends AbstractStreamService {
 
       @Override
       public void onFailure(Throwable t) {
-        LOG.warn("Failed to update stream resource requirement.", t);
+        LOG.warn("Failed to update stream resource requirement: {}", t.getMessage());
+        LOG.debug("Failed to update stream resource requirement.", t);
         if (isRunning()) {
           final FutureCallback<ResourceRequirement> callback = this;
           // Retry in 2 seconds. Shouldn't sleep in this callback thread. Should start a new thread for the retry.
@@ -479,7 +480,8 @@ public class DistributedStreamService extends AbstractStreamService {
           }
           return builder.build();
         } catch (Throwable e) {
-          LOG.error("Could not create requirement for coordinator in Stream handler leader", e);
+          LOG.warn("Could not create requirement for coordinator in Stream handler leader: " + e.getMessage());
+          LOG.debug("Could not create requirement for coordinator in Stream handler leader", e);
           throw Throwables.propagate(e);
         }
       }

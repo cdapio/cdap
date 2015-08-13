@@ -20,7 +20,9 @@ import co.cask.cdap.proto.Id;
 
 /**
  * Thrown when a program is not found
+ * @deprecated Use {@link co.cask.cdap.common.ProgramNotFoundException} instead
  */
+@Deprecated
 public class ProgramNotFoundException extends NotFoundException {
 
   private final Id.Program id;

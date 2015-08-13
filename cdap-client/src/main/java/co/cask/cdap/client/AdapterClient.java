@@ -16,12 +16,13 @@
 
 package co.cask.cdap.client;
 
+import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
-import co.cask.cdap.common.exception.AdapterNotFoundException;
-import co.cask.cdap.common.exception.ApplicationTemplateNotFoundException;
-import co.cask.cdap.common.exception.BadRequestException;
-import co.cask.cdap.common.exception.UnauthorizedException;
+import co.cask.cdap.common.AdapterNotFoundException;
+import co.cask.cdap.common.ApplicationTemplateNotFoundException;
+import co.cask.cdap.common.BadRequestException;
+import co.cask.cdap.common.UnauthorizedException;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.AdapterDetail;
@@ -56,6 +57,7 @@ import javax.inject.Inject;
 /**
  * Provides ways to interact with CDAP Adapters.
  */
+@Beta
 public class AdapterClient {
 
   private static final Gson GSON = new Gson();
@@ -81,8 +83,8 @@ public class AdapterClient {
    * @throws java.io.IOException if a network error occurred
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    */
-  public List<AdapterDetail> list() throws IOException, UnauthorizedException {
-    URL url = config.resolveNamespacedURLV3("adapters");
+  public List<AdapterDetail> list(Id.Namespace namespace) throws IOException, UnauthorizedException {
+    URL url = config.resolveNamespacedURLV3(namespace, "adapters");
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
     return ObjectResponse.fromJsonBody(response, new TypeToken<List<AdapterDetail>>() { }, GSON)
       .getResponseObject();
@@ -95,11 +97,8 @@ public class AdapterClient {
    * @throws java.io.IOException if a network error occurred
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    */
-  public AdapterDetail get(String adapterName)
-    throws AdapterNotFoundException, IOException, UnauthorizedException {
-
-    Id.Adapter adapter = Id.Adapter.from(config.getNamespace(), adapterName);
-    URL url = config.resolveNamespacedURLV3("adapters/" + adapterName);
+  public AdapterDetail get(Id.Adapter adapter) throws AdapterNotFoundException, IOException, UnauthorizedException {
+    URL url = config.resolveNamespacedURLV3(adapter.getNamespace(), "adapters/" + adapter.getId());
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
@@ -111,17 +110,17 @@ public class AdapterClient {
   /**
    * Creates an adapter.
    *
-   * @param adapterName name of the adapter to create
+   * @param adapter name of the adapter to create
    * @param adapterSpec properties of the adapter to create
    * @throws ApplicationTemplateNotFoundException if the desired adapter type was not found
    * @throws BadRequestException if the provided {@link AdapterConfig} was bad
    * @throws IOException if a network error occurred
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    */
-  public void create(String adapterName, AdapterConfig adapterSpec)
+  public void create(Id.Adapter adapter, AdapterConfig adapterSpec)
     throws ApplicationTemplateNotFoundException, BadRequestException, IOException, UnauthorizedException {
 
-    URL url = config.resolveNamespacedURLV3(String.format("adapters/%s", adapterName));
+    URL url = config.resolveNamespacedURLV3(adapter.getNamespace(), String.format("adapters/%s", adapter.getId()));
     HttpRequest request = HttpRequest.put(url).withBody(GSON.toJson(adapterSpec)).build();
 
     HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND,
@@ -136,14 +135,13 @@ public class AdapterClient {
   /**
    * Deletes an adapter.
    *
-   * @param adapterName Name of the adapter to delete
+   * @param adapter the adapter to delete
    * @throws AdapterNotFoundException if the adapter with the specified name could not be found
    * @throws java.io.IOException if a network error occurred
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    */
-  public void delete(String adapterName) throws AdapterNotFoundException, IOException, UnauthorizedException {
-    Id.Adapter adapter = Id.Adapter.from(config.getNamespace(), adapterName);
-    URL url = config.resolveNamespacedURLV3(String.format("adapters/%s", adapterName));
+  public void delete(Id.Adapter adapter) throws AdapterNotFoundException, IOException, UnauthorizedException {
+    URL url = config.resolveNamespacedURLV3(adapter.getNamespace(), String.format("adapters/%s", adapter.getId()));
     HttpResponse response = restClient.execute(HttpMethod.DELETE, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
@@ -154,13 +152,13 @@ public class AdapterClient {
   /**
    * Checks if a adapter exists.
    *
-   * @param adapterName Name of the adapter to check
+   * @param adapter the adapter to check
    * @return true if the adapter exists
    * @throws java.io.IOException if a network error occurred
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    */
-  public boolean exists(String adapterName) throws IOException, UnauthorizedException {
-    URL url = config.resolveNamespacedURLV3(String.format("adapters/%s", adapterName));
+  public boolean exists(Id.Adapter adapter) throws IOException, UnauthorizedException {
+    URL url = config.resolveNamespacedURLV3(adapter.getNamespace(), String.format("adapters/%s", adapter.getId()));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     return response.getResponseCode() != HttpURLConnection.HTTP_NOT_FOUND;
@@ -169,7 +167,7 @@ public class AdapterClient {
   /**
    * Waits for an adapter to exist.
    *
-   * @param adapterName Name of the adapter to check
+   * @param adapter the adapter to check
    * @param timeout time to wait before timing out
    * @param timeoutUnit time unit of timeout
    * @throws IOException if a network error occurred
@@ -177,14 +175,14 @@ public class AdapterClient {
    * @throws TimeoutException if the adapter was not yet existent before {@code timeout} milliseconds
    * @throws InterruptedException if interrupted while waiting
    */
-  public void waitForExists(final String adapterName, long timeout, TimeUnit timeoutUnit)
+  public void waitForExists(final Id.Adapter adapter, long timeout, TimeUnit timeoutUnit)
     throws IOException, UnauthorizedException, TimeoutException, InterruptedException {
 
     try {
       Tasks.waitFor(true, new Callable<Boolean>() {
         @Override
         public Boolean call() throws Exception {
-          return exists(adapterName);
+          return exists(adapter);
         }
       }, timeout, timeoutUnit, 1, TimeUnit.SECONDS);
     } catch (ExecutionException e) {
@@ -195,7 +193,7 @@ public class AdapterClient {
   /**
    * Waits for an adapter to be deleted.
    *
-   * @param adapterName Name of the adapter to check
+   * @param adapter the adapter to check
    * @param timeout time to wait before timing out
    * @param timeoutUnit time unit of timeout
    * @throws IOException if a network error occurred
@@ -203,14 +201,14 @@ public class AdapterClient {
    * @throws TimeoutException if the adapter was not yet deleted before {@code timeout} milliseconds
    * @throws InterruptedException if interrupted while waiting
    */
-  public void waitForDeleted(final String adapterName, long timeout, TimeUnit timeoutUnit)
+  public void waitForDeleted(final Id.Adapter adapter, long timeout, TimeUnit timeoutUnit)
     throws IOException, UnauthorizedException, TimeoutException, InterruptedException {
 
     try {
       Tasks.waitFor(false, new Callable<Boolean>() {
         @Override
         public Boolean call() throws Exception {
-          return exists(adapterName);
+          return exists(adapter);
         }
       }, timeout, timeoutUnit, 1, TimeUnit.SECONDS);
     } catch (ExecutionException e) {
@@ -221,14 +219,14 @@ public class AdapterClient {
   /**
    * Starts an adapter.
    *
-   * @param adapterName the name of the adapter to start
+   * @param adapter the adapter to start
    * @throws IOException if a network error occurred
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    * @throws AdapterNotFoundException if the adapter is not found
    */
-  public void start(String adapterName) throws IOException, UnauthorizedException, AdapterNotFoundException {
-    Id.Adapter adapter = Id.Adapter.from(config.getNamespace(), adapterName);
-    URL url = config.resolveNamespacedURLV3(String.format("adapters/%s/start", adapterName));
+  public void start(Id.Adapter adapter) throws IOException, UnauthorizedException, AdapterNotFoundException {
+    URL url = config.resolveNamespacedURLV3(
+      adapter.getNamespace(), String.format("adapters/%s/start", adapter.getId()));
     HttpResponse response = restClient.execute(HttpMethod.POST, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
@@ -239,14 +237,14 @@ public class AdapterClient {
   /**
    * Stops an adapter.
    *
-   * @param adapterName the name of the adapter to stop
+   * @param adapter the adapter to stop
    * @throws IOException if a network error occurred
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    * @throws AdapterNotFoundException if the adapter is not found
    */
-  public void stop(String adapterName) throws IOException, UnauthorizedException, AdapterNotFoundException {
-    Id.Adapter adapter = Id.Adapter.from(config.getNamespace(), adapterName);
-    URL url = config.resolveNamespacedURLV3(String.format("adapters/%s/stop", adapterName));
+  public void stop(Id.Adapter adapter) throws IOException, UnauthorizedException, AdapterNotFoundException {
+    URL url = config.resolveNamespacedURLV3(adapter.getNamespace(),
+                                            String.format("adapters/%s/stop", adapter.getId()));
     HttpResponse response = restClient.execute(HttpMethod.POST, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
@@ -257,7 +255,7 @@ public class AdapterClient {
   /**
    * Waits for an adapter to have a certain status.
    *
-   * @param adapterName name of the adapter to check
+   * @param adapter the adapter to check
    * @param status the status to wait for
    * @param timeout time to wait before timing out
    * @param timeoutUnit time unit of timeout
@@ -266,14 +264,14 @@ public class AdapterClient {
    * @throws TimeoutException if the adapter was not yet existent before {@code timeout} milliseconds
    * @throws InterruptedException if interrupted while waiting
    */
-  public void waitForStatus(final String adapterName, final AdapterStatus status, long timeout, TimeUnit timeoutUnit)
+  public void waitForStatus(final Id.Adapter adapter, final AdapterStatus status, long timeout, TimeUnit timeoutUnit)
     throws IOException, UnauthorizedException, TimeoutException, InterruptedException {
 
     try {
       Tasks.waitFor(true, new Callable<Boolean>() {
         @Override
         public Boolean call() throws Exception {
-          return status.equals(getStatus(adapterName));
+          return status.equals(getStatus(adapter));
         }
       }, timeout, timeoutUnit, 1, TimeUnit.SECONDS);
     } catch (ExecutionException e) {
@@ -281,22 +279,22 @@ public class AdapterClient {
     }
   }
 
-  public String getLogs(String adapterName)
+  public String getLogs(Id.Adapter adapter)
     throws AdapterNotFoundException, UnauthorizedException, IOException {
-    return getLogs(adapterName, null, null, null, null);
+    return getLogs(adapter, null, null, null, null);
   }
 
-  public String getLogs(String adapterName, @Nullable Long start, @Nullable Long stop)
+  public String getLogs(Id.Adapter adapter, @Nullable Long start, @Nullable Long stop)
     throws AdapterNotFoundException, UnauthorizedException, IOException {
-    return getLogs(adapterName, start, stop, null, null);
+    return getLogs(adapter, start, stop, null, null);
   }
 
-  public String getLogs(String adapterName, @Nullable Long start, @Nullable Long stop,
+  public String getLogs(Id.Adapter adapter, @Nullable Long start, @Nullable Long stop,
                         @Nullable Boolean escape, @Nullable String filter)
     throws IOException, AdapterNotFoundException, UnauthorizedException {
 
     Multimap<String, String> queryParams = HashMultimap.create();
-    queryParams.put("adapterid", adapterName);
+    queryParams.put("adapterid", adapter.getId());
 
     if (start != null) {
       queryParams.put("start", Long.toString(start));
@@ -312,12 +310,12 @@ public class AdapterClient {
     }
 
     String queryString = Joiner.on("&").join(queryParams.entries());
-    AdapterDetail adapterDetail = get(adapterName);
+    AdapterDetail adapterDetail = get(adapter);
     ProgramId program = adapterDetail.getProgram();
     // TODO: currently doesn't work for workflows since getting workflow logs is not implemented yet
 
-    Id.Adapter adapter = Id.Adapter.from(config.getNamespace(), adapterName);
-    URL url = config.resolveNamespacedURLV3(String.format("apps/%s/%s/%s/logs?%s",
+    URL url = config.resolveNamespacedURLV3(adapter.getNamespace(),
+                                            String.format("apps/%s/%s/%s/logs?%s",
                                                           program.getApplication(),
                                                           program.getType().getCategoryName(),
                                                           program.getId(), queryString));
@@ -330,11 +328,11 @@ public class AdapterClient {
     return response.getResponseBodyAsString();
   }
 
-  public AdapterStatus getStatus(String adapterName)
+  public AdapterStatus getStatus(Id.Adapter adapter)
     throws IOException, UnauthorizedException, AdapterNotFoundException {
 
-    Id.Adapter adapter = Id.Adapter.from(config.getNamespace(), adapterName);
-    URL url = config.resolveNamespacedURLV3(String.format("adapters/%s/status", adapterName));
+    URL url = config.resolveNamespacedURLV3(adapter.getNamespace(),
+                                            String.format("adapters/%s/status", adapter.getId()));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
@@ -347,15 +345,15 @@ public class AdapterClient {
     return AdapterStatus.valueOf(statusMap.get("status"));
   }
 
-  public List<RunRecord> getRuns(String adapterName, ProgramRunStatus status, long startTs, long endTs,
+  public List<RunRecord> getRuns(Id.Adapter adapter, ProgramRunStatus status, long startTs, long endTs,
                                  @Nullable Integer resultLimit)
     throws IOException, UnauthorizedException, AdapterNotFoundException {
 
-    String query = "?status" + status + "&start=" + startTs + "&end=" + endTs +
+    String query = "?status=" + status + "&start=" + startTs + "&end=" + endTs +
       (resultLimit == null ? "" : "&resultLimit=" + resultLimit);
 
-    Id.Adapter adapter = Id.Adapter.from(config.getNamespace(), adapterName);
-    URL url = config.resolveNamespacedURLV3(String.format("adapters/%s/runs" + query, adapterName));
+    URL url = config.resolveNamespacedURLV3(adapter.getNamespace(),
+                                            String.format("adapters/%s/runs" + query, adapter.getId()));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {

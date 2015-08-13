@@ -120,7 +120,7 @@ GITHUB="github"
 
 # BUILD.rst
 BUILD_RST="BUILD.rst"
-BUILD_RST_HASH="0d41d293a6e11c0461bf3ff3be03c242"
+BUILD_RST_HASH="f54ae74bb72f9ad894766b6c0bd2d2df"
 
 
 function usage() {
@@ -183,7 +183,7 @@ function build_javadocs_api() {
   cd ${PROJECT_PATH}
   set_mvn_environment
   check_build_for_changes
-  MAVEN_OPTS="-Xmx1024m" mvn clean install -P examples,templates,release -DskipTests -Dgpg.skip=true && mvn clean site -DskipTests -P templates -DisOffline=false
+  MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn clean install -P examples,templates,release -DskipTests -Dgpg.skip=true && mvn clean site -DskipTests -P templates -DisOffline=false
 }
 
 function build_javadocs_sdk() {
@@ -305,14 +305,15 @@ function test_an_include() {
   fi
   
   local m
+  local m_display
   
   if [[ "${new_md5_hash}" == "${NOT_FOUND_HASH}" ]]; then
-    m="${WARNING} ${RED}${BOLD}${file_name} not found!${NC}"  
+    m="${WARNING} ${RED}${BOLD}${file_name} not found!${NC} "  
     m="${m}\nfile: ${target}"  
   elif [[ "${new_md5_hash}" != "${md5_hash}" ]]; then
-    m="${WARNING} ${RED}${BOLD}${file_name} has changed! Compare files and update hash!${NC}"   
+    m="${WARNING} ${RED}${BOLD}${file_name} has changed! Compare files and update hash!${NC} "   
     m="${m}\nfile: ${target}"   
-    m="${m}\nOld MD5 Hash: ${md5_hash} New MD5 Hash: ${RED}${BOLD}${new_md5_hash}${NC}"   
+    m="${m}\nOld MD5 Hash: ${md5_hash} New MD5 Hash: ${new_md5_hash}"   
   fi
   if [ "x${m}" != "x" ]; then
     set_message "${m}"
@@ -357,7 +358,9 @@ function version() {
   local full_branch=`git rev-parse --abbrev-ref HEAD`
   IFS=/ read -a branch <<< "${full_branch}"
   GIT_BRANCH="${branch[1]}"
+  GIT_BRANCH_PARENT="develop"
   # Determine branch and branch type: one of develop, master, release, develop-feature, release-feature
+  # If unable to determine type, uses develop-feature
   if [ "${full_branch}" == "develop" -o  "${full_branch}" == "master" ]; then
     GIT_BRANCH="${full_branch}"
     GIT_BRANCH_TYPE=${GIT_BRANCH}
@@ -365,10 +368,15 @@ function version() {
     GIT_BRANCH_TYPE="release"
   else
     # We are on a feature branch: but from develop or release?
-    if [[ "x${GIT_BRANCH_PARENT}" == "x" ]]; then
-      GIT_BRANCH_PARENT=`git show-branch | grep '*' | grep -v "$(git rev-parse --abbrev-ref HEAD)" | head -n1 | sed 's/.*\[\(.*\)\].*/\1/' | sed 's/[\^~].*//'`  
+    # This is not easy to determine. This can fail very easily.
+    local git_branch_listing=`git show-branch | grep '*' | grep -v "$(git rev-parse --abbrev-ref HEAD)" | head -n1`
+    if [ "x${git_branch_listing}" == "x" ]; then 
+      echo_red_bold "Unable to determine parent branch as git_branch_listing empty; perhaps in a new branch with no commits"
+      echo_red_bold "Using default GIT_BRANCH_PARENT: ${GIT_BRANCH_PARENT}"
+    else
+      GIT_BRANCH_PARENT=`echo ${git_branch_listing} | sed 's/.*\[\(.*\)\].*/\1/' | sed 's/[\^~].*//'`
     fi
-    if [ "${GIT_BRANCH_PARENT}" == "release" ]; then
+    if [ "${GIT_BRANCH_PARENT:0:7}" == "release" ]; then
       GIT_BRANCH_TYPE="release-feature"
     else
       GIT_BRANCH_TYPE="develop-feature"
@@ -380,7 +388,6 @@ function version() {
 
 function display_version() {
   version
-  echo
   echo "PROJECT_PATH: ${PROJECT_PATH}"
   echo "PROJECT_VERSION: ${PROJECT_VERSION}"
   echo "PROJECT_LONG_VERSION: ${PROJECT_LONG_VERSION}"
@@ -390,18 +397,14 @@ function display_version() {
   echo "GIT_BRANCH_PARENT: ${GIT_BRANCH_PARENT}"
 }
 
-function set_messages_file() {
+function clear_messages_set_messages_file() {
+  MESSAGES=
   TMP_MESSAGES_FILE="/tmp/$(basename $0).$$.tmp"
   export TMP_MESSAGES_FILE
 }
 
 function cleanup_messages_file() {
   rm -f ${TMP_MESSAGES_FILE}
-}
-
-function clear_messages() {
-  MESSAGES=
-  set_messages_file
 }
 
 function set_message() {
@@ -413,9 +416,11 @@ function set_message() {
   if [ "x${TMP_MESSAGES_FILE}" != "x" ]; then
     local clean_m=`echo_clean_colors "${*}"`
     if [ -e ${TMP_MESSAGES_FILE} ]; then
+      # As TMP_MESSAGES_FILE exists, add a blank line to start new message
       echo >> ${TMP_MESSAGES_FILE}
     fi
-    echo -e "Warning Message for \"${MANUAL}\":\n${clean_m}" >> ${TMP_MESSAGES_FILE}
+    echo "Warning Message for \"${MANUAL}\":" >> ${TMP_MESSAGES_FILE}
+    echo "${clean_m}" >> ${TMP_MESSAGES_FILE}
   fi
 }
 
@@ -445,7 +450,9 @@ function display_any_messages() {
 function display_messages_file() {
   if [[ "x${TMP_MESSAGES_FILE}" != "x" && -a ${TMP_MESSAGES_FILE} ]]; then
     echo 
-    echo "Warning Messages: ${TMP_MESSAGES_FILE}"
+    echo "--------------------------------------------------------"
+    echo_red_bold "Warning Messages: ${TMP_MESSAGES_FILE}"
+    echo "--------------------------------------------------------"
     echo 
     echo >> ${TMP_MESSAGES_FILE}
     cat ${TMP_MESSAGES_FILE} | while read line
@@ -468,7 +475,7 @@ function rewrite() {
   echo "    $rewrite_source"
   if [ "x${3}" == "x" ]; then
     local sub_string=${2}
-    echo "  $sub_string"
+    echo "    $sub_string"
     if [ "$(uname)" == "Darwin" ]; then
       sed -i '.bak' "${sub_string}" ${rewrite_source}
       rm ${rewrite_source}.bak
@@ -478,7 +485,7 @@ function rewrite() {
   elif [ "x${4}" == "x" ]; then
     local sub_string=${2}
     local new_sub_string=${3}
-    echo "  ${sub_string} -> ${new_sub_string} "
+    echo "    ${sub_string} -> ${new_sub_string} "
     if [ "$(uname)" == "Darwin" ]; then
       sed -i '.bak' "s|${sub_string}|${new_sub_string}|g" ${rewrite_source}
       rm ${rewrite_source}.bak
@@ -491,7 +498,7 @@ function rewrite() {
     local new_sub_string=${4}
     echo "  to"
     echo "    ${rewrite_target}"
-    echo "  ${sub_string} -> ${new_sub_string} "
+    echo "    ${sub_string} -> ${new_sub_string} "
     sed -e "s|${sub_string}|${new_sub_string}|g" ${rewrite_source} > ${rewrite_target}
   fi
 }

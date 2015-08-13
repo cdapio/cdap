@@ -19,6 +19,7 @@ package co.cask.cdap.data2.transaction.metrics;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.proto.Id;
 import co.cask.tephra.metrics.TxMetricsCollector;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
@@ -32,14 +33,29 @@ public class TransactionManagerMetricsCollector extends TxMetricsCollector {
   @Inject
   public TransactionManagerMetricsCollector(MetricsCollectionService service) {
     this.metricsContext = service.getContext(
-      ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE,
+      ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Id.Namespace.SYSTEM.getId(),
                       Constants.Metrics.Tag.COMPONENT, "transactions"));
   }
 
   // todo: change TxMetricsCollector in Tephra
   @Override
   public void gauge(String metricName, int value, String...tags) {
-    metricsContext.increment(metricName, value);
+    metricsContext.gauge(metricName, value);
   }
 
+  @Override
+  public void histogram(String metricName, int value) {
+    // TODO: change when CDAP metrics supports histograms: CDAP-3120
+    metricsContext.gauge(metricName, value);
+  }
+
+  @Override
+  public void rate(String metricName) {
+    metricsContext.increment(metricName, 1L);
+  }
+
+  @Override
+  public void rate(String metricName, int count) {
+    metricsContext.increment(metricName, count);
+  }
 }

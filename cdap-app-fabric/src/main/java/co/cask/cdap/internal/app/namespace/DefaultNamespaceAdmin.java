@@ -20,13 +20,13 @@ import co.cask.cdap.api.metrics.MetricDeleteQuery;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
+import co.cask.cdap.common.AdapterNotFoundException;
+import co.cask.cdap.common.NamespaceAlreadyExistsException;
+import co.cask.cdap.common.NamespaceCannotBeCreatedException;
+import co.cask.cdap.common.NamespaceCannotBeDeletedException;
+import co.cask.cdap.common.NamespaceNotFoundException;
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.exception.AdapterNotFoundException;
-import co.cask.cdap.common.exception.NamespaceAlreadyExistsException;
-import co.cask.cdap.common.exception.NamespaceCannotBeCreatedException;
-import co.cask.cdap.common.exception.NamespaceCannotBeDeletedException;
-import co.cask.cdap.common.exception.NamespaceNotFoundException;
-import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.config.DashboardStore;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -34,6 +34,7 @@ import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.services.ApplicationLifecycleService;
 import co.cask.cdap.proto.AdapterStatus;
@@ -72,13 +73,15 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   private final Scheduler scheduler;
   private final ApplicationLifecycleService applicationLifecycleService;
   private final AdapterService adapterService;
+  private final ArtifactRepository artifactRepository;
 
   @Inject
   public DefaultNamespaceAdmin(Store store, PreferencesStore preferencesStore,
                                DashboardStore dashboardStore, DatasetFramework dsFramework,
                                ProgramRuntimeService runtimeService, QueueAdmin queueAdmin, StreamAdmin streamAdmin,
                                MetricStore metricStore, Scheduler scheduler,
-                               ApplicationLifecycleService applicationLifecycleService, AdapterService adapterService) {
+                               ApplicationLifecycleService applicationLifecycleService, AdapterService adapterService,
+                               ArtifactRepository artifactRepository) {
     this.queueAdmin = queueAdmin;
     this.streamAdmin = streamAdmin;
     this.store = store;
@@ -90,6 +93,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     this.metricStore = metricStore;
     this.applicationLifecycleService = applicationLifecycleService;
     this.adapterService = adapterService;
+    this.artifactRepository = artifactRepository;
   }
 
   /**
@@ -205,12 +209,14 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
       store.removeAll(namespaceId);
 
       deleteMetrics(namespaceId);
+      // delete all artifacts in the namespace
+      artifactRepository.clear(namespaceId);
 
       // Delete the namespace itself, only if it is a non-default namespace. This is because we do not allow users to
       // create default namespace, and hence deleting it may cause undeterministic behavior.
       // Another reason for not deleting the default namespace is that we do not want to call a delete on the default
       // namespace in the storage provider (Hive, HBase, etc), since we re-use their default namespace.
-      if (!Constants.DEFAULT_NAMESPACE_ID.equals(namespaceId)) {
+      if (!Id.Namespace.DEFAULT.equals(namespaceId)) {
         // Finally delete namespace from MDS
         store.deleteNamespace(namespaceId);
         // Delete namespace in storage providers

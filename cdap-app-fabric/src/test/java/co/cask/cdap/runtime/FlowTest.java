@@ -28,12 +28,12 @@ import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.common.AlreadyExistsException;
+import co.cask.cdap.common.NamespaceCannotBeCreatedException;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
-import co.cask.cdap.common.exception.AlreadyExistsException;
-import co.cask.cdap.common.exception.NamespaceCannotBeCreatedException;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.common.stream.StreamEventCodec;
 import co.cask.cdap.data2.queue.QueueClientFactory;
@@ -47,6 +47,7 @@ import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.runtime.app.PendingMetricTestApp;
 import co.cask.cdap.test.SlowTests;
@@ -115,7 +116,7 @@ public class FlowTest {
   @BeforeClass
   public static void init() throws AlreadyExistsException, NamespaceCannotBeCreatedException {
     NamespaceAdmin namespaceAdmin = AppFabricTestHelper.getInjector().getInstance(NamespaceAdmin.class);
-    namespaceAdmin.createNamespace(Constants.DEFAULT_NAMESPACE_META);
+    namespaceAdmin.createNamespace(NamespaceMeta.DEFAULT);
     metricStore = AppFabricTestHelper.getInjector().getInstance(MetricStore.class);
   }
 

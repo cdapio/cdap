@@ -25,6 +25,7 @@ import org.jboss.netty.handler.codec.http.HttpRequest;
 
 import java.util.Map;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -91,4 +92,36 @@ public class MonitorHandler extends AbstractMonitorHandler {
   public void getServiceSpec(HttpRequest request, HttpResponder responder) throws Exception {
     super.getServiceSpec(request, responder);
   }
+
+  /**
+   * Send request to restart all instances for a CDAP system service.
+   */
+  @Path("/system/services/{service-name}/restart")
+  @POST
+  public void restartAllServiceInstances(HttpRequest request, HttpResponder responder,
+                                         @PathParam("service-name") String serviceName) {
+    super.restartAllServiceInstances(request, responder, serviceName);
+  }
+
+  /**
+   * Send request to restart single instance identified by <instance-id>
+   */
+  @Path("/system/services/{service-name}/instances/{instance-id}/restart")
+  @POST
+  public void restartServiceInstance(HttpRequest request, HttpResponder responder,
+                                     @PathParam("service-name") String serviceName,
+                                     @PathParam("instance-id") int instanceId) {
+    super.restartServiceInstance(request, responder, serviceName, instanceId);
+  }
+
+  /**
+   * Send request to get the status of latest restart instances request for a CDAP system service.
+   */
+  @Path("/system/services/{service-name}/latest-restart")
+  @GET
+  public void getLatestRestartServiceInstanceStatus(HttpRequest request, HttpResponder responder,
+                                                    @PathParam("service-name") String serviceName) {
+    super.getLatestRestartServiceInstanceStatus(request, responder, serviceName);
+  }
+
 }

@@ -25,8 +25,8 @@ import co.cask.cdap.api.dataset.table.Table;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.AbstractIterator;
-import com.google.common.collect.Lists;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
@@ -249,7 +249,7 @@ abstract class TimeseriesDataset extends AbstractDataset {
     // Since we know that tags are sorted we can test match in one pass (like in merge sort)
     int curPos = Bytes.SIZEOF_LONG;
     int curTagToCheck = 0;
-    List<byte[]> parsedTags = Lists.newArrayList();
+    List<byte[]> parsedTags = new ArrayList<>();
 
     while (curPos < columnName.length - 1) {
       int tagLength = Bytes.toInt(columnName, curPos);

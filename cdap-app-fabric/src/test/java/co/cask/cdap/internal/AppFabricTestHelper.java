@@ -30,13 +30,15 @@ import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.internal.app.deploy.LocalApplicationManager;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
+import co.cask.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
-import co.cask.cdap.internal.app.deploy.pipeline.DeploymentInfo;
+import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.cdap.internal.guice.AppFabricTestModule;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.tephra.TransactionManager;
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
@@ -66,7 +68,6 @@ public class AppFabricTestHelper {
 
   public static CConfiguration configuration;
   private static Injector injector;
-  private static File tempFolder = TEMP_FOLDER.newFolder("dest");
 
   public static Injector getInjector() {
     return getInjector(CConfiguration.create());
@@ -95,9 +96,9 @@ public class AppFabricTestHelper {
   /**
    * @return Returns an instance of {@link LocalApplicationManager}
    */
-  public static Manager<DeploymentInfo, ApplicationWithPrograms> getLocalManager() {
-    ManagerFactory<DeploymentInfo, ApplicationWithPrograms> factory =
-      getInjector().getInstance(Key.get(new TypeLiteral<ManagerFactory<DeploymentInfo, ApplicationWithPrograms>>() {
+  public static Manager<AppDeploymentInfo, ApplicationWithPrograms> getLocalManager() {
+    ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms> factory =
+      getInjector().getInstance(Key.get(new TypeLiteral<ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms>>() {
       }));
 
     return factory.create(new ProgramTerminator() {
@@ -114,17 +115,22 @@ public class AppFabricTestHelper {
   }
 
   public static void deployApplication(Class<?> application) throws Exception {
-    deployApplication(Constants.DEFAULT_NAMESPACE_ID, application);
+    deployApplication(Id.Namespace.DEFAULT, application);
   }
 
-  /**
-   *
-   */
   public static void deployApplication(Id.Namespace namespace, Class<?> applicationClz,
                                        String appName, String config) throws Exception {
+    ensureNamespaceExists(namespace);
     AppFabricClient appFabricClient = getInjector().getInstance(AppFabricClient.class);
     Location deployedJar = appFabricClient.deployApplication(namespace, appName, applicationClz, config);
     deployedJar.delete(true);
+  }
+
+  private static void ensureNamespaceExists(Id.Namespace namespace) throws Exception {
+    NamespaceAdmin namespaceAdmin = getInjector().getInstance(NamespaceAdmin.class);
+    if (!namespaceAdmin.hasNamespace(namespace)) {
+      namespaceAdmin.createNamespace(new NamespaceMeta.Builder().setName(namespace).build());
+    }
   }
 
   public static void deployApplication(Id.Namespace namespace, Class<?> applicationClz, String appName)
@@ -137,41 +143,38 @@ public class AppFabricTestHelper {
   }
 
   public static void deployApplication(Class<?> applicationClz, String appName, String config) throws Exception {
-    deployApplication(Constants.DEFAULT_NAMESPACE_ID, applicationClz, appName, config);
+    deployApplication(Id.Namespace.DEFAULT, applicationClz, appName, config);
   }
 
   public static ApplicationWithPrograms deployApplicationWithManager(Class<?> appClass,
                                                                      final Supplier<File> folderSupplier)
     throws Exception {
+    ensureNamespaceExists(Id.Namespace.DEFAULT);
     Location deployedJar = createAppJar(appClass);
-    Location destination = new LocalLocationFactory().create(tempFolder.toURI()).append(deployedJar.getName());
-    DeploymentInfo info = new DeploymentInfo(new File(deployedJar.toURI()), destination, null);
-    try {
-      ApplicationWithPrograms appWithPrograms = getLocalManager().deploy(DefaultId.NAMESPACE, null, info).get();
-      // Transform program to get loadable, as the one created in deploy pipeline is not loadable.
+    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, appClass.getSimpleName(),
+                                              String.format("1.0.%d", System.currentTimeMillis()));
+    AppDeploymentInfo info = new AppDeploymentInfo(artifactId, appClass.getName(), deployedJar, null);
+    ApplicationWithPrograms appWithPrograms = getLocalManager().deploy(DefaultId.NAMESPACE, null, info).get();
+    // Transform program to get loadable, as the one created in deploy pipeline is not loadable.
 
-      final List<Program> programs = ImmutableList.copyOf(Iterables.transform(appWithPrograms.getPrograms(),
-                                                                              new Function<Program, Program>() {
-            @Override
-            public Program apply(Program program) {
-              try {
-                return Programs.createWithUnpack(program.getJarLocation(), folderSupplier.get());
-              } catch (IOException e) {
-                throw Throwables.propagate(e);
-              }
-            }
-          }
-      ));
-      return new ApplicationWithPrograms(appWithPrograms) {
+    final List<Program> programs = ImmutableList.copyOf(Iterables.transform(appWithPrograms.getPrograms(),
+      new Function<Program, Program>() {
         @Override
-        public Iterable<Program> getPrograms() {
-          return programs;
+        public Program apply(Program program) {
+          try {
+            return Programs.createWithUnpack(program.getJarLocation(), folderSupplier.get());
+          } catch (IOException e) {
+            throw Throwables.propagate(e);
+          }
         }
-      };
-    } finally {
-      info.getDestination().delete(true);
-      deployedJar.delete(true);
-    }
+      }
+    ));
+    return new ApplicationWithPrograms(appWithPrograms) {
+      @Override
+      public Iterable<Program> getPrograms() {
+        return programs;
+      }
+    };
   }
 
   private static Location createAppJar(Class<?> appClass) throws IOException {

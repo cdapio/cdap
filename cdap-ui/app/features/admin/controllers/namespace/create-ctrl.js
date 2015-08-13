@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.admin')
-  .controller('NamespaceCreateController', function ($scope, $alert, $modalInstance, MyDataSource, myNamespace, EventPipe) {
+  .controller('NamespaceCreateController', function ($scope, $alert, $modalInstance, MyDataSource, myNamespace, EventPipe, $timeout, $state) {
     $scope.model = {
       name: '',
       description: ''
@@ -22,18 +22,18 @@ angular.module(PKG.name + '.feature.admin')
         }
       })
         .then(
-          function success() {
+          function success(res) {
             $scope.isSaving = false;
-            $modalInstance.close();
             $alert({
-              title: 'Success!',
-              content: 'Namespace Created!',
+              content: res,
               type: 'success'
             });
 
             myNamespace.getList(true).then(function() {
               EventPipe.emit('namespace.update');
+               $modalInstance.close();
             });
+
           },
           function error(err) {
             $scope.isSaving = false;

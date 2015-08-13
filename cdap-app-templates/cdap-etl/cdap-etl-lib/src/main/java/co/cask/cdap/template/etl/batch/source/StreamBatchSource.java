@@ -54,7 +54,7 @@ import javax.annotation.Nullable;
 @SuppressWarnings("unused")
 @Plugin(type = "source")
 @Name("Stream")
-@Description("Batch source for a Stream")
+@Description("Batch source for a stream.")
 public class StreamBatchSource extends BatchSource<LongWritable, Object, StructuredRecord> {
 
   private static final Logger LOG = LoggerFactory.getLogger(StreamBatchSource.class);
@@ -66,9 +66,9 @@ public class StreamBatchSource extends BatchSource<LongWritable, Object, Structu
     Schema.Field.of("body", Schema.of(Schema.Type.BYTES))
   );
   private static final String NAME_DESCRIPTION = "Name of the stream. Must be a valid stream name. " +
-    "If it doesn't exist, it will be created";
+    "If it doesn't exist, it will be created.";
   private static final String DURATION_DESCRIPTION = "Size of the time window to read with each run of the pipeline. " +
-    "The format is expected to be a number followed by a 's', 'm', 'h', or 'd' specifying the time unit, with 's' " +
+    "The format is expected to be a number followed by an 's', 'm', 'h', or 'd' specifying the time unit, with 's' " +
     "for seconds, 'm' for minutes, 'h' for hours, and 'd' for days. For example, a value of '5m' means each run of " +
     "the pipeline will read 5 minutes of events from the stream.";
   private static final String DELAY_DESCRIPTION = "Optional delay for reading stream events. The value must be " +
@@ -215,7 +215,6 @@ public class StreamBatchSource extends BatchSource<LongWritable, Object, Structu
     }
 
     private Schema parseSchema() {
-      // try to parse the schema if there is one
       try {
         return Strings.isNullOrEmpty(schema) ? null : Schema.parseJson(schema);
       } catch (IOException e) {

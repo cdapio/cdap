@@ -23,13 +23,10 @@ import co.cask.cdap.common.discovery.ResolvingDiscoverable;
 import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
 import co.cask.cdap.common.metrics.MetricsReporterHook;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
-import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.MDSDatasetsRegistry;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
 import co.cask.cdap.data2.metrics.DatasetMetricsReporter;
-import co.cask.cdap.data2.registry.UsageRegistry;
-import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.http.NettyHttpService;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
@@ -78,20 +75,16 @@ public class DatasetService extends AbstractExecutionThreadService {
                         DiscoveryService discoveryService,
                         DiscoveryServiceClient discoveryServiceClient,
                         DatasetTypeManager typeManager,
-                        DatasetInstanceManager instanceManager,
                         MetricsCollectionService metricsCollectionService,
                         DatasetOpExecutor opExecutorClient,
                         MDSDatasetsRegistry mdsDatasets,
-                        ExploreFacade exploreFacade,
                         Set<DatasetMetricsReporter> metricReporters,
-                        StorageProviderNamespaceAdmin storageProviderNamespaceAdmin,
-                        UsageRegistry usageRegistry) throws Exception {
+                        DatasetInstanceService datasetInstanceService,
+                        StorageProviderNamespaceAdmin storageProviderNamespaceAdmin) throws Exception {
 
     this.typeManager = typeManager;
     DatasetTypeHandler datasetTypeHandler = new DatasetTypeHandler(typeManager, cConf, namespacedLocationFactory);
-    DatasetInstanceHandler datasetInstanceHandler = new DatasetInstanceHandler(typeManager, instanceManager,
-                                                                               opExecutorClient, exploreFacade, cConf,
-                                                                               usageRegistry);
+    DatasetInstanceHandler datasetInstanceHandler = new DatasetInstanceHandler(datasetInstanceService);
     UnderlyingSystemNamespaceHandler underlyingSystemNamespaceHandler =
       new UnderlyingSystemNamespaceHandler(storageProviderNamespaceAdmin);
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf);

@@ -137,7 +137,7 @@ start() {
 
       nohup nice -n $NICENESS "$JAVA" -Dcdap.service=$APP "$JAVA_HEAPMAX" \
         -Dexplore.conf.files=$EXPLORE_CONF_FILES \
-        -Dexplore.classpath=$EXPLORE_CLASSPATH "$OPTS" \
+        -Dexplore.classpath=$EXPLORE_CLASSPATH $OPTS \
         -Duser.dir=$LOCAL_DIR \
         -cp $CLASSPATH $MAIN_CLASS $MAIN_CLASS_ARGS </dev/null >>$loglog 2>&1 &
       echo $! >$pid
@@ -234,7 +234,7 @@ run() {
     check_or_create_master_local_dir
 
     echo "Running class $classname"
-    "$JAVA" "$JAVA_HEAPMAX" -Dhive.classpath=$HIVE_CLASSPATH -Duser.dir=$LOCAL_DIR "$OPTS" -cp $CLASSPATH $classname $@
+    "$JAVA" "$JAVA_HEAPMAX" -Dhive.classpath=$HIVE_CLASSPATH -Duser.dir=$LOCAL_DIR $OPTS -cp $CLASSPATH $classname $@
 }
 
 case "$1" in

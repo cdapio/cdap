@@ -25,14 +25,19 @@ import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.ObjectStore;
 import co.cask.cdap.api.dataset.lib.TimeseriesTable;
+import co.cask.cdap.api.dataset.lib.cube.AggregationFunction;
 import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.api.metrics.MetricDataQuery;
+import co.cask.cdap.api.metrics.MetricStore;
+import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.data.dataset.DatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -80,6 +85,8 @@ import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -98,6 +105,7 @@ public class MapReduceProgramRunnerTest {
   private static TransactionManager txService;
   private static DatasetFramework dsFramework;
   private static DatasetInstantiator datasetInstantiator;
+  private static MetricStore metricStore;
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
@@ -127,6 +135,7 @@ public class MapReduceProgramRunnerTest {
     datasetInstantiator = new DatasetInstantiator(DefaultId.NAMESPACE, dsFramework,
                                                   MapReduceProgramRunnerTest.class.getClassLoader(),
                                                   null, null);
+    metricStore = injector.getInstance(MetricStore.class);
 
     txService.startAndWait();
 
@@ -194,50 +203,68 @@ public class MapReduceProgramRunnerTest {
   }
 
   @Test
-  public void testMapreduceWithDynamicFileSet() throws Exception {
+  public void testMapreduceWithDynamicDatasets() throws Exception {
     Id.DatasetInstance rtInput1 = Id.DatasetInstance.from(DefaultId.NAMESPACE, "rtInput1");
     Id.DatasetInstance rtInput2 = Id.DatasetInstance.from(DefaultId.NAMESPACE, "rtInput2");
     Id.DatasetInstance rtOutput1 = Id.DatasetInstance.from(DefaultId.NAMESPACE, "rtOutput1");
     // create the datasets here because they are not created by the app
     dsFramework.addInstance("fileSet", rtInput1, FileSetProperties.builder()
-      .setBasePath("/rtInput1")
+      .setBasePath("rtInput1")
       .setInputFormat(TextInputFormat.class)
       .setOutputFormat(TextOutputFormat.class)
       .setOutputProperty(TextOutputFormat.SEPERATOR, ":")
       .build());
     dsFramework.addInstance("fileSet", rtOutput1, FileSetProperties.builder()
-      .setBasePath("/rtOutput1")
+      .setBasePath("rtOutput1")
       .setInputFormat(TextInputFormat.class)
       .setOutputFormat(TextOutputFormat.class)
       .setOutputProperty(TextOutputFormat.SEPERATOR, ":")
       .build());
     // build runtime args for app
     Map<String, String> runtimeArguments = Maps.newHashMap();
-    runtimeArguments.put(AppWithMapReduceUsingRuntimeFileSet.INPUT_NAME, "rtInput1");
-    runtimeArguments.put(AppWithMapReduceUsingRuntimeFileSet.INPUT_PATHS, "abc, xyz");
-    runtimeArguments.put(AppWithMapReduceUsingRuntimeFileSet.OUTPUT_NAME, "rtOutput1");
-    runtimeArguments.put(AppWithMapReduceUsingRuntimeFileSet.OUTPUT_PATH, "a001");
+    runtimeArguments.put(AppWithMapReduceUsingRuntimeDatasets.INPUT_NAME, "rtInput1");
+    runtimeArguments.put(AppWithMapReduceUsingRuntimeDatasets.INPUT_PATHS, "abc, xyz");
+    runtimeArguments.put(AppWithMapReduceUsingRuntimeDatasets.OUTPUT_NAME, "rtOutput1");
+    runtimeArguments.put(AppWithMapReduceUsingRuntimeDatasets.OUTPUT_PATH, "a001");
     // test reading and writing distinct datasets, reading more than one path
     testMapreduceWithFile("rtInput1", "abc, xyz", "rtOutput1", "a001",
-                          AppWithMapReduceUsingRuntimeFileSet.class,
-                          AppWithMapReduceUsingRuntimeFileSet.ComputeSum.class,
+                          AppWithMapReduceUsingRuntimeDatasets.class,
+                          AppWithMapReduceUsingRuntimeDatasets.ComputeSum.class,
                           new BasicArguments(runtimeArguments));
+
+    // validate that the table emitted metrics
+    Collection<MetricTimeSeries> metrics =
+      metricStore.query(new MetricDataQuery(
+        0,
+        System.currentTimeMillis() / 1000L,
+        60,
+        "system." + Constants.Metrics.Name.Dataset.OP_COUNT,
+        AggregationFunction.SUM,
+        ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, DefaultId.NAMESPACE.getId(),
+                        Constants.Metrics.Tag.APP, AppWithMapReduceUsingRuntimeDatasets.APP_NAME,
+                        Constants.Metrics.Tag.MAPREDUCE, AppWithMapReduceUsingRuntimeDatasets.MR_NAME,
+                        Constants.Metrics.Tag.DATASET, "rtt"),
+        Collections.<String>emptyList()));
+    Assert.assertEquals(1, metrics.size());
+    MetricTimeSeries ts = metrics.iterator().next();
+    Assert.assertEquals(1, ts.getTimeValues().size());
+    Assert.assertEquals(1, ts.getTimeValues().get(0).getValue());
 
     // test reading and writing same dataset
     dsFramework.addInstance("fileSet", rtInput2, FileSetProperties.builder()
-      .setBasePath("/rtInput2")
+      .setBasePath("rtInput2")
       .setInputFormat(TextInputFormat.class)
       .setOutputFormat(TextOutputFormat.class)
       .setOutputProperty(TextOutputFormat.SEPERATOR, ":")
       .build());
     runtimeArguments = Maps.newHashMap();
-    runtimeArguments.put(AppWithMapReduceUsingRuntimeFileSet.INPUT_NAME, "rtInput2");
-    runtimeArguments.put(AppWithMapReduceUsingRuntimeFileSet.INPUT_PATHS, "zzz");
-    runtimeArguments.put(AppWithMapReduceUsingRuntimeFileSet.OUTPUT_NAME, "rtInput2");
-    runtimeArguments.put(AppWithMapReduceUsingRuntimeFileSet.OUTPUT_PATH, "f123");
+    runtimeArguments.put(AppWithMapReduceUsingRuntimeDatasets.INPUT_NAME, "rtInput2");
+    runtimeArguments.put(AppWithMapReduceUsingRuntimeDatasets.INPUT_PATHS, "zzz");
+    runtimeArguments.put(AppWithMapReduceUsingRuntimeDatasets.OUTPUT_NAME, "rtInput2");
+    runtimeArguments.put(AppWithMapReduceUsingRuntimeDatasets.OUTPUT_PATH, "f123");
     testMapreduceWithFile("rtInput2", "zzz", "rtInput2", "f123",
-                          AppWithMapReduceUsingRuntimeFileSet.class,
-                          AppWithMapReduceUsingRuntimeFileSet.ComputeSum.class,
+                          AppWithMapReduceUsingRuntimeDatasets.class,
+                          AppWithMapReduceUsingRuntimeDatasets.ComputeSum.class,
                           new BasicArguments(runtimeArguments));
   }
 
@@ -394,7 +421,7 @@ public class MapReduceProgramRunnerTest {
                                                                                          TEMP_FOLDER_SUPPLIER);
 
     // we need to do a "get" on all datasets we use so that they are in dataSetInstantiator.getTransactionAware()
-    final TimeseriesTable table = (TimeseriesTable) datasetInstantiator.getDataset("timeSeries");
+    final TimeseriesTable table = datasetInstantiator.getDataset("timeSeries");
     final KeyValueTable beforeSubmitTable = datasetInstantiator.getDataset("beforeSubmit");
     final KeyValueTable onFinishTable = datasetInstantiator.getDataset("onFinish");
     final Table counters = datasetInstantiator.getDataset("counters");

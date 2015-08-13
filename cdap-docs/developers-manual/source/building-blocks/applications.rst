@@ -27,19 +27,19 @@ To create an application, implement the ``Application`` interface or subclass fr
 ``AbstractApplication`` class, specifying the application metadata and declaring and
 configuring each of the application components::
 
-      public class MyApp extends AbstractApplication {
-        @Override
-        public void configure() {
-          setName("myApp");
-          setDescription("My Sample Application");
-          addStream(new Stream("myAppStream"));
-          createDataset("myAppDataset", Table.class);
-          addFlow(new MyAppFlow());
-          addService(new MyService());
-          addMapReduce(new MyMapReduce());
-          addWorkflow(new MyAppWorkflow());
-        }
-      }
+  public class MyApp extends AbstractApplication {
+    @Override
+    public void configure() {
+      setName("myApp");
+      setDescription("My Sample Application");
+      addStream(new Stream("myAppStream"));
+      createDataset("myAppDataset", Table.class);
+      addFlow(new MyAppFlow());
+      addService(new MyService());
+      addMapReduce(new MyMapReduce());
+      addWorkflow(new MyAppWorkflow());
+    }
+  }
 
 Notice that *Streams* are defined using the provided ``Stream`` class, and *Datasets* are
 defined by passing a ``Table`` class; both are referenced by name.
@@ -48,7 +48,7 @@ Other components are defined using user-written classes that implement correspon
 interfaces and are referenced by passing an object, in addition to being assigned a unique
 name.
 
-Names used for streams and datasets need to be unique across the CDAP instance, while
+Names used for streams and datasets need to be unique across the CDAP namespace, while
 names used for programs and services need to be unique only to the application.
 
 .. rubric:: A Typical CDAP Application
@@ -67,3 +67,79 @@ Of course, not all components are required: it depends on the application. A min
 application could include a stream, a flow, a flowlet, and a dataset. It's possible a
 stream is not needed, if other methods of bringing in data are used. In the next pages,
 we'll look at these components, and their interactions.
+
+.. rubric:: Deployment Configuration
+
+Applications can use a ``Config`` class to receive a configuration during deployment time of the Application.
+For example, this can be used to specify |---| for application deployment time |---| a stream to be created or
+a dataset to be read, rather than having them hard-coded in the ``AbstractApplication``'s ``configure`` method.
+The configuration class needs to be the type parameter of the ``AbstractApplication`` class.
+It should also extend the ``Config`` class present in the CDAP API. The configuration is provided during
+application deployment time through a Header in the RESTful API. It is available during
+configuration time through the ``getConfig()`` method in ``AbstractApplication``.
+
+Information about the RESTful call is available in the :ref:`Lifecycle HTTP RESTful API documentation <http-restful-api-lifecycle>`.
+
+We can modify the ``MyApp`` class above to take in a Configuration ``MyApp.MyAppConfig``::
+
+  public class MyApp extends AbstractApplication<MyApp.MyAppConfig> {
+
+    public static class MyAppConfig extends Config {
+      String streamName;
+      String datasetName;
+
+      public MyAppConfig() {
+        // Default values
+        this.streamName = "myAppStream";
+        this.datasetName = "myAppDataset";
+      }
+    }
+
+    @Override
+    public void configure() {
+      MyAppConfig config = getConfig();
+      setName("myApp");
+      setDescription("My Sample Application");
+      addStream(new Stream(config.streamName));
+      createDataset(config.datasetName, Table.class);
+      addFlow(new MyAppFlow(config));
+      addService(new MyService(config.datasetName));
+      addMapReduce(new MyMapReduce(config.datasetName));
+      addWorkflow(new MyAppWorkflow());
+    }
+  }
+
+In order to use the configuration in programs, we pass it to individual programs using their constructor. If
+the configuration parameter is also required during runtime, you can use the ``@Property`` annotation.
+In the example below, the ``uniqueCountTableName`` is used in the ``configure`` method to register the
+usage of the dataset. It is also used during the runtime to get the dataset instance using ``getDataset()`` method::
+
+  public class UniqueCounter extends AbstractFlowlet {
+    @Property
+    private final String uniqueCountTableName;
+
+    private UniqueCountTable uniqueCountTable;
+
+    @Override
+    public void configure(FlowletConfigurer configurer) {
+      super.configure(configurer);
+      useDatasets(uniqueCountTableName);
+    }
+
+    public UniqueCounter(String uniqueCountTableName) {
+      this.uniqueCountTableName = uniqueCountTableName;
+    }
+
+    @Override
+    public void initialize(FlowletContext context) throws Exception {
+      super.initialize(context);
+      uniqueCountTable = context.getDataset(uniqueCountTableName);
+    }
+
+    @ProcessInput
+    public void process(String word) {
+      this.uniqueCountTable.updateUniqueCount(word);
+    }
+  }
+
+An example demonstrating the usage of a configuration is the :ref:`WordCount example <examples-word-count>`.

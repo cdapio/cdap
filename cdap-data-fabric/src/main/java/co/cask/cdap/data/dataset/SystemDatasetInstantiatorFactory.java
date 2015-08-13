@@ -36,18 +36,31 @@ public class SystemDatasetInstantiatorFactory {
   private final CConfiguration cConf;
 
   @Inject
-  private SystemDatasetInstantiatorFactory(LocationFactory locationFactory,
-                                           DatasetFramework datasetFramework,
-                                           CConfiguration cConf) {
+  public SystemDatasetInstantiatorFactory(LocationFactory locationFactory,
+                                          DatasetFramework datasetFramework,
+                                          CConfiguration cConf) {
     this.locationFactory = locationFactory;
     this.datasetFramework = datasetFramework;
     this.cConf = cConf;
   }
 
+  /**
+   * Create a {@link SystemDatasetInstantiator} using the system classloader as the parent classloader.
+   *
+   * @return a {@link SystemDatasetInstantiator} using the system classloader as the parent classloader
+   */
   public SystemDatasetInstantiator create() {
     return create(null);
   }
 
+  /**
+   * Create a {@link SystemDatasetInstantiator} that uses the given classloader as the parent when instantiating
+   * datasets. 
+   *
+   * @param parentClassLoader the parent classloader to use when instantiating datasets. If null, the system
+   *                          classloader will be used
+   * @return a {@link SystemDatasetInstantiator} using the given classloader as the parent classloader
+   */
   public SystemDatasetInstantiator create(@Nullable ClassLoader parentClassLoader) {
     return new SystemDatasetInstantiator(datasetFramework, parentClassLoader,
       new DirectoryClassLoaderProvider(cConf, locationFactory),

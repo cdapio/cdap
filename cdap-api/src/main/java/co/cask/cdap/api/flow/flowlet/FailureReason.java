@@ -16,8 +16,6 @@
 
 package co.cask.cdap.api.flow.flowlet;
 
-import com.google.common.base.Objects;
-
 /**
  * This class carries information about the reason of failure.
  */
@@ -94,9 +92,9 @@ public final class FailureReason {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
-      .add("type", type)
-      .add("message", message)
-      .toString();
+    return "FailureReason{" +
+      "type=" + type +
+      ", message='" + message + '\'' +
+      '}';
   }
 }

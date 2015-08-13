@@ -17,7 +17,7 @@
 package co.cask.cdap.data.stream.service.upload;
 
 import co.cask.cdap.api.stream.StreamEventData;
-import co.cask.cdap.common.exception.NotFoundException;
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.io.ByteBuffers;
 import co.cask.cdap.data.stream.service.ConcurrentStreamWriter;
 import co.cask.cdap.data.stream.service.MutableStreamEventData;

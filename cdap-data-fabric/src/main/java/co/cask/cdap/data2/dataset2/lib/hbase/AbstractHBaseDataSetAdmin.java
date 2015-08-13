@@ -19,6 +19,7 @@ import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.common.utils.ProjectInfo;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import co.cask.cdap.data2.util.hbase.HTableDescriptorBuilder;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -119,6 +120,9 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
       return;
     }
 
+    // create a new descriptor for the table upgrade
+    HTableDescriptorBuilder newDescriptor = tableUtil.buildHTableDescriptor(tableDescriptor);
+
     // Generate the coprocessor jar
     CoprocessorJar coprocessorJar = createCoprocessorJar();
     Location jarLocation = coprocessorJar.getJarLocation();
@@ -134,13 +138,13 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
         if (!jarLocation.getName().equals(info.getPath().getName())) {
           needUpgrade = true;
           // Remove old one and add the new one.
-          tableDescriptor.removeCoprocessor(info.getClassName());
-          addCoprocessor(tableDescriptor, coprocessor, jarLocation, coprocessorJar.getPriority(coprocessor));
+          newDescriptor.removeCoprocessor(info.getClassName());
+          addCoprocessor(newDescriptor, coprocessor, jarLocation, coprocessorJar.getPriority(coprocessor));
         }
       } else {
         // The coprocessor is missing from the table, add it.
         needUpgrade = true;
-        addCoprocessor(tableDescriptor, coprocessor, jarLocation, coprocessorJar.getPriority(coprocessor));
+        addCoprocessor(newDescriptor, coprocessor, jarLocation, coprocessorJar.getPriority(coprocessor));
       }
     }
 
@@ -148,7 +152,7 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
     Set<String> coprocessorNames = ImmutableSet.copyOf(Iterables.transform(coprocessorJar.coprocessors, CLASS_TO_NAME));
     for (String remove : Sets.difference(coprocessorInfo.keySet(), coprocessorNames)) {
       needUpgrade = true;
-      tableDescriptor.removeCoprocessor(remove);
+      newDescriptor.removeCoprocessor(remove);
     }
 
     if (!needUpgrade) {
@@ -156,7 +160,7 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
       return;
     }
 
-    setVersion(tableDescriptor);
+    setVersion(newDescriptor);
 
     LOG.info("Upgrading table '{}'...", tableId);
     boolean enableTable = false;
@@ -167,7 +171,7 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
       LOG.debug("Table '{}' not enabled when try to disable it.", tableId);
     }
 
-    tableUtil.modifyTable(getAdmin(), tableDescriptor);
+    tableUtil.modifyTable(getAdmin(), newDescriptor.build());
     if (enableTable) {
       tableUtil.enableTable(getAdmin(), tableId);
     }
@@ -175,7 +179,7 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
     LOG.info("Table '{}' upgrade completed.", tableId);
   }
 
-  public static void setVersion(HTableDescriptor tableDescriptor) {
+  public static void setVersion(HTableDescriptorBuilder tableDescriptor) {
     tableDescriptor.setValue(CDAP_VERSION, ProjectInfo.getVersion().toString());
   }
 
@@ -184,7 +188,7 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
     return new ProjectInfo.Version(value);
   }
 
-  protected void addCoprocessor(HTableDescriptor tableDescriptor, Class<? extends Coprocessor> coprocessor,
+  protected void addCoprocessor(HTableDescriptorBuilder tableDescriptor, Class<? extends Coprocessor> coprocessor,
                                 Location jarFile, Integer priority) throws IOException {
     if (priority == null) {
       priority = Coprocessor.PRIORITY_USER;

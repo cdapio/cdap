@@ -20,24 +20,25 @@ body {
     }
   }
   div.progress { margin: 1px; /* by default they have just margin-bottom: 20px */ }
-}
 
-header.navbar { border-bottom-color: @body-bg; }
-main.container {
-  margin-top: 100px;
-  padding-top: 1em;
-  > div { margin-bottom: 80px; }
-  .sidebar {
-    ul li a {
-      display: block;
-      &.abstract {
-        &.pull-left { width: 80%; }
-        // Create namespace "+"
-        + a { display: inline-block; width: 20%; }
+  main.container {
+    margin-top: 100px;
+    padding-top: 1em;
+    > div { margin-bottom: 80px; }
+    .sidebar {
+      ul li a {
+        display: block;
+        &.abstract {
+          &.pull-left { width: 80%; }
+          // Create namespace "+"
+          + a { display: inline-block; width: 20%; }
+        }
       }
     }
   }
 }
+
+header.navbar { border-bottom-color: @body-bg; }
 
 .caret {
   border-width: 6px 6px 0 6px;
@@ -64,7 +65,7 @@ main.container {
       transform: translateX(-50%) translateY(-50%);
     }
   }
-  .modal-body { max-height: 400px; overflow: auto; }
+  .modal-body { max-height: 75vh; overflow: auto; }
 }
 
 .modal-backdrop {
@@ -82,6 +83,11 @@ fieldset {
       animation-name: fadeIn;
     }
   }
+}
+
+span.fa-asterisk {
+  color: @brand-danger;
+  font-size: 11px;
 }
 
 .form-control {
@@ -118,7 +124,11 @@ footer {
       @media (max-width: @screen-md-max) { text-align: center; }
     }
   }
-  img { height: 32px; width: 32px; }
+  img {
+    height: 26px;
+    width: 26px;
+    margin-right: 8px;
+  }
   @media (min-width: @screen-md-max) {
     p, ul { height: 32px; margin: 0; }
     span, li { line-height: 32px; vertical-align: middle; }
@@ -169,5 +179,11 @@ footer {
   .programTitle {
     vertical-align: middle;
     margin: 0;
+
+    span {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
   }
 }

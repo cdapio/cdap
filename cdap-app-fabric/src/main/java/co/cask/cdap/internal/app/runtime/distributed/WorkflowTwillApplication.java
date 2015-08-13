@@ -15,15 +15,14 @@
  */
 package co.cask.cdap.internal.app.runtime.distributed;
 
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.proto.ProgramType;
 import org.apache.twill.api.EventHandler;
-import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.TwillApplication;
 
-import java.io.File;
 import java.util.Map;
 
 /**
@@ -31,15 +30,16 @@ import java.util.Map;
  */
 public class WorkflowTwillApplication extends AbstractProgramTwillApplication {
 
-  private static final int WORKFLOW_MEMORY_MB = 512;
-
   private final WorkflowSpecification spec;
+  private final Resources resources;
 
   public WorkflowTwillApplication(Program program, WorkflowSpecification spec,
-                                  Map<String, File> localizeFiles,
-                                  EventHandler eventHandler) {
-    super(program, localizeFiles, eventHandler);
+                                  Map<String, LocalizeResource> localizeResources,
+                                  EventHandler eventHandler,
+                                  Resources resources) {
+    super(program, localizeResources, eventHandler);
     this.spec = spec;
+    this.resources = resources;
   }
 
   @Override
@@ -49,15 +49,9 @@ public class WorkflowTwillApplication extends AbstractProgramTwillApplication {
 
   @Override
   protected void addRunnables(Map<String, RunnableResource> runnables) {
-    ResourceSpecification resourceSpec = ResourceSpecification.Builder.with()
-      .setVirtualCores(1)
-      .setMemory(WORKFLOW_MEMORY_MB, ResourceSpecification.SizeUnit.MEGA)
-      .setInstances(1)
-      .build();
-
     runnables.put(spec.getName(), new RunnableResource(
       new WorkflowTwillRunnable(spec.getName(), "hConf.xml", "cConf.xml"),
-      resourceSpec
+      createResourceSpec(resources, 1)
     ));
   }
 }

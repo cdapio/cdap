@@ -18,6 +18,7 @@ package co.cask.cdap.data2.dataset2.lib.table;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetAdmin;
+import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scan;
 import co.cask.cdap.api.dataset.table.Scanner;
@@ -25,12 +26,14 @@ import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.data2.dataset2.TableAssert;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionAware;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 
@@ -339,7 +342,7 @@ public abstract class BufferingTableTest<T extends BufferingTable>
       Assert.assertEquals(1, counters.size());
       byte[] colFromInc = counters.keySet().iterator().next();
       Assert.assertArrayEquals(new byte[] {2}, colFromInc);
-      Assert.assertEquals(3, (long) Bytes.toLong(counters.get(colFromInc)));
+      Assert.assertEquals(3, Bytes.toLong(counters.get(colFromInc)));
       counters.remove(new byte[] {2});
       colFromInc[0]++;
 
@@ -423,6 +426,76 @@ public abstract class BufferingTableTest<T extends BufferingTable>
     } finally {
       admin1.drop();
       admin2.drop();
+    }
+  }
+
+  @Test
+  public void testMultiGetIncludesBuffer() throws Exception {
+    DatasetAdmin admin = getTableAdmin(CONTEXT1, MY_TABLE);
+    admin.create();
+    try {
+      // persist some data
+      BufferingTable table = getTable(CONTEXT1, MY_TABLE);
+      Transaction tx1 = txClient.startShort();
+      table.startTx(tx1);
+      // writing a couple rows
+      // table should look like the following, with everything in the buffer
+      //          c1    c2    c3    c4
+      // r1       1     2     3     -
+      // r2       -     3     2     1
+      table.put(R1, a(C1, C2, C3), lb(1, 2, 3));
+      table.put(R2, a(C2, C3, C4), lb(3, 2, 1));
+      // check that multi-get can see buffered writes
+      List<Row> rows = table.get(Lists.newArrayList(new Get(R1), new Get(R2)));
+      Assert.assertEquals(2, rows.size());
+      TableAssert.assertRow(rows.get(0), R1, a(C1, C2, C3), lb(1, 2, 3));
+      TableAssert.assertRow(rows.get(1), R2, a(C2, C3, C4), lb(3, 2, 1));
+      // check multi-get with gets that specify columns, and one get that should return an empty row
+      rows = table.get(Lists.newArrayList(new Get(R1, C2, C3), new Get(R2, C2, C3), new Get(R3)));
+      Assert.assertEquals(3, rows.size());
+      TableAssert.assertRow(rows.get(0), R1, a(C2, C3), lb(2, 3));
+      TableAssert.assertRow(rows.get(1), R2, a(C2, C3), lb(3, 2));
+      Assert.assertTrue(rows.get(2).isEmpty());
+
+      // persist changes
+      Collection<byte []> txChanges = table.getTxChanges();
+      Assert.assertTrue(txClient.canCommit(tx1, txChanges));
+      Assert.assertTrue(table.commitTx());
+      Assert.assertTrue(txClient.commit(tx1));
+      table.postTxCommit();
+
+      // start another transaction
+      Transaction tx2 = txClient.startShort();
+      table.startTx(tx2);
+      // now add another row, delete a row, and change some column values
+      // table should look like the following
+      //         c1    c2    c3    c4    c5
+      // r1      -     -     3     2     -
+      // r3      -     -     -     -     1
+      table.put(R1, a(C2, C3, C4), lb(4, 3, 2));
+      table.delete(R1, a(C1, C2));
+      table.delete(R2);
+      table.put(R3, C5, L1);
+      // verify multi-get sees persisted data with buffer applied on top
+      rows = table.get(Lists.newArrayList(new Get(R1), new Get(R2), new Get(R3)));
+      Assert.assertEquals(3, rows.size());
+      TableAssert.assertRow(rows.get(0), R1, a(C3, C4), lb(3, 2));
+      Assert.assertTrue(rows.get(1).isEmpty());
+      TableAssert.assertRow(rows.get(2), R3, a(C5), lb(1));
+
+      // pretend there was a write conflict and rollback changes
+      Assert.assertTrue(table.rollbackTx());
+      txClient.abort(tx2);
+
+      // start another transaction and make sure it can't see what was done before
+      Transaction tx3 = txClient.startShort();
+      table.startTx(tx3);
+      rows = table.get(Lists.newArrayList(new Get(R1), new Get(R2)));
+      Assert.assertEquals(2, rows.size());
+      TableAssert.assertRow(rows.get(0), R1, a(C1, C2, C3), lb(1, 2, 3));
+      TableAssert.assertRow(rows.get(1), R2, a(C2, C3, C4), lb(3, 2, 1));
+    } finally {
+      admin.drop();
     }
   }
 

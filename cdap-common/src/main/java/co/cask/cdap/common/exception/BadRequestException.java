@@ -18,7 +18,9 @@ package co.cask.cdap.common.exception;
 
 /**
  * Thrown when the input was bad.
+ * @deprecated Use {@link co.cask.cdap.common.BadRequestException} instead
  */
+@Deprecated
 public class BadRequestException extends Exception {
 
   public BadRequestException(String message) {

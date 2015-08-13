@@ -21,7 +21,8 @@ import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
-import co.cask.cdap.common.exception.ProgramNotFoundException;
+import co.cask.cdap.common.ApplicationNotFoundException;
+import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
@@ -106,7 +107,7 @@ public final class ScheduleTaskRunner {
     ProgramRuntimeService.RuntimeInfo runtimeInfo;
     try {
       runtimeInfo = lifecycleService.start(id, sysArgs, userArgs, false);
-    } catch (ProgramNotFoundException e) {
+    } catch (ProgramNotFoundException | ApplicationNotFoundException e) {
       throw new TaskExecutionException(UserMessages.getMessage(UserErrors.PROGRAM_NOT_FOUND), e, false);
     }
 

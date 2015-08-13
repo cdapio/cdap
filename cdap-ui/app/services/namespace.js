@@ -14,7 +14,6 @@ angular.module(PKG.name + '.services')
       }
 
       if (!queryInProgress) {
-
         prom = $q.defer();
         queryInProgress = true;
         data.request(
@@ -33,6 +32,7 @@ angular.module(PKG.name + '.services')
                 }
 
                 this.namespaceList = res;
+                EventPipe.emit('namespace.update');
                 prom.resolve(res);
                 queryInProgress = null;
               }).bind(this),
@@ -53,7 +53,7 @@ angular.module(PKG.name + '.services')
                   $rootScope.$broadcast(MYAUTH_EVENT.sessionTimeout);
                   $state.go('login');
                 } else {
-                  EventPipe.emit('backendDown', 'Problem accessing namespace');
+                  EventPipe.emit('backendDown', 'Problem accessing namespace.', 'Please refresh the page.');
                 }
               }
         );

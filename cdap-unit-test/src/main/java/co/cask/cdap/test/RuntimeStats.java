@@ -67,7 +67,7 @@ public final class RuntimeStats {
   }
 
   public static RuntimeMetrics getFlowletMetrics(String applicationId, String flowId, String flowletId) {
-    return getFlowletMetrics(Constants.DEFAULT_NAMESPACE, applicationId, flowId, flowletId);
+    return getFlowletMetrics(Id.Namespace.DEFAULT.getId(), applicationId, flowId, flowletId);
   }
 
   public static RuntimeMetrics getServiceMetrics(String namespace, String applicationId, String serviceId) {
@@ -89,11 +89,11 @@ public final class RuntimeStats {
 
 
   public static RuntimeMetrics getServiceMetrics(String applicationId, String serviceId) {
-    return getServiceMetrics(Constants.DEFAULT_NAMESPACE, applicationId, serviceId);
+    return getServiceMetrics(Id.Namespace.DEFAULT.getId(), applicationId, serviceId);
   }
 
   public static RuntimeMetrics getServiceHandlerMetrics(String applicationId, String serviceId, String handlerId) {
-    return getServiceHandlerMetrics(Constants.DEFAULT_NAMESPACE, applicationId, serviceId, handlerId);
+    return getServiceHandlerMetrics(Id.Namespace.DEFAULT.getId(), applicationId, serviceId, handlerId);
   }
 
   @Deprecated
@@ -101,7 +101,7 @@ public final class RuntimeStats {
     try {
       metricStore.delete(
         new MetricDeleteQuery(0, System.currentTimeMillis() / 1000,
-                              ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE,
+                              ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Id.Namespace.DEFAULT.getId(),
                                               Constants.Metrics.Tag.APP, applicationId)));
     } catch (Exception e) {
       // Should never happen in unit test

@@ -17,185 +17,181 @@ package co.cask.cdap.internal.app.runtime.spark;
 
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkContext;
-import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.lang.ClassLoaders;
+import co.cask.cdap.common.lang.CombineClassLoader;
+import co.cask.cdap.common.lang.WeakReferenceDelegatorClassLoader;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
+import co.cask.cdap.common.twill.HadoopClassExcluder;
+import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data2.transaction.Transactions;
+import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.internal.app.runtime.spark.metrics.SparkMetricsSink;
-import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.tephra.DefaultTransactionExecutor;
 import co.cask.tephra.Transaction;
-import co.cask.tephra.TransactionExecutor;
+import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionFailureException;
 import co.cask.tephra.TransactionSystemClient;
+import com.google.common.base.Charsets;
+import com.google.common.base.Function;
 import com.google.common.base.Joiner;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
+import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import com.google.common.io.ByteStreams;
+import com.google.common.io.Closeables;
+import com.google.common.io.Files;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.mapreduce.MRConfig;
 import org.apache.spark.deploy.SparkSubmit;
+import org.apache.twill.api.ClassAcceptor;
+import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
+import org.apache.twill.internal.ApplicationBundler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.Tuple2;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.Writer;
 import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
-import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 
 /**
  * Performs the actual execution of Spark job.
  * <p/>
- * Service start -> Performs job setup, beforeSubmit and submit job
+ * Service start -> Performs job setup, and beforeSubmit call.
  * Service run -> Submits the spark job through {@link SparkSubmit}
  * Service triggerStop -> kill job
  * Service stop -> Commit/invalidate transaction, onFinish, cleanup
  */
 final class SparkRuntimeService extends AbstractExecutionThreadService {
 
-  static final String SPARK_HCONF_FILENAME = "spark_hconf.xml";
+  private static final String CDAP_SPARK_JAR = "cdap-spark.jar";
+
   private static final Logger LOG = LoggerFactory.getLogger(SparkRuntimeService.class);
+  private static final Function<File, String> FILE_TO_ABSOLUTE_PATH = new Function<File, String>() {
+    @Override
+    public String apply(File input) {
+      return input.getAbsolutePath();
+    }
+  };
 
   private final CConfiguration cConf;
   private final Configuration hConf;
   private final Spark spark;
-  private final SparkSpecification sparkSpecification;
   private final Location programJarLocation;
-  private final BasicSparkContext context;
-  private final LocationFactory locationFactory;
+  private final SparkContextFactory sparkContextFactory;
   private final TransactionSystemClient txClient;
-  private Transaction transaction;
+  private ExecutionSparkContext executionContext;
   private Runnable cleanupTask;
   private String[] sparkSubmitArgs;
-  private volatile boolean stopRequested;
+  private boolean success;
 
-  SparkRuntimeService(CConfiguration cConf, Configuration hConf, Spark spark, SparkSpecification sparkSpecification,
-                      BasicSparkContext context, Location programJarLocation, LocationFactory locationFactory,
+  SparkRuntimeService(CConfiguration cConf, Configuration hConf, Spark spark,
+                      SparkContextFactory sparkContextFactory, Location programJarLocation,
                       TransactionSystemClient txClient) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.spark = spark;
-    this.sparkSpecification = sparkSpecification;
     this.programJarLocation = programJarLocation;
-    this.context = context;
-    this.locationFactory = locationFactory;
+    this.sparkContextFactory = sparkContextFactory;
     this.txClient = txClient;
   }
 
   @Override
   protected String getServiceName() {
-    return "Spark - " + sparkSpecification.getName();
+    return "Spark - " + sparkContextFactory.getClientContext().getSpecification().getName();
   }
 
   @Override
   protected void startUp() throws Exception {
-    Configuration sparkHConf = new Configuration(hConf);
-
     // additional spark job initialization at run-time
     beforeSubmit();
 
+    // Creates a temporary directory locally for storing all generated files.
+    File tempDir = DirUtils.createTempDir(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
+                                                   cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile());
+    tempDir.mkdirs();
+    this.cleanupTask = createCleanupTask(tempDir);
     try {
-      Location programJarCopy = copyProgramJar(programJarLocation, context);
-      try {
-        // We remember tx, so that we can re-use it in Spark tasks
-        Transaction tx = txClient.startLong();
-        try {
-          SparkContextConfig.set(sparkHConf, context, cConf, tx, programJarCopy);
-          Location dependencyJar = buildDependencyJar(context, SparkContextConfig.getHConf());
-          try {
-            File tmpFile = File.createTempFile(SparkMetricsSink.SPARK_METRICS_PROPERTIES_FILENAME,
-                                               Location.TEMP_FILE_SUFFIX,
-                                               new File(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR)),
-                                                        cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile());
-            try {
-              SparkMetricsSink.generateSparkMetricsConfig(tmpFile);
-              context.setMetricsPropertyFile(tmpFile);
-              sparkSubmitArgs = prepareSparkSubmitArgs(sparkSpecification, sparkHConf, programJarCopy, dependencyJar);
-              LOG.info("Submitting Spark program: {} with arguments {}", context, Arrays.toString(sparkSubmitArgs));
-              this.transaction = tx;
-              this.cleanupTask = createCleanupTask(ImmutableList.of(tmpFile),
-                                                   ImmutableList.of(dependencyJar, programJarCopy));
-            } catch (Throwable t) {
-              tmpFile.delete();
-              throw t;
-            }
-          } catch (Throwable t) {
-            LOG.error("Exception while creating metrics properties file for Spark", t);
-            Locations.deleteQuietly(dependencyJar);
-            throw t;
-          }
-        } catch (Throwable t) {
-          Transactions.invalidateQuietly(txClient, tx);
-          throw t;
-        }
-      } catch (Throwable t) {
-        Locations.deleteQuietly(programJarCopy);
-        throw t;
+      SparkContextConfig contextConfig = new SparkContextConfig(hConf);
+
+      File jobJar = generateJobJar(tempDir);
+      File metricsConf = SparkMetricsSink.generateSparkMetricsConfig(File.createTempFile("metrics",
+                                                                                         ".properties", tempDir));
+
+      List<File> localizedArchives = Lists.newArrayList();
+      List<File> localizedFiles = Lists.newArrayList();
+
+      if (!contextConfig.isLocal()) {
+        localizedArchives.add(copyProgramJar(programJarLocation, tempDir));
+        localizedArchives.add(buildDependencyJar(tempDir));
+        localizedFiles.add(saveCConf(cConf, tempDir));
       }
+
+      // Create a long running transaction
+      Transaction transaction = txClient.startLong();
+
+      // Create execution spark context
+      executionContext = sparkContextFactory.createExecutionContext(transaction);
+
+      if (!contextConfig.isLocal()) {
+        localizedFiles.add(saveHConf(contextConfig.set(executionContext).getConfiguration(), tempDir));
+      }
+
+      sparkSubmitArgs = prepareSparkSubmitArgs(contextConfig.getExecutionMode(), sparkContextFactory.getClientContext(),
+                                               tempDir, localizedArchives, localizedFiles, jobJar, metricsConf);
+
     } catch (Throwable t) {
-      LOG.error("Exception while preparing for submitting Spark Job: {}", context, t);
-      throw Throwables.propagate(t);
+      cleanupTask.run();
+      throw t;
     }
   }
 
   @Override
   protected void run() throws Exception {
+    SparkClassLoader sparkClassLoader = new SparkClassLoader(executionContext);
+    ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(
+      new WeakReferenceDelegatorClassLoader(sparkClassLoader));
     try {
-      ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader();
-      // TODO: CDAP-598. Currently set it to CDAP system ClassLoader so that all system classes are available
-      // to the Spark program. The program classes are loaded from the JAR created through the copyProgramJar method.
-      // With this, the user Spark program can run, but it cannot use library of different version that CDAP
-      // depends on.
-      Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
-      try {
-        SparkProgramWrapper.setBasicSparkContext(context);
-        SparkProgramWrapper.setSparkProgramRunning(true);
-        SparkSubmit.main(sparkSubmitArgs);
-      } catch (Exception e) {
-        LOG.error("Failed to submit Spark program {}", context, e);
-      } finally {
-        // job completed so update running status and get the success status
-        SparkProgramWrapper.setSparkProgramRunning(false);
-        Thread.currentThread().setContextClassLoader(oldClassLoader);
-      }
+      LOG.debug("Submitting to spark with arguments: {}", Arrays.toString(sparkSubmitArgs));
+      SparkSubmit.main(sparkSubmitArgs);
+      success = true;
     } catch (Exception e) {
-      LOG.warn("Failed to set the classloader for submitting spark program");
-      throw Throwables.propagate(e);
-    }
-
-    // If the job is not successful, throw exception so that this service will terminate with a failure state
-    // Shutdown will still get executed, but the service will notify failure after that.
-    // However, if it's the job is requested to stop (via triggerShutdown, meaning it's a user action), don't throw
-    if (!stopRequested) {
-      // if spark program is not running anymore and it was successful we can say the the program succeeded
-      boolean programStatus = (!SparkProgramWrapper.isSparkProgramRunning()) &&
-        SparkProgramWrapper.isSparkProgramSuccessful();
-      Preconditions.checkState(programStatus, "Spark program execution failed.");
+      success = false;
+      // See if the context is stopped. If it is, then it's not an error.
+      if (!executionContext.isStopped()) {
+        LOG.error("Spark program execution failure: {}", executionContext, e);
+        throw e;
+      }
+    } finally {
+      Thread.currentThread().setContextClassLoader(oldClassLoader);
     }
   }
 
   @Override
   protected void shutDown() throws Exception {
-    boolean success = SparkProgramWrapper.isSparkProgramSuccessful();
     try {
+      Transaction transaction = executionContext.getTransaction();
       if (success) {
-        LOG.info("Committing Spark Program transaction: {}", context);
-        if (!txClient.commit(transaction)) {
-          LOG.warn("Spark Job transaction failed to commit");
-          throw new TransactionFailureException("Failed to commit transaction for Spark " + context.toString());
+        try {
+          executionContext.flushDatasets();
+          LOG.debug("Committing Spark Program transaction: {}", executionContext);
+          if (!txClient.commit(transaction)) {
+            LOG.warn("Spark Job transaction failed to commit");
+            throw new TransactionFailureException("Failed to commit transaction for Spark " + executionContext);
+          }
+        } catch (Exception e) {
+          LOG.error("Failed to commit datasets", e);
+          txClient.invalidate(transaction.getWritePointer());
         }
       } else {
         // invalidate the transaction as spark might have written to datasets too
@@ -206,7 +202,8 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
       try {
         onFinish(success);
       } finally {
-        context.close();
+        Closeables.closeQuietly(executionContext);
+        Closeables.closeQuietly(sparkContextFactory.getClientContext());
         cleanupTask.run();
       }
     }
@@ -214,14 +211,11 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
 
   @Override
   protected void triggerShutdown() {
-    try {
-      stopRequested = true;
-      if (SparkProgramWrapper.isSparkProgramRunning()) {
-        SparkProgramWrapper.stopSparkProgram();
-      }
-    } catch (Exception e) {
-      LOG.error("Failed to stop Spark job {}", sparkSpecification.getName(), e);
-      throw Throwables.propagate(e);
+    // No need to synchronize. The guava Service guarantees this method won't get called until
+    // the startUp() call returned.
+    ExecutionSparkContext context = executionContext;
+    if (context != null) {
+      context.close();
     }
   }
 
@@ -236,7 +230,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
           @Override
           public void run() {
             // note: this sets logging context on the thread level
-            LoggingContextAccessor.setLoggingContext(context.getLoggingContext());
+            LoggingContextAccessor.setLoggingContext(sparkContextFactory.getClientContext().getLoggingContext());
             runnable.run();
           }
         });
@@ -251,15 +245,17 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
    * Calls the {@link Spark#beforeSubmit(SparkContext)} method.
    */
   private void beforeSubmit() throws TransactionFailureException, InterruptedException {
-    createTransactionExecutor().execute(new TransactionExecutor.Subroutine() {
+    TransactionContext txContext = sparkContextFactory.getClientContext().getTransactionContext();
+    Transactions.execute(txContext, spark.getClass().getName() + ".beforeSubmit()", new Callable<Void>() {
       @Override
-      public void apply() throws Exception {
-        ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader();
-        Thread.currentThread().setContextClassLoader(spark.getClass().getClassLoader());
+      public Void call() throws Exception {
+        ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(new CombineClassLoader(
+          null, ImmutableList.of(spark.getClass().getClassLoader(), getClass().getClassLoader())));
         try {
-          spark.beforeSubmit(context);
+          spark.beforeSubmit(sparkContextFactory.getClientContext());
+          return null;
         } finally {
-          Thread.currentThread().setContextClassLoader(oldClassLoader);
+          ClassLoaders.setContextClassLoader(oldClassLoader);
         }
       }
     });
@@ -269,112 +265,171 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
    * Calls the {@link Spark#onFinish(boolean, SparkContext)} method.
    */
   private void onFinish(final boolean succeeded) throws TransactionFailureException, InterruptedException {
-    createTransactionExecutor().execute(new TransactionExecutor.Subroutine() {
+    TransactionContext txContext = sparkContextFactory.getClientContext().getTransactionContext();
+    Transactions.execute(txContext, spark.getClass().getName() + ".onFinish()", new Callable<Void>() {
       @Override
-      public void apply() throws Exception {
-        spark.onFinish(succeeded, context);
+      public Void call() throws Exception {
+        ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(new CombineClassLoader(
+          null, ImmutableList.of(spark.getClass().getClassLoader(), getClass().getClassLoader())));
+        try {
+          spark.onFinish(succeeded, sparkContextFactory.getClientContext());
+          return null;
+        } finally {
+          ClassLoaders.setContextClassLoader(oldClassLoader);
+        }
       }
     });
   }
 
   /**
-   * Creates a {@link TransactionExecutor} with all the {@link co.cask.tephra.TransactionAware} in the context.
-   */
-  private TransactionExecutor createTransactionExecutor() {
-    return new DefaultTransactionExecutor(txClient, context.getDatasetInstantiator().getTransactionAware());
-  }
-
-  /**
    * Prepares arguments which {@link SparkProgramWrapper} is submitted to {@link SparkSubmit} to run.
    *
-   * @param sparkSpec     {@link SparkSpecification} of this job
-   * @param conf          {@link Configuration} of the job whose {@link MRConfig#FRAMEWORK_NAME} specifies the mode in
-   *                      which spark runs
-   * @param jobJarCopy    {@link Location} copy of user program
-   * @param dependencyJar {@link Location} jar containing the dependencies of this job
+   * @param executionMode name of the execution mode
+   * @param context the {@link ClientSparkContext} for this execution
+   * @param localDir the directory to be used as the spark local directory
+   * @param localizedArchives list of files to be localized to the remote container as archives (.jar wil be expanded)
+   * @param localizedFiles list of files to be localized to the remote container
+   * @param jobJar the jar file submitted to Spark as the job jar
+   * @param metricsConf the configuration file for specifying Spark framework metrics collection integration
+   *
    * @return String[] of arguments with which {@link SparkProgramWrapper} will be submitted
    */
-  private String[] prepareSparkSubmitArgs(SparkSpecification sparkSpec, Configuration conf, Location jobJarCopy,
-                                          Location dependencyJar) throws Exception {
+  private String[] prepareSparkSubmitArgs(String executionMode, ClientSparkContext context, File localDir,
+                                          Iterable<File> localizedArchives, Iterable<File> localizedFiles,
+                                          File jobJar, File metricsConf) {
 
-    List<String> jars = Lists.newArrayList();
-    jars.add(dependencyJar.toURI().getPath());
+    String archives = Joiner.on(',').join(Iterables.transform(localizedArchives, FILE_TO_ABSOLUTE_PATH));
+    String files = Joiner.on(',').join(Iterables.transform(localizedFiles, FILE_TO_ABSOLUTE_PATH));
 
-    // Spark doesn't support bundle jar. However, the ProgramClassLoader already has everything expanded.
-    // We can just add those jars as dependency for spark submit.
-    // It is a little hacky since we know the ProgramClassLoader is a URLClassLoader. Revisit in CDAP-598
-    ClassLoader programClassLoader = spark.getClass().getClassLoader();
-    if (programClassLoader instanceof URLClassLoader) {
-      for (URL url : ((URLClassLoader) programClassLoader).getURLs()) {
-        File file = new File(url.toURI()).getAbsoluteFile();
-        if (file.isFile() && file.getName().endsWith(".jar")) {
-          jars.add(file.getAbsolutePath());
-        }
-      }
+    ImmutableList.Builder<String> builder = ImmutableList.builder();
+
+    // Add user specified configs first. CDAP specifics config will override them later if there are duplicates.
+    for (Tuple2<String, String> tuple : context.getSparkConf().getAll()) {
+      builder.add("--conf").add(tuple._1() + "=" + tuple._2());
     }
 
-    return new String[]{"--class", SparkProgramWrapper.class.getCanonicalName(), "--jars",
-      Joiner.on(',').join(jars), "--master", conf.get(MRConfig.FRAMEWORK_NAME), jobJarCopy.toURI().getPath(),
-      sparkSpec.getMainClassName()};
+    builder.add("--class").add(SparkProgramWrapper.class.getName())
+           .add("--master").add(executionMode)
+           .add("--conf").add("spark.executor.extraClassPath=$PWD/" + CDAP_SPARK_JAR + "/lib/*")
+           .add("--conf").add("spark.metrics.conf=" + metricsConf.getAbsolutePath())
+           .add("--conf").add("spark.local.dir=" + localDir.getAbsolutePath())
+           .add("--conf").add("spark.executor.memory=" + context.getExecutorResources().getMemoryMB() + "m")
+           .add("--conf").add("spark.executor.cores=" + context.getExecutorResources().getVirtualCores());
+
+    if (!archives.isEmpty()) {
+      builder.add("--archives").add(archives);
+    }
+    if (!files.isEmpty()) {
+      builder.add("--files").add(files);
+    }
+    List<String> args = builder
+      .add(jobJar.getAbsolutePath())
+      .add(context.getSpecification().getMainClassName())
+      .build();
+
+    return args.toArray(new String[args.size()]);
   }
 
   /**
-   * Packages all the dependencies of the Spark job
+   * Packages all the dependencies of the Spark job. It contains all CDAP classes that are needed to run the
+   * user spark program.
    *
-   * @param context {@link BasicSparkContext} created for this job
-   * @param conf    {@link Configuration} prepared for this job by {@link SparkContextConfig}
-   * @return {@link Location} of the dependency jar
+   * @param targetDir directory for the file to be created in
+   * @return {@link File} of the dependency jar in the given target directory
    * @throws IOException if failed to package the jar
    */
-  private Location buildDependencyJar(BasicSparkContext context, Configuration conf) throws IOException {
-    Id.Program programId = context.getProgram().getId();
+  private File buildDependencyJar(File targetDir) throws IOException {
+    Location tempLocation = new LocalLocationFactory(targetDir).create(CDAP_SPARK_JAR);
 
-    Location jobJarLocation = locationFactory.create(String.format("%s.%s.%s.%s.%s.jar",
-                                                                   ProgramType.SPARK.name().toLowerCase(),
-                                                                   programId.getNamespaceId(),
-                                                                   programId.getApplicationId(), programId.getId(),
-                                                                   context.getRunId().getId()));
+    final HadoopClassExcluder hadoopClassExcluder = new HadoopClassExcluder();
+    ApplicationBundler appBundler = new ApplicationBundler(new ClassAcceptor() {
 
-    LOG.debug("Creating Spark Job Jar: {}", jobJarLocation.toURI());
-    try (JarOutputStream jarOut = new JarOutputStream(jobJarLocation.getOutputStream())) {
-      // All we need is the serialized hConf in the job jar
-      jarOut.putNextEntry(new JarEntry(SPARK_HCONF_FILENAME));
-      conf.writeXml(jarOut);
-    }
-
-    return jobJarLocation;
+      @Override
+      public boolean accept(String className, URL classUrl, URL classPathUrl) {
+        // Exclude the spark-assembly and scala
+        if (className.startsWith("org.apache.spark")
+          || className.startsWith("scala")
+          || classPathUrl.toString().contains("spark-assembly")) {
+          return false;
+        }
+        return hadoopClassExcluder.accept(className, classUrl, classPathUrl);
+      }
+    });
+    appBundler.createBundle(tempLocation, SparkProgramWrapper.class, HBaseTableUtilFactory.getHBaseTableUtilClass());
+    return new File(tempLocation.toURI());
   }
 
   /**
-   * Copies the user submitted program jar and flatten it out by expanding all jars in the "/" and "/lib" to top level.
+   * Copy the program jar to local directory.
    *
-   * @param jobJarLocation {link Location} of the user's job
-   * @param context        {@link BasicSparkContext} context of this job
-   * @return {@link Location} where the program jar was copied
-   * @throws IOException if failed to get the {@link Location#getInputStream()} or {@link Location#getOutputStream()}
+   * @return {@link File} of the copied jar in the given target directory
    */
-  private Location copyProgramJar(Location jobJarLocation, BasicSparkContext context) throws IOException {
-    Id.Program programId = context.getProgram().getId();
-    Location programJarCopy = locationFactory.create(String.format("%s.%s.%s.%s.%s.program.jar",
-                                                                   ProgramType.SPARK.name().toLowerCase(),
-                                                                   programId.getNamespaceId(),
-                                                                   programId.getApplicationId(), programId.getId(),
-                                                                   context.getRunId().getId()));
+  private File copyProgramJar(Location programJar, File targetDir) throws IOException {
+    File tempFile = new File(targetDir, SparkContextProvider.PROGRAM_JAR_NAME);
 
-    ByteStreams.copy(Locations.newInputSupplier(jobJarLocation), Locations.newOutputSupplier(programJarCopy));
-    return programJarCopy;
+    LOG.debug("Copy program jar from {} to {}", programJar, tempFile);
+    Files.copy(Locations.newInputSupplier(programJar), tempFile);
+    return tempFile;
   }
 
-  private Runnable createCleanupTask(final Iterable<File> files, final Iterable<Location> locations) {
+  /**
+   * Generates an empty JAR file.
+   *
+   * @return The generated {@link File} in the given target directory
+   */
+  private File generateJobJar(File targetDir) throws IOException {
+    File tempFile = new File(targetDir, "emptyJob.jar");
+    JarOutputStream output = new JarOutputStream(new FileOutputStream(tempFile));
+    output.close();
+    return tempFile;
+  }
+
+  /**
+   * Serialize {@link CConfiguration} to a file.
+   *
+   * @return The {@link File} of the serialized configuration in the given target directory.
+   */
+  private File saveCConf(CConfiguration cConf, File targetDir) throws IOException {
+    File file = new File(targetDir, SparkContextProvider.CCONF_FILE_NAME);
+    try (Writer writer = Files.newWriter(file, Charsets.UTF_8)) {
+      cConf.writeXml(writer);
+    }
+    return file;
+  }
+
+  /**
+   * Serialize {@link Configuration} to a file.
+   *
+   * @return The {@link File} of the serialized configuration in the given target directory.
+   */
+  private File saveHConf(Configuration hConf, File targetDir) throws IOException {
+    File file = new File(targetDir, SparkContextProvider.HCONF_FILE_NAME);
+    try (Writer writer = Files.newWriter(file, Charsets.UTF_8)) {
+      hConf.writeXml(writer);
+    }
+    return file;
+  }
+
+  /**
+   * Creates a {@link Runnable} for deleting content for the given directory.
+   */
+  private Runnable createCleanupTask(final File directory) {
     return new Runnable() {
 
       @Override
       public void run() {
-        for (File file : files) {
-          file.delete();
+        // Cleanup all system properties setup by SparkSubmit
+        Iterable<String> sparkKeys = Iterables.filter(System.getProperties().stringPropertyNames(),
+                                                      Predicates.containsPattern("^spark\\."));
+        for (String key : sparkKeys) {
+          LOG.debug("Removing Spark system property: {}", key);
+          System.clearProperty(key);
         }
-        for (Location location : locations) {
-          Locations.deleteQuietly(location);
+
+        try {
+          DirUtils.deleteDirectoryContents(directory);
+        } catch (IOException e) {
+          LOG.warn("Failed to cleanup directory {}", directory);
         }
       }
     };

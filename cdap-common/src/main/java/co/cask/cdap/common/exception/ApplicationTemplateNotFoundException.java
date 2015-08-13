@@ -20,7 +20,9 @@ import co.cask.cdap.proto.Id;
 
 /**
  * Thrown when an ApplicationTemplate is not found
+ * @deprecated Use {@link co.cask.cdap.common.ApplicationTemplateNotFoundException} instead
  */
+@Deprecated
 public class ApplicationTemplateNotFoundException extends NotFoundException {
 
   private final Id.ApplicationTemplate template;

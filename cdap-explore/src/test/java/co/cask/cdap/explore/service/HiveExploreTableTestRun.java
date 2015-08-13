@@ -20,10 +20,13 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.proto.ColumnDesc;
+import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.test.SlowTests;
 import co.cask.tephra.Transaction;
@@ -40,7 +43,7 @@ import org.junit.rules.TemporaryFolder;
 import java.util.List;
 
 /**
- * Tests exploration of object mapped tables.
+ * Tests exploration of Tables.
  */
 @Category(SlowTests.class)
 public class HiveExploreTableTestRun extends BaseHiveExploreServiceTest {
@@ -97,6 +100,18 @@ public class HiveExploreTableTestRun extends BaseHiveExploreServiceTest {
   @AfterClass
   public static void stop() throws Exception {
     datasetFramework.deleteInstance(MY_TABLE);
+  }
+
+  @Test
+  public void testNoOpOnMissingSchema() throws Exception {
+    Id.DatasetInstance datasetId = Id.DatasetInstance.from(NAMESPACE_ID, "noschema");
+    datasetFramework.addInstance(Table.class.getName(), datasetId, DatasetProperties.EMPTY);
+    try {
+      DatasetSpecification spec = datasetFramework.getDatasetSpec(datasetId);
+      Assert.assertEquals(QueryHandle.NO_OP, exploreTableManager.enableDataset(datasetId, spec));
+    } finally {
+      datasetFramework.deleteInstance(datasetId);
+    }
   }
 
   @Test

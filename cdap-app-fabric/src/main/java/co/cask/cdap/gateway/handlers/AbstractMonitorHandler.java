@@ -29,6 +29,8 @@ import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -41,6 +43,8 @@ import java.util.TreeSet;
  * Monitor Handler returns the status of different discoverable services
  */
 public class AbstractMonitorHandler extends AbstractAppFabricHttpHandler {
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractMonitorHandler.class);
+
   private final Map<String, MasterServiceManager> serviceManagementMap;
   private static final String STATUSOK = Constants.Monitor.STATUS_OK;
   private static final String STATUSNOTOK = Constants.Monitor.STATUS_NOTOK;
@@ -202,4 +206,80 @@ public class AbstractMonitorHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
+  public void restartAllServiceInstances(HttpRequest request, HttpResponder responder, String serviceName) {
+    restartInstances(responder, serviceName, -1, true);
+  }
+
+  public void restartServiceInstance(HttpRequest request, HttpResponder responder, String serviceName,
+                                     int instanceId) {
+    restartInstances(responder, serviceName, instanceId, false);
+  }
+
+  private void restartInstances(HttpResponder responder, String serviceName, int instanceId, boolean restartAll) {
+    long startTimeMs = System.currentTimeMillis();
+    boolean isSuccess = true;
+    if (!serviceManagementMap.containsKey(serviceName)) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Invalid service name %s", serviceName));
+      return;
+    }
+    MasterServiceManager masterServiceManager = serviceManagementMap.get(serviceName);
+
+    try {
+      if (!masterServiceManager.isServiceEnabled()) {
+        String message = String.format("Failed to restart instance for % because the service is not enabled.",
+                                       serviceName);
+        LOG.debug(message);
+
+        isSuccess = false;
+        responder.sendString(HttpResponseStatus.FORBIDDEN, message);
+        return;
+      }
+
+      if (restartAll) {
+        masterServiceManager.restartAllInstances();
+      } else {
+        if (instanceId < 0 || instanceId >= masterServiceManager.getInstances()) {
+          throw new IllegalArgumentException();
+        }
+        masterServiceManager.restartInstances(instanceId);
+      }
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (IllegalStateException ise) {
+      String message = String.format("Failed to restart instance for % because the service may not be ready yet",
+                                 serviceName);
+      LOG.debug(message, ise);
+
+      isSuccess = false;
+      responder.sendString(HttpResponseStatus.SERVICE_UNAVAILABLE, message);
+    } catch (IllegalArgumentException iex) {
+      String message = String.format("Failed to restart instance %d for service: %s because invalid instance id",
+                                     instanceId, serviceName);
+      LOG.debug(message, iex);
+
+      isSuccess = false;
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, message);
+    } catch (Exception ex) {
+      LOG.warn(String.format("Exception when trying to restart instances for service %s", serviceName), ex);
+
+      isSuccess = false;
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
+                           String.format("Error restarting instance %d for service: %s", instanceId, serviceName));
+    } finally {
+      long endTimeMs = System.currentTimeMillis();
+      if (restartAll) {
+        serviceStore.setRestartAllInstancesRequest(serviceName, startTimeMs, endTimeMs, isSuccess);
+      } else {
+        serviceStore.setRestartInstanceRequest(serviceName, startTimeMs, endTimeMs, isSuccess, instanceId);
+      }
+    }
+  }
+
+  public void getLatestRestartServiceInstanceStatus(HttpRequest request, HttpResponder responder, String serviceName) {
+    try {
+      responder.sendJson(HttpResponseStatus.OK, serviceStore.getLatestRestartInstancesRequest(serviceName));
+    } catch (IllegalStateException ex) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND,
+                           String.format("No restart instances request found or %s", serviceName));
+    }
+  }
 }

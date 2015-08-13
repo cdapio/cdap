@@ -20,8 +20,8 @@ import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.util.AbstractCommand;
 import co.cask.cdap.client.PreferencesClient;
-import co.cask.cdap.common.exception.NotFoundException;
-import co.cask.cdap.common.exception.UnauthorizedException;
+import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.UnauthorizedException;
 import co.cask.common.cli.Arguments;
 import com.google.common.base.Joiner;
 
@@ -78,7 +78,7 @@ public abstract class AbstractGetPreferencesCommand extends AbstractCommand {
       case SPARK:
         return client.getProgramPreferences(parseProgramId(programIdParts, type.getProgramType()), resolved);
       default:
-        throw new IllegalArgumentException("Unrecognized element type for preferences "  + type.getTitleName());
+        throw new IllegalArgumentException("Unrecognized element type for preferences: "  + type.getShortName());
     }
   }
 }

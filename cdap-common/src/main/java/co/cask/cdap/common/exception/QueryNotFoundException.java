@@ -20,7 +20,9 @@ import co.cask.cdap.proto.Id;
 
 /**
  * Thrown when a query was not found by its handle.
+ * @deprecated Use {@link co.cask.cdap.common.QueryNotFoundException} instead
  */
+@Deprecated
 public class QueryNotFoundException extends NotFoundException {
 
   private final Id.QueryHandle id;

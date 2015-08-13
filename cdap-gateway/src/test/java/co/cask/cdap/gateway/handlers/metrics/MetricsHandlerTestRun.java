@@ -150,7 +150,8 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
   public void testSearchWithTags() throws Exception {
     // empty context
     verifySearchResultWithTags("/v3/metrics/search?target=tag", getSearchResultExpected("namespace", "myspace",
-                                                                                        "namespace", "yourspace"));
+                                                                                        "namespace", "yourspace",
+                                                                                        "namespace", "system"));
 
     // WordCount is in myspace, WCount in yourspace
     verifySearchResultWithTags("/v3/metrics/search?target=tag&tag=namespace:myspace",
@@ -216,7 +217,8 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
                                getSearchResultExpected("adapter", "adapter1",
                                                        "adapter", "adapter2",
                                                        "app", "WordCount1",
-                                                       "app", "WCount1"));
+                                                       "app", "WCount1",
+                                                       "component", "metrics.processor"));
 
     verifySearchResultWithTags("/v3/metrics/search?target=tag&tag=namespace:*&tag=app:*",
                                getSearchResultExpected("flow", "WCounter",
@@ -413,6 +415,10 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
 
     verifyAggregateQueryResult(
       "/v3/metrics/query?" + getTags("yourspace", "WCount1", "WCounter", "*") +
+        "&metric=system.reads&aggregate=true", 4);
+
+    verifyAggregateQueryResult(
+      "/v3/metrics/query?" + getTags("yourspace", "WCount1", "WCounter") +
         "&metric=system.reads&aggregate=true", 4);
 
     // for adapters, the same metrics should be available at both, just adapter level as well as mapreduce level
@@ -886,10 +892,21 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String result = EntityUtils.toString(response.getEntity());
     List<String> reply = GSON.fromJson(result, new TypeToken<List<String>>() { }.getType());
+    reply = removeMetricsSystemMetrics(reply);
     Assert.assertEquals(expectedValues.size(), reply.size());
     for (int i = 0; i < expectedValues.size(); i++) {
       Assert.assertEquals(expectedValues.get(i), reply.get(i));
     }
+  }
+
+  private List<String> removeMetricsSystemMetrics(List<String> reply) {
+    List<String> result = Lists.newArrayList();
+    for (String metric : reply) {
+      if (!metric.startsWith("system.metrics") && !metric.startsWith("user.metrics")) {
+        result.add(metric);
+      }
+    }
+    return result;
   }
 
   private void verifySearchResultWithTags(String url, List<Map<String, String>> expectedValues) throws Exception {

@@ -17,8 +17,8 @@
 package co.cask.cdap.hive.datasets;
 
 import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.common.DatasetNotFoundException;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.exception.DatasetNotFoundException;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.hive.context.ConfigurationUtil;

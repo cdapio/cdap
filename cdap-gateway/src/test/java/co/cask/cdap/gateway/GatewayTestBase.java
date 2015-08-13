@@ -45,7 +45,6 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.security.guice.InMemorySecurityModule;
 import co.cask.tephra.TransactionManager;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -70,8 +69,6 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -83,7 +80,6 @@ public abstract class GatewayTestBase {
   private static final Gson GSON = new Gson();
 
   private static final String API_KEY = "SampleTestApiKey";
-  private static final String CLUSTER = "SampleTestClusterName";
   private static final Header AUTH_HEADER = new BasicHeader(Constants.Gateway.API_KEY, API_KEY);
 
   private static final String hostname = "127.0.0.1";
@@ -139,8 +135,6 @@ public abstract class GatewayTestBase {
   }
 
   public static Injector startGateway(final CConfiguration conf) throws Exception {
-    final Map<String, List<String>> keysAndClusters = ImmutableMap.of(API_KEY, Collections.singletonList(CLUSTER));
-
     // Set up our Guice injections
     injector = Guice.createInjector(
       Modules.override(
@@ -149,6 +143,7 @@ public abstract class GatewayTestBase {
           protected void configure() {
           }
 
+          @SuppressWarnings("unused")
           @Provides
           @Named(Constants.Router.ADDRESS)
           public final InetAddress providesHostname(CConfiguration cConf) {
@@ -214,7 +209,7 @@ public abstract class GatewayTestBase {
   public static void stopGateway(CConfiguration conf) throws Exception {
     namespaceAdmin.deleteNamespace(Id.Namespace.from(TEST_NAMESPACE1));
     namespaceAdmin.deleteNamespace(Id.Namespace.from(TEST_NAMESPACE2));
-    namespaceAdmin.deleteNamespace(Constants.DEFAULT_NAMESPACE_ID);
+    namespaceAdmin.deleteNamespace(Id.Namespace.DEFAULT);
     streamService.stopAndWait();
     notificationService.stopAndWait();
     appFabricServer.stopAndWait();
@@ -247,14 +242,22 @@ public abstract class GatewayTestBase {
     int trials = 0;
     // it may take a while for workflow/mr to start...
     while (trials++ < 20) {
-      HttpResponse response = GatewayFastTestsSuite.doGet(String.format("/v3/namespaces/default/apps/%s/%s/%s/status",
-                                                                        appId, programType, programId));
-      JsonObject status = GSON.fromJson(EntityUtils.toString(response.getEntity()), JsonObject.class);
-      if (status != null && status.has("status") && state.equals(status.get("status").getAsString())) {
+      String status = getState(programType, appId, programId);
+      if (status != null && state.equals(status)) {
         break;
       }
       TimeUnit.SECONDS.sleep(1);
     }
     Assert.assertTrue(trials < 20);
+  }
+
+  protected static String getState(String programType, String appId, String programId) throws Exception {
+    HttpResponse response = GatewayFastTestsSuite.doGet(String.format("/v3/namespaces/default/apps/%s/%s/%s/status",
+                                                                      appId, programType, programId));
+    JsonObject status = GSON.fromJson(EntityUtils.toString(response.getEntity()), JsonObject.class);
+    if (status != null && status.has("status")) {
+      return status.get("status").getAsString();
+    }
+    return null;
   }
 }

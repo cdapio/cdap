@@ -57,12 +57,13 @@ public class ConnectionConfig {
   private final String hostname;
   private final int port;
   private final boolean sslEnabled;
-  private final Id.Namespace namespace;
 
-  public ConnectionConfig(Id.Namespace namespace, String hostname, int port, boolean sslEnabled) {
-    Preconditions.checkArgument(namespace != null, "namespace cannot be empty");
+  public ConnectionConfig(ConnectionConfig config) {
+    this(config.getHostname(), config.getPort(), config.isSSLEnabled());
+  }
+
+  public ConnectionConfig(String hostname, int port, boolean sslEnabled) {
     Preconditions.checkArgument(hostname != null && !hostname.isEmpty(), "hostname cannot be empty");
-    this.namespace = namespace;
     this.hostname = hostname;
     this.port = port;
     this.sslEnabled = sslEnabled;
@@ -80,12 +81,8 @@ public class ConnectionConfig {
     return getURI().resolve(String.format("/%s/%s", apiVersion, path));
   }
 
-  public URI resolveNamespacedURI(String apiVersion, String path) {
+  public URI resolveNamespacedURI(Id.Namespace namespace, String apiVersion, String path) {
     return getURI().resolve(String.format("/%s/namespaces/%s/%s", apiVersion, namespace.getId(), path));
-  }
-
-  public Id.Namespace getNamespace() {
-    return namespace;
   }
 
   public String getHostname() {
@@ -116,8 +113,7 @@ public class ConnectionConfig {
     final ConnectionConfig other = (ConnectionConfig) obj;
     return Objects.equal(this.hostname, other.hostname) &&
       Objects.equal(this.port, other.port) &&
-      Objects.equal(this.sslEnabled, other.sslEnabled) &&
-      Objects.equal(this.namespace, other.namespace);
+      Objects.equal(this.sslEnabled, other.sslEnabled);
   }
 
   @Override
@@ -126,7 +122,6 @@ public class ConnectionConfig {
       .add("hostname", hostname)
       .add("port", port)
       .add("sslEnabled", sslEnabled)
-      .add("namespace", namespace)
       .toString();
   }
 
@@ -145,7 +140,6 @@ public class ConnectionConfig {
     private String hostname = DEFAULT_HOST;
     private Integer port = null;
     private boolean sslEnabled = DEFAULT_SSL_ENABLED;
-    private Id.Namespace namespace = Constants.DEFAULT_NAMESPACE_ID;
 
     public Builder() {
     }
@@ -154,7 +148,6 @@ public class ConnectionConfig {
       this.hostname = connectionConfig.hostname;
       this.port = connectionConfig.port;
       this.sslEnabled = connectionConfig.sslEnabled;
-      this.namespace = connectionConfig.namespace;
     }
 
     public Builder setHostname(String hostname) {
@@ -177,11 +170,6 @@ public class ConnectionConfig {
       return this;
     }
 
-    public Builder setNamespace(Id.Namespace namespace) {
-      this.namespace = namespace;
-      return this;
-    }
-
     public ConnectionConfig build() {
       if (port == null) {
         if (sslEnabled) {
@@ -190,7 +178,7 @@ public class ConnectionConfig {
           port = DEFAULT_PORT;
         }
       }
-      return new ConnectionConfig(namespace, hostname, port, sslEnabled);
+      return new ConnectionConfig(hostname, port, sslEnabled);
     }
   }
 }

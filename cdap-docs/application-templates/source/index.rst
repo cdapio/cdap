@@ -60,9 +60,9 @@ These sections describe:
 
 
 .. |etl-templates| replace:: **ETL Templates:**
-.. _etl-templates: etl/templates.html
+.. _etl-templates: etl/templates/index.html
 
-- |etl-templates|_ Details on exploring Application templates using RESTful APIs.
+- |etl-templates|_ Details on Application Templates and exploring Application templates using RESTful APIs.
 
 
 .. |etl-creating| replace:: **Creating an ETL Adapter:**

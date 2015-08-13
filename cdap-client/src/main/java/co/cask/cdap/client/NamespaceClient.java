@@ -16,9 +16,10 @@
 
 package co.cask.cdap.client;
 
+import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
-import co.cask.cdap.common.exception.UnauthorizedException;
+import co.cask.cdap.common.UnauthorizedException;
 import co.cask.cdap.common.namespace.AbstractNamespaceClient;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
@@ -32,6 +33,7 @@ import javax.inject.Inject;
 /**
  * Client to interact with CDAP namespaces
  */
+@Beta
 public class NamespaceClient extends AbstractNamespaceClient {
   private final RESTClient restClient;
   private final ClientConfig config;

@@ -19,6 +19,7 @@ package co.cask.cdap.common.metrics;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.proto.Id;
 import co.cask.http.AbstractHandlerHook;
 import co.cask.http.HandlerInfo;
 import co.cask.http.HttpResponder;
@@ -111,7 +112,7 @@ public class MetricsReporterHook extends AbstractHandlerHook {
   private Map<String, String> createContext(HandlerInfo handlerInfo) {
     // todo: really inefficient to call this on the intense data flow path
     return ImmutableMap.of(
-      Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE,
+      Constants.Metrics.Tag.NAMESPACE, Id.Namespace.SYSTEM.getId(),
       Constants.Metrics.Tag.COMPONENT, serviceName,
       Constants.Metrics.Tag.HANDLER, getSimpleName(handlerInfo.getHandlerName()),
       Constants.Metrics.Tag.METHOD, handlerInfo.getMethodName());

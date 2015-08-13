@@ -37,6 +37,7 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.internal.utils.Dependencies;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -165,7 +166,7 @@ public class GatewayFastTestsSuite {
       if (classLoader == null) {
         classLoader = ClassLoader.getSystemClassLoader();
       }
-      Dependencies.findClassDependencies(classLoader, new Dependencies.ClassAcceptor() {
+      Dependencies.findClassDependencies(classLoader, new ClassAcceptor() {
         @Override
         public boolean accept(String className, URL classUrl, URL classPathUrl) {
           try {
@@ -200,7 +201,8 @@ public class GatewayFastTestsSuite {
       request = getPut("/v3/namespaces/default/apps/" + appName);
     }
     request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
-    request.setHeader("X-Archive-Name", application.getSimpleName() + ".jar");
+    request.setHeader("X-Archive-Name",
+                      String.format("%s-1.0.%d.jar", application.getSimpleName(), System.currentTimeMillis()));
     request.setEntity(new ByteArrayEntity(bos.toByteArray()));
     return execute(request);
   }

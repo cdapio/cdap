@@ -24,7 +24,7 @@ by clicking the icon at the bottom left. Included are the Eclipse and IntelliJ
 IDEs, Chromium Browser, Git, Subversion and the CDAP Standalone SDK.
 
 The login and password to the machine is 'cdap' and the user has sudo privileges
-without a password.
+without a password. SSH access can be enabled by 'sudo /etc/init.d/sshd start'.
 
 The SDK can be stopped/started/restarted using the /etc/init.d/cdap-sdk init
 script.

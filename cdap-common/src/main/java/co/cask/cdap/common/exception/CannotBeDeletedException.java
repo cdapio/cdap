@@ -20,7 +20,9 @@ import co.cask.cdap.proto.Id;
 
 /**
  * Thrown when an element cannot be deleted.
+ * @deprecated Use {@link co.cask.cdap.common.CannotBeDeletedException} instead
  */
+@Deprecated
 public class CannotBeDeletedException extends ConflictException {
 
   private final Id objectId;

@@ -1,38 +1,46 @@
-<div etl-canvas-template ng-controller="AdapterRunDetailStatusController">
-  <div class="etlflowcontainer" id="etlFlowContainer">
-    <div class="row">
-      <div class="col-xs-4">
-        <div class="wrapper" id="sourceWrapper">
-          <div class="template plugin-added">
-            <div>
-              <span>{{source.name}}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="col-xs-4">
-        <div class="wrapper transform-wrapper" id="transformsContainer">
-          <div class="template transforms"
-               ng-model="transforms">
-            <div class="plugin-added" ng-if="!transforms.length">
-              <span>No Transforms added</span>
-            </div>
-            <div ng-repeat="transform in transforms" id="transformWrapper{{$index}}" class="plugin-added">
-              <span>{{transform.name}}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="col-xs-4">
-        <div class="wrapper" id="sinkWrapper">
-          <div class="template plugin-added">
-            <div>
-              <span>{{sink.name}}</span>
-            </div>
-          </div>
-        </div>
-      </div>
+<div ng-controller="AdapterRunDetailStatusController">
+  <div class="clearfix">
+    <div class="btn btn-default my-clone-button" ng-click="cloneAdapter()">
+      <span class="fa fa-files-o"></span>
+      <span>Clone</span>
     </div>
   </div>
 
+  <my-plumb data-is-disabled="true" ng-if="nodes.length > 0" data-reloaddag="true" data-config="nodes"></my-plumb>
+
+  <table class="table table-responsive adapter-metrics-table" ng-if="isMetrics">
+    <thead>
+      <tr>
+        <th> Type </th>
+        <th> Node </th>
+        <th> Stage </th>
+        <th> Metric </th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr ng-repeat="value in formattedData">
+        <td>{{value.type}}</td>
+        <td>{{value.node}}</td>
+        <td>{{value.stage}}</td>
+        <td>
+          <div class="row text-left">
+            <div class="col-sm-3 col-xs-12">
+              IN
+            </div>
+            <div class="col-sm-4 col-xs-12">
+              {{value.value.in}}
+            </div>
+          </div>
+          <div class="row text-left">
+            <div class="col-sm-3 col-xs-12">
+              OUT
+            </div>
+            <div class="col-sm-4 col-xs-12">
+              {{value.value.out}}
+            </div>
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
 </div>

@@ -19,7 +19,6 @@ package co.cask.cdap.explore.guice;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.runtime.RuntimeModule;
-import co.cask.cdap.data.format.RecordFormats;
 import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.explore.executor.ExploreExecutorHttpHandler;
@@ -32,12 +31,15 @@ import co.cask.cdap.explore.executor.QueryExecutorHttpHandler;
 import co.cask.cdap.explore.service.ExploreService;
 import co.cask.cdap.explore.service.ExploreServiceUtils;
 import co.cask.cdap.explore.service.hive.Hive14ExploreService;
+import co.cask.cdap.format.RecordFormats;
 import co.cask.cdap.gateway.handlers.CommonHandlers;
 import co.cask.cdap.hive.datasets.DatasetStorageHandler;
 import co.cask.http.HttpHandler;
 import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 import com.google.inject.Exposed;
 import com.google.inject.Inject;
@@ -54,12 +56,15 @@ import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapreduce.MRConfig;
+import org.apache.twill.api.ClassAcceptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -256,21 +261,38 @@ public class ExploreRuntimeModule extends RuntimeModule {
     // It could even be wrong to keep them because in the target container, the boot class path may be different
     // (for example, if Hadoop uses a different Java version than CDAP).
 
-    Set<String> bootstrapClassPaths = ExploreServiceUtils.getBoostrapClasses();
+    final Set<String> bootstrapClassPaths = ExploreServiceUtils.getBoostrapClasses();
+
+    ClassAcceptor classAcceptor = new ClassAcceptor() {
+       /* Excluding any class contained in the bootstrapClassPaths and Kryo classes and hive-exec.jar
+        * We need to remove Kryo dependency in the Explore container. Spark introduced version 2.21 version of Kryo,
+        * which would be normally shipped to the Explore container. Yet, Hive requires Kryo 2.22,
+        * and gets it from the Hive jars - hive-exec.jar to be precise.
+        * we also exclude hive jars as hive dependencies are found in job.jar.
+        * */
+      @Override
+      public boolean accept(String className, URL classUrl, URL classPathUrl) {
+        if (bootstrapClassPaths.contains(classPathUrl.getFile()) ||
+          className.startsWith("com.esotericsoftware.kryo") || classPathUrl.getFile().contains("hive")) {
+          return false;
+        }
+        return true;
+      }
+    };
 
     Set<File> hBaseTableDeps = ExploreServiceUtils.traceDependencies(
-      HBaseTableUtilFactory.getHBaseTableUtilClass().getName(), bootstrapClassPaths, null);
+      HBaseTableUtilFactory.getHBaseTableUtilClass().getName(), null, classAcceptor);
 
     // Note the order of dependency jars is important so that HBase jars come first in the classpath order
     // LinkedHashSet maintains insertion order while removing duplicate entries.
     Set<File> orderedDependencies = new LinkedHashSet<>();
     orderedDependencies.addAll(hBaseTableDeps);
     orderedDependencies.addAll(ExploreServiceUtils.traceDependencies(RemoteDatasetFramework.class.getName(),
-                                                                     bootstrapClassPaths, null));
+                                                                     null, classAcceptor));
     orderedDependencies.addAll(ExploreServiceUtils.traceDependencies(DatasetStorageHandler.class.getName(),
-                                                                     bootstrapClassPaths, null));
+                                                                     null, classAcceptor));
     orderedDependencies.addAll(ExploreServiceUtils.traceDependencies(RecordFormats.class.getName(),
-                                                                     bootstrapClassPaths, null));
+                                                                     null, classAcceptor));
 
     // Note: the class path entries need to be prefixed with "file://" for the jars to work when
     // Hive starts local map-reduce job.
@@ -284,9 +306,21 @@ public class ExploreRuntimeModule extends RuntimeModule {
     LOG.debug("Setting {} to {}", HiveConf.ConfVars.HIVEAUXJARS.toString(),
               System.getProperty(HiveConf.ConfVars.HIVEAUXJARS.toString()));
 
+    // add hive-exec.jar to the HADOOP_CLASSPATH, which is used by the local mapreduce job launched by hive ,
+    // we need to add this, otherwise when hive runs a MapRedLocalTask it cannot find
+    // "org.apache.hadoop.hive.serde2.SerDe" class in its classpath.
+    List<String> orderedDependenciesWithHiveJar = Lists.newArrayList(orderedDependenciesStr);
+    String hiveExecJar = new JobConf(org.apache.hadoop.hive.ql.exec.Task.class).getJar();
+    Preconditions.checkNotNull(hiveExecJar, "Couldn't locate hive-exec.jar to be included in HADOOP_CLASSPATH " +
+      "for MapReduce jobs launched by Hive");
+    orderedDependenciesWithHiveJar.add(hiveExecJar);
+    LOG.debug("Added hive-exec.jar {} to HADOOP_CLASSPATH to be included for MapReduce jobs launched by Hive",
+              hiveExecJar);
+
     //TODO: Setup HADOOP_CLASSPATH hack, more info on why this is needed, see CDAP-9
     LocalMapreduceClasspathSetter classpathSetter =
-      new LocalMapreduceClasspathSetter(new HiveConf(), System.getProperty("java.io.tmpdir"), orderedDependenciesStr);
+      new LocalMapreduceClasspathSetter(new HiveConf(), System.getProperty("java.io.tmpdir"),
+                                        orderedDependenciesWithHiveJar);
     for (File jar : hBaseTableDeps) {
       classpathSetter.accept(jar.getAbsolutePath());
     }

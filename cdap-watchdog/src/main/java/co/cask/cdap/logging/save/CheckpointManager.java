@@ -25,11 +25,14 @@ import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Manages reading/writing of checkpoint information for a topic and partition.
  */
 public final class CheckpointManager {
+  private static final Logger LOG = LoggerFactory.getLogger(CheckpointManager.class);
 
   private static final byte [] OFFSET_COLNAME = Bytes.toBytes("nextOffset");
   private static final byte [] MAX_TIME_COLNAME = Bytes.toBytes("maxEventTime");
@@ -55,6 +58,7 @@ public final class CheckpointManager {
 
 
   public void saveCheckpoint(final int partition, final Checkpoint checkpoint) throws Exception {
+    LOG.trace("Saving checkpoint {} for partition {}", checkpoint, partition);
     mds.execute(new TransactionExecutor.Function<DatasetContext<Table>, Void>() {
       @Override
       public Void apply(DatasetContext<Table> ctx) throws Exception {
@@ -68,7 +72,7 @@ public final class CheckpointManager {
   }
 
   public Checkpoint getCheckpoint(final int partition) throws Exception {
-    return mds.execute(new TransactionExecutor.Function<DatasetContext<Table>, Checkpoint>() {
+    Checkpoint checkpoint = mds.execute(new TransactionExecutor.Function<DatasetContext<Table>, Checkpoint>() {
       @Override
       public Checkpoint apply(DatasetContext<Table> ctx) throws Exception {
         Row result =
@@ -77,5 +81,7 @@ public final class CheckpointManager {
           new Checkpoint(result.getLong(OFFSET_COLNAME, -1), result.getLong(MAX_TIME_COLNAME, -1));
       }
     });
+    LOG.trace("Read checkpoint {} for partition {}", checkpoint, partition);
+    return checkpoint;
   }
 }

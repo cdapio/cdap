@@ -276,6 +276,7 @@ angular.module(PKG.name+'.services')
 
       var id = generateUUID();
       resource.id = id;
+      resource.suppressErrors = true;
       this.bindings.push({
         resource: resource,
         id: id,

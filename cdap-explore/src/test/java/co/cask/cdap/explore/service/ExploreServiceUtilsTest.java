@@ -16,8 +16,11 @@
 
 package co.cask.cdap.explore.service;
 
+import com.google.common.base.Joiner;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.MRJobConfig;
+import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -41,38 +44,72 @@ public class ExploreServiceUtilsTest {
   }
 
   @Test
-  public void hijackHiveConfFileTest() throws Exception {
+  public void hijackConfFileTest() throws Exception {
     Configuration conf = new Configuration(false);
     conf.set("foo", "bar");
     Assert.assertEquals(1, conf.size());
 
+    File tempDir = tmpFolder.newFolder();
+
     File confFile = tmpFolder.newFile("hive-site.xml");
-    FileOutputStream fos = new FileOutputStream(confFile);
-    try {
-      conf.writeXml(fos);
-    } finally {
-      fos.close();
+
+    try (FileOutputStream os = new FileOutputStream(confFile)) {
+      conf.writeXml(os);
     }
 
-    File newConfFile = ExploreServiceUtils.hijackHiveConfFile(confFile);
+    File newConfFile = ExploreServiceUtils.updateConfFileForExplore(confFile, tempDir);
 
     conf = new Configuration(false);
     conf.addResource(newConfFile.toURI().toURL());
 
-    // If Hadoop config methods in ConfigUtil.java loaded the deprecated configurations, then
-    // mapreduce.user.classpath.first, which is the old hadoop configuration, will not be persisted
-    if (Configuration.isDeprecated("mapreduce.user.classpath.first")) {
-      Assert.assertEquals(2, conf.size());
-    } else {
-      Assert.assertEquals(3, conf.size());
-      Assert.assertEquals("true", conf.get("mapreduce.user.classpath.first"));
-    }
-    Assert.assertEquals("true", conf.get(Job.MAPREDUCE_JOB_USER_CLASSPATH_FIRST));
+    Assert.assertEquals(3, conf.size());
+    Assert.assertEquals("false", conf.get(Job.MAPREDUCE_JOB_USER_CLASSPATH_FIRST));
+    Assert.assertEquals("false", conf.get(Job.MAPREDUCE_JOB_CLASSLOADER));
     Assert.assertEquals("bar", conf.get("foo"));
 
-    // Ensure conf files that are not hive-site.xml are unchanged
+    // check yarn-site changes
     confFile = tmpFolder.newFile("yarn-site.xml");
-    Assert.assertEquals(confFile, ExploreServiceUtils.hijackHiveConfFile(confFile));
+    conf = new YarnConfiguration();
+
+    try (FileOutputStream os = new FileOutputStream(confFile)) {
+      conf.writeXml(os);
+    }
+
+    String yarnApplicationClassPath = "$PWD/*," +
+      conf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH,
+               Joiner.on(",").join(YarnConfiguration.DEFAULT_YARN_APPLICATION_CLASSPATH));
+
+
+    newConfFile = ExploreServiceUtils.updateConfFileForExplore(confFile, tempDir);
+
+    conf = new Configuration(false);
+    conf.addResource(newConfFile.toURI().toURL());
+
+    Assert.assertEquals(yarnApplicationClassPath, conf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH));
+
+    // check mapred-site changes
+    confFile = tmpFolder.newFile("mapred-site.xml");
+    conf = new YarnConfiguration();
+
+    try (FileOutputStream os = new FileOutputStream(confFile)) {
+      conf.writeXml(os);
+    }
+
+    String mapredApplicationClassPath = "$PWD/*," +
+      conf.get(MRJobConfig.MAPREDUCE_APPLICATION_CLASSPATH,
+               MRJobConfig.DEFAULT_MAPREDUCE_APPLICATION_CLASSPATH);
+
+
+    newConfFile = ExploreServiceUtils.updateConfFileForExplore(confFile, tempDir);
+
+    conf = new Configuration(false);
+    conf.addResource(newConfFile.toURI().toURL());
+
+    Assert.assertEquals(mapredApplicationClassPath, conf.get(MRJobConfig.MAPREDUCE_APPLICATION_CLASSPATH));
+
+    // Ensure conf files that are not hive-site.xml/mapred-site.xml/yarn-site.xml are unchanged
+    confFile = tmpFolder.newFile("core-site.xml");
+    Assert.assertEquals(confFile, ExploreServiceUtils.updateConfFileForExplore(confFile, tempDir));
   }
 
 }

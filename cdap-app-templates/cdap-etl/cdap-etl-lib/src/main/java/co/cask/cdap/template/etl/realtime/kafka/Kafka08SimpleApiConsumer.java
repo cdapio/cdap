@@ -48,18 +48,17 @@ import kafka.javaapi.TopicMetadataResponse;
 import kafka.javaapi.consumer.SimpleConsumer;
 import kafka.message.Message;
 import kafka.message.MessageAndOffset;
+import org.apache.twill.internal.kafka.client.ZKBrokerService;
 import org.apache.twill.kafka.client.BrokerInfo;
 import org.apache.twill.kafka.client.BrokerService;
 import org.apache.twill.kafka.client.TopicPartition;
 import org.apache.twill.zookeeper.RetryStrategies;
-import org.apache.twill.zookeeper.ZKClient;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.apache.twill.zookeeper.ZKClientServices;
 import org.apache.twill.zookeeper.ZKClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.Constructor;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.Iterator;
@@ -187,7 +186,7 @@ public class Kafka08SimpleApiConsumer extends KafkaSimpleApiConsumer<String, Byt
         ));
       zkClient.startAndWait();
 
-      brokerService = createBrokerService(zkClient);
+      brokerService = new ZKBrokerService(zkClient);
       brokerService.startAndWait();
     }
 
@@ -351,26 +350,6 @@ public class Kafka08SimpleApiConsumer extends KafkaSimpleApiConsumer<String, Byt
       // For other type of error, invalid it from cache so that a new one will be created in next iteration
       kafkaConsumers.invalidate(topicPartition);
     }
-  }
-
-  /**
-   * Creates a Kafka {@link BrokerService}.
-   */
-  private BrokerService createBrokerService(ZKClient zkClient) throws Exception {
-    Class<? extends BrokerService> brokerClass = loadBrokerServiceClass(BrokerService.class.getClassLoader());
-    Constructor<? extends BrokerService> constructor = brokerClass.getDeclaredConstructor(ZKClient.class);
-    constructor.setAccessible(true);
-    return constructor.newInstance(zkClient);
-  }
-
-  /**
-   * Loads the class that implements {@link BrokerService}.
-   */
-  @SuppressWarnings("unchecked")
-  private <T> Class<T> loadBrokerServiceClass(ClassLoader classLoader) throws ClassNotFoundException {
-    // TODO: Hacky way to construct ZKBrokerService from Twill as it's a protected class
-    // TODO: Need Twill update to resolve this hack: https://github.com/apache/incubator-twill/pull/31
-    return (Class<T>) classLoader.loadClass("org.apache.twill.internal.kafka.client.ZKBrokerService");
   }
 
   /**

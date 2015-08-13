@@ -22,7 +22,6 @@ import co.cask.cdap.api.flow.FlowletConnection;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.queue.QueueSpecification;
 import co.cask.cdap.app.queue.QueueSpecificationGenerator;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.DefaultId;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.Specifications;
@@ -90,31 +89,31 @@ public class SimpleQueueSpecificationGeneratorTest {
 
     // Node A
     Assert.assertTrue(containsQueue(get(FlowletConnection.Type.FLOWLET, "A", "E"),
-                                    String.format("queue:///%s/ToyApp/ToyFlow/A/out1", Constants.DEFAULT_NAMESPACE)));
+                                    String.format("queue:///%s/ToyApp/ToyFlow/A/out1", Id.Namespace.DEFAULT.getId())));
     Assert.assertTrue(containsQueue(get(FlowletConnection.Type.FLOWLET, "A", "C"),
-                                    String.format("queue:///%s/ToyApp/ToyFlow/A/queue", Constants.DEFAULT_NAMESPACE)));
+                                    String.format("queue:///%s/ToyApp/ToyFlow/A/queue", Id.Namespace.DEFAULT.getId())));
 
     // Node B
     Assert.assertTrue(containsQueue(get(FlowletConnection.Type.FLOWLET, "B", "E"),
-                                    String.format("queue:///%s/ToyApp/ToyFlow/B/queue", Constants.DEFAULT_NAMESPACE)));
+                                    String.format("queue:///%s/ToyApp/ToyFlow/B/queue", Id.Namespace.DEFAULT.getId())));
 
     // Node C
     Assert.assertTrue(containsQueue(get(FlowletConnection.Type.FLOWLET, "C", "D"),
-                                    String.format("queue:///%s/ToyApp/ToyFlow/C/c1", Constants.DEFAULT_NAMESPACE)));
+                                    String.format("queue:///%s/ToyApp/ToyFlow/C/c1", Id.Namespace.DEFAULT.getId())));
     Assert.assertTrue(containsQueue(get(FlowletConnection.Type.FLOWLET, "C", "F"),
-                                    String.format("queue:///%s/ToyApp/ToyFlow/C/c2", Constants.DEFAULT_NAMESPACE)));
+                                    String.format("queue:///%s/ToyApp/ToyFlow/C/c2", Id.Namespace.DEFAULT.getId())));
 
     // Node D
     Assert.assertTrue(containsQueue(get(FlowletConnection.Type.FLOWLET, "D", "G"),
-                                    String.format("queue:///%s/ToyApp/ToyFlow/D/d1", Constants.DEFAULT_NAMESPACE)));
+                                    String.format("queue:///%s/ToyApp/ToyFlow/D/d1", Id.Namespace.DEFAULT.getId())));
 
     // Node E
     Assert.assertTrue(containsQueue(get(FlowletConnection.Type.FLOWLET, "E", "G"),
-                                    String.format("queue:///%s/ToyApp/ToyFlow/E/queue", Constants.DEFAULT_NAMESPACE)));
+                                    String.format("queue:///%s/ToyApp/ToyFlow/E/queue", Id.Namespace.DEFAULT.getId())));
 
     // Node F
     Assert.assertTrue(containsQueue(get(FlowletConnection.Type.FLOWLET, "F", "G"),
-                                    String.format("queue:///%s/ToyApp/ToyFlow/F/f1", Constants.DEFAULT_NAMESPACE)));
+                                    String.format("queue:///%s/ToyApp/ToyFlow/F/f1", Id.Namespace.DEFAULT.getId())));
   }
 
   @Test
@@ -133,7 +132,7 @@ public class SimpleQueueSpecificationGeneratorTest {
     Assert.assertEquals(get(FlowletConnection.Type.FLOWLET, "StreamSource", "Tokenizer")
                         .iterator().next().getQueueName().toString(),
                         String.format("queue:///%s/WordCountApp/WordCountFlow/StreamSource/queue",
-                                      Constants.DEFAULT_NAMESPACE));
+                                      Id.Namespace.DEFAULT.getId()));
     Assert.assertEquals(1, get(FlowletConnection.Type.FLOWLET, "Tokenizer", "CountByField").size());
   }
 

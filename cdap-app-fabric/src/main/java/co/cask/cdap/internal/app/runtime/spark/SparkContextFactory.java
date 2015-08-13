@@ -1,0 +1,72 @@
+/*
+ * Copyright © 2015 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+package co.cask.cdap.internal.app.runtime.spark;
+
+import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.spark.SparkSpecification;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.tephra.Transaction;
+import org.apache.hadoop.conf.Configuration;
+
+/**
+ * Factory for creating {@link ExecutionSparkContext} by referencing properties in {@link ClientSparkContext}.
+ */
+final class SparkContextFactory {
+
+  private final Configuration hConf;
+  private final ClientSparkContext clientContext;
+  private final DatasetFramework datasetFramework;
+  private final StreamAdmin streamAdmin;
+
+  SparkContextFactory(Configuration hConf, ClientSparkContext clientContext,
+                      DatasetFramework datasetFramework, StreamAdmin streamAdmin) {
+    this.hConf = hConf;
+    this.clientContext = clientContext;
+    this.datasetFramework = datasetFramework;
+    this.streamAdmin = streamAdmin;
+  }
+
+  /**
+   * Returns the {@link ClientSparkContext}.
+   */
+  ClientSparkContext getClientContext() {
+    return clientContext;
+  }
+
+  /**
+   * Creates a new instance of {@link ExecutionSparkContext} based on the {@link ClientSparkContext} in this factory.
+   *
+   * @param transaction the transaction for the spark execution.
+   */
+  ExecutionSparkContext createExecutionContext(Transaction transaction) {
+    SparkSpecification spec = updateSpecExecutorResources(clientContext.getSpecification(),
+                                                          clientContext.getExecutorResources());
+    return new ExecutionSparkContext(spec, clientContext.getProgramId(),
+                                     clientContext.getRunId(), clientContext.getProgramClassLoader(),
+                                     clientContext.getLogicalStartTime(), clientContext.getRuntimeArguments(),
+                                     transaction, datasetFramework, clientContext.getDiscoveryServiceClient(),
+                                     clientContext.getMetricsContext(), clientContext.getLoggingContext(),
+                                     hConf, streamAdmin, clientContext.getWorkflowToken());
+  }
+
+  private SparkSpecification updateSpecExecutorResources(SparkSpecification originalSpec, Resources executorResources) {
+    return new SparkSpecification(originalSpec.getClassName(), originalSpec.getName(), originalSpec.getDescription(),
+                                  originalSpec.getMainClassName(), originalSpec.getProperties(),
+                                  originalSpec.getDriverResources(), executorResources);
+  }
+}

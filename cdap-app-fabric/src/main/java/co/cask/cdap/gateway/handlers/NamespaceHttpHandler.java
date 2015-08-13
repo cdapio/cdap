@@ -16,11 +16,11 @@
 
 package co.cask.cdap.gateway.handlers;
 
+import co.cask.cdap.common.AlreadyExistsException;
+import co.cask.cdap.common.NamespaceCannotBeDeletedException;
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.exception.AlreadyExistsException;
-import co.cask.cdap.common.exception.NamespaceCannotBeDeletedException;
-import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.proto.Id;
@@ -209,7 +209,7 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   private boolean isReserved(String namespaceId) {
-    return Constants.DEFAULT_NAMESPACE.equals(namespaceId) || Constants.SYSTEM_NAMESPACE.equals(namespaceId) ||
-      Constants.CDAP_NAMESPACE.equals(namespaceId);
+    return Id.Namespace.DEFAULT.getId().equals(namespaceId) || Id.Namespace.SYSTEM.getId().equals(namespaceId) ||
+      Id.Namespace.CDAP.getId().equals(namespaceId);
   }
 }

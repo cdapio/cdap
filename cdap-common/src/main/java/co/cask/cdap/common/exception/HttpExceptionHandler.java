@@ -26,7 +26,9 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Common logic to handle exceptions in handler methods.
+ * @deprecated Use {@link co.cask.cdap.common.HttpExceptionHandler} instead
  */
+@Deprecated
 public class HttpExceptionHandler extends ExceptionHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(HttpExceptionHandler.class);

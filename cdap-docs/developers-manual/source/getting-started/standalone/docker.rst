@@ -58,9 +58,9 @@ To use the **Docker image**:
   Directory is under ``/opt/cdap/sdk``.
 
 - Once CDAP starts, it will instruct you to connect to the CDAP UI with a web browser
-  at ``http://<virtual-hostname>:9999``, such as ``http://6f0162922c37:9999``. Replace
-  ``<virtual-hostname>`` with the Docker VM's IP address you obtained earlier. Start a browser 
-  and enter the address to access the CDAP UI.
+  at ``http://localhost:9999``. Replace ``localhost`` with the Docker VM's IP address 
+  (such as ``192.168.59.103``) that you obtained earlier. Start a browser and enter the
+  address to access the CDAP UI.
 
 - In order to begin building CDAP applications, have our :ref:`recommended software and tools
   <system-requirements>` installed in your environment.
@@ -74,5 +74,4 @@ To use the **Docker image**:
 .. include:: ../start-stop-cdap.rst  
    :start-line: 4
 
-.. include:: ../building-apps.rst
-   :start-line: 7
+.. include:: building-apps.txt

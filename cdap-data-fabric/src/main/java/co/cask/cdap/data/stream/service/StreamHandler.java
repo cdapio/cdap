@@ -21,12 +21,11 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
+import co.cask.cdap.common.BadRequestException;
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.exception.BadRequestException;
-import co.cask.cdap.common.exception.NotFoundException;
 import co.cask.cdap.common.namespace.AbstractNamespaceClient;
-import co.cask.cdap.data.format.RecordFormats;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
 import co.cask.cdap.data.stream.service.upload.ContentWriterFactory;
@@ -34,6 +33,7 @@ import co.cask.cdap.data.stream.service.upload.LengthBasedContentWriterFactory;
 import co.cask.cdap.data.stream.service.upload.StreamBodyConsumerFactory;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
+import co.cask.cdap.format.RecordFormats;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.StreamProperties;
@@ -319,7 +319,7 @@ public final class StreamHandler extends AbstractHttpHandler {
   }
 
   private Map<String, String> getStreamHandlerMetricsContext() {
-    return ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE,
+    return ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Id.Namespace.SYSTEM.getId(),
                            Constants.Metrics.Tag.COMPONENT, Constants.Gateway.METRICS_CONTEXT,
                            Constants.Metrics.Tag.HANDLER, Constants.Gateway.STREAM_HANDLER_NAME,
                            Constants.Metrics.Tag.INSTANCE_ID, cConf.get(Constants.Stream.CONTAINER_INSTANCE_ID, "0"));

@@ -73,10 +73,10 @@ public abstract class ETLTemplate<T extends ETLConfig> extends ApplicationTempla
     ETLStage sourceConfig = etlConfig.getSource();
     ETLStage sinkConfig = etlConfig.getSink();
     List<ETLStage> transformConfigs = etlConfig.getTransforms();
-    String sourcePluginId = String.format("%s%s%s", Constants.Source.PLUGINTYPE, Constants.ID_SEPARATOR,
-                                          sourceConfig.getName());
-    String sinkPluginId = String.format("%s%s%s", Constants.Sink.PLUGINTYPE, Constants.ID_SEPARATOR,
-                                        sinkConfig.getName());
+    String sourcePluginId = PluginID.from(Constants.Source.PLUGINTYPE, sourceConfig.getName(), 1).getID();
+    // 2 + since we start at 1, and there is always a source.  For example, if there are 0 transforms, sink is stage 2.
+    String sinkPluginId =
+      PluginID.from(Constants.Sink.PLUGINTYPE,  sinkConfig.getName(), 2 + transformConfigs.size()).getID();
 
     // Instantiate Source, Transforms, Sink stages.
     // Use the plugin name as the plugin id for source and sink stages since there can be only one source and one sink.
@@ -89,8 +89,8 @@ public abstract class ETLTemplate<T extends ETLConfig> extends ApplicationTempla
     }
 
     PluginProperties sinkProperties = getPluginProperties(sinkConfig);
-    PipelineConfigurable sink = configurer.usePlugin(Constants.Sink.PLUGINTYPE, sinkConfig.getName(), sinkPluginId,
-                                                     sinkProperties);
+    PipelineConfigurable sink = configurer.usePlugin(Constants.Sink.PLUGINTYPE, sinkConfig.getName(),
+                                                     sinkPluginId, sinkProperties);
     if (sink == null) {
       throw new IllegalArgumentException(String.format("No Plugin of type '%s' named '%s' was found",
                                                        Constants.Sink.PLUGINTYPE, sinkConfig.getName()));
@@ -104,7 +104,8 @@ public abstract class ETLTemplate<T extends ETLConfig> extends ApplicationTempla
 
       // Generate a transformId based on transform name and the array index (since there could
       // multiple transforms - ex, N filter transforms in the same pipeline)
-      String transformId = String.format("%s%s%d", transformConfig.getName(), Constants.ID_SEPARATOR, i);
+      // stage number starts from 1, plus source is always #1, so add 2 for stage number.
+      String transformId = PluginID.from(Constants.Transform.PLUGINTYPE, transformConfig.getName(), 2 + i).getID();
       PluginProperties transformProperties = getPluginProperties(transformConfig);
       Transform transformObj = configurer.usePlugin(Constants.Transform.PLUGINTYPE, transformConfig.getName(),
                                                     transformId, transformProperties);

@@ -37,7 +37,6 @@ import org.apache.twill.api.TwillRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.util.Map;
 
 /**
@@ -54,7 +53,8 @@ public class DistributedServiceProgramRunner extends AbstractDistributedProgramR
 
   @Override
   protected ProgramController launch(Program program, ProgramOptions options,
-                                     Map<String, File> localizeFiles, ApplicationLauncher launcher) {
+                                     Map<String, LocalizeResource> localizeResources,
+                                     ApplicationLauncher launcher) {
     // Extract and verify parameters
     ApplicationSpecification appSpec = program.getApplicationSpecification();
     Preconditions.checkNotNull(appSpec, "Missing application specification.");
@@ -70,7 +70,7 @@ public class DistributedServiceProgramRunner extends AbstractDistributedProgramR
     LOG.info("Launching distributed service: {}:{}", program.getName(), serviceSpec.getName());
 
     TwillController controller = launcher.launch(new ServiceTwillApplication(program, serviceSpec,
-                                                                             localizeFiles, eventHandler));
+                                                                             localizeResources, eventHandler));
 
     DistributedServiceRunnableInstanceUpdater instanceUpdater = new DistributedServiceRunnableInstanceUpdater(
       program, controller);

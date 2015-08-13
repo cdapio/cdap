@@ -37,7 +37,7 @@ public final class Properties {
   }
 
   /**
-   * Class to hold properties for S3BatchSource
+   * Class to hold properties for FileBatchSource
    */
   public static class File {
     public static final String FILESYSTEM = "fileSystem";
@@ -46,6 +46,20 @@ public final class Properties {
     public static final String FILE_REGEX = "fileRegex";
     public static final String TIME_TABLE = "timeTable";
     public static final String INPUT_FORMAT_CLASS = "inputFormatClass";
+    public static final String MAX_SPLIT_SIZE = "maxSplitSize";
+  }
+
+  /**
+   * Class to hold properties for S3BatchSource
+   */
+  public static class S3 {
+    public static final String ACCESS_ID = "accessID";
+    public static final String ACCESS_KEY = "accessKey";
+    public static final String PATH = "path";
+    public static final String FILE_REGEX = "fileRegex";
+    public static final String TIME_TABLE = "timeTable";
+    public static final String INPUT_FORMAT_CLASS = "inputFormatClass";
+    public static final String MAX_SPLIT_SIZE = "maxSplitSize";
   }
 
   /**
@@ -88,19 +102,41 @@ public final class Properties {
    * Properties for Cube
    */
   public static class Cube {
-    public static final String NAME = "name";
-    public static final String PROPERTY_RESOLUTIONS = co.cask.cdap.api.dataset.lib.cube.Cube.PROPERTY_RESOLUTIONS;
-    public static final String MAPPING_CONFIG_PROPERTY = "mapping.config";
-    public static final String CUSTOM_PROPERTIES = "custom.properties";
+    public static final String DATASET_NAME = "name";
+    public static final String DATASET_RESOLUTIONS =
+      co.cask.cdap.api.dataset.lib.cube.Cube.PROPERTY_RESOLUTIONS;
+    public static final String DATASET_OTHER = "dataset.cube.properties";
+
+    public static final String FACT_TS_FIELD = "cubeFact.timestamp.field";
+    public static final String FACT_TS_FORMAT = "cubeFact.timestamp.format";
+    public static final String MEASUREMENT_PREFIX = "cubeFact.measurement.";
+
+    public static final String MEASUREMENTS = "cubeFact.measurements";
   }
 
   /**
    * Properties for Tables
    */
   public static class Table {
+    public static final String NAME = "name";
     public static final String PROPERTY_SCHEMA = co.cask.cdap.api.dataset.table.Table.PROPERTY_SCHEMA;
     public static final String PROPERTY_SCHEMA_ROW_FIELD =
       co.cask.cdap.api.dataset.table.Table.PROPERTY_SCHEMA_ROW_FIELD;
+    public static final String CASE_SENSITIVE_ROW_FIELD = "case.sensitive.row.field";
+  }
+
+  /**
+   * Properties for elasticsearch
+   */
+  public static class Elasticsearch {
+    public static final String INDEX_NAME = "es.index";
+    public static final String TYPE_NAME = "es.type";
+    public static final String HOST = "es.host";
+    public static final String ID_FIELD = "es.idField";
+    public static final String QUERY = "query";
+    public static final String SCHEMA = "schema";
+    public static final String TRANSPORT_ADDRESSES = "es.transportAddresses";
+    public static final String CLUSTER = "es.cluster";
   }
 
   /**

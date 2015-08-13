@@ -97,6 +97,8 @@ public final class Constants {
     public static final String APP_SCHEDULER_QUEUE = "apps.scheduler.queue";
     public static final String MAPREDUCE_JOB_CLIENT_CONNECT_MAX_RETRIES = "mapreduce.jobclient.connect.max.retries";
     public static final String MAPREDUCE_INCLUDE_CUSTOM_CLASSES = "mapreduce.include.custom.format.classes";
+    public static final String PROGRAM_RUNID_CORRECTOR_INTERVAL_SECONDS = "app.program.runid.corrector.interval";
+    public static final String SYSTEM_ARTIFACTS_DIR = "app.artifact.dir";
 
     /**
      * Guice named bindings.
@@ -138,6 +140,10 @@ public final class Constants {
 
     public static final String SERVICE_DESCRIPTION = "Service for managing application lifecycle.";
 
+    /**
+     * Configuration setting to set the maximum size of a workflow token in MB
+     */
+    public static final String WORKFLOW_TOKEN_MAX_SIZE_MB = "workflow.token.max.size.mb";
   }
 
   /**
@@ -507,6 +513,14 @@ public final class Constants {
         public static final String WRITE_COUNT = "dataset.store.writes";
         public static final String WRITE_BYTES = "dataset.store.bytes";
       }
+
+      /**
+       * Logs metrics
+       */
+      public static final class Log {
+        public static final String PROCESS_DELAY = "log.process.delay";
+        public static final String PROCESS_MESSAGES_COUNT = "log.process.message.count";
+      }
     }
 
     /**
@@ -803,30 +817,10 @@ public final class Constants {
   public static final String CFG_APPFABRIC_ENVIRONMENT = "appfabric.environment";
   public static final String DEFAULT_APPFABRIC_ENVIRONMENT = "devsuite";
 
-
-  /**
-   * Default namespace to be used by v2 APIs
-   */
-  public static final String DEFAULT_NAMESPACE = "default";
-  public static final Id.Namespace DEFAULT_NAMESPACE_ID = Id.Namespace.from(DEFAULT_NAMESPACE);
-  public static final NamespaceMeta DEFAULT_NAMESPACE_META =
-    new NamespaceMeta.Builder().setName(Constants.DEFAULT_NAMESPACE_ID).setDescription("Default Namespace").build();
-
   /**
    * Used for upgrade and backwards compatability
    */
   public static final String DEVELOPER_ACCOUNT = "developer";
-
-  /**
-   * 'system' reserved namespace name
-   */
-  public static final String SYSTEM_NAMESPACE = "system";
-  public static final Id.Namespace SYSTEM_NAMESPACE_ID = Id.Namespace.from(SYSTEM_NAMESPACE);
-
-  /**
-   * 'cdap' reserved namespace name. Unused right now (other than in logging. Reserved in case we need it in future.
-   */
-  public static final String CDAP_NAMESPACE = "cdap";
 
   /**
    * Constants related to external systems.

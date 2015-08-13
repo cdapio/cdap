@@ -27,6 +27,7 @@ import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import java.io.IOException;
 import java.util.Map;
 import java.util.NavigableMap;
+import java.util.SortedMap;
 import javax.annotation.Nullable;
 
 /**
@@ -46,8 +47,8 @@ class MetricsTableOnTable implements MetricsTable {
   }
 
   @Override
-  public void put(NavigableMap<byte[], NavigableMap<byte[], Long>> updates) {
-    for (Map.Entry<byte[], NavigableMap<byte[], Long>> rowUpdate : updates.entrySet()) {
+  public void put(SortedMap<byte[], ? extends SortedMap<byte[], Long>> updates) {
+    for (Map.Entry<byte[], ? extends SortedMap<byte[], Long>> rowUpdate : updates.entrySet()) {
       Put put = new Put(rowUpdate.getKey());
       for (Map.Entry<byte[], Long> columnUpdate : rowUpdate.getValue().entrySet()) {
         put.add(columnUpdate.getKey(), columnUpdate.getValue());

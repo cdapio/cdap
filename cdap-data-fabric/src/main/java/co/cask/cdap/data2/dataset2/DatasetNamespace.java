@@ -28,7 +28,7 @@ public interface DatasetNamespace {
   /**
    * Namespaces (applies the namespace as a prefix) to the specified dataset instance name
    * Used for dataset instances in the system namespace
-   * Calls #namespace(Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE, datasetInstanceName)
+   * Calls #namespace(Id.DatasetInstance.from(Id.Namespace.SYSTEM, datasetInstanceName)
    * @see #namespace(Id.DatasetInstance)
    *
    * @param datasetInstanceName name of the dataset instance to be namespaced

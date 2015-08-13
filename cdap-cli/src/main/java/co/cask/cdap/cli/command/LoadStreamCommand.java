@@ -26,6 +26,7 @@ import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.FilePathResolver;
 import co.cask.cdap.client.StreamClient;
+import co.cask.cdap.proto.Id;
 import co.cask.common.cli.Arguments;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
@@ -67,7 +68,8 @@ public class LoadStreamCommand extends AbstractAuthCommand implements Categorize
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    String streamId = arguments.get(ArgumentName.STREAM.toString());
+    Id.Stream streamId = Id.Stream.from(cliConfig.getCurrentNamespace(),
+                                        arguments.get(ArgumentName.STREAM.toString()));
     File file = resolver.resolvePathToFile(arguments.get(ArgumentName.LOCAL_FILE_PATH.toString()));
     String contentType = arguments.get(ArgumentName.CONTENT_TYPE.toString(), "");
 
@@ -82,7 +84,7 @@ public class LoadStreamCommand extends AbstractAuthCommand implements Categorize
     }
 
     streamClient.sendFile(streamId, contentType, file);
-    output.printf("Successfully sent stream event to stream '%s'\n", streamId);
+    output.printf("Successfully sent stream event to stream '%s'\n", streamId.getId());
   }
 
   @Override
@@ -97,8 +99,8 @@ public class LoadStreamCommand extends AbstractAuthCommand implements Categorize
                          "become multiple events in the %s, " +
                          "based on the content type (%s). If <%s> is not provided, " +
                          "it will be detected by the file extension. Supported file extensions: %s.",
-                         Fragment.of(Article.A, ElementType.STREAM.getTitleName()),
-                         ElementType.STREAM.getTitleName(),
+                         Fragment.of(Article.A, ElementType.STREAM.getName()),
+                         ElementType.STREAM.getName(),
                          Joiner.on(", ").join(ImmutableSet.copyOf(CONTENT_TYPE_MAP.values())),
                          ArgumentName.CONTENT_TYPE,
                          Joiner.on(", ").join(CONTENT_TYPE_MAP.keySet()));

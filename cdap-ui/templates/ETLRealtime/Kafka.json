@@ -1,7 +1,7 @@
 {
   "id": "KafkaSource",
   "groups" : {
-    "position": [ "group1" ],
+    "position": [ "group1", "group2"  ],
     "group1": {
        "display" : "Kafka Configuration",
        "position" : [ "kafka.zookeeper", "kafka.brokers", "kafka.partitions", "kafka.topic", "kafka.default.offset" ],
@@ -28,7 +28,7 @@
           "kafka.partitions" : {
              "widget": "number",
              "label": "Number of Partitions",
-             "description": "Specifies the number of partitions. Each partition is an ordered, immutable sequence of messages that is continually appended to—a commit log. The messages in the partitions are each assigned a sequential id number called the offset that uniquely identifies each message within the partition",
+             "description": "Specifies the number of partitions. Each partition is an ordered, immutable sequence of messages that is continually appended to a commit log. The messages in the partitions are each assigned a sequential ID number called the offset that uniquely identifies each message within the partition",
              "properties": {
                "width": "extra-small",
                "default": 1
@@ -45,7 +45,6 @@
                "width": "medium"
              }
           },
-
           "kafka.default.offset" : {
              "widget": "number",
              "label": "Start Offset",
@@ -55,6 +54,27 @@
                "default": 0
              },
              "min": 1
+          }
+       }
+    },
+
+    "group2" : {
+       "display" : "Format & Schema",
+       "position" : [ "format", "schema" ],
+       "fields" : {
+          "format" : {
+             "widget" : "select",
+             "label"  : "Format",
+             "properties" : {
+               "values" : [ "", "avro", "clf", "csv", "grok", "syslog", "text", "tsv" ],
+               "default" : ""
+             }
+          },
+          "schema" : {
+             "widget": "stream-properties",
+             "label" : "Schema",
+             "schema-types" : [ "boolean", "int", "long", "float", "double", "bytes", "string" ],
+             "schema-default-type" : "string"
           }
        }
     }

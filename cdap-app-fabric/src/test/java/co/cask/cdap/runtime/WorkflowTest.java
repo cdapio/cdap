@@ -18,13 +18,17 @@ package co.cask.cdap.runtime;
 import co.cask.cdap.AppWithAnonymousWorkflow;
 import co.cask.cdap.MissingMapReduceWorkflowApp;
 import co.cask.cdap.MissingSparkWorkflowApp;
+import co.cask.cdap.NonUniqueProgramsInWorkflowApp;
+import co.cask.cdap.NonUniqueProgramsInWorkflowWithForkApp;
 import co.cask.cdap.OneActionWorkflowApp;
 import co.cask.cdap.ScheduleAppWithMissingWorkflow;
 import co.cask.cdap.WorkflowApp;
 import co.cask.cdap.WorkflowSchedulesWithSameNameApp;
 import co.cask.cdap.app.program.Program;
+import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
@@ -41,6 +45,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterators;
 import com.google.common.util.concurrent.SettableFuture;
+import com.google.inject.Injector;
 import org.apache.twill.common.Threads;
 import org.junit.Assert;
 import org.junit.ClassRule;
@@ -54,6 +59,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import javax.annotation.Nullable;
 
 /**
  *
@@ -83,11 +89,12 @@ public class WorkflowTest {
   public void testWorkflow() throws Exception {
     final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(WorkflowApp.class,
                                                                                          TEMP_FOLDER_SUPPLIER);
-    ProgramRunnerFactory runnerFactory = AppFabricTestHelper.getInjector().getInstance(ProgramRunnerFactory.class);
+    final Injector injector = AppFabricTestHelper.getInjector();
+    ProgramRunnerFactory runnerFactory = injector.getInstance(ProgramRunnerFactory.class);
 
     ProgramRunner programRunner = runnerFactory.create(ProgramRunnerFactory.Type.WORKFLOW);
 
-    Program program = Iterators.filter(app.getPrograms().iterator(), new Predicate<Program>() {
+    final Program program = Iterators.filter(app.getPrograms().iterator(), new Predicate<Program>() {
       @Override
       public boolean apply(Program input) {
         return input.getType() == ProgramType.WORKFLOW;
@@ -96,13 +103,20 @@ public class WorkflowTest {
 
     String inputPath = createInput();
     String outputPath = new File(tmpFolder.newFolder(), "output").getAbsolutePath();
-    BasicArguments systemArgs = new BasicArguments(ImmutableMap.of(ProgramOptionConstants.RUN_ID,
-                                                                   RunIds.generate().getId()));
+    final String runId = RunIds.generate().getId();
+    BasicArguments systemArgs = new BasicArguments(ImmutableMap.of(ProgramOptionConstants.RUN_ID, runId));
     BasicArguments userArgs = new BasicArguments(ImmutableMap.of("inputPath", inputPath, "outputPath", outputPath));
     ProgramOptions options = new SimpleProgramOptions(program.getName(), systemArgs, userArgs);
 
     final SettableFuture<String> completion = SettableFuture.create();
     programRunner.run(program, options).addListener(new AbstractListener() {
+
+      @Override
+      public void init(ProgramController.State currentState, @Nullable Throwable cause) {
+        LOG.info("Starting");
+        injector.getInstance(Store.class).setStart(program.getId(), runId, System.currentTimeMillis());
+      }
+
       @Override
       public void completed() {
         LOG.info("Completed");
@@ -123,55 +137,68 @@ public class WorkflowTest {
   public void testBadInputInWorkflow() throws Exception {
     // try deploying app containing Workflow configured with non-existent MapReduce program
     try {
-      final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(
-        MissingMapReduceWorkflowApp.class,
-        TEMP_FOLDER_SUPPLIER);
+      AppFabricTestHelper.deployApplicationWithManager(MissingMapReduceWorkflowApp.class, TEMP_FOLDER_SUPPLIER);
       Assert.fail("Should have thrown Exception because MapReduce program is missing in the Application.");
     } catch (Exception ex) {
-      Assert.assertEquals(ex.getCause().getMessage(),
-                          "MapReduce program 'SomeMapReduceProgram' is not configured with the Application.");
+      Assert.assertEquals("MapReduce program 'SomeMapReduceProgram' is not configured with the Application.",
+                          ex.getCause().getMessage());
     }
 
     // try deploying app containing Workflow configured with non-existent Spark program
     try {
-      final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(
-        MissingSparkWorkflowApp.class,
-        TEMP_FOLDER_SUPPLIER);
+      AppFabricTestHelper.deployApplicationWithManager(MissingSparkWorkflowApp.class, TEMP_FOLDER_SUPPLIER);
       Assert.fail("Should have thrown Exception because Spark program is missing in the Application.");
     } catch (Exception ex) {
-      Assert.assertEquals(ex.getCause().getMessage(),
-                          "Spark program 'SomeSparkProgram' is not configured with the Application.");
+      Assert.assertEquals("Spark program 'SomeSparkProgram' is not configured with the Application.",
+                          ex.getCause().getMessage());
     }
 
     // try deploying app containing Workflow configured with multiple schedules with the same name
     try {
-      final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(
-        WorkflowSchedulesWithSameNameApp.class,
-        TEMP_FOLDER_SUPPLIER);
+      AppFabricTestHelper.deployApplicationWithManager(WorkflowSchedulesWithSameNameApp.class, TEMP_FOLDER_SUPPLIER);
       Assert.fail("Should have thrown Exception because Workflow is configured with schedules having same name.");
     } catch (Exception ex) {
-      Assert.assertEquals(ex.getCause().getCause().getMessage(),
-                          "Schedule with the name 'DailySchedule' already exists.");
+      Assert.assertEquals("Schedule with the name 'DailySchedule' already exists.",
+                          ex.getCause().getCause().getMessage());
     }
 
     // try deploying app containing a schedule for non existent workflow
     try {
-      final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(
-        ScheduleAppWithMissingWorkflow.class, TEMP_FOLDER_SUPPLIER);
+      AppFabricTestHelper.deployApplicationWithManager(ScheduleAppWithMissingWorkflow.class, TEMP_FOLDER_SUPPLIER);
       Assert.fail("Should have thrown Exception because Schedule is configured for non existent Workflow.");
     } catch (Exception ex) {
-      Assert.assertEquals(ex.getCause().getMessage(),
-                          "Workflow 'NonExistentWorkflow' is not configured with the Application.");
+      Assert.assertEquals("Workflow 'NonExistentWorkflow' is not configured with the Application.",
+                          ex.getCause().getMessage());
     }
 
     // try deploying app containing anonymous workflow
     try {
-      final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(
-        AppWithAnonymousWorkflow.class, TEMP_FOLDER_SUPPLIER);
+      AppFabricTestHelper.deployApplicationWithManager(AppWithAnonymousWorkflow.class, TEMP_FOLDER_SUPPLIER);
       Assert.fail("Should have thrown Exception because Workflow does not have name.");
     } catch (Exception ex) {
-      Assert.assertEquals(ex.getCause().getMessage(),
-                          "'' name is not an ID. ID should be non empty and can contain only characters A-Za-z0-9_-");
+      Assert.assertEquals("'' name is not an ID. ID should be non empty and can contain only characters A-Za-z0-9_-",
+                          ex.getCause().getMessage());
+    }
+
+    // try deploying app containing workflow with non-unique programs
+    try {
+      AppFabricTestHelper.deployApplicationWithManager(NonUniqueProgramsInWorkflowApp.class, TEMP_FOLDER_SUPPLIER);
+      Assert.fail("Should have thrown Exception because 'NoOpMR' added multiple times in the workflow " +
+                    "'NonUniqueProgramsInWorkflow'.");
+    } catch (Exception ex) {
+      Assert.assertEquals("Node 'NoOpMR' already exists in workflow 'NonUniqueProgramsInWorkflow'.",
+                          ex.getCause().getMessage());
+    }
+
+    // try deploying app containing workflow fork with non-unique programs
+    try {
+      AppFabricTestHelper.deployApplicationWithManager(NonUniqueProgramsInWorkflowWithForkApp.class,
+                                                       TEMP_FOLDER_SUPPLIER);
+      Assert.fail("Should have thrown Exception because 'MyTestPredicate' added multiple times in the workflow " +
+                    "'NonUniqueProgramsInWorkflowWithFork'");
+    } catch (Exception ex) {
+      Assert.assertEquals("Node 'MyTestPredicate' already exists in workflow 'NonUniqueProgramsInWorkflowWithFork'.",
+                          ex.getCause().getMessage());
     }
   }
 
@@ -179,22 +206,29 @@ public class WorkflowTest {
   public void testOneActionWorkflow() throws Exception {
     final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(OneActionWorkflowApp.class,
                                                                                          TEMP_FOLDER_SUPPLIER);
-    ProgramRunnerFactory runnerFactory = AppFabricTestHelper.getInjector().getInstance(ProgramRunnerFactory.class);
+    final Injector injector = AppFabricTestHelper.getInjector();
+    ProgramRunnerFactory runnerFactory = injector.getInstance(ProgramRunnerFactory.class);
     ProgramRunner programRunner = runnerFactory.create(ProgramRunnerFactory.Type.WORKFLOW);
 
-    Program program = Iterators.filter(app.getPrograms().iterator(), new Predicate<Program>() {
+    final Program program = Iterators.filter(app.getPrograms().iterator(), new Predicate<Program>() {
       @Override
       public boolean apply(Program input) {
         return input.getType() == ProgramType.WORKFLOW;
       }
     }).next();
 
-    BasicArguments systemArgs = new BasicArguments(ImmutableMap.of(ProgramOptionConstants.RUN_ID,
-                                                                   RunIds.generate().getId()));
+    final String runId = RunIds.generate().getId();
+    BasicArguments systemArgs = new BasicArguments(ImmutableMap.of(ProgramOptionConstants.RUN_ID, runId));
     ProgramOptions options = new SimpleProgramOptions(program.getName(), systemArgs, new BasicArguments());
 
     final SettableFuture<String> completion = SettableFuture.create();
     programRunner.run(program, options).addListener(new AbstractListener() {
+      @Override
+      public void init(ProgramController.State currentState, @Nullable Throwable cause) {
+        LOG.info("Initializing");
+        injector.getInstance(Store.class).setStart(program.getId(), runId, System.currentTimeMillis());
+      }
+
       @Override
       public void completed() {
         LOG.info("Completed");
@@ -217,13 +251,10 @@ public class WorkflowTest {
 
     File inputFile = new File(inputDir.getPath() + "/words.txt");
     inputFile.deleteOnExit();
-    BufferedWriter writer = new BufferedWriter(new FileWriter(inputFile));
-    try {
+    try (BufferedWriter writer = new BufferedWriter(new FileWriter(inputFile))) {
       writer.write("this text has");
       writer.newLine();
       writer.write("two words text inside");
-    } finally {
-      writer.close();
     }
 
     return inputDir.getAbsolutePath();

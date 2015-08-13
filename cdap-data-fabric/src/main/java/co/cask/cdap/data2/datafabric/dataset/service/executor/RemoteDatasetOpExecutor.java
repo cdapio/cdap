@@ -18,16 +18,17 @@ package co.cask.cdap.data2.datafabric.dataset.service.executor;
 
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.common.HandlerException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
-import co.cask.cdap.common.exception.HandlerException;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
 import co.cask.common.http.ObjectResponse;
+import com.google.common.base.Charsets;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -130,7 +131,7 @@ public abstract class RemoteDatasetOpExecutor extends AbstractIdleService implem
   private void verifyResponse(HttpResponse httpResponse) {
     if (httpResponse.getResponseCode() != 200) {
       throw new HandlerException(HttpResponseStatus.valueOf(httpResponse.getResponseCode()),
-                                 httpResponse.getResponseMessage());
+                                 httpResponse.getResponseBodyAsString(Charsets.UTF_8));
     }
   }
 }

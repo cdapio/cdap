@@ -20,7 +20,9 @@ import co.cask.cdap.proto.Id;
 
 /**
  * Thrown when a dataset type is not found
+ * @deprecated Use {@link co.cask.cdap.common.DatasetTypeNotFoundException} instead
  */
+@Deprecated
 public class DatasetTypeNotFoundException extends NotFoundException {
 
   private final Id.DatasetType id;

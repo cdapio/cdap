@@ -122,8 +122,8 @@ public class ClientConfig {
    * @return URL of the resolved path
    * @throws MalformedURLException
    */
-  public URL resolveNamespacedURLV3(String path) throws MalformedURLException {
-    return getConnectionConfig().resolveNamespacedURI(Constants.Gateway.API_VERSION_3_TOKEN, path).toURL();
+  public URL resolveNamespacedURLV3(Id.Namespace namespace, String path) throws MalformedURLException {
+    return getConnectionConfig().resolveNamespacedURI(namespace, Constants.Gateway.API_VERSION_3_TOKEN, path).toURL();
   }
 
   public HttpRequestConfig getDefaultRequestConfig() {
@@ -193,14 +193,6 @@ public class ClientConfig {
 
   public void setUnavailableRetryLimit(int unavailableRetryLimit) {
     this.unavailableRetryLimit = unavailableRetryLimit;
-  }
-
-  public Id.Namespace getNamespace() {
-    return this.connectionConfig.getNamespace();
-  }
-
-  public void setNamespace(Id.Namespace namespace) {
-    this.connectionConfig = ConnectionConfig.builder(connectionConfig).setNamespace(namespace).build();
   }
 
   public String getApiVersion() {

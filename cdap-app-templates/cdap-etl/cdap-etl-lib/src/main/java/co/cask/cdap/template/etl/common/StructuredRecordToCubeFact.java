@@ -23,15 +23,18 @@ import co.cask.cdap.api.dataset.lib.cube.CubeFact;
 import co.cask.cdap.api.dataset.lib.cube.MeasureType;
 import co.cask.cdap.api.dataset.lib.cube.Measurement;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
+import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -40,82 +43,36 @@ import javax.annotation.Nullable;
  * {@link co.cask.cdap.api.dataset.lib.cube.Cube} dataset.
  * <p/>
  * To configure transformation from {@link StructuredRecord} to a {@link CubeFact} the
- * mapping configuration is required, that can be provided in JSON form in {@link #MAPPING_CONFIG_PROPERTY} property.
- * Example of the configuration:
-<pre>
-  {
-    timestamp: {
-      sourceField: "timeField",
-      sourceFieldFormat: "HH:mm:ss"
-    }
-
-    dimensions: [
-      {
-        name: "dim1",
-        sourceField: "field1"
-      },
-      {
-        name: "dim2",
-        value: "staticValue"
-      }
-    ],
-
-    measurements: [
-      {
-        name: "metric1",
-        type: "COUNTER",
-        sourceField: "field7"
-      },
-      {
-        name: "metric2",
-        type: "GAUGE",
-        sourceField: "field7"
-      },
-      {
-        name: "metric3",
-        type: "COUNTER",
-        value: "1"
-      },
-    ],
-  }
-</pre>
- *
- * In general, the value for a timestamp, dimension or measurement fields can be retrieved from {@link StructuredRecord}
- * field using 'srcField' property or set to a fixed value using 'value' property. If both are specified, then the one
- * in 'value' is used as the default when 'srcField' is not present in {@link StructuredRecord}.
- *
- * <h3>Special cases</h3>
+ * mapping configuration can be provided for timestamp field and measurements. All fields from {@link StructuredRecord}
+ * will be mapped to corresponded dimensions.
  * <p/>
- * Timestamp is either retrieved from the record field or is set to a current ts (at processing) is used.
- * If record field is used, either dateFormat is used to parse the value, or it is assumed as epoch in ms.
- * To use current ts, configure it the following way:
- *
-<pre>
-  {
-    timestamp: {
-      value: "now"
-    },
-    ...
-  }
- </pre>
- *
+ * The source field for the timestamp can be provided with {@link Properties.Cube#FACT_TS_FIELD} property.
+ * The value in the source field is assumed to be an epoch in milliseconds. For other formats you can use
+ * {@link Properties.Cube#FACT_TS_FORMAT} property to specify the date format according to {@link SimpleDateFormat}
+ * rules. If no {@link Properties.Cube##FACT_TS_FIELD} is provided, the current timestamp (at processing) is used.
  * <p/>
+ * To add a measurement to a {@link CubeFact} specify its type with the property
+ * cubeFact.measurement.{@literal<}measurement_name>={@literal<}measurement_type>. Measurement name corresponds to a
+ * field name in the {@link StructuredRecord} that contains its value.
  * Measurement type (specified in 'type' property) can be one of {@link co.cask.cdap.api.dataset.lib.cube.MeasureType}
  * values.
- *
+ * <p/>
+ * Example of the configuration:
+<pre>
+ cubeFact.timestamp.field=timeField
+ cubeFact.timestamp.format=HH:mm:ss
+ cubeFact.measurement.metric1=COUNTER
+ cubeFact.measurement.metric2=GAUGE
+</pre>
  */
 public class StructuredRecordToCubeFact {
-  public static final String MAPPING_CONFIG_PROPERTY = "mapping.config";
+  private static final Gson GSON = new Gson();
+  private static final Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
   private final CubeFactBuilder factBuilder;
 
   public StructuredRecordToCubeFact(Map<String, String> properties) {
-    String configAsString = properties.get(MAPPING_CONFIG_PROPERTY);
-    Preconditions.checkArgument(configAsString != null && !configAsString.isEmpty(),
-                                "the mapping config must be given with " + MAPPING_CONFIG_PROPERTY + "property");
-    StructuredRecordToCubeFact.MappingConfig config =
-      new Gson().fromJson(configAsString, StructuredRecordToCubeFact.MappingConfig.class);
-    factBuilder = new CubeFactBuilder(config);
+    factBuilder = new CubeFactBuilder(properties);
   }
 
   public CubeFact transform(StructuredRecord record) throws Exception {
@@ -126,63 +83,98 @@ public class StructuredRecordToCubeFact {
 
   private static final class CubeFactBuilder {
     private final TimestampResolver timestampResolver;
-    private final Collection<DimensionValueResolver> dimensionResolvers;
     private final Collection<MeasurementResolver> measurementResolvers;
 
-    public CubeFactBuilder(MappingConfig config) {
-      this.timestampResolver = new TimestampResolver(config.timestamp);
-      if (config.dimensions == null) {
-        throw new IllegalArgumentException("Missing required 'dimensions' configuration: " + config);
-      }
-      this.dimensionResolvers = Lists.newArrayList();
-      for (ValueMapping mapping : config.dimensions) {
-        dimensionResolvers.add(new DimensionValueResolver(mapping));
-      }
-      if (config.measurements == null) {
-        throw new IllegalArgumentException("Missing required 'measurements' configuration: " + config);
-      }
+    public CubeFactBuilder(Map<String, String> properties) {
+      Map<String, String> props = new HashMap<>(properties);
+      this.timestampResolver = new TimestampResolver(props);
       this.measurementResolvers = Lists.newArrayList();
-      for (ValueMapping mapping : config.measurements) {
-        measurementResolvers.add(new MeasurementResolver(mapping));
+      addMeasurementsFromProperty(props);
+      for (Map.Entry<String, String> property : props.entrySet()) {
+        if (property.getKey().startsWith(Properties.Cube.MEASUREMENT_PREFIX)) {
+          measurementResolvers.add(new MeasurementResolver(property.getKey(), property.getValue()));
+        }
+      }
+      if (measurementResolvers.isEmpty()) {
+        throw new IllegalArgumentException("At least one measurement must be specified with " +
+                                             Properties.Cube.MEASUREMENT_PREFIX +
+                                             "<measurement_name>=<measurement_type>");
+      }
+    }
+
+    // todo: workaround for CDAP-2944: allows specifying custom props via JSON map in a property value
+    private void addMeasurementsFromProperty(Map<String, String> props) {
+      if (props.containsKey(Properties.Cube.MEASUREMENTS)) {
+        Map<String, String> measurements = GSON.fromJson(props.get(Properties.Cube.MEASUREMENTS), STRING_MAP_TYPE);
+        props.putAll(measurements);
       }
     }
 
     public CubeFact build(StructuredRecord record) {
       // we divide by 1000 to get seconds - which is expected by Cube
       CubeFact fact = new CubeFact(timestampResolver.getTimestamp(record) / 1000);
-      for (DimensionValueResolver resolver : dimensionResolvers) {
-        String value = resolver.getValue(record);
+      addMeasurements(record, fact);
+
+      for (Schema.Field field : record.getSchema().getFields()) {
+        Object value = record.get(field.getName());
         if (value != null) {
-          fact.addDimensionValue(resolver.getName(), value);
+          String stringValue = getStringValue(field, value);
+          if (stringValue != null) {
+            fact.addDimensionValue(field.getName(), stringValue);
+          }
         }
       }
+
+      return fact;
+    }
+
+    private void addMeasurements(StructuredRecord record, CubeFact fact) {
       for (MeasurementResolver resolver : measurementResolvers) {
         Measurement measurement = resolver.getMeasurement(record);
         if (measurement != null) {
           fact.addMeasurement(measurement);
         }
       }
-      return fact;
+    }
+
+    @Nullable
+    private String getStringValue(Schema.Field field, Object value) {
+      Schema.Type type = validateAndGetType(field);
+      if (type == null) {
+        return null;
+      }
+      String dimValue;
+      switch (type) {
+        case BYTES:
+          if (value instanceof ByteBuffer) {
+            dimValue = Bytes.toString((ByteBuffer) value);
+          } else {
+            dimValue = Bytes.toStringBinary((byte[]) value);
+          }
+          break;
+        default:
+          dimValue = value.toString();
+      }
+
+      return dimValue;
     }
   }
 
   private static final class TimestampResolver {
-    private String srcField;
-    private DateFormat dateFormat;
+    private final String srcField;
+    private final DateFormat dateFormat;
 
-    public TimestampResolver(ValueMapping valueMapping) {
-      if (valueMapping == null) {
-        throw new IllegalArgumentException("Missing required configuration for CubeFact timestamp.");
-      }
-      // Timestamp is either retrieved from the record field or current ts (at processing) is used.
-      // If record field is used, either dateFormat is used to parse the value, or it is assumed as epoch in ms
-      if (valueMapping.sourceField != null) {
-        this.srcField = valueMapping.sourceField;
-        if (valueMapping.sourceFieldFormat != null) {
-          this.dateFormat = new SimpleDateFormat(valueMapping.sourceFieldFormat);
+    public TimestampResolver(Map<String, String> properties) {
+      if (properties.containsKey(Properties.Cube.FACT_TS_FIELD)) {
+        this.srcField = properties.get(Properties.Cube.FACT_TS_FIELD);
+        if (properties.containsKey(Properties.Cube.FACT_TS_FORMAT)) {
+          this.dateFormat = new SimpleDateFormat(properties.get(Properties.Cube.FACT_TS_FORMAT));
+        } else {
+          this.dateFormat = null;
         }
-      } else if (!"now".equals(valueMapping.value)) {
-        throw new IllegalArgumentException("Invalid configuration for CubeFact timestamp: " + valueMapping);
+      } else {
+        this.srcField = null;
+        this.dateFormat = null;
       }
     }
 
@@ -206,65 +198,7 @@ public class StructuredRecordToCubeFact {
     }
   }
 
-  private static class DimensionValueResolver {
-    protected String name;
-    protected String srcField;
-    protected String value;
-
-    public DimensionValueResolver(ValueMapping valueMapping) {
-      if (valueMapping.name == null) {
-        throw new IllegalArgumentException("Required 'name' of a dimension is missing in CubeFact mapping config: " +
-                                             valueMapping);
-      }
-      this.name = valueMapping.name;
-      // The value is either retrieved from record field or set as static value.
-      if (valueMapping.sourceField != null) {
-        this.srcField = valueMapping.sourceField;
-      } else if (valueMapping.value == null) {
-        throw new IllegalArgumentException("Either 'value' or 'sourceField' must be specified for dimension: " +
-                                             valueMapping);
-      }
-      this.value = valueMapping.value;
-    }
-
-    public String getName() {
-      return name;
-    }
-
-    @Nullable
-    public String getValue(StructuredRecord record) {
-      if (srcField == null) {
-        return value;
-      }
-      Object val = record.get(srcField);
-      if (val != null) {
-        Schema recordSchema = record.getSchema();
-        Schema.Field field = recordSchema.getField(srcField);
-        Schema.Type type = validateAndGetType(field);
-        String dimValue;
-        switch (type) {
-          case BYTES:
-            if (val instanceof ByteBuffer) {
-              dimValue = Bytes.toString((ByteBuffer) val);
-            } else {
-              dimValue = Bytes.toStringBinary((byte[]) val);
-            }
-            break;
-          default:
-            dimValue = val.toString();
-        }
-
-        return dimValue;
-      }
-      // value is default if srcField is missing
-      if (value != null) {
-        return value;
-      }
-
-      return null;
-    }
-  }
-
+  @Nullable
   private static Schema.Type validateAndGetType(Schema.Field field) {
     Schema.Type type;
     if (field.getSchema().isNullable()) {
@@ -272,40 +206,31 @@ public class StructuredRecordToCubeFact {
     } else {
       type = field.getSchema().getType();
     }
-    Preconditions.checkArgument(type.isSimpleType(),
-                                "only simple types are supported (boolean, int, long, float, double, bytes).");
+    // We only know how to convert simple types into String. Skipping the rest.
+    if (!type.isSimpleType()) {
+      return null;
+    }
+
     return type;
   }
 
   private static final class MeasurementResolver {
     private String name;
     private MeasureType type;
-    private String srcField;
-    private Long value;
 
-    public MeasurementResolver(ValueMapping valueMapping) {
-      if (valueMapping.name == null) {
-        throw new IllegalArgumentException("Required 'name' of a measurement is missing in CubeFact mapping config: " +
-                                             valueMapping);
+    public MeasurementResolver(String measureProperty, String measureType) {
+      String measureName = measureProperty.substring(Properties.Cube.MEASUREMENT_PREFIX.length());
+      if ("".equals(measureName)) {
+        throw new IllegalArgumentException(
+          "Invalid property: " + measureProperty + ", measureName must be not empty");
       }
-      this.name = valueMapping.name;
-      // The value is either retrieved from record field or set as static value.
-      if (valueMapping.sourceField != null) {
-        this.srcField = valueMapping.sourceField;
-      } else if (valueMapping.value == null) {
-        throw new IllegalArgumentException("Either 'value' or 'sourceField' must be specified for measurement" +
-                                             valueMapping);
+      if (Strings.isNullOrEmpty(measureType)) {
+        throw new IllegalArgumentException(
+          "Invalid property: " + measureProperty + ", measureType must be not empty");
       }
-      if (valueMapping.type == null) {
-        throw new IllegalArgumentException("Required 'type' value is missing in CubeFact measurement mapping config: " +
-                                             valueMapping);
-      }
-      this.type = MeasureType.valueOf(valueMapping.type);
-      try {
-        this.value = valueMapping.value == null ? null : Long.valueOf(valueMapping.value);
-      } catch (NumberFormatException e) {
-        throw new IllegalArgumentException("Cannot parse 'value' of a measurement as long: " + valueMapping.value);
-      }
+
+      this.name = measureName;
+      this.type = MeasureType.valueOf(measureType);
     }
 
     @Nullable
@@ -318,61 +243,12 @@ public class StructuredRecordToCubeFact {
     }
 
     private Long getValue(StructuredRecord record) {
-      if (srcField == null) {
-        return value;
-      }
-      Object val = record.get(srcField);
+      Object val = record.get(name);
       if (val != null) {
         return Double.valueOf(val.toString()).longValue();
       }
-      // value is default if srcField is missing
-      if (value != null) {
-        return value;
-      }
 
       return null;
-    }
-  }
-
-  // This class is needed to help with JSON serde
-  @SuppressWarnings("unused")
-  static final class MappingConfig {
-    ValueMapping timestamp;
-    ValueMapping[] dimensions;
-    ValueMapping[] measurements;
-
-    @Override
-    public String toString() {
-      final StringBuilder sb = new StringBuilder();
-      sb.append("MappingConfig");
-      sb.append("{timestamp=").append(timestamp);
-      sb.append(", dimensions=").append(dimensions == null ? "null" : Arrays.asList(dimensions).toString());
-      sb.append(", measurements=").append(measurements == null ? "null" : Arrays.asList(measurements).toString());
-      sb.append('}');
-      return sb.toString();
-    }
-  }
-
-  // This class is needed to help with JSON serde
-  @SuppressWarnings("unused")
-  static final class ValueMapping {
-    String name;
-    String type;
-    String value;
-    String sourceField;
-    String sourceFieldFormat;
-
-    @Override
-    public String toString() {
-      final StringBuilder sb = new StringBuilder();
-      sb.append("ValueMapping");
-      sb.append("{name='").append(name).append('\'');
-      sb.append(", type='").append(type).append('\'');
-      sb.append(", value='").append(value).append('\'');
-      sb.append(", sourceField='").append(sourceField).append('\'');
-      sb.append(", sourceFieldFormat='").append(sourceFieldFormat).append('\'');
-      sb.append('}');
-      return sb.toString();
     }
   }
 }

@@ -25,13 +25,34 @@ with the name of the JAR file as a header::
 
   X-Archive-Name: <JAR filename>
 
-and its content as the body of the request::
+(An optional header can supply a configuration object as a serialized JSON string:)
+
+::
+
+  X-App-Config: <JSON Serialization String of the Configuration Object>
+
+The application's content is the body of the request::
 
   <JAR binary content>
 
 Invoke the same command to update an application to a newer version.
 However, be sure to stop all of its flows, Spark and MapReduce programs before updating the application.
 
+For an application that has a configuration class such as::
+
+  public static class MyAppConfig extends Config {
+    String streamName;
+    String datasetName;
+  }
+
+we can deploy it with this RESTful call::
+
+  POST <bas-url>/namespaces/<namespace>/apps
+  -H "X-Archive-Name: <jar-name>"
+  -H "X-App-Config: "{\"streamName\" : \"newStream\", \"datasetName\" : \"newDataset\" }"
+  --data-binary "@<jar-location>"
+
+Note that the ``X-App-Config`` header contains the JSON serialization string of the ``MyAppConfig`` object.
 
 Deployed Applications
 ---------------------
@@ -619,9 +640,31 @@ For services, you can retrieve:
 
 For workflows, you can retrieve:
 
-- the information about the specific run currently running::
+- the information about the currently running node(s) in the workflow:
 
-    GET <base-url>/namespaces/<namespace>/apps/<app-id>/workflows/<workflow-id>/<run-id>/current
+  .. container:: table-block-example
+
+    .. list-table::
+       :widths: 99 1
+       :stub-columns: 1
+
+       * - Note: Workflow Current Node(s) RESTful API Deprecated
+         - 
+
+    .. list-table::
+       :widths: 100
+       :class: triple-table
+
+       * - As of **CDAP v3.1.0**, the *Workflow Current Node(s) RESTful API* has been
+           deprecated, pending removal in a later version.
+       * - Replace all use of the *Workflow Current Node(s) RESTful API*::
+           
+             GET <base-url>/namespaces/<namespace>/apps/<app-id>/workflows/<workflow-id>/<run-id>/current
+
+           with the revised API shown below for the *currently running node(s) of the workflow.*
+           Note the addition of a ``/runs/`` component in the path::
+
+             GET <base-url>/namespaces/<namespace>/apps/<app-id>/workflows/<workflow-id>/runs/<run-id>/current
 
 - the schedules defined for a workflow (using the parameter ``schedules``)::
 

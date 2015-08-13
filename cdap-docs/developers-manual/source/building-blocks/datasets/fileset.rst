@@ -64,9 +64,27 @@ and
 `OutputFormat <https://hadoop.apache.org/docs/current/api/org/apache/hadoop/mapreduce/OutputFormat.html>`_
 specifications.
 
-If you do not specify a base path, the dataset framework will generate a path
-based on the dataset name. If you do not specify an input format, you will not be able
-to use this as the input for a MapReduce program; similarly, for the output format.
+If you do not specify a base path, the dataset framework will generate a path based on the dataset name.
+This path |---| and any relative base path you specify |---| is relative to the data directory of the CDAP namespace
+in which the FileSet is created. You can also specify an absolute base path (one that begins with the character ``/``).
+This path is interpreted as an absolute path in the file system. Beware that if you create two FileSets with the
+same base path |---| be it multiple FileSets in the same namespace with the same relative base path, or in different
+namespaces with the same absolute base path |---| then these multiple FileSets will use the same directory and possibly
+obstruct each other's operations.
+
+You can configure a FileSet as "external". This means that the data (the actual files) in
+the FileSet are managed by an external process. This allows you to use FileSets with
+existing locations outside of CDAP. In that case, the FileSet will not allow the writing
+or deleting of files: it treats the contents of the base path as read-only::
+
+      createDataset("lines", FileSet.class, FileSetProperties.builder()
+        .setBasePath("/existing/path")
+        .setDataExternal(true)
+        .setInputFormat(TextInputFormat.class)
+        ...
+
+If you do not specify an input format, you will not be able to use this as the input for a
+MapReduce program; similarly for the output format.
 
 
 Using a FileSet in MapReduce
@@ -145,12 +163,12 @@ Yet that can become tedious to manage, especially if the naming convention shoul
 applications would have to be changed simultaneously for proper functioning.
 
 The PartitionedFileSet dataset relieves applications from understanding file name conventions. Instead,
-it associates a partition key with every file; for example the year and month associated with that file.
-Because different files cannot have the same partition key, this allows applications to address the
-data uniquely through its partition keys, or more broadly through conditions over the partition keys.
-For example, the months of February through June of a particular year, or the month of November in any
-year. By inheriting the attributes |---| such as format and schema |---| of FileSets, PartitionedFileSets
-are a powerful abstraction over data that is organized into files.
+it associates a partition key with a path. Because different paths cannot have the same partition key,
+this allows applications to address the file(s) at that path uniquely through their partition keys, or
+more broadly through conditions over the partition keys. For example, the months of February through June
+of a particular year, or the month of November in any year. By inheriting the attributes |---| such as
+format and schema |---| of FileSets, PartitionedFileSets are a powerful abstraction over data that is
+organized into files.
 
 Creating a PartitionedFileSet
 =============================
@@ -176,6 +194,12 @@ This creates a new PartitionedFileSet named *results*. Similar to FileSets, it s
 The difference to a FileSet is that this dataset is partitioned by league and season. This means that every file
 added to this dataset must have a partitioning key with a unique combination of league and season.
 
+Note that any of the properties that apply to FileSets can also be used for PartitionedFileSets (they apply to the
+embedded FileSet). If you configure a PartitionedFileSet as external using ``setDataExternal(true)``, then the
+embedded FileSet becomes read-only. You can still add partitions for locations that were written by an
+external process. But dropping a partition will only delete the partition's metadata, whereas the actual file
+remains intact. Similarly, if you drop or truncate an external PartitionedFileSet, its files will not be deleted.
+
 Reading and Writing PartitionedFileSets
 =======================================
 
@@ -185,8 +209,8 @@ partition key to obtain a Partition; you can then get a Location from that Parti
 
 For example, to read the content of a partition::
 
-      PartitionKey key = PartitionKey.builder().addStringField(...)
-                                               .addIntField(...)
+      PartitionKey key = PartitionKey.builder().addStringField("league", ...)
+                                               .addIntField("season", ...)
                                                .build());
       Partition partition = dataset.getPartition(key);
       if (partition != null) {
@@ -293,6 +317,60 @@ For example, give these arguments when starting the MapReduce through a RESTful 
     "dataset.results.input.partition.filter.season.upper": "1990",
     "dataset.totals.output.partition.key.league" : "nfl"
   }
+
+Incrementally Processing PartitionedFileSets
+============================================
+
+One way to process a partitioned file set is with a repeatedly-running MapReduce program that,
+in each run, reads all partitions that have been added since its previous run. This requires
+that the MapReduce program persists between runs which partitions have already been consumed.
+An easy way is to use the ``BatchPartitionConsumer``, an experimental feature introduced in CDAP 3.1.0.
+Your MapReduce program is responsible for extending this abstract consumer class with methods to
+persist and then read back its state. In this example, the state is persisted to a row in a
+KeyValue Table; however, other types of Datasets can also be used::
+
+  public static class WordCount extends AbstractMapReduce {
+
+    private final BatchPartitionConsumer batchPartitionConsumer = new BatchPartitionConsumer() {
+      private static final String STATE_KEY = "state.key";
+
+      @Nullable
+      @Override
+      protected byte[] readBytes(DatasetContext datasetContext) {
+        return ((KeyValueTable) datasetContext.getDataset("consumingState")).read(STATE_KEY);
+      }
+
+      @Override
+      protected void writeBytes(DatasetContext datasetContext, byte[] stateBytes) {
+        ((KeyValueTable) datasetContext.getDataset("consumingState")).write(STATE_KEY, stateBytes);
+      }
+    };
+
+Then, in the ``beforeSubmit()`` method of the MapReduce, specify the partitioned file set to be used as input::
+
+    @Override
+    public void beforeSubmit(MapReduceContext context) throws Exception {
+      PartitionedFileSet inputRecords = batchPartitionConsumer.getConfiguredDataset(context, "inputRecords");
+      context.setInput("inputRecords", inputRecords);
+      ...
+    }
+
+This will read back the previously persisted state, determine the new partitions to read based upon this
+state, and compute a new state to store in memory until a call to ``persist()``. The dataset it returns
+is instantiated with the set of new partitions to read as input.
+
+To save the state of partition processing, call the consumer's ``persist()`` method. This ensures that the
+next time the MapReduce job runs, it processes only the newly committed partitions::
+
+  @Override
+  public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
+    if (succeeded) {
+      batchPartitionConsumer.persist(context);
+    }
+    super.onFinish(succeeded, context);
+  }
+
+A limitation of the ``BatchPartitionConsumer`` is that there can't be concurrent runs of the MapReduce job.
 
 Exploring PartitionedFileSets
 =============================

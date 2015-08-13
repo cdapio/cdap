@@ -1,11 +1,13 @@
 angular.module(PKG.name + '.commons')
-  .directive('myFocusWatch', function($timeout, $parse) {
+  .directive('myFocusWatch', function($timeout) {
     return {
-      link: function (scope, element, attrs) {
-        var model = $parse(attrs.myFocusWatch);
+      scope: {
+        model: '=myFocusWatch'
+      },
+      link: function (scope, element) {
 
-        scope.$watch(model, function (v) {
-          if (v) {
+        scope.$watch('model', function () {
+          if (scope.model) {
             $timeout(function() {
               element[0].focus();
             });

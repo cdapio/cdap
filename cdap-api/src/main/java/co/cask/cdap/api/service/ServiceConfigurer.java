@@ -16,13 +16,14 @@
 
 package co.cask.cdap.api.service;
 
+import co.cask.cdap.api.DatasetConfigurer;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 
 /**
  * Interface for configurers used to create custom Services.
  */
-public interface ServiceConfigurer {
+public interface ServiceConfigurer extends DatasetConfigurer {
 
   /**
    * Set name of the service.

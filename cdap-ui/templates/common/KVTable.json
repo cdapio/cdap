@@ -3,15 +3,31 @@
   "groups" : {
     "position": [ "group1" ],
     "group1": {
-       "display" : "General",
+       "display" : "KV Table Properties",
        "position" : [ "name" ],
        "fields" : {
           "name" : {
-             "widget": "textbox",
-             "label": "Table Name",
-             "description" : "Specifies the name of the table to which data will be written to"
+            "widget": "dataset-selector",
+            "label": "Table Name",
+            "description" : "Specifies the name of the table the data will be written to"
+          },
+
+          "key" : {
+            "widget": "textbox",
+            "label": "Key"
+          },
+
+          "value" : {
+            "widget": "textbox",
+            "label": "Value"
           }
        }
+    }
+  },
+  "implicit" : {
+    "schema": {
+      "key": "bytes",
+      "value": "bytes"
     }
   }
 }

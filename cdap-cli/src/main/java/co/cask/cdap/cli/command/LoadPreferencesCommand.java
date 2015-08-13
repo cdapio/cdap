@@ -22,7 +22,7 @@ import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.english.Article;
 import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.client.PreferencesClient;
-import co.cask.cdap.common.exception.BadRequestException;
+import co.cask.cdap.common.BadRequestException;
 import co.cask.common.cli.Arguments;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
@@ -52,7 +52,7 @@ public class LoadPreferencesCommand extends AbstractSetPreferencesCommand {
 
   @Override
   public void printSuccessMessage(PrintStream printStream, ElementType type) {
-    printStream.printf(SUCCESS + "\n", type.getTitleName());
+    printStream.printf(SUCCESS + "\n", type.getName());
   }
 
   @SuppressWarnings("unchecked")
@@ -92,6 +92,6 @@ public class LoadPreferencesCommand extends AbstractSetPreferencesCommand {
   @Override
   public String getDescription() {
     return String.format("Sets preferences of %s from a local config file (supported formats = JSON).",
-                         Fragment.of(Article.A, type.getTitleName()));
+                         Fragment.of(Article.A, type.getName()));
   }
 }

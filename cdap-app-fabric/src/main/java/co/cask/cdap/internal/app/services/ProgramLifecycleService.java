@@ -22,12 +22,16 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.runtime.ProgramRuntimeService.RuntimeInfo;
 import co.cask.cdap.app.store.Store;
+import co.cask.cdap.common.ApplicationNotFoundException;
+import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.common.app.RunIds;
-import co.cask.cdap.common.exception.ProgramNotFoundException;
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
+import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
@@ -62,20 +66,27 @@ public class ProgramLifecycleService extends AbstractIdleService {
   private final ScheduledExecutorService scheduledExecutorService;
   private final Store store;
   private final ProgramRuntimeService runtimeService;
+  private final CConfiguration configuration;
 
   @Inject
-  public ProgramLifecycleService(Store store, ProgramRuntimeService runtimeService) {
+  public ProgramLifecycleService(Store store, ProgramRuntimeService runtimeService, CConfiguration configuration) {
     this.store = store;
     this.runtimeService = runtimeService;
     this.scheduledExecutorService = Executors.newScheduledThreadPool(1);
+    this.configuration = configuration;
   }
 
   @Override
   protected void startUp() throws Exception {
     LOG.info("Starting ProgramLifecycleService");
 
+    long interval = configuration.getLong(Constants.AppFabric.PROGRAM_RUNID_CORRECTOR_INTERVAL_SECONDS);
+    if (interval <= 0) {
+      LOG.debug("Invalid run id corrector interval {}. Setting it to 180 seconds.", interval);
+      interval = 180L;
+    }
     scheduledExecutorService.scheduleWithFixedDelay(new RunRecordsCorrectorRunnable(this),
-                                                    2L, 600L, TimeUnit.SECONDS);
+                                                    2L, interval, TimeUnit.SECONDS);
   }
 
   @Override
@@ -92,7 +103,8 @@ public class ProgramLifecycleService extends AbstractIdleService {
     }
   }
 
-  private Program getProgram(Id.Program id) throws IOException, ProgramNotFoundException {
+  private Program getProgram(Id.Program id)
+    throws IOException, ApplicationNotFoundException, ProgramNotFoundException {
     Program program = store.loadProgram(id);
     if (program == null) {
       throw new ProgramNotFoundException(id);
@@ -113,7 +125,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
    */
   public ProgramRuntimeService.RuntimeInfo start(final Id.Program id, Map<String, String> systemArgs,
                                                  Map<String, String> userArgs, boolean debug)
-    throws IOException, ProgramNotFoundException {
+    throws IOException, ProgramNotFoundException, ApplicationNotFoundException {
     final String adapterName = systemArgs.get(ProgramOptionConstants.ADAPTER_NAME);
     Program program = getProgram(id);
     BasicArguments systemArguments = new BasicArguments(systemArgs);
@@ -245,9 +257,9 @@ public class ProgramLifecycleService extends AbstractIdleService {
   void validateAndCorrectRunningRunRecords(ProgramType programType, Set<String> processedInvalidRunRecordIds) {
     final Map<RunId, RuntimeInfo> runIdToRuntimeInfo = runtimeService.list(programType);
 
-    List<RunRecord> invalidRunRecords = store.getRuns(ProgramRunStatus.RUNNING, new Predicate<RunRecord>() {
+    List<RunRecordMeta> invalidRunRecords = store.getRuns(ProgramRunStatus.RUNNING, new Predicate<RunRecordMeta>() {
       @Override
-      public boolean apply(@Nullable RunRecord input) {
+      public boolean apply(@Nullable RunRecordMeta input) {
         if (input == null) {
           return false;
         }
@@ -263,15 +275,15 @@ public class ProgramLifecycleService extends AbstractIdleService {
     }
 
     // Now lets correct the invalid RunRecords
-    for (RunRecord rr : invalidRunRecords) {
-      String runId = rr.getPid();
+    for (RunRecordMeta invalidRunRecordMeta : invalidRunRecords) {
+      String runId = invalidRunRecordMeta.getPid();
       Id.Program targetProgramId = retrieveProgramIdForRunRecord(programType, runId);
       if (targetProgramId == null) {
         // wrong program type
         continue;
       }
 
-      boolean shouldCorrect = shouldCorrectForWorkflowChildren(rr, processedInvalidRunRecordIds);
+      boolean shouldCorrect = shouldCorrectForWorkflowChildren(invalidRunRecordMeta, processedInvalidRunRecordIds);
       if (!shouldCorrect) {
         continue;
       }
@@ -289,22 +301,23 @@ public class ProgramLifecycleService extends AbstractIdleService {
   /**
    * Helper method to check if the run record is a child program of a Workflow
    *
-   * @param runRecord The target {@link RunRecord} to check
+   * @param runRecordMeta The target {@link RunRecordMeta} to check
    * @param processedInvalidRunRecordIds the {@link Set} of processed invalid run record ids.
    * @return {@code true} of we should check and {@code false} otherwise
    */
-  private boolean shouldCorrectForWorkflowChildren(RunRecord runRecord, Set<String> processedInvalidRunRecordIds) {
+  private boolean shouldCorrectForWorkflowChildren(RunRecordMeta runRecordMeta,
+                                                   Set<String> processedInvalidRunRecordIds) {
     // check if it is part of workflow because it may not have actual runtime info
-    if (runRecord.getProperties() != null && runRecord.getProperties().get("workflowrunid") != null) {
+    if (runRecordMeta.getProperties() != null && runRecordMeta.getProperties().get("workflowrunid") != null) {
 
       // Get the parent Workflow info
-      String workflowRunId = runRecord.getProperties().get("workflowrunid");
+      String workflowRunId = runRecordMeta.getProperties().get("workflowrunid");
       if (!processedInvalidRunRecordIds.contains(workflowRunId)) {
         // If the parent workflow has not been processed, then check if it still valid
         Id.Program workflowProgramId = retrieveProgramIdForRunRecord(ProgramType.WORKFLOW, workflowRunId);
         if (workflowProgramId != null) {
           // lets see if the parent workflow run records state is still running
-          RunRecord wfRunRecord = store.getRun(workflowProgramId, workflowRunId);
+          RunRecordMeta wfRunRecord = store.getRun(workflowProgramId, workflowRunId);
           RuntimeInfo wfRuntimeInfo = runtimeService.lookup(workflowProgramId, RunIds.fromString(workflowRunId));
 
           // Check of the parent workflow run record exists and it is running and runtime info said it is still there
@@ -426,7 +439,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
   private Id.Program validateProgramForRunRecord(String namespaceName, String appName, ProgramType programType,
                                                  String programName, String runId) {
     Id.Program programId = Id.Program.from(namespaceName, appName, programType, programName);
-    RunRecord runRecord = store.getRun(programId, runId);
+    RunRecordMeta runRecord = store.getRun(programId, runId);
     if (runRecord != null) {
       return programId;
     } else {

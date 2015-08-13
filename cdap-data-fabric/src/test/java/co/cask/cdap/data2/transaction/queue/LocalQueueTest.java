@@ -35,6 +35,7 @@ import co.cask.cdap.data2.queue.QueueProducer;
 import co.cask.cdap.data2.transaction.queue.inmemory.InMemoryQueueProducer;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
+import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TransactionSystemClient;
@@ -103,7 +104,7 @@ public class LocalQueueTest extends QueueTest {
         }));
     QueueClientFactory factory = injector.getInstance(QueueClientFactory.class);
     QueueProducer producer = factory.createProducer(QueueName.fromFlowlet(
-      Constants.DEFAULT_NAMESPACE, "app", "my", "flowlet", "output"));
+      Id.Namespace.DEFAULT.getId(), "app", "my", "flowlet", "output"));
     Assert.assertTrue(producer instanceof InMemoryQueueProducer);
   }
 

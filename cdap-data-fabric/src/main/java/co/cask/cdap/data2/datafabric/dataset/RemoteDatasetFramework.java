@@ -25,7 +25,6 @@ import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.ClassLoaders;
-import co.cask.cdap.common.utils.ApplicationBundler;
 import co.cask.cdap.data2.datafabric.dataset.type.ConstantClassLoaderProvider;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
@@ -50,6 +49,7 @@ import com.google.inject.Inject;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
+import org.apache.twill.internal.ApplicationBundler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -152,7 +152,7 @@ public class RemoteDatasetFramework implements DatasetFramework {
 
   @Override
   public boolean hasSystemType(String typeName) throws DatasetManagementException {
-    return hasType(Id.DatasetType.from(Constants.SYSTEM_NAMESPACE, typeName));
+    return hasType(Id.DatasetType.from(Id.Namespace.SYSTEM, typeName));
   }
 
   @Override
@@ -177,6 +177,15 @@ public class RemoteDatasetFramework implements DatasetFramework {
   @Override
   public <T extends DatasetAdmin> T getAdmin(Id.DatasetInstance datasetInstanceId, ClassLoader classLoader)
     throws DatasetManagementException, IOException {
+    return getAdmin(datasetInstanceId, classLoader, new ConstantClassLoaderProvider(classLoader));
+  }
+
+  @Nullable
+  @Override
+  public <T extends DatasetAdmin> T getAdmin(Id.DatasetInstance datasetInstanceId,
+                                             @Nullable ClassLoader parentClassLoader,
+                                             DatasetClassLoaderProvider classLoaderProvider)
+    throws DatasetManagementException, IOException {
     DatasetMeta instanceInfo = clientCache.getUnchecked(datasetInstanceId.getNamespace())
       .getInstance(datasetInstanceId.getId());
     if (instanceInfo == null) {
@@ -184,7 +193,7 @@ public class RemoteDatasetFramework implements DatasetFramework {
     }
 
     DatasetType type =
-      getDatasetType(instanceInfo.getType(), classLoader, new ConstantClassLoaderProvider(classLoader));
+      getDatasetType(instanceInfo.getType(), parentClassLoader, classLoaderProvider);
     return (T) type.getAdmin(DatasetContext.from(datasetInstanceId.getNamespaceId()), instanceInfo.getSpec());
   }
 

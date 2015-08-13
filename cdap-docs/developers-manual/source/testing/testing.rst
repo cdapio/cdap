@@ -30,7 +30,7 @@ in one of two ways:
     <dependency>
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-unit-test</artifactId>
-      <version>${project.version}</version>
+      <version>${cdap.version}</version>
       <scope>test</scope>
     </dependency>
     . . .
@@ -277,3 +277,21 @@ This can be done using a JDBC connection obtained from the test base::
 The JDBC connection does not implement the full JDBC functionality: it does not allow variable replacement and
 will not allow you to make any changes to datasets. But it is sufficient to perform test validation: you can create
 or prepare statements and execute queries, then iterate over the results set and validate its correctness.
+
+Configuring CDAP Runtime for Test Framework
+===========================================
+The ``TestBase`` class inherited by your test class starts an in-memory CDAP runtime before executing any test methods.
+Sometimes you may need to configure the CDAP runtime to suit your specific requirements. For example, if your test
+does not involve usage of SQL queries, you can turn off the explore service to reduce startup and shutdown times.
+
+You alter the configurations for the CDAP runtime by applying a JUnit ``@ClassRule`` on a ``TestConfiguration``
+instance. For example::
+
+  // Disable the SQL query support
+  // Set the transaction timeout to 60 seconds
+  @ClassRule
+  public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", false,
+                                                                       "data.tx.timeout", 60);
+
+Refer to the :ref:`cdap-site.xml <appendix-cdap-site.xml>` for the available set of configurations used by CDAP.
+

@@ -20,7 +20,9 @@ import co.cask.cdap.proto.Id;
 
 /**
  * Thrown when a namespace is not found in CDAP.
+ * @deprecated Use {@link co.cask.cdap.common.NamespaceNotFoundException} instead
  */
+@Deprecated
 public class NamespaceNotFoundException extends NotFoundException {
 
   private final Id.Namespace namespace;

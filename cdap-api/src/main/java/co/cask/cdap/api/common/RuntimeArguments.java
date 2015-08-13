@@ -17,10 +17,9 @@
 package co.cask.cdap.api.common;
 
 import com.google.common.base.Splitter;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -41,7 +40,7 @@ public final class RuntimeArguments {
    * @return Map of argument Keys and Values (Ex: Key = "os" and Value = "Linux").
    */
   public static Map<String, String> fromPosixArray(String[] args) {
-    Map<String, String> kvMap = Maps.newHashMap();
+    Map<String, String> kvMap = new HashMap<>();
     for (String arg : args) {
       kvMap.putAll(Splitter.on("--").omitEmptyStrings().trimResults().withKeyValueSeparator("=").split(arg));
     }
@@ -68,11 +67,11 @@ public final class RuntimeArguments {
    * @return Array of Strings in POSIX compliant format.
    */
   public static String[] toPosixArray(Iterable<Map.Entry<String, String>> iterable) {
-    ImmutableMap.Builder<String, String> userArgMapBuilder = ImmutableMap.builder();
+    Map<String, String> userArgs = new HashMap<>();
     for (Map.Entry<String, String> kv : iterable) {
-      userArgMapBuilder.put(kv);
+      userArgs.put(kv.getKey(), kv.getValue());
     }
-    return toPosixArray(userArgMapBuilder.build());
+    return toPosixArray(userArgs);
   }
 
   /**
@@ -89,21 +88,21 @@ public final class RuntimeArguments {
    * @param scope The type of the scope
    * @param name The name of the scope, e.g. "myTable"
    * @param arguments the runtime arguments of the enclosing scope
-   * @return a map that contains the arguments with and without prefix
+   * @return a new map that contains the arguments with and without prefix, never null
    */
   public static Map<String, String> extractScope(Scope scope, String name, Map<String, String> arguments) {
     if (arguments == null || arguments.isEmpty()) {
-      return arguments;
+      return new HashMap<>();
     }
 
     String prefix = scope + DOT + name + DOT;
     String wildCardPrefix = scope + DOT + ASTERISK + DOT;
 
-    Map<String, String> result = Maps.newHashMap();
+    Map<String, String> result = new HashMap<>();
     result.putAll(arguments);
 
-    Map<String, String> prefixMatchedArgs = Maps.newHashMap();
-    Map<String, String> wildCardPrefixMatchedArgs = Maps.newHashMap();
+    Map<String, String> prefixMatchedArgs = new HashMap<>();
+    Map<String, String> wildCardPrefixMatchedArgs = new HashMap<>();
 
     // Group the arguments into different categories based on wild card prefix match, named prefix match or no match
     for (Map.Entry<String, String> entry : arguments.entrySet()) {
@@ -133,7 +132,7 @@ public final class RuntimeArguments {
       return arguments;
     }
     final String prefix = scope + "." + name + ".";
-    Map<String, String> result = Maps.newHashMap();
+    Map<String, String> result = new HashMap<>();
     for (Map.Entry<String, String> entry : arguments.entrySet()) {
         result.put(prefix + entry.getKey(), entry.getValue());
     }

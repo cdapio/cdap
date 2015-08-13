@@ -16,6 +16,7 @@
 
 package co.cask.cdap.cli.util;
 
+import co.cask.cdap.cli.CLIConnectionConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -38,7 +39,7 @@ public class InstanceURIParser {
     this.cConf = cConf;
   }
 
-  public ConnectionConfig parse(String uriString) {
+  public CLIConnectionConfig parse(String uriString) {
     if (!uriString.contains("://")) {
       uriString = DEFAULT_PROTOCOL + "://" + uriString;
     }
@@ -46,8 +47,7 @@ public class InstanceURIParser {
     URI uri = URI.create(uriString);
     Id.Namespace namespace =
       (uri.getPath() == null || uri.getPath().isEmpty() || "/".equals(uri.getPath())) ?
-      Constants.DEFAULT_NAMESPACE_ID :
-      Id.Namespace.from(uri.getPath().substring(1));
+      Id.Namespace.DEFAULT : Id.Namespace.from(uri.getPath().substring(1));
     String hostname = uri.getHost();
     boolean sslEnabled = "https".equals(uri.getScheme());
     int port = uri.getPort();
@@ -58,12 +58,12 @@ public class InstanceURIParser {
         cConf.getInt(Constants.Router.ROUTER_PORT);
     }
 
-    return ConnectionConfig.builder()
+    ConnectionConfig config = ConnectionConfig.builder()
       .setHostname(hostname)
       .setPort(port)
       .setSSLEnabled(sslEnabled)
-      .setNamespace(namespace)
       .build();
+    return new CLIConnectionConfig(config, namespace, null);
   }
 
 }

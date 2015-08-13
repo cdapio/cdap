@@ -22,18 +22,21 @@ import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.client.DatasetClient;
 import co.cask.cdap.client.MetaClient;
 import co.cask.cdap.client.MetricsClient;
+import co.cask.cdap.client.MonitorClient;
 import co.cask.cdap.client.NamespaceClient;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.StreamClient;
 import co.cask.cdap.client.config.ClientConfig;
+import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.client.util.RESTClient;
+import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.ProgramNotFoundException;
+import co.cask.cdap.common.UnauthorizedException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.exception.NotFoundException;
-import co.cask.cdap.common.exception.ProgramNotFoundException;
-import co.cask.cdap.common.exception.UnauthorizedException;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.proto.ApplicationRecord;
+import co.cask.cdap.proto.ConfigEntry;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -41,8 +44,11 @@ import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.StreamDetail;
 import co.cask.cdap.security.authentication.client.AccessToken;
+import co.cask.cdap.security.authentication.client.AuthenticationClient;
+import co.cask.cdap.security.authentication.client.basic.BasicAuthenticationClient;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
@@ -53,27 +59,118 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import javax.annotation.Nullable;
+import javax.ws.rs.ServiceUnavailableException;
 
 /**
  *
  */
 public class IntegrationTestBase {
+  private static final Logger LOG = LoggerFactory.getLogger(IntegrationTestBase.class);
+  private static final long SERVICE_CHECK_TIMEOUT = TimeUnit.MINUTES.toSeconds(10);
 
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
+  private AccessToken accessToken;
+
   @Before
   public void setUp() throws Exception {
+    checkSystemServices();
+    assertUnrecoverableResetEnabled();
     assertIsClear();
+  }
+
+  protected void checkSystemServices() throws ServiceUnavailableException {
+    Callable<Boolean> monitorCallable = new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        return getMonitorClient().allSystemServicesOk();
+      }
+    };
+
+    try {
+      checkServicesWithRetry(monitorCallable, "CDAP Services are not available");
+    } catch (Throwable e) {
+      if (e.getCause() instanceof UnauthorizedException) {
+        // security is enabled, we need to get access token before checking system services
+        try {
+          accessToken = fetchAccessToken();
+          checkServicesWithRetry(monitorCallable, "CDAP Services are not available");
+        } catch (Exception ex) {
+          throw Throwables.propagate(ex);
+        }
+      } else {
+        throw Throwables.propagate(e);
+      }
+    }
+    LOG.info("CDAP Services are up and running!");
+  }
+
+  /**
+   * Uses BasicAuthenticationClient to fetch {@link AccessToken} - this implementation can be overridden if desired.
+   * @return {@link AccessToken}
+   * @throws IOException
+   */
+  protected AccessToken fetchAccessToken() throws IOException {
+    Properties properties = new Properties();
+    properties.setProperty("security.auth.client.username", System.getProperty("cdap.username"));
+    properties.setProperty("security.auth.client.password", System.getProperty("cdap.password"));
+    final AuthenticationClient authClient = new BasicAuthenticationClient();
+    authClient.configure(properties);
+    ConnectionConfig connectionConfig = getClientConfig().getConnectionConfig();
+    authClient.setConnectionInfo(connectionConfig.getHostname(), connectionConfig.getPort(), false);
+
+    checkServicesWithRetry(new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        return authClient.getAccessToken() != null;
+      }
+    }, "Unable to connect to Authentication service to obtain access token, Connection info : " + connectionConfig);
+
+    return authClient.getAccessToken();
+  }
+
+
+  private void checkServicesWithRetry(Callable<Boolean> callable,
+                                      String exceptionMessage) throws ServiceUnavailableException {
+    int numSecs = 0;
+    do {
+      try {
+        numSecs++;
+        if (callable.call()) {
+          return;
+        }
+        TimeUnit.SECONDS.sleep(1);
+      } catch (Throwable e) {
+        if (!(e.getCause() instanceof InterruptedException || e.getCause() instanceof IOException)) {
+          // we want to throw UnauthorizedException while suppress and retry on Interrupted or IOException
+          throw Throwables.propagate(e);
+        }
+      }
+    } while (numSecs <= SERVICE_CHECK_TIMEOUT);
+
+    // when we have passed the timeout and the check for services is not successful
+      throw new ServiceUnavailableException(exceptionMessage);
+  }
+
+  private void assertUnrecoverableResetEnabled() throws IOException, UnauthorizedException {
+    ConfigEntry configEntry = getMetaClient().getCDAPConfig().get(Constants.Dangerous.UNRECOVERABLE_RESET);
+    Preconditions.checkNotNull(configEntry,
+                               "Missing key from CDAP Configuration: {}", Constants.Dangerous.UNRECOVERABLE_RESET);
+    Preconditions.checkState(Boolean.parseBoolean(configEntry.getValue()), "UnrecoverableReset not enabled.");
   }
 
   @After
@@ -82,23 +179,12 @@ public class IntegrationTestBase {
     assertIsClear();
   }
 
-  protected ClientConfig createNamespacedClientConfig(ClientConfig initialClientConfig, Id.Namespace namespace) {
-    ClientConfig newClientConfig = new ClientConfig.Builder(initialClientConfig).build();
-    newClientConfig.setNamespace(namespace);
-    return newClientConfig;
-  }
-
-  protected TestManager createTestManager(Id.Namespace namespace) {
+  protected TestManager getTestManager() {
     try {
-      return new IntegrationTestManager(createNamespacedClientConfig(getClientConfig(), namespace), getRestClient(),
-                                        new LocalLocationFactory(TEMP_FOLDER.newFolder()));
+      return new IntegrationTestManager(getClientConfig(), getRestClient(), TEMP_FOLDER.newFolder());
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }
-  }
-
-  protected TestManager getTestManager() {
-    return createTestManager(Id.Namespace.DEFAULT);
   }
 
   /**
@@ -111,22 +197,23 @@ public class IntegrationTestBase {
 
   /**
    * CDAP access token for making requests to secure CDAP instances.
-   * Can be obtained via the CDAP authentication server.
    */
-  protected String getAccessToken() {
-    return System.getProperty("accessToken", "");
+  public AccessToken getAccessToken() {
+    return accessToken;
   }
 
   private void assertIsClear() throws Exception {
+    Id.Namespace namespace = Id.Namespace.DEFAULT;
+
     // only namespace existing should be 'default'
     NamespaceClient namespaceClient = getNamespaceClient();
     List<NamespaceMeta> list = namespaceClient.list();
     Assert.assertEquals(1, list.size());
-    Assert.assertEquals(Constants.DEFAULT_NAMESPACE_META, list.get(0));
+    Assert.assertEquals(NamespaceMeta.DEFAULT, list.get(0));
 
-    assertNoApps();
-    assertNoUserDatasets();
-    assertNoStreams();
+    assertNoApps(namespace);
+    assertNoUserDatasets(namespace);
+    assertNoStreams(namespace);
     // TODO: check metrics, etc.
   }
 
@@ -135,8 +222,8 @@ public class IntegrationTestBase {
     builder.setConnectionConfig(InstanceURIParser.DEFAULT.parse(
       URI.create(getInstanceURI()).toString()));
 
-    if (!getAccessToken().isEmpty()) {
-      builder.setAccessToken(new AccessToken(getAccessToken(), 0L, null));
+    if (accessToken != null) {
+      builder.setAccessToken(accessToken);
     }
 
     builder.setDefaultConnectTimeout(120000);
@@ -161,6 +248,10 @@ public class IntegrationTestBase {
 
   protected MetricsClient getMetricsClient() {
     return new MetricsClient(getClientConfig(), getRestClient());
+  }
+
+  protected MonitorClient getMonitorClient() {
+    return new MonitorClient(getClientConfig(), getRestClient());
   }
 
   protected ApplicationClient getApplicationClient() {
@@ -189,64 +280,54 @@ public class IntegrationTestBase {
   protected ApplicationManager deployApplication(Id.Namespace namespace,
                                                  Class<? extends Application> applicationClz,
                                                  File...bundleEmbeddedJars) throws IOException {
-    return createTestManager(namespace).deployApplication(namespace, applicationClz, bundleEmbeddedJars);
-  }
-
-  protected ApplicationManager deployApplication(Class<? extends Application> applicationClz,
-                                                 File...bundleEmbeddedJars) throws IOException {
-    return deployApplication(getClientConfig().getNamespace(), applicationClz, bundleEmbeddedJars);
-  }
-
-  protected ApplicationManager deployApplication(Id.Namespace namespace,
-                                                 Class<? extends Application> applicationClz) throws IOException {
-    return deployApplication(namespace, applicationClz, new File[0]);
+    return getTestManager().deployApplication(namespace, applicationClz, bundleEmbeddedJars);
   }
 
   protected ApplicationManager deployApplication(Class<? extends Application> applicationClz) throws IOException {
-    return deployApplication(getClientConfig().getNamespace(), applicationClz, new File[0]);
+    return deployApplication(Id.Namespace.DEFAULT, applicationClz, new File[0]);
   }
 
   private boolean isUserDataset(DatasetSpecificationSummary specification) {
     final DefaultDatasetNamespace dsNamespace = new DefaultDatasetNamespace(CConfiguration.create());
-    return !dsNamespace.contains(specification.getName(), Constants.SYSTEM_NAMESPACE);
+    return !dsNamespace.contains(specification.getName(), Id.Namespace.SYSTEM.getId());
   }
 
-  private void assertNoUserDatasets() throws Exception {
+  private void assertNoUserDatasets(Id.Namespace namespace) throws Exception {
     DatasetClient datasetClient = getDatasetClient();
-    List<DatasetSpecificationSummary> datasets = datasetClient.list();
+    List<DatasetSpecificationSummary> datasets = datasetClient.list(namespace);
 
     Iterable<DatasetSpecificationSummary> filteredDatasts = Iterables.filter(
       datasets, new Predicate<DatasetSpecificationSummary>() {
-      @Override
-      public boolean apply(@Nullable DatasetSpecificationSummary input) {
-        if (input == null) {
-          return true;
-        }
+        @Override
+        public boolean apply(@Nullable DatasetSpecificationSummary input) {
+          if (input == null) {
+            return true;
+          }
 
-        return isUserDataset(input);
-      }
+          return isUserDataset(input);
+        }
     });
 
     Iterable<String> filteredDatasetsNames = Iterables.transform(
       filteredDatasts, new Function<DatasetSpecificationSummary, String>() {
-      @Nullable
-      @Override
-      public String apply(@Nullable DatasetSpecificationSummary input) {
-        if (input == null) {
-          throw new IllegalStateException();
-        }
+        @Nullable
+        @Override
+        public String apply(@Nullable DatasetSpecificationSummary input) {
+          if (input == null) {
+            throw new IllegalStateException();
+          }
 
-        return input.getName();
-      }
+          return input.getName();
+        }
     });
 
     Assert.assertFalse("Must have no user datasets, but found the following user datasets: "
                          + Joiner.on(", ").join(filteredDatasetsNames), filteredDatasts.iterator().hasNext());
   }
 
-  private void assertNoApps() throws Exception {
+  private void assertNoApps(Id.Namespace namespace) throws Exception {
     ApplicationClient applicationClient = getApplicationClient();
-    List<ApplicationRecord> applicationRecords = applicationClient.list();
+    List<ApplicationRecord> applicationRecords = applicationClient.list(namespace);
     List<String> applicationIds = Lists.newArrayList();
     for (ApplicationRecord applicationRecord : applicationRecords) {
       applicationIds.add(applicationRecord.getName());
@@ -256,8 +337,8 @@ public class IntegrationTestBase {
                         + Joiner.on(", ").join(applicationIds), applicationRecords.isEmpty());
   }
 
-  private void assertNoStreams() throws Exception {
-    List<StreamDetail> streams = getStreamClient().list();
+  private void assertNoStreams(Id.Namespace namespace) throws Exception {
+    List<StreamDetail> streams = getStreamClient().list(namespace);
     List<String> streamNames = Lists.newArrayList();
     for (StreamDetail stream : streams) {
       streamNames.add(stream.getName());
@@ -285,8 +366,7 @@ public class IntegrationTestBase {
     return result;
   }
 
-  private void assertFlowletInstances(ProgramClient programClient, String appId, String flowId, String flowletId,
-                                        int numInstances)
+  private void assertFlowletInstances(ProgramClient programClient, Id.Flow.Flowlet flowletId, int numInstances)
     throws IOException, NotFoundException, UnauthorizedException {
 
     // TODO: replace with programClient.waitForFlowletInstances()
@@ -294,36 +374,33 @@ public class IntegrationTestBase {
     int numTries = 0;
     int maxTries = 5;
     do {
-      actualInstances = programClient.getFlowletInstances(appId, flowId, flowletId);
+      actualInstances = programClient.getFlowletInstances(flowletId);
       numTries++;
     } while (actualInstances != numInstances && numTries <= maxTries);
     Assert.assertEquals(numInstances, actualInstances);
   }
 
-  private void assertProgramRunning(ProgramClient programClient, String appId, ProgramType programType,
-                                      String programId)
+  private void assertProgramRunning(ProgramClient programClient, Id.Program programId)
     throws IOException, ProgramNotFoundException, UnauthorizedException, InterruptedException {
 
-    assertProgramStatus(programClient, appId, programType, programId, "RUNNING");
+    assertProgramStatus(programClient, programId, "RUNNING");
   }
 
-  private void assertProgramStopped(ProgramClient programClient, String appId, ProgramType programType,
-                                      String programId)
+  private void assertProgramStopped(ProgramClient programClient, Id.Program programId)
     throws IOException, ProgramNotFoundException, UnauthorizedException, InterruptedException {
 
-    assertProgramStatus(programClient, appId, programType, programId, "STOPPED");
+    assertProgramStatus(programClient, programId, "STOPPED");
   }
 
-  private void assertProgramStatus(ProgramClient programClient, String appId, ProgramType programType,
-                                     String programId, String programStatus)
+  private void assertProgramStatus(ProgramClient programClient, Id.Program programId, String programStatus)
     throws IOException, ProgramNotFoundException, UnauthorizedException, InterruptedException {
 
     try {
-      programClient.waitForStatus(appId, programType, programId, programStatus, 30, TimeUnit.SECONDS);
+      programClient.waitForStatus(programId, programStatus, 30, TimeUnit.SECONDS);
     } catch (TimeoutException e) {
       // NO-OP
     }
 
-    Assert.assertEquals(programStatus, programClient.getStatus(appId, programType, programId));
+    Assert.assertEquals(programStatus, programClient.getStatus(programId));
   }
 }

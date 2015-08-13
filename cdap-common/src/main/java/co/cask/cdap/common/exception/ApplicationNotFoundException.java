@@ -20,7 +20,9 @@ import co.cask.cdap.proto.Id;
 
 /**
  * Thrown when an application is not found.
+ * @deprecated Use {@link co.cask.cdap.common.ApplicationNotFoundException} instead
  */
+@Deprecated
 public class ApplicationNotFoundException extends NotFoundException {
 
   private final Id.Application id;

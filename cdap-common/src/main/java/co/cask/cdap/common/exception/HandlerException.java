@@ -25,7 +25,9 @@ import org.jboss.netty.handler.codec.http.HttpVersion;
 
 /**
  * Exception handling for failures in netty pipeline.
+ * @deprecated Use {@link co.cask.cdap.common.HandlerException} instead
  */
+@Deprecated
 public final class HandlerException extends RuntimeException {
 
   private final HttpResponseStatus failureStatus;

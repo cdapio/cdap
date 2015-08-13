@@ -12,15 +12,23 @@
 
   <div class="modal-body">
 
-    <textarea class="flow-injector-input form-control" placeholder="Events injected here will be consumed by all attached programs." ng-model="userInput" ng-keyup="$event.keyCode == 13 ? doInject($event) : null"></textarea>
+    <textarea class="flow-injector-input form-control" placeholder="Events injected here will be consumed by all attached programs." ng-model="userInput" ng-keyup="$event.keyCode == 13  && !$event.shiftKey? doInject($event) : null"></textarea>
 
   </div>
 
-  <div class="modal-footer text-right">
-    <button type="submit"
-      ng-disabled="injectStreamForm.$invalid"
-      class="btn btn-primary"
-    >Inject</button>
+  <div class="modal-footer">
+    <div class="pull-left">
+      <my-file-select button-disabled="{{loading}}"
+                      data-button-label="Upload"
+                      on-file-select="uploadFile($files)">
+    </div>
+
+    <div class="pull-right">
+      <button type="submit"
+        ng-disabled="injectStreamForm.$invalid || loading"
+        class="btn btn-primary"
+      >Inject</button>
+    </div>
   </div>
 
 </form>

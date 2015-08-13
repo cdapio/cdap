@@ -89,10 +89,10 @@ import org.apache.twill.api.TwillContext;
 import org.apache.twill.api.TwillRunnable;
 import org.apache.twill.api.TwillRunnableSpecification;
 import org.apache.twill.common.Cancellable;
-import org.apache.twill.common.Services;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
+import org.apache.twill.internal.Services;
 import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.slf4j.Logger;
@@ -137,6 +137,13 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
   private LogAppenderInitializer logAppenderInitializer;
   private CountDownLatch runlatch;
 
+  /**
+   * Constructor.
+   *
+   * @param name Name of the TwillRunnable
+   * @param hConfName Name of the hConf file as in the container directory
+   * @param cConfName Name of the cConf file as in the container directory
+   */
   protected AbstractProgramTwillRunnable(String name, String hConfName, String cConfName) {
     this.name = name;
     this.hConfName = hConfName;

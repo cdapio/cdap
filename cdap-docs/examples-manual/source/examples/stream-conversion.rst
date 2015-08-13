@@ -92,19 +92,9 @@ and it configures the ``events`` stream as its input and the ``converted`` datas
      :dedent: 2
 
 
-Building and Starting
-=====================
-
-.. include:: building-and-starting.txt
-
-
-Running CDAP Applications
-=========================
 
 .. |example| replace:: StreamConversion
-
-.. include:: /../../developers-manual/source/getting-started/building-apps.rst
-   :start-line: 11
+.. include:: building-starting-running-cdap.txt
 
 
 Running the Example
@@ -152,8 +142,8 @@ of the query. For example, to run the same query for only the month of January, 
 
 Stopping and Removing the Application
 =====================================
-Once done, you can stop the application as described above in `Stopping an Application. 
-<#stopping-an-application>`__ Here is an example-specific description of the steps:
+Once done, you can stop the application as described in :ref:`Stopping an Application 
+<cdap-building-running-stopping>`. Here is an example-specific description of the steps:
 
 **Suspending the Schedule**
 
@@ -171,7 +161,7 @@ The only thing you need to do to stop the application is suspend the schedule.
 
 **Removing the Application**
 
-You can now remove the application as described above, `Removing an Application <#removing-an-application>`__, or:
+You can now remove the application as described in :ref:`Removing an Application <cdap-building-running-removing>`, or:
 
 - Go to the *StreamConversionApp* `application overview page 
   <http://localhost:9999/ns/default/apps/StreamConversionApp/overview/status>`__,

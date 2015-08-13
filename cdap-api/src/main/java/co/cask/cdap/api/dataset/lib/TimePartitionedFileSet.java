@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,7 +19,6 @@ package co.cask.cdap.api.dataset.lib;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.dataset.DataSetException;
 
-import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -95,32 +94,4 @@ public interface TimePartitionedFileSet extends PartitionedFileSet {
    * to add the partition to this dataset.
    */
   TimePartitionOutput getPartitionOutput(long time);
-
-  /**
-   * @return the relative path of the partition for a specific time, rounded to the minute.
-   */
-  @Deprecated
-  @Nullable
-  String getPartition(long time);
-
-  /**
-   * @return a mapping from the partition time to the relative path, of all partitions with a time
-   *         that is between startTime (inclusive) and endTime (exclusive), both rounded to the full minute.
-   */
-  @Deprecated
-  Map<Long, String> getPartitions(long startTime, long endTime);
-
-  /**
-   * @return the relative paths of all partitions with a time that is between startTime (inclusive)
-   *         and endTime (exclusive), both rounded to the full minute.
-   */
-  @Deprecated
-  Collection<String> getPartitionPaths(long startTime, long endTime);
-
-  /**
-   * @return the underlying (embedded) file set.
-   * @deprecated use {@link #getEmbeddedFileSet} instead.
-   */
-  @Deprecated
-  FileSet getUnderlyingFileSet();
 }

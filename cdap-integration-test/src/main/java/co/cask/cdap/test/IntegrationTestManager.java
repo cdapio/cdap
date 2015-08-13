@@ -16,6 +16,7 @@
 
 package co.cask.cdap.test;
 
+import co.cask.cdap.api.Config;
 import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
@@ -42,6 +43,9 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.io.Files;
 import com.google.common.io.Resources;
+import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
+import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
@@ -52,6 +56,7 @@ import java.io.IOException;
 import java.net.JarURLConnection;
 import java.net.URL;
 import java.sql.Connection;
+import javax.annotation.Nullable;
 
 /**
  *
@@ -59,6 +64,7 @@ import java.sql.Connection;
 public class IntegrationTestManager implements TestManager {
 
   private static final Logger LOG = LoggerFactory.getLogger(IntegrationTestManager.class);
+  private static final Gson GSON = new Gson();
 
   private final ApplicationClient applicationClient;
   private final ClientConfig clientConfig;
@@ -67,11 +73,13 @@ public class IntegrationTestManager implements TestManager {
   private final ProgramClient programClient;
   private final NamespaceClient namespaceClient;
   private final AdapterClient adapterClient;
+  private final File tmpFolder;
 
-  public IntegrationTestManager(ClientConfig clientConfig, RESTClient restClient, LocationFactory locationFactory) {
+  public IntegrationTestManager(ClientConfig clientConfig, RESTClient restClient, File tmpFolder) {
     this.clientConfig = clientConfig;
     this.restClient = restClient;
-    this.locationFactory = locationFactory;
+    this.tmpFolder = tmpFolder;
+    this.locationFactory = new LocalLocationFactory(tmpFolder);
     this.applicationClient = new ApplicationClient(clientConfig, restClient);
     this.programClient = new ProgramClient(clientConfig, restClient);
     this.namespaceClient = new NamespaceClient(clientConfig, restClient);
@@ -82,6 +90,12 @@ public class IntegrationTestManager implements TestManager {
   public ApplicationManager deployApplication(Id.Namespace namespace,
                                               Class<? extends Application> applicationClz,
                                               File... bundleEmbeddedJars) {
+    return deployApplication(namespace, applicationClz, null, bundleEmbeddedJars);
+  }
+
+  @Override
+  public ApplicationManager deployApplication(Id.Namespace namespace, Class<? extends Application> applicationClz,
+                                              @Nullable Config configObject, File... bundleEmbeddedJars) {
     // See if the application class comes from file or jar.
     // If it's from JAR, no need to trace dependency since it should already be in an application jar.
     URL appClassURL = applicationClz.getClassLoader()
@@ -89,9 +103,19 @@ public class IntegrationTestManager implements TestManager {
     // Should never happen, otherwise the ClassLoader is broken
     Preconditions.checkNotNull(appClassURL, "Cannot find class %s from the classloader", applicationClz);
 
+    String appConfig = "";
+    TypeToken typeToken = TypeToken.of(applicationClz);
+    TypeToken<?> configToken = typeToken.resolveType(Application.class.getTypeParameters()[0]);
+
     try {
+      if (configObject != null) {
+        appConfig = GSON.toJson(configObject);
+      } else {
+        configObject = (Config) configToken.getRawType().newInstance();
+      }
+
       // Create and deploy application jar
-      File appJarFile = File.createTempFile(applicationClz.getSimpleName(), ".jar");
+      File appJarFile = new File(tmpFolder, String.format("%s-1.0.0-SNAPSHOT.jar", applicationClz.getSimpleName()));
       try {
         if ("jar".equals(appClassURL.getProtocol())) {
           copyJarFile(appClassURL, appJarFile);
@@ -99,7 +123,7 @@ public class IntegrationTestManager implements TestManager {
           Location appJar = AppJarHelper.createDeploymentJar(locationFactory, applicationClz, bundleEmbeddedJars);
           Files.copy(Locations.newInputSupplier(appJar), appJarFile);
         }
-        applicationClient.deploy(appJarFile);
+        applicationClient.deploy(namespace, appJarFile, appConfig);
       } finally {
         if (!appJarFile.delete()) {
           LOG.warn("Failed to delete temporary app jar {}", appJarFile.getAbsolutePath());
@@ -109,7 +133,7 @@ public class IntegrationTestManager implements TestManager {
       // Extracts application id from the application class
       Application application = applicationClz.newInstance();
       DefaultAppConfigurer configurer = new DefaultAppConfigurer(application);
-      application.configure(configurer, new DefaultApplicationContext());
+      application.configure(configurer, new DefaultApplicationContext(configObject));
       String applicationId = configurer.createSpecification().getName();
       return new RemoteApplicationManager(Id.Application.from(namespace, applicationId), clientConfig, restClient);
     } catch (Exception e) {
@@ -139,13 +163,15 @@ public class IntegrationTestManager implements TestManager {
 
   @Override
   public AdapterManager createAdapter(Id.Adapter adapterId, AdapterConfig config) throws Exception {
-    adapterClient.create(adapterId.getId(), config);
+    adapterClient.create(adapterId, config);
     return new RemoteAdapterManager(adapterId, adapterClient);
   }
 
   @Override
   public void clear() throws Exception {
-    programClient.stopAll();
+    for (NamespaceMeta namespace : namespaceClient.list()) {
+      programClient.stopAll(Id.Namespace.from(namespace.getName()));
+    }
     namespaceClient.deleteAll();
   }
 

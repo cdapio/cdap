@@ -31,6 +31,7 @@ public enum ArgumentName {
   MAPREDUCE("app-id.mapreduce-id"),
   SPARK("app-id.spark-id"),
 
+  APP_CONFIG("app-config"),
   RUNTIME_ARGS("runtime-args"),
   HOSTNAME("hostname"),
   DATASET_TYPE("dataset-type"),
@@ -63,6 +64,9 @@ public enum ArgumentName {
   ENDPOINT("endpoint"),
   HEADERS("headers"),
   HTTP_BODY("body"),
+  /**
+   * stream format
+   */
   FORMAT("format"),
   SCHEMA("schema"),
   SETTINGS("settings"),
@@ -78,7 +82,11 @@ public enum ArgumentName {
   ADAPTER_SPEC("adapter-spec-file"),
   COMMAND_CATEGORY("command-category"),
 
-  TABLE_RENDERER("table-renderer");
+  TABLE_RENDERER("table-renderer"),
+
+  WORKFLOW_NODE("workflow-node"),
+  WORKFLOW_TOKEN_SCOPE("workflow-token-scope"),
+  WORKFLOW_TOKEN_KEY("workflow-token-key");
 
   private final String name;
 

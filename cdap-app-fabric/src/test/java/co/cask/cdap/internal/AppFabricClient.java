@@ -17,6 +17,8 @@
 package co.cask.cdap.internal;
 
 import co.cask.cdap.api.schedule.ScheduleSpecification;
+import co.cask.cdap.api.workflow.WorkflowToken;
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.handlers.AdapterHttpHandler;
 import co.cask.cdap.gateway.handlers.AppLifecycleHttpHandler;
@@ -30,10 +32,15 @@ import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.ServiceInstances;
+import co.cask.cdap.proto.WorkflowTokenDetail;
+import co.cask.cdap.proto.WorkflowTokenNodeDetail;
 import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
+import co.cask.cdap.proto.codec.WorkflowTokenDetailCodec;
+import co.cask.cdap.proto.codec.WorkflowTokenNodeDetailCodec;
 import co.cask.http.BodyConsumer;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
@@ -58,6 +65,7 @@ import java.io.File;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Client tool for AppFabricHttpHandler.
@@ -66,6 +74,8 @@ public class AppFabricClient {
   private static final Logger LOG = LoggerFactory.getLogger(AppFabricClient.class);
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(ScheduleSpecification.class, new ScheduleSpecificationCodec())
+    .registerTypeAdapter(WorkflowTokenDetail.class, new WorkflowTokenDetailCodec())
+    .registerTypeAdapter(WorkflowTokenNodeDetail.class, new WorkflowTokenNodeDetailCodec())
     .create();
   private static final Type MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
   private static final Type RUN_RECORDS_TYPE = new TypeToken<List<RunRecord>>() { }.getType();
@@ -239,13 +249,53 @@ public class AppFabricClient {
     return schedules;
   }
 
-  public List<RunRecord> getHistory(String namespaceId, String appId, String wflowId) {
+  public WorkflowTokenDetail getWorkflowToken(String namespaceId, String appId, String wflowId, String runId,
+                                              @Nullable WorkflowToken.Scope scope,
+                                              @Nullable String key) throws NotFoundException {
     MockResponder responder = new MockResponder();
-    String uri = String.format("%s/apps/%s/workflows/%s/runs?status=completed",
-                               getNamespacePath(namespaceId), appId, wflowId);
+    String uri = String.format("%s/apps/%s/workflows/%s/runs/%s/token",
+                               getNamespacePath(namespaceId), appId, wflowId, runId);
+    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
+    scope = scope == null ? WorkflowToken.Scope.USER : scope;
+    key = key == null ? "" : key;
+    workflowHttpHandler.getWorkflowToken(request, responder, namespaceId, appId, wflowId, runId, scope.name(), key);
+
+    Type workflowTokenDetailType = new TypeToken<WorkflowTokenDetail>() { }.getType();
+    WorkflowTokenDetail workflowTokenDetail = responder.decodeResponseContent(workflowTokenDetailType, GSON);
+    verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Getting workflow token failed");
+    return workflowTokenDetail;
+  }
+
+  public WorkflowTokenNodeDetail getWorkflowToken(String namespaceId, String appId, String wflowId, String runId,
+                                                  String nodeName, @Nullable WorkflowToken.Scope scope,
+                                                  @Nullable String key) throws NotFoundException {
+    MockResponder responder = new MockResponder();
+    String uri = String.format("%s/apps/%s/workflows/%s/runs/%s/nodes/%s/token",
+                               getNamespacePath(namespaceId), appId, wflowId, runId, nodeName);
+    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
+    scope = scope == null ? WorkflowToken.Scope.USER : scope;
+    key = key == null ? "" : key;
+    workflowHttpHandler.getWorkflowToken(request, responder, namespaceId, appId, wflowId, runId, nodeName,
+                                         scope.name(), key);
+
+    Type workflowTokenNodeDetailType = new TypeToken<WorkflowTokenNodeDetail>() { }.getType();
+    WorkflowTokenNodeDetail workflowTokenDetail = responder.decodeResponseContent(workflowTokenNodeDetailType, GSON);
+    verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Getting workflow token at node failed");
+    return workflowTokenDetail;
+  }
+
+  public List<RunRecord> getHistory(Id.Program programId, ProgramRunStatus status) {
+    String namespaceId = programId.getNamespaceId();
+    String appId = programId.getApplicationId();
+    String programName = programId.getId();
+    String categoryName = programId.getType().getCategoryName();
+
+    MockResponder responder = new MockResponder();
+    String uri = String.format("%s/apps/%s/%s/%s/runs?status=" + status.name(),
+                               getNamespacePath(namespaceId), appId, categoryName, programName);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
     programLifecycleHttpHandler.programHistory(request, responder, namespaceId, appId,
-                                               "workflows", wflowId, null, null, null, 100);
+                                               categoryName, programName, status.name(), null, null, 100);
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Getting workflow history failed");
 
     return responder.decodeResponseContent(RUN_RECORDS_TYPE);
@@ -304,7 +354,7 @@ public class AppFabricClient {
     Location deployedJar = AppJarHelper.createDeploymentJar(locationFactory, applicationClz, bundleEmbeddedJars);
     LOG.info("Created deployedJar at {}", deployedJar.toURI().toASCIIString());
 
-    String archiveName = appName + ".jar";
+    String archiveName = String.format("%s-1.0.%d.jar", appName, System.currentTimeMillis());
     DefaultHttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST,
                                                         String.format("/v3/namespaces/%s/apps", namespace.getId()));
     request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
@@ -328,8 +378,6 @@ public class AppFabricClient {
       mockResponder = new MockResponder();
       bodyConsumer.finished(mockResponder);
       verifyResponse(HttpResponseStatus.OK, mockResponder.getStatus(), "Failed to deploy app");
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
     }
     return deployedJar;
   }
@@ -415,5 +463,13 @@ public class AppFabricClient {
       LOG.error("Error getting adapter run", e);
       throw Throwables.propagate(e);
     }
+  }
+
+  public void deleteAdapter(Id.Adapter adapterId) throws Exception {
+    String url = String.format("%s/adapters/%s", getNamespacePath(adapterId.getNamespaceId()), adapterId.getId());
+    DefaultHttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.DELETE, url);
+    MockResponder responder = new MockResponder();
+    adapterHttpHandler.deleteAdapter(request, responder, adapterId.getNamespaceId(), adapterId.getId());
+    verifyResponse(HttpResponseStatus.valueOf(200), responder.getStatus(), "Failed to delete adapter.");
   }
 }

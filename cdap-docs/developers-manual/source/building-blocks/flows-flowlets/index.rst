@@ -51,22 +51,19 @@ The ``Flow`` interface allows you to specify the flow’s metadata, :doc:`flowle
 <flowlets>` :doc:`flowlet connections, <connecting-flowlets>` (either stream to flowlet,
 or flowlet to flowlet), and any :ref:`Datasets <datasets-index>` used in the flow.
 
-To create a flow, implement ``Flow`` via a ``configure`` method that
-returns a ``FlowSpecification`` using the ``FlowSpecification.Builder()``::
+To create a flow, extend ``AbstractFlow`` and override the ``configureFlow`` method::
 
-  class MyExampleFlow implements Flow {
+  class MyExampleFlow extends AbstractFlow {
+
     @Override
-    public FlowSpecification configure() {
-      return FlowSpecification.Builder.with()
-        .setName("mySampleFlow")
-        .setDescription("Flow for showing examples")
-        .withFlowlets()
-          .add("flowlet1", new MyExampleFlowlet())
-          .add("flowlet2", new MyExampleFlowlet2())
-        .connect()
-          .fromStream("myStream").to("flowlet1")
-          .from("flowlet1").to("flowlet2")
-        .build();
+    public void configureFlow() {
+      setName("mySampleFlow");
+      setDescription("Flow for showing examples");
+      addFlowlet("flowlet1", new MyExampleFlowlet());
+      addFlowlet("flowlet2", new MyExampleFlowlet2());
+      connectStream("myStream", "flowlet1");
+      connect("flowlet1", "flowlet2");
+    }
   }
 
 In this example, the *name*, *description*, *with* (or *without*)

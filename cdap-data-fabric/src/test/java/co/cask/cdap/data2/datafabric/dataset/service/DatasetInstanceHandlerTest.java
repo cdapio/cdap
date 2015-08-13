@@ -22,9 +22,11 @@ import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
+import co.cask.cdap.data2.transaction.queue.QueueConstants;
+import co.cask.cdap.data2.transaction.queue.hbase.HBaseConsumerStateStore;
+import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueDatasetModule;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.cdap.proto.DatasetMeta;
 import co.cask.cdap.proto.DatasetModuleMeta;
@@ -55,6 +57,24 @@ import java.util.Map;
  * Unit-test for {@link DatasetInstanceHandler}
  */
 public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
+
+  @Test
+  public void testSystemDatasetNotInList() throws Exception {
+    try {
+      deployModule("default-table", InMemoryTableModule.class);
+      deployModule(HBaseConsumerStateStore.class.getSimpleName(), HBaseQueueDatasetModule.class);
+      // yes it's weird, you can create one a system dataset, but don't expect to see it in the get all request
+      Assert.assertEquals(HttpStatus.SC_OK,
+        createInstance(QueueConstants.STATE_STORE_NAME, HBaseConsumerStateStore.class.getSimpleName()));
+
+      // nothing has been created, modules and types list is empty
+      Assert.assertTrue(getInstances().getResponseObject().isEmpty());
+    } finally {
+      // cleanup
+      deleteInstance(QueueConstants.STATE_STORE_NAME);
+      Assert.assertEquals(HttpStatus.SC_OK, deleteModules());
+    }
+  }
 
   @Test
   public void testBasics() throws Exception {
@@ -181,10 +201,9 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
       Assert.assertEquals(2, getInstances().getResponseObject().size());
 
       // we want to verify that data is also gone, so we write smth to tables first
-      // using default namespace here since this is testing v2 APIs right now. TODO: add tests for v3 APIs
-      final Table table1 = dsFramework.getDataset(Id.DatasetInstance.from(Constants.DEFAULT_NAMESPACE, "myTable1"),
+      final Table table1 = dsFramework.getDataset(Id.DatasetInstance.from(Id.Namespace.DEFAULT, "myTable1"),
                                                   DatasetDefinition.NO_ARGUMENTS, null);
-      final Table table2 = dsFramework.getDataset(Id.DatasetInstance.from(Constants.DEFAULT_NAMESPACE, "myTable2"),
+      final Table table2 = dsFramework.getDataset(Id.DatasetInstance.from(Id.Namespace.DEFAULT, "myTable2"),
                                                   DatasetDefinition.NO_ARGUMENTS, null);
       TransactionExecutor txExecutor =
         new DefaultTransactionExecutor(new InMemoryTxSystemClient(txManager),

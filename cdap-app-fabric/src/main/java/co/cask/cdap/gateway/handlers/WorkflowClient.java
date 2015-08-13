@@ -42,6 +42,7 @@ public class WorkflowClient {
   private static final Logger LOG = LoggerFactory.getLogger(WorkflowClient.class);
   private final AsyncHttpClient httpClient;
   private final DiscoveryServiceClient discoveryServiceClient;
+
   @Inject
   WorkflowClient(DiscoveryServiceClient discoveryServiceClient) {
     this.discoveryServiceClient = discoveryServiceClient;
@@ -50,10 +51,10 @@ public class WorkflowClient {
                                                configBuilder.build());
   }
 
-  public void getWorkflowStatus(String accountId, String appId, String workflowId, String runId,
+  public void getWorkflowStatus(String namespaceId, String appId, String workflowId, String runId,
                                 final Callback callback) throws IOException {
     // determine the service provider for the given path
-    String serviceName = String.format("workflow.%s.%s.%s.%s", accountId, appId, workflowId, runId);
+    String serviceName = String.format("workflow.%s.%s.%s.%s", namespaceId, appId, workflowId, runId);
     Discoverable discoverable = new RandomEndpointStrategy(discoveryServiceClient.discover(serviceName)).pick();
 
     if (discoverable == null) {

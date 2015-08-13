@@ -16,21 +16,16 @@
 
 package co.cask.cdap.api.spark;
 
-import java.util.Map;
+import co.cask.cdap.api.DatasetConfigurer;
+import co.cask.cdap.api.ProgramConfigurer;
+import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.annotation.Beta;
 
 /**
  * Configurer for configuring {@link Spark}.
  */
-public interface SparkConfigurer {
-  /**
-   * Sets the name of the {@link Spark}.
-   */
-  void setName(String name);
-
-  /**
-   * Sets the description of the {@link Spark}.
-   */
-  void setDescription(String description);
+@Beta
+public interface SparkConfigurer extends ProgramConfigurer, DatasetConfigurer {
 
   /**
    * Sets the Spark job main class name in specification. The main method of this class will be called to run the
@@ -41,10 +36,12 @@ public interface SparkConfigurer {
   void setMainClassName(String className);
 
   /**
-   * Sets a set of properties that will be available through the {@link SparkSpecification#getProperties()}
-   * at runtime.
-   *
-   * @param properties the properties to set
+   * Sets the resources requirement for the Spark driver process.
    */
-  void setProperties(Map<String, String> properties);
+  void setDriverResources(Resources resources);
+
+  /**
+   * Sets the resources requirement for the Spark executor processes.
+   */
+  void setExecutorResources(Resources resources);
 }

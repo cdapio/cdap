@@ -16,23 +16,21 @@
 
 package co.cask.cdap.examples.webanalytics;
 
-import co.cask.cdap.api.flow.Flow;
-import co.cask.cdap.api.flow.FlowSpecification;
+import co.cask.cdap.api.flow.AbstractFlow;
 
 /**
  * Web Analytics Flow defines how the streams and flowlets are connected with
  * each other.
  */
-public class WebAnalyticsFlow implements Flow {
+public class WebAnalyticsFlow extends AbstractFlow {
+
   @Override
-  public FlowSpecification configure() {
-    return FlowSpecification.Builder.with()
-      .setName("WebAnalyticsFlow")
-      .setDescription("Web Analytics Flow")
-      .withFlowlets()
-        .add("UniqueVisitor", new UniqueVisitor())  // Only one Flowlet in this Flow
-      .connect()
-        .fromStream("log").to("UniqueVisitor")      // Feed events written to the "log" Stream to UniqueVisitor
-      .build();
+  protected void configureFlow() {
+    setName("WebAnalyticsFlow");
+    setDescription("Web Analytics Flow");
+    // Only one Flowlet in this Flow
+    addFlowlet("UniqueVisitor", new UniqueVisitor());
+    // Feed events written to the "log" Stream to UniqueVisitor
+    connectStream("log", "UniqueVisitor");
   }
 }

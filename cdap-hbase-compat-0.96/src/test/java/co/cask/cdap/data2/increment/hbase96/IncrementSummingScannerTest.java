@@ -17,20 +17,21 @@
 package co.cask.cdap.data2.increment.hbase96;
 
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.data.hbase.HBase96Test;
 import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseTable;
 import co.cask.cdap.data2.increment.hbase.IncrementHandlerState;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
+import co.cask.cdap.data2.util.hbase.HTableDescriptorBuilder;
 import co.cask.cdap.data2.util.hbase.MockRegionServerServices;
+import co.cask.cdap.proto.Id;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
-import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -62,26 +63,26 @@ import static org.junit.Assert.assertTrue;
  */
 public class IncrementSummingScannerTest {
   private static final byte[] TRUE = Bytes.toBytes(true);
-  private static HBaseTestingUtility testUtil;
+  private static HBase96Test testUtil;
   private static Configuration conf;
   private static CConfiguration cConf;
 
   @BeforeClass
   public static void setupBeforeClass() throws Exception {
-    testUtil = new HBaseTestingUtility();
-    testUtil.startMiniCluster();
+    testUtil = new HBase96Test();
+    testUtil.startHBase();
     conf = testUtil.getConfiguration();
     cConf = CConfiguration.create();
   }
 
   @AfterClass
   public static void shutdownAfterClass() throws Exception {
-    testUtil.shutdownMiniCluster();
+    testUtil.stopHBase();
   }
 
   @Test
   public void testIncrementScanning() throws Exception {
-    TableId tableId = TableId.from(Constants.DEFAULT_NAMESPACE, "TestIncrementSummingScanner");
+    TableId tableId = TableId.from(Id.Namespace.DEFAULT, "TestIncrementSummingScanner");
     byte[] familyBytes = Bytes.toBytes("f");
     byte[] columnBytes = Bytes.toBytes("c");
     HRegion region = createRegion(tableId, familyBytes);
@@ -221,7 +222,7 @@ public class IncrementSummingScannerTest {
 
   @Test
   public void testFlushAndCompact() throws Exception {
-    TableId tableId = TableId.from(Constants.DEFAULT_NAMESPACE, "TestFlushAndCompact");
+    TableId tableId = TableId.from(Id.Namespace.DEFAULT, "TestFlushAndCompact");
     byte[] familyBytes = Bytes.toBytes("f");
     byte[] columnBytes = Bytes.toBytes("c");
     HRegion region = createRegion(tableId, familyBytes);
@@ -314,7 +315,7 @@ public class IncrementSummingScannerTest {
 
   @Test
   public void testIncrementScanningWithBatchAndUVB() throws Exception {
-    TableId tableId = TableId.from(Constants.DEFAULT_NAMESPACE, "TestIncrementSummingScannerWithUpperVisibilityBound");
+    TableId tableId = TableId.from(Id.Namespace.DEFAULT, "TestIncrementSummingScannerWithUpperVisibilityBound");
     byte[] familyBytes = Bytes.toBytes("f");
     byte[] columnBytes = Bytes.toBytes("c");
     HRegion region = createRegion(tableId, familyBytes);
@@ -433,21 +434,22 @@ public class IncrementSummingScannerTest {
   static HRegion createRegion(Configuration hConf, CConfiguration cConf, TableId tableId,
                               HColumnDescriptor cfd) throws Exception {
     HBaseTableUtil tableUtil = new HBaseTableUtilFactory(cConf).get();
-    HTableDescriptor htd = tableUtil.createHTableDescriptor(tableId);
+    HTableDescriptorBuilder htd = tableUtil.buildHTableDescriptor(tableId);
     cfd.setMaxVersions(Integer.MAX_VALUE);
     cfd.setKeepDeletedCells(true);
     htd.addFamily(cfd);
     htd.addCoprocessor(IncrementHandler.class.getName());
 
-    String tableName = htd.getNameAsString();
+    HTableDescriptor desc = htd.build();
+    String tableName = desc.getNameAsString();
     Path tablePath = new Path("/tmp/" + tableName);
     Path hlogPath = new Path("/tmp/hlog-" + tableName);
     FileSystem fs = FileSystem.get(hConf);
     assertTrue(fs.mkdirs(tablePath));
     HLog hLog = HLogFactory.createHLog(fs, hlogPath, tableName, hConf);
-    HRegionInfo regionInfo = new HRegionInfo(htd.getTableName());
+    HRegionInfo regionInfo = new HRegionInfo(desc.getTableName());
     HRegionFileSystem regionFS = HRegionFileSystem.createRegionOnFileSystem(hConf, fs, tablePath, regionInfo);
-    return new HRegion(regionFS, hLog, hConf, htd,
+    return new HRegion(regionFS, hLog, hConf, desc,
                        new MockRegionServerServices(hConf, null));
   }
 }

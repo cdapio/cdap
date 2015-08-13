@@ -24,8 +24,7 @@ import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.lib.ObjectStore;
 import co.cask.cdap.api.dataset.lib.ObjectStores;
-import co.cask.cdap.api.flow.Flow;
-import co.cask.cdap.api.flow.FlowSpecification;
+import co.cask.cdap.api.flow.AbstractFlow;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.service.AbstractService;
@@ -128,18 +127,14 @@ public class SparkKMeansApp extends AbstractApplication {
   /**
    * This is a simple Flow that consumes points from a Stream and stores them in a dataset.
    */
-  public static final class PointsFlow implements Flow {
+  public static final class PointsFlow extends AbstractFlow {
 
     @Override
-    public FlowSpecification configure() {
-      return FlowSpecification.Builder.with()
-        .setName("PointsFlow")
-        .setDescription("Reads points information and stores in dataset")
-        .withFlowlets()
-        .add("reader", new PointsReader())
-        .connect()
-        .fromStream("pointsStream").to("reader")
-        .build();
+    protected void configureFlow() {
+      setName("PointsFlow");
+      setDescription("Reads points information and stores in dataset");
+      addFlowlet("reader", new PointsReader());
+      connectStream("pointsStream", "reader");
     }
   }
 

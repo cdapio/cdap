@@ -98,9 +98,9 @@ for /f "tokens=* delims= " %%f in ('%JAVACMD% -version 2^>^&1') do @(
 )
 set line=%line:java version "1.=!!%
 set line=%line:~0,1%
-if NOT "%line%" == "6" (
-  if NOT "%line%" == "7" (
-    echo ERROR: Java version not supported. Please install Java 6 or 7 - other versions of Java are not yet supported.
+if NOT "%line%" == "7" (
+  if NOT "%line%" == "8" (
+    echo ERROR: Java version not supported. Please install Java 7 or 8 - other versions of Java are not supported.
     GOTO :FINALLY
   )
 )
@@ -118,16 +118,11 @@ for /f "tokens=* delims= " %%f in ('node -v') do @(
   set line=%%f
 )
 set line=%line:v=!!%
-set line=0.10.1
 
 for /F "delims=. tokens=1,2,3" %%a in ('echo %line%') do (
-  if %%a LSS 1 (
-    if %%b LSS 9 (
-      if %%c LSS 16 (
-        echo Node.js version is not supported. The minimum version suported is v0.8.16.
-        GOTO :FINALLY
-      )
-    )
+  if  NOT %%b GEQ 10 (
+    echo Node.js version is not supported. The minimum version suported is v0.10.0.
+    GOTO :FINALLY
   )
 )
 endlocal

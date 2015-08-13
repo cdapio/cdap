@@ -40,6 +40,7 @@ import java.util.Map;
 final class WorkflowTwillRunnable extends AbstractProgramTwillRunnable<WorkflowProgramRunner> {
 
   // NOTE: DO NOT REMOVE.  Though it is unused, the dependency is needed when submitting the mapred job.
+  @SuppressWarnings("unused")
   private YarnClientProtocolProvider provider;
 
   WorkflowTwillRunnable(String name, String hConfName, String cConfName) {

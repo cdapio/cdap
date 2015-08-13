@@ -16,12 +16,14 @@
 
 package co.cask.cdap.api.service.http;
 
+import co.cask.cdap.api.DatasetConfigurer;
+
 import java.util.Map;
 
 /**
  * Interface which should be implemented to configure a {@link HttpServiceHandler}
  */
-public interface HttpServiceConfigurer {
+public interface HttpServiceConfigurer extends DatasetConfigurer {
 
   /**
    * Sets a set of properties that will be available through the {@link HttpServiceHandlerSpecification#getProperties()}

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data2.dataset2.lib.partitioned;
 
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetDefinition;
@@ -24,13 +25,15 @@ import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetArguments;
+import co.cask.cdap.api.dataset.lib.IndexedTable;
+import co.cask.cdap.api.dataset.lib.IndexedTableDefinition;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetProperties;
 import co.cask.cdap.api.dataset.lib.Partitioning;
-import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.explore.client.ExploreFacade;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
@@ -51,10 +54,15 @@ public class PartitionedFileSetDefinition extends AbstractDatasetDefinition<Part
 
   private static final Logger LOG = LoggerFactory.getLogger(PartitionedFileSetDefinition.class);
 
-  protected static final String PARTITION_TABLE_NAME = "partitions";
-  protected static final String FILESET_NAME = "files";
+  @VisibleForTesting
+  public static final String PARTITION_TABLE_NAME = "partitions";
+  @VisibleForTesting
+  public static final String FILESET_NAME = "files";
 
-  protected final DatasetDefinition<? extends Table, ?> tableDef;
+  public static final String INDEXED_COLS = Bytes.toString(PartitionedFileSetDataset.WRITE_PTR_COL) + ','
+    + Bytes.toString(PartitionedFileSetDataset.CREATION_TIME_COL);
+
+  protected final DatasetDefinition<? extends IndexedTable, ?> indexedTableDef;
   protected final DatasetDefinition<? extends FileSet, ?> filesetDef;
 
   @Inject
@@ -62,20 +70,25 @@ public class PartitionedFileSetDefinition extends AbstractDatasetDefinition<Part
 
   public PartitionedFileSetDefinition(String name,
                                       DatasetDefinition<? extends FileSet, ?> filesetDef,
-                                      DatasetDefinition<? extends Table, ?> tableDef) {
+                                      DatasetDefinition<? extends IndexedTable, ?> indexedTableDef) {
     super(name);
-    Preconditions.checkArgument(tableDef != null, "Table definition is required");
+    Preconditions.checkArgument(indexedTableDef != null, "IndexedTable definition is required");
     Preconditions.checkArgument(filesetDef != null, "FileSet definition is required");
     this.filesetDef = filesetDef;
-    this.tableDef = tableDef;
+    this.indexedTableDef = indexedTableDef;
   }
 
   @Override
   public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
+    // define the columns for indexing on the partitionsTable
+    DatasetProperties indexedTableProperties = DatasetProperties.builder()
+      .addAll(properties.getProperties())
+      .add(IndexedTableDefinition.INDEX_COLUMNS_CONF_KEY, INDEXED_COLS)
+      .build();
     return DatasetSpecification.builder(instanceName, getName())
       .properties(properties.getProperties())
       .datasets(filesetDef.configure(FILESET_NAME, properties),
-                tableDef.configure(PARTITION_TABLE_NAME, properties))
+                indexedTableDef.configure(PARTITION_TABLE_NAME, indexedTableProperties))
       .build();
   }
 
@@ -85,7 +98,7 @@ public class PartitionedFileSetDefinition extends AbstractDatasetDefinition<Part
     return new PartitionedFileSetAdmin(
         datasetContext, spec, getExploreProvider(),
         filesetDef.getAdmin(datasetContext, spec.getSpecification(FILESET_NAME), classLoader),
-        tableDef.getAdmin(datasetContext, spec.getSpecification(PARTITION_TABLE_NAME), classLoader));
+        indexedTableDef.getAdmin(datasetContext, spec.getSpecification(PARTITION_TABLE_NAME), classLoader));
   }
 
   @Override
@@ -97,10 +110,10 @@ public class PartitionedFileSetDefinition extends AbstractDatasetDefinition<Part
     // make any necessary updates to the arguments
     arguments = updateArgumentsIfNeeded(arguments, partitioning);
 
-    FileSet fileset = filesetDef.getDataset(datasetContext, spec.getSpecification(FILESET_NAME), arguments,
-                                            classLoader);
-    Table table = tableDef.getDataset(datasetContext, spec.getSpecification(PARTITION_TABLE_NAME), arguments,
-                                      classLoader);
+    FileSet fileset = filesetDef.getDataset(datasetContext, spec.getSpecification(FILESET_NAME),
+                                            arguments, classLoader);
+    IndexedTable table = indexedTableDef.getDataset(datasetContext, spec.getSpecification(PARTITION_TABLE_NAME),
+                                                    arguments, classLoader);
 
     return new PartitionedFileSetDataset(datasetContext, spec.getName(), partitioning, fileset, table, spec, arguments,
                                          getExploreProvider());

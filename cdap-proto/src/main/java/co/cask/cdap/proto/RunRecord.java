@@ -26,12 +26,9 @@ import javax.annotation.Nullable;
 /**
  * This class records information for a particular run.
  */
-public final class RunRecord {
+public class RunRecord {
   @SerializedName("runid")
   private final String pid;
-
-  @SerializedName("twillrunid")
-  private final String twillRunId;
 
   @SerializedName("start")
   private final long startTs;
@@ -50,28 +47,18 @@ public final class RunRecord {
   private final Map<String, String> properties;
 
   public RunRecord(String pid, long startTs, @Nullable Long stopTs, ProgramRunStatus status,
-                   @Nullable String adapterName, @Nullable String twillRunId, Map<String, String> properties) {
+                   @Nullable String adapterName, @Nullable Map<String, String> properties) {
     this.pid = pid;
     this.startTs = startTs;
     this.stopTs = stopTs;
     this.status = status;
     this.adapterName = adapterName;
-    this.twillRunId = twillRunId;
     this.properties = properties == null ? Maps.<String, String>newHashMap() : properties;
   }
 
-  public RunRecord(String pid, long startTs, @Nullable Long stopTs, ProgramRunStatus status,
-                   @Nullable String adapterName, @Nullable String twillRunId) {
-    this(pid, startTs, stopTs, status, adapterName, twillRunId, null);
-  }
-
-  public RunRecord(String pid, long startTs, @Nullable Long stopTs, ProgramRunStatus status) {
-    this(pid, startTs, stopTs, status, null, null);
-  }
-
-  public RunRecord(RunRecord started, @Nullable Long stopTs, ProgramRunStatus status) {
-    this(started.pid, started.startTs, stopTs, status, started.getAdapterName(), started.getTwillRunId(),
-         started.getProperties());
+  public RunRecord(RunRecord otherRunRecord) {
+    this(otherRunRecord.getPid(), otherRunRecord.getStartTs(), otherRunRecord.getStopTs(), otherRunRecord.getStatus(),
+         otherRunRecord.getAdapterName(), otherRunRecord.getProperties());
   }
 
   public String getPid() {
@@ -96,11 +83,6 @@ public final class RunRecord {
     return adapterName;
   }
 
-  @Nullable
-  public String getTwillRunId() {
-    return twillRunId;
-  }
-
   public Map<String, String> getProperties() {
     return properties;
   }
@@ -121,13 +103,12 @@ public final class RunRecord {
       Objects.equal(this.stopTs, that.stopTs) &&
       Objects.equal(this.status, that.status) &&
       Objects.equal(this.adapterName, that.adapterName) &&
-      Objects.equal(this.twillRunId, that.twillRunId) &&
       Objects.equal(this.properties, that.properties);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(pid, startTs, stopTs, status, adapterName, twillRunId, properties);
+    return Objects.hashCode(pid, startTs, stopTs, status, adapterName, properties);
   }
 
   @Override
@@ -138,7 +119,6 @@ public final class RunRecord {
       .add("stopTs", stopTs)
       .add("status", status)
       .add("adapter", adapterName)
-      .add("twillrunid", twillRunId)
       .add("properties", properties)
       .toString();
   }

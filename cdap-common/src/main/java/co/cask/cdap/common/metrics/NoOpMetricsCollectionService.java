@@ -20,6 +20,7 @@ import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
 import com.google.common.util.concurrent.AbstractIdleService;
 
+import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -58,6 +59,11 @@ public class NoOpMetricsCollectionService extends AbstractIdleService implements
       @Override
       public MetricsContext childContext(String tagName, String tagValue) {
         return this;
+      }
+
+      @Override
+      public Map<String, String> getTags() {
+        return Collections.emptyMap();
       }
     };
   }

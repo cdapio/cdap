@@ -9,7 +9,8 @@
 Word Count
 ==========
 
-A Cask Data Application Platform (CDAP) example demonstrating flows, datasets and services.
+A Cask Data Application Platform (CDAP) example demonstrating flows, datasets, services,
+and configuring an application at deployment time.
 
 Overview
 ========
@@ -41,7 +42,7 @@ of the application are tied together by the class ``WordCount``:
 
 .. literalinclude:: /../../../cdap-examples/WordCount/src/main/java/co/cask/cdap/examples/wordcount/WordCount.java
    :language: java
-   :lines: 27-
+   :lines: 31-
 
 Data Storage
 ------------
@@ -65,19 +66,8 @@ It exposes these endpoints:
 - ``/assoc/{word1}/{word2}`` returns the top associated words (those with the highest counts).
 
 
-Building and Starting
-=====================
-
-.. include:: building-and-starting.txt
-
-
-Running CDAP Applications
-=========================
-
 .. |example| replace:: WordCount
-
-.. include:: /../../developers-manual/source/getting-started/building-apps.rst
-   :start-line: 11
+.. include:: building-starting-running-cdap.txt
 
 
 Running the Example
@@ -161,8 +151,8 @@ You can also make requests to the other endpoints available in this service, as
 
 Stopping and Removing the Application
 =====================================
-Once done, you can stop the application as described above in `Stopping an Application. 
-<#stopping-an-application>`__ Here is an example-specific description of the steps:
+Once done, you can stop the application as described in :ref:`Stopping an Application 
+<cdap-building-running-stopping>`. Here is an example-specific description of the steps:
 
 **Stopping the Flow**
 
@@ -177,14 +167,14 @@ Once done, you can stop the application as described above in `Stopping an Appli
 
 - Go to the *WordCount* `application overview page 
   <http://localhost:9999/ns/default/apps/WordCount/overview/status>`__,
-  click ``RetrieveCounts`` to get to the flow detail page, then click the *Stop* button; or
+  click ``RetrieveCounts`` to get to the service detail page, then click the *Stop* button; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface::
 
     $ cdap-cli.sh stop service WordCount.RetrieveCounts 
 
 **Removing the Application**
 
-You can now remove the application as described above, `Removing an Application <#removing-an-application>`__, or:
+You can now remove the application as described in :ref:`Removing an Application <cdap-building-running-removing>`, or:
 
 - Go to the *WordCount* `application overview page 
   <http://localhost:9999/ns/default/apps/WordCount/overview/status>`__,

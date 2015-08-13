@@ -53,6 +53,8 @@ public final class EntityTable implements Closeable {
   private static final byte[] MAX_ID = Bytes.toBytes("maxId");
   private static final byte[] NAME = Bytes.toBytes("name");
   private static final byte[] DOT = { '.' };
+  // max number of distinct values of entity of a single type
+  private static final long MAX_ID_COUNT = 0x1000000L;
 
   private final MetricsTable table;
   private final LoadingCache<EntityName, Long> entityCache;
@@ -67,7 +69,7 @@ public final class EntityTable implements Closeable {
    * See {@link #EntityTable(MetricsTable, long)}.
    */
   public EntityTable(MetricsTable table) {
-    this(table, 0x1000000L);
+    this(table, MAX_ID_COUNT);
   }
 
   /**
@@ -76,7 +78,7 @@ public final class EntityTable implements Closeable {
    * @param table The storage table
    * @param maxId Maximum ID (exclusive) that can be generated.
    */
-  public EntityTable(MetricsTable table, long maxId) {
+  EntityTable(MetricsTable table, long maxId) {
     Preconditions.checkArgument(table != null, "Table cannot be null.");
     Preconditions.checkArgument(maxId > 0, "maxId must be > 0.");
 
@@ -201,7 +203,11 @@ public final class EntityTable implements Closeable {
     };
   }
 
-  private int computeSize(long maxId) {
+  static int computeSize() {
+    return computeSize(MAX_ID_COUNT);
+  }
+
+  private static int computeSize(long maxId) {
     byte[] bytes = Bytes.toBytes(maxId - 1);
     int size = bytes.length;
     for (byte b : bytes) {

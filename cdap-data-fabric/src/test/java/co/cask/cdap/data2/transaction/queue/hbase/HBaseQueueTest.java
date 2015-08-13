@@ -72,6 +72,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
+import com.google.common.io.InputSupplier;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -80,8 +81,11 @@ import com.google.inject.Scopes;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.TableNotFoundException;
+import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.twill.filesystem.LocationFactory;
@@ -97,6 +101,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -115,6 +120,7 @@ public abstract class HBaseQueueTest extends QueueTest {
 
   protected static HBaseTestBase testHBase;
   protected static HBaseTableUtil tableUtil;
+  protected static HBaseAdmin hbaseAdmin;
   private static ZKClientService zkClientService;
 
   @BeforeClass
@@ -131,7 +137,10 @@ public abstract class HBaseQueueTest extends QueueTest {
               Integer.toString(Networks.getRandomPort()));
     cConf.set(Constants.Dataset.TABLE_PREFIX, "test");
     cConf.set(Constants.CFG_HDFS_USER, System.getProperty("user.name"));
-    cConf.setLong(QueueConstants.QUEUE_CONFIG_UPDATE_FREQUENCY, 1L);
+    cConf.setLong(QueueConstants.QUEUE_CONFIG_UPDATE_FREQUENCY, 10000L);
+    // Test with fewer splits than default (16).
+    // Fewer splits make the forceEvict runs faster, which makes all queue tests run faster
+    cConf.setInt(QueueConstants.ConfigKeys.QUEUE_TABLE_PRESPLITS, 4);
 
     cConf.setLong(TxConstants.Manager.CFG_TX_TIMEOUT, 100000000L);
 
@@ -154,10 +163,11 @@ public abstract class HBaseQueueTest extends QueueTest {
     );
 
     //create HBase namespace
+    hbaseAdmin = testHBase.getHBaseAdmin();
     tableUtil = injector.getInstance(HBaseTableUtil.class);
-    tableUtil.createNamespaceIfNotExists(testHBase.getHBaseAdmin(), Constants.SYSTEM_NAMESPACE_ID);
-    tableUtil.createNamespaceIfNotExists(testHBase.getHBaseAdmin(), NAMESPACE_ID);
-    tableUtil.createNamespaceIfNotExists(testHBase.getHBaseAdmin(), NAMESPACE_ID1);
+    tableUtil.createNamespaceIfNotExists(hbaseAdmin, Id.Namespace.SYSTEM);
+    tableUtil.createNamespaceIfNotExists(hbaseAdmin, NAMESPACE_ID);
+    tableUtil.createNamespaceIfNotExists(hbaseAdmin, NAMESPACE_ID1);
 
     ConfigurationTable configTable = new ConfigurationTable(hConf);
     configTable.write(ConfigurationTable.Type.DEFAULT, cConf);
@@ -186,13 +196,13 @@ public abstract class HBaseQueueTest extends QueueTest {
   // TODO: CDAP-1177 Should move to QueueTest after making getApplicationName() etc instance methods in a base class
   @Test
   public void testQueueTableNameFormat() throws Exception {
-    QueueName queueName = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "application1", "flow1", "flowlet1",
+    QueueName queueName = QueueName.fromFlowlet(Id.Namespace.DEFAULT.getId(), "application1", "flow1", "flowlet1",
                                                 "output1");
     HBaseQueueAdmin hbaseQueueAdmin = (HBaseQueueAdmin) queueAdmin;
     TableId tableId = hbaseQueueAdmin.getDataTableId(queueName);
-    Assert.assertEquals(Constants.DEFAULT_NAMESPACE_ID, tableId.getNamespace());
+    Assert.assertEquals(Id.Namespace.DEFAULT, tableId.getNamespace());
     Assert.assertEquals("system." + hbaseQueueAdmin.getType() + ".application1.flow1", tableId.getTableName());
-    String tableName = tableUtil.createHTableDescriptor(tableId).getNameAsString();
+    String tableName = tableUtil.buildHTableDescriptor(tableId).build().getNameAsString();
     Assert.assertEquals("application1", HBaseQueueAdmin.getApplicationName(tableName));
     Assert.assertEquals("flow1", HBaseQueueAdmin.getFlowName(tableName));
 
@@ -200,14 +210,14 @@ public abstract class HBaseQueueTest extends QueueTest {
     tableId = hbaseQueueAdmin.getDataTableId(queueName);
     Assert.assertEquals(Id.Namespace.from("testNamespace"), tableId.getNamespace());
     Assert.assertEquals("system." + hbaseQueueAdmin.getType() + ".application1.flow1", tableId.getTableName());
-    tableName = tableUtil.createHTableDescriptor(tableId).getNameAsString();
+    tableName = tableUtil.buildHTableDescriptor(tableId).build().getNameAsString();
     Assert.assertEquals("application1", HBaseQueueAdmin.getApplicationName(tableName));
     Assert.assertEquals("flow1", HBaseQueueAdmin.getFlowName(tableName));
   }
 
   @Test
   public void testHTablePreSplitted() throws Exception {
-    testHTablePreSplitted((HBaseQueueAdmin) queueAdmin, QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "app",
+    testHTablePreSplitted((HBaseQueueAdmin) queueAdmin, QueueName.fromFlowlet(Id.Namespace.DEFAULT.getId(), "app",
                                                                               "flow", "flowlet", "out"));
   }
 
@@ -216,15 +226,16 @@ public abstract class HBaseQueueTest extends QueueTest {
     if (!admin.exists(queueName)) {
       admin.create(queueName);
     }
-    HTable hTable = tableUtil.createHTable(testHBase.getConfiguration(), tableId);
-    Assert.assertEquals("Failed for " + admin.getClass().getName(),
-                        cConf.getInt(QueueConstants.ConfigKeys.QUEUE_TABLE_PRESPLITS),
-                        hTable.getRegionsInRange(new byte[]{0}, new byte[]{(byte) 0xff}).size());
+    try (HTable hTable = tableUtil.createHTable(testHBase.getConfiguration(), tableId)) {
+      Assert.assertEquals("Failed for " + admin.getClass().getName(),
+                          cConf.getInt(QueueConstants.ConfigKeys.QUEUE_TABLE_PRESPLITS),
+                          hTable.getRegionsInRange(new byte[]{0}, new byte[]{(byte) 0xff}).size());
+    }
   }
 
   @Test
   public void configTest() throws Exception {
-    final QueueName queueName = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE,
+    final QueueName queueName = QueueName.fromFlowlet(Id.Namespace.DEFAULT.getId(),
                                                       "app", "flow", "flowlet", "configure");
     queueAdmin.create(queueName);
 
@@ -234,8 +245,7 @@ public abstract class HBaseQueueTest extends QueueTest {
       new ConsumerGroupConfig(3L, 3, DequeueStrategy.FIFO, null)
     );
 
-    final HBaseConsumerStateStore stateStore = ((HBaseQueueAdmin) queueAdmin).getConsumerStateStore(queueName);
-    try {
+    try (HBaseConsumerStateStore stateStore = ((HBaseQueueAdmin) queueAdmin).getConsumerStateStore(queueName)) {
       TransactionExecutor txExecutor = Transactions.createTransactionExecutor(executorFactory, stateStore);
       // Intentionally set a row state for group 2, instance 0. It's for testing upgrade of config.
       txExecutor.execute(new TransactionExecutor.Subroutine() {
@@ -395,15 +405,15 @@ public abstract class HBaseQueueTest extends QueueTest {
         }
       });
     } finally {
-      stateStore.close();
-      queueAdmin.dropAllInNamespace(Constants.DEFAULT_NAMESPACE_ID);
+      queueAdmin.dropAllInNamespace(Id.Namespace.DEFAULT);
     }
   }
 
   // This test upgrade from old queue (salted base) to new queue (sharded base)
   @Test (timeout = 30000L)
   public void testQueueUpgrade() throws Exception {
-    final QueueName queueName = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "app", "flow", "flowlet", "upgrade");
+    final QueueName queueName = QueueName.fromFlowlet(Id.Namespace.DEFAULT.getId(), "app",
+                                                      "flow", "flowlet", "upgrade");
     HBaseQueueAdmin hbaseQueueAdmin = (HBaseQueueAdmin) queueAdmin;
     HBaseQueueClientFactory hBaseQueueClientFactory = (HBaseQueueClientFactory) queueClientFactory;
 
@@ -416,10 +426,12 @@ public abstract class HBaseQueueTest extends QueueTest {
     oldQueueAdmin.create(queueName);
 
     int buckets = cConf.getInt(QueueConstants.ConfigKeys.QUEUE_TABLE_PRESPLITS);
-    final HBaseQueueProducer oldProducer = hBaseQueueClientFactory.createProducer(
-      oldQueueAdmin, queueName, QueueConstants.QueueType.QUEUE,
-      QueueMetrics.NOOP_QUEUE_METRICS, new SaltedHBaseQueueStrategy(buckets), ImmutableList.<ConsumerGroupConfig>of());
-    try {
+    try (
+      final HBaseQueueProducer oldProducer = hBaseQueueClientFactory.createProducer(
+        oldQueueAdmin, queueName, QueueConstants.QueueType.QUEUE,
+        QueueMetrics.NOOP_QUEUE_METRICS, new SaltedHBaseQueueStrategy(tableUtil, buckets),
+        new ArrayList<ConsumerGroupConfig>())
+    ) {
       // Enqueue 10 items to old queue table
       Transactions.createTransactionExecutor(executorFactory, oldProducer)
         .execute(new TransactionExecutor.Subroutine() {
@@ -430,27 +442,21 @@ public abstract class HBaseQueueTest extends QueueTest {
             }
           }
         });
-    } finally {
-      oldProducer.close();
     }
 
     // Configure the consumer
     final ConsumerConfig consumerConfig = new ConsumerConfig(0L, 0, 1, DequeueStrategy.HASH, "key");
-    final QueueConfigurer configurer = queueAdmin.getQueueConfigurer(queueName);
-    try {
+    try (QueueConfigurer configurer = queueAdmin.getQueueConfigurer(queueName)) {
       Transactions.createTransactionExecutor(executorFactory, configurer).execute(new TransactionExecutor.Subroutine() {
         @Override
         public void apply() throws Exception {
           configurer.configureGroups(ImmutableList.of(consumerConfig));
         }
       });
-    } finally {
-      configurer.close();
     }
 
     // explicit set the consumer state to be the lowest start row
-    final HBaseConsumerStateStore stateStore = hbaseQueueAdmin.getConsumerStateStore(queueName);
-    try {
+    try (HBaseConsumerStateStore stateStore = hbaseQueueAdmin.getConsumerStateStore(queueName)) {
       Transactions.createTransactionExecutor(executorFactory, stateStore).execute(new TransactionExecutor.Subroutine() {
         @Override
         public void apply() throws Exception {
@@ -458,8 +464,6 @@ public abstract class HBaseQueueTest extends QueueTest {
                                  QueueEntryRow.getQueueEntryRowKey(queueName, 0L, 0));
         }
       });
-    } finally {
-      stateStore.close();
     }
 
     // Enqueue 10 more items to new queue table
@@ -473,8 +477,7 @@ public abstract class HBaseQueueTest extends QueueTest {
 
     // Create a consumer. It should see all 20 items
     final List<String> messages = Lists.newArrayList();
-    final QueueConsumer consumer = queueClientFactory.createConsumer(queueName, consumerConfig, 1);
-    try {
+    try (final QueueConsumer consumer = queueClientFactory.createConsumer(queueName, consumerConfig, 1)) {
       while (messages.size() != 20) {
         Transactions.createTransactionExecutor(executorFactory, (TransactionAware) consumer)
           .execute(new TransactionExecutor.Subroutine() {
@@ -487,8 +490,6 @@ public abstract class HBaseQueueTest extends QueueTest {
             }
           });
       }
-    } finally {
-      configurer.close();
     }
 
     verifyQueueIsEmpty(queueName, ImmutableList.of(consumerConfig));
@@ -496,7 +497,7 @@ public abstract class HBaseQueueTest extends QueueTest {
 
   @Test (timeout = 30000L)
   public void testReconfigure() throws Exception {
-    final QueueName queueName = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE,
+    final QueueName queueName = QueueName.fromFlowlet(Id.Namespace.DEFAULT.getId(),
                                                       "app", "flow", "flowlet", "changeinstances");
     ConsumerGroupConfig groupConfig = new ConsumerGroupConfig(0L, 2, DequeueStrategy.HASH, "key");
     configureGroups(queueName, ImmutableList.of(groupConfig));
@@ -510,8 +511,7 @@ public abstract class HBaseQueueTest extends QueueTest {
     // Consume 2 items for each consumer instances
     for (int instanceId = 0; instanceId < groupConfig.getGroupSize(); instanceId++) {
       final ConsumerConfig consumerConfig = new ConsumerConfig(groupConfig, instanceId);
-      final QueueConsumer consumer = queueClientFactory.createConsumer(queueName, consumerConfig, 1);
-      try {
+      try (QueueConsumer consumer = queueClientFactory.createConsumer(queueName, consumerConfig, 1)) {
         Transactions.createTransactionExecutor(executorFactory, (TransactionAware) consumer)
           .execute(new TransactionExecutor.Subroutine() {
             @Override
@@ -523,8 +523,6 @@ public abstract class HBaseQueueTest extends QueueTest {
               }
             }
           });
-      } finally {
-        consumer.close();
       }
     }
 
@@ -540,8 +538,7 @@ public abstract class HBaseQueueTest extends QueueTest {
     while (dequeued.size() != 20) {
       for (int instanceId = 0; instanceId < groupConfig.getGroupSize(); instanceId++) {
         final ConsumerConfig consumerConfig = new ConsumerConfig(groupConfig, instanceId);
-        final QueueConsumer consumer = queueClientFactory.createConsumer(queueName, consumerConfig, 1);
-        try {
+        try (QueueConsumer consumer = queueClientFactory.createConsumer(queueName, consumerConfig, 1)) {
           Transactions.createTransactionExecutor(executorFactory, (TransactionAware) consumer)
             .execute(new TransactionExecutor.Subroutine() {
               @Override
@@ -551,8 +548,6 @@ public abstract class HBaseQueueTest extends QueueTest {
                 }
               }
             });
-        } finally {
-          consumer.close();
         }
       }
     }
@@ -567,8 +562,7 @@ public abstract class HBaseQueueTest extends QueueTest {
     // All consumers should have empty dequeue now
     for (int instanceId = 0; instanceId < groupConfig.getGroupSize(); instanceId++) {
       final ConsumerConfig consumerConfig = new ConsumerConfig(groupConfig, instanceId);
-      final QueueConsumer consumer = queueClientFactory.createConsumer(queueName, consumerConfig, 1);
-      try {
+      try (QueueConsumer consumer = queueClientFactory.createConsumer(queueName, consumerConfig, 1)) {
         Transactions.createTransactionExecutor(executorFactory, (TransactionAware) consumer)
           .execute(new TransactionExecutor.Subroutine() {
             @Override
@@ -577,8 +571,6 @@ public abstract class HBaseQueueTest extends QueueTest {
               Assert.assertTrue(result.isEmpty());
             }
           });
-      } finally {
-        consumer.close();
       }
     }
 
@@ -591,17 +583,18 @@ public abstract class HBaseQueueTest extends QueueTest {
     // The consumer 0 should be able to consume all 10 new items
     dequeued.clear();
     final ConsumerConfig consumerConfig = new ConsumerConfig(0L, 0, 1, DequeueStrategy.HASH, "key");
-    final QueueConsumer consumer = queueClientFactory.createConsumer(queueName, consumerConfig, 1);
-    while (dequeued.size() != 6) {
-      Transactions.createTransactionExecutor(executorFactory, (TransactionAware) consumer)
-        .execute(new TransactionExecutor.Subroutine() {
-          @Override
-          public void apply() throws Exception {
-            for (byte[] data : consumer.dequeue(1)) {
-              dequeued.put(consumerConfig.getInstanceId(), Bytes.toInt(data));
+    try (final QueueConsumer consumer = queueClientFactory.createConsumer(queueName, consumerConfig, 1)) {
+      while (dequeued.size() != 6) {
+        Transactions.createTransactionExecutor(executorFactory, (TransactionAware) consumer)
+          .execute(new TransactionExecutor.Subroutine() {
+            @Override
+            public void apply() throws Exception {
+              for (byte[] data : consumer.dequeue(1)) {
+                dequeued.put(consumerConfig.getInstanceId(), Bytes.toInt(data));
+              }
             }
-          }
-        });
+          });
+      }
     }
 
     Assert.assertEquals(ImmutableList.of(0, 1, 2, 3, 4, 5), dequeued.get(0));
@@ -634,38 +627,39 @@ public abstract class HBaseQueueTest extends QueueTest {
    * Count how many rows are there in the given HBase table.
    */
   private int countRows(TableId tableId) throws Exception {
-    HTable hTable = tableUtil.createHTable(hConf, tableId);
-    try {
-      ResultScanner scanner = hTable.getScanner(QueueEntryRow.COLUMN_FAMILY);
-      try {
-        return Iterables.size(scanner);
-      } finally {
-        scanner.close();
-      }
-    } finally {
-      hTable.close();
+    try (
+      HTable hTable = tableUtil.createHTable(hConf, tableId);
+      ResultScanner scanner = hTable.getScanner(QueueEntryRow.COLUMN_FAMILY)
+    ) {
+      return Iterables.size(scanner);
     }
   }
 
 
   private ConsumerConfigCache getConsumerConfigCache(QueueName queueName) throws Exception {
     TableId tableId = HBaseQueueAdmin.getConfigTableId(queueName);
-    HTableDescriptor htd = tableUtil.createHTable(hConf, tableId).getTableDescriptor();
-    String configTableName = htd.getNameAsString();
-    byte[] configTableNameBytes = Bytes.toBytes(configTableName);
-    HTableNameConverter nameConverter = new HTableNameConverterFactory().get();
-    CConfigurationReader cConfReader = new CConfigurationReader(hConf, nameConverter.getSysConfigTablePrefix(htd));
-    return ConsumerConfigCache.getInstance(hConf, configTableNameBytes,
-                                           cConfReader, new Supplier<TransactionSnapshot>() {
-      @Override
-      public TransactionSnapshot get() {
-        try {
-          return transactionManager.getSnapshot();
-        } catch (IOException e) {
-          throw Throwables.propagate(e);
-        }
-      }
-    });
+    try (HTable hTable = tableUtil.createHTable(hConf, tableId)) {
+      HTableDescriptor htd = hTable.getTableDescriptor();
+      final TableName configTableName = htd.getTableName();
+      HTableNameConverter nameConverter = new HTableNameConverterFactory().get();
+      CConfigurationReader cConfReader = new CConfigurationReader(hConf, nameConverter.getSysConfigTablePrefix(htd));
+      return ConsumerConfigCache.getInstance(configTableName,
+                                             cConfReader, new Supplier<TransactionSnapshot>() {
+          @Override
+          public TransactionSnapshot get() {
+            try {
+              return transactionManager.getSnapshot();
+            } catch (IOException e) {
+              throw Throwables.propagate(e);
+            }
+          }
+        }, new InputSupplier<HTableInterface>() {
+          @Override
+          public HTableInterface getInput() throws IOException {
+            return new HTable(hConf, configTableName);
+          }
+        });
+    }
   }
 
   /**
@@ -682,12 +676,13 @@ public abstract class HBaseQueueTest extends QueueTest {
 
   @AfterClass
   public static void finish() throws Exception {
-    tableUtil.deleteAllInNamespace(testHBase.getHBaseAdmin(), NAMESPACE_ID);
-    tableUtil.deleteNamespaceIfExists(testHBase.getHBaseAdmin(), NAMESPACE_ID);
+    tableUtil.deleteAllInNamespace(hbaseAdmin, NAMESPACE_ID);
+    tableUtil.deleteNamespaceIfExists(hbaseAdmin, NAMESPACE_ID);
 
-    tableUtil.deleteAllInNamespace(testHBase.getHBaseAdmin(), NAMESPACE_ID1);
-    tableUtil.deleteNamespaceIfExists(testHBase.getHBaseAdmin(), NAMESPACE_ID1);
+    tableUtil.deleteAllInNamespace(hbaseAdmin, NAMESPACE_ID1);
+    tableUtil.deleteNamespaceIfExists(hbaseAdmin, NAMESPACE_ID1);
 
+    hbaseAdmin.close();
     txService.stop();
     testHBase.stopHBase();
     zkClientService.stopAndWait();
@@ -696,7 +691,7 @@ public abstract class HBaseQueueTest extends QueueTest {
   @Override
   protected void forceEviction(QueueName queueName, int numGroups) throws Exception {
     TableId tableId = ((HBaseQueueAdmin) queueAdmin).getDataTableId(queueName);
-    byte[] tableName = tableUtil.getHTableDescriptor(testHBase.getHBaseAdmin(), tableId).getName();
+    byte[] tableName = tableUtil.getHTableDescriptor(hbaseAdmin, tableId).getName();
 
     // make sure consumer config cache is updated with the latest tx snapshot
     takeTxSnapshot();
@@ -705,7 +700,7 @@ public abstract class HBaseQueueTest extends QueueTest {
       public Object apply(HRegion region) {
         try {
           Coprocessor cp = region.getCoprocessorHost().findCoprocessor(coprocessorClass.getName());
-          // calling cp.getConfigCache().updateConfig(), NOTE: cannot do normal cast and stuff because cp is loaded
+          // calling cp.updateCache(), NOTE: cannot do normal cast and stuff because cp is loaded
           // by different classloader (corresponds to a cp's jar)
           LOG.info("forcing update of transaction state cache for HBaseQueueRegionObserver of region: {}", region);
           Method getTxStateCache = cp.getClass().getDeclaredMethod("getTxStateCache");
@@ -718,12 +713,10 @@ public abstract class HBaseQueueTest extends QueueTest {
           refreshState.invoke(txStateCache);
 
           LOG.info("forcing update cache for HBaseQueueRegionObserver of region: {}", region);
-          Method getConfigCacheMethod = cp.getClass().getDeclaredMethod("getConfigCache");
-          getConfigCacheMethod.setAccessible(true);
-          Object configCache = getConfigCacheMethod.invoke(cp);
-          Method updateConfigMethod = configCache.getClass().getDeclaredMethod("updateCache");
-          updateConfigMethod.setAccessible(true);
-          updateConfigMethod.invoke(configCache);
+          Method updateCache = cp.getClass().getDeclaredMethod("updateCache");
+          updateCache.setAccessible(true);
+          updateCache.invoke(cp);
+
         } catch (Exception e) {
           throw Throwables.propagate(e);
         }

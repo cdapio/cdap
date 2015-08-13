@@ -29,6 +29,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.internal.utils.Dependencies;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -114,8 +115,8 @@ final class ProgramResources {
     Set<String> resources = getBaseResources();
 
     // Base on the type, add extra resources
-    // Current only Spark type has extra visible resources
-    if (type == ProgramType.SPARK) {
+    // Current only Spark and Workflow type has extra visible resources
+    if (type == ProgramType.SPARK || type == ProgramType.WORKFLOW) {
       resources = getResources(ClassPath.from(ProgramResources.class.getClassLoader(), JAR_ONLY_URI),
                                SPARK_PACKAGES, CLASS_INFO_TO_RESOURCE_NAME, Sets.newHashSet(resources));
     }
@@ -253,7 +254,7 @@ final class ProgramResources {
     final Set<String> bootstrapClassPaths = getBootstrapClassPaths();
     final Set<URL> classPathSeen = Sets.newHashSet();
 
-    Dependencies.findClassDependencies(classLoader, new Dependencies.ClassAcceptor() {
+    Dependencies.findClassDependencies(classLoader, new ClassAcceptor() {
       @Override
       public boolean accept(String className, URL classUrl, URL classPathUrl) {
         // Ignore bootstrap classes

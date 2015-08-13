@@ -16,191 +16,160 @@
 
 package co.cask.cdap.internal.app.runtime.spark;
 
-import co.cask.cdap.api.data.batch.Split;
-import co.cask.cdap.app.runtime.Arguments;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.internal.app.runtime.BasicArguments;
+import co.cask.cdap.api.spark.SparkSpecification;
+import co.cask.cdap.api.workflow.WorkflowToken;
+import co.cask.cdap.common.app.RunIds;
+import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
+import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
+import co.cask.cdap.proto.Id;
 import co.cask.tephra.Transaction;
-import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.twill.filesystem.Location;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.twill.api.RunId;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.StringWriter;
-import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.Collections;
-import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
- * Helper class for getting and setting specific config settings for a spark job context
+ * Helper class for getting and setting specific config settings for a spark job context.
  */
 public class SparkContextConfig {
 
-  private static final Logger LOG = LoggerFactory.getLogger(SparkContextConfig.class);
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
+  private static final Type ARGS_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
-  private static final String HCONF_ATTR_RUN_ID = "hconf.program.run.id";
+  public static final String HCONF_ATTR_EXECUTION_MODE = "cdap.spark.execution.mode";
+  public static final String LOCAL_EXECUTION_MODE = "local";
+  public static final String YARN_EXECUTION_MODE = "yarn-client";
+
+  private static final String HCONF_ATTR_PROGRAM_SPEC = "cdap.spark.program.spec";
+  private static final String HCONF_ATTR_PROGRAM_ID = "cdap.spark.program.id";
+  private static final String HCONF_ATTR_RUN_ID = "cdap.spark.run.id";
   private static final String HCONF_ATTR_LOGICAL_START_TIME = "hconf.program.logical.start.time";
-  private static final String HCONF_ATTR_PROGRAM_NAME_IN_WORKFLOW = "hconf.program.name.in.workflow";
   private static final String HCONF_ATTR_ARGS = "hconf.program.args";
-  private static final String HCONF_ATTR_PROGRAM_JAR_NAME = "hconf.program.jar.name";
-  private static final String HCONF_ATTR_CCONF = "hconf.cconf";
-  public static final String HCONF_ATTR_INPUT_SPLIT_CLASS = "hconf.program.input.split.class";
-  public static final String HCONF_ATTR_INPUT_SPLITS = "hconf.program.input.splits";
   private static final String HCONF_ATTR_NEW_TX = "hconf.program.newtx.tx";
-  private static final String HCONF_ATTR_PROGRAM_JAR_LOCATION = "hconf.program.jar.location";
+  private static final String HCONF_ATTR_WORKFLOW_TOKEN = "hconf.program.workflow.token";
 
-  private static Configuration hConf;
+  private final Configuration hConf;
 
-  public static Configuration getHConf() {
+  /**
+   * Creates an instance by copying from the given configuration.
+   */
+  public SparkContextConfig(Configuration hConf) {
+    this.hConf = new Configuration(hConf);
+  }
+
+  /**
+   * Returns the configuration.
+   */
+  public Configuration getConfiguration() {
     return hConf;
   }
 
-  public SparkContextConfig(Configuration hConf) {
-    SparkContextConfig.hConf = hConf;
+  /**
+   * Returns true if in local mode.
+   */
+  public boolean isLocal() {
+    return LOCAL_EXECUTION_MODE.equals(getExecutionMode());
   }
 
-  public static void set(Configuration hadoopConf, BasicSparkContext context, CConfiguration conf, Transaction tx,
-                         Location programJarCopy) {
-    hConf = hadoopConf;
+  /**
+   * Sets configurations based on the given context.
+   */
+  public SparkContextConfig set(ExecutionSparkContext context) {
+    setSpecification(context.getSpecification());
+    setProgramId(context.getProgramId());
     setRunId(context.getRunId().getId());
     setLogicalStartTime(context.getLogicalStartTime());
-    //TODO: Change this once we start supporting Spark in Workflow
-    setProgramNameInWorkflow("Not Supported");
     setArguments(context.getRuntimeArguments());
-    setProgramJarName(programJarCopy.getName());
-    setProgramLocation(programJarCopy.toURI());
-    setConf(conf);
-    setTx(tx);
+    setTransaction(context.getTransaction());
+    setWorkflowToken(context.getWorkflowToken());
+
+    return this;
   }
 
-  private static void setArguments(Map<String, String> runtimeArgs) {
-    hConf.set(HCONF_ATTR_ARGS, new Gson().toJson(runtimeArgs));
+  public String getExecutionMode() {
+    return hConf.get(HCONF_ATTR_EXECUTION_MODE, LOCAL_EXECUTION_MODE);
   }
 
-  public Arguments getArguments() {
-    Map<String, String> arguments = new Gson().fromJson(hConf.get(HCONF_ATTR_ARGS),
-                                                        new TypeToken<Map<String, String>>() { }.getType());
-    return new BasicArguments(arguments);
+  /**
+   * @return the {@link SparkSpecification} stored in the configuration.
+   */
+  public SparkSpecification getSpecification() {
+    return GSON.fromJson(hConf.get(HCONF_ATTR_PROGRAM_SPEC), SparkSpecification.class);
   }
 
-  public URI getProgramLocation() {
-    URI uri;
-    try {
-      uri = (new URI(hConf.get(HCONF_ATTR_PROGRAM_JAR_LOCATION)));
-    } catch (URISyntaxException use) {
-      LOG.error("Failed to create an URI from program location. The string violates RFC 2396", use);
-      throw Throwables.propagate(use);
-    }
-    return uri;
+  /**
+   * @return the {@link Id.Program} stored in the configuration.
+   */
+  public Id.Program getProgramId() {
+    return GSON.fromJson(hConf.get(HCONF_ATTR_PROGRAM_ID), Id.Program.class);
   }
 
-  private static void setRunId(String runId) {
-    hConf.set(HCONF_ATTR_RUN_ID, runId);
+  /**
+   * @return the {@link RunId} stored in the configuration.
+   */
+  public RunId getRunId() {
+    return RunIds.fromString(hConf.get(HCONF_ATTR_RUN_ID));
   }
 
-  public String getRunId() {
-    return hConf.get(HCONF_ATTR_RUN_ID);
+  /**
+   * @return the runtime arguments stored in the configuration.
+   */
+  public Map<String, String> getArguments() {
+    return GSON.fromJson(hConf.get(HCONF_ATTR_ARGS), ARGS_TYPE);
   }
 
-  private static void setLogicalStartTime(long startTime) {
-    hConf.setLong(HCONF_ATTR_LOGICAL_START_TIME, startTime);
-  }
-
+  /**
+   * @return the logical start time stored in the configuration.
+   */
   public long getLogicalStartTime() {
     return hConf.getLong(HCONF_ATTR_LOGICAL_START_TIME, System.currentTimeMillis());
   }
 
-  private static void setProgramNameInWorkflow(String programNameInWorkflow) {
-    if (programNameInWorkflow != null) {
-      hConf.set(HCONF_ATTR_PROGRAM_NAME_IN_WORKFLOW, programNameInWorkflow);
-    }
+  /**
+   * @return the {@link Transaction} stored in the configuration.
+   */
+  public Transaction getTransaction() {
+    return GSON.fromJson(hConf.get(HCONF_ATTR_NEW_TX), Transaction.class);
   }
 
-  public String getProgramNameInWorkflow() {
-    return hConf.get(HCONF_ATTR_PROGRAM_NAME_IN_WORKFLOW);
+  /**
+   * @return the {@link WorkflowToken} stored in the configuration.
+   */
+  @Nullable
+  public WorkflowToken getWorkflowToken() {
+    return GSON.fromJson(hConf.get(HCONF_ATTR_WORKFLOW_TOKEN), BasicWorkflowToken.class);
   }
 
-  public List<Split> getInputSelection() {
-    String splitClassName = hConf.get(HCONF_ATTR_INPUT_SPLIT_CLASS);
-    String splitsJson = hConf.get(HCONF_ATTR_INPUT_SPLITS);
-    if (splitClassName == null || splitsJson == null) {
-      return Collections.emptyList();
-    }
-
-    try {
-      @SuppressWarnings("unchecked")
-      Class<? extends Split> splitClass =
-        (Class<? extends Split>) hConf.getClassLoader().loadClass(splitClassName);
-      return new Gson().fromJson(splitsJson, new ListSplitType(splitClass));
-    } catch (ClassNotFoundException e) {
-      LOG.warn("Class not found {}", splitClassName, e);
-      throw Throwables.propagate(e);
-    }
+  private void setSpecification(SparkSpecification spec) {
+    hConf.set(HCONF_ATTR_PROGRAM_SPEC, GSON.toJson(spec));
   }
 
-  private static void setProgramLocation(URI programJarLocation) {
-    hConf.set(HCONF_ATTR_PROGRAM_JAR_LOCATION, programJarLocation.toString());
+  private void setProgramId(Id.Program programId) {
+    hConf.set(HCONF_ATTR_PROGRAM_ID, GSON.toJson(programId));
   }
 
-  private static final class ListSplitType implements ParameterizedType {
-    private final Class<? extends Split> implementationClass;
-
-    private ListSplitType(Class<? extends Split> implementationClass) {
-      this.implementationClass = implementationClass;
-    }
-
-    @Override
-    public Type[] getActualTypeArguments() {
-      return new Type[]{implementationClass};
-    }
-
-    @Override
-    public Type getRawType() {
-      return List.class;
-    }
-
-    @Override
-    public Type getOwnerType() {
-      return null;
-    }
+  private void setRunId(String runId) {
+    hConf.set(HCONF_ATTR_RUN_ID, runId);
   }
 
-  private static void setConf(CConfiguration conf) {
-    StringWriter stringWriter = new StringWriter();
-    try {
-      conf.writeXml(stringWriter);
-    } catch (IOException e) {
-      LOG.error("Unable to serialize CConfiguration into xml");
-      throw Throwables.propagate(e);
-    }
-    hConf.set(HCONF_ATTR_CCONF, stringWriter.toString());
+  private void setArguments(Map<String, String> runtimeArgs) {
+    hConf.set(HCONF_ATTR_ARGS, GSON.toJson(runtimeArgs, ARGS_TYPE));
   }
 
-  private static void setProgramJarName(String programJarName) {
-    hConf.set(HCONF_ATTR_PROGRAM_JAR_NAME, programJarName);
+  private void setLogicalStartTime(long startTime) {
+    hConf.setLong(HCONF_ATTR_LOGICAL_START_TIME, startTime);
   }
 
-  public CConfiguration getConf() {
-    CConfiguration conf = CConfiguration.create();
-    conf.addResource(new ByteArrayInputStream(hConf.get(HCONF_ATTR_CCONF).getBytes()));
-    return conf;
-  }
-
-  private static void setTx(Transaction tx) {
+  private void setTransaction(Transaction tx) {
     hConf.set(HCONF_ATTR_NEW_TX, GSON.toJson(tx));
   }
 
-  public Transaction getTx() {
-    return GSON.fromJson(hConf.get(HCONF_ATTR_NEW_TX), Transaction.class);
+  public void setWorkflowToken(@Nullable WorkflowToken workflowToken) {
+    hConf.set(HCONF_ATTR_WORKFLOW_TOKEN, GSON.toJson(workflowToken));
   }
 }

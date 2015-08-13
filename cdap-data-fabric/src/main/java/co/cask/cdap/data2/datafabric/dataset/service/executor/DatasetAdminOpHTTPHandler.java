@@ -20,9 +20,11 @@ import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.common.HandlerException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.exception.HandlerException;
+import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
+import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
 import co.cask.cdap.data2.datafabric.dataset.DatasetType;
 import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
@@ -60,13 +62,16 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
   private final RemoteDatasetFramework dsFramework;
   private final CConfiguration cConf;
   private final LocationFactory locationFactory;
+  private final SystemDatasetInstantiatorFactory datasetInstantiatorFactory;
 
   @Inject
   public DatasetAdminOpHTTPHandler(RemoteDatasetFramework dsFramework,
-                                   CConfiguration cConf, LocationFactory locationFactory) {
+                                   CConfiguration cConf, LocationFactory locationFactory,
+                                   SystemDatasetInstantiatorFactory datasetInstantiatorFactory) {
     this.dsFramework = dsFramework;
     this.cConf = cConf;
     this.locationFactory = locationFactory;
+    this.datasetInstantiatorFactory = datasetInstantiatorFactory;
   }
 
   @POST
@@ -91,7 +96,7 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
   @Path("/data/datasets/{name}/admin/create")
   public void create(HttpRequest request, HttpResponder responder,
                      @PathParam("namespace-id") String namespaceId,
-                     @PathParam("name") String name) throws Exception {
+                     @PathParam("name") String name) {
     // TODO: Use namespaceId here
     InternalDatasetCreationParams params = GSON.fromJson(request.getContent().toString(Charsets.UTF_8),
                                                          InternalDatasetCreationParams.class);
@@ -115,8 +120,18 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
 
       DatasetSpecification spec = type.configure(name, props);
       DatasetAdmin admin = type.getAdmin(DatasetContext.from(namespaceId), spec);
-      admin.create();
+      try {
+        admin.create();
+      } catch (IOException e) {
+        responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
+                             String.format("Error creating dataset \"%s\": %s", name, e.getMessage()));
+        return;
+      }
       responder.sendJson(HttpResponseStatus.OK, spec);
+    } catch (IOException e) {
+      LOG.error("Exception instantiating dataset admin for dataset {}", name, e);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
+                           String.format("Error instantiating the dataset admin for dataset %s", name));
     }
   }
 
@@ -196,11 +211,14 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
 
   private DatasetAdmin getDatasetAdmin(Id.DatasetInstance datasetInstanceId)
     throws IOException, DatasetManagementException {
-    DatasetAdmin admin = dsFramework.getAdmin(datasetInstanceId, null);
-    if (admin == null) {
-      throw new HandlerException(HttpResponseStatus.NOT_FOUND,
-                                 "Couldn't obtain DatasetAdmin for dataset instance " + datasetInstanceId);
+
+    try (SystemDatasetInstantiator datasetInstantiator = datasetInstantiatorFactory.create()) {
+      DatasetAdmin admin = datasetInstantiator.getDatasetAdmin(datasetInstanceId);
+      if (admin == null) {
+        throw new HandlerException(HttpResponseStatus.NOT_FOUND,
+                                   "Couldn't obtain DatasetAdmin for dataset instance " + datasetInstanceId);
+      }
+      return admin;
     }
-    return admin;
   }
 }

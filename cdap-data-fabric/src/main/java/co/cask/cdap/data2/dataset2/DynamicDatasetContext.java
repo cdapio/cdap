@@ -22,6 +22,9 @@ import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetDefinition;
+import co.cask.cdap.api.dataset.metrics.MeteredDataset;
+import co.cask.cdap.api.metrics.MetricsContext;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionContext;
@@ -42,10 +45,10 @@ import javax.annotation.Nullable;
  * into a started {@link TransactionContext}. Datasets acquired from this context are distinct from any
  * Datasets instantiated outside this class.
  */
-public abstract class DynamicDatasetContext implements DatasetContext {
-  private static final Map<String, String> EMPTY_MAP = ImmutableMap.of();
+public class DynamicDatasetContext implements DatasetContext {
 
   private final TransactionContext context;
+  private final MetricsContext metricsContext;
   private final Set<String> allowedDatasets;
   private final DatasetFramework datasetFramework;
   private final ClassLoader classLoader;
@@ -54,8 +57,16 @@ public abstract class DynamicDatasetContext implements DatasetContext {
   private final Id.Namespace namespace;
   private final List<Id> owners;
 
+  /**
+   * Provides a {@link LoadingCache} for caching the dataset instance per thread.
+   * This method returns {@code null} by default.
+   *
+   * @return a {@link LoadingCache} or {@code null} to turn off caching.
+   */
   @Nullable
-  protected abstract LoadingCache<Long, Map<DatasetCacheKey, Dataset>> getDatasetsCache();
+  protected LoadingCache<Long, Map<DatasetCacheKey, Dataset>> getDatasetsCache() {
+    return null;
+  }
 
   /**
    * Get the runtime arguments for a specific dataset. All runtime arguments are retained. Additional arguments
@@ -65,23 +76,39 @@ public abstract class DynamicDatasetContext implements DatasetContext {
    * arguments.
    *
    * @param name the name of the dataset
+   *
    * @return runtime arguments for the given dataset
    */
   protected Map<String, String> getRuntimeArguments(String name) {
     return RuntimeArguments.extractScope(Scope.DATASET, name, runtimeArguments);
   }
 
+  /**
+   * Create a dynamic dataset context that will get datasets and add them to the transaction context.
+   *
+   * @param namespace the {@link Id.Namespace} in which all datasets are instantiated
+   * @param context the transaction context
+   * @param metricsContext if non-null, this context is used as the context for dataset metrics,
+   *                       with an additional tag for the dataset name.
+   * @param datasetFramework the dataset framework for creating dataset instances
+   * @param classLoader the classloader to use when creating dataset instances
+   */
   public DynamicDatasetContext(Id.Namespace namespace,
-                               TransactionContext context, DatasetFramework datasetFramework,
+                               TransactionContext context,
+                               @Nullable MetricsContext metricsContext,
+                               DatasetFramework datasetFramework,
                                ClassLoader classLoader) {
-    this(namespace, context, datasetFramework, classLoader, EMPTY_MAP, null, null);
+    this(namespace, context, metricsContext, datasetFramework,
+         classLoader, ImmutableMap.<String, String>of(), null, null);
   }
 
   /**
    * Create a dynamic dataset context that will get datasets and add them to the transaction context.
    *
-   * @param namespace the {@link Id.Namespace} in which the transaction context is created
+   * @param namespace the {@link Id.Namespace} in which all datasets are instantiated
    * @param context the transaction context
+   * @param metricsContext if non-null, this context is used as the context for dataset metrics,
+   *                       with an additional tag for the dataset name.
    * @param datasetFramework the dataset framework for creating dataset instances
    * @param classLoader the classloader to use when creating dataset instances
    * @param runtimeArguments all runtime arguments that are available to datasets in the context. Runtime arguments
@@ -89,7 +116,9 @@ public abstract class DynamicDatasetContext implements DatasetContext {
    * @param datasets the set of datasets that are allowed to be created. If null, any dataset can be created
    * @param owners the {@link Id}s which own this context
    */
-  public DynamicDatasetContext(Id.Namespace namespace, TransactionContext context,
+  public DynamicDatasetContext(Id.Namespace namespace,
+                               TransactionContext context,
+                               @Nullable MetricsContext metricsContext,
                                DatasetFramework datasetFramework,
                                ClassLoader classLoader,
                                Map<String, String> runtimeArguments,
@@ -98,6 +127,7 @@ public abstract class DynamicDatasetContext implements DatasetContext {
     this.namespace = namespace;
     this.owners = owners == null ? ImmutableList.<Id>of() : ImmutableList.copyOf(owners);
     this.context = context;
+    this.metricsContext = metricsContext;
     this.allowedDatasets = datasets == null ? null : ImmutableSet.copyOf(datasets);
     this.datasetFramework = datasetFramework;
     this.classLoader = classLoader;
@@ -183,6 +213,11 @@ public abstract class DynamicDatasetContext implements DatasetContext {
         context.addTransactionAware((TransactionAware) dataset);
         txnInProgressDatasets.add(datasetCacheKey);
       }
+
+      if (dataset instanceof MeteredDataset && metricsContext != null) {
+        ((MeteredDataset) dataset).setMetricsCollector(getMetricsContext(metricsContext, name));
+      }
+
       @SuppressWarnings("unchecked")
       T t = (T) dataset;
       return t;
@@ -193,5 +228,10 @@ public abstract class DynamicDatasetContext implements DatasetContext {
       throw new DatasetInstantiationException(String.format("Could not instantiate dataset '%s'", name), t);
     }
   }
+
+  private static MetricsContext getMetricsContext(MetricsContext metricsContext, String datasetName) {
+    return metricsContext.childContext(Constants.Metrics.Tag.DATASET, datasetName);
+  }
+
 }
 

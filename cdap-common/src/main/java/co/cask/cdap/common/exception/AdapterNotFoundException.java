@@ -20,7 +20,9 @@ import co.cask.cdap.proto.Id;
 
 /**
  * Thrown when an adapter was not found.
+ * @deprecated Use {@link co.cask.cdap.common.AdapterNotFoundException} instead
  */
+@Deprecated
 public class AdapterNotFoundException extends NotFoundException {
 
   private final Id.Adapter id;

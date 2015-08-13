@@ -1,36 +1,31 @@
 <div class="keyvalue-container">
-  <div class="labels row">
 
-    <div class="col-xs-1 delimiter-label">
-      <strong>Delimiter</strong>
+  <div class="row" ng-if="showDelimiter">
+    <div class="col-md-6">
+      <div class="form-group">
+        <label class="control-label">Delimiter</label>
+        <input type="text" class="form-control" ng-model="delimiter" />
+      </div>
     </div>
-    <div class="col-xs-1">
-      <input type="text" class="form-control" ng-model="delimiter">
+    <div class="col-md-6">
+      <div class="form-group">
+        <label class="control-label">KeyValue Delimiter</label>
+        <input type="text" class="form-control" ng-model="kvdelimiter" />
+      </div>
     </div>
-
-    <div class="col-xs-2 delimiter-label text-right">
-      <strong>KeyValue Delimiter</strong>
-    </div>
-    <div class="col-xs-1">
-      <input type="text" class="form-control" ng-model="kvdelimiter">
-    </div>
-
   </div>
 
   <div ng-repeat="property in properties" class="row" ng-keypress="enter($event, $last)">
-    <div class="col-xs-5">
-      <input type="text" class="form-control" ng-model="property.key" placeholder="key" my-focus-watch="$last" />
+    <div class="col-xs-4">
+      <input type="text" class="form-control" ng-model="property.key" placeholder="key" my-focus-watch="property.newField" />
     </div>
-    <div class="col-xs-5">
-      <input type="text" class="form-control" ng-model="property.value" placeholder="value"/>
-
+    <div class="col-xs-4">
+      <input type="text" class="form-control" ng-model="property.value" placeholder="value" />
     </div>
-    <div class="col-xs-1 text-center">
+    <div class="col-xs-4 text-left">
       <a href="" class="btn btn-danger" ng-click="removeProperty(property)">
         <span class="fa fa-fw fa-trash"> </span>
       </a>
-    </div>
-    <div class="col-xs-1 text-center">
       <a class="btn btn-info btn-transparent" ng-click="addProperty()" ng-if="$last">
         <span class="fa fa-fw fa-plus"></span>
       </a>

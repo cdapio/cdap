@@ -25,7 +25,8 @@ import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
-import co.cask.cdap.data.dataset.DatasetCreationSpec;
+import co.cask.cdap.internal.dataset.DatasetCreationSpec;
+import co.cask.cdap.proto.Id;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;
@@ -40,6 +41,7 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
   private final String version;
   private final String description;
   private final String configuration;
+  private final Id.Artifact artifactId;
   private final Map<String, StreamSpecification> streams;
   private final Map<String, String> datasetModules;
   private final Map<String, DatasetCreationSpec> datasetInstances;
@@ -52,6 +54,7 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
   private final Map<String, WorkerSpecification> workers;
 
   public DefaultApplicationSpecification(String name, String version, String description, String configuration,
+                                         Id.Artifact artifactId,
                                          Map<String, StreamSpecification> streams,
                                          Map<String, String> datasetModules,
                                          Map<String, DatasetCreationSpec> datasetInstances,
@@ -66,6 +69,7 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
     this.version = version;
     this.description = description;
     this.configuration = configuration;
+    this.artifactId = artifactId;
     this.streams = ImmutableMap.copyOf(streams);
     this.datasetModules = ImmutableMap.copyOf(datasetModules);
     this.datasetInstances = ImmutableMap.copyOf(datasetInstances);
@@ -80,7 +84,7 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
 
   public static DefaultApplicationSpecification from(ApplicationSpecification spec) {
     return new DefaultApplicationSpecification(spec.getName(), spec.getVersion(), spec.getDescription(),
-                                               spec.getConfiguration(),
+                                               spec.getConfiguration(), spec.getArtifactId(),
                                                spec.getStreams(),
                                                spec.getDatasetModules(), spec.getDatasets(),
                                                spec.getFlows(),
@@ -107,6 +111,11 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
   @Override
   public String getDescription() {
     return description;
+  }
+
+  @Override
+  public Id.Artifact getArtifactId() {
+    return artifactId;
   }
 
   @Override

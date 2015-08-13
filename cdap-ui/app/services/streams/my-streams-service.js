@@ -22,7 +22,9 @@ angular.module(PKG.name + '.services')
     };
 
   })
-  .controller('FlowStreamDetailController', function($scope, myStreamApi, $state) {
+  .controller('FlowStreamDetailController', function($scope, myStreamApi, $state, myFileUploader, $alert) {
+
+    $scope.loading = false;
 
     $scope.doInject = function () {
       if(!$scope.userInput) {
@@ -35,12 +37,44 @@ angular.module(PKG.name + '.services')
         streamId: $scope.streamId,
         scope: $scope
       };
-      myStreamApi.sendEvent(params, $scope.userInput);
+
+      var lines = $scope.userInput.replace(/\r\n/g, '\n').split('\n');
+
+      angular.forEach(lines, function (line) {
+        myStreamApi.sendEvent(params, line);
+      });
 
       $scope.userInput = null;
     };
 
     $scope.dismiss = function() {
       $scope.$dismiss();
+    };
+
+    $scope.uploadFile = function (files) {
+      $scope.loading = true;
+      var path = '/namespaces/' + $state.params.namespace + '/streams/' + $scope.streamId + '/batch';
+
+      function uploadSuccess() {
+        $alert({
+          type: 'success',
+          title: 'Upload success',
+          content: 'The file has been uploaded successfully'
+        });
+
+        $scope.loading = false;
+      }
+
+      for (var i = 0; i < files.length; i++) {
+        // TODO: support other file types
+
+        myFileUploader.upload({
+          path: path,
+          file: files[i]
+        }, 'text/csv')
+          .then(uploadSuccess);
+      }
+
+
     };
   });

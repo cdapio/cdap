@@ -4,20 +4,54 @@ angular.module(PKG.name + '.commons')
       restrict: 'EA',
       scope: {
         model: '=ngModel',
-        config: '='
+        config: '=',
+        disabled: '='
       },
       templateUrl: 'widget-container/widget-schema-editor/widget-schema-editor.html',
-      controller: function($scope, myHelpers) {
-        $scope.options = $scope.config['schema-types'];
-        var defaultType = $scope.config['schema-default-type'] || $scope.options[0];
+      controller: function($scope, myHelpers, EventPipe) {
+        var typeMap = 'map<string, string>';
+        var mapObj = {
+          type: 'map',
+          keys: 'string',
+          values: 'string'
+        };
+
+        var defaultOptions = [ 'boolean', 'int', 'long', 'float', 'double', 'bytes', 'string', 'map<string, string>' ];
+        var defaultType = null;
+        if ($scope.config) {
+          $scope.options = $scope.config['schema-types'];
+          defaultType = $scope.config['schema-default-type'] || $scope.options[0];
+        } else {
+          $scope.options = defaultOptions;
+          defaultType = 'string';
+        }
+
+        var modelCopy = angular.copy($scope.model);
+
+        EventPipe.on('plugin.reset', function () {
+          $scope.model = angular.copy(modelCopy);
+          initialize($scope.model);
+        });
+
+        EventPipe.on('schema.clear', function () {
+          initialize();
+        });
+
+        EventPipe.on('dataset.selected', function (schema) {
+          initialize(schema);
+        });
+
+        var filledCount;
 
         // Format model
-        function initialize() {
-          var schema = {};
+        function initialize(jsonString) {
+          filledCount = 0;
 
-          if ($scope.model) {
+          var schema = {};
+          $scope.error = null;
+          if (jsonString) {
             try {
-              schema = JSON.parse($scope.model);
+              schema = JSON.parse(jsonString);
             } catch (e) {
               $scope.error = 'Invalid JSON string';
             }
@@ -33,31 +67,60 @@ angular.module(PKG.name + '.commons')
                 nullable: true
               });
             } else if (angular.isObject(p.type)) {
-              $scope.properties.push({
-                name: p.name,
-                type: p.type.items,
-                nullable: false
-              });
+              if (p.type.type === 'map') {
+                $scope.properties.push({
+                  name: p.name,
+                  type: typeMap,
+                  nullable: p.nullable
+                });
+              } else {
+                $scope.properties.push({
+                  name: p.name,
+                  type: p.type.items,
+                  nullable: p.nullable
+                });
+              }
             } else {
               $scope.properties.push({
                 name: p.name,
                 type: p.type,
-                nullable: false
+                nullable: p.nullable
               });
             }
           });
 
-          if ($scope.properties.length === 0) {
+          filledCount = $scope.properties.length;
+
+          // Note: 15 for now
+          if ($scope.properties.length < 15) {
+            if ($scope.properties.length === 0) {
+              $scope.properties.push({
+                name: '',
+                type: defaultType,
+                nullable: false
+              });
+              filledCount = 1;
+            }
+
+            for (var i = $scope.properties.length; i < 15; i++) {
+              $scope.properties.push({
+                empty: true
+              });
+            }
+          } else { // to add one empty line when there are more than 15 fields
             $scope.properties.push({
-              name: '',
-              type: defaultType,
-              nullable: false
+              empty: true
             });
           }
 
+
         } // End of initialize
 
-        initialize();
+        initialize($scope.model);
+
+        $scope.$watch('disabled', function () {
+          initialize($scope.model);
+        });
 
 
         function formatSchema() {
@@ -65,9 +128,16 @@ angular.module(PKG.name + '.commons')
           var properties = [];
           angular.forEach($scope.properties, function(p) {
             if (p.name) {
+              var property;
+              if (p.type === typeMap) {
+                property = angular.copy(mapObj);
+              } else {
+                property = p.type;
+              }
+
               properties.push({
                 name: p.name,
-                type: p.nullable ? [p.type, 'null'] : p.type
+                type: p.nullable ? [property, 'null'] : property
               });
             }
           });
@@ -92,23 +162,61 @@ angular.module(PKG.name + '.commons')
         // watch for changes
         $scope.$watch('properties', formatSchema, true);
 
+        $scope.emptyRowClick = function (property, index) {
+          if (!property.empty || index !== filledCount || $scope.disabled) {
+            return;
+          }
+
+          delete property.empty;
+          property.name = '';
+          property.type = defaultType;
+          property.nullable = false;
+          property.newField = 'add';
+          filledCount++;
+
+          if (filledCount >= 15) {
+            $scope.properties.push({
+              empty: true
+            });
+          }
+        };
 
         $scope.addProperties = function() {
           $scope.properties.push({
             name: '',
             type: defaultType,
-            nullable: false
+            nullable: false,
+            newField: 'add'
           });
+
+          filledCount++;
+
+          if ($scope.properties.length >= 15) {
+            $scope.properties.push({
+              empty: true
+            });
+          }
         };
 
         $scope.removeProperty = function(property) {
           var index = $scope.properties.indexOf(property);
           $scope.properties.splice(index, 1);
+
+          if ($scope.properties.length <= 15) {
+            $scope.properties.push({
+              empty: true
+            });
+          }
+          filledCount--;
         };
 
-        $scope.enter = function(event, last) {
-          if (last && event.keyCode === 13) {
-            $scope.addProperties();
+        $scope.enter = function(event, index) {
+          if (index === filledCount-1 && event.keyCode === 13) {
+            if (filledCount < $scope.properties.length) {
+              $scope.emptyRowClick($scope.properties[index + 1], index+1);
+            } else {
+              $scope.addProperties();
+            }
           }
         };
 

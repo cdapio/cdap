@@ -25,7 +25,10 @@ import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.data2.util.TableId;
+import co.cask.cdap.data2.util.hbase.DeleteBuilder;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import co.cask.cdap.data2.util.hbase.PutBuilder;
+import co.cask.cdap.data2.util.hbase.ScanBuilder;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.Delete;
@@ -35,25 +38,28 @@ import org.apache.hadoop.hbase.client.Increment;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
-import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.util.Pair;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
+import java.util.SortedMap;
 import javax.annotation.Nullable;
 
 /**
  * An HBase metrics table client.
  */
 public class HBaseMetricsTable implements MetricsTable {
+
+  private final HBaseTableUtil tableUtil;
   private final TableId tableId;
   private final HTable hTable;
   private final byte[] columnFamily;
 
   public HBaseMetricsTable(DatasetContext datasetContext, DatasetSpecification spec,
                            Configuration hConf, HBaseTableUtil tableUtil) throws IOException {
+    this.tableUtil = tableUtil;
     this.tableId = TableId.from(datasetContext.getNamespaceId(), spec.getName());
     HTable hTable = tableUtil.createHTable(hConf, tableId);
     // todo: make configurable
@@ -67,9 +73,10 @@ public class HBaseMetricsTable implements MetricsTable {
   @Nullable
   public byte[] get(byte[] row, byte[] column) {
     try {
-      Get get = new Get(row);
-      get.addColumn(columnFamily, column);
-      get.setMaxVersions(1);
+      Get get = tableUtil.buildGet(row)
+        .addColumn(columnFamily, column)
+        .setMaxVersions(1)
+        .build();
       Result getResult = hTable.get(get);
       if (!getResult.isEmpty()) {
         return getResult.getValue(columnFamily, column);
@@ -81,14 +88,14 @@ public class HBaseMetricsTable implements MetricsTable {
   }
 
   @Override
-  public void put(NavigableMap<byte[], NavigableMap<byte[], Long>> updates) {
+  public void put(SortedMap<byte[], ? extends SortedMap<byte[], Long>> updates) {
     List<Put> puts = Lists.newArrayList();
-    for (Map.Entry<byte[], NavigableMap<byte[], Long>> row : updates.entrySet()) {
-      Put put = new Put(row.getKey());
+    for (Map.Entry<byte[], ? extends SortedMap<byte[], Long>> row : updates.entrySet()) {
+      PutBuilder put = tableUtil.buildPut(row.getKey());
       for (Map.Entry<byte[], Long> column : row.getValue().entrySet()) {
         put.add(columnFamily, column.getKey(), Bytes.toBytes(column.getValue()));
       }
-      puts.add(put);
+      puts.add(put.build());
     }
     try {
       hTable.put(puts);
@@ -102,13 +109,15 @@ public class HBaseMetricsTable implements MetricsTable {
   public boolean swap(byte[] row, byte[] column, byte[] oldValue, byte[] newValue) {
     try {
       if (newValue == null) {
-        Delete delete = new Delete(row);
         // HBase API weirdness: we must use deleteColumns() because deleteColumn() deletes only the last version.
-        delete.deleteColumns(columnFamily, column);
+        Delete delete = tableUtil.buildDelete(row)
+          .deleteColumns(columnFamily, column)
+          .build();
         return hTable.checkAndDelete(row, columnFamily, column, oldValue, delete);
       } else {
-        Put put = new Put(row);
-        put.add(columnFamily, column, newValue);
+        Put put = tableUtil.buildPut(row)
+          .add(columnFamily, column, newValue)
+          .build();
         return hTable.checkAndPut(row, columnFamily, column, oldValue, put);
       }
     } catch (IOException e) {
@@ -145,9 +154,9 @@ public class HBaseMetricsTable implements MetricsTable {
   }
 
   private Put getIncrementalPut(byte[] row) {
-    Put put = new Put(row);
-    put.setAttribute(HBaseTable.DELTA_WRITE, Bytes.toBytes(true));
-    return put;
+    return tableUtil.buildPut(row)
+      .setAttribute(HBaseTable.DELTA_WRITE, Bytes.toBytes(true))
+      .build();
   }
 
   @Override
@@ -192,12 +201,12 @@ public class HBaseMetricsTable implements MetricsTable {
 
   @Override
   public void delete(byte[] row, byte[][] columns) {
-    Delete delete = new Delete(row);
+    DeleteBuilder delete = tableUtil.buildDelete(row);
     for (byte[] column : columns) {
       delete.deleteColumns(columnFamily, column);
     }
     try {
-      hTable.delete(delete);
+      hTable.delete(delete.build());
     } catch (IOException e) {
       throw new DataSetException("Delete failed on table " + tableId, e);
     }
@@ -206,18 +215,18 @@ public class HBaseMetricsTable implements MetricsTable {
   @Override
   public Scanner scan(@Nullable byte[] startRow, @Nullable byte[] stopRow,
                       @Nullable FuzzyRowFilter filter) {
-    Scan scan = new Scan();
-    configureRangeScan(scan, startRow, stopRow, filter);
+    ScanBuilder scanBuilder = tableUtil.buildScan();
+    configureRangeScan(scanBuilder, startRow, stopRow, filter);
     try {
-      ResultScanner resultScanner = hTable.getScanner(scan);
+      ResultScanner resultScanner = hTable.getScanner(scanBuilder.build());
       return new HBaseScanner(resultScanner, columnFamily);
     } catch (IOException e) {
       throw new DataSetException("Scan failed on table " + tableId, e);
     }
   }
 
-  private Scan configureRangeScan(Scan scan, @Nullable byte[] startRow, @Nullable byte[] stopRow,
-                                  @Nullable FuzzyRowFilter filter) {
+  private ScanBuilder configureRangeScan(ScanBuilder scan, @Nullable byte[] startRow, @Nullable byte[] stopRow,
+                                         @Nullable FuzzyRowFilter filter) {
     // todo: should be configurable
     scan.setCaching(1000);
 

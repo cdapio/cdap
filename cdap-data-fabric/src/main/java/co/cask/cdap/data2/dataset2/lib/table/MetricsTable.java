@@ -21,11 +21,11 @@ import co.cask.cdap.api.dataset.table.Scanner;
 
 import java.util.Map;
 import java.util.NavigableMap;
+import java.util.SortedMap;
 import javax.annotation.Nullable;
 
 /**
- * A table interface dedicated to our metrics system. It is non-transactional, hence does not implement read or write
- * isolation. It provides all functions that the metrics system uses for its data.
+ * A table interface dedicated to our metrics system and is currently used by Cube dataset.
  */
 public interface MetricsTable extends Dataset {
 
@@ -38,7 +38,7 @@ public interface MetricsTable extends Dataset {
   /**
    * Write multiple rows, each with multiple individual columns to write.
    */
-  void put(NavigableMap<byte[], NavigableMap<byte[], Long>> updates);
+  void put(SortedMap<byte[], ? extends SortedMap<byte[], Long>> updates);
 
   /**
    * Atomically compare a single column of a row with a expected value, and if it matches, replace it with a new value.
