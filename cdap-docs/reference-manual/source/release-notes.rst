@@ -23,6 +23,34 @@ Cask Data Application Platform Release Notes
    :backlinks: none
    :depth: 2
 
+`Release 3.1.1 <http://docs.cask.co/cdap/3.1.1/index.html>`__
+=============================================================
+
+Bug Fixes
+---------
+
+- `CDAP-3259 <https://issues.cask.co/browse/CDAP-3259>`__ -
+  Removed a "live re-load" script accidentally included in the previous release.
+
+- `CDAP-3321 <https://issues.cask.co/browse/CDAP-3321>`__ -
+  Fixed a problem of being unable to enable SSL on the CDAP-UI.
+
+- `CDAP-3340 <https://issues.cask.co/browse/CDAP-3340>`__ -
+  Fixed a problem with the deployment of applications using the CDAP CLI on Windows.
+
+- `CDAP-3362 <https://issues.cask.co/browse/CDAP-3362>`__ -
+  Fixed a problem of the ``logback-container.xml`` not being copied into the master services.
+
+- `CDAP-3377 <https://issues.cask.co/browse/CDAP-3377>`__ -
+  Fixed a problem in the CDAP-UI with shrinking the browser height when working with
+  application templates.
+
+- `CDAP-3386 <https://issues.cask.co/browse/CDAP-3386>`__ -
+  Fixed a problem with Spark classes not being found when running a Spark program through
+  a Workflow in Distributed mode on HDP 2.2.
+
+
+
 `Release 3.1.0 <http://docs.cask.co/cdap/3.1.0/index.html>`__
 =============================================================
 
