@@ -11,17 +11,24 @@
                 "duration": "1h"
             }
         },
+	"transforms": [
+            {
+                "name": "Script",
+                "properties": {
+                    "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"ts\",\"type\":\"long\"},{\"name\":\"headers\",\"type\":{\"type\":\"map\",\"keys\":\"string\",\"values\":\"string\"}},{\"name\":\"remote_host\",\"type\":[\"string\",\"null\"]},{\"name\":\"remote_login\",\"type\":[\"string\",\"null\"]},{\"name\":\"auth_user\",\"type\":[\"string\",\"null\"]},{\"name\":\"date\",\"type\":[\"string\",\"null\"]},{\"name\":\"request\",\"type\":[\"string\",\"null\"]},{\"name\":\"status\",\"type\":[\"int\",\"null\"]},{\"name\":\"content_length\",\"type\":[\"int\",\"null\"]},{\"name\":\"referrer\",\"type\":[\"string\",\"null\"]},{\"name\":\"user_agent\",\"type\":[\"string\",\"null\"]},{\"name\":\"count\",\"type\":[\"int\",\"null\"]}]}",
+                    "script": "function transform(input) {\n  var output = input;\n  output.count = 1;\n  return output;\n}"
+                }
+            }
+        ],
         "sink": {
             "name": "Cube",
             "properties": {
                 "name": "logEventCube",
                 "dataset.cube.resolutions": "1",
-                "dataset.cube.aggregation.agg1.dimensions": "remote_host",
-                "dataset.cube.aggregation.agg2.dimensions": "status",
-                "mapping.config": "{\"timestamp\": {\"sourceField\": \"ts\"}, \"tags\": [], \"dimensions\": [{\"name\":\"remote_host\", \"sourceField\":\"remote_host\"}, {\"name\":\"status\",\"sourceField\":\"status\"}],\"measurements\": [{\"name\": \"count\", \"type\": \"COUNTER\", \"value\": \"1\"}]}"
+		"dataset.cube.properties" : "{ \"dataset.cube.aggregation.agg1.dimensions\": \"remote_host\", \"dataset.cube.aggregation.agg2.dimensions\": \"status\" }",
+		"cubeFact.measurements" : "{ \"cubeFact.measurement.count\" : \"COUNTER\" }"
             }
-        },
-        "transforms": []
+        }
     }
 }
 
