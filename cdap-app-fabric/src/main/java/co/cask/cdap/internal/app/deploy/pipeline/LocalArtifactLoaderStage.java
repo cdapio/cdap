@@ -23,6 +23,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.ForwardingApplicationSpecification;
 import co.cask.cdap.internal.app.deploy.InMemoryConfigurator;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.pipeline.AbstractStage;
 import co.cask.cdap.proto.Id;
@@ -49,18 +50,20 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
   private final Id.Namespace namespace;
   private final String appName;
   private final ApplicationSpecificationAdapter adapter;
+  private final ArtifactRepository artifactRepository;
 
   /**
    * Constructor with hit for handling type.
    */
-  public LocalArtifactLoaderStage(CConfiguration cConf, Store store,
-                                  Id.Namespace namespace, @Nullable String appName) {
+  public LocalArtifactLoaderStage(CConfiguration cConf, Store store, Id.Namespace namespace, @Nullable String appName,
+                                  ArtifactRepository artifactRepository) {
     super(TypeToken.of(AppDeploymentInfo.class));
     this.cConf = cConf;
     this.store = store;
     this.namespace = namespace;
     this.appName = appName;
     this.adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
+    this.artifactRepository = artifactRepository;
   }
 
   /**
@@ -79,7 +82,7 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
     String configString = deploymentInfo.getConfigString();
 
     InMemoryConfigurator inMemoryConfigurator =
-      new InMemoryConfigurator(cConf, artifactId, appClassName, artifactLocation, configString);
+      new InMemoryConfigurator(cConf, artifactId, appClassName, artifactLocation, configString, artifactRepository);
 
     ListenableFuture<ConfigResponse> result = inMemoryConfigurator.config();
     ConfigResponse response = result.get(120, TimeUnit.SECONDS);
