@@ -584,7 +584,7 @@ public class MasterServiceMain extends DaemonMain {
                                                                                 getSystemServiceInstances()))
           .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)));
         // Add logback xml
-        if (logbackFile.toFile().isFile()) {
+        if (Files.exists(logbackFile)) {
           preparer.withResources().withResources(logbackFile.toUri());
         }
 
