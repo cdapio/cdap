@@ -29,7 +29,10 @@ import java.util.Map;
  */
 public class WikipediaPipelineWorkflow extends AbstractWorkflow {
 
-  public static final String NAME = WikipediaPipelineWorkflow.class.getSimpleName();
+  static final String NAME = WikipediaPipelineWorkflow.class.getSimpleName();
+  static final String MIN_PAGES_THRESHOLD_KEY = "min.pages.threshold";
+  static final String MODE_KEY = "mode";
+  static final String ONLINE_MODE = "online";
 
   @Override
   protected void configure() {
@@ -58,8 +61,8 @@ public class WikipediaPipelineWorkflow extends AbstractWorkflow {
     public boolean apply(WorkflowContext context) {
       Map<String, String> runtimeArguments = context.getRuntimeArguments();
       int threshold = 10;
-      if (runtimeArguments.containsKey("min.page.threshold")) {
-        threshold = Integer.parseInt(runtimeArguments.get("min.page.threshold"));
+      if (runtimeArguments.containsKey(MIN_PAGES_THRESHOLD_KEY)) {
+        threshold = Integer.parseInt(runtimeArguments.get(MIN_PAGES_THRESHOLD_KEY));
       }
       WorkflowToken token = context.getToken();
       Value result = token.get("result", WikipediaPipelineApp.LIKES_TO_DATASET_MR_NAME);
@@ -71,8 +74,8 @@ public class WikipediaPipelineWorkflow extends AbstractWorkflow {
       // Also add information in the token on whether to download wikipedia data over the internet
       // NOTE: The following predicate can even consume this information through runtimeArguments. However,
       // we want to demonstrate the usage of workflow token through this example, so adding this indirection.
-      if (runtimeArguments.containsKey("mode")) {
-        token.put("online", Value.of(runtimeArguments.get("mode").equalsIgnoreCase("online")));
+      if (runtimeArguments.containsKey(MODE_KEY)) {
+        token.put(ONLINE_MODE, Value.of(runtimeArguments.get(MODE_KEY).equalsIgnoreCase(ONLINE_MODE)));
       }
       return conditionResult;
     }
