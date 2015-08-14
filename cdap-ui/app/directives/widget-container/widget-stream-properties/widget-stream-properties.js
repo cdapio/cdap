@@ -5,7 +5,8 @@ angular.module(PKG.name + '.commons')
       scope: {
         model: '=ngModel',
         config: '=',
-        plugins: '='
+        plugins: '=',
+        disabled: '='
       },
       templateUrl: 'widget-container/widget-stream-properties/widget-stream-properties.html',
       controller: function($scope, EventPipe, IMPLICIT_SCHEMA) {
