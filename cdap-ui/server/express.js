@@ -140,7 +140,7 @@ function makeApp (authAddress, cdapConfig) {
       req.param('namespace'),
       '/',
       req.param('path')
-    ];
+    ].join('');
 
     var opts = {
       method: 'POST',
@@ -239,7 +239,7 @@ function makeApp (authAddress, cdapConfig) {
       function (req, res) {
         var apptype = req.params.apptype;
         var config = {};
-        var fileConfig = {}
+        var fileConfig = {};
         var filesToMetadataMap = [];
         var filePath = __dirname + '/../templates/apps/predefined/config.json';
         try {
@@ -274,14 +274,14 @@ function makeApp (authAddress, cdapConfig) {
       var dirPath = __dirname + '/../templates/apps/predefined/';
       var filePath = dirPath + 'config.json';
       var config = {};
-      var fileConfig = {}
+      var fileConfig = {};
       try {
         fileConfig = JSON.parse(fs.readFileSync(filePath, 'utf8'));
         filesToMetadataMap = fileConfig[apptype] || [];
         filesToMetadataMap = filesToMetadataMap.filter(function(metadata) {
           if (metadata.name === appname) {
             return metadata.file;
-          };
+          }
         });
         if (filesToMetadataMap.length === 0) {
           throw {code: 404};
