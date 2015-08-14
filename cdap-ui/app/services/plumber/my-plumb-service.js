@@ -205,6 +205,7 @@ angular.module(PKG.name + '.services')
         description: conf.description,
         outputSchema: conf.outputSchema || '',
         templateName: conf.templateName || null,
+        lock: conf.lock || null,
         properties: conf.properties || {},
         _backendProperties: conf._backendProperties,
         type: conf.type

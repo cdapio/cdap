@@ -13,7 +13,7 @@ angular.module(PKG.name + '.feature.admin')
       });
 
     vm.isEmpty = function () {
-      return Object.keys(vm.list).length === 0
+      return Object.keys(vm.list).length === 0;
     };
 
     vm.delete = function (template) {

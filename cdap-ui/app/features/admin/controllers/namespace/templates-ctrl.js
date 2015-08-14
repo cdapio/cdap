@@ -91,7 +91,8 @@ angular.module(PKG.name + '.feature.admin')
           vm.pluginConfig = {
             templateName: template.templateName,
             properties: template.properties,
-            outputSchema: template.outputSchema
+            outputSchema: template.outputSchema,
+            lock: template.lock
           };
 
           initialize();
@@ -123,7 +124,8 @@ angular.module(PKG.name + '.feature.admin')
         type: vm.pluginType,
         templateType: vm.template,
         pluginName: vm.plugin,
-        outputSchema: vm.pluginConfig.outputSchema
+        outputSchema: vm.pluginConfig.outputSchema,
+        lock: vm.pluginConfig.lock
       };
 
       var namespace = $stateParams.nsadmin;
@@ -210,11 +212,13 @@ angular.module(PKG.name + '.feature.admin')
             }
 
             plugin.properties = {};
+            plugin.lock = {};
 
             if (vm.isEdit) {
               plugin.properties = vm.pluginConfig.properties;
               plugin.templateName = vm.pluginConfig.templateName;
               plugin.outputSchema = vm.pluginConfig.outputSchema;
+              plugin.lock = vm.pluginConfig.lock;
             }
 
             vm.pluginConfig = plugin;
