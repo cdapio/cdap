@@ -99,7 +99,7 @@ angular.module(PKG.name + '.feature.admin')
         });
     }
 
-    this.save = function () {
+    vm.save = function () {
 
       if (!vm.pluginConfig.templateName) {
         $alert({
@@ -147,7 +147,7 @@ angular.module(PKG.name + '.feature.admin')
             type: 'success',
             content: 'Success saving template'
           });
-          this.loading = false;
+          vm.loading = false;
 
           $state.go('admin.namespace.detail.templateslist');
         });

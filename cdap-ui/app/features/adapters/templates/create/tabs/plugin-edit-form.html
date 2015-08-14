@@ -175,7 +175,7 @@
               class="btn btn-sm btn-default pull-right"
               ng-click="PluginEditController.schemaClear()"
               ng-if="!plugin.implicitSchema && !isDisabled"
-              ng-disabled="plugin.templateName && plugin.outputSchema && plugin.outputSchema.length > 0">
+              ng-disabled="plugin.implicitSchema || (plugin.templateName && plugin.outputSchema && plugin.outputSchema.length > 0)">
               Clear</button>
           </h4>
 
@@ -287,7 +287,7 @@
                     class="btn btn-sm btn-default pull-right"
                     ng-click="PluginEditController.schemaClear()"
                     ng-if="(!plugin.implicitSchema && !isDisabled)"
-                    ng-disabled="plugin.templateName && plugin.outputSchema && plugin.outputSchema.length > 0">
+                    ng-disabled="plugin.implicitSchema || (plugin.templateName && plugin.outputSchema && plugin.outputSchema.length > 0)">
                     Clear
                   </button>
                 </h4>
