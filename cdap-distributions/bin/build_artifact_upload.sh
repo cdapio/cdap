@@ -129,7 +129,7 @@ function sync_build_artifacts_to_server () {
       OUTGOING_DIR=snapshot/cask/${BUILD_PACKAGE}/${_version}  ## send snapshots to a different directory
     fi
     echo "Create remote directory ${REMOTE_INCOMING_DIR}/${OUTGOING_DIR} if necessary"
-    ssh -l ${REMOTE_USER} ${REMOTE_HOST} "mkdir -p ${REMOTE_INCOMING_DIR}/${OUTGOING_DIR}" || die "could not create remote directory"
+    ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${REMOTE_USER} ${REMOTE_HOST} "mkdir -p ${REMOTE_INCOMING_DIR}/${OUTGOING_DIR}" || die "could not create remote directory"
 
     # sync package(s) to remote server
     decho "rsyncing with rsync -av -e \"ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null\" ${RSYNC_QUIET} ${i} ${REMOTE_BASE_DIR}/${OUTGOING_DIR}/ ${DRY_RUN} 2>&1"
