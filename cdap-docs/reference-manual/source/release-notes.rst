@@ -30,13 +30,14 @@ Bug Fixes
 ---------
 
 - `CDAP-3259 <https://issues.cask.co/browse/CDAP-3259>`__ -
-  Removed a "live re-load" script accidentally included in the previous release.
+  Removed a development script accidentally included in the 3.0.0 release.
 
 - `CDAP-3321 <https://issues.cask.co/browse/CDAP-3321>`__ -
   Fixed a problem of being unable to enable SSL on the CDAP-UI.
 
 - `CDAP-3340 <https://issues.cask.co/browse/CDAP-3340>`__ -
-  Fixed a problem with the deployment of applications using the CDAP CLI on Windows.
+  Fixed a problem with the deployment of applications and the batch loading of events to a
+  stream when using the CDAP CLI on Windows.
 
 - `CDAP-3362 <https://issues.cask.co/browse/CDAP-3362>`__ -
   Fixed a problem of the ``logback-container.xml`` not being copied into the master services.
