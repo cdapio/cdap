@@ -90,9 +90,10 @@ final class ProgramResources {
   /**
    * Returns a Set of resource names that are visible through to user program.
    *
+   * @param classLoader the ClassLoader for finding program type specific resources.
    * @param type program type. If {@code null}, only the base visible resources will be returned.
    */
-  static synchronized Set<String> getVisibleResources(@Nullable ProgramType type) {
+  static synchronized Set<String> getVisibleResources(ClassLoader classLoader, @Nullable ProgramType type) {
     if (type == null) {
       return getBaseResources();
     }
@@ -102,7 +103,7 @@ final class ProgramResources {
       return resources;
     }
     try {
-      resources = createVisibleResources(type);
+      resources = createVisibleResources(classLoader, type);
     } catch (IOException e) {
       LOG.error("Failed to determine visible resources to user program of type {}", type, e);
       resources = ImmutableSet.of();
@@ -111,13 +112,13 @@ final class ProgramResources {
     return resources;
   }
 
-  private static Set<String> createVisibleResources(ProgramType type) throws IOException {
+  private static Set<String> createVisibleResources(ClassLoader classLoader, ProgramType type) throws IOException {
     Set<String> resources = getBaseResources();
 
     // Base on the type, add extra resources
     // Current only Spark and Workflow type has extra visible resources
     if (type == ProgramType.SPARK || type == ProgramType.WORKFLOW) {
-      resources = getResources(ClassPath.from(ProgramResources.class.getClassLoader(), JAR_ONLY_URI),
+      resources = getResources(ClassPath.from(classLoader, JAR_ONLY_URI),
                                SPARK_PACKAGES, CLASS_INFO_TO_RESOURCE_NAME, Sets.newHashSet(resources));
     }
     return ImmutableSet.copyOf(resources);

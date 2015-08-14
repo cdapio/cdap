@@ -18,6 +18,7 @@ package co.cask.cdap.api.worker;
 
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.internal.api.AbstractProgramDatasetConfigurable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,7 +28,7 @@ import java.util.Map;
 /**
  * Extend this class to add workers.
  */
-public abstract class AbstractWorker implements Worker {
+public abstract class AbstractWorker extends AbstractProgramDatasetConfigurable<WorkerConfigurer> implements Worker {
 
   private WorkerConfigurer configurer;
   private WorkerContext context;
@@ -105,6 +106,7 @@ public abstract class AbstractWorker implements Worker {
   /**
    * Returns the {@link WorkerConfigurer} used for configuration. Only available during configuration time.
    */
+  @Override
   protected final WorkerConfigurer getConfigurer() {
     return configurer;
   }

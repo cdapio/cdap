@@ -28,6 +28,8 @@ angular.module(PKG.name + '.feature.admin')
           getDatasets(namespace)
             .then(function (data) {
               namespace.datasetsCount = data.length;
+            }, function error(err) {
+              console.log('ERROR: Fetching Datasets failed ', err);
             });
 
           getStreams(namespace)

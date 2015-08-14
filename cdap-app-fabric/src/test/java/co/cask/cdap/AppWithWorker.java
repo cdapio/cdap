@@ -43,7 +43,6 @@ public class AppWithWorker extends AbstractApplication {
     setName(NAME);
     setDescription(DESCRIPTION);
     addWorker(new TableWriter());
-    createDataset(DATASET, KeyValueTable.class);
   }
 
   public class TableWriter extends AbstractWorker {
@@ -54,6 +53,7 @@ public class AppWithWorker extends AbstractApplication {
     public void configure() {
       setName(WORKER);
       setDescription(DESCRIPTION);
+      createDataset(DATASET, KeyValueTable.class);
     }
 
     @Override

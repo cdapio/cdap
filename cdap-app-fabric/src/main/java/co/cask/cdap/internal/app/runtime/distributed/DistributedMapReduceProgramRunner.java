@@ -78,8 +78,7 @@ public final class DistributedMapReduceProgramRunner extends AbstractDistributed
       tempDir.mkdirs();
       try {
         launcherFile = File.createTempFile("launcher", ".jar", tempDir);
-        List<String> paths = MapReduceContainerHelper.getMapReduceClassPath(hConf, new ArrayList<String>());
-        MapReduceContainerHelper.saveLauncher(hConf, launcherFile, paths);
+        MapReduceContainerHelper.saveLauncher(hConf, launcherFile, extraClassPaths);
         localizeResources.put("launcher.jar", new LocalizeResource(launcherFile));
       } catch (Exception e) {
         LOG.warn("Failed to create twill container launcher.jar for TWILL-144 hack. " +

@@ -21,6 +21,7 @@ import com.google.inject.Inject;
 
 import java.io.File;
 import java.util.LinkedList;
+import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 
 /**
@@ -75,7 +76,7 @@ public class FilePathResolver {
     }
 
     // resolve the "." and ".." in the path
-    String[] tokens = path.split(File.separator);
+    String[] tokens = path.split(Pattern.quote(File.separator));
     LinkedList<String> finalTokens = new LinkedList<>();
     for (String token : tokens) {
       if (token.equals("..")) {

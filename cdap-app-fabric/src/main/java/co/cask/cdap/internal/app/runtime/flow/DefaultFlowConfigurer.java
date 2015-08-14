@@ -24,6 +24,7 @@ import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.api.flow.flowlet.Flowlet;
 import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;
+import co.cask.cdap.internal.api.DefaultDatasetConfigurer;
 import co.cask.cdap.internal.flow.DefaultFlowSpecification;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
@@ -35,8 +36,7 @@ import java.util.Map;
 /**
  * Default implementation of {@link FlowConfigurer}.
  */
-public class DefaultFlowConfigurer implements FlowConfigurer {
-
+public class DefaultFlowConfigurer extends DefaultDatasetConfigurer implements FlowConfigurer {
   private String className;
   private String name;
   private String description;
@@ -91,6 +91,9 @@ public class DefaultFlowConfigurer implements FlowConfigurer {
     Preconditions.checkArgument(!flowlets.containsKey(flowletName),
                                 UserMessages.getMessage(UserErrors.INVALID_FLOWLET_EXISTS), flowletName);
     flowlets.put(flowletName, flowletDef);
+    addStreams(flowletDef.getStreams());
+    addDatasetSpecs(flowletDef.getDatasetSpecs());
+    addDatasetModules(flowletDef.getDatasetModules());
   }
 
   @Override

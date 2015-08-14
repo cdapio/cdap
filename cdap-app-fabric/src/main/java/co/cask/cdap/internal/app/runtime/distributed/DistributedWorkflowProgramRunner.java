@@ -85,8 +85,7 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
     Preconditions.checkNotNull(workflowSpec, "Missing WorkflowSpecification for %s", program.getName());
 
     // It the workflow has Spark, localize the spark-assembly jar
-    List<String> extraClassPaths = new ArrayList<>(
-      MapReduceContainerHelper.localizeFramework(hConf, localizeResources));
+    List<String> extraClassPaths = new ArrayList<>();
 
     // See if the Workflow has Spark in it
     Resources resources = findSparkDriverResources(program.getApplicationSpecification().getSpark(), workflowSpec);
@@ -99,6 +98,9 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
       // No Spark
       resources = new Resources();
     }
+    
+    // Add classpaths for MR framework
+    extraClassPaths.addAll(MapReduceContainerHelper.localizeFramework(hConf, localizeResources));
 
     // TODO(CDAP-3119): Hack for TWILL-144. Need to remove
     File launcherFile = null;
@@ -108,8 +110,7 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
       tempDir.mkdirs();
       try {
         launcherFile = File.createTempFile("launcher", ".jar", tempDir);
-        List<String> paths = MapReduceContainerHelper.getMapReduceClassPath(hConf, new ArrayList<String>());
-        MapReduceContainerHelper.saveLauncher(hConf, launcherFile, paths);
+        MapReduceContainerHelper.saveLauncher(hConf, launcherFile, extraClassPaths);
         localizeResources.put("launcher.jar", new LocalizeResource(launcherFile));
       } catch (Exception e) {
         LOG.warn("Failed to create twill container launcher.jar for TWILL-144 hack. " +

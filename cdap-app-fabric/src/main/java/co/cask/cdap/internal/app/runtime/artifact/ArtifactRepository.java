@@ -30,9 +30,9 @@ import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
@@ -208,10 +208,8 @@ public class ArtifactRepository {
   public ArtifactDetail addArtifact(Id.Artifact artifactId, File artifactFile)
     throws IOException, WriteConflictException, ArtifactAlreadyExistsException, InvalidArtifactException {
 
-    // use spark program type in case the app contains spark, in which case we'll need access to spark
-    // packages when doing plugin inspection
-    try (CloseableClassLoader parentClassLoader =
-           artifactClassLoaderFactory.createClassLoader(Locations.toLocation(artifactFile), ProgramType.SPARK)) {
+    Location artifactLocation = Locations.toLocation(artifactFile);
+    try (CloseableClassLoader parentClassLoader = artifactClassLoaderFactory.createClassLoader(artifactLocation)) {
       ArtifactClasses artifactClasses = artifactInspector.inspectArtifact(artifactId, artifactFile, parentClassLoader);
       validatePluginSet(artifactClasses.getPlugins());
       ArtifactMeta meta = new ArtifactMeta(artifactClasses, ImmutableSet.<ArtifactRange>of());
@@ -419,9 +417,7 @@ public class ArtifactRepository {
     // assumes any of the parents will do
     Location parentLocation = parents.get(0).getDescriptor().getLocation();
 
-    // use spark program type in case the app contains spark, in which case we'll need access to spark
-    // packages when doing plugin inspection
-    return artifactClassLoaderFactory.createClassLoader(parentLocation, ProgramType.SPARK);
+    return artifactClassLoaderFactory.createClassLoader(parentLocation);
   }
 
   /**
@@ -430,6 +426,7 @@ public class ArtifactRepository {
    * @param parents the set of parent ranges to validate
    * @throws InvalidArtifactException if there is more than one version range for an artifact
    */
+  @VisibleForTesting
   static void validateParentSet(Set<ArtifactRange> parents) throws InvalidArtifactException {
     boolean isInvalid = false;
     StringBuilder errMsg = new StringBuilder("Invalid parents field.");
@@ -464,6 +461,7 @@ public class ArtifactRepository {
    * @param plugins the set of plugins to validate
    * @throws InvalidArtifactException if there is more than one class with the same type and name
    */
+  @VisibleForTesting
   static void validatePluginSet(Set<PluginClass> plugins) throws InvalidArtifactException {
     boolean isInvalid = false;
     StringBuilder errMsg = new StringBuilder("Invalid plugins field.");
