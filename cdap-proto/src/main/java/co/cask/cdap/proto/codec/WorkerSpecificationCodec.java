@@ -58,6 +58,7 @@ public final class WorkerSpecificationCodec extends AbstractSpecificationCodec<W
     Resources resources = context.deserialize(jsonObj.get("resources"), Resources.class);
     Set<String> datasets = deserializeSet(jsonObj.get("datasets"), context, String.class);
     int instances = jsonObj.get("instances").getAsInt();
+
     return new WorkerSpecification(className, name, description, properties, datasets, resources, instances);
   }
 }

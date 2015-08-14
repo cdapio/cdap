@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,24 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.verification;
-
-import co.cask.cdap.app.verification.AbstractVerifier;
-import co.cask.cdap.internal.dataset.DatasetCreationSpec;
-
 /**
- * This class verifies a {@link DatasetCreationSpec}.
+ * This package contains internal classes for supporting the CDAP API.
  * <p>
- * Following are the checks that are done.
- * <ul>
- * <li>Check if the dataset name is an id or not</li>
- * </ul>
+ * These should not be used directly by users of the CDAP API, as they may change in a later release without warning.
  * </p>
  */
-public class DatasetCreationSpecVerifier extends AbstractVerifier<DatasetCreationSpec> {
-
-  @Override
-  protected String getName(DatasetCreationSpec spec) {
-    return spec.getInstanceName();
-  }
-}
+package co.cask.cdap.internal.api;

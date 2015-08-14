@@ -25,6 +25,7 @@ import co.cask.cdap.api.service.http.HttpServiceContext;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
+import co.cask.cdap.internal.api.DefaultDatasetConfigurer;
 import co.cask.cdap.internal.app.runtime.service.http.DelegatorContext;
 import co.cask.cdap.internal.app.runtime.service.http.HttpHandlerFactory;
 import co.cask.http.HttpHandler;
@@ -44,7 +45,7 @@ import java.util.Map;
 /**
  * A default implementation of {@link ServiceConfigurer}.
  */
-public class DefaultServiceConfigurer implements ServiceConfigurer {
+public class DefaultServiceConfigurer extends DefaultDatasetConfigurer implements ServiceConfigurer {
   private final String className;
   private String name;
   private String description;
@@ -111,6 +112,9 @@ public class DefaultServiceConfigurer implements ServiceConfigurer {
       Preconditions.checkArgument(!handleSpecs.containsKey(spec.getName()),
                                   "Handler with name %s already existed.", spec.getName());
       handleSpecs.put(spec.getName(), spec);
+      addStreams(configurer.getStreams());
+      addDatasetModules(configurer.getDatasetModules());
+      addDatasetSpecs(configurer.getDatasetSpecs());
     }
     return handleSpecs;
   }
@@ -132,7 +136,6 @@ public class DefaultServiceConfigurer implements ServiceConfigurer {
       LOG.error(errMessage, t);
       throw new IllegalArgumentException(errMessage, t);
     }
-
   }
 
   private <T extends HttpServiceHandler> HttpHandler createHttpHandler(T handler) {

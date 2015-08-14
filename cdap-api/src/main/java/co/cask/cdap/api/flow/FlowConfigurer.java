@@ -16,6 +16,7 @@
 
 package co.cask.cdap.api.flow;
 
+import co.cask.cdap.api.DatasetConfigurer;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.flow.flowlet.Flowlet;
 import co.cask.cdap.api.flow.flowlet.FlowletConfigurer;
@@ -23,7 +24,7 @@ import co.cask.cdap.api.flow.flowlet.FlowletConfigurer;
 /**
  * Configurer for configuring {@link Flow}.
  */
-public interface FlowConfigurer {
+public interface FlowConfigurer extends DatasetConfigurer {
 
   /**
    * Set the name of the Flow.
