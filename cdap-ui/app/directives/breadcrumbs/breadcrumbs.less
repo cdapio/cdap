@@ -1,5 +1,6 @@
-@import "../../styles/variables.less";
+  @import "../../styles/variables.less";
 @import "../../styles/themes/cdap/mixins.less";
+@import "../../../bower_components/bootstrap/less/mixins.less";
 
 my-breadcrumbs {
   background-color: white;
@@ -27,20 +28,20 @@ my-breadcrumbs {
       }
     }
   }
-  a.temp-dropdown-toggle {
-    border-right: 1px solid white;
+  a.dropdown-toggle {
     color: @cdap-gray;
     font-weight: 500;
     padding: 0;
     height: 40px;
     position: relative;
+    top: -1px;
     &:hover, &:focus {
       background-color: transparent;
     }
     &:after {
-      content: url('@{img-path}/breadcrumb_arrow.png');
+      content: url('@{img-path}/chevron-front.png');
+      overflow: hidden;
       position: absolute;
-      width: 11px;
       height: 40px;
       z-index: 99;
     }
@@ -62,6 +63,9 @@ my-breadcrumbs {
     max-height: 290px;
   }
   li.dropdown.open {
+    a.dropdown-toggle:focus {
+      border-color: transparent;
+    }
     ul.dropdown-menu {
       background-color: white;
       border-color: white;
@@ -108,6 +112,7 @@ my-breadcrumbs {
   .crumbs {
     position: relative;
     height: 40px;
+    // Facilitates horizontal scrolling on smaller devices
     &:after{
       position: absolute;
       width: 15%;
@@ -128,52 +133,70 @@ my-breadcrumbs {
     overflow-y: hidden;
 
     > li {
-      border-right: 1px solid white;
       display: inline-block;
       height: 40px;
       line-height: 40px;
       position: relative;
-      &:before {
-        content: none;
-      }
-      &:not(:last-child) {
+      text-align: center;
+      &:not(:last-child), &:not(:only-child) {
+        &:before {
+          content: none;
+        }
         &:after {
-          content: url('@{img-path}/breadcrumb_arrow.png');
+          content: url('@{img-path}/chevron-front.png');
+          height: 42px;
+          top: -1px;
+          right: 0;
+          display: inline-block;
+          position: relative;
         }
       }
       &:after {
-        position: absolute;
         width: 11px;
-        height: 40px;
         z-index: 99;
+      }
+      &:nth-last-child(2) {
+        &:after {
+          content: "";
+        }
       }
       &:last-child, &:only-child {
         background-color: rgb(208, 208, 208);
+        .box-shadow(inset 0 8px 8px -8px rgba(0,0,0,0.3));
+        &:before {
+          background-color: white;
+          content: url('@{img-path}/gray_chevron_back.png');
+          display: inline-block;
+          left: 0;
+          padding: 0;
+          top: -1px;
+          height: 42px;
+          position: relative;
+        }
         &:after {
-          content: url('@{img-path}/breadcrumb_arrow_last.png');
+          background-color: white;
+          content: url('@{img-path}/gray_chevron_front.png');
           right: 0;
           top: -1px;
-          height: 39px;
+          height: 40px;
+          position: absolute;
         }
         span {
-          padding-right: 7px;
+          color: @cdap-header;
+          padding-right: 25px;
         }
       }
       a, span {
         display: inline-block;
         vertical-align: top;
-        margin-right: 7px;
-        padding-left: 7px;
-        margin-left: 14px;
+        width: 100%;
       }
       a {
         color: @cdap-gray;
+        padding-left: 18px;
         &:hover, &:focus {
           text-decoration: none;
         }
-      }
-      span {
-        color: @cdap-header;
       }
     }
   }
