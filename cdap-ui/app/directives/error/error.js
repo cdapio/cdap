@@ -14,8 +14,6 @@ angular.module(PKG.name+'.commons')
 
   $scope.remove = function (item) {
     myAlert.remove(item);
-    if (myAlert.count() === 0) {
-    }
   };
 })
 
