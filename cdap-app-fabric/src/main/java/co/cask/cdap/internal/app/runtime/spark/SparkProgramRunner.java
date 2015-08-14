@@ -135,9 +135,11 @@ public class SparkProgramRunner implements ProgramRunner {
       throw Throwables.propagate(e);
     }
 
+    SparkSubmitter submitter = new SparkContextConfig(hConf).isLocal() ? new LocalSparkSubmitter()
+                                                                       : new DistributedSparkSubmitter();
     Service sparkRuntimeService = new SparkRuntimeService(
       cConf, hConf, spark, new SparkContextFactory(hConf, context, datasetFramework, streamAdmin),
-      program.getJarLocation(), txSystemClient
+      submitter, program.getJarLocation(), txSystemClient
     );
 
     sparkRuntimeService.addListener(createRuntimeServiceListener(program.getId(), runId, arguments),
