@@ -16,7 +16,7 @@
 
 package co.cask.cdap.data.stream.decoder;
 
-import co.cask.cdap.api.flow.flowlet.StreamEvent;
+import co.cask.cdap.api.stream.StreamEvent;
 import co.cask.cdap.api.stream.StreamEventDecoder;
 import com.google.common.base.Charsets;
 import org.apache.hadoop.io.LongWritable;

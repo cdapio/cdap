@@ -26,7 +26,7 @@ import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.flow.AbstractFlow;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.OutputEmitter;
-import co.cask.cdap.api.flow.flowlet.StreamEvent;
+import co.cask.cdap.api.stream.StreamEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

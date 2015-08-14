@@ -21,7 +21,7 @@ import co.cask.cdap.api.data.format.Formats;
 import co.cask.cdap.api.data.format.RecordFormat;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.flow.flowlet.StreamEvent;
+import co.cask.cdap.api.stream.StreamEvent;
 import org.junit.Assert;
 import org.junit.Test;
 

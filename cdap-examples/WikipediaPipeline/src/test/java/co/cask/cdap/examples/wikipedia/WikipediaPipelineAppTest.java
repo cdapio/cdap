@@ -16,7 +16,7 @@
 
 package co.cask.cdap.examples.wikipedia;
 
-import co.cask.cdap.api.flow.flowlet.StreamEvent;
+import co.cask.cdap.api.stream.StreamEvent;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.utils.Tasks;

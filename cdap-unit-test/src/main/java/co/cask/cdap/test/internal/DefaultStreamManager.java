@@ -17,7 +17,7 @@
 package co.cask.cdap.test.internal;
 
 import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.flow.flowlet.StreamEvent;
+import co.cask.cdap.api.stream.StreamEvent;
 import co.cask.cdap.common.stream.StreamEventTypeAdapter;
 import co.cask.cdap.common.utils.TimeMathParser;
 import co.cask.cdap.data.stream.service.StreamFetchHandler;

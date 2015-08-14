@@ -2116,6 +2116,8 @@
 
       <modules>
         <module>cdap-common-unit-test</module>
+        <module>cdap-api-common</module>
+        <module>cdap-spi</module>
         <module>cdap-api</module>
         <module>cdap-formats</module>
         <module>cdap-hbase-compat-0.96</module>
