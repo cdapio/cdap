@@ -30,7 +30,7 @@ Bug Fixes
 ---------
 
 - `CDAP-3259 <https://issues.cask.co/browse/CDAP-3259>`__ -
-  Removed a development script accidentally included in the 3.0.0 release.
+  Removed a development script accidentally included in the 3.1.0 release.
 
 - `CDAP-3321 <https://issues.cask.co/browse/CDAP-3321>`__ -
   Fixed a problem of being unable to enable SSL on the CDAP-UI.
