@@ -24,7 +24,6 @@ import co.cask.cdap.common.ArtifactAlreadyExistsException;
 import co.cask.cdap.common.ArtifactNotFoundException;
 import co.cask.cdap.common.ArtifactRangeNotFoundException;
 import co.cask.cdap.common.BadRequestException;
-import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.UnauthorizedException;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
@@ -337,6 +336,29 @@ public class ArtifactClient {
       throw new BadRequestException(response.getResponseBodyAsString());
     } else if (responseCode == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new ArtifactRangeNotFoundException(parentArtifacts);
+    }
+  }
+
+  /**
+   * Delete an artifact.
+   *
+   * @param artifactId the artifact to delete
+   *
+   * @throws BadRequestException if the request is invalid. For example, if the artifact name or version is invalid
+   * @throws IOException if a network error occurred
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   */
+  public void delete(Id.Artifact artifactId) throws IOException, UnauthorizedException, BadRequestException {
+    URL url = config.resolveNamespacedURLV3(artifactId.getNamespace(),
+      String.format("artifacts/%s/versions/%s", artifactId.getName(), artifactId.getVersion().getVersion()));
+
+    HttpRequest request = HttpRequest.delete(url).build();
+
+    HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_BAD_REQUEST);
+
+    int responseCode = response.getResponseCode();
+    if (responseCode == HttpURLConnection.HTTP_BAD_REQUEST) {
+      throw new BadRequestException(response.getResponseBodyAsString());
     }
   }
 
