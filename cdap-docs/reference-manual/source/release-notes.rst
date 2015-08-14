@@ -1067,8 +1067,8 @@ Bug Fix
 `Release 3.0.2 <http://docs.cask.co/cdap/3.0.2/index.html>`__
 =============================================================
 
-Bug Fixes
----------
+Bug Fix
+-------
 
 - Fixed problems with the dataset upgrade tool
   (`CDAP-2962 <https://issues.cask.co/browse/CDAP-2962>`__, 
