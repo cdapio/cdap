@@ -427,7 +427,7 @@ Depending on your installation, you may want to set these properties:
   ``conf/cdap-site.xml`` (by default, it is disabled)::
 
     <property>
-      <name>cdap.explore.enabled</name>
+      <name>explore.enabled</name>
       <value>true</value>
       <description>Enable Explore functionality</description>
     </property>
