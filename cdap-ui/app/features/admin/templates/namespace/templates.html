@@ -71,7 +71,7 @@
   <div>
     <div class="output-schema">
       <h4>Output Schema</h4>
-{{TemplatesController.isDisabled}}
+
       <fieldset ng-disabled="TemplatesController.isDisabled" ng-if="TemplatesController.pluginConfig.outputSchema || !TemplatesController.isDisabled || TemplatesController.pluginConfig.properties.format === 'clf' || TemplatesController.pluginConfig.properties.format === 'syslog'">
         <my-schema-editor
           ng-model="TemplatesController.pluginConfig.outputSchema"

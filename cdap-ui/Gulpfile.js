@@ -310,7 +310,16 @@ gulp.task('html:main', function() {
       .pipe(gulp.dest('./dist'));
 });
 
+gulp.task('html:main.dev', function () {
+  return gulp.src('./app/*.html')
+      .pipe(plug.replace('<!-- DEV DEPENDENCIES -->',
+        '<script type="text/javascript" src="/assets/bundle/app.es6.js"></script>' +
+        '<script src="http://localhost:35729/livereload.js"></script>'))
+      .pipe(gulp.dest('./dist'));
+    });
+
 gulp.task('html', ['html:main', 'html:partials']);
+gulp.task('html.dev', ['html:main.dev', 'html:partials'])
 
 
 
@@ -395,7 +404,7 @@ gulp.task('css', ['css:lib', 'css:app']);
 gulp.task('style', ['css']);
 
 
-gulp.task('watch:build', ['watch:js', 'css', 'img', 'tpl', 'html']);
+gulp.task('watch:build', ['watch:js', 'css', 'img', 'tpl', 'html.dev']);
 gulp.task('build', ['js', 'css', 'img', 'tpl', 'html']);
 
 gulp.task('distribute', ['build', 'rev:replace']);
