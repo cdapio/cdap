@@ -35,6 +35,7 @@ import com.google.gson.stream.JsonWriter;
 
 import java.io.IOException;
 import java.io.Reader;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -343,8 +344,8 @@ public final class Schema {
 
   private final Type type;
 
-  private final BiMap<String, Integer> enumValues;
-  private final BiMap<Integer, String> enumIndexes;
+  private final Map<String, Integer> enumValues;
+  private final Map<Integer, String> enumIndexes;
 
   private final Schema componentSchema;
 
@@ -365,7 +366,7 @@ public final class Schema {
                  String recordName, Map<String, Field> fieldMap, List<Schema> unionSchemas) {
     this.type = type;
     this.enumValues = createIndex(enumValues);
-    this.enumIndexes = this.enumValues == null ? null : this.enumValues.inverse();
+    this.enumIndexes = this.enumValues == null ? null : inverse(this.enumValues);
     this.componentSchema = componentSchema;
     this.keySchema = keySchema;
     this.valueSchema = valueSchema;
@@ -785,5 +786,16 @@ public final class Schema {
       // It should never throw IOException on the StringBuilder Writer, if it does, something very wrong.
       throw Throwables.propagate(e);
     }
+  }
+
+  private <A, B> Map<B, A> inverse(Map<A, B> map) {
+    Map<B, A> result = new HashMap<>(map.size());
+    for (Map.Entry<A, B> entry : map.entrySet()) {
+      if (result.containsKey(entry.getValue())) {
+        throw new IllegalArgumentException("Cannot inverse map with duplicate values");
+      }
+      result.put(entry.getValue(), entry.getKey());
+    }
+    return result;
   }
 }
