@@ -11,7 +11,7 @@
   </div>
 </div>
 
-<div class="table-responsive" ng-if="TemplatesListController.list">
+<div class="table-responsive" ng-if="!TemplatesListController.isEmpty()">
   <table class="table table-curved">
     <thead>
       <th>Name</th>
@@ -41,6 +41,6 @@
 </div>
 
 <br/>
-<div class="well text-center" ng-if="!TemplatesListController.list">
+<div class="well text-center" ng-if="TemplatesListController.isEmpty()">
   <h3>No plugin template</h3>
 </div>

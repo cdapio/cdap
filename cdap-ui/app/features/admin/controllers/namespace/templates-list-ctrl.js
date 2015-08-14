@@ -2,11 +2,19 @@ angular.module(PKG.name + '.feature.admin')
   .controller('NamespaceTemplatesListController', function ($scope, mySettings, $stateParams, $alert) {
 
     var vm = this;
+    vm.list = {};
+
 
     mySettings.get('pluginTemplates')
       .then(function (res) {
-        vm.list = res[$stateParams.nsadmin];
+        if (res) {
+          vm.list = res[$stateParams.nsadmin];
+        }
       });
+
+    vm.isEmpty = function () {
+      return Object.keys(vm.list).length === 0
+    };
 
     vm.delete = function (template) {
       mySettings.get('pluginTemplates')
