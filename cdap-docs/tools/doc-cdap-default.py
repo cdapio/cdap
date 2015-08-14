@@ -16,6 +16,8 @@
 #  limitations under the License.
 
 # Builds an rst table to document the cdap-default.xml file
+# Any property names listed in cdap-default-exclusions.txt are excluded.
+# Any properties marked "final" are placed in second table after the first.
 #
 # python doc-cdap-default.py <source-filepath> <output-filepath>
 # python doc-cdap-default.py <output-filepath>
@@ -41,6 +43,7 @@ import xml.etree.ElementTree as ET
 
 RELATIVE_PATH = '../..'
 CDAP_DEFAULT_XML = 'cdap-common/src/main/resources/cdap-default.xml'
+CDAP_DEFAULT_EXCLUSIONS = 'cdap-default-exclusions.txt'
 
 RST_HEADER = """
 .. list-table::
@@ -52,17 +55,33 @@ RST_HEADER = """
      - Description
 """
 
+RST_HEADER_TABLE_FINAL = """
+
+These properties are marked as ``final``, meaning that their value cannot be changed, even
+with a setting in the ``cdap-site.xml``: 
+
+.. list-table::
+   :widths: 30 35 35
+   :header-rows: 1
+
+   * - Parameter name
+     - Default Value
+     - Description
+"""
 
 class Item:
 
-    def __init__(self, name='', value='', description ='', final=''):
+    def __init__(self, name='', value='', description ='', final=None):
         self.name = name
         self.value = value
         self.description = description
         self.final = final
     
     def __str__(self):
-        return "%s:\n%s\n%s" % (self.name, self.value, self.description)
+        if self.final != None:
+            return "%s:\n%s (%s)\n%s" % (self.name, self.value, self.final, self.description)
+        else:
+            return "%s:\n%s\n%s" % (self.name, self.value, self.description)
 
     def _append(self, name, value):
         if self.__dict__[name]:
@@ -92,6 +111,8 @@ class Item:
             v = "\n".join(v1.split())
         elif name == 'description' and v1 == 'None':
             v = ''
+        elif name == 'final':
+            v = (v1.lower() == 'true')
         else:
             v = " ".join(v1.split())
         self.__dict__[name] = v
@@ -112,13 +133,19 @@ class Item:
 def load_defaults(filesource):
     func = 'load_defaults'
     # Set paths
+    source_path = os.path.dirname(os.path.abspath(__file__))
+    
     if filesource:
         xml_path = filesource    
     else:
-        source_path = os.path.dirname(os.path.abspath(__file__))
         xml_path = os.path.join(source_path, RELATIVE_PATH, CDAP_DEFAULT_XML)
     if not os.path.isfile(xml_path):
         raise Exception(func, "'%s' not a valid path" % xml_path)
+    
+    exclusions_path = os.path.join(source_path, CDAP_DEFAULT_EXCLUSIONS)
+    if not os.path.isfile(exclusions_path):
+        raise Exception(func, "'%s' not a valid path" % exclusions_path)
+    exclusions = [line.rstrip('\n') for line in open(exclusions_path)]
     
     tree = ET.parse(xml_path)
     root = tree.getroot()
@@ -127,15 +154,32 @@ def load_defaults(filesource):
         item = Item()
         for attribute in property:
             item.set_attribute(attribute.tag, attribute.text)
-        items.append(item)
+        if item.name not in exclusions:
+            items.append(item)
 
     return sorted(items, key=lambda item: item.name)
 
+def create_rst_tables(items):
+    """Create rst tables from items"""
+    table = RST_HEADER
+    final_items =[]
+    
+    for item in items:
+        if not item.final:
+            table += item.rst() + '\n'
+        else:
+            final_items.append(item)
+            
+    if final_items:
+        table += RST_HEADER_TABLE_FINAL
+        for item in final_items:
+            table += item.rst() + '\n'
 
+    return table
+    
 def main():
     """ Main program entry point.
     """
-
     filesource = ''
     filepath = ''
     if len(sys.argv) > 2:
@@ -145,12 +189,7 @@ def main():
         filepath = sys.argv[1]
             
     defaults = load_defaults(filesource)
-
-    # Create an rst table from items
-    
-    table = RST_HEADER
-    for item in defaults:
-        table = table + item.rst() + '\n'
+    table = create_rst_tables(defaults)
     
     if filepath:
         f = open(filepath, 'w')
