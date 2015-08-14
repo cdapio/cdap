@@ -4,16 +4,20 @@
 
 .. _spark:
 
-=============================================
-Spark Programs *(Beta, Standalone CDAP only)*
-=============================================
+==============
+Spark Programs
+==============
+
+.. rubric:: Beta
 
 *Apache Spark* is used for in-memory cluster computing. It lets you load large sets of
 data into memory and query them repeatedly. This makes it suitable for both iterative and
 interactive programs. Similar to MapReduce, Spark can access **datasets** as both input
 and output. *Spark programs* in CDAP can be written in either Java or Scala.
 
-In the current release, Spark (version 1.0 or higher) is supported only in the Standalone CDAP. 
+A *beta* feature of CDAP, Spark is currently supported on standalone mode and non-secure
+clusters only. We are using Spark 1.3 in standalone mode, and support Spark 1.2, 1.3, or
+1.4 on clusters.
 
 To process data using Spark, specify ``addSpark()`` in your application specification::
 
@@ -223,8 +227,10 @@ Spark programs in CDAP can also be added to a :ref:`workflow <workflows>`, simil
 Examples of Using Spark Programs
 --------------------------------
 
-- For an example of **a Spark program,** see the :ref:`Spark K-Means <examples-spark-k-means>`
-  and :ref:`Spark Page Rank <examples-spark-page-rank>` examples.
+- Examples of **Spark programs** include the :ref:`Spark K-Means <examples-spark-k-means>`,
+  :ref:`Spark Page Rank <examples-spark-page-rank>`, 
+  :ref:`Log Analysis <examples-log-analysis>`, and
+  :ref:`Wikipedia Pipeline <examples-wikipedia-data-pipeline>` examples.
 
 - For a longer example, the how-to guide :ref:`cdap-spark-guide` gives another demonstration.
 
