@@ -50,6 +50,15 @@ Bug Fixes
   Fixed a problem with Spark classes not being found when running a Spark program through
   a Workflow in Distributed mode on HDP 2.2.
 
+- `CDAP-3404 <https://issues.cask.co/browse/CDAP-3404>`__ -
+  Fixed an error in the installation documentation on enabling the CDAP Explore service.
+
+- `CDAP-3405 <https://issues.cask.co/browse/CDAP-3405>`__ -
+  Fixed a problem with the third step of the Getting Started example on `cask.co/get-started <http://cask.co/get-started/>`_. 
+
+- `CDAP-3408 <https://issues.cask.co/browse/CDAP-3408>`__ -
+  Fixed a problem with starting the CDAP Explore service on CDH 5.2 and 5.3.
+
 
 
 `Release 3.1.0 <http://docs.cask.co/cdap/3.1.0/index.html>`__
