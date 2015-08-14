@@ -146,7 +146,7 @@ angular.module(PKG.name + '.feature.adapters')
     function extractMetricsFromData(obj, metric) {
       var matches = ['records.in', 'records.out'];
       var match = matches.filter(function(m) {
-        return metric[0].indexOf(m);
+        return metric[0].indexOf(m) !== -1;
       });
       if (match.length > 0) {
         var metricNameArray = metric[0].split('.');
