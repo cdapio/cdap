@@ -183,7 +183,7 @@ angular.module(PKG.name + '.commons')
 
         function formatSchema() {
 
-          if (['clf', 'syslog'].indexOf($scope.plugins.format) !== -1) {
+          if ($scope.plugins && ['clf', 'syslog'].indexOf($scope.plugins.format) !== -1) {
             $scope.model = null;
             return;
           }

@@ -148,7 +148,7 @@
                                  data-model="plugin.properties[field]"
                                  data-myconfig="PluginEditController.groups[group].fields[field]"
                                  data-properties="plugin.properties"
-                                 widget-disabled="plugin.templateName && plugin.properties[field] && plugin.properties[field].length > 0"
+                                 widget-disabled="plugin.templateName && plugin.lock[field]"
                                  widget-container>
                             </div>
                           </div>
@@ -175,19 +175,18 @@
               class="btn btn-sm btn-default pull-right"
               ng-click="PluginEditController.schemaClear()"
               ng-if="!plugin.implicitSchema && !isDisabled"
-              ng-disabled="plugin.implicitSchema || (plugin.templateName && plugin.outputSchema && plugin.outputSchema.length > 0)">
+              ng-disabled="plugin.implicitSchema">
               Clear</button>
           </h4>
 
           <fieldset class="clearfix" ng-disabled="isDisabled" ng-if="plugin.outputSchema || !isDisabled || plugin.properties.format === 'clf' || plugin.properties.format === 'syslog'">
             <my-schema-editor
               ng-model="plugin.outputSchema"
-              data-disabled="plugin.implicitSchema || (plugin.templateName && plugin.outputSchema && plugin.outputSchema.length > 0)"
+              data-disabled="plugin.implicitSchema"
               ng-if="plugin.name !== 'Stream' && plugin.name !== 'Kafka'"></my-schema-editor>
             <my-stream-properties
               ng-model="plugin.outputSchema"
               plugins="plugin.properties"
-              data-disabled="plugin.templateName && plugin.outputSchema && plugin.outputSchema.length > 0"
               ng-if="plugin.name === 'Stream' || plugin.name === 'Kafka'"
             ></my-stream-properties>
           </fieldset>
@@ -225,7 +224,7 @@
                             <input type="text"
                                     class="form-control"
                                     ng-model="plugin.properties[name]"
-                                    ng-disabled="plugin.templateName && plugin.properties[name] && plugin.properties[name].length > 0" />
+                                    ng-disabled="plugin.templateName && plugin.lock[name]" />
                           </div>
                         </div>
                       </div>
@@ -255,7 +254,7 @@
                                        data-model="plugin.properties[field]"
                                        data-myconfig="PluginEditController.groups[group].fields[field]"
                                        data-properties="plugin.properties"
-                                       widget-disabled="plugin.templateName && plugin.properties[field] && plugin.properties[field].length > 0"
+                                       widget-disabled="plugin.templateName && plugin.lock[field]"
                                        widget-container>
                                   </div>
                                 </div>
@@ -287,7 +286,7 @@
                     class="btn btn-sm btn-default pull-right"
                     ng-click="PluginEditController.schemaClear()"
                     ng-if="(!plugin.implicitSchema && !isDisabled)"
-                    ng-disabled="plugin.implicitSchema || (plugin.templateName && plugin.outputSchema && plugin.outputSchema.length > 0)">
+                    ng-disabled="plugin.implicitSchema">
                     Clear
                   </button>
                 </h4>
@@ -295,12 +294,11 @@
                 <fieldset ng-disabled="isDisabled">
                   <my-schema-editor
                     ng-model="plugin.outputSchema"
-                    data-disabled="plugin.implicitSchema || (plugin.templateName && plugin.outputSchema && plugin.outputSchema.length > 0)"
+                    data-disabled="plugin.implicitSchema"
                     ng-if="plugin.name !== 'Stream' && plugin.name !== 'Kafka'"></my-schema-editor>
                   <my-stream-properties
                     ng-model="plugin.outputSchema"
                     plugins="plugin.properties"
-                    data-disabled="plugin.templateName && plugin.outputSchema && plugin.outputSchema.length > 0"
                     ng-if="plugin.name === 'Stream' || plugin.name === 'Kafka'"
                   ></my-stream-properties>
                 </fieldset>
@@ -340,7 +338,7 @@
                     <input type="text"
                             class="form-control"
                             ng-model="plugin.properties[name]"
-                            ng-disabled="plugin.templateName && plugin.properties[name] && plugin.properties[name].length > 0" />
+                            ng-disabled="plugin.templateName && plugin.lock[name]" />
 
                   </div>
                 </div>

@@ -321,7 +321,8 @@ angular.module(PKG.name + '.feature.adapters')
           type: item.type,
           properties: item.properties,
           outputSchema: item.outputSchema,
-          templateName: item.templateName
+          templateName: item.templateName,
+          lock: item.lock
         };
       } else {
         config = {
