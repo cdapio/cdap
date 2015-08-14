@@ -272,7 +272,9 @@ angular.module(PKG.name + '.feature.adapters')
           );
         }.bind(this));
 
-        this.plugins.items = this.plugins.items.concat(savedTemplates);
+        if (group.name !== 'templates') {
+          this.plugins.items = this.plugins.items.concat(savedTemplates);
+        }
 
       }.bind(this));
     };
@@ -318,7 +320,8 @@ angular.module(PKG.name + '.feature.adapters')
           icon: MyPlumbFactory.getIcon(item.pluginName),
           type: item.type,
           properties: item.properties,
-          outputSchema: item.outputSchema
+          outputSchema: item.outputSchema,
+          templateName: item.templateName
         };
       } else {
         config = {
