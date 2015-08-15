@@ -13,9 +13,74 @@ my-breadcrumbs {
   line-height: 40px;
   .crumbs {
     .flexbox();
-    flex-flow: row nowrap;
+    flex-direction: row;
+    flex-wrap: nowrap;
     align-items: center;
     width: 100%;
+    position: relative;
+    height: 40px;
+    // Facilitates horizontal scrolling on smaller devices
+    &:after{
+      position: absolute;
+      width: 15%;
+      height: 100%;
+      right: 0;
+      top: 0;
+      content: '';
+    }
+    li.dropdown {
+      ul.dropdown-menu {
+        width: 120px;
+        max-height: 290px;
+        min-width: 0;
+        background-color: white;
+        border-color: white;
+        padding: 10px 0;
+        margin-top: 1px;
+        .border-radius(4px);
+        .box-shadow(0 6px 12px rgba(0, 0, 0, 0.175));
+        overflow-x: hidden;
+        overflow-y: scroll;
+        @media (max-width: @screen-md-max) {
+          position: absolute;
+        }
+        > li {
+          background-color: white;
+          padding: 0;
+          width: 120px;
+          &:focus {
+            outline: 0;
+          }
+          > a {
+            color: @cdap-header;
+            font-weight: 500;
+            background-color: white;
+            padding-right: 10px;
+            padding-left: 10px;
+            &:hover, &:focus {
+              color: @cdap-orange;
+              cursor: pointer;
+            }
+            &:focus {
+              outline: 0;
+            }
+          }
+          i {
+            display: inline-block;
+            width: 13px;
+          }
+          .active {
+            color: #c4c4c4;
+            pointer-events: none;
+          }
+        }
+      }
+      &.open {
+        a.ns-dropdown-toggle:focus {
+          border-color: transparent;
+        }
+      }
+    }
   }
   .nav {
     height: 40px;
@@ -28,10 +93,11 @@ my-breadcrumbs {
       }
     }
   }
-  a.dropdown-toggle {
+
+  a.ns-dropdown-toggle {
     color: @cdap-gray;
     font-weight: 500;
-    padding: 0;
+    padding: 1px 0 0;
     height: 40px;
     position: relative;
     top: -1px;
@@ -58,74 +124,6 @@ my-breadcrumbs {
     }
   }
 
-  li.dropdown {
-    ul.dropdown-menu {
-      min-width: 0;
-      width: 120px;
-      max-height: 290px;
-      background-color: white;
-      border-color: white;
-      padding: 10px 0;
-      margin-top: 1px;
-      .border-radius(4px);
-      > li {
-        background-color: white;
-        padding: 0;
-        width: 120px;
-        &:focus {
-          outline: 0;
-        }
-        > a {
-          color: @cdap-header;
-          font-weight: 500;
-          background-color: white;
-          padding-right: 10px;
-          padding-left: 10px;
-          &:hover, &:focus {
-            color: @cdap-orange;
-            cursor: pointer;
-          }
-          &:focus {
-            outline: 0;
-          }
-        }
-        i {
-          display: inline-block;
-          width: 13px;
-        }
-        .active {
-          color: #c4c4c4;
-          pointer-events: none;
-        }
-      }
-    }
-    &.open {
-      a.dropdown-toggle:focus {
-        border-color: transparent;
-      }
-      ul.dropdown-menu {
-        overflow-x: hidden;
-        overflow-y: auto;
-        @media (max-width: @screen-md-max) {
-          position: absolute;
-        }
-      }
-    }
-  }
-
-  .crumbs {
-    position: relative;
-    height: 40px;
-    // Facilitates horizontal scrolling on smaller devices
-    &:after{
-      position: absolute;
-      width: 15%;
-      height: 100%;
-      right: 0;
-      top: 0;
-      content: '';
-    }
-  }
   .breadcrumb {
     background-color: transparent;
     font-weight: 500;
@@ -135,54 +133,53 @@ my-breadcrumbs {
     white-space: nowrap;
     overflow-x: scroll;
     overflow-y: hidden;
-
     > li {
       display: inline-block;
       height: 40px;
       line-height: 40px;
       position: relative;
       text-align: center;
+      &:after {
+        width: 11px;
+        z-index: 99;
+      }
       &:not(:last-child), &:not(:only-child) {
         &:before {
           content: none;
         }
         &:after {
           content: url('@{img-path}/chevron-front.png');
-          height: 42px;
+          height: 40px;
           top: -1px;
           right: 0;
           display: inline-block;
           position: relative;
         }
       }
-      &:after {
-        width: 11px;
-        z-index: 99;
-      }
       &:nth-last-child(2) {
         &:after {
-          content: "";
+          content: '';
         }
       }
       &:last-child, &:only-child {
         background-color: rgb(208, 208, 208);
         .box-shadow(inset 0 8px 8px -8px rgba(0,0,0,0.3));
-        &:before {
+        &:before, &:after {
           background-color: white;
+          top: -1px;
+          height: 40px;
+        }
+        &:before {
           content: url('@{img-path}/gray_chevron_back.png');
           display: inline-block;
           left: 0;
           padding: 0;
-          top: -1px;
-          height: 42px;
+          height: 40px;
           position: relative;
         }
         &:after {
-          background-color: white;
           content: url('@{img-path}/gray_chevron_front.png');
           right: 0;
-          top: -1px;
-          height: 40px;
           position: absolute;
         }
         span {
