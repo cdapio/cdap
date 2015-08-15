@@ -126,7 +126,7 @@ final class FieldAccessorGenerator {
     mg.visitTryCatchBlock(beginTry, endTry, catchHandle, Type.getInternalName(Exception.class));
     mg.mark(beginTry);
 
-    // Field field = Fields.findField(TypeToken.of(classType), "fieldName")
+    // Field field = Fields.findField(classType, "fieldName")
     mg.loadArg(0);
     mg.invokeStatic(Type.getType(TypeToken.class), getMethod(TypeToken.class, "of", java.lang.reflect.Type.class));
     mg.push(field.getName());
