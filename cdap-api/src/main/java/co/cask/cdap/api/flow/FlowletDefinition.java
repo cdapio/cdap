@@ -36,7 +36,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.google.common.reflect.TypeToken;
 
 import java.lang.reflect.Type;
 import java.util.Collections;
@@ -81,7 +80,7 @@ public final class FlowletDefinition {
     Map<String, Set<Type>> inputTypes = Maps.newHashMap();
     Map<String, Set<Type>> outputTypes = Maps.newHashMap();
     Map<String, String> properties = Maps.newHashMap(flowletSpec.getProperties());
-    Reflections.visit(flowlet, TypeToken.of(flowlet.getClass()),
+    Reflections.visit(flowlet, flowlet.getClass(),
                       new DataSetFieldExtractor(datasets),
                       new PropertyFieldExtractor(properties),
                       new OutputEmitterFieldExtractor(outputTypes),

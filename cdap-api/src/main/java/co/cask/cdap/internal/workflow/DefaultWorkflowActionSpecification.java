@@ -25,7 +25,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.google.common.reflect.TypeToken;
 
 import java.util.Map;
 import java.util.Set;
@@ -55,7 +54,7 @@ public class DefaultWorkflowActionSpecification implements WorkflowActionSpecifi
 
     Map<String, String> properties = Maps.newHashMap(spec.getProperties());
     Set<String> datasets = Sets.newHashSet();
-    Reflections.visit(action, TypeToken.of(action.getClass()),
+    Reflections.visit(action, action.getClass(),
                       new DataSetFieldExtractor(datasets),
                       new PropertyFieldExtractor(properties));
 

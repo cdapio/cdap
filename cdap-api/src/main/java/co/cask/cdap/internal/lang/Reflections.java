@@ -54,12 +54,12 @@ public final class Reflections {
    * Inspect all members in the given type. Fields and Methods that are given to Visitor are
    * always having accessible flag being set.
    */
-  public static void visit(Object instance, TypeToken<?> inspectType, Visitor firstVisitor, Visitor... moreVisitors) {
-
+  public static void visit(Object instance, Type inspectType, Visitor firstVisitor, Visitor... moreVisitors) {
     try {
+      TypeToken<?> inspectTypeToken = TypeToken.of(inspectType);
       List<Visitor> visitors = ImmutableList.<Visitor>builder().add(firstVisitor).add(moreVisitors).build();
 
-      for (TypeToken<?> type : inspectType.getTypes().classes()) {
+      for (TypeToken<?> type : inspectTypeToken.getTypes().classes()) {
         if (Object.class.equals(type.getRawType())) {
           break;
         }
@@ -72,7 +72,7 @@ public final class Reflections {
             field.setAccessible(true);
           }
           for (Visitor visitor : visitors) {
-            visitor.visit(instance, inspectType, type, field);
+            visitor.visit(instance, inspectTypeToken, type, field);
           }
         }
 
@@ -84,7 +84,7 @@ public final class Reflections {
             method.setAccessible(true);
           }
           for (Visitor visitor : visitors) {
-            visitor.visit(instance, inspectType, type, method);
+            visitor.visit(instance, inspectTypeToken, type, method);
           }
         }
       }

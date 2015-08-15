@@ -16,8 +16,6 @@
 
 package co.cask.cdap.api.common;
 
-import com.google.common.base.Splitter;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -42,7 +40,11 @@ public final class RuntimeArguments {
   public static Map<String, String> fromPosixArray(String[] args) {
     Map<String, String> kvMap = new HashMap<>();
     for (String arg : args) {
-      kvMap.putAll(Splitter.on("--").omitEmptyStrings().trimResults().withKeyValueSeparator("=").split(arg));
+      int idx = arg.indexOf('=');
+      int keyOff = arg.startsWith("--") ? "--".length() : 0;
+      String key = idx < 0 ? arg.substring(keyOff) : arg.substring(keyOff, idx);
+      String value = idx < 0 ? "" : arg.substring(idx + 1);
+      kvMap.put(key, value);
     }
     return kvMap;
   }

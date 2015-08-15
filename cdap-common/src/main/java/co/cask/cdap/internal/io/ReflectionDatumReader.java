@@ -199,7 +199,8 @@ public final class ReflectionDatumReader<T> extends ReflectionReader<Decoder, T>
         }
         FieldAccessor fieldAccessor = getFieldAccessor(targetTypeToken, sourceField.getName());
         fieldAccessor.set(record,
-                          read(decoder, sourceField.getSchema(), targetField.getSchema(), fieldAccessor.getType()));
+                          read(decoder, sourceField.getSchema(), targetField.getSchema(),
+                               TypeToken.of(fieldAccessor.getType())));
       }
       return record;
     } catch (Exception e) {

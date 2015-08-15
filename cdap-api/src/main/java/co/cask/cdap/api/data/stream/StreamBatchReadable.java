@@ -26,12 +26,8 @@ import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.stream.GenericStreamEventData;
 import co.cask.cdap.api.stream.StreamEventDecoder;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
-import com.google.common.base.Function;
-import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterables;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -39,6 +35,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -141,21 +138,22 @@ public class StreamBatchReadable implements BatchReadable<Long, String> {
   private static URI createStreamURI(String streamName, Map<String, Object> arguments) {
     // It forms the query string for all key/value pairs in the arguments map
     // It encodes both key and value using the URLEncoder
-    String queryString = Joiner.on('&').join(
-      Iterables.transform(arguments.entrySet(), new Function<Map.Entry<String, Object>, String>() {
-        @Override
-        public String apply(Map.Entry<String, Object> entry) {
-          try {
-            return String.format("%s=%s",
-                                 URLEncoder.encode(entry.getKey(), "UTF-8"),
-                                 URLEncoder.encode(entry.getValue().toString(), "UTF-8"));
-          } catch (UnsupportedEncodingException e) {
-            // Shouldn't happen as UTF-8 should always supported.
-            throw new RuntimeException(e);
-          }
-        }
-      }));
-    return URI.create(String.format("stream://%s?%s", streamName, queryString));
+    try {
+      StringBuilder builder = new StringBuilder();
+      String sep = "";
+      for (Map.Entry<String, Object> entry : arguments.entrySet()) {
+        builder
+          .append(sep)
+          .append(URLEncoder.encode(entry.getKey(), "UTF-8"))
+          .append("=")
+          .append(URLEncoder.encode(entry.getValue().toString(), "UTF-8"));
+        sep = "&";
+      }
+      return URI.create(String.format("stream://%s?%s", streamName, builder.toString()));
+    } catch (UnsupportedEncodingException e) {
+      // Shouldn't happen as UTF-8 should always supported.
+      throw new RuntimeException(e);
+    }
   }
 
   /**
@@ -174,7 +172,13 @@ public class StreamBatchReadable implements BatchReadable<Long, String> {
 
     String query = uri.getQuery();
     if (query != null && !query.isEmpty()) {
-      Map<String, String> parameters = Splitter.on('&').withKeyValueSeparator("=").split(query);
+      Map<String, String> parameters = new HashMap<>();
+      for (String pair : query.split("&")) {
+        int idx = pair.indexOf('=');
+        String key = idx < 0 ? pair : pair.substring(0, idx);
+        String value = idx < 0 ? "" : pair.substring(idx + 1);
+        parameters.put(key, value);
+      }
 
       startTime = parameters.containsKey(START_TIME_KEY) ? Long.parseLong(parameters.get(START_TIME_KEY)) : 0L;
       endTime = parameters.containsKey(END_TIME_KEY) ? Long.parseLong(parameters.get(END_TIME_KEY)) : Long.MAX_VALUE;
