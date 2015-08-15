@@ -68,6 +68,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
@@ -266,7 +267,7 @@ public final class FlowUtils {
           Class<?> flowletClass = program.getClassLoader().loadClass(flowletDefinition.getFlowletSpec().getClassName());
           long groupId = generateConsumerGroupId(program, flowletId);
 
-          addConsumerGroup(queueSpec, TypeToken.of(flowletClass), groupId,
+          addConsumerGroup(queueSpec, flowletClass, groupId,
                            flowletDefinition.getInstances(), schemaGenerator, groupConfigs);
         } catch (ClassNotFoundException e) {
           // There is no way for not able to load a Flowlet class as it should be verified during deployment.
@@ -282,7 +283,7 @@ public final class FlowUtils {
    * Finds all consumer group for the given queue from the given flowlet.
    */
   private static void addConsumerGroup(final QueueSpecification queueSpec,
-                                       final TypeToken<?> flowletType,
+                                       final Type flowletType,
                                        final long groupId, final int groupSize,
                                        final SchemaGenerator schemaGenerator,
                                        final Collection<ConsumerGroupConfig> groupConfigs) {

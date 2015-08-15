@@ -28,7 +28,6 @@ import co.cask.cdap.internal.specification.PropertyFieldExtractor;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
-import com.google.common.reflect.TypeToken;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -61,7 +60,7 @@ public class DefaultFlowletConfigurer extends DefaultDatasetConfigurer implement
     this.datasets = new HashSet<>();
 
     // Grab all @Property fields
-    Reflections.visit(flowlet, TypeToken.of(flowlet.getClass()), new PropertyFieldExtractor(propertyFields));
+    Reflections.visit(flowlet, flowlet.getClass(), new PropertyFieldExtractor(propertyFields));
   }
 
   @Override
