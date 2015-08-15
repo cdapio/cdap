@@ -94,12 +94,12 @@ final class FieldAccessorGenerator {
                  .visitEnd();
     }
 
-    // Constructor(TypeToken<?> classType)
-    GeneratorAdapter mg = new GeneratorAdapter(Opcodes.ACC_PUBLIC, getMethod(void.class, "<init>", TypeToken.class),
-                                               null, new Type[0], classWriter);
+    // Constructor(Type classType)
+    Method constructor = getMethod(void.class, "<init>", java.lang.reflect.Type.class);
+    GeneratorAdapter mg = new GeneratorAdapter(Opcodes.ACC_PUBLIC, constructor, null, new Type[0], classWriter);
     mg.loadThis();
     mg.loadArg(0);
-    mg.invokeConstructor(Type.getType(AbstractFieldAccessor.class), getMethod(void.class, "<init>", TypeToken.class));
+    mg.invokeConstructor(Type.getType(AbstractFieldAccessor.class), constructor);
     if (isPrivate) {
       initializeReflectionField(mg, field);
     }
@@ -126,8 +126,9 @@ final class FieldAccessorGenerator {
     mg.visitTryCatchBlock(beginTry, endTry, catchHandle, Type.getInternalName(Exception.class));
     mg.mark(beginTry);
 
-    // Field field = findField(classType, "fieldName")
+    // Field field = Fields.findField(TypeToken.of(classType), "fieldName")
     mg.loadArg(0);
+    mg.invokeStatic(Type.getType(TypeToken.class), getMethod(TypeToken.class, "of", java.lang.reflect.Type.class));
     mg.push(field.getName());
     mg.invokeStatic(Type.getType(Fields.class), getMethod(Field.class, "findField", TypeToken.class, String.class));
     mg.dup();

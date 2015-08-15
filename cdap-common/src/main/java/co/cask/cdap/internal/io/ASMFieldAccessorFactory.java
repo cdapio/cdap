@@ -24,6 +24,7 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.reflect.TypeToken;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 
 /**
  * A {@link FieldAccessorFactory} that uses ASM to generate a specific {@link FieldAccessor} class
@@ -96,7 +97,7 @@ public final class ASMFieldAccessorFactory implements FieldAccessorFactory {
         byte[] bytecode = classDef.getBytecode();
         result = (Class<?>) defineClass.invoke(classLoader, className, bytecode, 0, bytecode.length);
       }
-      return (FieldAccessor) result.getConstructor(TypeToken.class).newInstance(type);
+      return (FieldAccessor) result.getConstructor(Type.class).newInstance(type.getType());
     }
   }
 }
