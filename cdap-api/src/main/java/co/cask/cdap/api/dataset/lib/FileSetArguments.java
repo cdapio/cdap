@@ -16,11 +16,10 @@
 
 package co.cask.cdap.api.dataset.lib;
 
-import com.google.common.base.Splitter;
-import com.google.common.collect.Lists;
-
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -100,8 +99,13 @@ public class FileSetArguments {
     if (pathsArg == null) {
       return Collections.emptyList();
     }
-    Iterable<String> paths = Splitter.on(',').omitEmptyStrings().trimResults().split(pathsArg);
-    return Lists.newArrayList(paths);
+    List<String> paths = new ArrayList<>();
+    for (String path : pathsArg.split("\\s*,\\s*")) {
+      if (!path.isEmpty()) {
+        paths.add(path);
+      }
+    }
+    return paths;
   }
 
 }
