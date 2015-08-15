@@ -12,7 +12,7 @@ my-breadcrumbs {
   height: 40px;
   line-height: 40px;
   .crumbs {
-    display: flex;
+    .flexbox();
     flex-flow: row nowrap;
     align-items: center;
     width: 100%;
@@ -21,7 +21,7 @@ my-breadcrumbs {
     height: 40px;
     margin: 0;
     white-space: nowrap;
-    order: 1;
+    .order(1);
     .open {
       > a, > a:hover, > a:focus {
         background-color: transparent;
@@ -57,25 +57,17 @@ my-breadcrumbs {
       }
     }
   }
-  ul.dropdown-menu {
-    min-width: 0;
-    width: 120px;
-    max-height: 290px;
-  }
-  li.dropdown.open {
-    a.dropdown-toggle:focus {
-      border-color: transparent;
-    }
+
+  li.dropdown {
     ul.dropdown-menu {
+      min-width: 0;
+      width: 120px;
+      max-height: 290px;
       background-color: white;
       border-color: white;
-      overflow-x: hidden;
-      overflow-y: auto;
       padding: 10px 0;
+      margin-top: 1px;
       .border-radius(4px);
-      @media (max-width: @screen-md-max) {
-        position: absolute;
-      }
       > li {
         background-color: white;
         padding: 0;
@@ -106,9 +98,21 @@ my-breadcrumbs {
           pointer-events: none;
         }
       }
-
+    }
+    &.open {
+      a.dropdown-toggle:focus {
+        border-color: transparent;
+      }
+      ul.dropdown-menu {
+        overflow-x: hidden;
+        overflow-y: auto;
+        @media (max-width: @screen-md-max) {
+          position: absolute;
+        }
+      }
     }
   }
+
   .crumbs {
     position: relative;
     height: 40px;
@@ -126,7 +130,7 @@ my-breadcrumbs {
     background-color: transparent;
     font-weight: 500;
     height: 40px;
-    order: 2;
+    .order(2);
     position: relative;
     white-space: nowrap;
     overflow-x: scroll;
