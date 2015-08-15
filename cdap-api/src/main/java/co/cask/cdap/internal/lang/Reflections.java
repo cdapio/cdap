@@ -72,7 +72,7 @@ public final class Reflections {
             field.setAccessible(true);
           }
           for (Visitor visitor : visitors) {
-            visitor.visit(instance, inspectTypeToken, type, field);
+            visitor.visit(instance, inspectTypeToken.getType(), type.getType(), field);
           }
         }
 
@@ -84,7 +84,7 @@ public final class Reflections {
             method.setAccessible(true);
           }
           for (Visitor visitor : visitors) {
-            visitor.visit(instance, inspectTypeToken, type, method);
+            visitor.visit(instance, inspectTypeToken.getType(), type.getType(), method);
           }
         }
       }

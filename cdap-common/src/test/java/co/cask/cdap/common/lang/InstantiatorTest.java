@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.Type;
 
 /**
  *
@@ -38,8 +39,7 @@ public class InstantiatorTest {
 
     Reflections.visit(record, Record.class, new FieldVisitor() {
       @Override
-      public void visit(Object instance, TypeToken<?> inspectType,
-                        TypeToken<?> declareType, Field field) throws Exception {
+      public void visit(Object instance, Type inspectType, Type declareType, Field field) throws Exception {
         if (!Modifier.isStatic(field.getModifiers())) {
           Assert.assertEquals(Defaults.defaultValue(field.getType()), field.get(instance));
         }

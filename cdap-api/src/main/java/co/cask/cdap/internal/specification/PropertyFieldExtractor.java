@@ -22,6 +22,7 @@ import com.google.common.reflect.TypeToken;
 import com.google.gson.internal.Primitives;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Type;
 import java.util.Map;
 
 /**
@@ -40,11 +41,11 @@ public final class PropertyFieldExtractor extends FieldVisitor {
   }
 
   @Override
-  public void visit(Object instance, TypeToken<?> inspectType, TypeToken<?> declareType, Field field) throws Exception {
+  public void visit(Object instance, Type inspectType, Type declareType, Field field) throws Exception {
     if (field.isAnnotationPresent(Property.class)) {
 
       // Key name is "className.fieldName".
-      String key = declareType.getRawType().getName() + '.' + field.getName();
+      String key = TypeToken.of(declareType).getRawType().getName() + '.' + field.getName();
       if (properties.containsKey(key)) {
         return;
       }

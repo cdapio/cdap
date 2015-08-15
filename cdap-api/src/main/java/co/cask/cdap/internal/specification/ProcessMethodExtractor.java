@@ -50,10 +50,10 @@ public final class ProcessMethodExtractor extends MethodVisitor {
   }
 
   @Override
-  public void visit(Object instance, TypeToken<?> inspectType,
-                    TypeToken<?> declareType, Method method) throws Exception {
+  public void visit(Object instance, Type inspectType, Type declareType, Method method) throws Exception {
+    TypeToken<?> inspectTypeToken = TypeToken.of(inspectType);
 
-    if (!seenMethods.add(new FlowletMethod(method, inspectType))) {
+    if (!seenMethods.add(new FlowletMethod(method, inspectTypeToken))) {
       // The method is already seen. It can only happen if a children class override a parent class method and
       // is visting the parent method, since the method visiting order is always from the leaf class walking
       // up the class hierarchy.
@@ -71,30 +71,30 @@ public final class ProcessMethodExtractor extends MethodVisitor {
     if (tickAnnotation != null) {
       Preconditions.checkArgument(processInputAnnotation == null,
                                   "Tick method %s.%s should not have ProcessInput.",
-                                  inspectType.getRawType().getName(), method);
+                                  inspectTypeToken.getRawType().getName(), method);
       Preconditions.checkArgument(method.getParameterTypes().length == 0,
                                   "Tick method %s.%s cannot have parameters.",
-                                  inspectType.getRawType().getName(), method);
+                                  inspectTypeToken.getRawType().getName(), method);
       return;
     }
 
     Type[] methodParams = method.getGenericParameterTypes();
     Preconditions.checkArgument(methodParams.length > 0 && methodParams.length <= 2,
                                 "Parameter missing from process method %s.%s.",
-                                inspectType.getRawType().getName(), method);
+                                inspectTypeToken.getRawType().getName(), method);
 
     // If there is more than one parameter there can only be exactly two; the second one must be InputContext type
     if (methodParams.length == 2) {
       Preconditions.checkArgument(InputContext.class.equals(TypeToken.of(methodParams[1]).getRawType()),
                                   "Second parameter must be InputContext type for process method %s.%s.",
-                                  inspectType.getRawType().getName(), method);
+                                  inspectTypeToken.getRawType().getName(), method);
     }
 
     // Extract the Input type from the first parameter of the process method
-    Type inputType = getInputType(inspectType, method, inspectType.resolveType(methodParams[0]).getType());
+    Type inputType = getInputType(inspectTypeToken, method, inspectTypeToken.resolveType(methodParams[0]).getType());
     Preconditions.checkArgument(Reflections.isResolved(inputType),
                                 "Invalid type in %s.%s. Only Class or ParameterizedType are supported.",
-                                inspectType.getRawType().getName(), method);
+                                inspectTypeToken.getRawType().getName(), method);
 
     List<String> inputNames = Lists.newLinkedList();
     if (processInputAnnotation.value().length == 0) {
@@ -111,7 +111,7 @@ public final class ProcessMethodExtractor extends MethodVisitor {
       }
       Preconditions.checkArgument(types.add(inputType),
                                   "Same type already defined for the same input name %s in process method %s.%s.",
-                                  inputName, inspectType.getRawType().getName(), method);
+                                  inputName, inspectTypeToken.getRawType().getName(), method);
     }
   }
 

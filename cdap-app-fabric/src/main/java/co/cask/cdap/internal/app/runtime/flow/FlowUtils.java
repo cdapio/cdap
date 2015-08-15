@@ -291,9 +291,10 @@ public final class FlowUtils {
     final Set<FlowletMethod> seenMethods = Sets.newHashSet();
     Reflections.visit(null, flowletType, new MethodVisitor() {
       @Override
-      public void visit(Object instance, TypeToken<?> inspectType,
-                        TypeToken<?> declareType, Method method) throws Exception {
-        if (!seenMethods.add(new FlowletMethod(method, inspectType))) {
+      public void visit(Object instance, Type inspectType, Type declareType, Method method) throws Exception {
+        TypeToken<?> inspectTypeToken = TypeToken.of(inspectType);
+
+        if (!seenMethods.add(new FlowletMethod(method, inspectTypeToken))) {
           // The method is already seen. It can only happen if a children class override a parent class method and
           // is visiting the parent method, since the method visiting order is always from the leaf class walking
           // up the class hierarchy.
@@ -312,12 +313,12 @@ public final class FlowUtils {
           inputNames.add(FlowletDefinition.ANY_INPUT);
         }
 
-        TypeToken<?> dataType = inspectType.resolveType(method.getGenericParameterTypes()[0]);
+        TypeToken<?> dataType = inspectTypeToken.resolveType(method.getGenericParameterTypes()[0]);
         // For batch mode and if the parameter is Iterator, need to get the actual data type from the Iterator.
         if (method.isAnnotationPresent(Batch.class) && Iterator.class.equals(dataType.getRawType())) {
           Preconditions.checkArgument(dataType.getType() instanceof ParameterizedType,
                                       "Only ParameterizedType is supported for batch Iterator.");
-          dataType = inspectType.resolveType(((ParameterizedType) dataType.getType()).getActualTypeArguments()[0]);
+          dataType = inspectTypeToken.resolveType(((ParameterizedType) dataType.getType()).getActualTypeArguments()[0]);
         }
 
         Schema schema = schemaGenerator.generate(dataType.getType());

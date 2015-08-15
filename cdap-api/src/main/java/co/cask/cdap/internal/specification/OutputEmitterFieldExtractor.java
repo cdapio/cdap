@@ -42,29 +42,31 @@ public final class OutputEmitterFieldExtractor extends FieldVisitor {
   }
 
   @Override
-  public void visit(Object instance, TypeToken<?> inspectType, TypeToken<?> declareType, Field field) throws Exception {
+  public void visit(Object instance, Type inspectType, Type declareType, Field field) throws Exception {
     if (!OutputEmitter.class.equals(field.getType())) {
       return;
     }
-    Type emitterType = inspectType.resolveType(field.getGenericType()).getType();
+
+    TypeToken<?> inspectTypeToken = TypeToken.of(inspectType);
+    Type emitterType = inspectTypeToken.resolveType(field.getGenericType()).getType();
     Preconditions.checkArgument(emitterType instanceof ParameterizedType,
                                 "Type info missing for OutputEmitter in %s.%s",
-                                inspectType.getRawType().getName(), field.getName());
+                                inspectTypeToken.getRawType().getName(), field.getName());
 
     // Extract the Output type from the first type argument of OutputEmitter.
     Type outputType = ((ParameterizedType) emitterType).getActualTypeArguments()[0];
-    outputType = inspectType.resolveType(outputType).getType();
+    outputType = inspectTypeToken.resolveType(outputType).getType();
     String outputName = field.isAnnotationPresent(Output.class) ?
       field.getAnnotation(Output.class).value() : FlowletDefinition.DEFAULT_OUTPUT;
 
     Preconditions.checkArgument(Reflections.isResolved(outputType),
                                 "Invalid type in %s.%s. Only Class or ParameterizedType are supported.",
-                                inspectType.getRawType().getName(), field.getName());
+                                inspectTypeToken.getRawType().getName(), field.getName());
 
     Preconditions.checkArgument(
       !outputTypes.containsKey(outputName),
       "Output with name '%s' already exists. Use @Output with different name; class: %s, field: %s",
-      outputName, inspectType.getRawType().toString(), field.getName()
+      outputName, inspectTypeToken.getRawType().toString(), field.getName()
     );
 
     outputTypes.put(outputName, ImmutableSet.of(outputType));
