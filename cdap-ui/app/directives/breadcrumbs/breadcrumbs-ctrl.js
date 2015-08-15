@@ -14,7 +14,7 @@ angular.module(PKG.name + '.commons')
 
     $scope.$watch('hideNsDropdown', function() {
       if (angular.isDefined($scope.hideNsDropdown)) {
-        var toggles = $scope.element[0].querySelectorAll('a.dropdown-toggle');
+        var toggles = $scope.element[0].querySelectorAll('a.ns-dropdown-toggle');
         var element;
          element = angular.element(toggles[0]);
         // namespace dropdown
