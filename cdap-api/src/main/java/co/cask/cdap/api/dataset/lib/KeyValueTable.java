@@ -29,15 +29,14 @@ import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import javax.annotation.Nullable;
 
 /**
@@ -86,12 +85,12 @@ public class KeyValueTable extends AbstractDataset implements
    * @return a map of the stored values, keyed by key
    */
   public Map<byte[], byte[]> readAll(byte[][] keys) {
-    List<Get> gets = Lists.newArrayListWithCapacity(keys.length);
+    List<Get> gets = new ArrayList<>(keys.length);
     for (byte[] key : keys) {
       gets.add(new Get(key).add(KEY_COLUMN));
     }
     List<Row> results = table.get(gets);
-    Map<byte[], byte[]> values = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    Map<byte[], byte[]> values = new TreeMap<>(Bytes.BYTES_COMPARATOR);
     for (Row row : results) {
       if (row.get(KEY_COLUMN) != null) {
         values.put(row.getRow(), row.get(KEY_COLUMN));
@@ -226,7 +225,9 @@ public class KeyValueTable extends AbstractDataset implements
       private boolean closed = false;
       @Override
       protected KeyValue<byte[], byte[]> computeNext() {
-        Preconditions.checkState(!closed);
+        if (closed) {
+          return endOfData();
+        }
         Row next = scanner.next();
         if (next != null) {
           return new KeyValue<>(next.getRow(), next.get(KEY_COLUMN));

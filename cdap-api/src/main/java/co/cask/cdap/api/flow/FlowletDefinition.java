@@ -32,14 +32,12 @@ import co.cask.cdap.internal.specification.DataSetFieldExtractor;
 import co.cask.cdap.internal.specification.OutputEmitterFieldExtractor;
 import co.cask.cdap.internal.specification.ProcessMethodExtractor;
 import co.cask.cdap.internal.specification.PropertyFieldExtractor;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 
 import java.lang.reflect.Type;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -76,17 +74,17 @@ public final class FlowletDefinition {
 
     this.instances = instances;
 
-    Set<String> datasets = Sets.newHashSet(flowletSpec.getDataSets());
-    Map<String, Set<Type>> inputTypes = Maps.newHashMap();
-    Map<String, Set<Type>> outputTypes = Maps.newHashMap();
-    Map<String, String> properties = Maps.newHashMap(flowletSpec.getProperties());
+    Set<String> datasets = new HashSet<>(flowletSpec.getDataSets());
+    Map<String, Set<Type>> inputTypes = new HashMap<>();
+    Map<String, Set<Type>> outputTypes = new HashMap<>();
+    Map<String, String> properties = new HashMap<>(flowletSpec.getProperties());
     Reflections.visit(flowlet, flowlet.getClass(),
                       new DataSetFieldExtractor(datasets),
                       new PropertyFieldExtractor(properties),
                       new OutputEmitterFieldExtractor(outputTypes),
                       new ProcessMethodExtractor(inputTypes));
 
-    this.datasets = ImmutableSet.copyOf(datasets);
+    this.datasets = Collections.unmodifiableSet(new HashSet<>(datasets));
     this.inputTypes = immutableCopyOf(inputTypes);
     this.outputTypes = immutableCopyOf(outputTypes);
     this.flowletSpec = new DefaultFlowletSpecification(flowlet.getClass().getName(),
@@ -128,7 +126,7 @@ public final class FlowletDefinition {
     }
 
     Schema streamSchema = null;
-    Set<Schema> changedSchemas = Sets.newLinkedHashSet();
+    Set<Schema> changedSchemas = new LinkedHashSet<>();
     for (Schema schema : schemas) {
       if (StreamEvent.class.getName().equals(schema.getRecordName())) {
         streamSchema = schema;
@@ -146,7 +144,7 @@ public final class FlowletDefinition {
 
     // Adding schema to the set under new name (creating set if not exists)
     Set<Schema> newSchemas =
-      inputs.containsKey(newStreamInput) ? inputs.get(newStreamInput) : Sets.<Schema>newLinkedHashSet();
+      inputs.containsKey(newStreamInput) ? inputs.get(newStreamInput) : new LinkedHashSet<Schema>();
     newSchemas.add(streamSchema);
     inputs.put(newStreamInput, newSchemas);
   }
@@ -189,7 +187,9 @@ public final class FlowletDefinition {
    * @return Mapping of name to the method types for processing inputs.
    */
   public Map<String, Set<Schema>> getInputs() {
-    Preconditions.checkState(inputs != null, "Input schemas not yet generated.");
+    if (inputs == null) {
+      throw new IllegalStateException("Input schemas not yet generated.");
+    }
     return inputs;
   }
 
@@ -197,7 +197,9 @@ public final class FlowletDefinition {
    * @return Mapping from name of {@link co.cask.cdap.api.flow.flowlet.OutputEmitter} to actual emitters.
    */
   public Map<String, Set<Schema>> getOutputs() {
-    Preconditions.checkState(outputs != null, "Output schemas not yet generated.");
+    if (outputs == null) {
+      throw new IllegalStateException("Output schemas not yet generated.");
+    }
     return outputs;
   }
 
@@ -246,11 +248,11 @@ public final class FlowletDefinition {
                                                   throws UnsupportedTypeException {
     Map<String, Set<Schema>> result = new HashMap<>();
     for (Map.Entry<String, Set<Type>> entry : types.entrySet()) {
-      ImmutableSet.Builder<Schema> schemas = ImmutableSet.builder();
+      Set<Schema> schemas = new LinkedHashSet<>();
       for (Type type : entry.getValue()) {
         schemas.add(generator.generate(type));
       }
-      result.put(entry.getKey(), schemas.build());
+      result.put(entry.getKey(), Collections.unmodifiableSet(schemas));
     }
     return result;
   }
@@ -258,7 +260,7 @@ public final class FlowletDefinition {
   private <K, V> Map<K, Set<V>> immutableCopyOf(Map<K, Set<V>> map) {
     Map<K, Set<V>> result = new HashMap<>();
     for (Map.Entry<K, Set<V>> entry : map.entrySet()) {
-      result.put(entry.getKey(), ImmutableSet.copyOf(entry.getValue()));
+      result.put(entry.getKey(), Collections.unmodifiableSet(new HashSet<>(entry.getValue())));
     }
     return result;
   }

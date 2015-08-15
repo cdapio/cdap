@@ -19,9 +19,10 @@ package co.cask.cdap.internal.flow;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletConnection;
 import co.cask.cdap.api.flow.FlowletDefinition;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -50,8 +51,8 @@ public final class DefaultFlowSpecification implements FlowSpecification {
     this.className = className;
     this.name = name;
     this.description = description;
-    this.flowlets = ImmutableMap.copyOf(flowlets);
-    this.connections = ImmutableList.copyOf(connections);
+    this.flowlets = Collections.unmodifiableMap(new HashMap<>(flowlets));
+    this.connections = Collections.unmodifiableList(new ArrayList<>(connections));
   }
 
   @Override
