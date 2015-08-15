@@ -217,7 +217,7 @@ public class PluginInstantiator implements Closeable {
       }
 
       // Create the config instance
-      Field field = Fields.findField(pluginType, configFieldName);
+      Field field = Fields.findField(pluginType.getType(), configFieldName);
       TypeToken<?> configFieldType = pluginType.resolveType(field.getGenericType());
       Object config = instantiatorFactory.get(configFieldType).create();
       Reflections.visit(config, configFieldType.getType(),

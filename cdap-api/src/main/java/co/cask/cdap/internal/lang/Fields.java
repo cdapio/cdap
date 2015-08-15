@@ -21,6 +21,7 @@ import com.google.common.base.Predicates;
 import com.google.common.reflect.TypeToken;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Type;
 
 /**
  *
@@ -34,7 +35,7 @@ public final class Fields {
    * @return A {@link Field} if found.
    * @throws NoSuchFieldException If the field is not found.
    */
-  public static Field findField(TypeToken<?> classType, String fieldName) throws NoSuchFieldException {
+  public static Field findField(Type classType, String fieldName) throws NoSuchFieldException {
     return findField(classType, fieldName, Predicates.<Field>alwaysTrue());
   }
 
@@ -46,9 +47,9 @@ public final class Fields {
    * @return A {@link Field} if found.
    * @throws NoSuchFieldException If the field is not found.
    */
-  public static Field findField(TypeToken<?> classType, String fieldName,
+  public static Field findField(Type classType, String fieldName,
                                 Predicate<Field> predicate) throws NoSuchFieldException {
-    for (Class<?> clz : classType.getTypes().classes().rawTypes()) {
+    for (Class<?> clz : TypeToken.of(classType).getTypes().classes().rawTypes()) {
       try {
         Field field = clz.getDeclaredField(fieldName);
         if (predicate.apply(field)) {
