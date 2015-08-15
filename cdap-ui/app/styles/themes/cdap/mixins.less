@@ -23,30 +23,6 @@
   &:hover, &:focus { text-decoration: none; }
 }
 
-.dropdown() {
-  border: 0;
-  border-radius: 0 8px 8px 8px;
-  background-color: @cdap-header;
-  margin: 0;
-  padding: 0;
-  > li {
-    margin: 0;
-    &:not(.divider) {
-      .border-radius(0 8px 8px 8px);
-      padding: 10px 0;
-      &:hover, &:focus { background-color: @cdap-lightgray; }
-    }
-    > a {
-      color: white;
-      padding: 3px 10px 3px 15px;
-      &:hover, &:focus {
-        background-color: transparent;
-        outline: none;
-      }
-    }
-  }
-}
-
 .dropdown-defaults() {
   + .dropdown-menu {
     background-color: transparent;
