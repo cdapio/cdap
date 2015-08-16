@@ -20,12 +20,6 @@
 include_recipe 'cdap::master'
 
 # Run the CDAP Upgrade Tool
-execute 'cdap-upgrade-tool' do
-  command "#{node['cdap']['master']['init_cmd']} run co.cask.cdap.data.tools.UpgradeTool upgrade force"
-  action :nothing
-  user node['cdap']['master']['user']
-end
-
 ruby_block 'run-cdap-upgrade-tool' do
   block do
     resources('execute[cdap-upgrade-tool]').run_action(:run)
