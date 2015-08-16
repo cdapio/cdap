@@ -2,7 +2,7 @@
 # Cookbook Name:: cdap
 # Recipe:: master
 #
-# Copyright © 2013-2014 Cask Data, Inc.
+# Copyright © 2013-2015 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -114,4 +114,11 @@ end
 service 'cdap-master' do
   status_command 'service cdap-master status'
   action node['cdap']['master']['init_actions']
+end
+
+# CDAP Upgrade Tool
+execute 'cdap-upgrade-tool' do
+  command "#{node['cdap']['master']['init_cmd']} run co.cask.cdap.data.tools.UpgradeTool upgrade force"
+  action :nothing
+  user node['cdap']['master']['user']
 end
