@@ -25,3 +25,9 @@ execute 'cdap-upgrade-tool' do
   action :nothing
   user node['cdap']['master']['user']
 end
+
+ruby_block 'run-cdap-upgrade-tool' do
+  block do
+    resources('execute[cdap-upgrade-tool]').run_action(:run)
+  end
+end
