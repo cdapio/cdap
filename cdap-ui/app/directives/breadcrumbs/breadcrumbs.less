@@ -105,7 +105,7 @@ my-breadcrumbs {
       background-color: transparent;
     }
     &:after {
-      content: url('@{img-path}/chevron-front.png');
+      content: url('@{img-path}/chevron_front.png');
       overflow: hidden;
       position: absolute;
       height: 40px;
@@ -148,7 +148,7 @@ my-breadcrumbs {
           content: none;
         }
         &:after {
-          content: url('@{img-path}/chevron-front.png');
+          content: url('@{img-path}/chevron_front.png');
           height: 40px;
           top: -1px;
           right: 0;
@@ -162,19 +162,19 @@ my-breadcrumbs {
         }
       }
       &:last-child, &:only-child {
+        background-image: url('@{img-path}/gray_chevron_body.png');
         background-color: rgb(208, 208, 208);
-        .box-shadow(inset 0 8px 8px -8px rgba(0,0,0,0.3));
         &:before, &:after {
           background-color: white;
-          top: -1px;
+          border-bottom: 1px solid #ddd;
           height: 40px;
+          top: 0;
         }
         &:before {
           content: url('@{img-path}/gray_chevron_back.png');
           display: inline-block;
           left: 0;
           padding: 0;
-          height: 40px;
           position: relative;
         }
         &:after {
