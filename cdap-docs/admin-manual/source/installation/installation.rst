@@ -803,10 +803,10 @@ please follow the upgrade instructions for the earlier versions and upgrade firs
         y
         Starting upgrade ...
 
-   You can run the tool in a non-interactive fashion by using the ``--force`` flag, in which case
+   You can run the tool in a non-interactive fashion by using the ``force`` flag, in which case
    it will run unattended and not prompt for continuing::
    
-     $ /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.UpgradeTool upgrade --force
+     $ /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.UpgradeTool upgrade force
 
 #. Restart the CDAP processes::
 
