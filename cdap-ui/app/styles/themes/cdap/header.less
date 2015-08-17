@@ -44,11 +44,32 @@ body {
             }
           }
         }
-
-        ul.navbar-nav {
-          @media (max-width: @screen-md-max) {
+        // Namespace dropdown
+        > ul.navbar-nav:first-child {
+          @media (min-width: @screen-sm-min) {
+            float: left;
+          }
+          @media (max-width: @screen-sm-max) {
+            max-width: 140px;
+            li.dropdown {
+              .navbar-collapse-menus();
+              &.open {
+                ul.dropdown-menu {
+                  max-height: 200px;
+                  overflow: auto;
+                }
+              }
+              &.one {
+                a.dropdown-toggle {
+                  cursor: default;
+                  .caret { display: none; }
+                }
+              }
+            }
+          }
+          // Hide Namespace navbar dropdown when breadcrumbs are displayed
+          @media (min-width: @screen-md-min) {
             display: none;
-            visibility: hidden;
           }
         }
 
@@ -73,25 +94,7 @@ body {
               padding: 11px 5px 0;
             }
             @media (max-width: @screen-md-max) {
-              min-width: 140px;
-              a.dropdown-toggle {
-                padding-bottom: 0;
-                span.caret {
-                  .transition (all 0.2s ease-in);
-                }
-              }
-              li.disabled { display: none; }
-              &.open {
-                a.dropdown-toggle {
-                  background-color: transparent;
-                  text-align: left;
-                  .transition(all 0.1s ease);
-                  &:hover, &:focus { background-color: transparent; }
-                  .caret {
-                    .rotate(-90deg);
-                  }
-                }
-              }
+              .navbar-collapse-menus();
             }
             @media (min-width: @screen-lg-min) {
               padding: 0;
@@ -184,6 +187,13 @@ body {
           }
         }
 
+        ul.navbar-nav {
+          @media (max-width: @screen-md-max) {
+            display: none;
+            visibility: hidden;
+          }
+        }
+
         // Main nav
         nav {
           @media (min-width: @screen-sm-min) {
@@ -253,6 +263,22 @@ body {
         }
 
         div.navbar-collapse {
+          // Namespace dropdown
+          > ul.navbar-nav:first-child {
+            @media (max-width: @screen-sm-max) {
+              li.dropdown {
+                a.dropdown-toggle {
+                  background-color: transparent;
+                  color: #9d9d9d;
+                }
+                &.one {
+                  &.open {
+                    a.droptown-toggle span:first-child { color: @cdap-darkness; }
+                  }
+                }
+              }
+            }
+          }
           // Main nav
           nav {
             @media (min-width: @screen-sm-min) {

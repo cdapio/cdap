@@ -12,9 +12,15 @@ function myNavbarDirective ($dropdown, myAuth, caskTheme, MY_CONFIG) {
     link: function (scope, element) {
 
       var toggles = element[0].querySelectorAll('a.dropdown-toggle');
+      // Namespace dropdown
+      $dropdown(angular.element(toggles[0]), {
+        template: 'navbar/namespace.html',
+        animation: 'am-flip-x',
+        scope: scope
+      });
 
       // Settings dropdown
-      $dropdown(angular.element(toggles[0]), {
+      $dropdown(angular.element(toggles[1]), {
         template: 'navbar/dropdown.html',
         animation: 'am-flip-x',
         placement: 'bottom-right',
