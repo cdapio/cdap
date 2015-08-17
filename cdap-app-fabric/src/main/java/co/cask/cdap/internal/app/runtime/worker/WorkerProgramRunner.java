@@ -102,7 +102,7 @@ public class WorkerProgramRunner implements ProgramRunner {
     WorkerSpecification newWorkerSpec = new WorkerSpecification(workerSpec.getClassName(), workerSpec.getName(),
                                                                 workerSpec.getDescription(), workerSpec.getProperties(),
                                                                 workerSpec.getDatasets(), newResources,
-                                                                Integer.valueOf(instances));
+                                                                Integer.valueOf(instances), workerSpec.getPluginMap());
 
     AdapterDefinition adapterSpec = getAdapterSpecification(options.getArguments());
 
@@ -111,7 +111,8 @@ public class WorkerProgramRunner implements ProgramRunner {
       options.getUserArguments(), cConf,
       metricsCollectionService, datasetFramework,
       txClient, discoveryServiceClient, streamWriterFactory,
-      adapterSpec, createPluginInstantiator(adapterSpec, program.getClassLoader()));
+      adapterSpec, createPluginInstantiator(adapterSpec, program.getClassLoader()),
+      createArtifactPluginInstantiator(program.getClassLoader()));
     WorkerDriver worker = new WorkerDriver(program, newWorkerSpec, context);
 
     ProgramControllerServiceAdapter controller = new WorkerControllerServiceAdapter(worker, workerName, runId);
@@ -136,6 +137,11 @@ public class WorkerProgramRunner implements ProgramRunner {
       return null;
     }
     return new PluginInstantiator(cConf, adapterSpec.getTemplate(), programClassLoader);
+  }
+
+  @Nullable
+  private PluginInstantiator createArtifactPluginInstantiator(ClassLoader classLoader) {
+    return new PluginInstantiator(cConf, classLoader);
   }
 
   private static final class WorkerControllerServiceAdapter extends ProgramControllerServiceAdapter {

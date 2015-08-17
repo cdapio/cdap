@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.service.http;
 
+import co.cask.cdap.api.artifact.Plugin;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
@@ -98,6 +99,11 @@ public class BasicHttpServiceContext extends AbstractContext implements Transact
   @Override
   public Metrics getMetrics() {
     return userMetrics;
+  }
+
+  @Override
+  public Map<String, Plugin> getPlugins() {
+    return null;
   }
 
   @Override

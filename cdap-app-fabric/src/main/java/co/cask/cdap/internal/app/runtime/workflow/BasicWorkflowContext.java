@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.internal.app.runtime.workflow;
 
+import co.cask.cdap.api.artifact.Plugin;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
@@ -56,7 +57,7 @@ final class BasicWorkflowContext extends AbstractContext implements WorkflowCont
                        DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient) {
     super(program, runId, new BasicArguments(runtimeArgs), (spec == null) ? new HashSet<String>() : spec.getDatasets(),
           getMetricCollector(program, runId.getId(), metricsCollectionService),
-          datasetFramework, discoveryServiceClient, null, null);
+          datasetFramework, discoveryServiceClient, null, null, null);
     this.workflowSpec = workflowSpec;
     this.specification = spec;
     this.logicalStartTime = logicalStartTime;
@@ -115,6 +116,11 @@ final class BasicWorkflowContext extends AbstractContext implements WorkflowCont
   @Override
   public Map<String, String> getRuntimeArguments() {
     return runtimeArgs;
+  }
+
+  @Override
+  public Map<String, Plugin> getPlugins() {
+    return null;
   }
 
   @Override

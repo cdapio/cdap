@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.runtime.batch;
 
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.artifact.Plugin;
 import co.cask.cdap.api.data.batch.BatchReadable;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
@@ -90,7 +91,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
                                @Nullable PluginInstantiator pluginInstantiator) {
     super(program, runId, runtimeArguments, datasets,
           getMetricCollector(program, runId.getId(), taskId, metricsCollectionService, type, adapterSpec),
-          dsFramework, discoveryServiceClient, adapterSpec, pluginInstantiator);
+          dsFramework, discoveryServiceClient, adapterSpec, pluginInstantiator, null);
     this.logicalStartTime = logicalStartTime;
     this.programNameInWorkflow = programNameInWorkflow;
     this.workflowToken = workflowToken;
@@ -121,6 +122,11 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   public String toString() {
     return String.format("job=%s,=%s",
                          spec.getName(), super.toString());
+  }
+
+  @Override
+  public Map<String, Plugin> getPlugins() {
+    return null;
   }
 
   @Override

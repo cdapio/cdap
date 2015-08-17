@@ -170,7 +170,8 @@ public class DefaultAppConfigurer extends DefaultDatasetConfigurer implements Ap
   @Override
   public void addWorker(Worker worker) {
     Preconditions.checkArgument(worker != null, "Worker cannot be null.");
-    DefaultWorkerConfigurer configurer = new DefaultWorkerConfigurer(worker);
+    DefaultWorkerConfigurer configurer = new DefaultWorkerConfigurer(worker, artifactId, artifactRepository,
+                                                                     pluginInstantiator);
     worker.configure(configurer);
 
     addStreams(configurer.getStreams());
