@@ -75,23 +75,18 @@
     <div class="output-schema">
       <h4>Output Schema</h4>
 
-      <fieldset ng-disabled="TemplatesController.isDisabled" ng-if="TemplatesController.pluginConfig.outputSchema || !TemplatesController.isDisabled || TemplatesController.pluginConfig.properties.format === 'clf' || TemplatesController.pluginConfig.properties.format === 'syslog'">
+      <fieldset ng-disabled="TemplatesController.isDisabled">
         <my-schema-editor
-          ng-model="TemplatesController.pluginConfig.outputSchema"
+          ng-model="TemplatesController.pluginConfig['outputSchema']"
           data-disabled="TemplatesController.pluginConfig.implicitSchema"
           ng-if="TemplatesController.plugin !== 'Stream' && TemplatesController.plugin !== 'Kafka'"></my-schema-editor>
         <my-stream-properties
-          ng-model="TemplatesController.pluginConfig.outputSchema"
+          ng-model="TemplatesController.pluginConfig['outputSchema']"
           plugins="TemplatesController.pluginConfig.properties"
           ng-if="TemplatesController.plugin === 'Stream' || TemplatesController.plugin === 'Kafka'"
         ></my-stream-properties>
       </fieldset>
 
-      <div ng-if="!TemplatesController.pluginConfig.outputSchema && TemplatesController.isDisabled && TemplatesController.pluginConfig.properties.format !== 'clf' && TemplatesController.pluginConfig.properties.format !== 'syslog'">
-        <div class="well well-lg">
-          <h4>There is no output schema</h4>
-        </div>
-      </div>
     </div>
   </div>
 

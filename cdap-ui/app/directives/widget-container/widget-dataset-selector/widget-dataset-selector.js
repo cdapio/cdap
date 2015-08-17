@@ -50,7 +50,6 @@ angular.module(PKG.name + '.commons')
               } else if ($scope.datasetType === 'dataset') {
                 schema = res.spec.properties.schema;
               }
-
               EventPipe.emit('dataset.selected', schema);
             });
         });
