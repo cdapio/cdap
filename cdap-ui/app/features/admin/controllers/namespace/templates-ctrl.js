@@ -114,7 +114,7 @@ angular.module(PKG.name + '.feature.admin')
 
       vm.loading = true;
 
-      if (vm.pluginConfig._backendProperties.schema) {
+      if (vm.pluginConfig._backendProperties && vm.pluginConfig._backendProperties.schema) {
         vm.pluginConfig.properties.schema = vm.pluginConfig.outputSchema;
       }
 
@@ -141,17 +141,27 @@ angular.module(PKG.name + '.feature.admin')
             res[namespace] = {};
           }
 
-          res[namespace][properties.templateName] = properties;
-          return mySettings.set('pluginTemplates', res);
-        })
-        .then(function () {
-          $alert({
-            type: 'success',
-            content: 'Success saving template'
-          });
-          vm.loading = false;
+          if (res[namespace][properties.templateName] && !vm.isEdit) {
+            $alert({
+              type: 'danger',
+              content: 'Template name already exist! Please choose another name'
+            });
+            vm.loading = false;
 
-          $state.go('admin.namespace.detail.templateslist');
+            return;
+          }
+
+          res[namespace][properties.templateName] = properties;
+          mySettings.set('pluginTemplates', res)
+            .then(function () {
+              $alert({
+                type: 'success',
+                content: 'Success saving template'
+              });
+              vm.loading = false;
+
+              $state.go('admin.namespace.detail.templateslist');
+            });
         });
     };
 
