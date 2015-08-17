@@ -21,10 +21,10 @@ from Kafka and write them to a stream.
 
 **kafka.topic:** Topic of the messages.
 
-**kafka.zookeeper:** The connect string location of Zookeeper.
+**kafka.zookeeper:** The connect string location of ZooKeeper.
 Either this or the list of brokers is required.
 
-**kafka.brokers:** Comma-separated list of Kafka brokers. Either this or the Zookeeper connect info is required.
+**kafka.brokers:** Comma-separated list of Kafka brokers. Either this or the ZooKeeper connect info is required.
 
 **kafka.default.offset:** The default offset for the partition. Default value is kafka.api.OffsetRequest.EarliestTime.
 

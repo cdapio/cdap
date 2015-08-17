@@ -33,7 +33,7 @@ These are the CDAP components:
 - **CDAP Authentication Server:** Performs client authentication for CDAP when security is enabled.
 
 Before installing the CDAP components, you must first install a Hadoop cluster
-with *HDFS*, *YARN*, *HBase*, and *Zookeeper*. In order to use the ad-hoc querying capabilities
+with *HDFS*, *YARN*, *HBase*, and *ZooKeeper*. In order to use the ad-hoc querying capabilities
 of CDAP, you will also need *Hive*. All CDAP components can be installed on the
 same boxes as your Hadoop cluster, or on separate boxes that can connect to the Hadoop services.
 
@@ -167,7 +167,7 @@ For a distributed enterprise, you must install these Hadoop components:
 +               +-------------------+-----------------------------------------------------+
 |               | MapR              | 4.1 (with Apache HBase)                             |
 +---------------+-------------------+-----------------------------------------------------+
-| **Zookeeper** | Apache            | Version 3.4.3 through 3.4.5                         |
+| **ZooKeeper** | Apache            | Version 3.4.3 through 3.4.5                         |
 +               +-------------------+-----------------------------------------------------+
 |               | CDH or HDP        | (CDH) 5.0.0 through 5.4.4 or (HDP) 2.0, 2.1, or 2.2 |
 +               +-------------------+-----------------------------------------------------+
@@ -187,8 +187,8 @@ but have not necessarily have been either tested or confirmed compatible.
 **Note:** Certain CDAP components need to reference your *Hadoop*, *HBase*, *YARN* (and
 possibly *Hive*) cluster configurations by adding your configuration to their class paths.
 
-**Note:** Zookeeper's ``maxClientCnxns`` must be raised from its default.  We suggest setting it to zero
-(unlimited connections). As each YARN container launched by CDAP makes a connection to Zookeeper, 
+**Note:** ZooKeeper's ``maxClientCnxns`` must be raised from its default.  We suggest setting it to zero
+(unlimited connections). As each YARN container launched by CDAP makes a connection to ZooKeeper, 
 the number of connections required is a function of usage.
 
 .. _deployment-architectures:
