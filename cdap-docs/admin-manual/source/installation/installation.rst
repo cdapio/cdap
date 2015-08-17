@@ -604,8 +604,8 @@ There are two temp directories utilized by CDAP (both specified in :ref:`appendi
 - ``app.temp.dir`` (default: ``/tmp``)
 - ``kafka.log.dir`` (default: ``/tmp/kafka-logs``)
 
-The CDAP user should be able to write to both of these directories, as they are used for
-deploying applications and operating CDAP.
+The CDAP user **must** be able to write to both of these directories, as they are used for
+deploying applications and for operating CDAP.
 
 Configuring Security
 ....................

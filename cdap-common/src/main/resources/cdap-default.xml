@@ -195,18 +195,6 @@
     <!-- Stream handles -->
 
     <property>
-        <name>stream.flume.port</name>
-        <value>10004</value>
-        <description></description>
-    </property>
-
-    <property>
-        <name>stream.flume.threads</name>
-        <value>100</value>
-        <description></description>
-    </property>
-
-    <property>
         <name>stream.base.dir</name>
         <value>/streams</value>
         <description>The directory root for all stream files, relative to the HDFS namespace</description>
@@ -831,25 +819,25 @@
     <property>
         <name>metrics.num.instances</name>
         <value>1</value>
-        <description></description>
+        <description>Number of instances for the metrics service</description>
     </property>
 
     <property>
         <name>metrics.max.instances</name>
         <value>${master.service.max.instances}</value>
-        <description></description>
+        <description>Maximum number of instances for the metrics service</description>
     </property>
 
     <property>
         <name>metrics.num.cores</name>
         <value>${master.service.num.cores}</value>
-        <description></description>
+        <description>Number of virtual cores for the metrics service</description>
     </property>
 
     <property>
         <name>metrics.memory.mb</name>
         <value>${master.service.memory.mb}</value>
-        <description></description>
+        <description>Memory assigned to the metrics service in megabytes</description>
     </property>
 
     <!-- Metrics Processor Configuration -->
@@ -863,7 +851,7 @@
     <property>
         <name>metrics.processor.max.instances</name>
         <value>${master.service.max.instances}</value>
-        <description></description>
+        <description>Maximum number of instances for Metrics Processor Service Apache Twill Runnable</description>
     </property>
 
     <property>
@@ -1060,7 +1048,8 @@
     <property>
         <name>explore.start.on.demand</name>
         <value>false</value>
-        <description></description>
+        <description>If false, the explore service starts up when CDAP is started;
+        if true, the explore service will start upon the first query it receives</description>
     </property>
 
     <property>
