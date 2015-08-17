@@ -217,7 +217,7 @@ public class PluginInstantiator implements Closeable {
       }
 
       // Create the config instance
-      Field field = Fields.findField(pluginType, configFieldName);
+      Field field = Fields.findField(pluginType.getType(), configFieldName);
       TypeToken<?> configFieldType = pluginType.resolveType(field.getGenericType());
       Object config = instantiatorFactory.get(configFieldType).create();
       Reflections.visit(config, configFieldType.getType(),
@@ -324,9 +324,10 @@ public class PluginInstantiator implements Closeable {
     }
 
     @Override
-    public void visit(Object instance, TypeToken<?> inspectType,
-                      TypeToken<?> declareType, Field field) throws Exception {
-      if (Config.class.equals(declareType.getRawType())) {
+    public void visit(Object instance, Type inspectType, Type declareType, Field field) throws Exception {
+      TypeToken<?> declareTypeToken = TypeToken.of(declareType);
+
+      if (Config.class.equals(declareTypeToken.getRawType())) {
         if (field.getName().equals("properties")) {
           field.set(instance, properties);
         }
@@ -342,7 +343,7 @@ public class PluginInstantiator implements Closeable {
       }
       String value = properties.getProperties().get(name);
       if (pluginPropertyField.isRequired() || value != null) {
-        field.set(instance, convertValue(declareType.resolveType(field.getGenericType()), value));
+        field.set(instance, convertValue(declareTypeToken.resolveType(field.getGenericType()), value));
       }
     }
 

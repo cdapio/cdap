@@ -22,9 +22,6 @@ import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Table;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.AbstractIterator;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -125,7 +122,6 @@ abstract class TimeseriesDataset extends AbstractDataset {
    *                    this value.
    * @return a composite value used as the row key
    */
-  @VisibleForTesting
   static byte[] createRow(byte[] key, long timestamp, long rowPartitionIntervalSize) {
     return Bytes.add(key, Bytes.toBytes(getRowKeyTimestampPart(timestamp, rowPartitionIntervalSize)));
   }
@@ -148,7 +144,6 @@ abstract class TimeseriesDataset extends AbstractDataset {
    * {@code [<tag_length><tag_value>]*}, where tag length is the 4-byte encoded int length of the tag and tags
    *             are sorted in ascending order
    */
-  @VisibleForTesting
   static byte[] createColumnName(long timestamp, byte[][] tags) {
     // hint: possible perf improvement: we can calculate the columnLength ahead of time and avoid creating many array
     //       objects
@@ -172,14 +167,12 @@ abstract class TimeseriesDataset extends AbstractDataset {
     return Bytes.toBytes(timestamp);
   }
 
-  @VisibleForTesting
   static long getTimeIntervalsCount(final long startTime, final long endTime,
                                     final long rowPartitionIntervalSize) {
     return (getRowKeyTimestampPart(endTime, rowPartitionIntervalSize) -
       getRowKeyTimestampPart(startTime, rowPartitionIntervalSize) + 1);
   }
 
-  @VisibleForTesting
   static byte[] getRowOfKthInterval(final byte[] key,
                                     final long timeRangeStart,
                                     // zero-based
@@ -188,13 +181,11 @@ abstract class TimeseriesDataset extends AbstractDataset {
     return createRow(key, timeRangeStart + intervalIndex * rowPartitionIntervalSize, rowPartitionIntervalSize);
   }
 
-  @VisibleForTesting
   static boolean hasTags(final byte[] columnName) {
     // if columnName only has timestamp, then there's no tags encoded into column name
     return (columnName.length > Bytes.SIZEOF_LONG);
   }
 
-  @VisibleForTesting
   static long parseTimeStamp(final byte[] columnName) {
     return Bytes.toLong(columnName, 0);
   }
@@ -214,8 +205,9 @@ abstract class TimeseriesDataset extends AbstractDataset {
    */
   final Iterator<Entry> readInternal(byte[] key, long startTime, long endTime, byte[]... tags) {
     // validating params
-    Preconditions.checkArgument(startTime <= endTime,
-                                "Provided time range condition is incorrect: startTime > endTime");
+    if (startTime > endTime) {
+      throw new IllegalArgumentException("Provided time range condition is incorrect: startTime > endTime");
+    }
 
     return new EntryScanner(key, startTime, endTime, tags);
   }
@@ -295,7 +287,7 @@ abstract class TimeseriesDataset extends AbstractDataset {
   /**
    * An iterator over entries.
    */
-  public final class EntryScanner extends AbstractIterator<Entry> {
+  public final class EntryScanner extends AbstractCloseableIterator<Entry> {
     private final byte[] key;
     private final long startTime;
     private final byte[][] tags;
@@ -321,7 +313,6 @@ abstract class TimeseriesDataset extends AbstractDataset {
      * @param tags defines a set of tags that MUST present in every returned entry.
      *        NOTE: using tags returns entries containing all tags that were providing during writing
      */
-    @VisibleForTesting
     EntryScanner(byte[] key, long startTime, long endTime, byte[][] tags) {
       this.key = key;
       this.startTime = startTime;
@@ -370,6 +361,11 @@ abstract class TimeseriesDataset extends AbstractDataset {
       }
 
       return null;
+    }
+
+    @Override
+    public void close() {
+      // no op for now since the internal scanner is created from Row, which is a local byte[]
     }
   }
 

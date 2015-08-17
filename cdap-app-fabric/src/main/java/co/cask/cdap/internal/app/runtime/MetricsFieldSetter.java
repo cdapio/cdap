@@ -17,9 +17,9 @@ package co.cask.cdap.internal.app.runtime;
 
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.internal.lang.FieldVisitor;
-import com.google.common.reflect.TypeToken;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Type;
 
 /**
  * A {@link FieldVisitor} that set Metrics fields.
@@ -33,7 +33,7 @@ public final class MetricsFieldSetter extends FieldVisitor {
   }
 
   @Override
-  public void visit(Object instance, TypeToken<?> inspectType, TypeToken<?> declareType, Field field) throws Exception {
+  public void visit(Object instance, Type inspectType, Type declareType, Field field) throws Exception {
     if (Metrics.class.equals(field.getType())) {
       field.set(instance, metrics);
     }

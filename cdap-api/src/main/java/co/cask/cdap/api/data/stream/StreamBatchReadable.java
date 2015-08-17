@@ -26,8 +26,6 @@ import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.stream.GenericStreamEventData;
 import co.cask.cdap.api.stream.StreamEventDecoder;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -166,7 +164,9 @@ public class StreamBatchReadable implements BatchReadable<Long, String> {
    * </pre>
    */
   public StreamBatchReadable(URI uri) {
-    Preconditions.checkArgument("stream".equals(uri.getScheme()));
+    if (!"stream".equals(uri.getScheme())) {
+      throw new IllegalArgumentException("Invalid stream URI " + uri);
+    }
     this.uri = uri;
     streamName = uri.getAuthority();
 
@@ -209,8 +209,7 @@ public class StreamBatchReadable implements BatchReadable<Long, String> {
    * @param endTime End timestamp in milliseconds.
    */
   public StreamBatchReadable(String streamName, long startTime, long endTime) {
-    this(createStreamURI(streamName, ImmutableMap.<String, Object>of(START_TIME_KEY, startTime,
-                                                                     END_TIME_KEY, endTime)));
+    this(createStreamURI(streamName, createArguments(START_TIME_KEY, startTime, END_TIME_KEY, endTime)));
   }
 
   /**
@@ -223,9 +222,9 @@ public class StreamBatchReadable implements BatchReadable<Long, String> {
    */
   public StreamBatchReadable(String streamName, long startTime,
                              long endTime, Class<? extends StreamEventDecoder> decoderType) {
-    this(createStreamURI(streamName, ImmutableMap.<String, Object>of(START_TIME_KEY, startTime,
-                                                                     END_TIME_KEY, endTime,
-                                                                     DECODER_KEY, decoderType.getName())));
+    this(createStreamURI(streamName, createArguments(START_TIME_KEY, startTime,
+                                                     END_TIME_KEY, endTime,
+                                                     DECODER_KEY, decoderType.getName())));
   }
 
   /**
@@ -239,10 +238,9 @@ public class StreamBatchReadable implements BatchReadable<Long, String> {
   @Beta
   public StreamBatchReadable(String streamName, long startTime,
                              long endTime, FormatSpecification bodyFormatSpec) {
-    this(createStreamURI(streamName, ImmutableMap.<String, Object>of(
-      START_TIME_KEY, startTime,
-      END_TIME_KEY, endTime,
-      BODY_FORMAT_KEY, encodeFormatSpec(bodyFormatSpec))));
+    this(createStreamURI(streamName, createArguments(START_TIME_KEY, startTime,
+                                                     END_TIME_KEY, endTime,
+                                                     BODY_FORMAT_KEY, encodeFormatSpec(bodyFormatSpec))));
   }
 
   /**
@@ -320,5 +318,16 @@ public class StreamBatchReadable implements BatchReadable<Long, String> {
       // this should never happen
       throw new RuntimeException(e);
     }
+  }
+
+  private static Map<String, Object> createArguments(Object...keyValues) {
+    if (keyValues.length % 2 != 0) {
+      throw new IllegalArgumentException("Expected keyValues of even size");
+    }
+    Map<String, Object> args = new HashMap<>();
+    for (int i = 0; i < keyValues.length; i += 2) {
+      args.put(keyValues[i].toString(), keyValues[i + 1]);
+    }
+    return args;
   }
 }

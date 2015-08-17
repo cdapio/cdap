@@ -20,12 +20,10 @@ import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.internal.specification.DataSetFieldExtractor;
 import co.cask.cdap.internal.specification.PropertyFieldExtractor;
-import com.google.common.base.Objects;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -42,18 +40,14 @@ public class DefaultWorkflowActionSpecification implements WorkflowActionSpecifi
 
   public DefaultWorkflowActionSpecification(String name, String description,
                                             Map<String, String> properties, Set<String> datasets) {
-    this.className = null;
-    this.name = name;
-    this.description = description;
-    this.properties = ImmutableMap.copyOf(properties);
-    this.datasets = ImmutableSet.copyOf(datasets);
+    this(null, name, description, properties, datasets);
   }
 
   public DefaultWorkflowActionSpecification(WorkflowAction action) {
     WorkflowActionSpecification spec = action.configure();
 
-    Map<String, String> properties = Maps.newHashMap(spec.getProperties());
-    Set<String> datasets = Sets.newHashSet();
+    Map<String, String> properties = new HashMap<>(spec.getProperties());
+    Set<String> datasets = new HashSet<>();
     Reflections.visit(action, action.getClass(),
                       new DataSetFieldExtractor(datasets),
                       new PropertyFieldExtractor(properties));
@@ -64,8 +58,8 @@ public class DefaultWorkflowActionSpecification implements WorkflowActionSpecifi
     this.className = action.getClass().getName();
     this.name = spec.getName();
     this.description = spec.getDescription();
-    this.properties = ImmutableMap.copyOf(properties);
-    this.datasets = ImmutableSet.copyOf(datasets);
+    this.properties = Collections.unmodifiableMap(new HashMap<>(properties));
+    this.datasets = Collections.unmodifiableSet(new HashSet<>(datasets));
   }
 
   public DefaultWorkflowActionSpecification(String className, String name, String description,
@@ -73,8 +67,8 @@ public class DefaultWorkflowActionSpecification implements WorkflowActionSpecifi
     this.className = className;
     this.name = name;
     this.description = description;
-    this.properties = ImmutableMap.copyOf(properties);
-    this.datasets = ImmutableSet.copyOf(datasets);
+    this.properties = Collections.unmodifiableMap(new HashMap<>(properties));
+    this.datasets = Collections.unmodifiableSet(new HashSet<>(datasets));
   }
 
   @Override
@@ -104,12 +98,13 @@ public class DefaultWorkflowActionSpecification implements WorkflowActionSpecifi
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(WorkflowActionSpecification.class)
-      .add("name", name)
-      .add("class", className)
-      .add("options", properties)
-      .add("datasets", datasets)
-      .toString();
+    return "DefaultWorkflowActionSpecification{" +
+      "className='" + className + '\'' +
+      ", name='" + name + '\'' +
+      ", description='" + description + '\'' +
+      ", properties=" + properties +
+      ", datasets=" + datasets +
+      '}';
   }
 
   @Override

@@ -15,8 +15,6 @@
  */
 package co.cask.cdap.internal.lang;
 
-import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
 import com.google.common.reflect.TypeToken;
 
 import java.lang.reflect.Field;
@@ -24,6 +22,8 @@ import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -57,7 +57,9 @@ public final class Reflections {
   public static void visit(Object instance, Type inspectType, Visitor firstVisitor, Visitor... moreVisitors) {
     try {
       TypeToken<?> inspectTypeToken = TypeToken.of(inspectType);
-      List<Visitor> visitors = ImmutableList.<Visitor>builder().add(firstVisitor).add(moreVisitors).build();
+      List<Visitor> visitors = new ArrayList<>(1 + moreVisitors.length);
+      visitors.add(firstVisitor);
+      Collections.addAll(visitors, moreVisitors);
 
       for (TypeToken<?> type : inspectTypeToken.getTypes().classes()) {
         if (Object.class.equals(type.getRawType())) {
@@ -72,7 +74,7 @@ public final class Reflections {
             field.setAccessible(true);
           }
           for (Visitor visitor : visitors) {
-            visitor.visit(instance, inspectTypeToken, type, field);
+            visitor.visit(instance, inspectTypeToken.getType(), type.getType(), field);
           }
         }
 
@@ -84,12 +86,14 @@ public final class Reflections {
             method.setAccessible(true);
           }
           for (Visitor visitor : visitors) {
-            visitor.visit(instance, inspectTypeToken, type, method);
+            visitor.visit(instance, inspectTypeToken.getType(), type.getType(), method);
           }
         }
       }
+    } catch (RuntimeException e) {
+      throw e;
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 

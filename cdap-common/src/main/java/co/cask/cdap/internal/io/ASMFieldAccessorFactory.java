@@ -78,8 +78,8 @@ public final class ASMFieldAccessorFactory implements FieldAccessorFactory {
 
       // Generate the FieldAccessor class bytecode.
       ClassDefinition classDef = new FieldAccessorGenerator()
-                                      .generate(key.getType(),
-                                                Fields.findField(key.getType(), key.getFieldName()),
+                                      .generate(key.getType().getRawType(),
+                                                Fields.findField(key.getType().getType(), key.getFieldName()),
                                                 defineClass == null);
       return createAccessor(key.getType(), classDef);
     }
