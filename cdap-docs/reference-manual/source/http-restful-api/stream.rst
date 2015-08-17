@@ -360,7 +360,7 @@ publishing a notification.
 
 Stream properties can be retrieved with an HTTP PUT method to the URL::
 
-  GET <base-url>/namespaces/<namespace>/streams/<stream-id>/
+  GET <base-url>/namespaces/<namespace>/streams/<stream-id>
 
 .. list-table::
    :widths: 20 80
