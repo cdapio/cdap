@@ -22,23 +22,30 @@ import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.templates.ApplicationTemplate;
+import co.cask.cdap.api.templates.plugins.PluginClass;
 import co.cask.cdap.api.templates.plugins.PluginPropertyField;
 import co.cask.cdap.app.DefaultAppConfigurer;
 import co.cask.cdap.app.DefaultApplicationContext;
+import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.client.AdapterClient;
 import co.cask.cdap.client.ApplicationClient;
+import co.cask.cdap.client.ArtifactClient;
 import co.cask.cdap.client.NamespaceClient;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.internal.test.AppJarHelper;
+import co.cask.cdap.internal.test.PluginJarHelper;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.artifact.ArtifactRange;
+import co.cask.cdap.proto.artifact.CreateAppRequest;
 import co.cask.cdap.test.remote.RemoteAdapterManager;
 import co.cask.cdap.test.remote.RemoteApplicationManager;
 import co.cask.cdap.test.remote.RemoteStreamManager;
+import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.io.Files;
@@ -56,6 +63,9 @@ import java.io.IOException;
 import java.net.JarURLConnection;
 import java.net.URL;
 import java.sql.Connection;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.jar.Manifest;
 import javax.annotation.Nullable;
 
 /**
@@ -66,6 +76,7 @@ public class IntegrationTestManager implements TestManager {
   private static final Logger LOG = LoggerFactory.getLogger(IntegrationTestManager.class);
   private static final Gson GSON = new Gson();
 
+  private final ArtifactClient artifactClient;
   private final ApplicationClient applicationClient;
   private final ClientConfig clientConfig;
   private final RESTClient restClient;
@@ -84,6 +95,7 @@ public class IntegrationTestManager implements TestManager {
     this.programClient = new ProgramClient(clientConfig, restClient);
     this.namespaceClient = new NamespaceClient(clientConfig, restClient);
     this.adapterClient = new AdapterClient(clientConfig, restClient);
+    this.artifactClient = new ArtifactClient(clientConfig, restClient);
   }
 
   @Override
@@ -142,6 +154,13 @@ public class IntegrationTestManager implements TestManager {
   }
 
   @Override
+  public ApplicationManager deployApplication(Id.Application appId,
+                                              CreateAppRequest createAppRequest) throws Exception {
+    applicationClient.deploy(appId, createAppRequest);
+    return new RemoteApplicationManager(appId, clientConfig, restClient);
+  }
+
+  @Override
   public void deployTemplate(Id.Namespace namespace, Id.ApplicationTemplate templateId,
                              Class<? extends ApplicationTemplate> templateClz,
                              String... exportPackages) throws IOException {
@@ -159,6 +178,68 @@ public class IntegrationTestManager implements TestManager {
                                     String description, String className,
                                     PluginPropertyField... fields) throws IOException {
     throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void addArtifact(Id.Artifact artifactId, File artifactFile) throws Exception {
+    artifactClient.add(artifactId, null, Files.newInputStreamSupplier(artifactFile));
+  }
+
+  @Override
+  public void addAppArtifact(Id.Artifact artifactId, Class<?> appClass) throws Exception {
+    Location appJar = AppJarHelper.createDeploymentJar(locationFactory, appClass, new Manifest());
+    File destination =
+      new File(tmpFolder, String.format("%s-%s.jar", artifactId.getName(), artifactId.getVersion().getVersion()));
+    Files.copy(Locations.newInputSupplier(appJar), destination);
+    appJar.delete();
+
+    artifactClient.add(artifactId, null, Files.newInputStreamSupplier(destination));
+  }
+
+  @Override
+  public void addPluginArtifact(Id.Artifact artifactId, Id.Artifact parent,
+                                Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
+    Set<ArtifactRange> parents = new HashSet<>();
+    parents.add(new ArtifactRange(
+      parent.getNamespace(), parent.getName(), parent.getVersion(), true, parent.getVersion(), true));
+    addPluginArtifact(artifactId, parents, pluginClass, pluginClasses);
+  }
+
+  @Override
+  public void addPluginArtifact(Id.Artifact artifactId, Set<ArtifactRange> parents,
+                                Class<?> pluginClass,
+                                Class<?>... pluginClasses) throws Exception {
+    Manifest manifest = createManifest(pluginClass, pluginClasses);
+    Location appJar = PluginJarHelper.createPluginJar(locationFactory, manifest, pluginClass, pluginClasses);
+    File destination =
+      new File(tmpFolder, String.format("%s-%s.jar", artifactId.getName(), artifactId.getVersion().getVersion()));
+    Files.copy(Locations.newInputSupplier(appJar), destination);
+    appJar.delete();
+
+    artifactClient.add(artifactId, parents, Files.newInputStreamSupplier(destination));
+  }
+
+  @Override
+  public void addPluginArtifact(Id.Artifact artifactId, Id.Artifact parent,
+                                Set<PluginClass> additionalPlugins,
+                                Class<?> pluginClass,
+                                Class<?>... pluginClasses) throws Exception {
+    Set<ArtifactRange> parents = new HashSet<>();
+    parents.add(new ArtifactRange(
+      parent.getNamespace(), parent.getName(), parent.getVersion(), true, parent.getVersion(), true));
+    addPluginArtifact(artifactId, parents, additionalPlugins, pluginClass, pluginClasses);
+  }
+
+  @Override
+  public void addPluginArtifact(Id.Artifact artifactId, Set<ArtifactRange> parents,
+                                @Nullable Set<PluginClass> additionalPlugins,
+                                Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
+    // TODO: implement once supported
+  }
+
+  @Override
+  public void deleteArtifact(Id.Artifact artifactId) throws Exception {
+    artifactClient.delete(artifactId);
   }
 
   @Override
@@ -238,5 +319,17 @@ public class IntegrationTestManager implements TestManager {
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }
+  }
+
+  private Manifest createManifest(Class<?> cls, Class<?>... classes) {
+    Manifest manifest = new Manifest();
+    Set<String> exportPackages = new HashSet<>();
+    exportPackages.add(cls.getPackage().getName());
+    for (Class<?> clz : classes) {
+      exportPackages.add(clz.getPackage().getName());
+    }
+
+    manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE, Joiner.on(',').join(exportPackages));
+    return manifest;
   }
 }

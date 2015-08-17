@@ -26,6 +26,7 @@ import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.templates.ApplicationTemplate;
+import co.cask.cdap.api.templates.plugins.PluginClass;
 import co.cask.cdap.api.templates.plugins.PluginPropertyField;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.InMemoryProgramRunnerModule;
@@ -79,6 +80,7 @@ import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.artifact.CreateAppRequest;
 import co.cask.cdap.test.internal.ApplicationManagerFactory;
 import co.cask.cdap.test.internal.DefaultApplicationManager;
 import co.cask.cdap.test.internal.DefaultStreamManager;
@@ -119,6 +121,7 @@ import java.net.URL;
 import java.sql.Connection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -416,7 +419,7 @@ public class ConfigurableTestBase {
    * other programs defined in the application must be in the same or children package as the application.
    *
    * @param applicationClz The application class
-   * @return An {@link co.cask.cdap.test.ApplicationManager} to manage the deployed application.
+   * @return An {@link ApplicationManager} to manage the deployed application.
    */
   protected static ApplicationManager deployApplication(Id.Namespace namespace,
                                                         Class<? extends Application> applicationClz,
@@ -438,7 +441,7 @@ public class ConfigurableTestBase {
    * other programs defined in the application must be in the same or children package as the application.
    *
    * @param applicationClz The application class
-   * @return An {@link co.cask.cdap.test.ApplicationManager} to manage the deployed application.
+   * @return An {@link ApplicationManager} to manage the deployed application.
    */
   protected static ApplicationManager deployApplication(Class<? extends Application> applicationClz,
                                                         File... bundleEmbeddedJars) {
@@ -448,6 +451,18 @@ public class ConfigurableTestBase {
   protected static ApplicationManager deployApplication(Class<? extends Application> applicationClz, Config appConfig,
                                                         File... bundleEmbeddedJars) {
     return deployApplication(Id.Namespace.DEFAULT, applicationClz, appConfig, bundleEmbeddedJars);
+  }
+
+  /**
+   * Deploys an {@link Application}. The application artifact must already exist.
+   *
+   * @param appId the id of the application to create
+   * @param createAppRequest the application create request
+   * @return An {@link ApplicationManager} to manage the deployed application
+   */
+  protected static ApplicationManager deployApplication(Id.Application appId,
+                                                        CreateAppRequest createAppRequest) throws Exception {
+    return getTestManager().deployApplication(appId, createAppRequest);
   }
 
   /**
@@ -523,6 +538,25 @@ public class ConfigurableTestBase {
                                               String description, String className,
                                               PluginPropertyField... fields) throws IOException {
     getTestManager().addTemplatePluginJson(templateId, fileName, type, name, description, className, fields);
+  }
+
+  protected static void addArtifact(Id.Artifact artifactId, File artifactFile) throws Exception {
+    getTestManager().addArtifact(artifactId, artifactFile);
+  }
+
+  protected static void addAppArtifact(Id.Artifact artifactId, Class<?> appClass) throws Exception {
+    getTestManager().addAppArtifact(artifactId, appClass);
+  }
+
+  protected static void addPluginArtifact(Id.Artifact artifactId, Id.Artifact parent,
+                                          Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
+    getTestManager().addPluginArtifact(artifactId, parent, pluginClass, pluginClasses);
+  }
+
+  protected static void addPluginArtifact(Id.Artifact artifactId, Id.Artifact parent,
+                                          Set<PluginClass> additionalPlugins,
+                                          Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
+    getTestManager().addPluginArtifact(artifactId, parent, additionalPlugins, pluginClass, pluginClasses);
   }
 
   /**

@@ -300,6 +300,27 @@ public class ArtifactClient {
   /**
    * Add an artifact.
    *
+   * @param artifactId the id of the artifact to add
+   * @param parentArtifacts the set of artifacts this artifact extends
+   * @param artifactContents an input supplier for the contents of the artifact
+   * @throws ArtifactAlreadyExistsException if the artifact already exists
+   * @throws BadRequestException if the request is invalid. For example, if the artifact name or version is invalid
+   * @throws ArtifactRangeNotFoundException if the parent artifacts do not exist
+   * @throws IOException if a network error occurred
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   */
+  public void add(Id.Artifact artifactId, @Nullable Set<ArtifactRange> parentArtifacts,
+                  InputSupplier<? extends InputStream> artifactContents)
+    throws UnauthorizedException, BadRequestException, ArtifactRangeNotFoundException,
+    ArtifactAlreadyExistsException, IOException {
+
+    add(artifactId.getNamespace(), artifactId.getName(), artifactContents,
+        artifactId.getVersion().getVersion(), parentArtifacts);
+  }
+
+  /**
+   * Add an artifact.
+   *
    * @param namespace the namespace to add the artifact to
    * @param artifactName the name of the artifact to add
    * @param artifactContents an input supplier for the contents of the artifact

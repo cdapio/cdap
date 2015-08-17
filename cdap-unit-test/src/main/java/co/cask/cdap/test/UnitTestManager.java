@@ -23,6 +23,7 @@ import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.templates.ApplicationTemplate;
+import co.cask.cdap.api.templates.plugins.PluginClass;
 import co.cask.cdap.api.templates.plugins.PluginPropertyField;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.DefaultAppConfigurer;
@@ -37,11 +38,16 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.explore.jdbc.ExploreDriver;
 import co.cask.cdap.internal.AppFabricClient;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactDetail;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.internal.test.PluginJarHelper;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.artifact.ArtifactRange;
+import co.cask.cdap.proto.artifact.ArtifactSummary;
+import co.cask.cdap.proto.artifact.CreateAppRequest;
 import co.cask.cdap.test.internal.ApplicationManagerFactory;
 import co.cask.cdap.test.internal.DefaultAdapterManager;
 import co.cask.cdap.test.internal.StreamManagerFactory;
@@ -94,9 +100,11 @@ public class UnitTestManager implements TestManager {
   private final NamespaceAdmin namespaceAdmin;
   private final StreamManagerFactory streamManagerFactory;
   private final LocationFactory locationFactory;
+  private final ArtifactRepository artifactRepository;
   private final File templateDir;
   private final File pluginDir;
   private final MetricsManager metricsManager;
+  private final File tmpDir;
 
   @Inject
   public UnitTestManager(AppFabricClient appFabricClient,
@@ -107,8 +115,9 @@ public class UnitTestManager implements TestManager {
                          NamespaceAdmin namespaceAdmin,
                          StreamManagerFactory streamManagerFactory,
                          LocationFactory locationFactory,
-                         CConfiguration cConf,
-                         MetricsManager metricsManager) {
+                         MetricsManager metricsManager,
+                         ArtifactRepository artifactRepository,
+                         CConfiguration cConf) {
     this.appFabricClient = appFabricClient;
     this.datasetFramework = datasetFramework;
     this.txSystemClient = txSystemClient;
@@ -117,10 +126,13 @@ public class UnitTestManager implements TestManager {
     this.namespaceAdmin = namespaceAdmin;
     this.streamManagerFactory = streamManagerFactory;
     this.locationFactory = locationFactory;
+    this.artifactRepository = artifactRepository;
     // this should have been set to a temp dir during injector setup
     this.templateDir = new File(cConf.get(Constants.AppFabric.APP_TEMPLATE_DIR));
     this.pluginDir = new File(cConf.get(Constants.AppFabric.APP_TEMPLATE_PLUGIN_DIR));
     this.metricsManager = metricsManager;
+    this.tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
+      cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
   }
 
   /**
@@ -159,10 +171,22 @@ public class UnitTestManager implements TestManager {
       ApplicationSpecification appSpec = configurer.createSpecification();
       Location deployedJar = appFabricClient.deployApplication(namespace, appSpec.getName(),
                                                                applicationClz, appConfig, bundleEmbeddedJars);
-      return appManagerFactory.create(Id.Application.from(namespace, appSpec.getName()), deployedJar, appSpec);
+      return appManagerFactory.create(Id.Application.from(namespace, appSpec.getName()), deployedJar);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
+  }
+
+  @Override
+  public ApplicationManager deployApplication(Id.Application appId,
+                                              CreateAppRequest createAppRequest) throws Exception {
+    appFabricClient.deployApplication(appId, createAppRequest);
+
+    ArtifactSummary requestedArtifact = createAppRequest.getArtifact();
+    Id.Artifact artifactId = Id.Artifact.from(requestedArtifact.isSystem() ? Id.Namespace.SYSTEM : appId.getNamespace(),
+      requestedArtifact.getName(), requestedArtifact.getVersion());
+    ArtifactDetail artifactDetail = artifactRepository.getArtifact(artifactId);
+    return appManagerFactory.create(appId, artifactDetail.getDescriptor().getLocation());
   }
 
   @Override
@@ -223,6 +247,64 @@ public class UnitTestManager implements TestManager {
     try (Writer writer = Files.newWriter(configFile, Charsets.UTF_8)) {
       GSON.toJson(Lists.newArrayList(json), writer);
     }
+  }
+
+  @Override
+  public void addArtifact(Id.Artifact artifactId, File artifactFile) throws Exception {
+    artifactRepository.addArtifact(artifactId, artifactFile);
+  }
+
+  @Override
+  public void addAppArtifact(Id.Artifact artifactId, Class<?> appClass) throws Exception {
+    Location appJar = AppJarHelper.createDeploymentJar(locationFactory, appClass, new Manifest());
+    File destination =
+      new File(tmpDir, String.format("%s-%s.jar", artifactId.getName(), artifactId.getVersion().getVersion()));
+    Files.copy(Locations.newInputSupplier(appJar), destination);
+    appJar.delete();
+
+    artifactRepository.addArtifact(artifactId, destination);
+  }
+
+  @Override
+  public void addPluginArtifact(Id.Artifact artifactId, Id.Artifact parent,
+                                Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
+    Set<ArtifactRange> parents = new HashSet<>();
+    parents.add(new ArtifactRange(
+      parent.getNamespace(), parent.getName(), parent.getVersion(), true, parent.getVersion(), true));
+    addPluginArtifact(artifactId, parents, pluginClass, pluginClasses);
+  }
+
+  @Override
+  public void addPluginArtifact(Id.Artifact artifactId, Set<ArtifactRange> parents,
+                                Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
+    Manifest manifest = createManifest(pluginClass, pluginClasses);
+    Location appJar = PluginJarHelper.createPluginJar(locationFactory, manifest, pluginClass, pluginClasses);
+    File destination =
+      new File(tmpDir, String.format("%s-%s.jar", artifactId.getName(), artifactId.getVersion().getVersion()));
+    Files.copy(Locations.newInputSupplier(appJar), destination);
+
+    artifactRepository.addArtifact(artifactId, destination, parents);
+  }
+
+  @Override
+  public void addPluginArtifact(Id.Artifact artifactId, Id.Artifact parent,
+                                @Nullable Set<PluginClass> additionalPlugins,
+                                Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
+    Set<ArtifactRange> parents = new HashSet<>();
+    parents.add(new ArtifactRange(
+      parent.getNamespace(), parent.getName(), parent.getVersion(), true, parent.getVersion(), true));
+    addPluginArtifact(artifactId, parents, additionalPlugins, pluginClass, pluginClasses);
+  }
+
+  @Override
+  public void addPluginArtifact(Id.Artifact artifactId, Set<ArtifactRange> parent, Set<PluginClass> additionalPlugins,
+                                Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
+    //TODO: implement when support for explicit plugins is added
+  }
+
+  @Override
+  public void deleteArtifact(Id.Artifact artifactId) throws Exception {
+    artifactRepository.deleteArtifact(artifactId);
   }
 
   @Override
@@ -336,7 +418,7 @@ public class UnitTestManager implements TestManager {
     int port = address.getPort();
 
     String connectString = String.format("%s%s:%d?namespace=%s", Constants.Explore.Jdbc.URL_PREFIX, host, port,
-                                         namespace.getId());
+      namespace.getId());
 
     return DriverManager.getConnection(connectString);
   }
@@ -354,5 +436,17 @@ public class UnitTestManager implements TestManager {
   @Override
   public StreamManager getStreamManager(Id.Stream streamId) {
     return streamManagerFactory.create(streamId);
+  }
+
+  private Manifest createManifest(Class<?> cls, Class<?>... classes) {
+    Manifest manifest = new Manifest();
+    Set<String> exportPackages = new HashSet<>();
+    exportPackages.add(cls.getPackage().getName());
+    for (Class<?> clz : classes) {
+      exportPackages.add(clz.getPackage().getName());
+    }
+
+    manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE, Joiner.on(',').join(exportPackages));
+    return manifest;
   }
 }
