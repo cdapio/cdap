@@ -262,6 +262,10 @@ public class ArtifactRepository {
     throws IOException, ArtifactAlreadyExistsException, WriteConflictException,
     InvalidArtifactException, ArtifactRangeNotFoundException {
 
+    if (additionalPlugins != null) {
+      validatePluginSet(additionalPlugins);
+    }
+
     parentArtifacts = parentArtifacts == null ? Collections.<ArtifactRange>emptySet() : parentArtifacts;
     CloseableClassLoader parentClassLoader;
     if (parentArtifacts.isEmpty()) {
