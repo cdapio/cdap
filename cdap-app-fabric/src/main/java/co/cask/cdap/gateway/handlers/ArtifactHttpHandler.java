@@ -66,6 +66,7 @@ import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 import java.util.zip.ZipException;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
@@ -395,6 +396,27 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
       LOG.error("Exception creating temp file to place artifact {} contents", artifactName, e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Server error creating temp file for artifact.");
       return null;
+    }
+  }
+
+  @DELETE
+  @Path("/namespaces/{namespace-id}/artifacts/{artifact-name}/versions/{artifact-version}")
+  public void deleteArtifact(HttpRequest request, HttpResponder responder,
+                             @PathParam("namespace-id") String namespaceId,
+                             @PathParam("artifact-name") String artifactName,
+                             @PathParam("artifact-version") String artifactVersion)
+    throws NamespaceNotFoundException, BadRequestException {
+
+    Id.Namespace namespace = validateAndGetNamespace(namespaceId);
+    Id.Artifact artifactId = validateAndGetArtifactId(namespace, artifactName, artifactVersion);
+
+    try {
+      artifactRepository.deleteArtifact(artifactId);
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (IOException e) {
+      LOG.error("Exception deleting artifact named {} for namespace {} from the store.", artifactName, namespaceId, e);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
+                           "Error deleting artifact metadata from the store: " + e.getMessage());
     }
   }
 

@@ -327,6 +327,16 @@ public class ArtifactRepository {
   }
 
   /**
+   * Delete the specified artifact. Programs that use the artifact will not be able to start.
+   *
+   * @param artifactId the artifact to delete
+   * @throws IOException if there was some IO error deleting the artifact
+   */
+  public void deleteArtifact(Id.Artifact artifactId) throws IOException {
+    artifactStore.delete(artifactId);
+  }
+
+  /**
    * Parses a string expected to be of the form {name}-{version}.jar into an {@link co.cask.cdap.proto.Id.Artifact},
    * where name is a valid id and version is of the form expected by {@link ArtifactVersion}.
    *

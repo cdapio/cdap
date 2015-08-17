@@ -40,7 +40,6 @@ import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.artifact.PluginInfo;
 import co.cask.cdap.proto.artifact.PluginSummary;
 import co.cask.cdap.test.XSlowTests;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -82,6 +81,10 @@ public class ArtifactClientTestRun extends ClientTestBase {
   public void setUp() throws Throwable {
     super.setUp();
     artifactClient = new ArtifactClient(clientConfig, new RESTClient(clientConfig));
+    for (ArtifactSummary artifactSummary : artifactClient.list(Id.Namespace.DEFAULT, false)) {
+      artifactClient.delete(
+        Id.Artifact.from(Id.Namespace.DEFAULT, artifactSummary.getName(), artifactSummary.getVersion()));
+    }
   }
 
   @Test
@@ -179,18 +182,15 @@ public class ArtifactClientTestRun extends ClientTestBase {
     ArtifactSummary pluginArtifactSummary =
       new ArtifactSummary(pluginId.getName(), pluginId.getVersion().getVersion(), false);
 
-    // no way to delete artifacts yet... when run in a suite will see other artifacts from app deployments.
-    // so just test that these expected ones are in the list returned.
     Set<ArtifactSummary> artifacts = Sets.newHashSet(artifactClient.list(Id.Namespace.DEFAULT));
-
-    Assert.assertTrue(artifacts.containsAll(ImmutableList.of(myapp1Summary, myapp2Summary, pluginArtifactSummary)));
+    Assert.assertEquals(Sets.newHashSet(myapp1Summary, myapp2Summary, pluginArtifactSummary), artifacts);
 
     // list all artifacts named 'myapp'
-    Assert.assertEquals(ImmutableList.of(myapp1Summary, myapp2Summary),
-                        artifactClient.listVersions(Id.Namespace.DEFAULT, myapp1Id.getName()));
+    Assert.assertEquals(Sets.newHashSet(myapp1Summary, myapp2Summary),
+                        Sets.newHashSet(artifactClient.listVersions(Id.Namespace.DEFAULT, myapp1Id.getName())));
     // list all artifacts named 'myapp-plugins'
-    Assert.assertEquals(ImmutableList.of(pluginArtifactSummary),
-                        artifactClient.listVersions(Id.Namespace.DEFAULT, pluginId.getName()));
+    Assert.assertEquals(Sets.newHashSet(pluginArtifactSummary),
+                        Sets.newHashSet(artifactClient.listVersions(Id.Namespace.DEFAULT, pluginId.getName())));
 
     // get info about specific artifacts
     Schema myAppConfigSchema = new ReflectionSchemaGenerator().generate(MyApp.Conf.class);
@@ -227,14 +227,16 @@ public class ArtifactClientTestRun extends ClientTestBase {
     // test get plugins of type callable for myapp-2.0.0
     PluginSummary pluginSummary =
       new PluginSummary("plugin1", "callable", "p1 description", Plugin1.class.getName(), pluginArtifactSummary);
-    Assert.assertEquals(Lists.newArrayList(pluginSummary), artifactClient.getPluginSummaries(myapp2Id, "callable"));
+    Assert.assertEquals(Sets.newHashSet(pluginSummary),
+                        Sets.newHashSet(artifactClient.getPluginSummaries(myapp2Id, "callable")));
     // no plugins of type "runnable"
     Assert.assertTrue(artifactClient.getPluginSummaries(myapp2Id, "runnable").isEmpty());
 
     // test get plugin details for plugin1 for myapp-2.0.0
     PluginInfo pluginInfo = new PluginInfo("plugin1", "callable", "p1 description", Plugin1.class.getName(),
       pluginArtifactSummary, props);
-    Assert.assertEquals(Lists.newArrayList(pluginInfo), artifactClient.getPluginInfo(myapp2Id, "callable", "plugin1"));
+    Assert.assertEquals(Sets.newHashSet(pluginInfo),
+                        Sets.newHashSet(artifactClient.getPluginInfo(myapp2Id, "callable", "plugin1")));
   }
 
 }

@@ -141,6 +141,55 @@ public class ArtifactStoreTest {
     assertEqual(artifactId, artifactMeta, artifactContents, artifactDetail);
   }
 
+  @Test
+  public void testDelete() throws Exception {
+    // write an artifact with an app
+    Id.Artifact parentId = Id.Artifact.from(Id.Namespace.DEFAULT, "parent", "1.0.0");
+    ApplicationClass appClass = new ApplicationClass(
+      InspectionApp.class.getName(), "",
+      new ReflectionSchemaGenerator().generate(InspectionApp.AConfig.class));
+    ArtifactMeta artifactMeta =
+      new ArtifactMeta(ArtifactClasses.builder().addApp(appClass).build());
+    writeArtifact(parentId, artifactMeta, "parent contents");
+
+    // write a child artifact that extends the parent with some plugins
+    Id.Artifact childId = Id.Artifact.from(Id.Namespace.DEFAULT, "myplugins", "1.0.0");
+    List<PluginClass> plugins = ImmutableList.of(
+      new PluginClass("atype", "plugin1", "", "c.c.c.plugin1", "cfg", ImmutableMap.<String, PluginPropertyField>of()),
+      new PluginClass("atype", "plugin2", "", "c.c.c.plugin2", "cfg", ImmutableMap.<String, PluginPropertyField>of())
+    );
+    Set<ArtifactRange> parents = ImmutableSet.of(new ArtifactRange(
+      parentId.getNamespace(), parentId.getName(), new ArtifactVersion("0.1.0"), new ArtifactVersion("2.0.0")));
+    artifactMeta = new ArtifactMeta(ArtifactClasses.builder().addPlugins(plugins).build(), parents);
+    writeArtifact(childId, artifactMeta, "child contents");
+
+    // check parent has plugins from the child
+    Assert.assertFalse(artifactStore.getPluginClasses(parentId).isEmpty());
+
+    // delete the child artifact
+    artifactStore.delete(childId);
+
+    // shouldn't be able to get artifact detail
+    try {
+      artifactStore.getArtifact(childId);
+      Assert.fail();
+    } catch (ArtifactNotFoundException e) {
+      // expected
+    }
+
+    // shouldn't see it in the list
+    List<ArtifactDetail> artifactList = artifactStore.getArtifacts(parentId.getNamespace());
+    Assert.assertEquals(1, artifactList.size());
+    Assert.assertEquals(parentId.getName(), artifactList.get(0).getDescriptor().getName());
+    // shouldn't see any more plugins for parent
+    Assert.assertTrue(artifactStore.getPluginClasses(parentId).isEmpty());
+
+    // delete parent
+    artifactStore.delete(parentId);
+    // nothing should be in the list
+    Assert.assertTrue(artifactStore.getArtifacts(parentId.getNamespace()).isEmpty());
+  }
+
   @Test(expected = ArtifactAlreadyExistsException.class)
   public void testImmutability() throws Exception {
     Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "myplugins", "1.0.0");
