@@ -82,7 +82,7 @@ angular.module(PKG.name + '.feature.admin')
 
       mySettings.get('pluginTemplates')
         .then(function (res) {
-          var template = res[$stateParams.nsadmin][$stateParams.templateName];
+          var template = angular.copy(res[$stateParams.nsadmin][$stateParams.templateName]);
 
           vm.template = template.templateType;
           vm.pluginType = template.type;
