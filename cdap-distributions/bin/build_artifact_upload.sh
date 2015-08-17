@@ -117,7 +117,7 @@ function sync_build_artifacts_to_server () {
     _version=`echo ${_version_stub} | awk -F - '{ print $1 }' | awk -F . '{ print $1"."$2"."$3 }'`
     decho "version = ${_version}"
     _snapshot_time=`echo ${_version_stub} | awk -F - '{ print $1 }' | sed 's/[0-9]\.[0-9]\.[0-9][\.]*\([0-9]*\)/\1/'`
-    if [ "${_version}" == ${_snapshot_time} ]; then
+    if [ "${_version}" == "${_snapshot_time}" ]; then
       _snapshot_time=''
     fi
     decho "snapshot time = ${_snapshot_time}"
