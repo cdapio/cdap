@@ -32,7 +32,7 @@ unless node['cdap']['version'].to_f >= 2.6
 end
 
 svcs.each do |svc|
-  attrib = svc.gsub('cdap-', '').gsub('-', '_')
+  attrib = svc.gsub('cdap-', '').tr('-', '_')
   template "/etc/init.d/#{svc}" do
     source 'cdap-service.erb'
     mode 0755
