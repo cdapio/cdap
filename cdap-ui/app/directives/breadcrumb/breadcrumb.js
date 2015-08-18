@@ -6,6 +6,7 @@ angular.module(PKG.name+'.commons')
     scope: {
       params: '='
     },
+    replace: true,
     controller: function($location, $scope) {
       var listener = $scope.$on('$stateChangeSuccess', function () {
         $location.search('sourceId', null);
