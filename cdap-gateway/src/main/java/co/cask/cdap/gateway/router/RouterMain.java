@@ -67,7 +67,7 @@ public class RouterMain extends DaemonMain {
       // Initialize ZK client
       String zookeeper = cConf.get(Constants.Zookeeper.QUORUM);
       if (zookeeper == null) {
-        LOG.error("No zookeeper quorum provided.");
+        LOG.error("No ZooKeeper quorum provided.");
         System.exit(1);
       }
 

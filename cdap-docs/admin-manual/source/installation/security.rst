@@ -81,19 +81,19 @@ Property                                          Default Value        Descripti
 ``cdap.master.kerberos.principal``                *None*               Kerberos principal associated with the keytab
 ================================================= ==================== ======================================================
 
-Configuring Zookeeper (required)
+Configuring ZooKeeper (required)
 ................................
-To configure Zookeeper to enable SASL authentication, add the following to your ``zoo.cfg``::
+To configure ZooKeeper to enable SASL authentication, add the following to your ``zoo.cfg``::
 
   authProvider.1=org.apache.zookeeper.server.auth.SASLAuthenticationProvider
   jaasLoginRenew=3600000
   kerberos.removeHostFromPrincipal=true
   kerberos.removeRealmFromPrincipal=true
 
-This will let Zookeeper use the ``SASLAuthenticationProvider`` as an auth provider, and the ``jaasLoginRenew`` line
-will cause the Zookeeper server to renew its Kerberos ticket once an hour.
+This will let ZooKeeper use the ``SASLAuthenticationProvider`` as an auth provider, and the ``jaasLoginRenew`` line
+will cause the ZooKeeper server to renew its Kerberos ticket once an hour.
 
-Then, create a ``jaas.conf`` file for your Zookeeper server::
+Then, create a ``jaas.conf`` file for your ZooKeeper server::
 
   Server {
        com.sun.security.auth.module.Krb5LoginModule required
@@ -104,10 +104,10 @@ Then, create a ``jaas.conf`` file for your Zookeeper server::
        principal="<your-zookeeper-principal>";
   };
 
-The keytab file must be readable by the Zookeeper server, and ``<your-zookeeper-principal>`` must correspond
+The keytab file must be readable by the ZooKeeper server, and ``<your-zookeeper-principal>`` must correspond
 to the keytab file.
 
-Finally, start Zookeeper server with the following JVM option::
+Finally, start ZooKeeper server with the following JVM option::
 
   -Djava.security.auth.login.config=/path/to/jaas.conf
 
