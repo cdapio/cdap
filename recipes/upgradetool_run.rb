@@ -17,11 +17,19 @@
 # limitations under the License.
 #
 
+master_init_actions = node['cdap']['master']['init_actions']
+
+# Ensure master service is stopped
+override['cdap']['master']['init_actions'] = [:stop]
+
 include_recipe 'cdap::master'
 
 # Run the CDAP Upgrade Tool
 ruby_block 'run-cdap-upgrade-tool' do
   block do
     resources('execute[cdap-upgrade-tool]').run_action(:run)
+  end
+  master_init_actions.each do |action|
+    notifies action.to_sym, 'service[cdap-master]', :immediately unless action == :nothing
   end
 end
