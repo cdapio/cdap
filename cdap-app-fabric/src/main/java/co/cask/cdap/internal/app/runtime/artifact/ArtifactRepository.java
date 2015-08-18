@@ -210,7 +210,7 @@ public class ArtifactRepository {
 
     Location artifactLocation = Locations.toLocation(artifactFile);
     try (CloseableClassLoader parentClassLoader = artifactClassLoaderFactory.createClassLoader(artifactLocation)) {
-      ArtifactClasses artifactClasses = artifactInspector.inspectArtifact(artifactId, artifactFile, parentClassLoader);
+      ArtifactClasses artifactClasses = inspectArtifact(artifactId, artifactFile, null, parentClassLoader);
       validatePluginSet(artifactClasses.getPlugins());
       ArtifactMeta meta = new ArtifactMeta(artifactClasses, ImmutableSet.<ArtifactRange>of());
       return artifactStore.write(artifactId, meta, Files.newInputStreamSupplier(artifactFile));
@@ -238,16 +238,66 @@ public class ArtifactRepository {
     throws IOException, ArtifactRangeNotFoundException, WriteConflictException,
     ArtifactAlreadyExistsException, InvalidArtifactException {
 
-    if (parentArtifacts == null || parentArtifacts.isEmpty()) {
-      return addArtifact(artifactId, artifactFile);
-    }
-    validateParentSet(parentArtifacts);
+    return addArtifact(artifactId, artifactFile, parentArtifacts, null);
+  }
 
-    try (CloseableClassLoader parentClassLoader = createParentClassLoader(artifactId, parentArtifacts)) {
-      ArtifactClasses artifactClasses = artifactInspector.inspectArtifact(artifactId, artifactFile, parentClassLoader);
-      validatePluginSet(artifactClasses.getPlugins());
+  /**
+   * Inspects and builds plugin and application information for the given artifact, adding an additional set of
+   * plugin classes to the plugins found through inspection. This method is used when all plugin classes
+   * cannot be derived by inspecting the artifact but need to be explicitly set. This is true for 3rd party plugins
+   * like jdbc drivers.
+   *
+   * @param artifactId the id of the artifact to inspect and store
+   * @param artifactFile the artifact to inspect and store
+   * @param parentArtifacts artifacts the given artifact extends.
+   *                        If null, the given artifact does not extend another artifact
+   * @param additionalPlugins the set of additional plugin classes to add to the plugins found through inspection.
+   *                          If null, no additional plugin classes will be added
+   * @throws IOException if there was an exception reading from the artifact store
+   * @throws ArtifactRangeNotFoundException if none of the parent artifacts could be found
+   */
+  public ArtifactDetail addArtifact(Id.Artifact artifactId, File artifactFile,
+                                    @Nullable Set<ArtifactRange> parentArtifacts,
+                                    @Nullable Set<PluginClass> additionalPlugins)
+    throws IOException, ArtifactAlreadyExistsException, WriteConflictException,
+    InvalidArtifactException, ArtifactRangeNotFoundException {
+
+    if (additionalPlugins != null) {
+      validatePluginSet(additionalPlugins);
+    }
+
+    parentArtifacts = parentArtifacts == null ? Collections.<ArtifactRange>emptySet() : parentArtifacts;
+    CloseableClassLoader parentClassLoader;
+    if (parentArtifacts.isEmpty()) {
+      parentClassLoader =
+        artifactClassLoaderFactory.createClassLoader(Locations.toLocation(artifactFile));
+    } else {
+      parentClassLoader = createParentClassLoader(artifactId, parentArtifacts);
+      validateParentSet(parentArtifacts);
+    }
+
+    try {
+      ArtifactClasses artifactClasses = inspectArtifact(artifactId, artifactFile, additionalPlugins, parentClassLoader);
       ArtifactMeta meta = new ArtifactMeta(artifactClasses, parentArtifacts);
       return artifactStore.write(artifactId, meta, Files.newInputStreamSupplier(artifactFile));
+    } finally {
+      parentClassLoader.close();
+    }
+  }
+
+  private ArtifactClasses inspectArtifact(Id.Artifact artifactId, File artifactFile,
+                                          @Nullable Set<PluginClass> additionalPlugins,
+                                          ClassLoader parentClassLoader) throws IOException, InvalidArtifactException {
+    ArtifactClasses artifactClasses = artifactInspector.inspectArtifact(artifactId, artifactFile, parentClassLoader);
+    validatePluginSet(artifactClasses.getPlugins());
+    if (additionalPlugins == null || additionalPlugins.isEmpty()) {
+      return artifactClasses;
+    } else {
+      return ArtifactClasses.builder()
+        .addApps(artifactClasses.getApps())
+        .addPlugins(artifactClasses.getPlugins())
+        .addPlugins(additionalPlugins)
+        .build();
     }
   }
 
@@ -311,10 +361,10 @@ public class ArtifactRepository {
           }
         }
 
-        // TODO: (CDAP-3272) use plugin classes from config file
         addArtifact(artifactId,
                     systemArtifactConfig.getFile(),
-                    systemArtifactConfig.getParents());
+                    systemArtifactConfig.getParents(),
+                    systemArtifactConfig.getPlugins());
       } catch (ArtifactAlreadyExistsException e) {
         // shouldn't happen... but if it does for some reason it's fine, it means it was added some other way already.
       } catch (ArtifactRangeNotFoundException e) {
