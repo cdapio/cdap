@@ -105,15 +105,13 @@ angular.module(PKG.name + '.feature.admin')
           .state('admin.namespace.create', {
             url: '/create',
             onEnter: function($bootstrapModal, $state) {
-              var modal = $bootstrapModal.open({
+              $bootstrapModal.open({
                 templateUrl: '/assets/features/admin/templates/namespace/create.html',
                 size: 'lg',
                 backdrop: true,
                 keyboard: true,
                 controller: 'NamespaceCreateController'
-              });
-
-              modal.result.then(function() {
+              }).result.finally(function() {
                 $state.go('admin.overview', {}, { reload: true });
               });
             },
