@@ -3,7 +3,7 @@
  */
 
 angular.module(PKG.name+'.commons')
-.directive('myBreadcrumbs', function () {
+.directive('myBreadcrumbs', function ($stateParams) {
   return {
     restrict: 'E',
     templateUrl: 'breadcrumbs/breadcrumbs.html',
@@ -14,6 +14,7 @@ angular.module(PKG.name+'.commons')
     link: function (scope, element, attrs) {
       scope.hideNsDropdown = attrs.hideNsDropdown === 'true';
       scope.element = element;
+      scope.$stateParams = $stateParams;
     }
   };
 

@@ -3,7 +3,6 @@ angular.module(PKG.name + '.commons')
     // Namespace dropdown
     $scope.namespaces = [];
     $scope.hideNsDropdown = false;
-
     function updateNamespaceList() {
       myNamespace.getList()
         .then(function(list) {

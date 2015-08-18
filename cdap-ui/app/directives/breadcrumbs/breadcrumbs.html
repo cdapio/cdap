@@ -8,6 +8,7 @@
         </a>
       </li>
     </ul>
-    <div ncy-breadcrumb></div>
+    <my-breadcrumb params="$stateParams" ng-if="$stateParams.sourceId"></my-breadcrumb>
+    <div ncy-breadcrumb ng-if="!$stateParams.sourceId"></div>
   </div>
 </div>
