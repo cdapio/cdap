@@ -1,6 +1,6 @@
 #
 # Cookbook Name:: cdap
-# Recipe:: upgradetool_run
+# Recipe:: upgrade
 #
 # Copyright © 2015 Cask Data, Inc.
 #
