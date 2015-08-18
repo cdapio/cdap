@@ -17,7 +17,7 @@
 package co.cask.cdap.spi.stream;
 
 import co.cask.cdap.api.data.format.RecordFormat;
-import co.cask.cdap.api.stream.StreamEvent;
+import co.cask.cdap.api.flow.flowlet.StreamEvent;
 
 /**
  * Format for a record contained in a {@link StreamEvent}.

@@ -15,7 +15,7 @@
  */
 package co.cask.cdap.data.stream.service;
 
-import co.cask.cdap.api.stream.StreamEvent;
+import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.stream.StreamEventData;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.data.file.FileWriter;

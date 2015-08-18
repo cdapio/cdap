@@ -15,6 +15,8 @@
  */
 package co.cask.cdap.api.stream;
 
+import co.cask.cdap.api.flow.flowlet.StreamEvent;
+
 import java.util.Objects;
 import javax.annotation.concurrent.NotThreadSafe;
 

@@ -17,7 +17,7 @@
 package co.cask.cdap.common.stream;
 
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.stream.StreamEvent;
+import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.TypeAdapter;
