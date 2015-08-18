@@ -274,8 +274,8 @@ public class ProgramLifecycleService extends AbstractIdleService {
     });
 
     if (!invalidRunRecords.isEmpty()) {
-      LOG.warn("Found {} RunRecords with RUNNING status but the program not actually running",
-               invalidRunRecords.size());
+      LOG.warn("Found {} RunRecords with RUNNING status but the program is not actually running for program type {}",
+               invalidRunRecords.size(), programType.getPrettyName());
     }
 
     // Now lets correct the invalid RunRecords
