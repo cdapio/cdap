@@ -45,8 +45,16 @@ body.state-dashboard {
         .btn.dropdown-toggle { margin: 0 10px; }
         .dropdown-menu { left: 10px; }
         .input-group {
-          .form-control { max-width: 100px; }
           &:first-child { margin-right: 10px; }
+          .form-control {
+            border: 1px solid #ccc;
+            border-right: 0;
+            max-width: 100px;
+          }
+          .input-group-addon {
+            border: 1px solid #ccc;
+            border-left: 0;
+          }
         }
       }
     }
