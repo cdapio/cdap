@@ -20,7 +20,7 @@
 master_init_actions = node['cdap']['master']['init_actions']
 
 # Ensure master service is stopped
-override['cdap']['master']['init_actions'] = [:stop]
+node.override['cdap']['master']['init_actions'] = [:stop]
 
 include_recipe 'cdap::master'
 
