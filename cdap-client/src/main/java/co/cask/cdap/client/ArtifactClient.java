@@ -77,6 +77,10 @@ public class ArtifactClient {
     this.restClient = restClient;
   }
 
+  public ArtifactClient(ClientConfig config) {
+    this(config, new RESTClient(config));
+  }
+
   /**
    * Lists all artifacts in the given namespace, including all system artifacts.
    *

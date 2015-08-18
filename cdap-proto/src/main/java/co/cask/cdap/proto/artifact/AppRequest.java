@@ -19,19 +19,19 @@ package co.cask.cdap.proto.artifact;
 import javax.annotation.Nullable;
 
 /**
- * Request body when creating an app
+ * Request body when creating or updating an app.
  *
  * @param <T> the type of application config
  */
-public class CreateAppRequest<T> {
+public class AppRequest<T> {
   private final ArtifactSummary artifact;
   private final T config;
 
-  public CreateAppRequest(ArtifactSummary artifact) {
+  public AppRequest(ArtifactSummary artifact) {
     this(artifact, null);
   }
 
-  public CreateAppRequest(ArtifactSummary artifact, @Nullable T config) {
+  public AppRequest(ArtifactSummary artifact, @Nullable T config) {
     this.artifact = artifact;
     this.config = config;
   }

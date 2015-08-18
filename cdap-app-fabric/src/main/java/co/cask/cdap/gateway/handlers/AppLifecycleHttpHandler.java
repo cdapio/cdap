@@ -59,18 +59,21 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.StreamDetail;
+import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
-import co.cask.cdap.proto.artifact.CreateAppRequest;
 import co.cask.http.BodyConsumer;
 import co.cask.http.HttpResponder;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.apache.twill.filesystem.Location;
+import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -80,6 +83,8 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -266,20 +271,130 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     responder.sendString(status.getCode(), status.getMessage());
   }
 
+  /**
+   * Updates an existing application.
+   */
+  @POST
+  @Path("/apps/{app-id}/update")
+  public void updateApp(HttpRequest request, HttpResponder responder,
+                        @PathParam("namespace-id") final String namespaceId,
+                        @PathParam("app-id") final String appName)
+    throws NamespaceNotFoundException, ArtifactNotFoundException {
+
+    Id.Namespace namespace = Id.Namespace.from(namespaceId);
+    namespaceAdmin.getNamespace(namespace);
+
+    Id.Application appId;
+    try {
+      appId = Id.Application.from(namespace, appName);
+    } catch (IllegalArgumentException e) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid app id: " + e.getMessage());
+      return;
+    }
+
+    AppRequest appRequest;
+    try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()), Charsets.UTF_8)) {
+      appRequest = GSON.fromJson(reader, AppRequest.class);
+    } catch (IOException e) {
+      LOG.error("Error reading request to update app {} in namespace {}.", appName, namespaceId, e);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error reading request body.");
+      return;
+    } catch (JsonSyntaxException e) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Request body is invalid json: " + e.getMessage());
+      return;
+    }
+
+    // check that app exists
+    ApplicationSpecification currentSpec = store.getApplication(appId);
+    if (currentSpec == null) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Application '%s' not found.", appName));
+      return;
+    }
+    Id.Artifact currentArtifact = currentSpec.getArtifactId();
+
+    // if no artifact is given, use the current one.
+    Id.Artifact newArtifactId = currentArtifact;
+    // otherwise, check requested artifact is valid and use it
+    ArtifactSummary requestedArtifact = appRequest.getArtifact();
+    if (requestedArtifact != null) {
+      // cannot change artifact name, only artifact version.
+      if (!currentArtifact.getName().equals(requestedArtifact.getName())) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, String.format(
+          " Only artifact version updates are allowed. Cannot change from artifact '%s' to '%s'.",
+          currentArtifact.getName(), requestedArtifact.getName()));
+        return;
+      }
+
+      if (currentArtifact.getNamespace().equals(Id.Namespace.SYSTEM) != requestedArtifact.isSystem()) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Only artifact version updates are allowed. " +
+            "Cannot change from a non-system artifact to a system artifact or vice versa.");
+        return;
+      }
+
+      // check requested artifact version is valid
+      ArtifactVersion requestedVersion = new ArtifactVersion(requestedArtifact.getVersion());
+      if (requestedVersion.getVersion() == null) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, String.format(
+          "Requested artifact version '%s' is invalid", requestedArtifact.getVersion()));
+        return;
+      }
+      newArtifactId = Id.Artifact.from(currentArtifact.getNamespace(), currentArtifact.getName(), requestedVersion);
+    }
+
+    Object requestedConfigObj = appRequest.getConfig();
+    // if config is null, use the previous config
+    String requestedConfigStr = requestedConfigObj == null ?
+      currentSpec.getConfiguration() : GSON.toJson(requestedConfigObj);
+
+    // check requested artifact exists
+    String appClassName;
+    Location jarLocation;
+    try {
+      ArtifactDetail artifactDetail = artifactRepository.getArtifact(newArtifactId);
+      Set<ApplicationClass> appClasses = artifactDetail.getMeta().getClasses().getApps();
+      if (appClasses.isEmpty()) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, String.format(
+          "No application classes found in artifact %s.", newArtifactId));
+        return;
+      }
+      // only one app per artifact today
+      appClassName = appClasses.iterator().next().getClassName();
+      jarLocation = artifactDetail.getDescriptor().getLocation();
+    } catch (IOException e) {
+      LOG.error("Error checking existance of artifact {} during update app call.", newArtifactId, e);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, String.format(
+        "Error checking existance of request artifact '%s'. Please try again or check system logs.", newArtifactId));
+      return;
+    }
+
+    // validation successful, update the app.
+    AppDeploymentInfo deploymentInfo =
+      new AppDeploymentInfo(newArtifactId, appClassName, jarLocation, requestedConfigStr);
+    try {
+      deploy(namespaceId, appName, deploymentInfo);
+      responder.sendString(HttpResponseStatus.OK, "Update complete.");
+    } catch (Exception e) {
+      // this is the same behavior as deploy app pipeline, but this is bad behavior. Error handling needs improvement.
+      LOG.error("Deploy failure", e);
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+    }
+  }
+
   // normally we wouldn't want to use a body consumer but would just want to read the request body directly
   // since it wont be big. But the deploy app API has one path with different behavior based on content type
   // the other behavior requires a BodyConsumer and only have one method per path is allowed,
   // so we have to use a BodyConsumer
   private BodyConsumer deployAppFromArtifact(final Id.Namespace namespace, final String appId) throws IOException {
 
-    return new AbstractBodyConsumer(File.createTempFile(appId, ".json", tmpDir)) {
+    // createTempFile() needs a prefix of at least 3 characters
+    return new AbstractBodyConsumer(File.createTempFile("apprequest-" + appId, ".json", tmpDir)) {
 
       @Override
       protected void onFinish(HttpResponder responder, File uploadedFile) {
         try (FileReader fileReader = new FileReader(uploadedFile)) {
 
-          CreateAppRequest<?> createAppRequest = GSON.fromJson(fileReader, CreateAppRequest.class);
-          ArtifactSummary artifactSummary = createAppRequest.getArtifact();
+          AppRequest<?> appRequest = GSON.fromJson(fileReader, AppRequest.class);
+          ArtifactSummary artifactSummary = appRequest.getArtifact();
           Id.Namespace artifactNamespace = artifactSummary.isSystem() ? Id.Namespace.SYSTEM : namespace;
           Id.Artifact artifactId =
             Id.Artifact.from(artifactNamespace, artifactSummary.getName(), artifactSummary.getVersion());
@@ -302,7 +417,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           Location location = artifactDetail.getDescriptor().getLocation();
 
           // if we don't null check, it get serialized to "null"
-          String configString = createAppRequest.getConfig() == null ? null : GSON.toJson(createAppRequest.getConfig());
+          String configString = appRequest.getConfig() == null ? null : GSON.toJson(appRequest.getConfig());
           AppDeploymentInfo deploymentInfo = new AppDeploymentInfo(artifactId, className, location, configString);
           deploy(namespace.getId(), appId, deploymentInfo);
           responder.sendString(HttpResponseStatus.OK, "Deploy Complete");
