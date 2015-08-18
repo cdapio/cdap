@@ -19,14 +19,14 @@ package co.cask.cdap.hive.stream;
 import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
-import co.cask.cdap.api.flow.flowlet.StreamEvent;
+import co.cask.cdap.api.stream.StreamEvent;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.format.RecordFormats;
-import co.cask.cdap.format.StreamEventRecordFormat;
 import co.cask.cdap.hive.context.ContextManager;
 import co.cask.cdap.hive.serde.ObjectDeserializer;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.spi.stream.AbstractStreamEventRecordFormat;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.serde2.SerDe;
@@ -54,7 +54,7 @@ public class StreamSerDe implements SerDe {
   // the rest of the columns are for the stream body.
   private static final int BODY_OFFSET = 2;
   private ObjectInspector inspector;
-  private StreamEventRecordFormat<?> streamFormat;
+  private AbstractStreamEventRecordFormat<?> streamFormat;
   private ObjectDeserializer deserializer;
 
   // initialize gets called multiple times by Hive. It may seem like a good idea to put additional settings into
@@ -88,7 +88,7 @@ public class StreamSerDe implements SerDe {
       ContextManager.Context context = ContextManager.getContext(conf);
       StreamConfig streamConfig = context.getStreamConfig(streamId);
       FormatSpecification formatSpec = streamConfig.getFormat();
-      this.streamFormat = (StreamEventRecordFormat) RecordFormats.createInitializedFormat(formatSpec);
+      this.streamFormat = (AbstractStreamEventRecordFormat) RecordFormats.createInitializedFormat(formatSpec);
       Schema schema = formatSpec.getSchema();
       this.deserializer = new ObjectDeserializer(properties, schema, BODY_OFFSET);
       this.inspector = deserializer.getInspector();

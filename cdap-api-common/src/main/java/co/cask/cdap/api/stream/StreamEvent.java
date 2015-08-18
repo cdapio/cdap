@@ -14,9 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.api.flow.flowlet;
-
-import co.cask.cdap.api.stream.StreamEventData;
+package co.cask.cdap.api.stream;
 
 import java.nio.ByteBuffer;
 import java.util.Collections;

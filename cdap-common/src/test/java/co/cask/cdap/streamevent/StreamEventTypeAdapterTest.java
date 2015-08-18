@@ -16,7 +16,7 @@
 
 package co.cask.cdap.streamevent;
 
-import co.cask.cdap.api.flow.flowlet.StreamEvent;
+import co.cask.cdap.api.stream.StreamEvent;
 import co.cask.cdap.common.stream.StreamEventTypeAdapter;
 import com.google.common.base.Charsets;
 import com.google.common.base.Equivalence;

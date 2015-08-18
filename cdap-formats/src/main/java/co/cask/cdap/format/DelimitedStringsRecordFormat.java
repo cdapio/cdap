@@ -21,7 +21,8 @@ import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.format.UnexpectedFormatException;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
-import co.cask.cdap.api.flow.flowlet.StreamEvent;
+import co.cask.cdap.api.stream.StreamEvent;
+import co.cask.cdap.spi.stream.AbstractStreamEventRecordFormat;
 import com.google.common.base.Charsets;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
@@ -42,7 +43,7 @@ import java.util.Map;
  * In addition, the very last field can be an array of strings.
  * </p>
  */
-public class DelimitedStringsRecordFormat extends StreamEventRecordFormat<StructuredRecord> {
+public class DelimitedStringsRecordFormat extends AbstractStreamEventRecordFormat<StructuredRecord> {
   public static final String CHARSET = "charset";
   public static final String DELIMITER = "delimiter";
   private Charset charset = Charsets.UTF_8;

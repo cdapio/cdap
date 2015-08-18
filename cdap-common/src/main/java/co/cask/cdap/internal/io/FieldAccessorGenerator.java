@@ -20,7 +20,6 @@ import co.cask.cdap.internal.asm.ClassDefinition;
 import co.cask.cdap.internal.asm.Methods;
 import co.cask.cdap.internal.lang.Fields;
 import com.google.common.base.Throwables;
-import com.google.common.reflect.TypeToken;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Opcodes;
@@ -51,10 +50,10 @@ final class FieldAccessorGenerator {
   private String className;
   private boolean isPrivate;
 
-  ClassDefinition generate(TypeToken<?> classType, Field field, boolean publicOnly) {
+  ClassDefinition generate(Class<?> classType, Field field, boolean publicOnly) {
     String name = String.format("%s$GeneratedAccessor%s",
-                                     classType.getRawType().getName(),
-                                     field.getName());
+                                classType.getName(),
+                                field.getName());
     if (name.startsWith("java.") || name.startsWith("javax.")) {
       name = "co.cask.cdap." + name;
       publicOnly = true;
@@ -94,12 +93,12 @@ final class FieldAccessorGenerator {
                  .visitEnd();
     }
 
-    // Constructor(TypeToken<?> classType)
-    GeneratorAdapter mg = new GeneratorAdapter(Opcodes.ACC_PUBLIC, getMethod(void.class, "<init>", TypeToken.class),
-                                               null, new Type[0], classWriter);
+    // Constructor(Type classType)
+    Method constructor = getMethod(void.class, "<init>", java.lang.reflect.Type.class);
+    GeneratorAdapter mg = new GeneratorAdapter(Opcodes.ACC_PUBLIC, constructor, null, new Type[0], classWriter);
     mg.loadThis();
     mg.loadArg(0);
-    mg.invokeConstructor(Type.getType(AbstractFieldAccessor.class), getMethod(void.class, "<init>", TypeToken.class));
+    mg.invokeConstructor(Type.getType(AbstractFieldAccessor.class), constructor);
     if (isPrivate) {
       initializeReflectionField(mg, field);
     }
@@ -126,10 +125,11 @@ final class FieldAccessorGenerator {
     mg.visitTryCatchBlock(beginTry, endTry, catchHandle, Type.getInternalName(Exception.class));
     mg.mark(beginTry);
 
-    // Field field = findField(classType, "fieldName")
+    // Field field = Fields.findField(classType, "fieldName")
     mg.loadArg(0);
     mg.push(field.getName());
-    mg.invokeStatic(Type.getType(Fields.class), getMethod(Field.class, "findField", TypeToken.class, String.class));
+    mg.invokeStatic(Type.getType(Fields.class),
+                    getMethod(Field.class, "findField", java.lang.reflect.Type.class, String.class));
     mg.dup();
 
     // field.setAccessible(true);

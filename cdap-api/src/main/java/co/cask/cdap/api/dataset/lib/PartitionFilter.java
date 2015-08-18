@@ -16,8 +16,6 @@
 
 package co.cask.cdap.api.dataset.lib;
 
-import com.google.common.base.Preconditions;
-
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -101,7 +99,9 @@ public class PartitionFilter {
     public <T extends Comparable<T>> Builder addRangeCondition(String field,
                                                                @Nullable T lower,
                                                                @Nullable T upper) {
-      Preconditions.checkArgument(field != null && !field.isEmpty(), "field name cannot be null or empty.");
+      if (field == null || field.isEmpty()) {
+        throw new IllegalArgumentException("field name cannot be null or empty.");
+      }
       if (map.containsKey(field)) {
         throw new IllegalArgumentException(String.format("Field '%s' already exists in partition filter.", field));
       }
@@ -123,8 +123,12 @@ public class PartitionFilter {
      *         or if the value is null.
      */
     public <T extends Comparable<T>> Builder addValueCondition(String field, T value) {
-      Preconditions.checkArgument(field != null && !field.isEmpty(), "field name cannot be null or empty.");
-      Preconditions.checkArgument(value != null, "condition value cannot be null.");
+      if (field == null || field.isEmpty()) {
+        throw new IllegalArgumentException("field name cannot be null or empty.");
+      }
+      if (value == null) {
+        throw new IllegalArgumentException("condition value cannot be null.");
+      }
       if (map.containsKey(field)) {
         throw new IllegalArgumentException(String.format("Field '%s' already exists in partition filter.", field));
       }
@@ -138,7 +142,9 @@ public class PartitionFilter {
      * @throws java.lang.IllegalStateException if no fields have been added
      */
     public PartitionFilter build() {
-      Preconditions.checkState(!map.isEmpty(), "Partition filter cannot be empty.");
+      if (map.isEmpty()) {
+        throw new IllegalStateException("Partition filter cannot be empty.");
+      }
       return new PartitionFilter(map);
     }
 
@@ -181,8 +187,10 @@ public class PartitionFilter {
     private final T upper;
     private final boolean isSingleValue;
 
-    private Condition(String fieldName, T lower, T upper) {
-      Preconditions.checkArgument(lower != null || upper != null, "Either lower or upper-bound must be non-null.");
+    private Condition(String fieldName, @Nullable T lower, @Nullable T upper) {
+      if (lower == null && upper == null) {
+        throw new IllegalArgumentException("Either lower or upper-bound must be non-null.");
+      }
       this.fieldName = fieldName;
       this.lower = lower;
       this.upper = upper;
@@ -190,7 +198,9 @@ public class PartitionFilter {
     }
 
     private Condition(String fieldName, T value) {
-      Preconditions.checkArgument(value != null, "Value must not be null.");
+      if (value == null) {
+        throw new IllegalArgumentException("Value must not be null.");
+      }
       this.fieldName = fieldName;
       this.lower = value;
       this.upper = null;

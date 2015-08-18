@@ -20,7 +20,7 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.api.flow.flowlet.StreamEvent;
+import co.cask.cdap.api.stream.StreamEvent;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.template.etl.api.PipelineConfigurable;
@@ -106,7 +106,7 @@ public class ETLWorkerTest extends TestBase {
                        RealtimeCubeSink.class, RealtimeTableSink.class,
                        StreamSink.class, RealtimeElasticsearchSink.class);
     addTemplatePlugins(TEMPLATE_ID, "transforms-1.0.0.jar",
-                       ProjectionTransform.class, ScriptFilterTransform.class, 
+                       ProjectionTransform.class, ScriptFilterTransform.class,
                        StructuredRecordToGenericRecordTransform.class);
     deployTemplate(Id.Namespace.DEFAULT, TEMPLATE_ID, ETLRealtimeTemplate.class,
                    PipelineConfigurable.class.getPackage().getName(),

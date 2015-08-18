@@ -18,7 +18,7 @@ package co.cask.cdap.test;
 
 import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
-import co.cask.cdap.api.flow.flowlet.StreamEvent;
+import co.cask.cdap.api.stream.StreamEvent;
 
 /**
  *

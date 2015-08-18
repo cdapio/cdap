@@ -87,7 +87,7 @@ public class DistributedSparkProgramRunner extends AbstractDistributedProgramRun
 
   private static Configuration createConfiguration(Configuration hConf) {
     Configuration configuration = new Configuration(hConf);
-    configuration.set(SparkContextConfig.HCONF_ATTR_EXECUTION_MODE, SparkContextConfig.YARN_EXECUTION_MODE);
+    configuration.setBoolean(SparkContextConfig.HCONF_ATTR_CLUSTER_MODE, true);
     return configuration;
   }
 }

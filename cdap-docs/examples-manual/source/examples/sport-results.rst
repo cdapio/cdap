@@ -100,7 +100,7 @@ the ``totals`` PartitionedFileSet. The ``beforeSubmit()`` method prepares the Ma
 
 .. literalinclude:: /../../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/ScoreCounter.java
     :language: java
-    :lines: 57-83
+    :lines: 56-82
     :dedent: 2
 
 It is worth mentioning that nothing else in ``ScoreCounter`` is specifically programmed to use file partitions.

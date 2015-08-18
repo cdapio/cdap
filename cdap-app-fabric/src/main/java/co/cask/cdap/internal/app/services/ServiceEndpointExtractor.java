@@ -26,6 +26,7 @@ import com.google.common.reflect.TypeToken;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Set;
 import javax.ws.rs.DELETE;
@@ -48,14 +49,13 @@ public final class ServiceEndpointExtractor extends MethodVisitor {
   }
 
   @Override
-  public void visit(Object instance, TypeToken<?> inspectType,
-                    TypeToken<?> declareType, Method method) throws Exception {
+  public void visit(Object instance, Type inspectType, Type declareType, Method method) throws Exception {
 
     if (!Modifier.isPublic(method.getModifiers())) {
       return;
     }
 
-    Path classPathAnnotation = inspectType.getRawType().getAnnotation(Path.class);
+    Path classPathAnnotation = TypeToken.of(inspectType).getRawType().getAnnotation(Path.class);
     Path methodPathAnnotation = method.getAnnotation(Path.class);
 
     if (methodPathAnnotation == null && classPathAnnotation == null) {

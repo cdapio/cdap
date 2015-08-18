@@ -41,9 +41,10 @@ public class SparkContextConfig {
   private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
   private static final Type ARGS_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
-  public static final String HCONF_ATTR_EXECUTION_MODE = "cdap.spark.execution.mode";
-  public static final String LOCAL_EXECUTION_MODE = "local";
-  public static final String YARN_EXECUTION_MODE = "yarn-client";
+  /**
+   * Configuration key for boolean value to tell whether Spark program is executed on a cluster or not.
+   */
+  public static final String HCONF_ATTR_CLUSTER_MODE = "cdap.spark.cluster.mode";
 
   private static final String HCONF_ATTR_PROGRAM_SPEC = "cdap.spark.program.spec";
   private static final String HCONF_ATTR_PROGRAM_ID = "cdap.spark.program.id";
@@ -73,7 +74,7 @@ public class SparkContextConfig {
    * Returns true if in local mode.
    */
   public boolean isLocal() {
-    return LOCAL_EXECUTION_MODE.equals(getExecutionMode());
+    return !hConf.getBoolean(HCONF_ATTR_CLUSTER_MODE, false);
   }
 
   /**
@@ -89,10 +90,6 @@ public class SparkContextConfig {
     setWorkflowToken(context.getWorkflowToken());
 
     return this;
-  }
-
-  public String getExecutionMode() {
-    return hConf.get(HCONF_ATTR_EXECUTION_MODE, LOCAL_EXECUTION_MODE);
   }
 
   /**

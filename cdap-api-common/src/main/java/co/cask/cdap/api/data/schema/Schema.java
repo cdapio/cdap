@@ -19,24 +19,24 @@ package co.cask.cdap.api.data.schema;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.internal.io.SQLSchemaParser;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableBiMap;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
-import com.google.common.io.CharStreams;
 import com.google.gson.stream.JsonWriter;
 
 import java.io.IOException;
 import java.io.Reader;
+import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -68,7 +68,7 @@ public final class Schema {
 
     private final boolean simpleType;
 
-    private Type(boolean primitive) {
+    Type(boolean primitive) {
       this.simpleType = primitive;
     }
 
@@ -195,7 +195,9 @@ public final class Schema {
    * @return A {@link Schema} with the given type.
    */
   public static Schema of(Type type) {
-    Preconditions.checkArgument(type.isSimpleType(), "Type %s is not a simple type.", type);
+    if (!type.isSimpleType()) {
+      throw new IllegalArgumentException("Type " + type + " is not a simple type.");
+    }
     return new Schema(type, null, null, null, null, null, null, null);
   }
 
@@ -207,7 +209,9 @@ public final class Schema {
    * @return A nullable version of the given {@link Schema}.
    */
   public static Schema nullableOf(Schema schema) {
-    Preconditions.checkArgument(schema.type != Type.NULL, "Given schema must not be the null type.");
+    if (schema.type == Type.NULL) {
+      throw new IllegalArgumentException("Given schema must not be the null type.");
+    }
     return Schema.unionOf(schema, Schema.of(Type.NULL));
   }
 
@@ -220,7 +224,7 @@ public final class Schema {
    * @return A {@link Schema} of {@link Type#ENUM ENUM} type.
    */
   public static Schema enumWith(String...values) {
-    return enumWith(ImmutableList.copyOf(values));
+    return enumWith(Arrays.asList(values));
   }
 
   /**
@@ -232,9 +236,15 @@ public final class Schema {
    * @return A {@link Schema} of {@link Type#ENUM ENUM} type.
    */
   public static Schema enumWith(Iterable<String> values) {
-    Set<String> uniqueValues = ImmutableSet.copyOf(values);
-    Preconditions.checkArgument(uniqueValues.size() > 0, "No enum value provided.");
-    Preconditions.checkArgument(Iterables.size(values) == uniqueValues.size(), "Duplicate enum value is not allowed.");
+    Set<String> uniqueValues = new LinkedHashSet<>();
+    for (String value : values) {
+      if (!uniqueValues.add(value)) {
+        throw new IllegalArgumentException("Duplicate enum value is not allowed.");
+      }
+    }
+    if (uniqueValues.isEmpty()) {
+      throw new IllegalArgumentException("No enum value provided.");
+    }
     return new Schema(Type.ENUM, uniqueValues, null, null, null, null, null, null);
   }
 
@@ -282,7 +292,9 @@ public final class Schema {
    * @return A {@link Schema} of {@link Type#RECORD RECORD} type.
    */
   public static Schema recordOf(String name) {
-    Preconditions.checkNotNull(name, "Record name cannot be null.");
+    if (name == null) {
+      throw new IllegalArgumentException("Record name cannot be null.");
+    }
     return new Schema(Type.RECORD, null, null, null, null, name, null, null);
   }
 
@@ -295,7 +307,7 @@ public final class Schema {
    * @return A {@link Schema} of {@link Type#RECORD RECORD} type.
    */
   public static Schema recordOf(String name, Field...fields) {
-    return recordOf(name, ImmutableList.copyOf(fields));
+    return recordOf(name, Arrays.asList(fields));
   }
 
   /**
@@ -307,13 +319,16 @@ public final class Schema {
    * @return A {@link Schema} of {@link Type#RECORD RECORD} type.
    */
   public static Schema recordOf(String name, Iterable<Field> fields) {
-    Preconditions.checkNotNull(name, "Record name cannot be null.");
-    ImmutableMap.Builder<String, Field> fieldMapBuilder = ImmutableMap.builder();
-    for (Field field : fields) {
-      fieldMapBuilder.put(field.getName(), field);
+    if (name == null) {
+      throw new IllegalArgumentException("Record name cannot be null.");
     }
-    Map<String, Field> fieldMap = fieldMapBuilder.build();
-    Preconditions.checkArgument(fieldMap.size() > 0, "No record field provided for %s", name);
+    Map<String, Field> fieldMap = new LinkedHashMap<>();
+    for (Field field : fields) {
+      fieldMap.put(field.getName(), field);
+    }
+    if (fieldMap.isEmpty()) {
+      throw new IllegalArgumentException("No record field provided for " + name);
+    }
     return new Schema(Type.RECORD, null, null, null, null, name, fieldMap, null);
   }
 
@@ -325,7 +340,7 @@ public final class Schema {
    * @return A {@link Schema} of {@link Type#UNION UNION} type.
    */
   public static Schema unionOf(Schema...schemas) {
-    return unionOf(ImmutableList.copyOf(schemas));
+    return unionOf(Arrays.asList(schemas));
   }
 
   /**
@@ -336,8 +351,13 @@ public final class Schema {
    * @return A {@link Schema} of {@link Type#UNION UNION} type.
    */
   public static Schema unionOf(Iterable<Schema> schemas) {
-    List<Schema> schemaList = ImmutableList.copyOf(schemas);
-    Preconditions.checkArgument(schemaList.size() > 0, "No union schema provided.");
+    List<Schema> schemaList = new ArrayList<>();
+    for (Schema schema : schemas) {
+      schemaList.add(schema);
+    }
+    if (schemaList.isEmpty()) {
+      throw new IllegalArgumentException("No union schema provided.");
+    }
     return new Schema(Type.UNION, null, null, null, null, null, null, schemaList);
   }
 
@@ -369,11 +389,12 @@ public final class Schema {
     this.componentSchema = componentSchema;
     this.keySchema = keySchema;
     this.valueSchema = valueSchema;
-    this.mapSchema = (keySchema == null || valueSchema == null) ? null : Maps.immutableEntry(keySchema, valueSchema);
+    this.mapSchema = (keySchema == null || valueSchema == null) ? null : immutableEntry(keySchema, valueSchema);
     this.recordName = recordName;
     this.fieldMap = populateRecordFields(fieldMap);
-    this.fields = this.fieldMap == null ? null : ImmutableList.copyOf(this.fieldMap.values());
-    this.unionSchemas = unionSchemas;
+    this.fields = this.fieldMap == null ? null : Collections.unmodifiableList(new ArrayList<>(this.fieldMap.values()));
+    this.unionSchemas = Collections.unmodifiableList(unionSchemas == null ? new ArrayList<Schema>()
+                                                                          : new ArrayList<>(unionSchemas));
   }
 
   /**
@@ -592,6 +613,47 @@ public final class Schema {
     return firstSchema.getType() == Type.NULL ? unionSchemas.get(1) : firstSchema;
   }
 
+  private <K, V> Map.Entry<K, V> immutableEntry(final K key, final V value) {
+    return new Map.Entry<K, V>() {
+      @Override
+      public K getKey() {
+        return key;
+      }
+
+      @Override
+      public V getValue() {
+        return value;
+      }
+
+      @Override
+      public V setValue(V value) {
+        throw new UnsupportedOperationException("Mutation to entry not supported");
+      }
+
+      @Override
+      public String toString() {
+        return getKey() + "=" + getValue();
+      }
+
+      @Override
+      public boolean equals(Object obj) {
+        if (obj == null) {
+          return false;
+        }
+        if (!(obj instanceof Map.Entry)) {
+          return false;
+        }
+        Map.Entry other = (Map.Entry) obj;
+        return Objects.equals(key, other.getKey()) && Objects.equals(value, other.getValue());
+      }
+
+      @Override
+      public int hashCode() {
+        return Objects.hash(getKey(), getValue());
+      }
+    };
+  }
+
   private boolean checkCompatible(Schema target, Multimap<String, String> recordCompared) {
     if (type.isSimpleType()) {
       if (type == target.getType()) {
@@ -700,9 +762,9 @@ public final class Schema {
       return null;
     }
 
-    Map<String, Schema> knownRecordSchemas = Maps.newHashMap();
+    Map<String, Schema> knownRecordSchemas = new HashMap<>();
     knownRecordSchemas.put(recordName, this);
-    ImmutableMap.Builder<String, Field> builder = ImmutableMap.builder();
+    Map<String, Field> resolvedFields = new LinkedHashMap<>();
 
     for (Map.Entry<String, Field> fieldEntry : fields.entrySet()) {
       String fieldName = fieldEntry.getKey();
@@ -710,13 +772,13 @@ public final class Schema {
       Schema fieldSchema = resolveSchema(field.getSchema(), knownRecordSchemas);
 
       if (fieldSchema == field.getSchema()) {
-        builder.put(fieldName, field);
+        resolvedFields.put(fieldName, field);
       } else {
-        builder.put(fieldName, Field.of(fieldName, fieldSchema));
+        resolvedFields.put(fieldName, Field.of(fieldName, fieldSchema));
       }
     }
 
-    return builder.build();
+    return Collections.unmodifiableMap(resolvedFields);
   }
 
   /**
@@ -741,21 +803,23 @@ public final class Schema {
         return (keySchema == entry.getKey() && valueSchema == entry.getValue()) ?
                 schema : Schema.mapOf(keySchema, valueSchema);
       case UNION:
-        ImmutableList.Builder<Schema> schemaBuilder = ImmutableList.builder();
+        List<Schema> schemas = new ArrayList<>();
         boolean changed = false;
         for (Schema input : schema.getUnionSchemas()) {
           Schema output = resolveSchema(input, knownRecordSchemas);
           if (output != input) {
             changed = true;
           }
-          schemaBuilder.add(output);
+          schemas.add(output);
         }
-        return changed ? Schema.unionOf(schemaBuilder.build()) : schema;
+        return changed ? Schema.unionOf(schemas) : schema;
       case RECORD:
         if (schema.fields == null) {
           // It is a named record that refers to previously defined record
           Schema knownSchema = knownRecordSchemas.get(schema.recordName);
-          Preconditions.checkArgument(knownSchema != null, "Undefined schema %s", schema.recordName);
+          if (knownSchema == null) {
+            throw new IllegalArgumentException("Undefined schema " + schema.recordName);
+          }
           return knownSchema;
         } else {
           // It is a concrete schema
@@ -775,15 +839,14 @@ public final class Schema {
     if (type.isSimpleType()) {
       return '"' + type.name().toLowerCase() + '"';
     }
-    StringBuilder builder = new StringBuilder();
-    JsonWriter writer = new JsonWriter(CharStreams.asWriter(builder));
-    try {
-      SCHEMA_TYPE_ADAPTER.write(writer, this);
-      writer.close();
-      return builder.toString();
+
+    StringWriter writer = new StringWriter();
+    try (JsonWriter jsonWriter = new JsonWriter(writer)) {
+      SCHEMA_TYPE_ADAPTER.write(jsonWriter, this);
     } catch (IOException e) {
-      // It should never throw IOException on the StringBuilder Writer, if it does, something very wrong.
-      throw Throwables.propagate(e);
+      // It should never throw IOException on the StringWriter, if it does, something very wrong.
+      throw new RuntimeException(e);
     }
+    return writer.toString();
   }
 }
