@@ -63,5 +63,5 @@ name = 'web_app'
 default['cdap'][name]['user'] = 'cdap'
 default['cdap'][name]['init_name'] = name.split('_').map(&:capitalize).join(' ')
 default['cdap'][name]['init_krb5'] = false
-default['cdap'][name]['init_cmd'] = "/opt/cdap/#{name}/bin/svc-#{name.gsub('_', '-')}"
+default['cdap'][name]['init_cmd'] = "/opt/cdap/#{name}/bin/svc-#{name.tr('_', '-')}"
 default['cdap'][name]['init_actions'] = [:nothing]
