@@ -29,7 +29,7 @@
 
   <artifactId>cdap-master</artifactId>
   <name>CDAP Master</name>
-  <packaging>jar</packaging>
+  <packaging>pom</packaging>
 
   <dependencies>
     <dependency>

@@ -21,7 +21,8 @@ import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.format.UnexpectedFormatException;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
-import co.cask.cdap.api.flow.flowlet.StreamEvent;
+import co.cask.cdap.api.stream.StreamEvent;
+import co.cask.cdap.spi.stream.AbstractStreamEventRecordFormat;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.avro.SchemaParseException;
 import org.apache.avro.io.BinaryDecoder;
@@ -39,7 +40,7 @@ import javax.annotation.concurrent.NotThreadSafe;
 /**
  * Stream record format that interprets the body as avro encoded binary data.
  */
-public class AvroRecordFormat extends StreamEventRecordFormat<StructuredRecord> {
+public class AvroRecordFormat extends AbstractStreamEventRecordFormat<StructuredRecord> {
   private final ByteBufferInputStream byteBufferInput = new ByteBufferInputStream(ByteBuffer.wrap(new byte[0]));
   private final DecoderFactory decoderFactory = DecoderFactory.get();
 

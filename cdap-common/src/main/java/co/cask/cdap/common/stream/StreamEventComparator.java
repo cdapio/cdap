@@ -15,7 +15,7 @@
  */
 package co.cask.cdap.common.stream;
 
-import co.cask.cdap.api.flow.flowlet.StreamEvent;
+import co.cask.cdap.api.stream.StreamEvent;
 import com.google.common.primitives.Longs;
 
 import java.util.Comparator;

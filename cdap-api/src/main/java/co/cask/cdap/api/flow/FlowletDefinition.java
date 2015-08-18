@@ -22,7 +22,7 @@ import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.Flowlet;
 import co.cask.cdap.api.flow.flowlet.FlowletSpecification;
-import co.cask.cdap.api.flow.flowlet.StreamEvent;
+import co.cask.cdap.api.stream.StreamEvent;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.internal.flow.DefaultFlowletConfigurer;
 import co.cask.cdap.internal.flowlet.DefaultFlowletSpecification;

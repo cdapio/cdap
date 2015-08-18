@@ -15,7 +15,7 @@
  */
 package co.cask.cdap.data.stream;
 
-import co.cask.cdap.api.flow.flowlet.StreamEvent;
+import co.cask.cdap.api.stream.StreamEvent;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.data.file.FileReader;
 import co.cask.cdap.data.file.FileWriter;

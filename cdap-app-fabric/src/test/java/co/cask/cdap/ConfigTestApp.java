@@ -26,7 +26,7 @@ import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.flow.AbstractFlow;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.FlowletConfigurer;
-import co.cask.cdap.api.flow.flowlet.StreamEvent;
+import co.cask.cdap.api.stream.StreamEvent;
 import co.cask.cdap.api.worker.AbstractWorker;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;

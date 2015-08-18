@@ -17,8 +17,8 @@
 package co.cask.cdap.data.stream.decoder;
 
 import co.cask.cdap.api.data.format.RecordFormat;
-import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.stream.GenericStreamEventData;
+import co.cask.cdap.api.stream.StreamEvent;
 import co.cask.cdap.api.stream.StreamEventDecoder;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;

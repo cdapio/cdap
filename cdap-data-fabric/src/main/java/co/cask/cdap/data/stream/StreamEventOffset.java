@@ -15,7 +15,7 @@
  */
 package co.cask.cdap.data.stream;
 
-import co.cask.cdap.api.flow.flowlet.StreamEvent;
+import co.cask.cdap.api.stream.StreamEvent;
 
 /**
  * This class is a {@link StreamEvent} that also carries the corresponding {@link StreamFileOffset} that mark
