@@ -37,6 +37,7 @@ import com.google.inject.Inject;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.ServiceAnnouncer;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.filesystem.LocationFactory;
 
 /**
  * A {@link ProgramRunner} that runs a component inside a Service (either a HTTP Server or a Worker).
@@ -50,12 +51,13 @@ public class ServiceProgramRunner implements ProgramRunner {
   private final TransactionSystemClient txClient;
   private final ServiceAnnouncer serviceAnnouncer;
   private final DataFabricFacadeFactory dataFabricFacadeFactory;
+  private final LocationFactory locationFactory;
 
   @Inject
   public ServiceProgramRunner(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
                               DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient,
                               TransactionSystemClient txClient, ServiceAnnouncer serviceAnnouncer,
-                              DataFabricFacadeFactory dataFabricFacadeFactory) {
+                              DataFabricFacadeFactory dataFabricFacadeFactory, LocationFactory locationFactory) {
     this.cConf = cConf;
     this.metricsCollectionService = metricsCollectionService;
     this.datasetFramework = datasetFramework;
@@ -63,6 +65,7 @@ public class ServiceProgramRunner implements ProgramRunner {
     this.txClient = txClient;
     this.serviceAnnouncer = serviceAnnouncer;
     this.dataFabricFacadeFactory = dataFabricFacadeFactory;
+    this.locationFactory = locationFactory;
   }
 
   @Override
@@ -96,7 +99,7 @@ public class ServiceProgramRunner implements ProgramRunner {
     ServiceHttpServer component = new ServiceHttpServer(host, program, spec, runId, options.getUserArguments(),
                                       instanceId, instanceCount, serviceAnnouncer,
                                       metricsCollectionService, datasetFramework, dataFabricFacadeFactory,
-                                      txClient, discoveryServiceClient);
+                                      txClient, discoveryServiceClient, locationFactory);
 
     ProgramControllerServiceAdapter controller = new ServiceProgramControllerAdapter(component, componentName, runId);
     component.start();

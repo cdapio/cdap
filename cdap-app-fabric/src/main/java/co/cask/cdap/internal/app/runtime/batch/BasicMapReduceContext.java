@@ -47,6 +47,7 @@ import com.google.common.collect.Maps;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.filesystem.LocationFactory;
 
 import java.util.List;
 import java.util.Map;
@@ -87,11 +88,14 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
                                DiscoveryServiceClient discoveryServiceClient,
                                MetricsCollectionService metricsCollectionService,
                                DatasetFramework dsFramework,
+                               LocationFactory locationFactory,
                                @Nullable AdapterDefinition adapterSpec,
-                               @Nullable PluginInstantiator pluginInstantiator) {
+                               @Nullable PluginInstantiator pluginInstantiator,
+                               @Nullable PluginInstantiator artifactPluginInstantiator) {
     super(program, runId, runtimeArguments, datasets,
           getMetricCollector(program, runId.getId(), taskId, metricsCollectionService, type, adapterSpec),
-          dsFramework, discoveryServiceClient, adapterSpec, pluginInstantiator, null);
+          dsFramework, discoveryServiceClient, locationFactory, adapterSpec, pluginInstantiator,
+          artifactPluginInstantiator);
     this.logicalStartTime = logicalStartTime;
     this.programNameInWorkflow = programNameInWorkflow;
     this.workflowToken = workflowToken;
@@ -126,7 +130,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
 
   @Override
   public Map<String, Plugin> getPlugins() {
-    return null;
+    return spec.getPlugins();
   }
 
   @Override

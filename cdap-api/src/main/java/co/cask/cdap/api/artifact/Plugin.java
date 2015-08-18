@@ -19,27 +19,44 @@ package co.cask.cdap.api.artifact;
 import co.cask.cdap.api.templates.plugins.PluginClass;
 import co.cask.cdap.api.templates.plugins.PluginProperties;
 
+import java.net.URI;
 import java.util.Objects;
 
 /**
  * A container class for holding plugin information for an adapter instance.
  */
 public final class Plugin {
-  private final ArtifactDescriptor artifactDescriptor;
+  private final String pluginName;
+  private final ArtifactVersion artifactVersion;
+  private final Boolean isSystem;
+  private final URI locationURI;
   private final PluginClass pluginClass;
   private final PluginProperties properties;
 
-  public Plugin(ArtifactDescriptor artifactDescriptor, PluginClass pluginClass, PluginProperties properties) {
-    this.artifactDescriptor = artifactDescriptor;
+  public Plugin(String pluginName, ArtifactVersion artifactVersion, boolean isSystem, URI locationURI,
+                PluginClass pluginClass, PluginProperties properties) {
+    this.pluginName = pluginName;
+    this.artifactVersion = artifactVersion;
+    this.isSystem = isSystem;
+    this.locationURI = locationURI;
     this.pluginClass = pluginClass;
     this.properties = properties;
   }
 
-  /**
-   * Returns the plugin information.
-   */
-  public ArtifactDescriptor getArtifactDescriptor() {
-    return artifactDescriptor;
+  public String getPluginName() {
+    return pluginName;
+  }
+
+  public ArtifactVersion getArtifactVersion() {
+    return artifactVersion;
+  }
+
+  public boolean isSystem() {
+    return isSystem;
+  }
+
+  public URI getLocationURI() {
+    return locationURI;
   }
 
   /**
@@ -67,21 +84,27 @@ public final class Plugin {
 
     Plugin that = (Plugin) o;
 
-    return artifactDescriptor.equals(that.artifactDescriptor)
+    return pluginName.equals(that.pluginName)
+      && artifactVersion.equals(that.artifactVersion)
+      && isSystem.equals(that.isSystem)
+      && locationURI.equals(that.locationURI)
       && pluginClass.equals(that.pluginClass)
       && properties.equals(that.properties);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(artifactDescriptor, pluginClass, properties);
+    return Objects.hash(pluginName, artifactVersion, isSystem, locationURI, pluginClass, properties);
   }
 
   @Override
   public String toString() {
     return "AdapterPlugin{" +
+      "pluginName=" + pluginName +
+      "artifactVersion=" + artifactVersion +
+      "isSystem=" + isSystem +
+      "locationURI=" + locationURI +
       "pluginClass=" + pluginClass +
-      ", pluginInfo=" + artifactDescriptor +
       ", properties=" + properties +
       '}';
   }

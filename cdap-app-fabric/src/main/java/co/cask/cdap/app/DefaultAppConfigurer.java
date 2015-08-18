@@ -123,7 +123,8 @@ public class DefaultAppConfigurer extends DefaultDatasetConfigurer implements Ap
   @Override
   public void addMapReduce(MapReduce mapReduce) {
     Preconditions.checkArgument(mapReduce != null, "MapReduce cannot be null.");
-    DefaultMapReduceConfigurer configurer = new DefaultMapReduceConfigurer(mapReduce);
+    DefaultMapReduceConfigurer configurer = new DefaultMapReduceConfigurer(mapReduce, artifactId, artifactRepository,
+                                                                           pluginInstantiator);
     mapReduce.configure(configurer);
 
     addStreams(configurer.getStreams());

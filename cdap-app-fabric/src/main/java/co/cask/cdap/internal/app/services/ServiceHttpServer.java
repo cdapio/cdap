@@ -58,6 +58,7 @@ import org.apache.twill.api.RunId;
 import org.apache.twill.api.ServiceAnnouncer;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -99,6 +100,7 @@ public class ServiceHttpServer extends AbstractIdleService {
   private final TransactionSystemClient txClient;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final BasicHttpServiceContextFactory contextFactory;
+  private final LocationFactory locationFactory;
 
   private NettyHttpService service;
   private Cancellable cancelDiscovery;
@@ -108,7 +110,7 @@ public class ServiceHttpServer extends AbstractIdleService {
                            int instanceId, int instanceCount, ServiceAnnouncer serviceAnnouncer,
                            MetricsCollectionService metricsCollectionService, DatasetFramework datasetFramework,
                            DataFabricFacadeFactory dataFabricFacadeFactory, TransactionSystemClient txClient,
-                           DiscoveryServiceClient discoveryServiceClient) {
+                           DiscoveryServiceClient discoveryServiceClient, LocationFactory locationFactory) {
     this.host = host;
     this.program = program;
     this.spec = spec;
@@ -122,6 +124,7 @@ public class ServiceHttpServer extends AbstractIdleService {
     this.dataFabricFacadeFactory = dataFabricFacadeFactory;
     this.txClient = txClient;
     this.discoveryServiceClient = discoveryServiceClient;
+    this.locationFactory = locationFactory;
 
     this.contextFactory = createHttpServiceContextFactory();
     this.handlerReferences = Maps.newConcurrentMap();
@@ -164,7 +167,7 @@ public class ServiceHttpServer extends AbstractIdleService {
       public BasicHttpServiceContext create(HttpServiceHandlerSpecification spec) {
         return new BasicHttpServiceContext(spec, program, runId, instanceId, instanceCount, runtimeArgs,
                                            metricsCollectionService, datasetFramework,
-                                           discoveryServiceClient, txClient);
+                                           discoveryServiceClient, txClient, locationFactory);
       }
     };
   }

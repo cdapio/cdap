@@ -222,8 +222,11 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       // Alter the configuration ClassLoader to a MapReduceClassLoader that supports plugin
       // It is mainly for standalone mode to have the same ClassLoader as in distributed mode
       // It can only be constructed here because we need to have all adapter plugins information
-      classLoader = new MapReduceClassLoader(context.getProgram().getClassLoader(), context.getAdapterSpecification(),
-                                             context.getPluginInstantiator());
+      classLoader = new MapReduceClassLoader(context.getProgram().getClassLoader(),
+                                             context.getSpecification(),
+                                             context.getAdapterSpecification(),
+                                             context.getPluginInstantiator(),
+                                             context.getArtifactPluginInstantiator());
       mapredConf.setClassLoader(new WeakReferenceDelegatorClassLoader(classLoader));
       ClassLoaders.setContextClassLoader(mapredConf.getClassLoader());
 

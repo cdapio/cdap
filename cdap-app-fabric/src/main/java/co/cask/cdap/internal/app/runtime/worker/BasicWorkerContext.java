@@ -56,6 +56,7 @@ import com.google.common.cache.RemovalNotification;
 import com.google.common.collect.Maps;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -92,12 +93,14 @@ public class BasicWorkerContext extends AbstractContext implements WorkerContext
                             TransactionSystemClient transactionSystemClient,
                             DiscoveryServiceClient discoveryServiceClient,
                             StreamWriterFactory streamWriterFactory,
+                            LocationFactory locationFactory,
                             @Nullable AdapterDefinition adapterSpec,
                             @Nullable PluginInstantiator pluginInstantiator,
                             @Nullable PluginInstantiator artifactPluginInstantiator) {
     super(program, runId, runtimeArgs, spec.getDatasets(),
           getMetricCollector(program, runId.getId(), instanceId, metricsCollectionService, adapterSpec),
-          datasetFramework, discoveryServiceClient, adapterSpec, pluginInstantiator, artifactPluginInstantiator);
+          datasetFramework, discoveryServiceClient, locationFactory, adapterSpec,
+          pluginInstantiator, artifactPluginInstantiator);
     this.program = program;
     this.specification = spec;
     this.instanceId = instanceId;
