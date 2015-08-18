@@ -151,7 +151,6 @@ angular.module(PKG.name + '.commons')
         if (this.isDisabled) {
           connObj.detachable = false;
         }
-
         this.instance.connect(connObj);
       }
     }
@@ -210,7 +209,8 @@ angular.module(PKG.name + '.commons')
         this.instance.bind('connection', function () {
           MyPlumbService.setConnections(this.instance.getConnections());
         }.bind(this));
-        this.instance.bind('connectionDetached', function() {
+        this.instance.bind('connectionDetached', function(obj) {
+          obj.connection.unbind('click');
           MyPlumbService.setConnections(this.instance.getConnections());
         }.bind(this));
         $timeout(this.drawGraph.bind(this));

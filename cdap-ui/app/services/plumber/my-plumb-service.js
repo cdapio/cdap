@@ -31,7 +31,7 @@
 
 */
 angular.module(PKG.name + '.services')
-  .service('MyPlumbService', function(myAdapterApi, $q, $bootstrapModal, $state, $filter, mySettings, AdapterErrorFactory, IMPLICIT_SCHEMA, myHelpers, PluginConfigFactory, ModalConfirm, EventPipe) {
+  .service('MyPlumbService', function(myAdapterApi, $q, $bootstrapModal, $state, $filter, mySettings, AdapterErrorFactory, IMPLICIT_SCHEMA, myHelpers, PluginConfigFactory, ModalConfirm, EventPipe, $tooltip) {
 
     var countSink = 0,
         countSource = 0,
@@ -189,6 +189,11 @@ angular.module(PKG.name + '.services')
           source: con.sourceId,
           target: con.targetId
         });
+
+
+        $tooltip(angular.element(con.canvas), {title: 'edwin', trigger: 'click', target: angular.element(con.canvas)});
+
+
       });
       localConnections = orderConnections.call(this, angular.copy(localConnections), angular.copy(localConnections));
       this.connections = localConnections;
