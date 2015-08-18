@@ -79,4 +79,11 @@ function ($scope, $state, rDashboardsModel, MY_CONFIG, $alert, $timeout) {
         restrict: 'E',
         templateUrl: '/assets/features/dashboard/templates/partials/tab-dd.html'
     };
+})
+.directive('widgetDdMenu', function() {
+  return {
+    replace: true,
+    restrict: 'E',
+    templateUrl: '/assets/features/dashboard/templates/partials/wdgt-dd.html'
+  };
 });

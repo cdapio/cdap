@@ -1,9 +1,10 @@
-<div class="dropdown">
+<div is-open="wdgt['isOpen']" dropdown>
   <a class="btn dropdown-toggle"
      role="toolbar"
-     ng-click="ddWidget($event)"
+     ng-click="wdgt.ddWidget($event)"
      no-drag>
     <span class="fa fa-ellipsis-h"></span>
   </a>
+  <widget-dd-menu></widget-dd-menu>
 </div>
 <span ng-bind="wdgt.title | myEllipsis: 36 "></span>
