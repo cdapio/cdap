@@ -15,19 +15,19 @@ debugging exceptions such as ``ClassCastException`` and ``ClassNotFoundException
 others. In this advanced section, we will talk about how Java class loading works and how
 we designed an extensible application framework with a flexible class loading strategy.
 
+Class Loading in Java
+=====================
+
 In Java, a class represents the code to be executed by the Java Virtual Machine (JVM).
 Before a class can be used, it needs to be loaded into the JVM process. A loaded class is
 represented by an instance of ``java.lang.Class``. There is a special class responsible for
 performing the class loading: the ``java.lang.ClassLoader``.
 
-Class Loading in Java
-=====================
-
 Before we dive into details of class loading, let’s first establish some basic concepts.
 First of all, class loaders in Java are hierarchical. Each class loader has a parent,
-except for the root class loader, which is called the bootstrap class loader. When a JVM
-process starts, it will create three class loaders: the bootstrap, the extension, and the
-system class loaders. These load the three different sets of classes provided by the JVM:
+except for the root class loader, which is called the **bootstrap class loader**. When a JVM
+process starts, it will create three class loaders: the *bootstrap*, the *extension*, and the
+*system* class loaders. These load the three different sets of classes provided by the JVM:
 
 .. image:: ../_images/class-loading/class-loading01.png
    :width: 6in
@@ -42,7 +42,7 @@ through the ``$CLASSPATH`` environment variable.
 
 In addition, an application can create custom class loaders for controlling class loading
 behaviors, such as supporting different versions of the same library in the same JVM or
-finding class files that were not in the classpath when JVM started.
+finding class files that were not in the classpath when the JVM started.
 
 Parent Delegation Model
 =======================
@@ -70,7 +70,7 @@ one for a given class. You may have the same class file available to multiple cl
 loaders in the hierarchy, but only the one highest in the hierarchy will be the defining
 class loader. For example, class files for all core Java classes are in the
 ``$JAVA_HOME/lib/rt.jar`` file. The bootstrap class loader uses it to find class files when
-loading core classes. If someone starts the JVM by running “``java -cp rt.jar...``”, the same
+loading core classes. If someone starts a JVM by running “``java -cp rt.jar...``”, the same
 set of class files will be available to the system class loader as well. However, because
 of the parent delegation model, all core Java classes will have the bootstrap class loader
 as the defining class loader, and never the system class loader.
@@ -134,8 +134,8 @@ Class Loading in Hadoop MapReduce and Apache Spark
 One of the major challenges faced when we integrate CDAP with data processing frameworks,
 such as Hadoop MapReduce and Apache Spark, is the class loading. Both frameworks use a
 flat classpath approach. For example, in Hadoop MapReduce, all the job classes, the
-libraries that the job needs, together with the Hadoop libraries and their dependencies
-are in one classpath. The classpath is used to create a single class loader, which load
+libraries that the job needs, together with the Hadoop libraries and their dependencies,
+are in one classpath. The classpath is used to create a single class loader, which loads
 classes by sequentially searching through the classpath. This approach doesn’t provide the
 class loading isolation that is desired. For example, if a Hadoop MapReduce job requires a
 different version of a library than the one used by the Hadoop framework in the cluster,
