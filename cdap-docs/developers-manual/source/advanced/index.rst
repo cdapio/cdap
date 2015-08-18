@@ -11,18 +11,13 @@ Advanced Topics
 .. toctree::
    :maxdepth: 1
    
-    Best Practices <best-practices>
     Application Logback <application-logback>
+    Best Practices <best-practices>
+    Class Loading <class-loading>
 
 
 This section of the documentation includes articles that cover advanced topics on CDAP that
 will be of interest to developers who want a deeper dive into CDAP:
-
-.. |best-practices| replace:: **Best Practices:**
-.. _best-practices: best-practices.html
-
-- |best-practices|_ Suggestions when developing a CDAP application.
-
 
 .. |application-logback| replace:: **Application Logback:**
 .. _application-logback: application-logback.html
@@ -30,10 +25,16 @@ will be of interest to developers who want a deeper dive into CDAP:
 - |application-logback|_ Adding a custom logback to a CDAP application.
 
 
+.. |best-practices| replace:: **Best Practices:**
+.. _best-practices: best-practices.html
+
+- |best-practices|_ Suggestions when developing a CDAP application.
+
+
 .. |class-loading| replace:: **Class Loading:**
 .. _class-loading: class-loading.html
 
-- |class-loading|_ How class loading works in CDAP.
+- |class-loading|_ Java Class Loading and Distributed Data Processing Frameworks.
 
 
 
