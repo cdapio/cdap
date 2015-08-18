@@ -138,7 +138,8 @@
     <twitter4j.version>4.0.3</twitter4j.version>
     <cask.packages.snapshot.repo>http://cask.invalid.snapshot.repo.co</cask.packages.snapshot.repo>
     <cask.packages.release.repo>http://cask.invalid.release.repo.co</cask.packages.release.repo>
-    <release.iteration>1</release.iteration>
+    <!-- package build number -->
+    <release.iteration>2</release.iteration>
   </properties>
 
   <dependencyManagement>
