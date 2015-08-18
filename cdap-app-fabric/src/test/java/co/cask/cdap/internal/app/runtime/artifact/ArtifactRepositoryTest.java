@@ -61,6 +61,7 @@ import org.junit.rules.TemporaryFolder;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -134,10 +135,17 @@ public class ArtifactRepositoryTest {
     createPluginJar(TestPlugin.class, new File(systemArtifactsDir, "myPlugin-1.0.0.jar"), manifest);
 
     // write plugins config file
+    Map<String, PluginPropertyField> emptyMap = Collections.emptyMap();
+    Set<PluginClass> manuallyAddedPlugins = ImmutableSet.of(
+      new PluginClass("typeA", "manual1", "desc", "co.cask.classname", null, emptyMap),
+      new PluginClass("typeB", "manual2", "desc", "co.cask.otherclassname", null, emptyMap)
+    );
     File pluginConfigFile = new File(systemArtifactsDir, "myPlugin-1.0.0.json");
     SystemArtifactConfig pluginConfig = SystemArtifactConfig.builder(pluginArtifactId, pluginConfigFile)
       .addParents(new ArtifactRange(
         Id.Namespace.SYSTEM, "PluginTest", new ArtifactVersion("0.9.0"), new ArtifactVersion("2.0.0")))
+      // add a dummy plugin to test explicit addition of plugins through the config file
+      .addPlugins(manuallyAddedPlugins)
       .build();
     try (BufferedWriter writer = Files.newWriter(pluginConfigFile, Charsets.UTF_8)) {
       writer.write(pluginConfig.toString());
@@ -155,7 +163,7 @@ public class ArtifactRepositoryTest {
     for (PluginClass pluginClass : pluginClasses) {
       pluginNames.add(pluginClass.getName());
     }
-    Assert.assertEquals(Sets.newHashSet("TestPlugin", "TestPlugin2"), pluginNames);
+    Assert.assertEquals(Sets.newHashSet("manual1", "manual2", "TestPlugin", "TestPlugin2"), pluginNames);
     Assert.assertEquals(systemAppArtifactId.getName(), appArtifactDetail.getDescriptor().getName());
     Assert.assertEquals(systemAppArtifactId.getVersion(), appArtifactDetail.getDescriptor().getVersion());
 
@@ -163,6 +171,8 @@ public class ArtifactRepositoryTest {
     ArtifactDetail pluginArtifactDetail = artifactRepository.getArtifact(pluginArtifactId);
     Assert.assertEquals(pluginArtifactId.getName(), pluginArtifactDetail.getDescriptor().getName());
     Assert.assertEquals(pluginArtifactId.getVersion(), pluginArtifactDetail.getDescriptor().getVersion());
+    // check manually added plugins are there
+    Assert.assertTrue(pluginArtifactDetail.getMeta().getClasses().getPlugins().containsAll(manuallyAddedPlugins));
   }
 
   @Test

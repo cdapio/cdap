@@ -29,6 +29,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.http.AbstractBodyConsumer;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
+import co.cask.cdap.internal.app.runtime.adapter.PluginClassDeserializer;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.PluginNotExistsException;
@@ -45,10 +46,13 @@ import co.cask.http.AbstractHttpHandler;
 import co.cask.http.BodyConsumer;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonParseException;
+import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -58,6 +62,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -84,9 +89,12 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(ArtifactHttpHandler.class);
   private static final String VERSION_HEADER = "Artifact-Version";
   private static final String EXTENDS_HEADER = "Artifact-Extends";
+  private static final String PLUGINS_HEADER = "Artifact-Plugins";
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+    .registerTypeAdapter(PluginClass.class, new PluginClassDeserializer())
     .create();
+  private static final Type PLUGINS_TYPE = new TypeToken<Set<PluginClass>>() { }.getType();
 
   private final ArtifactRepository artifactRepository;
   private final NamespaceAdmin namespaceAdmin;
@@ -323,7 +331,8 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
                                   @PathParam("namespace-id") String namespaceId,
                                   @PathParam("artifact-name") final String artifactName,
                                   @HeaderParam(VERSION_HEADER) final String artifactVersion,
-                                  @HeaderParam(EXTENDS_HEADER) final String parentArtifactsStr)
+                                  @HeaderParam(EXTENDS_HEADER) final String parentArtifactsStr,
+                                  @HeaderParam(PLUGINS_HEADER) String pluginClasses)
     throws NamespaceNotFoundException, BadRequestException {
 
     final Id.Namespace namespace = validateAndGetNamespace(namespaceId);
@@ -335,6 +344,19 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
     }
 
     final Set<ArtifactRange> parentArtifacts = parseExtendsHeader(namespace, parentArtifactsStr);
+
+    final Set<PluginClass> additionalPluginClasses;
+    if (pluginClasses == null) {
+      additionalPluginClasses = ImmutableSet.of();
+    } else {
+      try {
+        additionalPluginClasses = GSON.fromJson(pluginClasses, PLUGINS_TYPE);
+      } catch (JsonParseException e) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, String.format(
+          "%s header '%s' is invalid: %s", PLUGINS_HEADER, pluginClasses, e.getMessage()));
+        return null;
+      }
+    }
 
     try {
       // copy the artifact contents to local tmp directory
@@ -350,7 +372,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
             Id.Artifact artifactId = validateAndGetArtifactId(namespace, artifactName, version);
 
             // add the artifact to the repo
-            artifactRepository.addArtifact(artifactId, uploadedFile, parentArtifacts);
+            artifactRepository.addArtifact(artifactId, uploadedFile, parentArtifacts, additionalPluginClasses);
             responder.sendString(HttpResponseStatus.OK, "Artifact added successfully");
           } catch (ArtifactRangeNotFoundException e) {
             responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
