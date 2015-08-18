@@ -28,3 +28,12 @@ will be of interest to developers who want a deeper dive into CDAP:
 .. _application-logback: application-logback.html
 
 - |application-logback|_ Adding a custom logback to a CDAP application.
+
+
+.. |class-loading| replace:: **Class Loading:**
+.. _class-loading: class-loading.html
+
+- |class-loading|_ How class loading works in CDAP.
+
+
+
