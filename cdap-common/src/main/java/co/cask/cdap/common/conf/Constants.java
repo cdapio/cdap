@@ -52,7 +52,7 @@ public final class Constants {
   }
 
   /**
-   * Zookeeper Configuration.
+   * ZooKeeper Configuration.
    */
   public static final class Zookeeper {
     public static final String QUORUM = "zookeeper.quorum";
@@ -319,7 +319,7 @@ public final class Constants {
     // Period in seconds between two heartbeats in a stream service
     public static final int HEARTBEAT_INTERVAL = 2;
 
-    // Zookeeper namespace in which to keep the coordination metadata
+    // ZooKeeper namespace in which to keep the coordination metadata
     public static final String STREAM_ZK_COORDINATION_NAMESPACE = String.format("/%s/coordination", Service.STREAMS);
   }
 
@@ -834,7 +834,7 @@ public final class Constants {
     }
 
     /**
-     * Constants used by Zookeeper.
+     * Constants used by ZooKeeper.
      */
     public static final class Zookeeper {
       public static final String ENV_AUTH_PROVIDER_1 = "zookeeper.authProvider.1";

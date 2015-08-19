@@ -81,7 +81,7 @@ The *pageTitleStream* consumes events in the format returned by the Facebook "Li
 - Inject a file of Facebook "Likes" data to the stream *pageTitleStream* by running this command from the Standalone
   CDAP SDK directory, using the CDAP Command Line Interface::
 
-    $ cdap-cli.sh load stream pageTitleStream examples/WikipediaPipeline/resources/fb-likes.txt
+    $ cdap-cli.sh load stream pageTitleStream examples/WikipediaPipeline/resources/fb-likes-data.txt
     Successfully sent stream event to stream 'pageTitleStream'
 
 

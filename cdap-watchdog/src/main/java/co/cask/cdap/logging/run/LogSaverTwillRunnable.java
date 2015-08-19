@@ -115,8 +115,8 @@ public final class LogSaverTwillRunnable extends AbstractTwillRunnable {
       // Initialize ZK client
       String zookeeper = cConf.get(Constants.Zookeeper.QUORUM);
       if (zookeeper == null) {
-        LOG.error("No zookeeper quorum provided.");
-        throw new IllegalStateException("No zookeeper quorum provided.");
+        LOG.error("No ZooKeeper quorum provided.");
+        throw new IllegalStateException("No ZooKeeper quorum provided.");
       }
 
       Injector injector = createGuiceInjector(cConf, hConf);

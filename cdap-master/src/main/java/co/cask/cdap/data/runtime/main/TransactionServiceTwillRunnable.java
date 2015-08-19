@@ -88,7 +88,7 @@ public class TransactionServiceTwillRunnable extends AbstractMasterTwillRunnable
       LOG.info("{} Setting host name to {}", name, context.getHost().getCanonicalHostName());
 
 
-      //Get Zookeeper and Kafka Client Instances
+      //Get ZooKeeper and Kafka Client Instances
       zkClient = injector.getInstance(ZKClientService.class);
       kafkaClient = injector.getInstance(KafkaClientService.class);
 

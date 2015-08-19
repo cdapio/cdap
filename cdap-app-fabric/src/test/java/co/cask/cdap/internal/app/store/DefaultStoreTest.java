@@ -700,8 +700,9 @@ public class DefaultStoreTest {
     store.setStart(mapreduceProgramId1, "mrRun1", now - 1000);
     store.setStop(mapreduceProgramId1, "mrRun1", now, ProgramController.State.COMPLETED.getRunStatus());
 
-    store.setStart(workflowProgramId1, "wfRun1", now - 1000);
-    store.setStop(workflowProgramId1, "wfRun1", now, ProgramController.State.COMPLETED.getRunStatus());
+    RunId runId = RunIds.generate(System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(1000));
+    store.setStart(workflowProgramId1, runId.getId(), now - 1000);
+    store.setStop(workflowProgramId1, runId.getId(), now, ProgramController.State.COMPLETED.getRunStatus());
 
     store.setStart(flowProgramId2, "flowRun2", now - 1000);
     store.setStop(flowProgramId2, "flowRun2", now, ProgramController.State.COMPLETED.getRunStatus());
