@@ -39,6 +39,7 @@ angular.module(PKG.name + '.services')
 
     var prevConnections = null;
     var popoverScopes = [];
+    var popovers = [];
 
     this.resetToDefaults = function(isImport) {
       var callbacks = angular.copy(this.callbacks);
@@ -228,8 +229,15 @@ angular.module(PKG.name + '.services')
       return schema;
     }
 
-    this.setConnections = function(connections) {
+    function closeAllPopovers() {
+      angular.forEach(popovers, function (popover) {
+        popover.hide();
+      });
+    }
 
+    this.setConnections = function(connections) {
+      closeAllPopovers();
+      popovers = [];
       angular.forEach(prevConnections, function (conn) {
         conn.unbind('click');
       });
@@ -263,6 +271,8 @@ angular.module(PKG.name + '.services')
           contentTemplate: '/assets/features/adapters/templates/partial/schema-popover.html',
           scope: scope
         });
+
+        popovers.push(popover);
 
         con.bind('click', function () {
           var isStream = this.nodes[con.sourceId].name === 'Stream';
@@ -431,6 +441,8 @@ angular.module(PKG.name + '.services')
     }
 
     this.editPluginProperties = function (scope, pluginId) {
+      closeAllPopovers();
+
       this.isConfigTouched = true;
       var sourceConn = $filter('filter')(this.connections, { target: pluginId });
       var sourceSchema = null;
