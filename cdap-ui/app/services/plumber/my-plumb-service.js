@@ -31,7 +31,7 @@
 
 */
 angular.module(PKG.name + '.services')
-  .service('MyPlumbService', function(myAdapterApi, $q, $bootstrapModal, $state, $filter, mySettings, AdapterErrorFactory, IMPLICIT_SCHEMA, myHelpers, PluginConfigFactory, ModalConfirm, EventPipe, $tooltip) {
+  .service('MyPlumbService', function(myAdapterApi, $q, $bootstrapModal, $state, $filter, mySettings, AdapterErrorFactory, IMPLICIT_SCHEMA, myHelpers, PluginConfigFactory, ModalConfirm, EventPipe, $popover, $rootScope) {
 
     var countSink = 0,
         countSource = 0,
@@ -190,11 +190,34 @@ angular.module(PKG.name + '.services')
           target: con.targetId
         });
 
+        // con.setLabel('haha');
+        console.log('con', con);
 
-        $tooltip(angular.element(con.canvas), {title: 'edwin', trigger: 'click', target: angular.element(con.canvas)});
+        //get output schema
+        console.log('output', this.nodes[con.sourceId].outputSchema);
+
+        var label = angular.element(con.getOverlay('label').getElement());
+        var schema = this.nodes[con.sourceId].outputSchema;
+
+        var scope = $rootScope.$new();
+
+        scope.schema = schema;
+
+        $popover(label, {
+          title: 'Schema',
+          trigger: 'click',
+          placement: 'top',
+          target: label,
+          contentTemplate: '/assets/features/adapters/templates/partial/schema-popover.html',
+          scope: scope
+        });
+
+        con.bind('click', function () {
+          scope.schema = this.nodes[con.sourceId].outputSchema;
+        }.bind(this));
 
 
-      });
+      }.bind(this));
       localConnections = orderConnections.call(this, angular.copy(localConnections), angular.copy(localConnections));
       this.connections = localConnections;
     };
