@@ -14,13 +14,11 @@
     <a href="" ng-click="activeTabClick($event, 'system')" role="tab" data-toggle="tab"> System </a>
   </li>
   <li role="presentation"
-      ng-class="{'active': dashboards.activeIndex === $index}"
+      ng-class="{'active': dashboards.activeIndex === $index, 'has-boards': dashboard.columns.length !== 0}"
       ng-repeat="dashboard in dashboards | orderBy:$index">
-    <a
-        role="tab"
+    <a role="tab"
         href=""
-        ng-click="activeTabClick($event, $index)"
-        >
+        ng-click="activeTabClick($event, $index)">
         <span class="dtitle">
         {{dashboard.title}}
         </span>
