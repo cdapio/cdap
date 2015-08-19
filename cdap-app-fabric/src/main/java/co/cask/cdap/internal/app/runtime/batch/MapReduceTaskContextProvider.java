@@ -22,8 +22,8 @@ import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.lang.Delegators;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
-import co.cask.cdap.internal.app.runtime.batch.distributed.DistributedMapReduceContextBuilder;
-import co.cask.cdap.internal.app.runtime.batch.inmemory.InMemoryMapReduceContextBuilder;
+import co.cask.cdap.internal.app.runtime.batch.distributed.DistributedMapReduceTaskContextBuilder;
+import co.cask.cdap.internal.app.runtime.batch.inmemory.InMemoryMapReduceTaskContextBuilder;
 import com.google.common.base.Throwables;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -41,26 +41,26 @@ import java.io.IOException;
 import javax.annotation.Nullable;
 
 /**
- * Provides access to MapReduceContext for mapreduce job tasks.
+ * Provides access to MapReduceTaskContext for mapreduce job tasks.
  */
-public final class MapReduceContextProvider {
+public final class MapReduceTaskContextProvider {
 
-  private static final Logger LOG = LoggerFactory.getLogger(MapReduceContextProvider.class);
+  private static final Logger LOG = LoggerFactory.getLogger(MapReduceTaskContextProvider.class);
 
   private final TaskAttemptContext taskContext;
   private final MapReduceMetrics.TaskType type;
   private final MapReduceContextConfig contextConfig;
   private final LocationFactory locationFactory;
   private final LocationFactory artifactLocationFactory;
-  private BasicMapReduceContext context;
-  private AbstractMapReduceContextBuilder contextBuilder;
+  private BasicMapReduceTaskContext context;
+  private AbstractMapReduceTaskContextBuilder contextBuilder;
 
-  public MapReduceContextProvider(TaskAttemptContext context, MapReduceMetrics.TaskType type) {
+  public MapReduceTaskContextProvider(TaskAttemptContext context, MapReduceMetrics.TaskType type) {
     this.taskContext = context;
     this.type = type;
     this.contextConfig = new MapReduceContextConfig(context.getConfiguration());
     this.locationFactory = new LocalLocationFactory();
-    boolean isLocal = MapReduceContextProvider.isLocal(contextConfig.getConfiguration());
+    boolean isLocal = MapReduceTaskContextProvider.isLocal(contextConfig.getConfiguration());
     this.artifactLocationFactory = isLocal ? locationFactory : new HDFSLocationFactory(
       contextConfig.getConfiguration());
     this.contextBuilder = null;
@@ -71,7 +71,7 @@ public final class MapReduceContextProvider {
    * inside cannot load program classes. It is used for the cases where only the application specification is needed,
    * but no need to load any class from it.
    */
-  public synchronized BasicMapReduceContext get() {
+  public synchronized BasicMapReduceTaskContext get() {
     if (context == null) {
       CConfiguration cConf = contextConfig.getConf();
       context = getBuilder(cConf)
@@ -86,7 +86,6 @@ public final class MapReduceContextProvider {
                createProgram(contextConfig),
                artifactLocationFactory,
                contextConfig.getInputDataSet(),
-               contextConfig.getInputSelection(),
                contextConfig.getOutputDataSet(),
                contextConfig.getAdapterSpec(),
                getPluginInstantiator(contextConfig.getConfiguration()),
@@ -104,17 +103,17 @@ public final class MapReduceContextProvider {
     }
   }
 
-  private synchronized AbstractMapReduceContextBuilder getBuilder(CConfiguration conf) {
+  private synchronized AbstractMapReduceTaskContextBuilder getBuilder(CConfiguration conf) {
     if (contextBuilder != null) {
       return contextBuilder;
     }
 
     if (isLocal(taskContext.getConfiguration())) {
-      contextBuilder = new InMemoryMapReduceContextBuilder(conf);
+      contextBuilder = new InMemoryMapReduceTaskContextBuilder(conf);
     } else {
       // mrFramework = "yarn" or "classic"
       // if the jobContext is not a TaskAttemptContext, mrFramework should not be yarn.
-      contextBuilder = new DistributedMapReduceContextBuilder(
+      contextBuilder = new DistributedMapReduceTaskContextBuilder(
         conf, HBaseConfiguration.create(taskContext.getConfiguration()));
     }
     return contextBuilder;

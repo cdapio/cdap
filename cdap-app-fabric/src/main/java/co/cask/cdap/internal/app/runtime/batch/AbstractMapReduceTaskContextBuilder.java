@@ -17,7 +17,6 @@
 package co.cask.cdap.internal.app.runtime.batch;
 
 import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.workflow.WorkflowToken;
@@ -37,20 +36,19 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.RunIds;
 
-import java.util.List;
 import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
- * Builds the {@link BasicMapReduceContext}.
+ * Builds the {@link BasicMapReduceTaskContext}.
  * Subclasses must override {@link #prepare()} method by providing Guice injector configured for running and starting
  * services specific to the environment. To release those resources subclass must override {@link #finish()}
  * environment.
  */
-public abstract class AbstractMapReduceContextBuilder {
+public abstract class AbstractMapReduceTaskContextBuilder {
 
   /**
-   * Build the instance of {@link BasicMapReduceContext}.
+   * Build the instance of {@link BasicMapReduceTaskContext}.
    *
    * @param runId program run id
    * @param logicalStartTime The logical start time of the job.
@@ -59,26 +57,24 @@ public abstract class AbstractMapReduceContextBuilder {
    * @param tx transaction to use
    * @param mrProgram program containing the MapReduce job
    * @param inputDataSetName name of the input dataset if specified for this mapreduce job, null otherwise
-   * @param inputSplits input splits if specified for this mapreduce job, null otherwise
    * @param outputDataSetName name of the output dataset if specified for this mapreduce job, null otherwise
-   * @return instance of {@link BasicMapReduceContext}
+   * @return instance of {@link BasicMapReduceTaskContext}
    */
-  public BasicMapReduceContext build(MapReduceMetrics.TaskType type,
-                                     String runId,
-                                     String taskId,
-                                     long logicalStartTime,
-                                     String programNameInWorkflow,
-                                     @Nullable WorkflowToken workflowToken,
-                                     Arguments runtimeArguments,
-                                     Transaction tx,
-                                     Program mrProgram,
-                                     LocationFactory locationFactory,
-                                     @Nullable String inputDataSetName,
-                                     @Nullable List<Split> inputSplits,
-                                     @Nullable String outputDataSetName,
-                                     @Nullable AdapterDefinition adapterSpec,
-                                     @Nullable PluginInstantiator pluginInstantiator,
-                                     @Nullable PluginInstantiator artifactPluginInstantiator) {
+  public BasicMapReduceTaskContext build(MapReduceMetrics.TaskType type,
+                                         String runId,
+                                         String taskId,
+                                         long logicalStartTime,
+                                         String programNameInWorkflow,
+                                         @Nullable WorkflowToken workflowToken,
+                                         Arguments runtimeArguments,
+                                         Transaction tx,
+                                         Program mrProgram,
+                                         LocationFactory locationFactory,
+                                         @Nullable String inputDataSetName,
+                                         @Nullable String outputDataSetName,
+                                         @Nullable AdapterDefinition adapterSpec,
+                                         @Nullable PluginInstantiator pluginInstantiator,
+                                         @Nullable PluginInstantiator artifactPluginInstantiator) {
     Injector injector = prepare();
 
     // Initializing Program
@@ -115,11 +111,11 @@ public abstract class AbstractMapReduceContextBuilder {
 
     // Creating mapreduce job context
     MapReduceSpecification spec = program.getApplicationSpecification().getMapReduce().get(program.getName());
-    BasicMapReduceContext context =
-      new BasicMapReduceContext(program, type, RunIds.fromString(runId), taskId, runtimeArguments, datasets, spec,
-                                logicalStartTime, programNameInWorkflow, workflowToken, discoveryServiceClient,
-                                metricsCollectionService, datasetFramework, locationFactory,
-                                adapterSpec, pluginInstantiator, artifactPluginInstantiator);
+    BasicMapReduceTaskContext context =
+      new BasicMapReduceTaskContext(program, type, RunIds.fromString(runId), taskId, runtimeArguments, datasets, spec,
+                                    logicalStartTime, workflowToken, discoveryServiceClient,
+                                    metricsCollectionService, datasetFramework, locationFactory,
+                                    adapterSpec, pluginInstantiator, artifactPluginInstantiator);
 
     // propagating tx to all txAware guys
     // NOTE: tx will be committed by client code
@@ -127,25 +123,17 @@ public abstract class AbstractMapReduceContextBuilder {
       txAware.startTx(tx);
     }
 
-    // Setting extra context's configuration: mapreduce input and output
-    if (inputDataSetName != null && inputSplits != null) {
-      context.setInput(inputDataSetName, inputSplits);
-    }
-    if (outputDataSetName != null) {
-      context.setOutput(outputDataSetName);
-    }
-
     return context;
   }
 
   /**
-   * Refer to {@link AbstractMapReduceContextBuilder} for usage details
+   * Refer to {@link AbstractMapReduceTaskContextBuilder} for usage details
    * @return instance of {@link Injector} with bindings for current runtime environment
    */
   protected abstract Injector prepare();
 
   /**
-   * Refer to {@link AbstractMapReduceContextBuilder} for usage details
+   * Refer to {@link AbstractMapReduceTaskContextBuilder} for usage details
    */
   protected void finish() {
     // Do NOTHING by default

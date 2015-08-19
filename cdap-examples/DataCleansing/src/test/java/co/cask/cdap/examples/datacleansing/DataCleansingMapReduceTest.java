@@ -85,21 +85,25 @@ public class DataCleansingMapReduceTest extends TestBase {
     // write a set of records to one partition and run the DataCleansingMapReduce job on that one partition
     createPartition(serviceURL, RECORDS1);
 
-    // before starting the MR, there are 0 invalid records, according to metrics
-    Assert.assertEquals(0, getInvalidDataCount());
+    // before starting the MR, there are 0 invalid records and 0 valid records, according to metrics
+    Assert.assertEquals(0, getValidityMetrics(true));
+    Assert.assertEquals(0, getValidityMetrics(false));
     Long now = System.currentTimeMillis();
     ImmutableMap<String, String> args = ImmutableMap.of(DataCleansingMapReduce.OUTPUT_PARTITION_KEY, now.toString(),
                                                         DataCleansingMapReduce.SCHEMA_KEY, schemaJson);
     MapReduceManager mapReduceManager = applicationManager.getMapReduceManager(DataCleansingMapReduce.NAME).start(args);
     mapReduceManager.waitForFinish(5, TimeUnit.MINUTES);
 
-    Assert.assertEquals(filterInvalidRecords(RECORDS1), getCleanDatafromExplore(now));
-    Assert.assertEquals(filterInvalidRecords(RECORDS1), getCleanDataFromFile(now));
+    compareData(now, DataCleansing.CLEAN_RECORDS, filterRecords(RECORDS1, true));
+    compareData(now, DataCleansing.INVALID_RECORDS, filterRecords(RECORDS1, false));
+
     // assert that some of the records have indeed been filtered
-    Assert.assertNotEquals(filterInvalidRecords(RECORDS1), RECORDS1);
+    Assert.assertNotEquals(filterRecords(RECORDS1, true), RECORDS1);
+    Assert.assertNotEquals(filterRecords(RECORDS1, false), Collections.<String>emptySet());
 
     // verify this via metrics
-    Assert.assertEquals(1, getInvalidDataCount());
+    Assert.assertEquals(1, getValidityMetrics(true));
+    Assert.assertEquals(1, getValidityMetrics(false));
 
     // create two additional partitions
     createPartition(serviceURL, RECORDS2);
@@ -115,8 +119,13 @@ public class DataCleansingMapReduceTest extends TestBase {
     mapReduceManager.waitForFinish(5, TimeUnit.MINUTES);
 
     ImmutableSet<String> records2and3 = ImmutableSet.<String>builder().addAll(RECORDS2).addAll(RECORDS3).build();
-    Assert.assertEquals(filterInvalidRecords(records2and3), getCleanDatafromExplore(now));
-    Assert.assertEquals(filterInvalidRecords(records2and3), getCleanDataFromFile(now));
+    compareData(now, DataCleansing.CLEAN_RECORDS, filterRecords(records2and3, true));
+    compareData(now, DataCleansing.INVALID_RECORDS, filterRecords(records2and3, false));
+
+    // verify this via metrics
+    Assert.assertEquals(1, getValidityMetrics(true));
+    Assert.assertEquals(5, getValidityMetrics(false));
+
 
     // running the MapReduce job without adding new partitions creates no additional output
     now = System.currentTimeMillis();
@@ -126,21 +135,27 @@ public class DataCleansingMapReduceTest extends TestBase {
     mapReduceManager = applicationManager.getMapReduceManager(DataCleansingMapReduce.NAME).start(args);
     mapReduceManager.waitForFinish(5, TimeUnit.MINUTES);
 
-    Assert.assertEquals(Collections.<String>emptySet(), getCleanDatafromExplore(now));
-    Assert.assertEquals(Collections.<String>emptySet(), getCleanDataFromFile(now));
+    compareData(now, DataCleansing.CLEAN_RECORDS, Collections.<String>emptySet());
+    compareData(now, DataCleansing.INVALID_RECORDS, Collections.<String>emptySet());
   }
 
   private void createPartition(URL serviceUrl, Set<String> records) throws IOException {
     URL url = new URL(serviceUrl, "v1/records/raw");
-    HttpRequest request = HttpRequest.post(url).withBody(joinRecords(records)).build();
+    String body = Joiner.on("\n").join(records) + "\n";
+    HttpRequest request = HttpRequest.post(url).withBody(body).build();
     HttpResponse response = HttpRequests.execute(request);
     Assert.assertEquals(200, response.getResponseCode());
   }
 
-  private Set<String> getCleanDatafromExplore(Long time) throws Exception {
+  private void compareData(Long time, String dsName, Set<String> expectedRecords) throws Exception {
+    Assert.assertEquals(expectedRecords, getDataFromFile(time, dsName));
+    Assert.assertEquals(expectedRecords, getDataFromExplore(time, dsName));
+  }
+
+  private Set<String> getDataFromExplore(Long time, String dsName) throws Exception {
     try (Connection connection = getQueryClient()) {
       ResultSet results = connection
-        .prepareStatement("SELECT * FROM dataset_cleanRecords where TIME = " + time)
+        .prepareStatement("SELECT * FROM dataset_" + dsName + " where TIME = " + time)
         .executeQuery();
 
       Set<String> cleanRecords = new HashSet<>();
@@ -151,8 +166,8 @@ public class DataCleansingMapReduceTest extends TestBase {
     }
   }
 
-  private Set<String> getCleanDataFromFile(Long time) throws Exception {
-    DataSetManager<PartitionedFileSet> cleanRecords = getDataset(DataCleansing.CLEAN_RECORDS);
+  private Set<String> getDataFromFile(Long time, String dsName) throws Exception {
+    DataSetManager<PartitionedFileSet> cleanRecords = getDataset(dsName);
     PartitionDetail partition =
       cleanRecords.get().getPartition(PartitionKey.builder().addLongField("time", time).build());
 
@@ -175,25 +190,29 @@ public class DataCleansingMapReduceTest extends TestBase {
     return cleanData;
   }
 
-  private String joinRecords(Set<String> records) {
-    return Joiner.on("\n").join(records) + "\n";
-  }
-
-  private Set<String> filterInvalidRecords(Set<String> records) {
+  /**
+   * @param records the set of records to filter
+   * @param filterInvalids if true, will filter out invalid records; else, will return only invalid records
+   * @return the filtered set of records
+   */
+  private Set<String> filterRecords(Set<String> records, boolean filterInvalids) {
     Set<String> filteredSet = new HashSet<>();
     for (String record : records) {
-      if (schemaMatcher.matches(record)) {
+      if (filterInvalids == schemaMatcher.matches(record)) {
         filteredSet.add(record);
       }
     }
     return filteredSet;
   }
 
-  private long getInvalidDataCount() throws Exception {
+  // pass true to get the number of invalid records; pass false to get the number of valid records processed.
+  private long getValidityMetrics(boolean invalid) throws Exception {
+    String metric = "user.records." + (invalid ? "invalid" : "valid");
+
     Map<String, String> tags = ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Id.Namespace.DEFAULT.getId(),
                                                Constants.Metrics.Tag.APP, DataCleansing.NAME,
                                                Constants.Metrics.Tag.MAPREDUCE, DataCleansingMapReduce.NAME);
-    MetricDataQuery metricQuery = new MetricDataQuery(0, Integer.MAX_VALUE, Integer.MAX_VALUE, "user.data.invalid",
+    MetricDataQuery metricQuery = new MetricDataQuery(0, Integer.MAX_VALUE, Integer.MAX_VALUE, metric,
                                                       AggregationFunction.SUM, tags, ImmutableList.<String>of());
     Collection<MetricTimeSeries> result = getMetricsManager().query(metricQuery);
 

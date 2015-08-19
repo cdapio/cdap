@@ -21,8 +21,9 @@ import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.batch.SplitReader;
 import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.internal.app.runtime.batch.BasicMapReduceContext;
+import co.cask.cdap.internal.app.runtime.batch.BasicMapReduceTaskContext;
 import co.cask.cdap.internal.app.runtime.batch.MapReduceContextConfig;
-import co.cask.cdap.internal.app.runtime.batch.MapReduceContextProvider;
+import co.cask.cdap.internal.app.runtime.batch.MapReduceTaskContextProvider;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.InputSplit;
@@ -71,8 +72,9 @@ public final class DataSetInputFormat<KEY, VALUE> extends InputFormat<KEY, VALUE
     Configuration conf = context.getConfiguration();
     // we don't currently allow datasets as the format between map and reduce stages, otherwise we'll have to
     // pass in the stage here instead of hardcoding mapper.
-    MapReduceContextProvider contextProvider = new MapReduceContextProvider(context, MapReduceMetrics.TaskType.Mapper);
-    BasicMapReduceContext mrContext = contextProvider.get();
+    MapReduceTaskContextProvider contextProvider = new MapReduceTaskContextProvider(context,
+                                                                                    MapReduceMetrics.TaskType.Mapper);
+    BasicMapReduceTaskContext mrContext = contextProvider.get();
     mrContext.getMetricsCollectionService().startAndWait();
     String dataSetName = getInputName(conf);
     BatchReadable<KEY, VALUE> inputDataset = mrContext.getDataset(dataSetName);

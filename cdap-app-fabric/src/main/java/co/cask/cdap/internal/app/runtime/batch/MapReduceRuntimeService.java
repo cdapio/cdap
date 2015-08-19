@@ -17,7 +17,6 @@ package co.cask.cdap.internal.app.runtime.batch;
 
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.data.batch.BatchReadable;
-import co.cask.cdap.api.data.batch.BatchWritable;
 import co.cask.cdap.api.data.batch.DatasetOutputCommitter;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
@@ -49,7 +48,9 @@ import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetInputFormat;
-import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetOutputFormat;
+import co.cask.cdap.internal.app.runtime.batch.dataset.MultipleOutputs;
+import co.cask.cdap.internal.app.runtime.batch.dataset.MultipleOutputsMainOutputWrapper;
+import co.cask.cdap.internal.app.runtime.batch.dataset.UnsupportedOutputFormat;
 import co.cask.cdap.internal.app.runtime.batch.distributed.ContainerLauncherGenerator;
 import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerHelper;
 import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerLauncher;
@@ -100,6 +101,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -211,7 +213,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       //TODO: CDAP-3485 Not required once Templates/Adapters are removed
       Location pluginArchive = null;
       // For local mode, everything is in the configuration classloader already, hence no need to create new jar
-      if (!MapReduceContextProvider.isLocal(mapredConf)) {
+      if (!MapReduceTaskContextProvider.isLocal(mapredConf)) {
         // After calling beforeSubmit, we know what plugins are needed for adapter, hence construct the proper
         // ClassLoader from here and use it for setting up the job
         pluginArchive = createPluginArchive(context.getAdapterSpecification(), tempDir, tempLocation);
@@ -248,7 +250,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       job.setJar(jobJar.toURI().toString());
 
       Location programJar = programJarLocation;
-      if (!MapReduceContextProvider.isLocal(mapredConf)) {
+      if (!MapReduceTaskContextProvider.isLocal(mapredConf)) {
         // Copy and localize the program jar in distributed mode
         programJar = copyProgramJar(tempLocation);
         job.addCacheFile(programJar.toURI());
@@ -405,7 +407,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     Job job = Job.getInstance(new Configuration(hConf));
     Configuration jobConf = job.getConfiguration();
 
-    if (MapReduceContextProvider.isLocal(jobConf)) {
+    if (MapReduceTaskContextProvider.isLocal(jobConf)) {
       // Set the MR framework local directories inside the given tmp directory.
       // Setting "hadoop.tmp.dir" here has no effect due to Explore Service need to set "hadoop.tmp.dir"
       // as system property for Hive to work in local mode. The variable substitution of hadoop conf
@@ -474,7 +476,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
 
           // set input/output datasets info
           setInputDatasetIfNeeded(job);
-          setOutputDatasetIfNeeded(job);
+          setOutputDatasetsIfNeeded(job);
 
           return null;
         } finally {
@@ -496,18 +498,22 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         try {
           // TODO this should be done in the output committer, to make the M/R fail if addPartition fails
           boolean success = succeeded;
-          Dataset outputDataset = context.getOutputDataset();
-          if (outputDataset != null && outputDataset instanceof DatasetOutputCommitter) {
-            try {
-              if (succeeded) {
-                ((DatasetOutputCommitter) outputDataset).onSuccess();
-              } else {
-                ((DatasetOutputCommitter) outputDataset).onFailure();
+          for (Map.Entry<String, Dataset> dsEntry : context.getOutputDatasets().entrySet()) {
+            String datasetName = dsEntry.getKey();
+            Dataset outputDataset = dsEntry.getValue();
+
+            if (outputDataset instanceof DatasetOutputCommitter) {
+              try {
+                if (succeeded) {
+                  ((DatasetOutputCommitter) outputDataset).onSuccess();
+                } else {
+                  ((DatasetOutputCommitter) outputDataset).onFailure();
+                }
+              } catch (Throwable t) {
+                LOG.error(String.format("Error from %s method of output dataset %s.",
+                                        succeeded ? "onSuccess" : "onFailure", datasetName), t);
+                success = false;
               }
-            } catch (Throwable t) {
-              LOG.error(String.format("Error from %s method of output dataset %s.",
-                                      succeeded ? "onSuccess" : "onFailure", context.getOutputDatasetName()), t);
-              success = false;
             }
           }
           mapReduce.onFinish(success, context);
@@ -565,45 +571,47 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   }
 
   /**
-   * Sets the configurations for Dataset used for output.
+   * Sets the configurations for Datasets used for output.
    */
-  private void setOutputDatasetIfNeeded(Job job) {
-    String outputDatasetName = context.getOutputDatasetName();
-    Dataset dataset = context.getOutputDataset();
-    if (dataset == null) {
+  private void setOutputDatasetsIfNeeded(Job job) {
+    Map<String, OutputFormatProvider> outputFormatProviders = context.getOutputFormatProviders();
+
+    String rootOutputFormatClass;
+    Map<String, String> rootOutputConfig = new HashMap<>();
+    if (outputFormatProviders.size() == 0) {
+      // user is not going through our APIs to add output; leave the job's output format to user
       return;
+    } else if (outputFormatProviders.size() == 1) {
+      // If only one output is configured through the context, then set it as the root OutputFormat
+      Map.Entry<String, OutputFormatProvider> next = outputFormatProviders.entrySet().iterator().next();
+      rootOutputFormatClass = next.getValue().getOutputFormatClassName();
+      rootOutputConfig = next.getValue().getOutputFormatConfiguration();
+    } else {
+      // multiple output formats configured via the context. We should use a RecordWriter that doesn't support writing
+      // as the root output format in this case to disallow writing directly on the context
+      rootOutputFormatClass = UnsupportedOutputFormat.class.getName();
     }
+    MultipleOutputsMainOutputWrapper.setRootOutputFormat(job, rootOutputFormatClass, rootOutputConfig);
+    job.setOutputFormatClass(MultipleOutputsMainOutputWrapper.class);
 
-    LOG.debug("Using Dataset {} as output for MapReduce Job", outputDatasetName);
-    // We checked on validation phase that it implements BatchWritable or OutputFormatProvider
-    if (dataset instanceof BatchWritable) {
-      DataSetOutputFormat.setOutput(job, outputDatasetName);
-      return;
-    }
 
-    // must be output format provider
-    OutputFormatProvider outputDataset = (OutputFormatProvider) dataset;
-    String outputFormatClassName = outputDataset.getOutputFormatClassName();
-    if (outputFormatClassName == null) {
-      throw new DataSetException("Output dataset '" + outputDatasetName + "' provided null as the output format");
-    }
-    job.getConfiguration().set(Job.OUTPUT_FORMAT_CLASS_ATTR, outputFormatClassName);
+    LOG.debug("Using Datasets as output for MapReduce Job: {}", outputFormatProviders.keySet());
+    for (Map.Entry<String, OutputFormatProvider> entry : outputFormatProviders.entrySet()) {
+      String outputDatasetName = entry.getKey();
+      OutputFormatProvider outputFormatProvider = entry.getValue();
 
-    Map<String, String> outputConfig = outputDataset.getOutputFormatConfiguration();
-    if (outputConfig != null) {
-      for (Map.Entry<String, String> entry : outputConfig.entrySet()) {
-        job.getConfiguration().set(entry.getKey(), entry.getValue());
+      String outputFormatClassName = outputFormatProvider.getOutputFormatClassName();
+      if (outputFormatClassName == null) {
+        throw new DataSetException("Output dataset '" + outputDatasetName + "' provided null as the output format");
       }
+
+      Map<String, String> outputConfig = outputFormatProvider.getOutputFormatConfiguration();
+      MultipleOutputs.addNamedOutput(job, outputDatasetName, outputFormatClassName,
+                                     job.getOutputKeyClass(), job.getOutputValueClass(), outputConfig);
+
     }
   }
 
-  /**
-   * Configures the MapReduce Job that uses stream as input.
-   *
-   * @param job The MapReduce job
-   * @param stream A {@link StreamBatchReadable} that carries information about the stream being used for input
-   * @throws IOException If fails to configure the job
-   */
   private void configureStreamInput(Job job, StreamBatchReadable stream) throws IOException {
     Id.Stream streamId = Id.Stream.from(context.getNamespaceId(), stream.getStreamName());
     StreamConfig streamConfig = streamAdmin.getConfig(streamId);
@@ -716,7 +724,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     LOG.debug("Creating Job jar: {}", jobJar);
 
     // For local mode, nothing is needed in the job jar since we use the classloader in the configuration object.
-    if (MapReduceContextProvider.isLocal(job.getConfiguration())) {
+    if (MapReduceTaskContextProvider.isLocal(job.getConfiguration())) {
       JarOutputStream output = new JarOutputStream(new FileOutputStream(jobJar));
       output.close();
       return jobJar;

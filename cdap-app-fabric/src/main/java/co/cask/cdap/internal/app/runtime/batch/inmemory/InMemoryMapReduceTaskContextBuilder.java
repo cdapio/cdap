@@ -27,7 +27,7 @@ import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.explore.guice.ExploreClientModule;
-import co.cask.cdap.internal.app.runtime.batch.AbstractMapReduceContextBuilder;
+import co.cask.cdap.internal.app.runtime.batch.AbstractMapReduceTaskContextBuilder;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
@@ -46,10 +46,10 @@ import java.net.InetSocketAddress;
  * Builds an instance of {@link co.cask.cdap.internal.app.runtime.batch.BasicMapReduceContext} good for
  * in-memory environment
  */
-public class InMemoryMapReduceContextBuilder extends AbstractMapReduceContextBuilder {
+public class InMemoryMapReduceTaskContextBuilder extends AbstractMapReduceTaskContextBuilder {
   private final CConfiguration cConf;
 
-  public InMemoryMapReduceContextBuilder(CConfiguration cConf) {
+  public InMemoryMapReduceTaskContextBuilder(CConfiguration cConf) {
     this.cConf = cConf;
   }
 

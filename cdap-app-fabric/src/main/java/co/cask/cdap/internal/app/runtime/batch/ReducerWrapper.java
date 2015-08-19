@@ -61,15 +61,19 @@ public class ReducerWrapper extends Reducer {
   @SuppressWarnings("unchecked")
   @Override
   public void run(Context context) throws IOException, InterruptedException {
-    MapReduceContextProvider mrContextProvider =
-      new MapReduceContextProvider(context, MapReduceMetrics.TaskType.Reducer);
-    final BasicMapReduceContext basicMapReduceContext = mrContextProvider.get();
+    MapReduceTaskContextProvider mrContextProvider =
+      new MapReduceTaskContextProvider(context, MapReduceMetrics.TaskType.Reducer);
+    final BasicMapReduceTaskContext basicMapReduceContext = mrContextProvider.get();
     LoggingContextAccessor.setLoggingContext(basicMapReduceContext.getLoggingContext());
     basicMapReduceContext.getMetricsCollectionService().startAndWait();
 
+    // this is a hook for periodic flushing of changes buffered by datasets (to avoid OOME)
+    WrappedReducer.Context flushingContext = createAutoFlushingContext(context, basicMapReduceContext);
+    basicMapReduceContext.setHadoopContext(flushingContext);
+
     try {
       String userReducer = context.getConfiguration().get(ATTR_REDUCER_CLASS);
-      ClassLoader programClassLoader = MapReduceContextProvider.getProgramClassLoader(context.getConfiguration());
+      ClassLoader programClassLoader = MapReduceTaskContextProvider.getProgramClassLoader(context.getConfiguration());
       Reducer delegate = createReducerInstance(programClassLoader, userReducer);
 
       // injecting runtime components, like datasets, etc.
@@ -83,16 +87,13 @@ public class ReducerWrapper extends Reducer {
         throw Throwables.propagate(t);
       }
 
-      // this is a hook for periodic flushing of changes buffered by datasets (to avoid OOME)
-      WrappedReducer.Context flushingContext = createAutoFlushingContext(context, basicMapReduceContext);
-
       ClassLoader oldClassLoader;
       if (delegate instanceof ProgramLifecycle) {
         oldClassLoader = ClassLoaders.setContextClassLoader(programClassLoader);
         try {
-          ((ProgramLifecycle<BasicMapReduceContext>) delegate).initialize(basicMapReduceContext);
+          ((ProgramLifecycle) delegate).initialize(new MapReduceLifecycleContext(basicMapReduceContext));
         } catch (Exception e) {
-          LOG.error("Failed to initialize mapper with " + basicMapReduceContext.toString(), e);
+          LOG.error("Failed to initialize mapper with {}", basicMapReduceContext, e);
           throw Throwables.propagate(e);
         } finally {
           ClassLoaders.setContextClassLoader(oldClassLoader);
@@ -107,21 +108,20 @@ public class ReducerWrapper extends Reducer {
       }
 
       // transaction is not finished, but we want all operations to be dispatched (some could be buffered in
-      // memory by tx agent
+      // memory by tx agent)
       try {
         basicMapReduceContext.flushOperations();
       } catch (Exception e) {
-        LOG.error("Failed to flush operations at the end of reducer of " + basicMapReduceContext.toString(), e);
+        LOG.error("Failed to flush operations at the end of reducer of " + basicMapReduceContext, e);
         throw Throwables.propagate(e);
       }
-
 
       if (delegate instanceof ProgramLifecycle) {
         oldClassLoader = ClassLoaders.setContextClassLoader(programClassLoader);
         try {
           ((ProgramLifecycle<? extends RuntimeContext>) delegate).destroy();
         } catch (Exception e) {
-          LOG.error("Error during destroy of mapper", e);
+          LOG.error("Error during destroy of reducer {}", basicMapReduceContext, e);
           // Do nothing, try to finish
         } finally {
           ClassLoaders.setContextClassLoader(oldClassLoader);
@@ -138,8 +138,7 @@ public class ReducerWrapper extends Reducer {
   }
 
   private WrappedReducer.Context createAutoFlushingContext(final Context context,
-                                                          final BasicMapReduceContext basicMapReduceContext) {
-
+                                                           final BasicMapReduceTaskContext basicMapReduceContext) {
     // NOTE: we will change auto-flush to take into account size of buffered data, so no need to do/test a lot with
     //       current approach
     final int flushFreq = context.getConfiguration().getInt("c.reducer.flush.freq", 10000);

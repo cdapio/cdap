@@ -524,7 +524,6 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
   @Override
   public Map<String, String> getInputFormatConfiguration() {
     Collection<String> inputPaths = filterInputPaths();
-    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
     if (inputPaths == null) {
       return files.getInputFormatConfiguration();
     }
@@ -584,9 +583,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     }
     // copy the output partition key to the output arguments of the embedded file set
     // this will be needed by the output format to register the new partition.
-    Map<String, String> config = files.getOutputFormatConfiguration();
-    Map<String, String> outputArgs = Maps.newHashMap();
-    outputArgs.putAll(config);
+    Map<String, String> outputArgs = Maps.newHashMap(files.getOutputFormatConfiguration());
     PartitionedFileSetArguments.setOutputPartitionKey(outputArgs, outputKey);
     return ImmutableMap.copyOf(outputArgs);
   }
@@ -594,7 +591,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
   @Override
   public void onSuccess() throws DataSetException {
     String outputPath = FileSetArguments.getOutputPath(runtimeArguments);
-    // if there if no output path, the batch job probably would have failed
+    // if there is no output path, the batch job probably would have failed
     // we definitely can't do much here if we don't know the output path
     if (outputPath == null) {
       return;
