@@ -16,7 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.batch;
 
-import co.cask.cdap.api.stream.StreamEvent;
+import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data.stream.StreamInputFormat;
 import co.cask.cdap.data.stream.decoder.IdentityStreamEventDecoder;

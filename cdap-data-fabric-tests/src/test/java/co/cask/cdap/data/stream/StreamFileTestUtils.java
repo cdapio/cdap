@@ -15,7 +15,7 @@
  */
 package co.cask.cdap.data.stream;
 
-import co.cask.cdap.api.stream.StreamEvent;
+import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Charsets;

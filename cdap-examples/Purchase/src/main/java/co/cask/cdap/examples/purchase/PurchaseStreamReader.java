@@ -19,7 +19,7 @@ import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.OutputEmitter;
-import co.cask.cdap.api.stream.StreamEvent;
+import co.cask.cdap.api.flow.flowlet.StreamEvent;
 
 /**
  * This Flowlet reads events from a Stream and parses them as sentences of the form

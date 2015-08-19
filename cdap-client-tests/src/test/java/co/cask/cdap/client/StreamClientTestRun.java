@@ -17,7 +17,7 @@
 package co.cask.cdap.client;
 
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.stream.StreamEvent;
+import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.CannotBeDeletedException;

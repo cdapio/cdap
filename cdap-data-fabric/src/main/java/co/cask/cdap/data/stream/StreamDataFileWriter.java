@@ -17,7 +17,7 @@
 package co.cask.cdap.data.stream;
 
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.stream.StreamEvent;
+import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.io.BinaryEncoder;
 import co.cask.cdap.common.io.BufferedEncoder;
 import co.cask.cdap.common.io.Encoder;

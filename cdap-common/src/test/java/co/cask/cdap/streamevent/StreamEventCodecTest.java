@@ -19,7 +19,7 @@ package co.cask.cdap.streamevent;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.SchemaHash;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
-import co.cask.cdap.api.stream.StreamEvent;
+import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.io.BinaryDecoder;
 import co.cask.cdap.common.stream.StreamEventCodec;
 import co.cask.cdap.internal.io.ReflectionDatumReader;
