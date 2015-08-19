@@ -50,7 +50,7 @@ angular.module(PKG.name + '.services')
       var val = myHelpers.deepGet(this.data, key);
 
       if (!force && val) {
-        return $q.when(val);
+        return $q.when(angular.copy(val));
       }
 
       var self = this;
@@ -59,7 +59,7 @@ angular.module(PKG.name + '.services')
         var deferred = $q.defer();
         this.pending.promise.then(function () {
           deferred.resolve(
-            myHelpers.deepGet(self.data, key)
+            angular.copy(myHelpers.deepGet(self.data, key))
           );
         });
         return deferred.promise;
@@ -75,7 +75,7 @@ angular.module(PKG.name + '.services')
         function (res) {
           self.data = res.property;
           self.pending.resolve(
-            myHelpers.deepGet(self.data, key)
+            angular.copy(myHelpers.deepGet(self.data, key))
           );
         }
       );
