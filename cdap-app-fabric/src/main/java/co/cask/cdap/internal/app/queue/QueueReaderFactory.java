@@ -16,7 +16,7 @@
 
 package co.cask.cdap.internal.app.queue;
 
-import co.cask.cdap.api.stream.StreamEvent;
+import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.app.queue.QueueReader;
 import co.cask.cdap.data2.queue.QueueConsumer;
 import co.cask.cdap.data2.transaction.stream.StreamConsumer;

@@ -27,7 +27,7 @@ import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.FlowletSpecification;
 import co.cask.cdap.api.flow.flowlet.OutputEmitter;
-import co.cask.cdap.api.stream.StreamEvent;
+import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import com.google.common.collect.Lists;
 
 import java.net.URI;

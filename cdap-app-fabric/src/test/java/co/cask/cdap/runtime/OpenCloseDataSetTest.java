@@ -18,7 +18,7 @@ package co.cask.cdap.runtime;
 
 import co.cask.cdap.DummyAppWithTrackingTable;
 import co.cask.cdap.TrackingTable;
-import co.cask.cdap.api.stream.StreamEvent;
+import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRunner;

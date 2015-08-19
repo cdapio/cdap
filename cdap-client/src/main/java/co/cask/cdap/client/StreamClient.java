@@ -18,7 +18,7 @@ package co.cask.cdap.client;
 
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.stream.StreamEvent;
+import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.BadRequestException;

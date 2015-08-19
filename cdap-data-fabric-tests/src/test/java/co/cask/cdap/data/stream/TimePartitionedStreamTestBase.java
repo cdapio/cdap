@@ -15,7 +15,7 @@
  */
 package co.cask.cdap.data.stream;
 
-import co.cask.cdap.api.stream.StreamEvent;
+import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import com.google.common.collect.Lists;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
