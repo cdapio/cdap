@@ -263,6 +263,7 @@ public class UnitTestManager implements TestManager {
     appJar.delete();
 
     artifactRepository.addArtifact(artifactId, destination);
+    destination.delete();
   }
 
   @Override
@@ -277,13 +278,9 @@ public class UnitTestManager implements TestManager {
   @Override
   public void addPluginArtifact(Id.Artifact artifactId, Set<ArtifactRange> parents,
                                 Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
-    Manifest manifest = createManifest(pluginClass, pluginClasses);
-    Location appJar = PluginJarHelper.createPluginJar(locationFactory, manifest, pluginClass, pluginClasses);
-    File destination =
-      new File(tmpDir, String.format("%s-%s.jar", artifactId.getName(), artifactId.getVersion().getVersion()));
-    Files.copy(Locations.newInputSupplier(appJar), destination);
-
-    artifactRepository.addArtifact(artifactId, destination, parents);
+    File pluginJar = createPluginJar(artifactId, pluginClass, pluginClasses);
+    artifactRepository.addArtifact(artifactId, pluginJar, parents);
+    pluginJar.delete();
   }
 
   @Override
@@ -297,9 +294,11 @@ public class UnitTestManager implements TestManager {
   }
 
   @Override
-  public void addPluginArtifact(Id.Artifact artifactId, Set<ArtifactRange> parent, Set<PluginClass> additionalPlugins,
+  public void addPluginArtifact(Id.Artifact artifactId, Set<ArtifactRange> parents, Set<PluginClass> additionalPlugins,
                                 Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
-    //TODO: implement when support for explicit plugins is added
+    File pluginJar = createPluginJar(artifactId, pluginClass, pluginClasses);
+    artifactRepository.addArtifact(artifactId, pluginJar, parents, additionalPlugins);
+    pluginJar.delete();
   }
 
   @Override
@@ -448,5 +447,16 @@ public class UnitTestManager implements TestManager {
 
     manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE, Joiner.on(',').join(exportPackages));
     return manifest;
+  }
+
+  private File createPluginJar(Id.Artifact artifactId, Class<?> pluginClass,
+                               Class<?>... pluginClasses) throws IOException {
+    Manifest manifest = createManifest(pluginClass, pluginClasses);
+    Location appJar = PluginJarHelper.createPluginJar(locationFactory, manifest, pluginClass, pluginClasses);
+    File destination =
+      new File(tmpDir, String.format("%s-%s.jar", artifactId.getName(), artifactId.getVersion().getVersion()));
+    Files.copy(Locations.newInputSupplier(appJar), destination);
+    appJar.delete();
+    return destination;
   }
 }

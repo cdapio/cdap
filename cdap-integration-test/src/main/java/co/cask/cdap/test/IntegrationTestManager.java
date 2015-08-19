@@ -49,6 +49,7 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.io.Files;
+import com.google.common.io.InputSupplier;
 import com.google.common.io.Resources;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
@@ -60,6 +61,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.JarURLConnection;
 import java.net.URL;
 import java.sql.Connection;
@@ -187,13 +189,15 @@ public class IntegrationTestManager implements TestManager {
 
   @Override
   public void addAppArtifact(Id.Artifact artifactId, Class<?> appClass) throws Exception {
-    Location appJar = AppJarHelper.createDeploymentJar(locationFactory, appClass, new Manifest());
-    File destination =
-      new File(tmpFolder, String.format("%s-%s.jar", artifactId.getName(), artifactId.getVersion().getVersion()));
-    Files.copy(Locations.newInputSupplier(appJar), destination);
-    appJar.delete();
+    final Location appJar = AppJarHelper.createDeploymentJar(locationFactory, appClass, new Manifest());
 
-    artifactClient.add(artifactId, null, Files.newInputStreamSupplier(destination));
+    artifactClient.add(artifactId, null, new InputSupplier<InputStream>() {
+      @Override
+      public InputStream getInput() throws IOException {
+        return appJar.getInputStream();
+      }
+    });
+    appJar.delete();
   }
 
   @Override
@@ -210,13 +214,14 @@ public class IntegrationTestManager implements TestManager {
                                 Class<?> pluginClass,
                                 Class<?>... pluginClasses) throws Exception {
     Manifest manifest = createManifest(pluginClass, pluginClasses);
-    Location appJar = PluginJarHelper.createPluginJar(locationFactory, manifest, pluginClass, pluginClasses);
-    File destination =
-      new File(tmpFolder, String.format("%s-%s.jar", artifactId.getName(), artifactId.getVersion().getVersion()));
-    Files.copy(Locations.newInputSupplier(appJar), destination);
+    final Location appJar = PluginJarHelper.createPluginJar(locationFactory, manifest, pluginClass, pluginClasses);
+    artifactClient.add(artifactId, parents, new InputSupplier<InputStream>() {
+      @Override
+      public InputStream getInput() throws IOException {
+        return appJar.getInputStream();
+      }
+    });
     appJar.delete();
-
-    artifactClient.add(artifactId, parents, Files.newInputStreamSupplier(destination));
   }
 
   @Override
@@ -234,7 +239,22 @@ public class IntegrationTestManager implements TestManager {
   public void addPluginArtifact(Id.Artifact artifactId, Set<ArtifactRange> parents,
                                 @Nullable Set<PluginClass> additionalPlugins,
                                 Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
-    // TODO: implement once supported
+    Manifest manifest = createManifest(pluginClass, pluginClasses);
+    final Location appJar = PluginJarHelper.createPluginJar(locationFactory, manifest, pluginClass, pluginClasses);
+    artifactClient.add(
+      artifactId.getNamespace(),
+      artifactId.getName(),
+      new InputSupplier<InputStream>() {
+        @Override
+        public InputStream getInput() throws IOException {
+          return appJar.getInputStream();
+        }
+      },
+      artifactId.getVersion().getVersion(),
+      parents,
+      additionalPlugins
+    );
+    appJar.delete();
   }
 
   @Override
