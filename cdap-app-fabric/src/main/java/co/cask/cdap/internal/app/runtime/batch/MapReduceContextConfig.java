@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime.batch;
 
 import co.cask.cdap.api.data.batch.SimpleSplit;
 import co.cask.cdap.api.data.batch.Split;
+import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -59,6 +60,7 @@ public final class MapReduceContextConfig {
   private static final String HCONF_ATTR_PROGRAM_NAME_IN_WORKFLOW = "hconf.program.name.in.workflow";
   private static final String HCONF_ATTR_WORKFLOW_TOKEN = "hconf.program.workflow.token";
   private static final String HCONF_ATTR_ADAPTER_SPEC = "hconf.program.adapter.spec";
+  private static final String HCONF_ATTR_MAPREDUCE_SPEC = "hconf.program.mapreduce.spec";
   private static final String HCONF_ATTR_ARGS = "hconf.program.args";
   private static final String HCONF_ATTR_PROGRAM_JAR_URI = "hconf.program.jar.uri";
   private static final String HCONF_ATTR_CCONF = "hconf.cconf";
@@ -82,6 +84,7 @@ public final class MapReduceContextConfig {
     setProgramNameInWorkflow(context.getProgramNameInWorkflow());
     setWorkflowToken(context.getWorkflowToken());
     setAdapterSpec(context.getAdapterSpecification());
+    setProgramSpec(context.getSpecification());
     setArguments(context.getRuntimeArguments());
     setProgramJarURI(programJarURI);
     setConf(conf);
@@ -147,6 +150,18 @@ public final class MapReduceContextConfig {
     if (adapterSpec != null) {
       hConf.set(HCONF_ATTR_ADAPTER_SPEC, GSON.toJson(adapterSpec));
     }
+  }
+
+  private void setProgramSpec(MapReduceSpecification mrSpec) {
+    hConf.set(HCONF_ATTR_MAPREDUCE_SPEC, GSON.toJson(mrSpec));
+  }
+
+  public MapReduceSpecification getProgramSpec() {
+    String spec = hConf.get(HCONF_ATTR_MAPREDUCE_SPEC);
+    if (spec == null) {
+      return null;
+    }
+    return GSON.fromJson(spec, MapReduceSpecification.class);
   }
 
   @Nullable

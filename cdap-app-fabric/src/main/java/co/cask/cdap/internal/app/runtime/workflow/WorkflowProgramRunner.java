@@ -38,6 +38,7 @@ import com.google.inject.name.Named;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.ServiceAnnouncer;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.filesystem.LocationFactory;
 
 import java.net.InetAddress;
 
@@ -54,6 +55,7 @@ public class WorkflowProgramRunner implements ProgramRunner {
   private final TransactionSystemClient txClient;
   private final Store store;
   private final CConfiguration cConf;
+  private final LocationFactory locationFactory;
 
   @Inject
   public WorkflowProgramRunner(ProgramRunnerFactory programRunnerFactory,
@@ -61,7 +63,7 @@ public class WorkflowProgramRunner implements ProgramRunner {
                                @Named(Constants.AppFabric.SERVER_ADDRESS) InetAddress hostname,
                                MetricsCollectionService metricsCollectionService, DatasetFramework datasetFramework,
                                DiscoveryServiceClient discoveryServiceClient, TransactionSystemClient txClient,
-                               Store store, CConfiguration cConf) {
+                               LocationFactory locationFactory, Store store, CConfiguration cConf) {
     this.programRunnerFactory = programRunnerFactory;
     this.serviceAnnouncer = serviceAnnouncer;
     this.hostname = hostname;
@@ -69,6 +71,7 @@ public class WorkflowProgramRunner implements ProgramRunner {
     this.datasetFramework = datasetFramework;
     this.discoveryServiceClient = discoveryServiceClient;
     this.txClient = txClient;
+    this.locationFactory = locationFactory;
     this.store = store;
     this.cConf = cConf;
   }
@@ -88,7 +91,7 @@ public class WorkflowProgramRunner implements ProgramRunner {
 
     WorkflowDriver driver = new WorkflowDriver(program, options, hostname, workflowSpec, programRunnerFactory,
                                                metricsCollectionService, datasetFramework,
-                                               discoveryServiceClient, txClient, store, cConf);
+                                               discoveryServiceClient, txClient, locationFactory, store, cConf);
 
     // Controller needs to be created before starting the driver so that the state change of the driver
     // service can be fully captured by the controller.

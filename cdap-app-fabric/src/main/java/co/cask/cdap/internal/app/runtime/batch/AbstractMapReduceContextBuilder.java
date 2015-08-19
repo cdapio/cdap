@@ -34,6 +34,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
 import com.google.inject.Injector;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.RunIds;
 
 import java.util.List;
@@ -71,11 +72,13 @@ public abstract class AbstractMapReduceContextBuilder {
                                      Arguments runtimeArguments,
                                      Transaction tx,
                                      Program mrProgram,
+                                     LocationFactory locationFactory,
                                      @Nullable String inputDataSetName,
                                      @Nullable List<Split> inputSplits,
                                      @Nullable String outputDataSetName,
                                      @Nullable AdapterDefinition adapterSpec,
-                                     @Nullable PluginInstantiator pluginInstantiator) {
+                                     @Nullable PluginInstantiator pluginInstantiator,
+                                     @Nullable PluginInstantiator artifactPluginInstantiator) {
     Injector injector = prepare();
 
     // Initializing Program
@@ -115,7 +118,8 @@ public abstract class AbstractMapReduceContextBuilder {
     BasicMapReduceContext context =
       new BasicMapReduceContext(program, type, RunIds.fromString(runId), taskId, runtimeArguments, datasets, spec,
                                 logicalStartTime, programNameInWorkflow, workflowToken, discoveryServiceClient,
-                                metricsCollectionService, datasetFramework, adapterSpec, pluginInstantiator);
+                                metricsCollectionService, datasetFramework, locationFactory,
+                                adapterSpec, pluginInstantiator, artifactPluginInstantiator);
 
     // propagating tx to all txAware guys
     // NOTE: tx will be committed by client code

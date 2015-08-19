@@ -20,9 +20,12 @@ import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.api.worker.WorkerConfigurer;
 import co.cask.cdap.api.worker.WorkerSpecification;
-import co.cask.cdap.internal.api.DefaultDatasetConfigurer;
+import co.cask.cdap.internal.app.DefaultPluginConfigurer;
+import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.internal.specification.PropertyFieldExtractor;
+import co.cask.cdap.proto.Id;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
@@ -35,7 +38,7 @@ import java.util.Set;
 /**
  * Default implementation of the {@link WorkerConfigurer}.
  */
-public class DefaultWorkerConfigurer extends DefaultDatasetConfigurer implements WorkerConfigurer {
+public class DefaultWorkerConfigurer extends DefaultPluginConfigurer implements WorkerConfigurer {
 
   private final String className;
   private final Map<String, String> propertyFields;
@@ -47,7 +50,9 @@ public class DefaultWorkerConfigurer extends DefaultDatasetConfigurer implements
   private Map<String, String> properties;
   private Set<String> datasets;
 
-  public DefaultWorkerConfigurer(Worker worker) {
+  public DefaultWorkerConfigurer(Worker worker, Id.Artifact artifactId, ArtifactRepository artifactRepository,
+                                 PluginInstantiator pluginInstantiator) {
+    super(artifactRepository, pluginInstantiator, artifactId);
     this.name = worker.getClass().getSimpleName();
     this.className = worker.getClass().getName();
     this.propertyFields = Maps.newHashMap();
@@ -96,6 +101,7 @@ public class DefaultWorkerConfigurer extends DefaultDatasetConfigurer implements
   public WorkerSpecification createSpecification() {
     Map<String, String> properties = Maps.newHashMap(this.properties);
     properties.putAll(propertyFields);
-    return new WorkerSpecification(className, name, description, properties, datasets, resource, instances);
+    return new WorkerSpecification(className, name, description, properties, datasets, resource,
+                                   instances, getPlugins());
   }
 }
