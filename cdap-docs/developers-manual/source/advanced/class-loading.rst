@@ -12,47 +12,30 @@ Java class loading is one of the most fundamental and powerful concepts provided
 Java Platform. Understanding the class loading mechanism helps you when designing and
 building extensible application frameworks. You can also avoid spending many hours in
 debugging exceptions such as ``ClassCastException`` and ``ClassNotFoundException``, among
-others. In this advanced section, we will talk about how Java class loading works and how
-we designed an extensible application framework with a flexible class loading strategy.
+others. In this advanced section, we talk about how we used Java class loading to
+design an extensible application framework with a flexible class loading strategy.
 
-Class Loading in Java
-=====================
+In CDAP, we provide a platform with which application developers are free to write big
+data applications without worrying about the underlying execution framework. In terms of
+class loading strategy, we provide these properties for an application:
 
-In Java, a class represents the code to be executed by the Java Virtual Machine (JVM).
-Before a class can be used, it needs to be loaded into the JVM process. A loaded class is
-represented by an instance of ``java.lang.Class``. There is a special class responsible for
-performing the class loading: the ``java.lang.ClassLoader``.
+- Application can choose to use any library of any version;
+- Application can define a custom plugin API for extending itself;
+- Plugins can be written for an application by implementing the application plugin API; and
+- Different plugins can choose to use any library of any version, yet all plugins are
+  usable by the same application at the same time.
 
-Before we dive into details of class loading, let’s first establish some basic concepts.
-First of all, class loaders in Java are hierarchical. Each class loader has a parent,
-except for the root class loader, which is called the **bootstrap class loader**. When a JVM
-process starts, it will create three class loaders: the *bootstrap*, the *extension*, and the
-*system* class loaders. These load the three different sets of classes provided by the JVM:
-
-.. image:: ../_images/class-loading/class-loading01.png
-   :width: 6in
-   :align: center
-
-The bootstrap class loader loads the core Java libraries, such as ``java.lang.System``,
-while the extension class loader loads classes that are defined in the
-``$JAVA_HOME/lib/ext`` directory. The system class loader, which is the entry point for
-most class loading activities in a Java application, loads classes from the Java
-classpath, which is provided through the “``-cp``” argument of the “``java``” command or
-through the ``$CLASSPATH`` environment variable.
-
-In addition, an application can create custom class loaders for controlling class loading
-behaviors, such as supporting different versions of the same library in the same JVM or
-finding class files that were not in the classpath when the JVM started.
 
 Parent Delegation Model
 =======================
 
-When the JVM needs to load a class, by default it follows the parent delegation model. In
-this model, when the ``loadClass(String className)`` method of a class loader instance is
-called (it may be called implicitly by the JVM), it uses this logic to load the
-requested class:
+When a Java Virtual Machine (JVM) needs to load a class, by default it follows the
+parent delegation model. In this model, when the ``loadClass(String className)`` method of
+a class loader instance is called (it may be called implicitly by the JVM), it calls
+its parent class loader first before trying to load the class itself, using this
+logic to load the requested class:
 
-.. image:: ../_images/class-loading/class-loading02.png
+.. image:: ../_images/class-loading/class-loading01.png
    :width: 7in
    :align: center
 
@@ -65,18 +48,18 @@ Understanding this is the key to writing a custom class loader correctly and to 
 running into exceptions such as ``ClassCastException``, ``ClassNotFoundException``, and
 ``NoClassDefFoundError``.
 
-The parent delegation model also gives you control on which class loader is the defining
-one for a given class. You may have the same class file available to multiple class
-loaders in the hierarchy, but only the one highest in the hierarchy will be the defining
-class loader. For example, class files for all core Java classes are in the
-``$JAVA_HOME/lib/rt.jar`` file. The bootstrap class loader uses it to find class files when
-loading core classes. If someone starts a JVM by running “``java -cp rt.jar...``”, the same
-set of class files will be available to the system class loader as well. However, because
-of the parent delegation model, all core Java classes will have the bootstrap class loader
-as the defining class loader, and never the system class loader.
+The parent delegation model also gives control on which class loader is the defining one
+for a given class. You may have the same class file available to multiple class loaders in
+the hierarchy, but only the one highest in the hierarchy will be the defining class
+loader. 
 
-Class Loading in CDAP
-=====================
+For example, class files for all core Java classes are in the ``$JAVA_HOME/lib/rt.jar``
+file. The bootstrap class loader (one of the three JVM-created startup class loaders; the
+other two being the extension and system class loaders) uses it to find class files when
+loading core classes. If someone starts a JVM by running “``java -cp rt.jar...``”, the
+same set of class files will be available to the system class loader as well. However,
+because of the parent delegation model, all core Java classes will have the bootstrap
+class loader as the defining class loader, and never the system class loader.
 
 The parent delegation model allows for one class to be loadable from multiple class
 loaders, as long as those class loaders have the defining class loader of that class as a
@@ -84,39 +67,33 @@ common ancestor. This property enables one to define an extensible class loading
 architecture that provides class isolation, yet at the same time they’re able to
 inter-operate with a set of common API classes.
 
-In CDAP, we provide a platform with which application developers are free to write big
-data applications without worrying about the underlying execution framework. In terms of
-class loading strategy, we provide these properties for an application:
+Class Loading in CDAP
+=====================
 
-- Application can choose to use any library of any version;
-- Application can define a custom plugin API for extending itself;
-- Plugins can be written for an application by implementing the application plugin API; and
-- Different plugins can choose to use any library of any version, yet all plugins are
-  usable by the same application at the same time.
+Based on the parent delegation model, we’ve come up with this class loader hierarchy in
+CDAP:
 
-Based on the parent delegation model as described above, we’ve come up with this class
-loader hierarchy in CDAP:
-
-.. image:: ../_images/class-loading/class-loading03.png
+.. image:: ../_images/class-loading/class-loading02.png
    :width: 7in
    :align: center
 
 With this class loader hierarchy, the CDAP runtime system interacts with custom
 applications only through classes and interfaces defined in the API class loader; hence,
-libraries used by the CDAP system itself won’t interfere with applications. Moreover, CDAP
-allows an application to define its own plugin API for extending the functionalities of
-the application itself. Each plugin implementation will be loaded through a separate
-plugin class loader. The parent of each plugin class loader is a filter class loader that
-ensures that only CDAP and plugin API classes are loaded from the application class
-loader. All other classes required by the plugin are loaded by the plugin class loader
-itself. This allows an application to use multiple plugins at the same time, while
-providing class loading isolation between different plugins.
+libraries used by the CDAP system itself won’t interfere with applications. 
+
+Moreover, CDAP allows an application to define its own plugin API for extending the
+functionalities of the application itself. Each plugin implementation will be loaded
+through a separate plugin class loader. The parent of each plugin class loader is a filter
+class loader that ensures that only CDAP and plugin API classes are loaded from the
+application class loader. All other classes required by the plugin are loaded by the
+plugin class loader itself. This allows an application to use multiple plugins at the same
+time, while providing class loading isolation between different plugins.
 
 In CDAP, both applications and plugins are deployed as JAR files to the system. Instead of
 a normal JAR file that contains a collection of class files, a bundle JAR file has content
 similar to this example:
 
-.. image:: ../_images/class-loading/class-loading04.png
+.. image:: ../_images/class-loading/class-loading03.png
    :width: 7in
    :align: center
 
