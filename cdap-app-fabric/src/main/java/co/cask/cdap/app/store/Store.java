@@ -27,10 +27,12 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
+import co.cask.cdap.internal.app.store.WorkflowDataset;
 import co.cask.cdap.proto.AdapterStatus;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.WorkflowStatistics;
 import co.cask.cdap.templates.AdapterDefinition;
 import com.google.common.base.Predicate;
 import org.apache.twill.filesystem.Location;
@@ -486,4 +488,17 @@ public interface Store {
    * @return the {@link WorkflowToken} for the specified workflow run
    */
   WorkflowToken getWorkflowToken(Id.Workflow workflowId, String workflowRunId);
+
+  /**
+   * Used by {@link co.cask.cdap.gateway.handlers.WorkflowStatsSLAHttpHandler} to get the statistics of all completed
+   * workflows in a time range.
+   *
+   * @param workflowId Workflow that needs to have its statistics returned
+   * @param startTime StartTime of the range
+   * @param endTime EndTime of the range
+   * @param percentiles List of percentiles that the user wants to see
+   * @return the statistics for a given workflow
+   */
+  WorkflowStatistics getWorkflowStatistics(Id.Workflow workflowId, long startTime,
+                                           long endTime, List<Double> percentiles);
 }
