@@ -17,13 +17,13 @@
 package co.cask.cdap.internal.app;
 
 import co.cask.cdap.api.Resources;
-import co.cask.cdap.api.data.stream.StreamSpecification;
+import co.cask.cdap.api.artifact.Plugin;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
-import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.proto.codec.AbstractSpecificationCodec;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
@@ -75,11 +75,6 @@ public class ServiceSpecificationCodec extends AbstractSpecificationCodec<Servic
     Resources resources = context.deserialize(jsonObj.get("resources"), Resources.class);
     int instances = jsonObj.get("instances").getAsInt();
 
-    Map<String, StreamSpecification> streams = deserializeMap(jsonObj.get("streams"), context,
-                                                              StreamSpecification.class);
-    Map<String, String> datasetModules = deserializeMap(jsonObj.get("datasetModules"), context, String.class);
-    Map<String, DatasetCreationSpec> datasetSpecs = deserializeMap(jsonObj.get("datasetSpecs"), context,
-                                                                   DatasetCreationSpec.class);
     return new ServiceSpecification(className, name, description, handlers, resources, instances);
   }
 
@@ -126,7 +121,8 @@ public class ServiceSpecificationCodec extends AbstractSpecificationCodec<Servic
                                                        spec.get("name").getAsString(),
                                                        spec.get("description").getAsString(),
                                                        properties, ImmutableSet.<String>of(),
-                                                       ImmutableList.<ServiceHttpEndpoint>of()));
+                                                       ImmutableList.<ServiceHttpEndpoint>of(),
+                                                       ImmutableMap.<String, Plugin>of()));
     }
 
     ResourceSpecification resourceSpec = handlerSpec.getResourceSpecification();

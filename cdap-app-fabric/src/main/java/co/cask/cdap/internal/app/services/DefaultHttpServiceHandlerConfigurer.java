@@ -20,10 +20,13 @@ import co.cask.cdap.api.service.http.HttpServiceConfigurer;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
-import co.cask.cdap.internal.api.DefaultDatasetConfigurer;
+import co.cask.cdap.internal.app.DefaultPluginConfigurer;
+import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.internal.specification.DataSetFieldExtractor;
 import co.cask.cdap.internal.specification.PropertyFieldExtractor;
+import co.cask.cdap.proto.Id;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -38,7 +41,7 @@ import java.util.Set;
 /**
  * Default implementation of {@link HttpServiceConfigurer}.
  */
-public class DefaultHttpServiceHandlerConfigurer extends DefaultDatasetConfigurer implements HttpServiceConfigurer {
+public class DefaultHttpServiceHandlerConfigurer extends DefaultPluginConfigurer implements HttpServiceConfigurer {
 
   private final Map<String, String> propertyFields;
   private final String className;
@@ -53,7 +56,10 @@ public class DefaultHttpServiceHandlerConfigurer extends DefaultDatasetConfigure
    *
    * @param handler the handler for the service
    */
-  public DefaultHttpServiceHandlerConfigurer(HttpServiceHandler handler) {
+  public DefaultHttpServiceHandlerConfigurer(HttpServiceHandler handler, Id.Artifact artifactId,
+                                             ArtifactRepository artifactRepository,
+                                             PluginInstantiator pluginInstantiator) {
+    super(artifactRepository, pluginInstantiator, artifactId);
     this.propertyFields = Maps.newHashMap();
     this.className = handler.getClass().getName();
     this.name = handler.getClass().getSimpleName();
@@ -91,6 +97,6 @@ public class DefaultHttpServiceHandlerConfigurer extends DefaultDatasetConfigure
   public HttpServiceHandlerSpecification createSpecification() {
     Map<String, String> properties = Maps.newHashMap(this.properties);
     properties.putAll(propertyFields);
-    return new HttpServiceHandlerSpecification(className, name, "", properties, datasets, endpoints);
+    return new HttpServiceHandlerSpecification(className, name, "", properties, datasets, endpoints, getPlugins());
   }
 }
