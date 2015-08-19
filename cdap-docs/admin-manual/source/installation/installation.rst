@@ -779,6 +779,34 @@ please follow the upgrade instructions for the earlier versions and upgrade firs
 #. Run the upgrade tool, as the user that runs CDAP Master (the CDAP user)::
 
      $ /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.UpgradeTool upgrade
+     
+   Note that once you have upgraded an instance of CDAP, you cannot reverse the process; down-grades
+   to a previous version are not possible.
+   
+   The Upgrade Tool will produce output similar to the following, prompting you to continue with the upgrade:
+   
+    .. container:: highlight
+
+      .. parsed-literal::    
+    
+        UpgradeTool - version |short-version|-xxxxx.
+
+        upgrade - Upgrades CDAP to |short-version|
+          The upgrade tool upgrades the following:
+          1. User Datasets
+              - Upgrades the coprocessor jars for tables
+              - Migrates the metadata for PartitionedFileSets
+          2. System Datasets
+          3. UsageRegistry Dataset Type
+          Note: Once you run the upgrade tool you cannot rollback to the previous version.
+        Do you want to continue (y/n)
+        y
+        Starting upgrade ...
+
+   You can run the tool in a non-interactive fashion by using the ``force`` flag, in which case
+   it will run unattended and not prompt for continuing::
+   
+     $ /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.UpgradeTool upgrade force
 
 #. Restart the CDAP processes::
 
