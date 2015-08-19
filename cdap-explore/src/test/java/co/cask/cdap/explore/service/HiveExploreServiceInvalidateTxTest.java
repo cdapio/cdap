@@ -16,6 +16,7 @@
 
 package co.cask.cdap.explore.service;
 
+import co.cask.cdap.proto.Id;
 import org.apache.hive.service.cli.HiveSQLException;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -54,6 +55,15 @@ public class HiveExploreServiceInvalidateTxTest extends BaseHiveExploreServiceTe
     Assert.assertEquals(0, transactionManager.getCurrentState().getInvalid().size());
     try {
       waitForCompletionStatus(exploreService.execute(NAMESPACE_ID, "select * from dataset_nonexistent"),
+                              5, TimeUnit.SECONDS, 10);
+      Assert.fail("Expected HiveSQLException");
+    } catch (HiveSQLException e) {
+      // Expected
+    }
+    Assert.assertEquals(1, transactionManager.getCurrentState().getInvalid().size());
+
+    try {
+      waitForCompletionStatus(exploreService.deleteNamespace(Id.Namespace.from("nonexistent")),
                               5, TimeUnit.SECONDS, 10);
       Assert.fail("Expected HiveSQLException");
     } catch (HiveSQLException e) {
