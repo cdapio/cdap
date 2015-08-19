@@ -1,3 +1,28 @@
-{{ schema }}
+<div class="schema-popover">
+  <div class="table-responsive">
+    <table class="table table-curved">
+      <thead>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Null</th>
+      </thead>
 
-<button class="btn btn-default" ng-click="$hide()">close</button>
+      <tbody>
+        <tr ng-repeat="field in schema">
+          <td>{{ field.name }}</td>
+          <td>
+            <span ng-if="field.type.type !== 'map'">{{field.type}}</span>
+            <span ng-if="field.type.type === 'map'">map&lt;string, string&gt; </span>
+          </td>
+          <td class="text-center">
+            <input type="checkbox" ng-model="field.nullable" disabled>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="text-center">
+    <button class="btn btn-default" ng-click="$hide()">close</button>
+  </div>
+</div>

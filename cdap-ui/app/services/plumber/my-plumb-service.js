@@ -37,6 +37,9 @@ angular.module(PKG.name + '.services')
         countSource = 0,
         countTransform = 0;
 
+    var prevConnections = null;
+    var popoverScopes = [];
+
     this.resetToDefaults = function(isImport) {
       var callbacks = angular.copy(this.callbacks);
       var errorCallbacks = angular.copy(this.errorCallbacks);
@@ -179,8 +182,64 @@ angular.module(PKG.name + '.services')
       return finalConnections;
     }
 
+    function formatSchema(jsonSchema, isStreamSource) {
+      var schema;
+      var input;
+      try {
+        input = JSON.parse(jsonSchema);
+      } catch (e) {
+        input = null;
+      }
+
+      if (isStreamSource) {
+        // Must be in this order!!
+        if (!input) {
+          input = {
+            fields: [{ name: 'body', type: 'string' }]
+          };
+        }
+
+        input.fields.unshift({
+          name: 'headers',
+          type: {
+            type: 'map',
+            keys: 'string',
+            values: 'string'
+          }
+        });
+
+        input.fields.unshift({
+          name: 'ts',
+          type: 'long'
+        });
+
+      }
+
+      schema = input ? input.fields : null;
+      angular.forEach(schema, function (field) {
+        if (angular.isArray(field.type)) {
+          field.type = field.type[0];
+          field.nullable = true;
+        } else {
+          field.nullable = false;
+        }
+      });
+
+      return schema;
+    }
 
     this.setConnections = function(connections) {
+
+      angular.forEach(prevConnections, function (conn) {
+        conn.unbind('click');
+      });
+      prevConnections = connections;
+
+      angular.forEach(popoverScopes, function (s) {
+        s.$destroy();
+      });
+      popoverScopes = [];
+
       this.isConfigTouched = true;
       this.connections = [];
       var localConnections = [];
@@ -190,30 +249,25 @@ angular.module(PKG.name + '.services')
           target: con.targetId
         });
 
-        // con.setLabel('haha');
-        console.log('con', con);
-
-        //get output schema
-        console.log('output', this.nodes[con.sourceId].outputSchema);
 
         var label = angular.element(con.getOverlay('label').getElement());
-        var schema = this.nodes[con.sourceId].outputSchema;
 
         var scope = $rootScope.$new();
+        popoverScopes.push(scope);
 
-        scope.schema = schema;
-
-        $popover(label, {
+        var popover = $popover(label, {
           title: 'Schema',
-          trigger: 'click',
-          placement: 'top',
+          trigger: 'manual',
+          placement: 'auto',
           target: label,
           contentTemplate: '/assets/features/adapters/templates/partial/schema-popover.html',
           scope: scope
         });
 
         con.bind('click', function () {
-          scope.schema = this.nodes[con.sourceId].outputSchema;
+          var isStream = this.nodes[con.sourceId].name === 'Stream';
+          scope.schema = formatSchema(this.nodes[con.sourceId].outputSchema, isStream);
+          popover.toggle();
         }.bind(this));
 
 

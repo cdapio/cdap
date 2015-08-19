@@ -80,7 +80,7 @@ angular.module(PKG.name + '.commons')
 
       drawConnections.call(this);
 
-      MyPlumbService.setConnections(this.instance.getConnections());
+      // MyPlumbService.setConnections(this.instance.getConnections());
 
       mapSchemas.call(this);
 
