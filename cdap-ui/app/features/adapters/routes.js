@@ -138,5 +138,19 @@ angular.module(PKG.name + '.feature.adapters')
             label: 'History',
             parent: 'adapters.detail.runs'
           }
+        })
+        .state('adapters.detail.schedule', {
+          url: '/schedule',
+          data: {
+            authorizedRoles: MYAUTH_ROLE.all,
+            highlightTab: 'development'
+          },
+          templateUrl: '/assets/features/adapters/templates/tabs/schedule.html',
+          controller: 'ScheduleController',
+          controllerAs: 'ScheduleController',
+          ncyBreadcrumb: {
+            label: 'Schedule',
+            parent: 'adapters.detail.runs'
+          }
         });
   });
