@@ -49,9 +49,11 @@
     <span id="search-progress" style="padding-left: 10px"></span>
   </form>
   <p>
-  <i>Quick Search</i> is a local keyword search; not as comprehensive as
-  an external search engine, but fast and often sufficiently accurate. Note that the Search function will automatically search for all of the
-  words. Pages containing fewer words won't appear in the result list.
+  <i>Quick Search</i> is a local keyword search; not as comprehensive as an external
+  search engine, but fast and often sufficiently accurate. Note that the Search function
+  will automatically search for all of the words. Pages containing fewer words won't
+  appear in the result list. Don't use any special characters (such as hyphens or periods)
+  in your words, as the search will then not work.
   </p>
 <!-- 
   <p>
@@ -85,7 +87,7 @@
   {% if search_performed %}
     <h2>{{ _('Search Results') }}</h2>
     {% if not search_results %}
-      <p>{{ _('Your search did not match any documents. Please make sure that all words are spelled correctly and that you\'ve selected enough categories.') }}</p>
+      <p>{{ _('Your search did not match any documents. Please make sure that all words are spelled correctly and that you\'ve not used any special characters (such as hyphens or periods) in your words.') }}</p>
     {% endif %}
   {% endif %}
   <div id="search-results">
