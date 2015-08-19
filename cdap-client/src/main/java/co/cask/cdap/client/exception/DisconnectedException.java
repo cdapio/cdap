@@ -15,8 +15,28 @@
  */
 package co.cask.cdap.client.exception;
 
+import co.cask.cdap.client.config.ConnectionConfig;
+
+import javax.annotation.Nullable;
+
 /**
  * Thrown when the client is not connected, but a request was attempted.
  */
 public class DisconnectedException extends RuntimeException {
+
+  @Nullable
+  private final ConnectionConfig connectionConfig;
+
+  public DisconnectedException(@Nullable ConnectionConfig connectionConfig) {
+    this.connectionConfig = connectionConfig;
+  }
+
+  public DisconnectedException() {
+    this(null);
+  }
+
+  @Nullable
+  public ConnectionConfig getConnectionConfig() {
+    return connectionConfig;
+  }
 }
