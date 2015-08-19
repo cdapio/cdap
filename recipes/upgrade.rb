@@ -25,7 +25,7 @@ node.override['cdap']['master']['init_actions'] = [:stop]
 include_recipe 'cdap::master'
 
 # Run the CDAP Upgrade Tool
-ruby_block 'run-cdap-upgrade-tool' do
+ruby_block 'run-cdap-upgrade-tool' do # ~FC037
   block do
     resources('execute[cdap-upgrade-tool]').run_action(:run)
   end
