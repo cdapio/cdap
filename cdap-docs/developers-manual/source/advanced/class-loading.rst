@@ -36,8 +36,10 @@ its parent class loader first before trying to load the class itself, using this
 logic to load the requested class:
 
 .. image:: ../_images/class-loading/class-loading01.png
-   :width: 7in
    :align: center
+
+..    :width: 70%
+..    :scale: 75%
 
 Each loaded class maintains a reference to the class loader instance which actually read
 the class file and defined the class. We call that class loader the **defining class
@@ -74,8 +76,10 @@ Based on the parent delegation model, we’ve come up with this class loader hie
 CDAP:
 
 .. image:: ../_images/class-loading/class-loading02.png
-   :width: 7in
    :align: center
+
+..    :width: 82%
+..    :scale: 75%
 
 With this class loader hierarchy, the CDAP runtime system interacts with custom
 applications only through classes and interfaces defined in the API class loader; hence,
@@ -94,8 +98,10 @@ a normal JAR file that contains a collection of class files, a bundle JAR file h
 similar to this example:
 
 .. image:: ../_images/class-loading/class-loading03.png
-   :width: 7in
    :align: center
+
+..    :width: 58%
+..    :scale: 75%
 
 Inside an application bundle JAR file, besides the class files for the application, are
 the JAR files for third party libraries that are needed by the application. In the
