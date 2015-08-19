@@ -82,7 +82,7 @@ angular.module(PKG.name + '.feature.admin')
 
       mySettings.get('pluginTemplates')
         .then(function (res) {
-          var template = angular.copy(res[$stateParams.nsadmin][$stateParams.templateName]);
+          var template = res[$stateParams.nsadmin][$stateParams.templateName];
 
           vm.template = template.templateType;
           vm.pluginType = template.type;
@@ -107,6 +107,17 @@ angular.module(PKG.name + '.feature.admin')
           type: 'danger',
           title: 'Error!',
           content: 'Please enter template name'
+        });
+
+        return;
+      }
+
+      var list = vm.pluginList.map(function (p) { return p.name; });
+      if (list.indexOf(vm.pluginConfig.templateName) !== -1) {
+        $alert({
+          type: 'danger',
+          title: 'Error!',
+          content: 'There is already a plugin with the same name.'
         });
 
         return;
