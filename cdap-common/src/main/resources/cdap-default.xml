@@ -323,7 +323,7 @@
     <property>
         <name>data.local.storage</name>
         <value>${local.data.dir}/ldb</value>
-        <description>Database directory for data fabric when in standalone mode</description>
+        <description>Database directory for LevelDB, used for data fabric in standalone mode</description>
     </property>
 
     <property>
