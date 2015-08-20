@@ -17,10 +17,12 @@
 # limitations under the License.
 #
 
+maj_min = node['cdap']['version'].to_f
+
 case node['platform_family']
 when 'debian'
   include_recipe 'apt'
-  apt_repository 'cask' do
+  apt_repository "cdap-#{maj_min}" do
     uri node['cdap']['repo']['apt_repo_url']
     distribution node['lsb']['codename']
     components node['cdap']['repo']['apt_components']
@@ -28,13 +30,19 @@ when 'debian'
     arch 'amd64'
     key "#{node['cdap']['repo']['apt_repo_url']}/pubkey.gpg"
   end
+  file '/etc/apt/sources.list.d/cask.list' do
+    action :delete
+  end
 when 'rhel'
   include_recipe 'yum'
-  yum_repository 'cask' do
-    description 'Cask YUM repository'
+  yum_repository "cdap-#{maj_min}" do
+    description 'CDAP YUM repository'
     url node['cdap']['repo']['yum_repo_url']
     gpgkey "#{node['cdap']['repo']['yum_repo_url']}/pubkey.gpg"
     gpgcheck true
     action :add
+  end
+  file '/etc/yum.repos.d/cask.repo' do
+    action :delete
   end
 end
