@@ -1,0 +1,48 @@
+<div class="row">
+  <div class="col-xs-6">
+    <h2>Plugin Templates</h2>
+  </div>
+
+  <div class="col-xs-6 text-right">
+    <a ui-sref="admin.namespace.detail.templates" class="btn btn-default">
+      <i class="fa fa-plus"></i>
+      Add Template
+    </a>
+  </div>
+</div>
+
+<div class="table-responsive" ng-if="!TemplatesListController.isEmpty()">
+  <table class="table table-curved">
+    <thead>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Plugin</th>
+      <th></th>
+    </thead>
+
+    <tbody>
+      <tr ng-repeat="template in TemplatesListController.list">
+        <td>
+          <a ui-sref="admin.namespace.detail.templateedit({ templateName: template.templateName })">
+            {{ template.templateName }}
+          </a>
+        </td>
+        <td>{{ template.type }}</td>
+        <td>{{ template.pluginName }}</td>
+        <td>
+          <a href=""
+          ng-click="caskConfirm()"
+          cask-confirmable="TemplatesListController.delete(template)"
+          data-confirmable-content="Are you sure you want to delete this template?">
+            <span class=" fa fa-trash text-danger"></span>
+          </a>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<br/>
+<div class="well text-center" ng-if="TemplatesListController.isEmpty()">
+  <h3>No plugin template</h3>
+</div>

@@ -40,7 +40,6 @@ import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.artifact.PluginInfo;
 import co.cask.cdap.proto.artifact.PluginSummary;
 import co.cask.cdap.test.XSlowTests;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -57,6 +56,7 @@ import org.junit.rules.TemporaryFolder;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.jar.Manifest;
@@ -82,6 +82,10 @@ public class ArtifactClientTestRun extends ClientTestBase {
   public void setUp() throws Throwable {
     super.setUp();
     artifactClient = new ArtifactClient(clientConfig, new RESTClient(clientConfig));
+    for (ArtifactSummary artifactSummary : artifactClient.list(Id.Namespace.DEFAULT, false)) {
+      artifactClient.delete(
+        Id.Artifact.from(Id.Namespace.DEFAULT, artifactSummary.getName(), artifactSummary.getVersion()));
+    }
   }
 
   @Test
@@ -111,7 +115,7 @@ public class ArtifactClientTestRun extends ClientTestBase {
     Set<ArtifactRange> parents = Sets.newHashSet(
       new ArtifactRange(Id.Namespace.DEFAULT, "ghost", new ArtifactVersion("1"), new ArtifactVersion("2")));
     try {
-      artifactClient.add(Id.Namespace.DEFAULT, "abc", "1.0.0", parents, DUMMY_SUPPLIER);
+      artifactClient.add(Id.Namespace.DEFAULT, "abc", DUMMY_SUPPLIER, "1.0.0", parents);
       Assert.fail();
     } catch (NotFoundException e) {
       // expected
@@ -122,7 +126,7 @@ public class ArtifactClientTestRun extends ClientTestBase {
   public void testAddArtifactBadIds() throws Exception {
     // test bad version
     try {
-      artifactClient.add(Id.Namespace.DEFAULT, "abc", "1/0.0", null, DUMMY_SUPPLIER);
+      artifactClient.add(Id.Namespace.DEFAULT, "abc", DUMMY_SUPPLIER, "1/0.0");
       Assert.fail();
     } catch (BadRequestException e) {
       // expected
@@ -130,7 +134,7 @@ public class ArtifactClientTestRun extends ClientTestBase {
 
     // test bad name
     try {
-      artifactClient.add(Id.Namespace.DEFAULT, "ab:c", "1.0.0", null, DUMMY_SUPPLIER);
+      artifactClient.add(Id.Namespace.DEFAULT, "ab:c", DUMMY_SUPPLIER, "1.0.0");
       Assert.fail();
     } catch (BadRequestException e) {
       // expected
@@ -143,7 +147,9 @@ public class ArtifactClientTestRun extends ClientTestBase {
     Id.Artifact myapp1Id = Id.Artifact.from(Id.Namespace.DEFAULT, "myapp", "1.0.0");
     Id.Artifact myapp2Id = Id.Artifact.from(Id.Namespace.DEFAULT, "myapp", "2.0.0");
     LocalLocationFactory locationFactory = new LocalLocationFactory(tmpFolder.newFolder());
-    final Location appJarLoc = AppJarHelper.createDeploymentJar(locationFactory, MyApp.class);
+    Manifest manifest = new Manifest();
+    manifest.getMainAttributes().put(ManifestFields.BUNDLE_VERSION, "2.0.0");
+    final Location appJarLoc = AppJarHelper.createDeploymentJar(locationFactory, MyApp.class, manifest);
 
     InputSupplier<InputStream> inputSupplier = new InputSupplier<InputStream>() {
       @Override
@@ -152,13 +158,13 @@ public class ArtifactClientTestRun extends ClientTestBase {
       }
     };
     artifactClient.add(myapp1Id.getNamespace(), myapp1Id.getName(),
-                       myapp1Id.getVersion().getVersion(), null, inputSupplier);
-    artifactClient.add(myapp2Id.getNamespace(), myapp2Id.getName(),
-                       myapp2Id.getVersion().getVersion(), null, inputSupplier);
+                       inputSupplier, myapp1Id.getVersion().getVersion());
+    // let it derive version from jar manifest, which has bundle-version at 2.0.0
+    artifactClient.add(myapp2Id.getNamespace(), myapp2Id.getName(), inputSupplier, null, null);
 
     // add an artifact that contains a plugin, but only extends myapp-2.0.0
     Id.Artifact pluginId = Id.Artifact.from(Id.Namespace.DEFAULT, "myapp-plugins", "2.0.0");
-    Manifest manifest = new Manifest();
+    manifest = new Manifest();
     manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE, Plugin1.class.getPackage().getName());
     final Location pluginJarLoc = PluginJarHelper.createPluginJar(locationFactory, manifest, Plugin1.class);
     inputSupplier = new InputSupplier<InputStream>() {
@@ -169,26 +175,25 @@ public class ArtifactClientTestRun extends ClientTestBase {
     };
     Set<ArtifactRange> parents = Sets.newHashSet(new ArtifactRange(
       myapp2Id.getNamespace(), myapp2Id.getName(), myapp2Id.getVersion(), new ArtifactVersion("3.0.0")));
-    artifactClient.add(pluginId.getNamespace(), pluginId.getName(),
-                       pluginId.getVersion().getVersion(), parents, inputSupplier);
+    Set<PluginClass> additionalPlugins = Sets.newHashSet(new PluginClass(
+      "jdbc", "mysql", "", "com.mysql.jdbc.Driver", null, Collections.<String, PluginPropertyField>emptyMap()));
+    artifactClient.add(pluginId.getNamespace(), pluginId.getName(), inputSupplier,
+                       pluginId.getVersion().getVersion(), parents, additionalPlugins);
 
     ArtifactSummary myapp1Summary = new ArtifactSummary(myapp1Id.getName(), myapp1Id.getVersion().getVersion(), false);
     ArtifactSummary myapp2Summary = new ArtifactSummary(myapp2Id.getName(), myapp2Id.getVersion().getVersion(), false);
     ArtifactSummary pluginArtifactSummary =
       new ArtifactSummary(pluginId.getName(), pluginId.getVersion().getVersion(), false);
 
-    // no way to delete artifacts yet... when run in a suite will see other artifacts from app deployments.
-    // so just test that these expected ones are in the list returned.
     Set<ArtifactSummary> artifacts = Sets.newHashSet(artifactClient.list(Id.Namespace.DEFAULT));
-
-    Assert.assertTrue(artifacts.containsAll(ImmutableList.of(myapp1Summary, myapp2Summary, pluginArtifactSummary)));
+    Assert.assertEquals(Sets.newHashSet(myapp1Summary, myapp2Summary, pluginArtifactSummary), artifacts);
 
     // list all artifacts named 'myapp'
-    Assert.assertEquals(ImmutableList.of(myapp1Summary, myapp2Summary),
-                        artifactClient.listVersions(Id.Namespace.DEFAULT, myapp1Id.getName()));
+    Assert.assertEquals(Sets.newHashSet(myapp1Summary, myapp2Summary),
+                        Sets.newHashSet(artifactClient.listVersions(Id.Namespace.DEFAULT, myapp1Id.getName())));
     // list all artifacts named 'myapp-plugins'
-    Assert.assertEquals(ImmutableList.of(pluginArtifactSummary),
-                        artifactClient.listVersions(Id.Namespace.DEFAULT, pluginId.getName()));
+    Assert.assertEquals(Sets.newHashSet(pluginArtifactSummary),
+                        Sets.newHashSet(artifactClient.listVersions(Id.Namespace.DEFAULT, pluginId.getName())));
 
     // get info about specific artifacts
     Schema myAppConfigSchema = new ReflectionSchemaGenerator().generate(MyApp.Conf.class);
@@ -211,6 +216,7 @@ public class ArtifactClientTestRun extends ClientTestBase {
       "x", new PluginPropertyField("x", "", "int", true));
     ArtifactClasses pluginClasses = ArtifactClasses.builder()
       .addPlugin(new PluginClass("callable", "plugin1", "p1 description", Plugin1.class.getName(), "conf", props))
+      .addPlugins(additionalPlugins)
       .build();
     ArtifactInfo pluginArtifactInfo =
       new ArtifactInfo(pluginId.getName(), pluginId.getVersion().getVersion(), false, pluginClasses);
@@ -220,19 +226,21 @@ public class ArtifactClientTestRun extends ClientTestBase {
     Assert.assertTrue(artifactClient.getPluginTypes(myapp1Id).isEmpty());
 
     // test get plugin types for myapp-2.0.0
-    Assert.assertEquals(Lists.newArrayList("callable"), artifactClient.getPluginTypes(myapp2Id));
+    Assert.assertEquals(Lists.newArrayList("callable", "jdbc"), artifactClient.getPluginTypes(myapp2Id));
 
     // test get plugins of type callable for myapp-2.0.0
     PluginSummary pluginSummary =
       new PluginSummary("plugin1", "callable", "p1 description", Plugin1.class.getName(), pluginArtifactSummary);
-    Assert.assertEquals(Lists.newArrayList(pluginSummary), artifactClient.getPluginSummaries(myapp2Id, "callable"));
+    Assert.assertEquals(Sets.newHashSet(pluginSummary),
+                        Sets.newHashSet(artifactClient.getPluginSummaries(myapp2Id, "callable")));
     // no plugins of type "runnable"
     Assert.assertTrue(artifactClient.getPluginSummaries(myapp2Id, "runnable").isEmpty());
 
     // test get plugin details for plugin1 for myapp-2.0.0
     PluginInfo pluginInfo = new PluginInfo("plugin1", "callable", "p1 description", Plugin1.class.getName(),
       pluginArtifactSummary, props);
-    Assert.assertEquals(Lists.newArrayList(pluginInfo), artifactClient.getPluginInfo(myapp2Id, "callable", "plugin1"));
+    Assert.assertEquals(Sets.newHashSet(pluginInfo),
+                        Sets.newHashSet(artifactClient.getPluginInfo(myapp2Id, "callable", "plugin1")));
   }
 
 }

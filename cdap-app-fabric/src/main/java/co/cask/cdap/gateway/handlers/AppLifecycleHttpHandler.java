@@ -350,10 +350,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     // but the caller catches all exceptions and responds with a 500
     final Id.Artifact artifactId;
     try {
-      artifactId = parseArchiveName(namespace, archiveName);
+      artifactId = ArtifactRepository.parse(namespace, archiveName);
     } catch (InvalidArtifactException e) {
-      // TODO: (CDAP-3310) if id can't be parsed from archiveName,
-      //                   pick up version from manifest and use archive name as artifact name
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
       return null;
     }
@@ -486,30 +484,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       LOG.error("Got exception : ", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
-  }
-
-  // parse a filename into an Id.Artifact, assuming the filename is of format {name}-{version}.jar
-  @VisibleForTesting
-  static Id.Artifact parseArchiveName(Id.Namespace namespace, String archiveName) throws InvalidArtifactException {
-    if (!archiveName.endsWith(".jar")) {
-      throw new InvalidArtifactException(String.format("Archive name '%s' does not end in .jar", archiveName));
-    }
-
-    // strip '.jar' from the filename
-    archiveName = archiveName.substring(0, archiveName.length() - ".jar".length());
-
-    // true means try and match version as the end of the string
-    ArtifactVersion artifactVersion = new ArtifactVersion(archiveName, true);
-    String rawVersion = artifactVersion.getVersion();
-    // this happens if it could not parse the version
-    if (rawVersion == null) {
-      throw new InvalidArtifactException(
-        String.format("Archive name '%s' is not of the form {name}-{version}.jar", archiveName));
-    }
-
-    // filename should be {name}-{version}.  Strip -{version} from it to get artifact name
-    String artifactName = archiveName.substring(0, archiveName.length() - rawVersion.length() - 1);
-    return Id.Artifact.from(namespace, artifactName, rawVersion);
   }
 
   private static ApplicationDetail makeAppDetail(ApplicationSpecification spec) {

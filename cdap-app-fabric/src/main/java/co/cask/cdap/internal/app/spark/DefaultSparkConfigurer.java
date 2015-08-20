@@ -25,7 +25,6 @@ import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.internal.specification.PropertyFieldExtractor;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.reflect.TypeToken;
 
 import java.util.Collections;
 import java.util.Map;
@@ -83,7 +82,7 @@ public final class DefaultSparkConfigurer extends DefaultDatasetConfigurer imple
 
   public SparkSpecification createSpecification() {
     // Grab all @Property fields
-    Reflections.visit(spark, TypeToken.of(spark.getClass()), new PropertyFieldExtractor(properties));
+    Reflections.visit(spark, spark.getClass(), new PropertyFieldExtractor(properties));
     return new SparkSpecification(spark.getClass().getName(), name, description,
                                   mainClassName, properties, driverResources, executorResources);
   }

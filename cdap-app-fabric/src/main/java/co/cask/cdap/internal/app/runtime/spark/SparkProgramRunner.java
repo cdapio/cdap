@@ -126,7 +126,7 @@ public class SparkProgramRunner implements ProgramRunner {
       spark = new InstantiatorFactory(false).get(TypeToken.of(program.<Spark>getMainClass())).create();
 
       // Fields injection
-      Reflections.visit(spark, TypeToken.of(spark.getClass()),
+      Reflections.visit(spark, spark.getClass(),
                         new PropertyFieldSetter(spec.getProperties()),
                         new DataSetFieldSetter(context),
                         new MetricsFieldSetter(context.getMetrics()));
@@ -135,9 +135,11 @@ public class SparkProgramRunner implements ProgramRunner {
       throw Throwables.propagate(e);
     }
 
+    SparkSubmitter submitter = new SparkContextConfig(hConf).isLocal() ? new LocalSparkSubmitter()
+                                                                       : new DistributedSparkSubmitter();
     Service sparkRuntimeService = new SparkRuntimeService(
       cConf, hConf, spark, new SparkContextFactory(hConf, context, datasetFramework, streamAdmin),
-      program.getJarLocation(), txSystemClient
+      submitter, program.getJarLocation(), txSystemClient
     );
 
     sparkRuntimeService.addListener(createRuntimeServiceListener(program.getId(), runId, arguments),

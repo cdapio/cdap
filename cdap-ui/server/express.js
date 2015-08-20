@@ -140,7 +140,7 @@ function makeApp (authAddress, cdapConfig) {
       req.param('namespace'),
       '/',
       req.param('path')
-    ];
+    ].join('');
 
     var opts = {
       method: 'POST',

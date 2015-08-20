@@ -29,7 +29,6 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.google.common.reflect.TypeToken;
 
 import java.util.List;
 import java.util.Map;
@@ -62,7 +61,7 @@ public class DefaultHttpServiceHandlerConfigurer extends DefaultDatasetConfigure
     this.endpoints = Lists.newArrayList();
 
     // Inspect the handler to grab all @UseDataset, @Property and endpoints.
-    Reflections.visit(handler, TypeToken.of(handler.getClass()),
+    Reflections.visit(handler, handler.getClass(),
                       new DataSetFieldExtractor(datasets),
                       new PropertyFieldExtractor(propertyFields),
                       new ServiceEndpointExtractor(endpoints));

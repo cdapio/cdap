@@ -776,7 +776,7 @@ final class DatumWriterGenerator {
           fieldType = outputType.resolveType(rawType.getMethod(getter.getName()).getGenericReturnType());
           mg.invokeInterface(Type.getType(rawType), getter);
         } else {
-          fieldType = outputType.resolveType(Fields.findField(outputType, field.getName()).getGenericType());
+          fieldType = outputType.resolveType(Fields.findField(outputType.getType(), field.getName()).getGenericType());
           fieldAccessorRequests.put(outputType, field.getName());
           mg.loadThis();
           mg.dup();

@@ -50,6 +50,7 @@ import co.cask.cdap.gateway.handlers.TransactionHttpHandler;
 import co.cask.cdap.gateway.handlers.UsageHandler;
 import co.cask.cdap.gateway.handlers.VersionHandler;
 import co.cask.cdap.gateway.handlers.WorkflowHttpHandler;
+import co.cask.cdap.gateway.handlers.WorkflowStatsSLAHttpHandler;
 import co.cask.cdap.internal.app.deploy.LocalAdapterManager;
 import co.cask.cdap.internal.app.deploy.LocalApplicationManager;
 import co.cask.cdap.internal.app.deploy.LocalApplicationTemplateManager;
@@ -290,7 +291,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       );
       install(
         new FactoryModuleBuilder()
-          .implement(new TypeLiteral<Manager<AdapterDeploymentInfo, AdapterDefinition>> () { },
+          .implement(new TypeLiteral<Manager<AdapterDeploymentInfo, AdapterDefinition>>() { },
                      LocalAdapterManager.class)
           .build(Key.get(new TypeLiteral<ManagerFactory<AdapterDeploymentInfo, AdapterDefinition>>() { },
                          Names.named("adapters")))
@@ -324,6 +325,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       handlerBinder.addBinding().to(ApplicationTemplateHandler.class);
       handlerBinder.addBinding().to(WorkflowHttpHandler.class);
       handlerBinder.addBinding().to(ArtifactHttpHandler.class);
+      handlerBinder.addBinding().to(WorkflowStatsSLAHttpHandler.class);
 
       for (Class<? extends HttpHandler> handlerClass : handlerClasses) {
         handlerBinder.addBinding().to(handlerClass);

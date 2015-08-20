@@ -17,10 +17,10 @@ package co.cask.cdap.common.lang;
 
 import co.cask.cdap.internal.lang.FieldVisitor;
 import com.google.common.base.Defaults;
-import com.google.common.reflect.TypeToken;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.Type;
 
 /**
  * Package private class for {@link InstantiatorFactory} to initialize fields for instances created using Unsafe.
@@ -28,7 +28,7 @@ import java.lang.reflect.Modifier;
 final class FieldInitializer extends FieldVisitor {
 
   @Override
-  public void visit(Object instance, TypeToken<?> inspectType, TypeToken<?> declareType, Field field) throws Exception {
+  public void visit(Object instance, Type inspectType, Type declareType, Field field) throws Exception {
     if (Modifier.isStatic(field.getModifiers())) {
       return;
     }

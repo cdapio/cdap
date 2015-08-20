@@ -20,12 +20,11 @@ import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.workflow.WorkflowAction;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.api.workflow.WorkflowContext;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.Callable;
 
 /**
@@ -51,20 +50,23 @@ public final class ProgramWorkflowAction implements WorkflowAction {
 
   @Override
   public WorkflowActionSpecification configure() {
+    Map<String, String> options = new HashMap<>();
+    options.put(PROGRAM_TYPE, programType.name());
+    options.put(PROGRAM_NAME, programName);
+
     return WorkflowActionSpecification.Builder.with()
       .setName(name)
       .setDescription("Workflow action for " + programName)
-      .withOptions(ImmutableMap.of(
-        PROGRAM_TYPE, programType.name(),
-        PROGRAM_NAME, programName
-      ))
+      .withOptions(options)
       .build();
   }
 
   @Override
   public void initialize(WorkflowContext context) throws Exception {
     programName = context.getSpecification().getProperties().get(PROGRAM_NAME);
-    Preconditions.checkNotNull(programName, "No Program name provided.");
+    if (programName == null) {
+      throw new IllegalArgumentException("No Program name provided.");
+    }
 
     programRunner = context.getProgramRunner(programName);
     programType = context.getSpecification().getProperties().containsKey(PROGRAM_TYPE) ?
@@ -86,7 +88,7 @@ public final class ProgramWorkflowAction implements WorkflowAction {
                programType != null ? programType.name() : null, programName);
     } catch (Exception e) {
       LOG.info("Failed to execute {} Program {} in workflow", programType, programName, e);
-      throw Throwables.propagate(e);
+      throw e;
     }
   }
 

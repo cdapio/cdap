@@ -47,7 +47,7 @@ angular.module(PKG.name + '.services')
      */
     MyPersistentStorage.prototype.get = function (key, force) {
 
-      var val = myHelpers.deepGet(this.data, key);
+      var val = myHelpers.deepGet(this.data, key, true);
 
       if (!force && val) {
         return $q.when(val);
@@ -59,7 +59,7 @@ angular.module(PKG.name + '.services')
         var deferred = $q.defer();
         this.pending.promise.then(function () {
           deferred.resolve(
-            myHelpers.deepGet(self.data, key)
+            myHelpers.deepGet(self.data, key, true)
           );
         });
         return deferred.promise;
@@ -75,7 +75,7 @@ angular.module(PKG.name + '.services')
         function (res) {
           self.data = res.property;
           self.pending.resolve(
-            myHelpers.deepGet(self.data, key)
+            myHelpers.deepGet(self.data, key, true)
           );
         }
       );

@@ -15,8 +15,6 @@
  */
 package co.cask.cdap.api.common;
 
-import com.google.common.collect.ImmutableSortedMap;
-
 import java.io.DataOutput;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -28,6 +26,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.NavigableMap;
+import java.util.TreeMap;
 import java.util.UUID;
 import javax.annotation.Nullable;
 
@@ -1470,7 +1469,11 @@ public class Bytes {
    */
   @Deprecated
   public static <T> NavigableMap<byte[], T> immutableSortedMapOf(byte[] key, T value) {
-    return ImmutableSortedMap.<byte[], T>orderedBy(Bytes.BYTES_COMPARATOR).put(key, value).build();
+    // Not really immutable. However, for the sake of removing
+    // guava usage and given this API is deprecated, it should be fine.
+    TreeMap<byte[], T> result = new TreeMap<byte[], T>(BYTES_COMPARATOR);
+    result.put(key, value);
+    return result;
   }
 
   /**
@@ -1486,8 +1489,11 @@ public class Bytes {
   @Deprecated
   public static <T> NavigableMap<byte[], T> immutableSortedMapOf(byte[] key1, T value1,
                                                                   byte[] key2, T value2) {
-    return ImmutableSortedMap.<byte[], T>orderedBy(Bytes.BYTES_COMPARATOR)
-      .put(key1, value1)
-      .put(key2, value2).build();
+    // Not really immutable. However, for the sake of removing
+    // guava usage and given this API is deprecated, it should be fine.
+    TreeMap<byte[], T> result = new TreeMap<byte[], T>(BYTES_COMPARATOR);
+    result.put(key1, value1);
+    result.put(key2, value2);
+    return result;
   }
 }

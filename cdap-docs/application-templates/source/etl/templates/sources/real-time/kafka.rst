@@ -21,10 +21,10 @@ from Kafka and write them to a stream.
 
 **kafka.topic:** Topic of the messages.
 
-**kafka.zookeeper:** The connect string location of Zookeeper.
+**kafka.zookeeper:** The connect string location of ZooKeeper.
 Either this or the list of brokers is required.
 
-**kafka.brokers:** Comma-separated list of Kafka brokers. Either this or the Zookeeper connect info is required.
+**kafka.brokers:** Comma-separated list of Kafka brokers. Either this or the ZooKeeper connect info is required.
 
 **kafka.default.offset:** The default offset for the partition. Default value is kafka.api.OffsetRequest.EarliestTime.
 
@@ -63,7 +63,7 @@ If no format is given, Kafka message payloads will be treated as bytes, resultin
   }
 
 This example reads from ten partitions of the 'purchases' topic of a Kafka instance.
-It connects to Kafka via a Zookeeper instance running on 'localhost'. It then 
+It connects to Kafka via a ZooKeeper instance running on 'localhost'. It then 
 parses Kafka messages using the 'csv' format into records with the specified schema.
 For each Kafka message read, it will output a record with the schema::
 

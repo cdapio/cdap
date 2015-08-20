@@ -16,7 +16,11 @@ angular.module(PKG.name + '.feature.admin')
         .state('admin.overview', {
           url: '',
           templateUrl: '/assets/features/admin/templates/overview.html',
-          controller: 'OverviewController'
+          controller: 'OverviewController',
+          ncyBreadcrumb: {
+            label: 'Management',
+            parent: 'overview'
+          }
         })
 
         .state('admin.system', {
@@ -31,13 +35,21 @@ angular.module(PKG.name + '.feature.admin')
           .state('admin.system.configuration', {
             url: '/configuration',
             templateUrl: '/assets/features/admin/templates/system/configuration.html',
-            controller: 'SystemConfigurationController'
+            controller: 'SystemConfigurationController',
+            ncyBreadcrumb: {
+              label: 'Configuration',
+              parent: 'admin.overview'
+            }
           })
 
           .state('admin.system.services', {
             url: '/services',
             templateUrl: '/assets/features/admin/templates/system/services.html',
-            controller: 'SystemServicesController'
+            controller: 'SystemServicesController',
+            ncyBreadcrumb: {
+              label: 'Services',
+              parent: 'admin.overview'
+            }
           })
             .state('admin.system.services.detail', {
               parent: 'admin.system',
@@ -47,18 +59,30 @@ angular.module(PKG.name + '.feature.admin')
             })
               .state('admin.system.services.detail.metadata', {
                 url: '/metadata',
-                templateUrl: '/assets/features/admin/templates/partials/service-detail-metadata.html'
+                templateUrl: '/assets/features/admin/templates/partials/service-detail-metadata.html',
+                ncyBreadcrumb: {
+                  label: 'Metadata',
+                  parent: 'admin.system.services'
+                }
               })
               .state('admin.system.services.detail.logs', {
                 url: '/logs',
                 templateUrl: '/assets/features/admin/templates/partials/service-detail-log.html',
-                controller: 'SystemServiceLogController'
+                controller: 'SystemServiceLogController',
+                ncyBreadcrumb: {
+                  label: 'Logs',
+                  parent: 'admin.system.services'
+                }
               })
 
           .state('admin.system.preferences', {
             url: '/preferences',
             templateUrl: '/assets/features/admin/templates/preferences.html',
             controller: 'PreferencesController',
+            ncyBreadcrumb: {
+              label: 'Preferences',
+              parent: 'admin.overview'
+            },
             resolve: {
               rSource: function() {
                 return 'SYSTEM';
@@ -81,20 +105,21 @@ angular.module(PKG.name + '.feature.admin')
           .state('admin.namespace.create', {
             url: '/create',
             onEnter: function($bootstrapModal, $state) {
-              var modal = $bootstrapModal.open({
+              $bootstrapModal.open({
                 templateUrl: '/assets/features/admin/templates/namespace/create.html',
                 size: 'lg',
                 backdrop: true,
                 keyboard: true,
                 controller: 'NamespaceCreateController'
-              });
-
-              modal.result.then(function() {
+              }).result.finally(function() {
                 $state.go('admin.overview', {}, { reload: true });
               });
             },
             onExit: function($modalStack) {
               $modalStack.dismissAll();
+            },
+            ncyBreadcrumb: {
+              skip: true
             }
           })
 
@@ -110,8 +135,46 @@ angular.module(PKG.name + '.feature.admin')
                 rSource: function () {
                   return 'NAMESPACE';
                 }
+              },
+              ncyBreadcrumb: {
+                label: 'Preferences',
+                parent: 'admin.namespace.detail.settings'
               }
             })
+
+            .state('admin.namespace.detail.templateslist', {
+              url: '/templates',
+              templateUrl: '/assets/features/admin/templates/namespace/templates-list.html',
+              controller: 'NamespaceTemplatesListController',
+              controllerAs: 'TemplatesListController',
+              ncyBreadcrumb: {
+                label: 'Templates',
+                parent: 'admin.namespace.detail.settings'
+              }
+            })
+
+            .state('admin.namespace.detail.templates', {
+              url: '/templates/create',
+              templateUrl: '/assets/features/admin/templates/namespace/templates.html',
+              controller: 'NamespaceTemplatesController',
+              controllerAs: 'TemplatesController',
+              ncyBreadcrumb: {
+                label: 'Create',
+                parent: 'admin.namespace.detail.templateslist'
+              }
+            })
+
+            .state('admin.namespace.detail.templateedit', {
+              url: '/templates/edit/:templateName',
+              templateUrl: '/assets/features/admin/templates/namespace/templates.html',
+              controller: 'NamespaceTemplatesController',
+              controllerAs: 'TemplatesController',
+              ncyBreadcrumb: {
+                label: '{{$state.params.templateName}}',
+                parent: 'admin.namespace.detail.templateslist'
+              }
+            })
+
 
             .state('admin.namespace.detail.metadata', {
               url: '/metadata',
@@ -122,18 +185,30 @@ angular.module(PKG.name + '.feature.admin')
             .state('admin.namespace.detail.settings', {
               url: '/settings',
               templateUrl: '/assets/features/admin/templates/namespace/settings.html',
-              controller: 'NamespaceSettingsController'
+              controller: 'NamespaceSettingsController',
+              ncyBreadcrumb: {
+                label: '{{$state.params.nsadmin}}',
+                parent: 'admin.overview'
+              }
             })
 
             .state('admin.namespace.detail.data', {
               url: '/data',
               templateUrl: '/assets/features/admin/templates/namespace/datasets.html',
-              controller: 'NamespaceDatasetsController'
+              controller: 'NamespaceDatasetsController',
+              ncyBreadcrumb: {
+                label: 'Datasets',
+                parent: 'admin.namespace.detail.settings'
+              }
             })
               .state('admin.namespace.detail.data.datasetmetadata', {
                 url: '/datasets/:datasetId',
                 controller: 'NamespaceDatasetMetadataController',
-                templateUrl: '/assets/features/admin/templates/namespace/dataset-metadata.html'
+                templateUrl: '/assets/features/admin/templates/namespace/dataset-metadata.html',
+                ncyBreadcrumb: {
+                  label: '{{$state.params.datasetId}}',
+                  parent: 'admin.namespace.detail.data'
+                }
               })
 
               .state('admin.namespace.detail.data.streamcreate', {
@@ -151,30 +226,49 @@ angular.module(PKG.name + '.feature.admin')
                 },
                 onExit: function($modalStack) {
                   $modalStack.dismissAll();
+                },
+                ncyBreadcrumb: {
+                  skip: true
                 }
               })
 
               .state('admin.namespace.detail.data.streammetadata', {
                 url: '/streams/detail/:streamId',
                 controller: 'NamespaceStreamMetadataController',
-                templateUrl: '/assets/features/admin/templates/namespace/stream-metadata.html'
+                templateUrl: '/assets/features/admin/templates/namespace/stream-metadata.html',
+                ncyBreadcrumb: {
+                  label: '{{$state.params.streamId}}',
+                  parent: 'admin.namespace.detail.data'
+                }
               })
 
             .state('admin.namespace.detail.apps', {
               url: '/apps',
               templateUrl: '/assets/features/admin/templates/namespace/apps.html',
-              controller: 'NamespaceAppController'
+              controller: 'NamespaceAppController',
+              ncyBreadcrumb: {
+                label: 'Applications',
+                parent: 'admin.namespace.detail.settings'
+              }
             })
               .state('admin.namespace.detail.apps.metadata', {
                 parent: 'admin.namespace.detail',
                 url: '/:appId',
                 templateUrl: '/assets/features/admin/templates/namespace/app-metadata.html',
-                controller: 'NamespaceAppMetadataController'
+                controller: 'NamespaceAppMetadataController',
+                ncyBreadcrumb: {
+                  label: 'Metadata',
+                  parent: 'admin.namespace.detail.apps'
+                }
               })
                 .state('admin.namespace.detail.apps.metadata.preference', {
                   url: '/preferences',
                   templateUrl: '/assets/features/admin/templates/preferences.html',
                   controller: 'PreferencesController',
+                  ncyBreadcrumb: {
+                    label: 'Preferences',
+                    parent: 'admin.namespace.detail.settings'
+                  },
                   resolve: {
                     rSource: function () {
                       return 'APPLICATION';

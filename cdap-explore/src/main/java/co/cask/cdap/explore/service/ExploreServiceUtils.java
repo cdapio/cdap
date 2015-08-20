@@ -63,10 +63,14 @@ public class ExploreServiceUtils {
    * Hive support enum.
    */
   public enum HiveSupport {
+    // The order of the enum values below is very important
     // CDH 5.0 to 5.1 uses Hive 0.12
-    // CDH >5.1 uses Hive >=0.13.1 (aka 1.0, which Hive14ExploreService supports)
     HIVE_CDH5_0(Pattern.compile("^.*cdh5.0\\..*$"), Hive12CDH5ExploreService.class),
     HIVE_CDH5_1(Pattern.compile("^.*cdh5.1\\..*$"), Hive12CDH5ExploreService.class),
+    // CDH 5.2.x and 5.3.x use Hive 0.13
+    HIVE_CDH5_2(Pattern.compile("^.*cdh5.2\\..*$"), Hive13ExploreService.class),
+    HIVE_CDH5_3(Pattern.compile("^.*cdh5.3\\..*$"), Hive13ExploreService.class),
+    // CDH > 5.3 uses Hive >= 1.1 (which Hive14ExploreService supports)
     HIVE_CDH5(Pattern.compile("^.*cdh5\\..*$"), Hive14ExploreService.class),
 
     HIVE_12(null, Hive12ExploreService.class),

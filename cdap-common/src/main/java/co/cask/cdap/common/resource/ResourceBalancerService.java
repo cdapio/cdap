@@ -69,7 +69,7 @@ public abstract class ResourceBalancerService extends AbstractIdleService {
    * Creates instance of {@link ResourceBalancerService}.
    * @param serviceName name of the service
    * @param partitionCount number of partitions of the resource to balance
-   * @param zkClient Zookeeper place to keep metadata for sync; will be further namespaced with service name
+   * @param zkClient ZooKeeper place to keep metadata for sync; will be further namespaced with service name
    * @param discoveryService discovery service to register this service
    * @param discoveryServiceClient discovery service client to discover other instances of this service
    */

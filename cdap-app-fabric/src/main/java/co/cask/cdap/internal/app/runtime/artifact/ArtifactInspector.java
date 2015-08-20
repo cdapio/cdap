@@ -38,18 +38,27 @@ import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.proto.Id;
+import com.google.common.base.Function;
+import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
 import com.google.common.primitives.Primitives;
 import com.google.common.reflect.TypeToken;
 import org.apache.twill.filesystem.Location;
+import org.objectweb.asm.AnnotationVisitor;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.net.URL;
@@ -282,7 +291,21 @@ public class ArtifactInspector {
                   // which is for classloading purpose. Those classes won't be inspected for plugin classes.
                   // There should be exactly one of resource that match, because it maps to a directory on the FS.
                   if (packageResource.getProtocol().equals("file")) {
-                    classIterator = DirUtils.list(new File(packageResource.toURI()), "class").iterator();
+                    Iterator<String> classFiles = DirUtils.list(new File(packageResource.toURI()), "class").iterator();
+
+                    // Transform class file into class name and filter by @Plugin class only
+                    classIterator = Iterators.filter(
+                      Iterators.transform(classFiles, new Function<String, String>() {
+                        @Override
+                        public String apply(String input) {
+                          return getClassName(currentPackage, input);
+                        }
+                      }), new Predicate<String>() {
+                        @Override
+                        public boolean apply(String className) {
+                          return isPlugin(className, pluginClassLoader);
+                        }
+                      });
                     break;
                   }
                 }
@@ -293,7 +316,7 @@ public class ArtifactInspector {
             }
 
             try {
-              return pluginClassLoader.loadClass(getClassName(currentPackage, classIterator.next()));
+              return pluginClassLoader.loadClass(classIterator.next());
             } catch (ClassNotFoundException | NoClassDefFoundError e) {
               // Cannot happen, since the class name is from the list of the class files under the classloader.
               throw Throwables.propagate(e);
@@ -405,5 +428,39 @@ public class ArtifactInspector {
     }
 
     return new PluginPropertyField(name, description, rawType.getSimpleName().toLowerCase(), required);
+  }
+
+  /**
+   * Detects if a class is annotated with {@link Plugin} without loading the class.
+   *
+   * @param className name of the class
+   * @param classLoader ClassLoader for loading the class file of the given class
+   * @return true if the given class is annotated with {@link Plugin}
+   */
+  private boolean isPlugin(String className, ClassLoader classLoader) {
+    try (InputStream is = classLoader.getResourceAsStream(className.replace('.', '/') + ".class")) {
+      if (is == null) {
+        return false;
+      }
+
+      // Use ASM to inspect the class bytecode to see if it is annotated with @Plugin
+      final boolean[] isPlugin = new boolean[1];
+      ClassReader cr = new ClassReader(is);
+      cr.accept(new ClassVisitor(Opcodes.ASM5) {
+        @Override
+        public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
+          if (Plugin.class.getName().equals(Type.getType(desc).getClassName()) && visible) {
+            isPlugin[0] = true;
+          }
+          return super.visitAnnotation(desc, visible);
+        }
+      }, ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
+
+      return isPlugin[0];
+    } catch (IOException e) {
+      // If failed to open the class file, then it cannot be a plugin
+      LOG.warn("Failed to open class file for {}", className, e);
+      return false;
+    }
   }
 }

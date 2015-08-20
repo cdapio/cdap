@@ -24,7 +24,6 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.ApplicationManager;
-import co.cask.cdap.test.RuntimeStats;
 import co.cask.cdap.test.SparkManager;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.cdap.test.base.TestFrameworkTestBase;
@@ -67,7 +66,7 @@ public class SparkMetricsIntegrationTestRun extends TestFrameworkTestBase {
     //TODO: Add test to check user metrics once the support is added: CDAP-765
   }
 
-  private static long getSparkMetric(String applicationId, String sparkId, String metricName) throws Exception {
+  private long getSparkMetric(String applicationId, String sparkId, String metricName) throws Exception {
     Map<String, String> context = ImmutableMap.of(
       Constants.Metrics.Tag.NAMESPACE, Id.Namespace.DEFAULT.getId(),
       Constants.Metrics.Tag.APP, applicationId,
@@ -77,11 +76,11 @@ public class SparkMetricsIntegrationTestRun extends TestFrameworkTestBase {
   }
 
 
-  private static long getTotalCounter(Map<String, String> context, String metricName) throws Exception {
+  private long getTotalCounter(Map<String, String> context, String metricName) throws Exception {
     MetricDataQuery query = new MetricDataQuery(0, 0, Integer.MAX_VALUE, metricName, AggregationFunction.SUM,
                                                 context, new ArrayList<String>());
     try {
-      Collection<MetricTimeSeries> result = RuntimeStats.metricStore.query(query);
+      Collection<MetricTimeSeries> result = getMetricsManager().query(query);
       if (result.isEmpty()) {
         return 0;
       }

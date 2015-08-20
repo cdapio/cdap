@@ -22,7 +22,6 @@ gulp.task('css:lib', ['fonts'], function() {
     ].concat(mainBowerFiles({
       filter: /cask\-angular\-[^\/]+\/.*\.(css|less)$/
     })))
-    .pipe(plug.plumber())
     .pipe(plug.if('*.less', plug.less()))
     .pipe(plug.concat('lib.css'))
     .pipe(gulp.dest('./dist/assets/bundle'));
@@ -52,7 +51,6 @@ gulp.task('css:app', function() {
       './app/directives/**/*.{less,css}',
       './app/features/**/*.{less,css}'
     ])
-    .pipe(plug.plumber())
     .pipe(plug.if('*.less', plug.less()))
     .pipe(plug.concat('app.css'))
     .pipe(plug.autoprefixer(["> 1%"], {cascade:true}))
@@ -275,7 +273,6 @@ gulp.task('tpl', function() {
     gulp.src([
       './app/directives/**/*.html'
     ])
-      .pipe(plug.plumber())
       .pipe(plug.angularTemplatecache({
         module: pkg.name + '.commons'
       })),
@@ -283,7 +280,6 @@ gulp.task('tpl', function() {
     gulp.src([
       './app/features/home/home.html'
     ])
-      .pipe(plug.plumber())
       .pipe(plug.angularTemplatecache({
         module: pkg.name + '.features',
         base: __dirname + '/app',
@@ -310,7 +306,16 @@ gulp.task('html:main', function() {
       .pipe(gulp.dest('./dist'));
 });
 
+gulp.task('html:main.dev', function () {
+  return gulp.src('./app/*.html')
+      .pipe(plug.replace('<!-- DEV DEPENDENCIES -->',
+        '<script type="text/javascript" src="/assets/bundle/app.es6.js"></script>' +
+        '<script src="http://localhost:35729/livereload.js"></script>'))
+      .pipe(gulp.dest('./dist'));
+    });
+
 gulp.task('html', ['html:main', 'html:partials']);
+gulp.task('html.dev', ['html:main.dev', 'html:partials'])
 
 
 
@@ -395,7 +400,7 @@ gulp.task('css', ['css:lib', 'css:app']);
 gulp.task('style', ['css']);
 
 
-gulp.task('watch:build', ['watch:js', 'css', 'img', 'tpl', 'html']);
+gulp.task('watch:build', ['watch:js', 'css', 'img', 'tpl', 'html.dev']);
 gulp.task('build', ['js', 'css', 'img', 'tpl', 'html']);
 
 gulp.task('distribute', ['build', 'rev:replace']);

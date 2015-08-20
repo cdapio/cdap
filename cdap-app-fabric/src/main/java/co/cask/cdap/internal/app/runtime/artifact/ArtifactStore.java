@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.artifact;
 
+import co.cask.cdap.api.artifact.ApplicationClass;
 import co.cask.cdap.api.artifact.ArtifactDescriptor;
 import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.common.Bytes;
@@ -30,7 +31,6 @@ import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.templates.plugins.PluginClass;
 import co.cask.cdap.common.ArtifactAlreadyExistsException;
 import co.cask.cdap.common.ArtifactNotFoundException;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
@@ -444,8 +444,10 @@ public class ArtifactStore {
 
           ArtifactData data = new ArtifactData(destination, artifactMeta);
           // cleanup existing metadata if it exists and this is a snapshot
+          // if we are overwriting a previous snapshot, need to clean up the old snapshot data
+          // this means cleaning up the old jar, and deleting plugin and app rows.
           if (existingMetaBytes != null) {
-            cleanupOldSnapshot(table, artifactId, existingMetaBytes);
+            deleteMeta(table, artifactId, existingMetaBytes);
           }
           // write artifact metadata
           writeMeta(table, artifactId, data);
@@ -464,6 +466,34 @@ public class ArtifactStore {
       throw new IOException(e);
     }
     return new ArtifactDetail(getDescriptor(artifactId, destination), artifactMeta);
+  }
+
+  /**
+   * Delete the specified artifact. Programs that use the artifact will no longer be able to start.
+   *
+   * @param artifactId the id of the artifact to delete
+   * @throws IOException if there was an IO error deleting the metadata or the actual artifact
+   */
+  public void delete(final Id.Artifact artifactId) throws IOException {
+
+    // delete everything in a transaction
+    metaTable.executeUnchecked(new TransactionExecutor.Function<DatasetContext<Table>, Void>() {
+      @Override
+      public Void apply(DatasetContext<Table> context) throws Exception {
+        Table table = context.get();
+
+        // first look up details to get plugins and apps in the artifact
+        ArtifactCell artifactCell = new ArtifactCell(artifactId);
+        byte[] detailBytes = table.get(artifactCell.rowkey, artifactCell.column);
+        if (detailBytes == null) {
+          // ok there is nothing to delete, we're done
+          return null;
+        }
+        deleteMeta(table, artifactId, detailBytes);
+
+        return null;
+      }
+    });
   }
 
   /**
@@ -547,9 +577,7 @@ public class ArtifactStore {
     // TODO: write appClass metadata
   }
 
-  // if we are overwriting a previous snapshot, need to clean up the old snapshot data
-  // this means cleaning up the old jar, and deleting plugin and app rows.
-  private void cleanupOldSnapshot(Table table, Id.Artifact artifactId, byte[] oldData) throws IOException {
+  private void deleteMeta(Table table, Id.Artifact artifactId, byte[] oldData) throws IOException {
     // delete old artifact data
     ArtifactCell artifactCell = new ArtifactCell(artifactId);
     table.delete(artifactCell.rowkey, artifactCell.column);
@@ -559,7 +587,7 @@ public class ArtifactStore {
     ArtifactColumn artifactColumn = new ArtifactColumn(artifactId);
 
     for (PluginClass pluginClass : oldMeta.meta.getClasses().getPlugins()) {
-      // write metadata for each artifact this plugin extends
+      // delete metadata for each artifact this plugin extends
       for (ArtifactRange artifactRange : oldMeta.meta.getUsableBy()) {
         // p:{namespace}:{type}:{name}
         PluginKey pluginKey = new PluginKey(

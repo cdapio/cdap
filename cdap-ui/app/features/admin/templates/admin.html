@@ -1,3 +1,4 @@
+<my-breadcrumbs data-hide-ns-dropdown="true"></my-breadcrumbs>
 <div class="row">
   <div class="col-sm-3 sidebar">
 
@@ -81,6 +82,12 @@
                 <a ui-sref-active="current"
                     ui-sref="admin.namespace.detail.settings({nsadmin: ns.name})">
                   Settings
+                </a>
+              </li>
+              <li>
+                <a ui-sref-active="current"
+                    ui-sref="admin.namespace.detail.templateslist({nsadmin: ns.name})">
+                  Templates
                 </a>
               </li>
             </ul>
