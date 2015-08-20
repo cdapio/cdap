@@ -18,7 +18,7 @@ package co.cask.cdap.examples.webanalytics;
 
 import co.cask.cdap.api.metrics.RuntimeMetrics;
 import co.cask.cdap.test.ApplicationManager;
-import co.cask.cdap.test.RuntimeStats;
+import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.TestBase;
 import co.cask.cdap.test.TestConfiguration;
@@ -45,7 +45,7 @@ public class WebAnalyticsTest extends TestBase {
     // Deploy the Application
     ApplicationManager appManager = deployApplication(WebAnalytics.class);
     // Start the Flow
-    appManager.getFlowManager("WebAnalyticsFlow").start();
+    FlowManager flowManager = appManager.getFlowManager("WebAnalyticsFlow").start();
 
     // Send events to the Stream
     StreamManager streamManager = getStreamManager("log");
@@ -64,8 +64,7 @@ public class WebAnalyticsTest extends TestBase {
     }
 
     // Wait for the flow to process all data
-    RuntimeMetrics flowletMetrics = RuntimeStats.getFlowletMetrics("WebAnalytics",
-                                                                   "WebAnalyticsFlow", "UniqueVisitor");
+    RuntimeMetrics flowletMetrics = flowManager.getFlowletMetrics("UniqueVisitor");
     flowletMetrics.waitForProcessed(lines, 10, TimeUnit.SECONDS);
 
     // Verify the unique count
