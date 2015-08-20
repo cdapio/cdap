@@ -131,3 +131,13 @@
     }
   }
 }
+
+.appearance(@value: none) {
+  appearance: @value;
+  -webkit-appearance: @value;
+  -moz-appearance: @value;
+  -o-appearance: @value;
+  ::-ms-expand {
+    display: none;  // Need this to hide default select in IE10
+  }
+}
