@@ -24,20 +24,3 @@ For information on configuring the ``cdap-site.xml`` file and CDAP for security,
 see the :ref:`configuration-security` section.
 
 .. include:: ../../build/_includes/cdap-default-table.rst
-
-.. _note 1:
-
-**Note 1**:
-
-    **kafka.default.replication.factor:** Used to replicate *Kafka* messages across multiple
-    machines to prevent data loss in the event of a hardware failure. The recommended setting
-    is to run at least two *Kafka* servers. If you are running two *Kafka* servers, set this
-    value to 2; otherwise, set it to the number of *Kafka* servers.
-
-.. _note 2:
-
-**Note 2**:
-
-    **thrift.max.read.buffer:** Maximum read buffer size in bytes used by the Thrift
-    server; this value should be set to greater than the maximum frame sent on the RPC
-    channel.

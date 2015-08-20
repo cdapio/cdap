@@ -17,10 +17,16 @@
   -->
 <configuration>
 
+    <!-- General Configuration -->
+
     <property>
         <name>root.namespace</name>
         <value>cdap</value>
-        <description>Namespace for this CDAP instance</description>
+        <description>
+          Root for this CDAP instance; used as the parent (or root) node for ZooKeeper, as the directory under which
+          all CDAP data and metadata is stored in HDFS, and as the prefix for all HBase tables created by CDAP; 
+          must be composed of alphanumeric characters
+        </description>
     </property>
 
     <property>
@@ -32,7 +38,7 @@
     <property>
         <name>zookeeper.session.timeout.millis</name>
         <value>40000</value>
-        <description>ZooKeeper session time-out in milliseconds</description>
+        <description>ZooKeeper session timeout in milliseconds</description>
     </property>
 
     <property>
@@ -112,33 +118,33 @@
         </description>
     </property>
 
-    <!-- Gateway configuration -->
+    <!-- Gateway Configuration -->
 
     <property>
         <name>app.connection.backlog</name>
         <value>20000</value>
-        <description>Max connection backlog of app fabric server</description>
+        <description>Max connection backlog of CDAP-Master</description>
     </property>
 
     <property>
         <name>app.exec.threads</name>
         <value>20</value>
-        <description>Number of netty server executor threads</description>
+        <description>Number of Netty server executor threads</description>
     </property>
 
     <property>
         <name>app.boss.threads</name>
         <value>1</value>
-        <description>Number of netty server boss threads</description>
+        <description>Number of Netty server boss threads</description>
     </property>
 
     <property>
         <name>app.worker.threads</name>
         <value>10</value>
-        <description>Number of netty server worker threads</description>
+        <description>Number of Netty server worker threads</description>
     </property>
 
-    <!-- Monitor Handler Parameters -->
+    <!-- Monitor Handler Configuration -->
 
     <property>
       <name>monitor.handler.service.discovery.timeout.seconds</name>
@@ -146,7 +152,7 @@
       <description>Timeout in seconds for service discovery used in Monitor Handler Service Status check</description>
     </property>
 
-    <!-- YARN Services Parameters -->
+    <!-- YARN Services Configuration -->
 
     <property>
         <name>master.service.num.cores</name>
@@ -166,7 +172,7 @@
         <description>Maximum Number of Master Service Instances</description>
     </property>
 
-    <!-- Master Services HTTP handles -->
+    <!-- Master Services HTTP Configuration -->
 
     <property>
         <name>http.service.connection.backlog</name>
@@ -177,22 +183,22 @@
     <property>
         <name>http.service.exec.threads</name>
         <value>20</value>
-        <description>Number of netty server executor threads for master HTTP services</description>
+        <description>Number of Netty server executor threads for master HTTP services</description>
     </property>
 
     <property>
         <name>http.service.boss.threads</name>
         <value>1</value>
-        <description>Number of netty server boss threads for master HTTP services</description>
+        <description>Number of Netty server boss threads for master HTTP services</description>
     </property>
 
     <property>
         <name>http.service.worker.threads</name>
         <value>10</value>
-        <description>Number of netty server worker threads for master HTTP services</description>
+        <description>Number of Netty server worker threads for master HTTP services</description>
     </property>
 
-    <!-- Stream handles -->
+    <!-- Stream Configuration -->
 
     <property>
         <name>stream.base.dir</name>
@@ -214,9 +220,8 @@
 
     <property>
         <name>stream.event.ttl</name>
-        <!-- Long.MAX_VALUE !-->
         <value>9223372036854775807</value>
-        <description>Default time to live in milliseconds for stream events</description>
+        <description>Default time to live in milliseconds (Long.MAX_VALUE) for stream events</description>
     </property>
 
     <property>
@@ -431,8 +436,9 @@
     <property>
         <name>data.tx.janitor.enable</name>
         <value>true</value>
-        <description>Whether or not the TransactionDataJanitor coprocessor
-            should be enabled on tables; should normally be true</description>
+        <description>
+            Determines if the TransactionDataJanitor coprocessor is enabled on tables; 
+            normally should be true</description>
     </property>
 
     <property>
@@ -474,14 +480,8 @@
         <description>Base directory for user data on the filesystem</description>
     </property>
 
-    <!-- Queue-related Configuration -->
+    <!-- Queue-Related Configuration -->
  
-    <property>
-        <name>data.queue.table.name</name>
-        <value>queues</value>
-        <description>Table name for queues</description>
-    </property>
-
     <property>
         <name>data.queue.dequeue.tx.percent</name>
         <value>30</value>
@@ -505,53 +505,7 @@
         <description>Number of splits in the queue table</description>
     </property>
 
-    <!-- Metadata Service Configuration -->
- 
-    <property>
-        <name>metadata.bind.address</name>
-        <value>0.0.0.0</value>
-        <description>Metadata server address</description>
-    </property>
-
-    <property>
-        <name>metadata.bind.port</name>
-        <value>45004</value>
-        <description>Metadata server bind port</description>
-    </property>
-
-    <property>
-        <name>metadata.program.run.history.keepdays</name>
-        <value>30</value>
-        <description>Number of days to keep metadata of program run history</description>
-    </property>
-
-    <!-- Log collection service configuration -->
-
-    <property>
-        <name>log.query.bind.address</name>
-        <value>0.0.0.0</value>
-        <description>Specifies the server address of metrics frontend
-            server</description>
-    </property>
-
-    <property>
-        <name>log.query.bind.port</name>
-        <value>45002</value>
-        <description>Specifies the port on which frontend metrics server
-            is started on</description>
-    </property>
-
-    <property>
-        <name>log.collection.bind.address</name>
-        <value>0.0.0.0</value>
-        <description>Specifies the hostname where the collection service runs</description>
-    </property>
-
-    <property>
-        <name>log.collection.bind.port</name>
-        <value>12157</value>
-        <description>Port the log collection service runs on</description>
-    </property>
+    <!-- Log Collection Service Configuration -->
 
     <property>
         <name>log.collection.root</name>
@@ -559,7 +513,7 @@
         <description>Root location for collecting logs when in standalone mode</description>
     </property>
 
-    <!-- Template configuration -->
+    <!-- Application Template Configuration -->
 
     <property>
         <name>app.template.dir</name>
@@ -574,7 +528,7 @@
         <final>true</final>
     </property>
 
-    <!-- Artifact configuration -->
+    <!-- Artifact Configuration -->
 
     <property>
         <name>app.artifact.dir</name>
@@ -582,7 +536,7 @@
         <description>Directory where all archives for application templates are stored</description>
     </property>
 
-    <!-- App Fabric related changes -->
+    <!-- App Fabric Configuration -->
 
     <property>
         <name>app.bind.address</name>
@@ -647,7 +601,15 @@
         </description>
     </property>
 
-    <!-- Used for MapReduce Info endpoint -->
+    <property>
+        <name>appfabric.environment</name>
+        <value>devsuite</value>
+        <description>Sets the environment that the App Fabric server is in</description>
+        <!-- Sets whether Devsuite is in Cloud or not -->
+    </property>
+    
+    <!-- MapReduce Info Endpoint Configuration -->
+    
     <property>
         <name>mapreduce.jobclient.connect.max.retries</name>
         <value>2</value>
@@ -667,14 +629,16 @@
         </description>
     </property>
 
-    <!-- scheduler related configuration -->
+    <!-- Scheduler Configuration -->
+    
     <property>
         <name>scheduler.max.thread.pool.size</name>
         <value>30</value>
         <description>Size of the scheduler thread pool</description>
     </property>
 
-    <!-- workflow related configuration -->
+    <!-- Workflow Configuration -->
+    
     <property>
         <name>workflow.token.max.size.mb</name>
         <value>30</value>
@@ -684,9 +648,8 @@
         </description>
     </property>
 
-    <!--
-        Router configuration
-    -->
+    <!-- Router Configuration -->
+    
     <property>
         <name>router.bind.address</name>
         <value>0.0.0.0</value>
@@ -696,7 +659,7 @@
     <property>
         <name>router.webapp.enabled</name>
         <value>false</value>
-        <description>Specifies if webapp listening service should be started at router</description>
+        <description>Determines if the webapp listening service should be started at router</description>
     </property>
 
     <property>
@@ -734,15 +697,7 @@
         <description>Secure router listening port for webapp</description>
     </property>
 
-    <!-- Sets whether Devsuite is in Cloud or not -->
-
-    <property>
-        <name>appfabric.environment</name>
-        <value>devsuite</value>
-        <description>Sets the environment that the app fabric server is in</description>
-    </property>
-
-    <!-- New Metrics system settings -->
+    <!-- Metrics Configuration -->
 
     <property>
         <name>metrics.query.bind.address</name>
@@ -759,31 +714,31 @@
     <property>
         <name>metrics.data.table.retention.resolution.1.seconds</name>
         <value>7200</value>
-        <description>Retention resolution of the 1 second table in seconds; default retention period is 2 hours</description>
+        <description>Retention resolution of the 1-second resolution table in seconds; default retention period is 2 hours</description>
     </property>
 
     <property>
         <name>metrics.data.table.retention.resolution.60.seconds</name>
         <value>2592000</value>
-        <description>Retention resolution for 1 minute table (in seconds); default retention period is 30 days</description>
+        <description>Retention resolution for 1-minute resolution table (in seconds); default retention period is 30 days</description>
     </property>
 
     <property>
         <name>metrics.data.table.retention.resolution.3600.seconds</name>
         <value>2592000</value>
-        <description>Retention resolution 1 hour table (in seconds); default retention period is 30 days</description>
+        <description>Retention resolution 1-hour resolution table (in seconds); default retention period is 30 days</description>
     </property>
 
     <property>
         <name>metrics.data.table.ts.rollTime.60</name>
         <value>60</value>
-        <description>Number of columns in a 1 minute timeseries table</description>
+        <description>Number of columns in a 1-minute resolution timeseries table</description>
     </property>
 
     <property>
         <name>metrics.data.table.ts.rollTime.3600</name>
         <value>24</value>
-        <description>Number of columns in a 1 hour timeseries table</description>
+        <description>Number of columns in a 1-hour resolution timeseries table</description>
     </property>
 
     <property>
@@ -801,19 +756,19 @@
     <property>
         <name>metrics.exec.threads</name>
         <value>${http.service.exec.threads}</value>
-        <description>Number of netty server executor threads for metrics HTTP services</description>
+        <description>Number of Netty server executor threads for metrics HTTP services</description>
     </property>
 
     <property>
         <name>metrics.boss.threads</name>
         <value>${http.service.boss.threads}</value>
-        <description>Number of netty server boss threads for metrics HTTP services</description>
+        <description>Number of Netty server boss threads for metrics HTTP services</description>
     </property>
 
     <property>
         <name>metrics.worker.threads</name>
         <value>${http.service.worker.threads}</value>
-        <description>Number of netty server worker threads for metrics HTTP services</description>
+        <description>Number of Netty server worker threads for metrics HTTP services</description>
     </property>
 
     <property>
@@ -975,7 +930,13 @@
     <property>
         <name>kafka.default.replication.factor</name>
         <value>1</value>
-        <description>Kafka replication factor [See Note 1]</description>
+        <description>
+            Kafka replication factor; used to replicate Kafka messages across multiple
+            machines to prevent data loss in the event of a hardware failure. The
+            recommended setting is to run at least two Kafka servers. If you are running
+            two Kafka servers, set this value to 2; otherwise, set it to the number of
+            Kafka servers.
+        </description>
     </property>
 
     <!-- Global Configuration -->
@@ -984,6 +945,7 @@
         <name>enable.unrecoverable.reset</name>
         <value>false</value>
         <description>
+            Determines if resetting CDAP should be enabled.            
             **WARNING: Enabling this option makes it possible to delete all applications
             and data; NO RECOVERY IS POSSIBLE!**
         </description>
@@ -998,8 +960,8 @@
             deployed upon app redeployment.
         </description>
     </property>
-
-    <!-- Web App Settings -->
+   
+    <!-- UI Configuration -->
  
     <property>
         <name>dashboard.bind.address</name>
@@ -1031,7 +993,7 @@
         <description>Router address to which CDAP UI connects</description>
     </property>
 
-    <!-- Explore Service Settings -->
+    <!-- Explore Service Configuration -->
  
     <property>
         <name>explore.enabled</name>
@@ -1042,14 +1004,20 @@
     <property>
         <name>explore.writes.enabled</name>
         <value>true</value>
-        <description>Whether writing to a table through ad-hoc SQL queries is enabled</description>
+        <description>
+            Determines if writing to a table through the CDAP Explore Service (ad-hoc SQL queries)
+            is enabled
+        </description>
     </property>
 
     <property>
         <name>explore.start.on.demand</name>
         <value>false</value>
-        <description>If false, the explore service starts up when CDAP is started;
-        if true, the explore service will start upon the first query it receives</description>
+        <description>
+            Determines the start-up of the CDAP Explore Service (ad-hoc SQL queries);
+            if false, the explore service starts up when CDAP is started;
+            if true, the explore service will start upon the first query it receives
+          </description>
     </property>
 
     <property>
@@ -1093,7 +1061,7 @@
         <description>Time in seconds to schedule clean-up job to timeout operations</description>
     </property>
 
-    <!-- Notification System Settings -->
+    <!-- Notification System Configuration -->
  
     <property>
         <name>notification.transport.system</name>
@@ -1149,7 +1117,7 @@
         <description>Path to the secret key file (only used in standalone mode)</description>
     </property>
 
-    <!-- External Authentication login module Settings -->
+    <!-- External Security Authentication Login Module Configuration -->
  
     <property>
         <name>security.authentication.handlerClassName</name>
@@ -1193,13 +1161,13 @@
         <description>Parent node in ZooKeeper used for secret key distribution in distributed mode</description>
     </property>
 
-  <!-- Security-enabled Flag -->
+  <!-- Security-Enabled Configuration -->
  
   <property>
       <name>security.enabled</name>
       <value>false</value>
       <description>
-          Enables authentication for CDAP; when set to true, all requests to CDAP must
+          Determines if authentication is enabled for CDAP; if true, all requests to CDAP must
           provide a valid access token
       </description>
   </property>
@@ -1207,13 +1175,13 @@
   <property>
       <name>security.authorization.enabled</name>
       <value>false</value>
-      <description>If this is set to true, authorization checks will be made</description>
+      <description>Determines if authorization checks are enabled</description>
   </property>
 
   <property>
       <name>kerberos.auth.enabled</name>
       <value>${security.enabled}</value>
-      <description>If true, Kerberos authentication will be enabled</description>
+      <description>Determines if Kerberos authentication is enabled</description>
   </property>
 
   <property>
@@ -1225,7 +1193,7 @@
       </description>
   </property>
 
-  <!-- Security configurations for Kerberos authentication -->
+  <!-- Kerberos Security Authentication Configuration -->
  
   <property>
       <name>cdap.master.kerberos.keytab</name>
@@ -1245,12 +1213,12 @@
       </description>
   </property>
 
-  <!-- Configuration for enabling SSL -->
+  <!-- SSL-Enabled Configuration -->
 
   <property>
       <name>ssl.enabled</name>
       <value>false</value>
-      <description>True to enable SSL</description>
+      <description>Determines if SSL is enabled</description>
   </property>
 
 </configuration>

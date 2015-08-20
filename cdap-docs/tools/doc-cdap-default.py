@@ -45,29 +45,31 @@ RELATIVE_PATH = '../..'
 CDAP_DEFAULT_XML = 'cdap-common/src/main/resources/cdap-default.xml'
 CDAP_DEFAULT_EXCLUSIONS = 'cdap-default-exclusions.txt'
 
-RST_HEADER = """
+RST_TABLE_HEADER = """
 .. list-table::
    :widths: 30 35 35
    :header-rows: 1
 
-   * - Parameter name
+   * - Parameter Name
      - Default Value
-     - Description
-"""
+     - Description"""
 
-RST_HEADER_TABLE_FINAL = """
+RST_TABLE_HEADER_FINAL = """
 
+Final Configurations
+--------------------
 These properties are marked as ``final``, meaning that their value cannot be changed, even
-with a setting in the ``cdap-site.xml``: 
+with a setting in the ``cdap-site.xml``:
+""" + RST_TABLE_HEADER + '\n'
 
-.. list-table::
-   :widths: 30 35 35
-   :header-rows: 1
+NAME_START  = '   * - '
+VALUE_START = '     - '
+BLOCK_START = '| ``'
+BLOCK_JOIN  = '``\n       | ``'
+DESC_START  = '     - '
 
-   * - Parameter name
-     - Default Value
-     - Description
-"""
+SECTION_START = NAME_START + '|\n       | '
+
 
 class Item:
 
@@ -90,11 +92,6 @@ class Item:
             self.__dict__[name] = value
     
     def rst(self):
-        NAME_START  = '   * - '
-        VALUE_START = '     - '
-        BLOCK_START = '| ``'
-        BLOCK_JOIN  = '``\n       | ``'
-        DESC_START  = '     - '
         name = "``%s``" % self.name
         if self.value.find('\n') != -1:
             value = BLOCK_START + BLOCK_JOIN.join(self.value.split()) + '``'
@@ -129,7 +126,48 @@ class Item:
     def append_description(self, description):
         self._append("description", description)
     
+    
+class Section:
 
+    def __init__(self, name=''):
+        self.name = name
+        self.final = None
+
+    def rst(self):
+        CONFIG = ' Configuration'
+        name = self.name.strip()
+        if name.endswith(CONFIG):
+            name = name[0:-len(CONFIG)]
+        underline = "-" * len(name)
+        rst = "\n%s\n%s\n%s" % (name, underline, RST_TABLE_HEADER)
+        return rst
+       
+
+class PIParser(ET.XMLTreeBuilder):
+    """An XML parser that preserves processing instructions and comments"""
+
+    def __init__(self):
+        ET.XMLTreeBuilder.__init__(self)
+        # assumes ElementTree 1.2.X
+        self._parser.CommentHandler = self.handle_comment
+        self._parser.ProcessingInstructionHandler = self.handle_pi
+        self._target.start("document", {})
+
+    def close(self):
+        self._target.end("document")
+        return ET.XMLTreeBuilder.close(self)
+
+    def handle_comment(self, data):
+        self._target.start(ET.Comment, {})
+        self._target.data(data)
+        self._target.end(ET.Comment)
+
+    def handle_pi(self, target, data):
+        self._target.start(ET.PI, {})
+        self._target.data(target + " " + data)
+        self._target.end(ET.PI)
+       
+       
 def load_defaults(filesource):
     func = 'load_defaults'
     # Set paths
@@ -147,21 +185,28 @@ def load_defaults(filesource):
         raise Exception(func, "'%s' not a valid path" % exclusions_path)
     exclusions = [line.rstrip('\n') for line in open(exclusions_path)]
     
-    tree = ET.parse(xml_path)
-    root = tree.getroot()
     items = []
-    for property in root:
-        item = Item()
-        for attribute in property:
-            item.set_attribute(attribute.tag, attribute.text)
-        if item.name not in exclusions:
-            items.append(item)
+    parser = PIParser()
+    tree = ET.parse(xml_path, parser=parser)
+    root = tree.getroot()
+    for outer_element in root:
+        for inner_element in outer_element:
+            if inner_element.tag == 'property':
+                item = Item()
+                for attribute in inner_element:
+                    item.set_attribute(attribute.tag, attribute.text)                
+                if item.name not in exclusions:
+                    items.append(item)                
+            else:
+                section = Section()
+                section.name = inner_element.text
+                items.append(section)
 
-    return sorted(items, key=lambda item: item.name)
+    return items
 
-def create_rst_tables(items):
-    """Create rst tables from items"""
-    table = RST_HEADER
+def create_rst(items):
+    """Create rst from items"""
+    table = ''
     final_items =[]
     
     for item in items:
@@ -171,7 +216,7 @@ def create_rst_tables(items):
             final_items.append(item)
             
     if final_items:
-        table += RST_HEADER_TABLE_FINAL
+        table += RST_TABLE_HEADER_FINAL
         for item in final_items:
             table += item.rst() + '\n'
 
@@ -189,7 +234,7 @@ def main():
         filepath = sys.argv[1]
             
     defaults = load_defaults(filesource)
-    table = create_rst_tables(defaults)
+    table = create_rst(defaults)
     
     if filepath:
         f = open(filepath, 'w')
@@ -201,4 +246,4 @@ def main():
     
 if __name__ == '__main__':
     main()
-    
+

@@ -18,8 +18,9 @@
 
 source ../_common/common-build.sh
 
-CDAP_DEFAULT_XML="../../cdap-common/src/main/resources/cdap-default.xml"
-CDAP_DEFAULT_RST="cdap-default-table.rst"
+DEFAULT_XML="../../cdap-common/src/main/resources/cdap-default.xml"
+DEFAULT_TOOL="../tools/doc-cdap-default.py"
+DEFAULT_RST="cdap-default-table.rst"
 CHECK_INCLUDES=$TRUE
 
 function download_includes() {
@@ -27,11 +28,11 @@ function download_includes() {
   
   local includes_dir=${1}
   if [ ! -d "${includes_dir}" ]; then
-    mkdir ${includes_dir}
     echo "Creating Includes Directory: ${includes_dir}"
+    mkdir ${includes_dir}
   fi
 
-  python ../tools/doc-cdap-default.py "${CDAP_DEFAULT_XML}" "${includes_dir}/${CDAP_DEFAULT_RST}"
+  python "${DEFAULT_TOOL}" "${DEFAULT_XML}" "${includes_dir}/${DEFAULT_RST}"
 
 }
 
