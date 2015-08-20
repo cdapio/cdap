@@ -17,6 +17,7 @@
 package co.cask.cdap.api.service.http;
 
 import co.cask.cdap.api.ProgramSpecification;
+import co.cask.cdap.api.artifact.Plugin;
 import co.cask.cdap.api.common.PropertyProvider;
 import co.cask.cdap.api.dataset.Dataset;
 
@@ -39,19 +40,22 @@ public final class HttpServiceHandlerSpecification implements PropertyProvider, 
   private final Map<String, String> properties;
   private final Set<String> datasets;
   private final List<ServiceHttpEndpoint> endpoints;
+  private final Map<String, Plugin> plugins;
 
   /**
    * Create an instance of {@link HttpServiceHandlerSpecification}.
    */
   public HttpServiceHandlerSpecification(String className, String name,
                                          String description, Map<String, String> properties,
-                                         Set<String> datasets, List<ServiceHttpEndpoint> endpoints) {
+                                         Set<String> datasets, List<ServiceHttpEndpoint> endpoints,
+                                         Map<String, Plugin> plugins) {
     this.className = className;
     this.name = name;
     this.description = description;
     this.properties = Collections.unmodifiableMap(new HashMap<>(properties));
     this.datasets = Collections.unmodifiableSet(new HashSet<>(datasets));
     this.endpoints = Collections.unmodifiableList(new ArrayList<>(endpoints));
+    this.plugins = Collections.unmodifiableMap(new HashMap<>(plugins));
   }
 
   /**
@@ -107,5 +111,9 @@ public final class HttpServiceHandlerSpecification implements PropertyProvider, 
    */
   public List<ServiceHttpEndpoint> getEndpoints() {
     return endpoints;
+  }
+
+  public Map<String, Plugin> getPlugins() {
+    return plugins;
   }
 }

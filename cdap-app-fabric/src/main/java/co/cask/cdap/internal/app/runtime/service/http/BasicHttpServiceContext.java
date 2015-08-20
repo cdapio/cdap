@@ -27,6 +27,7 @@ import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
+import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.collect.Maps;
@@ -66,10 +67,11 @@ public class BasicHttpServiceContext extends AbstractContext implements Transact
                                  Program program, RunId runId, int instanceId, AtomicInteger instanceCount,
                                  Arguments runtimeArgs, MetricsCollectionService metricsCollectionService,
                                  DatasetFramework dsFramework, DiscoveryServiceClient discoveryServiceClient,
-                                 TransactionSystemClient txClient, LocationFactory locationFactory) {
+                                 TransactionSystemClient txClient, LocationFactory locationFactory,
+                                 PluginInstantiator pluginInstantiator) {
     super(program, runId, runtimeArgs, spec.getDatasets(),
           getMetricCollector(metricsCollectionService, program, spec.getName(), runId.getId(), instanceId),
-          dsFramework, discoveryServiceClient, locationFactory);
+          dsFramework, discoveryServiceClient, locationFactory, null, null, pluginInstantiator);
     this.spec = spec;
     this.instanceId = instanceId;
     this.instanceCount = instanceCount;
@@ -104,7 +106,7 @@ public class BasicHttpServiceContext extends AbstractContext implements Transact
 
   @Override
   public Map<String, Plugin> getPlugins() {
-    return null;
+    return spec.getPlugins();
   }
 
   @Override

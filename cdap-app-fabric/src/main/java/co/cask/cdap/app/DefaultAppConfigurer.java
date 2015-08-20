@@ -158,7 +158,8 @@ public class DefaultAppConfigurer extends DefaultDatasetConfigurer implements Ap
 
   public void addService(Service service) {
     Preconditions.checkArgument(service != null, "Service cannot be null.");
-    DefaultServiceConfigurer configurer = new DefaultServiceConfigurer(service);
+    DefaultServiceConfigurer configurer = new DefaultServiceConfigurer(service, artifactId, artifactRepository,
+                                                                       pluginInstantiator);
     service.configure(configurer);
 
     ServiceSpecification spec = configurer.createSpecification();

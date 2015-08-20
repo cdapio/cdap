@@ -26,8 +26,11 @@ import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.internal.api.DefaultDatasetConfigurer;
+import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.service.http.DelegatorContext;
 import co.cask.cdap.internal.app.runtime.service.http.HttpHandlerFactory;
+import co.cask.cdap.proto.Id;
 import co.cask.http.HttpHandler;
 import co.cask.http.NettyHttpService;
 import com.google.common.base.Preconditions;
@@ -47,6 +50,9 @@ import java.util.Map;
  */
 public class DefaultServiceConfigurer extends DefaultDatasetConfigurer implements ServiceConfigurer {
   private final String className;
+  private final Id.Artifact artifactId;
+  private final ArtifactRepository artifactRepository;
+  private final PluginInstantiator pluginInstantiator;
   private String name;
   private String description;
   private List<HttpServiceHandler> handlers;
@@ -57,13 +63,17 @@ public class DefaultServiceConfigurer extends DefaultDatasetConfigurer implement
   /**
    * Create an instance of {@link DefaultServiceConfigurer}
    */
-  public DefaultServiceConfigurer(Service service) {
+  public DefaultServiceConfigurer(Service service, Id.Artifact artifactId, ArtifactRepository artifactRepository,
+                                  PluginInstantiator pluginInstantiator) {
     this.className = service.getClass().getName();
     this.name = service.getClass().getSimpleName();
     this.description = "";
     this.handlers = Lists.newArrayList();
     this.resources = new Resources();
     this.instances = 1;
+    this.artifactId = artifactId;
+    this.artifactRepository = artifactRepository;
+    this.pluginInstantiator = pluginInstantiator;
   }
 
   @Override
@@ -106,7 +116,8 @@ public class DefaultServiceConfigurer extends DefaultDatasetConfigurer implement
     verifyHandlers(handlers);
     Map<String, HttpServiceHandlerSpecification> handleSpecs = Maps.newHashMap();
     for (HttpServiceHandler handler : handlers) {
-      DefaultHttpServiceHandlerConfigurer configurer = new DefaultHttpServiceHandlerConfigurer(handler);
+      DefaultHttpServiceHandlerConfigurer configurer = new DefaultHttpServiceHandlerConfigurer(
+        handler, artifactId, artifactRepository, pluginInstantiator);
       handler.configure(configurer);
       HttpServiceHandlerSpecification spec = configurer.createSpecification();
       Preconditions.checkArgument(!handleSpecs.containsKey(spec.getName()),
