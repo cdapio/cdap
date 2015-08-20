@@ -284,6 +284,7 @@ angular.module(PKG.name + '.services')
           placement: 'auto',
           target: label,
           contentTemplate: '/assets/features/adapters/templates/partial/schema-popover.html',
+          container: 'body',
           scope: scope
         });
 
