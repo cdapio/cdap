@@ -2,7 +2,7 @@
 # Cookbook Name:: cdap
 # Attribute:: security
 #
-# Copyright © 2013-2014 Cask Data, Inc.
+# Copyright © 2013-2015 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -48,17 +48,27 @@ if node['cdap']['cdap_site'].key?('kerberos.auth.enabled') && node['cdap']['cdap
     default['cdap']['kerberos']['cdap_keytab'] = node['cdap']['security']['cdap_keytab']
   else
     default['cdap']['kerberos']['cdap_keytab'] = "#{node['krb5_utils']['keytabs_dir']}/cdap.service.keytab"
+    # Backwards compat
+    default['cdap']['security']['cdap_keytab'] = node['cdap']['kerberos']['cdap_keytab']
   end
   if node['cdap'].key?('security') && node['cdap']['security'].key?('cdap_principal')
     default['cdap']['kerberos']['cdap_principal'] = default['cdap']['security']['cdap_principal']
   else
     default['cdap']['kerberos']['cdap_principal'] = "cdap/#{node['fqdn']}@#{default_realm}"
+    # Backwards compat
+    default['cdap']['security']['cdap_principal'] = node['cdap']['kerberos']['cdap_principal']
   end
 
   # Add cdap user to YARN container-executor.cfg's allowed.system.users
   if node['hadoop'].key?('container_executor') && node['hadoop']['container_executor'].key?('allowed.system.users')
     arr = node['hadoop']['container_executor']['allowed.system.users'].split(',')
-    user = node['cdap']['kerberos']['cdap_principal'].split(%r{[@/]}).first
+    user =
+      if node.key?('cdap') && node['cdap'].key?('kerberos') && node['cdap']['kerberos'].key?('cdap_principal') &&
+         node['cdap']['kerberos']['cdap_principal'] != "cdap/#{node['fqdn']}@#{default_realm}"
+        node['cdap']['kerberos']['cdap_principal'].split(%r{[@/]}).first
+      else
+        'cdap'
+      end
     unless arr.include?(user)
       arr += [user]
       default['hadoop']['container_executor']['allowed.system.users'] = arr.join(',')

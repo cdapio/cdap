@@ -1,2 +1,2 @@
-grant '<%= node["cdap"]["security"]["cdap_principal"].split(/[@\/]/).first %>', 'ACRW'
+grant '<%= node["cdap"]["kerberos"]["cdap_principal"].split(/[@\/]/).first %>', 'ACRW'
 exit
