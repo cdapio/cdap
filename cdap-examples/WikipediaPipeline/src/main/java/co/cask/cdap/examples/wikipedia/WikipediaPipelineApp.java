@@ -20,6 +20,7 @@ import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.api.schedule.Schedules;
 
 /**
  * App to demonstrate a data pipeline that processes Wikipedia data using a CDAP Workflow.
@@ -52,5 +53,7 @@ public class WikipediaPipelineApp extends AbstractApplication {
     createDataset(MAPREDUCE_TOPN_OUTPUT, KeyValueTable.class);
     addWorkflow(new WikipediaPipelineWorkflow());
     addService(new WikipediaService());
+    scheduleWorkflow(Schedules.createTimeSchedule("Every5MinuteSchedule", "Every 5 Min schedule", "*/5 * * * *"),
+                     WikipediaPipelineWorkflow.NAME);
   }
 }
