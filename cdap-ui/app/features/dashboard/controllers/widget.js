@@ -8,7 +8,7 @@ angular.module(PKG.name+'.feature.dashboard')
     function Widget (opts) {
       opts = opts || {};
       this.title = opts.title || 'Widget';
-
+      this.isOpen = false;
       // Type of widget and the metrics
       this.type = opts.type;
       this.metric = opts.metric || false;
@@ -72,31 +72,12 @@ angular.module(PKG.name+'.feature.dashboard')
       return color;
     };
 
-    return Widget;
-  })
-
-  .controller('DropdownCtrl', function ($scope, $state, $dropdown) {
-    $scope.ddWidget = function(event){
-      var toggle = angular.element(event.target);
-      if(!toggle.hasClass('dropdown-toggle')) {
-        toggle = toggle.parent();
-      }
-
-      var scope = $scope.$new(),
-          dd = $dropdown(toggle, {
-            template: 'assets/features/dashboard/templates/partials/wdgt-dd.html',
-            animation: 'am-flip-x',
-            trigger: 'manual',
-            prefixEvent: 'wdgt-tab-dd',
-            scope: scope
-          });
-
-      dd.$promise.then(function(){
-        dd.show();
-      });
-
-      scope.$on('wdgt-tab-dd.hide', function () {
-        dd.destroy();
-      });
+    Widget.prototype.ddWidget = function(event){
+      this.isOpen = !this.isOpen;
+      event.preventDefault();
+      event.stopPropagation();
+      return false;
     };
+    return Widget;
+
   });

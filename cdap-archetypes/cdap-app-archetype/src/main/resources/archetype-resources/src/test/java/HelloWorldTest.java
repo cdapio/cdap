@@ -50,8 +50,7 @@ public class HelloWorldTest extends TestBase {
     ApplicationManager appManager = deployApplication(HelloWorld.class);
 
     // Start WhoFlow
-    FlowManager flowManager = appManager.getFlowManager("WhoFlow");
-    flowManager.start();
+    FlowManager flowManager = appManager.getFlowManager("WhoFlow").start();
 
     // Send stream events to the "who" Stream
     StreamManager streamManager = getStreamManager("who");

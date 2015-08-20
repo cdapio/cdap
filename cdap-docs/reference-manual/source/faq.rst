@@ -22,7 +22,7 @@ Cask Data Application Platform
 
 Cask Data Application Platform (CDAP) is the industry’s first Big Data Application Server for Hadoop. It
 abstracts all the complexities and integrates the components of the Hadoop ecosystem (YARN, MapReduce, 
-Zookeeper, HBase, etc.) enabling developers to build, test, deploy, and manage Big Data applications
+ZooKeeper, HBase, etc.) enabling developers to build, test, deploy, and manage Big Data applications
 without having to worry about infrastructure, interoperability, or the complexities of distributed
 systems.
 

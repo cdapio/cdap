@@ -18,13 +18,13 @@ package co.cask.cdap.client;
 
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.templates.plugins.PluginClass;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.ArtifactAlreadyExistsException;
 import co.cask.cdap.common.ArtifactNotFoundException;
 import co.cask.cdap.common.ArtifactRangeNotFoundException;
 import co.cask.cdap.common.BadRequestException;
-import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.UnauthorizedException;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
@@ -300,11 +300,8 @@ public class ArtifactClient {
   /**
    * Add an artifact.
    *
-   * @param namespace the namespace to add the artifact to
-   * @param artifactName the name of the artifact to add
-   * @param artifactVersion the version of the artifact to add. If null, the version will be derived from the
-   *                        manifest of the artifact.
-   * @param parentArtifacts the set of artifacts this artifact extends.
+   * @param artifactId the id of the artifact to add
+   * @param parentArtifacts the set of artifacts this artifact extends
    * @param artifactContents an input supplier for the contents of the artifact
    * @throws ArtifactAlreadyExistsException if the artifact already exists
    * @throws BadRequestException if the request is invalid. For example, if the artifact name or version is invalid
@@ -312,8 +309,85 @@ public class ArtifactClient {
    * @throws IOException if a network error occurred
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    */
-  public void add(Id.Namespace namespace, String artifactName, @Nullable String artifactVersion,
-                  @Nullable Set<ArtifactRange> parentArtifacts, InputSupplier<? extends InputStream> artifactContents)
+  public void add(Id.Artifact artifactId, @Nullable Set<ArtifactRange> parentArtifacts,
+                  InputSupplier<? extends InputStream> artifactContents)
+    throws UnauthorizedException, BadRequestException, ArtifactRangeNotFoundException,
+    ArtifactAlreadyExistsException, IOException {
+
+    add(artifactId.getNamespace(), artifactId.getName(), artifactContents,
+        artifactId.getVersion().getVersion(), parentArtifacts);
+  }
+
+  /**
+   * Add an artifact.
+   *
+   * @param namespace the namespace to add the artifact to
+   * @param artifactName the name of the artifact to add
+   * @param artifactContents an input supplier for the contents of the artifact
+   * @param artifactVersion the version of the artifact to add. If null, the version will be derived from the
+   *                        manifest of the artifact.
+   * @throws ArtifactAlreadyExistsException if the artifact already exists
+   * @throws BadRequestException if the request is invalid. For example, if the artifact name or version is invalid
+   * @throws ArtifactRangeNotFoundException if the parent artifacts do not exist
+   * @throws IOException if a network error occurred
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   */
+  public void add(Id.Namespace namespace, String artifactName,
+                  InputSupplier<? extends InputStream> artifactContents,
+                  @Nullable String artifactVersion)
+    throws ArtifactAlreadyExistsException, BadRequestException, IOException,
+    UnauthorizedException, ArtifactRangeNotFoundException {
+
+    add(namespace, artifactName, artifactContents, artifactVersion, null, null);
+  }
+
+  /**
+   * Add an artifact.
+   *
+   * @param namespace the namespace to add the artifact to
+   * @param artifactName the name of the artifact to add
+   * @param artifactContents an input supplier for the contents of the artifact
+   * @param artifactVersion the version of the artifact to add. If null, the version will be derived from the
+   *                        manifest of the artifact
+   * @param parentArtifacts the set of artifacts this artifact extends
+   * @throws ArtifactAlreadyExistsException if the artifact already exists
+   * @throws BadRequestException if the request is invalid. For example, if the artifact name or version is invalid
+   * @throws ArtifactRangeNotFoundException if the parent artifacts do not exist
+   * @throws IOException if a network error occurred
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   */
+  public void add(Id.Namespace namespace, String artifactName, InputSupplier<? extends InputStream> artifactContents,
+                  @Nullable String artifactVersion, @Nullable Set<ArtifactRange> parentArtifacts)
+    throws ArtifactAlreadyExistsException, BadRequestException, IOException,
+    UnauthorizedException, ArtifactRangeNotFoundException {
+
+    add(namespace, artifactName, artifactContents, artifactVersion, parentArtifacts, null);
+  }
+
+  /**
+   * Add an artifact.
+   *
+   * @param namespace the namespace to add the artifact to
+   * @param artifactName the name of the artifact to add
+   * @param artifactContents an input supplier for the contents of the artifact
+   * @param artifactVersion the version of the artifact to add. If null, the version will be derived from the
+   *                        manifest of the artifact
+   * @param parentArtifacts the set of artifacts this artifact extends
+   * @param additionalPlugins the set of plugins contained in the artifact that cannot be determined
+   *                          through jar inspection. This set should include any classes that are plugins but could
+   *                          not be annotated as such. For example, 3rd party classes like jdbc drivers fall into
+   *                          this category.
+   * @throws ArtifactAlreadyExistsException if the artifact already exists
+   * @throws BadRequestException if the request is invalid. For example, if the artifact name or version is invalid
+   * @throws ArtifactRangeNotFoundException if the parent artifacts do not exist
+   * @throws IOException if a network error occurred
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   */
+  public void add(Id.Namespace namespace, String artifactName,
+                  InputSupplier<? extends InputStream> artifactContents,
+                  @Nullable String artifactVersion,
+                  @Nullable Set<ArtifactRange> parentArtifacts,
+                  @Nullable Set<PluginClass> additionalPlugins)
     throws ArtifactAlreadyExistsException, BadRequestException, IOException,
     UnauthorizedException, ArtifactRangeNotFoundException {
 
@@ -324,6 +398,9 @@ public class ArtifactClient {
     }
     if (parentArtifacts != null) {
       requestBuilder.addHeader("Artifact-Extends", Joiner.on('/').join(parentArtifacts));
+    }
+    if (additionalPlugins != null) {
+      requestBuilder.addHeader("Artifact-Plugins", GSON.toJson(additionalPlugins));
     }
     HttpRequest request = requestBuilder.withBody(artifactContents).build();
 
@@ -337,6 +414,29 @@ public class ArtifactClient {
       throw new BadRequestException(response.getResponseBodyAsString());
     } else if (responseCode == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new ArtifactRangeNotFoundException(parentArtifacts);
+    }
+  }
+
+  /**
+   * Delete an artifact.
+   *
+   * @param artifactId the artifact to delete
+   *
+   * @throws BadRequestException if the request is invalid. For example, if the artifact name or version is invalid
+   * @throws IOException if a network error occurred
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   */
+  public void delete(Id.Artifact artifactId) throws IOException, UnauthorizedException, BadRequestException {
+    URL url = config.resolveNamespacedURLV3(artifactId.getNamespace(),
+      String.format("artifacts/%s/versions/%s", artifactId.getName(), artifactId.getVersion().getVersion()));
+
+    HttpRequest request = HttpRequest.delete(url).build();
+
+    HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_BAD_REQUEST);
+
+    int responseCode = response.getResponseCode();
+    if (responseCode == HttpURLConnection.HTTP_BAD_REQUEST) {
+      throw new BadRequestException(response.getResponseBodyAsString());
     }
   }
 

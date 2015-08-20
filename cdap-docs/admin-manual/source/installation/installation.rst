@@ -33,7 +33,7 @@ These are the CDAP components:
 - **CDAP Authentication Server:** Performs client authentication for CDAP when security is enabled.
 
 Before installing the CDAP components, you must first install a Hadoop cluster
-with *HDFS*, *YARN*, *HBase*, and *Zookeeper*. In order to use the ad-hoc querying capabilities
+with *HDFS*, *YARN*, *HBase*, and *ZooKeeper*. In order to use the ad-hoc querying capabilities
 of CDAP, you will also need *Hive*. All CDAP components can be installed on the
 same boxes as your Hadoop cluster, or on separate boxes that can connect to the Hadoop services.
 
@@ -167,7 +167,7 @@ For a distributed enterprise, you must install these Hadoop components:
 +               +-------------------+-----------------------------------------------------+
 |               | MapR              | 4.1 (with Apache HBase)                             |
 +---------------+-------------------+-----------------------------------------------------+
-| **Zookeeper** | Apache            | Version 3.4.3 through 3.4.5                         |
+| **ZooKeeper** | Apache            | Version 3.4.3 through 3.4.5                         |
 +               +-------------------+-----------------------------------------------------+
 |               | CDH or HDP        | (CDH) 5.0.0 through 5.4.4 or (HDP) 2.0, 2.1, or 2.2 |
 +               +-------------------+-----------------------------------------------------+
@@ -187,8 +187,8 @@ but have not necessarily have been either tested or confirmed compatible.
 **Note:** Certain CDAP components need to reference your *Hadoop*, *HBase*, *YARN* (and
 possibly *Hive*) cluster configurations by adding your configuration to their class paths.
 
-**Note:** Zookeeper's ``maxClientCnxns`` must be raised from its default.  We suggest setting it to zero
-(unlimited connections). As each YARN container launched by CDAP makes a connection to Zookeeper, 
+**Note:** ZooKeeper's ``maxClientCnxns`` must be raised from its default.  We suggest setting it to zero
+(unlimited connections). As each YARN container launched by CDAP makes a connection to ZooKeeper, 
 the number of connections required is a function of usage.
 
 .. _deployment-architectures:
@@ -779,6 +779,34 @@ please follow the upgrade instructions for the earlier versions and upgrade firs
 #. Run the upgrade tool, as the user that runs CDAP Master (the CDAP user)::
 
      $ /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.UpgradeTool upgrade
+     
+   Note that once you have upgraded an instance of CDAP, you cannot reverse the process; down-grades
+   to a previous version are not possible.
+   
+   The Upgrade Tool will produce output similar to the following, prompting you to continue with the upgrade:
+   
+    .. container:: highlight
+
+      .. parsed-literal::    
+    
+        UpgradeTool - version |short-version|-xxxxx.
+
+        upgrade - Upgrades CDAP to |short-version|
+          The upgrade tool upgrades the following:
+          1. User Datasets
+              - Upgrades the coprocessor jars for tables
+              - Migrates the metadata for PartitionedFileSets
+          2. System Datasets
+          3. UsageRegistry Dataset Type
+          Note: Once you run the upgrade tool you cannot rollback to the previous version.
+        Do you want to continue (y/n)
+        y
+        Starting upgrade ...
+
+   You can run the tool in a non-interactive fashion by using the ``force`` flag, in which case
+   it will run unattended and not prompt for continuing::
+   
+     $ /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.UpgradeTool upgrade force
 
 #. Restart the CDAP processes::
 

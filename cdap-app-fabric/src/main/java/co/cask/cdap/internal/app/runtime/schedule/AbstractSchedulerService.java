@@ -154,15 +154,15 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
   public void schedule(Id.Program programId, SchedulableProgramType programType, Schedule schedule,
                        Map<String, String> properties) throws SchedulerException {
     Scheduler scheduler;
-    if (schedule instanceof TimeSchedule) {
-      scheduler = timeScheduler;
-    } else if (schedule instanceof StreamSizeSchedule) {
-      scheduler = streamSizeScheduler;
-    } else {
-      throw new IllegalArgumentException("Unhandled type of schedule: " + schedule.getClass());
-    }
+    scheduler = getScheduler(schedule);
 
     scheduler.schedule(programId, programType, schedule, properties);
+    doLazyStart(programId, programType, schedule, properties);
+  }
+
+  private void doLazyStart(Id.Program programId, SchedulableProgramType programType, Schedule schedule,
+                           Map<String, String> properties) throws SchedulerException {
+    Scheduler scheduler = getScheduler(schedule);
     if (isLazyStart()) {
       // TODO: CDAP-2281 figure out a better way to handle schedules in unit tests
       String ignoreLazy = properties.get(Constants.Scheduler.IGNORE_LAZY_START);
@@ -245,7 +245,12 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
   public void updateSchedule(Id.Program program, SchedulableProgramType programType, Schedule schedule,
                              Map<String, String> properties) throws NotFoundException, SchedulerException {
     Scheduler scheduler = getSchedulerForSchedule(program, schedule.getName());
+    ScheduleState scheduleState = scheduleState(program, programType, schedule.getName());
     scheduler.updateSchedule(program, programType, schedule, properties);
+    // the update of schedule will delete and a create new one so we have to suspend it if it was suspended
+    if (scheduleState == ScheduleState.SUSPENDED) {
+      suspendSchedule(program, programType, schedule.getName());
+    }
   }
 
   @Override
@@ -312,11 +317,16 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
 
     ScheduleSpecification scheduleSpec = schedules.get(scheduleName);
     Schedule schedule = scheduleSpec.getSchedule();
+    return getScheduler(schedule);
+  }
+
+  private Scheduler getScheduler(Schedule schedule) {
     if (schedule instanceof TimeSchedule) {
       return timeScheduler;
     } else if (schedule instanceof StreamSizeSchedule) {
       return streamSizeScheduler;
+    } else {
+      throw new IllegalArgumentException("Unhandled type of schedule: " + schedule.getClass());
     }
-    throw new IllegalArgumentException("Unhandled type of schedule: " + schedule.getClass());
   }
 }

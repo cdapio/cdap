@@ -129,7 +129,7 @@ public class CLIConfig implements TableRendererConfig {
 
   public Id.Namespace getCurrentNamespace() {
     if (connectionConfig == null || connectionConfig.getNamespace() == null) {
-      throw new DisconnectedException();
+      throw new DisconnectedException(connectionConfig);
     }
     return connectionConfig.getNamespace();
   }
