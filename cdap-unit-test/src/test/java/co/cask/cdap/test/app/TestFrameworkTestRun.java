@@ -41,6 +41,8 @@ import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.WorkflowTokenDetail;
 import co.cask.cdap.proto.WorkflowTokenNodeDetail;
+import co.cask.cdap.proto.artifact.ArtifactSummary;
+import co.cask.cdap.proto.artifact.CreateAppRequest;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.FlowManager;
@@ -182,26 +184,32 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
   @Test
   public void testAppConfigWithNull() throws Exception {
-    testAppConfig(null);
+    testAppConfig(deployApplication(ConfigTestApp.class), null);
   }
 
   @Test
   public void testAppConfig() throws Exception {
-    testAppConfig(new ConfigTestApp.ConfigClass("testStream", "testDataset"));
+    ConfigTestApp.ConfigClass conf = new ConfigTestApp.ConfigClass("testStream", "testDataset");
+    testAppConfig(deployApplication(ConfigTestApp.class, conf), conf);
   }
 
-  private void testAppConfig(ConfigTestApp.ConfigClass object) throws Exception {
-    String streamName = ConfigTestApp.DEFAULT_STREAM;
-    String datasetName = ConfigTestApp.DEFAULT_TABLE;
+  @Test
+  public void testAppFromArtifact() throws Exception {
+    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "cfg-app", "1.0.0-SNAPSHOT");
+    addAppArtifact(artifactId, ConfigTestApp.class);
 
-    ApplicationManager appManager;
-    if (object != null) {
-      streamName = object.getStreamName();
-      datasetName = object.getTableName();
-      appManager = deployApplication(ConfigTestApp.class, object);
-    } else {
-      appManager = deployApplication(ConfigTestApp.class);
-    }
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "AppFromArtifact");
+    CreateAppRequest<ConfigTestApp.ConfigClass> createRequest = new CreateAppRequest<>(
+      new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion(), false),
+      new ConfigTestApp.ConfigClass("testStream", "testDataset")
+    );
+    ApplicationManager appManager = deployApplication(appId, createRequest);
+    testAppConfig(appManager, createRequest.getConfig());
+  }
+
+  private void testAppConfig(ApplicationManager appManager, ConfigTestApp.ConfigClass conf) throws Exception {
+    String streamName = conf == null ? ConfigTestApp.DEFAULT_STREAM : conf.getStreamName();
+    String datasetName = conf == null ? ConfigTestApp.DEFAULT_TABLE : conf.getTableName();
 
     FlowManager flowManager = appManager.getFlowManager(ConfigTestApp.FLOW_NAME).start();
     StreamManager streamManager = getStreamManager(streamName);
