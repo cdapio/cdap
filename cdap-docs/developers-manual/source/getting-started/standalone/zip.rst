@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: CDAP SDK Zip
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
 .. highlight:: console
   
