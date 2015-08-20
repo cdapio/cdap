@@ -4,7 +4,14 @@
 
 body.theme-cdap {
   &.state-admin {
+    header.navbar {
+      // Hide the namespace dropdown in Admin
+      .navbar-collapse > ul.navbar-nav:first-child {
+        display: none;
+      }
+    }
     main.container {
+      margin-top: 140px;
       .search-bar { margin-bottom: 15px; }
       .clickable { cursor: pointer; }
       .sidebar {

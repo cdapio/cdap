@@ -406,7 +406,7 @@ public class ServiceHttpServer extends AbstractIdleService {
       // Instantiate the user handler and injects Metrics and Dataset fields.
       HttpServiceHandler handler = instantiatorFactory.get(handlerType).create();
       BasicHttpServiceContext context = contextFactory.create(spec);
-      Reflections.visit(handler, handlerType,
+      Reflections.visit(handler, handlerType.getType(),
                         new MetricsFieldSetter(context.getMetrics()),
                         new DataSetFieldSetter(context),
                         new PropertyFieldSetter(spec.getProperties()));

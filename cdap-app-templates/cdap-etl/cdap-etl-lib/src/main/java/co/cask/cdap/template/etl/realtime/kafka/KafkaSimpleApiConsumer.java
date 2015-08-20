@@ -110,7 +110,7 @@ public abstract class KafkaSimpleApiConsumer<KEY, PAYLOAD, OFFSET> {
     configureKafka(kafkaConfigurer);
 
     if (kafkaConfigurer.getZookeeper() == null && kafkaConfigurer.getBrokers() == null) {
-      throw new IllegalStateException("Kafka not configured. Must provide either zookeeper or broker list.");
+      throw new IllegalStateException("Kafka not configured. Must provide either ZooKeeper or broker list.");
     }
 
     kafkaConfig = new KafkaConfig(kafkaConfigurer.getZookeeper(), kafkaConfigurer.getBrokers());

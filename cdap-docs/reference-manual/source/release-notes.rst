@@ -1144,7 +1144,7 @@ Bug Fixes
   `CDAP-2946 <https://issues.cask.co/browse/CDAP-2946>`__,
   `TEPHRA-101 <https://issues.cask.co/browse/TEPHRA-101>`__).
   
-- Fixed a problem with CDAP Master not being resilient in the handling of Zookeeper 
+- Fixed a problem with CDAP Master not being resilient in the handling of ZooKeeper 
   exceptions
   (`CDAP-2569 <https://issues.cask.co/browse/CDAP-2569>`__).
   
@@ -1879,7 +1879,7 @@ Known Issues
 - Writing to datasets through Hive is not supported in CDH4.x
   (`CDAP-988 <https://issues.cask.co/browse/CDAP-988>`__).
 - A race condition resulting in a deadlock can occur when a TwillRunnable container
-  shutdowns while it still has Zookeeper events to process. This occasionally surfaces when
+  shutdowns while it still has ZooKeeper events to process. This occasionally surfaces when
   running with OpenJDK or JDK7, though not with Oracle JDK6. It is caused by a change in the
   ``ThreadPoolExecutor`` implementation between Oracle JDK6 and OpenJDK/JDK7. Until Twill is
   updated in a future version of CDAP, a work-around is to kill the errant process. The Yarn
@@ -2009,7 +2009,7 @@ Services
 Security
 .................
 - Added authorization logging
-- Added Kerberos authentication to Zookeeper secret keys
+- Added Kerberos authentication to ZooKeeper secret keys
 - Added support for SSL
 
 Spark Integration

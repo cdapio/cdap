@@ -228,7 +228,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
 
       // Inject DataSet, OutputEmitter, Metric fields
       ImmutableList.Builder<ProducerSupplier> queueProducerSupplierBuilder = ImmutableList.builder();
-      Reflections.visit(flowlet, TypeToken.of(flowlet.getClass()),
+      Reflections.visit(flowlet, flowlet.getClass(),
                         new PropertyFieldSetter(flowletDef.getFlowletSpec().getProperties()),
                         new DataSetFieldSetter(flowletContext),
                         new MetricsFieldSetter(flowletContext.getMetrics()),

@@ -319,5 +319,4 @@ public class PluginRepository {
       return first.getName().compareTo(second.getName());
     }
   }
-
 }

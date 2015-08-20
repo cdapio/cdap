@@ -31,9 +31,9 @@ import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
@@ -209,11 +209,9 @@ public class ArtifactRepository {
   public ArtifactDetail addArtifact(Id.Artifact artifactId, File artifactFile)
     throws IOException, WriteConflictException, ArtifactAlreadyExistsException, InvalidArtifactException {
 
-    // use spark program type in case the app contains spark, in which case we'll need access to spark
-    // packages when doing plugin inspection
-    try (CloseableClassLoader parentClassLoader =
-           artifactClassLoaderFactory.createClassLoader(Locations.toLocation(artifactFile), ProgramType.SPARK)) {
-      ArtifactClasses artifactClasses = artifactInspector.inspectArtifact(artifactId, artifactFile, parentClassLoader);
+    Location artifactLocation = Locations.toLocation(artifactFile);
+    try (CloseableClassLoader parentClassLoader = artifactClassLoaderFactory.createClassLoader(artifactLocation)) {
+      ArtifactClasses artifactClasses = inspectArtifact(artifactId, artifactFile, null, parentClassLoader);
       validatePluginSet(artifactClasses.getPlugins());
       ArtifactMeta meta = new ArtifactMeta(artifactClasses, ImmutableSet.<ArtifactRange>of());
       return artifactStore.write(artifactId, meta, Files.newInputStreamSupplier(artifactFile));
@@ -241,16 +239,66 @@ public class ArtifactRepository {
     throws IOException, ArtifactRangeNotFoundException, WriteConflictException,
     ArtifactAlreadyExistsException, InvalidArtifactException {
 
-    if (parentArtifacts == null || parentArtifacts.isEmpty()) {
-      return addArtifact(artifactId, artifactFile);
-    }
-    validateParentSet(parentArtifacts);
+    return addArtifact(artifactId, artifactFile, parentArtifacts, null);
+  }
 
-    try (CloseableClassLoader parentClassLoader = createParentClassLoader(artifactId, parentArtifacts)) {
-      ArtifactClasses artifactClasses = artifactInspector.inspectArtifact(artifactId, artifactFile, parentClassLoader);
-      validatePluginSet(artifactClasses.getPlugins());
+  /**
+   * Inspects and builds plugin and application information for the given artifact, adding an additional set of
+   * plugin classes to the plugins found through inspection. This method is used when all plugin classes
+   * cannot be derived by inspecting the artifact but need to be explicitly set. This is true for 3rd party plugins
+   * like jdbc drivers.
+   *
+   * @param artifactId the id of the artifact to inspect and store
+   * @param artifactFile the artifact to inspect and store
+   * @param parentArtifacts artifacts the given artifact extends.
+   *                        If null, the given artifact does not extend another artifact
+   * @param additionalPlugins the set of additional plugin classes to add to the plugins found through inspection.
+   *                          If null, no additional plugin classes will be added
+   * @throws IOException if there was an exception reading from the artifact store
+   * @throws ArtifactRangeNotFoundException if none of the parent artifacts could be found
+   */
+  public ArtifactDetail addArtifact(Id.Artifact artifactId, File artifactFile,
+                                    @Nullable Set<ArtifactRange> parentArtifacts,
+                                    @Nullable Set<PluginClass> additionalPlugins)
+    throws IOException, ArtifactAlreadyExistsException, WriteConflictException,
+    InvalidArtifactException, ArtifactRangeNotFoundException {
+
+    if (additionalPlugins != null) {
+      validatePluginSet(additionalPlugins);
+    }
+
+    parentArtifacts = parentArtifacts == null ? Collections.<ArtifactRange>emptySet() : parentArtifacts;
+    CloseableClassLoader parentClassLoader;
+    if (parentArtifacts.isEmpty()) {
+      parentClassLoader =
+        artifactClassLoaderFactory.createClassLoader(Locations.toLocation(artifactFile));
+    } else {
+      parentClassLoader = createParentClassLoader(artifactId, parentArtifacts);
+      validateParentSet(parentArtifacts);
+    }
+
+    try {
+      ArtifactClasses artifactClasses = inspectArtifact(artifactId, artifactFile, additionalPlugins, parentClassLoader);
       ArtifactMeta meta = new ArtifactMeta(artifactClasses, parentArtifacts);
       return artifactStore.write(artifactId, meta, Files.newInputStreamSupplier(artifactFile));
+    } finally {
+      parentClassLoader.close();
+    }
+  }
+
+  private ArtifactClasses inspectArtifact(Id.Artifact artifactId, File artifactFile,
+                                          @Nullable Set<PluginClass> additionalPlugins,
+                                          ClassLoader parentClassLoader) throws IOException, InvalidArtifactException {
+    ArtifactClasses artifactClasses = artifactInspector.inspectArtifact(artifactId, artifactFile, parentClassLoader);
+    validatePluginSet(artifactClasses.getPlugins());
+    if (additionalPlugins == null || additionalPlugins.isEmpty()) {
+      return artifactClasses;
+    } else {
+      return ArtifactClasses.builder()
+        .addApps(artifactClasses.getApps())
+        .addPlugins(artifactClasses.getPlugins())
+        .addPlugins(additionalPlugins)
+        .build();
     }
   }
 
@@ -314,10 +362,10 @@ public class ArtifactRepository {
           }
         }
 
-        // TODO: (CDAP-3272) use plugin classes from config file
         addArtifact(artifactId,
                     systemArtifactConfig.getFile(),
-                    systemArtifactConfig.getParents());
+                    systemArtifactConfig.getParents(),
+                    systemArtifactConfig.getPlugins());
       } catch (ArtifactAlreadyExistsException e) {
         // shouldn't happen... but if it does for some reason it's fine, it means it was added some other way already.
       } catch (ArtifactRangeNotFoundException e) {
@@ -327,6 +375,16 @@ public class ArtifactRepository {
         LOG.warn(String.format("Could not add system artifact '%s' because it is invalid.", fileName), e);
       }
     }
+  }
+
+  /**
+   * Delete the specified artifact. Programs that use the artifact will not be able to start.
+   *
+   * @param artifactId the artifact to delete
+   * @throws IOException if there was some IO error deleting the artifact
+   */
+  public void deleteArtifact(Id.Artifact artifactId) throws IOException {
+    artifactStore.delete(artifactId);
   }
 
   /**
@@ -420,9 +478,7 @@ public class ArtifactRepository {
     // assumes any of the parents will do
     Location parentLocation = parents.get(0).getDescriptor().getLocation();
 
-    // use spark program type in case the app contains spark, in which case we'll need access to spark
-    // packages when doing plugin inspection
-    return artifactClassLoaderFactory.createClassLoader(parentLocation, ProgramType.SPARK);
+    return artifactClassLoaderFactory.createClassLoader(parentLocation);
   }
 
   /**
@@ -431,6 +487,7 @@ public class ArtifactRepository {
    * @param parents the set of parent ranges to validate
    * @throws InvalidArtifactException if there is more than one version range for an artifact
    */
+  @VisibleForTesting
   static void validateParentSet(Set<ArtifactRange> parents) throws InvalidArtifactException {
     boolean isInvalid = false;
     StringBuilder errMsg = new StringBuilder("Invalid parents field.");
@@ -465,6 +522,7 @@ public class ArtifactRepository {
    * @param plugins the set of plugins to validate
    * @throws InvalidArtifactException if there is more than one class with the same type and name
    */
+  @VisibleForTesting
   static void validatePluginSet(Set<PluginClass> plugins) throws InvalidArtifactException {
     boolean isInvalid = false;
     StringBuilder errMsg = new StringBuilder("Invalid plugins field.");

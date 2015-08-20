@@ -23,7 +23,6 @@ import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
-import com.google.common.base.Preconditions;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -64,35 +63,35 @@ public class DefaultDatasetConfigurer implements DatasetConfigurer {
 
   @Override
   public void addStream(Stream stream) {
-    Preconditions.checkArgument(stream != null, "Stream cannot be null.");
+    checkArgument(stream != null, "Stream cannot be null.");
     StreamSpecification spec = stream.configure();
     streams.put(spec.getName(), spec);
   }
 
   @Override
   public void addStream(String streamName) {
-    Preconditions.checkArgument(streamName != null && !streamName.isEmpty(), "Stream Name cannot be null or empty");
+    checkArgument(streamName != null && !streamName.isEmpty(), "Stream Name cannot be null or empty");
     addStream(new Stream(streamName));
   }
 
   @Override
   public void addDatasetModule(String moduleName, Class<? extends DatasetModule> moduleClass) {
-    Preconditions.checkArgument(moduleName != null, "Dataset module name cannot be null.");
-    Preconditions.checkArgument(moduleClass != null, "Dataset module class cannot be null.");
+    checkArgument(moduleName != null, "Dataset module name cannot be null.");
+    checkArgument(moduleClass != null, "Dataset module class cannot be null.");
     datasetModules.put(moduleName, moduleClass.getName());
   }
 
   @Override
   public void addDatasetType(Class<? extends Dataset> datasetClass) {
-    Preconditions.checkArgument(datasetClass != null, "Dataset class cannot be null.");
+    checkArgument(datasetClass != null, "Dataset class cannot be null.");
     datasetModules.put(datasetClass.getName(), datasetClass.getName());
   }
 
   @Override
   public void createDataset(String datasetInstanceName, String typeName, DatasetProperties properties) {
-    Preconditions.checkArgument(datasetInstanceName != null, "Dataset instance name cannot be null.");
-    Preconditions.checkArgument(typeName != null, "Dataset type name cannot be null.");
-    Preconditions.checkArgument(properties != null, "Instance properties name cannot be null.");
+    checkArgument(datasetInstanceName != null, "Dataset instance name cannot be null.");
+    checkArgument(typeName != null, "Dataset type name cannot be null.");
+    checkArgument(properties != null, "Instance properties name cannot be null.");
     datasetSpecs.put(datasetInstanceName,
                          new DatasetCreationSpec(datasetInstanceName, typeName, properties));
   }
@@ -105,9 +104,9 @@ public class DefaultDatasetConfigurer implements DatasetConfigurer {
   @Override
   public void createDataset(String datasetInstanceName, Class<? extends Dataset> datasetClass,
                             DatasetProperties properties) {
-    Preconditions.checkArgument(datasetInstanceName != null, "Dataset instance name cannot be null.");
-    Preconditions.checkArgument(datasetClass != null, "Dataset class name cannot be null.");
-    Preconditions.checkArgument(properties != null, "Instance properties name cannot be null.");
+    checkArgument(datasetInstanceName != null, "Dataset instance name cannot be null.");
+    checkArgument(datasetClass != null, "Dataset class name cannot be null.");
+    checkArgument(properties != null, "Instance properties name cannot be null.");
     datasetSpecs.put(datasetInstanceName,
                          new DatasetCreationSpec(datasetInstanceName, datasetClass.getName(), properties));
     datasetModules.put(datasetClass.getName(), datasetClass.getName());
@@ -116,5 +115,11 @@ public class DefaultDatasetConfigurer implements DatasetConfigurer {
   @Override
   public void createDataset(String datasetName, Class<? extends Dataset> datasetClass) {
     createDataset(datasetName, datasetClass, DatasetProperties.EMPTY);
+  }
+
+  private void checkArgument(boolean condition, String template, Object...args) {
+    if (!condition) {
+      throw new IllegalArgumentException(String.format(template, args));
+    }
   }
 }

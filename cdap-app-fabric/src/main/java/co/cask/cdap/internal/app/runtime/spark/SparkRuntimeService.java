@@ -22,30 +22,28 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.CombineClassLoader;
-import co.cask.cdap.common.lang.WeakReferenceDelegatorClassLoader;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.twill.HadoopClassExcluder;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
+import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import co.cask.cdap.internal.app.runtime.spark.metrics.SparkMetricsSink;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionFailureException;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Charsets;
-import com.google.common.base.Function;
-import com.google.common.base.Joiner;
 import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import com.google.common.io.Closeables;
 import com.google.common.io.Files;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.spark.deploy.SparkSubmit;
 import org.apache.twill.api.ClassAcceptor;
+import org.apache.twill.api.RunId;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.internal.ApplicationBundler;
@@ -58,10 +56,13 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.Writer;
 import java.net.URL;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.jar.JarOutputStream;
 
 /**
@@ -77,33 +78,29 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
   private static final String CDAP_SPARK_JAR = "cdap-spark.jar";
 
   private static final Logger LOG = LoggerFactory.getLogger(SparkRuntimeService.class);
-  private static final Function<File, String> FILE_TO_ABSOLUTE_PATH = new Function<File, String>() {
-    @Override
-    public String apply(File input) {
-      return input.getAbsolutePath();
-    }
-  };
 
   private final CConfiguration cConf;
   private final Configuration hConf;
   private final Spark spark;
   private final Location programJarLocation;
   private final SparkContextFactory sparkContextFactory;
+  private final SparkSubmitter sparkSubmitter;
   private final TransactionSystemClient txClient;
-  private ExecutionSparkContext executionContext;
+  private final AtomicReference<ExecutionFuture<RunId>> submissionFuture;
+  private Callable<ExecutionFuture<RunId>> submitSpark;
   private Runnable cleanupTask;
-  private String[] sparkSubmitArgs;
-  private boolean success;
 
   SparkRuntimeService(CConfiguration cConf, Configuration hConf, Spark spark,
-                      SparkContextFactory sparkContextFactory, Location programJarLocation,
-                      TransactionSystemClient txClient) {
+                      SparkContextFactory sparkContextFactory, SparkSubmitter sparkSubmitter,
+                      Location programJarLocation, TransactionSystemClient txClient) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.spark = spark;
     this.programJarLocation = programJarLocation;
     this.sparkContextFactory = sparkContextFactory;
+    this.sparkSubmitter = sparkSubmitter;
     this.txClient = txClient;
+    this.submissionFuture = new AtomicReference<>();
   }
 
   @Override
@@ -124,31 +121,37 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     try {
       SparkContextConfig contextConfig = new SparkContextConfig(hConf);
 
-      File jobJar = generateJobJar(tempDir);
-      File metricsConf = SparkMetricsSink.generateSparkMetricsConfig(File.createTempFile("metrics",
-                                                                                         ".properties", tempDir));
-
-      List<File> localizedArchives = Lists.newArrayList();
-      List<File> localizedFiles = Lists.newArrayList();
+      final File jobJar = generateJobJar(tempDir);
+      File metricsConf = SparkMetricsSink.writeConfig(File.createTempFile("metrics", ".properties", tempDir));
+      final List<LocalizeResource> localizeResources = new ArrayList<>();
 
       if (!contextConfig.isLocal()) {
-        localizedArchives.add(copyProgramJar(programJarLocation, tempDir));
-        localizedArchives.add(buildDependencyJar(tempDir));
-        localizedFiles.add(saveCConf(cConf, tempDir));
+        localizeResources.add(new LocalizeResource(copyProgramJar(programJarLocation, tempDir), true));
+        localizeResources.add(new LocalizeResource(buildDependencyJar(tempDir), true));
+        localizeResources.add(new LocalizeResource(saveCConf(cConf, tempDir)));
       }
 
       // Create a long running transaction
       Transaction transaction = txClient.startLong();
 
       // Create execution spark context
-      executionContext = sparkContextFactory.createExecutionContext(transaction);
+      final ExecutionSparkContext executionContext = sparkContextFactory.createExecutionContext(transaction);
 
       if (!contextConfig.isLocal()) {
-        localizedFiles.add(saveHConf(contextConfig.set(executionContext).getConfiguration(), tempDir));
+        localizeResources.add(new LocalizeResource(saveHConf(contextConfig.set(executionContext).getConfiguration(),
+                                                             tempDir)));
       }
 
-      sparkSubmitArgs = prepareSparkSubmitArgs(contextConfig.getExecutionMode(), sparkContextFactory.getClientContext(),
-                                               tempDir, localizedArchives, localizedFiles, jobJar, metricsConf);
+      final Map<String, String> configs = createSubmitConfigs(sparkContextFactory.getClientContext(),
+                                                              tempDir, metricsConf);
+      submitSpark = new Callable<ExecutionFuture<RunId>>() {
+        @Override
+        public ExecutionFuture<RunId> call() throws Exception {
+          return sparkSubmitter.submit(executionContext, configs,
+                                       localizeResources, jobJar, executionContext.getRunId());
+        }
+      };
+      submissionFuture.set(new SettableExecutionFuture<RunId>(executionContext));
 
     } catch (Throwable t) {
       cleanupTask.run();
@@ -158,65 +161,75 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
 
   @Override
   protected void run() throws Exception {
-    SparkClassLoader sparkClassLoader = new SparkClassLoader(executionContext);
-    ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(
-      new WeakReferenceDelegatorClassLoader(sparkClassLoader));
+    // First, only submit the job if this service is in RUNNING state.
+    // This service will not be in running state if the triggeredShutdown() method
+    // is invoked between startUp() and run() methods.
+    //
+    // The second clause is to guard against case where job is submitted through submitSpark.call(),
+    // but before the atomic reference is updated, the triggeredShutdown() method is invoked and cancelled
+    // the old Future reference inside the atomic reference. If that happened, need to cancel the submitted job.
+    if (isRunning() && submissionFuture.getAndSet(submitSpark.call()).isCancelled()) {
+      submissionFuture.get().cancel(true);
+    }
+
+    ExecutionFuture<RunId> jobCompletion = submissionFuture.get();
+    ExecutionSparkContext executionContext = jobCompletion.getSparkContext();
+    Transaction transaction = executionContext.getTransaction();
+
     try {
-      LOG.debug("Submitting to spark with arguments: {}", Arrays.toString(sparkSubmitArgs));
-      SparkSubmit.main(sparkSubmitArgs);
-      success = true;
+      // Block for job completion
+      jobCompletion.get();
+      try {
+        executionContext.flushDatasets();
+        LOG.debug("Committing Spark Program transaction: {}", executionContext);
+        if (!txClient.commit(transaction)) {
+          LOG.warn("Spark Job transaction failed to commit");
+          throw new TransactionFailureException("Failed to commit transaction for Spark " + executionContext);
+        }
+        LOG.debug("Spark Program transaction committed: {}", executionContext);
+      } catch (Exception e) {
+        LOG.error("Failed to commit datasets", e);
+        txClient.invalidate(transaction.getWritePointer());
+      }
+
     } catch (Exception e) {
-      success = false;
-      // See if the context is stopped. If it is, then it's not an error.
-      if (!executionContext.isStopped()) {
-        LOG.error("Spark program execution failure: {}", executionContext, e);
+      // invalidate the transaction as spark might have written to datasets too
+      txClient.invalidate(transaction.getWritePointer());
+
+      // See if it is due to job cancelation. If it is, then it's not an error.
+      if (jobCompletion.isCancelled()) {
+        LOG.debug("Spark program execution cancelled: {}", sparkContextFactory.getClientContext());
+      } else {
+        LOG.error("Spark program execution failure: {}", sparkContextFactory.getClientContext(), e);
         throw e;
       }
     } finally {
-      Thread.currentThread().setContextClassLoader(oldClassLoader);
+      Closeables.closeQuietly(executionContext);
     }
   }
 
   @Override
   protected void shutDown() throws Exception {
     try {
-      Transaction transaction = executionContext.getTransaction();
-      if (success) {
-        try {
-          executionContext.flushDatasets();
-          LOG.debug("Committing Spark Program transaction: {}", executionContext);
-          if (!txClient.commit(transaction)) {
-            LOG.warn("Spark Job transaction failed to commit");
-            throw new TransactionFailureException("Failed to commit transaction for Spark " + executionContext);
-          }
-        } catch (Exception e) {
-          LOG.error("Failed to commit datasets", e);
-          txClient.invalidate(transaction.getWritePointer());
-        }
-      } else {
-        // invalidate the transaction as spark might have written to datasets too
-        txClient.invalidate(transaction.getWritePointer());
-      }
-    } finally {
-      // whatever happens we want to call this
+      // Try to get from the submission future to see if the job completed successfully.
+      boolean success = true;
       try {
-        onFinish(success);
-      } finally {
-        Closeables.closeQuietly(executionContext);
-        Closeables.closeQuietly(sparkContextFactory.getClientContext());
-        cleanupTask.run();
+        submissionFuture.get().get();
+      } catch (Exception e) {
+        success = false;
       }
+      onFinish(success);
+    } finally {
+      Closeables.closeQuietly(sparkContextFactory.getClientContext());
+      cleanupTask.run();
+      LOG.debug("Spark program completed: {}", sparkContextFactory.getClientContext());
     }
   }
 
   @Override
   protected void triggerShutdown() {
-    // No need to synchronize. The guava Service guarantees this method won't get called until
-    // the startUp() call returned.
-    ExecutionSparkContext context = executionContext;
-    if (context != null) {
-      context.close();
-    }
+    LOG.debug("Stop requested for Spark Program {}", submissionFuture.get().getSparkContext());
+    submissionFuture.get().cancel(true);
   }
 
   @Override
@@ -282,52 +295,23 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
   }
 
   /**
-   * Prepares arguments which {@link SparkProgramWrapper} is submitted to {@link SparkSubmit} to run.
-   *
-   * @param executionMode name of the execution mode
-   * @param context the {@link ClientSparkContext} for this execution
-   * @param localDir the directory to be used as the spark local directory
-   * @param localizedArchives list of files to be localized to the remote container as archives (.jar wil be expanded)
-   * @param localizedFiles list of files to be localized to the remote container
-   * @param jobJar the jar file submitted to Spark as the job jar
-   * @param metricsConf the configuration file for specifying Spark framework metrics collection integration
-   *
-   * @return String[] of arguments with which {@link SparkProgramWrapper} will be submitted
+   * Creates the configurations for the spark submitter.
    */
-  private String[] prepareSparkSubmitArgs(String executionMode, ClientSparkContext context, File localDir,
-                                          Iterable<File> localizedArchives, Iterable<File> localizedFiles,
-                                          File jobJar, File metricsConf) {
-
-    String archives = Joiner.on(',').join(Iterables.transform(localizedArchives, FILE_TO_ABSOLUTE_PATH));
-    String files = Joiner.on(',').join(Iterables.transform(localizedFiles, FILE_TO_ABSOLUTE_PATH));
-
-    ImmutableList.Builder<String> builder = ImmutableList.builder();
+  private Map<String, String> createSubmitConfigs(ClientSparkContext context, File localDir, File metricsConf) {
+    Map<String, String> configs = new HashMap<>();
 
     // Add user specified configs first. CDAP specifics config will override them later if there are duplicates.
     for (Tuple2<String, String> tuple : context.getSparkConf().getAll()) {
-      builder.add("--conf").add(tuple._1() + "=" + tuple._2());
+      configs.put(tuple._1(), tuple._2());
     }
 
-    builder.add("--class").add(SparkProgramWrapper.class.getName())
-           .add("--master").add(executionMode)
-           .add("--conf").add("spark.executor.extraClassPath=$PWD/" + CDAP_SPARK_JAR + "/lib/*")
-           .add("--conf").add("spark.metrics.conf=" + metricsConf.getAbsolutePath())
-           .add("--conf").add("spark.local.dir=" + localDir.getAbsolutePath())
-           .add("--conf").add("spark.executor.memory=" + context.getExecutorResources().getMemoryMB() + "m")
-           .add("--conf").add("spark.executor.cores=" + context.getExecutorResources().getVirtualCores());
+    configs.put("spark.executor.extraClassPath", "$PWD/" + CDAP_SPARK_JAR + "/lib/*");
+    configs.put("spark.metrics.conf", metricsConf.getAbsolutePath());
+    configs.put("spark.local.dir", localDir.getAbsolutePath());
+    configs.put("spark.executor.memory", context.getExecutorResources().getMemoryMB() + "m");
+    configs.put("spark.executor.cores", String.valueOf(context.getExecutorResources().getVirtualCores()));
 
-    if (!archives.isEmpty()) {
-      builder.add("--archives").add(archives);
-    }
-    if (!files.isEmpty()) {
-      builder.add("--files").add(files);
-    }
-    List<String> args = builder
-      .add(jobJar.getAbsolutePath())
-      .add(context.getSpecification().getMainClassName())
-      .build();
-
-    return args.toArray(new String[args.size()]);
+    return configs;
   }
 
   /**

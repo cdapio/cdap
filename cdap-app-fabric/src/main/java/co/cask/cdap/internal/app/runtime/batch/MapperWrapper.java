@@ -26,7 +26,6 @@ import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.lang.Reflections;
 import com.google.common.base.Throwables;
-import com.google.common.reflect.TypeToken;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.MRJobConfig;
@@ -77,7 +76,7 @@ public class MapperWrapper extends Mapper {
 
       // injecting runtime components, like datasets, etc.
       try {
-        Reflections.visit(delegate, TypeToken.of(delegate.getClass()),
+        Reflections.visit(delegate, delegate.getClass(),
                           new PropertyFieldSetter(basicMapReduceContext.getSpecification().getProperties()),
                           new MetricsFieldSetter(basicMapReduceContext.getMetrics()),
                           new DataSetFieldSetter(basicMapReduceContext));

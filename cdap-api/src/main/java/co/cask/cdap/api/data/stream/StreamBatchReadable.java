@@ -26,12 +26,6 @@ import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.stream.GenericStreamEventData;
 import co.cask.cdap.api.stream.StreamEventDecoder;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
-import com.google.common.base.Function;
-import com.google.common.base.Joiner;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Splitter;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterables;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -39,6 +33,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -141,21 +136,22 @@ public class StreamBatchReadable implements BatchReadable<Long, String> {
   private static URI createStreamURI(String streamName, Map<String, Object> arguments) {
     // It forms the query string for all key/value pairs in the arguments map
     // It encodes both key and value using the URLEncoder
-    String queryString = Joiner.on('&').join(
-      Iterables.transform(arguments.entrySet(), new Function<Map.Entry<String, Object>, String>() {
-        @Override
-        public String apply(Map.Entry<String, Object> entry) {
-          try {
-            return String.format("%s=%s",
-                                 URLEncoder.encode(entry.getKey(), "UTF-8"),
-                                 URLEncoder.encode(entry.getValue().toString(), "UTF-8"));
-          } catch (UnsupportedEncodingException e) {
-            // Shouldn't happen as UTF-8 should always supported.
-            throw new RuntimeException(e);
-          }
-        }
-      }));
-    return URI.create(String.format("stream://%s?%s", streamName, queryString));
+    try {
+      StringBuilder builder = new StringBuilder();
+      String sep = "";
+      for (Map.Entry<String, Object> entry : arguments.entrySet()) {
+        builder
+          .append(sep)
+          .append(URLEncoder.encode(entry.getKey(), "UTF-8"))
+          .append("=")
+          .append(URLEncoder.encode(entry.getValue().toString(), "UTF-8"));
+        sep = "&";
+      }
+      return URI.create(String.format("stream://%s?%s", streamName, builder.toString()));
+    } catch (UnsupportedEncodingException e) {
+      // Shouldn't happen as UTF-8 should always supported.
+      throw new RuntimeException(e);
+    }
   }
 
   /**
@@ -168,13 +164,21 @@ public class StreamBatchReadable implements BatchReadable<Long, String> {
    * </pre>
    */
   public StreamBatchReadable(URI uri) {
-    Preconditions.checkArgument("stream".equals(uri.getScheme()));
+    if (!"stream".equals(uri.getScheme())) {
+      throw new IllegalArgumentException("Invalid stream URI " + uri);
+    }
     this.uri = uri;
     streamName = uri.getAuthority();
 
     String query = uri.getQuery();
     if (query != null && !query.isEmpty()) {
-      Map<String, String> parameters = Splitter.on('&').withKeyValueSeparator("=").split(query);
+      Map<String, String> parameters = new HashMap<>();
+      for (String pair : query.split("&")) {
+        int idx = pair.indexOf('=');
+        String key = idx < 0 ? pair : pair.substring(0, idx);
+        String value = idx < 0 ? "" : pair.substring(idx + 1);
+        parameters.put(key, value);
+      }
 
       startTime = parameters.containsKey(START_TIME_KEY) ? Long.parseLong(parameters.get(START_TIME_KEY)) : 0L;
       endTime = parameters.containsKey(END_TIME_KEY) ? Long.parseLong(parameters.get(END_TIME_KEY)) : Long.MAX_VALUE;
@@ -205,8 +209,7 @@ public class StreamBatchReadable implements BatchReadable<Long, String> {
    * @param endTime End timestamp in milliseconds.
    */
   public StreamBatchReadable(String streamName, long startTime, long endTime) {
-    this(createStreamURI(streamName, ImmutableMap.<String, Object>of(START_TIME_KEY, startTime,
-                                                                     END_TIME_KEY, endTime)));
+    this(createStreamURI(streamName, createArguments(START_TIME_KEY, startTime, END_TIME_KEY, endTime)));
   }
 
   /**
@@ -219,9 +222,9 @@ public class StreamBatchReadable implements BatchReadable<Long, String> {
    */
   public StreamBatchReadable(String streamName, long startTime,
                              long endTime, Class<? extends StreamEventDecoder> decoderType) {
-    this(createStreamURI(streamName, ImmutableMap.<String, Object>of(START_TIME_KEY, startTime,
-                                                                     END_TIME_KEY, endTime,
-                                                                     DECODER_KEY, decoderType.getName())));
+    this(createStreamURI(streamName, createArguments(START_TIME_KEY, startTime,
+                                                     END_TIME_KEY, endTime,
+                                                     DECODER_KEY, decoderType.getName())));
   }
 
   /**
@@ -235,10 +238,9 @@ public class StreamBatchReadable implements BatchReadable<Long, String> {
   @Beta
   public StreamBatchReadable(String streamName, long startTime,
                              long endTime, FormatSpecification bodyFormatSpec) {
-    this(createStreamURI(streamName, ImmutableMap.<String, Object>of(
-      START_TIME_KEY, startTime,
-      END_TIME_KEY, endTime,
-      BODY_FORMAT_KEY, encodeFormatSpec(bodyFormatSpec))));
+    this(createStreamURI(streamName, createArguments(START_TIME_KEY, startTime,
+                                                     END_TIME_KEY, endTime,
+                                                     BODY_FORMAT_KEY, encodeFormatSpec(bodyFormatSpec))));
   }
 
   /**
@@ -316,5 +318,16 @@ public class StreamBatchReadable implements BatchReadable<Long, String> {
       // this should never happen
       throw new RuntimeException(e);
     }
+  }
+
+  private static Map<String, Object> createArguments(Object...keyValues) {
+    if (keyValues.length % 2 != 0) {
+      throw new IllegalArgumentException("Expected keyValues of even size");
+    }
+    Map<String, Object> args = new HashMap<>();
+    for (int i = 0; i < keyValues.length; i += 2) {
+      args.put(keyValues[i].toString(), keyValues[i + 1]);
+    }
+    return args;
   }
 }

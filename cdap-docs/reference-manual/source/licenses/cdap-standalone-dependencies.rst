@@ -23,7 +23,7 @@ Cask Data Application Platform Standalone Dependencies
 
    "antlr.antlr-2.7.7.jar","2.7.7","\-","ANTLR 3 License (BSD License)","http://www.antlr2.org/license.html"
    "aopalliance.aopalliance-1.0.jar","1.0","\-","Public Domain","http://aopalliance.sourceforge.net/"
-   "c3p0.c3p0-0.9.1.1.jar","0.9.1.1","\-","EPL, LGPLv2",""
+   "c3p0.c3p0-0.9.1.1.jar","0.9.1.1","\-","EPL or LGPLv2","http://www.eclipse.org/legal/epl-v10.html"
    "ch.qos.logback.logback-classic-1.0.9.jar","1.0.9","\-","EPL","http://www.eclipse.org/legal/epl-v10.html"
    "ch.qos.logback.logback-core-1.0.9.jar","1.0.9","\-","EPL","http://www.eclipse.org/legal/epl-v10.html"
    "com.clearspring.analytics.stream-2.7.0.jar","2.7.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
@@ -116,7 +116,7 @@ Cask Data Application Platform Standalone Dependencies
    "net.sf.py4j.py4j-0.8.2.1.jar","0.8.2.1","\-","The New BSD License","http://www.opensource.org/licenses/bsd-license.html"
    "org.antlr.ST4-4.0.4.jar","4.0.4","\-","BSD License","http://antlr.org/license.html"
    "org.antlr.antlr-runtime-3.4.jar","3.4","\-","ANTLR 3 License (BSD License)","http://www.antlr3.org/license.html"
-   "org.antlr.stringtemplate-3.2.1.jar","3.2.1","\-","BSD License","http://antlr.org/license.html<"
+   "org.antlr.stringtemplate-3.2.1.jar","3.2.1","\-","BSD License","http://antlr.org/license.html"
    "org.apache.ant.ant-1.9.1.jar","1.9.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.ant.ant-launcher-1.9.1.jar","1.9.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.avro.avro-1.6.2.jar","1.6.2","\-","The Apache Software License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.txt"

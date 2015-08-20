@@ -30,7 +30,7 @@ public class ProgramClassLoader extends DirectoryClassLoader {
 
   /**
    * Constructs an instance that load classes from the given directory, without program type. See
-   * {@link ProgramResources#getVisibleResources(ProgramType)} for details on system classes that
+   * {@link ProgramResources#getVisibleResources(ClassLoader, ProgramType)} for details on system classes that
    * are visible to the returned ClassLoader.
    */
   public static ProgramClassLoader create(File unpackedJarDir, ClassLoader parentClassLoader) throws IOException {

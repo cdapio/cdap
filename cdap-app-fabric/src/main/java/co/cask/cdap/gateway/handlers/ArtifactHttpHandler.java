@@ -19,16 +19,17 @@ package co.cask.cdap.gateway.handlers;
 import co.cask.cdap.api.artifact.ArtifactDescriptor;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.templates.plugins.PluginClass;
+import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.common.ArtifactAlreadyExistsException;
 import co.cask.cdap.common.ArtifactNotFoundException;
 import co.cask.cdap.common.ArtifactRangeNotFoundException;
 import co.cask.cdap.common.BadRequestException;
-import co.cask.cdap.common.InvalidArtifactException;
 import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.http.AbstractBodyConsumer;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
+import co.cask.cdap.internal.app.runtime.adapter.PluginClassDeserializer;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.PluginNotExistsException;
@@ -45,10 +46,13 @@ import co.cask.http.AbstractHttpHandler;
 import co.cask.http.BodyConsumer;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonParseException;
+import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -58,10 +62,16 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
+import java.util.jar.Attributes;
+import java.util.jar.JarFile;
+import java.util.jar.Manifest;
+import java.util.zip.ZipException;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
@@ -79,9 +89,12 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(ArtifactHttpHandler.class);
   private static final String VERSION_HEADER = "Artifact-Version";
   private static final String EXTENDS_HEADER = "Artifact-Extends";
+  private static final String PLUGINS_HEADER = "Artifact-Plugins";
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+    .registerTypeAdapter(PluginClass.class, new PluginClassDeserializer())
     .create();
+  private static final Type PLUGINS_TYPE = new TypeToken<Set<PluginClass>>() { }.getType();
 
   private final ArtifactRepository artifactRepository;
   private final NamespaceAdmin namespaceAdmin;
@@ -316,32 +329,33 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
   @Path("/namespaces/{namespace-id}/artifacts/{artifact-name}")
   public BodyConsumer addArtifact(HttpRequest request, HttpResponder responder,
                                   @PathParam("namespace-id") String namespaceId,
-                                  @PathParam("artifact-name") String artifactName,
-                                  @HeaderParam(VERSION_HEADER) String artifactVersion,
-                                  @HeaderParam(EXTENDS_HEADER) final String parentArtifactsStr) {
+                                  @PathParam("artifact-name") final String artifactName,
+                                  @HeaderParam(VERSION_HEADER) final String artifactVersion,
+                                  @HeaderParam(EXTENDS_HEADER) final String parentArtifactsStr,
+                                  @HeaderParam(PLUGINS_HEADER) String pluginClasses)
+    throws NamespaceNotFoundException, BadRequestException {
 
-    Id.Namespace namespace;
-    try {
-      namespace = validateAndGetNamespace(namespaceId);
-    } catch (NamespaceNotFoundException e) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
-      return null;
+    final Id.Namespace namespace = validateAndGetNamespace(namespaceId);
+
+    // if version is explicitly given, validate the id now. otherwise version will be derived from the manifest
+    // and validated there
+    if (artifactVersion != null && !artifactVersion.isEmpty()) {
+      validateAndGetArtifactId(namespace, artifactName, artifactVersion);
     }
 
-    final Id.Artifact artifactId;
-    try {
-      artifactId = validateAndGetArtifactId(namespace, artifactName, artifactVersion);
-    } catch (BadRequestException e) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-      return null;
-    }
+    final Set<ArtifactRange> parentArtifacts = parseExtendsHeader(namespace, parentArtifactsStr);
 
-    final Set<ArtifactRange> parentArtifacts;
-    try {
-      parentArtifacts = parseExtendsHeader(namespace, parentArtifactsStr);
-    } catch (BadRequestException e) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-      return null;
+    final Set<PluginClass> additionalPluginClasses;
+    if (pluginClasses == null) {
+      additionalPluginClasses = ImmutableSet.of();
+    } else {
+      try {
+        additionalPluginClasses = GSON.fromJson(pluginClasses, PLUGINS_TYPE);
+      } catch (JsonParseException e) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, String.format(
+          "%s header '%s' is invalid: %s", PLUGINS_HEADER, pluginClasses, e.getMessage()));
+        return null;
+      }
     }
 
     try {
@@ -353,29 +367,78 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
         @Override
         protected void onFinish(HttpResponder responder, File uploadedFile) {
           try {
+            String version = (artifactVersion == null || artifactVersion.isEmpty()) ?
+              getBundleVersion(uploadedFile) : artifactVersion;
+            Id.Artifact artifactId = validateAndGetArtifactId(namespace, artifactName, version);
+
             // add the artifact to the repo
-            artifactRepository.addArtifact(artifactId, uploadedFile, parentArtifacts);
+            artifactRepository.addArtifact(artifactId, uploadedFile, parentArtifacts, additionalPluginClasses);
             responder.sendString(HttpResponseStatus.OK, "Artifact added successfully");
-          } catch (InvalidArtifactException e) {
-            responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
           } catch (ArtifactRangeNotFoundException e) {
             responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
           } catch (ArtifactAlreadyExistsException e) {
-            responder.sendString(HttpResponseStatus.CONFLICT, "Artifact " + artifactId + " already exists.");
+            responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
           } catch (WriteConflictException e) {
             responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
-              "Conflict while writing artifact, please try again");
+              "Conflict while writing artifact, please try again.");
           } catch (IOException e) {
-            LOG.error("Exception while trying to write artifact {}.", artifactId, e);
+            LOG.error("Exception while trying to write artifact {}-{}.", artifactName, artifactVersion, e);
             responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
-              "Error performing IO while writing artifact");
+              "Error performing IO while writing artifact.");
+          } catch (BadRequestException e) {
+            responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
           }
         }
+
+        private String getBundleVersion(File file) throws BadRequestException, IOException {
+          try {
+            JarFile jarFile = new JarFile(file);
+
+            Manifest manifest = jarFile.getManifest();
+            if (manifest == null) {
+              throw new BadRequestException(
+                "Unable to derive version from artifact because it does not contain a manifest. " +
+                  "Please package the jar with a manifest, or explicitly specify the artifact version.");
+            }
+            Attributes attributes = manifest.getMainAttributes();
+            String version = attributes == null ? null : attributes.getValue(ManifestFields.BUNDLE_VERSION);
+            if (version == null) {
+              throw new BadRequestException(
+                "Unable to derive version from artifact because manifest does not contain Bundle-Version attribute. " +
+                  "Please include Bundle-Version in the manifest, or explicitly specify the artifact version.");
+            }
+            return version;
+          } catch (ZipException e) {
+            throw new BadRequestException("Artifact is not in zip format. Please make sure it is a jar file.");
+          }
+        }
+
       };
     } catch (IOException e) {
-      LOG.error("Exception creating temp file to place artifact {} contents", artifactId, e);
+      LOG.error("Exception creating temp file to place artifact {} contents", artifactName, e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Server error creating temp file for artifact.");
       return null;
+    }
+  }
+
+  @DELETE
+  @Path("/namespaces/{namespace-id}/artifacts/{artifact-name}/versions/{artifact-version}")
+  public void deleteArtifact(HttpRequest request, HttpResponder responder,
+                             @PathParam("namespace-id") String namespaceId,
+                             @PathParam("artifact-name") String artifactName,
+                             @PathParam("artifact-version") String artifactVersion)
+    throws NamespaceNotFoundException, BadRequestException {
+
+    Id.Namespace namespace = validateAndGetNamespace(namespaceId);
+    Id.Artifact artifactId = validateAndGetArtifactId(namespace, artifactName, artifactVersion);
+
+    try {
+      artifactRepository.deleteArtifact(artifactId);
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (IOException e) {
+      LOG.error("Exception deleting artifact named {} for namespace {} from the store.", artifactName, namespaceId, e);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
+                           "Error deleting artifact metadata from the store: " + e.getMessage());
     }
   }
 

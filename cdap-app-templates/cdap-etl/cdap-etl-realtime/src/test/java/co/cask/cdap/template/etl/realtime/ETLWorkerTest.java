@@ -106,7 +106,7 @@ public class ETLWorkerTest extends TestBase {
                        RealtimeCubeSink.class, RealtimeTableSink.class,
                        StreamSink.class, RealtimeElasticsearchSink.class);
     addTemplatePlugins(TEMPLATE_ID, "transforms-1.0.0.jar",
-                       ProjectionTransform.class, ScriptFilterTransform.class, 
+                       ProjectionTransform.class, ScriptFilterTransform.class,
                        StructuredRecordToGenericRecordTransform.class);
     deployTemplate(Id.Namespace.DEFAULT, TEMPLATE_ID, ETLRealtimeTemplate.class,
                    PipelineConfigurable.class.getPackage().getName(),

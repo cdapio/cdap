@@ -22,6 +22,7 @@ import com.google.common.reflect.TypeToken;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Type;
 import java.util.Map;
 
 /**
@@ -36,9 +37,9 @@ public final class PropertyFieldSetter extends FieldVisitor {
   }
 
   @Override
-  public void visit(Object instance, TypeToken<?> inspectType, TypeToken<?> declareType, Field field) throws Exception {
+  public void visit(Object instance, Type inspectType, Type declareType, Field field) throws Exception {
     if (field.isAnnotationPresent(Property.class)) {
-      String key = declareType.getRawType().getName() + '.' + field.getName();
+      String key = TypeToken.of(declareType).getRawType().getName() + '.' + field.getName();
       String value = properties.get(key);
       if (value == null) {
         return;

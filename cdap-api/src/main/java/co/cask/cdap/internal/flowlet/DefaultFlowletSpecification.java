@@ -19,9 +19,10 @@ package co.cask.cdap.internal.flowlet;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.flow.flowlet.FailurePolicy;
 import co.cask.cdap.api.flow.flowlet.FlowletSpecification;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -52,8 +53,9 @@ public final class DefaultFlowletSpecification implements FlowletSpecification {
     this.name = name;
     this.description = description;
     this.failurePolicy = failurePolicy;
-    this.dataSets = ImmutableSet.copyOf(dataSets);
-    this.properties = properties == null ? ImmutableMap.<String, String>of() : ImmutableMap.copyOf(properties);
+    this.dataSets = Collections.unmodifiableSet(new HashSet<>(dataSets));
+    this.properties = Collections.unmodifiableMap(properties == null ? new HashMap<String, String>()
+                                                                     : new HashMap<>(properties));
     this.resources = resources;
   }
 

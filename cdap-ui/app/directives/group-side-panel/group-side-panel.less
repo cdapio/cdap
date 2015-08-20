@@ -37,6 +37,10 @@ my-side-panel {
         line-height: 70px;
         height: 70px;
         width: 70px;
+        @media (max-height: 550px) {
+          height: 40px;
+          line-height: 40px;
+        }
         span:last-child {
           display: none;
         }
@@ -96,7 +100,10 @@ my-side-panel {
           padding: 10px;
           overflow-y: auto;
           max-height: 50vh;
-
+          // Adjust max height to prevent side panel from becoming unusable below a certain browser height
+          @media (max-height: 550px) {
+            max-height: 20vh;
+          }
           .plugin-item {
             width: 100px;
             padding-left: 5px;

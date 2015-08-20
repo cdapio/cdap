@@ -16,7 +16,7 @@
 
 package co.cask.cdap.internal.io;
 
-import com.google.common.reflect.TypeToken;
+import java.lang.reflect.Type;
 
 /**
  * A base implementation of {@link FieldAccessor} that throws {@link UnsupportedOperationException}
@@ -24,9 +24,9 @@ import com.google.common.reflect.TypeToken;
  */
 public abstract class AbstractFieldAccessor implements FieldAccessor {
 
-  private final TypeToken<?> type;
+  private final Type type;
 
-  protected AbstractFieldAccessor(TypeToken<?> type) {
+  protected AbstractFieldAccessor(Type type) {
     this.type = type;
   }
 
@@ -121,7 +121,7 @@ public abstract class AbstractFieldAccessor implements FieldAccessor {
   }
 
   @Override
-  public final TypeToken<?> getType() {
+  public final Type getType() {
     return type;
   }
 }

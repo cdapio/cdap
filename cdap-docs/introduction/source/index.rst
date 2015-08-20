@@ -1501,7 +1501,7 @@ Building Real World Applications
 
      * - Without CDAP
        - - Discover the host and port where the service is running on by looking at the host 
-           and port in the YARN logs or by writing a discovery client that is co-ordinated using **Zookeeper**
+           and port in the YARN logs or by writing a discovery client that is co-ordinated using **ZooKeeper**
          - Run ``curl http://hostname:port/ip/69.181.160.120/count``
          
      * - Using CDAP

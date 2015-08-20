@@ -31,7 +31,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.google.common.reflect.TypeToken;
 
 import java.util.Map;
 import java.util.Set;
@@ -64,7 +63,7 @@ public class DefaultWorkerConfigurer extends DefaultPluginConfigurer implements 
     this.datasets = Sets.newHashSet();
 
     // Grab all @Property fields
-    Reflections.visit(worker, TypeToken.of(worker.getClass()), new PropertyFieldExtractor(propertyFields));
+    Reflections.visit(worker, worker.getClass(), new PropertyFieldExtractor(propertyFields));
   }
 
   @Override

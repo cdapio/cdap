@@ -80,8 +80,8 @@
                     --name "cdap"
                     --vendor "Cask Data, Inc."
                     --maintainer "support@cask.co"
-                    --license "Copyright ${package.build.year} Cask Data, Inc. Licensed under the Apache License, Version 2.0."
-                    --description "Component of Cask CDAP"
+                    --license "Copyright © ${package.build.year} Cask Data, Inc. Licensed under the Apache License, Version 2.0."
+                    --description "Common setup and default configuration for CDAP"
                     --category misc
                     -s dir
                     -t rpm
@@ -156,8 +156,8 @@
                     --name "cdap"
                     --vendor "Cask Data, Inc."
                     --maintainer "support@cask.co"
-                    --license "Copyright © 2014 Cask Data, Inc. All Rights Reserved."
-                    --description "Component of Cask CDAP"
+                    --license "Copyright © ${package.build.year} Cask Data, Inc. All Rights Reserved."
+                    --description "Common setup and default configuration for CDAP"
                     --category misc
                     -s dir
                     -t deb

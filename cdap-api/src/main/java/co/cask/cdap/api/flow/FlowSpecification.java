@@ -22,10 +22,9 @@ import co.cask.cdap.api.flow.flowlet.Flowlet;
 import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.internal.flow.DefaultFlowSpecification;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -79,8 +78,8 @@ public interface FlowSpecification extends ProgramSpecification {
   static final class Builder {
     private String name;
     private String description;
-    private final Map<String, FlowletDefinition> flowlets = Maps.newHashMap();
-    private final List<FlowletConnection> connections = Lists.newArrayList();
+    private final Map<String, FlowletDefinition> flowlets = new HashMap<>();
+    private final List<FlowletConnection> connections = new ArrayList<>();
 
     /**
      * Creates a {@link Builder} for building instance of {@link FlowSpecification}.
@@ -102,7 +101,9 @@ public interface FlowSpecification extends ProgramSpecification {
        * @return An instance of {@link DescriptionSetter}
        */
       public DescriptionSetter setName(String name) {
-        Preconditions.checkArgument(name != null, UserMessages.getMessage(UserErrors.FLOW_SPEC_NAME));
+        if (name == null) {
+          throw new IllegalArgumentException(UserMessages.getMessage(UserErrors.FLOW_SPEC_NAME));
+        }
 
         Builder.this.name = name;
         return new DescriptionSetter();
@@ -120,7 +121,9 @@ public interface FlowSpecification extends ProgramSpecification {
        * @return An instance of {@link AfterDescription}
        */
       public AfterDescription setDescription(String description) {
-        Preconditions.checkArgument(description != null, UserMessages.getMessage(UserErrors.FLOW_SPEC_DESC));
+        if (description == null) {
+          throw new IllegalArgumentException(UserMessages.getMessage(UserErrors.FLOW_SPEC_DESC));
+        }
         Builder.this.description = description;
         return new AfterDescription();
       }
@@ -206,17 +209,22 @@ public interface FlowSpecification extends ProgramSpecification {
 
       @Override
       public MoreFlowlet add(String name, Flowlet flowlet, int instances) {
-
-        Preconditions.checkArgument(flowlet != null, UserMessages.getMessage(UserErrors.INVALID_FLOWLET_NULL));
+        if (flowlet == null) {
+          throw new IllegalArgumentException(UserMessages.getMessage(UserErrors.INVALID_FLOWLET_NULL));
+        }
 
         FlowletDefinition flowletDef = new FlowletDefinition(name, flowlet, instances);
         String flowletName = flowletDef.getFlowletSpec().getName();
 
-        Preconditions.checkArgument(instances > 0, String.format(UserMessages.getMessage(UserErrors.INVALID_INSTANCES),
-          flowletName, instances));
+        if (instances <= 0) {
+          throw new IllegalArgumentException(String.format(UserMessages.getMessage(UserErrors.INVALID_INSTANCES),
+                                                           flowletName, instances));
+        }
 
-        Preconditions.checkArgument(!flowlets.containsKey(flowletName),
-                UserMessages.getMessage(UserErrors.INVALID_FLOWLET_EXISTS), flowletName);
+        if (flowlets.containsKey(flowletName)) {
+          throw new IllegalArgumentException(String.format(UserMessages.getMessage(UserErrors.INVALID_FLOWLET_EXISTS),
+                                                           flowletName));
+        }
 
         flowlets.put(flowletName, flowletDef);
 
@@ -307,20 +315,29 @@ public interface FlowSpecification extends ProgramSpecification {
 
       @Override
       public ConnectTo from(Flowlet flowlet) {
-        Preconditions.checkArgument(flowlet != null, UserMessages.getMessage(UserErrors.INVALID_FLOWLET_NULL));
+        if (flowlet == null) {
+          throw new IllegalArgumentException(UserMessages.getMessage(UserErrors.INVALID_FLOWLET_NULL));
+        }
         return from(flowlet.configure().getName());
       }
 
       @Override
       public ConnectTo from(Stream stream) {
-        Preconditions.checkArgument(stream != null, UserMessages.getMessage(UserErrors.INVALID_STREAM_NULL));
+        if (stream == null) {
+          throw new IllegalArgumentException(UserMessages.getMessage(UserErrors.INVALID_STREAM_NULL));
+        }
         return fromStream(stream.configure().getName());
       }
 
       @Override
       public ConnectTo from(String flowlet) {
-        Preconditions.checkArgument(flowlets.containsKey(flowlet),
-                                    UserMessages.getMessage(UserErrors.INVALID_FLOWLET_NAME), flowlet);
+        if (flowlet == null) {
+          throw new IllegalArgumentException(UserMessages.getMessage(UserErrors.INVALID_FLOWLET_NULL));
+        }
+        if (!flowlets.containsKey(flowlet)) {
+          throw new IllegalArgumentException(String.format(UserMessages.getMessage(UserErrors.INVALID_FLOWLET_NAME),
+                                                           flowlet));
+        }
         fromFlowlet = flowlets.get(flowlet);
         fromStream = null;
         return this;
@@ -328,7 +345,9 @@ public interface FlowSpecification extends ProgramSpecification {
 
       @Override
       public ConnectTo fromStream(String stream) {
-        Preconditions.checkArgument(stream != null, UserMessages.getMessage(UserErrors.INVALID_STREAM_NAME), stream);
+        if (stream == null) {
+          throw new IllegalArgumentException(UserMessages.getMessage(UserErrors.INVALID_STREAM_NULL));
+        }
         fromFlowlet = null;
         fromStream = stream;
         return this;
@@ -336,15 +355,21 @@ public interface FlowSpecification extends ProgramSpecification {
 
       @Override
       public MoreConnect to(Flowlet flowlet) {
-        Preconditions.checkArgument(flowlet != null, UserMessages.getMessage(UserErrors.INVALID_FLOWLET_NULL));
+        if (flowlet == null) {
+          throw new IllegalArgumentException(UserMessages.getMessage(UserErrors.INVALID_FLOWLET_NULL));
+        }
         return to(flowlet.configure().getName());
       }
 
       @Override
       public MoreConnect to(String flowlet) {
-        Preconditions.checkArgument(flowlet != null, UserMessages.getMessage(UserErrors.INVALID_FLOWLET_NULL));
-        Preconditions.checkArgument(flowlets.containsKey(flowlet),
-                                    UserMessages.getMessage(UserErrors.INVALID_FLOWLET_NAME), flowlet);
+        if (flowlet == null) {
+          throw new IllegalArgumentException(UserMessages.getMessage(UserErrors.INVALID_FLOWLET_NULL));
+        }
+        if (!flowlets.containsKey(flowlet)) {
+          throw new IllegalArgumentException(String.format(UserMessages.getMessage(UserErrors.INVALID_FLOWLET_NAME),
+                                                           flowlet));
+        }
 
         FlowletConnection.Type sourceType;
         String sourceName;

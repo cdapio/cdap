@@ -518,7 +518,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
 
     ClassLoader oldClassLoader = setContextCombinedClassLoader(action);
     try {
-      Reflections.visit(action, TypeToken.of(action.getClass()),
+      Reflections.visit(action, action.getClass(),
                         new PropertyFieldSetter(actionSpec.getProperties()),
                         new DataSetFieldSetter(workflowContext),
                         new MetricsFieldSetter(workflowContext.getMetrics()));

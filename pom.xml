@@ -659,6 +659,10 @@
             <groupId>javax.servlet</groupId>
             <artifactId>servlet-api</artifactId>
           </exclusion>
+          <exclusion>
+            <groupId>asm</groupId>
+            <artifactId>asm</artifactId>
+          </exclusion>
         </exclusions>
       </dependency>
       <dependency>
@@ -1946,8 +1950,8 @@
                       --name "cdap-${package.name}"
                       --vendor "Cask Data, Inc."
                       --maintainer "support@cask.co"
-                      --license "Copyright ${package.build.year} Cask Data, Inc. Licensed under the Apache License, Version 2.0."
-                      --description "Component of Cask DAP"
+                      --license "Copyright © ${package.build.year} Cask Data, Inc. Licensed under the Apache License, Version 2.0."
+                      --description "Cask DAP (CDAP) Component: ${package.name}"
                       --category misc
                       -s dir
                       -t rpm
@@ -1997,8 +2001,8 @@
                       --name "cdap-${package.name}"
                       --vendor "Cask Data, Inc."
                       --maintainer "support@cask.co"
-                      --license "Copyright ${package.build.year} Cask Data, Inc. Licensed under the Apache License, Version 2.0."
-                      --description "Component of Cask DAP"
+                      --license "Copyright © ${package.build.year} Cask Data, Inc. Licensed under the Apache License, Version 2.0."
+                      --description "Cask DAP (CDAP) Component: ${package.name}"
                       --category misc
                       -s dir
                       -t deb
@@ -2112,6 +2116,8 @@
 
       <modules>
         <module>cdap-common-unit-test</module>
+        <module>cdap-api-common</module>
+        <module>cdap-spi</module>
         <module>cdap-api</module>
         <module>cdap-formats</module>
         <module>cdap-hbase-compat-0.96</module>

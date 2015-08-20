@@ -166,7 +166,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
                                     adapterSpec, pluginInstantiator, artifactPluginInstantiator);
 
 
-      Reflections.visit(mapReduce, TypeToken.of(mapReduce.getClass()),
+      Reflections.visit(mapReduce, mapReduce.getClass(),
                         new PropertyFieldSetter(context.getSpecification().getProperties()),
                         new MetricsFieldSetter(context.getMetrics()),
                         new DataSetFieldSetter(context));

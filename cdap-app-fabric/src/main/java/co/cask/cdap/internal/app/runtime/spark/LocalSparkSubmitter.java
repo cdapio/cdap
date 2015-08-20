@@ -14,16 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.format;
-
-import co.cask.cdap.api.data.format.RecordFormat;
-import co.cask.cdap.api.flow.flowlet.StreamEvent;
+package co.cask.cdap.internal.app.runtime.spark;
 
 /**
- * Format for a record contained in a {@link StreamEvent}.
- *
- * @param <T> type of object to read the byte buffer as.
+ * A {@link SparkSubmitter} to submit Spark job that runs in the same local process.
  */
-public abstract class StreamEventRecordFormat<T> extends RecordFormat<StreamEvent, T> {
+public class LocalSparkSubmitter extends AbstractSparkSubmitter {
 
+  @Override
+  protected String getMaster() {
+    return "local";
+  }
+
+  @Override
+  protected void triggerShutdown(ExecutionSparkContext context) {
+    context.close();
+  }
 }

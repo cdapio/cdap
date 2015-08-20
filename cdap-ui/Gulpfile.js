@@ -197,6 +197,7 @@ gulp.task('watch:js:app', function() {
         '!./app/**/*-test.js'
       ].concat(getEs6Features(true))
     )
+    .pipe(plug.plumber())
     .pipe(plug.ngAnnotate())
     .pipe(plug.wrapper({
        header: '\n(function (PKG){ /* ${filename} */\n',
@@ -212,6 +213,7 @@ gulp.task('watch:js:app:babel', function() {
     v: pkg.version
   });
   return gulp.src(getEs6Features())
+    .pipe(plug.plumber())
     .pipe(plug.ngAnnotate())
     .pipe(plug.sourcemaps.init())
     .pipe(plug.wrapper({
@@ -236,6 +238,7 @@ gulp.task('js:app', function() {
     './app/**/*.js',
     '!./app/**/*-test.js'
   ])
+    .pipe(plug.plumber())
     .pipe(plug.ngAnnotate())
     .pipe(plug.sourcemaps.init())
     .pipe(plug.wrapper({
@@ -314,6 +317,7 @@ gulp.task('html', ['html:main', 'html:partials']);
  */
 gulp.task('lint', function() {
   return gulp.src(['./app/**/*.js', './server/*.js'])
+    .pipe(plug.plumber())
     .pipe(plug.jshint())
     .pipe(plug.jshint.reporter())
     .pipe(plug.jshint.reporter('fail'));

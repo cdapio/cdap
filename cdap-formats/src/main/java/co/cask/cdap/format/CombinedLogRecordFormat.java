@@ -22,6 +22,7 @@ import co.cask.cdap.api.data.format.UnexpectedFormatException;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
+import co.cask.cdap.spi.stream.AbstractStreamEventRecordFormat;
 import com.google.common.collect.Lists;
 
 import java.util.Iterator;
@@ -35,7 +36,7 @@ import java.util.List;
  * "Mozilla/5.0 (compatible; Baiduspider/2.0; +http://www.baidu.com/search/spider.html)"
  *
  */
-public class CombinedLogRecordFormat extends StreamEventRecordFormat<StructuredRecord> {
+public class CombinedLogRecordFormat extends AbstractStreamEventRecordFormat<StructuredRecord> {
 
   @Override
   public StructuredRecord read(StreamEvent event) throws UnexpectedFormatException {
@@ -55,7 +56,6 @@ public class CombinedLogRecordFormat extends StreamEventRecordFormat<StructuredR
 
     return builder.build();
   }
-
 
   @Override
   protected Schema getDefaultSchema() {

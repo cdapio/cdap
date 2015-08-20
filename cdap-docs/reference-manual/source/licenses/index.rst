@@ -50,9 +50,10 @@ Other product and company names mentioned herein, within our documentation or we
 be the trademarks of their respective owners. Where the ownership or registration is known,
 the addition of appropriate symbols has been made.
 
-Apache®, `Apache Hadoop <http://hadoop.apache.org>`__, and `Hadoop®
-<http://hadoop.apache.org>`__ are either registered trademarks or trademarks of the
-`Apache Software Foundation <http://www.apache.org>`__ in the United States and/or other
+Apache®, `Apache Hadoop <https://hadoop.apache.org>`__, `Hadoop®
+<https://hadoop.apache.org>`__, and `Apache ZooKeeper <https://zookeeper.apache.org/>`__, 
+are either registered trademarks or trademarks of the
+`Apache Software Foundation <https://www.apache.org>`__ in the United States and/or other
 countries.
 
 Cloudera, Cloudera Impala, and Impala are trademarks of `Cloudera, Inc. <http://www.cloudera.com>`__ 

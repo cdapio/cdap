@@ -17,11 +17,15 @@
 package co.cask.cdap.internal.app.runtime.spark;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -116,6 +120,41 @@ public final class SparkUtils {
     LOG.info("Located Spark Assembly JAR in {}", sparkAssemblyJar);
     return sparkAssemblyJar;
   }
+
+  /**
+   * Creates a new {@link URLClassLoader} that can load Spark classes. If Spark classes are already loadable
+   * from the given parent ClassLoader, a new URLClassLoader will be created in a way such that it
+   * always delegates to the parent for class loading.
+   * Otherwise, it will try to find the Spark Assembly JAR to create a new URLClassLoader from it.
+   *
+   * @param parentClassLoader the parent ClassLoader for the new URLClassLoader created
+   */
+  public static URLClassLoader createSparkFrameworkClassLoader(ClassLoader parentClassLoader) {
+    // Try to see if Spark class is already available in the CDAP system classpath.
+    // It is for the Standalone case
+    URL[] urls;
+
+    try {
+      parentClassLoader.loadClass("org.apache.spark.SparkConf");
+      urls = new URL[0];
+    } catch (ClassNotFoundException e) {
+      // Try to locate Spark Assembly jar, which is for the distributed mode case
+      try {
+        urls = new URL[] { SparkUtils.locateSparkAssemblyJar().toURI().toURL() };
+      } catch (IllegalStateException ex) {
+        // Don't propagate as it's possible that a cluster doesn't have Spark configured
+        // If someone deploy an artifact with Spark program inside, there will be NoClassDefFound exception and
+        // will be handled by the ArtifactInspector.
+        LOG.debug("Spark is not available");
+        urls = new URL[0];
+      } catch (MalformedURLException ex) {
+        // This shouldn't happen
+        throw Throwables.propagate(ex);
+      }
+    }
+    return new URLClassLoader(urls, parentClassLoader);
+  }
+
 
   private SparkUtils() {
   }
