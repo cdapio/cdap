@@ -209,13 +209,18 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       this.cleanupTask = createCleanupTask(tempDir, tempLocation);
 
       Location pluginArchive = null;
+      Location artifactPluginArchive = null;
       // For local mode, everything is in the configuration classloader already, hence no need to create new jar
       if (!MapReduceContextProvider.isLocal(mapredConf)) {
         // After calling beforeSubmit, we know what plugins are needed for adapter, hence construct the proper
         // ClassLoader from here and use it for setting up the job
         pluginArchive = createPluginArchive(context.getAdapterSpecification(), tempDir, tempLocation);
+        artifactPluginArchive = createArtifactPluginArchive(context.getSpecification(), tempDir, tempLocation);
         if (pluginArchive != null) {
           job.addCacheArchive(pluginArchive.toURI());
+        }
+        if (artifactPluginArchive != null) {
+          job.addCacheArchive(artifactPluginArchive.toURI());
         }
       }
 
@@ -223,6 +228,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       // It is mainly for standalone mode to have the same ClassLoader as in distributed mode
       // It can only be constructed here because we need to have all adapter plugins information
       classLoader = new MapReduceClassLoader(context.getProgram().getClassLoader(),
+                                             mapredConf,
                                              context.getSpecification(),
                                              context.getAdapterSpecification(),
                                              context.getPluginInstantiator(),
@@ -975,6 +981,19 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     Location location = targetDir.append("plugins.jar");
     Files.copy(jarFile, Locations.newOutputSupplier(location));
     return location;
+  }
+
+  private Location createArtifactPluginArchive(MapReduceSpecification mapReduceSpecification, File tempDir,
+                                               Location targetDir) throws IOException {
+    if (mapReduceSpecification.getPlugins().isEmpty()) {
+      return null;
+    }
+    return null;
+
+//    File jarFile = File.createTempFile("artifactPlugin", ".jar", tempDir);
+//    Location location = targetDir.append("artifactPlugins.jar");
+//    Files.copy(jarFile, Locations.newOutputSupplier(location));
+//    return location;
   }
 
   private Runnable createCleanupTask(final Object...resources) {

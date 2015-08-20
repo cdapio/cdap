@@ -29,6 +29,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.mapreduce.MRConfig;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.apache.twill.filesystem.HDFSLocationFactory;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -50,6 +51,7 @@ public final class MapReduceContextProvider {
   private final MapReduceMetrics.TaskType type;
   private final MapReduceContextConfig contextConfig;
   private final LocationFactory locationFactory;
+  private final LocationFactory artifactLocationFactory;
   private BasicMapReduceContext context;
   private AbstractMapReduceContextBuilder contextBuilder;
 
@@ -58,6 +60,9 @@ public final class MapReduceContextProvider {
     this.type = type;
     this.contextConfig = new MapReduceContextConfig(context.getConfiguration());
     this.locationFactory = new LocalLocationFactory();
+    boolean isLocal = MapReduceContextProvider.isLocal(contextConfig.getConfiguration());
+    this.artifactLocationFactory = isLocal ? locationFactory : new HDFSLocationFactory(
+      contextConfig.getConfiguration());
     this.contextBuilder = null;
   }
 
@@ -79,7 +84,7 @@ public final class MapReduceContextProvider {
                contextConfig.getArguments(),
                contextConfig.getTx(),
                createProgram(contextConfig),
-               locationFactory,
+               artifactLocationFactory,
                contextConfig.getInputDataSet(),
                contextConfig.getInputSelection(),
                contextConfig.getOutputDataSet(),
