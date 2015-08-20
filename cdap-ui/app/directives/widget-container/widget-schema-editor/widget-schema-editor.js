@@ -5,10 +5,13 @@ angular.module(PKG.name + '.commons')
       scope: {
         model: '=ngModel',
         config: '=',
+        plugins: '=',
         disabled: '='
       },
       templateUrl: 'widget-container/widget-schema-editor/widget-schema-editor.html',
-      controller: function($scope, myHelpers, EventPipe) {
+      controller: function($scope, myHelpers, EventPipe, IMPLICIT_SCHEMA) {
+        var modelCopy = angular.copy($scope.model);
+
         var typeMap = 'map<string, string>';
         var mapObj = {
           type: 'map',
@@ -18,28 +21,87 @@ angular.module(PKG.name + '.commons')
 
         var defaultOptions = [ 'boolean', 'int', 'long', 'float', 'double', 'bytes', 'string', 'map<string, string>' ];
         var defaultType = null;
+        var watchProperty = null;
+
         if ($scope.config) {
           $scope.options = $scope.config['schema-types'];
           defaultType = $scope.config['schema-default-type'] || $scope.options[0];
+
+          if ($scope.config['property-watch']) {
+            watchProperty = $scope.config['property-watch'];
+
+            $scope.$watch(function () {
+              return $scope.plugins[watchProperty];
+            }, changeFormat);
+          }
+
         } else {
           $scope.options = defaultOptions;
           defaultType = 'string';
         }
 
-        var modelCopy = angular.copy($scope.model);
+        var watcher;
+        function removeWatcher() {
+          if (watcher) {
+            // deregister watch
+            watcher();
+            watcher = null;
+          }
+        }
 
-        EventPipe.on('plugin.reset', function () {
-          $scope.model = angular.copy(modelCopy);
-          initialize($scope.model);
-        });
+        function changeFormat() {
+          if (!$scope.plugins) {
+            return;
+          }
 
-        EventPipe.on('schema.clear', function () {
-          initialize();
-        });
+          // watch for changes
+          removeWatcher();
 
-        EventPipe.on('dataset.selected', function (schema) {
-          initialize(schema);
-        });
+          // do things based on format
+          if (['clf', 'syslog', ''].indexOf($scope.plugins[watchProperty]) > -1) {
+            $scope.model = null;
+            $scope.disableEdit = true;
+            // $scope.fields = 'NOTHING';
+            if ($scope.plugins[watchProperty] === 'clf') {
+              var clfSchema = IMPLICIT_SCHEMA.clf;
+
+              initialize(clfSchema);
+              $scope.fields = 'SHOW';
+            } else if ($scope.plugins[watchProperty] === 'syslog') {
+              var syslogSchema = IMPLICIT_SCHEMA.syslog;
+
+              initialize(syslogSchema);
+              $scope.fields = 'SHOW';
+            } else {
+              $scope.fields = 'NOTHING';
+            }
+
+          } else if ($scope.plugins[watchProperty] === 'avro'){
+            $scope.disableEdit = false;
+            $scope.fields = 'AVRO';
+            watcher = $scope.$watch('avro', formatAvro, true);
+
+            if ($scope.model) {
+              try {
+                $scope.avro.schema = JSON.parse($scope.model);
+              } catch (e) {
+                $scope.error = 'Invalid JSON string';
+              }
+
+            }
+          } else if ($scope.plugins[watchProperty] === 'grok') {
+            $scope.disableEdit = false;
+            $scope.fields = 'GROK';
+            $scope.model = null;
+          }
+
+          else {
+            $scope.disableEdit = false;
+            $scope.fields = 'SHOW';
+            watcher = $scope.$watch('properties', formatSchema, true);
+          }
+        }
+
 
         var filledCount;
 
@@ -47,6 +109,8 @@ angular.module(PKG.name + '.commons')
         function initialize(jsonString) {
           filledCount = 0;
           var schema = {};
+          $scope.avro = {};
+
           $scope.error = null;
           if (jsonString) {
             try {
@@ -117,12 +181,39 @@ angular.module(PKG.name + '.commons')
 
         initialize($scope.model);
 
+        EventPipe.on('plugin.reset', function () {
+          $scope.model = angular.copy(modelCopy);
+          initialize($scope.model);
+        });
+
+        EventPipe.on('schema.clear', function () {
+          initialize();
+        });
+
+        EventPipe.on('dataset.selected', function (schema) {
+          initialize(schema);
+        });
+
         $scope.$watch('disabled', function () {
           initialize($scope.model);
         });
 
+        function formatAvro() {
+          if ($scope.plugins[watchProperty] !== 'avro') {
+            return;
+          }
+
+          var avroJson = JSON.stringify($scope.avro.schema);
+          $scope.model = avroJson;
+        }
+
 
         function formatSchema() {
+          if (watchProperty && $scope.plugins && ['clf', 'syslog'].indexOf($scope.plugins[watchProperty]) !== -1) {
+            $scope.model = null;
+            return;
+          }
+
           // Format Schema
           var properties = [];
           angular.forEach($scope.properties, function(p) {

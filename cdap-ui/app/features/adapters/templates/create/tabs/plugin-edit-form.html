@@ -185,12 +185,9 @@
             <my-schema-editor
               ng-model="plugin.outputSchema"
               data-disabled="plugin.implicitSchema"
-              ng-if="plugin.name !== 'Stream' && plugin.name !== 'Kafka'"></my-schema-editor>
-            <my-stream-properties
-              ng-model="plugin.outputSchema"
               plugins="plugin.properties"
-              ng-if="plugin.name === 'Stream' || plugin.name === 'Kafka'"
-            ></my-stream-properties>
+              config="PluginEditController.schemaProperties">
+            </my-schema-editor>
           </fieldset>
 
           <div ng-if="!plugin.outputSchema && isDisabled && plugin.properties.format !== 'clf' && plugin.properties.format !== 'syslog'">
@@ -297,12 +294,9 @@
                   <my-schema-editor
                     ng-model="plugin.outputSchema"
                     data-disabled="plugin.implicitSchema"
-                    ng-if="plugin.name !== 'Stream' && plugin.name !== 'Kafka'"></my-schema-editor>
-                  <my-stream-properties
-                    ng-model="plugin.outputSchema"
                     plugins="plugin.properties"
-                    ng-if="plugin.name === 'Stream' || plugin.name === 'Kafka'"
-                  ></my-stream-properties>
+                    config="PluginEditController.schemaProperties">
+                  </my-schema-editor>
                 </fieldset>
 
                 <div ng-if="!plugin.outputSchema && isDisabled">
