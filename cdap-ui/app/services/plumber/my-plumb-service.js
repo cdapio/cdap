@@ -183,9 +183,24 @@ angular.module(PKG.name + '.services')
       return finalConnections;
     }
 
-    function formatSchema(jsonSchema, isStreamSource) {
+    function formatSchema(node) {
+      var isStreamSource = node.name === 'Stream';
       var schema;
       var input;
+      var jsonSchema;
+
+      if (isStreamSource) {
+        if (node.properties.format === 'clf') {
+          jsonSchema = IMPLICIT_SCHEMA.clf;
+        } else if (node.properties.format === 'syslog') {
+          jsonSchema = IMPLICIT_SCHEMA.syslog;
+        } else {
+          jsonSchema = node.outputSchema;
+        }
+      } else {
+        jsonSchema = node.outputSchema;
+      }
+
       try {
         input = JSON.parse(jsonSchema);
       } catch (e) {
@@ -275,8 +290,7 @@ angular.module(PKG.name + '.services')
         popovers.push(popover);
 
         con.bind('click', function () {
-          var isStream = this.nodes[con.sourceId].name === 'Stream';
-          scope.schema = formatSchema(this.nodes[con.sourceId].outputSchema, isStream);
+          scope.schema = formatSchema(this.nodes[con.sourceId]);
           popover.toggle();
         }.bind(this));
 
