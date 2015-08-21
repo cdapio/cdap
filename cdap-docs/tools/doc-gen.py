@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 #
-# Copyright © 2014-2015 Cask Data, Inc.
+# Copyright © 2014 Cask Data, Inc.
 #
 # Used to generate documentation media files from .rst sources.
 #
