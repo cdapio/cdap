@@ -215,6 +215,7 @@ angular.module(PKG.name + '.commons')
     MyPlumbService.registerCallBack(this.addPlugin.bind(this));
 
     $scope.$on('$destroy', function() {
+      closeAllPopovers();
       angular.forEach(popoverScopes, function (s) {
         s.$destroy();
       });
