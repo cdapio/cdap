@@ -126,23 +126,38 @@ my-plumb {
   }
 }
 
-.popover-title {
-  i.fa.fa-times-circle-o {
-    cursor: pointer;
-  }
-}
+.popover {
 
-.schema-popover {
-  max-height: 350px;
-  overflow-y: auto;
+  min-width: 250px;
 
-  table.table-curved {
-    th {
-      font-size: 14px;
+  .popover-title {
+    i.fa.fa-times-circle-o {
+      cursor: pointer;
     }
-    td {
-      font-size: 13px;
-      padding: 8px;
+  }
+
+  .popover-content {
+    padding: 0;
+
+    .schema-popover {
+      max-height: 350px;
+      overflow-y: auto;
+      overflow-x: hidden;
+
+      .well { margin-bottom: 0; }
+
+      table.table-bordered {
+        margin-top: 0;
+        margin-bottom: 0;
+
+        th {
+          font-size: 14px;
+        }
+        td {
+          font-size: 13px;
+          padding: 8px;
+        }
+      }
     }
   }
 }

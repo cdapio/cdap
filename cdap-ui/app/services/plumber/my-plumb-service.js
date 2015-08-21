@@ -250,8 +250,7 @@ angular.module(PKG.name + '.services')
           source: con.sourceId,
           target: con.targetId
         });
-
-      }.bind(this));
+      });
       localConnections = orderConnections.call(this, angular.copy(localConnections), angular.copy(localConnections));
       this.connections = localConnections;
     };
