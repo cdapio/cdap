@@ -9,13 +9,13 @@ def ambari_commands(host, subdir, base, cluster_info):
     ## get ambari configs
     manager = 'ambari' 
     cu = get_config_urls(host, cluster_info)
-    print 'cu=%s' % (cu)
+    #print 'cu=%s' % (cu)
     config_url_href = cu.read()
-    print 'configurlref=%s' % (config_url_href)
+    #print 'configurlref=%s' % (config_url_href)
 
     ## extract the ambari config urls
     data = json.loads(config_url_href)
-    config_urls = [ item["href"] for item in  data["items"] ]
+    config_urls = [ item['href'] for item in  data['items'] ]
 
     ## iterate through ambari config urls, and run api requests against those
     ##   This creates config files in a subdirectory
@@ -47,7 +47,7 @@ def get_configs(host, urls, subdir, cluster_info):
 # process tmp configs and store results
 def store_results(subdir, stored_configs, mgr):
     # get list of tmp config files and read
-    print "get and store all %s configurations in %s\n" % (mgr, stored_configs)
+    print "Get and store all %s configurations in %s\n" % (mgr, stored_configs)
     s = open(stored_configs, 'w')
     os.chdir(subdir)
     for file in glob.glob('*'):
@@ -75,7 +75,7 @@ def store_results(subdir, stored_configs, mgr):
             s.write('%s:%s=\'%s\'\n' % (service, key, value))
         
     # return
-    os.chdir("..")
+    os.chdir('..')
 
 def get_service_name(service_config_file):
     # take file name, extract first part (before first '-') treat that as the service

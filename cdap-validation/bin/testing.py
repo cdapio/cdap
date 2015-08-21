@@ -11,16 +11,21 @@ input_json = "input.json"
 
 # calls all other functions
 def testing(base_vars):
-    print "start testing"
+    print 'start testing'
 
     # prep input variables
     cluster_vars = {}
     input = read_input(input_json)
     cluster_vars['host'] = input['params']['uri']
     cluster_vars['username'],cluster_vars['password']= input['params']['userpass'].split(':')
-    cluster_vars['verbose'] = input['params']['verbose']
     cluster_vars['cluster'] = input['params']['cluster_name']
     cluster_vars['modules'] = input['params']['modules']
+
+    # check for verbosity not set
+    if not input['params']['verbose']:
+        cluster_vars['verbose'] = 'default'
+    else:
+        cluster_vars['verbose'] = input['params']['verbose']
 
     # find_modules
     # hold on for now
@@ -35,17 +40,17 @@ def testing(base_vars):
     print 'uri=%s' % (cluster_vars['host'])
 
     # validate_connection
-    print "validate connection"
+    print 'Validating connection'
     api_tests = [{'cm': base_vars['cm']['api_test']},{'ambari': base_vars['ambari']['api_test']}]
     version_test = validate_connection(base_vars, cluster_vars, api_tests)
-    print ""
+    print ''
     print 'version_test=%s' % (version_test)
 
     # now we determine the install manager from the info we have
-    print "determine install manager"
+    print 'Determine Hadoop install manager'
     install_manager = get_install_manager(version_test)
     cluster_vars['manager'] = install_manager
-    print 'install manager is %s' % (install_manager)
+    print 'Hadoop install manager is %s' % (install_manager)
 
     # get version for API call
     if install_manager == 'cm':
@@ -89,30 +94,29 @@ def read_input(input_file):
 def validate_connection(base_info, cluster_info, api_tests):
 # test api connection, etc.
     version = test_api_connection(base_info, cluster_info, api_tests)
-    #print version
     return version
 
 def test_api_connection(base_info, cluster_info, api_tests):
-    print "test api connection"
+    print 'test api connection'
     # let us iterate through potential hadoop manager tests and see what we get back
     # the first one that works should be saved and set from that point on for the rest of the testing 
     host_url = cluster_info['host']
     for hash in api_tests:
-        print ""
+        print ''
         print hash
         for manager, test in hash.iteritems():
             mgr_test_url = host_url + test
-            print "manager=%s, test=%s, mgr_test_url=%s" % (manager, test, mgr_test_url)
-            print "running onetime_auth"
+            #print "manager=%s, test=%s, mgr_test_url=%s" % (manager, test, mgr_test_url)
+            print 'Running onetime_auth'
             helpers.onetime_auth(mgr_test_url,cluster_info) # set up password manager and install opener
-            print "run_request"
+            print 'run_request'
             h = helpers.run_request(mgr_test_url,cluster_info) # run url request
             # if it equals noapi, it means the api login test failed for that install manager
             if h == 'noapi':
-                print 'no api for %s, trying the next or exiting' % (manager)
+                print 'No API for %s, trying the next or exiting' % (manager)
                 break
             else:
-                print '%s\'s api may be reachable' % (manager)
+                print '' # API may be reachable -- confirmed in next steps
             mgr_test = h.read()
             # add logic to do next iteration or not, depending on whether we succeeded on first one
             # if good: create array or hash with manager and mgr_test and return that?
@@ -123,7 +127,7 @@ def test_api_connection(base_info, cluster_info, api_tests):
             break
 
 def get_install_manager(version):
-    if version == "v10":
+    if version == 'v10':
         manager = 'cm'
     else:
         manager = 'ambari'
@@ -142,7 +146,7 @@ def get_install_manager_info(base_info,cluster_info,mgr):
 
 def get_commands(base,cluster):
     # get API commands
-    print "now running API commands"
+    print 'Now running API commands'
     mgr = cluster['manager']
     host_url = cluster['base_url']
     username = cluster['username']
@@ -150,14 +154,14 @@ def get_commands(base,cluster):
     configs_subdir = base[mgr]['subdir']
     my_cluster = cluster['my_cluster']
      
-    if mgr == "cm":
-        print "Hadoop install manager: Cloudera Manager"
+    if mgr == 'cm':
+        print 'Hadoop install manager: Cloudera Manager'
         #cm.cm_commands(host_url, configs_subdir, base, cluster) ## disabling for now
     
-    elif mgr == "ambari":
-        print "Hadoop install manager: Ambari"
+    elif mgr == 'ambari':
+        print 'Hadoop install manager: Ambari'
         ambari.ambari_commands(host_url, configs_subdir, base, cluster)
     
     else:
-        print "Your Hadoop install manager is not recognized"
+        print 'Your Hadoop install manager is not recognized'
 
