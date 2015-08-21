@@ -34,7 +34,4 @@ will be of interest to developers who want a deeper dive into CDAP:
 .. |class-loading| replace:: **Class Loading:**
 .. _class-loading: class-loading.html
 
-- |class-loading|_ Java Class Loading and Distributed Data Processing Frameworks.
-
-
-
+- |class-loading|_ Java Class Loading in CDAP.

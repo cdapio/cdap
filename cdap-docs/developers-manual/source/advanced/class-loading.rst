@@ -4,20 +4,13 @@
 
 .. _class-loading:
 
-=============================================================
-Java Class Loading and Distributed Data Processing Frameworks
-=============================================================
+=====================
+Class Loading in CDAP
+=====================
 
-Java class loading is one of the most fundamental and powerful concepts provided by the
-Java Platform. Understanding the class loading mechanism helps you when designing and
-building extensible application frameworks. You can also avoid spending many hours in
-debugging exceptions such as ``ClassCastException`` and ``ClassNotFoundException``, among
-others. In this advanced section, we talk about how we used Java class loading to
-design an extensible application framework with a flexible class loading strategy.
-
-In CDAP, we provide a platform with which application developers are free to write big
-data applications without worrying about the underlying execution framework. In terms of
-class loading strategy, we provide these properties for an application:
+In this advanced section, we talk about how we used Java class loading to design an
+extensible application framework with a flexible class loading strategy. In terms of class
+loading strategy, we provide these properties for an application:
 
 - Application can choose to use any library of any version;
 - Application can define a custom plugin API for extending itself;
@@ -25,44 +18,12 @@ class loading strategy, we provide these properties for an application:
 - Different plugins can choose to use any library of any version, yet all plugins are
   usable by the same application at the same time.
 
-
 Parent Delegation Model
 =======================
 
 When a Java Virtual Machine (JVM) needs to load a class, by default it follows the
-parent delegation model. In this model, when the ``loadClass(String className)`` method of
-a class loader instance is called (it may be called implicitly by the JVM), it calls
-its parent class loader first before trying to load the class itself, using this
-logic to load the requested class:
-
-.. image:: ../_images/class-loading/class-loading01.png
-   :align: center
-
-..    :width: 70%
-..    :scale: 75%
-
-Each loaded class maintains a reference to the class loader instance which actually read
-the class file and defined the class. We call that class loader the **defining class
-loader** of that class. This is to differentiate from the **initiating class loader**, the
-one whose ``loadClass`` method was called initially. Two classes are only considered the
-same if, and only if, they have the same name and have the same defining class loader.
-Understanding this is the key to writing a custom class loader correctly and to avoid
-running into exceptions such as ``ClassCastException``, ``ClassNotFoundException``, and
-``NoClassDefFoundError``.
-
-The parent delegation model also gives control on which class loader is the defining one
-for a given class. You may have the same class file available to multiple class loaders in
-the hierarchy, but only the one highest in the hierarchy will be the defining class
-loader. 
-
-For example, class files for all core Java classes are in the ``$JAVA_HOME/lib/rt.jar``
-file. The bootstrap class loader (one of the three JVM-created startup class loaders; the
-other two being the extension and system class loaders) uses it to find class files when
-loading core classes. If someone starts a JVM by running “``java -cp rt.jar...``”, the
-same set of class files will be available to the system class loader as well. However,
-because of the parent delegation model, all core Java classes will have the bootstrap
-class loader as the defining class loader, and never the system class loader.
-
+`parent delegation model 
+<https://www-01.ibm.com/support/knowledgecenter/#!/SSYKE2_7.0.0/com.ibm.java.zos.70.doc/diag/understanding/cl_delegation.html>`__. 
 The parent delegation model allows for one class to be loadable from multiple class
 loaders, as long as those class loaders have the defining class loader of that class as a
 common ancestor. This property enables one to define an extensible class loading
@@ -71,11 +32,10 @@ inter-operate with a set of common API classes.
 
 Class Loading in CDAP
 =====================
-
 Based on the parent delegation model, we’ve come up with this class loader hierarchy in
 CDAP:
 
-.. image:: ../_images/class-loading/class-loading02.png
+.. image:: ../_images/class-loading/class-loading01.png
    :align: center
 
 ..    :width: 82%
@@ -97,7 +57,7 @@ In CDAP, both applications and plugins are deployed as JAR files to the system. 
 a normal JAR file that contains a collection of class files, a bundle JAR file has content
 similar to this example:
 
-.. image:: ../_images/class-loading/class-loading03.png
+.. image:: ../_images/class-loading/class-loading02.png
    :align: center
 
 ..    :width: 58%
