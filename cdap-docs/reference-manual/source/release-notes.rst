@@ -36,7 +36,7 @@ Bug Fixes
 - The HBaseQueueDebugger now shows the minimum queue event transaction write pointer both per-queue and for all queues
   (`CDAP-3419 <https://issues.cask.co/browse/CDAP-3419>`__).
  
- - Fixed a problem with the logback-container.xml not being copied into CDAP-Master services
+- Fixed a problem with the logback-container.xml not being copied into CDAP-Master services
   (`CDAP-3362 <https://issues.cask.co/browse/CDAP-3362>`__).
   
 
