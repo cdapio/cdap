@@ -165,7 +165,7 @@ angular.module(PKG.name + '.feature.admin')
             })
 
             .state('admin.namespace.detail.templateedit', {
-              url: '/templates/edit/:templateName',
+              url: '/templates/edit/:templateType/:templateName',
               templateUrl: '/assets/features/admin/templates/namespace/templates.html',
               controller: 'NamespaceTemplatesController',
               controllerAs: 'TemplatesController',

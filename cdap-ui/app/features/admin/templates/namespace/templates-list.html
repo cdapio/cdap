@@ -23,7 +23,7 @@
     <tbody>
       <tr ng-repeat="template in TemplatesListController.list">
         <td>
-          <a ui-sref="admin.namespace.detail.templateedit({ templateName: template.templateName })">
+          <a ui-sref="admin.namespace.detail.templateedit({ templateType: template.type, templateName: template.templateName })">
             {{ template.templateName }}
           </a>
         </td>

@@ -2,26 +2,43 @@ angular.module(PKG.name + '.feature.admin')
   .controller('NamespaceTemplatesListController', function ($scope, mySettings, $stateParams, $alert) {
 
     var vm = this;
-    vm.list = {};
+    vm.list = [];
+
+    function objectToArray(obj) {
+      angular.forEach(obj, function (value) {
+        vm.list.push(value);
+      });
+    }
+
+    function processResult(response) {
+      if (response) {
+        vm.list = [];
+
+        var sources, transforms, sinks;
+        sources = response[$stateParams.nsadmin].source;
+        transforms = response[$stateParams.nsadmin].transform;
+        sinks = response[$stateParams.nsadmin].sink;
+
+        objectToArray(sources);
+        objectToArray(transforms);
+        objectToArray(sinks);
+      }
+    }
 
 
     mySettings.get('pluginTemplates')
-      .then(function (res) {
-        if (res) {
-          vm.list = res[$stateParams.nsadmin];
-        }
-      });
+      .then(processResult);
 
     vm.isEmpty = function () {
-      return Object.keys(vm.list).length === 0;
+      return vm.list.length === 0;
     };
 
     vm.delete = function (template) {
       mySettings.get('pluginTemplates')
         .then(function (res) {
-          delete res[$stateParams.nsadmin][template.templateName];
+          delete res[$stateParams.nsadmin][template.type][template.templateName];
 
-          vm.list = res[$stateParams.nsadmin];
+          processResult(res);
 
           mySettings.set('pluginTemplates', res)
             .then(function () {

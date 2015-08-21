@@ -82,7 +82,7 @@ angular.module(PKG.name + '.feature.admin')
 
       mySettings.get('pluginTemplates')
         .then(function (res) {
-          var template = res[$stateParams.nsadmin][$stateParams.templateName];
+          var template = res[$stateParams.nsadmin][$stateParams.templateType][$stateParams.templateName];
 
           vm.template = template.templateType;
           vm.pluginType = template.type;
@@ -152,7 +152,11 @@ angular.module(PKG.name + '.feature.admin')
             res[namespace] = {};
           }
 
-          if (res[namespace][properties.templateName] && !vm.isEdit) {
+          if (!res[namespace][properties.type]) {
+            res[namespace][properties.type] = {};
+          }
+
+          if (res[namespace][properties.type] && res[namespace][properties.type][properties.templateName] && !vm.isEdit) {
             $alert({
               type: 'danger',
               content: 'Template name already exist! Please choose another name'
@@ -162,7 +166,7 @@ angular.module(PKG.name + '.feature.admin')
             return;
           }
 
-          res[namespace][properties.templateName] = properties;
+          res[namespace][properties.type][properties.templateName] = properties;
           mySettings.set('pluginTemplates', res)
             .then(function () {
               $alert({
