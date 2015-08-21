@@ -81,10 +81,10 @@ def read_input(input_file):
 ###def find_modules
 # navigate through ./module/* directories and look for module.json files
 # parse through those to determine modules that will be run
-# save that somewhere? follow design
+# save (follow design)
 
 ###def detect_installed_services
-# what is the best way to do this?
+# coming soon
 
 def validate_connection(base_info, cluster_info, api_tests):
 # test api connection, etc.
