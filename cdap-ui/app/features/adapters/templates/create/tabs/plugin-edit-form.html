@@ -145,6 +145,8 @@
                           <div>
                             <div data-name="field"
                                  class="my-widget-container"
+                                 data-info="{{plugin.myconfig.widget}}"
+                                 ng-class="{'select-wrapper': PluginEditController.groups[group].fields[field].widget === 'select'}"
                                  data-model="plugin.properties[field]"
                                  data-myconfig="PluginEditController.groups[group].fields[field]"
                                  data-properties="plugin.properties"

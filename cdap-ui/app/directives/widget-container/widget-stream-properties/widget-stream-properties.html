@@ -25,8 +25,10 @@
                 <input type="text" class="form-control" ng-model="property.name" placeholder="name" my-focus-watch="property.newField" />
               </td>
               <td class="type" ng-if="!property.empty">
-                <select ng-model="property.type" class="form-control col-xs-4"
-                    ng-options="option as option for option in options"></select>
+                <div class="select-wrapper">
+                  <select ng-model="property.type" class="form-control col-xs-4"
+                      ng-options="option as option for option in options"></select>
+                </div>
               </td>
               <td class="text-center nullable" ng-if="!property.empty">
                 <input type="checkbox" ng-model="property.nullable" />
@@ -46,7 +48,6 @@
         </table>
       </fieldset>
     </div>
-
   </div>
 
   <div class="schema-container" ng-if="fields === 'AVRO'">
