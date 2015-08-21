@@ -331,6 +331,31 @@ public class DefaultStore implements Store {
   }
 
   @Override
+  public WorkflowDataset.WorkflowRunRecord getWorkflowRun(final Id.Workflow workflowId, final String runId) {
+    return txnlWorkflow.executeUnchecked(new TransactionExecutor.Function
+      <WorkflowStatsDataset, WorkflowDataset.WorkflowRunRecord>() {
+      @Override
+      public WorkflowDataset.WorkflowRunRecord apply(WorkflowStatsDataset dataset) throws Exception {
+        return dataset.workflowDataset.getRecord(workflowId, runId);
+      }
+    });
+  }
+
+  @Override
+  public Collection<WorkflowDataset.WorkflowRunRecord> retrieveSpacedRecords(final Id.Workflow workflow,
+                                                                             final String runId,
+                                                                             final int limit,
+                                                                             final long timeInterval) {
+    return txnlWorkflow.executeUnchecked(new TransactionExecutor.Function
+      <WorkflowStatsDataset, Collection<WorkflowDataset.WorkflowRunRecord>>() {
+      @Override
+      public Collection<WorkflowDataset.WorkflowRunRecord> apply(WorkflowStatsDataset dataset) throws Exception {
+        return dataset.workflowDataset.getDetailsOfRange(workflow, runId, limit, timeInterval);
+      }
+    });
+  }
+
+  @Override
   public List<RunRecordMeta> getRuns(final Id.Program id, final ProgramRunStatus status,
                                      final long startTime, final long endTime, final int limit, final String adapter) {
     return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, List<RunRecordMeta>>() {
@@ -1216,9 +1241,9 @@ public class DefaultStore implements Store {
   }
 
   private static ApplicationSpecification replaceFlowletInAppSpec(final ApplicationSpecification appSpec,
-                                                           final Id.Program id,
-                                                           final FlowSpecification flowSpec,
-                                                           final FlowletDefinition adjustedFlowletDef) {
+                                                                  final Id.Program id,
+                                                                  final FlowSpecification flowSpec,
+                                                                  final FlowletDefinition adjustedFlowletDef) {
     // as app spec is immutable we have to do this trick
     return replaceFlowInAppSpec(appSpec, id, new FlowSpecificationWithChangedFlowlets(flowSpec, adjustedFlowletDef));
   }

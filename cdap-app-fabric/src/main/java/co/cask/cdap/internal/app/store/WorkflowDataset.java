@@ -22,6 +22,7 @@ import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scan;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.PercentileInformation;
@@ -30,8 +31,10 @@ import co.cask.cdap.proto.WorkflowStatistics;
 import com.google.common.primitives.Longs;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import org.apache.twill.api.RunId;
 
 import java.lang.reflect.Type;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -39,6 +42,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
@@ -81,9 +85,8 @@ public class WorkflowDataset extends AbstractDataset {
    * @param timeRangeStart Start of the time range that the scan should begin from
    * @param timeRangeEnd End of the time range that the scan should end at
    * @return List of WorkflowRunRecords
-   * @throws Exception
    */
-  public List<WorkflowRunRecord> scan(Id.Workflow id, long timeRangeStart, long timeRangeEnd) throws Exception {
+  private List<WorkflowRunRecord> scan(Id.Workflow id, long timeRangeStart, long timeRangeEnd) {
     byte[] startRowKey = new MDSKey.Builder().add(id.getApplication().getNamespaceId()).add(id.getApplicationId()).
       add(id.getId()).add(timeRangeStart).build().getKey();
     byte[] endRowKey = new MDSKey.Builder().add(id.getApplication().getNamespaceId()).add(id.getApplicationId()).
@@ -204,10 +207,86 @@ public class WorkflowDataset extends AbstractDataset {
     return programToRunRecord.values();
   }
 
+  @Nullable
+  WorkflowRunRecord getRecord(Id.Workflow id, String pid) {
+    RunId runId = RunIds.fromString(pid);
+    long startTime = RunIds.getTime(runId, TimeUnit.SECONDS);
+    MDSKey mdsKey = new MDSKey.Builder().add(id.getNamespaceId())
+      .add(id.getApplicationId()).add(id.getId()).add(startTime).build();
+    byte[] startRowKey = mdsKey.getKey();
+
+    Row indexRow = table.get(startRowKey);
+    if (indexRow == null) {
+      return null;
+    }
+    Map<byte[], byte[]> columns = indexRow.getColumns();
+    String workflowRunId = Bytes.toString(columns.get(RUNID));
+    long timeTaken = Bytes.toLong(columns.get(TIME_TAKEN));
+
+    List<ProgramRun> actionRunsList = GSON.fromJson(Bytes.toString(columns.get(NODES)), PROGRAM_RUNS_TYPE);
+    return new WorkflowRunRecord(workflowRunId, timeTaken, actionRunsList);
+  }
+
+  Collection<WorkflowRunRecord> getDetailsOfRange(Id.Workflow workflow, String runId, int limit, long timeInterval) {
+    Map<String, WorkflowRunRecord> mainRunRecords = getNeighbors(workflow, RunIds.fromString(runId),
+                                                                 limit, timeInterval);
+    WorkflowRunRecord workflowRunRecord = getRecord(workflow, runId);
+    if (workflowRunRecord != null) {
+      mainRunRecords.put(workflowRunRecord.getWorkflowRunId(), workflowRunRecord);
+    }
+    return mainRunRecords.values();
+  }
+
+  /**
+   * Returns a map of WorkflowRunId to WorkflowRunRecord that are close to the WorkflowRunId provided by the user.
+   *
+   * @param id The workflow
+   * @param runId The runid of the workflow
+   * @param limit The limit on each side of the run that we want to see into
+   * @param timeInterval The time interval that we want the results to be spaced apart
+   * @return A Map of WorkflowRunId to the corresponding Workflow Run Record. A map is used so that duplicates of
+   * the WorkflowRunRecord are not obtained
+   */
+  private Map<String, WorkflowRunRecord> getNeighbors(Id.Workflow id, RunId runId, int limit, long timeInterval) {
+    long startTime = RunIds.getTime(runId, TimeUnit.SECONDS);
+    Map<String, WorkflowRunRecord> workflowRunRecords = new HashMap<>();
+    int i = -limit;
+    long prevStartTime = startTime - (limit * timeInterval);
+    // The loop iterates across the range that is startTime - (limit * timeInterval) to
+    // startTime + (limit * timeInterval) since we want to capture all runs that started in this range.
+    // Since we want to stop getting the same key, we have the prevStartTime become 1 more than the time at which
+    // the last record was found if the (interval * the count of the loop) is less than the time.
+    while (prevStartTime <= startTime + (limit * timeInterval)) {
+      MDSKey mdsKey = new MDSKey.Builder().add(id.getNamespaceId())
+        .add(id.getApplicationId()).add(id.getId()).add(prevStartTime).build();
+      byte[] startRowKey = mdsKey.getKey();
+      Scan scan = new Scan(startRowKey, null);
+      Scanner scanner = table.scan(scan);
+      Row indexRow = scanner.next();
+      if (indexRow == null) {
+        return workflowRunRecords;
+      }
+      byte[] rowKey = indexRow.getRow();
+      long time = ByteBuffer.wrap(rowKey, rowKey.length - Bytes.SIZEOF_LONG, Bytes.SIZEOF_LONG).getLong();
+      if (!((time >= (startTime - (limit * timeInterval))) && time <= (startTime + (limit * timeInterval)))) {
+        break;
+      }
+      Map<byte[], byte[]> columns = indexRow.getColumns();
+      String workflowRunId = Bytes.toString(columns.get(RUNID));
+      long timeTaken = Bytes.toLong(columns.get(TIME_TAKEN));
+      List<ProgramRun> programRunList = GSON.fromJson(Bytes.toString(columns.get(NODES)), PROGRAM_RUNS_TYPE);
+      workflowRunRecords.put(workflowRunId, new WorkflowRunRecord(workflowRunId, timeTaken, programRunList));
+      prevStartTime = startTime + (i * timeInterval) < time ?
+        time + 1 : startTime + (i * timeInterval);
+      i++;
+    }
+    return workflowRunRecords;
+  }
+
   /**
    * Class to store the name, type and list of runs of the programs across all workflow runs
    */
-  static class ProgramRunDetails {
+  private static final class ProgramRunDetails {
     private final String name;
     private final ProgramType programType;
     private final List<Long> programRunList;
@@ -236,9 +315,9 @@ public class WorkflowDataset extends AbstractDataset {
   }
 
   /**
-   * Internal class to keep track of Workflow Run Records
+   * Class to keep track of Workflow Run Records
    */
-  static class WorkflowRunRecord {
+  public static final class WorkflowRunRecord {
     private final String workflowRunId;
     private final long timeTaken;
     private final List<ProgramRun> programRuns;
@@ -263,9 +342,9 @@ public class WorkflowDataset extends AbstractDataset {
   }
 
   /**
-   * Internal Class for keeping track of programs in a workflow
+   * Class for keeping track of programs in a workflow
    */
-  static class ProgramRun {
+  public static final class ProgramRun {
     private final String runId;
     private final long timeTaken;
     private final ProgramType programType;

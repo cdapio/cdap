@@ -501,4 +501,25 @@ public interface Store {
    */
   WorkflowStatistics getWorkflowStatistics(Id.Workflow workflowId, long startTime,
                                            long endTime, List<Double> percentiles);
+
+  /**
+   * Returns the record that represents the run of a workflow.
+   *
+   * @param workflowId The Workflow whose run needs to be queried
+   * @param runId RunId of the workflow run
+   * @return A workflow run record corresponding to the runId
+   */
+  WorkflowDataset.WorkflowRunRecord getWorkflowRun(Id.Workflow workflowId, String runId);
+
+  /**
+   * Get a list of workflow runs that are spaced apart by time interval in both directions from the run id provided.
+   *
+   * @param workflow The workflow whose statistics need to be obtained
+   * @param runId The run id of the workflow
+   * @param limit The number of the records that the user wants to compare against on either side of the run
+   * @param timeInterval The timeInterval with which the user wants to space out the runs
+   * @return Map of runId of Workflow to DetailedStatistics of the run
+   */
+  Collection<WorkflowDataset.WorkflowRunRecord> retrieveSpacedRecords(Id.Workflow workflow, String runId,
+                                                                       int limit, long timeInterval);
 }
