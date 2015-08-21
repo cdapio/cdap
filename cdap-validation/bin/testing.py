@@ -159,5 +159,5 @@ def get_commands(base,cluster):
         ambari.ambari_commands(host_url, configs_subdir, base, cluster)
     
     else:
-        print "something is wrong here"
+        print "Your Hadoop install manager is not recognized"
 
