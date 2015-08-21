@@ -37,10 +37,6 @@ New Feature
 Bug Fixes
 ---------
 
-- Fixed a problem with the system.collect.events metric for a stream being lower than the system.process.events.in 
-  metric of a consuming flowlet
-  (`CDAP-3458 <https://issues.cask.co/browse/CDAP-3458>`__).
-  
 - Fixed a problem with a readless increment co-processor throwing an IllegalStateException during flush
   (`CDAP-3449 <https://issues.cask.co/browse/CDAP-3449>`__).
   
