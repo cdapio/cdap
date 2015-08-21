@@ -31,15 +31,11 @@
 
 */
 angular.module(PKG.name + '.services')
-  .service('MyPlumbService', function(myAdapterApi, $q, $bootstrapModal, $state, $filter, mySettings, AdapterErrorFactory, IMPLICIT_SCHEMA, myHelpers, PluginConfigFactory, ModalConfirm, EventPipe, $popover, $rootScope) {
+  .service('MyPlumbService', function(myAdapterApi, $q, $bootstrapModal, $state, $filter, mySettings, AdapterErrorFactory, IMPLICIT_SCHEMA, myHelpers, PluginConfigFactory, ModalConfirm, EventPipe) {
 
     var countSink = 0,
         countSource = 0,
         countTransform = 0;
-
-    var prevConnections = null;
-    var popoverScopes = [];
-    var popovers = [];
 
     this.resetToDefaults = function(isImport) {
       var callbacks = angular.copy(this.callbacks);
@@ -183,7 +179,7 @@ angular.module(PKG.name + '.services')
       return finalConnections;
     }
 
-    function formatSchema(node) {
+    this.formatSchema = function (node) {
       var isStreamSource = node.name === 'Stream';
       var schema;
       var input;
@@ -242,27 +238,10 @@ angular.module(PKG.name + '.services')
       });
 
       return schema;
-    }
+    };
 
-    function closeAllPopovers() {
-      angular.forEach(popovers, function (popover) {
-        popover.hide();
-      });
-    }
 
     this.setConnections = function(connections) {
-      closeAllPopovers();
-      popovers = [];
-      angular.forEach(prevConnections, function (conn) {
-        conn.unbind('click');
-      });
-      prevConnections = connections;
-
-      angular.forEach(popoverScopes, function (s) {
-        s.$destroy();
-      });
-      popoverScopes = [];
-
       this.isConfigTouched = true;
       this.connections = [];
       var localConnections = [];
@@ -271,30 +250,6 @@ angular.module(PKG.name + '.services')
           source: con.sourceId,
           target: con.targetId
         });
-
-
-        var label = angular.element(con.getOverlay('label').getElement());
-
-        var scope = $rootScope.$new();
-        popoverScopes.push(scope);
-
-        var popover = $popover(label, {
-          title: 'Schema',
-          trigger: 'manual',
-          placement: 'auto',
-          target: label,
-          contentTemplate: '/assets/features/adapters/templates/partial/schema-popover.html',
-          container: 'body',
-          scope: scope
-        });
-
-        popovers.push(popover);
-
-        con.bind('click', function () {
-          scope.schema = formatSchema(this.nodes[con.sourceId]);
-          popover.toggle();
-        }.bind(this));
-
 
       }.bind(this));
       localConnections = orderConnections.call(this, angular.copy(localConnections), angular.copy(localConnections));
@@ -456,8 +411,6 @@ angular.module(PKG.name + '.services')
     }
 
     this.editPluginProperties = function (scope, pluginId) {
-      closeAllPopovers();
-
       this.isConfigTouched = true;
       var sourceConn = $filter('filter')(this.connections, { target: pluginId });
       var sourceSchema = null;
