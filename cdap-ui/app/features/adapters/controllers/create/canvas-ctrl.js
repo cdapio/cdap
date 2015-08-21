@@ -5,24 +5,24 @@ angular.module(PKG.name + '.feature.adapters')
         transformTemplates = [],
         sinkTemplates = [];
 
+    function objectToArray(obj, arr) {
+      angular.forEach(obj, function (val) {
+        if (val.templateType === MyPlumbService.metadata.template.type) {
+          val.icon = 'fa-plug';
+          val.name = val.templateName;
+
+          arr.push(val);
+        }
+      });
+    }
+
     mySettings.get('pluginTemplates')
       .then(function (res) {
         var templates = res[$state.params.namespace];
 
-        angular.forEach(templates, function (template) {
-          if (template.templateType === MyPlumbService.metadata.template.type) {
-            template.icon = 'fa-plug';
-            template.name = template.templateName;
-            if (template.type === 'source') {
-              sourceTemplates.push(template);
-            } else if (template.type === 'transform') {
-              transformTemplates.push(template);
-            } else if (template.type === 'sink') {
-              sinkTemplates.push(template);
-            }
-          }
-        });
-
+        objectToArray(templates.source, sourceTemplates);
+        objectToArray(templates.transform, transformTemplates);
+        objectToArray(templates.sink, sinkTemplates);
       });
 
 
