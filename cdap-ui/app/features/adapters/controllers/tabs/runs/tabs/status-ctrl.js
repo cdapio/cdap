@@ -89,13 +89,13 @@ angular.module(PKG.name + '.feature.adapters')
       function onMetricsDiscoverySuccess(res) {
         widget.metric.names = res;
         if (res.length > 0) {
-          FetchMetricsData(widget);
+          fetchMetricsData(widget);
         } else {
           $scope.formattedData = [];
         }
       }
     );
-    function FetchMetricsData(widget) {
+    function fetchMetricsData(widget) {
       DashboardHelper.fetchData(widget)
         .then(
           function onMetricsFetchSuccess() {
