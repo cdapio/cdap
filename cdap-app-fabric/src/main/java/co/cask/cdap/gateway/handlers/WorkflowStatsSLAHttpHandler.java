@@ -180,7 +180,7 @@ public class WorkflowStatsSLAHttpHandler extends AbstractHttpHandler {
    * @param otherRunId The other run id of the same workflow that the user wants to compare against
    */
   @GET
-  @Path("apps/{app-id}/workflows/{workflow-id}/runs/run-id/{run-id}/compare")
+  @Path("apps/{app-id}/workflows/{workflow-id}/runs/{run-id}/compare")
   public void compare(HttpRequest request, HttpResponder responder,
                       @PathParam("namespace-id") String namespaceId,
                       @PathParam("app-id") String appId,
