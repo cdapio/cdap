@@ -24,6 +24,30 @@ Cask Data Application Platform Release Notes
    :depth: 2
 
 
+`Release 3.0.4 <http://docs.cask.co/cdap/3.0.4/index.html>`__
+=============================================================
+
+New Feature
+-----------
+
+- The HBaseQueueDebugger now shows the minimum queue event transaction write pointer both per-queue and for all queues
+  (`CDAP-3419 <https://issues.cask.co/browse/CDAP-3419>`__).
+ 
+
+Bug Fixes
+---------
+
+- Fixed a problem with the system.collect.events metric for a stream being lower than the system.process.events.in 
+  metric of a consuming flowlet
+  (`CDAP-3458 <https://issues.cask.co/browse/CDAP-3458>`__).
+  
+- Fixed a problem with a readless increment co-processor throwing an IllegalStateException during flush
+  (`CDAP-3449 <https://issues.cask.co/browse/CDAP-3449>`__).
+  
+ - Fixed a problem with the logback-container.xml not being copied into CDAP-Master services
+  (`CDAP-3362 <https://issues.cask.co/browse/CDAP-3362>`__).
+  
+
 `Release 3.0.3 <http://docs.cask.co/cdap/3.0.3/index.html>`__
 =============================================================
 
