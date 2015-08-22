@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.commons')
-  .controller('MyPlumbController', function MyPlumbController(jsPlumb, $scope, $timeout, MyPlumbService, myHelpers, MyPlumbFactory, $window, $popover, $rootScope) {
+  .controller('MyPlumbController', function MyPlumbController(jsPlumb, $scope, $timeout, MyPlumbService, myHelpers, MyPlumbFactory, $window, $popover, $rootScope, EventPipe) {
     this.plugins = $scope.config || [];
     this.isDisabled = $scope.isDisabled;
     this.reloadDAG = false;
@@ -189,6 +189,21 @@ angular.module(PKG.name + '.commons')
       });
     }
 
+    EventPipe.on('popovers.close', function () {
+      closeAllPopovers();
+    });
+
+    EventPipe.on('popovers.reset', function () {
+      closeAllPopovers();
+
+      popovers = [];
+
+      angular.forEach(popoverScopes, function (s) {
+        s.$destroy();
+      });
+
+    });
+
     function createPopover(connection) {
       var label = angular.element(connection.getOverlay('label').getElement());
 
@@ -200,7 +215,7 @@ angular.module(PKG.name + '.commons')
         placement: 'auto',
         target: label,
         template: '/assets/features/adapters/templates/partial/schema-popover.html',
-        container: 'body',
+        container: 'main',
         scope: scope
       });
 
@@ -237,7 +252,6 @@ angular.module(PKG.name + '.commons')
 
       // Need to move this to the controller that is using this directive.
       this.instance.bind('connection', function (con) {
-
         createPopover(con.connection);
 
         // Whenever there is a change in the connection just copy the entire array
@@ -249,8 +263,14 @@ angular.module(PKG.name + '.commons')
 
     $scope.$watch('reloaddag', function (value) {
       if (value) {
+        angular.forEach(this.instance.getConnections(), function (connection) {
+          connection.unbind('click');
+        });
+        popovers = [];
+
         this.instance.reset();
         this.instance = jsPlumb.getInstance();
+        window.a = this.instance;
         this.instance.importDefaults(MyPlumbFactory.getSettings().default);
         this.instance.bind('connection', function (con) {
 
