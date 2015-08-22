@@ -11,6 +11,7 @@ Cask Data Application Platform (CDAP) Documentation
 Earlier versions:
 
 - `Version 3.1.0 <http://docs.cdap.io/cdap/3.1.0>`__
+- `Version 3.0.4 <http://docs.cdap.io/cdap/3.0.4>`__
 - `Version 3.0.3 <http://docs.cdap.io/cdap/3.0.3>`__
 - `Version 3.0.2 <http://docs.cdap.io/cdap/3.0.2>`__
 - `Version 3.0.1 <http://docs.cdap.io/cdap/3.0.1>`__
