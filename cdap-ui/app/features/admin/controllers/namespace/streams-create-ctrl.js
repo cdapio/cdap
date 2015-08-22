@@ -37,4 +37,10 @@ angular.module(PKG.name + '.feature.admin')
       $modalInstance.close();
     };
 
+    $scope.enter = function (event) {
+      if (event.keyCode === 13) {
+        $scope.createStream();
+      }
+    };
+
   });
