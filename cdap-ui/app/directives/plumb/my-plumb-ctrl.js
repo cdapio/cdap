@@ -223,7 +223,7 @@ angular.module(PKG.name + '.commons')
 
       connection.bind('click', function () {
         scope.schema = MyPlumbService.formatSchema(MyPlumbService.nodes[connection.sourceId]);
-        popover.toggle();
+        popover.show();
       });
     }
 
