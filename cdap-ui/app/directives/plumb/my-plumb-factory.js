@@ -20,7 +20,16 @@ angular.module(PKG.name + '.commons')
         radius: 7,
         lineWidth: 3
       },
-      connectorOverlays: [ [ 'Arrow', { location: 1, length: 12, width: 12, height: 10, foldback: 1 } ] ],
+      connectorOverlays: [
+        [ 'Arrow', { location: 1, length: 12, width: 12, height: 10, foldback: 1 } ],
+        [ 'Custom', {
+          create: function() {
+            return angular.element('<div><div class="label-container"><i class="fa fa-file-text-o"></i></div></div>');
+          },
+          location: 0.5,
+          id: 'label'
+        }]
+      ],
       anchors: [ 'Perimeter', {shape: 'Circle'}]
     };
     var sourceSettings = angular.extend({

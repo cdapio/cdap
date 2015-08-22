@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.adapters')
-  .controller('CanvasController', function (myAdapterApi, MyPlumbService, $bootstrapModal, $state, $scope, $alert, CanvasFactory, MyPlumbFactory, $modalStack, $timeout, ModalConfirm, myAdapterTemplatesApi, $q, mySettings) {
+  .controller('CanvasController', function (myAdapterApi, MyPlumbService, $bootstrapModal, $state, $scope, $alert, CanvasFactory, MyPlumbFactory, $modalStack, $timeout, ModalConfirm, myAdapterTemplatesApi, $q, mySettings, EventPipe) {
 
     var sourceTemplates = [],
         transformTemplates = [],
@@ -80,6 +80,8 @@ angular.module(PKG.name + '.feature.adapters')
     ];
 
     this.onImportSuccess = function(result) {
+      // EventPipe.emit('popovers.close');
+      EventPipe.emit('popovers.reset');
       $scope.config = JSON.stringify(result);
       this.reloadDAG = true;
       MyPlumbService.resetToDefaults(true);
@@ -104,6 +106,7 @@ angular.module(PKG.name + '.feature.adapters')
     };
 
     this.onRightSideGroupItemClicked = function(group) {
+      EventPipe.emit('popovers.close');
       var config;
       switch(group.name) {
         case 'Export':

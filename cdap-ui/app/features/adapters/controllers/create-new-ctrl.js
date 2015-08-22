@@ -33,6 +33,8 @@ angular.module(PKG.name + '.feature.adapters')
       }.bind(this));
 
     this.showMetadataModal = function() {
+      EventPipe.emit('popovers.close');
+
       if (this.metadata.error) {
         delete this.metadata.error;
       }

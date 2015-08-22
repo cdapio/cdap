@@ -1,0 +1,42 @@
+<div class="popover">
+  <div class="arrow"></div>
+  <div class="popover-title">
+    <h4>
+      <span>Schema</span>
+      <i class="fa fa-times-circle-o pull-right" ng-click="$hide()"></i>
+    </h4>
+  </div>
+  <div class="popover-content">
+
+    <div class="schema-popover">
+      <div class="table-responsive" ng-if="schema.length > 0">
+        <table class="table table-bordered">
+          <thead>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Null</th>
+          </thead>
+
+          <tbody>
+            <tr ng-repeat="field in schema">
+              <td>{{ field.name }}</td>
+              <td>
+                <span ng-if="field.type.type !== 'map'">{{field.type}}</span>
+                <span ng-if="field.type.type === 'map'">map&lt;string, string&gt; </span>
+              </td>
+              <td class="text-center">
+                <input type="checkbox" ng-model="field.nullable" disabled>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="well text-center" ng-if="!schema || schema.length === 0">
+        <h4>No Schema</h4>
+      </div>
+
+    </div>
+
+  </div>
+</div>

@@ -111,10 +111,54 @@ my-plumb {
       width: inherit;
     }
   }
+
+  .label-container {
+    background-color: white;
+    padding: 5px;
+    border-radius: 50%;
+  }
+
 }
 
 .tooltip .tooltip-inner {
   ul {
     padding-left: 20px;
+  }
+}
+
+.popover {
+
+  min-width: 250px;
+  max-width: 400px;
+
+  .popover-title {
+    i.fa.fa-times-circle-o {
+      cursor: pointer;
+    }
+  }
+
+  .popover-content {
+    padding: 5px;
+
+    .schema-popover {
+      max-height: 350px;
+      overflow-y: auto;
+      overflow-x: hidden;
+
+      .well { margin-bottom: 0; }
+
+      table.table-bordered {
+        margin-top: 0;
+        margin-bottom: 0;
+
+        th {
+          font-size: 14px;
+        }
+        td {
+          font-size: 13px;
+          padding: 8px;
+        }
+      }
+    }
   }
 }
