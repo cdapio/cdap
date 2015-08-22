@@ -1,6 +1,6 @@
 {
   "variables": {
-    "sdk_version": "3.0.0"
+    "sdk_version": "3.0.4"
   },
   "builders": [
     {
@@ -98,7 +98,12 @@
       "remote_cookbook_paths": "/var/chef/cookbooks",
       "run_list": "recipe[cdap::sdk]",
       "prevent_sudo": true,
-      "skip_install": true
+      "skip_install": true,
+      "json": {
+        "cdap": {
+          "version": "{{user `sdk_version`}}-1"
+        }
+      }
     },
     {
       "type": "shell",
