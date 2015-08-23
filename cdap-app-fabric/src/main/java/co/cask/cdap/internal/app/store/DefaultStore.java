@@ -516,7 +516,7 @@ public class DefaultStore implements Store {
                                                                        workerSpec.getDatasets(),
                                                                        workerSpec.getResources(),
                                                                        instances,
-                                                                       workerSpec.getPluginMap());
+                                                                       workerSpec.getPlugins());
         ApplicationSpecification newAppSpec = replaceWorkerInAppSpec(appSpec, id, newSpecification);
         replaceAppSpecInProgramJar(id, newAppSpec);
         mds.apps.updateAppSpec(id.getNamespaceId(), id.getApplicationId(), newAppSpec);

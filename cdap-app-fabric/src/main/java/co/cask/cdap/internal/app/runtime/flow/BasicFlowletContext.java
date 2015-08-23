@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.runtime.flow;
 
-import co.cask.cdap.api.artifact.Plugin;
 import co.cask.cdap.api.flow.flowlet.FlowletContext;
 import co.cask.cdap.api.flow.flowlet.FlowletSpecification;
 import co.cask.cdap.api.metrics.Metrics;
@@ -30,6 +29,7 @@ import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
+import co.cask.cdap.internal.artifact.Plugin;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;

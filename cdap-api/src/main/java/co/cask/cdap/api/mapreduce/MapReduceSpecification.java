@@ -18,8 +18,8 @@ package co.cask.cdap.api.mapreduce;
 
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.Resources;
-import co.cask.cdap.api.artifact.Plugin;
 import co.cask.cdap.api.common.PropertyProvider;
+import co.cask.cdap.internal.artifact.Plugin;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -57,7 +57,7 @@ public class MapReduceSpecification implements ProgramSpecification, PropertyPro
     this.mapperResources = mapperResources;
     this.reducerResources = reducerResources;
     this.dataSets = getAllDatasets(dataSets, inputDataSet, outputDataSet);
-    this.plugins = plugins;
+    this.plugins = Collections.unmodifiableMap(new HashMap<>(plugins));
   }
 
   @Override
@@ -141,6 +141,9 @@ public class MapReduceSpecification implements ProgramSpecification, PropertyPro
     return Collections.unmodifiableSet(allDatasets);
   }
 
+  /**
+   * @return Map of plugin ids and {@link Plugin} registered in this program.
+   */
   public Map<String, Plugin> getPlugins() {
     return plugins;
   }

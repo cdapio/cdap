@@ -18,6 +18,7 @@ package co.cask.cdap.test.app;
 
 import co.cask.cdap.ConfigTestApp;
 import co.cask.cdap.api.app.Application;
+import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
@@ -41,6 +42,7 @@ import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.WorkflowTokenDetail;
 import co.cask.cdap.proto.WorkflowTokenNodeDetail;
+import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.artifact.CreateAppRequest;
 import co.cask.cdap.test.ApplicationManager;
@@ -53,6 +55,8 @@ import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.WorkerManager;
 import co.cask.cdap.test.WorkflowManager;
 import co.cask.cdap.test.XSlowTests;
+import co.cask.cdap.test.artifacts.AppWithPlugin;
+import co.cask.cdap.test.artifacts.plugins.ToStringPlugin;
 import co.cask.cdap.test.base.TestFrameworkTestBase;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
@@ -65,6 +69,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import org.junit.Assert;
@@ -191,6 +196,45 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   public void testAppConfig() throws Exception {
     ConfigTestApp.ConfigClass conf = new ConfigTestApp.ConfigClass("testStream", "testDataset");
     testAppConfig(deployApplication(ConfigTestApp.class, conf), conf);
+  }
+
+  @Test
+  public void testAppWithPlugin() throws Exception {
+    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "app-with-plugin", "1.0.0-SNAPSHOT");
+    addAppArtifact(artifactId, AppWithPlugin.class);
+
+    ArtifactRange artifactRange = new ArtifactRange(artifactId.getNamespace(), artifactId.getName(),
+                                                    artifactId.getVersion(), true, new ArtifactVersion("2.0.0"), true);
+    Id.Artifact pluginArtifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "test-plugin", "1.0.0-SNAPSHOT");
+    // TODO: Using ArtifactRange should not be required. Comparison of versions in ArtifactStore needs to be fixed.
+    addPluginArtifact(pluginArtifactId, Sets.<ArtifactRange>newHashSet(artifactRange), ToStringPlugin.class);
+
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "AppWithPlugin");
+    CreateAppRequest createRequest = new CreateAppRequest(
+      new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion(), false));
+
+    ApplicationManager appManager = deployApplication(appId, createRequest);
+    WorkerManager workerManager = appManager.getWorkerManager(AppWithPlugin.WORKER);
+    workerManager.start();
+    workerManager.waitForStatus(false, 5, 1);
+    List<RunRecord> workerRun = workerManager.getHistory(ProgramRunStatus.COMPLETED);
+    Assert.assertFalse(workerRun.isEmpty());
+
+    ServiceManager serviceManager = appManager.getServiceManager(AppWithPlugin.SERVICE);
+    serviceManager.start();
+    serviceManager.waitForStatus(true, 1, 10);
+    URL serviceURL = serviceManager.getServiceURL(5, TimeUnit.SECONDS);
+    callServiceGet(serviceURL, "dummy");
+    serviceManager.stop();
+    serviceManager.waitForStatus(false, 1, 10);
+    List<RunRecord> serviceRun = serviceManager.getHistory(ProgramRunStatus.KILLED);
+    Assert.assertFalse(serviceRun.isEmpty());
+
+    MapReduceManager mrManager = appManager.getMapReduceManager(AppWithPlugin.MAPREDUCE);
+    mrManager.start();
+    mrManager.waitForFinish(10, TimeUnit.MINUTES);
+    List<RunRecord> runRecords = mrManager.getHistory();
+    Assert.assertNotEquals(ProgramRunStatus.FAILED, runRecords.get(0).getStatus());
   }
 
   @Test

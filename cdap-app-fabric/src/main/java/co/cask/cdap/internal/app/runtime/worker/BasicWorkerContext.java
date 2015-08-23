@@ -17,7 +17,6 @@
 package co.cask.cdap.internal.app.runtime.worker;
 
 import co.cask.cdap.api.TxRunnable;
-import co.cask.cdap.api.artifact.Plugin;
 import co.cask.cdap.api.data.stream.StreamBatchWriter;
 import co.cask.cdap.api.data.stream.StreamWriter;
 import co.cask.cdap.api.dataset.Dataset;
@@ -40,6 +39,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DynamicDatasetContext;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
+import co.cask.cdap.internal.artifact.Plugin;
 import co.cask.cdap.logging.context.WorkerLoggingContext;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.templates.AdapterDefinition;
@@ -233,7 +233,7 @@ public class BasicWorkerContext extends AbstractContext implements WorkerContext
 
   @Override
   public Map<String, Plugin> getPlugins() {
-    return getSpecification().getPluginMap();
+    return getSpecification().getPlugins();
   }
 
   private void abortTransaction(Exception e, String message, TransactionContext context) {

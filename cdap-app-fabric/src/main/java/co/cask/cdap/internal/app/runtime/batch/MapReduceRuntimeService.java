@@ -208,19 +208,15 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       Location tempLocation = createTempLocationDirectory();
       this.cleanupTask = createCleanupTask(tempDir, tempLocation);
 
+      //TODO: CDAP-3485 Not required once Templates/Adapters are removed
       Location pluginArchive = null;
-      Location artifactPluginArchive = null;
       // For local mode, everything is in the configuration classloader already, hence no need to create new jar
       if (!MapReduceContextProvider.isLocal(mapredConf)) {
         // After calling beforeSubmit, we know what plugins are needed for adapter, hence construct the proper
         // ClassLoader from here and use it for setting up the job
         pluginArchive = createPluginArchive(context.getAdapterSpecification(), tempDir, tempLocation);
-        artifactPluginArchive = createArtifactPluginArchive(context.getSpecification(), tempDir, tempLocation);
         if (pluginArchive != null) {
           job.addCacheArchive(pluginArchive.toURI());
-        }
-        if (artifactPluginArchive != null) {
-          job.addCacheArchive(artifactPluginArchive.toURI());
         }
       }
 
@@ -981,19 +977,6 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     Location location = targetDir.append("plugins.jar");
     Files.copy(jarFile, Locations.newOutputSupplier(location));
     return location;
-  }
-
-  private Location createArtifactPluginArchive(MapReduceSpecification mapReduceSpecification, File tempDir,
-                                               Location targetDir) throws IOException {
-    if (mapReduceSpecification.getPlugins().isEmpty()) {
-      return null;
-    }
-    return null;
-
-//    File jarFile = File.createTempFile("artifactPlugin", ".jar", tempDir);
-//    Location location = targetDir.append("artifactPlugins.jar");
-//    Files.copy(jarFile, Locations.newOutputSupplier(location));
-//    return location;
   }
 
   private Runnable createCleanupTask(final Object...resources) {

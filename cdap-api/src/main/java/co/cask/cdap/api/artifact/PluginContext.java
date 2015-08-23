@@ -17,51 +17,50 @@
 package co.cask.cdap.api.artifact;
 
 import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.templates.AdapterConfigurer;
-import co.cask.cdap.api.templates.ApplicationTemplate;
 import co.cask.cdap.api.templates.plugins.PluginConfig;
 import co.cask.cdap.api.templates.plugins.PluginProperties;
 
 /**
- * Provides access to template plugin context when a program is executing.
+ * Provides access to plugin context when a program is executing.
+ * TODO: Rename the methods in the class to the ones in AdapterContext once templates/adapters are removed.
  */
 @Beta
 public interface PluginContext {
 
   /**
-   * Gets the {@link PluginProperties} associated with the given plugin type and name in the adapter context.
+   * Gets the {@link PluginProperties} associated with the given plugin id.
    *
-   * @param pluginId the unique identifier provide when declaring plugin usage in {@link AdapterConfigurer}.
+   * @param pluginId the unique identifier provide when declaring plugin usage in the program.
    * @return the {@link PluginProperties}.
-   * @throws IllegalArgumentException if no plugin for the given type and name
-   * @throws UnsupportedOperationException if the program is not running under the adapter context
+   * @throws IllegalArgumentException if pluginId is not found
+   * @throws UnsupportedOperationException if the program does not support plugin
    */
   PluginProperties getPluginProps(String pluginId);
 
   /**
-   * Loads and returns a plugin class as specified by the given type and name.
+   * Loads and returns a plugin class as specified by the given plugin id.
    *
-   * @param pluginId the unique identifier provide when declaring plugin usage in {@link AdapterConfigurer}.
+   * @param pluginId the unique identifier provide when declaring plugin usage in the program.
    * @param <T> the class type of the plugin
    * @return the resulting plugin {@link Class}.
-   * @throws IllegalArgumentException if no plugin for the given type and name
-   * @throws UnsupportedOperationException if the program is not running under the adapter context
+   * @throws IllegalArgumentException if pluginId is not found
+   * @throws UnsupportedOperationException if the program does not support plugin
    */
   <T> Class<T> loadClass(String pluginId);
 
   /**
    * Creates a new instance of a plugin. The instance returned will have the {@link PluginConfig} setup with
    * {@link PluginProperties} provided at the time when the
-   * {@link AdapterConfigurer#usePlugin(String, String, String, PluginProperties)} was called during the
-   * {@link ApplicationTemplate#configureAdapter(String, Object, AdapterConfigurer)} time.
+   * {@link PluginConfigurer#usePlugin(String, String, String, PluginProperties)} was called during the
+   * program configuration time.
    *
-   * @param pluginId the unique identifier provide when declaring plugin usage in {@link AdapterConfigurer}.
+   * @param pluginId the unique identifier provide when declaring plugin usage in the program.
    * @param <T> the class type of the plugin
    * @return A new instance of the plugin being specified by the arguments
    *
-   * @throws InstantiationException if failed create a new instance.
-   * @throws UnsupportedOperationException if the program is not running under the adapter context
-   * @throws IllegalArgumentException if no plugin for the given type and name
+   * @throws InstantiationException if failed create a new instance
+   * @throws IllegalArgumentException if pluginId is not found
+   * @throws UnsupportedOperationException if the program does not support plugin
    */
   <T> T newInstance(String pluginId) throws InstantiationException;
 }

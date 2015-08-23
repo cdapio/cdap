@@ -1345,9 +1345,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     if (state == ProgramController.State.ERROR) {
       return "FAILED";
     }
-    if (state == ProgramController.State.COMPLETED) {
-      return "STOPPED";
-    }
     return state.toString();
   }
 

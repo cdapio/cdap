@@ -18,7 +18,6 @@ package co.cask.cdap.internal.app.runtime;
 
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.artifact.ArtifactDescriptor;
-import co.cask.cdap.api.artifact.Plugin;
 import co.cask.cdap.api.artifact.PluginContext;
 import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.data.DatasetContext;
@@ -36,6 +35,7 @@ import co.cask.cdap.data.dataset.DatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
+import co.cask.cdap.internal.artifact.Plugin;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.templates.AdapterDefinition;
 import co.cask.cdap.templates.AdapterPlugin;
@@ -97,6 +97,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
    * Constructs a context. To have application template adapter support,
    * both the {@code adapterSpec} and {@code pluginInstantiator} must not be null.
    */
+  // TODO: Pass in only one PluginInstantiator after templates, adapters are removed
   protected AbstractContext(Program program, RunId runId, Arguments arguments,
                             Set<String> datasets, MetricsContext metricsContext,
                             DatasetFramework dsFramework, DiscoveryServiceClient discoveryServiceClient,
@@ -146,13 +147,17 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   }
 
   /**
-   * Returns the {@link PluginInstantiator} used by this context or {@code null} if there is no plugin supported.
+   * Returns the {@link PluginInstantiator} used by this context or {@code null} if there is no plugin support.
    */
   @Nullable
   public PluginInstantiator getPluginInstantiator() {
     return pluginInstantiator;
   }
 
+  /**
+   * Returns the {@link PluginInstantiator} used by this context or {@code null} if there is no plugin support.
+   */
+  @Nullable
   public PluginInstantiator getArtifactPluginInstantiator() {
     return artifactPluginInstantiator;
   }
@@ -318,13 +323,13 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
 
   @Override
   public PluginProperties getPluginProps(String pluginId) {
-    return null;
+    return getPlugin(pluginId).getProperties();
   }
 
   @Override
   public <T> Class<T> loadClass(String pluginId) {
     if (artifactPluginInstantiator == null) {
-      throw new UnsupportedOperationException("Plugin not supported for non-adapter program");
+      throw new UnsupportedOperationException("Plugin not supported for this program type");
     }
     Plugin plugin = getPlugin(pluginId);
     try {
@@ -345,7 +350,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   @Override
   public <T> T newInstance(String pluginId) throws InstantiationException {
     if (artifactPluginInstantiator == null) {
-      throw new UnsupportedOperationException("Plugin not supported for non-adapter program");
+      throw new UnsupportedOperationException("Plugin not supported for this program type");
     }
     Plugin plugin = getPlugin(pluginId);
     try {
@@ -370,7 +375,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     }
 
     Plugin plugin = getPlugins().get(pluginId);
-    Preconditions.checkArgument(plugin != null, "Plugin with id %s not exists in program %s of application %s.",
+    Preconditions.checkArgument(plugin != null, "Plugin with id %s does not exist in program %s of application %s.",
                                 pluginId, program.getId(), program.getApplicationId());
     return plugin;
   }

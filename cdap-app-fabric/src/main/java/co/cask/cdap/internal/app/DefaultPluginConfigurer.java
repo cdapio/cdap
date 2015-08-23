@@ -17,8 +17,7 @@
 package co.cask.cdap.internal.app;
 
 import co.cask.cdap.api.artifact.ArtifactDescriptor;
-import co.cask.cdap.api.artifact.Plugin;
-import co.cask.cdap.api.artifact.PluginRegistry;
+import co.cask.cdap.api.artifact.PluginConfigurer;
 import co.cask.cdap.api.artifact.PluginSelector;
 import co.cask.cdap.api.templates.plugins.PluginClass;
 import co.cask.cdap.api.templates.plugins.PluginProperties;
@@ -27,6 +26,7 @@ import co.cask.cdap.internal.api.DefaultDatasetConfigurer;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.PluginNotExistsException;
+import co.cask.cdap.internal.artifact.Plugin;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -37,9 +37,10 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- *
+ * Contains implementation of methods in {@link PluginConfigurer} thus assisting Program configurers who can extend
+ * this class.
  */
-public class DefaultPluginConfigurer extends DefaultDatasetConfigurer implements PluginRegistry {
+public class DefaultPluginConfigurer extends DefaultDatasetConfigurer implements PluginConfigurer {
 
   private final ArtifactRepository artifactRepository;
   private final PluginInstantiator pluginInstantiator;
@@ -68,22 +69,12 @@ public class DefaultPluginConfigurer extends DefaultDatasetConfigurer implements
   @Override
   public <T> T usePlugin(String pluginType, String pluginName, String pluginId, PluginProperties properties,
                          PluginSelector selector) {
-    Preconditions.checkArgument(!plugins.containsKey(pluginId),
-                                "Plugin of type {}, name {} was already added.", pluginType, pluginName);
-    Preconditions.checkArgument(properties != null, "Plugin properties cannot be null");
-
-    Map.Entry<ArtifactDescriptor, PluginClass> pluginEntry = null;
-    try {
-      pluginEntry = artifactRepository.findPlugin(artifactId, pluginType, pluginName, selector);
-    } catch (IOException e) {
-      e.printStackTrace();
-    } catch (PluginNotExistsException e) {
-      e.printStackTrace();
-    }
-
+    Map.Entry<ArtifactDescriptor, PluginClass> pluginEntry = findPlugin(pluginType, pluginName, pluginId, properties,
+                                                                        selector);
     if (pluginEntry == null) {
       return null;
     }
+
     try {
       T instance = pluginInstantiator.newInstance(pluginEntry.getKey(), pluginEntry.getValue(), properties);
       registerPlugin(pluginId, pluginEntry.getKey(), pluginEntry.getValue(), properties);
@@ -108,29 +99,10 @@ public class DefaultPluginConfigurer extends DefaultDatasetConfigurer implements
   @Override
   public <T> Class<T> usePluginClass(String pluginType, String pluginName, String pluginId, PluginProperties properties,
                                      PluginSelector selector) {
-    Preconditions.checkArgument(!plugins.containsKey(pluginId),
-                                "Plugin of type %s, name %s was already added.", pluginType, pluginName);
-    Preconditions.checkArgument(properties != null, "Plugin properties cannot be null");
-
-    Map.Entry<ArtifactDescriptor, PluginClass> pluginEntry = null;
-    try {
-      pluginEntry = artifactRepository.findPlugin(artifactId, pluginType, pluginName, selector);
-    } catch (IOException e) {
-      e.printStackTrace();
-    } catch (PluginNotExistsException e) {
-      e.printStackTrace();
-    }
-
+    Map.Entry<ArtifactDescriptor, PluginClass> pluginEntry = findPlugin(pluginType, pluginName, pluginId, properties,
+                                                                        selector);
     if (pluginEntry == null) {
       return null;
-    }
-
-    // Just verify if all required properties are provided.
-    // No type checking is done for now.
-    for (PluginPropertyField field : pluginEntry.getValue().getProperties().values()) {
-      Preconditions.checkArgument(!field.isRequired() || properties.getProperties().containsKey(field.getName()),
-                                  "Required property '%s' missing for plugin of type %s, name %s.",
-                                  field.getName(), pluginType, pluginName);
     }
 
     try {
@@ -144,6 +116,34 @@ public class DefaultPluginConfigurer extends DefaultDatasetConfigurer implements
       // Shouldn't happen
       throw Throwables.propagate(e);
     }
+  }
+
+  private Map.Entry<ArtifactDescriptor, PluginClass> findPlugin(String pluginType, String pluginName, String pluginId,
+                                                                PluginProperties properties, PluginSelector selector) {
+    Preconditions.checkArgument(!plugins.containsKey(pluginId),
+                                "Plugin of type %s, name %s was already added.", pluginType, pluginName);
+    Preconditions.checkArgument(properties != null, "Plugin properties cannot be null");
+
+    Map.Entry<ArtifactDescriptor, PluginClass> pluginEntry;
+    try {
+      pluginEntry = artifactRepository.findPlugin(artifactId, pluginType, pluginName, selector);
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
+    } catch (PluginNotExistsException e) {
+      throw new IllegalArgumentException(String.format("Plugin of type %s, name %s could not be found",
+                                                       pluginType, pluginName), e);
+    }
+
+    if (pluginEntry != null) {
+      // Just verify if all required properties are provided.
+      // No type checking is done for now.
+      for (PluginPropertyField field : pluginEntry.getValue().getProperties().values()) {
+        Preconditions.checkArgument(!field.isRequired() || properties.getProperties().containsKey(field.getName()),
+                                    "Required property '%s' missing for plugin of type %s, name %s.",
+                                    field.getName(), pluginType, pluginName);
+      }
+    }
+    return pluginEntry;
   }
 
   /**
