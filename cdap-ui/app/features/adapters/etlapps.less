@@ -202,7 +202,7 @@ body.theme-cdap.state-adapters-create {
             }
 
             .transition(all 0.2s ease);
-            @media (max-width: @screen-sm-max) {
+            @media (max-width: @screen-xs-min) {
               width: 20%;
             }
             &:last-child {
@@ -216,6 +216,9 @@ body.theme-cdap.state-adapters-create {
             }
             &:only-child {
               margin-right: -1px;
+              @media (max-width: @screen-xs-max) {
+                width: 100%;
+              }
             }
             &:hover, &:focus {
               background-color: @cdap-header;
@@ -227,6 +230,11 @@ body.theme-cdap.state-adapters-create {
           &.btn-group {
             display: block;
             > div {
+
+              @media (max-width: @screen-xs-max) {
+                width: 20%;
+              }
+
               display: inline-block;
               margin-right: -4px;
               &:last-child {
