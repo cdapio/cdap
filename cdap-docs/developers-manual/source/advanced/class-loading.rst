@@ -71,16 +71,16 @@ only classes under those packages will be available to the plugin. This is to av
 libraries used by the application interfering with the ones used by the plugin. The plugin
 JAR file is following a similar structure as an application JAR file.
 
-Class Loading in Hadoop MapReduce and Apache Spark
+Class Loading in Apache Hadoop MapReduce and Spark
 ==================================================
 
 One of the major challenges faced when we integrate CDAP with data processing frameworks,
-such as Hadoop MapReduce and Apache Spark, is the class loading. Both frameworks use a
-flat classpath approach. For example, in Hadoop MapReduce, all the job classes, the
+such as MapReduce and Spark, is the class loading. Both frameworks use a
+flat classpath approach. For example, in MapReduce, all the job classes, the
 libraries that the job needs, together with the Hadoop libraries and their dependencies,
 are in one classpath. The classpath is used to create a single class loader, which loads
 classes by sequentially searching through the classpath. This approach doesn’t provide the
-class loading isolation that is desired. For example, if a Hadoop MapReduce job requires a
+class loading isolation that is desired. For example, if a MapReduce job requires a
 different version of a library than the one used by the Hadoop framework in the cluster,
 the job can fail with exceptions such as ``NoSuchMethodError`` or ``ClassNotFoundException``.
 
