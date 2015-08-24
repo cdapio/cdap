@@ -66,6 +66,25 @@ function ($scope, $state, rDashboardsModel, MY_CONFIG, $alert, $timeout) {
       });
   };
 
+  $scope.$on('$stateChangeSuccess', function(event, toState, toParams, fromState) {
+    // This might be redundant if the user navigates by clicking on the tabs,
+    // but its just re-assignment. This is really useful when the user navigates through
+    // the browser's back button or (or BACKSPACE). re-assignment is ok, not assigning proper
+    // values is a problem.
+    if (
+      fromState.name.indexOf('dashboard') !== -1 &&
+      toState.name.indexOf('dashboard') !== -1
+    ) {
+      if ($state.includes('dashboard.standard.*')) {
+        $scope.unknownBoard = true;
+        $scope.dashboards.activeIndex = 'system';
+      } else {
+        $scope.dashboards.activeIndex = parseInt(toParams.tab, 10);
+        $state.params.activeDashboard = $scope.dashboards[toParams.tab].title;
+      }
+    }
+  });
+
   $scope.reorderDashboard = function (reverse) {
     var newIndex = rDashboardsModel.reorder(reverse);
     if (newIndex > 0) {
