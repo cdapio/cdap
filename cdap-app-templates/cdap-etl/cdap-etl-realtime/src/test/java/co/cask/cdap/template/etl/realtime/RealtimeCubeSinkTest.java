@@ -20,6 +20,7 @@ import co.cask.cdap.api.dataset.lib.cube.AggregationFunction;
 import co.cask.cdap.api.dataset.lib.cube.Cube;
 import co.cask.cdap.api.dataset.lib.cube.CubeQuery;
 import co.cask.cdap.api.dataset.lib.cube.TimeSeries;
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data2.dataset2.lib.cube.CubeDatasetDefinition;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
@@ -56,6 +57,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -108,23 +110,25 @@ public class RealtimeCubeSinkTest extends TestBase {
 
     AdapterManager manager = createAdapter(adapterId, adapterConfig);
 
-    long startTs = System.currentTimeMillis() / 1000;
+    final long startTs = System.currentTimeMillis() / 1000;
 
     manager.start();
-    // Let the worker run for 5 seconds
-    TimeUnit.SECONDS.sleep(5);
+    final DataSetManager<Cube> tableManager = getDataset("cube1");
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        tableManager.flush();
+        Cube cube = tableManager.get();
+        Collection<TimeSeries> result = cube.query(buildCubeQuery(startTs));
+        return !result.isEmpty();
+      }
+    }, 10, TimeUnit.SECONDS, 50, TimeUnit.MILLISECONDS);
     manager.stop();
 
-    long endTs = System.currentTimeMillis() / 1000;
-
     // verify
-    DataSetManager<Cube> tableManager = getDataset("cube1");
     Cube cube = tableManager.get();
-    Collection<TimeSeries> result = cube.query(CubeQuery.builder()
-                                                 .select().measurement("score", AggregationFunction.LATEST)
-                                                 .from("byName").resolution(1, TimeUnit.SECONDS)
-                                                 .where().timeRange(startTs, endTs).limit(100).build());
-    Assert.assertFalse(result.isEmpty());
+    Collection<TimeSeries> result = cube.query(buildCubeQuery(startTs));
+
     Iterator<TimeSeries> iterator = result.iterator();
     Assert.assertTrue(iterator.hasNext());
     TimeSeries timeSeries = iterator.next();
@@ -132,5 +136,13 @@ public class RealtimeCubeSinkTest extends TestBase {
     Assert.assertFalse(timeSeries.getTimeValues().isEmpty());
     Assert.assertEquals(3, timeSeries.getTimeValues().get(0).getValue());
     Assert.assertFalse(iterator.hasNext());
+  }
+
+  private CubeQuery buildCubeQuery(long startTs) {
+    long endTs = System.currentTimeMillis() / 1000;
+    return CubeQuery.builder()
+      .select().measurement("score", AggregationFunction.LATEST)
+      .from("byName").resolution(1, TimeUnit.SECONDS)
+      .where().timeRange(startTs, endTs).limit(100).build();
   }
 }
