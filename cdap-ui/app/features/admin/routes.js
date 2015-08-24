@@ -165,12 +165,12 @@ angular.module(PKG.name + '.feature.admin')
             })
 
             .state('admin.namespace.detail.templateedit', {
-              url: '/templates/edit/:template/:templateType/:templateName',
+              url: '/templates/edit/:templateType/:pluginType/:pluginTemplate',
               templateUrl: '/assets/features/admin/templates/namespace/templates.html',
               controller: 'NamespaceTemplatesController',
               controllerAs: 'TemplatesController',
               ncyBreadcrumb: {
-                label: '{{$state.params.templateName}}',
+                label: '{{$state.params.pluginTemplate}}',
                 parent: 'admin.namespace.detail.templateslist'
               }
             })

@@ -39,7 +39,7 @@ angular.module(PKG.name + '.feature.admin')
     vm.delete = function (template) {
       mySettings.get('pluginTemplates')
         .then(function (res) {
-          delete res[$stateParams.nsadmin][template.templateType][template.pluginType][template.templateName];
+          delete res[$stateParams.nsadmin][template.templateType][template.pluginType][template.pluginTemplate];
 
           processResult(res);
 
