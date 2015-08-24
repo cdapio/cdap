@@ -68,8 +68,6 @@ angular.module(PKG.name + '.feature.adapters')
       )
         .then(
           function success(res) {
-            // console.log('res', res);
-
             if (res.schema) {
               this.schemaProperties = res.schema;
             }

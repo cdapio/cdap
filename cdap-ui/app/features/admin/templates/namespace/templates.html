@@ -31,11 +31,8 @@
   </div>
 </div>
 
-<<<<<<< HEAD
-<div ng-if="TemplatesController.pluginName">
-=======
+
 <div ng-if="TemplatesController.plugin && TemplatesController.configFetched">
->>>>>>> fix plugin templates in admin
   <h3>Plugin Properties</h3>
 
   <label class="label-control">Template Name</label>
@@ -83,18 +80,9 @@
         <my-schema-editor
           ng-model="TemplatesController.pluginConfig['outputSchema']"
           data-disabled="TemplatesController.pluginConfig.implicitSchema"
-<<<<<<< HEAD
-          ng-if="TemplatesController.pluginName !== 'Stream' && TemplatesController.pluginName !== 'Kafka'"></my-schema-editor>
-        <my-stream-properties
-          ng-model="TemplatesController.pluginConfig['outputSchema']"
-          plugins="TemplatesController.pluginConfig.properties"
-          ng-if="TemplatesController.pluginName === 'Stream' || TemplatesController.pluginName === 'Kafka'"
-        ></my-stream-properties>
-=======
           plugin="TemplatesController.pluginConfig.properties"
           config="TemplatesController.schemaProperties"
           ></my-schema-editor>
->>>>>>> fix plugin templates in admin
       </fieldset>
 
     </div>
