@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.adapters')
-  .controller('_AdapterCreateController', function(MyPlumbService, myAdapterApi, $bootstrapModal, $scope, rConfig, $stateParams, $alert, $modalStack, ModalConfirm, EventPipe, $window) {
+  .controller('AdapterCreateController', function(MyPlumbService, myAdapterApi, $bootstrapModal, $scope, rConfig, $stateParams, $alert, $modalStack, ModalConfirm, EventPipe, $window) {
     this.metadata = MyPlumbService['metadata'];
     function resetMetadata() {
       this.metadata = MyPlumbService['metadata'];
@@ -79,7 +79,6 @@ angular.module(PKG.name + '.feature.adapters')
           MyPlumbService.metadata.description = this.metadata.description;
         }.bind(this));
     };
-
 
     var confirmOnPageExit = function (e) {
 

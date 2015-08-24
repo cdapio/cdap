@@ -49,7 +49,7 @@ angular.module(PKG.name + '.feature.adapters')
               return defer.promise;
             }
           },
-          controller: '_AdapterCreateController as AdapterCreateController',
+          controller: 'AdapterCreateController as AdapterCreateController',
           templateUrl: '/assets/features/adapters/templates/create.html',
           ncyBreadcrumb: {
             skip: true

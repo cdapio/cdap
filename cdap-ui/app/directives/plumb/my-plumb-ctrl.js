@@ -270,7 +270,6 @@ angular.module(PKG.name + '.commons')
 
         this.instance.reset();
         this.instance = jsPlumb.getInstance();
-        window.a = this.instance;
         this.instance.importDefaults(MyPlumbFactory.getSettings().default);
         this.instance.bind('connection', function (con) {
 
