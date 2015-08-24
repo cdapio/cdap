@@ -6,6 +6,7 @@ angular.module(PKG.name + '.feature.admin')
     vm.pluginList = [];
     vm.isEdit = false;
     vm.isDisabled = false;
+    vm.configFetched = false;
 
 
     var plugin;
@@ -53,6 +54,7 @@ angular.module(PKG.name + '.feature.admin')
         vm.pluginName = null;
         plugin = null;
         vm.pluginConfig = null;
+        vm.configFetched = false;
 
         var prom;
         switch (vm.pluginType) {
@@ -79,6 +81,7 @@ angular.module(PKG.name + '.feature.admin')
     // On Edit Mode
     if ($stateParams.pluginTemplate) {
       vm.isEdit = true;
+      vm.configFetched = false;
 
       mySettings.get('pluginTemplates')
         .then(function (res) {
@@ -202,6 +205,10 @@ angular.module(PKG.name + '.feature.admin')
       )
         .then(
           function success(res) {
+            if (res.schema) {
+              vm.schemaProperties = res.schema;
+            }
+
             vm.groups.position = res.groups.position;
             angular.forEach(
               res.groups.position,
@@ -249,6 +256,8 @@ angular.module(PKG.name + '.feature.admin')
             }
 
             vm.pluginConfig = plugin;
+
+            vm.configFetched = true;
           }
         );
     }
