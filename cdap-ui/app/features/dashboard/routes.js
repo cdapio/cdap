@@ -36,8 +36,7 @@ angular.module(PKG.name+'.feature.dashboard')
         templateUrl: '/assets/features/dashboard/templates/staticdashboard.html',
         controller: 'OpsCdapCtrl',
         ncyBreadcrumb: {
-          label: 'System',
-          parent: 'overview'
+          label: 'Operations'
         }
       })
 
@@ -54,8 +53,7 @@ angular.module(PKG.name+'.feature.dashboard')
           }
         },
         ncyBreadcrumb: {
-          label: '{{$state.params.activeDashboard}}',
-          parent: 'overview'
+          label: 'Operations'
         }
       })
 

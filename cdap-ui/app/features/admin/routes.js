@@ -18,8 +18,7 @@ angular.module(PKG.name + '.feature.admin')
           templateUrl: '/assets/features/admin/templates/overview.html',
           controller: 'OverviewController',
           ncyBreadcrumb: {
-            label: 'Management',
-            parent: 'overview'
+            label: 'Management'
           }
         })
 
