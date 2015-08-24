@@ -74,32 +74,29 @@ function makeApp (authAddress, cdapConfig) {
 
     fs.mkdir(path, function (err) {
       if (err && err.code === 'EEXIST') {
-        console.log('Suppressing "folder aleady exists" error for download query');
-        // means the folder already exist. We can ignore it
+        console.log('[Download Query] Public folder already exist');
       }
-    });
 
-    var decoder = new StringDecoder('utf8');
+      var decoder = new StringDecoder('utf8');
 
-    var file = fs.createWriteStream(DIST_PATH + '/assets/public/' + query + '.csv');
+      var file = fs.createWriteStream(DIST_PATH + '/assets/public/' + query + '.csv');
 
-
-    var r = request.post({
-      method: 'POST',
-      url: url
-    });
-
-    r.on('response', function(response) {
-      response.on('data', function(chunk) {
-        file.write(decoder.write(chunk));
+      var r = request.post({
+        method: 'POST',
+        url: url
       });
 
-      response.on('end', function() {
-        file.end();
-        res.send('/assets/public/' + query + '.csv');
+      r.on('response', function(response) {
+        response.on('data', function(chunk) {
+          file.write(decoder.write(chunk));
+        });
+
+        response.on('end', function() {
+          file.end();
+          res.send('/assets/public/' + query + '.csv');
+        });
       });
     });
-
   });
 
   /*
