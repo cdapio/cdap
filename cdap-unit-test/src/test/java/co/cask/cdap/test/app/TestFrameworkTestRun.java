@@ -501,22 +501,18 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   }
 
   /**
-   * Checks to ensure that a particular runnable of the {@param serviceManager} has {@param expected} number of
-   * instances. If the initial check fails, it performs {@param retries} more attempts, sleeping 1 second before each
-   * successive attempt.
+   * Checks to ensure that a particular  {@param workerManager} has {@param expected} number of
+   * instances while retrying every 50 ms for 15 seconds.
+   *
+   * @throws Exception if the worker does not have the specified number of instances after 15 seconds.
    */
-  private void workerInstancesCheck(WorkerManager workerManager, int expected,
-                                    int retries) throws InterruptedException {
-    for (int i = 0; i <= retries; i++) {
-      int actualInstances = workerManager.getInstances();
-      if (actualInstances == expected) {
-        return;
+  private void workerInstancesCheck(final WorkerManager workerManager, int expected) throws Exception {
+    Tasks.waitFor(expected, new Callable<Integer>() {
+      @Override
+      public Integer call() throws Exception {
+        return workerManager.getInstances();
       }
-      if (i == retries) {
-        Assert.assertEquals(expected, actualInstances);
-      }
-      TimeUnit.SECONDS.sleep(1);
-    }
+    }, 15, TimeUnit.SECONDS, 50, TimeUnit.MILLISECONDS);
   }
 
   @Category(SlowTests.class)
@@ -526,22 +522,20 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     WorkerManager workerManager = applicationManager.getWorkerManager(AppUsingGetServiceURL.PINGING_WORKER).start();
     workerManager.waitForStatus(true);
 
-    int retries = 5;
-
     // Should be 5 instances when first started.
-    workerInstancesCheck(workerManager, 5, retries);
+    workerInstancesCheck(workerManager, 5);
 
     // Test increasing instances.
     workerManager.setInstances(10);
-    workerInstancesCheck(workerManager, 10, retries);
+    workerInstancesCheck(workerManager, 10);
 
     // Test decreasing instances.
     workerManager.setInstances(2);
-    workerInstancesCheck(workerManager, 2, retries);
+    workerInstancesCheck(workerManager, 2);
 
     // Test requesting same number of instances.
     workerManager.setInstances(2);
-    workerInstancesCheck(workerManager, 2, retries);
+    workerInstancesCheck(workerManager, 2);
 
     WorkerManager lifecycleWorkerManager =
       applicationManager.getWorkerManager(AppUsingGetServiceURL.LIFECYCLE_WORKER).start();
@@ -549,7 +543,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
     // Set 5 instances for the LifecycleWorker
     lifecycleWorkerManager.setInstances(5);
-    workerInstancesCheck(lifecycleWorkerManager, 5, retries);
+    workerInstancesCheck(lifecycleWorkerManager, 5);
 
     lifecycleWorkerManager.stop();
     lifecycleWorkerManager.waitForStatus(false);
@@ -560,8 +554,8 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     workerManager.waitForStatus(false);
 
     // Should be same instances after being stopped.
-    workerInstancesCheck(lifecycleWorkerManager, 5, retries);
-    workerInstancesCheck(workerManager, 2, retries);
+    workerInstancesCheck(lifecycleWorkerManager, 5);
+    workerInstancesCheck(workerManager, 2);
 
     // Assert the LifecycleWorker dataset writes
     // 3 workers should have started with 3 total instances. 2 more should later start with 5 total instances.
