@@ -17,13 +17,9 @@
 package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.api.ProgramSpecification;
-import co.cask.cdap.api.artifact.ApplicationClass;
-import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.app.ApplicationSpecification;
-import co.cask.cdap.app.deploy.Manager;
-import co.cask.cdap.app.deploy.ManagerFactory;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
@@ -42,15 +38,11 @@ import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
-import co.cask.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
-import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.WriteConflictException;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
-import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
 import co.cask.cdap.internal.app.services.ApplicationLifecycleService;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.proto.ApplicationDetail;
@@ -63,7 +55,6 @@ import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.http.BodyConsumer;
 import co.cask.http.HttpResponder;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMultimap;
@@ -86,7 +77,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -117,25 +107,20 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private final Store store;
 
   private final CConfiguration configuration;
-  private final ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms> managerFactory;
   private final Scheduler scheduler;
   private final NamespaceAdmin namespaceAdmin;
   private final NamespacedLocationFactory namespacedLocationFactory;
   private final ApplicationLifecycleService applicationLifecycleService;
   private final AdapterService adapterService;
-  private final ArtifactRepository artifactRepository;
   private final File tmpDir;
 
   @Inject
   public AppLifecycleHttpHandler(CConfiguration configuration,
-                                 ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms> managerFactory,
                                  Scheduler scheduler, ProgramRuntimeService runtimeService, Store store,
                                  NamespaceAdmin namespaceAdmin, NamespacedLocationFactory namespacedLocationFactory,
                                  ApplicationLifecycleService applicationLifecycleService,
-                                 AdapterService adapterService,
-                                 ArtifactRepository artifactRepository) {
+                                 AdapterService adapterService) {
     this.configuration = configuration;
-    this.managerFactory = managerFactory;
     this.namespaceAdmin = namespaceAdmin;
     this.scheduler = scheduler;
     this.runtimeService = runtimeService;
@@ -143,7 +128,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     this.store = store;
     this.applicationLifecycleService = applicationLifecycleService;
     this.adapterService = adapterService;
-    this.artifactRepository = artifactRepository;
     this.tmpDir = new File(new File(configuration.get(Constants.CFG_LOCAL_DATA_DIR)),
                            configuration.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
   }
@@ -278,8 +262,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}/update")
   public void updateApp(HttpRequest request, HttpResponder responder,
                         @PathParam("namespace-id") final String namespaceId,
-                        @PathParam("app-id") final String appName)
-    throws NamespaceNotFoundException, ArtifactNotFoundException {
+                        @PathParam("app-id") final String appName) throws NamespaceNotFoundException {
 
     Id.Namespace namespace = Id.Namespace.from(namespaceId);
     namespaceAdmin.getNamespace(namespace);
@@ -304,75 +287,13 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       return;
     }
 
-    // check that app exists
-    ApplicationSpecification currentSpec = store.getApplication(appId);
-    if (currentSpec == null) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Application '%s' not found.", appName));
-      return;
-    }
-    Id.Artifact currentArtifact = currentSpec.getArtifactId();
-
-    // if no artifact is given, use the current one.
-    Id.Artifact newArtifactId = currentArtifact;
-    // otherwise, check requested artifact is valid and use it
-    ArtifactSummary requestedArtifact = appRequest.getArtifact();
-    if (requestedArtifact != null) {
-      // cannot change artifact name, only artifact version.
-      if (!currentArtifact.getName().equals(requestedArtifact.getName())) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, String.format(
-          " Only artifact version updates are allowed. Cannot change from artifact '%s' to '%s'.",
-          currentArtifact.getName(), requestedArtifact.getName()));
-        return;
-      }
-
-      if (currentArtifact.getNamespace().equals(Id.Namespace.SYSTEM) != requestedArtifact.isSystem()) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Only artifact version updates are allowed. " +
-            "Cannot change from a non-system artifact to a system artifact or vice versa.");
-        return;
-      }
-
-      // check requested artifact version is valid
-      ArtifactVersion requestedVersion = new ArtifactVersion(requestedArtifact.getVersion());
-      if (requestedVersion.getVersion() == null) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, String.format(
-          "Requested artifact version '%s' is invalid", requestedArtifact.getVersion()));
-        return;
-      }
-      newArtifactId = Id.Artifact.from(currentArtifact.getNamespace(), currentArtifact.getName(), requestedVersion);
-    }
-
-    Object requestedConfigObj = appRequest.getConfig();
-    // if config is null, use the previous config
-    String requestedConfigStr = requestedConfigObj == null ?
-      currentSpec.getConfiguration() : GSON.toJson(requestedConfigObj);
-
-    // check requested artifact exists
-    String appClassName;
-    Location jarLocation;
     try {
-      ArtifactDetail artifactDetail = artifactRepository.getArtifact(newArtifactId);
-      Set<ApplicationClass> appClasses = artifactDetail.getMeta().getClasses().getApps();
-      if (appClasses.isEmpty()) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, String.format(
-          "No application classes found in artifact %s.", newArtifactId));
-        return;
-      }
-      // only one app per artifact today
-      appClassName = appClasses.iterator().next().getClassName();
-      jarLocation = artifactDetail.getDescriptor().getLocation();
-    } catch (IOException e) {
-      LOG.error("Error checking existance of artifact {} during update app call.", newArtifactId, e);
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, String.format(
-        "Error checking existance of request artifact '%s'. Please try again or check system logs.", newArtifactId));
-      return;
-    }
-
-    // validation successful, update the app.
-    AppDeploymentInfo deploymentInfo =
-      new AppDeploymentInfo(newArtifactId, appClassName, jarLocation, requestedConfigStr);
-    try {
-      deploy(namespaceId, appName, deploymentInfo);
+      applicationLifecycleService.updateApp(appId, appRequest, createProgramTerminator());
       responder.sendString(HttpResponseStatus.OK, "Update complete.");
+    } catch (InvalidArtifactException e) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+    } catch (NotFoundException e) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
     } catch (Exception e) {
       // this is the same behavior as deploy app pipeline, but this is bad behavior. Error handling needs improvement.
       LOG.error("Deploy failure", e);
@@ -399,28 +320,14 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           Id.Artifact artifactId =
             Id.Artifact.from(artifactNamespace, artifactSummary.getName(), artifactSummary.getVersion());
 
-          ArtifactDetail artifactDetail;
-          try {
-            artifactDetail = artifactRepository.getArtifact(artifactId);
-          } catch (ArtifactNotFoundException e) {
-            responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
-            return;
-          }
-
-          Set<ApplicationClass> appClasses = artifactDetail.getMeta().getClasses().getApps();
-          if (appClasses.isEmpty()) {
-            responder.sendString(HttpResponseStatus.BAD_REQUEST, String.format(
-              "No application classes found in artifact %s.", artifactId));
-            return;
-          }
-          String className = appClasses.iterator().next().getClassName();
-          Location location = artifactDetail.getDescriptor().getLocation();
-
-          // if we don't null check, it get serialized to "null"
+          // if we don't null check, it gets serialized to "null"
           String configString = appRequest.getConfig() == null ? null : GSON.toJson(appRequest.getConfig());
-          AppDeploymentInfo deploymentInfo = new AppDeploymentInfo(artifactId, className, location, configString);
-          deploy(namespace.getId(), appId, deploymentInfo);
+          applicationLifecycleService.deployApp(namespace, appId, artifactId, configString, createProgramTerminator());
           responder.sendString(HttpResponseStatus.OK, "Deploy Complete");
+        } catch (ArtifactNotFoundException e) {
+          responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
+        } catch (InvalidArtifactException e) {
+          responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
         } catch (IOException e) {
           LOG.error("Error reading request body for creating app {}.", appId);
           responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, String.format(
@@ -486,20 +393,9 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       @Override
       protected void onFinish(HttpResponder responder, File uploadedFile) {
         try {
-          // add artifact to ArtifactRepository
-          ArtifactDetail artifactDetail = artifactRepository.addArtifact(artifactId, uploadedFile);
-
-          Set<ApplicationClass> appClasses = artifactDetail.getMeta().getClasses().getApps();
-          if (appClasses.isEmpty()) {
-            responder.sendString(HttpResponseStatus.BAD_REQUEST, "No application classes found in jar.");
-            return;
-          }
-          String className = appClasses.iterator().next().getClassName();
-          Location location = artifactDetail.getDescriptor().getLocation();
-
-          // deploy application with newly added artifact
-          AppDeploymentInfo deploymentInfo = new AppDeploymentInfo(artifactId, className, location, configString);
-          deploy(namespaceId, appId, deploymentInfo);
+          // deploy app
+          applicationLifecycleService.deployAppAndArtifact(namespace, appId, artifactId, uploadedFile,
+            configString, createProgramTerminator());
           responder.sendString(HttpResponseStatus.OK, "Deploy Complete");
         } catch (InvalidArtifactException e) {
           responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
@@ -519,49 +415,29 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     };
   }
 
-  // deploy helper
-  private void deploy(final String namespaceId, final String appId, AppDeploymentInfo deploymentInfo) throws Exception {
-    try {
-      Id.Namespace id = Id.Namespace.from(namespaceId);
-
-      Manager<AppDeploymentInfo, ApplicationWithPrograms> manager = managerFactory.create(new ProgramTerminator() {
-        @Override
-        public void stop(Id.Program programId) throws ExecutionException {
-          deleteHandler(programId);
+  private ProgramTerminator createProgramTerminator() {
+    return new ProgramTerminator() {
+      @Override
+      public void stop(Id.Program programId) throws Exception {
+        switch (programId.getType()) {
+          case FLOW:
+            stopProgramIfRunning(programId);
+            break;
+          case WORKFLOW:
+            scheduler.deleteSchedules(programId, SchedulableProgramType.WORKFLOW);
+            break;
+          case MAPREDUCE:
+            //no-op
+            break;
+          case SERVICE:
+            stopProgramIfRunning(programId);
+            break;
+          case WORKER:
+            stopProgramIfRunning(programId);
+            break;
         }
-      });
-
-      manager.deploy(id, appId, deploymentInfo).get();
-    } catch (Throwable e) {
-      LOG.warn(e.getMessage(), e);
-      throw new Exception(e.getMessage());
-    }
-  }
-
-  private void deleteHandler(Id.Program programId) throws ExecutionException {
-    try {
-      switch (programId.getType()) {
-        case FLOW:
-          stopProgramIfRunning(programId);
-          break;
-        case WORKFLOW:
-          scheduler.deleteSchedules(programId, SchedulableProgramType.WORKFLOW);
-          break;
-        case MAPREDUCE:
-          //no-op
-          break;
-        case SERVICE:
-          stopProgramIfRunning(programId);
-          break;
-        case WORKER:
-          stopProgramIfRunning(programId);
-          break;
       }
-    } catch (InterruptedException e) {
-      throw new ExecutionException(e);
-    } catch (SchedulerException e) {
-      throw new ExecutionException(e);
-    }
+    };
   }
 
   private void stopProgramIfRunning(Id.Program programId)
