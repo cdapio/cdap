@@ -5,7 +5,9 @@ angular.module(PKG.name + '.feature.adapters')
         transformTemplates = [],
         sinkTemplates = [];
 
-    function objectToArray(obj, arr) {
+    function objectToArray(obj) {
+      var arr = [];
+
       angular.forEach(obj, function (val) {
         if (val.templateType === MyPlumbService.metadata.template.type) {
           val.icon = 'fa-plug';
@@ -14,15 +16,17 @@ angular.module(PKG.name + '.feature.adapters')
           arr.push(val);
         }
       });
+
+      return arr;
     }
 
     mySettings.get('pluginTemplates')
       .then(function (res) {
         var templates = res[$state.params.namespace][MyPlumbService.metadata.template.type];
 
-        objectToArray(templates.source, sourceTemplates);
-        objectToArray(templates.transform, transformTemplates);
-        objectToArray(templates.sink, sinkTemplates);
+        sourceTemplates = objectToArray(templates.source);
+        transformTemplates = objectToArray(templates.transform);
+        sinkTemplates = objectToArray(templates.sink);
       });
 
 
@@ -318,7 +322,7 @@ angular.module(PKG.name + '.feature.adapters')
           id: id,
           name: item.pluginName,
           icon: MyPlumbFactory.getIcon(item.pluginName),
-          type: item.type,
+          type: item.pluginType,
           properties: item.properties,
           outputSchema: item.outputSchema,
           templateName: item.templateName,

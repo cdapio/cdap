@@ -24,12 +24,15 @@
     <tbody>
       <tr ng-repeat="template in TemplatesListController.list">
         <td>
-          <a ui-sref="admin.namespace.detail.templateedit({ template: template.templateType, templateType: template.type, templateName: template.templateName })">
+          <a ui-sref="admin.namespace.detail.templateedit({ template: template.templateType, templateType: template.pluginType, templateName: template.templateName })">
             {{ template.templateName }}
           </a>
         </td>
-        <td>{{ template.templateType }}</td>
-        <td>{{ template.type }}</td>
+        <td>
+          <i class="icon-{{template.templateType}}"></i>
+          <span>{{ template.templateType }}</span>
+        </td>
+        <td>{{ template.pluginType }}</td>
         <td>{{ template.pluginName }}</td>
         <td>
           <a href=""

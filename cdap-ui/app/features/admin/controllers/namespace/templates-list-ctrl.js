@@ -5,32 +5,26 @@ angular.module(PKG.name + '.feature.admin')
     vm.list = [];
 
     function objectToArray(obj) {
+      var arr = [];
+
       angular.forEach(obj, function (value) {
-        vm.list.push(value);
+        arr.push(value);
       });
+
+      return arr;
     }
 
     function processResult(response) {
       if (response) {
         vm.list = [];
 
-        var sources, transforms, sinks;
-
-        sources = myHelpers.objectQuery(response, $stateParams.nsadmin, 'ETLBatch', 'source');
-        transforms = myHelpers.objectQuery(response, $stateParams.nsadmin, 'ETLBatch', 'transform');
-        sinks = myHelpers.objectQuery(response, $stateParams.nsadmin, 'ETLBatch', 'sink');
-
-        objectToArray(sources);
-        objectToArray(transforms);
-        objectToArray(sinks);
-
-        sources = myHelpers.objectQuery(response, $stateParams.nsadmin, 'ETLRealtime', 'source');
-        transforms = myHelpers.objectQuery(response, $stateParams.nsadmin, 'ETLRealtime', 'transform');
-        sinks = myHelpers.objectQuery(response, $stateParams.nsadmin, 'ETLRealtime', 'sink');
-
-        objectToArray(sources);
-        objectToArray(transforms);
-        objectToArray(sinks);
+        ['ETLBatch', 'ETLRealtime'].forEach(function (templateType) {
+          ['source', 'transform', 'sink'].forEach(function (pluginType) {
+            var obj = myHelpers.objectQuery(response, $stateParams.nsadmin, templateType, pluginType);
+            var pluginArray = objectToArray(obj);
+            vm.list = vm.list.concat(pluginArray);
+          });
+        });
       }
     }
 
@@ -45,7 +39,7 @@ angular.module(PKG.name + '.feature.admin')
     vm.delete = function (template) {
       mySettings.get('pluginTemplates')
         .then(function (res) {
-          delete res[$stateParams.nsadmin][template.templateType][template.type][template.templateName];
+          delete res[$stateParams.nsadmin][template.templateType][template.pluginType][template.templateName];
 
           processResult(res);
 

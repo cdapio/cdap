@@ -76,7 +76,7 @@ angular.module(PKG.name + '.feature.admin')
     }
 
 
-
+    // On Edit Mode
     if ($stateParams.templateName) {
       vm.isEdit = true;
 
@@ -85,7 +85,7 @@ angular.module(PKG.name + '.feature.admin')
           var template = res[$stateParams.nsadmin][$stateParams.template][$stateParams.templateType][$stateParams.templateName];
 
           vm.template = template.templateType;
-          vm.pluginType = template.type;
+          vm.pluginType = template.pluginType;
           vm.plugin = template.pluginName;
 
           vm.pluginConfig = {
@@ -132,7 +132,7 @@ angular.module(PKG.name + '.feature.admin')
       var properties = {
         templateName: vm.pluginConfig.templateName,
         properties: vm.pluginConfig.properties,
-        type: vm.pluginType,
+        pluginType: vm.pluginType,
         templateType: vm.template,
         pluginName: vm.plugin,
         outputSchema: vm.pluginConfig.outputSchema,
@@ -144,23 +144,9 @@ angular.module(PKG.name + '.feature.admin')
       mySettings.get('pluginTemplates')
         .then(function(res) {
 
-          if (!angular.isObject(res)) {
-            res = {};
-          }
+          var config = myHelpers.objectQuery(res, namespace, properties.templateType, properties.pluginType, properties.templateName);
 
-          if (!res[namespace]) {
-            res[namespace] = {};
-          }
-
-          if (!res[namespace][properties.templateType]) {
-            res[namespace][properties.templateType] = {};
-          }
-
-          if (!res[namespace][properties.templateType][properties.type]) {
-            res[namespace][properties.templateType][properties.type] = {};
-          }
-
-          if (res[namespace][properties.templateType][properties.type][properties.templateName] && !vm.isEdit) {
+          if (config && !vm.isEdit) {
             $alert({
               type: 'danger',
               content: 'Template name already exist! Please choose another name'
@@ -170,7 +156,15 @@ angular.module(PKG.name + '.feature.admin')
             return;
           }
 
-          res[namespace][properties.templateType][properties.type][properties.templateName] = properties;
+          var json = [
+            namespace,
+            properties.templateType,
+            properties.pluginType,
+            properties.templateName
+          ].join('.');
+
+          myHelpers.deepSet(res, json, properties);
+
           mySettings.set('pluginTemplates', res)
             .then(function () {
               $alert({
