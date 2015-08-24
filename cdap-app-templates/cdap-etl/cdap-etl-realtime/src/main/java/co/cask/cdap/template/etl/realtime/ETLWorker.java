@@ -70,7 +70,7 @@ public class ETLWorker extends AbstractWorker {
   private byte[] stateStoreKeyBytes;
   private Metrics metrics;
 
-  private volatile boolean running;
+  private volatile boolean stopped;
 
   @Override
   public void configure() {
@@ -178,7 +178,6 @@ public class ETLWorker extends AbstractWorker {
     final SourceState currentState = new SourceState();
     final SourceState nextState = new SourceState();
     final List<Object> dataToSink = Lists.newArrayList();
-    running = true;
 
     // Fetch SourceState from State Table.
     // Only required at the beginning since we persist the state if there is a change.
@@ -194,7 +193,7 @@ public class ETLWorker extends AbstractWorker {
       }
     });
 
-    while (running) {
+    while (!stopped) {
       // Invoke poll method of the source to fetch data
       try {
         SourceState newState = source.poll(sourceEmitter, new SourceState(currentState));
@@ -256,7 +255,7 @@ public class ETLWorker extends AbstractWorker {
 
   @Override
   public void stop() {
-    running = false;
+    stopped = true;
   }
 
   @Override
