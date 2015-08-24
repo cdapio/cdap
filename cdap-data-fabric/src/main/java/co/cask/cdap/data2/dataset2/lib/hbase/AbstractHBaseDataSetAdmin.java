@@ -136,14 +136,12 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
       if (info != null) {
         // The same coprocessor has been configured, check by the file name hash to see if they are the same.
         if (!jarLocation.getName().equals(info.getPath().getName())) {
-          needUpgrade = true;
           // Remove old one and add the new one.
           newDescriptor.removeCoprocessor(info.getClassName());
           addCoprocessor(newDescriptor, coprocessor, jarLocation, coprocessorJar.getPriority(coprocessor));
         }
       } else {
         // The coprocessor is missing from the table, add it.
-        needUpgrade = true;
         addCoprocessor(newDescriptor, coprocessor, jarLocation, coprocessorJar.getPriority(coprocessor));
       }
     }
@@ -151,13 +149,7 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
     // Removes all old coprocessors
     Set<String> coprocessorNames = ImmutableSet.copyOf(Iterables.transform(coprocessorJar.coprocessors, CLASS_TO_NAME));
     for (String remove : Sets.difference(coprocessorInfo.keySet(), coprocessorNames)) {
-      needUpgrade = true;
       newDescriptor.removeCoprocessor(remove);
-    }
-
-    if (!needUpgrade) {
-      LOG.info("No upgrade needed for table '{}'", tableId);
-      return;
     }
 
     setVersion(newDescriptor);
