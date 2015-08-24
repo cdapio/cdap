@@ -78,10 +78,18 @@
         "eclipse": {
           "version": "Luna",
           "release_code": "SR2",
+          "plugins": [
+            { "http://download.eclipse.org/releases/luna": "org.eclipse.egit.feature.group" },
+            { "http://download.eclipse.org/technology/m2e/releases": "org.eclipse.m2e.feature.feature.group" }
+          ],
           "url": "http://mirrors.ibiblio.org/pub/mirrors/eclipse/technology/epp/downloads/release/luna/SR2/eclipse-jee-luna-SR2-linux-gtk-x86_64.tar.gz"
         },
         "idea": {
           "setup_dir": "/opt"
+        },
+        "hadoop": {
+          "distribution": "hdp",
+          "distribution_version": "2.1.7.0"
         },
         "java": {
           "install_flavor": "oracle",
