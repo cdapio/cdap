@@ -15,6 +15,7 @@ my-breadcrumbs, my-breadcrumb {
     left: 0;
     height: 40px;
     line-height: 40px;
+
     .crumbs {
       .flexbox();
       flex-direction: row;
@@ -23,50 +24,6 @@ my-breadcrumbs, my-breadcrumb {
       height: 40px;
 
       li.dropdown {
-        ul.dropdown-menu {
-          width: 120px;
-          max-height: 290px;
-          min-width: 0;
-          background-color: white;
-          border-color: white;
-          padding: 10px 0;
-          margin-top: 1px;
-          .border-radius(4px);
-          .box-shadow(0 6px 12px rgba(0, 0, 0, 0.175));
-          overflow-x: hidden;
-          overflow-y: scroll;
-          @media (max-width: @screen-md-max) {
-            position: absolute;
-          }
-          > li {
-            background-color: white;
-            padding: 0;
-            &:focus {
-              outline: 0;
-            }
-            > a {
-              color: @cdap-header;
-              font-weight: 500;
-              background-color: white;
-              padding-right: 10px;
-              padding-left: 10px;
-              &:hover, &:focus {
-                color: @cdap-orange;
-              }
-              &:focus {
-                outline: 0;
-              }
-            }
-            i {
-              display: inline-block;
-              width: 13px;
-            }
-            .active {
-              color: #c4c4c4;
-              pointer-events: none;
-            }
-          }
-        }
         &.open {
           a.ns-dropdown-toggle:focus {
             border-color: transparent;
@@ -110,6 +67,52 @@ my-breadcrumbs, my-breadcrumb {
         }
         &:last-child {
           margin-right: 7px;
+        }
+      }
+    }
+
+    ul.dropdown-menu {
+      width: 120px;
+      height: auto;
+      max-height: 290px;
+      min-width: 0;
+      background-color: white;
+      border-color: white;
+      padding: 10px 0;
+      margin-top: 1px;
+      .border-radius(4px);
+      .box-shadow(0 6px 12px rgba(0, 0, 0, 0.175));
+      overflow-x: hidden;
+      overflow-y: scroll;
+      @media (max-width: @screen-md-max) {
+        position: absolute;
+      }
+      > li {
+        background-color: white;
+        padding: 0;
+        &:focus {
+          outline: 0;
+        }
+        > a {
+          color: @cdap-header;
+          font-weight: 500;
+          background-color: white;
+          padding-right: 10px;
+          padding-left: 10px;
+          &:hover, &:focus {
+            color: @cdap-orange;
+          }
+          &:focus {
+            outline: 0;
+          }
+        }
+        i {
+          display: inline-block;
+          width: 13px;
+        }
+        .active {
+          color: #c4c4c4;
+          pointer-events: none;
         }
       }
     }
