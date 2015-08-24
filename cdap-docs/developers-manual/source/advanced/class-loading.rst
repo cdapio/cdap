@@ -71,8 +71,8 @@ only classes under those packages will be available to the plugin. This is to av
 libraries used by the application interfering with the ones used by the plugin. The plugin
 JAR file is following a similar structure as an application JAR file.
 
-Class Loading in Apache Hadoop MapReduce and Spark
-==================================================
+Class Loading in Apache Hadoop MapReduce and Apache Spark
+=========================================================
 
 One of the major challenges faced when we integrate CDAP with data processing frameworks,
 such as MapReduce and Spark, is the class loading. Both frameworks use a
