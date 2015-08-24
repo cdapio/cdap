@@ -59,8 +59,8 @@
     },
 
     "group2" : {
-       "display" : "Format & Schema",
-       "position" : [ "format", "schema" ],
+       "display" : "Format",
+       "position" : [ "format" ],
        "fields" : {
           "format" : {
              "widget" : "select",
@@ -69,14 +69,14 @@
                "values" : [ "", "avro", "clf", "csv", "grok", "syslog", "text", "tsv" ],
                "default" : ""
              }
-          },
-          "schema" : {
-             "widget": "stream-properties",
-             "label" : "Schema",
-             "schema-types" : [ "boolean", "int", "long", "float", "double", "bytes", "string" ],
-             "schema-default-type" : "string"
           }
        }
     }
+  },
+  "schema" : {
+     "widget": "stream-properties",
+     "schema-types" : [ "boolean", "int", "long", "float", "double", "bytes", "string" ],
+     "schema-default-type" : "string",
+     "property-watch": "format"
   }
 }

@@ -23,6 +23,8 @@ angular.module(PKG.name + '.commons')
         var defaultType = null;
         var watchProperty = null;
 
+        $scope.fields = 'SHOW';
+
         if ($scope.config) {
           $scope.options = $scope.config['schema-types'];
           defaultType = $scope.config['schema-default-type'] || $scope.options[0];
