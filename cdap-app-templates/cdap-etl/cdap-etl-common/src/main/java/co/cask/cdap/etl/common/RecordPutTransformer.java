@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.template.etl.common;
+package co.cask.cdap.etl.common;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.format.StructuredRecord;
@@ -32,6 +32,7 @@ import javax.annotation.Nullable;
  * Transforms records into Puts.
  */
 public class RecordPutTransformer {
+  public static final String CASE_SENSITIVE_ROW_FIELD = "case.sensitive.row.field";
   // Not final for an optimization - When rowField is case-insensitive, we may have to look for it in the schema
   // provided to the toPut method. When there isn't an exact match but a case-insensitive match, we have to loop over
   // all fields in the schema to find the case-insensitive match. Making this non-final allows us to do this look up
@@ -179,7 +180,7 @@ public class RecordPutTransformer {
         Preconditions.checkArgument(Iterables.size(filtered) == 1,
                                     "Cannot have multiple fields in the schema that match %s in a case-insensitive " +
                                       "manner when the property %s is false. Found %s.",
-                                    rowField, Properties.Table.CASE_SENSITIVE_ROW_FIELD, Iterables.toString(filtered));
+                                    rowField, CASE_SENSITIVE_ROW_FIELD, Iterables.toString(filtered));
         field = filtered.iterator().next();
         rowField = field.getName();
       }
