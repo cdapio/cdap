@@ -6,9 +6,6 @@ import test_helpers as helpers
 ##### INPUT FUNCTIONS #####
 
 def process_input(argv):
-## Calls the functions below
-# take input
-#    print blah
     input_vars = process_params(argv)
     return input_vars
 
