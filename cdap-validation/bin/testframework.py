@@ -58,7 +58,7 @@ def testing(base_vars,cluster_vars):
     cluster_vars['base_url'] = cluster_vars['host'] + cluster_vars['version']
     
     # get preliminary info
-    cluster_vars = get_install_manager_info(base_vars, cluster_vars, install_manager)
+    cluster_vars = get_install_manager_info(cluster_vars)
       # do we need these (below) or can we just work with the dict values?
     if cluster_vars['verbose'] == 2:
         for key, value in cluster_vars.iteritems():
@@ -167,7 +167,7 @@ def get_install_manager(version):
     return manager
 
 # get static info needed to connect to a specific API
-def get_install_manager_info(base_info,cluster_info,mgr):
+def get_install_manager_info(cluster_info):
     my_cluster = '/clusters/' + cluster_info['cluster']
     cluster_info['my_cluster'] = my_cluster
     base_url = cluster_info['host']
