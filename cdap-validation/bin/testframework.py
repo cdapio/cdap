@@ -6,7 +6,7 @@ import json
 import re
 from subprocess import call
 import ambari
-import cm
+import cloudera
 
 ##### TEST FRAMEWORK FUNCTIONS #####
 
@@ -38,7 +38,7 @@ def testing(base_vars,cluster_vars):
 
     # validate_connection
     if cluster_vars['verbose'] == 2:  print 'Validating connection'
-    api_tests = [{'cm': base_vars['cm']['api_test']},{'ambari': base_vars['ambari']['api_test']}]
+    api_tests = [{'cloudera': base_vars['cloudera']['api_test']},{'ambari': base_vars['ambari']['api_test']}]
     version_test = validate_connection(base_vars, cluster_vars, api_tests)
     if cluster_vars['verbose'] == 2:  print ''
     if cluster_vars['verbose'] == 2:  print 'version_test=%s' % (version_test)
@@ -50,7 +50,7 @@ def testing(base_vars,cluster_vars):
     if cluster_vars['verbose'] == 2:  print 'Hadoop install manager is %s' % (install_manager)
 
     # get version for API call
-    if install_manager == 'cm':
+    if install_manager == 'cloudera':
         cluster_vars['version'] = version_test
     else:
         cluster_vars['version'] = 'v1'
@@ -160,7 +160,7 @@ def test_api_connection(base_info, cluster_info, api_tests):
 
 def get_install_manager(version):
     if version == 'v10':
-        manager = 'cm'
+        manager = 'cloudera'
     else:
         manager = 'ambari'
 
@@ -186,9 +186,9 @@ def get_commands(base,cluster):
     configs_subdir = base[mgr]['subdir']
     my_cluster = cluster['my_cluster']
      
-    if mgr == 'cm':
+    if mgr == 'cloudera':
         print 'Hadoop install manager: Cloudera Manager'
-        #cm.cm_commands(host_url, configs_subdir, base, cluster) ## disabling for now
+        #cloudera.cloudera_commands(host_url, configs_subdir, base, cluster) ## disabling for now
     
     elif mgr == 'ambari':
         if cluster['verbose'] ==2: print 'Hadoop install manager: Ambari'

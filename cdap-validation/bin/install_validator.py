@@ -1,13 +1,13 @@
 #!/usr/bin/python
 
-import testing
+import testframework
 import sys
 import input
 import getopt
 
 # generic static values used regardless of user input
 base_vars = dict(
-cm = { 'api_test': 'version', 'version': '', 'subdir': 'cm_configs/', 'stored_results': 'stored_configs', 'baseref': 'baseref_configs' },
+cloudera = { 'api_test': 'version', 'version': '', 'subdir': 'cloudera_configs/', 'stored_results': 'stored_configs', 'baseref': 'baseref_configs' },
 ambari = { 'api_test': 'v1/clusters', 'version': 'v1', 'subdir': 'ambari_configs/', 'stored_results': 'stored_configs', 'baseref': 'baseref_configs' }
 )
 
@@ -32,7 +32,7 @@ def main(argv):
     #}
 
     ### test framework functions
-    testing.testing(base_vars,cluster_vars)
+    testframework.testing(base_vars,cluster_vars)
 
 if __name__ == '__main__':
     main(sys.argv[1:])

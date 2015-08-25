@@ -11,7 +11,8 @@ def usage():
     print """
     -h, --help  help menu
     -c, --cluster       cluster name used in API calls to the install manager
-    -m, --modules       run modules, e.g. --modules 'module1;module2'
+    -m, --modules       Run plugabble test modules, separated by ';'.  E.g. -m 'module1;module2'
+                        Each module is a self-contained unit under the modules subdirectory
     -u, --user          authentication, e.g. --user 'george:pass'
     -U, --uri           URI: e.g. --uri 'http://10.240.0.8:7180'
     -v, --verbose       adds more output (additional invocations increase verbosity)
