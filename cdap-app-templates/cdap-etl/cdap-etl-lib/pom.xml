@@ -191,6 +191,7 @@
               <instructions>
                 <!-- build bundle jar for batch. excluding realtime-->
                 <Export-Package>co.cask.cdap.template.etl.batch.*;co.cask.cdap.template.etl.transform.*;
+                  co.cask.cdap.template.etl.validator.*;
                   co.cask.cdap.template.etl.common;org.apache.avro.mapreduce;parquet.avro;
                   org.elasticsearch.hadoop.mr.*</Export-Package>
                 <Embed-Dependency>*;inline=false;scope=compile</Embed-Dependency>
@@ -210,7 +211,7 @@
               <instructions>
                 <!-- build bundle jar for realtime. excluding batch-->
                 <Export-Package>co.cask.cdap.template.etl.realtime.*;co.cask.cdap.template.etl.transform.*;
-                  co.cask.cdap.template.etl.common</Export-Package>
+                  co.cask.cdap.template.etl.validator.*;co.cask.cdap.template.etl.common</Export-Package>
                 <Embed-Dependency>*;inline=false;scope=compile</Embed-Dependency>
                 <Embed-Transitive>true</Embed-Transitive>
                 <Embed-Directory>lib</Embed-Directory>
