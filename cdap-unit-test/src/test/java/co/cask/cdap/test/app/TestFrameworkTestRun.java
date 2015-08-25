@@ -665,7 +665,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     request = HttpRequest.get(url).build();
     response = HttpRequests.execute(request);
     Assert.assertEquals(500, response.getResponseCode());
-    Assert.assertTrue(response.getResponseBodyAsString().contains("Transaction failure"));
+    Assert.assertTrue(response.getResponseBodyAsString().contains("IllegalStateException"));
 
     // Call the verify ClassLoader endpoint
     url = new URL(serviceURL, "verifyClassLoader");

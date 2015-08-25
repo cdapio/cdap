@@ -21,6 +21,7 @@ import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import com.google.gson.Gson;
@@ -176,11 +177,15 @@ public final class DelayedHttpServiceResponder implements HttpServiceResponder {
    * Since calling one of the send methods multiple times logs a warning, upon transaction failures this
    * method is called to allow setting the failure response without an additional warning.
    */
-  public void setTransactionFailureResponse() {
-    ByteBuffer buffer = Charsets.UTF_8.encode("Transaction failure when committing changes. Aborted transaction.");
+  public void setTransactionFailureResponse(Throwable t) {
+    Throwable rootCause = Throwables.getRootCause(t);
+    ByteBuffer buffer = Charsets.UTF_8.encode("Exception occurred while handling request: "
+                                                + Throwables.getStackTraceAsString(rootCause));
+
     bufferedResponse = new BufferedResponse(HttpResponseStatus.INTERNAL_SERVER_ERROR.getCode(),
                                             ChannelBuffers.wrappedBuffer(buffer),
                                             "text/plain; charset=" + Charsets.UTF_8.name(), null);
+
   }
 
   /**

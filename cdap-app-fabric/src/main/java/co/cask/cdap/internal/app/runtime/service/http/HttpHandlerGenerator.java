@@ -613,7 +613,9 @@ final class HttpHandlerGenerator {
 
       // wrappedResponder.setTransactionFailureResponse();
       mg.loadLocal(wrappedResponder);
-      mg.invokeVirtual(delayedHttpServiceResponderType, Methods.getMethod(void.class, "setTransactionFailureResponse"));
+      mg.loadLocal(txFailureException);
+      mg.invokeVirtual(delayedHttpServiceResponderType, Methods.getMethod(void.class, "setTransactionFailureResponse",
+                                                                          Throwable.class));
 
       mg.mark(txFinish);
 
