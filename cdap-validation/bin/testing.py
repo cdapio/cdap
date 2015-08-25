@@ -24,18 +24,11 @@ def testing(base_vars,cluster_vars):
     cluster_vars['cluster'] = input['params']['cluster_name']
     cluster_vars['modules'] = input['params']['modules']
 
-    # check for verbosity not set
-    #if not input['params']['verbose']:
-    #    cluster_vars['verbose'] = 'default'
-    #else:
-    #    cluster_vars['verbose'] = input['params']['verbose']
-
     if cluster_vars['verbose'] == 2:
         for k,v in cluster_vars.iteritems():
             print 'cluster vars: %s=%s' % (k,v)
 
-    # detect_installed_services
-    # hold on for now
+    # detect_installed_services -- placeholder for future function
 
     # prep the url
     find_api='/api'
@@ -156,8 +149,6 @@ def test_api_connection(base_info, cluster_info, api_tests):
             if h == 'noapi':
                 if cluster_info['verbose'] == 2: print 'No API for %s, trying the next or exiting' % (manager)
                 break
-            else:
-                print '' # API may be reachable -- confirmed in next steps
             mgr_test = h.read()
             # add logic to do next iteration or not, depending on whether we succeeded on first one
             # if good: create array or hash with manager and mgr_test and return that?
@@ -185,8 +176,8 @@ def get_install_manager_info(base_info,cluster_info,mgr):
     cluster_info['base_url'] = base_url
     return cluster_info
 
+# get (and run) API commands
 def get_commands(base,cluster):
-    # get (and run) API commands
     if cluster['verbose'] == 2: print 'Now running API commands'
     mgr = cluster['manager']
     host_url = cluster['base_url']
