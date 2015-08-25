@@ -31,8 +31,8 @@ import co.cask.cdap.api.templates.plugins.PluginPropertyField;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactRange;
-import co.cask.cdap.proto.artifact.CreateAppRequest;
 
 import java.io.File;
 import java.io.IOException;
@@ -73,11 +73,11 @@ public interface TestManager {
    * Deploys an {@link Application}.
    *
    * @param appId the id of the application to create
-   * @param createAppRequest the app creation request that includes the artifact to create the app from and any config
-   *                         to pass to the application.
+   * @param appRequest the app create or update request that includes the artifact to create the app from and any config
+   *                   to pass to the application.
    * @return An {@link ApplicationManager} to manage the deployed application.
    */
-  ApplicationManager deployApplication(Id.Application appId, CreateAppRequest createAppRequest) throws Exception;
+  ApplicationManager deployApplication(Id.Application appId, AppRequest appRequest) throws Exception;
 
   /**
    * Deploys an {@link ApplicationTemplate}. Only supported in unit tests.

@@ -80,8 +80,8 @@ import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactRange;
-import co.cask.cdap.proto.artifact.CreateAppRequest;
 import co.cask.cdap.test.internal.ApplicationManagerFactory;
 import co.cask.cdap.test.internal.DefaultApplicationManager;
 import co.cask.cdap.test.internal.DefaultStreamManager;
@@ -458,12 +458,12 @@ public class ConfigurableTestBase {
    * Deploys an {@link Application}. The application artifact must already exist.
    *
    * @param appId the id of the application to create
-   * @param createAppRequest the application create request
+   * @param appRequest the application create or update request
    * @return An {@link ApplicationManager} to manage the deployed application
    */
   protected static ApplicationManager deployApplication(Id.Application appId,
-                                                        CreateAppRequest createAppRequest) throws Exception {
-    return getTestManager().deployApplication(appId, createAppRequest);
+                                                        AppRequest appRequest) throws Exception {
+    return getTestManager().deployApplication(appId, appRequest);
   }
 
   /**
