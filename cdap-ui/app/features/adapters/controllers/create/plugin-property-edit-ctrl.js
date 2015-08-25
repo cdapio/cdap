@@ -186,4 +186,49 @@ angular.module(PKG.name + '.feature.adapters')
       EventPipe.emit('schema.clear');
     };
 
+    this.save = function () {
+      if (validateSchema()) {
+        $scope.$close('save');
+      }
+    };
+
+    function validateSchema() {
+      $scope.errors = [];
+      var schema;
+      try {
+        schema = JSON.parse($scope.plugin.outputSchema);
+        schema = schema.fields;
+      } catch (e) {
+        schema = null;
+      }
+
+      var validationRules = [
+        hasUniqueFields
+      ];
+
+      var error = [];
+      validationRules.forEach(function (rule) {
+        rule.call(this, schema, error);
+      });
+
+      if (error.length > 0) {
+        $scope.errors = error;
+        return false;
+      } else {
+        return true;
+      }
+
+    }
+
+    function hasUniqueFields(schema, error) {
+      if (!schema) { return true; }
+
+      var fields = schema.map(function (field) { return field.name; });
+      var unique = _.uniq(fields);
+
+      if (fields.length !== unique.length) {
+        error.push('There are two or more fields with the same name.');
+      }
+    }
+
   });

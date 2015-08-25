@@ -36,7 +36,7 @@
           </a>
         </div>
         <div ng-if="!isDisabled" class="non-info">
-          <a class="btn" ng-click="$close('save')">
+          <a class="btn" ng-click="PluginEditController.save()">
             <span class="fa fa-floppy-o"></span>
           </a>
         </div>
@@ -170,6 +170,12 @@
       <!-- OUTPUT EDITOR -->
       <div class="col-lg-4" ng-if="!isSink">
         <div class="modal-content-scroll output-schema">
+
+          <div class="schema-error">
+            <ul>
+              <li class="text-danger" ng-repeat="error in errors">{{ error }}</li>
+            </ul>
+          </div>
 
           <h4>
             <span>Output Schema</span>
