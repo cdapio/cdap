@@ -1,3 +1,19 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright © 2015 Cask Data, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import urllib2
 import json
 import re
@@ -5,7 +21,7 @@ import glob, os
 import test_helpers as helpers
 
 # Start Ambari configuration retrieval process
-def ambari_commands(host, subdir, base, cluster_info):
+def get_ambari_configs(host, subdir, base, cluster_info):
     ## get ambari configs
     manager = 'ambari' 
     cu = get_config_urls(host, cluster_info)
@@ -17,6 +33,7 @@ def ambari_commands(host, subdir, base, cluster_info):
     data = json.loads(config_url_href)
     config_urls = [ item['href'] for item in data['items'] ]
 
+    ## run API commands:
     ## iterate through ambari config urls, and run api requests against those
     ##   This creates config files in a subdirectory
     get_configs(config_urls, subdir, cluster_info)

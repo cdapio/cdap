@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 #
 # Copyright © 2015 Cask Data, Inc.
 #
@@ -206,7 +207,7 @@ def get_and_run_api_commands(base,cluster):
     
     elif mgr == 'ambari':
         if cluster['verbose'] ==2: print 'Hadoop install manager: Ambari'
-        ambari.ambari_commands(host_url, configs_subdir, base, cluster)
+        ambari.get_ambari_configs(host_url, configs_subdir, base, cluster)
     
     else:
         print 'Your Hadoop install manager is not recognized'
