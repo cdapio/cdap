@@ -499,7 +499,7 @@ final class HttpHandlerGenerator {
      *       txContext.finish();
      *     } catch (TransactionFailureException e) {
      *        LOG.error("Transaction failure: ", e);
-     *        wrappedResponder.setTransactionFailureResponse();
+     *        wrappedResponder.setTransactionFailureResponse(e);
      *     }
      *     wrappedResponder.execute();
      *   }
@@ -611,7 +611,7 @@ final class HttpHandlerGenerator {
       mg.invokeInterface(loggerType, Methods.getMethod(void.class, "error", String.class,
                                                        Throwable.class));
 
-      // wrappedResponder.setTransactionFailureResponse();
+      // wrappedResponder.setTransactionFailureResponse(e);
       mg.loadLocal(wrappedResponder);
       mg.loadLocal(txFailureException);
       mg.invokeVirtual(delayedHttpServiceResponderType, Methods.getMethod(void.class, "setTransactionFailureResponse",
