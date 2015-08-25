@@ -15,6 +15,7 @@
   <table class="table table-curved">
     <thead>
       <th>Name</th>
+      <th>Template</th>
       <th>Type</th>
       <th>Plugin</th>
       <th></th>
@@ -23,11 +24,15 @@
     <tbody>
       <tr ng-repeat="template in TemplatesListController.list">
         <td>
-          <a ui-sref="admin.namespace.detail.templateedit({ templateName: template.templateName })">
-            {{ template.templateName }}
+          <a ui-sref="admin.namespace.detail.templateedit({ templateType: template.templateType, pluginType: template.pluginType, pluginTemplate: template.pluginTemplate })">
+            {{ template.pluginTemplate }}
           </a>
         </td>
-        <td>{{ template.type }}</td>
+        <td>
+          <i class="icon-{{template.templateType}}"></i>
+          <span>{{ template.templateType }}</span>
+        </td>
+        <td>{{ template.pluginType }}</td>
         <td>{{ template.pluginName }}</td>
         <td>
           <a href=""

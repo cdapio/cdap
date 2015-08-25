@@ -11,7 +11,7 @@ angular.module(PKG.name + '.feature.admin')
     var plugin;
 
     function initialize() {
-      if (!vm.plugin) { return; }
+      if (!vm.pluginName) { return; }
 
       var fetchApi;
       switch (vm.pluginType) {
@@ -27,13 +27,13 @@ angular.module(PKG.name + '.feature.admin')
       }
 
       plugin = {
-        name: vm.plugin
+        name: vm.pluginName
       };
 
       var params = {
-        adapterType: vm.template
+        adapterType: vm.templateType
       };
-      params[vm.pluginType] = vm.plugin;
+      params[vm.pluginType] = vm.pluginName;
 
       fetchApi(params).$promise
         .then(function (res) {
@@ -45,25 +45,25 @@ angular.module(PKG.name + '.feature.admin')
         });
     }
 
-    if (!$stateParams.templateName) {
+    if (!$stateParams.pluginTemplate) {
       // Obtaining list of plugins
       $scope.$watch(function () { return vm.pluginType; }, function () {
         if (!vm.pluginType) { return; }
 
-        vm.plugin = null;
+        vm.pluginName = null;
         plugin = null;
         vm.pluginConfig = null;
 
         var prom;
         switch (vm.pluginType) {
           case 'source':
-            prom = myAdapterApi.fetchSources({ adapterType: vm.template }).$promise;
+            prom = myAdapterApi.fetchSources({ adapterType: vm.templateType }).$promise;
             break;
           case 'transform':
-            prom = myAdapterApi.fetchTransforms({ adapterType: vm.template }).$promise;
+            prom = myAdapterApi.fetchTransforms({ adapterType: vm.templateType }).$promise;
             break;
           case 'sink':
-            prom = myAdapterApi.fetchSinks({ adapterType: vm.template }).$promise;
+            prom = myAdapterApi.fetchSinks({ adapterType: vm.templateType }).$promise;
             break;
         }
         prom.then(function (res) {
@@ -72,24 +72,24 @@ angular.module(PKG.name + '.feature.admin')
       });
 
       // Fetching backend properties
-      $scope.$watch(function () { return vm.plugin; }, initialize);
+      $scope.$watch(function () { return vm.pluginName; }, initialize);
     }
 
 
-
-    if ($stateParams.templateName) {
+    // On Edit Mode
+    if ($stateParams.pluginTemplate) {
       vm.isEdit = true;
 
       mySettings.get('pluginTemplates')
         .then(function (res) {
-          var template = res[$stateParams.nsadmin][$stateParams.templateName];
+          var template = res[$stateParams.nsadmin][$stateParams.templateType][$stateParams.pluginType][$stateParams.pluginTemplate];
 
-          vm.template = template.templateType;
-          vm.pluginType = template.type;
-          vm.plugin = template.pluginName;
+          vm.templateType = template.templateType;
+          vm.pluginType = template.pluginType;
+          vm.pluginName = template.pluginName;
 
           vm.pluginConfig = {
-            templateName: template.templateName,
+            pluginTemplate: template.pluginTemplate,
             properties: template.properties,
             outputSchema: template.outputSchema,
             lock: template.lock
@@ -102,7 +102,7 @@ angular.module(PKG.name + '.feature.admin')
 
     vm.save = function () {
 
-      if (!vm.pluginConfig.templateName) {
+      if (!vm.pluginConfig.pluginTemplate) {
         $alert({
           type: 'danger',
           title: 'Error!',
@@ -113,7 +113,7 @@ angular.module(PKG.name + '.feature.admin')
       }
 
       var list = vm.pluginList.map(function (p) { return p.name; });
-      if (list.indexOf(vm.pluginConfig.templateName) !== -1) {
+      if (list.indexOf(vm.pluginConfig.pluginTemplate) !== -1) {
         $alert({
           type: 'danger',
           title: 'Error!',
@@ -130,11 +130,11 @@ angular.module(PKG.name + '.feature.admin')
       }
 
       var properties = {
-        templateName: vm.pluginConfig.templateName,
+        pluginTemplate: vm.pluginConfig.pluginTemplate,
         properties: vm.pluginConfig.properties,
-        type: vm.pluginType,
-        templateType: vm.template,
-        pluginName: vm.plugin,
+        pluginType: vm.pluginType,
+        templateType: vm.templateType,
+        pluginName: vm.pluginName,
         outputSchema: vm.pluginConfig.outputSchema,
         lock: vm.pluginConfig.lock
       };
@@ -144,15 +144,9 @@ angular.module(PKG.name + '.feature.admin')
       mySettings.get('pluginTemplates')
         .then(function(res) {
 
-          if (!angular.isObject(res)) {
-            res = {};
-          }
+          var config = myHelpers.objectQuery(res, namespace, properties.templateType, properties.pluginType, properties.pluginTemplate);
 
-          if (!res[namespace]) {
-            res[namespace] = {};
-          }
-
-          if (res[namespace][properties.templateName] && !vm.isEdit) {
+          if (config && !vm.isEdit) {
             $alert({
               type: 'danger',
               content: 'Template name already exist! Please choose another name'
@@ -162,7 +156,15 @@ angular.module(PKG.name + '.feature.admin')
             return;
           }
 
-          res[namespace][properties.templateName] = properties;
+          var json = [
+            namespace,
+            properties.templateType,
+            properties.pluginType,
+            properties.pluginTemplate
+          ].join('.');
+
+          myHelpers.deepSet(res, json, properties);
+
           mySettings.set('pluginTemplates', res)
             .then(function () {
               $alert({
@@ -191,8 +193,8 @@ angular.module(PKG.name + '.feature.admin')
       vm.groups = {};
       PluginConfigFactory.fetch(
         $scope,
-        vm.template,
-        vm.plugin
+        vm.templateType,
+        vm.pluginName
       )
         .then(
           function success(res) {
@@ -237,7 +239,7 @@ angular.module(PKG.name + '.feature.admin')
 
             if (vm.isEdit) {
               plugin.properties = vm.pluginConfig.properties;
-              plugin.templateName = vm.pluginConfig.templateName;
+              plugin.pluginTemplate = vm.pluginConfig.pluginTemplate;
               plugin.outputSchema = vm.pluginConfig.outputSchema;
               plugin.lock = vm.pluginConfig.lock;
             }

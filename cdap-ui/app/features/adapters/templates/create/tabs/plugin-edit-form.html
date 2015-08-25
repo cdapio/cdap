@@ -150,7 +150,7 @@
                                  data-model="plugin.properties[field]"
                                  data-myconfig="PluginEditController.groups[group].fields[field]"
                                  data-properties="plugin.properties"
-                                 widget-disabled="plugin.templateName && plugin.lock[field]"
+                                 widget-disabled="plugin.pluginTemplate && plugin.lock[field]"
                                  widget-container>
                             </div>
                           </div>
@@ -226,7 +226,7 @@
                             <input type="text"
                                     class="form-control"
                                     ng-model="plugin.properties[name]"
-                                    ng-disabled="plugin.templateName && plugin.lock[name]" />
+                                    ng-disabled="plugin.pluginTemplate && plugin.lock[name]" />
                           </div>
                         </div>
                       </div>
@@ -256,7 +256,7 @@
                                        data-model="plugin.properties[field]"
                                        data-myconfig="PluginEditController.groups[group].fields[field]"
                                        data-properties="plugin.properties"
-                                       widget-disabled="plugin.templateName && plugin.lock[field]"
+                                       widget-disabled="plugin.pluginTemplate && plugin.lock[field]"
                                        widget-container>
                                   </div>
                                 </div>
@@ -340,7 +340,7 @@
                     <input type="text"
                             class="form-control"
                             ng-model="plugin.properties[name]"
-                            ng-disabled="plugin.templateName && plugin.lock[name]" />
+                            ng-disabled="plugin.pluginTemplate && plugin.lock[name]" />
 
                   </div>
                 </div>

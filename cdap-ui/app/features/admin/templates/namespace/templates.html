@@ -9,12 +9,12 @@
 </div>
 <div ng-if="!TemplatesController.isEdit">
   <label class="label-control">Choose Templates</label>
-  <select ng-model="TemplatesController.template" class="form-control">
+  <select ng-model="TemplatesController.templateType" class="form-control">
     <option value="ETLBatch">ETL Batch</option>
     <option value="ETLRealtime">ETL Realtime</option>
   </select>
 
-  <div ng-if="TemplatesController.template">
+  <div ng-if="TemplatesController.templateType">
     <label class="label-control">Choose Plugin Type</label>
     <select ng-model="TemplatesController.pluginType" class="form-control">
       <option value="source">Source</option>
@@ -25,17 +25,17 @@
 
   <div ng-if="TemplatesController.pluginList.length > 0">
     <label class="label-control">Choose Plugin</label>
-    <select ng-model="TemplatesController.plugin" class="form-control">
+    <select ng-model="TemplatesController.pluginName" class="form-control">
       <option ng-repeat="plugin in TemplatesController.pluginList" value="{{plugin.name}}">{{plugin.name}}</option>
     </select>
   </div>
 </div>
 
-<div ng-if="TemplatesController.plugin">
+<div ng-if="TemplatesController.pluginName">
   <h3>Plugin Properties</h3>
 
   <label class="label-control">Template Name</label>
-  <input type="text" class="form-control" ng-model="TemplatesController.pluginConfig.templateName">
+  <input type="text" class="form-control" ng-model="TemplatesController.pluginConfig.pluginTemplate">
 
   <div ng-repeat="group in TemplatesController.groups.position">
     <div class="widget-group-container">
@@ -79,11 +79,11 @@
         <my-schema-editor
           ng-model="TemplatesController.pluginConfig['outputSchema']"
           data-disabled="TemplatesController.pluginConfig.implicitSchema"
-          ng-if="TemplatesController.plugin !== 'Stream' && TemplatesController.plugin !== 'Kafka'"></my-schema-editor>
+          ng-if="TemplatesController.pluginName !== 'Stream' && TemplatesController.pluginName !== 'Kafka'"></my-schema-editor>
         <my-stream-properties
           ng-model="TemplatesController.pluginConfig['outputSchema']"
           plugins="TemplatesController.pluginConfig.properties"
-          ng-if="TemplatesController.plugin === 'Stream' || TemplatesController.plugin === 'Kafka'"
+          ng-if="TemplatesController.pluginName === 'Stream' || TemplatesController.pluginName === 'Kafka'"
         ></my-stream-properties>
       </fieldset>
 
