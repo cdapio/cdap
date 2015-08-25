@@ -19,12 +19,13 @@ package co.cask.cdap.api.worker;
 import co.cask.cdap.api.DatasetConfigurer;
 import co.cask.cdap.api.ProgramConfigurer;
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.artifact.PluginConfigurer;
 import co.cask.cdap.api.dataset.Dataset;
 
 /**
  * Interface for configuring {@link Worker}.
  */
-public interface WorkerConfigurer extends DatasetConfigurer, ProgramConfigurer {
+public interface WorkerConfigurer extends DatasetConfigurer, ProgramConfigurer, PluginConfigurer {
 
   /**
    * Sets the resources requirements for the the {@link Worker}.

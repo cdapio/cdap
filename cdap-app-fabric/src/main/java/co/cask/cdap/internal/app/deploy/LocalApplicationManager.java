@@ -38,6 +38,7 @@ import co.cask.cdap.internal.app.deploy.pipeline.DeployDatasetModulesStage;
 import co.cask.cdap.internal.app.deploy.pipeline.LocalArtifactLoaderStage;
 import co.cask.cdap.internal.app.deploy.pipeline.ProgramGenerationStage;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.pipeline.Pipeline;
 import co.cask.cdap.pipeline.PipelineFactory;
@@ -72,6 +73,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
   private final DatasetFramework inMemoryDatasetFramework;
   private final MetricStore metricStore;
   private final UsageRegistry usageRegistry;
+  private final ArtifactRepository artifactRepository;
 
   @Inject
   public LocalApplicationManager(CConfiguration configuration, PipelineFactory pipelineFactory,
@@ -82,7 +84,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
                                  StreamAdmin streamAdmin, ExploreFacade exploreFacade,
                                  Scheduler scheduler, AdapterService adapterService,
                                  @Assisted ProgramTerminator programTerminator, MetricStore metricStore,
-                                 UsageRegistry usageRegistry) {
+                                 UsageRegistry usageRegistry, ArtifactRepository artifactRepository) {
     this.configuration = configuration;
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.pipelineFactory = pipelineFactory;
@@ -99,12 +101,13 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
     this.exploreEnabled = configuration.getBoolean(Constants.Explore.EXPLORE_ENABLED);
     this.adapterService = adapterService;
     this.usageRegistry = usageRegistry;
+    this.artifactRepository = artifactRepository;
   }
 
   @Override
   public ListenableFuture<O> deploy(Id.Namespace namespace, @Nullable String appId, I input) throws Exception {
     Pipeline<O> pipeline = pipelineFactory.getPipeline();
-    pipeline.addLast(new LocalArtifactLoaderStage(configuration, store, namespace, appId));
+    pipeline.addLast(new LocalArtifactLoaderStage(configuration, store, namespace, appId, artifactRepository));
     pipeline.addLast(new ApplicationVerificationStage(store, datasetFramework, adapterService));
     pipeline.addLast(new DeployDatasetModulesStage(configuration, namespace, datasetFramework,
                                                    inMemoryDatasetFramework));

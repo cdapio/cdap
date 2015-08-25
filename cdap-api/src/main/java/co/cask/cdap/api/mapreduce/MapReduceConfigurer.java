@@ -19,11 +19,12 @@ package co.cask.cdap.api.mapreduce;
 import co.cask.cdap.api.DatasetConfigurer;
 import co.cask.cdap.api.ProgramConfigurer;
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.artifact.PluginConfigurer;
 
 /**
  * Configurer for configuring {@link MapReduce}.
  */
-public interface MapReduceConfigurer extends DatasetConfigurer, ProgramConfigurer {
+public interface MapReduceConfigurer extends DatasetConfigurer, ProgramConfigurer, PluginConfigurer {
 
   /**
    * Specifies set of dataset names that are used by the {@link MapReduce}.

@@ -18,6 +18,7 @@ package co.cask.cdap.proto.codec;
 
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
+import co.cask.cdap.internal.artifact.Plugin;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -55,6 +56,7 @@ public final class MapReduceSpecificationCodec extends AbstractSpecificationCode
     }
     jsonObj.add("datasets", serializeSet(src.getDataSets(), context, String.class));
     jsonObj.add("properties", serializeMap(src.getProperties(), context, String.class));
+    jsonObj.add("plugins", serializeMap(src.getPlugins(), context, Plugin.class));
 
     return jsonObj;
   }
@@ -76,9 +78,9 @@ public final class MapReduceSpecificationCodec extends AbstractSpecificationCode
 
     Set<String> dataSets = deserializeSet(jsonObj.get("datasets"), context, String.class);
     Map<String, String> properties = deserializeMap(jsonObj.get("properties"), context, String.class);
-
+    Map<String, Plugin> plugins = deserializeMap(jsonObj.get("plugins"), context, Plugin.class);
     return new MapReduceSpecification(className, name, description, inputDataSet, outputDataSet,
-                                      dataSets, properties, mapperResources, reducerResources);
+                                      dataSets, properties, mapperResources, reducerResources, plugins);
   }
 
   /**

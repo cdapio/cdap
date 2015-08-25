@@ -28,7 +28,9 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
+import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactClassLoaderFactory;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.CloseableClassLoader;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.proto.Id;
@@ -63,8 +65,11 @@ public final class InMemoryConfigurator implements Configurator {
    * JAR file path.
    */
   private final Location artifact;
+  private final CConfiguration cConf;
   private final String configString;
   private final ArtifactClassLoaderFactory artifactClassLoaderFactory;
+
+  private ArtifactRepository artifactRepository;
 
   // these field provided if going through artifact code path, but not through template code path
   // this is temporary until we can remove templates. (CDAP-2662).
@@ -73,11 +78,12 @@ public final class InMemoryConfigurator implements Configurator {
   private Id.Artifact artifactId;
 
   public InMemoryConfigurator(CConfiguration cConf, Id.Artifact artifactId, String appClassName,
-                              Location artifact, @Nullable String configString) {
+                              Location artifact, @Nullable String configString, ArtifactRepository artifactRepository) {
     this(cConf, artifact, configString);
     this.artifactId = artifactId;
     this.appClassName = appClassName;
     this.version = artifactId.getVersion().getVersion();
+    this.artifactRepository = artifactRepository;
   }
 
   // remove once app templates are gone
@@ -85,6 +91,7 @@ public final class InMemoryConfigurator implements Configurator {
     Preconditions.checkNotNull(artifact);
     this.artifact = artifact;
     this.configString = configString;
+    this.cConf = cConf;
     this.artifactClassLoaderFactory = new ArtifactClassLoaderFactory(
       new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile());
@@ -141,16 +148,21 @@ public final class InMemoryConfigurator implements Configurator {
   }
 
   private ConfigResponse createResponse(Application app, String bundleVersion)
-    throws InstantiationException, IllegalAccessException {
+    throws InstantiationException, IllegalAccessException, IOException {
     String specJson = getSpecJson(app, bundleVersion, configString);
     return new DefaultConfigResponse(0, CharStreams.newReaderSupplier(specJson));
   }
 
   private String getSpecJson(Application app, final String bundleVersion, final String configString)
-    throws IllegalAccessException, InstantiationException {
+    throws IllegalAccessException, InstantiationException, IOException {
+
     // Now, we call configure, which returns application specification.
-    DefaultAppConfigurer configurer = artifactId == null ?
-      new DefaultAppConfigurer(app, configString) : new DefaultAppConfigurer(artifactId, app, configString);
+    DefaultAppConfigurer configurer;
+    try (PluginInstantiator pluginInstantiator = new PluginInstantiator(cConf, app.getClass().getClassLoader())) {
+      configurer = artifactId == null ?
+        new DefaultAppConfigurer(app, configString) :
+        new DefaultAppConfigurer(artifactId, app, configString, artifactRepository, pluginInstantiator);
+    }
 
     Config appConfig;
     TypeToken typeToken = TypeToken.of(app.getClass());

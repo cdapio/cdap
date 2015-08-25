@@ -39,6 +39,8 @@ import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.internal.api.DefaultDatasetConfigurer;
 import co.cask.cdap.internal.app.DefaultApplicationSpecification;
 import co.cask.cdap.internal.app.mapreduce.DefaultMapReduceConfigurer;
+import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.flow.DefaultFlowConfigurer;
 import co.cask.cdap.internal.app.services.DefaultServiceConfigurer;
 import co.cask.cdap.internal.app.spark.DefaultSparkConfigurer;
@@ -60,6 +62,8 @@ public class DefaultAppConfigurer extends DefaultDatasetConfigurer implements Ap
   private String description;
   private String configuration;
   private Id.Artifact artifactId;
+  private ArtifactRepository artifactRepository;
+  private PluginInstantiator pluginInstantiator;
   private final Map<String, FlowSpecification> flows = new HashMap<>();
   private final Map<String, MapReduceSpecification> mapReduces = new HashMap<>();
   private final Map<String, SparkSpecification> sparks = new HashMap<>();
@@ -74,14 +78,18 @@ public class DefaultAppConfigurer extends DefaultDatasetConfigurer implements Ap
     this.description = "";
   }
 
+  // TODO: Remove this constructor when app templates are removed and when all applications are created from artifacts
   public DefaultAppConfigurer(Application app, String configuration) {
     this(app);
     this.configuration = configuration;
   }
 
-  public DefaultAppConfigurer(Id.Artifact artifactId, Application app, String configuration) {
+  public DefaultAppConfigurer(Id.Artifact artifactId, Application app, String configuration,
+                              ArtifactRepository artifactRepository, PluginInstantiator pluginInstantiator) {
     this(app, configuration);
     this.artifactId = artifactId;
+    this.artifactRepository = artifactRepository;
+    this.pluginInstantiator = pluginInstantiator;
   }
 
   @Override
@@ -116,7 +124,8 @@ public class DefaultAppConfigurer extends DefaultDatasetConfigurer implements Ap
   @Override
   public void addMapReduce(MapReduce mapReduce) {
     Preconditions.checkArgument(mapReduce != null, "MapReduce cannot be null.");
-    DefaultMapReduceConfigurer configurer = new DefaultMapReduceConfigurer(mapReduce);
+    DefaultMapReduceConfigurer configurer = new DefaultMapReduceConfigurer(mapReduce, artifactId, artifactRepository,
+                                                                           pluginInstantiator);
     mapReduce.configure(configurer);
 
     addStreams(configurer.getStreams());
@@ -150,7 +159,8 @@ public class DefaultAppConfigurer extends DefaultDatasetConfigurer implements Ap
 
   public void addService(Service service) {
     Preconditions.checkArgument(service != null, "Service cannot be null.");
-    DefaultServiceConfigurer configurer = new DefaultServiceConfigurer(service);
+    DefaultServiceConfigurer configurer = new DefaultServiceConfigurer(service, artifactId, artifactRepository,
+                                                                       pluginInstantiator);
     service.configure(configurer);
 
     ServiceSpecification spec = configurer.createSpecification();
@@ -163,7 +173,8 @@ public class DefaultAppConfigurer extends DefaultDatasetConfigurer implements Ap
   @Override
   public void addWorker(Worker worker) {
     Preconditions.checkArgument(worker != null, "Worker cannot be null.");
-    DefaultWorkerConfigurer configurer = new DefaultWorkerConfigurer(worker);
+    DefaultWorkerConfigurer configurer = new DefaultWorkerConfigurer(worker, artifactId, artifactRepository,
+                                                                     pluginInstantiator);
     worker.configure(configurer);
 
     addStreams(configurer.getStreams());

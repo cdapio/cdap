@@ -43,6 +43,7 @@ import com.google.common.cache.RemovalNotification;
 import com.google.common.collect.Maps;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -80,11 +81,13 @@ public class DynamicMapReduceContext extends BasicMapReduceContext implements Da
                                  MetricsCollectionService metricsCollectionService,
                                  TransactionSystemClient txClient,
                                  DatasetFramework dsFramework,
+                                 LocationFactory locationFactory,
                                  @Nullable AdapterDefinition adapterSpec,
-                                 @Nullable PluginInstantiator pluginInstantiator) {
+                                 @Nullable PluginInstantiator pluginInstantiator,
+                                 @Nullable PluginInstantiator artifactPluginInstantiator) {
     super(program, type, runId, taskId, runtimeArguments, Collections.<String>emptySet(), spec,
           logicalStartTime, programNameInWorkflow, workflowToken, discoveryServiceClient, metricsCollectionService,
-          dsFramework, adapterSpec, pluginInstantiator);
+          dsFramework, locationFactory, adapterSpec, pluginInstantiator, artifactPluginInstantiator);
     this.datasetsCache = CacheBuilder.newBuilder()
       .removalListener(new RemovalListener<Long, Map<DatasetCacheKey, Dataset>>() {
         @Override

@@ -39,6 +39,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DynamicDatasetContext;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
+import co.cask.cdap.internal.artifact.Plugin;
 import co.cask.cdap.logging.context.WorkerLoggingContext;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.templates.AdapterDefinition;
@@ -55,6 +56,7 @@ import com.google.common.cache.RemovalNotification;
 import com.google.common.collect.Maps;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -91,11 +93,14 @@ public class BasicWorkerContext extends AbstractContext implements WorkerContext
                             TransactionSystemClient transactionSystemClient,
                             DiscoveryServiceClient discoveryServiceClient,
                             StreamWriterFactory streamWriterFactory,
+                            LocationFactory locationFactory,
                             @Nullable AdapterDefinition adapterSpec,
-                            @Nullable PluginInstantiator pluginInstantiator) {
+                            @Nullable PluginInstantiator pluginInstantiator,
+                            @Nullable PluginInstantiator artifactPluginInstantiator) {
     super(program, runId, runtimeArgs, spec.getDatasets(),
           getMetricCollector(program, runId.getId(), instanceId, metricsCollectionService, adapterSpec),
-          datasetFramework, discoveryServiceClient, adapterSpec, pluginInstantiator);
+          datasetFramework, discoveryServiceClient, locationFactory, adapterSpec,
+          pluginInstantiator, artifactPluginInstantiator);
     this.program = program;
     this.specification = spec;
     this.instanceId = instanceId;
@@ -224,6 +229,11 @@ public class BasicWorkerContext extends AbstractContext implements WorkerContext
     // Close all existing datasets that haven't been invalidated by the cache already.
     datasetsCache.invalidateAll();
     datasetsCache.cleanUp();
+  }
+
+  @Override
+  public Map<String, Plugin> getPlugins() {
+    return getSpecification().getPlugins();
   }
 
   private void abortTransaction(Exception e, String message, TransactionContext context) {

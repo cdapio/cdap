@@ -20,6 +20,7 @@ import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.common.PropertyProvider;
 import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.internal.artifact.Plugin;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -38,9 +39,10 @@ public final class WorkerSpecification implements ProgramSpecification, Property
   private final Set<String> datasets;
   private final Resources resources;
   private final int instances;
+  private final Map<String, Plugin> plugins;
 
   public WorkerSpecification(String className, String name, String description, Map<String, String> properties,
-                             Set<String> datasets, Resources resources, int instances) {
+                             Set<String> datasets, Resources resources, int instances, Map<String, Plugin> plugins) {
     this.className = className;
     this.name = name;
     this.description = description;
@@ -48,6 +50,7 @@ public final class WorkerSpecification implements ProgramSpecification, Property
     this.datasets = Collections.unmodifiableSet(new HashSet<>(datasets));
     this.resources = resources;
     this.instances = instances;
+    this.plugins = Collections.unmodifiableMap(new HashMap<>(plugins));
   }
 
   @Override
@@ -94,5 +97,12 @@ public final class WorkerSpecification implements ProgramSpecification, Property
    */
   public int getInstances() {
     return instances;
+  }
+
+  /**
+   * @return Map of plugin ids and {@link Plugin} registered in this program.
+   */
+  public Map<String, Plugin> getPlugins() {
+    return plugins;
   }
 }
