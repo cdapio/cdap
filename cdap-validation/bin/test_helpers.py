@@ -4,6 +4,19 @@ import urllib2
 import json
 import sys
 
+def usage():
+    print "\nThis is the usage function\n"
+    print 'Usage: \n'+sys.argv[0]+' [-v, --verbose] -c, --cluster \'<cluster>\' [-m, --modules \'<modules>]\' -u --user <user:password> -U --uri <URI>\n'
+
+    print """
+    -h, --help  help menu
+    -c, --cluster       cluster name used in API calls to the install manager
+    -m, --modules       run modules, e.g. --modules 'module1;module2'
+    -u, --user          authentication, e.g. --user 'george:pass'
+    -U, --uri           URI: e.g. --uri 'http://10.240.0.8:7180'
+    -v, --verbose       adds more output (additional invocations increase verbosity)
+ """
+
 def onetime_auth(host,info):
     # this should work with all, but when authentication is not set up correctly, this fails (http 403)
     passman = urllib2.HTTPPasswordMgrWithDefaultRealm() # this creates a password manager
@@ -30,7 +43,7 @@ def run_request(host,info):
             return handle
         except IOError, e:
             # here we shouldn't fail if the username/password is right
-            print "It looks like the username or password is wrong."
+            if info['verbose'] == 2: print "It looks like the username or password is wrong."
             return 'noapi'
 
 def write_config_file(config, dir, file):

@@ -9,9 +9,9 @@ def ambari_commands(host, subdir, base, cluster_info):
     ## get ambari configs
     manager = 'ambari' 
     cu = get_config_urls(host, cluster_info)
-    #print 'cu=%s' % (cu)
+    if cluster_info['verbose'] == 2: print 'cu=%s' % (cu)
     config_url_href = cu.read()
-    #print 'configurlref=%s' % (config_url_href)
+    if cluster_info['verbose'] == 2: print 'configurlref=%s' % (config_url_href)
 
     ## extract the ambari config urls
     data = json.loads(config_url_href)
@@ -23,14 +23,14 @@ def ambari_commands(host, subdir, base, cluster_info):
 
     # process tmp configs and store results
     ambari_stored_configs = base[manager]['stored_results']
-    store_results(subdir, ambari_stored_configs, manager)
+    store_results(subdir, ambari_stored_configs, manager, cluster_info)
 
 # get config urls
 def get_config_urls(host, cluster_info):
     cluster = cluster_info['cluster']  
     append = '/clusters/' + cluster + '/configurations' 
     url = host + append
-    print 'url=%s' % (url)
+    if cluster_info['verbose'] == 2:  print 'url=%s' % (url)
     config_urls = helpers.run_request(url, cluster_info)
     return config_urls
 
@@ -45,9 +45,9 @@ def get_configs(host, urls, subdir, cluster_info):
         helpers.get_config_and_write(uri, subdir, file, cluster_info)
 
 # process tmp configs and store results
-def store_results(subdir, stored_configs, mgr):
+def store_results(subdir, stored_configs, mgr, cluster):
     # get list of tmp config files and read
-    print "Get and store all %s configurations in %s\n" % (mgr, stored_configs)
+    if cluster['verbose'] == 2: print "Get and store all %s configurations in %s\n" % (mgr, stored_configs)
     s = open(stored_configs, 'w')
     os.chdir(subdir)
     for file in glob.glob('*'):
@@ -57,7 +57,7 @@ def store_results(subdir, stored_configs, mgr):
         tmp_config_file = f.read()
         f.close()
         service = get_service_name(file)
-        print 'service=%s' % (service)
+        if cluster['verbose'] == 2: print 'service=%s' % (service)
 
         # read json
         data = json.loads(tmp_config_file)

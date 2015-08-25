@@ -1,20 +1,23 @@
 #!/usr/bin/python
 
+import os
 import test_helpers as helpers
 import json
+import re
+from subprocess import call
 import ambari
 import cm
 
 ##### TEST FRAMEWORK FUNCTIONS #####
 
-input_json = "input.json"
+input_json = 'input.json'
 
 # calls all other functions
-def testing(base_vars):
-    print 'start testing'
+def testing(base_vars,cluster_vars):
+    if cluster_vars['verbose'] == 2: print 'start testing'
 
     # prep input variables
-    cluster_vars = {}
+    #cluster_vars = {}
     input = read_input(input_json)
     cluster_vars['host'] = input['params']['uri']
     cluster_vars['username'],cluster_vars['password']= input['params']['userpass'].split(':')
@@ -22,13 +25,14 @@ def testing(base_vars):
     cluster_vars['modules'] = input['params']['modules']
 
     # check for verbosity not set
-    if not input['params']['verbose']:
-        cluster_vars['verbose'] = 'default'
-    else:
-        cluster_vars['verbose'] = input['params']['verbose']
+    #if not input['params']['verbose']:
+    #    cluster_vars['verbose'] = 'default'
+    #else:
+    #    cluster_vars['verbose'] = input['params']['verbose']
 
-    # find_modules
-    # hold on for now
+    if cluster_vars['verbose'] == 2:
+        for k,v in cluster_vars.iteritems():
+            print 'cluster vars: %s=%s' % (k,v)
 
     # detect_installed_services
     # hold on for now
@@ -37,20 +41,20 @@ def testing(base_vars):
     find_api='/api'
     if cluster_vars['host'].find(find_api) == -1:
         cluster_vars['host'] += 'api/'
-    print 'uri=%s' % (cluster_vars['host'])
+    if cluster_vars['verbose'] == 2:  print 'uri=%s' % (cluster_vars['host'])
 
     # validate_connection
-    print 'Validating connection'
+    if cluster_vars['verbose'] == 2:  print 'Validating connection'
     api_tests = [{'cm': base_vars['cm']['api_test']},{'ambari': base_vars['ambari']['api_test']}]
     version_test = validate_connection(base_vars, cluster_vars, api_tests)
-    print ''
-    print 'version_test=%s' % (version_test)
+    if cluster_vars['verbose'] == 2:  print ''
+    if cluster_vars['verbose'] == 2:  print 'version_test=%s' % (version_test)
 
     # now we determine the install manager from the info we have
-    print 'Determine Hadoop install manager'
+    if cluster_vars['verbose'] == 2:  print 'Determine Hadoop install manager'
     install_manager = get_install_manager(version_test)
     cluster_vars['manager'] = install_manager
-    print 'Hadoop install manager is %s' % (install_manager)
+    if cluster_vars['verbose'] == 2:  print 'Hadoop install manager is %s' % (install_manager)
 
     # get version for API call
     if install_manager == 'cm':
@@ -63,8 +67,9 @@ def testing(base_vars):
     # get preliminary info
     cluster_vars = get_install_manager_info(base_vars, cluster_vars, install_manager)
       # do we need these (below) or can we just work with the dict values?
-    for key, value in cluster_vars.iteritems():
-        print "%s=%s" % (key, value)
+    if cluster_vars['verbose'] == 2:
+        for key, value in cluster_vars.iteritems():
+            print "%s=%s" % (key, value)
 
     # get and run commands (API commands for now)
     get_commands(base_vars, cluster_vars)
@@ -73,8 +78,37 @@ def testing(base_vars):
 
     ##### MODULES #####
     
-    # identify and run modules
+    # find_modules
+    # navigate through ./module/* directories and look for module.json files
+    # parse through those to determine modules that will be run
+    # save (follow design)
 
+    if cluster_vars['verbose'] == 2:  print 'verbose=%s' % (cluster_vars['verbose'])
+    if cluster_vars['verbose'] == 2:  print '\nfind modules:\n'
+
+    module_list = find_modules('module.json', 'modules')
+    if cluster_vars['verbose'] == 2:
+        for module in module_list:
+            print 'module = %s' % (module)
+
+    modules = AutoVivification()
+    module_name_list = []
+   
+    for module in module_list:
+        m = re.search('/(.+?)/', module)
+        if m:
+            module_name = m.group(1)
+            modules[module_name] = create_module_json(module_list)
+            module_name_list.append(module_name)
+
+    if cluster_vars['verbose'] == 2: print modules
+
+    # run modules
+    # execute modules: for every known module, run specific functions (see module_functions)
+    if cluster_vars['verbose'] == 2: print '\nrun modules:\n'
+    run_modules(base_vars, cluster_vars, modules, module_name_list, install_manager) 
+    # send params necessary for module to run
+    # e.g. config_validator needs to know location of the base ref and stored results files
 
 ###########################################################################################
 # reads JSON object passed to the framework
@@ -83,10 +117,16 @@ def read_input(input_file):
         data = json.load(json_file)
     return data
 
-###def find_modules
-# navigate through ./module/* directories and look for module.json files
-# parse through those to determine modules that will be run
-# save (follow design)
+def find_all(name, path):
+    result = []
+    for root, dirs, files in os.walk(path):
+        if name in files:
+            result.append(os.path.join(root, name))
+    return result
+
+def find_modules(file, path):
+    results = find_all(file, path)
+    return results
 
 ###def detect_installed_services
 # coming soon
@@ -94,26 +134,27 @@ def read_input(input_file):
 def validate_connection(base_info, cluster_info, api_tests):
 # test api connection, etc.
     version = test_api_connection(base_info, cluster_info, api_tests)
+    # placeholder for testing other connections
     return version
 
 def test_api_connection(base_info, cluster_info, api_tests):
-    print 'test api connection'
+    if cluster_info['verbose'] == 2: print 'test api connection'
     # let us iterate through potential hadoop manager tests and see what we get back
     # the first one that works should be saved and set from that point on for the rest of the testing 
     host_url = cluster_info['host']
     for hash in api_tests:
-        print ''
-        print hash
+        if cluster_info['verbose'] == 2: print ''
+        if cluster_info['verbose'] == 2: print hash
         for manager, test in hash.iteritems():
             mgr_test_url = host_url + test
             #print "manager=%s, test=%s, mgr_test_url=%s" % (manager, test, mgr_test_url)
-            print 'Running onetime_auth'
+            if cluster_info['verbose'] == 2: print 'Running onetime_auth'
             helpers.onetime_auth(mgr_test_url,cluster_info) # set up password manager and install opener
-            print 'run_request'
+            if cluster_info['verbose'] == 2: print 'run_request'
             h = helpers.run_request(mgr_test_url,cluster_info) # run url request
             # if it equals noapi, it means the api login test failed for that install manager
             if h == 'noapi':
-                print 'No API for %s, trying the next or exiting' % (manager)
+                if cluster_info['verbose'] == 2: print 'No API for %s, trying the next or exiting' % (manager)
                 break
             else:
                 print '' # API may be reachable -- confirmed in next steps
@@ -140,13 +181,13 @@ def get_install_manager_info(base_info,cluster_info,mgr):
     cluster_info['my_cluster'] = my_cluster
     base_url = cluster_info['host']
     base_url += cluster_info['version']
-    print 'base_url=%s' % (base_url)
+    if cluster_info['verbose'] == 2: print 'base_url=%s' % (base_url)
     cluster_info['base_url'] = base_url
     return cluster_info
 
 def get_commands(base,cluster):
-    # get API commands
-    print 'Now running API commands'
+    # get (and run) API commands
+    if cluster['verbose'] == 2: print 'Now running API commands'
     mgr = cluster['manager']
     host_url = cluster['base_url']
     username = cluster['username']
@@ -159,9 +200,43 @@ def get_commands(base,cluster):
         #cm.cm_commands(host_url, configs_subdir, base, cluster) ## disabling for now
     
     elif mgr == 'ambari':
-        print 'Hadoop install manager: Ambari'
+        if cluster['verbose'] ==2: print 'Hadoop install manager: Ambari'
         ambari.ambari_commands(host_url, configs_subdir, base, cluster)
     
     else:
         print 'Your Hadoop install manager is not recognized'
+
+def create_module_json(modules):
+    module_info = read_input(modules[0])
+    return module_info 
+
+def run_modules(base,cluster,modules,name_list,mgr):
+    if cluster['verbose'] == 2:
+        print 'run modules'
+        print name_list
+
+    for module_name in name_list:
+        command = ''
+        full_command = ''
+        command = modules[module_name]['groups'][0]['command']  
+        params = base[mgr]['baseref'] + ' ' + base[mgr]['stored_results'] + ' ' + str(cluster['verbose'])
+        if cluster['verbose'] == 2: print modules
+        full_command = 'modules/' + command + ' ' + params
+        if cluster['verbose'] == 2: print full_command
+        os.system(full_command)
+
+def process_runtime_errors():
+    print "process runtime errors"
+
+def clean_up():
+# note: make note of temp and dirs and files we create
+    print "clean up"
+
+class AutoVivification(dict):
+    def __getitem__(self, item):
+        try:
+            return dict.__getitem__(self, item)
+        except KeyError:
+            value = self[item] = type(self)()
+            return value
 

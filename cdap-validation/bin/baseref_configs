@@ -1,0 +1,5 @@
+cdap:cdap_master_heapsize='1024m':bytes:exact
+hbase:hbase_master_heapsize='4096m-':bytes:range
+yarn:nodemanager_heapsize='512m-99999m':bytes:range
+hbase:hbase.security.authorization='false':alpha:exact
+yarn:yarn.acl.enable='true':alpha:exact
