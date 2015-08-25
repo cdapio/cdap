@@ -40,6 +40,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -120,7 +121,7 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
       tags.put(Constants.Metrics.Tag.NAMESPACE, namespace);
       tags.put(Constants.Metrics.Tag.APP, application);
       tags.put(Constants.Metrics.Tag.FLOW, flow);
-      MetricDeleteQuery deleteQuery = new MetricDeleteQuery(0, endTs, null, tags);
+      MetricDeleteQuery deleteQuery = new MetricDeleteQuery(0, endTs, Collections.<String>emptyList(), tags);
       metricStore.delete(deleteQuery);
     }
   }

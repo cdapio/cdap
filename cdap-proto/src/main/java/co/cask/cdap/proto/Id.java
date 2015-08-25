@@ -1341,6 +1341,10 @@ public abstract class Id {
       return new Artifact(namespace, name, new ArtifactVersion(version));
     }
 
+    public static Artifact from(Namespace namespace, String name, ArtifactVersion version) {
+      return new Artifact(namespace, name, version);
+    }
+
     public static boolean isValidName(String name) {
       return isValidId(name);
     }
