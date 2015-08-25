@@ -1,38 +1,4 @@
-<my-side-panel
-  data-panel-groups="CanvasController.pluginTypes"
-  data-on-group-click-context="CanvasController"
-  data-on-group-click="CanvasController.onLeftSideGroupItemClicked"
-
-  data-placement="left"
-  data-is-sub-menu="true"
-  data-is-expanded="true"
-
-  data-panel="CanvasController.plugins"
-  data-on-panel-item-click-context="CanvasController"
-  data-on-panel-item-click="CanvasController.onLeftSidePanelItemClicked">
-</my-side-panel>
-
 <my-plumb data-reloaddag="CanvasController.reloadDAG"
           data-config="CanvasController.nodes"
           data-errors="CanvasController.errors">
 </my-plumb>
-
-<my-side-panel
-  data-panel-groups="CanvasController.canvasOperations"
-  data-on-group-click-context="CanvasController"
-  data-on-group-click="CanvasController.onRightSideGroupItemClicked"
-
-  data-placement="right"
-  data-is-expanded="true"
-
-  data-is-sub-menu="false">
-</my-side-panel>
-
-<!-- Hidden links for downloading/uploading configs -->
-<a class="sr-only" id="adapter-export-config-link" href="{{CanvasController.url}}" download="{{CanvasController.exportFileName}}.json">Export</a>
-<my-file-select class="sr-only"
-                id="adapter-import-config-link"
-                data-button-icon="fa-upload"
-                on-file-select="CanvasController.importFile($files)"
-                data-button-label="Import">
-</my-file-select>

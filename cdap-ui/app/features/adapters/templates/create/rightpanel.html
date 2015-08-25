@@ -1,0 +1,19 @@
+<my-side-panel
+  data-panel-groups="RightPanelController.canvasOperations"
+  data-on-group-click-context="RightPanelController"
+  data-on-group-click="RightPanelController.onRightSideGroupItemClicked"
+
+  data-placement="right"
+  data-is-expanded="true"
+
+  data-is-sub-menu="false">
+</my-side-panel>
+
+<!-- Hidden links for downloading/uploading configs -->
+<a class="sr-only" id="adapter-export-config-link" href="{{RightPanelController.url}}" download="{{RightPanelController.exportFileName}}.json">Export</a>
+<my-file-select class="sr-only"
+                id="adapter-import-config-link"
+                data-button-icon="fa-upload"
+                on-file-select="RightPanelController.importFile($files)"
+                data-button-label="Import">
+</my-file-select>
