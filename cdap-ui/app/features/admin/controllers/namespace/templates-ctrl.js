@@ -144,6 +144,10 @@ angular.module(PKG.name + '.feature.admin')
       mySettings.get('pluginTemplates')
         .then(function(res) {
 
+          if (!angular.isObject(res)) {
+            res = {};
+          }
+
           var config = myHelpers.objectQuery(res, namespace, properties.templateType, properties.pluginType, properties.pluginTemplate);
 
           if (config && !vm.isEdit) {

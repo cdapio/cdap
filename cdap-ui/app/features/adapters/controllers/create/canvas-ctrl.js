@@ -22,6 +22,10 @@ angular.module(PKG.name + '.feature.adapters')
 
     mySettings.get('pluginTemplates')
       .then(function (res) {
+        if (!angular.isObject(res)) {
+          return;
+        }
+
         var templates = res[$state.params.namespace][MyPlumbService.metadata.template.type];
 
         sourceTemplates = objectToArray(templates.source);
