@@ -42,9 +42,9 @@ import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.WorkflowTokenDetail;
 import co.cask.cdap.proto.WorkflowTokenNodeDetail;
+import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
-import co.cask.cdap.proto.artifact.CreateAppRequest;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.FlowManager;
@@ -210,7 +210,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     addPluginArtifact(pluginArtifactId, Sets.<ArtifactRange>newHashSet(artifactRange), ToStringPlugin.class);
 
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "AppWithPlugin");
-    CreateAppRequest createRequest = new CreateAppRequest(
+    AppRequest createRequest = new AppRequest(
       new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion(), false));
 
     ApplicationManager appManager = deployApplication(appId, createRequest);
@@ -243,7 +243,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     addAppArtifact(artifactId, ConfigTestApp.class);
 
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "AppFromArtifact");
-    CreateAppRequest<ConfigTestApp.ConfigClass> createRequest = new CreateAppRequest<>(
+    AppRequest<ConfigTestApp.ConfigClass> createRequest = new AppRequest<>(
       new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion(), false),
       new ConfigTestApp.ConfigClass("testStream", "testDataset")
     );

@@ -45,9 +45,9 @@ import co.cask.cdap.internal.test.PluginJarHelper;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
-import co.cask.cdap.proto.artifact.CreateAppRequest;
 import co.cask.cdap.test.internal.ApplicationManagerFactory;
 import co.cask.cdap.test.internal.DefaultAdapterManager;
 import co.cask.cdap.test.internal.StreamManagerFactory;
@@ -179,10 +179,10 @@ public class UnitTestManager implements TestManager {
 
   @Override
   public ApplicationManager deployApplication(Id.Application appId,
-                                              CreateAppRequest createAppRequest) throws Exception {
-    appFabricClient.deployApplication(appId, createAppRequest);
+                                              AppRequest appRequest) throws Exception {
+    appFabricClient.deployApplication(appId, appRequest);
 
-    ArtifactSummary requestedArtifact = createAppRequest.getArtifact();
+    ArtifactSummary requestedArtifact = appRequest.getArtifact();
     Id.Artifact artifactId = Id.Artifact.from(requestedArtifact.isSystem() ? Id.Namespace.SYSTEM : appId.getNamespace(),
       requestedArtifact.getName(), requestedArtifact.getVersion());
     ArtifactDetail artifactDetail = artifactRepository.getArtifact(artifactId);
