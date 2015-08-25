@@ -15,7 +15,7 @@ def ambari_commands(host, subdir, base, cluster_info):
 
     ## extract the ambari config urls
     data = json.loads(config_url_href)
-    config_urls = [ item['href'] for item in  data['items'] ]
+    config_urls = [ item['href'] for item in data['items'] ]
 
     ## iterate through ambari config urls, and run api requests against those
     ##   This creates config files in a subdirectory
