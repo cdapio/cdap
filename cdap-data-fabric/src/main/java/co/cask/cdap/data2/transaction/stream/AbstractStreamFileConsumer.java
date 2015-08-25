@@ -546,8 +546,7 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
     byte[] stopRow = Arrays.copyOf(row, row.length);
     Bytes.putLong(stopRow, stopRow.length - Longs.BYTES, Long.MAX_VALUE);
 
-    StateScanner scanner = scanStates(row, stopRow);
-    try {
+    try (StateScanner scanner = scanStates(row, stopRow)) {
       // Scan until MAX_SCAN_ROWS or exhausted the scanner
       int rowCached = 0;
       while (scanner.nextStateRow() && rowCached < MAX_SCAN_ROWS) {
@@ -560,8 +559,6 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
       if (rowCached == 0) {
         entryStatesScanCompleted.add(row);
       }
-    } finally {
-      scanner.close();
     }
     return rowStates;
   }
