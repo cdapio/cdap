@@ -36,16 +36,12 @@ angular.module(PKG.name+'.feature.dashboard')
         templateUrl: '/assets/features/dashboard/templates/staticdashboard.html',
         controller: 'OpsCdapCtrl',
         ncyBreadcrumb: {
-          label: 'System',
-          parent: 'overview'
+          label: 'Operations'
         }
       })
 
       .state('dashboard.user', {
         url: '/user/:tab',
-        params: {
-          activeDashboard: null
-        },
         templateUrl: '/assets/features/dashboard/templates/userdashboard.html',
         controller: 'UserDashboardCtrl',
         resolve: {
@@ -54,8 +50,7 @@ angular.module(PKG.name+'.feature.dashboard')
           }
         },
         ncyBreadcrumb: {
-          label: '{{$state.params.activeDashboard}}',
-          parent: 'overview'
+          label: 'Operations'
         }
       })
 
