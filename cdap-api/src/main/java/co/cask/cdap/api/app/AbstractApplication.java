@@ -17,11 +17,6 @@
 package co.cask.cdap.api.app;
 
 import co.cask.cdap.api.Config;
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.data.stream.Stream;
-import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
@@ -33,6 +28,7 @@ import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.api.workflow.Workflow;
+import co.cask.cdap.internal.api.AbstractPluginConfigurable;
 
 import java.util.Collections;
 import java.util.Map;
@@ -48,7 +44,8 @@ import java.util.Map;
  * @param <T> {@link Config} config class that represents the configuration of the Application.
  * @see co.cask.cdap.api.app
  */
-public abstract class AbstractApplication<T extends Config> implements Application<T> {
+public abstract class AbstractApplication<T extends Config> extends AbstractPluginConfigurable<ApplicationConfigurer>
+  implements Application<T> {
   private ApplicationContext context;
   private ApplicationConfigurer configurer;
 
@@ -100,72 +97,6 @@ public abstract class AbstractApplication<T extends Config> implements Applicati
    */
   protected void setDescription(String description) {
     configurer.setDescription(description);
-  }
-
-  /**
-   * @see ApplicationConfigurer#addStream(Stream)
-   */
-  protected void addStream(Stream stream) {
-    configurer.addStream(stream);
-  }
-
-  /**
-   * @see ApplicationConfigurer#addDatasetModule(String, Class)
-   */
-  @Beta
-  protected void addDatasetModule(String moduleName, Class<? extends DatasetModule> moduleClass) {
-    configurer.addDatasetModule(moduleName, moduleClass);
-  }
-
-  /**
-   * @see ApplicationConfigurer#addDatasetType(Class)
-   */
-  @Beta
-  protected void addDatasetType(Class<? extends Dataset> datasetClass) {
-    configurer.addDatasetType(datasetClass);
-  }
-
-  /**
-   * Calls {@link ApplicationConfigurer#createDataset(String, String, DatasetProperties)}, passing empty properties.
-   *
-   * @see ApplicationConfigurer#createDataset(String, String, DatasetProperties)
-   */
-  @Beta
-  protected void createDataset(String datasetName, String typeName) {
-    configurer.createDataset(datasetName, typeName, DatasetProperties.EMPTY);
-  }
-
-  /**
-   * Calls {@link ApplicationConfigurer#createDataset(String, String, DatasetProperties)}, passing the type name and
-   * properties.
-   *
-   * @see ApplicationConfigurer#createDataset(String, String, co.cask.cdap.api.dataset.DatasetProperties)
-   */
-  @Beta
-  protected void createDataset(String datasetName, String typeName, DatasetProperties properties) {
-    configurer.createDataset(datasetName, typeName, properties);
-  }
-
-  /**
-   * Calls {@link ApplicationConfigurer#createDataset(String, String, DatasetProperties)}, passing the dataset class
-   * and properties.
-   *
-   * @see ApplicationConfigurer#createDataset(String, Class, co.cask.cdap.api.dataset.DatasetProperties)
-   */
-  protected void createDataset(String datasetName,
-                               Class<? extends Dataset> datasetClass,
-                               DatasetProperties properties) {
-    configurer.createDataset(datasetName, datasetClass, properties);
-  }
-
-  /**
-   * Calls {@link ApplicationConfigurer#createDataset(String, Class, DatasetProperties)}, passing empty properties.
-   *
-   * @see ApplicationConfigurer#createDataset(String, Class, DatasetProperties)
-   */
-  protected void createDataset(String datasetName,
-                               Class<? extends Dataset> datasetClass) {
-    configurer.createDataset(datasetName, datasetClass, DatasetProperties.EMPTY);
   }
 
   /**

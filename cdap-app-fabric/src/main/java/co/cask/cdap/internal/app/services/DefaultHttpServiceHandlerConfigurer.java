@@ -96,6 +96,6 @@ public class DefaultHttpServiceHandlerConfigurer extends DefaultPluginConfigurer
   public HttpServiceHandlerSpecification createSpecification() {
     Map<String, String> properties = Maps.newHashMap(this.properties);
     properties.putAll(propertyFields);
-    return new HttpServiceHandlerSpecification(className, name, "", properties, datasets, endpoints, getPlugins());
+    return new HttpServiceHandlerSpecification(className, name, "", properties, datasets, endpoints);
   }
 }

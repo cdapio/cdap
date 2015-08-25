@@ -49,6 +49,7 @@ public class BasicHttpServiceContext extends AbstractContext implements Transact
   private final Metrics userMetrics;
   private final int instanceId;
   private final AtomicInteger instanceCount;
+  private final Map<String, Plugin> plugins;
 
   /**
    * Creates a BasicHttpServiceContext for the given HttpServiceHandlerSpecification.
@@ -79,6 +80,7 @@ public class BasicHttpServiceContext extends AbstractContext implements Transact
     this.userMetrics =
       new ProgramUserMetrics(getMetricCollector(metricsCollectionService, program,
                                                 spec.getName(), runId.getId(), instanceId));
+    this.plugins = Maps.newHashMap(program.getApplicationSpecification().getPlugins());
   }
 
   /**
@@ -106,7 +108,7 @@ public class BasicHttpServiceContext extends AbstractContext implements Transact
 
   @Override
   public Map<String, Plugin> getPlugins() {
-    return spec.getPlugins();
+    return plugins;
   }
 
   @Override

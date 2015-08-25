@@ -59,6 +59,10 @@ public class DefaultPluginConfigurer extends DefaultDatasetConfigurer implements
     return plugins;
   }
 
+  public void addPlugins(Map<String, Plugin> plugins) {
+    this.plugins.putAll(plugins);
+  }
+
   @Nullable
   @Override
   public <T> T usePlugin(String pluginType, String pluginName, String pluginId, PluginProperties properties) {

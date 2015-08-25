@@ -225,7 +225,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       // It can only be constructed here because we need to have all adapter plugins information
       classLoader = new MapReduceClassLoader(context.getProgram().getClassLoader(),
                                              mapredConf,
-                                             context.getSpecification(),
+                                             context.getPlugins(),
                                              context.getAdapterSpecification(),
                                              context.getPluginInstantiator(),
                                              context.getArtifactPluginInstantiator());

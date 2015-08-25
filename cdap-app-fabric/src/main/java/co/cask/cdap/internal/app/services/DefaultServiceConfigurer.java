@@ -25,7 +25,7 @@ import co.cask.cdap.api.service.http.HttpServiceContext;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
-import co.cask.cdap.internal.api.DefaultDatasetConfigurer;
+import co.cask.cdap.internal.app.DefaultPluginConfigurer;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.service.http.DelegatorContext;
@@ -48,23 +48,25 @@ import java.util.Map;
 /**
  * A default implementation of {@link ServiceConfigurer}.
  */
-public class DefaultServiceConfigurer extends DefaultDatasetConfigurer implements ServiceConfigurer {
+public class DefaultServiceConfigurer extends DefaultPluginConfigurer implements ServiceConfigurer {
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultServiceConfigurer.class);
   private final String className;
   private final Id.Artifact artifactId;
   private final ArtifactRepository artifactRepository;
   private final PluginInstantiator pluginInstantiator;
+
   private String name;
   private String description;
   private List<HttpServiceHandler> handlers;
   private Resources resources;
   private int instances;
-  private static final Logger LOG = LoggerFactory.getLogger(DefaultServiceConfigurer.class);
 
   /**
    * Create an instance of {@link DefaultServiceConfigurer}
    */
   public DefaultServiceConfigurer(Service service, Id.Artifact artifactId, ArtifactRepository artifactRepository,
                                   PluginInstantiator pluginInstantiator) {
+    super(artifactRepository, pluginInstantiator, artifactId);
     this.className = service.getClass().getName();
     this.name = service.getClass().getSimpleName();
     this.description = "";
@@ -126,6 +128,7 @@ public class DefaultServiceConfigurer extends DefaultDatasetConfigurer implement
       addStreams(configurer.getStreams());
       addDatasetModules(configurer.getDatasetModules());
       addDatasetSpecs(configurer.getDatasetSpecs());
+      addPlugins(configurer.getPlugins());
     }
     return handleSpecs;
   }

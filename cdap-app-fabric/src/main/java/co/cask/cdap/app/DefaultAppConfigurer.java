@@ -36,8 +36,8 @@ import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
-import co.cask.cdap.internal.api.DefaultDatasetConfigurer;
 import co.cask.cdap.internal.app.DefaultApplicationSpecification;
+import co.cask.cdap.internal.app.DefaultPluginConfigurer;
 import co.cask.cdap.internal.app.mapreduce.DefaultMapReduceConfigurer;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
@@ -57,7 +57,7 @@ import java.util.Map;
 /**
  * Default implementation of {@link ApplicationConfigurer}.
  */
-public class DefaultAppConfigurer extends DefaultDatasetConfigurer implements ApplicationConfigurer {
+public class DefaultAppConfigurer extends DefaultPluginConfigurer implements ApplicationConfigurer {
   private String name;
   private String description;
   private String configuration;
@@ -74,6 +74,7 @@ public class DefaultAppConfigurer extends DefaultDatasetConfigurer implements Ap
 
   // passed app to be used to resolve default name and description
   public DefaultAppConfigurer(Application app) {
+    super(null, null, null);
     this.name = app.getClass().getSimpleName();
     this.description = "";
   }
@@ -86,7 +87,10 @@ public class DefaultAppConfigurer extends DefaultDatasetConfigurer implements Ap
 
   public DefaultAppConfigurer(Id.Artifact artifactId, Application app, String configuration,
                               ArtifactRepository artifactRepository, PluginInstantiator pluginInstantiator) {
-    this(app, configuration);
+    super(artifactRepository, pluginInstantiator, artifactId);
+    this.name = app.getClass().getSimpleName();
+    this.description = "";
+    this.configuration = configuration;
     this.artifactId = artifactId;
     this.artifactRepository = artifactRepository;
     this.pluginInstantiator = pluginInstantiator;
@@ -131,6 +135,7 @@ public class DefaultAppConfigurer extends DefaultDatasetConfigurer implements Ap
     addStreams(configurer.getStreams());
     addDatasetModules(configurer.getDatasetModules());
     addDatasetSpecs(configurer.getDatasetSpecs());
+    addPlugins(configurer.getPlugins());
     MapReduceSpecification spec = configurer.createSpecification();
     mapReduces.put(spec.getName(), spec);
   }
@@ -167,6 +172,7 @@ public class DefaultAppConfigurer extends DefaultDatasetConfigurer implements Ap
     addStreams(configurer.getStreams());
     addDatasetModules(configurer.getDatasetModules());
     addDatasetSpecs(configurer.getDatasetSpecs());
+    addPlugins(configurer.getPlugins());
     services.put(spec.getName(), spec);
   }
 
@@ -180,6 +186,7 @@ public class DefaultAppConfigurer extends DefaultDatasetConfigurer implements Ap
     addStreams(configurer.getStreams());
     addDatasetModules(configurer.getDatasetModules());
     addDatasetSpecs(configurer.getDatasetSpecs());
+    addPlugins(configurer.getPlugins());
     WorkerSpecification spec = configurer.createSpecification();
     workers.put(spec.getName(), spec);
   }
@@ -214,7 +221,7 @@ public class DefaultAppConfigurer extends DefaultDatasetConfigurer implements Ap
     return new DefaultApplicationSpecification(name, version, description, configuration, artifactId, getStreams(),
                                                getDatasetModules(), getDatasetSpecs(),
                                                flows, mapReduces, sparks, workflows, services,
-                                               schedules, workers);
+                                               schedules, workers, getPlugins());
   }
 
   public ApplicationSpecification createSpecification() {
