@@ -39,7 +39,7 @@ import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.ServiceInstances;
 import co.cask.cdap.proto.WorkflowTokenDetail;
 import co.cask.cdap.proto.WorkflowTokenNodeDetail;
-import co.cask.cdap.proto.artifact.CreateAppRequest;
+import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
 import co.cask.cdap.proto.codec.WorkflowTokenDetailCodec;
 import co.cask.cdap.proto.codec.WorkflowTokenNodeDetailCodec;
@@ -56,7 +56,6 @@ import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.handler.codec.http.DefaultHttpRequest;
-import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -69,8 +68,6 @@ import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
-import javax.ws.rs.HeaderParam;
-import javax.ws.rs.PathParam;
 import javax.ws.rs.core.MediaType;
 
 /**
@@ -388,7 +385,7 @@ public class AppFabricClient {
     return deployedJar;
   }
 
-  public void deployApplication(Id.Application appId, CreateAppRequest createAppRequest) throws Exception {
+  public void deployApplication(Id.Application appId, AppRequest appRequest) throws Exception {
 
     DefaultHttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.PUT,
       String.format("/v3/namespaces/%s/apps/%s", appId.getNamespaceId(), appId.getId()));
@@ -398,12 +395,12 @@ public class AppFabricClient {
 
     BodyConsumer bodyConsumer = appLifecycleHttpHandler.deploy(request, mockResponder,
       appId.getNamespaceId(), appId.getId(),
-      createAppRequest.getArtifact().getName(),
-      GSON.toJson(createAppRequest.getConfig()),
+      appRequest.getArtifact().getName(),
+      GSON.toJson(appRequest.getConfig()),
       MediaType.APPLICATION_JSON);
     Preconditions.checkNotNull(bodyConsumer, "BodyConsumer from deploy call should not be null");
 
-    bodyConsumer.chunk(ChannelBuffers.wrappedBuffer(Bytes.toBytes(GSON.toJson(createAppRequest))), mockResponder);
+    bodyConsumer.chunk(ChannelBuffers.wrappedBuffer(Bytes.toBytes(GSON.toJson(appRequest))), mockResponder);
     bodyConsumer.finished(mockResponder);
   }
 

@@ -40,8 +40,8 @@ import co.cask.cdap.internal.test.PluginJarHelper;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactRange;
-import co.cask.cdap.proto.artifact.CreateAppRequest;
 import co.cask.cdap.test.remote.RemoteAdapterManager;
 import co.cask.cdap.test.remote.RemoteApplicationManager;
 import co.cask.cdap.test.remote.RemoteStreamManager;
@@ -157,8 +157,8 @@ public class IntegrationTestManager implements TestManager {
 
   @Override
   public ApplicationManager deployApplication(Id.Application appId,
-                                              CreateAppRequest createAppRequest) throws Exception {
-    applicationClient.deploy(appId, createAppRequest);
+                                              AppRequest appRequest) throws Exception {
+    applicationClient.deploy(appId, appRequest);
     return new RemoteApplicationManager(appId, clientConfig, restClient);
   }
 
