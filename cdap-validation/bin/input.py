@@ -47,20 +47,7 @@ def process_params(params):
 
     return input_vars
 
-# validate_params()
-# process_modules()
-# convert_input()
-
-###def process_params
-# parses parameters
-
-###def validate_params
-# validates command line parameters:
-#   verify they are correct
-#   verify all the parameters that are needed are there
-
-###def process_modules
-# process what is in between quotes in --modules=""
-
-###def convert_input
-# takes input and converts it to a JSON object
+### Placeholders for future functions
+# validate_params() ## ensures parameters are valid and minimum number of parameters necesssary is present
+# process_module_params() ## process what is in between quotes in --modules=""
+# convert_input() ## creates JSON object from processed parameters
