@@ -65,7 +65,7 @@ def testing(base_vars,cluster_vars):
             print "%s=%s" % (key, value)
 
     # get and run commands (API commands for now)
-    get_commands(base_vars, cluster_vars)
+    get_and_run_api_commands(base_vars, cluster_vars)
 
     #########################################
 
@@ -177,7 +177,7 @@ def get_install_manager_info(cluster_info):
     return cluster_info
 
 # get (and run) API commands
-def get_commands(base,cluster):
+def get_and_run_api_commands(base,cluster):
     if cluster['verbose'] == 2: print 'Now running API commands'
     mgr = cluster['manager']
     host_url = cluster['base_url']
