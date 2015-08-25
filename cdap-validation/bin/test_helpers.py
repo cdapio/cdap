@@ -47,7 +47,7 @@ def run_request(host,info):
             if info['verbose'] == 2: print "It looks like the username or password is wrong."
             return 'noapi'
 
-def write_config_file(config, dir, file, createdir):
+def write_file(config, dir, file, createdir):
     path = dir + file 
     if not os.path.exists(dir):
         if createdir == True:
@@ -97,7 +97,7 @@ def get_config_and_write(url, subdir, file, cluster_info):
     config_in = run_request(url, cluster_info)
     config = config_in.read()
     create_directory_if_missing = True
-    write_config_file(config, subdir, file, create_directory_if_missing)
+    write_file(config, subdir, file, create_directory_if_missing)
 
 def safe_get_config_and_write(url, user, passwd, subdir, file):
     # run api config retrieval commands and write to individual files (safer)
@@ -106,7 +106,7 @@ def safe_get_config_and_write(url, user, passwd, subdir, file):
         config_in = urllib2.urlopen(url)
         config = config_in.read()
         create_directory_if_missing = True
-        write_config_file(config, subdir, file, create_directory_if_missing)
+        write_file(config, subdir, file, create_directory_if_missing)
     except:
         # need to find a good way to ignore API calls that return nothing (for unused services)
         pass
