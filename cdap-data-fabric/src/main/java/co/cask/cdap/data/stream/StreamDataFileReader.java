@@ -262,7 +262,6 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
         }
       }
     } catch (IOException e) {
-      position = 0;
       if (eventInput != null) {
         eventInput.close();
         eventInput = null;
