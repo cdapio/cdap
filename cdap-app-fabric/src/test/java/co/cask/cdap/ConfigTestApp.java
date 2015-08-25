@@ -123,7 +123,7 @@ public class ConfigTestApp extends AbstractApplication<ConfigTestApp.ConfigClass
 
   private static class DefaultWorker extends AbstractWorker {
     private final String streamName;
-    private volatile boolean running;
+    private volatile boolean stopped;
 
     public DefaultWorker(String streamName) {
       this.streamName = streamName;
@@ -131,8 +131,7 @@ public class ConfigTestApp extends AbstractApplication<ConfigTestApp.ConfigClass
 
     @Override
     public void run() {
-      running = true;
-      while (running) {
+      while (!stopped) {
         try {
           TimeUnit.SECONDS.sleep(1);
         } catch (InterruptedException e) {
@@ -155,7 +154,7 @@ public class ConfigTestApp extends AbstractApplication<ConfigTestApp.ConfigClass
 
     @Override
     public void stop() {
-      running = false;
+      stopped = true;
     }
   }
 }

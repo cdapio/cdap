@@ -130,7 +130,7 @@ public class AppUsingGetServiceURL extends AbstractApplication {
    */
   public static final class LifecycleWorker extends AbstractWorker {
     private static final Logger LOG = LoggerFactory.getLogger(LifecycleWorker.class);
-    private volatile boolean isRunning;
+    private volatile boolean stopped;
 
     @Override
     protected void configure() {
@@ -150,8 +150,7 @@ public class AppUsingGetServiceURL extends AbstractApplication {
 
     @Override
     public void run() {
-      isRunning = true;
-      while (isRunning) {
+      while (!stopped) {
         try {
           TimeUnit.MILLISECONDS.sleep(50);
         } catch (InterruptedException e) {
@@ -161,12 +160,15 @@ public class AppUsingGetServiceURL extends AbstractApplication {
     }
 
     @Override
-    public void stop() {
-      isRunning = false;
-
+    public void destroy() {
       String key = String.format("stop.%d", getContext().getInstanceId());
       byte[] value = Bytes.toBytes(getContext().getInstanceCount());
       writeToDataSet(getContext(), WORKER_INSTANCES_DATASET, key, value);
+    }
+
+    @Override
+    public void stop() {
+      stopped = true;
     }
   }
 
