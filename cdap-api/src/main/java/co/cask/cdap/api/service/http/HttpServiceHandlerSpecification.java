@@ -17,9 +17,9 @@
 package co.cask.cdap.api.service.http;
 
 import co.cask.cdap.api.ProgramSpecification;
-import co.cask.cdap.api.artifact.Plugin;
 import co.cask.cdap.api.common.PropertyProvider;
 import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.internal.artifact.Plugin;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -113,6 +113,9 @@ public final class HttpServiceHandlerSpecification implements PropertyProvider, 
     return endpoints;
   }
 
+  /**
+   * @return Map of plugin ids and {@link Plugin} registered in this program.
+   */
   public Map<String, Plugin> getPlugins() {
     return plugins;
   }

@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.runtime.artifact;
 
-import co.cask.cdap.api.artifact.ApplicationClass;
 import co.cask.cdap.api.artifact.ArtifactDescriptor;
 import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.common.Bytes;

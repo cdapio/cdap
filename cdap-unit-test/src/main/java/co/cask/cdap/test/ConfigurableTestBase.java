@@ -80,6 +80,7 @@ import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.artifact.CreateAppRequest;
 import co.cask.cdap.test.internal.ApplicationManagerFactory;
 import co.cask.cdap.test.internal.DefaultApplicationManager;
@@ -540,6 +541,7 @@ public class ConfigurableTestBase {
     getTestManager().addTemplatePluginJson(templateId, fileName, type, name, description, className, fields);
   }
 
+  // TODO: Add Javadocs for these test methods
   protected static void addArtifact(Id.Artifact artifactId, File artifactFile) throws Exception {
     getTestManager().addArtifact(artifactId, artifactFile);
   }
@@ -557,6 +559,11 @@ public class ConfigurableTestBase {
                                           Set<PluginClass> additionalPlugins,
                                           Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
     getTestManager().addPluginArtifact(artifactId, parent, additionalPlugins, pluginClass, pluginClasses);
+  }
+
+  protected static void addPluginArtifact(Id.Artifact artifactId, Set<ArtifactRange> parentArtifacts,
+                                          Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
+    getTestManager().addPluginArtifact(artifactId, parentArtifacts, pluginClass, pluginClasses);
   }
 
   /**

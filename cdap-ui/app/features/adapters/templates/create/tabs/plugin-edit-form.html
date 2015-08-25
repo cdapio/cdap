@@ -145,9 +145,12 @@
                           <div>
                             <div data-name="field"
                                  class="my-widget-container"
+                                 data-info="{{plugin.myconfig.widget}}"
+                                 ng-class="{'select-wrapper': PluginEditController.groups[group].fields[field].widget === 'select'}"
                                  data-model="plugin.properties[field]"
                                  data-myconfig="PluginEditController.groups[group].fields[field]"
                                  data-properties="plugin.properties"
+                                 widget-disabled="plugin.pluginTemplate && plugin.lock[field]"
                                  widget-container>
                             </div>
                           </div>
@@ -173,7 +176,8 @@
             <button
               class="btn btn-sm btn-default pull-right"
               ng-click="PluginEditController.schemaClear()"
-              ng-if="!plugin.implicitSchema && !isDisabled">
+              ng-if="!plugin.implicitSchema && !isDisabled"
+              ng-disabled="plugin.implicitSchema">
               Clear</button>
           </h4>
 
@@ -221,7 +225,8 @@
                             </label>
                             <input type="text"
                                     class="form-control"
-                                    ng-model="plugin.properties[name]" />
+                                    ng-model="plugin.properties[name]"
+                                    ng-disabled="plugin.pluginTemplate && plugin.lock[name]" />
                           </div>
                         </div>
                       </div>
@@ -251,6 +256,7 @@
                                        data-model="plugin.properties[field]"
                                        data-myconfig="PluginEditController.groups[group].fields[field]"
                                        data-properties="plugin.properties"
+                                       widget-disabled="plugin.pluginTemplate && plugin.lock[field]"
                                        widget-container>
                                   </div>
                                 </div>
@@ -281,7 +287,8 @@
                   <button
                     class="btn btn-sm btn-default pull-right"
                     ng-click="PluginEditController.schemaClear()"
-                    ng-if="!plugin.implicitSchema && !isDisabled">
+                    ng-if="(!plugin.implicitSchema && !isDisabled)"
+                    ng-disabled="plugin.implicitSchema">
                     Clear
                   </button>
                 </h4>
@@ -289,7 +296,8 @@
                 <fieldset ng-disabled="isDisabled">
                   <my-schema-editor
                     ng-model="plugin.outputSchema"
-                    data-disabled="plugin.implicitSchema" ng-if="plugin.name !== 'Stream' && plugin.name !== 'Kafka'"></my-schema-editor>
+                    data-disabled="plugin.implicitSchema"
+                    ng-if="plugin.name !== 'Stream' && plugin.name !== 'Kafka'"></my-schema-editor>
                   <my-stream-properties
                     ng-model="plugin.outputSchema"
                     plugins="plugin.properties"
@@ -331,7 +339,9 @@
                     </label>
                     <input type="text"
                             class="form-control"
-                            ng-model="plugin.properties[name]" />
+                            ng-model="plugin.properties[name]"
+                            ng-disabled="plugin.pluginTemplate && plugin.lock[name]" />
+
                   </div>
                 </div>
               </div>

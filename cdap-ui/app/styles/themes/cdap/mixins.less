@@ -154,3 +154,17 @@
   order: @val;
 }
 
+.appearance(@value: none) {
+  // Remove dashed border from select elements when in focus
+  color: rgba(0,0,0,0);
+  text-shadow: 0 0 0 @cdap-header;
+
+  appearance: @value;
+  -webkit-appearance: @value;
+  -moz-appearance: @value;
+  -o-appearance: @value;
+  ::-ms-expand {
+    display: none;  // Need this to hide default select in IE10
+  }
+}
+

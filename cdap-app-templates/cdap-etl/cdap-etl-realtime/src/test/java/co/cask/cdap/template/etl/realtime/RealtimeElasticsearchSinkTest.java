@@ -17,6 +17,7 @@
 package co.cask.cdap.template.etl.realtime;
 
 import co.cask.cdap.common.utils.Networks;
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.template.etl.api.PipelineConfigurable;
@@ -63,6 +64,7 @@ import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 import static org.elasticsearch.index.query.QueryBuilders.matchQuery;
@@ -138,11 +140,21 @@ public class RealtimeElasticsearchSinkTest extends TestBase {
       AdapterManager adapterManager = createAdapter(adapterId, adapterConfig);
 
       adapterManager.start();
-      TimeUnit.SECONDS.sleep(5);
+      Tasks.waitFor(1L, new Callable<Long>() {
+        @Override
+        public Long call() throws Exception {
+          try {
+            SearchResponse searchResponse = client.prepareSearch("test").execute().actionGet();
+            return searchResponse.getHits().getTotalHits();
+          } catch (Exception e) {
+            //the index test won't exist until the run is finished
+            return 0L;
+          }
+        }
+      }, 15, TimeUnit.SECONDS, 50, TimeUnit.MILLISECONDS);
       adapterManager.stop();
 
       SearchResponse searchResponse = client.prepareSearch("test").execute().actionGet();
-      Assert.assertEquals(1, searchResponse.getHits().getTotalHits());
       Map<String, Object> result = searchResponse.getHits().getAt(0).getSource();
 
       Assert.assertEquals(1, (int) result.get("id"));

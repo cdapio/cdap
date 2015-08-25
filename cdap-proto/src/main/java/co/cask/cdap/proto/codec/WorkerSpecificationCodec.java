@@ -17,8 +17,8 @@
 package co.cask.cdap.proto.codec;
 
 import co.cask.cdap.api.Resources;
-import co.cask.cdap.api.artifact.Plugin;
 import co.cask.cdap.api.worker.WorkerSpecification;
+import co.cask.cdap.internal.artifact.Plugin;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -44,7 +44,7 @@ public final class WorkerSpecificationCodec extends AbstractSpecificationCodec<W
     object.add("resources", context.serialize(spec.getResources(), Resources.class));
     object.add("datasets", serializeSet(spec.getDatasets(), context, String.class));
     object.addProperty("instances", spec.getInstances());
-    object.add("plugins", serializeMap(spec.getPluginMap(), context, Plugin.class));
+    object.add("plugins", serializeMap(spec.getPlugins(), context, Plugin.class));
     return object;
   }
 

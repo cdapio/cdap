@@ -7,7 +7,7 @@
           id="{{plugin.id}}"
           ng-dblclick="MyPlumbController.onPluginClick(plugin)">
       <div class="icon fa {{plugin.icon}}"></div>
-      <div class="plugin-name">{{plugin.name}}</div>
+      <div class="plugin-name">{{plugin.pluginTemplate || plugin.name}}</div>
       <div class="fa fa-close" ng-if="!MyPlumbController.isDisabled" ng-click="MyPlumbController.removePlugin($index, plugin.id)"></div>
 
       <div class="error-node-notification"

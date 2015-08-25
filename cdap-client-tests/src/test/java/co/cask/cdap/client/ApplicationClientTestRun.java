@@ -18,15 +18,22 @@ package co.cask.cdap.client;
 
 import co.cask.cdap.client.app.AppReturnsArgs;
 import co.cask.cdap.client.app.ConfigTestApp;
+import co.cask.cdap.client.app.ConfigurableProgramsApp;
+import co.cask.cdap.client.app.ConfigurableProgramsApp2;
 import co.cask.cdap.client.app.FakeApp;
 import co.cask.cdap.client.app.FakeDatasetModule;
 import co.cask.cdap.client.common.ClientTestBase;
+import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.DatasetModuleNotFoundException;
 import co.cask.cdap.common.DatasetNotFoundException;
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.artifact.AppRequest;
+import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.test.XSlowTests;
+import com.google.common.io.Files;
 import com.google.gson.Gson;
 import org.junit.After;
 import org.junit.Assert;
@@ -52,6 +59,7 @@ public class ApplicationClientTestRun extends ClientTestBase {
   private ApplicationClient appClient;
   private DatasetClient datasetClient;
   private DatasetModuleClient datasetModuleClient;
+  private ArtifactClient artifactClient;
 
   @Before
   public void setUp() throws Throwable {
@@ -59,6 +67,7 @@ public class ApplicationClientTestRun extends ClientTestBase {
     appClient = new ApplicationClient(clientConfig);
     datasetClient = new DatasetClient(clientConfig);
     datasetModuleClient = new DatasetModuleClient(clientConfig);
+    artifactClient = new ArtifactClient(clientConfig);
   }
 
   @After
@@ -135,6 +144,88 @@ public class ApplicationClientTestRun extends ClientTestBase {
       appClient.delete(app);
       appClient.waitForDeleted(app, 30, TimeUnit.SECONDS);
       Assert.assertEquals(0, appClient.list(Id.Namespace.DEFAULT).size());
+    }
+  }
+
+  @Test
+  public void testAppUpdate() throws Exception {
+    String artifactName = "cfg-programs";
+    Id.Artifact artifactIdV1 = Id.Artifact.from(Id.Namespace.DEFAULT, artifactName, "1.0.0");
+    Id.Artifact artifactIdV2 = Id.Artifact.from(Id.Namespace.DEFAULT, artifactName, "2.0.0");
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "ProgramsApp");
+    try {
+      artifactClient.add(Id.Namespace.DEFAULT, artifactName,
+                         Files.newInputStreamSupplier(createAppJarFile(ConfigurableProgramsApp.class)),
+                         "1.0.0");
+      artifactClient.add(Id.Namespace.DEFAULT, artifactName,
+                         Files.newInputStreamSupplier(createAppJarFile(ConfigurableProgramsApp2.class)),
+                         "2.0.0");
+
+      // deploy the app with just the worker
+      ConfigurableProgramsApp.Programs conf =
+        new ConfigurableProgramsApp.Programs(null, "worker1", "stream1", "dataset1");
+      AppRequest<ConfigurableProgramsApp.Programs> request = new AppRequest<>(
+        new ArtifactSummary(artifactIdV1.getName(), artifactIdV1.getVersion().getVersion(), false), conf);
+      appClient.deploy(appId, request);
+
+      // should only have the worker
+      Assert.assertTrue(appClient.listPrograms(appId, ProgramType.FLOW).isEmpty());
+      Assert.assertEquals(1, appClient.listPrograms(appId, ProgramType.WORKER).size());
+
+      // update to use just the flow
+      conf = new ConfigurableProgramsApp.Programs("flow1", null, "stream1", "dataset1");
+      request = new AppRequest<>(
+        new ArtifactSummary(artifactIdV1.getName(), artifactIdV1.getVersion().getVersion(), false), conf);
+      appClient.update(appId, request);
+
+      // should only have the flow
+      Assert.assertTrue(appClient.listPrograms(appId, ProgramType.WORKER).isEmpty());
+      Assert.assertEquals(1, appClient.listPrograms(appId, ProgramType.FLOW).size());
+
+      // check nonexistent app is not found
+      try {
+        appClient.update(Id.Application.from(Id.Namespace.DEFAULT, "ghost"), request);
+        Assert.fail();
+      } catch (NotFoundException e) {
+        // expected
+      }
+
+      // check different artifact name is invalid
+      request = new AppRequest<>(
+        new ArtifactSummary("ghost", artifactIdV1.getVersion().getVersion(), false), conf);
+      try {
+        appClient.update(appId, request);
+        Assert.fail();
+      } catch (BadRequestException e) {
+        // expected
+      }
+
+      // check nonexistent artifact is not found
+      request = new AppRequest<>(
+        new ArtifactSummary(artifactIdV1.getName(), "0.0.1", false), conf);
+      try {
+        appClient.update(appId, request);
+        Assert.fail();
+      } catch (NotFoundException e) {
+        // expected
+      }
+
+      // update artifact version. This version uses a different app class with that can add a service
+      ConfigurableProgramsApp2.Programs conf2 =
+        new ConfigurableProgramsApp2.Programs(null, null, "stream1", "dataset1", "service2");
+      AppRequest<ConfigurableProgramsApp2.Programs> request2 = new AppRequest<>(
+        new ArtifactSummary(artifactIdV2.getName(), artifactIdV2.getVersion().getVersion(), false), conf2);
+      appClient.update(appId, request2);
+
+      // should only have a single service
+      Assert.assertTrue(appClient.listPrograms(appId, ProgramType.WORKER).isEmpty());
+      Assert.assertTrue(appClient.listPrograms(appId, ProgramType.FLOW).isEmpty());
+      Assert.assertEquals(1, appClient.listPrograms(appId, ProgramType.SERVICE).size());
+    } finally {
+      appClient.delete(appId);
+      appClient.waitForDeleted(appId, 30, TimeUnit.SECONDS);
+      artifactClient.delete(artifactIdV1);
+      artifactClient.delete(artifactIdV2);
     }
   }
 

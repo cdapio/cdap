@@ -79,7 +79,7 @@ public class Hive14ExploreService extends BaseHiveExploreService {
   }
 
   @Override
-  protected QueryStatus fetchStatus(OperationHandle operationHandle)
+  protected QueryStatus doFetchStatus(OperationHandle operationHandle)
     throws HiveSQLException, ExploreException, HandleNotFoundException {
     OperationStatus operationStatus = getCliService().getOperationStatus(operationHandle);
     return new QueryStatus(QueryStatus.OpStatus.valueOf(operationStatus.getState().toString()),

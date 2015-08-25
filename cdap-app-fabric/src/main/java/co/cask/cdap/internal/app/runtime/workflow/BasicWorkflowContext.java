@@ -15,7 +15,6 @@
  */
 package co.cask.cdap.internal.app.runtime.workflow;
 
-import co.cask.cdap.api.artifact.Plugin;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
@@ -28,6 +27,7 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
+import co.cask.cdap.internal.artifact.Plugin;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.apache.twill.api.RunId;

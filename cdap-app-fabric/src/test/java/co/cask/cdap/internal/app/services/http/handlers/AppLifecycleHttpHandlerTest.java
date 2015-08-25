@@ -27,8 +27,8 @@ import co.cask.cdap.gateway.handlers.AppLifecycleHttpHandler;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
-import co.cask.cdap.proto.artifact.CreateAppRequest;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import org.apache.http.HttpResponse;
@@ -77,9 +77,9 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testDeployUsingNonexistantArtifact404() throws Exception {
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "badapp");
-    CreateAppRequest<Config> createAppRequest =
-      new CreateAppRequest<>(new ArtifactSummary("something", "1.0.0", false), null);
-    HttpResponse response = deploy(appId, createAppRequest);
+    AppRequest<Config> appRequest =
+      new AppRequest<>(new ArtifactSummary("something", "1.0.0", false), null);
+    HttpResponse response = deploy(appId, appRequest);
     Assert.assertEquals(404, response.getStatusLine().getStatusCode());
   }
 
@@ -90,7 +90,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "cfgApp");
     ConfigTestApp.ConfigClass config = new ConfigTestApp.ConfigClass("abc", "def");
-    CreateAppRequest<ConfigTestApp.ConfigClass> request = new CreateAppRequest<>(
+    AppRequest<ConfigTestApp.ConfigClass> request = new AppRequest<>(
       new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion(), false), config);
     Assert.assertEquals(200, deploy(appId, request).getStatusLine().getStatusCode());
 

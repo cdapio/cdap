@@ -78,6 +78,7 @@ public class DefaultAppConfigurer extends DefaultDatasetConfigurer implements Ap
     this.description = "";
   }
 
+  // TODO: Remove this constructor when app templates are removed and when all applications are created from artifacts
   public DefaultAppConfigurer(Application app, String configuration) {
     this(app);
     this.configuration = configuration;

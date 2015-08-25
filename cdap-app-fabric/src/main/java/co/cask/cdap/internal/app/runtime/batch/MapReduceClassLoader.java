@@ -17,7 +17,6 @@
 package co.cask.cdap.internal.app.runtime.batch;
 
 import co.cask.cdap.api.artifact.ArtifactDescriptor;
-import co.cask.cdap.api.artifact.Plugin;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.templates.plugins.PluginInfo;
 import co.cask.cdap.common.lang.CombineClassLoader;
@@ -28,6 +27,7 @@ import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.app.runtime.adapter.PluginClassLoader;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerLauncher;
+import co.cask.cdap.internal.artifact.Plugin;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.templates.AdapterDefinition;
 import co.cask.cdap.templates.AdapterPlugin;
@@ -280,6 +280,7 @@ public class MapReduceClassLoader extends CombineClassLoader {
       }
 
       try {
+        //TODO: CDAP-3485 Remove this logic when ApplicationTemplate/Adapter are removed
         if (pluginInstantiator != null && adapterSpec != null) {
           // Gather all explicitly used plugin class names. It is needed for external plugin case,
           Multimap<PluginInfo, String> adapterPluginClasses = getAdapterPluginClasses(adapterSpec);
@@ -307,6 +308,8 @@ public class MapReduceClassLoader extends CombineClassLoader {
           LocationFactory locationFactory;
           LocationFactory localLocationFactory = new LocalLocationFactory();
           LocationFactory hdfsLocationFactory = new HDFSLocationFactory(hConf);
+
+          // Need appropriate LocationFactory since we only the Location URI from Plugin
           locationFactory = (MapReduceContextProvider.isLocal(hConf)) ? localLocationFactory : hdfsLocationFactory;
           List<ClassLoader> pluginClassLoaders = Lists.newArrayList();
           for (Plugin plugin : mapReduceSpecification.getPlugins().values()) {

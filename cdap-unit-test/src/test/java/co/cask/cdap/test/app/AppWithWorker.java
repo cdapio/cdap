@@ -46,7 +46,7 @@ public class AppWithWorker extends AbstractApplication {
 
   private static class TableWriter extends AbstractWorker {
 
-    private volatile boolean running;
+    private volatile boolean stopped;
 
     @Override
     protected void configure() {
@@ -61,9 +61,8 @@ public class AppWithWorker extends AbstractApplication {
 
     @Override
     public void run() {
-      running = true;
       writeToTable(RUN, RUN);
-      while (running) {
+      while (!stopped) {
         try {
           TimeUnit.MILLISECONDS.sleep(100);
         } catch (InterruptedException e) {
@@ -73,9 +72,13 @@ public class AppWithWorker extends AbstractApplication {
     }
 
     @Override
-    public void stop() {
-      running = false;
+    public void destroy() {
       writeToTable(STOP, STOP);
+    }
+
+    @Override
+    public void stop() {
+      stopped = true;
     }
 
     private void writeToTable(final String key, final String value) {

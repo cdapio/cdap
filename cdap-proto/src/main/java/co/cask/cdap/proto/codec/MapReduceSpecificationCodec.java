@@ -17,8 +17,8 @@
 package co.cask.cdap.proto.codec;
 
 import co.cask.cdap.api.Resources;
-import co.cask.cdap.api.artifact.Plugin;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
+import co.cask.cdap.internal.artifact.Plugin;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;

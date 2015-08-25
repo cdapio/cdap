@@ -271,7 +271,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
       });
       future.get();
     } catch (Throwable t) {
-      LOG.error("Exception on WorkflowAction.run(), aborting Workflow. {}", actionSpec);
+      LOG.error("Exception on WorkflowAction.run(), aborting Workflow. {}", actionSpec, t);
       Throwables.propagateIfPossible(t, Exception.class);
       throw Throwables.propagate(t);
     } finally {
@@ -379,8 +379,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
 
       for (int i = 0; i < fork.getBranches().size(); i++) {
         try {
-          Future<Map.Entry<String, WorkflowToken>> f = completionService.take();
-          Map.Entry<String, WorkflowToken> retValue = f.get();
+          Future<Map.Entry<String, WorkflowToken>> forkBranchResult = completionService.take();
+          Map.Entry<String, WorkflowToken> retValue = forkBranchResult.get();
           String branchInfo = retValue.getKey();
           WorkflowToken branchToken = retValue.getValue();
           ((BasicWorkflowToken) token).mergeToken((BasicWorkflowToken) branchToken);
@@ -388,15 +388,15 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
         } catch (Throwable t) {
           Throwable rootCause = Throwables.getRootCause(t);
           if (rootCause instanceof ExecutionException) {
-            LOG.error("Exception occurred in the execution of the fork node {}", fork);
-            throw (ExecutionException) t;
+            LOG.error("Exception occurred in the execution of the fork node {}.", fork, rootCause);
+            throw (ExecutionException) rootCause;
           }
           if (rootCause instanceof InterruptedException) {
-            LOG.error("Workflow execution aborted.");
+            LOG.error("Workflow execution aborted.", rootCause);
             break;
           }
-          Throwables.propagateIfPossible(t, Exception.class);
-          throw Throwables.propagate(t);
+          Throwables.propagateIfPossible(rootCause, Exception.class);
+          throw Throwables.propagate(rootCause);
         }
       }
     } finally {
@@ -472,10 +472,10 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
       } catch (Throwable t) {
         Throwable rootCause = Throwables.getRootCause(t);
         if (rootCause instanceof InterruptedException) {
-          LOG.error("Workflow execution aborted.");
+          LOG.error("Workflow execution aborted.", rootCause);
           break;
         }
-        Throwables.propagate(t);
+        throw Throwables.propagate(rootCause);
       }
     }
   }

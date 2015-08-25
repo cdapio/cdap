@@ -17,10 +17,10 @@
 package co.cask.cdap.internal.app;
 
 import co.cask.cdap.api.Resources;
-import co.cask.cdap.api.artifact.Plugin;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
+import co.cask.cdap.internal.artifact.Plugin;
 import co.cask.cdap.proto.codec.AbstractSpecificationCodec;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;

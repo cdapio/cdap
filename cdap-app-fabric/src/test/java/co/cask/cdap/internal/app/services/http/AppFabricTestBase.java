@@ -42,8 +42,8 @@ import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactRange;
-import co.cask.cdap.proto.artifact.CreateAppRequest;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Charsets;
@@ -402,13 +402,13 @@ public abstract class AppFabricTestBase {
   }
 
   protected HttpResponse deploy(Id.Application appId,
-                                CreateAppRequest<? extends Config> createAppRequest) throws Exception {
+                                AppRequest<? extends Config> appRequest) throws Exception {
     HttpEntityEnclosingRequestBase request;
     String deployPath = getVersionedAPIPath("apps/" + appId.getId(), appId.getNamespaceId());
     request = getPut(deployPath);
     request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
     request.setHeader(HttpHeaders.Names.CONTENT_TYPE, MediaType.APPLICATION_JSON);
-    request.setEntity(new StringEntity(GSON.toJson(createAppRequest)));
+    request.setEntity(new StringEntity(GSON.toJson(appRequest)));
     return execute(request);
   }
 

@@ -25,7 +25,7 @@ import javax.annotation.Nullable;
  * This interface provides methods to register plugin usage in a CDAP Program. The registered plugins will be
  * available at the runtime of the Program.
  */
-public interface PluginRegistry {
+public interface PluginConfigurer {
   /**
    * Adds a Plugin usage to the Adapter and create a new instance.
    * The Plugin will be accessible at execution time via the {@link AdapterContext}.
@@ -37,6 +37,7 @@ public interface PluginRegistry {
    *                   instance at execution time
    * @param <T> type of the plugin class
    * @return A new instance of the plugin class or {@code null} if no plugin was found
+   * @throws IllegalArgumentException if the pluginId has been used already
    */
   @Nullable
   <T> T usePlugin(String pluginType, String pluginName, String pluginId, PluginProperties properties);
@@ -53,6 +54,7 @@ public interface PluginRegistry {
    * @param selector for selecting which plugin to use
    * @param <T> type of the plugin class
    * @return A new instance of the plugin class or {@code null} if no plugin was found
+   * @throws IllegalArgumentException if the pluginId has been used already
    */
   @Nullable
   <T> T usePlugin(String pluginType, String pluginName,
@@ -69,6 +71,7 @@ public interface PluginRegistry {
    *                   instance at execution time
    * @param <T> type of the plugin class
    * @return A {@link Class} for the plugin class or {@code null} if no plugin was found
+   * @throws IllegalArgumentException if the pluginId has been used already
    */
   @Nullable
   <T> Class<T> usePluginClass(String pluginType, String pluginName, String pluginId, PluginProperties properties);
@@ -85,6 +88,7 @@ public interface PluginRegistry {
    * @param selector for selecting which plugin to use
    * @param <T> type of the plugin class
    * @return A {@link Class} for the plugin class or {@code null} if no plugin was found
+   * @throws IllegalArgumentException if the pluginId has been used already
    */
   @Nullable
   <T> Class<T> usePluginClass(String pluginType, String pluginName,

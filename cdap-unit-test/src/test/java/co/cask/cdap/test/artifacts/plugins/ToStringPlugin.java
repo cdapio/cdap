@@ -14,34 +14,27 @@
  * the License.
  */
 
-package co.cask.cdap.proto.artifact;
+package co.cask.cdap.test.artifacts.plugins;
 
-import javax.annotation.Nullable;
+import co.cask.cdap.api.annotation.Name;
+import co.cask.cdap.api.annotation.Plugin;
+import co.cask.cdap.api.templates.plugins.PluginConfig;
 
 /**
- * Request body when creating an app
- *
- * @param <T> the type of application config
+ * Simple plugin for testing plugin usage in programs.
  */
-public class CreateAppRequest<T> {
-  private final ArtifactSummary artifact;
-  private final T config;
+@Plugin(type = "t1")
+@Name("n1")
+public class ToStringPlugin {
 
-  public CreateAppRequest(ArtifactSummary artifact) {
-    this(artifact, null);
+  @Override
+  public String toString() {
+    return config.toString;
   }
 
-  public CreateAppRequest(ArtifactSummary artifact, @Nullable T config) {
-    this.artifact = artifact;
-    this.config = config;
+  public static class Config extends PluginConfig {
+    public String toString;
   }
 
-  public ArtifactSummary getArtifact() {
-    return artifact;
-  }
-
-  @Nullable
-  public T getConfig() {
-    return config;
-  }
+  private Config config;
 }

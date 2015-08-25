@@ -18,8 +18,7 @@ angular.module(PKG.name + '.feature.admin')
           templateUrl: '/assets/features/admin/templates/overview.html',
           controller: 'OverviewController',
           ncyBreadcrumb: {
-            label: 'Management',
-            parent: 'overview'
+            label: 'Management'
           }
         })
 
@@ -141,6 +140,40 @@ angular.module(PKG.name + '.feature.admin')
                 parent: 'admin.namespace.detail.settings'
               }
             })
+
+            .state('admin.namespace.detail.templateslist', {
+              url: '/templates',
+              templateUrl: '/assets/features/admin/templates/namespace/templates-list.html',
+              controller: 'NamespaceTemplatesListController',
+              controllerAs: 'TemplatesListController',
+              ncyBreadcrumb: {
+                label: 'Templates',
+                parent: 'admin.namespace.detail.settings'
+              }
+            })
+
+            .state('admin.namespace.detail.templates', {
+              url: '/templates/create',
+              templateUrl: '/assets/features/admin/templates/namespace/templates.html',
+              controller: 'NamespaceTemplatesController',
+              controllerAs: 'TemplatesController',
+              ncyBreadcrumb: {
+                label: 'Create',
+                parent: 'admin.namespace.detail.templateslist'
+              }
+            })
+
+            .state('admin.namespace.detail.templateedit', {
+              url: '/templates/edit/:templateType/:pluginType/:pluginTemplate',
+              templateUrl: '/assets/features/admin/templates/namespace/templates.html',
+              controller: 'NamespaceTemplatesController',
+              controllerAs: 'TemplatesController',
+              ncyBreadcrumb: {
+                label: '{{$state.params.pluginTemplate}}',
+                parent: 'admin.namespace.detail.templateslist'
+              }
+            })
+
 
             .state('admin.namespace.detail.metadata', {
               url: '/metadata',

@@ -58,8 +58,12 @@ angular.module(PKG.name + '.feature.adapters')
 
       });
 
+    if ($scope.runs.length === 0) {
+      return;
+    }
     var context = 'namespace.' + $state.params.namespace +
-                  '.adapter.' + $state.params.adapterId;
+                  '.adapter.' + $state.params.adapterId +
+                  '.run.' + $scope.runs.selected.runid;
     var tagQueryParams = MyMetricsQueryHelper
                           .tagsToParams(
                             MyMetricsQueryHelper.contextToTags(context)
@@ -77,26 +81,22 @@ angular.module(PKG.name + '.feature.adapters')
       }
     };
 
-    datasrc.request(
+    datasrc.poll(
       {
         method: 'POST',
         _cdapPath: '/metrics/search?target=metric&' + tagQueryParams
-      })
-        .then(
-          function onMetricsDiscoverySuccess(res) {
-            widget.metric.names = res;
-            if (res.length > 0) {
-              pollForMetricsData(widget);
-            } else {
-              $scope.formattedData = [];
-            }
-          },
-          function onMetricsDiscoveryError() {
-            console.error('Error on Metrics fetch');
-          }
-        );
-    function pollForMetricsData(widget) {
-      DashboardHelper.pollData(widget)
+      },
+      function onMetricsDiscoverySuccess(res) {
+        widget.metric.names = res;
+        if (res.length > 0) {
+          fetchMetricsData(widget);
+        } else {
+          $scope.formattedData = [];
+        }
+      }
+    );
+    function fetchMetricsData(widget) {
+      DashboardHelper.fetchData(widget)
         .then(
           function onMetricsFetchSuccess() {
             if (!widget.formattedData || !widget.formattedData.columns) {

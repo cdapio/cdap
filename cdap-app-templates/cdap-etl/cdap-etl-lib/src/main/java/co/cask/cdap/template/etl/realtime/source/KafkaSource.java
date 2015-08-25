@@ -53,7 +53,8 @@ import javax.annotation.Nullable;
  */
 @Plugin(type = "source")
 @Name("Kafka")
-@Description("Kafka Real-time Source: Emits a record with two fields: 'key' (nullable string) and 'message' (bytes).")
+@Description("Kafka Real-time Source: Emits a record with the schema specified by the user. " +
+  "If no schema is specified, it will emit a record with two fields: 'key' (nullable string) and 'message' (bytes).")
 public class KafkaSource extends RealtimeSource<StructuredRecord> {
   private static final Logger LOG = LoggerFactory.getLogger(KafkaSource.class);
 
@@ -203,7 +204,7 @@ public class KafkaSource extends RealtimeSource<StructuredRecord> {
     @Description("Optional format of the Kafka event. Any format supported by CDAP is supported. " +
       "For example, a value of 'csv' will attempt to parse Kafka payloads as comma-separated values. " +
       "If no format is given, Kafka message payloads will be treated as bytes, resulting in a two-field schema: " +
-      "'key' of type string (which is nullable) and 'payload' of type bytes.")
+      "'key' of type string (which is nullable) and 'message' of type bytes.")
     @Nullable
     private final String format;
 

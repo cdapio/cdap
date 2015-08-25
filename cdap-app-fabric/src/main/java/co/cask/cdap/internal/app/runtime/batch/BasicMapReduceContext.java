@@ -17,7 +17,6 @@
 package co.cask.cdap.internal.app.runtime.batch;
 
 import co.cask.cdap.api.Resources;
-import co.cask.cdap.api.artifact.Plugin;
 import co.cask.cdap.api.data.batch.BatchReadable;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
@@ -39,6 +38,7 @@ import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
+import co.cask.cdap.internal.artifact.Plugin;
 import co.cask.cdap.logging.context.MapReduceLoggingContext;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.templates.AdapterDefinition;

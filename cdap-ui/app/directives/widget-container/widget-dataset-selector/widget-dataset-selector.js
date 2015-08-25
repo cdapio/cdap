@@ -18,7 +18,7 @@ angular.module(PKG.name + '.commons')
         }
 
         var params = {
-          namespace: $state.params.namespace
+          namespace: $state.params.namespace || $state.params.nsadmin
         };
 
         var dataMap = [];
@@ -50,7 +50,6 @@ angular.module(PKG.name + '.commons')
               } else if ($scope.datasetType === 'dataset') {
                 schema = res.spec.properties.schema;
               }
-
               EventPipe.emit('dataset.selected', schema);
             });
         });

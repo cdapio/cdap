@@ -19,7 +19,7 @@ angular.module(PKG.name + '.commons')
         // namespace dropdown
         $dropdown(element, {
           template: 'breadcrumbs/namespace.html',
-          animation: 'am-flip-x',
+          animation: 'none',
           scope: $scope
         });
       }

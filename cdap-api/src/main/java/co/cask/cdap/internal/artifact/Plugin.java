@@ -14,8 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.api.artifact;
+package co.cask.cdap.internal.artifact;
 
+import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.templates.plugins.PluginClass;
 import co.cask.cdap.api.templates.plugins.PluginProperties;
 
@@ -23,7 +24,7 @@ import java.net.URI;
 import java.util.Objects;
 
 /**
- * A container class for holding plugin information for an adapter instance.
+ * A container class for holding plugin information.
  */
 public final class Plugin {
   private final String pluginName;
@@ -47,14 +48,23 @@ public final class Plugin {
     return pluginName;
   }
 
+  /**
+   * @return {@link ArtifactVersion}
+   */
   public ArtifactVersion getArtifactVersion() {
     return artifactVersion;
   }
 
+  /**
+   * @return true if the plugin is part of a system artifact
+   */
   public boolean isSystem() {
     return isSystem;
   }
 
+  /**
+   * @retun location of plugin artifact
+   */
   public URI getLocationURI() {
     return locationURI;
   }
@@ -83,13 +93,12 @@ public final class Plugin {
     }
 
     Plugin that = (Plugin) o;
-
-    return pluginName.equals(that.pluginName)
-      && artifactVersion.equals(that.artifactVersion)
-      && isSystem.equals(that.isSystem)
-      && locationURI.equals(that.locationURI)
-      && pluginClass.equals(that.pluginClass)
-      && properties.equals(that.properties);
+    return Objects.equals(pluginName, that.pluginName)
+      && Objects.equals(artifactVersion, that.artifactVersion)
+      && Objects.equals(isSystem, that.isSystem)
+      && Objects.equals(locationURI, that.locationURI)
+      && Objects.equals(pluginClass, that.pluginClass)
+      && Objects.equals(properties, that.properties);
   }
 
   @Override
@@ -101,11 +110,11 @@ public final class Plugin {
   public String toString() {
     return "AdapterPlugin{" +
       "pluginName=" + pluginName +
-      "artifactVersion=" + artifactVersion +
-      "isSystem=" + isSystem +
-      "locationURI=" + locationURI +
-      "pluginClass=" + pluginClass +
-      ", properties=" + properties +
+      ",artifactVersion=" + artifactVersion +
+      ",isSystem=" + isSystem +
+      ",locationURI=" + locationURI +
+      ",pluginClass=" + pluginClass +
+      ",properties=" + properties +
       '}';
   }
 }
