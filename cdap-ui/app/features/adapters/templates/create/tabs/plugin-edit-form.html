@@ -288,6 +288,12 @@
             <div class="col-xs-12">
               <div class="padding-offset-right padding-offset-left">
 
+                <div class="schema-error">
+                  <ul>
+                    <li class="text-danger" ng-repeat="error in errors">{{ error }}</li>
+                  </ul>
+                </div>
+
                 <h4 class="sink-schema">
                   <span>Schema</span>
                   <button
