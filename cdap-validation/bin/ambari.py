@@ -19,11 +19,11 @@ def ambari_commands(host, subdir, base, cluster_info):
 
     ## iterate through ambari config urls, and run api requests against those
     ##   This creates config files in a subdirectory
-    get_configs(host, config_urls, subdir, cluster_info)
+    get_configs(config_urls, subdir, cluster_info)
 
     # process tmp configs and store results
     ambari_stored_configs = base[manager]['stored_results']
-    store_results(subdir, ambari_stored_configs, manager, cluster_info)
+    store_ambari_results(subdir, ambari_stored_configs, cluster_info)
 
 # get config urls
 def get_config_urls(host, cluster_info):
@@ -35,7 +35,7 @@ def get_config_urls(host, cluster_info):
     return config_urls
 
 # get configs through config urls
-def get_configs(host, urls, subdir, cluster_info):
+def get_configs(urls, subdir, cluster_info):
     for uri in urls:
         # extract service file name
         m = re.search('\?type=(.+?)&tag', uri)
@@ -45,11 +45,11 @@ def get_configs(host, urls, subdir, cluster_info):
         helpers.get_config_and_write(uri, subdir, file, cluster_info)
 
 # process tmp configs and store results
-def store_results(subdir, stored_configs, mgr, cluster):
+def store_ambari_results(subdir, stored_configs, cluster):
     # get list of tmp config files and read
-    if cluster['verbose'] == 2: print "Get and store all %s configurations in %s\n" % (mgr, stored_configs)
+    if cluster['verbose'] == 2: print "Get and store all Ambari configurations in %s\n" % (stored_configs)
     s = open(stored_configs, 'w')
-    os.chdir(subdir)
+    os.chdir(subdir) ## better: capture current directory
     for file in glob.glob('*'):
 
         # open file
@@ -75,7 +75,7 @@ def store_results(subdir, stored_configs, mgr, cluster):
             s.write('%s:%s=\'%s\'\n' % (service, key, value))
         
     # return
-    os.chdir('..')
+    os.chdir('..') ## returned to captured current directory above
 
 def get_service_name(service_config_file):
     # take file name, extract first part (before first '-') treat that as the service
