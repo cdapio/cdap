@@ -60,7 +60,7 @@ public interface AdapterContext {
    * Creates a new instance of a plugin. The instance returned will have the {@link PluginConfig} setup with
    * {@link PluginProperties} provided at the time when the
    * {@link AdapterConfigurer#usePlugin(String, String, String, PluginProperties)} was called during the
-   * {@link ApplicationTemplate#configureAdapter(String, Object, AdapterConfigurer)} time.
+   * {@link ApplicationTemplate#configureAdapter(String, Object, AdapterConfigurer)} adapter configuration time.
    *
    * @param pluginId the unique identifier provide when declaring plugin usage in {@link AdapterConfigurer}.
    * @param <T> the class type of the plugin

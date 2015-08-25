@@ -102,7 +102,4 @@ public abstract class MapReduceBatchContext extends BatchTransformContext implem
     return mrContext.getRuntimeArguments();
   }
 
-  private String getPluginId(String childPluginId) {
-    return String.format("%s%s%s", pluginId, Constants.ID_SEPARATOR, childPluginId);
-  }
 }

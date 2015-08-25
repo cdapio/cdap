@@ -18,6 +18,7 @@ package co.cask.cdap.template.etl.realtime.source;
 
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.template.etl.api.Emitter;
+import co.cask.cdap.template.etl.api.InvalidEntry;
 import co.cask.cdap.template.etl.api.realtime.SourceState;
 import co.cask.cdap.template.etl.common.MockRealtimeContext;
 import com.google.common.collect.Maps;
@@ -92,6 +93,11 @@ public class TwitterSourceTest {
     @Override
     public void emit(StructuredRecord value) {
       tweet = value;
+    }
+
+    @Override
+    public void emitError(InvalidEntry<StructuredRecord> value) {
+      //no-op
     }
 
     public StructuredRecord getTweet() {

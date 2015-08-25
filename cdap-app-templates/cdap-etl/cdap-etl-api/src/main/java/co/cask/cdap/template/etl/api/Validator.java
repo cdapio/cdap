@@ -16,27 +16,21 @@
 
 package co.cask.cdap.template.etl.api;
 
-import co.cask.cdap.api.annotation.Beta;
-
 /**
- * Used to emit one or more key, value pairs to the next stage.
- *
- * @param <T> Type of the object to emit
+ * Utility for obtaining an object which implements a set of validator functions, this object
+ * is usually assigned to a variable specified by the
+ * {@link co.cask.cdap.template.etl.api.Validator#getValidatorName} value.
  */
-@Beta
-public interface Emitter<T> {
+public interface Validator {
 
   /**
-   * Emit an object.
-   *
-   * @param value the object to emit
+   * Name used as variable name for the Object returned by {@link co.cask.cdap.template.etl.api.Validator#getValidator}
    */
-  void emit(T value);
+  String getValidatorName();
 
   /**
-   * Emit an Error object.
-   *
-   * @param invalidEntry {@link InvalidEntry<T>} representing the error.
+   * get Validator Object, on which the validator function's can be invoked from user-code..
+   * @return
    */
-  void emitError(InvalidEntry<T> invalidEntry);
+  Object getValidator();
 }

@@ -18,6 +18,7 @@ package co.cask.cdap.template.etl.common;
 
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.template.etl.api.Emitter;
+import co.cask.cdap.template.etl.api.InvalidEntry;
 import com.google.common.collect.Lists;
 
 import java.util.Iterator;
@@ -30,10 +31,12 @@ import java.util.List;
  */
 public class DefaultEmitter<T> implements Emitter<T>, Iterable<T> {
   private final List<T> entryList;
+  private final List<InvalidEntry<T>> errorList;
   private final Metrics metrics;
 
   public DefaultEmitter(Metrics metrics) {
     this.entryList = Lists.newArrayList();
+    this.errorList = Lists.newArrayList();
     this.metrics = metrics;
   }
 
@@ -44,11 +47,17 @@ public class DefaultEmitter<T> implements Emitter<T>, Iterable<T> {
   }
 
   @Override
+  public void emitError(InvalidEntry<T> value) {
+    errorList.add(value);
+  }
+
+  @Override
   public Iterator<T> iterator() {
     return entryList.iterator();
   }
 
   public void reset() {
     entryList.clear();
+    errorList.clear();
   }
 }

@@ -18,6 +18,7 @@ package co.cask.cdap.template.etl.realtime.source;
 
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.template.etl.api.Emitter;
+import co.cask.cdap.template.etl.api.InvalidEntry;
 import co.cask.cdap.template.etl.api.realtime.SourceState;
 import co.cask.cdap.template.etl.common.MockRealtimeContext;
 import co.cask.cdap.template.etl.realtime.jms.JmsProvider;
@@ -219,6 +220,15 @@ public class JmsSourceTest {
     @Override
     public void emit(StructuredRecord value) {
       currentValues.add(value);
+    }
+
+    /**
+     * we skip the errors
+     * @param value the object to emit
+     */
+    @Override
+    public void emitError(InvalidEntry<StructuredRecord> value) {
+      //no-op
     }
 
     List<StructuredRecord> getCurrentValues() {
