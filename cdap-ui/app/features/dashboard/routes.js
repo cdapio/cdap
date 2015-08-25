@@ -42,9 +42,6 @@ angular.module(PKG.name+'.feature.dashboard')
 
       .state('dashboard.user', {
         url: '/user/:tab',
-        params: {
-          activeDashboard: null
-        },
         templateUrl: '/assets/features/dashboard/templates/userdashboard.html',
         controller: 'UserDashboardCtrl',
         resolve: {

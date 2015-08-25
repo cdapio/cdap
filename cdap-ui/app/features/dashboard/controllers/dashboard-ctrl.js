@@ -29,8 +29,7 @@ function ($scope, $state, rDashboardsModel, MY_CONFIG, $alert, $timeout) {
     if (index !== $scope.dashboards.activeIndex || !$state.includes('dashboard.user')) {
       $scope.unknownBoard = true;
       $state.go('dashboard.user', {
-        tab: index,
-        activeDashboard: $scope.dashboards[index].title
+        tab: index
       });
       $scope.dashboards.activeIndex = index;
       return;
@@ -80,7 +79,6 @@ function ($scope, $state, rDashboardsModel, MY_CONFIG, $alert, $timeout) {
         $scope.dashboards.activeIndex = 'system';
       } else {
         $scope.dashboards.activeIndex = parseInt(toParams.tab, 10);
-        $state.params.activeDashboard = $scope.dashboards[toParams.tab].title;
       }
     }
   });
@@ -93,9 +91,6 @@ function ($scope, $state, rDashboardsModel, MY_CONFIG, $alert, $timeout) {
       });
     }
   };
-  if ($state.params.tab) {
-    $state.params.activeDashboard = $scope.dashboards[$state.params.tab].title;
-  }
 })
 .directive('tabDdMenu', function() {
     return {
