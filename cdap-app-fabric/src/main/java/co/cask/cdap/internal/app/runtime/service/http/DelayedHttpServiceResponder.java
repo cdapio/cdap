@@ -185,7 +185,6 @@ public final class DelayedHttpServiceResponder implements HttpServiceResponder {
     bufferedResponse = new BufferedResponse(HttpResponseStatus.INTERNAL_SERVER_ERROR.getCode(),
                                             ChannelBuffers.wrappedBuffer(buffer),
                                             "text/plain; charset=" + Charsets.UTF_8.name(), null);
-
   }
 
   /**
