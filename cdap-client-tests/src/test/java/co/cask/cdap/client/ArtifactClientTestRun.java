@@ -34,13 +34,17 @@ import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.internal.test.PluginJarHelper;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.artifact.ApplicationClassInfo;
+import co.cask.cdap.proto.artifact.ApplicationClassSummary;
 import co.cask.cdap.proto.artifact.ArtifactInfo;
 import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.artifact.PluginInfo;
 import co.cask.cdap.proto.artifact.PluginSummary;
 import co.cask.cdap.test.XSlowTests;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.io.InputSupplier;
@@ -57,6 +61,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.jar.Manifest;
@@ -221,6 +226,24 @@ public class ArtifactClientTestRun extends ClientTestBase {
     ArtifactInfo pluginArtifactInfo =
       new ArtifactInfo(pluginId.getName(), pluginId.getVersion().getVersion(), false, pluginClasses);
     Assert.assertEquals(pluginArtifactInfo, artifactClient.getArtifactInfo(pluginId));
+
+    // test get all app classes in namespace
+    Set<ApplicationClassSummary> expectedSummaries = ImmutableSet.of(
+      new ApplicationClassSummary(myapp1Summary, MyApp.class.getName()),
+      new ApplicationClassSummary(myapp2Summary, MyApp.class.getName())
+    );
+    Set<ApplicationClassSummary> appClassSummaries = Sets.newHashSet(
+      artifactClient.getApplicationClasses(Id.Namespace.DEFAULT));
+    Assert.assertEquals(expectedSummaries, appClassSummaries);
+
+    // test get all app classes in namespace with name MyApp.class.getName()
+    Set<ApplicationClassInfo> appClassInfos = Sets.newHashSet(
+      artifactClient.getApplicationClasses(Id.Namespace.DEFAULT, MyApp.class.getName()));
+    Set<ApplicationClassInfo> expectedInfos = ImmutableSet.of(
+      new ApplicationClassInfo(myapp1Summary, MyApp.class.getName(), myAppConfigSchema),
+      new ApplicationClassInfo(myapp2Summary, MyApp.class.getName(), myAppConfigSchema)
+    );
+    Assert.assertEquals(expectedInfos, appClassInfos);
 
     // test get plugin types for myapp-1.0.0. should be empty, since plugins only extends versions [2.0.0 - 3.0.0)
     Assert.assertTrue(artifactClient.getPluginTypes(myapp1Id).isEmpty());

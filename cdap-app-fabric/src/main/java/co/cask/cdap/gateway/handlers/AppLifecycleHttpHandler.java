@@ -85,6 +85,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
 /**
@@ -186,8 +187,10 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/apps")
   public void getAllApps(HttpRequest request, HttpResponder responder,
-                         @PathParam("namespace-id") String namespaceId) throws NamespaceNotFoundException {
-    getAppRecords(responder, store, namespaceId);
+                         @PathParam("namespace-id") String namespaceId,
+                         @QueryParam("artifactName") String artifactName,
+                         @QueryParam("artifactVersion") String artifactVersion) throws NamespaceNotFoundException {
+    getAppRecords(responder, store, namespaceId, artifactName, artifactVersion);
   }
 
   /**
@@ -514,7 +517,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       datasets.add(new DatasetDetail(datasetSpec.getInstanceName(), datasetSpec.getTypeName()));
     }
 
-    return new ApplicationDetail(spec.getName(), spec.getVersion(), spec.getDescription(), spec.getConfiguration(),
-                                 streams, datasets, programs);
+    return new ApplicationDetail(spec.getName(), spec.getDescription(), spec.getConfiguration(),
+                                 streams, datasets, programs, ArtifactSummary.from(spec.getArtifactId()));
   }
 }
