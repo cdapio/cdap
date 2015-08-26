@@ -358,7 +358,6 @@ public class ArtifactStore {
       });
   }
 
-
   /**
    * Get all plugin classes that extend the given parent artifact.
    * Results are returned as a sorted map from plugin artifact to plugins in that artifact.
@@ -607,6 +606,12 @@ public class ArtifactStore {
           Bytes.toBytes(String.format("%s:%s;", PLUGIN_PREFIX, namespace.getId()))
         );
         scanner = table.scan(pluginsScan);
+        while ((row = scanner.next()) != null) {
+          table.delete(row.getRow());
+        }
+
+        // delete app classes in this namespace
+        scanner = table.scan(scanAppClasses(namespace));
         while ((row = scanner.next()) != null) {
           table.delete(row.getRow());
         }

@@ -228,20 +228,18 @@ public class ArtifactClientTestRun extends ClientTestBase {
     Assert.assertEquals(pluginArtifactInfo, artifactClient.getArtifactInfo(pluginId));
 
     // test get all app classes in namespace
-    // no way to delete artifacts yet... when run in a suite will see other app classes from app deployments,
-    // so just check the expected ones are in the list returned.
     Set<ApplicationClassSummary> expectedSummaries = ImmutableSet.of(
       new ApplicationClassSummary(myapp1Summary, MyApp.class.getName()),
       new ApplicationClassSummary(myapp2Summary, MyApp.class.getName())
     );
     Set<ApplicationClassSummary> appClassSummaries = Sets.newHashSet(
       artifactClient.getApplicationClasses(Id.Namespace.DEFAULT));
-    Assert.assertTrue(appClassSummaries.containsAll(expectedSummaries));
+    Assert.assertEquals(expectedSummaries, appClassSummaries);
 
     // test get all app classes in namespace with name MyApp.class.getName()
-    List<ApplicationClassInfo> appClassInfos =
-      artifactClient.getApplicationClasses(Id.Namespace.DEFAULT, MyApp.class.getName());
-    List<ApplicationClassInfo> expectedInfos = ImmutableList.of(
+    Set<ApplicationClassInfo> appClassInfos = Sets.newHashSet(
+      artifactClient.getApplicationClasses(Id.Namespace.DEFAULT, MyApp.class.getName()));
+    Set<ApplicationClassInfo> expectedInfos = ImmutableSet.of(
       new ApplicationClassInfo(myapp1Summary, MyApp.class.getName(), myAppConfigSchema),
       new ApplicationClassInfo(myapp2Summary, MyApp.class.getName(), myAppConfigSchema)
     );

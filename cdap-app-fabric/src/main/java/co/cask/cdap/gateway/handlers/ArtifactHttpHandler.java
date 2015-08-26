@@ -311,7 +311,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
 
     try {
       responder.sendJson(HttpResponseStatus.OK, artifactRepository.getApplicationClasses(namespace, includeSystem),
-        APPCLASS_SUMMARIES_TYPE, GSON);
+                         APPCLASS_SUMMARIES_TYPE, GSON);
     } catch (IOException e) {
       LOG.error("Error getting app classes for namespace {}.", namespaceId, e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,

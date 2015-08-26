@@ -52,7 +52,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.SortedMap;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
@@ -190,6 +189,8 @@ public class ArtifactStoreTest {
     artifactStore.delete(parentId);
     // nothing should be in the list
     Assert.assertTrue(artifactStore.getArtifacts(parentId.getNamespace()).isEmpty());
+    // shouldn't be able to see app class either
+    Assert.assertTrue(artifactStore.getApplicationClasses(Id.Namespace.DEFAULT, appClass.getClassName()).isEmpty());
   }
 
   @Test(expected = ArtifactAlreadyExistsException.class)
