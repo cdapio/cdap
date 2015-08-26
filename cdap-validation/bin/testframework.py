@@ -28,7 +28,7 @@ input_json = 'input.json'
 
 
 # calls all other functions
-def testing(base_vars, cluster_vars):
+def test(base_vars, cluster_vars):
     helpers.vprint('start testing', cluster_vars['verbose']) 
 
 

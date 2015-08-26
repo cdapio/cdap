@@ -47,7 +47,7 @@ def main(argv):
     #}
 
     ### test framework functions
-    testframework.testing(base_vars, cluster_vars)
+    testframework.test(base_vars, cluster_vars)
 
 if __name__ == '__main__':
     main(sys.argv[1:])
