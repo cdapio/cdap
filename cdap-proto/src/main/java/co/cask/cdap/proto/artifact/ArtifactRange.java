@@ -37,13 +37,13 @@ public class ArtifactRange {
   }
 
   public ArtifactRange(Id.Namespace namespace, String name, ArtifactVersion lower, boolean isLowerInclusive,
-                       ArtifactVersion upper, boolean isUpperInclusives) {
+                       ArtifactVersion upper, boolean isUpperInclusive) {
     this.namespace = namespace;
     this.name = name;
     this.lower = lower;
     this.upper = upper;
     this.isLowerInclusive = isLowerInclusive;
-    this.isUpperInclusive = isUpperInclusives;
+    this.isUpperInclusive = isUpperInclusive;
   }
 
   public Id.Namespace getNamespace() {

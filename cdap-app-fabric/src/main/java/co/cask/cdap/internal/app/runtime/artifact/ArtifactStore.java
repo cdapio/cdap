@@ -39,6 +39,7 @@ import co.cask.cdap.data2.dataset2.tx.Transactional;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ArtifactRange;
+import co.cask.cdap.proto.artifact.InvalidArtifactRangeException;
 import co.cask.tephra.TransactionConflictException;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
@@ -54,6 +55,13 @@ import com.google.common.io.ByteStreams;
 import com.google.common.io.InputSupplier;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSerializer;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -61,6 +69,7 @@ import org.apache.twill.filesystem.LocationFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Type;
 import java.net.URI;
 import java.util.Collections;
 import java.util.Iterator;
@@ -142,6 +151,7 @@ public class ArtifactStore {
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.gson = new GsonBuilder()
       .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+      .registerTypeAdapter(ArtifactRange.class, new ArtifactRangeCodec())
       .create();
     this.metaTable = Transactional.of(txExecutorFactory, new Supplier<DatasetContext<Table>>() {
       @Override
@@ -356,7 +366,7 @@ public class ArtifactStore {
               ArtifactColumn artifactColumn = ArtifactColumn.parse(column.getKey());
               PluginData pluginData = gson.fromJson(Bytes.toString(column.getValue()), PluginData.class);
               // filter out plugins that don't extend this version of the parent artifact
-              if (matches(pluginData, parentArtifactId.getVersion())) {
+              if (pluginData.usableBy.versionIsInRange(parentArtifactId.getVersion())) {
                 ArtifactDescriptor artifactInfo =
                   getDescriptor(artifactColumn.artifactId, locationFactory.create(pluginData.artifactLocationURI));
                 result.put(artifactInfo, pluginData.pluginClass);
@@ -370,12 +380,6 @@ public class ArtifactStore {
       throw new PluginNotExistsException(parentArtifactId.getNamespace(), type, name);
     }
     return Collections.unmodifiableSortedMap(plugins);
-  }
-
-  private boolean matches(PluginData pluginData, ArtifactVersion version) {
-    ArtifactVersion lower = new ArtifactVersion(pluginData.parentVersionLower);
-    ArtifactVersion upper = new ArtifactVersion(pluginData.parentVersionUpper);
-    return version.compareTo(lower) >= 0 && version.compareTo(upper) < 0;
   }
 
   /**
@@ -623,7 +627,7 @@ public class ArtifactStore {
       PluginData pluginData = gson.fromJson(Bytes.toString(column.getValue()), PluginData.class);
 
       // filter out plugins that don't extend this version of the parent artifact
-      if (matches(pluginData, parentArtifactId.getVersion())) {
+      if (pluginData.usableBy.versionIsInRange(parentArtifactId.getVersion())) {
         ArtifactDescriptor artifactDescriptor =
           getDescriptor(artifactColumn.artifactId, locationFactory.create(pluginData.artifactLocationURI));
 
@@ -750,15 +754,32 @@ public class ArtifactStore {
   // Data that will be stored for a plugin.
   private static class PluginData {
     private final PluginClass pluginClass;
-    private final String parentVersionLower;
-    private final String parentVersionUpper;
+    private final ArtifactRange usableBy;
     private final URI artifactLocationURI;
 
     public PluginData(PluginClass pluginClass, ArtifactRange usableBy, Location artifactLocation) {
       this.pluginClass = pluginClass;
-      this.parentVersionLower = usableBy.getLower().getVersion();
-      this.parentVersionUpper = usableBy.getUpper().getVersion();
+      this.usableBy = usableBy;
       this.artifactLocationURI = artifactLocation.toURI();
+    }
+  }
+
+  // serialize and deserialize artifact range
+  private static class ArtifactRangeCodec implements JsonDeserializer<ArtifactRange>, JsonSerializer<ArtifactRange> {
+
+    @Override
+    public ArtifactRange deserialize(JsonElement json, Type typeOfT,
+                                     JsonDeserializationContext context) throws JsonParseException {
+      try {
+        return ArtifactRange.parse(json.getAsString());
+      } catch (InvalidArtifactRangeException e) {
+        throw new JsonParseException(e);
+      }
+    }
+
+    @Override
+    public JsonElement serialize(ArtifactRange src, Type typeOfSrc, JsonSerializationContext context) {
+      return new JsonPrimitive(src.toString());
     }
   }
 }
