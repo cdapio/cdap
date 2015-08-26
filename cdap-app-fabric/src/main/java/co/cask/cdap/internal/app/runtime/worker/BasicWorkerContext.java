@@ -37,9 +37,9 @@ import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.data2.dataset2.DatasetCacheKey;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DynamicDatasetContext;
+import co.cask.cdap.internal.app.Plugin;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
-import co.cask.cdap.internal.artifact.Plugin;
 import co.cask.cdap.logging.context.WorkerLoggingContext;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.templates.AdapterDefinition;
@@ -85,6 +85,7 @@ public class BasicWorkerContext extends AbstractContext implements WorkerContext
   private final Program program;
   private final Map<String, String> runtimeArgs;
   private final StreamWriter streamWriter;
+  private final Map<String, Plugin> plugins;
 
   public BasicWorkerContext(WorkerSpecification spec, Program program, RunId runId, int instanceId,
                             int instanceCount, Arguments runtimeArgs, CConfiguration cConf,
@@ -115,6 +116,7 @@ public class BasicWorkerContext extends AbstractContext implements WorkerContext
     }
     this.runtimeArgs = runtimeArgs.asMap();
     this.streamWriter = streamWriterFactory.create(program.getId().getNamespace(), getOwners());
+    this.plugins = Maps.newHashMap(program.getApplicationSpecification().getPlugins());
 
     // The cache expiry should be greater than (2 * transaction.timeout) and at least 2 hours.
     // This ensures that when a dataset instance is requested multiple times during a single transaction,
@@ -233,7 +235,7 @@ public class BasicWorkerContext extends AbstractContext implements WorkerContext
 
   @Override
   public Map<String, Plugin> getPlugins() {
-    return getSpecification().getPlugins();
+    return plugins;
   }
 
   private void abortTransaction(Exception e, String message, TransactionContext context) {

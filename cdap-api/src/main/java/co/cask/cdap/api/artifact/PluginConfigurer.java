@@ -16,6 +16,7 @@
 
 package co.cask.cdap.api.artifact;
 
+import co.cask.cdap.api.DatasetConfigurer;
 import co.cask.cdap.api.templates.AdapterContext;
 import co.cask.cdap.api.templates.plugins.PluginProperties;
 
@@ -25,7 +26,7 @@ import javax.annotation.Nullable;
  * This interface provides methods to register plugin usage in a CDAP Program. The registered plugins will be
  * available at the runtime of the Program.
  */
-public interface PluginConfigurer {
+public interface PluginConfigurer extends DatasetConfigurer {
   /**
    * Adds a Plugin usage to the Adapter and create a new instance.
    * The Plugin will be accessible at execution time via the {@link AdapterContext}.

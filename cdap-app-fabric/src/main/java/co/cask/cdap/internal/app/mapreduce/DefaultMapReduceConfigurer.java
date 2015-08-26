@@ -96,6 +96,6 @@ public final class DefaultMapReduceConfigurer extends DefaultPluginConfigurer im
 
   public MapReduceSpecification createSpecification() {
     return new MapReduceSpecification(className, name, description, inputDataset, outputDataset, datasets,
-                                      properties, mapperResources, reducerResources, getPlugins());
+                                      properties, mapperResources, reducerResources);
   }
 }

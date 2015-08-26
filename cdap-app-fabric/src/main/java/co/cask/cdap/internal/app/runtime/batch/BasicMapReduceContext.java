@@ -36,9 +36,9 @@ import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.internal.app.Plugin;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
-import co.cask.cdap.internal.artifact.Plugin;
 import co.cask.cdap.logging.context.MapReduceLoggingContext;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.templates.AdapterDefinition;
@@ -66,6 +66,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   private final WorkflowToken workflowToken;
   private final Metrics userMetrics;
   private final MetricsCollectionService metricsCollectionService;
+  private final Map<String, Plugin> plugins;
 
   private String inputDatasetName;
   private List<Split> inputDataSelection;
@@ -113,6 +114,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
     // initialize input/output to what the spec says. These can be overwritten at runtime.
     this.inputDatasetName = spec.getInputDataSet();
     this.outputDatasetName = spec.getOutputDataSet();
+    this.plugins = Maps.newHashMap(program.getApplicationSpecification().getPlugins());
   }
 
   private LoggingContext createLoggingContext(Id.Program programId, RunId runId,
@@ -124,13 +126,12 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
 
   @Override
   public String toString() {
-    return String.format("job=%s,=%s",
-                         spec.getName(), super.toString());
+    return String.format("job=%s,=%s", spec.getName(), super.toString());
   }
 
   @Override
   public Map<String, Plugin> getPlugins() {
-    return spec.getPlugins();
+    return plugins;
   }
 
   @Override
