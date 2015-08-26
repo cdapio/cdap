@@ -85,11 +85,11 @@ angular.module(PKG.name + '.feature.admin')
           var template = res[$stateParams.nsadmin][$stateParams.templateType][$stateParams.pluginType][$stateParams.pluginTemplate];
 
           vm.templateType = template.templateType;
-          vm.pluginType = template.pluginType;
+          vm.pluginType = template.pluginType || template.type;
           vm.pluginName = template.pluginName;
 
           vm.pluginConfig = {
-            pluginTemplate: template.pluginTemplate,
+            pluginTemplate: template.pluginTemplate || template.templateName,
             properties: template.properties,
             outputSchema: template.outputSchema,
             lock: template.lock
