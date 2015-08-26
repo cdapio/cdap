@@ -18,6 +18,8 @@ import urllib2
 import json
 import re
 import glob, os
+from os import listdir
+from os.path import isfile, join
 import test_helpers as helpers
 
 # Start Ambari configuration retrieval process
@@ -66,14 +68,17 @@ def store_ambari_results(subdir, stored_configs, cluster):
     # get list of tmp config files and read
     if cluster['verbose'] == 2: print "Get and store all Ambari configurations in %s\n" % (stored_configs)
     s = open(stored_configs, 'w')
-    os.chdir(subdir) ## better: capture current directory
-    for file in glob.glob('*'):
+    config_file_list = [ c for c in listdir(subdir) if isfile(join(subdir,c)) ]
+    
+    for file in config_file_list:
 
         # open file
+        subfile = subdir + file
+        if cluster['verbose'] == 2: print 'file=%s  subfile=%s' % (file, subfile)
         try:
-            f = open(file, 'r')
+            f = open(subfile, 'r')
         except IOError:
-            print 'cannot open list of config files', file # runtime error -- need to stop this modules' run
+            print 'cannot open config file', subfile # runtime error -- need to stop this modules' run
             exit(1) # replace with functionality to end module's run (but with the chance to start another module if applicable)
 
         tmp_config_file = f.read()
@@ -97,7 +102,6 @@ def store_ambari_results(subdir, stored_configs, cluster):
             s.write('%s:%s=\'%s\'\n' % (service, key, value))
         
     # return
-    os.chdir('..') ## returned to captured current directory above
 
 def get_service_name(service_config_file):
     # take file name, extract first part (before first '-') treat that as the service
