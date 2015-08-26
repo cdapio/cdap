@@ -1,0 +1,72 @@
+@import "../../styles/variables.less";
+my-explore {
+  .explore-container {
+    background-color: white;
+    padding: 15px;
+    border-radius: @border-radius-base;
+
+    button.execute {
+      padding-left: 25px;
+      padding-right: 25px;
+    }
+
+    h5 {
+      font-weight: bold;
+    }
+
+    textarea {
+      max-width: 100%;
+      min-height: 100px;
+    }
+
+    table.table-explore-results {
+      background-color: white;
+      border-left: none;
+      border-right: none;
+
+      th {
+        font-size: 13px;
+
+        &:first-child {
+          border-left: none;
+        }
+
+        &:last-child {
+          border-right: none;
+        }
+      }
+
+      td {
+        vertical-align: middle;
+        font-size: 13px;
+
+        &.col-index {
+          width: 5%;
+          border-left: none;
+        }
+
+        &.col-start-time {
+          width: 20%;
+        }
+
+        &.col-status {
+          width: 15%;
+        }
+
+        &.col-statement {
+          width: 40%;
+        }
+
+        &.col-actions {
+          width: 20%;
+          border-right: none;
+
+          button.btn {
+            padding: 10px;
+          }
+        }
+      }
+
+    }
+  }
+}

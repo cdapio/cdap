@@ -1,0 +1,63 @@
+<div class="explore-container">
+  <h5>Execute SQL</h5>
+  <p>
+    <textarea class="form-control" ng-model="query"></textarea>
+  </p>
+  <div class="text-right">
+    <button class="btn btn-primary execute" type="button" ng-click="execute()">
+      Execute
+    </button>
+  </div>
+
+  <div ng-if="queries.length > 0">
+    <h5>Results</h5>
+    <div class="table-responsive">
+      <table class="table table-bordered table-explore-results">
+        <thead>
+          <th></th>
+          <th>Started</th>
+          <th>Status</th>
+          <th>SQL Query</th>
+          <th>Actions</th>
+        </thead>
+
+        <tbody>
+          <tr ng-repeat="query in queries | orderBy:'':true">
+            <td class="col-index text-center">{{ $index + 1 }}</td>
+            <td class="col-start-time">{{ query.timestamp | amDateFormat:'MM/DD/YYYY  h:mm:ss a'}}</td>
+            <td class="col-status">{{ query.status }}</td>
+            <td class="col-statement">{{ query.statement }}</td>
+            <td class="col-actions">
+              <div class="btn-group btn-group-justified">
+
+                <div class="btn-group">
+                  <button class="btn btn-default" ng-click="download(query)" ng-disabled="query.downloading">
+                    <i class="fa"
+                      ng-class="{ 'fa-download': !query.downloading, 'fa-spinner fa-spin': query.downloading }">
+                    </i>
+                  </button>
+                </div>
+
+                <div class="btn-group">
+                  <button class="btn btn-default"
+                    ng-click="preview(query)"
+                    ng-disabled="!query.is_active || query.status !== 'FINISHED'">
+                    <i class="fa fa-eye"></i>
+                  </button>
+                </div>
+
+                <div class="btn-group">
+                  <button class="btn btn-default" ng-click="clone(query)">
+                    <i class="fa fa-files-o"></i>
+                  </button>
+                </div>
+
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>

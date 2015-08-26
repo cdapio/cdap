@@ -1,19 +1,31 @@
 angular.module(PKG.name + '.commons')
-  .directive('myViewQueries', function () {
+  .directive('myExplore', function () {
 
     return {
       restrict: 'E',
       scope: {
-        panel: '='
+        type: '=',
+        name: '='
       },
-      templateUrl: 'view-queries/view-queries.html',
-      controller: function ($scope, MyDataSource, $state, EventPipe, myExploreApi, $http, myCdapUrl, $bootstrapModal) {
+      templateUrl: 'explore/explore.html',
+      controller: myExploreCtrl
+    };
 
+
+    function myExploreCtrl ($scope, MyDataSource, myExploreApi, $http, $state, $bootstrapModal, myCdapUrl) {
         var dataSrc = new MyDataSource($scope);
         $scope.queries = [];
         var params = {
           namespace: $state.params.namespace,
           scope: $scope
+        };
+
+        $scope.$watch('name', function() {
+          $scope.query = 'SELECT * FROM ' + $scope.type + '_' + $scope.name + ' LIMIT 5';
+        });
+
+        $scope.execute = function() {
+          myExploreApi.postQuery(params, { query: $scope.query }, $scope.getQueries);
         };
 
         $scope.getQueries = function() {
@@ -47,14 +59,12 @@ angular.module(PKG.name + '.commons')
             });
         };
 
-        EventPipe.on('explore.newQuery', $scope.getQueries);
-
         $scope.getQueries();
 
 
         $scope.preview = function (query) {
           $bootstrapModal.open({
-            templateUrl: 'view-queries/preview-modal.html',
+            templateUrl: 'explore/preview-modal.html',
             size: 'lg',
             resolve: {
               query: function () { return query; }
@@ -68,8 +78,6 @@ angular.module(PKG.name + '.commons')
               myExploreApi.getQuerySchema(params)
                 .$promise
                 .then(function (res) {
-                  console.log('schema', res);
-
                   angular.forEach(res, function(v) {
                     v.name = v.name.split('.')[1];
                   });
@@ -84,7 +92,6 @@ angular.module(PKG.name + '.commons')
 
             }]
           });
-          console.log('query', query);
         };
 
 
@@ -119,16 +126,10 @@ angular.module(PKG.name + '.commons')
         };
 
         $scope.clone = function (query) {
-          var params = {
-            namespace: $state.params.namespace,
-            scope: $scope
-          };
-
           myExploreApi.postQuery(params, { query: query.statement }, $scope.getQueries);
         };
 
       }
 
-    };
 
   });
