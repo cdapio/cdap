@@ -72,48 +72,50 @@ function makeApp (authAddress, cdapConfig) {
 
     var path = DIST_PATH + '/assets/public';
 
-    fs.mkdir(path, function (err) {
-      if (err && err.code === 'EEXIST') {
-        console.log('[Download Query] Public folder already exist');
+    try {
+      fs.mkdirSync(path);
+    } catch (e) {
+      if (e.code !== 'EEXIST') {
+        log.debug('Error! ' + e);
+        res.status(500).send('Write permission denied. Unable to download the CSV file.');
+        return;
       }
+    }
 
-      var decoder = new StringDecoder('utf8');
+    var decoder = new StringDecoder('utf8');
 
-      var filePath = DIST_PATH + '/assets/public/' + query + '.csv';
+    var filePath = DIST_PATH + '/assets/public/' + query + '.csv';
 
 
-      try {
-        fs.lstatSync(filePath);
+    try {
+      fs.lstatSync(filePath);
 
-        // checking if file exist
-        // if file exist, respond with the link directly
-        // if file does not exist, it will throw an error
-        res.send('/assets/public/' + query + '.csv');
+      // checking if file exist
+      // if file exist, respond with the link directly
+      // if file does not exist, it will throw an error
+      res.send('/assets/public/' + query + '.csv');
 
-      } catch (e) {
-        // this catch block will get executed when the file does not exist yet
+    } catch (e) {
+      // this catch block will get executed when the file does not exist yet
 
-        var file = fs.createWriteStream(filePath);
+      var file = fs.createWriteStream(filePath);
 
-        var r = request.post({
-          method: 'POST',
-          url: url
+      var r = request.post({
+        method: 'POST',
+        url: url
+      });
+
+      r.on('response', function(response) {
+        response.on('data', function(chunk) {
+          file.write(decoder.write(chunk));
         });
 
-        r.on('response', function(response) {
-          response.on('data', function(chunk) {
-            file.write(decoder.write(chunk));
-          });
-
-          response.on('end', function() {
-            file.end();
-            res.send('/assets/public/' + query + '.csv');
-          });
+        response.on('end', function() {
+          file.end();
+          res.send('/assets/public/' + query + '.csv');
         });
-      }
-
-
-    });
+      });
+    }
   });
 
   /*

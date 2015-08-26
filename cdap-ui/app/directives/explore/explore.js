@@ -13,7 +13,7 @@ angular.module(PKG.name + '.commons')
     };
 
 
-    function myExploreCtrl ($scope, MyDataSource, myExploreApi, $http, $state, $bootstrapModal, myCdapUrl, $timeout) {
+    function myExploreCtrl ($scope, MyDataSource, myExploreApi, $http, $state, $bootstrapModal, myCdapUrl, $timeout, myAlert) {
         var vm = this;
 
         var dataSrc = new MyDataSource($scope);
@@ -134,8 +134,13 @@ angular.module(PKG.name + '.commons')
 
               query.downloading = false;
             })
-            .error(function() {
+            .error(function(error) {
               console.info('Error downloading query');
+              myAlert({
+                title: 'Error',
+                content: error
+              });
+
               query.downloading = false;
             });
         };
