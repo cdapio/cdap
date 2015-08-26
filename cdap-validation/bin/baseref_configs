@@ -1,3 +1,10 @@
+# FORMAT
+# service:key='value':data_type:comparison_type
+# data_type can be bytes or alpha
+# comparison_type can be exact or range
+# ranges can have no starting or no end value and separate start and end with a '-'
+# Empty lines and lines starting with '#' will be ignored
+
 cdap:cdap_master_heapsize='1024m':bytes:exact
 hbase:hbase_master_heapsize='4096m-':bytes:range
 yarn:nodemanager_heapsize='512m-99999m':bytes:range

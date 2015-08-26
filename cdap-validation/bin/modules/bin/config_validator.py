@@ -137,8 +137,13 @@ with open(actual_configs) as l:
 
 f = open(baseref_configs, 'r')
 for line in f:
-    # parse line: 
-    # service:property='value/range'
+    # baseref_configs format: 
+    # service:property='value/range':datatype:comparison_type
+
+    # ignore lines starting with '#' or empty lines
+    if line.startswith('#') or not line.strip():
+        continue
+
     bservice,bproperty,datatype,type = line.split(':')
     #bvars = [bservice, bproperty, datatype, type]
     #for bvar in bvars:
