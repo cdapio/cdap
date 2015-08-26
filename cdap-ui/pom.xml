@@ -150,7 +150,7 @@
                   <goal>bower</goal>
                 </goals>
                 <configuration>
-                  <arguments>cache clean</arguments>
+                  <arguments>cache clean --allow-root</arguments>
                 </configuration>
               </execution>
               <execution>
