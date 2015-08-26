@@ -24,9 +24,11 @@ import re
 import install_validator.module_helpers as module_helpers
 #import module_helpers as module_helpers
 
+
 def strip_crlf(var):
     #print 'attempting to strip \\n from %s' % (var)
     return var.rstrip()
+
 
 def check_numeric_unit(value):
     # if string ends in digits followed by [a-z], m is a Match object, else None
@@ -36,6 +38,7 @@ def check_numeric_unit(value):
         return value[:-1]
     else:
         return value
+
 
 def process_range_reference(x,y):
     #print 'processing range reference'
@@ -54,6 +57,7 @@ def process_range_reference(x,y):
     else:
         return str(x) + ':' + str(y)
 
+
 def exact_eval(a,b):
     #print 'testing exact_eval with %s and %s' % (a,b)
     if a == b:
@@ -62,6 +66,7 @@ def exact_eval(a,b):
     else:
         return '1'
         #print 'a != b'
+
 
 def range_eval(a,x,y):
     #print 'evaluating a to see if it is within range x:y'
@@ -79,6 +84,7 @@ def range_eval(a,x,y):
         if a < x or a > y: 
             return '1'
         return '0'
+
 
 ################################################################
 
@@ -144,11 +150,15 @@ for line in f:
     if line.startswith('#') or not line.strip():
         continue
 
-    bservice,bproperty,datatype,type = line.split(':')
-    #bvars = [bservice, bproperty, datatype, type]
-    #for bvar in bvars:
-    #    bvar = strip_crlf(bvar)
-    #print 'datatype = %s' % (datatype)
+    # placeholder: need to handle bad/improperly formatted data
+
+
+    try:
+        bservice,bproperty,datatype,type = line.split(':',3)
+    except:
+        print '\ninvalid baseref_config line:  ', line
+        continue
+
     bvalue = ''
     bvaluenum = 0
     
