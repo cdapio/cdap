@@ -70,7 +70,12 @@ def store_ambari_results(subdir, stored_configs, cluster):
     for file in glob.glob('*'):
 
         # open file
-        f = open(file, 'r')
+        try:
+            f = open(file, 'r')
+        except IOError:
+            print 'cannot open list of config files', file # runtime error -- need to stop this modules' run
+            exit(1) # replace with functionality to end module's run (but with the chance to start another module if applicable)
+
         tmp_config_file = f.read()
         f.close()
         service = get_service_name(file)
