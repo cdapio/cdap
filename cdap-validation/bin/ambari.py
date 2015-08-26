@@ -34,7 +34,7 @@ def get_ambari_configs(host, subdir, base, cluster_info):
 
     # extract the ambari config urls
     data = json.loads(config_url_href)
-    config_urls = [ item['href'] for item in data['items'] ]
+    config_urls = [item['href'] for item in data['items']]
 
     # run API commands:
     # iterate through ambari config urls, and run api requests against those
@@ -51,7 +51,7 @@ def get_config_urls(host, cluster_info):
     cluster = cluster_info['cluster']
     append = '/clusters/' + cluster + '/configurations'
     url = host + append
-    if cluster_info['verbose'] == 2:  print 'url=%s' % (url)
+    if cluster_info['verbose'] == 2: print 'url=%s' % (url)
     config_urls = helpers.run_request(url, cluster_info)
     return config_urls
 
@@ -72,7 +72,7 @@ def store_ambari_results(subdir, stored_configs, cluster):
     # get list of tmp config files and read
     if cluster['verbose'] == 2: print "Get and store all Ambari configurations in %s\n" % (stored_configs)
     s = open(stored_configs, 'w')
-    config_file_list = [ c for c in listdir(subdir) if isfile(join(subdir, c)) ]
+    config_file_list = [c for c in listdir(subdir) if isfile(join(subdir, c))]
 
     for file in config_file_list:
 
@@ -95,7 +95,7 @@ def store_ambari_results(subdir, stored_configs, cluster):
 
         # extract properties
         try:
-            properties = [ items['properties'] for items in data['items']]
+            properties = [items['properties'] for items in data['items']]
         except KeyError:
             pass  # we need to do this for config files with no properties
 
@@ -104,7 +104,7 @@ def store_ambari_results(subdir, stored_configs, cluster):
             if key == 'content':  ### filter out properties with key = 'content'
                 continue
             s.write('%s:%s=\'%s\'\n' % (service, key, value))
-        
+
     # return
 
 
@@ -115,4 +115,3 @@ def get_service_name(service_config_file):
     if service_config_file == 'zoo.cfg':
         service = 'zookeeper'
     return service
-

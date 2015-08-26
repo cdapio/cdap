@@ -26,7 +26,7 @@ def vout(result, line, output, verbose):
     # 1 => not ok -- always send to output
     # 2 => critical (fatal) => runtime error and exit
     #example: not ok config hadoop hadoop_hdfs_replication_factor 3 2
-    
+
     result_ref = {}
     result_ref['0'] = 'ok'
     result_ref['1'] = 'not ok'
@@ -49,8 +49,8 @@ def vout(result, line, output, verbose):
 
 
 def convert_mult_to_bytes(alphavalue):
-    # parse value string, e.g. 1024m and split the two 
-    multipliers = {'k': 1, 'm': 2, 'g': 3 }
+    # parse value string, e.g. 1024m and split the two
+    multipliers = {'k': 1, 'm': 2, 'g': 3}
     num = re.search('(\d+)([a-z]?)', alphavalue)
     value = long(num.group(1))
     z = num.group(2)
