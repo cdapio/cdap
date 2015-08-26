@@ -27,10 +27,11 @@ import test_helpers as helpers
 def get_ambari_configs(host, subdir, base, cluster_info):
     # get ambari configs
     manager = 'ambari'
+    verbose = cluster_info['verbose']
     cu = get_config_urls(host, cluster_info)
-    if cluster_info['verbose'] == 2: print 'cu=%s' % (cu)
+    helpers.vprint ('cu=%s' % (cu), verbose)
     config_url_href = cu.read()
-    if cluster_info['verbose'] == 2: print 'configurlref=%s' % (config_url_href)
+    helpers.vprint ('configurlref=%s' % (config_url_href), verbose)
 
     # extract the ambari config urls
     data = json.loads(config_url_href)
@@ -51,7 +52,7 @@ def get_config_urls(host, cluster_info):
     cluster = cluster_info['cluster']
     append = '/clusters/' + cluster + '/configurations'
     url = host + append
-    if cluster_info['verbose'] == 2: print 'url=%s' % (url)
+    helpers.vprint ('url=%s' % (url), cluster_info['verbose'])
     config_urls = helpers.run_request(url, cluster_info)
     return config_urls
 
@@ -70,7 +71,8 @@ def get_configs(urls, subdir, cluster_info):
 # process tmp configs and store results
 def store_ambari_results(subdir, stored_configs, cluster):
     # get list of tmp config files and read
-    if cluster['verbose'] == 2: print "Get and store all Ambari configurations in %s\n" % (stored_configs)
+    verbose = cluster['verbose']
+    helpers.vprint ('Get and store all Ambari configurations in %s\n' % (stored_configs), verbose)
     s = open(stored_configs, 'w')
     config_file_list = [c for c in listdir(subdir) if isfile(join(subdir, c))]
 
@@ -78,7 +80,7 @@ def store_ambari_results(subdir, stored_configs, cluster):
 
         # open file
         subfile = subdir + file
-        if cluster['verbose'] == 2: print 'file=%s  subfile=%s' % (file, subfile)
+        helpers.vprint ('file=%s  subfile=%s' % (file, subfile), verbose)
         try:
             f = open(subfile, 'r')
         except IOError:
@@ -88,7 +90,7 @@ def store_ambari_results(subdir, stored_configs, cluster):
         tmp_config_file = f.read()
         f.close()
         service = get_service_name(file)
-        if cluster['verbose'] == 2: print 'service=%s' % (service)
+        helpers.vprint ('service=%s' % (service), verbose)
 
         # read json
         data = json.loads(tmp_config_file)

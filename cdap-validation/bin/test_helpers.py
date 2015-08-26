@@ -37,6 +37,12 @@ def usage():
  """
 
 
+# function used to (only) print certain content when verbose is set to highest level (e.g. debug)
+def vprint(content, verbose):
+    if verbose == 2:
+        print content
+
+
 def onetime_auth(host, info):
     # this should work with all, but when authentication is not set up correctly, this fails (http 403)
     passman = urllib2.HTTPPasswordMgrWithDefaultRealm()  # this creates a password manager
@@ -64,7 +70,7 @@ def run_request(host, info):
             return handle
         except IOError, e:
             # here we shouldn't fail if the username/password is right
-            if info['verbose'] == 2: print "It looks like the username or password is wrong."
+            vprint ('It looks like the username or password is wrong.', info['verbose'])
             return 'noapi'
 
 
@@ -139,8 +145,9 @@ def get_config_from_managermgr(mgr, host_url, configs_subdir, base, cluster):
         # cloudera.cloudera_commands(host_url, configs_subdir, base, cluster) ## disabling for now
 
     elif mgr == 'ambari':
-        if cluster['verbose'] == 2: print 'Hadoop install manager: Ambari'
+        vprint ('Hadoop install manager: Ambari', cluster['verbose'])
         ambari.get_ambari_configs(host_url, configs_subdir, base, cluster)
 
     else:
         print 'Your Hadoop install manager is not recognized'
+

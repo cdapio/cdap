@@ -52,17 +52,18 @@ def process_params(params):
             input_vars['verbose'] = 1
         elif opt == '-d':
             global _debug
-            print 'debug not implemented yet'
             input_vars['verbose'] = 2
             _debug = 1
 
-    if input_vars['verbose'] == 2:
-        for k, v in input_vars.iteritems():
-            print 'input vars = %s=%s' % (k, v)
+    for k, v in input_vars.iteritems():
+        helpers.vprint ('input vars = %s=%s' % (k, v), input_vars['verbose'])
 
     return input_vars
 
 ### Placeholders for future functions
+
 # validate_params() ## ensures parameters are valid and minimum number of parameters necesssary is present
+
 # process_module_params() ## process what is in between quotes in --modules=""
+
 # convert_input() ## creates JSON object from processed parameters

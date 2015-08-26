@@ -29,7 +29,8 @@ input_json = 'input.json'
 
 # calls all other functions
 def testing(base_vars, cluster_vars):
-    if cluster_vars['verbose'] == 2: print 'start testing'
+    helpers.vprint('start testing', cluster_vars['verbose']) 
+
 
     # prep input variables
     # cluster_vars = {}
@@ -39,10 +40,10 @@ def testing(base_vars, cluster_vars):
     cluster_vars['password'] = input['params']['password']
     cluster_vars['cluster'] = input['params']['cluster_name']
     cluster_vars['modules'] = input['params']['modules']
+    verbose = cluster_vars['verbose']
 
-    if cluster_vars['verbose'] == 2:
-        for k, v in cluster_vars.iteritems():
-            print 'cluster vars: %s=%s' % (k, v)
+    for k, v in cluster_vars.iteritems():
+        helpers.vprint ('cluster vars: %s=%s' % (k, v), verbose)
 
     # detect_installed_services -- placeholder for future function
 
@@ -50,20 +51,20 @@ def testing(base_vars, cluster_vars):
     find_api = '/api'
     if cluster_vars['host'].find(find_api) == -1:
         cluster_vars['host'] += 'api/'
-    if cluster_vars['verbose'] == 2: print 'uri=%s' % (cluster_vars['host'])
+    helpers.vprint ('uri=%s' % (cluster_vars['host']), verbose)
 
     # validate_connection
-    if cluster_vars['verbose'] == 2: print 'Validating connection'
+    helpers.vprint ('Validating connection', verbose)
     api_tests = [{'cloudera': base_vars['cloudera']['api_test']}, {'ambari': base_vars['ambari']['api_test']}]
     version_test = validate_connection(base_vars, cluster_vars, api_tests)
-    if cluster_vars['verbose'] == 2: print ''
-    if cluster_vars['verbose'] == 2: print 'version_test=%s' % (version_test)
+    helpers.vprint ('', verbose)
+    helpers.vprint ('version_test=%s' % (version_test), verbose)
 
     # now we determine the install manager from the info we have
-    if cluster_vars['verbose'] == 2: print 'Determine Hadoop install manager'
+    helpers.vprint ('Determine Hadoop install manager', verbose)
     install_manager = get_install_manager(version_test)
     cluster_vars['manager'] = install_manager
-    if cluster_vars['verbose'] == 2: print 'Hadoop install manager is %s' % (install_manager)
+    helpers.vprint ('Hadoop install manager is %s' % (install_manager), verbose)
 
     # get version for API call
     if install_manager == 'cloudera':
@@ -76,9 +77,8 @@ def testing(base_vars, cluster_vars):
     # get preliminary info
     cluster_vars = get_install_manager_info(cluster_vars)
     # do we need these (below) or can we just work with the dict values?
-    if cluster_vars['verbose'] == 2:
-        for key, value in cluster_vars.iteritems():
-            print "%s=%s" % (key, value)
+    for key, value in cluster_vars.iteritems():
+        helpers.vprint ("%s=%s" % (key, value), verbose)
 
     # get and run commands (API commands for now)
     get_and_run_api_commands(base_vars, cluster_vars)
@@ -92,13 +92,12 @@ def testing(base_vars, cluster_vars):
     # parse through those to determine modules that will be run
     # save (follow design)
 
-    if cluster_vars['verbose'] == 2: print 'verbose=%s' % (cluster_vars['verbose'])
-    if cluster_vars['verbose'] == 2: print '\nfind modules:\n'
+    helpers.vprint ('verbose=%s' % (verbose), verbose)
+    helpers.vprint ('\nfind modules:\n', verbose)
 
     module_list = find_modules('module.json', 'modules')
-    if cluster_vars['verbose'] == 2:
-        for module in module_list:
-            print 'module = %s' % (module)
+    for module in module_list:
+        helpers.vprint ('module = %s' % (module), verbose)
 
     modules = AutoVivification()
     module_name_list = []
@@ -110,11 +109,11 @@ def testing(base_vars, cluster_vars):
             modules[module_name] = create_module_json(module_list)
             module_name_list.append(module_name)
 
-    if cluster_vars['verbose'] == 2: print modules
+    helpers.vprint (modules, verbose)
 
     # run modules
     # execute modules: for every known module, run specific functions (see module_functions)
-    if cluster_vars['verbose'] == 2: print '\nrun modules:\n'
+    helpers.vprint ('\nrun modules:\n', verbose)
     run_modules(base_vars, cluster_vars, modules, module_name_list, install_manager)
     # send params necessary for module to run
     # e.g. config_validator needs to know location of the base ref and stored results files
@@ -152,23 +151,24 @@ def validate_connection(base_info, cluster_info, api_tests):
 
 
 def test_api_connection(base_info, cluster_info, api_tests):
-    if cluster_info['verbose'] == 2: print 'test api connection'
+    verbose = cluster_info['verbose']
+    helpers.vprint ('test api connection', verbose)
     # let us iterate through potential hadoop manager tests and see what we get back
     # the first one that works should be saved and set from that point on for the rest of the testing
     host_url = cluster_info['host']
     for hash in api_tests:
-        if cluster_info['verbose'] == 2: print ''
-        if cluster_info['verbose'] == 2: print hash
+        helpers.vprint ('', verbose)
+        helpers.vprint (hash, verbose)
         for manager, test in hash.iteritems():
             mgr_test_url = host_url + test
-            # print "manager=%s, test=%s, mgr_test_url=%s" % (manager, test, mgr_test_url)
-            if cluster_info['verbose'] == 2: print 'Running onetime_auth'
+            helpers.vprint ('manager=%s, test=%s, mgr_test_url=%s' % (manager, test, mgr_test_url), verbose)
+            helpers.vprint ('Running onetime_auth', verbose)
             helpers.onetime_auth(mgr_test_url, cluster_info)  # set up password manager and install opener
-            if cluster_info['verbose'] == 2: print 'run_request'
+            helpers.vprint ('run_request', verbose)
             h = helpers.run_request(mgr_test_url, cluster_info)  # run url request
             # if it equals noapi, it means the api login test failed for that install manager
             if h == 'noapi':
-                if cluster_info['verbose'] == 2: print 'No API for %s, trying the next or exiting' % (manager)
+                helpers.vprint ('No API for %s, trying the next or exiting' % (manager), verbose)
                 break
             mgr_test = h.read()
             # add logic to do next iteration or not, depending on whether we succeeded on first one
@@ -195,14 +195,14 @@ def get_install_manager_info(cluster_info):
     cluster_info['my_cluster'] = my_cluster
     base_url = cluster_info['host']
     base_url += cluster_info['version']
-    if cluster_info['verbose'] == 2: print 'base_url=%s' % (base_url)
+    helpers.vprint ('base_url=%s' % (base_url), cluster_info['verbose'])
     cluster_info['base_url'] = base_url
     return cluster_info
 
 
 # get (and run) API commands
 def get_and_run_api_commands(base, cluster):
-    if cluster['verbose'] == 2: print 'Now running API commands'
+    helpers.vprint ('Now running API commands', cluster['verbose'])
     mgr = cluster['manager']
     host_url = cluster['base_url']
     configs_subdir = base[mgr]['subdir']
@@ -215,18 +215,18 @@ def create_module_json(modules):
 
 
 def run_modules(base, cluster, modules, name_list, mgr):
-    if cluster['verbose'] == 2:
-        print 'run modules'
-        print name_list
+    verbose = cluster['verbose']
+    helpers.vprint ('run modules', verbose)
+    helpers.vprint (name_list, verbose)
 
     for module_name in name_list:
         command = ''
         full_command = ''
         command = modules[module_name]['groups'][0]['command']
         params = base[mgr]['baseref'] + ' ' + base[mgr]['stored_results'] + ' ' + str(cluster['verbose'])
-        if cluster['verbose'] == 2: print modules
+        helpers.vprint (modules, verbose)
         full_command = 'modules/' + command + ' ' + params
-        if cluster['verbose'] == 2: print full_command
+        helpers.vprint (full_command, verbose)
         os.system(full_command)
 
 
