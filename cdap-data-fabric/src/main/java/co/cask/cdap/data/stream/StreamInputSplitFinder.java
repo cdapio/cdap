@@ -62,9 +62,8 @@ public class StreamInputSplitFinder<T> {
    * @param conf Configuration of the filesystem the stream resides on.
    * @return List of input splits for the stream.
    * @throws IOException
-   * @throws InterruptedException
    */
-  public List<T> getSplits(Configuration conf) throws IOException, InterruptedException {
+  public List<T> getSplits(Configuration conf) throws IOException {
     List<T> splits = Lists.newArrayList();
 
     // Collects all stream event files timestamp, size and block locations information
