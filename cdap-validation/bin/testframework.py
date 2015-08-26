@@ -33,7 +33,7 @@ def testing(base_vars, cluster_vars):
 
     # prep input variables
     # cluster_vars = {}
-    input = read_input(input_json)
+    input = read_file_as_json(input_json)
     cluster_vars['host'] = input['params']['uri']
     cluster_vars['username'] = input['params']['user']
     cluster_vars['password'] = input['params']['password']
@@ -122,7 +122,7 @@ def testing(base_vars, cluster_vars):
 
 ###########################################################################################
 # reads JSON object passed to the framework
-def read_input(input_file):
+def read_file_as_json(input_file):
     with open(input_file) as json_file:
         data = json.load(json_file)
     return data
@@ -210,7 +210,7 @@ def get_and_run_api_commands(base, cluster):
 
 
 def create_module_json(modules):
-    module_info = read_input(modules[0])
+    module_info = read_file_as_json(modules[0])
     return module_info
 
 
