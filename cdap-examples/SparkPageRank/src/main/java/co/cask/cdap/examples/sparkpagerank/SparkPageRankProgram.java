@@ -130,12 +130,14 @@ public class SparkPageRankProgram implements JavaSparkProgram {
       @Override
       public Tuple2<byte[], Integer> call(Tuple2<String, Double> tuple) throws Exception {
         LOG.debug("URL {} has rank {}", Arrays.toString(tuple._1().getBytes(Charsets.UTF_8)), tuple._2());
-        URL serviceURL = discoveryServiceContext.getServiceURL(SparkPageRankApp.GOOGLE_TYPE_PR_SERVICE_NAME);
+        URL serviceURL = discoveryServiceContext.getServiceURL(SparkPageRankApp.SERVICE_HANDLERS);
         if (serviceURL == null) {
-          throw new RuntimeException("Failed to discover service: " + SparkPageRankApp.GOOGLE_TYPE_PR_SERVICE_NAME);
+          throw new RuntimeException("Failed to discover service: " + SparkPageRankApp.SERVICE_HANDLERS);
         }
         try {
-          URLConnection connection = new URL(serviceURL, String.format("transform/%s",
+          URLConnection connection = new URL(serviceURL, String.format("%s/%s",
+                                                                       SparkPageRankApp.SparkPageRankServiceHandler.
+                                                                         TRANSFORM_PATH,
                                                                        tuple._2().toString())).openConnection();
           try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(),
                                                                                 Charsets.UTF_8))) {
@@ -150,7 +152,7 @@ public class SparkPageRankProgram implements JavaSparkProgram {
             return new Tuple2(tuple._1().getBytes(Charsets.UTF_8), Integer.parseInt(pr));
           }
         } catch (Exception e) {
-          LOG.warn("Failed to read the Stream for service {}", SparkPageRankApp.GOOGLE_TYPE_PR_SERVICE_NAME, e);
+          LOG.warn("Failed to read the Stream for service {}", SparkPageRankApp.SERVICE_HANDLERS, e);
           throw Throwables.propagate(e);
         }
       }

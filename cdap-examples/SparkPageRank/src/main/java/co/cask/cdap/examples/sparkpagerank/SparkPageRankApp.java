@@ -52,9 +52,7 @@ import javax.ws.rs.PathParam;
  */
 public class SparkPageRankApp extends AbstractApplication {
 
-  public static final String RANKS_SERVICE_NAME = "RanksService";
-  public static final String GOOGLE_TYPE_PR_SERVICE_NAME = "GoogleTypePRService";
-  public static final String TOTAL_PAGES_PR_SERVICE_NAME = "TotalPagesPRService";
+  public static final String SERVICE_HANDLERS = "ServiceHandlers";
   public static final String BACKLINK_URL_STREAM = "backlinkURLStream";
 
   @Override
@@ -66,7 +64,7 @@ public class SparkPageRankApp extends AbstractApplication {
     addStream(new Stream(BACKLINK_URL_STREAM));
 
     // Run a Spark program on the acquired data
-    addSpark(new SparkPageRankSpecification());
+    addSpark(new PageRankSpark());
 
     // Runs MapReduce program on data emitted by Spark program
     addMapReduce(new RanksCounter());
@@ -74,14 +72,8 @@ public class SparkPageRankApp extends AbstractApplication {
     // Runs Spark followed by a MapReduce in a Workflow
     addWorkflow(new PageRankWorkflow());
 
-    // Retrieve the processed data using a Service
-    addService(RANKS_SERVICE_NAME, new RanksServiceHandler());
-
-    // Service which converts calculated pageranks to Google type page ranks
-    addService(GOOGLE_TYPE_PR_SERVICE_NAME, new GoogleTypePRHandler());
-
-    // Service which gives the total number of pages with a given page rank
-    addService(TOTAL_PAGES_PR_SERVICE_NAME, new TotalPagesHandler());
+    // Service to retrieve process data
+    addService(SERVICE_HANDLERS, new SparkPageRankServiceHandler());
 
     // Store input and processed data in ObjectStore Datasets
     try {
@@ -103,21 +95,19 @@ public class SparkPageRankApp extends AbstractApplication {
 
     @Override
     public void configure() {
-      setName("PageRankWorkflow");
       setDescription("Runs SparkPageRankProgram followed by RanksCounter MapReduce");
-      addSpark("SparkPageRankProgram");
-      addMapReduce("RanksCounter");
+      addSpark(PageRankSpark.class.getSimpleName());
+      addMapReduce(RanksCounter.class.getSimpleName());
     }
   }
 
   /**
    * A Spark program that calculates page rank.
    */
-  public static final class SparkPageRankSpecification extends AbstractSpark {
+  public static final class PageRankSpark extends AbstractSpark {
 
     @Override
     public void configure() {
-      setName(SparkPageRankProgram.class.getSimpleName());
       setDescription("Spark Page Rank Program");
       setMainClass(SparkPageRankProgram.class);
       setDriverResources(new Resources(1024));
@@ -126,66 +116,43 @@ public class SparkPageRankApp extends AbstractApplication {
   }
 
   /**
-   * A {@link Service} that responds with rank of the URL.
+   * A {@link Service} with handlers to get rank of a url, total number of pages for a given rank and transform a page
+   * rank on a scale of 1 to 10
    */
-  public static final class RanksServiceHandler extends AbstractHttpServiceHandler {
+  public static final class SparkPageRankServiceHandler extends AbstractHttpServiceHandler {
 
     private static final Gson GSON = new Gson();
     public static final String URL_KEY = "url";
-    public static final String RANKS_SERVICE_PATH = "rank";
+    public static final String RANKS_PATH = "rank";
+    public static final String TOTAL_PAGES_PATH = "total";
+    public static final String TRANSFORM_PATH = "transform";
+
+    @UseDataSet("rankscount")
+    private ObjectStore<Integer> store;
 
     @UseDataSet("ranks")
     private ObjectStore<Integer> ranks;
 
-    @Path(RANKS_SERVICE_PATH)
+    @Path(RANKS_PATH)
     @POST
     public void getRank(HttpServiceRequest request, HttpServiceResponder responder) {
       String urlRequest = Charsets.UTF_8.decode(request.getContent()).toString();
-      if (urlRequest == null) {
-        responder.sendString(HttpURLConnection.HTTP_BAD_REQUEST,
-                             String.format("Please provide an url to query for its rank in JSON."), Charsets.UTF_8);
-        return;
-      }
 
       String url = GSON.fromJson(urlRequest, JsonObject.class).get(URL_KEY).getAsString();
       if (url == null) {
-        responder.sendString(HttpURLConnection.HTTP_BAD_REQUEST,
-                             String.format("The url must be specified with \"url\" as key in JSON."), Charsets.UTF_8);
+        responder.sendError(HttpURLConnection.HTTP_BAD_REQUEST,
+                            "The url must be specified with \"url\" as key in JSON.");
         return;
       }
 
       // Get the rank from the ranks dataset
       Integer rank = ranks.read(url.getBytes(Charsets.UTF_8));
       if (rank == null) {
-        responder.sendString(HttpURLConnection.HTTP_NO_CONTENT,
-                             String.format("No rank found of %s", url), Charsets.UTF_8);
+        responder.sendError(HttpURLConnection.HTTP_NO_CONTENT, String.format("No rank found of %s", url));
       } else {
-        responder.sendString(HttpURLConnection.HTTP_OK, rank.toString(), Charsets.UTF_8);
+        responder.sendString(rank.toString());
       }
     }
-  }
-
-  /**
-   * A {@link Service} which converts the page rank to a Google Type page rank (from 0 to 10).
-   */
-  public static final class GoogleTypePRHandler extends AbstractHttpServiceHandler {
-
-    @Path("transform/{pr}")
-    @GET
-    public void transform(HttpServiceRequest request, HttpServiceResponder responder, @PathParam("pr") String pr) {
-      responder.sendString(String.valueOf((int) (Math.round(Double.parseDouble(pr) * 10))));
-    }
-  }
-
-  /**
-   * Total Pages Handler which gives the total number of a pages which has then given page rank
-   */
-  public static final class TotalPagesHandler extends AbstractHttpServiceHandler {
-
-    public static final String TOTAL_PAGES_PATH = "total";
-
-    @UseDataSet("rankscount")
-    private ObjectStore<Integer> store;
 
     @Path(TOTAL_PAGES_PATH + "/{pr}")
     @GET
@@ -200,6 +167,12 @@ public class SparkPageRankApp extends AbstractApplication {
         responder.sendString(HttpURLConnection.HTTP_OK, totalPages.toString(), Charsets.UTF_8);
       }
     }
+
+    @Path(TRANSFORM_PATH + "/{pr}")
+    @GET
+    public void transform(HttpServiceRequest request, HttpServiceResponder responder, @PathParam("pr") String pr) {
+      responder.sendString(String.valueOf((int) (Math.round(Double.parseDouble(pr) * 10))));
+    }
   }
 
   /**
@@ -209,7 +182,6 @@ public class SparkPageRankApp extends AbstractApplication {
 
     @Override
     public void configure() {
-      setName("RanksCounter");
       setInputDataset("ranks");
       setOutputDataset("rankscount");
     }
