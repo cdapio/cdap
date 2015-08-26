@@ -23,7 +23,6 @@ import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.hive.context.ContextManager;
 import co.cask.cdap.proto.Id;
-import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -74,18 +73,8 @@ public class HiveStreamInputFormat implements InputFormat<Void, ObjectWritable> 
     // over when initialize is called. If we set job conf settings there, the settings for one stream get clobbered
     // by the settings for another stream if a join over streams is being performed.
     StreamInputSplitFinder<InputSplit> splitFinder = getSplitFinder(conf);
-    try {
-      List<InputSplit> splits = splitFinder.getSplits(conf);
-      InputSplit[] splitArray = new InputSplit[splits.size()];
-      int i = 0;
-      for (InputSplit split : splits) {
-        splitArray[i] = split;
-        i++;
-      }
-      return splitArray;
-    } catch (InterruptedException e) {
-      throw Throwables.propagate(e);
-    }
+    List<InputSplit> splits = splitFinder.getSplits(conf);
+    return splits.toArray(new InputSplit[splits.size()]);
   }
 
   @Override
@@ -194,7 +183,7 @@ public class HiveStreamInputFormat implements InputFormat<Void, ObjectWritable> 
 
     private final String opClassName;
 
-    private CompareOp(String opClassName) {
+    CompareOp(String opClassName) {
       this.opClassName = opClassName;
     }
 

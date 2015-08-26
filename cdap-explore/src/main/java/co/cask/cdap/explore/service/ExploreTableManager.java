@@ -38,7 +38,9 @@ import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
 import co.cask.cdap.data2.dataset2.lib.table.ObjectMappedTableModule;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.explore.table.CreateStatementBuilder;
+import co.cask.cdap.hive.datasets.DatasetStorageHandler;
 import co.cask.cdap.hive.objectinspector.ObjectInspectorFactory;
+import co.cask.cdap.hive.stream.StreamStorageHandler;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.QueryHandle;
@@ -108,7 +110,7 @@ public class ExploreTableManager {
       .setSchema(schema)
       .setLocation(streamLocation)
       .setTableComment("CDAP Stream")
-      .buildWithStorageHandler(Constants.Explore.STREAM_STORAGE_HANDLER_CLASS, serdeProperties);
+      .buildWithStorageHandler(StreamStorageHandler.class.getName(), serdeProperties);
 
     LOG.debug("Running create statement for stream {}", streamName);
 
@@ -199,7 +201,7 @@ public class ExploreTableManager {
         createStatement = new CreateStatementBuilder(datasetName, getDatasetTableName(datasetID))
           .setSchema(hiveSchemaFor(recordType))
           .setTableComment("CDAP Dataset")
-          .buildWithStorageHandler(Constants.Explore.DATASET_STORAGE_HANDLER_CLASS, serdeProperties);
+          .buildWithStorageHandler(DatasetStorageHandler.class.getName(), serdeProperties);
       } else if (dataset instanceof FileSet || dataset instanceof PartitionedFileSet) {
         Map<String, String> properties = spec.getProperties();
         if (FileSetProperties.isExploreEnabled(properties)) {
@@ -241,7 +243,7 @@ public class ExploreTableManager {
       String createStatement = new CreateStatementBuilder(datasetID.getId(), getDatasetTableName(datasetID))
         .setSchema(schema)
         .setTableComment("CDAP Dataset")
-        .buildWithStorageHandler(Constants.Explore.DATASET_STORAGE_HANDLER_CLASS, serdeProperties);
+        .buildWithStorageHandler(DatasetStorageHandler.class.getName(), serdeProperties);
 
       return exploreService.execute(datasetID.getNamespace(), createStatement);
     } catch (IOException e) {
