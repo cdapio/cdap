@@ -17,41 +17,44 @@
 import urllib2
 import json
 import re
-import glob, os
 from os import listdir
-from os.path import isfile, join
+from os.path import isfile
+from os.path import join
 import test_helpers as helpers
+
 
 # Start Ambari configuration retrieval process
 def get_ambari_configs(host, subdir, base, cluster_info):
-    ## get ambari configs
-    manager = 'ambari' 
+    # get ambari configs
+    manager = 'ambari'
     cu = get_config_urls(host, cluster_info)
     if cluster_info['verbose'] == 2: print 'cu=%s' % (cu)
     config_url_href = cu.read()
     if cluster_info['verbose'] == 2: print 'configurlref=%s' % (config_url_href)
 
-    ## extract the ambari config urls
+    # extract the ambari config urls
     data = json.loads(config_url_href)
     config_urls = [ item['href'] for item in data['items'] ]
 
-    ## run API commands:
-    ## iterate through ambari config urls, and run api requests against those
-    ##   This creates config files in a subdirectory
+    # run API commands:
+    # iterate through ambari config urls, and run api requests against those
+    #     This creates config files in a subdirectory
     get_configs(config_urls, subdir, cluster_info)
 
     # process tmp configs and store results
     ambari_stored_configs = base[manager]['stored_results']
     store_ambari_results(subdir, ambari_stored_configs, cluster_info)
 
+
 # get config urls
 def get_config_urls(host, cluster_info):
-    cluster = cluster_info['cluster']  
-    append = '/clusters/' + cluster + '/configurations' 
+    cluster = cluster_info['cluster']
+    append = '/clusters/' + cluster + '/configurations'
     url = host + append
     if cluster_info['verbose'] == 2:  print 'url=%s' % (url)
     config_urls = helpers.run_request(url, cluster_info)
     return config_urls
+
 
 # get configs through config urls
 def get_configs(urls, subdir, cluster_info):
@@ -63,13 +66,14 @@ def get_configs(urls, subdir, cluster_info):
         # run api config retrieval command and write result to file
         helpers.get_config_and_write(uri, subdir, file, cluster_info)
 
+
 # process tmp configs and store results
 def store_ambari_results(subdir, stored_configs, cluster):
     # get list of tmp config files and read
     if cluster['verbose'] == 2: print "Get and store all Ambari configurations in %s\n" % (stored_configs)
     s = open(stored_configs, 'w')
-    config_file_list = [ c for c in listdir(subdir) if isfile(join(subdir,c)) ]
-    
+    config_file_list = [ c for c in listdir(subdir) if isfile(join(subdir, c)) ]
+
     for file in config_file_list:
 
         # open file
@@ -78,8 +82,8 @@ def store_ambari_results(subdir, stored_configs, cluster):
         try:
             f = open(subfile, 'r')
         except IOError:
-            print 'cannot open config file', subfile # runtime error -- need to stop this modules' run
-            exit(1) # replace with functionality to end module's run (but with the chance to start another module if applicable)
+            print 'cannot open config file', subfile  # runtime error -- need to stop this modules' run
+            exit(1)  # replace with functionality to end module's run (but with the chance to start another module if applicable)
 
         tmp_config_file = f.read()
         f.close()
@@ -93,15 +97,16 @@ def store_ambari_results(subdir, stored_configs, cluster):
         try:
             properties = [ items['properties'] for items in data['items']]
         except KeyError:
-            pass # we need to do this for config files with no properties
+            pass  # we need to do this for config files with no properties
 
         # get the properties we want and parse
         for key, value in properties[0].iteritems():
-            if key == 'content': ### filter out properties with key = 'content'
+            if key == 'content':  ### filter out properties with key = 'content'
                 continue
             s.write('%s:%s=\'%s\'\n' % (service, key, value))
         
     # return
+
 
 def get_service_name(service_config_file):
     # take file name, extract first part (before first '-') treat that as the service

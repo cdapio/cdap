@@ -20,6 +20,7 @@ import urllib2
 import json
 import sys
 
+
 def usage():
     print "\nThis is the usage function\n"
     print 'Usage: \n'+sys.argv[0]+' [-v, --verbose] -c, --cluster \'<cluster>\' [-m, --modules \'<modules>]\' -u --user <user:password> -U --uri <URI>\n'
@@ -34,7 +35,8 @@ def usage():
     -v, --verbose       adds more output (additional invocations increase verbosity)
  """
 
-def onetime_auth(host,info):
+
+def onetime_auth(host, info):
     # this should work with all, but when authentication is not set up correctly, this fails (http 403)
     passman = urllib2.HTTPPasswordMgrWithDefaultRealm() # this creates a password manager
     passman.add_password(None, host, info['username'], info['password'])
@@ -43,7 +45,8 @@ def onetime_auth(host,info):
     urllib2.install_opener(opener)
     return urllib2
 
-def run_request(host,info):
+
+def run_request(host, info):
     user = info['username']
     passwd = info['password']
     try:
@@ -63,8 +66,9 @@ def run_request(host,info):
             if info['verbose'] == 2: print "It looks like the username or password is wrong."
             return 'noapi'
 
+
 def write_file(config, dir, file, createdir):
-    path = dir + file 
+    path = dir + file
     if not os.path.exists(dir):
         if createdir == True:
             os.makedirs(dir)
@@ -89,7 +93,7 @@ def write_file(config, dir, file, createdir):
 #  * iterate through the list of services (to verify service exists) from the serviceTypes call, and for each service:
 #    - Using the value obtained from the first API call and from the second API call, run an API call that would look like:
 #    GET /api/v10/clusters/<cluster>/services/hdfs/roles/hdfs-NAMENODE-cd4bc7dac120e30f653e076328de207d/process/configFiles/hdfs-site.xml
-#            
+#
 # To find and iterate through all configurations needed, we need to make the following API calls and extraction
 #  * GET /api/v10/cm/deployment
 #  * GET /api/v10/clusters/<cluster>/serviceTypes
@@ -100,20 +104,20 @@ def write_file(config, dir, file, createdir):
 def convert_types_to_list(types):
     data = json.loads(types)
     services = []
-    upper_services = [ item for item in data["items" ] ]
+    upper_services = [item for item in data["items"]]
     for service in upper_services:
         services.append(service.lower())
     services.sort()
     return services
 
+
 def get_config_and_write(url, subdir, file, cluster_info):
     # run api config retrieval commands and write to individual files
-    user = cluster_info['username']
-    passwd = cluster_info['password']
     config_in = run_request(url, cluster_info)
     config = config_in.read()
     create_directory_if_missing = True
     write_file(config, subdir, file, create_directory_if_missing)
+
 
 def safe_get_config_and_write(url, user, passwd, subdir, file):
     # run api config retrieval commands and write to individual files (safer)

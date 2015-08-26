@@ -20,9 +20,11 @@ import test_helpers as helpers
 
 ##### INPUT FUNCTIONS #####
 
+
 def process_input(argv):
     input_vars = process_params(argv)
     return input_vars
+
 
 def process_params(params):
     input_vars = {}
@@ -43,7 +45,7 @@ def process_params(params):
             input_vars['modules'] = arg
         elif opt in ('-u', '--user'):
             # split user auth info to user and password and store accordingly
-            input_vars['user'],input_vars['password'] = arg.split(':')
+            input_vars['user'], input_vars['password'] = arg.split(':')
         elif opt in ('-U', '--uri'):
             input_vars['host'] = arg
         elif opt in ('-v', '--verbose'):
@@ -55,7 +57,7 @@ def process_params(params):
             _debug = 1
 
     if input_vars['verbose'] == 2:
-        for k,v in input_vars.iteritems():
+        for k, v in input_vars.iteritems():
             print 'input vars = %s=%s' % (k, v)
 
     return input_vars

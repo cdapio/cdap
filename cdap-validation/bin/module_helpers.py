@@ -18,6 +18,7 @@
 
 import re
 
+
 def vout(result, line, output, verbose):
     # we want to follow nagios standard
     # the way it applies here:
@@ -46,6 +47,7 @@ def vout(result, line, output, verbose):
 
 # Need to convert to bytes before we do anything
 
+
 def convert_mult_to_bytes(alphavalue):
     # parse value string, e.g. 1024m and split the two 
     multipliers = {'k': 1, 'm': 2, 'g': 3 }
@@ -61,5 +63,5 @@ def convert_mult_to_bytes(alphavalue):
         multiplier = 1024 ** int(zexp)
 
     value *= multiplier
-    #print 'value=%d' % (value)
+    # print 'value=%d' % (value)
     return value
