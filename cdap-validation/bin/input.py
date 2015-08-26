@@ -28,7 +28,7 @@ def process_input(argv):
 
 def process_params(params):
     input_vars = {}
-    input_vars['verbose'] = 0
+
     try:
         opts, args = getopt.getopt(params, 'hc:m:u:U:vd', ['help', 'cluster=', 'module=', 'user=', 'uri=', 'verbose'])
     except getopt.GetoptError:
@@ -55,10 +55,17 @@ def process_params(params):
             input_vars['verbose'] = 2
             _debug = 1
 
+    # set verbose to default (0=quiet) if not specified in command line parameters
+    try:
+        verbose = input_vars['verbose']
+    except:
+        verbose = input_vars['verbose'] = 0 
+
     for k, v in input_vars.iteritems():
-        helpers.vprint ('input vars = %s=%s' % (k, v), input_vars['verbose'])
+        helpers.vprint ('input vars = %s=%s' % (k, v), verbose)
 
     return input_vars
+
 
 ### Placeholders for future functions
 
