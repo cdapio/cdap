@@ -22,6 +22,7 @@
 import sys
 import re
 import install_validator.module_helpers as module_helpers
+import install_validator.test_helpers as helpers
 #import module_helpers as module_helpers
 
 
@@ -166,7 +167,7 @@ for line in f:
     type = strip_crlf(type)
     bkey, bvalue = bproperty.split('=')
     bvalue = re.sub('[\']', '', bvalue)
-    if verbose == 2: print "%s:%s=%s:%s:%s" % (bservice, bkey, bvalue, datatype, type)
+    helpers.vprint ('%s:%s=%s:%s:%s' % (bservice, bkey, bvalue, datatype, type), verbose)
 
     # set it to a safe, impossible value
     result_value = -1
@@ -175,9 +176,8 @@ for line in f:
 
     value = actual[bservice][bkey]
     if datatype == 'alpha':  # alpha type -- simple comparison
-        if verbose == 2:
-            print 'type alpha: simple comparison'
-            print 'value=%s    bvalue=%s' % (value, bvalue)
+        helpers.vprint ('type alpha: simple comparison', verbose)
+        helpers.vprint ('value=%s    bvalue=%s' % (value, bvalue), verbose)
         result_value = exact_eval(value, bvalue)
 
     elif datatype == 'bytes':  # e.g. can be any of regular number, of number appended with k,m,g
@@ -185,22 +185,22 @@ for line in f:
         valuenum = module_helpers.convert_mult_to_bytes(value)
 
         if type == 'exact':
-            if verbose == 2: print 'type = exact'
+            helpers.vprint ('type = exact', verbose)
             bvaluenum = module_helpers.convert_mult_to_bytes(bvalue)
             result_value = exact_eval(bvaluenum, valuenum)
-            if verbose == 2: print 'bvaluenum=%s  valuenum=%s' % (bvaluenum, valuenum)
+            helpers.vprint ('bvaluenum=%s  valuenum=%s' % (bvaluenum, valuenum), verbose)
 
         elif type == 'range':
-            if verbose == 2: print 'type = range'
+            helpers.vprint ('type = range', verbose)
             min, max = bvalue.split('-')
             if min != '': min = module_helpers.convert_mult_to_bytes(min)
             if max != '': max = module_helpers.convert_mult_to_bytes(max)
             range = process_range_reference(min, max)
-            if verbose == 2: print 'range=%s' % (range)
+            helpers.vprint ('range=%s' % (range), verbose)
             bmin, bmax = range.split(':')
             bmin = long(bmin)
             result_value = range_eval(valuenum, bmin, bmax)
-            if verbose == 2: print 'bvalue=%s range=%s  valuenum=%s' % (bvalue, range, valuenum)
+            helpers.vprint ('bvalue=%s range=%s  valuenum=%s' % (bvalue, range, valuenum), verbose)
 
         else:
             print 'unknown type'
@@ -209,12 +209,12 @@ for line in f:
         print 'unkown datatype'
         #exit(1) -- initiate runtime error
 
-    if verbose == 2: print 'result_value=%s' % (result_value)
+    helpers.vprint ('result_value=%s' % (result_value), verbose)
     # format output
     output = module + ' ' + service + ' ' + bkey + ' ' + bvalue + ' ' + value
-    if verbose == 2: print 'output=%s' % (output)
+    helpers.vprint ('output=%s' % (output), verbose)
 
     # send output
-    if verbose == 2: print 'running vout for output'
+    helpers.vprint ('running vout for output', verbose)
     module_helpers.vout(result_value, line, output, verbose)
-    if verbose == 2: print ''
+    helpers.vprint ('', verbose)
