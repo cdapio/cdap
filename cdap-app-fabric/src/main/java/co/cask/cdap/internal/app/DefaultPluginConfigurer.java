@@ -26,7 +26,6 @@ import co.cask.cdap.internal.api.DefaultDatasetConfigurer;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.PluginNotExistsException;
-import co.cask.cdap.internal.artifact.Plugin;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -57,6 +56,10 @@ public class DefaultPluginConfigurer extends DefaultDatasetConfigurer implements
 
   public Map<String, Plugin> getPlugins() {
     return plugins;
+  }
+
+  public void addPlugins(Map<String, Plugin> plugins) {
+    this.plugins.putAll(plugins);
   }
 
   @Nullable

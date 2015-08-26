@@ -56,6 +56,7 @@ public class AppWithPlugin extends AbstractApplication {
     addWorker(new WorkerWithPlugin());
     addMapReduce(new MapReduceWithPlugin());
     addService(new ServiceWithPlugin());
+    usePlugin("t1", "n1", "mrid", PluginProperties.builder().add(KEY, TEST).build());
   }
 
   public static class ServiceWithPlugin extends AbstractService {
@@ -64,18 +65,13 @@ public class AppWithPlugin extends AbstractApplication {
     protected void configure() {
       setName(SERVICE);
       addHandler(new SimpleHandler());
+      usePlugin("t1", "n1", "sid", PluginProperties.builder().add(KEY, TEST).build());
     }
   }
 
   public static class SimpleHandler extends AbstractHttpServiceHandler {
 
     private Object object;
-
-    @Override
-    protected void configure() {
-      super.configure();
-      getConfigurer().usePlugin("t1", "n1", "sid", PluginProperties.builder().add(KEY, TEST).build());
-    }
 
     @Override
     public void initialize(HttpServiceContext context) throws Exception {
@@ -100,7 +96,6 @@ public class AppWithPlugin extends AbstractApplication {
       createDataset("output", KeyValueTable.class);
       addStream("input");
       setOutputDataset("output");
-      getConfigurer().usePlugin("t1", "n1", "mrid", PluginProperties.builder().add(KEY, TEST).build());
     }
 
     @Override
@@ -155,7 +150,7 @@ public class AppWithPlugin extends AbstractApplication {
     @Override
     protected void configure() {
       setName(WORKER);
-      getConfigurer().usePlugin("t1", "n1", "plug", PluginProperties.builder().add(KEY, TEST).build());
+      usePlugin("t1", "n1", "plug", PluginProperties.builder().add(KEY, TEST).build());
     }
   }
 }

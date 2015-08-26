@@ -38,6 +38,7 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
 import java.util.Set;
+import java.util.jar.Manifest;
 import javax.annotation.Nullable;
 
 /**
@@ -149,6 +150,27 @@ public interface TestManager {
    * @throws Exception
    */
   void addAppArtifact(Id.Artifact artifactId, Class<?> appClass) throws Exception;
+
+  /**
+   * Build an application artifact from the specified class and then add it.
+   *
+   * @param artifactId the id of the artifact to add
+   * @param appClass the application class to build the artifact from
+   * @param exportPackages the packages to export and place in the manifest of the jar to build. This should include
+   *                       packages that contain classes that plugins for the application will implement.
+   * @throws Exception
+   */
+  void addAppArtifact(Id.Artifact artifactId, Class<?> appClass, String... exportPackages) throws Exception;
+
+  /**
+   * Build an application artifact from the specified class and then add it.
+   *
+   * @param artifactId the id of the artifact to add
+   * @param appClass the application class to build the artifact from
+   * @param manifest the manifest to use when building the jar
+   * @throws Exception
+   */
+  void addAppArtifact(Id.Artifact artifactId, Class<?> appClass, Manifest manifest) throws Exception;
 
   /**
    * Build an artifact from the specified plugin classes and then add it. The

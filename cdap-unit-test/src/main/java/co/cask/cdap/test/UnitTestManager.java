@@ -257,13 +257,21 @@ public class UnitTestManager implements TestManager {
   @Override
   public void addAppArtifact(Id.Artifact artifactId, Class<?> appClass) throws Exception {
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, appClass, new Manifest());
-    File destination =
-      new File(tmpDir, String.format("%s-%s.jar", artifactId.getName(), artifactId.getVersion().getVersion()));
-    Files.copy(Locations.newInputSupplier(appJar), destination);
-    appJar.delete();
+    addArtifact(artifactId, appJar);
+  }
 
-    artifactRepository.addArtifact(artifactId, destination);
-    destination.delete();
+  @Override
+  public void addAppArtifact(Id.Artifact artifactId, Class<?> appClass, String... exportPackages) throws Exception {
+    Manifest manifest = new Manifest();
+    manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE, Joiner.on(',').join(exportPackages));
+    Location appJar = AppJarHelper.createDeploymentJar(locationFactory, appClass, manifest);
+    addArtifact(artifactId, appJar);
+  }
+
+  @Override
+  public void addAppArtifact(Id.Artifact artifactId, Class<?> appClass, Manifest manifest) throws Exception {
+    Location appJar = AppJarHelper.createDeploymentJar(locationFactory, appClass, manifest);
+    addArtifact(artifactId, appJar);
   }
 
   @Override
@@ -294,7 +302,8 @@ public class UnitTestManager implements TestManager {
   }
 
   @Override
-  public void addPluginArtifact(Id.Artifact artifactId, Set<ArtifactRange> parents, Set<PluginClass> additionalPlugins,
+  public void addPluginArtifact(Id.Artifact artifactId, Set<ArtifactRange> parents,
+                                @Nullable Set<PluginClass> additionalPlugins,
                                 Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
     File pluginJar = createPluginJar(artifactId, pluginClass, pluginClasses);
     artifactRepository.addArtifact(artifactId, pluginJar, parents, additionalPlugins);
@@ -458,5 +467,15 @@ public class UnitTestManager implements TestManager {
     Files.copy(Locations.newInputSupplier(appJar), destination);
     appJar.delete();
     return destination;
+  }
+
+  private void addArtifact(Id.Artifact artifactId, Location jar) throws Exception {
+    File destination =
+      new File(tmpDir, String.format("%s-%s.jar", artifactId.getName(), artifactId.getVersion().getVersion()));
+    Files.copy(Locations.newInputSupplier(jar), destination);
+    jar.delete();
+
+    artifactRepository.addArtifact(artifactId, destination);
+    destination.delete();
   }
 }

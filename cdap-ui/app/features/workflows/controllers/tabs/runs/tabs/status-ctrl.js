@@ -148,19 +148,6 @@ class WorkflowsRunsStatusController {
         stateParams.destinationType = 'Spark';
         this.$state.go('spark.detail.runs.run', stateParams);
       }
-    } else {
-      var errorObj = {
-        type: 'info',
-        scope: this.$scope,
-        content: `No runs for the workflow: ${this.$state.params.programId} yet.`
-      }, e;
-      if (!alertpromise) {
-        alertpromise = this.$alert(errorObj);
-        e = this.$scope.$on('alert.hide',() => {
-          alertpromise = null;
-          e(); // un-register from listening to the hide event of a closed alert.
-        });
-      }
     }
   }
 

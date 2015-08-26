@@ -25,9 +25,9 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.internal.app.Plugin;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
-import co.cask.cdap.internal.artifact.Plugin;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.collect.Maps;
@@ -49,6 +49,7 @@ public class BasicHttpServiceContext extends AbstractContext implements Transact
   private final Metrics userMetrics;
   private final int instanceId;
   private final AtomicInteger instanceCount;
+  private final Map<String, Plugin> plugins;
 
   /**
    * Creates a BasicHttpServiceContext for the given HttpServiceHandlerSpecification.
@@ -79,6 +80,7 @@ public class BasicHttpServiceContext extends AbstractContext implements Transact
     this.userMetrics =
       new ProgramUserMetrics(getMetricCollector(metricsCollectionService, program,
                                                 spec.getName(), runId.getId(), instanceId));
+    this.plugins = Maps.newHashMap(program.getApplicationSpecification().getPlugins());
   }
 
   /**
@@ -106,7 +108,7 @@ public class BasicHttpServiceContext extends AbstractContext implements Transact
 
   @Override
   public Map<String, Plugin> getPlugins() {
-    return spec.getPlugins();
+    return plugins;
   }
 
   @Override

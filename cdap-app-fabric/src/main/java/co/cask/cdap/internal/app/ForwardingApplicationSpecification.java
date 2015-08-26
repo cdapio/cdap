@@ -117,4 +117,9 @@ public abstract class ForwardingApplicationSpecification implements ApplicationS
   public Map<String, ScheduleSpecification> getSchedules() {
     return delegate.getSchedules();
   }
+
+  @Override
+  public Map<String, Plugin> getPlugins() {
+    return delegate.getPlugins();
+  }
 }

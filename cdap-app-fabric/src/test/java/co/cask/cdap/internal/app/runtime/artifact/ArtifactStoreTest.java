@@ -523,6 +523,82 @@ public class ArtifactStoreTest {
     Assert.assertEquals(expected, actual);
   }
 
+  @Test
+  public void testPluginParentInclusiveExclusiveVersions() throws Exception {
+    // write artifacts that extend:
+    // parent-[1.0.0,1.0.0] -- only visible by parent-1.0.0
+    Id.Artifact id1  = Id.Artifact.from(Id.Namespace.DEFAULT, "plugins", "0.0.1");
+    Set<ArtifactRange> parentArtifacts = ImmutableSet.of(new ArtifactRange(
+      Id.Namespace.DEFAULT, "parent", new ArtifactVersion("1.0.0"), true, new ArtifactVersion("1.0.0"), true));
+    List<PluginClass> plugins = ImmutableList.of(
+      new PluginClass("typeA", "plugin1", "", "c.c.c.plugin1", "cfg", ImmutableMap.<String, PluginPropertyField>of())
+    );
+    ArtifactMeta meta = new ArtifactMeta(ArtifactClasses.builder().addPlugins(plugins).build(), parentArtifacts);
+    writeArtifact(id1, meta, "some contents");
+
+    // parent-[2.0.0,2.0.1) -- only visible by parent-2.0.0
+    Id.Artifact id2  = Id.Artifact.from(Id.Namespace.DEFAULT, "plugins", "0.0.2");
+    parentArtifacts = ImmutableSet.of(new ArtifactRange(
+      Id.Namespace.DEFAULT, "parent", new ArtifactVersion("2.0.0"), true, new ArtifactVersion("2.0.1"), false));
+    plugins = ImmutableList.of(
+      new PluginClass("typeA", "plugin2", "", "c.c.c.plugin2", "cfg", ImmutableMap.<String, PluginPropertyField>of())
+    );
+    meta = new ArtifactMeta(ArtifactClasses.builder().addPlugins(plugins).build(), parentArtifacts);
+    writeArtifact(id2, meta, "some contents");
+
+    // parent-(3.0.0,3.0.1] -- only visible by parent-3.0.1
+    Id.Artifact id3  = Id.Artifact.from(Id.Namespace.DEFAULT, "plugins", "0.0.3");
+    parentArtifacts = ImmutableSet.of(new ArtifactRange(
+      Id.Namespace.DEFAULT, "parent", new ArtifactVersion("3.0.0"), false, new ArtifactVersion("3.0.1"), true));
+    plugins = ImmutableList.of(
+      new PluginClass("typeA", "plugin3", "", "c.c.c.plugin3", "cfg", ImmutableMap.<String, PluginPropertyField>of())
+    );
+    meta = new ArtifactMeta(ArtifactClasses.builder().addPlugins(plugins).build(), parentArtifacts);
+    writeArtifact(id3, meta, "some contents");
+
+    // parent-(4.0.0,4.0.2) -- only visible by parent-4.0.1
+    Id.Artifact id4  = Id.Artifact.from(Id.Namespace.DEFAULT, "plugins", "0.0.4");
+    parentArtifacts = ImmutableSet.of(new ArtifactRange(
+      Id.Namespace.DEFAULT, "parent", new ArtifactVersion("4.0.0"), false, new ArtifactVersion("4.0.2"), false));
+    plugins = ImmutableList.of(
+      new PluginClass("typeA", "plugin4", "", "c.c.c.plugin4", "cfg", ImmutableMap.<String, PluginPropertyField>of())
+    );
+    meta = new ArtifactMeta(ArtifactClasses.builder().addPlugins(plugins).build(), parentArtifacts);
+    writeArtifact(id4, meta, "some contents");
+
+    // check parent-1.0.0 has plugin1 but parent-0.0.9 does not and 1.0.1 does not
+    Assert.assertTrue(artifactStore.getPluginClasses(
+      Id.Artifact.from(Id.Namespace.DEFAULT, "parent", "0.0.9")).isEmpty());
+    Assert.assertTrue(artifactStore.getPluginClasses(
+      Id.Artifact.from(Id.Namespace.DEFAULT, "parent", "1.0.1")).isEmpty());
+    Assert.assertEquals(1, artifactStore.getPluginClasses(
+      Id.Artifact.from(Id.Namespace.DEFAULT, "parent", "1.0.0")).size());
+
+    // check parent-2.0.0 has plugin2 but parent-1.9.9 does not and 2.0.1 does not
+    Assert.assertTrue(artifactStore.getPluginClasses(
+      Id.Artifact.from(Id.Namespace.DEFAULT, "parent", "1.9.9")).isEmpty());
+    Assert.assertTrue(artifactStore.getPluginClasses(
+      Id.Artifact.from(Id.Namespace.DEFAULT, "parent", "2.0.1")).isEmpty());
+    Assert.assertEquals(1, artifactStore.getPluginClasses(
+      Id.Artifact.from(Id.Namespace.DEFAULT, "parent", "2.0.0")).size());
+
+    // check parent-3.0.1 has plugin3 but parent-3.0.0 does not and 3.0.2 does not
+    Assert.assertTrue(artifactStore.getPluginClasses(
+      Id.Artifact.from(Id.Namespace.DEFAULT, "parent", "3.0.0")).isEmpty());
+    Assert.assertTrue(artifactStore.getPluginClasses(
+      Id.Artifact.from(Id.Namespace.DEFAULT, "parent", "3.0.2")).isEmpty());
+    Assert.assertEquals(1, artifactStore.getPluginClasses(
+      Id.Artifact.from(Id.Namespace.DEFAULT, "parent", "3.0.1")).size());
+
+    // check parent-4.0.1 has plugin4 but parent-4.0.0 does not and 4.0.2 does not
+    Assert.assertTrue(artifactStore.getPluginClasses(
+      Id.Artifact.from(Id.Namespace.DEFAULT, "parent", "4.0.0")).isEmpty());
+    Assert.assertTrue(artifactStore.getPluginClasses(
+      Id.Artifact.from(Id.Namespace.DEFAULT, "parent", "4.0.2")).isEmpty());
+    Assert.assertEquals(1, artifactStore.getPluginClasses(
+      Id.Artifact.from(Id.Namespace.DEFAULT, "parent", "4.0.1")).size());
+  }
+
   // this test tests that when an artifact specifies a range of artifact versions it extends,
   // those versions are honored
   @Test

@@ -31,6 +31,7 @@ import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
+import co.cask.cdap.internal.app.Plugin;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.proto.Id;
 
@@ -129,4 +130,9 @@ public interface ApplicationSpecification {
    * @return An immutable {@link Map} from Schedule name to {@link ScheduleSpecification}
    */
   Map<String, ScheduleSpecification> getSchedules();
+
+  /**
+   * @return An immutable {@link Map} from plugin id to {@link Plugin}
+   */
+  Map<String, Plugin> getPlugins();
 }

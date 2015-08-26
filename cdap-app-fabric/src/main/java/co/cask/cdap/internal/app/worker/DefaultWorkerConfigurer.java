@@ -101,7 +101,6 @@ public class DefaultWorkerConfigurer extends DefaultPluginConfigurer implements 
   public WorkerSpecification createSpecification() {
     Map<String, String> properties = Maps.newHashMap(this.properties);
     properties.putAll(propertyFields);
-    return new WorkerSpecification(className, name, description, properties, datasets, resource,
-                                   instances, getPlugins());
+    return new WorkerSpecification(className, name, description, properties, datasets, resource, instances);
   }
 }

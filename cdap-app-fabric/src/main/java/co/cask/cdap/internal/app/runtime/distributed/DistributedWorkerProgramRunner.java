@@ -77,7 +77,7 @@ public class DistributedWorkerProgramRunner extends AbstractDistributedProgramRu
     WorkerSpecification newWorkerSpec = new WorkerSpecification(workerSpec.getClassName(), workerSpec.getName(),
                                                                 workerSpec.getDescription(), workerSpec.getProperties(),
                                                                 workerSpec.getDatasets(), newResources,
-                                                                Integer.valueOf(instances), workerSpec.getPlugins());
+                                                                Integer.valueOf(instances));
 
     LOG.info("Launching distributed worker {}", program.getName());
 
