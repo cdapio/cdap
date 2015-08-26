@@ -198,47 +198,7 @@
 
 </div>
 
-<section class="panel-group explore"
-     ng-model="GlobalExploreController.activePanel"
-     data-allow-multiple="true"
-     bs-collapse>
-
-  <!-- WRITE & EXECUTE SQL -->
-  <div class="panel panel-explore">
-    <div class="panel-heading" bs-collapse-toggle="0">
-      <h3 class="panel-title">
-        <span
-          ng-class="{'fa-chevron-right': GlobalExploreController.activePanel.indexOf(0)===-1,
-                     'fa-chevron-down': GlobalExploreController.activePanel.indexOf(0)!==-1}"
-          class="fa fa-fw"
-        ></span>Execute SQL
-      </h3>
-    </div>
-    <div class="panel-collapse" bs-collapse-target>
-      <div class="panel-body">
-        <my-sql-query data-type="GlobalExploreController.type" data-name="GlobalExploreController.name"></my-sql-query>
-      </div>
-    </div>
-  </div>
-
-  <!-- VIEW QUERIES -->
-  <div class="panel panel-explore">
-    <div class="panel-heading" bs-collapse-toggle="1">
-      <h3 class="panel-title" >
-        <span
-          ng-class="{'fa-chevron-right': GlobalExploreController.activePanel.indexOf(1)===-1,
-                     'fa-chevron-down': GlobalExploreController.activePanel.indexOf(1)!==-1}"
-          class="fa fa-fw"
-        ></span>View Results
-      </h3>
-    </div>
-    <div class="panel-collapse" bs-collapse-target="1">
-      <div class="panel-body">
-
-        <my-view-queries></my-view-queries>
-
-      </div>
-    </div>
-  </div>
-
-</section>
+<my-explore
+  data-type="GlobalExploreController.type"
+  data-name="GlobalExploreController.name">
+</my-explore>
