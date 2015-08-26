@@ -7,7 +7,7 @@ angular.module(PKG.name + '.feature.adapters')
       angular.forEach(obj, function (val) {
         if (val.templateType === MyPlumbService.metadata.template.type) {
           val.icon = 'fa-plug';
-          val.name = val.pluginTemplate || val.templateName;
+          val.name = val.pluginTemplate;
 
           arr.push(val);
         }
@@ -318,15 +318,15 @@ angular.module(PKG.name + '.feature.adapters')
 
       var config;
 
-      if (item.pluginTemplate || item.templateName) {
+      if (item.pluginTemplate) {
         config = {
           id: id,
           name: item.pluginName,
           icon: MyPlumbFactory.getIcon(item.pluginName),
-          type: item.pluginType || item.type,
+          type: item.pluginType,
           properties: item.properties,
           outputSchema: item.outputSchema,
-          pluginTemplate: item.pluginTemplate || item.templateName,
+          pluginTemplate: item.pluginTemplate,
           lock: item.lock
         };
       } else {

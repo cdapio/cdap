@@ -24,21 +24,15 @@
     <tbody>
       <tr ng-repeat="template in TemplatesListController.list">
         <td>
-          <a ng-if="template.pluginTemplate"
-             ui-sref="admin.namespace.detail.templateedit({ templateType: template.templateType, pluginType: template.pluginType, pluginTemplate: template.pluginTemplate })">
+          <a ui-sref="admin.namespace.detail.templateedit({ templateType: template.templateType, pluginType: template.pluginType, pluginTemplate: template.pluginTemplate })">
             {{ template.pluginTemplate }}
           </a>
-          <a ng-if="template.templateName"
-              ui-sref="admin.namespace.detail.templateedit({ templateType: template.templateType, pluginType: template.type, pluginTemplate: template.templateName })">
-            {{template.templateName}}
-          </a>
-
         </td>
         <td>
           <i class="icon-{{template.templateType}}"></i>
           <span>{{ template.templateType }}</span>
         </td>
-        <td>{{ template.pluginType || template.type }}</td>
+        <td>{{ template.pluginType }}</td>
         <td>{{ template.pluginName }}</td>
         <td>
           <a href=""
