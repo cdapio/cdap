@@ -19,12 +19,16 @@
 ### config validator module
 ################################################################
 
+import os
 import sys
+cwd = os.getcwd()
+modules_dir = cwd + '/modules'
+sys.path.append(modules_dir)
 import re
-import install_validator.module_helpers as module_helpers
-import install_validator.test_helpers as helpers
-#import module_helpers as module_helpers
+import lib
+from lib import helpers
 
+################################################################
 
 def strip_crlf(var):
     #print 'attempting to strip \\n from %s' % (var)
@@ -182,19 +186,19 @@ for line in f:
 
     elif datatype == 'bytes':  # e.g. can be any of regular number, of number appended with k,m,g
 
-        valuenum = module_helpers.convert_mult_to_bytes(value)
+        valuenum = helpers.convert_mult_to_bytes(value)
 
         if type == 'exact':
             helpers.vprint ('type = exact', verbose)
-            bvaluenum = module_helpers.convert_mult_to_bytes(bvalue)
+            bvaluenum = helpers.convert_mult_to_bytes(bvalue)
             result_value = exact_eval(bvaluenum, valuenum)
             helpers.vprint ('bvaluenum=%s  valuenum=%s' % (bvaluenum, valuenum), verbose)
 
         elif type == 'range':
             helpers.vprint ('type = range', verbose)
             min, max = bvalue.split('-')
-            if min != '': min = module_helpers.convert_mult_to_bytes(min)
-            if max != '': max = module_helpers.convert_mult_to_bytes(max)
+            if min != '': min = helpers.convert_mult_to_bytes(min)
+            if max != '': max = helpers.convert_mult_to_bytes(max)
             range = process_range_reference(min, max)
             helpers.vprint ('range=%s' % (range), verbose)
             bmin, bmax = range.split(':')
@@ -216,5 +220,5 @@ for line in f:
 
     # send output
     helpers.vprint ('running vout for output', verbose)
-    module_helpers.vout(result_value, line, output, verbose)
+    helpers.vout(result_value, line, output, verbose)
     helpers.vprint ('', verbose)
