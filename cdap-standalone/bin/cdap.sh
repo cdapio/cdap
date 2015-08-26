@@ -72,7 +72,16 @@ SAVED="`pwd`"
 cd "`dirname \"$PRG\"`/.." >&-
 APP_HOME="`pwd -P`"
 
-CLASSPATH="$APP_HOME/lib/*":"$APP_HOME/conf/"
+i=0
+for jar in `ls -1 $APP_HOME/lib/* | sort` ; do
+    ((i++))
+    if [ $i -eq 1 ] ; then
+        CLASSPATH=${jar}
+    else
+        CLASSPATH=${CLASSPATH}:${jar}
+    fi
+done
+CLASSPATH="${CLASSPATH}:$APP_HOME/conf/"
 
 # Determine the Java command to use to start the JVM.
 if [ -n "$JAVA_HOME" ] ; then
