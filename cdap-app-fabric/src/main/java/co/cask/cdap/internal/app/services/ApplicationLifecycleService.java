@@ -408,7 +408,6 @@ public class ApplicationLifecycleService extends AbstractIdleService {
         File tmpFile = File.createTempFile("tmpApp", ".jar", tmpDir);
         Files.copy(Locations.newInputSupplier(appJarLocation), tmpFile);
 
-        // use app name as artifact name
         String version = appSpec.getVersion();
         if (version == null || version.isEmpty()) {
           // version derived from manifest.
@@ -424,6 +423,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
         }
 
         ArtifactDetail artifactDetail;
+        // use app name as artifact name
         Id.Artifact artifactId = Id.Artifact.from(namespaceId, appId.getId(), version);
         try {
           artifactDetail = artifactRepository.addArtifact(artifactId, tmpFile);
@@ -436,16 +436,22 @@ public class ApplicationLifecycleService extends AbstractIdleService {
           }
           throw e;
         } catch (ArtifactAlreadyExistsException e) {
-          // this should not happen, but if it does for some reason it is ok, we just care that the artifact exists
+          // this can happen if the upgrade tool ran already, the artifact was added, but the app metadata was not
+          // updated. In that case, just look up artifact detail from the repository instead of adding the artifact,
+          // and proceed to update the app metadata again
           try {
             artifactDetail = artifactRepository.getArtifact(artifactId);
           } catch (Exception e2) {
+            LOG.error("Error looking up artifact detail for artifact {}. Please try re-running the upgrade.",
+                      artifactId, e);
             if (continueOnFailure) {
               continue;
             }
             throw e2;
           }
         } catch (InvalidArtifactException e) {
+          LOG.error("Artifact {} is invalid. You will need to redeploy the app manually after upgrade.",
+                    artifactId, e);
           // this should not happen either since the app jar was successfully deployed already
           if (continueOnFailure) {
             continue;
