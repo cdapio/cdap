@@ -79,23 +79,40 @@ function makeApp (authAddress, cdapConfig) {
 
       var decoder = new StringDecoder('utf8');
 
-      var file = fs.createWriteStream(DIST_PATH + '/assets/public/' + query + '.csv');
+      var filePath = DIST_PATH + '/assets/public/' + query + '.csv';
 
-      var r = request.post({
-        method: 'POST',
-        url: url
-      });
 
-      r.on('response', function(response) {
-        response.on('data', function(chunk) {
-          file.write(decoder.write(chunk));
+      try {
+        fs.lstatSync(filePath);
+
+        // checking if file exist
+        // if file exist, respond with the link directly
+        // if file does not exist, it will throw an error
+        res.send('/assets/public/' + query + '.csv');
+
+      } catch (e) {
+        // this catch block will get executed when the file does not exist yet
+
+        var file = fs.createWriteStream(filePath);
+
+        var r = request.post({
+          method: 'POST',
+          url: url
         });
 
-        response.on('end', function() {
-          file.end();
-          res.send('/assets/public/' + query + '.csv');
+        r.on('response', function(response) {
+          response.on('data', function(chunk) {
+            file.write(decoder.write(chunk));
+          });
+
+          response.on('end', function() {
+            file.end();
+            res.send('/assets/public/' + query + '.csv');
+          });
         });
-      });
+      }
+
+
     });
   });
 
