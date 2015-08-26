@@ -40,7 +40,7 @@ def check_numeric_unit(value):
         return value
 
 
-def process_range_reference(x,y):
+def process_range_reference(x, y):
     #print 'processing range reference'
     # 3 scenarios
     #   range = x-y => x <= value <= y
@@ -53,13 +53,13 @@ def process_range_reference(x,y):
     elif x == '':
         return 'x:' + str(y)
     elif y == '':
-        return str(x) + ':y'        
+        return str(x) + ':y'
     else:
         return str(x) + ':' + str(y)
 
 
-def exact_eval(a,b):
-    #print 'testing exact_eval with %s and %s' % (a,b)
+def exact_eval(a, b):
+    #print 'testing exact_eval with %s and %s' % (a, b)
     if a == b:
         return '0'
         #print 'a = b'
@@ -68,9 +68,9 @@ def exact_eval(a,b):
         #print 'a != b'
 
 
-def range_eval(a,x,y):
+def range_eval(a, x, y):
     #print 'evaluating a to see if it is within range x:y'
-    #print 'a=%d x=%d y=%d' % (a,x,y)
+    #print 'a=%d x=%d y=%d' % (a, x, y)
     if x == 'x':
         #print 'x=x'
         if a > y:
@@ -81,7 +81,7 @@ def range_eval(a,x,y):
             return '1'
     else:
         #print 'x and y exist'
-        if a < x or a > y: 
+        if a < x or a > y:
             return '1'
         return '0'
 
@@ -90,8 +90,8 @@ def range_eval(a,x,y):
 
 # process inputs:
 #   base reference configurations
-#   actual configurations 
-#   verbose level 
+#   actual configurations
+#   verbose level
 
 # the goal is to iterate through baseref_configs and find corresponding actual configurations
 
@@ -118,6 +118,7 @@ module = 'config'
 validation_results = {}
 output = ''
 
+
 class AutoVivification(dict):
     def __getitem__(self, item):
         try:
@@ -125,7 +126,7 @@ class AutoVivification(dict):
         except KeyError:
             value = self[item] = type(self)()
             return value
-   
+
 actual = AutoVivification()
 results = AutoVivification()
 
@@ -134,7 +135,7 @@ results = AutoVivification()
 with open(actual_configs) as l:
     for line in l:
         line = strip_crlf(line)
-        service,key,value = re.split(':|=\'',line,2)
+        service, key, value = re.split(':|=\'', line, 2)
         value = re.sub('[\']', '', value)
         value = strip_crlf(value)
         actual[service][key] = value
@@ -143,7 +144,7 @@ with open(actual_configs) as l:
 
 f = open(baseref_configs, 'r')
 for line in f:
-    # baseref_configs format: 
+    # baseref_configs format:
     # service:property='value/range':datatype:comparison_type
 
     # ignore lines starting with '#' or empty lines
@@ -152,29 +153,28 @@ for line in f:
 
     # placeholder: need to handle bad/improperly formatted data
 
-
     try:
-        bservice,bproperty,datatype,type = line.split(':',3)
+        bservice, bproperty, datatype, type = line.split(':', 3)
     except:
         print '\ninvalid baseref_config line:  ', line
         continue
 
     bvalue = ''
     bvaluenum = 0
-    
+
     datatype = strip_crlf(datatype)
     type = strip_crlf(type)
-    bkey,bvalue = bproperty.split('=') 
+    bkey, bvalue = bproperty.split('=')
     bvalue = re.sub('[\']', '', bvalue)
     if verbose == 2: print "%s:%s=%s:%s:%s" % (bservice, bkey, bvalue, datatype, type)
 
     # set it to a safe, impossible value
-    result_value=-1
-   
+    result_value = -1
+
     # COMPARISONS
 
     value = actual[bservice][bkey]
-    if datatype == 'alpha': # alpha type -- simple comparison
+    if datatype == 'alpha':  # alpha type -- simple comparison
         if verbose == 2:
             print 'type alpha: simple comparison'
             print 'value=%s    bvalue=%s' % (value, bvalue)
@@ -190,16 +190,16 @@ for line in f:
             result_value = exact_eval(bvaluenum, valuenum)
             if verbose == 2: print 'bvaluenum=%s  valuenum=%s' % (bvaluenum, valuenum)
 
-        elif type == 'range':    
+        elif type == 'range':
             if verbose == 2: print 'type = range'
-            min,max = bvalue.split('-')
+            min, max = bvalue.split('-')
             if min != '': min = module_helpers.convert_mult_to_bytes(min)
             if max != '': max = module_helpers.convert_mult_to_bytes(max)
-            range = process_range_reference(min,max) 
+            range = process_range_reference(min, max)
             if verbose == 2: print 'range=%s' % (range)
-            bmin,bmax = range.split(':')
+            bmin, bmax = range.split(':')
             bmin = long(bmin)
-            result_value = range_eval(valuenum,bmin,bmax)
+            result_value = range_eval(valuenum, bmin, bmax)
             if verbose == 2: print 'bvalue=%s range=%s  valuenum=%s' % (bvalue, range, valuenum)
 
         else:
