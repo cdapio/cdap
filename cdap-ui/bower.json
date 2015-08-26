@@ -35,7 +35,7 @@
     "c3": "0.4.10",
     "angular-ui-ace": "bower",
     "jsPlumb": "1.7.5",
-    "angular-gridster": "0.13.2"
+    "angular-gridster": "0.13.5"
   },
   "resolutions": {
     "angular": "1.4.3",
