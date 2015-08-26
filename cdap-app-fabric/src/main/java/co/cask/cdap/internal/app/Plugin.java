@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.internal.artifact;
+package co.cask.cdap.internal.app;
 
 import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.templates.plugins.PluginClass;

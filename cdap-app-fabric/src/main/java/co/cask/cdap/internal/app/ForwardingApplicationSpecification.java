@@ -25,7 +25,6 @@ import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
-import co.cask.cdap.internal.artifact.Plugin;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.proto.Id;
 
