@@ -20,6 +20,7 @@ import urllib2
 import json
 import sys
 import ambari
+import cloudera
 
 
 def usage():
@@ -70,7 +71,7 @@ def run_request(host, info):
             return handle
         except IOError, e:
             # here we shouldn't fail if the username/password is right
-            vprint ('It looks like the username or password is wrong.', info['verbose'])
+            vprint('It looks like the username or password is wrong.', info['verbose'])
             return 'noapi'
 
 
@@ -141,11 +142,11 @@ def safe_get_config_and_write(url, user, passwd, subdir, file):
 
 def get_config_from_managermgr(mgr, host_url, configs_subdir, base, cluster):
     if mgr == 'cloudera':
-        print 'Hadoop install manager: Cloudera Manager'
-        # cloudera.cloudera_commands(host_url, configs_subdir, base, cluster) ## disabling for now
+        vprint('Hadoop install manager: Cloudera Manager', cluster['verbose'])
+        # cloudera.get_cloudera_configs(host_url, configs_subdir, base, cluster) ## disabling for now
 
     elif mgr == 'ambari':
-        vprint ('Hadoop install manager: Ambari', cluster['verbose'])
+        vprint('Hadoop install manager: Ambari', cluster['verbose'])
         ambari.get_ambari_configs(host_url, configs_subdir, base, cluster)
 
     else:
