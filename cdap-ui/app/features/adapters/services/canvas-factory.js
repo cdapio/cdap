@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.adapters')
-  .factory('CanvasFactory', function(myHelpers, MyPlumbService, $q, $alert) {
+  .factory('CanvasFactory', function(myHelpers, $q, $alert) {
     function getNodes(config) {
       var nodes = [];
       var i =0;
@@ -66,7 +66,7 @@ angular.module(PKG.name + '.feature.adapters')
       return connections;
     }
 
-    function exportAdapter(detailedConfig, name) {
+    function exportAdapter(detailedConfig, name, nodes, connections) {
       var defer = $q.defer();
       if (!name || name === '') {
         detailedConfig.name = 'noname';
@@ -75,8 +75,8 @@ angular.module(PKG.name + '.feature.adapters')
       }
 
       detailedConfig.ui = {
-        nodes: angular.copy(MyPlumbService.nodes),
-        connections: angular.copy(MyPlumbService.connections)
+        nodes: angular.copy(nodes),
+        connections: angular.copy(connections)
       };
 
       angular.forEach(detailedConfig.ui.nodes, function(node) {
@@ -126,13 +126,13 @@ angular.module(PKG.name + '.feature.adapters')
       return result;
     }
 
-    function importAdapter(files) {
+    function importAdapter(files, templateType) {
       var defer = $q.defer();
       var reader = new FileReader();
       reader.readAsText(files[0], 'UTF-8');
 
       reader.onload = function (evt) {
-        var result = parseImportedJson(evt.target.result, MyPlumbService.metadata.template.type);
+        var result = parseImportedJson(evt.target.result, templateType);
         if (result.error) {
           $alert({
             type: 'danger',

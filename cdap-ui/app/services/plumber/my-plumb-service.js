@@ -31,7 +31,7 @@
 
 */
 angular.module(PKG.name + '.services')
-  .service('MyPlumbService', function(myAdapterApi, $q, $bootstrapModal, $state, $filter, mySettings, AdapterErrorFactory, IMPLICIT_SCHEMA, myHelpers, PluginConfigFactory, ModalConfirm, EventPipe) {
+  .service('MyPlumbService', function(myAdapterApi, $q, $bootstrapModal, $state, $filter, mySettings, AdapterErrorFactory, IMPLICIT_SCHEMA, myHelpers, PluginConfigFactory, ModalConfirm, EventPipe, CanvasFactory) {
 
     var countSink = 0,
         countSource = 0,
@@ -765,6 +765,36 @@ angular.module(PKG.name + '.services')
           res[this.metadata.name] = config;
           return mySettings.set('adapterDrafts', res);
         }.bind(this));
+    };
+
+    this.setNodesAndConnectionsFromDraft = function(data) {
+      var ui = data.ui;
+      var config = data.config;
+      var nodes = [];
+      var config1 = CanvasFactory.extractMetadataFromDraft(data.config, data);
+
+      if (config1.name) {
+        this.metadata.name = config1.name;
+      }
+      this.metadata.description = config1.description;
+      this.metadata.template = config1.template;
+
+      if (ui && ui.nodes) {
+        angular.forEach(ui.nodes, function(value) {
+          nodes.push(value);
+        }.bind(this));
+      } else {
+        nodes = CanvasFactory.getNodes(config);
+      }
+      nodes.forEach(function(node) {
+        this.addNodes(node, node.type);
+      }.bind(this));
+
+      if (ui && ui.connections) {
+        this.connections = ui.connections;
+      } else {
+        this.connections = CanvasFactory.getConnectionsBasedOnNodes(nodes);
+      }
     };
 
   });
