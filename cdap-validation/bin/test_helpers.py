@@ -19,6 +19,7 @@ import base64
 import urllib2
 import json
 import sys
+import ambari
 
 
 def usage():
@@ -38,9 +39,9 @@ def usage():
 
 def onetime_auth(host, info):
     # this should work with all, but when authentication is not set up correctly, this fails (http 403)
-    passman = urllib2.HTTPPasswordMgrWithDefaultRealm() # this creates a password manager
+    passman = urllib2.HTTPPasswordMgrWithDefaultRealm()  # this creates a password manager
     passman.add_password(None, host, info['username'], info['password'])
-    authhandler = urllib2.HTTPBasicAuthHandler(passman) # create the AuthHandler
+    authhandler = urllib2.HTTPBasicAuthHandler(passman)  # create the AuthHandler
     opener = urllib2.build_opener(authhandler)
     urllib2.install_opener(opener)
     return urllib2
@@ -52,11 +53,11 @@ def run_request(host, info):
     try:
         handle = urllib2.urlopen(host)
         return handle
-    except: #except HTTPError, h: ### would like to do something like this
+    except:  #except HTTPError, h: ### would like to do something like this
         # try a different way (encoding headers)
         req = urllib2.Request(host)
         base64string = base64.encodestring('%s:%s' % (user, passwd))[:-1]
-        authheader =  "Basic %s" % base64string
+        authheader = "Basic %s" % base64string
         req.add_header("Authorization", authheader)
         try:
             handle = urllib2.urlopen(req)
@@ -70,7 +71,7 @@ def run_request(host, info):
 def write_file(config, dir, file, createdir):
     path = dir + file
     if not os.path.exists(dir):
-        if createdir == True:
+        if createdir is True:
             os.makedirs(dir)
         else:
             print 'Directory missing. Unable to write configurations. Exiting.'
@@ -131,3 +132,15 @@ def safe_get_config_and_write(url, user, passwd, subdir, file):
         # need to find a good way to ignore API calls that return nothing (for unused services)
         pass
 
+
+def get_config_from_managermgr(mgr, host_url, configs_subdir, base, cluster):
+    if mgr == 'cloudera':
+        print 'Hadoop install manager: Cloudera Manager'
+        # cloudera.cloudera_commands(host_url, configs_subdir, base, cluster) ## disabling for now
+
+    elif mgr == 'ambari':
+        if cluster['verbose'] == 2: print 'Hadoop install manager: Ambari'
+        ambari.get_ambari_configs(host_url, configs_subdir, base, cluster)
+
+    else:
+        print 'Your Hadoop install manager is not recognized'
