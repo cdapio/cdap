@@ -189,7 +189,19 @@ public class IntegrationTestManager implements TestManager {
 
   @Override
   public void addAppArtifact(Id.Artifact artifactId, Class<?> appClass) throws Exception {
-    final Location appJar = AppJarHelper.createDeploymentJar(locationFactory, appClass, new Manifest());
+    addAppArtifact(artifactId, appClass, new Manifest());
+  }
+
+  @Override
+  public void addAppArtifact(Id.Artifact artifactId, Class<?> appClass, String... exportPackages) throws Exception {
+    Manifest manifest = new Manifest();
+    manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE, Joiner.on(',').join(exportPackages));
+    addAppArtifact(artifactId, appClass, manifest);
+  }
+
+  @Override
+  public void addAppArtifact(Id.Artifact artifactId, Class<?> appClass, Manifest manifest) throws Exception {
+    final Location appJar = AppJarHelper.createDeploymentJar(locationFactory, appClass, manifest);
 
     artifactClient.add(artifactId, null, new InputSupplier<InputStream>() {
       @Override

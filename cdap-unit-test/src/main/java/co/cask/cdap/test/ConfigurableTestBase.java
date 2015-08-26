@@ -123,6 +123,7 @@ import java.sql.Connection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.jar.Manifest;
 import javax.annotation.Nullable;
 
 /**
@@ -541,26 +542,118 @@ public class ConfigurableTestBase {
     getTestManager().addTemplatePluginJson(templateId, fileName, type, name, description, className, fields);
   }
 
-  // TODO: Add Javadocs for these test methods
+  /**
+   * Add the specified artifact.
+   *
+   * @param artifactId the id of the artifact to add
+   * @param artifactFile the contents of the artifact. Must be a valid jar file containing apps or plugins
+   * @throws Exception
+   */
   protected static void addArtifact(Id.Artifact artifactId, File artifactFile) throws Exception {
     getTestManager().addArtifact(artifactId, artifactFile);
   }
 
+  /**
+   * Build an application artifact from the specified class and then add it.
+   *
+   * @param artifactId the id of the artifact to add
+   * @param appClass the application class to build the artifact from
+   * @throws Exception
+   */
   protected static void addAppArtifact(Id.Artifact artifactId, Class<?> appClass) throws Exception {
     getTestManager().addAppArtifact(artifactId, appClass);
   }
 
+  /**
+   * Build an application artifact from the specified class and then add it.
+   *
+   * @param artifactId the id of the artifact to add
+   * @param appClass the application class to build the artifact from
+   * @param exportPackages the packages to export and place in the manifest of the jar to build. This should include
+   *                       packages that contain classes that plugins for the application will implement.
+   * @throws Exception
+   */
+  protected static void addAppArtifact(Id.Artifact artifactId, Class<?> appClass,
+                                       String... exportPackages) throws Exception {
+    getTestManager().addAppArtifact(artifactId, appClass, exportPackages);
+  }
+
+  /**
+   * Build an application artifact from the specified class and then add it.
+   *
+   * @param artifactId the id of the artifact to add
+   * @param appClass the application class to build the artifact from
+   * @param manifest the manifest to use when building the jar
+   * @throws Exception
+   */
+  protected static void addAppArtifact(Id.Artifact artifactId, Class<?> appClass, Manifest manifest) throws Exception {
+    getTestManager().addAppArtifact(artifactId, appClass, manifest);
+  }
+
+  /**
+   * Build an artifact from the specified plugin classes and then add it. The
+   * jar created will include all classes in the same package as the give classes, plus any dependencies of the
+   * given classes. If another plugin in the same package as the given plugin requires a different set of dependent
+   * classes, you must include both plugins. For example, suppose you have two plugins,
+   * com.company.myapp.functions.functionX and com.company.myapp.function.functionY, with functionX having
+   * one set of dependencies and functionY having another set of dependencies. If you only add functionX, functionY
+   * will also be included in the created jar since it is in the same package. However, only functionX's dependencies
+   * will be traced and added to the jar, so you will run into issues when the platform tries to register functionY.
+   * In this scenario, you must be certain to include specify both functionX and functionY when calling this method.
+   *
+   * @param artifactId the id of the artifact to add
+   * @param parent the parent artifact it extends
+   * @param pluginClass the plugin class to build the jar from
+   * @param pluginClasses any additional plugin classes that should be included in the jar
+   * @throws Exception
+   */
   protected static void addPluginArtifact(Id.Artifact artifactId, Id.Artifact parent,
                                           Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
     getTestManager().addPluginArtifact(artifactId, parent, pluginClass, pluginClasses);
   }
 
+  /**
+   * Build an artifact from the specified plugin classes and then add it. The
+   * jar created will include all classes in the same package as the give classes, plus any dependencies of the
+   * given classes. If another plugin in the same package as the given plugin requires a different set of dependent
+   * classes, you must include both plugins. For example, suppose you have two plugins,
+   * com.company.myapp.functions.functionX and com.company.myapp.function.functionY, with functionX having
+   * one set of dependencies and functionY having another set of dependencies. If you only add functionX, functionY
+   * will also be included in the created jar since it is in the same package. However, only functionX's dependencies
+   * will be traced and added to the jar, so you will run into issues when the platform tries to register functionY.
+   * In this scenario, you must be certain to include specify both functionX and functionY when calling this method.
+   *
+   * @param artifactId the id of the artifact to add
+   * @param parent the parent artifact it extends
+   * @param additionalPlugins any plugin classes that need to be explicitly declared because they cannot be found
+   *                          by inspecting the jar. This is true for 3rd party plugins, such as jdbc drivers
+   * @param pluginClass the plugin class to build the jar from
+   * @param pluginClasses any additional plugin classes that should be included in the jar
+   * @throws Exception
+   */
   protected static void addPluginArtifact(Id.Artifact artifactId, Id.Artifact parent,
                                           Set<PluginClass> additionalPlugins,
                                           Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
     getTestManager().addPluginArtifact(artifactId, parent, additionalPlugins, pluginClass, pluginClasses);
   }
 
+  /**
+   * Build an artifact from the specified plugin classes and then add it. The
+   * jar created will include all classes in the same package as the give classes, plus any dependencies of the
+   * given classes. If another plugin in the same package as the given plugin requires a different set of dependent
+   * classes, you must include both plugins. For example, suppose you have two plugins,
+   * com.company.myapp.functions.functionX and com.company.myapp.function.functionY, with functionX having
+   * one set of dependencies and functionY having another set of dependencies. If you only add functionX, functionY
+   * will also be included in the created jar since it is in the same package. However, only functionX's dependencies
+   * will be traced and added to the jar, so you will run into issues when the platform tries to register functionY.
+   * In this scenario, you must be certain to include specify both functionX and functionY when calling this method.
+   *
+   * @param artifactId the id of the artifact to add
+   * @param parentArtifacts the parent artifacts it extends
+   * @param pluginClass the plugin class to build the jar from
+   * @param pluginClasses any additional plugin classes that should be included in the jar
+   * @throws Exception
+   */
   protected static void addPluginArtifact(Id.Artifact artifactId, Set<ArtifactRange> parentArtifacts,
                                           Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
     getTestManager().addPluginArtifact(artifactId, parentArtifacts, pluginClass, pluginClasses);
