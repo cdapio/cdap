@@ -42,7 +42,8 @@ def process_params(params):
         elif opt in ('-m', '--module'):
             input_vars['modules'] = arg
         elif opt in ('-u', '--user'):
-            input_vars['user'] = arg
+            # split user auth info to user and password and store accordingly
+            input_vars['user'],input_vars['password'] = arg.split(':')
         elif opt in ('-U', '--uri'):
             input_vars['host'] = arg
         elif opt in ('-v', '--verbose'):

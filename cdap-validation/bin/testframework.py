@@ -35,7 +35,8 @@ def testing(base_vars,cluster_vars):
     #cluster_vars = {}
     input = read_input(input_json)
     cluster_vars['host'] = input['params']['uri']
-    cluster_vars['username'],cluster_vars['password']= input['params']['userpass'].split(':')
+    cluster_vars['username'] = input['params']['user']
+    cluster_vars['password'] = input['params']['password']
     cluster_vars['cluster'] = input['params']['cluster_name']
     cluster_vars['modules'] = input['params']['modules']
 
