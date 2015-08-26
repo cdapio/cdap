@@ -30,9 +30,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Testing the Validation of Adapter stage hookups.
+ * Testing the Validation of etl stage hookups.
  */
-public class ValidationTest {
+public class PipelineValidatorTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void testSimpleInvalidMatch() throws Exception {
@@ -40,7 +40,7 @@ public class ValidationTest {
     ArrayList<Type> typeList = Lists.newArrayList();
     typeList.add(String.class);
     typeList.add(Integer.class);
-    ETLTemplate.validateTypes(typeList);
+    PipelineValidator.validateTypes(typeList);
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -53,7 +53,7 @@ public class ValidationTest {
     typeList.add(Object.class);
     typeList.addAll(getBothParameters(ParamToListParam.class));
     typeList.add(getFirstTypeParameter(StringListSink.class));
-    ETLTemplate.validateTypes(typeList);
+    PipelineValidator.validateTypes(typeList);
   }
 
   @Test
@@ -64,7 +64,7 @@ public class ValidationTest {
     typeList.add(GenericRecord.class);
     typeList.add(Integer.class);
     typeList.add(Object.class);
-    ETLTemplate.validateTypes(typeList);
+    PipelineValidator.validateTypes(typeList);
   }
 
   @Test
@@ -74,7 +74,7 @@ public class ValidationTest {
     typeList.add(String.class);
     typeList.addAll(getBothParameters(ParamToListParam.class));
     typeList.add(getFirstTypeParameter(StringListSink.class));
-    ETLTemplate.validateTypes(typeList);
+    PipelineValidator.validateTypes(typeList);
   }
 
   @Test
@@ -86,7 +86,7 @@ public class ValidationTest {
     typeList.addAll(getBothParameters(ParamToListParam.class));
     typeList.addAll(getBothParameters(ParamToListParam.class));
     typeList.add(getFirstTypeParameter(NoOpSink.class));
-    ETLTemplate.validateTypes(typeList);
+    PipelineValidator.validateTypes(typeList);
   }
 
   @Test
@@ -96,7 +96,7 @@ public class ValidationTest {
     typeList.add(String[].class);
     typeList.addAll(getBothParameters(ArrayToListArray.class));
     typeList.add(getFirstTypeParameter(NoOpSink.class));
-    ETLTemplate.validateTypes(typeList);
+    PipelineValidator.validateTypes(typeList);
   }
 
   @Test
@@ -107,7 +107,7 @@ public class ValidationTest {
     typeList.addAll(getBothParameters(ArrayToListArray.class));
     typeList.addAll(getBothParameters(ParamToListParam.class));
     typeList.add(getFirstTypeParameter(NoOpSink.class));
-    ETLTemplate.validateTypes(typeList);
+    PipelineValidator.validateTypes(typeList);
   }
 
   @Test
@@ -117,7 +117,7 @@ public class ValidationTest {
     typeList.add(getFirstTypeParameter(ParamToListParam.class));
     typeList.addAll(getBothParameters(ParamToListParam.class));
     typeList.add(getFirstTypeParameter(ParamToListParam.class));
-    ETLTemplate.validateTypes(typeList);
+    PipelineValidator.validateTypes(typeList);
   }
 
   private static List<Type> getBothParameters(Class klass) {
