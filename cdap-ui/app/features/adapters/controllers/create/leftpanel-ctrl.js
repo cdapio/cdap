@@ -163,8 +163,10 @@ angular.module(PKG.name + '.feature.adapters')
 
         var templates = res[$state.params.namespace][MyPlumbService.metadata.template.type];
 
-        sourceTemplates = objectToArray(templates.source);
-        transformTemplates = objectToArray(templates.transform);
-        sinkTemplates = objectToArray(templates.sink);
+        if (templates) {
+          sourceTemplates = objectToArray(templates.source);
+          transformTemplates = objectToArray(templates.transform);
+          sinkTemplates = objectToArray(templates.sink);
+        }
       });
   });

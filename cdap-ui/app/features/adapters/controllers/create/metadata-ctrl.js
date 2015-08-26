@@ -7,9 +7,6 @@ angular.module(PKG.name + '.feature.adapters')
 
     MyPlumbService.registerResetCallBack(resetMetadata.bind(this));
 
-    if (rConfig) {
-      this.data =  rConfig;
-    }
     if ($stateParams.name) {
       this.metadata.name = $stateParams.name;
     }
@@ -33,7 +30,7 @@ angular.module(PKG.name + '.feature.adapters')
       MyPlumbService.isConfigTouched = true;
       $bootstrapModal
         .open({
-          templateUrl: '/assets/features/adapters/templates/create/metadata.html',
+          templateUrl: '/assets/features/adapters/templates/create/popovers/metadata-detail.html',
           size: 'lg',
           windowClass: 'adapter-modal',
           keyboard: true,

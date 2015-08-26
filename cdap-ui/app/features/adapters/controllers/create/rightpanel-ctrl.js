@@ -33,7 +33,11 @@ angular.module(PKG.name + '.feature.adapters')
       switch(group.name) {
         case 'Export':
           CanvasFactory
-            .exportAdapter(MyPlumbService.getConfigForBackend(), MyPlumbService.metadata.name)
+            .exportAdapter(
+              MyPlumbService.getConfigForBackend(),
+              MyPlumbService.metadata.name,
+              MyPlumbService.nodes,
+              MyPlumbService.connections)
             .then(
               function success(result) {
                 this.exportFileName = result.name;
@@ -143,6 +147,31 @@ angular.module(PKG.name + '.feature.adapters')
               }
             );
       }
+    };
+
+    this.onImportSuccess = function(result) {
+      EventPipe.emit('popovers.reset');
+      $scope.config = JSON.stringify(result);
+      this.reloadDAG = true;
+      MyPlumbService.resetToDefaults(true);
+      MyPlumbService.setNodesAndConnectionsFromDraft(result);
+      if ($scope.config.name) {
+        MyPlumbService.metadata.name = $scope.config.name;
+      }
+
+      MyPlumbService.notifyError({});
+      MyPlumbService.notifyResetListners();
+    };
+
+    this.importFile = function(files) {
+      CanvasFactory
+        .importAdapter(files, MyPlumbService.metadata.template.type)
+        .then(
+          this.onImportSuccess.bind(this),
+          function error(errorEvent) {
+            console.error('Upload config failed', errorEvent);
+          }
+        );
     };
 
 
