@@ -28,10 +28,10 @@ def get_ambari_configs(host, subdir, base, cluster_info):
     # get ambari configs
     manager = 'ambari'
     verbose = cluster_info['verbose']
-    cu = get_config_urls(host, cluster_info)
-    helpers.vprint ('cu=%s' % (cu), verbose)
+    cu = get_ambari_config_urls(host, cluster_info)
+    helpers.vprint('cu=%s' % (cu), verbose)
     config_url_href = cu.read()
-    helpers.vprint ('configurlref=%s' % (config_url_href), verbose)
+    helpers.vprint('configurlref=%s' % (config_url_href), verbose)
 
     # extract the ambari config urls
     data = json.loads(config_url_href)
@@ -40,7 +40,7 @@ def get_ambari_configs(host, subdir, base, cluster_info):
     # run API commands:
     # iterate through ambari config urls, and run api requests against those
     #     This creates config files in a subdirectory
-    get_configs(config_urls, subdir, cluster_info)
+    get_ambari_service_configs(config_urls, subdir, cluster_info)
 
     # process tmp configs and store results
     ambari_stored_configs = base[manager]['stored_results']
@@ -48,17 +48,17 @@ def get_ambari_configs(host, subdir, base, cluster_info):
 
 
 # get config urls
-def get_config_urls(host, cluster_info):
+def get_ambari_config_urls(host, cluster_info):
     cluster = cluster_info['cluster']
     append = '/clusters/' + cluster + '/configurations'
     url = host + append
-    helpers.vprint ('url=%s' % (url), cluster_info['verbose'])
-    config_urls = helpers.run_request(url, cluster_info)
-    return config_urls
+    helpers.vprint('url=%s' % (url), cluster_info['verbose'])
+    ambari_config_urls = helpers.run_request(url, cluster_info)
+    return ambari_config_urls
 
 
 # get configs through config urls
-def get_configs(urls, subdir, cluster_info):
+def get_ambari_service_configs(urls, subdir, cluster_info):
     for uri in urls:
         # extract service file name
         m = re.search('\?type=(.+?)&tag', uri)
@@ -72,7 +72,7 @@ def get_configs(urls, subdir, cluster_info):
 def store_ambari_results(subdir, stored_configs, cluster):
     # get list of tmp config files and read
     verbose = cluster['verbose']
-    helpers.vprint ('Get and store all Ambari configurations in %s\n' % (stored_configs), verbose)
+    helpers.vprint('Get and store all Ambari configurations in %s\n' % (stored_configs), verbose)
     s = open(stored_configs, 'w')
     config_file_list = [c for c in listdir(subdir) if isfile(join(subdir, c))]
 
@@ -80,7 +80,7 @@ def store_ambari_results(subdir, stored_configs, cluster):
 
         # open file
         subfile = subdir + file
-        helpers.vprint ('file=%s  subfile=%s' % (file, subfile), verbose)
+        helpers.vprint('file=%s  subfile=%s' % (file, subfile), verbose)
         try:
             f = open(subfile, 'r')
         except IOError:
@@ -90,7 +90,7 @@ def store_ambari_results(subdir, stored_configs, cluster):
         tmp_config_file = f.read()
         f.close()
         service = get_service_name(file)
-        helpers.vprint ('service=%s' % (service), verbose)
+        helpers.vprint('service=%s' % (service), verbose)
 
         # read json
         data = json.loads(tmp_config_file)
