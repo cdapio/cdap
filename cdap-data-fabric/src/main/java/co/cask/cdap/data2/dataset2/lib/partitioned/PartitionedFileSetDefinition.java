@@ -33,7 +33,6 @@ import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetProperties;
 import co.cask.cdap.api.dataset.lib.Partitioning;
 import co.cask.cdap.explore.client.ExploreFacade;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
@@ -54,12 +53,10 @@ public class PartitionedFileSetDefinition extends AbstractDatasetDefinition<Part
 
   private static final Logger LOG = LoggerFactory.getLogger(PartitionedFileSetDefinition.class);
 
-  @VisibleForTesting
-  public static final String PARTITION_TABLE_NAME = "partitions";
-  @VisibleForTesting
-  public static final String FILESET_NAME = "files";
+  protected static final String PARTITION_TABLE_NAME = "partitions";
+  protected static final String FILESET_NAME = "files";
 
-  public static final String INDEXED_COLS = Bytes.toString(PartitionedFileSetDataset.WRITE_PTR_COL) + ','
+  private static final String INDEXED_COLS = Bytes.toString(PartitionedFileSetDataset.WRITE_PTR_COL) + ','
     + Bytes.toString(PartitionedFileSetDataset.CREATION_TIME_COL);
 
   protected final DatasetDefinition<? extends IndexedTable, ?> indexedTableDef;

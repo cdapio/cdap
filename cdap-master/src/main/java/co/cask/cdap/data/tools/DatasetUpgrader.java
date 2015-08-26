@@ -57,7 +57,6 @@ public class DatasetUpgrader extends AbstractUpgrader {
   private final String datasetTablePrefix;
 
   @Inject
-  @VisibleForTesting
   DatasetUpgrader(CConfiguration cConf, Configuration hConf, LocationFactory locationFactory,
                   NamespacedLocationFactory namespacedLocationFactory,
                   HBaseTableUtil hBaseTableUtil, DatasetFramework dsFramework) {
