@@ -8,35 +8,47 @@ angular.module(PKG.name + '.commons')
         name: '='
       },
       templateUrl: 'explore/explore.html',
-      controller: myExploreCtrl
+      controller: myExploreCtrl,
+      controllerAs: 'MyExploreCtrl'
     };
 
 
-    function myExploreCtrl ($scope, MyDataSource, myExploreApi, $http, $state, $bootstrapModal, myCdapUrl) {
+    function myExploreCtrl ($scope, MyDataSource, myExploreApi, $http, $state, $bootstrapModal, myCdapUrl, $timeout) {
+        var vm = this;
+
         var dataSrc = new MyDataSource($scope);
-        $scope.queries = [];
+        var isFirstTime = true;
+        vm.queries = [];
+        vm.currentPage = 1;
         var params = {
           namespace: $state.params.namespace,
           scope: $scope
         };
 
         $scope.$watch('name', function() {
-          $scope.query = 'SELECT * FROM ' + $scope.type + '_' + $scope.name + ' LIMIT 5';
+          vm.query = 'SELECT * FROM ' + $scope.type + '_' + $scope.name + ' LIMIT 5';
         });
 
-        $scope.execute = function() {
-          myExploreApi.postQuery(params, { query: $scope.query }, $scope.getQueries);
+        vm.execute = function() {
+          myExploreApi.postQuery(params, { query: vm.query }, vm.getQueries);
+          vm.currentPage = 1;
         };
 
-        $scope.getQueries = function() {
+        vm.getQueries = function() {
 
           myExploreApi.getQueries(params)
             .$promise
             .then(function (queries) {
-              $scope.queries = queries;
+              if (!isFirstTime) {
+                vm.previous = vm.queries.map(function (q) { return q.query_handle; });
+              }
+
+              isFirstTime = false;
+
+              vm.queries = queries;
 
               // Polling for status
-              angular.forEach($scope.queries, function(q) {
+              angular.forEach(vm.queries, function(q) {
                 q.isOpen = false;
                 if (q.status !== 'FINISHED') {
 
@@ -56,13 +68,16 @@ angular.module(PKG.name + '.commons')
                 }
               });
 
+              $timeout(function () {
+                vm.previous = vm.queries.map(function (q) { return q.query_handle; });
+              }, 1000);
+
             });
         };
 
-        $scope.getQueries();
+        vm.getQueries();
 
-
-        $scope.preview = function (query) {
+        vm.preview = function (query) {
           $bootstrapModal.open({
             templateUrl: 'explore/preview-modal.html',
             size: 'lg',
@@ -95,7 +110,7 @@ angular.module(PKG.name + '.commons')
         };
 
 
-        $scope.download = function(query) {
+        vm.download = function(query) {
           query.downloading = true;
           query.is_active = false; // this will prevent user from previewing after download
 
@@ -125,8 +140,8 @@ angular.module(PKG.name + '.commons')
             });
         };
 
-        $scope.clone = function (query) {
-          myExploreApi.postQuery(params, { query: query.statement }, $scope.getQueries);
+        vm.clone = function (query) {
+          vm.query = query.statement;
         };
 
       }

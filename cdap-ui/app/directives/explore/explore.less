@@ -17,6 +17,7 @@ my-explore {
     textarea {
       max-width: 100%;
       min-height: 100px;
+      max-height: 250px;
     }
 
     table.table-explore-results {
@@ -26,14 +27,6 @@ my-explore {
 
       th {
         font-size: 13px;
-
-        &:first-child {
-          border-left: none;
-        }
-
-        &:last-child {
-          border-right: none;
-        }
       }
 
       td {
@@ -42,7 +35,6 @@ my-explore {
 
         &.col-index {
           width: 5%;
-          border-left: none;
         }
 
         &.col-start-time {
@@ -59,14 +51,12 @@ my-explore {
 
         &.col-actions {
           width: 20%;
-          border-right: none;
 
           button.btn {
             padding: 10px;
           }
         }
       }
-
     }
   }
 }
