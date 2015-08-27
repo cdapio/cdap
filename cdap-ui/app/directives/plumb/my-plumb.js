@@ -8,8 +8,7 @@ commonModule.directive('myPlumb', function() {
     restrict: 'E',
     scope: {
       config: '=',
-      isDisabled: '=',
-      reloaddag: '='
+      isDisabled: '='
     },
     link: function(scope, element) {
       scope.element = element;
