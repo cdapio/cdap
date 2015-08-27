@@ -16,21 +16,19 @@
 #
 ######################################################################################
 # Create RPM and Debian bundles and upload them directly to docs1
-# This script expects to receive 5 parameters in this order:
-#   $1 BUILD_PACKAGE    e.g. cdap
-#   $2 VERSION    e.g. 3.0.4
-#   $3 USER                     REMOTE_USER
-#   $4 remote host              REMOTE_HOST
-#   $5 target directory         REMOTE_INCOMING_DIR
+# This script expects to receive 3 parameters in this order:
+#   $1 USER                     REMOTE_USER
+#   $2 remote host              REMOTE_HOST
+#   $3 target directory         REMOTE_INCOMING_DIR
 ######################################################################################
 DEBUG=${DEBUG:-no}              ### set to yes for debugging
 RUN_DATE=`date '+%Y%m%d_%R'`
 SCRIPT=`basename ${BASH_SOURCE[0]}`                     ### Set Script Name variable
-BUILD_PACKAGE=${1}                                    ## e.g. cdap ## a.k.a. BUILD_PACKAGE
-VERSION=${2} ## e.g. 3.0.4
-REMOTE_USER=${3}                                        ### remote user
-REMOTE_HOST=${4:-127.0.0.1}                             ### remote host
-REMOTE_INCOMING_DIR=${5}                                ### target directory on remote host
+BUILD_PACKAGE='cdap'                                   ## e.g. cdap ## a.k.a. BUILD_PACKAGE
+VERSION=$(<cdap-distributions/target/stage-packaging/opt/cdap/distributions/VERSION)
+REMOTE_USER=${1}                                        ### remote user
+REMOTE_HOST=${2:-127.0.0.1}                             ### remote host
+REMOTE_INCOMING_DIR=${3}                                ### target directory on remote host
 BUILD_PACKAGE=${BUILD_PACKAGE:-cdap}
 REMOTE_BASE_DIR="incoming"
 USER=${USER:-bamboo}
@@ -51,7 +49,6 @@ S3STG_INCOMING_PROJ="${S3STG_INCOMING}/${BUILD_PACKAGE}"
 STG_DIR="${S3STG_INCOMING}/downloads/co/cask/${BUILD_PACKAGE}"
 STG_DEB_DIR="${STG_DIR}/${DISTRIBUTED_DEB_BUNDLE}/${VERSION}"
 STG_RPM_DIR="${STG_DIR}/${DISTRIBUTED_RPM_BUNDLE}/${VERSION}"
-echo ${STG_RPM_DIR}
 
 #############################
 # output trimmer
@@ -89,7 +86,7 @@ create_bundles() {
    mkdir -p ${STG_DIR} || die "Unable to create STG_DIR"
    mkdir -p ${DEB_BUNDLE_DIR} ${RPM_BUNDLE_DIR} || die "Unable to create bundle processing directories"
    mkdir -p ${STG_DEB_DIR} ${STG_RPM_DIR} || die "Unable to create bundle staging directories"
-   OUTGOING_DIR=${BUILD_PACKAGE}/${_version}
+   OUTGOING_DIR=${BUILD_PACKAGE}/${VERSION}
    echo ${OUTGOING_DIR}
    
    ### FIND ARTIFACTS
@@ -121,10 +118,10 @@ create_bundles() {
 ######################################################################################
 decho "STARTING"
 
-# Check number of arguments. If <5 are passed, print help and exit.
+# Check number of arguments. If <3 are passed, print help and exit.
 NUMARGS=$#
 decho -e \\n"Number of arguments: ${NUMARGS}"
-if [ ${NUMARGS} -lt 5 ]; then
+if [ ${NUMARGS} -lt 3 ]; then
   HELP
 fi
 
