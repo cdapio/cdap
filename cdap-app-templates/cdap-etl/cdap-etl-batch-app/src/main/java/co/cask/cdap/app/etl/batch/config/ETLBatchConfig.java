@@ -28,16 +28,28 @@ import java.util.List;
  */
 public final class ETLBatchConfig extends ETLConfig {
   private final String schedule;
+  private final List<ETLStage> actions;
+
+  public ETLBatchConfig(String schedule, ETLStage source, ETLStage sink, List<ETLStage> transforms,
+                        Resources resources, List<ETLStage> actions) {
+    super(source, sink, transforms, resources);
+    this.schedule = schedule;
+    this.actions = actions;
+  }
 
   public ETLBatchConfig(String schedule, ETLStage source, ETLStage sink, List<ETLStage> transforms,
                         Resources resources) {
-    super(source, sink, transforms, resources);
-    this.schedule = schedule;
+    this(schedule, source, sink, transforms, resources, null);
+  }
+
+  public ETLBatchConfig(String schedule, ETLStage source, ETLStage sink,
+                        List<ETLStage> transforms, List<ETLStage> actions) {
+    this(schedule, source, sink, transforms, null, actions);
   }
 
   @VisibleForTesting
   public ETLBatchConfig(String schedule, ETLStage source, ETLStage sink, List<ETLStage> transforms) {
-    this(schedule, source, sink, transforms, null);
+    this(schedule, source, sink, transforms, null, null);
   }
 
   @VisibleForTesting
@@ -47,5 +59,9 @@ public final class ETLBatchConfig extends ETLConfig {
 
   public String getSchedule() {
     return schedule;
+  }
+
+  public List<ETLStage> getActions() {
+    return actions;
   }
 }

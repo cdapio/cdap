@@ -17,17 +17,39 @@
 package co.cask.cdap.app.etl.batch;
 
 import co.cask.cdap.api.workflow.AbstractWorkflow;
+import co.cask.cdap.app.etl.batch.config.ETLBatchConfig;
+import co.cask.cdap.template.etl.common.ETLStage;
+import com.google.common.base.Throwables;
+
+import java.io.IOException;
 
 /**
  * Workflow for scheduling Batch ETL MapReduce Driver.
  */
 public class ETLWorkflow extends AbstractWorkflow {
+
   public static final String NAME = "ETLWorkflow";
+
+  private final ETLBatchConfig config;
+
+  public ETLWorkflow(ETLBatchConfig config) {
+    this.config = config;
+  }
 
   @Override
   protected void configure() {
     setName(NAME);
     setDescription("Workflow for Batch ETL MapReduce Driver");
     addMapReduce(ETLMapReduce.NAME);
+    if (config.getActions() != null) {
+      for (ETLStage action : config.getActions()) {
+        if (!action.getName().equals("Email")) {
+          Throwables.propagate(new IOException(String.format("Only \'Email\' actions are supported. " +
+                                                               "You cannot create an action of type %s.",
+                                                             action)));
+        }
+        addAction(new EmailAction(action));
+      }
+    }
   }
 }
