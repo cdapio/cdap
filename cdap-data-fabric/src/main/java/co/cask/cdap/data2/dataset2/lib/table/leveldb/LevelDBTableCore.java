@@ -77,10 +77,17 @@ public class LevelDBTableCore {
 
   private final String tableName;
   private final LevelDBTableService service;
+  private final Long snapshotVersion;
 
   public LevelDBTableCore(String tableName, LevelDBTableService service) throws IOException {
+    this(tableName, service, null);
+  }
+
+  public LevelDBTableCore(String tableName, LevelDBTableService service,
+                          @Nullable Long snapshotVersion) throws IOException {
     this.tableName = tableName;
     this.service = service;
+    this.snapshotVersion = snapshotVersion;
   }
 
   private DB getDB() throws IOException {
@@ -203,7 +210,7 @@ public class LevelDBTableCore {
     DBIterator iterator = getDB().iterator();
     seekToStart(iterator, startRow);
     byte[] endKey = stopRow == null ? null : createEndKey(stopRow);
-    return new LevelDBScanner(iterator, endKey, filter, columns, tx);
+    return new LevelDBScanner(iterator, endKey, filter, columns, tx, snapshotVersion);
   }
 
   /**
@@ -225,7 +232,7 @@ public class LevelDBTableCore {
     byte[] endKey = createEndKey(row, columns == null ? stopCol : upperBound(columns[columns.length - 1]));
     try (DBIterator iterator = getDB().iterator()) {
       iterator.seek(startKey);
-      return getRow(iterator, endKey, tx, false, columns, limit).getSecond();
+      return getRow(iterator, endKey, tx, false, columns, limit, snapshotVersion).getSecond();
     }
   }
 
@@ -259,7 +266,8 @@ public class LevelDBTableCore {
    *         is false, null is returned for row key because the caller already knows it.
    */
   private static ImmutablePair<byte[], NavigableMap<byte[], byte[]>>
-  getRow(DBIterator iterator, byte[] endKey, Transaction tx, boolean multiRow, byte[][] columns, int limit)
+  getRow(DBIterator iterator, byte[] endKey, Transaction tx, boolean multiRow, byte[][] columns, int limit,
+         Long snapshotVersion)
     throws IOException {
 
     byte[] rowBeingRead = null;
@@ -289,9 +297,13 @@ public class LevelDBTableCore {
       // it is safe to consume this entry, advance the iterator
       iterator.next();
 
-      // Determine if this KV is visible
-      if (tx != null && !tx.isVisible(kv.getTimestamp())) {
+      if (snapshotVersion != null && kv.getTimestamp() != snapshotVersion) {
         continue;
+      } else {
+        // Determine if this KV is visible
+        if (tx != null && !tx.isVisible(kv.getTimestamp())) {
+          continue;
+        }
       }
 
       // have we seen this row & column before?
@@ -401,7 +413,7 @@ public class LevelDBTableCore {
     DBIterator iterator = db.iterator();
     seekToStart(iterator, startRow);
     byte[] endKey = stopRow == null ? null : createEndKey(stopRow);
-    Scanner scanner = new LevelDBScanner(iterator, endKey, filter, columns, null);
+    Scanner scanner = new LevelDBScanner(iterator, endKey, filter, columns, null, null);
 
     DBIterator deleteIterator = db.iterator();
     seekToStart(deleteIterator, startRow);
@@ -492,21 +504,25 @@ public class LevelDBTableCore {
     private final DBIterator iterator;
     private final byte[][] columns;
     private final FuzzyRowFilter filter;
+    private final Long snapshotVersion;
 
     public LevelDBScanner(DBIterator iterator, byte[] endKey,
-                          @Nullable FuzzyRowFilter filter, @Nullable byte[][] columns, @Nullable Transaction tx) {
+                          @Nullable FuzzyRowFilter filter, @Nullable byte[][] columns, @Nullable Transaction tx,
+                          @Nullable Long snapshotVersion) {
       this.tx = tx;
       this.endKey = endKey;
       this.iterator = iterator;
       this.filter = filter;
       this.columns = columns;
+      this.snapshotVersion = snapshotVersion;
     }
 
     @Override
     public Row next() {
       try {
         while (true) {
-          ImmutablePair<byte[], NavigableMap<byte[], byte[]>> result = getRow(iterator, endKey, tx, true, columns, -1);
+          ImmutablePair<byte[], NavigableMap<byte[], byte[]>> result = getRow(iterator, endKey, tx, true, columns, -1,
+                                                                              snapshotVersion);
           if (result.getFirst() == null) {
             return null;
           }

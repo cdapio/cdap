@@ -50,9 +50,15 @@ public class LevelDBTable extends BufferingTable {
   public LevelDBTable(DatasetContext datasetContext, String tableName, ConflictDetection level,
                       LevelDBTableService service, CConfiguration cConf,
                       Schema schema, String schemaRowField) throws IOException {
+    this(datasetContext, tableName, level, service, cConf, schema, schemaRowField, null);
+  }
+
+  public LevelDBTable(DatasetContext datasetContext, String tableName, ConflictDetection level,
+                      LevelDBTableService service, CConfiguration cConf,
+                      Schema schema, String schemaRowField, Map<String, String> arguments) throws IOException {
     super(PrefixedNamespaces.namespace(cConf, datasetContext.getNamespaceId(), tableName), level,
-          false, schema, schemaRowField);
-    this.core = new LevelDBTableCore(getTableName(), service);
+          false, schema, schemaRowField, arguments);
+    this.core = new LevelDBTableCore(getTableName(), service, snapshotVersion);
   }
 
   // TODO this is the same for all OcTableClient implementations -> promote to base class

@@ -65,7 +65,8 @@ public class LevelDBTableDefinition
     } catch (IOException e) {
       throw new IllegalArgumentException("Invalid schema", e);
     }
-    return new LevelDBTable(datasetContext, spec.getName(), conflictDetection, service, cConf, schema, schemaRowField);
+    return new LevelDBTable(datasetContext, spec.getName(), conflictDetection, service, cConf, schema, schemaRowField,
+                            arguments);
   }
 
   @Override
