@@ -799,12 +799,6 @@ public final class Constants {
   public static final String DEFAULT_LOG_COLLECTION_ROOT = "data/logs";
 
   /**
-   * Constants related to Passport.
-   */
-  public static final String CFG_APPFABRIC_ENVIRONMENT = "appfabric.environment";
-  public static final String DEFAULT_APPFABRIC_ENVIRONMENT = "devsuite";
-
-  /**
    * Used for upgrade and backwards compatability
    */
   public static final String DEVELOPER_ACCOUNT = "developer";

@@ -315,12 +315,6 @@ public class StandaloneMain {
   private static List<Module> createPersistentModules(CConfiguration configuration, Configuration hConf) {
     configuration.setIfUnset(Constants.CFG_DATA_LEVELDB_DIR, Constants.DEFAULT_DATA_LEVELDB_DIR);
 
-    String environment =
-      configuration.get(Constants.CFG_APPFABRIC_ENVIRONMENT, Constants.DEFAULT_APPFABRIC_ENVIRONMENT);
-    if (environment.equals("vpc")) {
-      System.err.println("Application Server Environment: " + environment);
-    }
-
     configuration.set(Constants.CFG_DATA_INMEMORY_PERSISTENCE, Constants.InMemoryPersistenceType.LEVELDB.name());
 
     return ImmutableList.of(

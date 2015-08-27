@@ -39,11 +39,17 @@
 
 import os
 import sys
+import textwrap
 import xml.etree.ElementTree as ET
+
+from datetime import datetime
 
 RELATIVE_PATH = '../..'
 CDAP_DEFAULT_XML = 'cdap-common/src/main/resources/cdap-default.xml'
 CDAP_DEFAULT_EXCLUSIONS = 'cdap-default-exclusions.txt'
+
+FIRST_TWO_SECTIONS = ['General Configuration', 'Global Configuration']
+
 
 RST_TABLE_HEADER = """
 .. list-table::
@@ -70,13 +76,41 @@ DESC_START  = '     - '
 
 SECTION_START = NAME_START + '|\n       | '
 
+# The XML_HEADER is not ascii text due to the copyright symbol in the fourth line
+
+XML_HEADER = u"""<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+<!--
+  Copyright © 2014-%d Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+  -->
+""" % datetime.now().year
+
 
 class Item:
+    @staticmethod
+    def encode(value):
+        import cgi
+        if value:
+            return cgi.escape(value).encode('ascii', 'xmlcharrefreplace')
+        else:
+            return ''
 
     def __init__(self, name='', value='', description ='', final=None):
         self.name = name
-        self.value = value
-        self.description = description
+        self.value = self.encode(value)
+        self.description = self.encode(description)
         self.final = final
     
     def __str__(self):
@@ -93,7 +127,7 @@ class Item:
     
     def rst(self):
         name = "``%s``" % self.name
-        if self.value.find('\n') != -1:
+        if self.value.find(' ') != -1:
             value = BLOCK_START + BLOCK_JOIN.join(self.value.split()) + '``'
         else:
             value = "``%s``" % self.value
@@ -103,15 +137,15 @@ class Item:
         return rst
     
     def set_attribute(self, name, value):
-        v1 = "%s" % value
-        if name == 'value':
-            v = "\n".join(v1.split())
-        elif name == 'description' and v1 == 'None':
+        v1 = "%s" % self.encode(value)
+        if name == 'description' and v1 == 'None':
             v = ''
+        elif name == 'description':
+            v = " ".join(v1.split())
         elif name == 'final':
             v = (v1.lower() == 'true')
         else:
-            v = " ".join(v1.split())
+            v = v1
         self.__dict__[name] = v
             
     def get_attribute(self, name):
@@ -126,11 +160,14 @@ class Item:
     def append_description(self, description):
         self._append("description", description)
     
-    
+    def display(self):
+        print self.name
+
+
 class Section:
 
     def __init__(self, name=''):
-        self.name = name
+        self.name = name.strip()
         self.final = None
 
     def rst(self):
@@ -141,6 +178,9 @@ class Section:
         underline = "-" * len(name)
         rst = "\n%s\n%s\n%s" % (name, underline, RST_TABLE_HEADER)
         return rst
+
+    def display(self):
+        print "\nSection %s" % self.name
        
 
 class PIParser(ET.XMLTreeBuilder):
@@ -166,24 +206,38 @@ class PIParser(ET.XMLTreeBuilder):
         self._target.start(ET.PI, {})
         self._target.data(target + " " + data)
         self._target.end(ET.PI)
-       
-       
-def load_defaults(filesource):
-    func = 'load_defaults'
-    # Set paths
+
+
+def default_xml_filepath(extra_path=''):
     source_path = os.path.dirname(os.path.abspath(__file__))
+    return os.path.join(source_path, RELATIVE_PATH, CDAP_DEFAULT_XML + extra_path)
     
-    if filesource:
-        xml_path = filesource    
-    else:
-        xml_path = os.path.join(source_path, RELATIVE_PATH, CDAP_DEFAULT_XML)
-    if not os.path.isfile(xml_path):
-        raise Exception(func, "'%s' not a valid path" % xml_path)
-    
+def load_exclusions():
+    source_path = os.path.dirname(os.path.abspath(__file__))
     exclusions_path = os.path.join(source_path, CDAP_DEFAULT_EXCLUSIONS)
     if not os.path.isfile(exclusions_path):
         raise Exception(func, "'%s' not a valid path" % exclusions_path)
-    exclusions = [line.rstrip('\n') for line in open(exclusions_path)]
+    return [line.rstrip('\n') for line in open(exclusions_path)]
+
+def load_defaults(filesource, include_exclusions=False):
+    func = 'load_defaults'
+
+    if filesource:
+        xml_path = filesource    
+    else:
+        xml_path = default_xml_filepath()
+    if not os.path.isfile(xml_path):
+        raise Exception(func, "'%s' not a valid path" % xml_path)
+    
+    if include_exclusions:
+        exclusions = []
+    else:
+        exclusions = load_exclusions()
+#         source_path = os.path.dirname(os.path.abspath(__file__))
+#         exclusions_path = os.path.join(source_path, CDAP_DEFAULT_EXCLUSIONS)
+#         if not os.path.isfile(exclusions_path):
+#             raise Exception(func, "'%s' not a valid path" % exclusions_path)
+#         exclusions = [line.rstrip('\n') for line in open(exclusions_path)]
     
     items = []
     parser = PIParser()
@@ -198,9 +252,7 @@ def load_defaults(filesource):
                 if item.name not in exclusions:
                     items.append(item)                
             else:
-                section = Section()
-                section.name = inner_element.text
-                items.append(section)
+                items.append(Section(inner_element.text))
 
     return items
 
@@ -221,29 +273,162 @@ def create_rst(items):
             table += item.rst() + '\n'
 
     return table
+
+def rebuild():
+    """Loads the cdap-default.xml, and rebuilds it according to these rules:
+    - First two sections: 
+        General Configuration
+        Global Configuration
+    - Remaining sections alphabetical
+    - Properties within a section alphabetical
+    - Descriptions wrapped to a 70 character line-length"""
     
-def main():
-    """ Main program entry point.
-    """
-    filesource = ''
-    filepath = ''
-    if len(sys.argv) > 2:
-        filesource = sys.argv[1]
-        filepath = sys.argv[2]
-    elif len(sys.argv) > 1:
-        filepath = sys.argv[1]
-            
+    print 'Rebuilding cdap-default.xml'
+    items = load_defaults('', include_exclusions=True)
+    exclusions = load_exclusions()
+    in_section = True
+    defaults = {}
+    section = []
+    section_counter = 0
+    properties_counter = 0
+    for item in items:
+        if str(item.__class__) == '__main__.Section':
+            if section: # End old section
+                defaults[section_name] = section
+                section = []
+            # Start new section
+            section_counter += 1
+            section_name = item.name
+        else:
+            properties_counter += 1
+            section.append(item)
+    if section: # End old section
+        defaults[section_name] = section
+        section = []  
+    
+    print "Sections: %d Keys: %d Properties: %d" % (section_counter, len(defaults.keys()), properties_counter)
+
+    # Build XML file
+    XML_CONFIG_OPEN   = '<configuration>\n'
+    XML_SECTION_SUB   = "\n    <!-- %s -->\n\n"
+    XML_PROP_OPEN     = '    <property>\n'
+    XML_NAME_SUB      = "        <name>%s</name>\n"
+    XML_VALUE_SUB     = "        <value>%s</value>\n"
+    XML_DESCRIP_OPEN  = '        <description>\n'
+    XML_DESCRIP_SUB   = "            %s\n"
+    XML_DESCRIP_CLOSE = '        </description>\n'
+    XML_PROP_CLOSE    = '    </property>\n\n'
+    XML_CONFIG_CLOSE  = '</configuration>\n'
+
+    xml = XML_CONFIG_OPEN
+    keys = defaults.keys()
+    for key in FIRST_TWO_SECTIONS:
+        keys.remove(key)
+    keys.sort()        
+    keys = FIRST_TWO_SECTIONS + keys
+    for key in keys:
+        xml += XML_SECTION_SUB % key
+        props = defaults[key]
+        props.sort(key = lambda p: p.name)
+        for prop in props:
+            xml += XML_PROP_OPEN
+            xml += XML_NAME_SUB % prop.name
+            xml += XML_VALUE_SUB % prop.value
+            xml += XML_DESCRIP_OPEN
+            if prop.description:
+                for line in textwrap.wrap(prop.description):
+                    xml += XML_DESCRIP_SUB % line
+            else:
+                print "WARNING: No description for property %s" % prop.name
+                if prop.name in exclusions:
+                    print "but in the list of exclusions"
+            xml += XML_DESCRIP_CLOSE
+            xml += XML_PROP_CLOSE
+    xml += XML_CONFIG_CLOSE
+    
+    filepath = default_xml_filepath('_revised.xml')
+    f = open(filepath, 'wb')
+    f.write(XML_HEADER.encode('utf8'))
+    f.write(xml)
+    f.close()
+
+def load_create_rst(filesource='', filepath=''):
     defaults = load_defaults(filesource)
     table = create_rst(defaults)
-    
     if filepath:
         f = open(filepath, 'w')
         f.write(table)
         f.close()
     else:
         print table
-    
+        
+def load_xml(props_only=False):
+    print 'Loading cdap-default.xml'
+    items = load_defaults('')
+    section_counter = 0
+    properties_counter = 0
+    for item in items:
+        if str(item.__class__) == '__main__.Section':
+            section_counter += 1
+            if not props_only:
+                item.display()                
+        else:
+            properties_counter += 1
+            item.display()
+    print "Sections: %d\nProperties: %d" % (section_counter, properties_counter)
+
+def print_usage():
+    print """Usage:
+    --rst [source] [target]  Loads the existing default XML and creates an RST file from it
+                             source: the XML to be loaded, if not the default
+                             [optional, but required if target specified]
+                             target: where to write the rst, if not standard output [optional]
+
+      If both options are not specified, reads from default and writes to standard output                      
+
+    --rebuild  Loads the existing default XML and rewrites it in the correct order to
+               a file at the same location with '_revised.xml'
+
+    --load-props  Loads the existing default XML and writes the properties to standard output
+    --load-xml    Loads the existing default XML and writes it to standard output
+    --print-rst   Loads the existing default XML and writes the RST to standard output
+
+    --help  This help statement
+"""
+
+def main():
+    """ Main program entry point.
+    """
+    if len(sys.argv) == 1:
+        print_usage()
+        return
+    elif sys.argv[1] == '--rebuild':
+        rebuild()
+        return
+    elif sys.argv[1] == '--load-props':
+        load_xml(props_only=True)
+        return
+    elif sys.argv[1] == '--load-xml':
+        load_xml()
+        return
+    elif sys.argv[1] == '--print-rst':
+        load_create_rst('', '')
+        return
+    elif sys.argv[1] == '--help':
+        print_usage()
+        return
+    elif sys.argv[1] == '--rst':
+        filesource = ''
+        filepath = ''
+        if len(sys.argv) > 3:
+            filesource = sys.argv[2]
+            filepath = sys.argv[3]
+        elif len(sys.argv) > 2:
+            filepath = sys.argv[2]
+        load_create_rst(filesource, filepath)
+    else:
+        print_usage()
+        return    
     
 if __name__ == '__main__':
     main()
-
