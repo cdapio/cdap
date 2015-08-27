@@ -25,7 +25,7 @@ DEBUG=${DEBUG:-no}              ### set to yes for debugging
 RUN_DATE=`date '+%Y%m%d_%R'`
 SCRIPT=`basename ${BASH_SOURCE[0]}`                     ### Set Script Name variable
 BUILD_PACKAGE='cdap'                                   ## e.g. cdap ## a.k.a. BUILD_PACKAGE
-VERSION=$(<cdap-distributions/target/stage-packaging/opt/cdap/distributions/VERSION)
+VERSION=$(cdap-distributions/target/stage-packaging/opt/cdap/distributions/VERSION)
 REMOTE_USER=${1}                                        ### remote user
 REMOTE_HOST=${2:-127.0.0.1}                             ### remote host
 REMOTE_INCOMING_DIR=${3}                                ### target directory on remote host
@@ -90,7 +90,6 @@ create_bundles() {
    echo ${OUTGOING_DIR}
    
    ### FIND ARTIFACTS
-   mkdir -p ${S3STG_INCOMING_PROJ} || die "Unable to create project staging directory"
    cd ${S3STG_INCOMING_PROJ} || die "Unable to cd to ${S3STG_INCOMING_PROJ} directory"
    find . -name "${BUILD_PACKAGE}-*${VERSION}-*.deb" -exec cp '{}' ${DEB_BUNDLE_DIR}/. \; || die "Unable to copy Debian ${VERSION} packages to TMP directory"
    find . -name "${BUILD_PACKAGE}-*${VERSION}-*.rpm" -exec cp '{}' ${RPM_BUNDLE_DIR}/. \; || die "Unable to copy ${VERSION} RPMs to TMP directory"
@@ -104,7 +103,9 @@ create_bundles() {
    cd ${RPM_BUNDLE_DIR} || die "Unable to cd to ${RPM_BUNDLE_DIR} directory"
    tar czvf ${RPM_BUNDLE_TGZ} * || die "Unable to create RPM tar bundle"
    tar tzvf ${RPM_BUNDLE_TGZ} || die "Unable to show contents of RPM tar bundle"
-   
+}
+
+sync_bundles() {
    # SYNC bundle(s) to remote server
    decho "rsyncing with rsync -av -e \"ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null\" ${RSYNC_QUIET} ${DEB_BUNDLE_TGZ_PATH} ${STG_DEB_DIR}/.  2>&1"
    decho "rsyncing with rsync -av -e \"ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null\" ${RSYNC_QUIET} ${RPM_BUNDLE_TGZ_PATH} ${STG_RPM_DIR}/.  2>&1"
@@ -112,7 +113,7 @@ create_bundles() {
    rsync -av -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" ${RSYNC_QUIET} ${RPM_BUNDLE_TGZ_PATH} ${STG_RPM_DIR}/. 2>&1 || die "could not rsync ${RPM_BUNDLE_TGZ_PATH} as ${REMOTE_USER} to ${REMOTE_HOST}: ${!}"
 
    # clean up
-   #clean
+   clean
 }
 
 ######################################################################################
@@ -128,6 +129,10 @@ fi
 decho "#######################################################################################"
 echo "Creating RPM and Debian bundles"
 create_bundles
+
+echo "Syncing bundles to staging"
+sync_bundles
+
 
 exit 0
 
