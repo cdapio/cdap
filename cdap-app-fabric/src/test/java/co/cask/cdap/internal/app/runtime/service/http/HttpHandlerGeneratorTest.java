@@ -33,16 +33,21 @@ import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionFailureException;
 import com.google.common.base.Charsets;
+import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Maps;
 import com.google.common.io.ByteStreams;
 import com.google.common.reflect.TypeToken;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -77,6 +82,31 @@ public class HttpHandlerGeneratorTest {
     public void echo(HttpServiceRequest request, HttpServiceResponder responder, @PathParam("name") String name) {
       responder.sendString(Charsets.UTF_8.decode(request.getContent()).toString() + " " + name);
     }
+
+    @Path("/echo/firstHeaders")
+    @GET
+    public void echoFirstHeaders(HttpServiceRequest request, HttpServiceResponder responder) {
+      Map<String, List<String>> headers = request.getAllHeaders();
+      responder.sendStatus(200, Maps.transformValues(headers, new Function<List<String>, String>() {
+        @Override
+        public String apply(List<String> input) {
+          return input.iterator().next();
+        }
+      }));
+    }
+
+    @Path("/echo/allHeaders")
+    @GET
+    public void echoAllHeaders(HttpServiceRequest request, HttpServiceResponder responder) {
+      List<Map.Entry<String, String>> headers = new ArrayList<>();
+      for (Map.Entry<String, List<String>> entry : request.getAllHeaders().entrySet()) {
+        for (String value : entry.getValue()) {
+          headers.add(Maps.immutableEntry(entry.getKey(), value));
+        }
+      }
+
+      responder.sendStatus(200, headers);
+    }
   }
 
   // Omit class-level PATH annotation, to verify that prefix is still prepended to handled path.
@@ -89,6 +119,59 @@ public class HttpHandlerGeneratorTest {
     }
   }
 
+  @Test
+  public void testHttpHeaders() throws Exception {
+    MetricsContext noOpsMetricsContext =
+      new NoOpMetricsCollectionService().getContext(new HashMap<String, String>());
+    HttpHandlerFactory factory = new HttpHandlerFactory("/prefix", noOpsMetricsContext);
+
+    HttpHandler httpHandler = factory.createHttpHandler(
+      TypeToken.of(MyHttpHandler.class), new AbstractDelegatorContext<MyHttpHandler>() {
+        @Override
+        protected MyHttpHandler createHandler() {
+          return new MyHttpHandler();
+        }
+      });
+
+    NettyHttpService service = NettyHttpService.builder()
+      .addHttpHandlers(ImmutableList.of(httpHandler))
+      .build();
+
+    service.startAndWait();
+    try {
+      InetSocketAddress bindAddress = service.getBindAddress();
+
+      // Make a request with headers that the response should carry first value for each header name
+      HttpURLConnection urlConn = (HttpURLConnection) new URL(String.format("http://%s:%d/prefix/p2/echo/firstHeaders",
+                                                                            bindAddress.getHostName(),
+                                                                            bindAddress.getPort())).openConnection();
+      urlConn.addRequestProperty("k1", "v1");
+      urlConn.addRequestProperty("k1", "v2");
+      urlConn.addRequestProperty("k2", "v2");
+
+      Assert.assertEquals(200, urlConn.getResponseCode());
+      Map<String, List<String>> headers = urlConn.getHeaderFields();
+      Assert.assertEquals(ImmutableList.of("v1"), headers.get("k1"));
+      Assert.assertEquals(ImmutableList.of("v2"), headers.get("k2"));
+
+      // Make a request with headers that the response should carry all values for each header name
+      urlConn = (HttpURLConnection) new URL(String.format("http://%s:%d/prefix/p2/echo/allHeaders",
+                                                          bindAddress.getHostName(),
+                                                          bindAddress.getPort())).openConnection();
+      urlConn.addRequestProperty("k1", "v1");
+      urlConn.addRequestProperty("k1", "v2");
+      urlConn.addRequestProperty("k1", "v3");
+      urlConn.addRequestProperty("k2", "v2");
+
+      Assert.assertEquals(200, urlConn.getResponseCode());
+      headers = urlConn.getHeaderFields();
+      // URLConnection always reverse the ordering of the header values.
+      Assert.assertEquals(ImmutableList.of("v3", "v2", "v1"), headers.get("k1"));
+      Assert.assertEquals(ImmutableList.of("v2"), headers.get("k2"));
+    } finally {
+      service.stopAndWait();
+    }
+  }
 
   @Test
   public void testHttpHandlerGenerator() throws Exception {

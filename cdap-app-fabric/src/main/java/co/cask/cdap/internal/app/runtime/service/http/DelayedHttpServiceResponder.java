@@ -22,6 +22,8 @@ import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import com.google.gson.Gson;
@@ -34,6 +36,8 @@ import org.slf4j.LoggerFactory;
 import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Implementation of {@link HttpServiceResponder} which delegates calls to
@@ -58,109 +62,74 @@ public final class DelayedHttpServiceResponder implements HttpServiceResponder {
     this.metricsContext = metricsContext;
   }
 
-  /**
-   * Sends JSON response back to the client with status code 200 OK.
-   *
-   * @param object the object that will be serialized into JSON and sent back as content
-   */
   @Override
   public void sendJson(Object object) {
     sendJson(HttpResponseStatus.OK.getCode(), object);
   }
 
-  /**
-   * Sends JSON response back to the client.
-   *
-   * @param status the status of the HTTP response
-   * @param object the object that will be serialized into JSON and sent back as content
-   */
   @Override
   public void sendJson(int status, Object object) {
     sendJson(status, object, object.getClass(), GSON);
   }
 
-   /**
-    * Sends JSON response back to the client using the given {@link Gson} object.
-    *
-    * @param status the status of the HTTP response
-    * @param object the object that will be serialized into JSON and sent back as content
-    * @param type the type of object
-    * @param gson the Gson object for serialization
-   */
   @Override
   public void sendJson(int status, Object object, Type type, Gson gson) {
-    send(status, Charsets.UTF_8.encode(gson.toJson(object, type)), "application/json", null, false);
+    doSend(status, Charsets.UTF_8.encode(gson.toJson(object, type)), "application/json", null, false);
   }
 
-  /**
-   * Sends a UTF-8 encoded string response back to the HTTP client with a default response status.
-   *
-   * @param data the data to be sent back
-   */
   @Override
   public void sendString(String data) {
     sendString(HttpResponseStatus.OK.getCode(), data, Charsets.UTF_8);
   }
 
-  /**
-   * Sends a string response back to the HTTP client.
-   *
-   * @param status the status of the HTTP response
-   * @param data the data to be sent back
-   * @param charset the Charset used to encode the string
-   */
   @Override
   public void sendString(int status, String data, Charset charset) {
-    send(status, charset.encode(data), "text/plain; charset=" + charset.name(), null, false);
+    doSend(status, charset.encode(data), "text/plain; charset=" + charset.name(), null, false);
   }
 
-  /**
-   * Sends only a status code back to the client without any content.
-   *
-   * @param status the status of the HTTP response
-   */
   @Override
   public void sendStatus(int status) {
-    sendStatus(status, null);
+    sendStatus(status, ImmutableMap.<String, String>of());
   }
 
-  /**
-   * Sends a status code and headers back to client without any content.
-   *
-   * @param status the status of the HTTP response
-   * @param headers the headers to send
-   */
   @Override
   public void sendStatus(int status, Multimap<String, String> headers) {
-    send(status, null, null, headers, false);
+    doSend(status, null, null, headers, false);
   }
 
-  /**
-   * Sends error message back to the client with the specified status code.
-   *
-   * @param status the status of the response
-   * @param errorMessage the error message sent back to the client
-   */
+  @Override
+  public void sendStatus(int status, Map<String, String> headers) {
+    sendStatus(status, headers.entrySet());
+  }
+
+  @Override
+  public void sendStatus(int status, Iterable<? extends Map.Entry<String, String>> headers) {
+    doSend(status, null, null, createMultimap(headers), false);
+  }
+
   @Override
   public void sendError(int status, String errorMessage) {
     sendString(status, errorMessage, Charsets.UTF_8);
   }
 
-  /**
-   * Sends response back to client.
-   *
-   * @param status the status of the response
-   * @param content the content to be sent back
-   * @param contentType the type of content
-   * @param headers the headers to be sent back
-   */
   @Override
   public void send(int status, ByteBuffer content, String contentType, Multimap<String, String> headers) {
-    send(status, content, contentType, headers, true);
+    doSend(status, content, contentType, headers, true);
   }
 
-  private void send(int status, ByteBuffer content, String contentType,
-                    Multimap<String, String> headers, boolean copy) {
+  @Override
+  public void send(int status, ByteBuffer content, String contentType, Map<String, String> headers) {
+    send(status, content, contentType, headers.entrySet());
+  }
+
+  @Override
+  public void send(int status, ByteBuffer content, String contentType,
+                   Iterable<? extends Map.Entry<String, String>> headers) {
+    doSend(status, content, contentType, createMultimap(headers), true);
+  }
+
+  private void doSend(int status, ByteBuffer content, String contentType,
+                      @Nullable Multimap<String, String> headers, boolean copy) {
     if (bufferedResponse != null) {
       LOG.warn("Multiple calls to one of the 'send*' methods has been made. Only the last response will be sent.");
     }
@@ -171,6 +140,14 @@ public final class DelayedHttpServiceResponder implements HttpServiceResponder {
     }
 
     bufferedResponse = new BufferedResponse(status, channelBuffer, contentType, headers);
+  }
+
+  private <K, V> Multimap<K, V> createMultimap(Iterable<? extends Map.Entry<K, V>> entries) {
+    ImmutableMultimap.Builder<K, V> builder = ImmutableMultimap.builder();
+    for (Map.Entry<K, V> entry : entries) {
+      builder.put(entry);
+    }
+    return builder.build();
   }
 
   /**
@@ -231,7 +208,7 @@ public final class DelayedHttpServiceResponder implements HttpServiceResponder {
     private final Multimap<String, String> headers;
 
     private BufferedResponse(int status, ChannelBuffer channelBuffer,
-                             String contentType, Multimap<String, String> headers) {
+                             String contentType, @Nullable Multimap<String, String> headers) {
       this.status = status;
       this.channelBuffer = channelBuffer;
       this.contentType = contentType;
@@ -250,6 +227,7 @@ public final class DelayedHttpServiceResponder implements HttpServiceResponder {
       return contentType;
     }
 
+    @Nullable
     public Multimap<String, String> getHeaders() {
       return headers;
     }
