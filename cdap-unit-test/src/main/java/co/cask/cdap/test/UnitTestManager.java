@@ -25,9 +25,8 @@ import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.templates.ApplicationTemplate;
 import co.cask.cdap.api.templates.plugins.PluginClass;
 import co.cask.cdap.api.templates.plugins.PluginPropertyField;
-import co.cask.cdap.app.ApplicationSpecification;
-import co.cask.cdap.app.DefaultAppConfigurer;
 import co.cask.cdap.app.DefaultApplicationContext;
+import co.cask.cdap.app.MockAppConfigurer;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -166,12 +165,11 @@ public class UnitTestManager implements TestManager {
       }
 
       Application app = applicationClz.newInstance();
-      DefaultAppConfigurer configurer = new DefaultAppConfigurer(app);
+      MockAppConfigurer configurer = new MockAppConfigurer(app);
       app.configure(configurer, new DefaultApplicationContext(configObject));
-      ApplicationSpecification appSpec = configurer.createSpecification();
-      Location deployedJar = appFabricClient.deployApplication(namespace, appSpec.getName(),
+      Location deployedJar = appFabricClient.deployApplication(namespace, configurer.getName(),
                                                                applicationClz, appConfig, bundleEmbeddedJars);
-      return appManagerFactory.create(Id.Application.from(namespace, appSpec.getName()), deployedJar);
+      return appManagerFactory.create(Id.Application.from(namespace, configurer.getName()), deployedJar);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
