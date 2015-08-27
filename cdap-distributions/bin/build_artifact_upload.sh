@@ -85,7 +85,7 @@ function sync_build_artifacts_to_server () {
 
   # prepare for bundling
   mkdir -p ${PKG_PROCESSING_DIR}
-  for p in ${PACKAGES}; do cp ${p} ${PKG_PROCESSING_DIR}; done
+  cp ${PACKAGES} ${PKG_PROCESSING_DIR}
 
   # copy packages
   decho "copy packages"
