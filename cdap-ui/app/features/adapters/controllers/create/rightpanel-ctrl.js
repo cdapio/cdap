@@ -64,7 +64,7 @@ angular.module(PKG.name + '.feature.adapters')
         case 'Config':
           config = angular.copy(MyPlumbService.getConfigForBackend());
           $bootstrapModal.open({
-            templateUrl: '/assets/features/adapters/templates/create/viewconfig.html',
+            templateUrl: '/assets/features/adapters/templates/create/popovers/viewconfig.html',
             size: 'lg',
             windowClass: 'adapter-modal',
             keyboard: true,
@@ -98,7 +98,7 @@ angular.module(PKG.name + '.feature.adapters')
 
           MyPlumbService.isConfigTouched = true;
           $bootstrapModal.open({
-            templateUrl: '/assets/features/adapters/templates/create/settings.html',
+            templateUrl: '/assets/features/adapters/templates/create/popovers/settings.html',
             size: 'lg',
             windowClass: 'adapter-modal',
             keyboard: true,
@@ -152,15 +152,11 @@ angular.module(PKG.name + '.feature.adapters')
     this.onImportSuccess = function(result) {
       EventPipe.emit('popovers.reset');
       $scope.config = JSON.stringify(result);
-      this.reloadDAG = true;
       MyPlumbService.resetToDefaults(true);
       MyPlumbService.setNodesAndConnectionsFromDraft(result);
       if ($scope.config.name) {
         MyPlumbService.metadata.name = $scope.config.name;
       }
-
-      MyPlumbService.notifyError({});
-      MyPlumbService.notifyResetListners();
     };
 
     this.importFile = function(files) {

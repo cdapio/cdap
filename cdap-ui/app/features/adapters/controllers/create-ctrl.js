@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.adapters')
-  .controller('AdapterCreateController', function(MyPlumbService, $scope, rConfig, $modalStack, EventPipe, $window) {
+  .controller('AdapterCreateController', function(MyPlumbService, $scope, rConfig, $modalStack, EventPipe, $window, $timeout) {
 
     var confirmOnPageExit = function (e) {
 
@@ -26,7 +26,9 @@ angular.module(PKG.name + '.feature.adapters')
     });
 
     if (rConfig) {
-      MyPlumbService.setNodesAndConnectionsFromDraft(rConfig);
+      $timeout(function() {
+        MyPlumbService.setNodesAndConnectionsFromDraft(rConfig);
+      });
     }
 
     $scope.$on('$destroy', function() {

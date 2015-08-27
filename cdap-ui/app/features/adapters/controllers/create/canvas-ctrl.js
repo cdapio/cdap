@@ -2,8 +2,7 @@ angular.module(PKG.name + '.feature.adapters')
   .controller('CanvasController', function (MyPlumbService, $scope, $modalStack) {
 
     this.nodes = [];
-    this.reloadDAG = false;
-
+    
     function errorNotification(errors) {
       angular.forEach(this.pluginTypes, function (type) {
         delete type.error;
