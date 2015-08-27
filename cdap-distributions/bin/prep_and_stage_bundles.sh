@@ -58,14 +58,6 @@ decho () {
   fi
 }
 
-# Help function
-function HELP {
-  echo -e \\n"Help documentation for ${BOLD}${SCRIPT}.${NORM}"\\n
-  echo -e "${REV}Basic usage:${NORM} ${BOLD}$SCRIPT${NORM} <remote_user> <remote_host> <remote_target_directory"\\n
-  echo -e "${REV}-h${NORM}  --Displays this help message. No further functions are performed."\\n
-  exit 1
-}
-
 die ( ) { echo ; echo "ERROR: ${*}" ; echo ; exit 1; }
 
 ######################################################################################
@@ -125,7 +117,8 @@ decho "STARTING"
 NUMARGS=$#
 decho -e \\n"Number of arguments: ${NUMARGS}"
 if [ ${NUMARGS} -lt 3 ]; then
-  HELP
+  echo "wrong number of arguments: ${NUMARGS} instead of 3"
+  exit 1
 fi
 
 decho "#######################################################################################"
