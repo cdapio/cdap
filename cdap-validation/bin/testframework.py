@@ -41,6 +41,10 @@ def test(base_vars, cluster_vars):
     cluster_vars['modules'] = input['params']['modules']
     verbose = cluster_vars['verbose']
 
+    # confirm that all cluster_vars key/value pairs include something
+    # if they do not (other than modules param, throw an error)
+    # iterate through keys and verify
+
     for k, v in cluster_vars.iteritems():
         helpers.vprint('cluster vars: %s=%s' % (k, v), verbose)
 
@@ -105,8 +109,19 @@ def test(base_vars, cluster_vars):
         m = re.search('/(.+?)/', module)
         if m:
             module_name = m.group(1)
-            modules[module_name] = create_module_json(module_list)
+            helpers.vprint ('module_name=%s' % (module_name), verbose)
             module_name_list.append(module_name)
+            helpers.vprint ('module_name_list=%s' % (module_name_list), verbose)
+        else:
+            # throw error (no plugin modules found)
+            print 'no plugin modules found'
+
+    helpers.vprint ('\niterate through list of module names', verbose)
+    module_path = 'modules/' 
+    helpers.vprint ('module_path=%s' % (module_path), verbose)
+    for module_name in module_name_list:
+        helpers.vprint ('module_name=%s' % (module_name), verbose)
+        modules[module_name] = create_module_json(module_name, module_path, cluster_vars)
 
     helpers.vprint(modules, verbose)
 
@@ -208,8 +223,13 @@ def get_and_run_api_commands(base, cluster):
     helpers.get_config_from_managermgr(mgr, host_url, configs_subdir, base, cluster)
 
 
-def create_module_json(modules):
-    module_info = read_file_as_json(modules[0])
+def create_module_json(module_name, module_path, cluster):
+    verbose = cluster['verbose']
+    helpers.vprint ('\nrunning create_module_json function', verbose)
+    helpers.vprint ('module name: %s    module path: %s' % (module_name, module_path), verbose)
+    module_file_path = module_path + module_name + '/module.json'
+    helpers.vprint ('module_file_path=%s' % (module_file_path), verbose)
+    module_info = read_file_as_json(module_file_path)
     return module_info
 
 
@@ -218,6 +238,8 @@ def run_modules(base, cluster, modules, name_list, mgr):
     helpers.vprint('run modules', verbose)
     helpers.vprint(name_list, verbose)
 
+    # note: we want to modify this to only pass processed stored configurations
+    #       baseref_configs will only be used by config validator module
     for module_name in name_list:
         command = ''
         full_command = ''
