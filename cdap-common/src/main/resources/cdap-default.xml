@@ -590,6 +590,14 @@
     </property>
 
     <property>
+        <name>security.auth.server.bind.port</name>
+        <value>10009</value>
+        <description>
+            Port that the CDAP Authentication Server should bind to
+        </description>
+    </property>
+
+    <property>
         <name>security.auth.server.ssl.bind.port</name>
         <value>10010</value>
         <description>
