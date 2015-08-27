@@ -1,0 +1,48 @@
+@import "../../styles/variables.less";
+@import "../../styles/themes/cdap/mixins.less";
+
+body {
+  my-start-stop-button {
+    > .btn-group {
+      @media (max-width: @screen-xs-max) {
+        display: block;
+        margin-top: 20px;
+      }
+      .btn-default {
+        .border-radius(0);
+        width: 100px;
+        &.dropdown-toggle {
+          .dropdown-defaults(@text-align: center);
+        }
+        > span {
+          display: block;
+          &:last-child {
+            font-size: 13px;
+            margin-top: 5px;
+          }
+        }
+      }
+      ul.dropdown-menu {
+        min-width: 0;
+      }
+    }
+  }
+  &.theme-cdap {
+    my-start-stop-button {
+      .btn-group {
+        .btn-default {
+          &.dropdown-toggle {
+            background-color: white;
+            border: 1px solid #dfe2e9;
+            color: @btn-default-color;
+          }
+        }
+        .btn-group.open {
+          .dropdown-toggle {
+            background-color: #e0e0e0;
+          }
+        }
+      }
+    }
+  }
+}

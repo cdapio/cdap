@@ -1,16 +1,24 @@
-<div class="col-xs-3 instances">
-  <table class="table">
-    <tr>
-      <td></td>
-      <td>Provisioned</td>
-      <td>Requested</td>
-      <td></td>
-    </tr>
-    <tr>
-      <td><strong>Instances:</strong></td>
-      <td class="text-center">{{ instance.provisioned }}</td>
-      <td><input class="form-control" type="number" ng-model="instance.requested"></td>
-      <td><button class="btn btn-primary btn-sm" ng-click="handleSet()" ng-disabled="instance.requested < 1">Set</button></td>
-    </tr>
-  </table>
-</div>
+<table class="table table-curved borderless">
+  <tr>
+    <td></td>
+    <td>Provisioned</td>
+    <td>Requested</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>
+      <strong>Instances:</strong>
+    </td>
+    <td class="text-center provisioned">
+      <span class="text-primary">{{ instance.provisioned }}</span>
+    </td>
+    <td class="requested">
+      <input class="form-control mod" type="number" ng-model="instance.requested">
+      <span></span>
+    </td>
+    <td>
+      <button class="btn btn-primary btn-block" ng-click="handleSet()" ng-disabled="instance.requested < 1">Set</button>
+    </td>
+  </tr>
+</table>
+

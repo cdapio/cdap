@@ -1,8 +1,81 @@
+@import "../../styles/variables.less";
+@import "../../styles/themes/cdap/mixins.less";
+@import "../../../bower_components/bootstrap/less/mixins.less";
+
 my-instance-control {
-  div.instances {
-    table > tbody > tr > td {
+  table {
+    > tbody > tr > td {
+      font-weight: bold;
       padding: 5px 10px;
       vertical-align: middle;
+    }
+    &.table.borderless {
+      border-left: 1px solid @table-border-color;
+      > tbody > tr > td {
+        border: 0;
+        &.endpoint-path {
+          word-wrap: break-word;
+        }
+        &.provisioned > span {
+          background-color: @subnav-border;
+          display: block;
+          font-weight: 500;
+          padding: 5px 0;
+          height: 30px;
+          .border-radius(4px);
+        }
+        &.requested {
+          position: relative;
+          width: 33%;
+        }
+        &:last-child {
+          width: 20%;
+        }
+      }
+    }
+  }
+
+  input[type="number"] {
+    position: relative;
+    // Only apply number input styling to Chrome
+    @supports (-webkit-appearance:none) {
+      &.mod::-webkit-outer-spin-button,
+      &.mod::-webkit-inner-spin-button {
+        display: block;
+        width: 45px;
+        height: 32px;
+        border-left: 1px solid @table-border-color;
+        color: @cdap-header;
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        margin: 0;
+        .opacity(1);
+        .appearance(none);
+        &:before, &:after {
+          display: block;
+          font-family: 'FontAwesome';
+          width: 8px;
+          margin: 0 auto;
+        }
+        &:before {
+          content: '\f0d8';
+        }
+        &:after {
+          content: '\f0d7';
+          position: relative;
+          bottom: 4px;
+        }
+      }
+      + span {
+        position: absolute;
+        width: 46px;
+        background-color: @table-border-color;
+        height: 1px;
+        right: 10px;
+        bottom: 25px;
+      }
     }
   }
 }

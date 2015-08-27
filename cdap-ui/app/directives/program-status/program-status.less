@@ -1,4 +1,32 @@
-my-program-status {
-  .run-status { margin-bottom: 25px; }
-  .table.table-status { margin-top: 0; }
+@import "../../styles/variables.less";
+@import "../../styles/themes/cdap/mixins.less";
+@import "../../../bower_components/bootstrap/less/mixins.less";
+
+body.theme-cdap {
+  my-program-status {
+    .order(2);
+    table.table-status {
+      background-color: transparent;
+      margin: 0;
+      @media (max-width: @screen-sm-max) {
+        border: 1px solid @table-border-color;
+      }
+      td {
+        border-right: 1px solid @table-border-color;
+        padding-right: 15px;
+        padding-left: 15px;
+        > span {
+          display: block;
+          &:first-child {
+            font-weight: bold;
+          }
+        }
+        &:not(:first-child) {
+          > span:last-child {
+            color: @program-text;
+          }
+        }
+      }
+    }
+  }
 }

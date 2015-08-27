@@ -1,74 +1,71 @@
-<div class="btn-group" dropdown>
+<div class="btn-group">
 
   <div ng-if="status === 'STOPPED'"
-       class="btn btn-success btn-md"
+       class="btn btn-lg btn-default"
        ng-click="do('start')">
-    <span class="fa fa-play"> </span>
+    <span class="fa fa-play text-success"></span>
     <span>Start</span>
   </div>
   <div ng-if="(['RUNNING', 'STARTED', 'SUSPENDED'].indexOf(status) !== -1) && isStoppable === 'false'"
-       class="btn btn-success btn-md"
+       class="btn btn-lg btn-default"
        ng-disabled="status === 'RUNNING' && isRestartable === 'false'"
        ng-click="do('start')">
-       <span class="fa fa-play"></span>
+       <span class="fa fa-play text-success"></span>
        <span>Start</span>
   </div>
   <div ng-if="(['RUNNING', 'STARTED'].indexOf(status) !== -1) && isStoppable === 'true'"
-       class="btn btn-danger btn-md"
+       class="btn btn-lg btn-default"
        ng-click="do('stop')">
-    <span class="fa fa-stop"> </span>
+    <span class="fa fa-stop text-danger"> </span>
     <span>Stop</span>
   </div>
 
   <div ng-if="['STARTING', 'STOPPING'].indexOf(status) !== -1"
-       class="btn btn-md"
-       ng-class="{'btn-success': status === 'STARTING', 'btn-danger': status === 'STOPPING'}"
-       >
-    <span class="fa fa-refresh fa-spin"></span>
+       class="btn btn-lg btn-default">
+    <span class="fa fa-refresh fa-spin" ng-class="{'text-success': status === 'STARTING', 'text-danger': status === 'STOPPING'}"></span>
     <span>{{status | caskCapitalizeFilter}}</span>
   </div>
 
-  <button class="btn btn-md btn-success dropdown-toggle" dropdown-toggle ng-if="status === 'STOPPED'">
-    <span class="caret"></span>
-  </button>
+  <div ng-if="status === 'STOPPED'"
+       ng-click="openPreferences()"
+       class="btn btn-lg btn-default">
+    <span class="fa fa-wrench"></span>
+    <span> Preferences </span>
+  </div>
 
-  <ul class="dropdown-menu dropdown-menu-right" role="menu" ng-if="status === 'STOPPED'">
-    <li>
-      <a href="#" ng-click="openRuntime()">
-        <span class="fa fa-wrench pull-right"></span>
-        <span> Runtime Arguments </span>
-      </a>
-    </li>
-    <li>
-      <a href="#" ng-click="openPreferences()">
-        <span class="fa fa-cog pull-right"></span>
-        <span> Preferences </span>
-      </a>
-    </li>
-  </ul>
+  <div ng-if="(['RUNNING', 'STARTED'].indexOf(status) !== -1) && isStoppable === 'false'"
+       ng-click="openPreferences()"
+      class="btn btn-lg btn-default">
+    <span class="fa fa-cog"></span>
+    <span> Preferences </span>
+  </div>
 
-  <button class="btn btn-md btn-success dropdown-toggle"
-          dropdown-toggle ng-if="(['RUNNING', 'STARTED', 'SUSPENDED'].indexOf(status) !== -1) && isStoppable === 'false'"
-          ng-disabled="status === 'RUNNING' && isRestartable === 'false'">
-    <span class="caret"></span>
-  </button>
+  <a ui-sref="services.detail.history"
+     ui-sref-active="active"
+     class="btn btn-lg btn-default">
+    <span class="fa fa-clock-o"></span>
+    <span> History </span>
+  </a>
 
-  <ul class="dropdown-menu dropdown-menu-right"
-      role="menu"
-      ng-disabled="status === 'RUNNING' && isRestartable === 'false'"
-      ng-if="(['RUNNING', 'STARTED'].indexOf(status) !== -1) && isStoppable === 'false'">
-    <li>
-      <a href="#" ng-click="openRuntime()">
-        <span class="fa fa-wrench pull-right"></span>
-        <span> Runtime Arguments </span>
-      </a>
-    </li>
-    <li>
-      <a href="#" ng-click="openPreferences()">
-        <span class="fa fa-cog pull-right"></span>
-        <span> Preferences </span>
-      </a>
-    </li>
-  </ul>
+  <div class="btn-group dropdown" dropdown>
+    <div class="btn btn-lg btn-default dropdown-toggle" dropdown-toggle>
+      <span class="fa fa-ellipsis-h"></span>
+      <span> More </span>
+    </div>
+    <ul class="dropdown-menu" role="menu">
+      <li>
+        <div class="btn btn-lg btn-default" ng-click="">
+          <span class="fa fa-cogs"></span>
+          <span> Manage </span>
+        </div>
+      </li>
+      <li>
+        <div class="btn btn-lg btn-default" ng-click="">
+          <span class="fa fa-database"></span>
+          <span> Metadata </span>
+        </div>
+      </li>
+    </ul>
+  </div>
 
 </div>
