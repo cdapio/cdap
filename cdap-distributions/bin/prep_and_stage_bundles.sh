@@ -81,8 +81,8 @@ create_bundles() {
    
    ### FIND ARTIFACTS
    cd ${S3STG_INCOMING_PROJ} || die "Unable to cd to ${S3STG_INCOMING_PROJ} directory"
-   find . -name "${BUILD_PACKAGE}_*${VERSION}-*.deb" -exec cp '{}' ${DEB_BUNDLE_DIR}/. \; || die "Unable to copy Debian ${VERSION} packages to TMP directory"
-   find . -name "${BUILD_PACKAGE}-*${VERSION}-*.rpm" -exec cp '{}' ${RPM_BUNDLE_DIR}/. \; || die "Unable to copy ${VERSION} RPMs to TMP directory"
+   find . -name "${BUILD_PACKAGE}*_${VERSION}-*.deb" -exec cp '{}' ${DEB_BUNDLE_DIR}/. \; || die "Unable to copy Debian ${VERSION} packages to TMP directory"
+   find . -name "${BUILD_PACKAGE}*-${VERSION}-*.rpm" -exec cp '{}' ${RPM_BUNDLE_DIR}/. \; || die "Unable to copy ${VERSION} RPMs to TMP directory"
    
    # create and verify debian tarball
    cd ${DEB_BUNDLE_DIR} || die "Unable to cd to ${DEB_BUNDLE_DIR} directory"
