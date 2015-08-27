@@ -12,7 +12,8 @@ Appendix: ``cdap-default.xml`` and ``cdap-site.xml``
 Default parameter values for configuring CDAP are defined in the file
 ``cdap-default.xml``. It is located in the CDAP JARs, and should not be altered.
 
-Any of its values can be over-ridden by defining a modifying value in the
+Any of its values (with the exception of those marked :ref:`[Final] <cdap-site-xml-note-final>`)
+can be over-ridden by defining a modifying value in the
 ``cdap-site.xml`` file, located by default either in
 ``<CDAP-SDK-HOME>/conf/cdap-site.xml`` (Standalone mode) or
 ``/etc/cdap/conf/cdap-site.xml`` (Distributed mode).
@@ -24,3 +25,10 @@ For information on configuring the ``cdap-site.xml`` file and CDAP for security,
 see the :ref:`configuration-security` section.
 
 .. include:: ../../build/_includes/cdap-default-table.rst
+
+.. _cdap-site-xml-note-final:
+
+Notes
+-----
+**[Final]:** Properties marked as *[Final]* indicates that their value cannot be changed, even
+with a setting in the ``cdap-site.xml``.

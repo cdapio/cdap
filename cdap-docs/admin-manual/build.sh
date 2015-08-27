@@ -32,7 +32,7 @@ function download_includes() {
     mkdir ${includes_dir}
   fi
 
-  python "${DEFAULT_TOOL}" --rst "${DEFAULT_XML}" "${includes_dir}/${DEFAULT_RST}"
+  python "${DEFAULT_TOOL}" -g -t "${includes_dir}/${DEFAULT_RST}"
 
 }
 

@@ -31,7 +31,7 @@
         <name>hdfs.namespace</name>
         <value>/${root.namespace}</value>
         <description>
-            Namespace for HDFS files written by CDAP
+            Root directory for HDFS files written by CDAP
         </description>
     </property>
 
@@ -252,42 +252,19 @@
     </property>
 
     <property>
-        <name>dataset.executor.container.instances</name>
-        <value>1</value>
+        <name>scheduler.max.thread.pool.size</name>
+        <value>30</value>
         <description>
-            Number of dataset executor instances
+            Size of the scheduler thread pool
         </description>
     </property>
 
     <property>
-        <name>dataset.executor.max.instances</name>
-        <value>${master.service.max.instances}</value>
+        <name>workflow.token.max.size.mb</name>
+        <value>30</value>
         <description>
-            Maximum number of dataset executor instances
-        </description>
-    </property>
-
-    <property>
-        <name>dataset.service.bind.address</name>
-        <value>0.0.0.0</value>
-        <description>
-            Dataset service hostname
-        </description>
-    </property>
-
-    <property>
-        <name>dataset.service.output.dir</name>
-        <value>/datasets</value>
-        <description>
-            Directory where all dataset modules archives are stored
-        </description>
-    </property>
-
-    <property>
-        <name>dataset.table.prefix</name>
-        <value>${root.namespace}</value>
-        <description>
-            Prefix for dataset table name
+            Maximum allowed size of a Workflow Token, in megabytes; if the
+            workflow token exceeds this size, no further updates are allowed
         </description>
     </property>
 
@@ -498,6 +475,46 @@
         </description>
     </property>
 
+    <property>
+        <name>dataset.executor.container.instances</name>
+        <value>1</value>
+        <description>
+            Number of dataset executor instances
+        </description>
+    </property>
+
+    <property>
+        <name>dataset.executor.max.instances</name>
+        <value>${master.service.max.instances}</value>
+        <description>
+            Maximum number of dataset executor instances
+        </description>
+    </property>
+
+    <property>
+        <name>dataset.service.bind.address</name>
+        <value>0.0.0.0</value>
+        <description>
+            Dataset service hostname
+        </description>
+    </property>
+
+    <property>
+        <name>dataset.service.output.dir</name>
+        <value>/datasets</value>
+        <description>
+            Directory where all dataset modules archives are stored
+        </description>
+    </property>
+
+    <property>
+        <name>dataset.table.prefix</name>
+        <value>${root.namespace}</value>
+        <description>
+            Prefix for dataset table name
+        </description>
+    </property>
+
 
     <!-- Explore Service Configuration -->
 
@@ -607,10 +624,47 @@
     </property>
 
     <property>
+        <name>security.authentication.basic.realmfile</name>
+        <value></value>
+        <description>
+            Username / password file to use when basic authentication is
+            configured
+        </description>
+    </property>
+
+    <property>
+        <name>security.authentication.handlerClassName</name>
+        <value></value>
+        <description>
+            Name of the authentication implementation to use to validate user
+            credentials
+        </description>
+    </property>
+
+    <property>
+        <name>security.authentication.loginmodule.className</name>
+        <value></value>
+        <description>
+            JAAS LoginModule implementation to use when
+            co.cask.security.server.JAASAuthenticationHandler is configured for
+            security.authentication.handlerClassName
+        </description>
+    </property>
+
+    <property>
         <name>security.data.keyfile.path</name>
         <value>${local.data.dir}/security/keyfile</value>
         <description>
             Path to the secret key file (only used in standalone mode)
+        </description>
+    </property>
+
+    <property>
+        <name>security.server.extended.token.expiration.ms</name>
+        <value>604800000</value>
+        <description>
+            Admin tool access token expiration time in milliseconds; defaults to 1
+            week (internal)
         </description>
     </property>
 
@@ -640,60 +694,20 @@
     </property>
 
     <property>
-        <name>security.token.digest.keylength</name>
-        <value>128</value>
-        <description>
-            Key length used in generating the secret keys for generating MAC of
-            access tokens
-        </description>
-    </property>
-
-
-    <!-- External Security Authentication Login Module Configuration -->
-
-    <property>
-        <name>security.authentication.basic.realmfile</name>
-        <value></value>
-        <description>
-            Username / password file to use when basic authentication is
-            configured
-        </description>
-    </property>
-
-    <property>
-        <name>security.authentication.handlerClassName</name>
-        <value></value>
-        <description>
-            Name of the authentication implementation to use to validate user
-            credentials
-        </description>
-    </property>
-
-    <property>
-        <name>security.authentication.loginmodule.className</name>
-        <value></value>
-        <description>
-            JAAS LoginModule implementation to use when
-            co.cask.security.server.JAASAuthenticationHandler is configured for
-            security.authentication.handlerClassName
-        </description>
-    </property>
-
-    <property>
-        <name>security.server.extended.token.expiration.ms</name>
-        <value>604800000</value>
-        <description>
-            Admin tool access token expiration time in milliseconds; defaults to 1
-            week (internal)
-        </description>
-    </property>
-
-    <property>
         <name>security.token.digest.key.expiration.ms</name>
         <value>3600000</value>
         <description>
             Time duration (in milliseconds) after which an active secret key used
             for signing tokens should be retired
+        </description>
+    </property>
+
+    <property>
+        <name>security.token.digest.keylength</name>
+        <value>128</value>
+        <description>
+            Key length used in generating the secret keys for generating MAC of
+            access tokens
         </description>
     </property>
 
@@ -793,30 +807,6 @@
         <value>kafka</value>
         <description>
             Kafka ZooKeeper namespace
-        </description>
-    </property>
-
-
-    <!-- Kerberos Security Authentication Configuration -->
-
-    <property>
-        <name>cdap.master.kerberos.keytab</name>
-        <value></value>
-        <description>
-            The full path to the Kerberos keytab file containing the CDAP Master's
-            credentials
-        </description>
-    </property>
-
-    <property>
-        <name>cdap.master.kerberos.principal</name>
-        <value></value>
-        <description>
-            Example: "CDAP_PRINCIPAL/_HOST@EXAMPLE.COM". The Kerberos principal
-            name that should be used to login to the CDAP Master process.
-            Substitute the Kerberos principal for CDAP_PRINCIPAL, and your domain
-            for EXAMPLE.COM. The string "_HOST" will be substituted with the local
-            hostname.
         </description>
     </property>
 
@@ -1274,17 +1264,6 @@
     </property>
 
 
-    <!-- SSL-Enabled Configuration -->
-
-    <property>
-        <name>ssl.enabled</name>
-        <value>false</value>
-        <description>
-            Determines if SSL is enabled
-        </description>
-    </property>
-
-
     <!-- Scheduler and Workflow Configuration -->
 
     <property>
@@ -1305,7 +1284,28 @@
     </property>
 
 
-    <!-- Security-Enabled Configuration -->
+    <!-- Security Configuration -->
+
+    <property>
+        <name>cdap.master.kerberos.keytab</name>
+        <value></value>
+        <description>
+            The full path to the Kerberos keytab file containing the CDAP Master's
+            credentials
+        </description>
+    </property>
+
+    <property>
+        <name>cdap.master.kerberos.principal</name>
+        <value></value>
+        <description>
+            Example: "CDAP_PRINCIPAL/_HOST@EXAMPLE.COM". The Kerberos principal
+            name that should be used to login to the CDAP Master process.
+            Substitute the Kerberos principal for CDAP_PRINCIPAL, and your domain
+            for EXAMPLE.COM. The string "_HOST" will be substituted with the local
+            hostname.
+        </description>
+    </property>
 
     <property>
         <name>kerberos.auth.enabled</name>
@@ -1338,6 +1338,14 @@
         <description>
             Authentication realm used for scoping security; this value should be
             unique for each installation of CDAP
+        </description>
+    </property>
+
+    <property>
+        <name>ssl.enabled</name>
+        <value>false</value>
+        <description>
+            Determines if SSL is enabled
         </description>
     </property>
 
