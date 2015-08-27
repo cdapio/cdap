@@ -16,6 +16,7 @@
 
 <div ng-controller="WorkflowsRunsStatusController as StatusController">
   <my-workflow-graph data-model="StatusController.data"
+                     data-on-change-flag="StatusController.onChangeFlag"
                      data-click-context="StatusController"
                      data-click="StatusController.workflowProgramClick"></my-workflow-graph>
 </div>
