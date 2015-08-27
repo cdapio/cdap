@@ -16,7 +16,7 @@
 #
 ######################################################################################
 # Create RPM and Debian bundles and upload them directly to docs1
-# This script expects to receive 3 parameters in this order:
+# This script expects to receive 5 parameters in this order:
 #   $1 BUILD_PACKAGE    e.g. cdap
 #   $2 VERSION    e.g. 3.0.4
 #   $3 USER                     REMOTE_USER
@@ -26,8 +26,8 @@
 DEBUG=${DEBUG:-no}              ### set to yes for debugging
 RUN_DATE=`date '+%Y%m%d_%R'`
 SCRIPT=`basename ${BASH_SOURCE[0]}`                     ### Set Script Name variable
-BUILD_PACKAGE="${1:-cdap}"                                    ## e.g. cdap ## a.k.a. BUILD_PACKAGE
-VERSION="${2}" ## e.g. 3.0.1
+BUILD_PACKAGE=${1}                                    ## e.g. cdap ## a.k.a. BUILD_PACKAGE
+VERSION=${2} ## e.g. 3.0.4
 REMOTE_USER=${3}                                        ### remote user
 REMOTE_HOST=${4:-127.0.0.1}                             ### remote host
 REMOTE_INCOMING_DIR=${5}                                ### target directory on remote host
