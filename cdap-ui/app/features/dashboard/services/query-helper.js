@@ -27,7 +27,7 @@ angular.module(PKG.name + '.feature.dashboard')
     // that is part of the widget, which is not a metric.
     // Right now a chart and a metric is tied together and
     // it needs to be changed.
-    function constructQuery(queryId, tags, metric) {
+    function constructQuery(queryId, tags, metric, isTimeRange, groupBy) {
       var timeRange, retObj;
       timeRange = {
         'start': metric.startTime || 'now-60s',
@@ -39,10 +39,17 @@ angular.module(PKG.name + '.feature.dashboard')
       retObj = {};
       retObj[queryId] = {
         tags: tags,
-        metrics: metric.names,
-        groupBy: [],
-        timeRange: timeRange
+        metrics: metric.names
       };
+      groupBy = groupBy || [];
+      if (groupBy.length) {
+        retObj[queryId].groupBy = groupBy;
+      }
+
+      isTimeRange = (isTimeRange !== false);
+      if (isTimeRange) {
+        retObj[queryId].timeRange = timeRange;
+      }
       return retObj;
     }
 
