@@ -447,7 +447,7 @@ angular.module(PKG.name + '.services')
         .then(function(plugin) {
           modalInstance = $bootstrapModal.open({
             backdrop: 'static',
-            templateUrl: '/assets/features/adapters/templates/tabs/runs/tabs/properties/properties.html',
+            templateUrl: '/assets/features/adapters/templates/create/popovers/plugin-edit-form.html',
             controller: ['$scope', 'AdapterModel', 'type', 'inputSchema', 'isDisabled', '$bootstrapModal', 'pluginCopy', function ($scope, AdapterModel, type, inputSchema, isDisabled, $bootstrapModal, pluginCopy){
               $scope.plugin = AdapterModel;
               $scope.type = type;
@@ -795,6 +795,8 @@ angular.module(PKG.name + '.services')
       } else {
         this.connections = CanvasFactory.getConnectionsBasedOnNodes(nodes);
       }
+      this.notifyError({});
+      this.notifyResetListners();
     };
 
   });
