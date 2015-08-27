@@ -112,10 +112,20 @@ my-plumb {
     }
   }
 
-  .label-container {
-    background-color: white;
-    padding: 5px;
-    border-radius: 50%;
+  div._jsPlumb_overlay {
+    div.label-container {
+      background-color: @cdap-orange;
+      border-radius: 50%;
+      height: 20px;
+      width: 20px;
+      line-height: 20px;
+
+      i.icon-SchemaEdge {
+        font-size: 10px;
+        color: white;
+        vertical-align: middle;
+      }
+    }
   }
 
 }
