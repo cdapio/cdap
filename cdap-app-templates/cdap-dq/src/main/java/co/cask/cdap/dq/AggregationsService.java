@@ -202,7 +202,7 @@ public class AggregationsService extends AbstractService {
       ValuesRowKey valuesRowKeyEnd = new ValuesRowKey(endTimestamp + 1,
          fieldName, sourceID); // scan rows inclusive of endTimestamp
       try {
-        Class<?> aggregationClass = Class.forName("data.quality.app.functions." + aggregationType);
+        Class<?> aggregationClass = Class.forName("co.cask.cdap.dq.functions." + aggregationType);
         CombinableAggregationFunction aggregationClassInstance =
           (CombinableAggregationFunction) aggregationClass.newInstance();
         Scanner scanner = dataStore.scan(valuesRowKeyStart.getTableRowKey(),
@@ -252,7 +252,7 @@ public class AggregationsService extends AbstractService {
                                                       fieldName, sourceID); // scan rows inclusive of endTimestamp
       List<TimestampValue> timestampValueList = new ArrayList<>();
       try {
-        Class<?> aggregationClass = Class.forName("data.quality.app.functions." + aggregationType);
+        Class<?> aggregationClass = Class.forName("co.cask.cdap.dq.functions." + aggregationType);
         BasicAggregationFunction aggregationClassInstance =
           (BasicAggregationFunction) aggregationClass.newInstance();
         Scanner scanner = dataStore.scan(valuesRowKeyStart.getTableRowKey(),

@@ -18,13 +18,10 @@ package co.cask.cdap.dq;
 
 import co.cask.cdap.api.Config;
 import co.cask.cdap.api.ProgramLifecycle;
-import co.cask.cdap.api.annotation.Property;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.data.format.Formats;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
@@ -33,6 +30,7 @@ import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.api.stream.GenericStreamEventData;
 import co.cask.cdap.api.templates.plugins.PluginProperties;
+import co.cask.cdap.dq.etl.MapReducePipelineConfigurer;
 import co.cask.cdap.dq.etl.MapReduceSourceContext;
 import co.cask.cdap.dq.functions.BasicAggregationFunction;
 import co.cask.cdap.dq.functions.CombinableAggregationFunction;
@@ -78,46 +76,40 @@ public class DataQualityApp extends AbstractApplication<DataQualityApp.ConfigCla
 
   public static final String DEFAULT_AGGREGATION_NAME = DiscreteValuesHistogram.class.getSimpleName();
   public static final int DEFAULT_WORKFLOW_SCHEDULE_MINUTES = 5;
-  public static final String DEFAULT_SOURCE_ID = "logStream";
   public static final String DEFAULT_DATASET_NAME = "dataQuality";
-  public static final String DEFAULT_INPUT_FORMAT = Formats.COMBINED_LOG_FORMAT;
   public static final Map<String, Set<String>> DEFAULT_MAP = new HashMap<>();
 
   /**
    * Configuration Class for the application
    * Sets following fields: aggregationName, fields (a comma separated list
-   * of the fields we want to aggregate over), workflowScheduleMinutes, sourceID, datasetName,
+   * of the fields we want to aggregate over), workflowScheduleMinutes, source, datasetName,
    * inputFormat, and schema.
    */
   public static class ConfigClass extends Config {
     private String aggregationName;
     private int workflowScheduleMinutes;
-    private String sourceID;
+    private DataQualitySource source;
     private String datasetName;
-    private String inputFormat;
-    private String schema;
     private Map<String, Set<String>> fieldAggregations;
 
     public ConfigClass() {
       this.aggregationName = DEFAULT_AGGREGATION_NAME;
       this.workflowScheduleMinutes = DEFAULT_WORKFLOW_SCHEDULE_MINUTES;
-      this.sourceID = DEFAULT_SOURCE_ID;
+      // By default use a Stream BatchSource with 'logStream' as the name and 'clf' format
+      this.source = new DataQualitySource("Stream", "logStream", ImmutableMap.of(
+        "name", "logStream", "duration", DEFAULT_WORKFLOW_SCHEDULE_MINUTES + "m", "format", "clf"));
       this.datasetName = DEFAULT_DATASET_NAME;
-      this.inputFormat = DEFAULT_INPUT_FORMAT;
       this.fieldAggregations = DEFAULT_MAP;
     }
 
-    public ConfigClass(int workflowScheduleMinutes, String sourceID,
-                       String datasetName, String inputFormat, String schema,
-                       Map<String, Set<String>> fieldAggregations) {
+    public ConfigClass(String aggregationName, int workflowScheduleMinutes, DataQualitySource source,
+                       String datasetName, Map<String, Set<String>> fieldAggregations) {
       Preconditions.checkNotNull(workflowScheduleMinutes);
-      Preconditions.checkNotNull(sourceID);
-      this.aggregationName = DEFAULT_AGGREGATION_NAME;
+      Preconditions.checkNotNull(source);
+      this.aggregationName = aggregationName;
       this.workflowScheduleMinutes = workflowScheduleMinutes;
-      this.sourceID = sourceID;
+      this.source = source;
       this.datasetName = datasetName;
-      this.inputFormat = inputFormat;
-      this.schema = schema;
       this.fieldAggregations = fieldAggregations;
     }
   }
@@ -127,15 +119,11 @@ public class DataQualityApp extends AbstractApplication<DataQualityApp.ConfigCla
     ConfigClass configObj = getContext().getConfig();
     Integer scheduleMinutes = configObj.workflowScheduleMinutes;
     addMapReduce(new FieldAggregator(configObj.aggregationName,
-                                     configObj.workflowScheduleMinutes,
-                                     configObj.sourceID,
+                                     configObj.source,
                                      configObj.datasetName,
-                                     configObj.inputFormat,
-                                     configObj.schema,
                                      configObj.fieldAggregations));
     setName("DataQualityApp");
-    setDescription("Application with MapReduce job using stream as input");
-    addStream(new Stream(configObj.sourceID));
+    setDescription("Application with MapReduce job to determine the data quality in a Batch Source");
     createDataset(configObj.datasetName, Table.class);
     addService(new AggregationsService(configObj.datasetName));
     addWorkflow(new DataQualityWorkflow());
@@ -147,66 +135,40 @@ public class DataQualityApp extends AbstractApplication<DataQualityApp.ConfigCla
 
   /**
    * Map Reduce job that ingests a stream of data and builds an aggregation of the ingested data
-   * that maps timestamp, sourceID, field type and field value to frequency.
+   * that maps timestamp, sourceId, field type and field value to frequency.
    */
   public static final class FieldAggregator extends AbstractMapReduce {
-
-    @Property
+    // Need to use the separator used in MapReduceSourceContext
+    private static final String PLUGIN_ID = "input:";
     private final String aggregationName;
-
-    @Property
-    private final int workflowScheduleMinutes;
-
-    @Property
-    private final String sourceID;
-
-    @Property
     private final String datasetName;
-
-    @Property
-    private final String inputFormat;
-
-    @Property
-    private final String schema;
-
     private final Map<String, Set<String>> fieldAggregations;
 
-    BatchSource batchSource;
+    private DataQualitySource source;
 
-    public FieldAggregator(String aggregationName, int workflowScheduleMinutes,
-                           String sourceID, String datasetName, String inputFormat,
-                           String schema, Map<String, Set<String>> fieldAggregations) {
+    public FieldAggregator(String aggregationName, DataQualitySource source, String datasetName,
+                           Map<String, Set<String>> fieldAggregations) {
       this.aggregationName = aggregationName;
-      this.workflowScheduleMinutes = workflowScheduleMinutes;
-      this.sourceID = sourceID;
+      this.source = source;
       this.datasetName = datasetName;
-      this.inputFormat = inputFormat;
-      this.schema = schema;
       this.fieldAggregations = fieldAggregations;
     }
 
     @Override
     public void configure() {
       super.configure();
-      MapReduceConfigurer mrc = getConfigurer();
-      mrc.usePlugin("source", "Stream", sourceID,
-                                PluginProperties.builder()
-                                  .add("name", sourceID)
-                                  .add("duration", String.valueOf(workflowScheduleMinutes) + "m")
-                                  .add("delay", "0m")
-                                  .add("format", inputFormat)
-                                  .add("schema", schema)
-                                  .build());
+      final MapReduceConfigurer mrConfigurer = getConfigurer();
+      BatchSource batchSource = usePlugin("source", source.getName(), PLUGIN_ID,
+                                          PluginProperties.builder().addAll(source.getProperties()).build());
+      Preconditions.checkNotNull(batchSource, "Could not find plugin %s of type 'source'", source.getName());
+      // We use pluginId as the prefixId
+      batchSource.configurePipeline(new MapReducePipelineConfigurer(mrConfigurer, PLUGIN_ID));
       setName("FieldAggregator");
       setOutputDataset(datasetName);
       setProperties(ImmutableMap.<String, String>builder()
-                      .put("agg", aggregationName)
-                      .put("workflowScheduleMinutes", Integer.toString(workflowScheduleMinutes))
-                      .put("sourceID", sourceID)
-                      .put("inputFormat", inputFormat)
-                      .put("schema", schema == null ? "" : schema) // Need to do this because we cannot pass
-                                                                   // null arguments to the ImmutableMap
+                      .put("defaultAgg", aggregationName)
                       .put("fieldAggregations", GSON.toJson(fieldAggregations))
+                      .put("sourceId", source.getId())
                       .build());
     }
 
@@ -215,10 +177,9 @@ public class DataQualityApp extends AbstractApplication<DataQualityApp.ConfigCla
       Job job = context.getHadoopJob();
       job.setMapperClass(AggregationMapper.class);
       job.setReducerClass(AggregationReducer.class);
-      batchSource = context.newInstance(context.getSpecification().getProperties().get("sourceID"));
-      BatchSourceContext sourceContext = new MapReduceSourceContext(context, null,
-                                                                    context.getSpecification().
-                                                                      getProperties().get("sourceID"));
+      BatchSource batchSource = context.newInstance(PLUGIN_ID);
+      // TODO: Figure out metrics to be passed in
+      BatchSourceContext sourceContext = new MapReduceSourceContext(context, null, PLUGIN_ID);
       batchSource.prepareRun(sourceContext);
     }
   }
@@ -231,6 +192,16 @@ public class DataQualityApp extends AbstractApplication<DataQualityApp.ConfigCla
     Mapper<LongWritable, GenericStreamEventData<StructuredRecord>, Text, DataQualityWritable>
     implements ProgramLifecycle<MapReduceContext> {
     private Set<String> fieldsSet = new HashSet<>();
+
+    @Override
+    public void initialize(MapReduceContext mapReduceContext) throws Exception {
+      Map<String, Set<String>> fieldAggregations =
+        GSON.fromJson(mapReduceContext.getSpecification().getProperties().get("fieldAggregations"),
+                      TOKEN_TYPE_MAP_STRING_SET_STRING);
+      if (fieldAggregations != null) {
+        fieldsSet = fieldAggregations.keySet();
+      }
+    }
 
     @Override
     public void map(LongWritable key, GenericStreamEventData<StructuredRecord> event, Context context)
@@ -285,14 +256,6 @@ public class DataQualityApp extends AbstractApplication<DataQualityApp.ConfigCla
     }
 
     @Override
-    public void initialize(MapReduceContext mapReduceContext) throws Exception {
-      Map<String, Set<String>> fieldAggregations =
-        GSON.fromJson(mapReduceContext.getSpecification().getProperties().get("fieldAggregations"),
-                      TOKEN_TYPE_MAP_STRING_SET_STRING);
-      fieldsSet = fieldAggregations.keySet();
-    }
-
-    @Override
     public void destroy() {
     }
   }
@@ -303,10 +266,20 @@ public class DataQualityApp extends AbstractApplication<DataQualityApp.ConfigCla
   public static class AggregationReducer extends Reducer<Text, DataQualityWritable, byte[], Put>
     implements ProgramLifecycle<MapReduceContext> {
     private static final Gson GSON = new Gson();
-    private String sourceID;
+    private String sourceId;
     private Map<String, Set<String>> fieldAggregations;
     private String defaultAggregationType;
     long timeKey = 0;
+
+    @Override
+    public void initialize(MapReduceContext mapReduceContext) throws Exception {
+      timeKey = mapReduceContext.getLogicalStartTime();
+      sourceId = mapReduceContext.getSpecification().getProperties().get("sourceId");
+      fieldAggregations = GSON.fromJson(mapReduceContext
+                                          .getSpecification().getProperties().get("fieldAggregations"),
+                                        TOKEN_TYPE_MAP_STRING_SET_STRING);
+      defaultAggregationType = mapReduceContext.getSpecification().getProperties().get("defaultAgg");
+    }
 
     @Override
     public void reduce(Text key, Iterable<DataQualityWritable> values, Context context)
@@ -318,18 +291,18 @@ public class DataQualityApp extends AbstractApplication<DataQualityApp.ConfigCla
         aggregationTypesSet.add(defaultAggregationType);
       }
       List<AggregationTypeValue> aggregationTypeValueList = new ArrayList<>();
-      AggregationsRowKey aggregationsRowKey = new AggregationsRowKey(timeKey, sourceID);
+      AggregationsRowKey aggregationsRowKey = new AggregationsRowKey(timeKey, sourceId);
       byte[] fieldColumnKey = Bytes.toBytes(key.toString());
       for (String aggregationType : aggregationTypesSet) {
         boolean isCombinable = true;
         try {
-          Class<?> aggregationClass = Class.forName("data.quality.app.functions." + aggregationType);
+          Class<?> aggregationClass = Class.forName("co.cask.cdap.dq.functions." + aggregationType);
           BasicAggregationFunction instance = (BasicAggregationFunction) aggregationClass.newInstance();
           isCombinable = instance instanceof CombinableAggregationFunction;
           for (DataQualityWritable value : values) {
             instance.add(value);
           }
-          ValuesRowKey valuesRowKey = new ValuesRowKey(timeKey, key.toString(), sourceID);
+          ValuesRowKey valuesRowKey = new ValuesRowKey(timeKey, key.toString(), sourceId);
           context.write(valuesRowKey.getTableRowKey(), new Put(valuesRowKey.getTableRowKey(),
                                                                Bytes.toBytes(aggregationType),
                                                                instance.aggregate()));
@@ -344,16 +317,6 @@ public class DataQualityApp extends AbstractApplication<DataQualityApp.ConfigCla
       context.write(aggregationsRowKey.getTableRowKey(),
                     new Put(aggregationsRowKey.getTableRowKey(), fieldColumnKey, aggregationTypeListBytes));
       //TODO: There are issues if multiple apps use the same source and same fields, but different aggregations
-    }
-
-    @Override
-    public void initialize(MapReduceContext mapReduceContext) throws Exception {
-      timeKey = mapReduceContext.getLogicalStartTime();
-      sourceID = mapReduceContext.getSpecification().getProperties().get("sourceID");
-      fieldAggregations = GSON.fromJson(mapReduceContext
-                                                  .getSpecification().getProperties().get("fieldAggregations"),
-                                                TOKEN_TYPE_MAP_STRING_SET_STRING);
-      defaultAggregationType = mapReduceContext.getSpecification().getProperties().get("agg");
     }
 
     @Override
