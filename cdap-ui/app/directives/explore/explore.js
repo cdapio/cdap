@@ -13,10 +13,9 @@ angular.module(PKG.name + '.commons')
     };
 
 
-    function myExploreCtrl ($scope, MyDataSource, myExploreApi, $http, $state, $bootstrapModal, myCdapUrl, $timeout, myAlert) {
+    function myExploreCtrl ($scope, myExploreApi, $http, $state, $bootstrapModal, myCdapUrl, $timeout, myAlert) {
         var vm = this;
 
-        var dataSrc = new MyDataSource($scope);
         var isFirstTime = true;
         vm.queries = [];
         vm.currentPage = 1;
@@ -52,19 +51,21 @@ angular.module(PKG.name + '.commons')
                 q.isOpen = false;
                 if (q.status !== 'FINISHED') {
 
-                  // TODO: change to use myExploreApi once figure out how to manually stop poll with $resource
-                  var promise = dataSrc.poll({
-                    _cdapPath: '/data/explore/queries/' +
-                                q.query_handle + '/status',
-                    interval: 1000
-                  }, function(res) {
-                    q.status = res.status;
+                  var statusParams = {
+                    queryhandle: q.query_handle,
+                    scope: $scope
+                  };
 
-                    if (res.status === 'FINISHED') {
-                      dataSrc.stopPoll(q.pollid);
-                    }
-                  });
-                  q.pollid = promise.__pollId__;
+                  myExploreApi.pollQueryStatus(statusParams)
+                    .$promise
+                    .then(function (res) {
+                      q.status = res.status;
+
+                      if (res.status === 'FINISHED') {
+                        myExploreApi.stopPollQueryStatus(statusParams);
+                      }
+                    });
+
                 }
               });
 
@@ -84,7 +85,7 @@ angular.module(PKG.name + '.commons')
             resolve: {
               query: function () { return query; }
             },
-            controller: ['$scope', 'myExploreApi', function ($scope, myExploreApi) {
+            controller: ['$scope', 'myExploreApi', 'query', function ($scope, myExploreApi, query) {
               var params = {
                 queryhandle: query.query_handle,
                 scope: $scope
@@ -116,7 +117,7 @@ angular.module(PKG.name + '.commons')
 
           // Cannot use $resource: http://stackoverflow.com/questions/24876593/resource-query-return-split-strings-array-of-char-instead-of-a-string
 
-          // The files are being store in the node proxy
+          // The files are being stored in the node proxy
 
           $http.post('/downloadQuery', {
             'backendUrl': myCdapUrl.constructUrl({_cdapPath: '/data/explore/queries/' + query.query_handle + '/download'}),
