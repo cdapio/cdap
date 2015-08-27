@@ -30,9 +30,12 @@ SCRIPT=`basename ${BASH_SOURCE[0]}`                     ### Set Script Name vari
 REMOTE_USER=${1}                                        ### remote user
 REMOTE_HOST=${2:-127.0.0.1}                             ### remote host
 REMOTE_INCOMING_DIR=${3}                                ### target directory on remote host
-REMOTE_BASE_DIR="${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_INCOMING_DIR}"
+REMOTE_BASE_DIR="incoming"
 BUILD_RELEASE_DIRS='*/target'                           ### Source directories
 BUILD_PACKAGE=${BUILD_PACKAGE:-cdap}
+TMP_DIR="/tmp/bundles"
+PKG_PROCESSING_DIR="${TMP_DIR}/${REMOTE_BASE_DIR}/${BUILD_PACKAGE}/"
+
 #############################
 # find top of repo
 find_repo_root() {
@@ -63,7 +66,8 @@ function HELP {
   exit 1
 }
 
-die ( ) { echo ; echo "ERROR: ${*}" ; echo ; exit 1; }
+clean() { test -d ${TMP_DIR} && rm -rf ${TMP_DIR}; }
+die() { echo ; echo "ERROR: ${*}" ; echo ; exit 1; }
 
 ###############################################################################
 # sync any rpm/deb
@@ -71,10 +75,16 @@ function sync_build_artifacts_to_server () {
   _source=$1
   echo "source directories: ${_source}"
 
+  clean
+
   decho "identify packages"
   PACKAGES=$(find ${_source} -type f \( -name '*.rpm' -o -name '*.deb' \) | sort -u)
   decho "${PACKAGES}"
   decho ""
+
+  # prepare for bundling
+  mkdir -p ${PKG_PROCESSING_DIR}
+  for p in ${PACKAGES}; do cp ${p} ${PKG_PROCESSING_DIR}; done
 
   # copy packages
   decho "copy packages"
@@ -97,6 +107,8 @@ function sync_build_artifacts_to_server () {
     #
     # Where version = <Major>.<Minor>.<Patch>(.optional time stamp)(-optional build revision)
     ##
+
+    # store the packages in a temporary directory
 
     # grab version stub
     if [[ "${_package}" == *_all.deb ]]
