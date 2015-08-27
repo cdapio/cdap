@@ -30,11 +30,12 @@ SCRIPT=`basename ${BASH_SOURCE[0]}`                     ### Set Script Name vari
 REMOTE_USER=${1}                                        ### remote user
 REMOTE_HOST=${2:-127.0.0.1}                             ### remote host
 REMOTE_INCOMING_DIR=${3}                                ### target directory on remote host
-REMOTE_BASE_DIR="incoming"
+REMOTE_BASE_DIR="${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_INCOMING_DIR}"
+INCOMING_DIR='incoming'
 BUILD_RELEASE_DIRS='*/target'                           ### Source directories
 BUILD_PACKAGE=${BUILD_PACKAGE:-cdap}
 TMP_DIR="/tmp/bundles"
-PKG_PROCESSING_DIR="${TMP_DIR}/${REMOTE_BASE_DIR}/${BUILD_PACKAGE}/"
+PKG_PROCESSING_DIR="${TMP_DIR}/${INCOMING_DIR}/${BUILD_PACKAGE}/"
 
 #############################
 # find top of repo
