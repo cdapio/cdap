@@ -28,7 +28,6 @@ import co.cask.tephra.TxConstants;
 import co.cask.tephra.distributed.PooledClientProvider;
 import co.cask.tephra.distributed.ThreadLocalClientProvider;
 import co.cask.tephra.distributed.ThriftClientProvider;
-import co.cask.tephra.metrics.MetricsCollector;
 import co.cask.tephra.metrics.TxMetricsCollector;
 import co.cask.tephra.runtime.TransactionModules;
 import com.google.inject.AbstractModule;

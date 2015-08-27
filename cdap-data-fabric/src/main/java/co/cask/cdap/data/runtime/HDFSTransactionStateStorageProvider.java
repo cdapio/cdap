@@ -16,7 +16,6 @@
 
 package co.cask.cdap.data.runtime;
 
-import co.cask.tephra.metrics.MetricsCollector;
 import co.cask.tephra.metrics.TxMetricsCollector;
 import co.cask.tephra.persist.HDFSTransactionStateStorage;
 import co.cask.tephra.snapshot.SnapshotCodecProvider;

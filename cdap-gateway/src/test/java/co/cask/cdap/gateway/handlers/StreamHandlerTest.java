@@ -120,7 +120,7 @@ public class StreamHandlerTest extends GatewayTestBase {
     urlConn = openURL(createURL("streams/non_existent_stream"), HttpMethod.POST);
     Assert.assertEquals(HttpResponseStatus.NOT_FOUND.getCode(), urlConn.getResponseCode());
     urlConn.disconnect();
-    
+
     // Now, create the new stream.
     urlConn = openURL(createURL("streams/test_stream1"), HttpMethod.PUT);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());

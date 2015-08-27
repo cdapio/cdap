@@ -18,6 +18,7 @@ package co.cask.cdap.api.mapreduce;
 
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
+import co.cask.cdap.internal.api.AbstractPluginConfigurable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,7 +28,8 @@ import java.util.Map;
 /**
  * This abstract class provides a default implementation of {@link MapReduce} methods for easy extension.
  */
-public abstract class AbstractMapReduce implements MapReduce {
+public abstract class AbstractMapReduce extends AbstractPluginConfigurable<MapReduceConfigurer>
+  implements MapReduce {
 
   private MapReduceConfigurer configurer;
 
@@ -47,6 +49,7 @@ public abstract class AbstractMapReduce implements MapReduce {
   /**
    * Returns the {@link MapReduceConfigurer}, only available at configuration time.
    */
+  @Override
   protected final MapReduceConfigurer getConfigurer() {
     return configurer;
   }

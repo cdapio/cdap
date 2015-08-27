@@ -20,6 +20,10 @@ import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceConfigurer;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
+import co.cask.cdap.internal.app.DefaultPluginConfigurer;
+import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import co.cask.cdap.proto.Id;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
@@ -29,7 +33,7 @@ import java.util.Set;
 /**
  * Default implementation of {@link MapReduceConfigurer}.
  */
-public final class DefaultMapReduceConfigurer implements MapReduceConfigurer {
+public final class DefaultMapReduceConfigurer extends DefaultPluginConfigurer implements MapReduceConfigurer {
 
   private final String className;
   private String name;
@@ -41,7 +45,9 @@ public final class DefaultMapReduceConfigurer implements MapReduceConfigurer {
   private Resources mapperResources;
   private Resources reducerResources;
 
-  public DefaultMapReduceConfigurer(MapReduce mapReduce) {
+  public DefaultMapReduceConfigurer(MapReduce mapReduce, Id.Artifact artifactId, ArtifactRepository artifactRepository,
+                                    PluginInstantiator pluginInstantiator) {
+    super(artifactRepository, pluginInstantiator, artifactId);
     this.className = mapReduce.getClass().getName();
     this.name = mapReduce.getClass().getSimpleName();
     this.description = "";

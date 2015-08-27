@@ -25,7 +25,7 @@ import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
-import co.cask.cdap.data.dataset.DatasetCreationSpec;
+import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.proto.Id;
 import com.google.common.collect.ImmutableMap;
 
@@ -52,6 +52,7 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
   private final Map<String, ServiceSpecification> services;
   private final Map<String, ScheduleSpecification> schedules;
   private final Map<String, WorkerSpecification> workers;
+  private final Map<String, Plugin> plugins;
 
   public DefaultApplicationSpecification(String name, String version, String description, String configuration,
                                          Id.Artifact artifactId,
@@ -64,7 +65,8 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
                                          Map<String, WorkflowSpecification> workflows,
                                          Map<String, ServiceSpecification> services,
                                          Map<String, ScheduleSpecification> schedules,
-                                         Map<String, WorkerSpecification> workers) {
+                                         Map<String, WorkerSpecification> workers,
+                                         Map<String, Plugin> plugins) {
     this.name = name;
     this.version = version;
     this.description = description;
@@ -80,6 +82,7 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
     this.services = ImmutableMap.copyOf(services);
     this.schedules = ImmutableMap.copyOf(schedules);
     this.workers = ImmutableMap.copyOf(workers);
+    this.plugins = ImmutableMap.copyOf(plugins);
   }
 
   public static DefaultApplicationSpecification from(ApplicationSpecification spec) {
@@ -89,7 +92,8 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
                                                spec.getDatasetModules(), spec.getDatasets(),
                                                spec.getFlows(),
                                                spec.getMapReduce(), spec.getSpark(), spec.getWorkflows(),
-                                               spec.getServices(), spec.getSchedules(), spec.getWorkers());
+                                               spec.getServices(), spec.getSchedules(), spec.getWorkers(),
+                                               spec.getPlugins());
   }
 
   @Override
@@ -165,5 +169,10 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
   @Override
   public Map<String, ScheduleSpecification> getSchedules() {
     return schedules;
+  }
+
+  @Override
+  public Map<String, Plugin> getPlugins() {
+    return plugins;
   }
 }

@@ -21,7 +21,7 @@ import co.cask.cdap.internal.AppFabricClient;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.AbstractProgramManager;
 import co.cask.cdap.test.FlowManager;
-import co.cask.cdap.test.RuntimeStats;
+import co.cask.cdap.test.MetricsManager;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 
@@ -30,11 +30,13 @@ import com.google.common.base.Throwables;
  */
 public class DefaultFlowManager extends AbstractProgramManager<FlowManager> implements FlowManager {
   private final AppFabricClient appFabricClient;
+  private final MetricsManager metricsManager;
 
   public DefaultFlowManager(Id.Program programId, AppFabricClient appFabricClient,
-                            DefaultApplicationManager applicationManager) {
+                            DefaultApplicationManager applicationManager, MetricsManager metricsManager) {
     super(programId, applicationManager);
     this.appFabricClient = appFabricClient;
+    this.metricsManager = metricsManager;
   }
 
   @Override
@@ -60,7 +62,7 @@ public class DefaultFlowManager extends AbstractProgramManager<FlowManager> impl
 
   @Override
   public RuntimeMetrics getFlowletMetrics(String flowletId) {
-    return RuntimeStats.getFlowletMetrics(programId.getNamespaceId(), programId.getApplicationId(), programId.getId(),
+    return metricsManager.getFlowletMetrics(programId.getNamespaceId(), programId.getApplicationId(), programId.getId(),
                                           flowletId);
   }
 }

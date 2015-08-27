@@ -19,10 +19,10 @@ package co.cask.cdap.api.flow.flowlet;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.common.PropertyProvider;
 import co.cask.cdap.internal.flowlet.DefaultFlowletSpecification;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -80,12 +80,12 @@ public interface FlowletSpecification extends PropertyProvider {
    * not reusable, meaning each instance of this class can only be used to create one instance
    * of {@link FlowletSpecification}.
    */
-  static final class Builder {
+  final class Builder {
 
     private String name;
     private String description;
     private FailurePolicy failurePolicy = FailurePolicy.RETRY;
-    private final ImmutableSet.Builder<String> dataSets = ImmutableSet.builder();
+    private final Set<String> dataSets = new HashSet<>();
     private Map<String, String> arguments;
     private Resources resources = new Resources();
 
@@ -105,7 +105,9 @@ public interface FlowletSpecification extends PropertyProvider {
        * @return An instance of {@link DescriptionSetter}
        */
       public DescriptionSetter setName(String name) {
-        Preconditions.checkArgument(name != null, "Name cannot be null.");
+        if (name == null) {
+          throw new IllegalArgumentException("Name cannot be null.");
+        }
         Builder.this.name = name;
         return new DescriptionSetter();
       }
@@ -121,7 +123,9 @@ public interface FlowletSpecification extends PropertyProvider {
        * @return An instance of what needs to be done after description {@link AfterDescription}
        */
       public AfterDescription setDescription(String description) {
-        Preconditions.checkArgument(description != null, "Description cannot be null.");
+        if (description == null) {
+          throw new IllegalArgumentException("Description cannot be null.");
+        }
         Builder.this.description = description;
         return new AfterDescription();
       }
@@ -138,7 +142,9 @@ public interface FlowletSpecification extends PropertyProvider {
        * @return An instance of {@link AfterDescription}
        */
       public AfterDescription setFailurePolicy(FailurePolicy policy) {
-        Preconditions.checkArgument(policy != null, "FailurePolicy cannot be null");
+        if (policy == null) {
+          throw new IllegalArgumentException("FailurePolicy cannot be null");
+        }
         failurePolicy = policy;
         return this;
       }
@@ -151,7 +157,8 @@ public interface FlowletSpecification extends PropertyProvider {
        * @return An instance of {@link AfterDescription}.
        */
       public AfterDescription useDataSet(String dataSet, String...moreDataSets) {
-        dataSets.add(dataSet).add(moreDataSets);
+        dataSets.add(dataSet);
+        dataSets.addAll(Arrays.asList(moreDataSets));
         return this;
       }
 
@@ -162,12 +169,14 @@ public interface FlowletSpecification extends PropertyProvider {
        * @return An instance of {@link AfterDescription}.
        */
       public AfterDescription withArguments(Map<String, String> args) {
-        arguments = ImmutableMap.copyOf(args);
+        arguments = new HashMap<>(args);
         return this;
       }
 
       public AfterDescription withResources(Resources resources) {
-        Preconditions.checkArgument(resources != null, "Resources cannot be null.");
+        if (resources == null) {
+          throw new IllegalArgumentException("Resources cannot be null.");
+        }
         Builder.this.resources = resources;
         return this;
       }
@@ -177,8 +186,7 @@ public interface FlowletSpecification extends PropertyProvider {
        * @return An instance of {@link FlowletSpecification}.
        */
       public FlowletSpecification build() {
-        return new DefaultFlowletSpecification(name, description, failurePolicy,
-                                               dataSets.build(), arguments, resources);
+        return new DefaultFlowletSpecification(name, description, failurePolicy, dataSets, arguments, resources);
       }
     }
 

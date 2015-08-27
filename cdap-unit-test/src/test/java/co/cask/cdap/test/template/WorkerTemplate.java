@@ -74,7 +74,7 @@ public class WorkerTemplate extends ApplicationTemplate<WorkerTemplate.Config> {
   public static class Worker extends AbstractWorker {
     public static final String NAME = "worker";
     private Config config;
-    private volatile boolean running;
+    private volatile boolean stopped;
     private Callable<Long> plugin;
 
     @Override
@@ -83,7 +83,6 @@ public class WorkerTemplate extends ApplicationTemplate<WorkerTemplate.Config> {
       config = GSON.fromJson(context.getRuntimeArguments().get("config"), Config.class);
       String pluginId = context.getRuntimeArguments().get("pluginId");
       plugin = context.newPluginInstance(pluginId);
-      running = true;
     }
 
     @Override
@@ -101,7 +100,7 @@ public class WorkerTemplate extends ApplicationTemplate<WorkerTemplate.Config> {
           table.write(Bytes.toBytes(config.x), Bytes.toBytes(y));
         }
       });
-      while (running) {
+      while (!stopped) {
         try {
           TimeUnit.MILLISECONDS.sleep(100);
         } catch (InterruptedException e) {
@@ -112,7 +111,7 @@ public class WorkerTemplate extends ApplicationTemplate<WorkerTemplate.Config> {
 
     @Override
     public void stop() {
-      running = false;
+      stopped = true;
     }
   }
 

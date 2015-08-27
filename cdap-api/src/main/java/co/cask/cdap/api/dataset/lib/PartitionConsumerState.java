@@ -17,7 +17,6 @@
 package co.cask.cdap.api.dataset.lib;
 
 import co.cask.cdap.api.common.Bytes;
-import com.google.common.base.Preconditions;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -44,7 +43,9 @@ public class PartitionConsumerState {
   private final List<Long> versionsToCheck;
 
   public PartitionConsumerState(long startVersion, List<Long> versionsToCheck) {
-    Preconditions.checkNotNull(versionsToCheck);
+    if (versionsToCheck == null) {
+      throw new IllegalArgumentException("List of versions cannot be null");
+    }
     this.startVersion = startVersion;
     this.versionsToCheck = Collections.unmodifiableList(new ArrayList<>(versionsToCheck));
   }
@@ -58,12 +59,15 @@ public class PartitionConsumerState {
   }
 
   public static PartitionConsumerState fromBytes(byte[] bytes) {
-    Preconditions.checkArgument((bytes.length - 1) % Bytes.SIZEOF_LONG == 0,
-                                "bytes does not have length divisible by %s", Bytes.SIZEOF_LONG);
+    if (((bytes.length - 1) % Bytes.SIZEOF_LONG) != 0) {
+      throw new IllegalArgumentException("bytes does not have length divisible by " + Bytes.SIZEOF_LONG);
+    }
+
     ByteBuffer bb = ByteBuffer.wrap(bytes);
     byte serializationFormatVersion = bb.get();
-    Preconditions.checkArgument(serializationFormatVersion == 0,
-                                "Unsupported serialization format: {}", serializationFormatVersion);
+    if (serializationFormatVersion != 0) {
+      throw new IllegalArgumentException("Unsupported serialization format: " + serializationFormatVersion);
+    }
     long startVersion = bb.getLong();
     List<Long> versionsToCheck = new ArrayList<>();
     while (bb.hasRemaining()) {

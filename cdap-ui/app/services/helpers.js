@@ -31,7 +31,6 @@ angular.module(PKG.name+'.services')
     } else {
       obj[key] = val;
     }
-
     return obj;
   }
 
@@ -41,10 +40,12 @@ angular.module(PKG.name+'.services')
    * get to a property deep in an obj by jsonpath
    * @param  {Object} obj object to inspect
    * @param  {String} key jsonpath eg "foo.bar.baz"
+   * @param  {Boolean} returns a copy when isCopy === true
    * @return {Mixed}     value at the
    */
-  function deepGet(obj, key) {
-    return objectQuery.apply(null, [obj].concat(key.split('.')));
+  function deepGet(obj, key, isCopy) {
+    var val = objectQuery.apply(null, [obj].concat(key.split('.')));
+    return isCopy ? angular.copy(val) : val;
   }
 
   /* ----------------------------------------------------------------------- */

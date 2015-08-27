@@ -1,5 +1,39 @@
 angular.module(PKG.name + '.feature.adapters')
-  .controller('CanvasController', function (myAdapterApi, MyPlumbService, $bootstrapModal, $state, $scope, $alert, CanvasFactory, MyPlumbFactory, $modalStack, $timeout, ModalConfirm, myAdapterTemplatesApi, $q) {
+  .controller('CanvasController', function (myAdapterApi, MyPlumbService, $bootstrapModal, $state, $scope, $alert, CanvasFactory, MyPlumbFactory, $modalStack, $timeout, ModalConfirm, myAdapterTemplatesApi, $q, mySettings, EventPipe) {
+
+    var sourceTemplates = [],
+        transformTemplates = [],
+        sinkTemplates = [];
+
+    function objectToArray(obj) {
+      var arr = [];
+
+      angular.forEach(obj, function (val) {
+        if (val.templateType === MyPlumbService.metadata.template.type) {
+          val.icon = 'fa-plug';
+          val.name = val.pluginTemplate;
+
+          arr.push(val);
+        }
+      });
+
+      return arr;
+    }
+
+    mySettings.get('pluginTemplates')
+      .then(function (res) {
+        if (!angular.isObject(res)) {
+          return;
+        }
+
+        var templates = res[$state.params.namespace][MyPlumbService.metadata.template.type];
+
+        sourceTemplates = objectToArray(templates.source);
+        transformTemplates = objectToArray(templates.transform);
+        sinkTemplates = objectToArray(templates.sink);
+      });
+
+
     this.nodes = [];
     this.reloadDAG = false;
     if ($scope.AdapterCreateController.data) {
@@ -54,6 +88,8 @@ angular.module(PKG.name + '.feature.adapters')
     ];
 
     this.onImportSuccess = function(result) {
+      // EventPipe.emit('popovers.close');
+      EventPipe.emit('popovers.reset');
       $scope.config = JSON.stringify(result);
       this.reloadDAG = true;
       MyPlumbService.resetToDefaults(true);
@@ -64,7 +100,7 @@ angular.module(PKG.name + '.feature.adapters')
 
       MyPlumbService.notifyError({});
       MyPlumbService.notifyResetListners();
-    }
+    };
 
     this.importFile = function(files) {
       CanvasFactory
@@ -74,10 +110,11 @@ angular.module(PKG.name + '.feature.adapters')
           function error(errorEvent) {
             console.error('Upload config failed', errorEvent);
           }
-        )
-    }
+        );
+    };
 
     this.onRightSideGroupItemClicked = function(group) {
+      EventPipe.emit('popovers.close');
       var config;
       switch(group.name) {
         case 'Export':
@@ -98,7 +135,7 @@ angular.module(PKG.name + '.feature.adapters')
               function error() {
                 console.log('ERROR: ' + 'exporting adapter failed');
               }
-            )
+            );
           break;
         case 'Import':
           // Clicking on the hidden upload button. #hack.
@@ -108,7 +145,7 @@ angular.module(PKG.name + '.feature.adapters')
           break;
         case 'Config':
           config = angular.copy(MyPlumbService.getConfigForBackend());
-          modalInstance = $bootstrapModal.open({
+          $bootstrapModal.open({
             templateUrl: '/assets/features/adapters/templates/create/viewconfig.html',
             size: 'lg',
             windowClass: 'adapter-modal',
@@ -187,10 +224,10 @@ angular.module(PKG.name + '.feature.adapters')
                 });
                 $state.go('adapters.list');
               },
-              function error(message) {
+              function error() {
                 console.info('Failed saving as draft');
               }
-            )
+            );
       }
     };
 
@@ -201,19 +238,23 @@ angular.module(PKG.name + '.feature.adapters')
     this.onLeftSideGroupItemClicked = function(group) {
       var prom;
       var templatedefer = $q.defer();
+      var savedTemplates;
       switch(group.name) {
         case 'source':
           prom = myAdapterApi.fetchSources({ adapterType: MyPlumbService.metadata.template.type }).$promise;
+          savedTemplates = sourceTemplates;
           break;
         case 'transform':
           prom = myAdapterApi.fetchTransforms({ adapterType: MyPlumbService.metadata.template.type }).$promise;
+          savedTemplates = transformTemplates;
           break;
         case 'sink':
           prom = myAdapterApi.fetchSinks({ adapterType: MyPlumbService.metadata.template.type }).$promise;
+          savedTemplates = sinkTemplates;
           break;
         case 'templates':
           prom = myAdapterTemplatesApi.list({
-              apptype: MyPlumbService.metadata.template.type.toLowerCase()
+              apptype: MyPlumbService.metadata.template.type
             })
               .$promise
               .then(function(res) {
@@ -241,6 +282,11 @@ angular.module(PKG.name + '.feature.adapters')
             )
           );
         }.bind(this));
+
+        if (group.name !== 'templates') {
+          this.plugins.items = this.plugins.items.concat(savedTemplates);
+        }
+
       }.bind(this));
     };
 
@@ -251,12 +297,15 @@ angular.module(PKG.name + '.feature.adapters')
         delete this.pluginTypes[2].error;
       } else if (item.type === 'templates') {
         myAdapterTemplatesApi.get({
-          apptype: MyPlumbService.metadata.template.type.toLowerCase(),
+          apptype: MyPlumbService.metadata.template.type,
           appname: item.name
         })
           .$promise
           .then(function(res) {
-            var result = CanvasFactory.parseImportedJson(JSON.stringify(res), MyPlumbService.metadata.template.type)
+            var result = CanvasFactory.parseImportedJson(
+              JSON.stringify(res),
+              MyPlumbService.metadata.template.type
+            );
             if (result.error) {
               $alert({
                 type: 'danger',
@@ -272,13 +321,30 @@ angular.module(PKG.name + '.feature.adapters')
       // TODO: Better UUID?
       var id = item.name + '-' + item.type + '-' + Date.now();
       event.stopPropagation();
-      var config = {
-        id: id,
-        name: item.name,
-        icon: item.icon,
-        description: item.description,
-        type: item.type
-      };
+
+      var config;
+
+      if (item.pluginTemplate) {
+        config = {
+          id: id,
+          name: item.pluginName,
+          icon: MyPlumbFactory.getIcon(item.pluginName),
+          type: item.pluginType,
+          properties: item.properties,
+          outputSchema: item.outputSchema,
+          pluginTemplate: item.pluginTemplate,
+          lock: item.lock
+        };
+      } else {
+        config = {
+          id: id,
+          name: item.name,
+          icon: item.icon,
+          description: item.description,
+          type: item.type
+        };
+      }
+
       MyPlumbService.addNodes(config, config.type, true);
     };
 

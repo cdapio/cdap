@@ -295,7 +295,7 @@ def process_cdap_ui(options):
     
     import json
     from pprint import pprint
-    
+
     for type in CDAP_UI_SOURCES.keys():
         source = CDAP_UI_SOURCES[type][0]
         json_path = os.path.join(SCRIPT_DIR_PATH, source)

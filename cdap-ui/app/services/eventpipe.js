@@ -12,6 +12,9 @@ angular.module(PKG.name + '.services')
 
     this.emit =  function(event) {
       var args = Array.prototype.slice.call(arguments, 1);
+      if (!events[event]) {
+        return;
+      }
       for (var i = 0; i < events[event].length; i++) {
         events[event][i].apply(this, args);
       }

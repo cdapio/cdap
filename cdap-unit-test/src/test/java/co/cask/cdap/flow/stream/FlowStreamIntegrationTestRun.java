@@ -18,7 +18,7 @@ package co.cask.cdap.flow.stream;
 
 import co.cask.cdap.api.metrics.RuntimeMetrics;
 import co.cask.cdap.test.ApplicationManager;
-import co.cask.cdap.test.RuntimeStats;
+import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.base.TestFrameworkTestBase;
@@ -41,11 +41,11 @@ public class FlowStreamIntegrationTestRun extends TestFrameworkTestBase {
       s1.send(String.valueOf(i));
     }
 
-    applicationManager.getFlowManager("StreamTestFlow").start();
-    RuntimeMetrics flowletMetrics1 = RuntimeStats.getFlowletMetrics("TestFlowStreamIntegrationApp",
-                                                                    "StreamTestFlow", "StreamReader");
-    flowletMetrics1.waitForProcessed(1, 10, TimeUnit.SECONDS);
-    if (flowletMetrics1.getException() > 0) {
+    FlowManager flowManager = applicationManager.getFlowManager("StreamTestFlow");
+    flowManager.start();
+    RuntimeMetrics flowletMetrics = flowManager.getFlowletMetrics("StreamReader");
+    flowletMetrics.waitForProcessed(1, 10, TimeUnit.SECONDS);
+    if (flowletMetrics.getException() > 0) {
       Assert.fail("StreamReader test failed");
     }
   }

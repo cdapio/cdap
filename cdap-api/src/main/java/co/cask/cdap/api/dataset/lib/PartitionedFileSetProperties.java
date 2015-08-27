@@ -17,7 +17,6 @@
 package co.cask.cdap.api.dataset.lib;
 
 import co.cask.cdap.api.annotation.Beta;
-import com.google.common.base.Joiner;
 
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -92,7 +91,13 @@ public class PartitionedFileSetProperties extends FileSetProperties {
      * Sets the base path for the file dataset.
      */
     public Builder setPartitioning(Partitioning partitioning) {
-      add(PARTITIONING_FIELDS, Joiner.on(",").join(partitioning.getFields().keySet()));
+      StringBuilder builder = new StringBuilder();
+      String sep = "";
+      for (String key : partitioning.getFields().keySet()) {
+        builder.append(sep).append(key);
+        sep = ",";
+      }
+      add(PARTITIONING_FIELDS, builder.toString());
       for (Map.Entry<String, Partitioning.FieldType> entry : partitioning.getFields().entrySet()) {
         add(PARTITIONING_FIELD_PREFIX + entry.getKey(), entry.getValue().name());
       }

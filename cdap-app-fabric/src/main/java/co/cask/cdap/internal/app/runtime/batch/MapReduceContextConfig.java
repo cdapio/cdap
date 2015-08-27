@@ -21,6 +21,7 @@ import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.internal.app.Plugin;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetInputFormat;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetOutputFormat;
@@ -59,6 +60,7 @@ public final class MapReduceContextConfig {
   private static final String HCONF_ATTR_PROGRAM_NAME_IN_WORKFLOW = "hconf.program.name.in.workflow";
   private static final String HCONF_ATTR_WORKFLOW_TOKEN = "hconf.program.workflow.token";
   private static final String HCONF_ATTR_ADAPTER_SPEC = "hconf.program.adapter.spec";
+  private static final String HCONF_ATTR_PLUGINS = "hconf.program.plugins.map";
   private static final String HCONF_ATTR_ARGS = "hconf.program.args";
   private static final String HCONF_ATTR_PROGRAM_JAR_URI = "hconf.program.jar.uri";
   private static final String HCONF_ATTR_CCONF = "hconf.cconf";
@@ -82,6 +84,7 @@ public final class MapReduceContextConfig {
     setProgramNameInWorkflow(context.getProgramNameInWorkflow());
     setWorkflowToken(context.getWorkflowToken());
     setAdapterSpec(context.getAdapterSpecification());
+    setPlugins(context.getPlugins());
     setArguments(context.getRuntimeArguments());
     setProgramJarURI(programJarURI);
     setConf(conf);
@@ -147,6 +150,18 @@ public final class MapReduceContextConfig {
     if (adapterSpec != null) {
       hConf.set(HCONF_ATTR_ADAPTER_SPEC, GSON.toJson(adapterSpec));
     }
+  }
+
+  private void setPlugins(Map<String, Plugin> plugins) {
+    hConf.set(HCONF_ATTR_PLUGINS, GSON.toJson(plugins));
+  }
+
+  public Map<String, Plugin> getPlugins() {
+    String spec = hConf.get(HCONF_ATTR_PLUGINS);
+    if (spec == null) {
+      return null;
+    }
+    return GSON.fromJson(spec, new TypeToken<Map<String, Plugin>>() { }.getType());
   }
 
   @Nullable

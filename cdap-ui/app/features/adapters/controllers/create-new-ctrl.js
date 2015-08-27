@@ -33,6 +33,8 @@ angular.module(PKG.name + '.feature.adapters')
       }.bind(this));
 
     this.showMetadataModal = function() {
+      EventPipe.emit('popovers.close');
+
       if (this.metadata.error) {
         delete this.metadata.error;
       }
@@ -43,7 +45,7 @@ angular.module(PKG.name + '.feature.adapters')
           size: 'lg',
           windowClass: 'adapter-modal',
           keyboard: true,
-          controller: ['$scope', 'metadata', 'MyPlumbService', function($scope, metadata, MyPlumbService) {
+          controller: ['$scope', 'metadata', function($scope, metadata) {
             $scope.modelCopy = angular.copy(this.metadata);
             $scope.metadata = metadata;
             $scope.reset = function () {
@@ -105,6 +107,8 @@ angular.module(PKG.name + '.feature.adapters')
 
     $scope.$on('$destroy', function() {
       $modalStack.dismissAll();
+      $window.onbeforeunload = null;
       EventPipe.cancelEvent('plugin.reset');
+      EventPipe.cancelEvent('schema.clear');
     });
   });

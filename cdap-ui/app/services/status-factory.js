@@ -8,9 +8,7 @@ angular.module(PKG.name + '.services')
 
       _.debounce(function() {
         $http.get(
-          (MY_CONFIG.sslEnabled? 'https://': 'http://')
-          + window.location.host
-          + '/backendstatus',
+          (MY_CONFIG.sslEnabled? 'https://': 'http://') + window.location.host + '/backendstatus',
           {ignoreLoadingBar: true}
         )
              .success(success.bind(this))

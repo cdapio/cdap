@@ -63,7 +63,7 @@ public class DummyWorkerTemplate extends ApplicationTemplate<DummyWorkerTemplate
   public static class TWorker extends AbstractWorker {
     private static final Logger LOG = LoggerFactory.getLogger(TWorker.class);
     public static final String NAME = TWorker.class.getSimpleName();
-    private volatile boolean running;
+    private volatile boolean stopped;
 
     @Override
     public void configure() {
@@ -72,12 +72,11 @@ public class DummyWorkerTemplate extends ApplicationTemplate<DummyWorkerTemplate
 
     @Override
     public void run() {
-      running = true;
       String adapterName = getContext().getRuntimeArguments().get(ADAPTER_NAME);
       int instanceCount = getContext().getInstanceCount();
       int instanceId = getContext().getInstanceId();
       Preconditions.checkNotNull(adapterName);
-      while (running) {
+      while (!stopped) {
         try {
           LOG.info("Adapter {}; Instance: Count {} Id {}", adapterName, instanceCount, instanceId);
           TimeUnit.MILLISECONDS.sleep(250);
@@ -89,7 +88,7 @@ public class DummyWorkerTemplate extends ApplicationTemplate<DummyWorkerTemplate
 
     @Override
     public void stop() {
-      running = false;
+      stopped = true;
     }
   }
 }

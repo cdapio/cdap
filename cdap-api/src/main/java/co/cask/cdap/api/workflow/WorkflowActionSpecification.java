@@ -19,10 +19,10 @@ package co.cask.cdap.api.workflow;
 import co.cask.cdap.api.common.PropertyProvider;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.internal.workflow.DefaultWorkflowActionSpecification;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Maps;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -54,11 +54,11 @@ public interface WorkflowActionSpecification extends PropertyProvider {
   /**
    * Builder class for building the {@link WorkflowActionSpecification}.
    */
-  static final class Builder {
+  final class Builder {
     private String name;
     private String description;
-    private Map<String, String> options = Maps.newHashMap();
-    private final ImmutableSet.Builder<String> datasets = ImmutableSet.builder();
+    private Map<String, String> options = new HashMap<>();
+    private final Set<String> datasets = new HashSet<>();
 
     public static NameSetter with() {
       return new Builder().new NameSetter();
@@ -71,7 +71,9 @@ public interface WorkflowActionSpecification extends PropertyProvider {
        * @return An instance of {@link DescriptionSetter}
        */
       public DescriptionSetter setName(String name) {
-        Preconditions.checkArgument(name != null, "Name cannot be null.");
+        if (name == null) {
+          throw new IllegalArgumentException("Name cannot be null.");
+        }
         Builder.this.name = name;
         return new DescriptionSetter();
       }
@@ -87,7 +89,9 @@ public interface WorkflowActionSpecification extends PropertyProvider {
        * @return An instance of what needs to be done after description {@link AfterDescription}
        */
       public AfterDescription setDescription(String description) {
-        Preconditions.checkArgument(description != null, "Description cannot be null.");
+        if (description == null) {
+          throw new IllegalArgumentException("Description cannot be null.");
+        }
         Builder.this.description = description;
         return new AfterDescription();
       }
@@ -104,12 +108,13 @@ public interface WorkflowActionSpecification extends PropertyProvider {
       }
 
       public AfterDescription useDataset(String dataset, String...moreDatasets) {
-        Builder.this.datasets.add(dataset).add(moreDatasets);
+        datasets.add(dataset);
+        datasets.addAll(Arrays.asList(moreDatasets));
         return this;
       }
 
       public WorkflowActionSpecification build() {
-        return new DefaultWorkflowActionSpecification(name, description, options, datasets.build());
+        return new DefaultWorkflowActionSpecification(name, description, options, datasets);
       }
     }
 

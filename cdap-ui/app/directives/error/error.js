@@ -8,16 +8,12 @@ angular.module(PKG.name+'.commons')
   $scope.alerts = myAlert.getAlerts();
 
   $scope.clear = function () {
-    $scope.$hide();
     myAlert.clear();
     $scope.alerts = myAlert.getAlerts();
   };
 
   $scope.remove = function (item) {
     myAlert.remove(item);
-    if (myAlert.count() === 0) {
-      $scope.$hide();
-    }
   };
 })
 

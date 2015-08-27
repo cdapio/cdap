@@ -20,6 +20,7 @@ angular.module(PKG.name + '.feature.admin')
       .then(function (list) {
         $scope.nsList = list;
         $scope.nsList.forEach(function (namespace) {
+          console.log('namespace', namespace);
           getApps(namespace)
             .then(function (apps) {
               namespace.appsCount = apps.length;
@@ -27,6 +28,8 @@ angular.module(PKG.name + '.feature.admin')
           getDatasets(namespace)
             .then(function (data) {
               namespace.datasetsCount = data.length;
+            }, function error(err) {
+              console.log('ERROR: Fetching Datasets failed ', err);
             });
 
           getStreams(namespace)

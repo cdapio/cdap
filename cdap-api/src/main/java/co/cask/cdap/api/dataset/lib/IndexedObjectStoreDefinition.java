@@ -23,7 +23,6 @@ import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.table.Table;
-import com.google.common.base.Preconditions;
 
 import java.io.IOException;
 import java.util.Map;
@@ -42,8 +41,12 @@ public class IndexedObjectStoreDefinition
                                       DatasetDefinition<? extends Table, ?> tableDef,
                                       DatasetDefinition<? extends ObjectStore, ?> objectStoreDef) {
     super(name);
-    Preconditions.checkArgument(tableDef != null, "Table definition is required");
-    Preconditions.checkArgument(objectStoreDef != null, "ObjectStore definition is required");
+    if (tableDef == null) {
+      throw new IllegalArgumentException("Table definition is required");
+    }
+    if (objectStoreDef == null) {
+      throw new IllegalArgumentException("ObjectStore definition is required");
+    }
     this.tableDef = tableDef;
     this.objectStoreDef = objectStoreDef;
   }

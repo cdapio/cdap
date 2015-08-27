@@ -135,13 +135,14 @@ angular.module(PKG.name + '.services')
 
     function findTransformThatIsSource(originalConnections) {
       var transformAsSource = {};
+      function isSource (c) {
+        if (c.target === connection.source) {
+          return c;
+        }
+      }
       for (var i =0; i<originalConnections.length; i++) {
         var connection = originalConnections[i];
-        var isSoureATarget = originalConnections.filter(function (c) {
-          if (c.target === connection.source) {
-            return c;
-          }
-        });
+        var isSoureATarget = originalConnections.filter(isSource);
         if (!isSoureATarget.length) {
           transformAsSource = connection;
           break;
@@ -172,11 +173,72 @@ angular.module(PKG.name + '.services')
           finalConnections = finalConnections.concat(parallelConnections);
         }
       } else {
-        var source = findTransformThatIsSource(originalConnections);
+        source = findTransformThatIsSource(originalConnections);
         addConnectionsInOrder(source, finalConnections, originalConnections);
       }
       return finalConnections;
     }
+
+    this.formatSchema = function (node) {
+      var isStreamSource = node.name === 'Stream';
+      var schema;
+      var input;
+      var jsonSchema;
+
+      if (isStreamSource) {
+        if (node.properties.format === 'clf') {
+          jsonSchema = IMPLICIT_SCHEMA.clf;
+        } else if (node.properties.format === 'syslog') {
+          jsonSchema = IMPLICIT_SCHEMA.syslog;
+        } else {
+          jsonSchema = node.outputSchema;
+        }
+      } else {
+        jsonSchema = node.outputSchema;
+      }
+
+      try {
+        input = JSON.parse(jsonSchema);
+      } catch (e) {
+        input = null;
+      }
+
+      if (isStreamSource) {
+        // Must be in this order!!
+        if (!input) {
+          input = {
+            fields: [{ name: 'body', type: 'string' }]
+          };
+        }
+
+        input.fields.unshift({
+          name: 'headers',
+          type: {
+            type: 'map',
+            keys: 'string',
+            values: 'string'
+          }
+        });
+
+        input.fields.unshift({
+          name: 'ts',
+          type: 'long'
+        });
+
+      }
+
+      schema = input ? input.fields : null;
+      angular.forEach(schema, function (field) {
+        if (angular.isArray(field.type)) {
+          field.type = field.type[0];
+          field.nullable = true;
+        } else {
+          field.nullable = false;
+        }
+      });
+
+      return schema;
+    };
 
 
     this.setConnections = function(connections) {
@@ -189,7 +251,7 @@ angular.module(PKG.name + '.services')
           target: con.targetId
         });
       });
-      var localConnections = orderConnections.call(this, angular.copy(localConnections), angular.copy(localConnections));
+      localConnections = orderConnections.call(this, angular.copy(localConnections), angular.copy(localConnections));
       this.connections = localConnections;
     };
 
@@ -203,6 +265,8 @@ angular.module(PKG.name + '.services')
         style: conf.style || '',
         description: conf.description,
         outputSchema: conf.outputSchema || '',
+        pluginTemplate: conf.pluginTemplate || null,
+        lock: conf.lock || null,
         properties: conf.properties || {},
         _backendProperties: conf._backendProperties,
         type: conf.type

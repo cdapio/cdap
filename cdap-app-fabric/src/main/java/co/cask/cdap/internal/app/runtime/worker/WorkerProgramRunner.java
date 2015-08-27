@@ -40,6 +40,7 @@ import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.RunIds;
 
 import javax.annotation.Nullable;
@@ -56,17 +57,20 @@ public class WorkerProgramRunner implements ProgramRunner {
   private final DiscoveryServiceClient discoveryServiceClient;
   private final TransactionSystemClient txClient;
   private final StreamWriterFactory streamWriterFactory;
+  private final LocationFactory locationFactory;
 
   @Inject
   public WorkerProgramRunner(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
                              DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient,
-                             TransactionSystemClient txClient, StreamWriterFactory streamWriterFactory) {
+                             TransactionSystemClient txClient, StreamWriterFactory streamWriterFactory,
+                             LocationFactory locationFactory) {
     this.cConf = cConf;
     this.metricsCollectionService = metricsCollectionService;
     this.datasetFramework = datasetFramework;
     this.discoveryServiceClient = discoveryServiceClient;
     this.txClient = txClient;
     this.streamWriterFactory = streamWriterFactory;
+    this.locationFactory = locationFactory;
   }
 
   @Override
@@ -110,8 +114,9 @@ public class WorkerProgramRunner implements ProgramRunner {
       newWorkerSpec, program, runId, instanceId, instanceCount,
       options.getUserArguments(), cConf,
       metricsCollectionService, datasetFramework,
-      txClient, discoveryServiceClient, streamWriterFactory,
-      adapterSpec, createPluginInstantiator(adapterSpec, program.getClassLoader()));
+      txClient, discoveryServiceClient, streamWriterFactory, locationFactory,
+      adapterSpec, createPluginInstantiator(adapterSpec, program.getClassLoader()),
+      createArtifactPluginInstantiator(program.getClassLoader()));
     WorkerDriver worker = new WorkerDriver(program, newWorkerSpec, context);
 
     ProgramControllerServiceAdapter controller = new WorkerControllerServiceAdapter(worker, workerName, runId);
@@ -136,6 +141,11 @@ public class WorkerProgramRunner implements ProgramRunner {
       return null;
     }
     return new PluginInstantiator(cConf, adapterSpec.getTemplate(), programClassLoader);
+  }
+
+  @Nullable
+  private PluginInstantiator createArtifactPluginInstantiator(ClassLoader classLoader) {
+    return new PluginInstantiator(cConf, classLoader);
   }
 
   private static final class WorkerControllerServiceAdapter extends ProgramControllerServiceAdapter {

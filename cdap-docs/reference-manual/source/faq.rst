@@ -22,7 +22,7 @@ Cask Data Application Platform
 
 Cask Data Application Platform (CDAP) is the industry’s first Big Data Application Server for Hadoop. It
 abstracts all the complexities and integrates the components of the Hadoop ecosystem (YARN, MapReduce, 
-Zookeeper, HBase, etc.) enabling developers to build, test, deploy, and manage Big Data applications
+ZooKeeper, HBase, etc.) enabling developers to build, test, deploy, and manage Big Data applications
 without having to worry about infrastructure, interoperability, or the complexities of distributed
 systems.
 
@@ -107,7 +107,7 @@ Issues, User Groups, Mailing Lists, and IRC Channel
 
 .. rubric:: I've found a bug in CDAP. How do I file an issue?
 
-We have a `JIRA for filing issues. <https://issues.cask.co/browse/CDAP>`__
+We have a `JIRA for filing issues <https://issues.cask.co/browse/CDAP>`__.
 
 
 .. rubric:: What User Groups and Mailing Lists are available about CDAP?
@@ -128,7 +128,7 @@ notifications.
 
 .. rubric:: Is CDAP on IRC?
 
-**CDAP IRC Channel:** #cdap on `irc.freenode.net. <http://irc.freenode.net/>`__
+**CDAP IRC Channel:** #cdap on `irc.freenode.net <irc://irc.freenode.net:6667/cdap>`__.
 
 
 

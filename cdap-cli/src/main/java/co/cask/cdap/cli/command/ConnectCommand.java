@@ -20,7 +20,6 @@ import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.CLIConnectionConfig;
 import co.cask.cdap.cli.LaunchOptions;
 import co.cask.cdap.cli.util.InstanceURIParser;
-import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.common.cli.Arguments;
 import co.cask.common.cli.Command;
 

@@ -108,7 +108,7 @@ body.theme-cdap {
   // Add table-curved class for curved table edges
   .table-curved {
     border-collapse: separate;
-    border: solid @table-border-color 1px;
+    border: 1px solid @table-border-color;
     .border-radius(8px);
     border-left: 0;
     thead {
@@ -276,25 +276,6 @@ body.theme-cdap {
     &.dark {
       margin-top: 0;
       background: @cdap-darkness;
-    }
-  }
-
-  //
-  // Breadcrumbs
-  // --------------------------------------------------
-
-  .breadcrumb {
-    background-color: transparent;
-    padding-left: 0px;
-    font-weight: 500;
-    > li {
-      color: @cdap-gray;
-      a { color: @cdap-header; }
-      + li:before {
-        content: ">";
-        padding: 0 3px;
-        color: @cdap-gray;
-      }
     }
   }
 
@@ -472,4 +453,5 @@ body.theme-cdap {
     text-align: left;
     .border-radius(3px);
   }
+
 }

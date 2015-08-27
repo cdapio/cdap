@@ -21,23 +21,20 @@ import co.cask.cdap.api.flow.flowlet.FailurePolicy;
 import co.cask.cdap.api.flow.flowlet.Flowlet;
 import co.cask.cdap.api.flow.flowlet.FlowletConfigurer;
 import co.cask.cdap.api.flow.flowlet.FlowletSpecification;
+import co.cask.cdap.internal.api.DefaultDatasetConfigurer;
 import co.cask.cdap.internal.flowlet.DefaultFlowletSpecification;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.internal.specification.PropertyFieldExtractor;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
-import com.google.common.reflect.TypeToken;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 /**
  * Default implementation of {@link FlowletConfigurer}.
  */
-public class DefaultFlowletConfigurer implements FlowletConfigurer {
+public class DefaultFlowletConfigurer extends DefaultDatasetConfigurer implements FlowletConfigurer {
 
   private final String className;
   private final Map<String, String> propertyFields;
@@ -53,14 +50,14 @@ public class DefaultFlowletConfigurer implements FlowletConfigurer {
     this.name = flowlet.getClass().getSimpleName();
     this.className = flowlet.getClass().getName();
     this.failurePolicy = FailurePolicy.RETRY;
-    this.propertyFields = Maps.newHashMap();
+    this.propertyFields = new HashMap<>();
     this.description = "";
     this.resources = new Resources();
-    this.properties = ImmutableMap.of();
-    this.datasets = Sets.newHashSet();
+    this.properties = new HashMap<>();
+    this.datasets = new HashSet<>();
 
     // Grab all @Property fields
-    Reflections.visit(flowlet, TypeToken.of(flowlet.getClass()), new PropertyFieldExtractor(propertyFields));
+    Reflections.visit(flowlet, flowlet.getClass(), new PropertyFieldExtractor(propertyFields));
   }
 
   @Override
@@ -75,28 +72,34 @@ public class DefaultFlowletConfigurer implements FlowletConfigurer {
 
   @Override
   public void setResources(Resources resources) {
-    Preconditions.checkArgument(resources != null, "Resources cannot be null.");
+    if (resources == null) {
+      throw new IllegalArgumentException("Resources cannot be null.");
+    }
     this.resources = resources;
   }
 
   @Override
   public void setFailurePolicy(FailurePolicy failurePolicy) {
-    Preconditions.checkArgument(failurePolicy != null, "FailurePolicy cannot be null");
+    if (failurePolicy == null) {
+      throw new IllegalArgumentException("FailurePolicy cannot be null");
+    }
     this.failurePolicy = failurePolicy;
   }
 
   @Override
   public void setProperties(Map<String, String> properties) {
-    this.properties = ImmutableMap.copyOf(properties);
+    this.properties = new HashMap<>(properties);
   }
 
   @Override
   public void useDatasets(Iterable<String> datasets) {
-    Iterables.addAll(this.datasets, datasets);
+    for (String dataset : datasets) {
+      this.datasets.add(dataset);
+    }
   }
 
   public FlowletSpecification createSpecification() {
-    Map<String, String> properties = Maps.newHashMap(this.properties);
+    Map<String, String> properties = new HashMap<>(this.properties);
     properties.putAll(propertyFields);
     return new DefaultFlowletSpecification(this.className, this.name, this.description, this.failurePolicy,
                                            this.datasets, this.properties, this.resources);

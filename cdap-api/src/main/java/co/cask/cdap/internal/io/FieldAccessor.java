@@ -16,7 +16,7 @@
 
 package co.cask.cdap.internal.io;
 
-import com.google.common.reflect.TypeToken;
+import java.lang.reflect.Type;
 
 /**
  *
@@ -59,5 +59,5 @@ public interface FieldAccessor {
 
   void setDouble(Object object, double value);
 
-  TypeToken<?> getType();
+  Type getType();
 }

@@ -29,6 +29,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.DataFabricFacadeFactory;
 import co.cask.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
 import co.cask.cdap.internal.app.services.ServiceHttpServer;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.tephra.TransactionSystemClient;
@@ -37,6 +38,9 @@ import com.google.inject.Inject;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.ServiceAnnouncer;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.filesystem.LocationFactory;
+
+import javax.annotation.Nullable;
 
 /**
  * A {@link ProgramRunner} that runs a component inside a Service (either a HTTP Server or a Worker).
@@ -50,12 +54,13 @@ public class ServiceProgramRunner implements ProgramRunner {
   private final TransactionSystemClient txClient;
   private final ServiceAnnouncer serviceAnnouncer;
   private final DataFabricFacadeFactory dataFabricFacadeFactory;
+  private final LocationFactory locationFactory;
 
   @Inject
   public ServiceProgramRunner(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
                               DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient,
                               TransactionSystemClient txClient, ServiceAnnouncer serviceAnnouncer,
-                              DataFabricFacadeFactory dataFabricFacadeFactory) {
+                              DataFabricFacadeFactory dataFabricFacadeFactory, LocationFactory locationFactory) {
     this.cConf = cConf;
     this.metricsCollectionService = metricsCollectionService;
     this.datasetFramework = datasetFramework;
@@ -63,6 +68,7 @@ public class ServiceProgramRunner implements ProgramRunner {
     this.txClient = txClient;
     this.serviceAnnouncer = serviceAnnouncer;
     this.dataFabricFacadeFactory = dataFabricFacadeFactory;
+    this.locationFactory = locationFactory;
   }
 
   @Override
@@ -96,11 +102,17 @@ public class ServiceProgramRunner implements ProgramRunner {
     ServiceHttpServer component = new ServiceHttpServer(host, program, spec, runId, options.getUserArguments(),
                                       instanceId, instanceCount, serviceAnnouncer,
                                       metricsCollectionService, datasetFramework, dataFabricFacadeFactory,
-                                      txClient, discoveryServiceClient);
+                                      txClient, discoveryServiceClient, locationFactory,
+                                      createArtifactPluginInstantiator(program.getClassLoader()));
 
     ProgramControllerServiceAdapter controller = new ServiceProgramControllerAdapter(component, componentName, runId);
     component.start();
     return controller;
+  }
+
+  @Nullable
+  private PluginInstantiator createArtifactPluginInstantiator(ClassLoader classLoader) {
+    return new PluginInstantiator(cConf, classLoader);
   }
 
   private static final class ServiceProgramControllerAdapter extends ProgramControllerServiceAdapter {

@@ -16,8 +16,6 @@
 
 package co.cask.cdap.api.dataset.lib;
 
-import com.google.common.base.Preconditions;
-
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -94,8 +92,12 @@ public class PartitionKey {
      *         or if the value is null.
      */
     public Builder addField(String name, Comparable value) {
-      Preconditions.checkArgument(name != null && !name.isEmpty(), "field name cannot be null or empty.");
-      Preconditions.checkArgument(value != null, "field name cannot be null.");
+      if (name == null || name.isEmpty()) {
+        throw new IllegalArgumentException("Field name cannot be null or empty.");
+      }
+      if (value == null) {
+        throw new IllegalArgumentException("Field value cannot be null.");
+      }
       if (fields.containsKey(name)) {
         throw new IllegalArgumentException(String.format("Field '%s' already exists in partition key.", name));
       }
@@ -148,7 +150,9 @@ public class PartitionKey {
      * @throws java.lang.IllegalStateException if no fields have been added
      */
     public PartitionKey build() {
-      Preconditions.checkState(!fields.isEmpty(), "Partition key cannot be empty.");
+      if (fields.isEmpty()) {
+        throw new IllegalStateException("Partition key cannot be empty.");
+      }
       return new PartitionKey(fields);
     }
   }

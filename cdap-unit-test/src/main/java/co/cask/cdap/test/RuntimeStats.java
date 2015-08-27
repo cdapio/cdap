@@ -42,8 +42,11 @@ import java.util.concurrent.TimeoutException;
 import javax.annotation.Nullable;
 
 /**
- *
+ * This class is deprecated, use {@link FlowManager} or {@link ServiceManager} for flow/service related metrics and use
+ * {@link MetricsManager} for querying metrics for other program types and custom user metrics.
+ * TODO: remove in next release (CDAP-3.3)
  */
+@Deprecated
 public final class RuntimeStats {
 
   // ugly attempt to suport existing APIs
@@ -182,6 +185,10 @@ public final class RuntimeStats {
 
   private static long getTotalCounter(Map<String, String> context, String metricName) {
     MetricDataQuery query = getTotalCounterQuery(context, metricName);
+    return getSingleValueFromTotals(query);
+  }
+
+  private static long getSingleValueFromTotals(MetricDataQuery query) {
     try {
       Collection<MetricTimeSeries> result = metricStore.query(query);
       if (result.isEmpty()) {

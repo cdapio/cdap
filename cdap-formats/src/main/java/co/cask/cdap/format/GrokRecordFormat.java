@@ -21,6 +21,7 @@ import co.cask.cdap.api.data.format.UnexpectedFormatException;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
+import co.cask.cdap.spi.stream.AbstractStreamEventRecordFormat;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Resources;
@@ -39,7 +40,7 @@ import java.util.Map;
 /**
  * GrokRecordFormat. Grok parses a string and outputs a map of field name (string) to value (string).
  */
-public class GrokRecordFormat extends StreamEventRecordFormat<StructuredRecord> {
+public class GrokRecordFormat extends AbstractStreamEventRecordFormat<StructuredRecord> {
 
   private static final Logger LOG = LoggerFactory.getLogger(GrokRecordFormat.class);
   private static final String DEFAULT_PATTERN = "%{GREEDYDATA:body}";

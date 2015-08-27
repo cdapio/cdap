@@ -18,9 +18,11 @@ angular.module(PKG.name+'.feature.dashboard')
           rDashboardsModel: function ($stateParams, MyDashboardsModel) {
             return (new MyDashboardsModel($stateParams.namespace)).$promise;
           }
-
         },
-        controller: 'DashboardCtrl'
+        controller: 'DashboardCtrl',
+        ncyBreadcrumb: {
+          skip: true
+        }
       })
 
       .state('dashboard.standard', {
@@ -32,7 +34,10 @@ angular.module(PKG.name+'.feature.dashboard')
       .state('dashboard.standard.cdap', {
         url: '/cdap',
         templateUrl: '/assets/features/dashboard/templates/staticdashboard.html',
-        controller: 'OpsCdapCtrl'
+        controller: 'OpsCdapCtrl',
+        ncyBreadcrumb: {
+          label: 'Operations'
+        }
       })
 
       .state('dashboard.user', {
@@ -43,6 +48,9 @@ angular.module(PKG.name+'.feature.dashboard')
           tab: function($stateParams) {
             return $stateParams.tab;
           }
+        },
+        ncyBreadcrumb: {
+          label: 'Operations'
         }
       })
 

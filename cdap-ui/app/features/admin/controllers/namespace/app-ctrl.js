@@ -1,6 +1,6 @@
 var alertpromise;
 angular.module(PKG.name + '.feature.admin').controller('NamespaceAppController',
-function ($scope, $state, myAppUploader, MyDataSource, myNamespace, myAdapterApi, $alert, $timeout) {
+function ($scope, $state, myAppUploader, MyDataSource, myNamespace, myAdapterApi, $alert) {
 
   $scope.apps = [];
   $scope.nsname = myNamespace.getDisplayName($state.params.nsadmin);
@@ -39,7 +39,7 @@ function ($scope, $state, myAppUploader, MyDataSource, myNamespace, myAdapterApi
     } else {
       deleteApp(id);
     }
-  }
+  };
 
   function deleteAdapter(id, p) {
     myAdapterApi

@@ -36,6 +36,7 @@ import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.internal.app.Plugin;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
 import co.cask.cdap.logging.context.MapReduceLoggingContext;
@@ -46,6 +47,7 @@ import com.google.common.collect.Maps;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.filesystem.LocationFactory;
 
 import java.util.List;
 import java.util.Map;
@@ -64,6 +66,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   private final WorkflowToken workflowToken;
   private final Metrics userMetrics;
   private final MetricsCollectionService metricsCollectionService;
+  private final Map<String, Plugin> plugins;
 
   private String inputDatasetName;
   private List<Split> inputDataSelection;
@@ -86,11 +89,14 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
                                DiscoveryServiceClient discoveryServiceClient,
                                MetricsCollectionService metricsCollectionService,
                                DatasetFramework dsFramework,
+                               LocationFactory locationFactory,
                                @Nullable AdapterDefinition adapterSpec,
-                               @Nullable PluginInstantiator pluginInstantiator) {
+                               @Nullable PluginInstantiator pluginInstantiator,
+                               @Nullable PluginInstantiator artifactPluginInstantiator) {
     super(program, runId, runtimeArguments, datasets,
           getMetricCollector(program, runId.getId(), taskId, metricsCollectionService, type, adapterSpec),
-          dsFramework, discoveryServiceClient, adapterSpec, pluginInstantiator);
+          dsFramework, discoveryServiceClient, locationFactory, adapterSpec, pluginInstantiator,
+          artifactPluginInstantiator);
     this.logicalStartTime = logicalStartTime;
     this.programNameInWorkflow = programNameInWorkflow;
     this.workflowToken = workflowToken;
@@ -108,6 +114,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
     // initialize input/output to what the spec says. These can be overwritten at runtime.
     this.inputDatasetName = spec.getInputDataSet();
     this.outputDatasetName = spec.getOutputDataSet();
+    this.plugins = Maps.newHashMap(program.getApplicationSpecification().getPlugins());
   }
 
   private LoggingContext createLoggingContext(Id.Program programId, RunId runId,
@@ -119,8 +126,12 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
 
   @Override
   public String toString() {
-    return String.format("job=%s,=%s",
-                         spec.getName(), super.toString());
+    return String.format("job=%s,=%s", spec.getName(), super.toString());
+  }
+
+  @Override
+  public Map<String, Plugin> getPlugins() {
+    return plugins;
   }
 
   @Override

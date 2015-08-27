@@ -17,35 +17,12 @@
 package co.cask.cdap.api.workflow;
 
 import co.cask.cdap.api.Predicate;
-
-import java.util.Map;
+import co.cask.cdap.api.ProgramConfigurer;
 
 /**
  * Configurer for configuring the {@link Workflow}.
  */
-public interface WorkflowConfigurer {
-
-  /**
-   * Sets the name of the {@link Workflow}
-   *
-   * @param name of the {@link Workflow}
-   */
-  void setName(String name);
-
-  /**
-   * Sets the description of the {@link Workflow}
-   *
-   * @param description of the {@link Workflow}
-   */
-  void setDescription(String description);
-
-  /**
-   * Sets the map of properties that will be available through the {@link WorkflowSpecification#getProperties()}
-   * at runtime
-   *
-   * @param properties the properties to set
-   */
-  void setProperties(Map<String, String> properties);
+public interface WorkflowConfigurer extends ProgramConfigurer {
 
   /**
    * Adds a MapReduce program as a next sequential step in the {@link Workflow}. MapReduce program must be

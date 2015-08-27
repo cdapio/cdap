@@ -17,6 +17,8 @@
 package co.cask.cdap.internal.app.runtime;
 
 import co.cask.cdap.api.RuntimeContext;
+import co.cask.cdap.api.artifact.ArtifactDescriptor;
+import co.cask.cdap.api.artifact.PluginContext;
 import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.DatasetInstantiationException;
@@ -31,6 +33,7 @@ import co.cask.cdap.app.services.AbstractServiceDiscoverer;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.dataset.DatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.internal.app.Plugin;
 import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
 import co.cask.cdap.proto.Id;
@@ -41,13 +44,16 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
+import com.google.common.io.Closeables;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -57,7 +63,7 @@ import javax.annotation.Nullable;
  * Base class for program runtime context
  */
 public abstract class AbstractContext extends AbstractServiceDiscoverer
-                                      implements DatasetContext, RuntimeContext, AdapterContext {
+                                      implements DatasetContext, RuntimeContext, AdapterContext, PluginContext {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractContext.class);
 
   private final Program program;
@@ -70,33 +76,41 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
 
   private final DatasetInstantiator dsInstantiator;
   private final DiscoveryServiceClient discoveryServiceClient;
+  private final LocationFactory locationFactory;
 
   private final AdapterDefinition adapterSpec;
   private final PluginInstantiator pluginInstantiator;
+  private final PluginInstantiator artifactPluginInstantiator;
 
   /**
    * Constructs a context without application template adapter support.
    */
   protected AbstractContext(Program program, RunId runId, Arguments arguments,
                             Set<String> datasets, MetricsContext metricsContext,
-                            DatasetFramework dsFramework, DiscoveryServiceClient discoveryServiceClient) {
-    this(program, runId, arguments, datasets, metricsContext, dsFramework, discoveryServiceClient, null, null);
+                            DatasetFramework dsFramework, DiscoveryServiceClient discoveryServiceClient,
+                            LocationFactory locationFactory) {
+    this(program, runId, arguments, datasets, metricsContext, dsFramework, discoveryServiceClient,
+         locationFactory, null, null, null);
   }
 
   /**
    * Constructs a context. To have application template adapter support,
    * both the {@code adapterSpec} and {@code pluginInstantiator} must not be null.
    */
+  // TODO: Pass in only one PluginInstantiator after templates, adapters are removed
   protected AbstractContext(Program program, RunId runId, Arguments arguments,
                             Set<String> datasets, MetricsContext metricsContext,
                             DatasetFramework dsFramework, DiscoveryServiceClient discoveryServiceClient,
+                            LocationFactory locationFactory,
                             @Nullable AdapterDefinition adapterSpec,
-                            @Nullable PluginInstantiator pluginInstantiator) {
+                            @Nullable PluginInstantiator pluginInstantiator,
+                            @Nullable PluginInstantiator artifactPluginInstantiator) {
     super(program.getId());
     this.program = program;
     this.runId = runId;
     this.runtimeArguments = ImmutableMap.copyOf(arguments.asMap());
     this.discoveryServiceClient = discoveryServiceClient;
+    this.locationFactory = locationFactory;
     this.owners = createOwners(program.getId(), adapterSpec);
 
     this.programMetrics = metricsContext;
@@ -109,6 +123,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     this.datasets = Datasets.createDatasets(dsInstantiator, datasets, runtimeArguments);
     this.adapterSpec = adapterSpec;
     this.pluginInstantiator = pluginInstantiator;
+    this.artifactPluginInstantiator = artifactPluginInstantiator;
   }
 
   private List<Id> createOwners(Id.Program programId, @Nullable AdapterDefinition adapterSpec) {
@@ -132,11 +147,19 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   }
 
   /**
-   * Returns the {@link PluginInstantiator} used by this context or {@code null} if there is no plugin supported.
+   * Returns the {@link PluginInstantiator} used by this context or {@code null} if there is no plugin support.
    */
   @Nullable
   public PluginInstantiator getPluginInstantiator() {
     return pluginInstantiator;
+  }
+
+  /**
+   * Returns the {@link PluginInstantiator} used by this context or {@code null} if there is no plugin support.
+   */
+  @Nullable
+  public PluginInstantiator getArtifactPluginInstantiator() {
+    return artifactPluginInstantiator;
   }
 
   @Override
@@ -212,6 +235,10 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   public void close() {
     for (Closeable ds : datasets.values()) {
       closeDataSet(ds);
+    }
+
+    if (artifactPluginInstantiator != null) {
+      Closeables.closeQuietly(artifactPluginInstantiator);
     }
   }
 
@@ -290,5 +317,66 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     tags.put(ProgramTypeMetricTag.getTagName(program.getType()), program.getName());
     tags.put(Constants.Metrics.Tag.RUN_ID, runId);
     return tags;
+  }
+
+  public abstract Map<String, Plugin> getPlugins();
+
+  @Override
+  public PluginProperties getPluginProps(String pluginId) {
+    return getPlugin(pluginId).getProperties();
+  }
+
+  @Override
+  public <T> Class<T> loadClass(String pluginId) {
+    if (artifactPluginInstantiator == null) {
+      throw new UnsupportedOperationException("Plugin not supported for this program type");
+    }
+    Plugin plugin = getPlugin(pluginId);
+    try {
+      URI locationURI = plugin.getLocationURI();
+      ArtifactDescriptor artifactDescriptor = new ArtifactDescriptor(plugin.getPluginName(),
+                                                                     plugin.getArtifactVersion(), plugin.isSystem(),
+                                                                     locationFactory.create(locationURI));
+      return artifactPluginInstantiator.loadClass(artifactDescriptor, plugin.getPluginClass());
+    } catch (ClassNotFoundException e) {
+      // Shouldn't happen, unless there is bug in file localization
+      throw new IllegalArgumentException("Plugin class not found", e);
+    } catch (IOException e) {
+      // This is fatal, since jar cannot be expanded.
+      throw Throwables.propagate(e);
+    }
+  }
+
+  @Override
+  public <T> T newInstance(String pluginId) throws InstantiationException {
+    if (artifactPluginInstantiator == null) {
+      throw new UnsupportedOperationException("Plugin not supported for this program type");
+    }
+    Plugin plugin = getPlugin(pluginId);
+    try {
+      URI locationURI = plugin.getLocationURI();
+      ArtifactDescriptor artifactDescriptor = new ArtifactDescriptor(plugin.getPluginName(),
+                                                                     plugin.getArtifactVersion(), plugin.isSystem(),
+                                                                     locationFactory.create(locationURI));
+      return artifactPluginInstantiator.newInstance(artifactDescriptor, plugin.getPluginClass(),
+                                                    plugin.getProperties());
+    } catch (ClassNotFoundException e) {
+      // Shouldn't happen, unless there is bug in file localization
+      throw new IllegalArgumentException("Plugin class not found", e);
+    } catch (IOException e) {
+      // This is fatal, since jar cannot be expanded.
+      throw Throwables.propagate(e);
+    }
+  }
+
+  private Plugin getPlugin(String pluginId) {
+    if (getPlugins() == null) {
+      throw new UnsupportedOperationException("Plugin not supported in this program");
+    }
+
+    Plugin plugin = getPlugins().get(pluginId);
+    Preconditions.checkArgument(plugin != null, "Plugin with id %s does not exist in program %s of application %s.",
+                                pluginId, program.getId(), program.getApplicationId());
+    return plugin;
   }
 }

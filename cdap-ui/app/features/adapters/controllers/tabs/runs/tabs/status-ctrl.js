@@ -11,8 +11,6 @@ angular.module(PKG.name + '.feature.adapters')
       scope: $scope
     };
 
-    var template;
-
     $scope.cloneAdapter = function() {
       if ($scope.config) {
         $state.go('adapters.create', {
@@ -60,8 +58,12 @@ angular.module(PKG.name + '.feature.adapters')
 
       });
 
+    if ($scope.runs.length === 0) {
+      return;
+    }
     var context = 'namespace.' + $state.params.namespace +
-                  '.adapter.' + $state.params.adapterId;
+                  '.adapter.' + $state.params.adapterId +
+                  '.run.' + $scope.runs.selected.runid;
     var tagQueryParams = MyMetricsQueryHelper
                           .tagsToParams(
                             MyMetricsQueryHelper.contextToTags(context)
@@ -79,28 +81,24 @@ angular.module(PKG.name + '.feature.adapters')
       }
     };
 
-    datasrc.request(
+    datasrc.poll(
       {
         method: 'POST',
         _cdapPath: '/metrics/search?target=metric&' + tagQueryParams
-      })
+      },
+      function onMetricsDiscoverySuccess(res) {
+        widget.metric.names = res;
+        if (res.length > 0) {
+          fetchMetricsData(widget);
+        } else {
+          $scope.formattedData = [];
+        }
+      }
+    );
+    function fetchMetricsData(widget) {
+      DashboardHelper.fetchData(widget)
         .then(
-          function onMetricsDiscoverySuccess(res) {
-            widget.metric.names = res;
-            if (res.length > 0) {
-              pollForMetricsData(widget);
-            } else {
-              $scope.formattedData = [];
-            }
-          },
-          function onMetricsDiscoveryError() {
-            console.error('Error on Metrics fetch');
-          }
-        );
-    function pollForMetricsData(widget) {
-      DashboardHelper.pollData(widget)
-        .then(
-          function onMetricsFetchSuccess(metrics) {
+          function onMetricsFetchSuccess() {
             if (!widget.formattedData || !widget.formattedData.columns) {
               return;
             }
@@ -135,10 +133,10 @@ angular.module(PKG.name + '.feature.adapters')
         return metric.type === 'sink';
       });
       sink = sink[0];
-      transform = data.filter(function(metric) {
+      transforms = data.filter(function(metric) {
         return metric.type === 'transform';
       });
-      returnArray = returnArray.concat(transform);
+      returnArray = returnArray.concat(transforms);
       if (source) {returnArray.unshift(source);}
       if (sink) {returnArray.push(sink);}
       return returnArray;
@@ -148,7 +146,7 @@ angular.module(PKG.name + '.feature.adapters')
     function extractMetricsFromData(obj, metric) {
       var matches = ['records.in', 'records.out'];
       var match = matches.filter(function(m) {
-        return metric[0].indexOf(m);
+        return metric[0].indexOf(m) !== -1;
       });
       if (match.length > 0) {
         var metricNameArray = metric[0].split('.');

@@ -46,6 +46,7 @@ import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.internal.app.runtime.schedule.store.ScheduleStoreTableUtil;
+import co.cask.cdap.internal.app.services.ApplicationLifecycleService;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.logging.save.LogSaverTableUtil;
 import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
@@ -97,13 +98,16 @@ public class UpgradeTool {
    * Set of Action available in this tool.
    */
   private enum Action {
-    UPGRADE("Upgrades CDAP to 3.0\n" +
+    UPGRADE("Upgrades CDAP to 3.2\n" +
               "  The upgrade tool upgrades the following: \n" +
               "  1. User Datasets\n" +
               "      - Upgrades the coprocessor jars for tables\n" +
               "      - Migrates the metadata for PartitionedFileSets\n" +
               "  2. System Datasets\n" +
               "  3. UsageRegistry Dataset Type\n" +
+              "  4. Application Specifications\n" +
+              "      - Adds artifacts for existing applications\n" +
+              "      - Updates application metadata to include newly added artifact\n" +
               "  Note: Once you run the upgrade tool you cannot rollback to the previous version."),
     HELP("Show this help.");
 
@@ -324,6 +328,10 @@ public class UpgradeTool {
     UsageRegistry usageRegistry = injector.getInstance(UsageRegistry.class);
     usageRegistry.upgrade(injector.getInstance(Key.get(DatasetInstanceManager.class,
                                                        Names.named("datasetInstanceManager"))));
+
+    LOG.info("Upgrading Apps ...");
+    ApplicationLifecycleService applicationLifecycleService = injector.getInstance(ApplicationLifecycleService.class);
+    applicationLifecycleService.upgrade(true);
   }
 
   public static void main(String[] args) {

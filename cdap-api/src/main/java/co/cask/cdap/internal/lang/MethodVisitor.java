@@ -15,9 +15,8 @@
  */
 package co.cask.cdap.internal.lang;
 
-import com.google.common.reflect.TypeToken;
-
 import java.lang.reflect.Field;
+import java.lang.reflect.Type;
 
 /**
  * Visitor for visiting class method.
@@ -25,8 +24,7 @@ import java.lang.reflect.Field;
 public abstract class MethodVisitor implements Visitor {
 
   @Override
-  public final void visit(Object instance, TypeToken<?> inspectType,
-                          TypeToken<?> declareType, Field field) throws Exception {
+  public final void visit(Object instance, Type inspectType, Type declareType, Field field) throws Exception {
     // no-op
   }
 }

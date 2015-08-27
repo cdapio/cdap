@@ -24,7 +24,6 @@ angular.module(PKG.name + '.feature.admin')
         .then(
           function success(res) {
             $scope.isSaving = false;
-            $modalInstance.close();
             $alert({
               content: res,
               type: 'success'
@@ -32,7 +31,9 @@ angular.module(PKG.name + '.feature.admin')
 
             myNamespace.getList(true).then(function() {
               EventPipe.emit('namespace.update');
+               $modalInstance.close();
             });
+
           },
           function error(err) {
             $scope.isSaving = false;
@@ -43,5 +44,11 @@ angular.module(PKG.name + '.feature.admin')
     $scope.closeModal = function() {
       $modalInstance.close();
 
+    };
+
+    $scope.enter = function (event) {
+      if (event.keyCode === 13) {
+        $scope.submitHandler();
+      }
     };
   });

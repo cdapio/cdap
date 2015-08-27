@@ -36,7 +36,7 @@ The CDAP CSD consists of four mandatory roles:
 
 and an optional role |---| Security Auth Service |---| plus a Gateway client configuration. 
 
-CDAP depends on HBase, YARN, HDFS, Zookeeper, and |---| optionally |---| Hive. It must also be placed on a cluster host with full
+CDAP depends on HBase, YARN, HDFS, ZooKeeper, and |---| optionally |---| Hive. It must also be placed on a cluster host with full
 client configurations for these dependent services. Therefore, CDAP roles must be colocated on a cluster host with at least
 an HDFS Gateway, Yarn Gateway, HBase Gateway, and |---| optionally |---| a Hive Gateway. Note that Gateways are redundant if colocating
 CDAP on cluster hosts with actual services, such as the HBase Master, Yarn Resourcemanager, or HDFS Namenode.
@@ -51,8 +51,8 @@ Prerequisites
    role instance will run. You can download the appropriate version of Node.js from `nodejs.org
    <http://nodejs.org/dist/>`__.
 
-#. Zookeeper's ``maxClientCnxns`` must be raised from its default.  We suggest setting it to zero
-   (unlimited connections). As each YARN container launched by CDAP makes a connection to Zookeeper, 
+#. ZooKeeper's ``maxClientCnxns`` must be raised from its default.  We suggest setting it to zero
+   (unlimited connections). As each YARN container launched by CDAP makes a connection to ZooKeeper, 
    the number of connections required is a function of usage.
 
 #. For Kerberos-enabled Hadoop clusters:

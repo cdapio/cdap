@@ -27,10 +27,12 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
+import co.cask.cdap.internal.app.store.WorkflowDataset;
 import co.cask.cdap.proto.AdapterStatus;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.WorkflowStatistics;
 import co.cask.cdap.templates.AdapterDefinition;
 import com.google.common.base.Predicate;
 import org.apache.twill.filesystem.Location;
@@ -198,8 +200,8 @@ public interface Store {
    * @param specification        Application specification
    * @return                     List of ProgramSpecifications that are deleted
    */
-  List<ProgramSpecification> getDeletedProgramSpecifications (Id.Application id,
-                                                              ApplicationSpecification specification);
+  List<ProgramSpecification> getDeletedProgramSpecifications(Id.Application id,
+                                                             ApplicationSpecification specification);
 
   /**
    * Returns application specification by id.
@@ -211,9 +213,27 @@ public interface Store {
   ApplicationSpecification getApplication(Id.Application id);
 
   /**
-   * Returns a collection of all application specs.
+   * Returns a collection of all application specs in the specified namespace
+   *
+   * @param id the namespace to get application specs from
+   * @return collection of all application specs in the namespace
    */
   Collection<ApplicationSpecification> getAllApplications(Id.Namespace id);
+
+  /**
+   * Returns a collection of all application specs in the specified namespace, optionally filtered to contain
+   * only applications that use the specified artifact name and version.
+   *
+   * @param namespace the namespace to get application specs from
+   * @param artifactName the name of the artifact to filter on.
+   *                     If null, app specs will not be filtered by artifact name.
+   * @param artifactVersion the version of the artifact to filter on.
+   *                        If null, app specs will not be filtered by artifact version.
+   * @return collection of all application specs in the namespace
+   */
+  Collection<ApplicationSpecification> getApplications(Id.Namespace namespace,
+                                                       @Nullable String artifactName,
+                                                       @Nullable String artifactVersion);
 
   /**
    * Returns location of the application archive.
@@ -486,4 +506,38 @@ public interface Store {
    * @return the {@link WorkflowToken} for the specified workflow run
    */
   WorkflowToken getWorkflowToken(Id.Workflow workflowId, String workflowRunId);
+
+  /**
+   * Used by {@link co.cask.cdap.gateway.handlers.WorkflowStatsSLAHttpHandler} to get the statistics of all completed
+   * workflows in a time range.
+   *
+   * @param workflowId Workflow that needs to have its statistics returned
+   * @param startTime StartTime of the range
+   * @param endTime EndTime of the range
+   * @param percentiles List of percentiles that the user wants to see
+   * @return the statistics for a given workflow
+   */
+  WorkflowStatistics getWorkflowStatistics(Id.Workflow workflowId, long startTime,
+                                           long endTime, List<Double> percentiles);
+
+  /**
+   * Returns the record that represents the run of a workflow.
+   *
+   * @param workflowId The Workflow whose run needs to be queried
+   * @param runId RunId of the workflow run
+   * @return A workflow run record corresponding to the runId
+   */
+  WorkflowDataset.WorkflowRunRecord getWorkflowRun(Id.Workflow workflowId, String runId);
+
+  /**
+   * Get a list of workflow runs that are spaced apart by time interval in both directions from the run id provided.
+   *
+   * @param workflow The workflow whose statistics need to be obtained
+   * @param runId The run id of the workflow
+   * @param limit The number of the records that the user wants to compare against on either side of the run
+   * @param timeInterval The timeInterval with which the user wants to space out the runs
+   * @return Map of runId of Workflow to DetailedStatistics of the run
+   */
+  Collection<WorkflowDataset.WorkflowRunRecord> retrieveSpacedRecords(Id.Workflow workflow, String runId,
+                                                                       int limit, long timeInterval);
 }

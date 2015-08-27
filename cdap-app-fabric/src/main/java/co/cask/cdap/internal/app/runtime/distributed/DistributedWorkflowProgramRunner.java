@@ -32,7 +32,6 @@ import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerHelper;
 import co.cask.cdap.internal.app.runtime.spark.SparkContextConfig;
@@ -45,7 +44,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunner;
-import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -85,8 +83,7 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
     Preconditions.checkNotNull(workflowSpec, "Missing WorkflowSpecification for %s", program.getName());
 
     // It the workflow has Spark, localize the spark-assembly jar
-    List<String> extraClassPaths = new ArrayList<>(
-      MapReduceContainerHelper.localizeFramework(hConf, localizeResources));
+    List<String> extraClassPaths = new ArrayList<>();
 
     // See if the Workflow has Spark in it
     Resources resources = findSparkDriverResources(program.getApplicationSpecification().getSpark(), workflowSpec);
@@ -99,54 +96,22 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
       // No Spark
       resources = new Resources();
     }
-
-    // TODO(CDAP-3119): Hack for TWILL-144. Need to remove
-    File launcherFile = null;
-    if (MapReduceContainerHelper.getFrameworkURI(hConf) != null) {
-      File tempDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
-                              cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
-      tempDir.mkdirs();
-      try {
-        launcherFile = File.createTempFile("launcher", ".jar", tempDir);
-        List<String> paths = MapReduceContainerHelper.getMapReduceClassPath(hConf, new ArrayList<String>());
-        MapReduceContainerHelper.saveLauncher(hConf, launcherFile, paths);
-        localizeResources.put("launcher.jar", new LocalizeResource(launcherFile));
-      } catch (Exception e) {
-        LOG.warn("Failed to create twill container launcher.jar for TWILL-144 hack. " +
-                   "Still proceed, but the run will likely fail", e);
-      }
-    }
-    // End Hack for TWILL-144
+    
+    // Add classpaths for MR framework
+    extraClassPaths.addAll(MapReduceContainerHelper.localizeFramework(hConf, localizeResources));
 
     LOG.info("Launching distributed workflow: " + program.getName() + ":" + workflowSpec.getName());
     TwillController controller = launcher.launch(
       new WorkflowTwillApplication(program, workflowSpec, localizeResources, eventHandler, resources),
       extraClassPaths
     );
-
-    // TODO(CDAP-3119): Hack for TWILL-144. Need to remove
-    final File cleanupFile = launcherFile;
-    Runnable cleanupTask = new Runnable() {
-      @Override
-      public void run() {
-        if (cleanupFile != null) {
-          cleanupFile.delete();
-        }
-      }
-    };
-    // Cleanup when the app is running. Also add a safe guide to do cleanup on terminate in case there is race
-    // such that the app terminated before onRunning was called
-    controller.onRunning(cleanupTask, Threads.SAME_THREAD_EXECUTOR);
-    controller.onTerminated(cleanupTask, Threads.SAME_THREAD_EXECUTOR);
-    // End Hack for TWILL-144
-
     RunId runId = RunIds.fromString(options.getArguments().getOption(ProgramOptionConstants.RUN_ID));
     return new WorkflowTwillProgramController(program.getName(), controller, runId).startListen();
   }
 
   private static Configuration createConfiguration(Configuration hConf) {
     Configuration configuration = new Configuration(hConf);
-    configuration.set(SparkContextConfig.HCONF_ATTR_EXECUTION_MODE, SparkContextConfig.YARN_EXECUTION_MODE);
+    configuration.setBoolean(SparkContextConfig.HCONF_ATTR_CLUSTER_MODE, true);
     return configuration;
   }
 

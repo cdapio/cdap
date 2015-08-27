@@ -166,11 +166,7 @@ final class TimeScheduler implements Scheduler {
         .withSchedule(CronScheduleBuilder
                         .cronSchedule(getQuartzCronExpression(cronEntry))
                         .withMisfireHandlingInstructionDoNothing());
-      if (properties != null) {
-        for (Map.Entry<String, String> entry : properties.entrySet()) {
-          trigger.usingJobData(entry.getKey(), entry.getValue());
-        }
-      }
+      addProperties(trigger, properties);
       try {
         scheduler.scheduleJob(trigger.build());
       } catch (org.quartz.SchedulerException e) {
@@ -268,9 +264,21 @@ final class TimeScheduler implements Scheduler {
   @Override
   public void updateSchedule(Id.Program program, SchedulableProgramType programType, Schedule schedule,
                              Map<String, String> properties) throws NotFoundException, SchedulerException {
-    // TODO modify the update flow [CDAP-1618]
-    deleteSchedule(program, programType, schedule.getName());
-    schedule(program, programType, schedule, properties);
+    checkInitialized();
+    try {
+      Trigger trigger = getTrigger(program, programType, schedule.getName());
+      TriggerBuilder triggerBuilder = trigger.getTriggerBuilder();
+      String cronEntry =  ((TimeSchedule) schedule).getCronEntry();
+
+      // create the new trigger with the new schedule schedule all other fields will remain unmodified
+      triggerBuilder.withSchedule(CronScheduleBuilder
+                                    .cronSchedule(getQuartzCronExpression(cronEntry))
+                                    .withMisfireHandlingInstructionDoNothing());
+      addProperties(triggerBuilder, properties);
+      scheduler.rescheduleJob(trigger.getKey(), triggerBuilder.build());
+    } catch (org.quartz.SchedulerException e) {
+      throw new SchedulerException(e);
+    }
   }
 
   @Override
@@ -278,11 +286,7 @@ final class TimeScheduler implements Scheduler {
     throws NotFoundException, SchedulerException {
     checkInitialized();
     try {
-      Trigger trigger = scheduler.getTrigger(
-        new TriggerKey(AbstractSchedulerService.scheduleIdFor(program, programType, scheduleName)));
-      if (trigger == null) {
-        throw new ScheduleNotFoundException(Id.Schedule.from(program.getApplication(), scheduleName));
-      }
+      Trigger trigger = getTrigger(program, programType, scheduleName);
 
       scheduler.unscheduleJob(trigger.getKey());
 
@@ -394,5 +398,29 @@ final class TimeScheduler implements Scheduler {
         }
       }
     };
+  }
+
+  /**
+   * Gets a {@link Trigger} associated with this program name, type and schedule name
+   */
+  private Trigger getTrigger(Id.Program program, SchedulableProgramType programType,
+                             String scheduleName) throws org.quartz.SchedulerException, ScheduleNotFoundException {
+    Trigger trigger = scheduler.getTrigger(
+      new TriggerKey(AbstractSchedulerService.scheduleIdFor(program, programType, scheduleName)));
+    if (trigger == null) {
+      throw new ScheduleNotFoundException(Id.Schedule.from(program.getApplication(), scheduleName));
+    }
+    return  trigger;
+  }
+
+  /**
+   * Adds properties to a {@link TriggerBuilder} to used by the {@link Trigger}
+   */
+  private void addProperties(TriggerBuilder trigger, Map<String, String> properties) {
+    if (properties != null) {
+      for (Map.Entry<String, String> entry : properties.entrySet()) {
+        trigger.usingJobData(entry.getKey(), entry.getValue());
+      }
+    }
   }
 }

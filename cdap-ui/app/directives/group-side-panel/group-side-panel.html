@@ -48,7 +48,7 @@
     <div class="item-body"
           ng-class="{'text-left': MySidePanel.isExpanded === true}"
           ng-if="MySidePanel.isSubMenu === true && MySidePanel.openedGroup === group.name">
-      <div ng-repeat="plugin in MySidePanel.panel.items"
+      <div ng-repeat="plugin in MySidePanel.panel.items track by $index"
             class="plugin-item"
             popover="{{plugin.description}}"
             popover-title="{{plugin.name}}"

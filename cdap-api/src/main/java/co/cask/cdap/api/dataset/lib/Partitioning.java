@@ -16,8 +16,6 @@
 
 package co.cask.cdap.api.dataset.lib;
 
-import com.google.common.base.Preconditions;
-
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -116,8 +114,12 @@ public class Partitioning {
      *         or if the type is null.
      */
     public Builder addField(@Nonnull String name, @Nonnull FieldType type) {
-      Preconditions.checkArgument(name != null && !name.isEmpty(), "Field name cannot be null or empty.");
-      Preconditions.checkArgument(type != null, "Field type cannot be null.");
+      if (name == null || name.isEmpty()) {
+        throw new IllegalArgumentException("Field name cannot be null or empty.");
+      }
+      if (type == null) {
+        throw new IllegalArgumentException("Field type cannot be null.");
+      }
       if (fields.containsKey(name)) {
         throw new IllegalArgumentException(String.format("Field '%s' already exists in partitioning.", name));
       }
@@ -164,7 +166,9 @@ public class Partitioning {
      * @throws java.lang.IllegalStateException if no fields have been added
      */
     public Partitioning build() {
-      Preconditions.checkState(!fields.isEmpty(), "Partitioning cannot be empty.");
+      if (fields.isEmpty()) {
+        throw new IllegalStateException("Partitioning cannot be empty.");
+      }
       return new Partitioning(fields);
     }
   }

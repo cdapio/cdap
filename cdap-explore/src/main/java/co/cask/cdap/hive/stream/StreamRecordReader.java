@@ -42,16 +42,15 @@ final class StreamRecordReader implements RecordReader<Void, ObjectWritable> {
   private static final Logger LOG = LoggerFactory.getLogger(StreamRecordReader.class);
 
   private final List<PositionStreamEvent> events;
-  private StreamDataFileReader reader;
-  private StreamInputSplit inputSplit;
-  private ReadFilter readFilter;
+  private final StreamDataFileReader reader;
+  private final StreamInputSplit inputSplit;
+  private final ReadFilter readFilter;
 
   StreamRecordReader(InputSplit split, JobConf conf) throws IOException {
     this.inputSplit = (StreamInputSplit) split;
     this.events = Lists.newArrayListWithCapacity(1);
     this.reader = createReader(FileSystem.get(conf), inputSplit);
-    reader.initialize();
-    readFilter = new TimeRangeReadFilter(inputSplit.getStartTime(), inputSplit.getEndTime());
+    this.readFilter = new TimeRangeReadFilter(inputSplit.getStartTime(), inputSplit.getEndTime());
   }
 
   @Override
@@ -114,9 +113,21 @@ final class StreamRecordReader implements RecordReader<Void, ObjectWritable> {
    * @param inputSplit Split information.
    * @return A stream data file reader that is ready for reading events as specified by the input split.
    */
-  private StreamDataFileReader createReader(FileSystem fs, StreamInputSplit inputSplit) {
-    return StreamDataFileReader.createWithOffset(Locations.newInputSupplier(fs, inputSplit.getPath()),
-                                                 Locations.newInputSupplier(fs, inputSplit.getIndexPath()),
-                                                 inputSplit.getStart());
+  private StreamDataFileReader createReader(FileSystem fs, StreamInputSplit inputSplit) throws IOException {
+    StreamDataFileReader reader = StreamDataFileReader.createWithOffset(
+      Locations.newInputSupplier(fs, inputSplit.getPath()),
+      Locations.newInputSupplier(fs, inputSplit.getIndexPath()),
+      inputSplit.getStart());
+    try {
+      reader.initialize();
+      return reader;
+    } catch (IOException e) {
+      try {
+        reader.close();
+      } catch (IOException closeEx) {
+        e.addSuppressed(closeEx);
+      }
+      throw e;
+    }
   }
 }

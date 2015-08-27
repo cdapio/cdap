@@ -80,10 +80,10 @@ public class DistributedKeyManager extends AbstractKeyManager implements Resourc
     this.zookeeper = ZKClients.namespace(zookeeper, parentZNode);
 
     if (acls.isEmpty()) {
-      LOG.warn("Zookeeper ACL list is empty for keys!");
+      LOG.warn("ZooKeeper ACL list is empty for keys!");
       acls = ZooDefs.Ids.OPEN_ACL_UNSAFE;
     }
-    LOG.info("Zookeeper ACLs {} for keys", acls);
+    LOG.info("ZooKeeper ACLs {} for keys", acls);
     this.keyCache = new SharedResourceCache<>(zookeeper, codec, "/keys", acls);
   }
 
@@ -209,7 +209,7 @@ public class DistributedKeyManager extends AbstractKeyManager implements Resourc
       return ZooDefs.Ids.CREATOR_ALL_ACL;
     }
 
-    LOG.warn("Not adding ACLs on keys in Zookeeper as Kerberos is not enabled");
+    LOG.warn("Not adding ACLs on keys in ZooKeeper as Kerberos is not enabled");
     return ZooDefs.Ids.OPEN_ACL_UNSAFE;
   }
 }

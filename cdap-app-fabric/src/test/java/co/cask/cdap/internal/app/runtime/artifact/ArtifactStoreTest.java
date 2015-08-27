@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.artifact;
 
+import co.cask.cdap.WordCountApp;
 import co.cask.cdap.api.artifact.ApplicationClass;
 import co.cask.cdap.api.artifact.ArtifactClasses;
 import co.cask.cdap.api.artifact.ArtifactDescriptor;
@@ -139,6 +140,57 @@ public class ArtifactStoreTest {
 
     ArtifactDetail artifactDetail = artifactStore.getArtifact(artifactId);
     assertEqual(artifactId, artifactMeta, artifactContents, artifactDetail);
+  }
+
+  @Test
+  public void testDelete() throws Exception {
+    // write an artifact with an app
+    Id.Artifact parentId = Id.Artifact.from(Id.Namespace.DEFAULT, "parent", "1.0.0");
+    ApplicationClass appClass = new ApplicationClass(
+      InspectionApp.class.getName(), "",
+      new ReflectionSchemaGenerator().generate(InspectionApp.AConfig.class));
+    ArtifactMeta artifactMeta =
+      new ArtifactMeta(ArtifactClasses.builder().addApp(appClass).build());
+    writeArtifact(parentId, artifactMeta, "parent contents");
+
+    // write a child artifact that extends the parent with some plugins
+    Id.Artifact childId = Id.Artifact.from(Id.Namespace.DEFAULT, "myplugins", "1.0.0");
+    List<PluginClass> plugins = ImmutableList.of(
+      new PluginClass("atype", "plugin1", "", "c.c.c.plugin1", "cfg", ImmutableMap.<String, PluginPropertyField>of()),
+      new PluginClass("atype", "plugin2", "", "c.c.c.plugin2", "cfg", ImmutableMap.<String, PluginPropertyField>of())
+    );
+    Set<ArtifactRange> parents = ImmutableSet.of(new ArtifactRange(
+      parentId.getNamespace(), parentId.getName(), new ArtifactVersion("0.1.0"), new ArtifactVersion("2.0.0")));
+    artifactMeta = new ArtifactMeta(ArtifactClasses.builder().addPlugins(plugins).build(), parents);
+    writeArtifact(childId, artifactMeta, "child contents");
+
+    // check parent has plugins from the child
+    Assert.assertFalse(artifactStore.getPluginClasses(parentId).isEmpty());
+
+    // delete the child artifact
+    artifactStore.delete(childId);
+
+    // shouldn't be able to get artifact detail
+    try {
+      artifactStore.getArtifact(childId);
+      Assert.fail();
+    } catch (ArtifactNotFoundException e) {
+      // expected
+    }
+
+    // shouldn't see it in the list
+    List<ArtifactDetail> artifactList = artifactStore.getArtifacts(parentId.getNamespace());
+    Assert.assertEquals(1, artifactList.size());
+    Assert.assertEquals(parentId.getName(), artifactList.get(0).getDescriptor().getName());
+    // shouldn't see any more plugins for parent
+    Assert.assertTrue(artifactStore.getPluginClasses(parentId).isEmpty());
+
+    // delete parent
+    artifactStore.delete(parentId);
+    // nothing should be in the list
+    Assert.assertTrue(artifactStore.getArtifacts(parentId.getNamespace()).isEmpty());
+    // shouldn't be able to see app class either
+    Assert.assertTrue(artifactStore.getApplicationClasses(Id.Namespace.DEFAULT, appClass.getClassName()).isEmpty());
   }
 
   @Test(expected = ArtifactAlreadyExistsException.class)
@@ -292,6 +344,70 @@ public class ArtifactStoreTest {
     artifactVersions = artifactStore.getArtifacts(range);
     Assert.assertEquals(1, artifactVersions.size());
     assertEqual(artifact2V1, meta2V1, contents2V1, artifactVersions.get(0));
+  }
+
+  @Test
+  public void testGetAppClasses() throws Exception {
+    // create 2 versions of the same artifact with the same app class
+    Id.Artifact app1v1Id = Id.Artifact.from(Id.Namespace.DEFAULT, "appA", "1.0.0");
+    ApplicationClass inspectionClass1 = new ApplicationClass(
+      InspectionApp.class.getName(), "v1",
+      new ReflectionSchemaGenerator().generate(InspectionApp.AConfig.class));
+    ArtifactMeta artifactMeta =
+      new ArtifactMeta(ArtifactClasses.builder().addApp(inspectionClass1).build());
+    writeArtifact(app1v1Id, artifactMeta, "my artifact contents");
+    ArtifactDetail app1v1Detail = artifactStore.getArtifact(app1v1Id);
+
+    Id.Artifact app1v2Id = Id.Artifact.from(Id.Namespace.DEFAULT, "appA", "2.0.0");
+    ApplicationClass inspectionClass2 = new ApplicationClass(
+      InspectionApp.class.getName(), "v2",
+      new ReflectionSchemaGenerator().generate(InspectionApp.AConfig.class));
+    artifactMeta = new ArtifactMeta(ArtifactClasses.builder().addApp(inspectionClass2).build());
+    writeArtifact(app1v2Id, artifactMeta, "my artifact contents");
+    ArtifactDetail app1v2Detail = artifactStore.getArtifact(app1v2Id);
+
+    // create a different artifact with the same app class
+    Id.Artifact app2v1Id = Id.Artifact.from(Id.Namespace.DEFAULT, "appB", "1.0.0");
+    artifactMeta = new ArtifactMeta(ArtifactClasses.builder().addApp(inspectionClass1).build());
+    writeArtifact(app2v1Id, artifactMeta, "other contents");
+    ArtifactDetail app2v1Detail = artifactStore.getArtifact(app2v1Id);
+
+    // create another artifact with a different app class
+    Id.Artifact app3v1Id = Id.Artifact.from(Id.Namespace.DEFAULT, "appC", "1.0.0");
+    ApplicationClass wordCountClass1 = new ApplicationClass(
+      WordCountApp.class.getName(), "v1",
+      new ReflectionSchemaGenerator().generate(InspectionApp.AConfig.class));
+    artifactMeta = new ArtifactMeta(ArtifactClasses.builder().addApp(wordCountClass1).build());
+    writeArtifact(app3v1Id, artifactMeta, "wc contents");
+    ArtifactDetail app3v1Detail = artifactStore.getArtifact(app3v1Id);
+
+    // test getting all app classes in the namespace
+    Map<ArtifactDescriptor, List<ApplicationClass>> appClasses =
+      artifactStore.getApplicationClasses(Id.Namespace.DEFAULT);
+    Map<ArtifactDescriptor, List<ApplicationClass>> expected =
+      ImmutableMap.<ArtifactDescriptor, List<ApplicationClass>>of(
+        app1v1Detail.getDescriptor(), ImmutableList.of(inspectionClass1),
+        app1v2Detail.getDescriptor(), ImmutableList.of(inspectionClass2),
+        app2v1Detail.getDescriptor(), ImmutableList.of(inspectionClass1),
+        app3v1Detail.getDescriptor(), ImmutableList.of(wordCountClass1)
+      );
+    Assert.assertEquals(expected, appClasses);
+
+    // test getting all app classes by class name
+    Map<ArtifactDescriptor, ApplicationClass> appArtifacts =
+      artifactStore.getApplicationClasses(Id.Namespace.DEFAULT, InspectionApp.class.getName());
+    Map<ArtifactDescriptor, ApplicationClass> expectedAppArtifacts = ImmutableMap.of(
+      app1v1Detail.getDescriptor(), inspectionClass1,
+      app1v2Detail.getDescriptor(), inspectionClass2,
+      app2v1Detail.getDescriptor(), inspectionClass1
+    );
+    Assert.assertEquals(expectedAppArtifacts, appArtifacts);
+
+    appArtifacts = artifactStore.getApplicationClasses(Id.Namespace.DEFAULT, WordCountApp.class.getName());
+    expectedAppArtifacts = ImmutableMap.of(app3v1Detail.getDescriptor(), wordCountClass1);
+    Assert.assertEquals(expectedAppArtifacts, appArtifacts);
+
+    Assert.assertTrue(artifactStore.getApplicationClasses(Id.Namespace.from("ghost")).isEmpty());
   }
 
   @Test
@@ -472,6 +588,82 @@ public class ArtifactStoreTest {
     expected.put(artifact2Info, plugins);
     Map<ArtifactDescriptor, List<PluginClass>> actual = artifactStore.getPluginClasses(parentArtifactId);
     Assert.assertEquals(expected, actual);
+  }
+
+  @Test
+  public void testPluginParentInclusiveExclusiveVersions() throws Exception {
+    // write artifacts that extend:
+    // parent-[1.0.0,1.0.0] -- only visible by parent-1.0.0
+    Id.Artifact id1  = Id.Artifact.from(Id.Namespace.DEFAULT, "plugins", "0.0.1");
+    Set<ArtifactRange> parentArtifacts = ImmutableSet.of(new ArtifactRange(
+      Id.Namespace.DEFAULT, "parent", new ArtifactVersion("1.0.0"), true, new ArtifactVersion("1.0.0"), true));
+    List<PluginClass> plugins = ImmutableList.of(
+      new PluginClass("typeA", "plugin1", "", "c.c.c.plugin1", "cfg", ImmutableMap.<String, PluginPropertyField>of())
+    );
+    ArtifactMeta meta = new ArtifactMeta(ArtifactClasses.builder().addPlugins(plugins).build(), parentArtifacts);
+    writeArtifact(id1, meta, "some contents");
+
+    // parent-[2.0.0,2.0.1) -- only visible by parent-2.0.0
+    Id.Artifact id2  = Id.Artifact.from(Id.Namespace.DEFAULT, "plugins", "0.0.2");
+    parentArtifacts = ImmutableSet.of(new ArtifactRange(
+      Id.Namespace.DEFAULT, "parent", new ArtifactVersion("2.0.0"), true, new ArtifactVersion("2.0.1"), false));
+    plugins = ImmutableList.of(
+      new PluginClass("typeA", "plugin2", "", "c.c.c.plugin2", "cfg", ImmutableMap.<String, PluginPropertyField>of())
+    );
+    meta = new ArtifactMeta(ArtifactClasses.builder().addPlugins(plugins).build(), parentArtifacts);
+    writeArtifact(id2, meta, "some contents");
+
+    // parent-(3.0.0,3.0.1] -- only visible by parent-3.0.1
+    Id.Artifact id3  = Id.Artifact.from(Id.Namespace.DEFAULT, "plugins", "0.0.3");
+    parentArtifacts = ImmutableSet.of(new ArtifactRange(
+      Id.Namespace.DEFAULT, "parent", new ArtifactVersion("3.0.0"), false, new ArtifactVersion("3.0.1"), true));
+    plugins = ImmutableList.of(
+      new PluginClass("typeA", "plugin3", "", "c.c.c.plugin3", "cfg", ImmutableMap.<String, PluginPropertyField>of())
+    );
+    meta = new ArtifactMeta(ArtifactClasses.builder().addPlugins(plugins).build(), parentArtifacts);
+    writeArtifact(id3, meta, "some contents");
+
+    // parent-(4.0.0,4.0.2) -- only visible by parent-4.0.1
+    Id.Artifact id4  = Id.Artifact.from(Id.Namespace.DEFAULT, "plugins", "0.0.4");
+    parentArtifacts = ImmutableSet.of(new ArtifactRange(
+      Id.Namespace.DEFAULT, "parent", new ArtifactVersion("4.0.0"), false, new ArtifactVersion("4.0.2"), false));
+    plugins = ImmutableList.of(
+      new PluginClass("typeA", "plugin4", "", "c.c.c.plugin4", "cfg", ImmutableMap.<String, PluginPropertyField>of())
+    );
+    meta = new ArtifactMeta(ArtifactClasses.builder().addPlugins(plugins).build(), parentArtifacts);
+    writeArtifact(id4, meta, "some contents");
+
+    // check parent-1.0.0 has plugin1 but parent-0.0.9 does not and 1.0.1 does not
+    Assert.assertTrue(artifactStore.getPluginClasses(
+      Id.Artifact.from(Id.Namespace.DEFAULT, "parent", "0.0.9")).isEmpty());
+    Assert.assertTrue(artifactStore.getPluginClasses(
+      Id.Artifact.from(Id.Namespace.DEFAULT, "parent", "1.0.1")).isEmpty());
+    Assert.assertEquals(1, artifactStore.getPluginClasses(
+      Id.Artifact.from(Id.Namespace.DEFAULT, "parent", "1.0.0")).size());
+
+    // check parent-2.0.0 has plugin2 but parent-1.9.9 does not and 2.0.1 does not
+    Assert.assertTrue(artifactStore.getPluginClasses(
+      Id.Artifact.from(Id.Namespace.DEFAULT, "parent", "1.9.9")).isEmpty());
+    Assert.assertTrue(artifactStore.getPluginClasses(
+      Id.Artifact.from(Id.Namespace.DEFAULT, "parent", "2.0.1")).isEmpty());
+    Assert.assertEquals(1, artifactStore.getPluginClasses(
+      Id.Artifact.from(Id.Namespace.DEFAULT, "parent", "2.0.0")).size());
+
+    // check parent-3.0.1 has plugin3 but parent-3.0.0 does not and 3.0.2 does not
+    Assert.assertTrue(artifactStore.getPluginClasses(
+      Id.Artifact.from(Id.Namespace.DEFAULT, "parent", "3.0.0")).isEmpty());
+    Assert.assertTrue(artifactStore.getPluginClasses(
+      Id.Artifact.from(Id.Namespace.DEFAULT, "parent", "3.0.2")).isEmpty());
+    Assert.assertEquals(1, artifactStore.getPluginClasses(
+      Id.Artifact.from(Id.Namespace.DEFAULT, "parent", "3.0.1")).size());
+
+    // check parent-4.0.1 has plugin4 but parent-4.0.0 does not and 4.0.2 does not
+    Assert.assertTrue(artifactStore.getPluginClasses(
+      Id.Artifact.from(Id.Namespace.DEFAULT, "parent", "4.0.0")).isEmpty());
+    Assert.assertTrue(artifactStore.getPluginClasses(
+      Id.Artifact.from(Id.Namespace.DEFAULT, "parent", "4.0.2")).isEmpty());
+    Assert.assertEquals(1, artifactStore.getPluginClasses(
+      Id.Artifact.from(Id.Namespace.DEFAULT, "parent", "4.0.1")).size());
   }
 
   // this test tests that when an artifact specifies a range of artifact versions it extends,

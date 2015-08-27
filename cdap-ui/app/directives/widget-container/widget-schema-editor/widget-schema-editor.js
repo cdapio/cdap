@@ -33,6 +33,10 @@ angular.module(PKG.name + '.commons')
           initialize($scope.model);
         });
 
+        EventPipe.on('schema.clear', function () {
+          initialize();
+        });
+
         EventPipe.on('dataset.selected', function (schema) {
           initialize(schema);
         });
@@ -42,7 +46,6 @@ angular.module(PKG.name + '.commons')
         // Format model
         function initialize(jsonString) {
           filledCount = 0;
-
           var schema = {};
           $scope.error = null;
           if (jsonString) {
@@ -108,7 +111,7 @@ angular.module(PKG.name + '.commons')
               empty: true
             });
           }
-
+          formatSchema();
 
         } // End of initialize
 
@@ -152,7 +155,6 @@ angular.module(PKG.name + '.commons')
           } else {
             $scope.model = null;
           }
-
         }
 
         // watch for changes

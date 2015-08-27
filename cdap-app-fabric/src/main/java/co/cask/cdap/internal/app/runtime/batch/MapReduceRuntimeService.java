@@ -208,6 +208,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       Location tempLocation = createTempLocationDirectory();
       this.cleanupTask = createCleanupTask(tempDir, tempLocation);
 
+      //TODO: CDAP-3485 Not required once Templates/Adapters are removed
       Location pluginArchive = null;
       // For local mode, everything is in the configuration classloader already, hence no need to create new jar
       if (!MapReduceContextProvider.isLocal(mapredConf)) {
@@ -222,8 +223,12 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       // Alter the configuration ClassLoader to a MapReduceClassLoader that supports plugin
       // It is mainly for standalone mode to have the same ClassLoader as in distributed mode
       // It can only be constructed here because we need to have all adapter plugins information
-      classLoader = new MapReduceClassLoader(context.getProgram().getClassLoader(), context.getAdapterSpecification(),
-                                             context.getPluginInstantiator());
+      classLoader = new MapReduceClassLoader(context.getProgram().getClassLoader(),
+                                             mapredConf,
+                                             context.getPlugins(),
+                                             context.getAdapterSpecification(),
+                                             context.getPluginInstantiator(),
+                                             context.getArtifactPluginInstantiator());
       mapredConf.setClassLoader(new WeakReferenceDelegatorClassLoader(classLoader));
       ClassLoaders.setContextClassLoader(mapredConf.getClassLoader());
 

@@ -21,6 +21,7 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.template.etl.api.PipelineConfigurable;
@@ -73,6 +74,7 @@ import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -106,7 +108,7 @@ public class ETLWorkerTest extends TestBase {
                        RealtimeCubeSink.class, RealtimeTableSink.class,
                        StreamSink.class, RealtimeElasticsearchSink.class);
     addTemplatePlugins(TEMPLATE_ID, "transforms-1.0.0.jar",
-                       ProjectionTransform.class, ScriptFilterTransform.class, 
+                       ProjectionTransform.class, ScriptFilterTransform.class,
                        StructuredRecordToGenericRecordTransform.class);
     deployTemplate(Id.Namespace.DEFAULT, TEMPLATE_ID, ETLRealtimeTemplate.class,
                    PipelineConfigurable.class.getPackage().getName(),
@@ -184,17 +186,14 @@ public class ETLWorkerTest extends TestBase {
     AdapterManager manager = createAdapter(adapterId, adapterConfig);
 
     manager.start();
-    // Let the worker run for 5 seconds
-    TimeUnit.SECONDS.sleep(5);
+    DataSetManager<Table> tableManager = getDataset("table1");
+    waitForTableToBePopulated(tableManager);
     manager.stop();
 
     // verify
-    DataSetManager<Table> tableManager = getDataset("table1");
     Table table = tableManager.get();
-    // verify that atleast 1 record got written to the Table
     Row row = table.get("Bob".getBytes(Charsets.UTF_8));
 
-    Assert.assertNotNull("Atleast 1 row should have been exported to the Table sink.", row);
     Assert.assertEquals(1, (int) row.getInt("id"));
     Assert.assertEquals("Bob", row.getString("name"));
     Assert.assertEquals(3.4, row.getDouble("score"), 0.000001);
@@ -235,18 +234,29 @@ public class ETLWorkerTest extends TestBase {
     AdapterManager adapterManager = createAdapter(adapterId, adapterConfig);
 
     adapterManager.start();
-    TimeUnit.SECONDS.sleep(5);
+    DataSetManager<Table> tableManager = getDataset("outputTable");
+    waitForTableToBePopulated(tableManager);
     adapterManager.stop();
 
-    // verify
-    DataSetManager<Table> tableManager = getDataset("outputTable");
+    // verify. We need to get the table fresh because it doesn't update otherwise
     Table table = tableManager.get();
-    // verify that at least 1 record got written to the Table
     Row row = table.get("Bob".getBytes(Charsets.UTF_8));
 
-    Assert.assertNotNull("At least 1 row should have been exported to the Table sink.", row);
     Assert.assertEquals(1, (int) row.getInt("ID"));
     Assert.assertEquals(3, (int) row.getInt("AGE"));
+  }
+
+  private void waitForTableToBePopulated(final DataSetManager<Table> tableManager) throws Exception {
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        tableManager.flush();
+        Table table = tableManager.get();
+        Row row = table.get("Bob".getBytes(Charsets.UTF_8));
+        // need to wait for information to get to the table, not just for the row to be created
+        return row.getColumns().size() != 0;
+      }
+    }, 10, TimeUnit.SECONDS, 50, TimeUnit.MILLISECONDS);
   }
 
   public static void setUp() throws IOException {

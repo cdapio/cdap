@@ -73,13 +73,11 @@ public class AppWithServices extends AbstractApplication {
     @Override
     public void configure() {
       setName(APP_NAME);
-      addStream(new Stream("text"));
       addService(new BasicService("NoOpService", new NoOpHandler()));
       addService(new BasicService(SERVICE_NAME, new ServerService()));
       addService(new DatasetUpdateService());
       addService(new TransactionalHandlerService());
       addWorker(new DatasetUpdateWorker());
-      createDataset(DATASET_NAME, KeyValueTable.class);
       createDataset(TRANSACTIONS_DATASET_NAME, KeyValueTable.class);
    }
 
@@ -92,6 +90,11 @@ public class AppWithServices extends AbstractApplication {
     public void ping(HttpServiceRequest request, HttpServiceResponder responder,
                      @PathParam("key") String key) throws IOException {
       responder.sendJson(Bytes.toString(table.read(key)));
+    }
+
+    @Override
+    protected void configure() {
+      createDataset(DATASET_NAME, KeyValueTable.class);
     }
   }
 
@@ -191,6 +194,7 @@ public class AppWithServices extends AbstractApplication {
     protected void configure() {
       setName(DATASET_WORKER_SERVICE_NAME);
       addHandler(new NoOpHandler());
+      addStream(new Stream("text"));
     }
 
     private static final class NoOpHandler extends AbstractHttpServiceHandler {
@@ -201,7 +205,7 @@ public class AppWithServices extends AbstractApplication {
   private static final class DatasetUpdateWorker extends AbstractWorker {
 
     private static int datasetHashCode;
-    private volatile boolean workerStopped = false;
+    private volatile boolean workerStopped;
 
     @Property
     private long sleepMs = 1000;
@@ -230,7 +234,29 @@ public class AppWithServices extends AbstractApplication {
     }
 
     @Override
-    public void stop() {
+    public void run() {
+      try {
+        // Run this loop till stop is called.
+        while (!workerStopped) {
+          getContext().execute(new TxRunnable() {
+            @Override
+            public void run(DatasetContext context) throws Exception {
+              KeyValueTable table = context.getDataset(DATASET_NAME);
+              // Write only if the dataset instance is the same as the one gotten in initialize.
+              if (datasetHashCode == System.identityHashCode(table)) {
+                table.write(DATASET_TEST_KEY, valueToWriteOnRun);
+              }
+            }
+          });
+          TimeUnit.MILLISECONDS.sleep(sleepMs);
+        }
+      } catch (Exception e) {
+        throw Throwables.propagate(e);
+      }
+    }
+
+    @Override
+    public void destroy() {
       getContext().execute(new TxRunnable() {
         @Override
         public void run(DatasetContext context) throws Exception {
@@ -255,29 +281,11 @@ public class AppWithServices extends AbstractApplication {
           }
         }
       });
-      workerStopped = true;
     }
 
     @Override
-    public void run() {
-      try {
-        // Run this loop till stop is called.
-        while (!workerStopped) {
-          getContext().execute(new TxRunnable() {
-            @Override
-            public void run(DatasetContext context) throws Exception {
-              KeyValueTable table = context.getDataset(DATASET_NAME);
-              // Write only if the dataset instance is the same as the one gotten in initialize.
-              if (datasetHashCode == System.identityHashCode(table)) {
-                table.write(DATASET_TEST_KEY, valueToWriteOnRun);
-              }
-            }
-          });
-          TimeUnit.MILLISECONDS.sleep(sleepMs);
-        }
-      } catch (Exception e) {
-        throw Throwables.propagate(e);
-      }
+    public void stop() {
+      workerStopped = true;
     }
   }
 }

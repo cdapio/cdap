@@ -197,6 +197,7 @@ gulp.task('watch:js:app', function() {
         '!./app/**/*-test.js'
       ].concat(getEs6Features(true))
     )
+    .pipe(plug.plumber())
     .pipe(plug.ngAnnotate())
     .pipe(plug.wrapper({
        header: '\n(function (PKG){ /* ${filename} */\n',
@@ -212,6 +213,7 @@ gulp.task('watch:js:app:babel', function() {
     v: pkg.version
   });
   return gulp.src(getEs6Features())
+    .pipe(plug.plumber())
     .pipe(plug.ngAnnotate())
     .pipe(plug.sourcemaps.init())
     .pipe(plug.wrapper({
@@ -236,6 +238,7 @@ gulp.task('js:app', function() {
     './app/**/*.js',
     '!./app/**/*-test.js'
   ])
+    .pipe(plug.plumber())
     .pipe(plug.ngAnnotate())
     .pipe(plug.sourcemaps.init())
     .pipe(plug.wrapper({
@@ -303,7 +306,16 @@ gulp.task('html:main', function() {
       .pipe(gulp.dest('./dist'));
 });
 
+gulp.task('html:main.dev', function () {
+  return gulp.src('./app/*.html')
+      .pipe(plug.replace('<!-- DEV DEPENDENCIES -->',
+        '<script type="text/javascript" src="/assets/bundle/app.es6.js"></script>' +
+        '<script src="http://localhost:35729/livereload.js"></script>'))
+      .pipe(gulp.dest('./dist'));
+    });
+
 gulp.task('html', ['html:main', 'html:partials']);
+gulp.task('html.dev', ['html:main.dev', 'html:partials'])
 
 
 
@@ -314,6 +326,7 @@ gulp.task('html', ['html:main', 'html:partials']);
  */
 gulp.task('lint', function() {
   return gulp.src(['./app/**/*.js', './server/*.js'])
+    .pipe(plug.plumber())
     .pipe(plug.jshint())
     .pipe(plug.jshint.reporter())
     .pipe(plug.jshint.reporter('fail'));
@@ -387,7 +400,7 @@ gulp.task('css', ['css:lib', 'css:app']);
 gulp.task('style', ['css']);
 
 
-gulp.task('watch:build', ['watch:js', 'css', 'img', 'tpl', 'html']);
+gulp.task('watch:build', ['watch:js', 'css', 'img', 'tpl', 'html.dev']);
 gulp.task('build', ['js', 'css', 'img', 'tpl', 'html']);
 
 gulp.task('distribute', ['build', 'rev:replace']);
@@ -399,14 +412,14 @@ gulp.task('default', ['lint', 'build']);
 /*
   watch
  */
-gulp.task('watch', ['watch:build'], function() {
+gulp.task('watch', ['jshint', 'watch:build'], function() {
   plug.livereload.listen();
 
   gulp.watch('./dist/**/*')
     .on('change', plug.livereload.changed);
 
-  gulp.watch(['./app/**/*.js', '!./app/features/workflows/**/*.js', '!./app/**/*-test.js'], ['watch:js:app']);
-  gulp.watch(['./app/features/workflows/**/*.js'], ['watch:js:app:babel']);
+  gulp.watch(['./app/**/*.js', '!./app/features/workflows/**/*.js', '!./app/**/*-test.js'], ['jshint', 'watch:js:app']);
+  gulp.watch(['./app/features/workflows/**/*.js'], ['jshint', 'watch:js:app:babel']);
 
   gulp.watch('./app/**/*.{less,css}', ['css']);
   gulp.watch(['./app/directives/**/*.html', './app/features/home/home.html'], ['tpl']);

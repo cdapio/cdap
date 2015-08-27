@@ -25,12 +25,14 @@ import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.internal.app.Plugin;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.filesystem.LocationFactory;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -53,10 +55,11 @@ final class BasicWorkflowContext extends AbstractContext implements WorkflowCont
                        long logicalStartTime, @Nullable ProgramWorkflowRunner programWorkflowRunner,
                        Map<String, String> runtimeArgs, WorkflowToken token, Program program, RunId runId,
                        MetricsCollectionService metricsCollectionService,
-                       DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient) {
+                       DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient,
+                       LocationFactory locationFactory) {
     super(program, runId, new BasicArguments(runtimeArgs), (spec == null) ? new HashSet<String>() : spec.getDatasets(),
           getMetricCollector(program, runId.getId(), metricsCollectionService),
-          datasetFramework, discoveryServiceClient, null, null);
+          datasetFramework, discoveryServiceClient, locationFactory, null, null, null);
     this.workflowSpec = workflowSpec;
     this.specification = spec;
     this.logicalStartTime = logicalStartTime;
@@ -115,6 +118,11 @@ final class BasicWorkflowContext extends AbstractContext implements WorkflowCont
   @Override
   public Map<String, String> getRuntimeArguments() {
     return runtimeArgs;
+  }
+
+  @Override
+  public Map<String, Plugin> getPlugins() {
+    return null;
   }
 
   @Override

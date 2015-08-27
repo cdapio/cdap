@@ -18,11 +18,6 @@ package co.cask.cdap.app;
 
 import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.app.ApplicationConfigurer;
-import co.cask.cdap.api.data.stream.Stream;
-import co.cask.cdap.api.data.stream.StreamSpecification;
-import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.flow.AbstractFlow;
 import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.flow.FlowSpecification;
@@ -41,9 +36,11 @@ import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
-import co.cask.cdap.data.dataset.DatasetCreationSpec;
 import co.cask.cdap.internal.app.DefaultApplicationSpecification;
+import co.cask.cdap.internal.app.DefaultPluginConfigurer;
 import co.cask.cdap.internal.app.mapreduce.DefaultMapReduceConfigurer;
+import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.flow.DefaultFlowConfigurer;
 import co.cask.cdap.internal.app.services.DefaultServiceConfigurer;
 import co.cask.cdap.internal.app.spark.DefaultSparkConfigurer;
@@ -53,43 +50,50 @@ import co.cask.cdap.internal.flow.DefaultFlowSpecification;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Maps;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
  * Default implementation of {@link ApplicationConfigurer}.
  */
-public class DefaultAppConfigurer implements ApplicationConfigurer {
+public class DefaultAppConfigurer extends DefaultPluginConfigurer implements ApplicationConfigurer {
   private String name;
   private String description;
   private String configuration;
   private Id.Artifact artifactId;
-  private final Map<String, StreamSpecification> streams = Maps.newHashMap();
-  private final Map<String, String> dataSetModules = Maps.newHashMap();
-  private final Map<String, DatasetCreationSpec> dataSetInstances = Maps.newHashMap();
-  private final Map<String, FlowSpecification> flows = Maps.newHashMap();
-  private final Map<String, MapReduceSpecification> mapReduces = Maps.newHashMap();
-  private final Map<String, SparkSpecification> sparks = Maps.newHashMap();
-  private final Map<String, WorkflowSpecification> workflows = Maps.newHashMap();
-  private final Map<String, ServiceSpecification> services = Maps.newHashMap();
-  private final Map<String, ScheduleSpecification> schedules = Maps.newHashMap();
-  private final Map<String, WorkerSpecification> workers = Maps.newHashMap();
+  private ArtifactRepository artifactRepository;
+  private PluginInstantiator pluginInstantiator;
+  private final Map<String, FlowSpecification> flows = new HashMap<>();
+  private final Map<String, MapReduceSpecification> mapReduces = new HashMap<>();
+  private final Map<String, SparkSpecification> sparks = new HashMap<>();
+  private final Map<String, WorkflowSpecification> workflows = new HashMap<>();
+  private final Map<String, ServiceSpecification> services = new HashMap<>();
+  private final Map<String, ScheduleSpecification> schedules = new HashMap<>();
+  private final Map<String, WorkerSpecification> workers = new HashMap<>();
 
   // passed app to be used to resolve default name and description
   public DefaultAppConfigurer(Application app) {
+    super(null, null, null);
     this.name = app.getClass().getSimpleName();
     this.description = "";
   }
 
+  // TODO: Remove this constructor when app templates are removed and when all applications are created from artifacts
   public DefaultAppConfigurer(Application app, String configuration) {
     this(app);
     this.configuration = configuration;
   }
 
-  public DefaultAppConfigurer(Id.Artifact artifactId, Application app, String configuration) {
-    this(app, configuration);
+  public DefaultAppConfigurer(Id.Artifact artifactId, Application app, String configuration,
+                              ArtifactRepository artifactRepository, PluginInstantiator pluginInstantiator) {
+    super(artifactRepository, pluginInstantiator, artifactId);
+    this.name = app.getClass().getSimpleName();
+    this.description = "";
+    this.configuration = configuration;
     this.artifactId = artifactId;
+    this.artifactRepository = artifactRepository;
+    this.pluginInstantiator = pluginInstantiator;
   }
 
   @Override
@@ -100,48 +104,6 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   @Override
   public void setDescription(String description) {
     this.description = description;
-  }
-
-  @Override
-  public void addStream(Stream stream) {
-    Preconditions.checkArgument(stream != null, "Stream cannot be null.");
-    StreamSpecification spec = stream.configure();
-    streams.put(spec.getName(), spec);
-  }
-
-  @Override
-  public void addDatasetModule(String moduleName, Class<? extends DatasetModule> moduleClass) {
-    Preconditions.checkArgument(moduleName != null, "Dataset module name cannot be null.");
-    Preconditions.checkArgument(moduleClass != null, "Dataset module class cannot be null.");
-    dataSetModules.put(moduleName, moduleClass.getName());
-  }
-
-  @Override
-  public void addDatasetType(Class<? extends Dataset> datasetClass) {
-    Preconditions.checkArgument(datasetClass != null, "Dataset class cannot be null.");
-    dataSetModules.put(datasetClass.getName(), datasetClass.getName());
-  }
-
-  @Override
-  public void createDataset(String datasetInstanceName, String typeName, DatasetProperties properties) {
-    Preconditions.checkArgument(datasetInstanceName != null, "Dataset instance name cannot be null.");
-    Preconditions.checkArgument(typeName != null, "Dataset type name cannot be null.");
-    Preconditions.checkArgument(properties != null, "Instance properties name cannot be null.");
-    dataSetInstances.put(datasetInstanceName,
-                         new DatasetCreationSpec(datasetInstanceName, typeName, properties));
-  }
-
-  @Override
-  public void createDataset(String datasetInstanceName,
-                            Class<? extends Dataset> datasetClass,
-                            DatasetProperties properties) {
-
-    Preconditions.checkArgument(datasetInstanceName != null, "Dataset instance name cannot be null.");
-    Preconditions.checkArgument(datasetClass != null, "Dataset class name cannot be null.");
-    Preconditions.checkArgument(properties != null, "Instance properties name cannot be null.");
-    dataSetInstances.put(datasetInstanceName,
-                         new DatasetCreationSpec(datasetInstanceName, datasetClass.getName(), properties));
-    dataSetModules.put(datasetClass.getName(), datasetClass.getName());
   }
 
   @Override
@@ -156,15 +118,24 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
     } else {
       spec = new DefaultFlowSpecification(flow.getClass().getName(), spec);
     }
+
+    addStreams(configurer.getStreams());
+    addDatasetModules(configurer.getDatasetModules());
+    addDatasetSpecs(configurer.getDatasetSpecs());
     flows.put(spec.getName(), spec);
   }
 
   @Override
   public void addMapReduce(MapReduce mapReduce) {
     Preconditions.checkArgument(mapReduce != null, "MapReduce cannot be null.");
-    DefaultMapReduceConfigurer configurer = new DefaultMapReduceConfigurer(mapReduce);
+    DefaultMapReduceConfigurer configurer = new DefaultMapReduceConfigurer(mapReduce, artifactId, artifactRepository,
+                                                                           pluginInstantiator);
     mapReduce.configure(configurer);
 
+    addStreams(configurer.getStreams());
+    addDatasetModules(configurer.getDatasetModules());
+    addDatasetSpecs(configurer.getDatasetSpecs());
+    addPlugins(configurer.getPlugins());
     MapReduceSpecification spec = configurer.createSpecification();
     mapReduces.put(spec.getName(), spec);
   }
@@ -174,6 +145,10 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
     Preconditions.checkArgument(spark != null, "Spark cannot be null.");
     DefaultSparkConfigurer configurer = new DefaultSparkConfigurer(spark);
     spark.configure(configurer);
+
+    addStreams(configurer.getStreams());
+    addDatasetModules(configurer.getDatasetModules());
+    addDatasetSpecs(configurer.getDatasetSpecs());
     SparkSpecification spec = configurer.createSpecification();
     sparks.put(spec.getName(), spec);
   }
@@ -189,18 +164,29 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
 
   public void addService(Service service) {
     Preconditions.checkArgument(service != null, "Service cannot be null.");
-    DefaultServiceConfigurer configurer = new DefaultServiceConfigurer(service);
+    DefaultServiceConfigurer configurer = new DefaultServiceConfigurer(service, artifactId, artifactRepository,
+                                                                       pluginInstantiator);
     service.configure(configurer);
 
     ServiceSpecification spec = configurer.createSpecification();
+    addStreams(configurer.getStreams());
+    addDatasetModules(configurer.getDatasetModules());
+    addDatasetSpecs(configurer.getDatasetSpecs());
+    addPlugins(configurer.getPlugins());
     services.put(spec.getName(), spec);
   }
 
   @Override
   public void addWorker(Worker worker) {
     Preconditions.checkArgument(worker != null, "Worker cannot be null.");
-    DefaultWorkerConfigurer configurer = new DefaultWorkerConfigurer(worker);
+    DefaultWorkerConfigurer configurer = new DefaultWorkerConfigurer(worker, artifactId, artifactRepository,
+                                                                     pluginInstantiator);
     worker.configure(configurer);
+
+    addStreams(configurer.getStreams());
+    addDatasetModules(configurer.getDatasetModules());
+    addDatasetSpecs(configurer.getDatasetSpecs());
+    addPlugins(configurer.getPlugins());
     WorkerSpecification spec = configurer.createSpecification();
     workers.put(spec.getName(), spec);
   }
@@ -232,10 +218,10 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   }
 
   public ApplicationSpecification createSpecification(String version) {
-    return new DefaultApplicationSpecification(name, version, description, configuration, artifactId, streams,
-                                               dataSetModules, dataSetInstances,
+    return new DefaultApplicationSpecification(name, version, description, configuration, artifactId, getStreams(),
+                                               getDatasetModules(), getDatasetSpecs(),
                                                flows, mapReduces, sparks, workflows, services,
-                                               schedules, workers);
+                                               schedules, workers, getPlugins());
   }
 
   public ApplicationSpecification createSpecification() {

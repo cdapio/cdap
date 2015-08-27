@@ -26,6 +26,7 @@ import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.templates.ApplicationTemplate;
+import co.cask.cdap.api.templates.plugins.PluginClass;
 import co.cask.cdap.api.templates.plugins.PluginPropertyField;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.InMemoryProgramRunnerModule;
@@ -79,6 +80,8 @@ import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.artifact.AppRequest;
+import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.test.internal.ApplicationManagerFactory;
 import co.cask.cdap.test.internal.DefaultApplicationManager;
 import co.cask.cdap.test.internal.DefaultStreamManager;
@@ -96,8 +99,10 @@ import com.google.common.io.Files;
 import com.google.common.io.Resources;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
+import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Module;
+import com.google.inject.Provider;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
@@ -117,6 +122,8 @@ import java.net.URL;
 import java.sql.Connection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.jar.Manifest;
 import javax.annotation.Nullable;
 
 /**
@@ -145,6 +152,7 @@ public class ConfigurableTestBase {
   private static DatasetService datasetService;
   private static TransactionManager txService;
   private static StreamCoordinatorClient streamCoordinatorClient;
+  private static MetricsManager metricsManager;
 
   // This list is to record ApplicationManager create inside @Test method
   private static final List<ApplicationManager> applicationManagers = Lists.newArrayList();
@@ -230,6 +238,7 @@ public class ConfigurableTestBase {
           bind(StreamFileJanitorService.class).to(LocalStreamFileJanitorService.class).in(Scopes.SINGLETON);
           bind(StreamWriterSizeCollector.class).to(BasicStreamWriterSizeCollector.class).in(Scopes.SINGLETON);
           bind(StreamCoordinatorClient.class).to(InMemoryStreamCoordinatorClient.class).in(Scopes.SINGLETON);
+          bind(MetricsManager.class).toProvider(MetricsManagerProvider.class);
         }
       },
       // todo: do we need handler?
@@ -278,8 +287,23 @@ public class ConfigurableTestBase {
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
     // we use MetricStore directly, until RuntimeStats API changes
     RuntimeStats.metricStore = injector.getInstance(MetricStore.class);
+    metricsManager = injector.getInstance(MetricsManager.class);
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
     namespaceAdmin.createNamespace(NamespaceMeta.DEFAULT);
+  }
+
+  private static class MetricsManagerProvider implements Provider<MetricsManager> {
+    private final MetricStore metricStore;
+
+    @Inject
+    private MetricsManagerProvider(MetricStore metricStore) {
+      this.metricStore = metricStore;
+    }
+
+    @Override
+    public MetricsManager get() {
+      return new MetricsManager(metricStore);
+    }
   }
 
   private static CConfiguration createCConf(File localDataDir,
@@ -368,6 +392,10 @@ public class ConfigurableTestBase {
     txService.stopAndWait();
   }
 
+  protected MetricsManager getMetricsManager() {
+    return metricsManager;
+  }
+
   /**
    * Creates a Namespace.
    *
@@ -393,7 +421,7 @@ public class ConfigurableTestBase {
    * other programs defined in the application must be in the same or children package as the application.
    *
    * @param applicationClz The application class
-   * @return An {@link co.cask.cdap.test.ApplicationManager} to manage the deployed application.
+   * @return An {@link ApplicationManager} to manage the deployed application.
    */
   protected static ApplicationManager deployApplication(Id.Namespace namespace,
                                                         Class<? extends Application> applicationClz,
@@ -415,7 +443,7 @@ public class ConfigurableTestBase {
    * other programs defined in the application must be in the same or children package as the application.
    *
    * @param applicationClz The application class
-   * @return An {@link co.cask.cdap.test.ApplicationManager} to manage the deployed application.
+   * @return An {@link ApplicationManager} to manage the deployed application.
    */
   protected static ApplicationManager deployApplication(Class<? extends Application> applicationClz,
                                                         File... bundleEmbeddedJars) {
@@ -425,6 +453,18 @@ public class ConfigurableTestBase {
   protected static ApplicationManager deployApplication(Class<? extends Application> applicationClz, Config appConfig,
                                                         File... bundleEmbeddedJars) {
     return deployApplication(Id.Namespace.DEFAULT, applicationClz, appConfig, bundleEmbeddedJars);
+  }
+
+  /**
+   * Deploys an {@link Application}. The application artifact must already exist.
+   *
+   * @param appId the id of the application to create
+   * @param appRequest the application create or update request
+   * @return An {@link ApplicationManager} to manage the deployed application
+   */
+  protected static ApplicationManager deployApplication(Id.Application appId,
+                                                        AppRequest appRequest) throws Exception {
+    return getTestManager().deployApplication(appId, appRequest);
   }
 
   /**
@@ -500,6 +540,123 @@ public class ConfigurableTestBase {
                                               String description, String className,
                                               PluginPropertyField... fields) throws IOException {
     getTestManager().addTemplatePluginJson(templateId, fileName, type, name, description, className, fields);
+  }
+
+  /**
+   * Add the specified artifact.
+   *
+   * @param artifactId the id of the artifact to add
+   * @param artifactFile the contents of the artifact. Must be a valid jar file containing apps or plugins
+   * @throws Exception
+   */
+  protected static void addArtifact(Id.Artifact artifactId, File artifactFile) throws Exception {
+    getTestManager().addArtifact(artifactId, artifactFile);
+  }
+
+  /**
+   * Build an application artifact from the specified class and then add it.
+   *
+   * @param artifactId the id of the artifact to add
+   * @param appClass the application class to build the artifact from
+   * @throws Exception
+   */
+  protected static void addAppArtifact(Id.Artifact artifactId, Class<?> appClass) throws Exception {
+    getTestManager().addAppArtifact(artifactId, appClass);
+  }
+
+  /**
+   * Build an application artifact from the specified class and then add it.
+   *
+   * @param artifactId the id of the artifact to add
+   * @param appClass the application class to build the artifact from
+   * @param exportPackages the packages to export and place in the manifest of the jar to build. This should include
+   *                       packages that contain classes that plugins for the application will implement.
+   * @throws Exception
+   */
+  protected static void addAppArtifact(Id.Artifact artifactId, Class<?> appClass,
+                                       String... exportPackages) throws Exception {
+    getTestManager().addAppArtifact(artifactId, appClass, exportPackages);
+  }
+
+  /**
+   * Build an application artifact from the specified class and then add it.
+   *
+   * @param artifactId the id of the artifact to add
+   * @param appClass the application class to build the artifact from
+   * @param manifest the manifest to use when building the jar
+   * @throws Exception
+   */
+  protected static void addAppArtifact(Id.Artifact artifactId, Class<?> appClass, Manifest manifest) throws Exception {
+    getTestManager().addAppArtifact(artifactId, appClass, manifest);
+  }
+
+  /**
+   * Build an artifact from the specified plugin classes and then add it. The
+   * jar created will include all classes in the same package as the give classes, plus any dependencies of the
+   * given classes. If another plugin in the same package as the given plugin requires a different set of dependent
+   * classes, you must include both plugins. For example, suppose you have two plugins,
+   * com.company.myapp.functions.functionX and com.company.myapp.function.functionY, with functionX having
+   * one set of dependencies and functionY having another set of dependencies. If you only add functionX, functionY
+   * will also be included in the created jar since it is in the same package. However, only functionX's dependencies
+   * will be traced and added to the jar, so you will run into issues when the platform tries to register functionY.
+   * In this scenario, you must be certain to include specify both functionX and functionY when calling this method.
+   *
+   * @param artifactId the id of the artifact to add
+   * @param parent the parent artifact it extends
+   * @param pluginClass the plugin class to build the jar from
+   * @param pluginClasses any additional plugin classes that should be included in the jar
+   * @throws Exception
+   */
+  protected static void addPluginArtifact(Id.Artifact artifactId, Id.Artifact parent,
+                                          Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
+    getTestManager().addPluginArtifact(artifactId, parent, pluginClass, pluginClasses);
+  }
+
+  /**
+   * Build an artifact from the specified plugin classes and then add it. The
+   * jar created will include all classes in the same package as the give classes, plus any dependencies of the
+   * given classes. If another plugin in the same package as the given plugin requires a different set of dependent
+   * classes, you must include both plugins. For example, suppose you have two plugins,
+   * com.company.myapp.functions.functionX and com.company.myapp.function.functionY, with functionX having
+   * one set of dependencies and functionY having another set of dependencies. If you only add functionX, functionY
+   * will also be included in the created jar since it is in the same package. However, only functionX's dependencies
+   * will be traced and added to the jar, so you will run into issues when the platform tries to register functionY.
+   * In this scenario, you must be certain to include specify both functionX and functionY when calling this method.
+   *
+   * @param artifactId the id of the artifact to add
+   * @param parent the parent artifact it extends
+   * @param additionalPlugins any plugin classes that need to be explicitly declared because they cannot be found
+   *                          by inspecting the jar. This is true for 3rd party plugins, such as jdbc drivers
+   * @param pluginClass the plugin class to build the jar from
+   * @param pluginClasses any additional plugin classes that should be included in the jar
+   * @throws Exception
+   */
+  protected static void addPluginArtifact(Id.Artifact artifactId, Id.Artifact parent,
+                                          Set<PluginClass> additionalPlugins,
+                                          Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
+    getTestManager().addPluginArtifact(artifactId, parent, additionalPlugins, pluginClass, pluginClasses);
+  }
+
+  /**
+   * Build an artifact from the specified plugin classes and then add it. The
+   * jar created will include all classes in the same package as the give classes, plus any dependencies of the
+   * given classes. If another plugin in the same package as the given plugin requires a different set of dependent
+   * classes, you must include both plugins. For example, suppose you have two plugins,
+   * com.company.myapp.functions.functionX and com.company.myapp.function.functionY, with functionX having
+   * one set of dependencies and functionY having another set of dependencies. If you only add functionX, functionY
+   * will also be included in the created jar since it is in the same package. However, only functionX's dependencies
+   * will be traced and added to the jar, so you will run into issues when the platform tries to register functionY.
+   * In this scenario, you must be certain to include specify both functionX and functionY when calling this method.
+   *
+   * @param artifactId the id of the artifact to add
+   * @param parentArtifacts the parent artifacts it extends
+   * @param pluginClass the plugin class to build the jar from
+   * @param pluginClasses any additional plugin classes that should be included in the jar
+   * @throws Exception
+   */
+  protected static void addPluginArtifact(Id.Artifact artifactId, Set<ArtifactRange> parentArtifacts,
+                                          Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
+    getTestManager().addPluginArtifact(artifactId, parentArtifacts, pluginClass, pluginClasses);
   }
 
   /**

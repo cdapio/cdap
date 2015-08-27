@@ -20,6 +20,8 @@
                id="namespaceDisplayName"
                ng-model="model.name"
                class="form-control"
+               ng-keypress="enter($event)"
+               autofocus
                required>
         <div class="alert alert-danger alert-dismissible"
              ng-show="error"

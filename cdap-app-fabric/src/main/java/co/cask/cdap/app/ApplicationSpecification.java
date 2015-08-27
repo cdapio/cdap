@@ -18,17 +18,21 @@ package co.cask.cdap.app;
 
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.data.stream.StreamSpecification;
+import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
+import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
-import co.cask.cdap.data.dataset.DatasetCreationSpec;
+import co.cask.cdap.internal.app.Plugin;
+import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.proto.Id;
 
 import java.util.Map;
@@ -75,15 +79,13 @@ public interface ApplicationSpecification {
   Map<String, StreamSpecification> getStreams();
 
   /**
-   * @return An immutable {@link Map} from {@link co.cask.cdap.api.dataset.module.DatasetModule} name
-   *         to {@link co.cask.cdap.api.dataset.module.DatasetModule} class name for
+   * @return An immutable {@link Map} from {@link DatasetModule} name to {@link DatasetModule} class name for
    *         dataset modules configured for the Application.
    */
   Map<String, String> getDatasetModules();
 
   /**
-   * @return An immutable {@link Map} from {@link co.cask.cdap.api.dataset.Dataset} name to
-   *         {@link co.cask.cdap.data.dataset.DatasetCreationSpec} for {@link co.cask.cdap.api.dataset.Dataset}s
+   * @return An immutable {@link Map} from {@link Dataset} name to {@link DatasetCreationSpec} for {@link Dataset}s
    *         configured for the Application.
    */
   Map<String, DatasetCreationSpec> getDatasets();
@@ -101,8 +103,8 @@ public interface ApplicationSpecification {
   Map<String, MapReduceSpecification> getMapReduce();
 
   /**
-   * @return An immutable {@link Map} from {@link co.cask.cdap.api.spark.Spark} name to
-   * {@link SparkSpecification} for {@link co.cask.cdap.api.spark.Spark} jobs configured for the Application.
+   * @return An immutable {@link Map} from {@link Spark} name to
+   * {@link SparkSpecification} for {@link Spark} jobs configured for the Application.
    */
   Map<String, SparkSpecification> getSpark();
 
@@ -128,4 +130,9 @@ public interface ApplicationSpecification {
    * @return An immutable {@link Map} from Schedule name to {@link ScheduleSpecification}
    */
   Map<String, ScheduleSpecification> getSchedules();
+
+  /**
+   * @return An immutable {@link Map} from plugin id to {@link Plugin}
+   */
+  Map<String, Plugin> getPlugins();
 }

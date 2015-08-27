@@ -16,6 +16,8 @@
 
 package co.cask.cdap.internal.app.runtime.artifact;
 
+import co.cask.cdap.api.artifact.ApplicationClass;
+import co.cask.cdap.api.artifact.ArtifactClasses;
 import co.cask.cdap.api.artifact.ArtifactDescriptor;
 import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.common.Bytes;
@@ -30,7 +32,6 @@ import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.templates.plugins.PluginClass;
 import co.cask.cdap.common.ArtifactAlreadyExistsException;
 import co.cask.cdap.common.ArtifactNotFoundException;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
@@ -40,6 +41,7 @@ import co.cask.cdap.data2.dataset2.tx.Transactional;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ArtifactRange;
+import co.cask.cdap.proto.artifact.InvalidArtifactRangeException;
 import co.cask.tephra.TransactionConflictException;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
@@ -55,6 +57,13 @@ import com.google.common.io.ByteStreams;
 import com.google.common.io.InputSupplier;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSerializer;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -62,7 +71,9 @@ import org.apache.twill.filesystem.LocationFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Type;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -82,7 +93,6 @@ import java.util.SortedMap;
  * The first adds metadata about the artifact, with
  * rowkey r:{namespace}:{artifact-name}, column {artifact-version}, and ArtifactData as the value
  *
- * TODO: (CDAP-2764) add this part when we have a better idea of what needs to be in AppClass.
  * The second adds metadata about any Application Class contained in the artifact, with
  * rowkey a:{namespace}:{classname}, column {artifact-name}:{artifact-version}, and AppClass as the value
  *
@@ -127,6 +137,7 @@ public class ArtifactStore {
   private static final String ARTIFACTS_PATH = "artifacts";
   private static final String ARTIFACT_PREFIX = "r";
   private static final String PLUGIN_PREFIX = "p";
+  private static final String APPCLASS_PREFIX = "a";
   private static final Id.DatasetInstance META_ID = Id.DatasetInstance.from(Id.Namespace.SYSTEM, "artifact.meta");
 
   private final LocationFactory locationFactory;
@@ -143,6 +154,7 @@ public class ArtifactStore {
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.gson = new GsonBuilder()
       .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+      .registerTypeAdapter(ArtifactRange.class, new ArtifactRangeCodec())
       .create();
     this.metaTable = Transactional.of(txExecutorFactory, new Supplier<DatasetContext<Table>>() {
       @Override
@@ -271,6 +283,82 @@ public class ArtifactStore {
   }
 
   /**
+   * Get all application classes that belong to the specified namespace.
+   * Results are returned as a sorted map from artifact to application classes in that artifact.
+   * Map entries are sorted by the artifact.
+   *
+   * @param namespace the namespace from which to get application classes
+   * @return an unmodifiable map of artifact to a list of all application classes in that artifact.
+   *         The map will never be null. If there are no application classes, an empty map will be returned.
+   */
+  public SortedMap<ArtifactDescriptor, List<ApplicationClass>> getApplicationClasses(final Id.Namespace namespace) {
+
+    return metaTable.executeUnchecked(
+      new TransactionExecutor.Function<DatasetContext<Table>, SortedMap<ArtifactDescriptor, List<ApplicationClass>>>() {
+        @Override
+        public SortedMap<ArtifactDescriptor, List<ApplicationClass>> apply(DatasetContext<Table> context) {
+          SortedMap<ArtifactDescriptor, List<ApplicationClass>> result = Maps.newTreeMap();
+
+          Scanner scanner = context.get().scan(scanAppClasses(namespace));
+          Row row;
+          while ((row = scanner.next()) != null) {
+            // columns are {artifact-name}:{artifact-version}. vals are serialized AppData
+            for (Map.Entry<byte[], byte[]> column : row.getColumns().entrySet()) {
+              ArtifactColumn artifactColumn = ArtifactColumn.parse(column.getKey());
+              AppData appData = gson.fromJson(Bytes.toString(column.getValue()), AppData.class);
+
+              ArtifactDescriptor artifactDescriptor =
+                getDescriptor(artifactColumn.artifactId, locationFactory.create(appData.artifactLocationURI));
+              List<ApplicationClass> existingAppClasses = result.get(artifactDescriptor);
+              if (existingAppClasses == null) {
+                existingAppClasses = new ArrayList<>();
+                result.put(artifactDescriptor, existingAppClasses);
+              }
+              existingAppClasses.add(appData.appClass);
+            }
+          }
+          return Collections.unmodifiableSortedMap(result);
+        }
+      });
+  }
+
+  /**
+   * Get all application classes that belong to the specified namespace of the specified classname.
+   * Results are returned as a sorted map from artifact to application classes in that artifact.
+   * Map entries are sorted by the artifact.
+   *
+   * @param namespace the namespace from which to get application classes
+   * @param className the classname of application classes to get
+   * @return an unmodifiable map of artifact the application classes in that artifact.
+   *         The map will never be null. If there are no application classes, an empty map will be returned.
+   */
+  public SortedMap<ArtifactDescriptor, ApplicationClass> getApplicationClasses(final Id.Namespace namespace,
+                                                                               final String className) {
+
+    return metaTable.executeUnchecked(
+      new TransactionExecutor.Function<DatasetContext<Table>, SortedMap<ArtifactDescriptor, ApplicationClass>>() {
+        @Override
+        public SortedMap<ArtifactDescriptor, ApplicationClass> apply(DatasetContext<Table> context) {
+          SortedMap<ArtifactDescriptor, ApplicationClass> result = Maps.newTreeMap();
+
+          Row row = context.get().get(new AppClassKey(namespace, className).getRowKey());
+          if (!row.isEmpty()) {
+            // columns are {artifact-name}:{artifact-version}. vals are serialized AppData
+            for (Map.Entry<byte[], byte[]> column : row.getColumns().entrySet()) {
+              ArtifactColumn artifactColumn = ArtifactColumn.parse(column.getKey());
+              AppData appData = gson.fromJson(Bytes.toString(column.getValue()), AppData.class);
+
+              ArtifactDescriptor artifactDescriptor =
+                getDescriptor(artifactColumn.artifactId, locationFactory.create(appData.artifactLocationURI));
+              result.put(artifactDescriptor, appData.appClass);
+            }
+          }
+          return Collections.unmodifiableSortedMap(result);
+        }
+      });
+  }
+
+  /**
    * Get all plugin classes that extend the given parent artifact.
    * Results are returned as a sorted map from plugin artifact to plugins in that artifact.
    * Map entries are sorted by the artifact
@@ -357,7 +445,7 @@ public class ArtifactStore {
               ArtifactColumn artifactColumn = ArtifactColumn.parse(column.getKey());
               PluginData pluginData = gson.fromJson(Bytes.toString(column.getValue()), PluginData.class);
               // filter out plugins that don't extend this version of the parent artifact
-              if (matches(pluginData, parentArtifactId.getVersion())) {
+              if (pluginData.usableBy.versionIsInRange(parentArtifactId.getVersion())) {
                 ArtifactDescriptor artifactInfo =
                   getDescriptor(artifactColumn.artifactId, locationFactory.create(pluginData.artifactLocationURI));
                 result.put(artifactInfo, pluginData.pluginClass);
@@ -371,12 +459,6 @@ public class ArtifactStore {
       throw new PluginNotExistsException(parentArtifactId.getNamespace(), type, name);
     }
     return Collections.unmodifiableSortedMap(plugins);
-  }
-
-  private boolean matches(PluginData pluginData, ArtifactVersion version) {
-    ArtifactVersion lower = new ArtifactVersion(pluginData.parentVersionLower);
-    ArtifactVersion upper = new ArtifactVersion(pluginData.parentVersionUpper);
-    return version.compareTo(lower) >= 0 && version.compareTo(upper) < 0;
   }
 
   /**
@@ -444,8 +526,10 @@ public class ArtifactStore {
 
           ArtifactData data = new ArtifactData(destination, artifactMeta);
           // cleanup existing metadata if it exists and this is a snapshot
+          // if we are overwriting a previous snapshot, need to clean up the old snapshot data
+          // this means cleaning up the old jar, and deleting plugin and app rows.
           if (existingMetaBytes != null) {
-            cleanupOldSnapshot(table, artifactId, existingMetaBytes);
+            deleteMeta(table, artifactId, existingMetaBytes);
           }
           // write artifact metadata
           writeMeta(table, artifactId, data);
@@ -464,6 +548,34 @@ public class ArtifactStore {
       throw new IOException(e);
     }
     return new ArtifactDetail(getDescriptor(artifactId, destination), artifactMeta);
+  }
+
+  /**
+   * Delete the specified artifact. Programs that use the artifact will no longer be able to start.
+   *
+   * @param artifactId the id of the artifact to delete
+   * @throws IOException if there was an IO error deleting the metadata or the actual artifact
+   */
+  public void delete(final Id.Artifact artifactId) throws IOException {
+
+    // delete everything in a transaction
+    metaTable.executeUnchecked(new TransactionExecutor.Function<DatasetContext<Table>, Void>() {
+      @Override
+      public Void apply(DatasetContext<Table> context) throws Exception {
+        Table table = context.get();
+
+        // first look up details to get plugins and apps in the artifact
+        ArtifactCell artifactCell = new ArtifactCell(artifactId);
+        byte[] detailBytes = table.get(artifactCell.rowkey, artifactCell.column);
+        if (detailBytes == null) {
+          // ok there is nothing to delete, we're done
+          return null;
+        }
+        deleteMeta(table, artifactId, detailBytes);
+
+        return null;
+      }
+    });
   }
 
   /**
@@ -498,6 +610,12 @@ public class ArtifactStore {
           table.delete(row.getRow());
         }
 
+        // delete app classes in this namespace
+        scanner = table.scan(scanAppClasses(namespace));
+        while ((row = scanner.next()) != null) {
+          table.delete(row.getRow());
+        }
+
         // delete plugins in this namespace from system artifacts
         // for example, if there was an artifact in this namespace that extends a system artifact
         Scan systemPluginsScan = new Scan(
@@ -528,10 +646,12 @@ public class ArtifactStore {
 
     // column for plugin meta and app meta. {artifact-name}:{artifact-version}
     // does not need to contain namespace because namespace is in the rowkey
-    ArtifactColumn artifactColumn = new ArtifactColumn(artifactId);
+    byte[] artifactColumn = new ArtifactColumn(artifactId).getColumn();
 
+    ArtifactClasses classes = data.meta.getClasses();
+    Location artifactLocation = locationFactory.create(data.locationURI);
     // write pluginClass metadata
-    for (PluginClass pluginClass : data.meta.getClasses().getPlugins()) {
+    for (PluginClass pluginClass : classes.getPlugins()) {
       // write metadata for each artifact this plugin extends
       for (ArtifactRange artifactRange : data.meta.getUsableBy()) {
         // p:{namespace}:{type}:{name}
@@ -539,36 +659,44 @@ public class ArtifactStore {
           artifactRange.getNamespace(), artifactRange.getName(), pluginClass.getType(), pluginClass.getName());
 
         byte[] pluginDataBytes = Bytes.toBytes(
-          gson.toJson(new PluginData(pluginClass, artifactRange, locationFactory.create(data.locationURI))));
-        table.put(pluginKey.getRowKey(), artifactColumn.getColumn(), pluginDataBytes);
+          gson.toJson(new PluginData(pluginClass, artifactRange, artifactLocation)));
+        table.put(pluginKey.getRowKey(), artifactColumn, pluginDataBytes);
       }
     }
 
-    // TODO: write appClass metadata
+    // write appClass metadata
+    for (ApplicationClass appClass : classes.getApps()) {
+      // a:{namespace}:{classname}
+      AppClassKey appClassKey = new AppClassKey(artifactId.getNamespace(), appClass.getClassName());
+      byte[] appDataBytes = Bytes.toBytes(gson.toJson(new AppData(appClass, artifactLocation)));
+      table.put(appClassKey.getRowKey(), artifactColumn, appDataBytes);
+    }
   }
 
-  // if we are overwriting a previous snapshot, need to clean up the old snapshot data
-  // this means cleaning up the old jar, and deleting plugin and app rows.
-  private void cleanupOldSnapshot(Table table, Id.Artifact artifactId, byte[] oldData) throws IOException {
+  private void deleteMeta(Table table, Id.Artifact artifactId, byte[] oldData) throws IOException {
     // delete old artifact data
     ArtifactCell artifactCell = new ArtifactCell(artifactId);
     table.delete(artifactCell.rowkey, artifactCell.column);
 
     // delete old plugins
     ArtifactData oldMeta = gson.fromJson(Bytes.toString(oldData), ArtifactData.class);
-    ArtifactColumn artifactColumn = new ArtifactColumn(artifactId);
+    byte[] artifactColumn = new ArtifactColumn(artifactId).getColumn();
 
     for (PluginClass pluginClass : oldMeta.meta.getClasses().getPlugins()) {
-      // write metadata for each artifact this plugin extends
+      // delete metadata for each artifact this plugin extends
       for (ArtifactRange artifactRange : oldMeta.meta.getUsableBy()) {
         // p:{namespace}:{type}:{name}
         PluginKey pluginKey = new PluginKey(
           artifactRange.getNamespace(), artifactRange.getName(), pluginClass.getType(), pluginClass.getName());
-        table.delete(pluginKey.getRowKey(), artifactColumn.getColumn());
+        table.delete(pluginKey.getRowKey(), artifactColumn);
       }
     }
 
-    // TODO: delete appClass metadata
+    // delete old appclass metadata
+    for (ApplicationClass appClass : oldMeta.meta.getClasses().getApps()) {
+      AppClassKey appClassKey = new AppClassKey(artifactId.getNamespace(), appClass.getClassName());
+      table.delete(appClassKey.getRowKey(), artifactColumn);
+    }
 
     // delete the old jar file
     locationFactory.create(oldMeta.locationURI).delete();
@@ -596,7 +724,7 @@ public class ArtifactStore {
       PluginData pluginData = gson.fromJson(Bytes.toString(column.getValue()), PluginData.class);
 
       // filter out plugins that don't extend this version of the parent artifact
-      if (matches(pluginData, parentArtifactId.getVersion())) {
+      if (pluginData.usableBy.versionIsInRange(parentArtifactId.getVersion())) {
         ArtifactDescriptor artifactDescriptor =
           getDescriptor(artifactColumn.artifactId, locationFactory.create(pluginData.artifactLocationURI));
 
@@ -633,6 +761,26 @@ public class ArtifactStore {
         PLUGIN_PREFIX, parentArtifactId.getNamespace().getId(), parentArtifactId.getName(), type)),
       Bytes.toBytes(String.format("%s:%s:%s:%s;",
         PLUGIN_PREFIX, parentArtifactId.getNamespace().getId(), parentArtifactId.getName(), type)));
+  }
+
+  private Scan scanAppClasses(Id.Namespace namespace) {
+    return new Scan(
+      Bytes.toBytes(String.format("%s:%s:", APPCLASS_PREFIX, namespace.getId())),
+      Bytes.toBytes(String.format("%s:%s;", APPCLASS_PREFIX, namespace.getId())));
+  }
+
+  private static class AppClassKey {
+    private final Id.Namespace namespace;
+    private final String className;
+
+    public AppClassKey(Id.Namespace namespace, String className) {
+      this.namespace = namespace;
+      this.className = className;
+    }
+
+    private byte[] getRowKey() {
+      return Bytes.toBytes(Joiner.on(':').join(APPCLASS_PREFIX, namespace.getId(), className));
+    }
   }
 
   private static class PluginKey {
@@ -723,15 +871,43 @@ public class ArtifactStore {
   // Data that will be stored for a plugin.
   private static class PluginData {
     private final PluginClass pluginClass;
-    private final String parentVersionLower;
-    private final String parentVersionUpper;
+    private final ArtifactRange usableBy;
     private final URI artifactLocationURI;
 
     public PluginData(PluginClass pluginClass, ArtifactRange usableBy, Location artifactLocation) {
       this.pluginClass = pluginClass;
-      this.parentVersionLower = usableBy.getLower().getVersion();
-      this.parentVersionUpper = usableBy.getUpper().getVersion();
+      this.usableBy = usableBy;
       this.artifactLocationURI = artifactLocation.toURI();
+    }
+  }
+  
+  // Data that will be stored for an application class.
+  private static class AppData {
+    private final ApplicationClass appClass;
+    private final URI artifactLocationURI;
+
+    public AppData(ApplicationClass appClass, Location artifactLocation) {
+      this.appClass = appClass;
+      this.artifactLocationURI = artifactLocation.toURI();
+    }
+  }
+
+  // serialize and deserialize artifact range
+  private static class ArtifactRangeCodec implements JsonDeserializer<ArtifactRange>, JsonSerializer<ArtifactRange> {
+
+    @Override
+    public ArtifactRange deserialize(JsonElement json, Type typeOfT,
+                                     JsonDeserializationContext context) throws JsonParseException {
+      try {
+        return ArtifactRange.parse(json.getAsString());
+      } catch (InvalidArtifactRangeException e) {
+        throw new JsonParseException(e);
+      }
+    }
+
+    @Override
+    public JsonElement serialize(ArtifactRange src, Type typeOfSrc, JsonSerializationContext context) {
+      return new JsonPrimitive(src.toString());
     }
   }
 }

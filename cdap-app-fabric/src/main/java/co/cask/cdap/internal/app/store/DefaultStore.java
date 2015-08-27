@@ -28,6 +28,9 @@ import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.worker.WorkerSpecification;
+import co.cask.cdap.api.workflow.WorkflowActionNode;
+import co.cask.cdap.api.workflow.WorkflowNode;
+import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
@@ -50,6 +53,8 @@ import co.cask.cdap.proto.AdapterStatus;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.WorkflowStatistics;
 import co.cask.cdap.templates.AdapterDefinition;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
@@ -60,6 +65,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
@@ -73,6 +79,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -85,10 +92,16 @@ import javax.annotation.Nullable;
  * Implementation of the Store that ultimately places data into MetaDataTable.
  */
 public class DefaultStore implements Store {
-  private static final Logger LOG = LoggerFactory.getLogger(DefaultStore.class);
+
   public static final String APP_META_TABLE = "app.meta";
+  // mds is specific for metadata, we do not want to add workflow stats related information to the mds,
+  // as it is not specifically metadata
+  public static final String WORKFLOW_STATS_TABLE = "workflow.stats";
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultStore.class);
   private static final Id.DatasetInstance APP_META_INSTANCE_ID =
     Id.DatasetInstance.from(Id.Namespace.SYSTEM, APP_META_TABLE);
+  private static final Id.DatasetInstance WORKFLOW_STATS_INSTANCE_ID =
+    Id.DatasetInstance.from(Id.Namespace.SYSTEM, WORKFLOW_STATS_TABLE);
 
   private final LocationFactory locationFactory;
   private final NamespacedLocationFactory namespacedLocationFactory;
@@ -96,6 +109,7 @@ public class DefaultStore implements Store {
   private final DatasetFramework dsFramework;
 
   private Transactional<AppMds, AppMetadataStore> txnl;
+  private Transactional<WorkflowStatsDataset,  WorkflowDataset> txnlWorkflow;
 
   @Inject
   public DefaultStore(CConfiguration conf,
@@ -121,6 +135,19 @@ public class DefaultStore implements Store {
         }
       }
     });
+    txnlWorkflow = Transactional.of(txExecutorFactory, new Supplier<WorkflowStatsDataset>() {
+      @Override
+      public WorkflowStatsDataset get() {
+        try {
+          Table workflowTable = DatasetsUtil.getOrCreateDataset(dsFramework, WORKFLOW_STATS_INSTANCE_ID, "table",
+                                                                DatasetProperties.EMPTY,
+                                                                DatasetDefinition.NO_ARGUMENTS, null);
+          return new WorkflowStatsDataset(workflowTable);
+        } catch (Exception e) {
+          throw Throwables.propagate(e);
+        }
+      }
+    });
   }
 
   /**
@@ -130,6 +157,8 @@ public class DefaultStore implements Store {
    */
   public static void setupDatasets(DatasetFramework framework) throws IOException, DatasetManagementException {
     framework.addInstance(Table.class.getName(), Id.DatasetInstance.from(Id.Namespace.SYSTEM, APP_META_TABLE),
+                          DatasetProperties.EMPTY);
+    framework.addInstance(Table.class.getName(), Id.DatasetInstance.from(Id.Namespace.SYSTEM, WORKFLOW_STATS_TABLE),
                           DatasetProperties.EMPTY);
   }
 
@@ -159,7 +188,7 @@ public class DefaultStore implements Store {
     // todo: this should not be checked here but in start()
     Preconditions.checkArgument(appMeta.getLastUpdateTs() >= programLocation.lastModified(),
                                 "Newer program update time than the specification update time. " +
-                                "Application must be redeployed");
+                                  "Application must be redeployed");
 
     return Programs.create(programLocation);
   }
@@ -225,8 +254,47 @@ public class DefaultStore implements Store {
       }
     });
 
-
+    // This block has been added so that completed workflow runs can be logged to the workflow dataset
+    if (id.getType() == ProgramType.WORKFLOW && runStatus == ProgramRunStatus.COMPLETED) {
+      Id.Workflow workflow = Id.Workflow.from(id.getApplication(), id.getId());
+      recordCompletedWorkflow(workflow, pid);
+    }
     // todo: delete old history data
+  }
+
+  private void recordCompletedWorkflow(final Id.Workflow id, String pid) {
+    final RunRecordMeta run = getRun(id, pid);
+    if (run == null) {
+      return;
+    }
+    Id.Application app = id.getApplication();
+    ApplicationSpecification appSpec = getApplication(app);
+    if (appSpec == null || appSpec.getWorkflows() == null || appSpec.getWorkflows().get(id.getId()) == null) {
+      return;
+    }
+
+    WorkflowSpecification workflowSpec = appSpec.getWorkflows().get(id.getId());
+    Map<String, WorkflowNode> nodeIdMap = workflowSpec.getNodeIdMap();
+
+    final List<WorkflowDataset.ProgramRun> programRunsList = new ArrayList<>();
+    for (Map.Entry<String, String> entry : run.getProperties().entrySet()) {
+      if (!"workflowToken".equals(entry.getKey())) {
+        WorkflowActionNode workflowNode = (WorkflowActionNode) nodeIdMap.get(entry.getKey());
+        ProgramType programType = ProgramType.valueOfSchedulableType(workflowNode.getProgram().getProgramType());
+        Id.Program innerProgram = Id.Program.from(app.getNamespaceId(), app.getId(), programType, entry.getKey());
+        RunRecordMeta innerProgramRun = getRun(innerProgram, entry.getValue());
+        programRunsList.add(new WorkflowDataset.ProgramRun(
+          entry.getKey(), entry.getValue(), programType, innerProgramRun.getStopTs() - innerProgramRun.getStartTs()));
+      }
+    }
+
+    txnlWorkflow.executeUnchecked(new TransactionExecutor.Function<WorkflowStatsDataset, Void>() {
+      @Override
+      public Void apply(WorkflowStatsDataset dataset) {
+        dataset.workflowDataset.write(id, run, programRunsList);
+        return null;
+      }
+    });
   }
 
   @Override
@@ -247,6 +315,43 @@ public class DefaultStore implements Store {
       public Void apply(AppMds mds) throws Exception {
         mds.apps.recordProgramResumed(id, pid);
         return null;
+      }
+    });
+  }
+
+  @Nullable
+  public WorkflowStatistics getWorkflowStatistics(final Id.Workflow id, final long startTime,
+                                                  final long endTime, final List<Double> percentiles) {
+    return txnlWorkflow.executeUnchecked(new TransactionExecutor.Function
+      <WorkflowStatsDataset, WorkflowStatistics>() {
+      @Override
+      public WorkflowStatistics apply(WorkflowStatsDataset dataset) throws Exception {
+        return dataset.workflowDataset.getStatistics(id, startTime, endTime, percentiles);
+      }
+    });
+  }
+
+  @Override
+  public WorkflowDataset.WorkflowRunRecord getWorkflowRun(final Id.Workflow workflowId, final String runId) {
+    return txnlWorkflow.executeUnchecked(new TransactionExecutor.Function
+      <WorkflowStatsDataset, WorkflowDataset.WorkflowRunRecord>() {
+      @Override
+      public WorkflowDataset.WorkflowRunRecord apply(WorkflowStatsDataset dataset) throws Exception {
+        return dataset.workflowDataset.getRecord(workflowId, runId);
+      }
+    });
+  }
+
+  @Override
+  public Collection<WorkflowDataset.WorkflowRunRecord> retrieveSpacedRecords(final Id.Workflow workflow,
+                                                                             final String runId,
+                                                                             final int limit,
+                                                                             final long timeInterval) {
+    return txnlWorkflow.executeUnchecked(new TransactionExecutor.Function
+      <WorkflowStatsDataset, Collection<WorkflowDataset.WorkflowRunRecord>>() {
+      @Override
+      public Collection<WorkflowDataset.WorkflowRunRecord> apply(WorkflowStatsDataset dataset) throws Exception {
+        return dataset.workflowDataset.getDetailsOfRange(workflow, runId, limit, timeInterval);
       }
     });
   }
@@ -596,6 +701,15 @@ public class DefaultStore implements Store {
                                });
       }
     });
+  }
+
+  @Override
+  public Collection<ApplicationSpecification> getApplications(final Id.Namespace namespace,
+                                                              @Nullable final String artifactName,
+                                                              @Nullable final String artifactVersion) {
+    Collection<ApplicationSpecification> allApps = getAllApplications(namespace);
+    Predicate<ApplicationSpecification> filterPredicate = getAppPredicate(artifactName, artifactVersion);
+    return filterPredicate == null ? allApps : Collections2.filter(allApps, filterPredicate);
   }
 
   @Nullable
@@ -950,7 +1064,11 @@ public class DefaultStore implements Store {
 
   @VisibleForTesting
   void clear() throws Exception {
-    DatasetAdmin admin = dsFramework.getAdmin(APP_META_INSTANCE_ID, null);
+    truncate(dsFramework.getAdmin(APP_META_INSTANCE_ID, null));
+    truncate(dsFramework.getAdmin(WORKFLOW_STATS_INSTANCE_ID, null));
+  }
+
+  private void truncate(DatasetAdmin admin) throws Exception {
     if (admin != null) {
       admin.truncate();
     }
@@ -1133,9 +1251,9 @@ public class DefaultStore implements Store {
   }
 
   private static ApplicationSpecification replaceFlowletInAppSpec(final ApplicationSpecification appSpec,
-                                                           final Id.Program id,
-                                                           final FlowSpecification flowSpec,
-                                                           final FlowletDefinition adjustedFlowletDef) {
+                                                                  final Id.Program id,
+                                                                  final FlowSpecification flowSpec,
+                                                                  final FlowletDefinition adjustedFlowletDef) {
     // as app spec is immutable we have to do this trick
     return replaceFlowInAppSpec(appSpec, id, new FlowSpecificationWithChangedFlowlets(flowSpec, adjustedFlowletDef));
   }
@@ -1201,6 +1319,49 @@ public class DefaultStore implements Store {
     @Override
     public Iterator<AppMetadataStore> iterator() {
       return Iterators.singletonIterator(apps);
+    }
+  }
+
+  private static final class WorkflowStatsDataset implements Iterable<WorkflowDataset> {
+    private final WorkflowDataset workflowDataset;
+
+    private WorkflowStatsDataset(Table mdsTable) {
+      this.workflowDataset = new WorkflowDataset(mdsTable);
+    }
+
+    @Override
+    public Iterator<WorkflowDataset> iterator() {
+      return Iterators.singletonIterator(workflowDataset);
+    }
+  }
+
+  // get filter for app specs by artifact name and version. if they are null, it means don't filter.
+  private Predicate<ApplicationSpecification> getAppPredicate(@Nullable final String artifactName,
+                                                              @Nullable final String artifactVersion) {
+    if (artifactName == null && artifactVersion == null) {
+      return null;
+    } else if (artifactName == null) {
+      return new Predicate<ApplicationSpecification>() {
+        @Override
+        public boolean apply(ApplicationSpecification input) {
+          return artifactVersion.equals(input.getArtifactId().getVersion().getVersion());
+        }
+      };
+    } else if (artifactVersion == null) {
+      return new Predicate<ApplicationSpecification>() {
+        @Override
+        public boolean apply(ApplicationSpecification input) {
+          return artifactName.equals(input.getArtifactId().getName());
+        }
+      };
+    } else {
+      return new Predicate<ApplicationSpecification>() {
+        @Override
+        public boolean apply(ApplicationSpecification input) {
+          Id.Artifact artifact = input.getArtifactId();
+          return artifactVersion.equals(artifact.getVersion().getVersion()) && artifactName.equals(artifact.getName());
+        }
+      };
     }
   }
 }

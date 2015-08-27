@@ -5,7 +5,8 @@ angular.module(PKG.name + '.commons')
       scope: {
         model: '=ngModel',
         config: '=',
-        plugins: '='
+        plugins: '=',
+        disabled: '='
       },
       templateUrl: 'widget-container/widget-stream-properties/widget-stream-properties.html',
       controller: function($scope, EventPipe, IMPLICIT_SCHEMA) {
@@ -172,13 +173,17 @@ angular.module(PKG.name + '.commons')
           initialize($scope.model);
         });
 
+        EventPipe.on('schema.clear', function () {
+          initialize();
+        });
+
         EventPipe.on('dataset.selected', function (schema) {
           initialize(schema);
         });
 
         function formatSchema() {
 
-          if (['clf', 'syslog'].indexOf($scope.plugins.format) !== -1) {
+          if ($scope.plugins && ['clf', 'syslog'].indexOf($scope.plugins.format) !== -1) {
             $scope.model = null;
             return;
           }

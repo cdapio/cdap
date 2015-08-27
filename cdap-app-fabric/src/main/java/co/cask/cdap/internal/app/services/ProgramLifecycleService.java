@@ -254,7 +254,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
    * @param programType The type of program the run records need to validate and update.
    * @param processedInvalidRunRecordIds the {@link Set} of processed invalid run record ids.
    */
-  void validateAndCorrectRunningRunRecords(ProgramType programType, Set<String> processedInvalidRunRecordIds) {
+  void validateAndCorrectRunningRunRecords(final ProgramType programType, Set<String> processedInvalidRunRecordIds) {
     final Map<RunId, RuntimeInfo> runIdToRuntimeInfo = runtimeService.list(programType);
 
     List<RunRecordMeta> invalidRunRecords = store.getRuns(ProgramRunStatus.RUNNING, new Predicate<RunRecordMeta>() {
@@ -265,24 +265,23 @@ public class ProgramLifecycleService extends AbstractIdleService {
         }
         // Check if it is actually running
         String runId = input.getPid();
-        return !runIdToRuntimeInfo.containsKey(RunIds.fromString(runId));
+        // check for program Id for the run record, if null then it is invalid program type.
+        Id.Program targetProgramId = retrieveProgramIdForRunRecord(programType, runId);
+
+        // Check if run id is for the right program type and it is not actually running.
+        return (targetProgramId != null) && !runIdToRuntimeInfo.containsKey(RunIds.fromString(runId));
       }
     });
 
     if (!invalidRunRecords.isEmpty()) {
-      LOG.warn("Found {} RunRecords with RUNNING status but the program not actually running",
-               invalidRunRecords.size());
+      LOG.warn("Found {} RunRecords with RUNNING status but the program is not actually running for program type {}",
+               invalidRunRecords.size(), programType.getPrettyName());
     }
 
     // Now lets correct the invalid RunRecords
     for (RunRecordMeta invalidRunRecordMeta : invalidRunRecords) {
       String runId = invalidRunRecordMeta.getPid();
       Id.Program targetProgramId = retrieveProgramIdForRunRecord(programType, runId);
-      if (targetProgramId == null) {
-        // wrong program type
-        continue;
-      }
-
       boolean shouldCorrect = shouldCorrectForWorkflowChildren(invalidRunRecordMeta, processedInvalidRunRecordIds);
       if (!shouldCorrect) {
         continue;

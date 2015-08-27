@@ -157,15 +157,16 @@ public class MapReduceProgramRunner implements ProgramRunner {
     }
 
     final PluginInstantiator pluginInstantiator = createPluginInstantiator(adapterSpec, program.getClassLoader());
+    final PluginInstantiator artifactPluginInstantiator = createArtifactPluginInstantiator(program.getClassLoader());
     try {
       final DynamicMapReduceContext context =
         new DynamicMapReduceContext(program, null, runId, null, options.getUserArguments(), spec,
                                     logicalStartTime, programNameInWorkflow, workflowToken, discoveryServiceClient,
-                                    metricsCollectionService, txSystemClient, datasetFramework, adapterSpec,
-                                    pluginInstantiator);
+                                    metricsCollectionService, txSystemClient, datasetFramework, locationFactory,
+                                    adapterSpec, pluginInstantiator, artifactPluginInstantiator);
 
 
-      Reflections.visit(mapReduce, TypeToken.of(mapReduce.getClass()),
+      Reflections.visit(mapReduce, mapReduce.getClass(),
                         new PropertyFieldSetter(context.getSpecification().getProperties()),
                         new MetricsFieldSetter(context.getMetrics()),
                         new DataSetFieldSetter(context));
@@ -288,5 +289,10 @@ public class MapReduceProgramRunner implements ProgramRunner {
       return null;
     }
     return new PluginInstantiator(cConf, adapterSpec.getTemplate(), programClassLoader);
+  }
+
+  @Nullable
+  private PluginInstantiator createArtifactPluginInstantiator(ClassLoader programClassLoader) {
+    return new PluginInstantiator(cConf, programClassLoader);
   }
 }

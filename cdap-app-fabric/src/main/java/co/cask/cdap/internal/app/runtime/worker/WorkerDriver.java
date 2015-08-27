@@ -62,7 +62,7 @@ public class WorkerDriver extends AbstractExecutionThreadService {
     worker = new InstantiatorFactory(false).get(workerType).create();
 
     // Fields injection
-    Reflections.visit(worker, workerType,
+    Reflections.visit(worker, workerType.getType(),
                       new MetricsFieldSetter(context.getMetrics()),
                       new PropertyFieldSetter(spec.getProperties()));
 

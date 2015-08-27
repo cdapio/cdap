@@ -75,6 +75,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.gson.Gson;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -126,12 +127,13 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private final Store store;
   private final Id.Workflow workflowId;
   private final CConfiguration cConf;
+  private final LocationFactory locationFactory;
 
   WorkflowDriver(Program program, ProgramOptions options, InetAddress hostname,
                  WorkflowSpecification workflowSpec, ProgramRunnerFactory programRunnerFactory,
                  MetricsCollectionService metricsCollectionService, DatasetFramework datasetFramework,
                  DiscoveryServiceClient discoveryServiceClient, TransactionSystemClient txClient,
-                 Store store, CConfiguration cConf) {
+                 LocationFactory locationFactory, Store store, CConfiguration cConf) {
     this.program = program;
     this.hostname = hostname;
     this.runtimeArgs = createRuntimeArgs(options.getUserArguments());
@@ -157,6 +159,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     this.datasetFramework = datasetFramework;
     this.discoveryServiceClient = discoveryServiceClient;
     this.txClient = txClient;
+    this.locationFactory = locationFactory;
     this.store = store;
     this.workflowId = Id.Workflow.from(program.getId().getApplication(), workflowSpec.getName());
     this.cConf = cConf;
@@ -268,7 +271,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
       });
       future.get();
     } catch (Throwable t) {
-      LOG.error("Exception on WorkflowAction.run(), aborting Workflow. {}", actionSpec);
+      LOG.error("Exception on WorkflowAction.run(), aborting Workflow. {}", actionSpec, t);
       Throwables.propagateIfPossible(t, Exception.class);
       throw Throwables.propagate(t);
     } finally {
@@ -376,8 +379,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
 
       for (int i = 0; i < fork.getBranches().size(); i++) {
         try {
-          Future<Map.Entry<String, WorkflowToken>> f = completionService.take();
-          Map.Entry<String, WorkflowToken> retValue = f.get();
+          Future<Map.Entry<String, WorkflowToken>> forkBranchResult = completionService.take();
+          Map.Entry<String, WorkflowToken> retValue = forkBranchResult.get();
           String branchInfo = retValue.getKey();
           WorkflowToken branchToken = retValue.getValue();
           ((BasicWorkflowToken) token).mergeToken((BasicWorkflowToken) branchToken);
@@ -385,15 +388,15 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
         } catch (Throwable t) {
           Throwable rootCause = Throwables.getRootCause(t);
           if (rootCause instanceof ExecutionException) {
-            LOG.error("Exception occurred in the execution of the fork node {}", fork);
-            throw (ExecutionException) t;
+            LOG.error("Exception occurred in the execution of the fork node {}.", fork, rootCause);
+            throw (ExecutionException) rootCause;
           }
           if (rootCause instanceof InterruptedException) {
-            LOG.error("Workflow execution aborted.");
+            LOG.error("Workflow execution aborted.", rootCause);
             break;
           }
-          Throwables.propagateIfPossible(t, Exception.class);
-          throw Throwables.propagate(t);
+          Throwables.propagateIfPossible(rootCause, Exception.class);
+          throw Throwables.propagate(rootCause);
         }
       }
     } finally {
@@ -433,7 +436,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
 
     WorkflowContext context = new BasicWorkflowContext(workflowSpec, null, logicalStartTime, null, runtimeArgs, token,
                                                        program, runId, metricsCollectionService,
-                                                       datasetFramework, discoveryServiceClient);
+                                                       datasetFramework, discoveryServiceClient, locationFactory);
     Iterator<WorkflowNode> iterator;
     if (predicate.apply(context)) {
       // execute the if branch
@@ -469,10 +472,10 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
       } catch (Throwable t) {
         Throwable rootCause = Throwables.getRootCause(t);
         if (rootCause instanceof InterruptedException) {
-          LOG.error("Workflow execution aborted.");
+          LOG.error("Workflow execution aborted.", rootCause);
           break;
         }
-        Throwables.propagate(t);
+        throw Throwables.propagate(rootCause);
       }
     }
   }
@@ -499,7 +502,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     return new BasicWorkflowContext(workflowSpec, actionSpec, logicalStartTime,
                                     workflowProgramRunnerFactory.getProgramWorkflowRunner(actionSpec, token, nodeId),
                                     runtimeArgs, token, program, runId, metricsCollectionService,
-                                    datasetFramework, discoveryServiceClient);
+                                    datasetFramework, discoveryServiceClient, locationFactory);
   }
 
   /**
@@ -515,7 +518,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
 
     ClassLoader oldClassLoader = setContextCombinedClassLoader(action);
     try {
-      Reflections.visit(action, TypeToken.of(action.getClass()),
+      Reflections.visit(action, action.getClass(),
                         new PropertyFieldSetter(actionSpec.getProperties()),
                         new DataSetFieldSetter(workflowContext),
                         new MetricsFieldSetter(workflowContext.getMetrics()));

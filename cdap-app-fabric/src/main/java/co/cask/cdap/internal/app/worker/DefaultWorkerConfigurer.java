@@ -20,14 +20,17 @@ import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.api.worker.WorkerConfigurer;
 import co.cask.cdap.api.worker.WorkerSpecification;
+import co.cask.cdap.internal.app.DefaultPluginConfigurer;
+import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.internal.specification.PropertyFieldExtractor;
+import co.cask.cdap.proto.Id;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.google.common.reflect.TypeToken;
 
 import java.util.Map;
 import java.util.Set;
@@ -35,7 +38,7 @@ import java.util.Set;
 /**
  * Default implementation of the {@link WorkerConfigurer}.
  */
-public class DefaultWorkerConfigurer implements WorkerConfigurer {
+public class DefaultWorkerConfigurer extends DefaultPluginConfigurer implements WorkerConfigurer {
 
   private final String className;
   private final Map<String, String> propertyFields;
@@ -47,7 +50,9 @@ public class DefaultWorkerConfigurer implements WorkerConfigurer {
   private Map<String, String> properties;
   private Set<String> datasets;
 
-  public DefaultWorkerConfigurer(Worker worker) {
+  public DefaultWorkerConfigurer(Worker worker, Id.Artifact artifactId, ArtifactRepository artifactRepository,
+                                 PluginInstantiator pluginInstantiator) {
+    super(artifactRepository, pluginInstantiator, artifactId);
     this.name = worker.getClass().getSimpleName();
     this.className = worker.getClass().getName();
     this.propertyFields = Maps.newHashMap();
@@ -58,7 +63,7 @@ public class DefaultWorkerConfigurer implements WorkerConfigurer {
     this.datasets = Sets.newHashSet();
 
     // Grab all @Property fields
-    Reflections.visit(worker, TypeToken.of(worker.getClass()), new PropertyFieldExtractor(propertyFields));
+    Reflections.visit(worker, worker.getClass(), new PropertyFieldExtractor(propertyFields));
   }
 
   @Override

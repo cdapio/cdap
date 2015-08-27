@@ -25,12 +25,15 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.internal.app.Plugin;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
+import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.collect.Maps;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.filesystem.LocationFactory;
 
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -46,6 +49,7 @@ public class BasicHttpServiceContext extends AbstractContext implements Transact
   private final Metrics userMetrics;
   private final int instanceId;
   private final AtomicInteger instanceCount;
+  private final Map<String, Plugin> plugins;
 
   /**
    * Creates a BasicHttpServiceContext for the given HttpServiceHandlerSpecification.
@@ -64,10 +68,11 @@ public class BasicHttpServiceContext extends AbstractContext implements Transact
                                  Program program, RunId runId, int instanceId, AtomicInteger instanceCount,
                                  Arguments runtimeArgs, MetricsCollectionService metricsCollectionService,
                                  DatasetFramework dsFramework, DiscoveryServiceClient discoveryServiceClient,
-                                 TransactionSystemClient txClient) {
+                                 TransactionSystemClient txClient, LocationFactory locationFactory,
+                                 PluginInstantiator pluginInstantiator) {
     super(program, runId, runtimeArgs, spec.getDatasets(),
           getMetricCollector(metricsCollectionService, program, spec.getName(), runId.getId(), instanceId),
-          dsFramework, discoveryServiceClient);
+          dsFramework, discoveryServiceClient, locationFactory, null, null, pluginInstantiator);
     this.spec = spec;
     this.instanceId = instanceId;
     this.instanceCount = instanceCount;
@@ -75,6 +80,7 @@ public class BasicHttpServiceContext extends AbstractContext implements Transact
     this.userMetrics =
       new ProgramUserMetrics(getMetricCollector(metricsCollectionService, program,
                                                 spec.getName(), runId.getId(), instanceId));
+    this.plugins = Maps.newHashMap(program.getApplicationSpecification().getPlugins());
   }
 
   /**
@@ -98,6 +104,11 @@ public class BasicHttpServiceContext extends AbstractContext implements Transact
   @Override
   public Metrics getMetrics() {
     return userMetrics;
+  }
+
+  @Override
+  public Map<String, Plugin> getPlugins() {
+    return plugins;
   }
 
   @Override

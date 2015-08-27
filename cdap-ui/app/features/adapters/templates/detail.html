@@ -1,4 +1,4 @@
-<div ncy-breadcrumb></div>
+<my-breadcrumbs></my-breadcrumbs>
 
 <div class="row" program-heading>
 
@@ -40,6 +40,9 @@
   </li>
   <li role="presentation" ui-sref-active="active">
     <a ui-sref="adapters.detail.datasets" role="tab">Datasets</a>
+  </li>
+  <li role="presentation" ui-sref-active="active" ng-if="isScheduled">
+    <a ui-sref="adapters.detail.schedule" role="tab">Schedules</a>
   </li>
 </ul>
 

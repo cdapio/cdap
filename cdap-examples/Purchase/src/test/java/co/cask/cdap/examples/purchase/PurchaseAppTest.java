@@ -20,7 +20,6 @@ import co.cask.cdap.api.metrics.RuntimeMetrics;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.MapReduceManager;
-import co.cask.cdap.test.RuntimeStats;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.TestBase;
@@ -64,7 +63,7 @@ public class PurchaseAppTest extends TestBase {
 
     try {
       // Wait for the last Flowlet processing 5 events, or at most 5 seconds
-      RuntimeMetrics metrics = RuntimeStats.getFlowletMetrics("PurchaseHistory", "PurchaseFlow", "collector");
+      RuntimeMetrics metrics = flowManager.getFlowletMetrics("collector");
       metrics.waitForProcessed(5, 15, TimeUnit.SECONDS);
     } finally {
       flowManager.stop();

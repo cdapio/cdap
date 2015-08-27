@@ -52,7 +52,7 @@ public final class Constants {
   }
 
   /**
-   * Zookeeper Configuration.
+   * ZooKeeper Configuration.
    */
   public static final class Zookeeper {
     public static final String QUORUM = "zookeeper.quorum";
@@ -319,7 +319,7 @@ public final class Constants {
     // Period in seconds between two heartbeats in a stream service
     public static final int HEARTBEAT_INTERVAL = 2;
 
-    // Zookeeper namespace in which to keep the coordination metadata
+    // ZooKeeper namespace in which to keep the coordination metadata
     public static final String STREAM_ZK_COORDINATION_NAMESPACE = String.format("/%s/coordination", Service.STREAMS);
   }
 
@@ -698,10 +698,8 @@ public final class Constants {
 
     public static final String DATASET_NAME = "explore.dataset.name";
     public static final String DATASET_NAMESPACE = "explore.dataset.namespace";
-    public static final String DATASET_STORAGE_HANDLER_CLASS = "co.cask.cdap.hive.datasets.DatasetStorageHandler";
     public static final String STREAM_NAME = "explore.stream.name";
     public static final String STREAM_NAMESPACE = "explore.stream.namespace";
-    public static final String STREAM_STORAGE_HANDLER_CLASS = "co.cask.cdap.hive.stream.StreamStorageHandler";
     public static final String EXPLORE_CLASSPATH = "explore.classpath";
     public static final String EXPLORE_CONF_FILES = "explore.conf.files";
     public static final String PREVIEWS_DIR_NAME = "explore.previews.dir";
@@ -815,7 +813,7 @@ public final class Constants {
     }
 
     /**
-     * Constants used by Zookeeper.
+     * Constants used by ZooKeeper.
      */
     public static final class Zookeeper {
       public static final String ENV_AUTH_PROVIDER_1 = "zookeeper.authProvider.1";

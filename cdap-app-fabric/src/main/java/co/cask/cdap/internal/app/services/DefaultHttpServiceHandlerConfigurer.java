@@ -20,15 +20,18 @@ import co.cask.cdap.api.service.http.HttpServiceConfigurer;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
+import co.cask.cdap.internal.app.DefaultPluginConfigurer;
+import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.internal.specification.DataSetFieldExtractor;
 import co.cask.cdap.internal.specification.PropertyFieldExtractor;
+import co.cask.cdap.proto.Id;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.google.common.reflect.TypeToken;
 
 import java.util.List;
 import java.util.Map;
@@ -37,7 +40,7 @@ import java.util.Set;
 /**
  * Default implementation of {@link HttpServiceConfigurer}.
  */
-public class DefaultHttpServiceHandlerConfigurer implements HttpServiceConfigurer {
+public class DefaultHttpServiceHandlerConfigurer extends DefaultPluginConfigurer implements HttpServiceConfigurer {
 
   private final Map<String, String> propertyFields;
   private final String className;
@@ -52,7 +55,10 @@ public class DefaultHttpServiceHandlerConfigurer implements HttpServiceConfigure
    *
    * @param handler the handler for the service
    */
-  public DefaultHttpServiceHandlerConfigurer(HttpServiceHandler handler) {
+  public DefaultHttpServiceHandlerConfigurer(HttpServiceHandler handler, Id.Artifact artifactId,
+                                             ArtifactRepository artifactRepository,
+                                             PluginInstantiator pluginInstantiator) {
+    super(artifactRepository, pluginInstantiator, artifactId);
     this.propertyFields = Maps.newHashMap();
     this.className = handler.getClass().getName();
     this.name = handler.getClass().getSimpleName();
@@ -61,7 +67,7 @@ public class DefaultHttpServiceHandlerConfigurer implements HttpServiceConfigure
     this.endpoints = Lists.newArrayList();
 
     // Inspect the handler to grab all @UseDataset, @Property and endpoints.
-    Reflections.visit(handler, TypeToken.of(handler.getClass()),
+    Reflections.visit(handler, handler.getClass(),
                       new DataSetFieldExtractor(datasets),
                       new PropertyFieldExtractor(propertyFields),
                       new ServiceEndpointExtractor(endpoints));

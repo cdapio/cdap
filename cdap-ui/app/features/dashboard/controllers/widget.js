@@ -8,7 +8,7 @@ angular.module(PKG.name+'.feature.dashboard')
     function Widget (opts) {
       opts = opts || {};
       this.title = opts.title || 'Widget';
-
+      this.isOpen = false;
       // Type of widget and the metrics
       this.type = opts.type;
       this.metric = opts.metric || false;
@@ -56,47 +56,28 @@ angular.module(PKG.name+'.feature.dashboard')
     }
 
     var stringToColor = function(str) {
-
+      var i,
+          hash,
+          color;
       // str to hash
-      for (var i = 0, hash = 0;
-            i < str.length;
-            hash = str.charCodeAt(i++) + ((hash << 100) - hash)
-          );
-
-      // int/hash to hex
-      for (var i = 0, color = "#";
-            i < 3;
-            color += ("00" + ((hash >> i++ * 8) & 0xFF).toString(16)).slice(-2)
-          );
-
-      return color;
-    }
-
-    return Widget;
-  })
-
-  .controller('DropdownCtrl', function ($scope, $state, $dropdown) {
-    $scope.ddWidget = function(event){
-      var toggle = angular.element(event.target);
-      if(!toggle.hasClass('dropdown-toggle')) {
-        toggle = toggle.parent();
+      for (i = 0, hash = 0; i < str.length; ) {
+        hash = str.charCodeAt(i++) + ((hash << 100) - hash);
       }
 
-      var scope = $scope.$new(),
-          dd = $dropdown(toggle, {
-            template: 'assets/features/dashboard/templates/partials/wdgt-dd.html',
-            animation: 'am-flip-x',
-            trigger: 'manual',
-            prefixEvent: 'wdgt-tab-dd',
-            scope: scope
-          });
+      // int/hash to hex
+      for (i = 0, color = '#'; i < 3; ) {
+        color += ('00' + ((hash >> i++ * 8) & 0xFF).toString(16)).slice(-2);
+      }
 
-      dd.$promise.then(function(){
-        dd.show();
-      });
-
-      scope.$on('wdgt-tab-dd.hide', function () {
-        dd.destroy();
-      });
+      return color;
     };
+
+    Widget.prototype.ddWidget = function(event){
+      this.isOpen = !this.isOpen;
+      event.preventDefault();
+      event.stopPropagation();
+      return false;
+    };
+    return Widget;
+
   });

@@ -21,32 +21,21 @@ body.theme-cdap.state-adapters {
   .text-success { color: @brand-success; }
   .text-danger { color: @brand-danger; }
   .table.adapter-metrics-table {
-    tbody tr td .row {
-      margin: 0;
-      [class*="col-xs-"] {
-        padding: 0px 5px;
-        border: 1px solid #dddddd;
-        border-bottom: 0;
-        min-height: 21px;
+    tbody tr td {
+      &:last-child{
+        padding-left: 0;
+        padding-right: 0;
+      }
+      .row {
+        margin: 0;
+        [class*="col-xs-"] {
+          padding: 0px 10px;
+          min-height: 21px;
+
+        }
 
         &:last-child {
-          border-left: 0;
-        }
-      }
-
-      &:last-child {
-        [class*="col-xs-"] {
-          border-bottom: 1px solid #dddddd;
-        }
-      }
-      @media (max-width: @screen-sm-max) {
-        [class*="col-xs-"] {
-          border: 1px solid #dddddd;
-          border-bottom: 0;
-
-          &:last-child {
-            border: 1px solid #dddddd;
-          }
+          border-top: 1px solid #dddddd;
         }
       }
     }
@@ -75,7 +64,7 @@ body.theme-cdap.state-adapters-create {
       padding: 10px;
       border: 1px solid white;
       height: 250px;
-      background: #D3D3D3;
+      background: @subnav-border;
       color: white;
 
       &.transform-wrapper { height: auto; }
@@ -93,9 +82,7 @@ body.theme-cdap.state-adapters-create {
           top: 50%;
           font-size: @font-size;
           word-wrap: ellipsis;
-          -ms-transform: translateY(-50%);
-          -webkit-transform: translateY(-50%);
-          transform: translateY(-50%);
+          .translate(@x: 0%; @y: -50%);
         }
       }
       .template {
@@ -106,7 +93,7 @@ body.theme-cdap.state-adapters-create {
             background-color: @brand-danger;
           }
           &:hover {
-            background-color: #5a84e4;
+            background-color: @brand-primary;
             color: black;
           }
         }
@@ -117,7 +104,7 @@ body.theme-cdap.state-adapters-create {
               background-color: @brand-danger;
             }
             &:hover {
-              background-color: #5a84e4;
+              background-color: @brand-primary;
               color: black;
             }
           }
@@ -193,7 +180,6 @@ body.theme-cdap.state-adapters-create {
         .modal-btns {
           margin-right: -15px;
           text-align: right;
-
           &.hideNonInfoButtons {
             .non-info {
               display: none;
@@ -216,8 +202,8 @@ body.theme-cdap.state-adapters-create {
             }
 
             .transition(all 0.2s ease);
-            @media (max-width: @screen-sm-max) {
-              width: 45px;
+            @media (max-width: @screen-xs-min) {
+              width: 20%;
             }
             &:last-child {
               .btn {
@@ -230,6 +216,9 @@ body.theme-cdap.state-adapters-create {
             }
             &:only-child {
               margin-right: -1px;
+              @media (max-width: @screen-xs-max) {
+                width: 100%;
+              }
             }
             &:hover, &:focus {
               background-color: @cdap-header;
@@ -241,6 +230,11 @@ body.theme-cdap.state-adapters-create {
           &.btn-group {
             display: block;
             > div {
+
+              @media (max-width: @screen-xs-max) {
+                width: 20%;
+              }
+
               display: inline-block;
               margin-right: -4px;
               &:last-child {
@@ -275,7 +269,7 @@ body.theme-cdap.state-adapters-create {
         a {
           cursor: pointer;
           background-color: transparent;
-          color: #6a7387;
+          color: @btn-default-color;
           &:hover, &:focus {
             text-decoration: none;
           }
@@ -335,7 +329,9 @@ body.theme-cdap.state-adapters-create {
           .table {
             margin-bottom: 0;
             td {
-              width: 50%;
+              @media (min-width: @screen-lg-min) {
+                width: 50%;
+              }
             }
           }
           @media (max-width: @screen-md-max) {
@@ -380,6 +376,13 @@ body.theme-cdap.state-adapters-create {
             margin-left: -15px;
             > h4 {
               padding-left: 10px;
+              padding-right: 10px;
+              line-height: 30px;
+              margin-bottom: 15px;
+
+              span, button {
+                vertical-align: middle;
+              }
             }
             .table {
               margin-bottom: 0;
@@ -403,6 +406,9 @@ body.theme-cdap.state-adapters-create {
         h4 {
           font-weight: 400;
           margin-top: 0;
+          &.sink-schema {
+            margin-bottom: 15px;
+          }
         }
         .well {
           background-color: @body-bg;
@@ -411,6 +417,28 @@ body.theme-cdap.state-adapters-create {
           .box-shadow(4px);
           p {
             margin-bottom: 0;
+          }
+        }
+        .select-wrapper {
+          background-color: white;
+          display: inline-block;
+          position: relative;
+          width: 100%;
+          &:after {
+            color: @cdap-header;
+            content:"\f0d7";
+            font-family:'FontAwesome';
+            position: absolute;
+            top: 25%;
+            right: 5px;
+            z-index: 5;
+          }
+          select.form-control {
+            background-color: transparent;
+            padding-right: 20px;
+            position: relative;
+            z-index: 10;
+            .appearance();
           }
         }
       }
@@ -649,7 +677,7 @@ body.theme-cdap.state-adapters-create {
             }
           }
           li.list-group-item:hover {
-            background-color: #5a84e4;
+            background-color: @brand-primary;
             .fa-info-circle {
               color: white;
               padding-left: 2px;

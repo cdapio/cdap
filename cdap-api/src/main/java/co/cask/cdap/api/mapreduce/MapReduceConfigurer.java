@@ -16,32 +16,15 @@
 
 package co.cask.cdap.api.mapreduce;
 
+import co.cask.cdap.api.DatasetConfigurer;
+import co.cask.cdap.api.ProgramConfigurer;
 import co.cask.cdap.api.Resources;
-
-import java.util.Map;
+import co.cask.cdap.api.artifact.PluginConfigurer;
 
 /**
  * Configurer for configuring {@link MapReduce}.
  */
-public interface MapReduceConfigurer {
-
-  /**
-   * Sets the name of the {@link MapReduce}.
-   */
-  void setName(String name);
-
-  /**
-   * Sets the description of the {@link MapReduce}.
-   */
-  void setDescription(String description);
-
-  /**
-   * Sets a set of properties that will be available through the {@link MapReduceSpecification#getProperties()}
-   * at runtime.
-   *
-   * @param properties the properties to set
-   */
-  void setProperties(Map<String, String> properties);
+public interface MapReduceConfigurer extends DatasetConfigurer, ProgramConfigurer, PluginConfigurer {
 
   /**
    * Specifies set of dataset names that are used by the {@link MapReduce}.

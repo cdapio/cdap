@@ -28,6 +28,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.internal.app.Plugin;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
 import com.google.common.cache.CacheBuilder;
@@ -37,6 +38,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.filesystem.LocationFactory;
 
 import java.util.Map;
 import java.util.Set;
@@ -64,10 +66,10 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
                       Arguments runtimeArguments, FlowletSpecification flowletSpec,
                       MetricsCollectionService metricsCollectionService,
                       DiscoveryServiceClient discoveryServiceClient,
-                      DatasetFramework dsFramework) {
+                      DatasetFramework dsFramework, LocationFactory locationFactory) {
     super(program, runId, runtimeArguments, datasets,
           getMetricCollector(metricsCollectionService, program, flowletId, runId.getId(), instanceId),
-          dsFramework, discoveryServiceClient);
+          dsFramework, discoveryServiceClient, locationFactory);
     this.namespaceId = program.getNamespaceId();
     this.flowId = program.getName();
     this.flowletId = flowletId;
@@ -105,6 +107,11 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
   public String toString() {
     return String.format("flowlet=%s, instance=%d, groupsize=%s, %s",
                          getFlowletId(), getInstanceId(), getInstanceCount(), super.toString());
+  }
+
+  @Override
+  public Map<String, Plugin> getPlugins() {
+    return null;
   }
 
   @Override

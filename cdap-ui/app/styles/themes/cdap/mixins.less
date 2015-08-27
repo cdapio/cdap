@@ -23,30 +23,6 @@
   &:hover, &:focus { text-decoration: none; }
 }
 
-.dropdown() {
-  border: 0;
-  border-radius: 0 8px 8px 8px;
-  background-color: @cdap-header;
-  margin: 0;
-  padding: 0;
-  > li {
-    margin: 0;
-    &:not(.divider) {
-      .border-radius(0 8px 8px 8px);
-      padding: 10px 0;
-      &:hover, &:focus { background-color: @cdap-lightgray; }
-    }
-    > a {
-      color: white;
-      padding: 3px 10px 3px 15px;
-      &:hover, &:focus {
-        background-color: transparent;
-        outline: none;
-      }
-    }
-  }
-}
-
 .dropdown-defaults() {
   + .dropdown-menu {
     background-color: transparent;
@@ -131,3 +107,64 @@
     }
   }
 }
+
+.navbar-collapse-menus() {
+  // for li.dropdown instances in global navbar
+  min-width: 140px;
+  a.dropdown-toggle {
+    padding-bottom: 0;
+    span.caret {
+      .transition (all 0.2s ease-in);
+    }
+  }
+  ul.dropdown-menu.am-flip-x {
+    .transition(none);
+    -webkit-animation-duration: 0s;
+    animation-duration: 0s;
+  }
+  li.disabled { display: none; }
+  &.open {
+    a.dropdown-toggle {
+      background-color: transparent;
+      text-align: left;
+      .transition(all 0.1s ease);
+      &:hover, &:focus { background-color: transparent; }
+      .caret {
+        .rotate(-90deg);
+      }
+    }
+    ul.dropdown-menu { padding: 0; }
+  }
+}
+
+.flexbox() {
+  display: -webkit-box;
+  display: -moz-box;
+  display: -ms-flexbox;
+  display: -webkit-flex;
+  display: flex;
+}
+
+.order(@val) {
+  -webkit-box-ordinal-group: @val;
+  -moz-box-ordinal-group: @val;
+  -ms-flex-order: @val;
+  -webkit-order: @val;
+  -webkit-box-ordinal-group: @val;
+  order: @val;
+}
+
+.appearance(@value: none) {
+  // Remove dashed border from select elements when in focus
+  color: rgba(0,0,0,0);
+  text-shadow: 0 0 0 @cdap-header;
+
+  appearance: @value;
+  -webkit-appearance: @value;
+  -moz-appearance: @value;
+  -o-appearance: @value;
+  ::-ms-expand {
+    display: none;  // Need this to hide default select in IE10
+  }
+}
+

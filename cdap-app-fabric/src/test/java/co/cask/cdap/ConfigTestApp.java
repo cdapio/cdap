@@ -75,8 +75,6 @@ public class ConfigTestApp extends AbstractApplication<ConfigTestApp.ConfigClass
   @Override
   public void configure() {
     ConfigClass configObj = getConfig();
-    addStream(new Stream(configObj.streamName));
-    createDataset(configObj.tableName, KeyValueTable.class);
     addWorker(new DefaultWorker(configObj.streamName));
     addFlow(new SimpleFlow(configObj.streamName, configObj.tableName));
   }
@@ -118,13 +116,14 @@ public class ConfigTestApp extends AbstractApplication<ConfigTestApp.ConfigClass
     @Override
     public void configure(FlowletConfigurer configurer) {
       super.configure(configurer);
+      createDataset(datasetName, KeyValueTable.class);
       useDatasets(datasetName);
     }
   }
 
   private static class DefaultWorker extends AbstractWorker {
     private final String streamName;
-    private volatile boolean running;
+    private volatile boolean stopped;
 
     public DefaultWorker(String streamName) {
       this.streamName = streamName;
@@ -132,8 +131,7 @@ public class ConfigTestApp extends AbstractApplication<ConfigTestApp.ConfigClass
 
     @Override
     public void run() {
-      running = true;
-      while (running) {
+      while (!stopped) {
         try {
           TimeUnit.SECONDS.sleep(1);
         } catch (InterruptedException e) {
@@ -149,8 +147,14 @@ public class ConfigTestApp extends AbstractApplication<ConfigTestApp.ConfigClass
     }
 
     @Override
+    protected void configure() {
+      super.configure();
+      addStream(new Stream(streamName));
+    }
+
+    @Override
     public void stop() {
-      running = false;
+      stopped = true;
     }
   }
 }

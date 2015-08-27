@@ -1,4 +1,4 @@
-<div ncy-breadcrumb></div>
+<my-breadcrumbs></my-breadcrumbs>
 
 <h2>Explore</h2>
 
@@ -38,7 +38,7 @@
         <a href="" role="tab">Schema</a>
       </li>
       <li role="presentation"
-          ng-class="{'active': GlobalExploreController.activeTab === 2}"
+          ng-class="{'active': GlobalExploreController.activeTab === 2, 'bottom-border-tab': GlobalExploreController.selectedInfo.partitioned_keys.length === 0}"
           ng-click="GlobalExploreController.activeTab = 2">
         <a href="" role="tab">Partition Keys</a>
       </li>

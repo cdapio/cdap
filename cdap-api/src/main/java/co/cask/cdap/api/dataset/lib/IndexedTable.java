@@ -30,13 +30,12 @@ import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scan;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
-import com.google.common.base.Preconditions;
-import com.google.common.primitives.Longs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Type;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -429,7 +428,9 @@ public class IndexedTable extends AbstractDataset implements Table {
    */
   @Override
   public Row incrementAndGet(byte[] row, byte[][] columns, long[] amounts) {
-    Preconditions.checkArgument(columns.length == amounts.length, "Size of columns and amounts arguments must match");
+    if (columns.length != amounts.length) {
+      throw new IllegalArgumentException("Size of columns and amounts arguments must match");
+    }
 
     Row existingRow = table.get(row, columns);
     byte[][] updatedValues = new byte[columns.length][];
@@ -471,9 +472,15 @@ public class IndexedTable extends AbstractDataset implements Table {
   @Override
   public Row incrementAndGet(Increment increment) {
     Map<byte[], Long> incrementValues = increment.getValues();
+    Collection<Long> values = incrementValues.values();
+    long[] longValues = new long[values.size()];
+    int i = 0;
+    for (long value : values) {
+      longValues[i++] = value;
+    }
     return incrementAndGet(increment.getRow(),
                            incrementValues.keySet().toArray(new byte[incrementValues.size()][]),
-                           Longs.toArray(incrementValues.values()));
+                           longValues);
   }
 
 

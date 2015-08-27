@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal;
 
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.NotFoundException;
@@ -38,6 +39,7 @@ import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.ServiceInstances;
 import co.cask.cdap.proto.WorkflowTokenDetail;
 import co.cask.cdap.proto.WorkflowTokenNodeDetail;
+import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
 import co.cask.cdap.proto.codec.WorkflowTokenDetailCodec;
 import co.cask.cdap.proto.codec.WorkflowTokenNodeDetailCodec;
@@ -66,6 +68,7 @@ import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
+import javax.ws.rs.core.MediaType;
 
 /**
  * Client tool for AppFabricHttpHandler.
@@ -380,6 +383,25 @@ public class AppFabricClient {
       verifyResponse(HttpResponseStatus.OK, mockResponder.getStatus(), "Failed to deploy app");
     }
     return deployedJar;
+  }
+
+  public void deployApplication(Id.Application appId, AppRequest appRequest) throws Exception {
+
+    DefaultHttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.PUT,
+      String.format("/v3/namespaces/%s/apps/%s", appId.getNamespaceId(), appId.getId()));
+    request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
+
+    MockResponder mockResponder = new MockResponder();
+
+    BodyConsumer bodyConsumer = appLifecycleHttpHandler.deploy(request, mockResponder,
+      appId.getNamespaceId(), appId.getId(),
+      appRequest.getArtifact().getName(),
+      GSON.toJson(appRequest.getConfig()),
+      MediaType.APPLICATION_JSON);
+    Preconditions.checkNotNull(bodyConsumer, "BodyConsumer from deploy call should not be null");
+
+    bodyConsumer.chunk(ChannelBuffers.wrappedBuffer(Bytes.toBytes(GSON.toJson(appRequest))), mockResponder);
+    bodyConsumer.finished(mockResponder);
   }
 
   public void deployTemplate(Id.Namespace namespace, Id.ApplicationTemplate templateId) {
