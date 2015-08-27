@@ -314,6 +314,7 @@ def rebuild():
     XML_DESCRIP_OPEN  = '        <description>\n'
     XML_DESCRIP_SUB   = "            %s\n"
     XML_DESCRIP_CLOSE = '        </description>\n'
+    XML_FINAL         = '        <final>true</final>\n'
     XML_PROP_CLOSE    = '    </property>\n\n'
     XML_CONFIG_CLOSE  = '</configuration>\n'
 
@@ -340,6 +341,8 @@ def rebuild():
                 if prop.name in exclusions:
                     print "but in the list of exclusions"
             xml += XML_DESCRIP_CLOSE
+            if prop.final:
+                xml += XML_FINAL
             xml += XML_PROP_CLOSE
     xml += XML_CONFIG_CLOSE
     

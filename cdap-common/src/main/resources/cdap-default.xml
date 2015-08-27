@@ -248,6 +248,7 @@
         <description>
             Directory where application template plugins are stored
         </description>
+        <final>true</final>
     </property>
 
     <property>
@@ -1467,6 +1468,7 @@
         <description>
             Prefix of file name for stream file per writer instance
         </description>
+        <final>true</final>
     </property>
 
     <property>
