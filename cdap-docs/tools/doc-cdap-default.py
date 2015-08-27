@@ -129,6 +129,8 @@ class Item:
         name = "``%s``" % self.name
         if self.value.find(' ') != -1:
             value = BLOCK_START + BLOCK_JOIN.join(self.value.split()) + '``'
+        elif not self.value:
+            value = ''
         else:
             value = "``%s``" % self.value
         rst = "%s%s\n%s%s\n%s%s" % (NAME_START, name,
@@ -233,11 +235,6 @@ def load_defaults(filesource, include_exclusions=False):
         exclusions = []
     else:
         exclusions = load_exclusions()
-#         source_path = os.path.dirname(os.path.abspath(__file__))
-#         exclusions_path = os.path.join(source_path, CDAP_DEFAULT_EXCLUSIONS)
-#         if not os.path.isfile(exclusions_path):
-#             raise Exception(func, "'%s' not a valid path" % exclusions_path)
-#         exclusions = [line.rstrip('\n') for line in open(exclusions_path)]
     
     items = []
     parser = PIParser()
