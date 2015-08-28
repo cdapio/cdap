@@ -72,43 +72,10 @@
     </div>
   </div>
 
-  <!-- WRITE & EXECUTE SQL -->
-  <div class="panel panel-explore">
-    <div class="panel-heading" bs-collapse-toggle>
-      <h3 class="panel-title">
-        <span
-          ng-class="{'fa-chevron-right': ExploreController.activePanel.indexOf(1) === -1,
-                     'fa-chevron-down': ExploreController.activePanel.indexOf(1) !== -1}"
-          class="fa fa-fw"
-        ></span>Write &amp; Execute SQL
-      </h3>
-    </div>
-    <div class="panel-collapse" bs-collapse-target>
-      <div class="panel-body">
-        <my-sql-query data-type="'stream'" data-name="ExploreController.name"></my-sql-query>
-      </div>
-    </div>
-  </div>
-
-  <!-- VIEW QUERIES -->
-  <div class="panel panel-explore">
-    <div class="panel-heading" bs-collapse-toggle>
-      <h3 class="panel-title">
-        <span
-          ng-class="{'fa-chevron-right': ExploreController.activePanel.indexOf(2) === -1,
-                     'fa-chevron-down': ExploreController.activePanel.indexOf(2) !== -1}"
-          class="fa fa-fw"
-        ></span>View Results
-      </h3>
-    </div>
-    <div class="panel-collapse" bs-collapse-target>
-      <div class="panel-body">
-
-        <my-view-queries></my-view-queries>
-
-      </div>
-    </div>
-  </div>
+  <my-explore
+    data-type="'stream'"
+    data-name="ExploreController.name">
+  </my-explore>
 
 
 </section>

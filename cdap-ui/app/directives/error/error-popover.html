@@ -14,7 +14,7 @@
 
     <div class="clearfix">
 
-      <div class="row bg-danger" ng-repeat="alert in alerts">
+      <div class="row bg-danger" ng-repeat="alert in alerts track by $index">
         <div class="col-xs-10">
           <span class="badge" ng-if="alert.count > 1">{{alert.count}}</span>
           <strong>{{ alert.title }}</strong>  {{ alert.content }}

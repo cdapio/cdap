@@ -72,14 +72,33 @@ function makeApp (authAddress, cdapConfig) {
 
     var path = DIST_PATH + '/assets/public';
 
-    fs.mkdir(path, function (err) {
-      if (err && err.code === 'EEXIST') {
-        console.log('[Download Query] Public folder already exist');
+    try {
+      fs.mkdirSync(path);
+    } catch (e) {
+      if (e.code !== 'EEXIST') {
+        log.debug('Error! ' + e);
+        res.status(500).send('Write permission denied. Unable to download the CSV file.');
+        return;
       }
+    }
 
-      var decoder = new StringDecoder('utf8');
+    var decoder = new StringDecoder('utf8');
 
-      var file = fs.createWriteStream(DIST_PATH + '/assets/public/' + query + '.csv');
+    var filePath = DIST_PATH + '/assets/public/' + query + '.csv';
+
+
+    try {
+      fs.lstatSync(filePath);
+
+      // checking if file exist
+      // if file exist, respond with the link directly
+      // if file does not exist, it will throw an error
+      res.send('/assets/public/' + query + '.csv');
+
+    } catch (e) {
+      // this catch block will get executed when the file does not exist yet
+
+      var file = fs.createWriteStream(filePath);
 
       var r = request.post({
         method: 'POST',
@@ -96,7 +115,7 @@ function makeApp (authAddress, cdapConfig) {
           res.send('/assets/public/' + query + '.csv');
         });
       });
-    });
+    }
   });
 
   /*

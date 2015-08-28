@@ -28,12 +28,12 @@ public class BatchTransformContext implements TransformContext {
   private final MapReduceContext context;
   private final Metrics metrics;
 
-  protected final String pluginPrefix;
+  protected final String pluginId;
 
-  public BatchTransformContext(MapReduceContext context, Metrics metrics, String pluginPrefix) {
+  public BatchTransformContext(MapReduceContext context, Metrics metrics, String pluginId) {
     this.context = context;
     this.metrics = metrics;
-    this.pluginPrefix = pluginPrefix;
+    this.pluginId = pluginId;
   }
 
   @Override
@@ -43,6 +43,11 @@ public class BatchTransformContext implements TransformContext {
 
   @Override
   public PluginProperties getPluginProperties() {
-    return context.getPluginProperties(pluginPrefix);
+    // temporary hack to let it support both templates and applications. Will be removed when templates are removed.
+    try {
+      return context.getPluginProperties(pluginId);
+    } catch (UnsupportedOperationException e) {
+      return context.getPluginProps(pluginId);
+    }
   }
 }

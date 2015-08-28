@@ -18,6 +18,8 @@ angular.module(PKG.name + '.services')
       postQuery: myHelpers.getConfig('POST', 'REQUEST', querypathNs),
       getQueries: myHelpers.getConfig('GET', 'REQUEST', querypathNs, true),
       getQuerySchema: myHelpers.getConfig('GET', 'REQUEST', querypath + '/schema', true),
-      getQueryPreview: myHelpers.getConfig('POST', 'REQUEST', querypath + '/preview', true)
+      getQueryPreview: myHelpers.getConfig('POST', 'REQUEST', querypath + '/preview', true),
+      pollQueryStatus: myHelpers.getConfig('GET', 'POLL', querypath + '/status', false, { interval: 2000 }),
+      stopPollQueryStatus: myHelpers.getConfig('GET', 'POLL-STOP', querypath + '/status')
     });
   });

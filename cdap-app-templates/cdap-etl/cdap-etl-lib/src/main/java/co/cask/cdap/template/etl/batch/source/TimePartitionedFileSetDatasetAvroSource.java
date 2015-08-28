@@ -126,10 +126,16 @@ public class TimePartitionedFileSetDatasetAvroSource extends
 
   @Override
   public void prepareRun(BatchSourceContext context) {
+    Map<String, String> runtimeArgs = context.getRuntimeArguments();
+    long runtime = context.getLogicalStartTime();
+    if (runtimeArgs.containsKey("runtime")) {
+      runtime = Long.parseLong(runtimeArgs.get("runtime"));
+    }
+
     long duration = ETLUtils.parseDuration(tpfsAvroSourceConfig.duration);
     long delay = Strings.isNullOrEmpty(tpfsAvroSourceConfig.delay) ? 0 :
       ETLUtils.parseDuration(tpfsAvroSourceConfig.delay);
-    long endTime = context.getLogicalStartTime() - delay;
+    long endTime = runtime - delay;
     long startTime = endTime - duration;
     Map<String, String> sourceArgs = Maps.newHashMap();
     TimePartitionedFileSetArguments.setInputStartTime(sourceArgs, startTime);

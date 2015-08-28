@@ -16,79 +16,96 @@
 
 package co.cask.cdap.template.etl.common;
 
+import co.cask.cdap.api.artifact.PluginConfigurer;
+import co.cask.cdap.api.artifact.PluginSelector;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
-import co.cask.cdap.api.templates.AdapterConfigurer;
 import co.cask.cdap.api.templates.plugins.PluginProperties;
-import co.cask.cdap.api.templates.plugins.PluginSelector;
 import co.cask.cdap.template.etl.api.PipelineConfigurer;
 
 import javax.annotation.Nullable;
 
 /**
- * Configurer for a pipeline, that delegates all operations to an AdapterConfigurer.
+ * Configurer for a pipeline, that delegates all operations to a PluginConfigurer, except it prefixes plugin ids
+ * to provide isolation for each etl stage. For example, a source can use a plugin with id 'jdbcdriver' and
+ * a sink can also use a plugin with id 'jdbcdriver' without clobbering each other.
  */
 public class DefaultPipelineConfigurer implements PipelineConfigurer {
-  private final AdapterConfigurer adapterConfigurer;
+  private final PluginConfigurer configurer;
   private final String pluginPrefix;
 
-  public DefaultPipelineConfigurer(AdapterConfigurer adapterConfigurer, String pluginPrefix) {
-    this.adapterConfigurer = adapterConfigurer;
+  public DefaultPipelineConfigurer(PluginConfigurer configurer, String pluginPrefix) {
+    this.configurer = configurer;
     this.pluginPrefix = pluginPrefix;
   }
 
   @Override
   public void addStream(Stream stream) {
-    adapterConfigurer.addStream(stream);
+    configurer.addStream(stream);
+  }
+
+  @Override
+  public void addStream(String streamName) {
+    configurer.addStream(streamName);
   }
 
   @Override
   public void addDatasetModule(String moduleName, Class<? extends DatasetModule> moduleClass) {
-    adapterConfigurer.addDatasetModule(moduleName, moduleClass);
+    configurer.addDatasetModule(moduleName, moduleClass);
   }
 
   @Override
   public void addDatasetType(Class<? extends Dataset> datasetClass) {
-    adapterConfigurer.addDatasetType(datasetClass);
+    configurer.addDatasetType(datasetClass);
   }
 
   @Override
   public void createDataset(String datasetName, String typeName, DatasetProperties properties) {
-    adapterConfigurer.createDataset(datasetName, typeName, properties);
+    configurer.createDataset(datasetName, typeName, properties);
+  }
+
+  @Override
+  public void createDataset(String datasetName, String typeName) {
+    configurer.createDataset(datasetName, typeName);
   }
 
   @Override
   public void createDataset(String datasetName, Class<? extends Dataset> datasetClass, DatasetProperties props) {
-    adapterConfigurer.createDataset(datasetName, datasetClass, props);
+    configurer.createDataset(datasetName, datasetClass, props);
+  }
+
+  @Override
+  public void createDataset(String datasetName, Class<? extends Dataset> datasetClass) {
+    configurer.createDataset(datasetName, datasetClass);
   }
 
   @Nullable
   @Override
   public <T> T usePlugin(String pluginType, String pluginName, String pluginId, PluginProperties properties) {
-    return adapterConfigurer.usePlugin(pluginType, pluginName, getPluginId(pluginId), properties);
+    return configurer.usePlugin(pluginType, pluginName, getPluginId(pluginId), properties);
   }
 
   @Nullable
   @Override
   public <T> T usePlugin(String pluginType, String pluginName, String pluginId, PluginProperties properties,
                          PluginSelector selector) {
-    return adapterConfigurer.usePlugin(pluginType, pluginName, getPluginId(pluginId), properties, selector);
+    return configurer.usePlugin(pluginType, pluginName, pluginId, properties, selector);
   }
 
   @Nullable
   @Override
   public <T> Class<T> usePluginClass(String pluginType, String pluginName, String pluginId,
                                      PluginProperties properties) {
-    return adapterConfigurer.usePluginClass(pluginType, pluginName, getPluginId(pluginId), properties);
+    return configurer.usePluginClass(pluginType, pluginName, getPluginId(pluginId), properties);
   }
 
   @Nullable
   @Override
   public <T> Class<T> usePluginClass(String pluginType, String pluginName, String pluginId, PluginProperties properties,
                                      PluginSelector selector) {
-    return adapterConfigurer.usePluginClass(pluginType, pluginName, getPluginId(pluginId), properties, selector);
+    return configurer.usePluginClass(pluginType, pluginName, pluginId, properties, selector);
   }
   
   private String getPluginId(String childPluginId) {

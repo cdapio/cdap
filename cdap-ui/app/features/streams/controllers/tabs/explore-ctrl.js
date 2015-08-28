@@ -4,10 +4,6 @@ angular.module(PKG.name + '.feature.streams')
     this.activePanel = [0];
     this.name = $state.params.streamId;
 
-    EventPipe.on('explore.newQuery', function() {
-      this.activePanel = [0,1,2];
-    }.bind(this));
-
     var now = Date.now();
 
     this.eventSearch = {

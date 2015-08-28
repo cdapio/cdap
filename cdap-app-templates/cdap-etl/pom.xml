@@ -32,6 +32,7 @@
   <modules>
     <module>cdap-etl-api</module>
     <module>cdap-etl-batch</module>
+    <module>cdap-etl-batch-app</module>
     <module>cdap-etl-core</module>
     <module>cdap-etl-lib</module>
     <module>cdap-etl-realtime</module>
