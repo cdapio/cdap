@@ -273,6 +273,30 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
   }
 
   @Test
+  public void testQueriesCount() throws Exception {
+    Id.Namespace testNamespace1 = Id.Namespace.from("testQueriesCount");
+    exploreClient.addNamespace(testNamespace1).get();
+
+    try {
+      Assert.assertEquals(0, exploreService.getActiveQueryCount(testNamespace1));
+
+      ListenableFuture<ExploreExecutionResult> future = exploreClient.submit(testNamespace1, "show tables");
+      ExploreExecutionResult result = null;
+      try {
+        result = future.get();
+        Assert.assertEquals(1, exploreService.getActiveQueryCount(testNamespace1));
+      } finally {
+        if (result != null) {
+          result.close();
+        }
+        Assert.assertEquals(0, exploreService.getActiveQueryCount(testNamespace1));
+      }
+    } finally {
+      exploreClient.removeNamespace(testNamespace1).get();
+    }
+  }
+
+  @Test
   public void testQueriesList() throws Exception {
     ListenableFuture<ExploreExecutionResult> future;
     ExploreExecutionResult results;

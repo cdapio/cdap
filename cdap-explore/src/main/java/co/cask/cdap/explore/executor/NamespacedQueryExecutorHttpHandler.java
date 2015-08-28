@@ -17,10 +17,12 @@
 package co.cask.cdap.explore.executor;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.ExploreService;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.QueryInfo;
 import co.cask.http.HttpResponder;
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -88,5 +90,13 @@ public class NamespacedQueryExecutorHttpHandler extends AbstractQueryExecutorHtt
       LOG.error("Got exception:", e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error");
     }
+  }
+
+  @GET
+  @Path("data/explore/queries/count")
+  public void getActiveQueryCount(HttpRequest request, HttpResponder responder,
+                                  @PathParam("namespace-id") String namespaceId) throws ExploreException {
+    int count = exploreService.getActiveQueryCount(Id.Namespace.from(namespaceId));
+    responder.sendJson(HttpResponseStatus.OK, ImmutableMap.of("count", count));
   }
 }

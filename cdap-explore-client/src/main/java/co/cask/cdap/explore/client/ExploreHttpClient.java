@@ -232,6 +232,17 @@ abstract class ExploreHttpClient implements Explore {
   }
 
   @Override
+  public int getActiveQueryCount(Id.Namespace namespace) throws ExploreException {
+    String resource = String.format("namespaces/%s/data/explore/queries/count", namespace.getId());
+    HttpResponse response = doGet(resource);
+    if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
+      Map<String, String> mapResponse = parseJson(response, new TypeToken<Map<String, String>>() { }.getType());
+      return Integer.parseInt(mapResponse.get("count"));
+    }
+    throw new ExploreException("Cannot get list of queries. Reason: " + response);
+  }
+
+  @Override
   public List<QueryInfo> getQueries(Id.Namespace namespace) throws ExploreException, SQLException {
     String resource = String.format("namespaces/%s/data/explore/queries/", namespace.getId());
     HttpResponse response = doGet(resource);

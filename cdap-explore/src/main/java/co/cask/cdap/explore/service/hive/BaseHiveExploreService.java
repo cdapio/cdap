@@ -742,7 +742,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
         operationHandle = doExecute(sessionHandle, statement);
         QueryHandle handle = saveReadWriteOperation(operationHandle, sessionHandle, sessionConf,
-                                               statement, database);
+                                                    statement, database);
         LOG.trace("Executing statement: {} with handle {}", statement, handle);
         return handle;
       } catch (Throwable e) {
@@ -962,9 +962,10 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     startAndWait();
 
     List<QueryInfo> result = Lists.newArrayList();
+    String namespaceHiveDb = getHiveDatabase(namespace.getId());
     for (Map.Entry<QueryHandle, OperationInfo> entry : activeHandleCache.asMap().entrySet()) {
       try {
-        if (entry.getValue().getNamespace().equals(getHiveDatabase(namespace.getId()))) {
+        if (entry.getValue().getNamespace().equals(namespaceHiveDb)) {
           // we use empty query statement for get tables, get schemas, we don't need to return it this method call.
           if (!entry.getValue().getStatement().isEmpty()) {
             QueryStatus status = getStatus(entry.getKey());
@@ -994,6 +995,23 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     }
     Collections.sort(result);
     return result;
+  }
+
+  @Override
+  public int getActiveQueryCount(Id.Namespace namespace) throws ExploreException {
+    startAndWait();
+
+    int count = 0;
+    String namespaceHiveDb = getHiveDatabase(namespace.getId());
+    for (Map.Entry<QueryHandle, OperationInfo> entry : activeHandleCache.asMap().entrySet()) {
+      if (entry.getValue().getNamespace().equals(namespaceHiveDb)) {
+        // we use empty query statement for get tables, get schemas, we don't need to return it this method call.
+        if (!entry.getValue().getStatement().isEmpty()) {
+          count++;
+        }
+      }
+    }
+    return count;
   }
 
   // this upgrade code is for upgrading CDAP v2.6 to v2.8 and above.
