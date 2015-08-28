@@ -24,7 +24,7 @@ import cloudera
 
 
 def usage():
-    print "\nThis is the usage function\n"
+    print '\nThis is the usage function\n'
     print 'Usage: \n'+sys.argv[0]+' [-v, --verbose] -c, --cluster \'<cluster>\' [-m, --modules \'<modules>]\' -u --user <user:password> -U --uri <URI>\n'
 
     print """
@@ -64,8 +64,8 @@ def run_request(host, info):
         # try a different way (encoding headers)
         req = urllib2.Request(host)
         base64string = base64.encodestring('%s:%s' % (user, passwd))[:-1]
-        authheader = "Basic %s" % base64string
-        req.add_header("Authorization", authheader)
+        authheader = 'Basic %s' % base64string
+        req.add_header('Authorization', authheader)
         try:
             handle = urllib2.urlopen(req)
             return handle
@@ -112,7 +112,7 @@ def write_file(config, dir, file, createdir):
 def convert_types_to_list(types):
     data = json.loads(types)
     services = []
-    upper_services = [item for item in data["items"]]
+    upper_services = [item for item in data['items']]
     for service in upper_services:
         services.append(service.lower())
     services.sort()

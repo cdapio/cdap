@@ -59,7 +59,7 @@ def process_params(params):
     try:
         verbose = input_vars['verbose']
     except:
-        verbose = input_vars['verbose'] = 0 
+        verbose = input_vars['verbose'] = 0
 
     for k, v in input_vars.iteritems():
         helpers.vprint('input vars = %s=%s' % (k, v), verbose)

@@ -81,7 +81,7 @@ def test(base_vars, cluster_vars):
     cluster_vars = get_install_manager_info(cluster_vars)
     # do we need these (below) or can we just work with the dict values?
     for key, value in cluster_vars.iteritems():
-        helpers.vprint("%s=%s" % (key, value), verbose)
+        helpers.vprint('%s=%s' % (key, value), verbose)
 
     # get and run commands (API commands for now)
     get_and_run_api_commands(base_vars, cluster_vars)
@@ -290,12 +290,12 @@ def run_modules(base, cluster, modules, name_list, mgr):
 
 
 def process_runtime_errors():
-    print "process runtime errors"
+    print 'process runtime errors'
 
 
 def clean_up():
     # note: make note of temp and dirs and files we create
-    print "clean up"
+    print 'clean up'
 
 
 class AutoVivification(dict):
