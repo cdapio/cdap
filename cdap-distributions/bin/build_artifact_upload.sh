@@ -23,19 +23,29 @@
 ######################################################################################
 #DRY_RUN=--dry-run		### uncomment to only test what the rsync would do
 DEBUG=${DEBUG:-no}              ### set to yes for debugging
-
-# Vars
 RUN_DATE=`date '+%Y%m%d_%R'`
 SCRIPT=`basename ${BASH_SOURCE[0]}`                     ### Set Script Name variable
+VERSION=$(<cdap-distributions/target/stage-packaging/opt/cdap/distributions/VERSION)
 REMOTE_USER=${1}                                        ### remote user
 REMOTE_HOST=${2:-127.0.0.1}                             ### remote host
-REMOTE_INCOMING_DIR=${3}                                ### target directory on remote host
+REMOTE_INCOMING_DIR=${3}      # 'incoming'                  ### target directory on remote host
 REMOTE_BASE_DIR="${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_INCOMING_DIR}"
-INCOMING_DIR='incoming'
 BUILD_RELEASE_DIRS='*/target'                           ### Source directories
 BUILD_PACKAGE=${BUILD_PACKAGE:-cdap}
 TMP_DIR="/tmp/bundles"
-PKG_PROCESSING_DIR="${TMP_DIR}/${INCOMING_DIR}/${BUILD_PACKAGE}/"
+DEB_BUNDLE="${BUILD_PACKAGE}-deb-bundle"
+RPM_BUNDLE="${BUILD_PACKAGE}-rpm-bundle"
+DEB_BUNDLE_DIR="${TMP_DIR}/${DEB_BUNDLE}"
+RPM_BUNDLE_DIR="${TMP_DIR}/${RPM_BUNDLE}"
+DISTRIBUTED_DEB_BUNDLE="${BUILD_PACKAGE}-distributed-deb-bundle"
+DISTRIBUTED_RPM_BUNDLE="${BUILD_PACKAGE}-distributed-rpm-bundle"
+DEB_BUNDLE_TGZ="${DISTRIBUTED_DEB_BUNDLE}-${VERSION}.tgz"
+RPM_BUNDLE_TGZ="${DISTRIBUTED_RPM_BUNDLE}-${VERSION}.tgz"
+DEB_BUNDLE_TGZ_PATH="${DEB_BUNDLE_DIR}/${DEB_BUNDLE_TGZ}"
+RPM_BUNDLE_TGZ_PATH="${RPM_BUNDLE_DIR}/${RPM_BUNDLE_TGZ}"
+REMOTE_DOWNLOADS_DIR="downloads/co/cask/${BUILD_PACKAGE}" 
+STG_DEB_DIR="${REMOTE_DOWNLOADS_DIR}/${DEB_FINAL_DIR}"
+STG_RPM_DIR="${REMOTE_DOWNLOADS_DIR}/${RPM_FINAL_DIR}"
 
 #############################
 # find top of repo
@@ -59,40 +69,86 @@ decho () {
   fi
 }
 
-# Help function
-function HELP {
-  echo -e \\n"Help documentation for ${BOLD}${SCRIPT}.${NORM}"\\n
-  echo -e "${REV}Basic usage:${NORM} ${BOLD}$SCRIPT${NORM} <remote_user> <remote_host> <remote_target_directory"\\n
-  echo -e "${REV}-h${NORM}  --Displays this help message. No further functions are performed."\\n
-  exit 1
-}
-
 clean() { test -d ${TMP_DIR} && rm -rf ${TMP_DIR}; }
 die() { echo ; echo "ERROR: ${*}" ; echo ; exit 1; }
 
+########################################################
+
+bundle_prep() {
+  ### PREP
+  decho ''
+  decho 'prep bundles'
+  # create local processing directories
+  mkdir -p ${DEB_BUNDLE_DIR} ${RPM_BUNDLE_DIR} || die "Unable to create bundle processing directories"
+  # create remote bundle downloads directories
+  decho "Create remote directories ${STG_DEB_DIR} ${STG_RPM_DIR} if necessary"
+  ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${REMOTE_USER} ${REMOTE_HOST} "mkdir -p ${STG_DEB_DIR} ${STG_RPM_DIR}" || die "could not create remote directories"
+}
+
+create_bundles() {
+   decho 'Create Debian bundle'
+   # create and verify debian tarball
+   cd ${DEB_BUNDLE_DIR} || die "Unable to cd to ${DEB_BUNDLE_DIR} directory"
+   decho "debbundledir=${DEB_BUNDLE_DIR}"
+   tar czvf ${DEB_BUNDLE_TGZ} * || die "Unable to create Debian tar bundle"
+   if [[ "${DEBUG}" == 'yes' ]]; then
+     tar tzf ${DEB_BUNDLE_TGZ} || die "Unable to show contents of Debian tar bundle"
+   fi
+
+   decho ''
+   decho 'Create RPM bundle'
+   # create and verify RPM tarball
+   decho "rpmbundledir=${RPM_BUNDLE_DIR}"
+   cd ${RPM_BUNDLE_DIR} || die "Unable to cd to ${RPM_BUNDLE_DIR} directory"
+   tar czvf ${RPM_BUNDLE_TGZ} * || die "Unable to create RPM tar bundle"
+   if [[ "${DEBUG}" == 'yes' ]]; then
+     tar tzf ${RPM_BUNDLE_TGZ} || die "Unable to show contents of RPM tar bundle"
+   fi
+}
+
+sync_bundles() {
+   ### COPY TO STAGING
+   decho ''
+   decho "Syncing bundles to staging"
+   decho "rsync -av -e \"ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null\" ${RSYNC_QUIET} ${DEB_BUNDLE_TGZ_PATH} ${REMOTE_BASE_DIR}/${STG_DEB_DIR}/ ${DRY_RUN} 2>&1 || die could not rsync ${_package} as ${REMOTE_USER} to ${REMOTE_HOST}: ${!}"
+   rsync -av -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" ${RSYNC_QUIET} ${DEB_BUNDLE_TGZ_PATH} ${REMOTE_BASE_DIR}/${STG_DEB_DIR}/ ${DRY_RUN} 2>&1 || die "could not rsync ${DEB_BUNDLE_TGZ_PATH} as ${REMOTE_USER} to ${REMOTE_HOST}: ${!}"
+
+   rsync -av -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" ${RSYNC_QUIET} ${RPM_BUNDLE_TGZ_PATH} ${REMOTE_BASE_DIR}/${STG_RPM_DIR}/ ${DRY_RUN} 2>&1 || die "could not rsync ${RPM_BUNDLE_TGZ_PATH} as ${REMOTE_USER} to ${REMOTE_HOST}: ${!}"
+
+   # clean up
+   #clean
+}
+
 ###############################################################################
-# sync any rpm/deb
+# identify and sync any rpm/deb
 function sync_build_artifacts_to_server () {
   _source=$1
-  echo "source directories: ${_source}"
+  decho "source directories: ${_source}"
 
   clean
 
+  bundle_prep
+
   decho "identify packages"
   PACKAGES=$(find ${_source} -type f \( -name '*.rpm' -o -name '*.deb' \) | sort -u)
+  DEB_PACKAGES=$(find ${_source} -type f \( -name '*.deb' \) | sort -u)
+  RPM_PACKAGES=$(find ${_source} -type f \( -name '*.rpm' \) | sort -u)
   decho "${PACKAGES}"
   decho ""
 
-  # prepare for bundling
-  mkdir -p ${PKG_PROCESSING_DIR}
-  cp ${PACKAGES} ${PKG_PROCESSING_DIR}
+  cp ${DEB_PACKAGES} ${DEB_BUNDLE_DIR}
+  cp ${RPM_PACKAGES} ${RPM_BUNDLE_DIR}
+
+  create_bundles
+
+  sync_bundles
 
   # copy packages
   decho "copy packages"
   for i in ${PACKAGES}
   do
-    decho "PACKAGE=${i}"
     _package=`basename ${i}`
+    decho "PACKAGE=${i}    package=${_package}"
     _snapshot_time=''
 
     ##
@@ -115,9 +171,11 @@ function sync_build_artifacts_to_server () {
     if [[ "${_package}" == *_all.deb ]]
     then
       _version_stub=`echo ${_package} | sed 's/cdap.*_\(.*\)_all.deb/\1/'`
+      LOCAL_DIR=${DEB_BUNDLE_DIR}
     elif [[ "${_package}" == *.noarch.rpm ]]
     then
       _version_stub=`echo ${_package} | sed 's/cdap.*-\(.*-.*\).noarch.rpm/\1/'`
+      LOCAL_DIR=${RPM_BUNDLE_DIR}
     else # send failure notification because package file has an unexpected format/pattern
       decho "something is wrong this this package"
       die "package ${_package} has the wrong format: ${!}"
@@ -141,12 +199,12 @@ function sync_build_artifacts_to_server () {
     else
       OUTGOING_DIR=snapshot/cask/${BUILD_PACKAGE}/${_version}  ## send snapshots to a different directory
     fi
-    echo "Create remote directory ${REMOTE_INCOMING_DIR}/${OUTGOING_DIR} if necessary"
+    decho "Create remote directory ${REMOTE_INCOMING_DIR}/${OUTGOING_DIR} if necessary"
     ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${REMOTE_USER} ${REMOTE_HOST} "mkdir -p ${REMOTE_INCOMING_DIR}/${OUTGOING_DIR}" || die "could not create remote directory"
 
     # sync package(s) to remote server
-    decho "rsyncing with rsync -av -e \"ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null\" ${RSYNC_QUIET} ${i} ${REMOTE_BASE_DIR}/${OUTGOING_DIR}/ ${DRY_RUN} 2>&1"
-    rsync -av -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" ${RSYNC_QUIET} ${i} ${REMOTE_BASE_DIR}/${OUTGOING_DIR}/ ${DRY_RUN} 2>&1 || die "could not rsync ${_package} as ${REMOTE_USER} to ${REMOTE_HOST}: ${!}"
+    decho "rsyncing with rsync -av -e \"ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null\" ${RSYNC_QUIET} ${LOCAL_DIR}/${_package} ${REMOTE_BASE_DIR}/${OUTGOING_DIR}/ ${DRY_RUN} 2>&1"
+    rsync -av -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" ${RSYNC_QUIET} ${LOCAL_DIR}/${_package} ${REMOTE_BASE_DIR}/${OUTGOING_DIR}/ ${DRY_RUN} 2>&1 || die "could not rsync ${_package} as ${REMOTE_USER} to ${REMOTE_HOST}: ${!}"
     decho ""
   done
 }
@@ -160,7 +218,8 @@ find_repo_root && cd ${__repo_root}  ### this takes us to the right place (top o
 NUMARGS=$#
 decho -e \\n"Number of arguments: ${NUMARGS}"
 if [ ${NUMARGS} -lt 3 ]; then
-  HELP
+  echo "wrong number of arguments: ${NUMARGS} instead of 3"
+  exit 1
 fi
 
 decho "#######################################################################################"
