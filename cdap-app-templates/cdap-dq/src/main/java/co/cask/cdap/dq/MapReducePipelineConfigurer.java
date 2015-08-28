@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.dq.etl;
+package co.cask.cdap.dq;
 
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.Dataset;
@@ -28,7 +28,7 @@ import co.cask.cdap.template.etl.api.PipelineConfigurer;
 import javax.annotation.Nullable;
 
 /**
- *
+ * Implementation of {@link PipelineConfigurer} that delegates to {@link MapReduceConfigurer}
  */
 public class MapReducePipelineConfigurer implements PipelineConfigurer {
   private final MapReduceConfigurer mrConfigurer;

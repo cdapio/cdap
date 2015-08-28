@@ -228,7 +228,8 @@ public class DataQualityService extends AbstractService {
           responder.sendJson(HttpURLConnection.HTTP_OK, output);
         }
       } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
-        responder.sendString(HttpURLConnection.HTTP_NOT_FOUND, "Aggregation could not be found.", Charsets.UTF_8);
+        responder.sendString(HttpURLConnection.HTTP_NOT_FOUND,
+                             String.format("Aggregation %s could not be found." , aggregationType), Charsets.UTF_8);
       } catch (ClassCastException e) {
         responder.sendString(HttpURLConnection.HTTP_BAD_REQUEST,
                              "Aggregation function is not a Combinable Aggregation Function", Charsets.UTF_8);
@@ -281,7 +282,8 @@ public class DataQualityService extends AbstractService {
           responder.sendJson(HttpURLConnection.HTTP_OK, timestampValueList);
         }
       } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
-        responder.sendString(HttpURLConnection.HTTP_NOT_FOUND, "Aggregation could not be found.", Charsets.UTF_8);
+        responder.sendString(HttpURLConnection.HTTP_NOT_FOUND,
+                             String.format("Aggregation %s could not be found.", aggregationType), Charsets.UTF_8);
       } catch (ClassCastException e) {
         responder.sendString(HttpURLConnection.HTTP_BAD_REQUEST,
                              "Aggregation function is not a Basic Aggregation Function", Charsets.UTF_8);
