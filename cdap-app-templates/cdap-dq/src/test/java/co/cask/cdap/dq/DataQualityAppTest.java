@@ -109,8 +109,23 @@ public class DataQualityAppTest extends TestBase {
     }
   }
 
+  @Test(expected = IllegalArgumentException.class)
+  public void testInvalidConfig() throws Exception {
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "badApp");
+    Map<String, Set<String>> testMap = new HashMap<>();
+    // Empty aggregation set - should throw an exception while creating an application
+    testMap.put("content_length", new HashSet<String>());
+
+    DataQualityApp.ConfigClass config = new DataQualityApp.ConfigClass(
+      WORKFLOW_SCHEDULE_MINUTES, getStreamSource(), "avg", testMap);
+
+    AppRequest<DataQualityApp.ConfigClass> appRequest = new AppRequest<>(
+      new ArtifactSummary(appArtifact.getName(), appArtifact.getVersion().getVersion(), false), config);
+    deployApplication(appId, appRequest);
+  }
+
   @Test
-  public void test() throws Exception {
+  public void testDefaultConfig() throws Exception {
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "newApp");
 
     AppRequest<DataQualityApp.ConfigClass> appRequest = new AppRequest<>(
@@ -147,7 +162,7 @@ public class DataQualityAppTest extends TestBase {
   }
 
   @Test
-  public void test2() throws Exception {
+  public void testMeanContentLength() throws Exception {
     Map<String, Set<String>> testMap = new HashMap<>();
     Set<String> testSet = new HashSet<>();
 
@@ -188,7 +203,7 @@ public class DataQualityAppTest extends TestBase {
   }
 
   @Test
-  public void test3() throws Exception {
+  public void testTotals() throws Exception {
     Map<String, Set<String>> testMap = new HashMap<>();
     Set<String> testSet = new HashSet<>();
 
