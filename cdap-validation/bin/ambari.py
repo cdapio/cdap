@@ -25,8 +25,8 @@ import test_helpers as helpers
 
 # Start Ambari configuration retrieval process
 
-# This is the main ambari API configuration/service and cluster layout check  results processing method
-# It identifies API URIs for a Rest API service type (currently only Configuration) and runs corresponding
+# Main ambari API configuration/service and cluster layout check  results processing method
+# Identifies API URIs for a Rest API service type (currently only Configuration) and runs corresponding
 #  API commands to retrieve and store results
 # Input includes host, subdir (where configurations, etc. retrieved via API are temporarily stored), 
 #   base (static) info dict and cluster_info dict
@@ -60,6 +60,9 @@ def get_ambari_configs(host, subdir, base, cluster_info):
 
 
 # get Ambari config urls # goal: make this method generic so it can be used for other (service, layout) checks
+# Run by get_ambari_configs (main Ambari method)
+# Inputs: host(URI), cluster_info dict
+# Returns ambari config URLs 
 def get_ambari_config_urls(host, cluster_info):
     cluster = cluster_info['cluster']
     append = '/clusters/' + cluster + '/configurations'
