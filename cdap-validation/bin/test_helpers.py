@@ -47,7 +47,7 @@ def usage():
                         * service=service checks
                         * layout=cluster layout checks
     -u, --user          Authentication, e.g. --user 'george:pass'
-    -U, --uri           URI: e.g. --uri 'http://10.240.0.8:7180'
+    -U, --uri           URI of Hadoop Install Manger API: e.g. --uri 'http://10.240.0.8:7180'
     -v, --verbose       Adds more output (shows successful checks)
     -d, --debug         Full debug output of validation runs (if both verbose and debug are used, the last one wins)
  """
