@@ -69,7 +69,7 @@ def run_request(host, info):
         try:
             handle = urllib2.urlopen(req)
             return handle
-        except IOError, e:
+        except IOError:
             # here we shouldn't fail if the username/password is right
             vprint('It looks like the username or password is wrong.', info['verbose'])
             return 'noapi'
@@ -151,4 +151,3 @@ def get_config_from_managermgr(mgr, host_url, configs_subdir, base, cluster):
 
     else:
         print 'Your Hadoop install manager is not recognized'
-

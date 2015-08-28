@@ -62,7 +62,7 @@ def process_params(params):
         verbose = input_vars['verbose'] = 0 
 
     for k, v in input_vars.iteritems():
-        helpers.vprint ('input vars = %s=%s' % (k, v), verbose)
+        helpers.vprint('input vars = %s=%s' % (k, v), verbose)
 
     return input_vars
 
@@ -72,5 +72,6 @@ def process_params(params):
 # validate_params() ## ensures parameters are valid and minimum number of parameters necesssary is present
 
 # process_module_params() ## process what is in between quotes in --modules=""
-
-# convert_input() ## creates JSON object from processed parameters
+    # must process modules =>
+    # if 'all' => keep track and that and run all modules
+    # if specific modules, run those only

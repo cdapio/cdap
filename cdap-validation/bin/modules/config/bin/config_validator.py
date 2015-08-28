@@ -25,8 +25,9 @@ cwd = os.getcwd()
 modules_dir = cwd + '/modules'
 sys.path.append(modules_dir)
 import re
-import lib
 from lib import helpers
+
+baseref_file = 'baseref_configs'
 
 ################################################################
 
@@ -108,21 +109,24 @@ def range_eval(a, x, y):
 #    multiple values or ranges
 #    condition based
 
-#print 'Argument List:', str(sys.argv)
-#print len(sys.argv)
-
-baseref_configs = str(sys.argv[1])
-actual_configs = str(sys.argv[2])
-# need to add: pass actual verbose level from framework
-if len(sys.argv) == 3:
+module = 'config'
+if len(sys.argv) == 2:
     verbose = 0
 else:
     verbose = int(sys.argv[3])
 
-module = 'config'
+helpers.vprint('Argument List: %s' % (str(sys.argv)), verbose)
+helpers.vprint(len(sys.argv), verbose)
+helpers.vprint('verbose=%s' % (verbose), verbose)
+
+actual_configs = str(sys.argv[1])
+additional_params = str(sys.argv[2])
+baseref_configs = modules_dir + '/' +  module + '/' + baseref_file
+
 validation_results = {}
 output = ''
 
+print '\nRUNNING CONFIG VALIDATION MODULE:\n'
 
 class AutoVivification(dict):
     def __getitem__(self, item):
@@ -171,7 +175,7 @@ for line in f:
     type = strip_crlf(type)
     bkey, bvalue = bproperty.split('=')
     bvalue = re.sub('[\']', '', bvalue)
-    helpers.vprint ('%s:%s=%s:%s:%s' % (bservice, bkey, bvalue, datatype, type), verbose)
+    helpers.vprint('%s:%s=%s:%s:%s' % (bservice, bkey, bvalue, datatype, type), verbose)
 
     # set it to a safe, impossible value
     result_value = -1
@@ -180,8 +184,8 @@ for line in f:
 
     value = actual[bservice][bkey]
     if datatype == 'alpha':  # alpha type -- simple comparison
-        helpers.vprint ('type alpha: simple comparison', verbose)
-        helpers.vprint ('value=%s    bvalue=%s' % (value, bvalue), verbose)
+        helpers.vprint('type alpha: simple comparison', verbose)
+        helpers.vprint('value=%s    bvalue=%s' % (value, bvalue), verbose)
         result_value = exact_eval(value, bvalue)
 
     elif datatype == 'bytes':  # e.g. can be any of regular number, of number appended with k,m,g
@@ -189,22 +193,22 @@ for line in f:
         valuenum = helpers.convert_mult_to_bytes(value)
 
         if type == 'exact':
-            helpers.vprint ('type = exact', verbose)
+            helpers.vprint('type = exact', verbose)
             bvaluenum = helpers.convert_mult_to_bytes(bvalue)
             result_value = exact_eval(bvaluenum, valuenum)
-            helpers.vprint ('bvaluenum=%s  valuenum=%s' % (bvaluenum, valuenum), verbose)
+            helpers.vprint('bvaluenum=%s  valuenum=%s' % (bvaluenum, valuenum), verbose)
 
         elif type == 'range':
-            helpers.vprint ('type = range', verbose)
+            helpers.vprint('type = range', verbose)
             min, max = bvalue.split('-')
             if min != '': min = helpers.convert_mult_to_bytes(min)
             if max != '': max = helpers.convert_mult_to_bytes(max)
             range = process_range_reference(min, max)
-            helpers.vprint ('range=%s' % (range), verbose)
+            helpers.vprint('range=%s' % (range), verbose)
             bmin, bmax = range.split(':')
             bmin = long(bmin)
             result_value = range_eval(valuenum, bmin, bmax)
-            helpers.vprint ('bvalue=%s range=%s  valuenum=%s' % (bvalue, range, valuenum), verbose)
+            helpers.vprint('bvalue=%s range=%s  valuenum=%s' % (bvalue, range, valuenum), verbose)
 
         else:
             print 'unknown type'
@@ -213,12 +217,12 @@ for line in f:
         print 'unkown datatype'
         #exit(1) -- initiate runtime error
 
-    helpers.vprint ('result_value=%s' % (result_value), verbose)
+    helpers.vprint('result_value=%s' % (result_value), verbose)
     # format output
     output = module + ' ' + service + ' ' + bkey + ' ' + bvalue + ' ' + value
-    helpers.vprint ('output=%s' % (output), verbose)
+    helpers.vprint('output=%s' % (output), verbose)
 
     # send output
-    helpers.vprint ('running vout for output', verbose)
+    helpers.vprint('running vout for output', verbose)
     helpers.vout(result_value, line, output, verbose)
-    helpers.vprint ('', verbose)
+    helpers.vprint('', verbose)

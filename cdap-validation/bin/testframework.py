@@ -20,6 +20,7 @@ import test_helpers as helpers
 import json
 import re
 import ambari
+import pprint
 # import cloudera
 
 ##### TEST FRAMEWORK FUNCTIONS #####
@@ -58,8 +59,7 @@ def test(base_vars, cluster_vars):
 
     # validate_connection
     helpers.vprint('Validating connection', verbose)
-    api_tests = [{'cloudera': base_vars['cloudera']['api_test']}, {'ambari': base_vars['ambari']['api_test']}]
-    version_test = validate_connection(base_vars, cluster_vars, api_tests)
+    version_test = validate_connection(base_vars, cluster_vars)
     helpers.vprint('', verbose)
     helpers.vprint('version_test=%s' % (version_test), verbose)
 
@@ -91,9 +91,10 @@ def test(base_vars, cluster_vars):
     ##### MODULES #####
 
     # find_modules
-    # navigate through ./module/* directories and look for module.json files
-    # parse through those to determine modules that will be run
-    # save (follow design)
+    #   navigate through ./module/* directories and look for module.json files
+    #   parse through those to determine modules that will be run
+    #   save (follow design)
+    #   note: consider moving this to a separate method
 
     helpers.vprint('verbose=%s' % (verbose), verbose)
     helpers.vprint('\nfind modules:\n', verbose)
@@ -109,27 +110,47 @@ def test(base_vars, cluster_vars):
         m = re.search('/(.+?)/', module)
         if m:
             module_name = m.group(1)
-            helpers.vprint ('module_name=%s' % (module_name), verbose)
+            helpers.vprint('module_name=%s' % (module_name), verbose)
             module_name_list.append(module_name)
-            helpers.vprint ('module_name_list=%s' % (module_name_list), verbose)
+            helpers.vprint('module_name_list=%s' % (module_name_list), verbose)
         else:
             # throw error (no plugin modules found)
             print 'no plugin modules found'
 
-    helpers.vprint ('\niterate through list of module names', verbose)
+    helpers.vprint('\niterate through list of module names', verbose)
     module_path = 'modules/' 
-    helpers.vprint ('module_path=%s' % (module_path), verbose)
+    helpers.vprint('module_path=%s' % (module_path), verbose)
     for module_name in module_name_list:
-        helpers.vprint ('module_name=%s' % (module_name), verbose)
-        modules[module_name] = create_module_json(module_name, module_path, cluster_vars)
+        helpers.vprint('module_name=%s' % (module_name), verbose)
+        modules[module_name] = find_module_from_json(module_name, module_path, cluster_vars)
 
-    helpers.vprint(modules, verbose)
+        # We now test to make sure JSON file is properly formatted
+        # goal: skip module if we receive an error string from the JSON retrieval function
+        helpers.vprint('modules[module_name]=%s' % (modules[module_name]), verbose)
+        if modules[module_name] == 'invalid JSON -- ValueError':
+            print '%s, skipping %s module' % (modules[module_name], module_name)
+            # remove module element from module list
+            module_name_list.remove(module_name)
+            continue
+
+        #  make sure we have necessary params for module to run
+        try:
+            module_params = modules[module_name]['groups'][0]['params']
+        except:
+            helpers.vprint('found no params, passing NOPARAMS to %s module' % (module_name), verbose)
+            modules[module_name]['groups'][0]['params'] = 'NOPARAMS'
+        else:
+            helpers.vprint('params=%s' % (module_params), verbose)
+
+    helpers.vprint('modules dict:\n%s' % (modules), verbose)
+  
+    if verbose == 2: pprint.pprint(modules)
 
     # run modules
-    # execute modules: for every known module, run specific functions (see module_functions)
+        
+    #   execute modules: for every known module, run specific functions (see module_functions)
     helpers.vprint('\nrun modules:\n', verbose)
     run_modules(base_vars, cluster_vars, modules, module_name_list, install_manager)
-    # send params necessary for module to run
     # e.g. config_validator needs to know location of the base ref and stored results files
 
 
@@ -137,7 +158,13 @@ def test(base_vars, cluster_vars):
 # reads JSON object passed to the framework
 def read_file_as_json(input_file):
     with open(input_file) as json_file:
-        data = json.load(json_file)
+        try:
+            data = json.load(json_file)
+        except ValueError:
+            data = 'invalid JSON -- ValueError'
+        except:
+            data['error'] = 'invalid JSON -- Other Error'
+     
     return data
 
 
@@ -157,16 +184,18 @@ def find_modules(file, path):
 # coming soon
 
 
-def validate_connection(base_info, cluster_info, api_tests):
+def validate_connection(base_info, cluster_info):
     # test api connection, etc.
-    version = test_api_connection(base_info, cluster_info, api_tests)
+    version = test_api_connection(base_info, cluster_info)
     # placeholder for testing other connections
     return version
 
 
-def test_api_connection(base_info, cluster_info, api_tests):
+def test_api_connection(base_info, cluster_info):
     verbose = cluster_info['verbose']
     helpers.vprint('test api connection', verbose)
+
+    api_tests = [{'cloudera': base_info['cloudera']['api_test']}, {'ambari': base_info['ambari']['api_test']}]
     # let us iterate through potential hadoop manager tests and see what we get back
     # the first one that works should be saved and set from that point on for the rest of the testing
     host_url = cluster_info['host']
@@ -223,12 +252,12 @@ def get_and_run_api_commands(base, cluster):
     helpers.get_config_from_managermgr(mgr, host_url, configs_subdir, base, cluster)
 
 
-def create_module_json(module_name, module_path, cluster):
+def find_module_from_json(module_name, module_path, cluster):
     verbose = cluster['verbose']
-    helpers.vprint ('\nrunning create_module_json function', verbose)
-    helpers.vprint ('module name: %s    module path: %s' % (module_name, module_path), verbose)
+    helpers.vprint('\nrunning find_module_from_json function', verbose)
+    helpers.vprint('module name: %s    module path: %s' % (module_name, module_path), verbose)
     module_file_path = module_path + module_name + '/module.json'
-    helpers.vprint ('module_file_path=%s' % (module_file_path), verbose)
+    helpers.vprint('module_file_path=%s' % (module_file_path), verbose)
     module_info = read_file_as_json(module_file_path)
     return module_info
 
@@ -240,12 +269,19 @@ def run_modules(base, cluster, modules, name_list, mgr):
 
     # note: we want to modify this to only pass processed stored configurations
     #       baseref_configs will only be used by config validator module
+    
     for module_name in name_list:
+        print ''
         command = ''
         full_command = ''
+
+        # additional parameters
+        additional_params = modules[module_name]['groups'][0]['params']
+        helpers.vprint('additional parameters: %s' % (additional_params), verbose)
+
         # command should have the format: <module name>/<command path>
         command = module_name + '/' + modules[module_name]['groups'][0]['command']
-        params = base[mgr]['baseref'] + ' ' + base[mgr]['stored_results'] + ' ' + str(cluster['verbose'])
+        params = base[mgr]['stored_results'] + ' ' + additional_params + ' ' + str(cluster['verbose'])
         helpers.vprint(modules, verbose)
         # full command should have the format: modules/<module name>/<command path> <params>
         full_command = 'modules/' + command + ' ' + params

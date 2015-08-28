@@ -21,10 +21,11 @@ import input
 
 # generic static values used regardless of user input
 base_vars = dict(
-    cloudera={'api_test': 'version', 'version': '', 'subdir': 'cloudera_configs/', 'stored_results': 'stored_configs', 'baseref': 'baseref_configs'},
-    ambari={'api_test': 'v1/clusters', 'version': 'v1', 'subdir': 'ambari_configs/', 'stored_results': 'stored_configs', 'baseref': 'baseref_configs'}
+    cloudera={'api_test': 'version', 'version': '', 'subdir': 'cloudera_configs/', 'stored_results': 'stored_configs'},
+    ambari={'api_test': 'v1/clusters', 'version': 'v1', 'subdir': 'ambari_configs/', 'stored_results': 'stored_configs'}
 )
 
+# add services
 
 def main(argv):
 
