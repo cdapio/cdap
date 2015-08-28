@@ -16,13 +16,13 @@
 
 package co.cask.cdap.dq;
 
+import co.cask.cdap.api.artifact.PluginSelector;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.mapreduce.MapReduceConfigurer;
 import co.cask.cdap.api.templates.plugins.PluginProperties;
-import co.cask.cdap.api.templates.plugins.PluginSelector;
 import co.cask.cdap.template.etl.api.PipelineConfigurer;
 
 import javax.annotation.Nullable;
@@ -45,6 +45,11 @@ public class MapReducePipelineConfigurer implements PipelineConfigurer {
   }
 
   @Override
+  public void addStream(String streamName) {
+    mrConfigurer.addStream(streamName);
+  }
+
+  @Override
   public void addDatasetModule(String moduleName, Class<? extends DatasetModule> moduleClass) {
     mrConfigurer.addDatasetModule(moduleName, moduleClass);
   }
@@ -60,8 +65,18 @@ public class MapReducePipelineConfigurer implements PipelineConfigurer {
   }
 
   @Override
+  public void createDataset(String datasetName, String typeName) {
+    mrConfigurer.createDataset(datasetName, typeName);
+  }
+
+  @Override
   public void createDataset(String datasetName, Class<? extends Dataset> datasetClass, DatasetProperties props) {
     mrConfigurer.createDataset(datasetName, datasetClass, props);
+  }
+
+  @Override
+  public void createDataset(String datasetName, Class<? extends Dataset> datasetClass) {
+    mrConfigurer.createDataset(datasetName, datasetClass);
   }
 
   @Nullable
@@ -74,7 +89,7 @@ public class MapReducePipelineConfigurer implements PipelineConfigurer {
   @Override
   public <T> T usePlugin(String pluginType, String pluginName, String pluginId, PluginProperties properties,
                          PluginSelector selector) {
-    return mrConfigurer.usePlugin(pluginType, pluginName, prefixId + pluginId, properties);
+    return mrConfigurer.usePlugin(pluginType, pluginName, prefixId + pluginId, properties, selector);
   }
 
   @Nullable
@@ -88,6 +103,6 @@ public class MapReducePipelineConfigurer implements PipelineConfigurer {
   @Override
   public <T> Class<T> usePluginClass(String pluginType, String pluginName, String pluginId, PluginProperties properties,
                                      PluginSelector selector) {
-    return mrConfigurer.usePluginClass(pluginType, pluginName, prefixId + pluginId, properties);
+    return mrConfigurer.usePluginClass(pluginType, pluginName, prefixId + pluginId, properties, selector);
   }
 }
