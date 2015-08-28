@@ -18,7 +18,6 @@ package co.cask.cdap.test.app;
 
 import co.cask.cdap.ConfigTestApp;
 import co.cask.cdap.api.app.Application;
-import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
@@ -43,7 +42,6 @@ import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.WorkflowTokenDetail;
 import co.cask.cdap.proto.WorkflowTokenNodeDetail;
 import co.cask.cdap.proto.artifact.AppRequest;
-import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
@@ -69,7 +67,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import org.junit.Assert;
@@ -203,11 +200,8 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "app-with-plugin", "1.0.0-SNAPSHOT");
     addAppArtifact(artifactId, AppWithPlugin.class);
 
-    ArtifactRange artifactRange = new ArtifactRange(artifactId.getNamespace(), artifactId.getName(),
-                                                    artifactId.getVersion(), true, new ArtifactVersion("2.0.0"), true);
     Id.Artifact pluginArtifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "test-plugin", "1.0.0-SNAPSHOT");
-    // TODO: Using ArtifactRange should not be required. Comparison of versions in ArtifactStore needs to be fixed.
-    addPluginArtifact(pluginArtifactId, Sets.<ArtifactRange>newHashSet(artifactRange), ToStringPlugin.class);
+    addPluginArtifact(pluginArtifactId, artifactId, ToStringPlugin.class);
 
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "AppWithPlugin");
     AppRequest createRequest = new AppRequest(
@@ -632,8 +626,9 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     }
   }
 
+  // AppFabricClient returns IllegalStateException if the app fails to deploy
   @Category(SlowTests.class)
-  @Test(expected = IllegalArgumentException.class)
+  @Test(expected = IllegalStateException.class)
   public void testServiceWithInvalidHandler() throws Exception {
     deployApplication(AppWithInvalidHandler.class);
   }

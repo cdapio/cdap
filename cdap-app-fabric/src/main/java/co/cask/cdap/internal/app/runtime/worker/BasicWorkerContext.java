@@ -54,6 +54,7 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
 import com.google.common.collect.Maps;
+import com.google.common.io.Closeables;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocationFactory;
@@ -231,6 +232,7 @@ public class BasicWorkerContext extends AbstractContext implements WorkerContext
     // Close all existing datasets that haven't been invalidated by the cache already.
     datasetsCache.invalidateAll();
     datasetsCache.cleanUp();
+    Closeables.closeQuietly(getArtifactPluginInstantiator());
   }
 
   @Override

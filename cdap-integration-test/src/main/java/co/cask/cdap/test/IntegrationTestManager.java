@@ -24,8 +24,8 @@ import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.templates.ApplicationTemplate;
 import co.cask.cdap.api.templates.plugins.PluginClass;
 import co.cask.cdap.api.templates.plugins.PluginPropertyField;
-import co.cask.cdap.app.DefaultAppConfigurer;
 import co.cask.cdap.app.DefaultApplicationContext;
+import co.cask.cdap.app.MockAppConfigurer;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.client.AdapterClient;
 import co.cask.cdap.client.ApplicationClient;
@@ -146,9 +146,9 @@ public class IntegrationTestManager implements TestManager {
 
       // Extracts application id from the application class
       Application application = applicationClz.newInstance();
-      DefaultAppConfigurer configurer = new DefaultAppConfigurer(application);
+      MockAppConfigurer configurer = new MockAppConfigurer(application);
       application.configure(configurer, new DefaultApplicationContext(configObject));
-      String applicationId = configurer.createSpecification().getName();
+      String applicationId = configurer.getName();
       return new RemoteApplicationManager(Id.Application.from(namespace, applicationId), clientConfig, restClient);
     } catch (Exception e) {
       throw Throwables.propagate(e);
