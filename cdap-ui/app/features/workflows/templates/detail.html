@@ -1,39 +1,128 @@
 <my-breadcrumbs></my-breadcrumbs>
-<div class="row" program-heading>
-  <div class="col-sm-6">
-    <h2 class="programTitle">
-      <span ng-bind="$state.params.programId"></span>
-    </h2>
-    <div class="type-block">
-      <span class="icon-workflow"></span>
-      <small> Type: WorkFlow </small>
+
+<div class="levels">
+  <div class="program-level">
+    <div class="container">
+      <div class="row" program-heading>
+        <div class="col-sm-4 col-md-6">
+          <h2 ng-bind="$state.params.programId"></h2>
+          <div class="type-block">
+            <span class="icon-workflow"></span>
+            <small> Type: Workflow </small>
+          </div>
+          <p> Description goes here. </p>
+          <div class="program-tags">
+            <a class="btn">Dataset</a>
+            <a class="btn">Apps</a>
+            <a class="btn">
+              <span class="fa fa-plus"></span>
+            </a>
+          </div>
+        </div>
+        <div class="col-sm-8 col-md-6">
+          <div class="button-bar text-right">
+            <my-start-stop-button
+              type="workflows"
+              is-stoppable="false"
+              is-restartable="true">
+            </my-start-stop-button>
+            <div class="btn-group">
+              <div ui-sref="workflows.detail.history"
+                 class="btn btn-lg btn-default">
+                <span class="fa fa-clock-o"></span>
+                <span> History </span>
+              </div>
+              <div class="btn-group dropdown" dropdown>
+                <div class="btn btn-lg btn-default dropdown-toggle" dropdown-toggle>
+                  <span class="fa fa-ellipsis-h"></span>
+                  <span> More </span>
+                </div>
+                <ul class="dropdown-menu" role="menu">
+                  <li ui-sref="admin.namespace.detail.apps.metadata({nsadmin: $state.params.namespace, appId: $state.params.appId})">
+                    <div class="btn btn-lg btn-default" ng-click="">
+                      <span class="fa fa-cogs"></span>
+                      <span> Manage </span>
+                    </div>
+                  </li>
+                  <li>
+                    <div class="btn btn-lg btn-default" ng-click="">
+                      <span class="fa fa-database"></span>
+                      <span> Metadata </span>
+                    </div>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
-  <div class="col-sm-6 text-right">
-    <my-start-stop-button
-      type="workflows"
-      is-stoppable="false"
-      is-restartable="true">
-    </my-start-stop-button>
+  <div class="run-level">
+    <div class="container">
+      <div class="run-level-inner">
+
+        <div dropdown is-open="dropdown.isopen" class="flex-item">
+          <a class="btn btn-default dropdown-toggle"
+             dropdown-toggle ng-disabled="RunsController.runs.length === 0">
+            <span class="fa fa-circle"></span>
+            <span class="runid-text text-left">
+              <span>{{ RunsController.runs.selected.runid }}</span>
+              <span>07-15-2015 10:51:38</span>
+            </span>
+            <span class="fa fa-caret-down"></span>
+          </a>
+          <ul class="dropdown-menu" role="menu">
+            <li ng-repeat="run in RunsController.runs">
+              <a ui-sref="workflows.detail.run({runid: run.runid})">
+                <span class="fa fa-circle"></span>
+                <span class="runid-text">
+                  <span>{{ run.runid }}</span>
+                  <span>07-15-2015 10:51:38</span>
+                </span>
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <my-program-status
+          data-type="workflows"
+          data-runid="{{ RunsController.runs.selected.runid }}"
+          data-poll-interval="1000"
+          data-runs="RunsController.runs"
+        ></my-program-status>
+
+        <div class="stop-run flex-item">
+          <div class="btn btn-default btn-block">
+            <span>
+              <span class="fa fa-stop text-danger"></span>
+              <span>Stop Run</span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs-level">
+    <div class="container">
+      <ul class="nav nav-tabs slanted-tabs" role="tablist">
+        <li role="presentation"
+            ng-repeat="tab in RunsController.tabs"
+            ng-class="{'active': tab.title == RunsController.activeTab.title}">
+          <a
+             role="tab"
+             ng-click="RunsController.selectTab(tab)">
+            {{ tab.title }}
+          </a>
+        </li>
+      </ul>
+    </div>
   </div>
 </div>
 
-<div class="cdap-subnav-end"></div>
-<ul class="nav nav-tabs slanted-tabs" role="tablist">
+<div class="container">
+  <div ng-if="!$state.params.runid" ng-include="RunsController.activeTab.template" class="tab-view"></div>
+  <ui-view ng-if="$state.params.runid" role="tabpanel" class="tab-view" />
+</div>
 
-  <li role="presentation" ui-sref-active="active">
-    <a ui-sref="workflows.detail.runs" ui-sref-opts="{reload: true}" role="tab">Runs</a>
-  </li>
-
-  <li role="presentation" ui-sref-active="active">
-    <a ui-sref="workflows.detail.schedules" ui-sref-opts="{reload: true}" role="tab">Schedules</a>
-  </li>
-
-
-  <li role="presentation" ui-sref-active="active">
-    <a ui-sref="workflows.detail.history" role="tab" >History</a>
-  </li>
-</ul>
-
-<br />
-<ui-view role="tabpanel"/>
