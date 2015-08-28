@@ -1269,6 +1269,8 @@
                   <exclude>**/*.json</exclude>
                   <exclude>archetypes/**/resources/**/*.txt</exclude>
                   <exclude>**/MANIFEST.MF</exclude>
+                  <!-- Excludes template used in CI for Docker/VM builds -->
+                  <exclude>cdap-distributions/src/packer/files/*.template</exclude>
                 </excludes>
               </configuration>
             </execution>
