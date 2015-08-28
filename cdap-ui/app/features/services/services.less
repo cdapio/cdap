@@ -1,21 +1,39 @@
 @import "../../styles/variables.less";
+@import "../../../bower_components/bootstrap/less/mixins.less";
+@import "../../styles/themes/cdap/mixins.less";
 
 body.state-services {
-  table.endpoints {
-    th, td {
-      &:last-child {
-        border-left: 0;
-        text-align: center;
-        vertical-align: middle;
+  main.container {
+    // Override container styling to accommodate full width view
+    // TODO: come up with a way to apply the 3 lines below to all program detail views
+    width: 100%;
+    padding-right: 0;
+    padding-left: 0;
+
+    h2 {
+      font-weight: 500;
+      margin-top: 0;
+      margin-bottom: 5px;
+    }
+    h3 {
+      font-weight: 400;
+    }
+    table.endpoints {
+      th, td {
+        &:first-child {
+          width: 30%;
+        }
+        &:last-child {
+          text-align: center;
+          vertical-align: middle;
+          width: 20%;
+        }
+      }
+      th {
+        &:hover, &:focus {
+          cursor: default;
+        }
       }
     }
-    th {
-      &:hover, &:focus {
-        cursor: default;
-      }
-    }
-  }
-  td.endpoint-path {
-    word-wrap: break-word;
   }
 }

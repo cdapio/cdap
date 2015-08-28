@@ -1,11 +1,13 @@
 <div ng-controller="ServicesRunsDetailStatusController as StatusController">
 
   <div class="row">
-    <my-instance-control data-base-path="StatusController.basePath"></my-instance-control>
+    <div class="col-sm-6 col-sm-offset-6 col-md-5 col-md-offset-7">
+      <my-instance-control data-base-path="StatusController.basePath"></my-instance-control>
+    </div>
   </div>
 
   <div class="row">
-    <div class="col-md-9">
+    <div class="col-xs-12">
       <h3> Endpoints [{{StatusController.endPoints.length}}] </h3>
       <table class="table table-curved endpoints">
         <thead>

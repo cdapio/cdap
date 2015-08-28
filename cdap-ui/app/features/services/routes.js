@@ -2,18 +2,13 @@ angular.module(PKG.name + '.feature.services')
   .config(function($stateProvider, $urlRouterProvider, MYAUTH_ROLE) {
     $stateProvider
       .state('services', {
-        url: '/services',
+        url: '/services/:programId',
         abstract: true,
         parent: 'programs',
         data: {
           authorizedRoles: MYAUTH_ROLE.all,
           highlightTab: 'development'
         },
-        template: '<ui-view/>'
-      })
-      .state('services.detail', {
-        url: '/:programId',
-        templateUrl: '/assets/features/services/templates/detail.html',
         resolve : {
           rRuns: function($stateParams, $q, myServiceApi) {
             var defer = $q.defer();
@@ -32,29 +27,28 @@ angular.module(PKG.name + '.feature.services')
             return defer.promise;
           }
         },
+        template: '<ui-view/>'
+      })
+      .state('services.detail', {
+        url: '/runs',
+        templateUrl: '/assets/features/services/templates/detail.html',
+        controller: 'ServicesRunsController',
+        controllerAs: 'RunsController',
         ncyBreadcrumb: {
           parent: 'apps.detail.overview.status',
           label: 'Services',
           skip: true
         }
       })
-        .state('services.detail.runs', {
-          url: '/runs',
-          templateUrl: '/assets/features/services/templates/tabs/runs.html',
+        .state('services.detail.run', {
+          url: '/:runid',
+          templateUrl: '/assets/features/services/templates/tabs/runs/run-detail.html',
           controller: 'ServicesRunsController',
           controllerAs: 'RunsController',
           ncyBreadcrumb: {
             label: '{{$state.params.programId}}'
           }
         })
-          .state('services.detail.runs.run', {
-            url: '/:runid',
-            templateUrl: '/assets/features/services/templates/tabs/runs/run-detail.html',
-            controller: 'ServicesRunDetailController',
-            ncyBreadcrumb: {
-              label: '{{$state.params.runid}}'
-            }
-          })
           .state('services.detail.runs.makerequest', {
             params: {
               requestUrl: null,
