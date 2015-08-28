@@ -40,6 +40,9 @@ angular.module(`${PKG.name}.feature.workflows`)
           ncyBreadcrumb: {
             parent: 'apps.detail.overview.status',
             label: '{{$state.params.programId}}'
+          },
+          onExit: function($modalStack) {
+            $modalStack.dismissAll();
           }
         })
 
@@ -51,34 +54,9 @@ angular.module(`${PKG.name}.feature.workflows`)
             ncyBreadcrumb: {
               label: '{{$state.params.runid}}',
               parent: 'workflows.detail'
+            },
+            onExit: function($modalStack) {
+              $modalStack.dismissAll();
             }
-          })
-          .state('workflows.detail.history', {
-            url: '/history',
-            data: {
-              authorizedRoles: MYAUTH_ROLE.all,
-              highlightTab: 'development'
-            },
-            ncyBreadcrumb: {
-              parent: 'workflows.detail.runs',
-              label: 'History'
-            },
-            template: '<my-program-history data-runs="RunsController.runs" data-type="WORKFLOWS"></my-program-history>',
-            controller: 'WorkflowsRunsController',
-            controllerAs: 'RunsController'
-          })
-          .state('workflows.detail.schedules', {
-            url: '/schedules',
-            data: {
-              authorizedRoles: MYAUTH_ROLE.all,
-              highlightTab: 'development'
-            },
-            ncyBreadcrumb: {
-              label: 'Schedules',
-              parent: 'workflows.detail.runs'
-            },
-            templateUrl: '/assets/features/workflows/templates/tabs/schedules.html',
-            controller: 'WorkflowsSchedulesController',
-            controllerAs: 'SchedulesController'
           });
   });
