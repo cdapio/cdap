@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.cli.docs;
+package co.cask.cdap.docgen.cli;
 
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.LaunchOptions;
