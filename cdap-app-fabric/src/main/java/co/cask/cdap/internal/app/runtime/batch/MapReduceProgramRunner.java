@@ -178,7 +178,8 @@ public class MapReduceProgramRunner implements ProgramRunner {
                                                                           program.getJarLocation(), locationFactory,
                                                                           streamAdmin, txSystemClient, usageRegistry);
       mapReduceRuntimeService.addListener(createRuntimeServiceListener(program, runId, adapterSpec,
-                                                                       pluginInstantiator, arguments),
+                                                                       pluginInstantiator, artifactPluginInstantiator,
+                                                                       arguments),
                                           Threads.SAME_THREAD_EXECUTOR);
 
       final ProgramController controller = new MapReduceProgramController(mapReduceRuntimeService, context);
@@ -220,7 +221,8 @@ public class MapReduceProgramRunner implements ProgramRunner {
    */
   private Service.Listener createRuntimeServiceListener(final Program program, final RunId runId,
                                                         final AdapterDefinition adapterSpec,
-                                                        final PluginInstantiator pluginInstantiator,
+                                                        @Nullable final PluginInstantiator pluginInstantiator,
+                                                        final PluginInstantiator artifactPluginInstantiator,
                                                         Arguments arguments) {
 
     final String twillRunId = arguments.getOption(ProgramOptionConstants.TWILL_RUN_ID);
@@ -249,6 +251,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
       @Override
       public void terminated(Service.State from) {
+        Closeables.closeQuietly(artifactPluginInstantiator);
         if (pluginInstantiator != null) {
           Closeables.closeQuietly(pluginInstantiator);
         }
@@ -291,7 +294,6 @@ public class MapReduceProgramRunner implements ProgramRunner {
     return new PluginInstantiator(cConf, adapterSpec.getTemplate(), programClassLoader);
   }
 
-  @Nullable
   private PluginInstantiator createArtifactPluginInstantiator(ClassLoader programClassLoader) {
     return new PluginInstantiator(cConf, programClassLoader);
   }
