@@ -16,6 +16,8 @@
 
 package co.cask.cdap.dq;
 
+import co.cask.cdap.dq.functions.CombinableAggregationFunction;
+
 import java.util.Objects;
 
 /**
@@ -35,6 +37,9 @@ public class AggregationTypeValue {
     return name;
   }
 
+  /**
+   * @return true if the aggregation is a {@link CombinableAggregationFunction}
+   */
   public boolean isCombinable() {
     return isCombinable;
   }
