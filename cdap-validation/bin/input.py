@@ -20,12 +20,18 @@ import test_helpers as helpers
 
 ##### INPUT FUNCTIONS #####
 
-
+# Entry point for processing input
+# Runs process_params method 
+# Expected input are command line parameters (no error checking)
+# Returns dict with input variables
 def process_input(argv):
     input_vars = process_params(argv)
     return input_vars
 
 
+# Method for processing parameters
+# Input: Parameters passed by process_input method
+# Returns dict with input variables
 def process_params(params):
     input_vars = {}
 

@@ -68,7 +68,7 @@ def test(base_vars, cluster_vars):
 
     # validate_connection
     helpers.vprint('Validating connection', verbose)
-    version_test = validate_connection(base_vars, cluster_vars)
+    version_test = test_api_connection(base_vars, cluster_vars)
     helpers.vprint('', verbose)
     helpers.vprint('version_test=%s' % (version_test), verbose)
 
@@ -193,11 +193,12 @@ def find_modules(file, path):
 # coming soon
 
 
-def validate_connection(base_info, cluster_info):
-    # test api connection, etc.
-    version = test_api_connection(base_info, cluster_info)
-    # placeholder for testing other connections
-    return version
+# placeholder for future function that tests various ways of connecting
+#def validate_connection(base_info, cluster_info):
+#    # test api connection, etc.
+#    version = test_api_connection(base_info, cluster_info) <== example
+#    # placeholder for testing other connections
+#    return version
 
 
 def test_api_connection(base_info, cluster_info):
