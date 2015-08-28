@@ -69,6 +69,6 @@ public class WorkerRealtimeContext extends RealtimeTransformContext implements R
   }
 
   private String getPluginId(String childPluginId) {
-    return String.format("%s%s%s", pluginPrefix, Constants.ID_SEPARATOR, childPluginId);
+    return String.format("%s%s%s", pluginId, Constants.ID_SEPARATOR, childPluginId);
   }
 }

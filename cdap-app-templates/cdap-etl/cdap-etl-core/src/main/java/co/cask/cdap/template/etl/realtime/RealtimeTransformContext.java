@@ -28,12 +28,12 @@ public class RealtimeTransformContext implements TransformContext {
   private final WorkerContext context;
   private final Metrics metrics;
 
-  protected final String pluginPrefix;
+  protected final String pluginId;
 
-  public RealtimeTransformContext(WorkerContext context, Metrics metrics, String pluginPrefix) {
+  public RealtimeTransformContext(WorkerContext context, Metrics metrics, String pluginId) {
     this.context = context;
     this.metrics = metrics;
-    this.pluginPrefix = pluginPrefix;
+    this.pluginId = pluginId;
   }
 
   @Override
@@ -43,6 +43,11 @@ public class RealtimeTransformContext implements TransformContext {
 
   @Override
   public PluginProperties getPluginProperties() {
-    return context.getPluginProperties(pluginPrefix);
+    // hack until templates are removed
+    try {
+      return context.getPluginProperties(pluginId);
+    } catch (UnsupportedOperationException e) {
+      return context.getPluginProps(pluginId);
+    }
   }
 }
