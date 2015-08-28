@@ -377,15 +377,15 @@ def rebuild(filepath=''):
 
     # Build XML file
     XML_CONFIG_OPEN   = '<configuration>\n'
-    XML_SECTION_SUB   = "\n    <!-- %s -->\n\n"
-    XML_PROP_OPEN     = '    <property>\n'
-    XML_NAME_SUB      = "        <name>%s</name>\n"
-    XML_VALUE_SUB     = "        <value>%s</value>\n"
-    XML_DESCRIP_OPEN  = '        <description>\n'
-    XML_DESCRIP_SUB   = "            %s\n"
-    XML_DESCRIP_CLOSE = '        </description>\n'
-    XML_FINAL         = '        <final>true</final>\n'
-    XML_PROP_CLOSE    = '    </property>\n\n'
+    XML_SECTION_SUB   = "\n  <!-- %s -->\n\n"
+    XML_PROP_OPEN     = '  <property>\n'
+    XML_NAME_SUB      = "    <name>%s</name>\n"
+    XML_VALUE_SUB     = "    <value>%s</value>\n"
+    XML_DESCRIP_OPEN  = '    <description>\n'
+    XML_DESCRIP_SUB   = "      %s\n"
+    XML_DESCRIP_CLOSE = '    </description>\n'
+    XML_FINAL         = '    <final>true</final>\n'
+    XML_PROP_CLOSE    = '  </property>\n\n'
     XML_CONFIG_CLOSE  = '</configuration>\n'
 
     prop_names = {}
