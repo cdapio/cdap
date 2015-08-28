@@ -51,6 +51,7 @@ import co.cask.cdap.gateway.handlers.AppLifecycleHttpHandler;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
+import co.cask.cdap.internal.app.deploy.pipeline.ProgramGenerationStage;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.WriteConflictException;
@@ -395,11 +396,11 @@ public class ApplicationLifecycleService extends AbstractIdleService {
           continue;
         }
 
-        Location appJarLocation = store.getApplicationArchiveLocation(appId);
+        Location appJarLocation = findAppJarLocation(appId);
         if (appJarLocation == null) {
-          LOG.error(String.format("Unable to get location of jar for app '%s' in namespace '%s'. " +
-              "You will need to re-deploy the app after upgrade.",
-            appId.getNamespaceId(), appId.getId()));
+          // nothing we can do... skip and log a message
+          LOG.warn("Unable to find application jar for app '%s' in namespace '%s'. " +
+            "Please re-deploy the app manually after upgrade.");
           continue;
         }
 
@@ -471,6 +472,37 @@ public class ApplicationLifecycleService extends AbstractIdleService {
         }
       }
     }
+  }
+
+  // look up the app archive location from the store.  Most of this logic is in case that jar isn't actually
+  // there. In that case we try to find it in the expected place.
+  private Location findAppJarLocation(Id.Application appId) throws IOException {
+    Location appJarLocation = store.getApplicationArchiveLocation(appId);
+    if (appJarLocation == null) {
+      return null;
+    }
+    // bad metadata... not sure how it gets into this state but we have seen it
+    if (!appJarLocation.exists()) {
+      // make an educated guess for where it could be
+      appJarLocation =
+        ProgramGenerationStage.getAppArchiveDirLocation(configuration, appId, namespacedLocationFactory);
+      if (!appJarLocation.exists() || !appJarLocation.isDirectory()) {
+        return null;
+      }
+      // should be only one file there... expect it to start with the app name and end in .jar
+      boolean found = false;
+      for (Location file : appJarLocation.list()) {
+        if (file.getName().startsWith(appId.getId()) && file.getName().endsWith(".jar")) {
+          appJarLocation = file;
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        return null;
+      }
+    }
+    return appJarLocation;
   }
 
   /**
