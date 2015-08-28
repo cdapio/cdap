@@ -24,7 +24,7 @@ import co.cask.cdap.explore.service.hive.Hive12CDH5ExploreService;
 import co.cask.cdap.explore.service.hive.Hive12ExploreService;
 import co.cask.cdap.explore.service.hive.Hive13ExploreService;
 import co.cask.cdap.explore.service.hive.Hive14ExploreService;
-import co.cask.cdap.format.RecordFormats;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
@@ -33,6 +33,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
+import com.google.common.io.ByteStreams;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.MRJobConfig;
@@ -40,24 +41,39 @@ import org.apache.hadoop.util.VersionInfo;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.internal.utils.Dependencies;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.commons.GeneratorAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.Arrays;
+import java.util.Enumeration;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
+import java.util.jar.JarOutputStream;
 import java.util.regex.Pattern;
+import javax.annotation.Nullable;
 
 /**
  * Utility class for the explore service.
  */
 public class ExploreServiceUtils {
   private static final Logger LOG = LoggerFactory.getLogger(ExploreServiceUtils.class);
+
+  private static final String HIVE_AUTHFACTORY_CLASS_NAME = "org.apache.hive.service.auth.HiveAuthFactory";
 
   /**
    * Hive support enum.
@@ -236,13 +252,13 @@ public class ExploreServiceUtils {
    *
    * @return an ordered set of jar files.
    */
-  public static Set<File> traceExploreDependencies() throws IOException {
+  public static Set<File> traceExploreDependencies(File tmpDir) throws IOException {
     if (exploreDependencies != null) {
       return exploreDependencies;
     }
 
     ClassLoader classLoader = getExploreClassLoader();
-    return traceExploreDependencies(classLoader);
+    return traceExploreDependencies(classLoader, tmpDir);
   }
 
   /**
@@ -250,9 +266,10 @@ public class ExploreServiceUtils {
    *
    * @param classLoader class loader to use to trace the dependencies.
    *                    If it is null, use the class loader of this class.
+   * @param tmpDir temporary directory for storing rewritten jar files.
    * @return an ordered set of jar files.
    */
-  public static Set<File> traceExploreDependencies(ClassLoader classLoader)
+  public static Set<File> traceExploreDependencies(ClassLoader classLoader, File tmpDir)
     throws IOException {
     if (exploreDependencies != null) {
       return exploreDependencies;
@@ -281,35 +298,27 @@ public class ExploreServiceUtils {
       }
     };
 
-    Set<File> hBaseTableDeps = traceDependencies(HBaseTableUtilFactory.getHBaseTableUtilClass().getName(),
-                                                 usingCL, classAcceptor);
+    Set<File> hBaseTableDeps = traceDependencies(usingCL, classAcceptor, tmpDir,
+                                                 HBaseTableUtilFactory.getHBaseTableUtilClass().getName());
 
     // Note the order of dependency jars is important so that HBase jars come first in the classpath order
     // LinkedHashSet maintains insertion order while removing duplicate entries.
     Set<File> orderedDependencies = new LinkedHashSet<>();
     orderedDependencies.addAll(hBaseTableDeps);
-    orderedDependencies.addAll(traceDependencies(DatasetService.class.getName(),
-                                                 usingCL, classAcceptor));
-    orderedDependencies.addAll(traceDependencies("co.cask.cdap.hive.datasets.DatasetStorageHandler",
-                                                 usingCL, classAcceptor));
-    orderedDependencies.addAll(traceDependencies("co.cask.cdap.hive.datasets.StreamStorageHandler",
-                                                 usingCL, classAcceptor));
-    orderedDependencies.addAll(traceDependencies("org.apache.hadoop.hive.ql.exec.mr.ExecDriver",
-                                                 usingCL, classAcceptor));
-    orderedDependencies.addAll(traceDependencies("org.apache.hive.service.cli.CLIService",
-                                                 usingCL, classAcceptor));
-    orderedDependencies.addAll(traceDependencies("org.apache.hadoop.mapred.YarnClientProtocolProvider",
-                                                 usingCL, classAcceptor));
-    orderedDependencies.addAll(traceDependencies(RecordFormats.class.getName(),
-                                                 usingCL, classAcceptor));
-
-    // Needed for - at least - CDH 4.4 integration
-    orderedDependencies.addAll(traceDependencies("org.apache.hive.builtins.BuiltinUtils",
-                                                 usingCL, classAcceptor));
-
-    // Needed for - at least - CDH 5 integration
-    orderedDependencies.addAll(traceDependencies("org.apache.hadoop.hive.shims.Hadoop23Shims",
-                                                 usingCL, classAcceptor));
+    orderedDependencies.addAll(traceDependencies(usingCL, classAcceptor, tmpDir,
+                                                 DatasetService.class.getName(),
+                                                 // Referred to by string rather than Class.getName()
+                                                 // because DatasetStorageHandler and StreamStorageHandler
+                                                 // extend a Hive class, which isn't present in this class loader
+                                                 "co.cask.cdap.hive.datasets.DatasetStorageHandler",
+                                                 "co.cask.cdap.hive.stream.StreamStorageHandler",
+                                                 "org.apache.hadoop.hive.ql.exec.mr.ExecDriver",
+                                                 "org.apache.hive.service.cli.CLIService",
+                                                 "org.apache.hadoop.mapred.YarnClientProtocolProvider",
+                                                 // Needed for - at least - CDH 4.4 integration
+                                                 "org.apache.hive.builtins.BuiltinUtils",
+                                                 // Needed for - at least - CDH 5 integration
+                                                 "org.apache.hadoop.hive.shims.Hadoop23Shims"));
 
     exploreDependencies = orderedDependencies;
     return orderedDependencies;
@@ -319,17 +328,22 @@ public class ExploreServiceUtils {
    * Trace the dependencies files of the given className, using the classLoader,
    * and including the classes that's accepted by the classAcceptor
    *
-   * Nothing is returned if the classLoader does not contain the className.
+   * Nothing is returned if the classLoader, or if not provided, the ExploreRuntimeModule class loader,
+   * does not contain the className.
    */
-  public static Set<File> traceDependencies(String className, ClassLoader classLoader,
-                                            final ClassAcceptor classAcceptor)
-    throws IOException {
+  public static Set<File> traceDependencies(@Nullable ClassLoader classLoader, final ClassAcceptor classAcceptor,
+                                            File tmpDir, String... classNames) throws IOException {
+    LOG.debug("Tracing dependencies for classes: {}", Arrays.toString(classNames));
+
     ClassLoader usingCL = classLoader;
     if (usingCL == null) {
       usingCL = ExploreRuntimeModule.class.getClassLoader();
     }
-    final Set<File> jarFiles = Sets.newHashSet();
 
+    final String rewritingClassName = HIVE_AUTHFACTORY_CLASS_NAME;
+    final Set<File> rewritingFiles = Sets.newHashSet();
+
+    final Set<File> jarFiles = Sets.newHashSet();
     Dependencies.findClassDependencies(
       usingCL,
       new ClassAcceptor() {
@@ -339,14 +353,86 @@ public class ExploreServiceUtils {
             return false;
           }
 
+          if (rewritingClassName.equals(className)) {
+            rewritingFiles.add(new File(classPathUrl.getFile()));
+          }
+
           jarFiles.add(new File(classPathUrl.getFile()));
           return true;
         }
       },
-      className
+      classNames
     );
 
+    // Rewrite HiveAuthFactory.loginFromKeytab to be a no-op method.
+    // This is needed because we don't want to use Hive's CLIService since
+    // we're already using delegation tokens
+    for (File rewritingFile : rewritingFiles) {
+      // TODO: this may cause lots of rewrites since we may rewrite the same jar multiple times
+      File rewrittenJar = rewriteHiveAuthFactory(
+        rewritingFile, new File(tmpDir, rewritingFile.getName() + "-" + System.currentTimeMillis() + ".jar"));
+      jarFiles.add(rewrittenJar);
+      LOG.debug("Rewrote {} to {}", rewritingFile.getAbsolutePath(), rewrittenJar.getAbsolutePath());
+    }
+    jarFiles.removeAll(rewritingFiles);
+
+    if (LOG.isDebugEnabled()) {
+      for (File jarFile : jarFiles) {
+        LOG.debug("Added jar {}", jarFile.getAbsolutePath());
+      }
+    }
+
     return jarFiles;
+  }
+
+  @VisibleForTesting
+  static File rewriteHiveAuthFactory(File sourceJar, File targetJar) throws IOException {
+    try (
+      JarFile input = new JarFile(sourceJar);
+      JarOutputStream output = new JarOutputStream(new FileOutputStream(targetJar))
+    ) {
+      String hiveAuthFactoryPath = HIVE_AUTHFACTORY_CLASS_NAME.replace('.', '/') + ".class";
+
+      Enumeration<JarEntry> sourceEntries = input.entries();
+      while (sourceEntries.hasMoreElements()) {
+        JarEntry entry = sourceEntries.nextElement();
+        output.putNextEntry(new JarEntry(entry.getName()));
+
+        try (InputStream entryInputStream = input.getInputStream(entry)) {
+          if (!hiveAuthFactoryPath.equals(entry.getName())) {
+            ByteStreams.copy(entryInputStream, output);
+            continue;
+          }
+
+          try {
+            // Rewrite the bytecode of HiveAuthFactory.loginFromKeytab method to a no-op method
+            ClassReader cr = new ClassReader(entryInputStream);
+            ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+            cr.accept(new ClassVisitor(Opcodes.ASM5, cw) {
+              @Override
+              public MethodVisitor visitMethod(final int access, final String name, final String desc,
+                                               String signature, String[] exceptions) {
+                MethodVisitor methodVisitor = super.visitMethod(access, name, desc, signature, exceptions);
+                if (!"loginFromKeytab".equals(name)) {
+                  return methodVisitor;
+                }
+                GeneratorAdapter adapter = new GeneratorAdapter(methodVisitor, access, name, desc);
+                adapter.returnValue();
+
+                // VisitMaxs with 0 so that COMPUTE_MAXS from ClassWriter will compute the right values.
+                adapter.visitMaxs(0, 0);
+                return new MethodVisitor(Opcodes.ASM5) { };
+              }
+            }, 0);
+            output.write(cw.toByteArray());
+          } catch (Exception e) {
+            throw new IOException("Unable to generate HiveAuthFactory class", e);
+          }
+        }
+      }
+
+      return targetJar;
+    }
   }
 
   /**

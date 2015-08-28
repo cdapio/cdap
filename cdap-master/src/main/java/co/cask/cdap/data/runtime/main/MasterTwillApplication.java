@@ -19,6 +19,7 @@ package co.cask.cdap.data.runtime.main;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.twill.AbortOnTimeoutEventHandler;
+import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.explore.service.ExploreServiceUtils;
 import co.cask.cdap.logging.run.LogSaverTwillRunnable;
 import co.cask.cdap.metrics.runtime.MetricsProcessorTwillRunnable;
@@ -230,11 +231,14 @@ public class MasterTwillApplication implements TwillApplication {
 
     try {
       // Ship jars needed by Hive to the container
-      Set<File> jars = ExploreServiceUtils.traceExploreDependencies();
+      File tempDir = DirUtils.createTempDir(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
+                                                     cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile());
+      Set<File> jars = ExploreServiceUtils.traceExploreDependencies(tempDir);
       for (File jarFile : jars) {
+        LOG.debug("Adding jar {} for explore.service", jarFile.getAbsolutePath());
         twillSpecs = twillSpecs.add(jarFile.getName(), jarFile);
       }
-    } catch (IOException e) {
+    } catch (Exception e) {
       throw new RuntimeException("Unable to trace Explore dependencies", e);
     }
 

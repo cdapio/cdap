@@ -35,6 +35,11 @@ import java.util.Map;
 
 /**
  * HiveStorageHandler to access Datasets.
+ *
+ * <p>
+ * Referred to by string rather than {@code Class.getName()} in {@code ExploreServiceUtils.traceExploreDependencies()}
+ * because this class extends a Hive class, which isn't present in the {@code ExploreServiceUtils} class loader.
+ * </p>
  */
 public class DatasetStorageHandler extends DefaultStorageHandler {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetStorageHandler.class);
