@@ -24,17 +24,32 @@ import cloudera
 
 
 def usage():
-    print '\nThis is the usage function\n'
-    print 'Usage: \n'+sys.argv[0]+' [-v, --verbose] -c, --cluster \'<cluster>\' [-m, --modules \'<modules>]\' -u --user <user:password> -U --uri <URI>\n'
+    print """
+                              CDAP Validation Tool
+
+    Its purpose is to check A Hadoop or CDAP cluster for its CDAP readiness.
+    It is designed in a modular way (validation modules are pluggable).
+    Configurations, service checks, etc are gathered via the Hadoop Manager's API.
+    These are stored and made available to the validation modules.
+    Three pluggable modules are provided with this tool:
+    * Configuration Validation
+    * Service Checks -- coming soon
+    * Cluster Layout checks -- coming soon
+ """ 
+    print 'Usage: \n'+sys.argv[0]+' [-v, --verbose | -d] -c, --cluster \'<cluster>\' [-m, --modules \'<modules>]\' -u --user <user:password> -U --uri <URI>\n'
 
     print """
     -h, --help  help menu
     -c, --cluster       cluster name used in API calls to the install manager
     -m, --modules       Run plugabble test modules, separated by ';'.  E.g. -m 'module1;module2'
                         Each module is a self-contained unit under the modules subdirectory
-    -u, --user          authentication, e.g. --user 'george:pass'
+                        * config=configuration validation
+                        * service=service checks
+                        * layout=cluster layout checks
+    -u, --user          Authentication, e.g. --user 'george:pass'
     -U, --uri           URI: e.g. --uri 'http://10.240.0.8:7180'
-    -v, --verbose       adds more output (additional invocations increase verbosity)
+    -v, --verbose       Adds more output (shows successful checks)
+    -d, --debug         Full debug output of validation runs (if both verbose and debug are used, the last one wins)
  """
 
 

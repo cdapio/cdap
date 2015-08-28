@@ -30,7 +30,7 @@ def process_params(params):
     input_vars = {}
 
     try:
-        opts, args = getopt.getopt(params, 'hc:m:u:U:vd', ['help', 'cluster=', 'module=', 'user=', 'uri=', 'verbose'])
+        opts, args = getopt.getopt(params, 'hc:m:u:U:vd', ['help', 'cluster=', 'module=', 'user=', 'uri=', 'verbose', 'debug'])
     except getopt.GetoptError:
         helpers.usage()
         sys.exit(2)
@@ -50,7 +50,7 @@ def process_params(params):
             input_vars['host'] = arg
         elif opt in ('-v', '--verbose'):
             input_vars['verbose'] = 1
-        elif opt == '-d':
+        elif opt in ('-d', '--debug'):
             global _debug
             input_vars['verbose'] = 2
             _debug = 1
