@@ -5,7 +5,7 @@ angular.module(PKG.name + '.commons')
       scope: {
         model: '=ngModel',
         config: '=',
-        plugin: '=',
+        pluginProperties: '=',
         disabled: '='
       },
       templateUrl: 'widget-container/widget-schema-editor/widget-schema-editor.html',
@@ -34,7 +34,7 @@ angular.module(PKG.name + '.commons')
             watchProperty = $scope.config['property-watch'];
 
             $scope.$watch(function () {
-              return $scope.plugin[watchProperty];
+              return $scope.pluginProperties[watchProperty];
             }, changeFormat);
           }
 
@@ -53,7 +53,7 @@ angular.module(PKG.name + '.commons')
         }
 
         function changeFormat() {
-          if (!$scope.plugin) {
+          if (!$scope.pluginProperties) {
             return;
           }
 
@@ -61,16 +61,16 @@ angular.module(PKG.name + '.commons')
           removeWatcher();
 
           // do things based on format
-          if (['clf', 'syslog', ''].indexOf($scope.plugin[watchProperty]) > -1) {
+          if (['clf', 'syslog', ''].indexOf($scope.pluginProperties[watchProperty]) > -1) {
             $scope.model = null;
             $scope.disableEdit = true;
             // $scope.fields = 'NOTHING';
-            if ($scope.plugin[watchProperty] === 'clf') {
+            if ($scope.pluginProperties[watchProperty] === 'clf') {
               var clfSchema = IMPLICIT_SCHEMA.clf;
 
               initialize(clfSchema);
               $scope.fields = 'SHOW';
-            } else if ($scope.plugin[watchProperty] === 'syslog') {
+            } else if ($scope.pluginProperties[watchProperty] === 'syslog') {
               var syslogSchema = IMPLICIT_SCHEMA.syslog;
 
               initialize(syslogSchema);
@@ -79,7 +79,7 @@ angular.module(PKG.name + '.commons')
               $scope.fields = 'NOTHING';
             }
 
-          } else if ($scope.plugin[watchProperty] === 'avro'){
+          } else if ($scope.pluginProperties[watchProperty] === 'avro'){
             $scope.disableEdit = false;
             $scope.fields = 'AVRO';
             watcher = $scope.$watch('avro', formatAvro, true);
@@ -92,10 +92,12 @@ angular.module(PKG.name + '.commons')
               }
 
             }
-          } else if ($scope.plugin[watchProperty] === 'grok') {
+          } else if ($scope.pluginProperties[watchProperty] === 'grok') {
             $scope.disableEdit = false;
             $scope.fields = 'GROK';
-            $scope.model = null;
+            watcher = $scope.$watch('grok', function () {
+              $scope.model = $scope.grok.pattern;
+            }, true);
           }
 
           else {
@@ -113,11 +115,15 @@ angular.module(PKG.name + '.commons')
           filledCount = 0;
           var schema = {};
           $scope.avro = {};
+          $scope.grok = {
+            pattern: $scope.model
+          };
 
           $scope.error = null;
           if (jsonString) {
             try {
               schema = JSON.parse(jsonString);
+              $scope.avro.schema = schema;
             } catch (e) {
               $scope.error = 'Invalid JSON string';
             }
@@ -202,7 +208,7 @@ angular.module(PKG.name + '.commons')
         });
 
         function formatAvro() {
-          if ($scope.plugin[watchProperty] !== 'avro') {
+          if ($scope.pluginProperties[watchProperty] !== 'avro') {
             return;
           }
 
@@ -212,7 +218,7 @@ angular.module(PKG.name + '.commons')
 
 
         function formatSchema() {
-          if (watchProperty && $scope.plugin && ['clf', 'syslog'].indexOf($scope.plugin[watchProperty]) !== -1) {
+          if (watchProperty && $scope.pluginProperties && ['clf', 'syslog'].indexOf($scope.pluginProperties[watchProperty]) !== -1) {
             $scope.model = null;
             return;
           }
