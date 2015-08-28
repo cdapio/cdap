@@ -37,9 +37,10 @@ module.factory('dagreD3', function ($window) {
   return $window.dagreD3;
 });
 
-module.controller('myFlowController', function($scope) {
+module.controller('myFlowController', function($scope, myHelpers) {
   function update(newVal) {
-    if (angular.isObject(newVal) && Object.keys(newVal).length) {
+    // Avoid rendering the graph without nodes and edges.
+    if (myHelpers.objectQuery(newVal, 'nodes') && myHelpers.objectQuery(newVal, 'edges')) {
       $scope.render();
     }
   }
