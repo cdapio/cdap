@@ -75,11 +75,11 @@ def get_ambari_service_configs(urls, subdir, cluster_info):
 
 
 # process tmp configs and store results
-def store_ambari_results(subdir, stored_configs, cluster):
+def store_ambari_results(subdir, stored_config_file, cluster):
     # get list of tmp config files and read
     verbose = cluster['verbose']
-    helpers.vprint('Get and store all Ambari configurations in %s\n' % (stored_configs), verbose)
-    s = open(stored_configs, 'w')
+    helpers.vprint('Get and store all Ambari configurations in %s\n' % (stored_config_file), verbose)
+    s = open(stored_config_file, 'w')
     config_file_list = [c for c in listdir(subdir) if isfile(join(subdir, c))]
 
     for file in config_file_list:
