@@ -28,6 +28,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
@@ -173,15 +174,22 @@ public abstract class AbstractAppFabricHttpHandler extends AbstractHttpHandler {
   }
 
   protected final void getAppRecords(HttpResponder responder, Store store,
-                                     String namespaceId) throws NamespaceNotFoundException {
+                                     String namespaceId,
+                                     @Nullable String artifactName,
+                                     @Nullable String artifactVersion) throws NamespaceNotFoundException {
     Id.Namespace namespace = Id.Namespace.from(namespaceId);
     if (store.getNamespace(namespace) == null) {
       throw new NamespaceNotFoundException(namespace);
     }
 
     List<ApplicationRecord> appRecords = new ArrayList<>();
-    for (ApplicationSpecification appSpec : store.getAllApplications(namespace)) {
-      appRecords.add(new ApplicationRecord(appSpec.getName(), appSpec.getVersion(), appSpec.getDescription()));
+    for (ApplicationSpecification appSpec : store.getApplications(namespace, artifactName, artifactVersion)) {
+      // null artifact id means its an application template
+      // TODO: (CDAP-3359) remove generated artifact summary when ApplicationTemplates are removed
+      Id.Artifact artifactId = appSpec.getArtifactId();
+      ArtifactSummary artifactSummary = artifactId == null ?
+        new ArtifactSummary(appSpec.getName(), appSpec.getVersion(), true) : ArtifactSummary.from(artifactId);
+      appRecords.add(new ApplicationRecord(artifactSummary, appSpec.getName(), appSpec.getDescription()));
     }
 
     responder.sendJson(HttpResponseStatus.OK, appRecords);

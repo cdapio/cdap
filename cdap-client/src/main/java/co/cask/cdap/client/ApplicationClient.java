@@ -53,6 +53,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
@@ -82,8 +83,9 @@ public class ApplicationClient {
   /**
    * Lists all applications currently deployed.
    *
-   * @return list of {@link ApplicationRecord}s.
-   * @throws IOException
+   * @param namespace the namespace to list applications from
+   * @return list of {@link ApplicationRecord ApplicationRecords}.
+   * @throws IOException if a network error occurred
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    */
   public List<ApplicationRecord> list(Id.Namespace namespace) throws IOException, UnauthorizedException {
@@ -91,6 +93,61 @@ public class ApplicationClient {
                                                config.resolveNamespacedURLV3(namespace, "apps"),
                                                config.getAccessToken());
     return ObjectResponse.fromJsonBody(response, new TypeToken<List<ApplicationRecord>>() { }).getResponseObject();
+  }
+
+  /**
+   * Lists all applications currently deployed, optionally filtering to only include applications that use the
+   * specified artifact name and version.
+   *
+   * @param namespace the namespace to list applications from
+   * @param artifactName the name of the artifact to filter by. If null, no filtering will be done
+   * @param artifactVersion the version of the artifact to filter by. If null, no filtering will be done
+   * @return list of {@link ApplicationRecord ApplicationRecords}.
+   * @throws IOException if a network error occurred
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   */
+  public List<ApplicationRecord> list(Id.Namespace namespace,
+                                      @Nullable String artifactName,
+                                      @Nullable String artifactVersion) throws IOException, UnauthorizedException {
+    if (artifactName == null && artifactVersion == null) {
+      return list(namespace);
+    }
+
+    String path;
+    if (artifactName != null && artifactVersion != null) {
+      path = String.format("apps?artifactName=%s&artifactVersion=%s", artifactName, artifactVersion);
+    } else if (artifactName != null) {
+      path = "apps?artifactName=" + artifactName;
+    } else {
+      path = "apps?artifactVersion=" + artifactVersion;
+    }
+
+    HttpResponse response = restClient.execute(HttpMethod.GET,
+      config.resolveNamespacedURLV3(namespace, path),
+      config.getAccessToken());
+    return ObjectResponse.fromJsonBody(response, new TypeToken<List<ApplicationRecord>>() { }).getResponseObject();
+  }
+
+  /**
+   * Get details about the specified application.
+   *
+   * @param appId the id of the application to get
+   * @return details about the specified application
+   * @throws ApplicationNotFoundException if the application with the given ID was not found
+   * @throws IOException if a network error occurred
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   */
+  public ApplicationDetail get(Id.Application appId)
+    throws ApplicationNotFoundException, IOException, UnauthorizedException {
+
+    HttpResponse response = restClient.execute(HttpMethod.GET,
+      config.resolveNamespacedURLV3(appId.getNamespace(), "apps/" + appId.getId()),
+      config.getAccessToken(),
+      HttpURLConnection.HTTP_NOT_FOUND);
+    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
+      throw new ApplicationNotFoundException(appId);
+    }
+    return ObjectResponse.fromJsonBody(response, ApplicationDetail.class).getResponseObject();
   }
 
   /**

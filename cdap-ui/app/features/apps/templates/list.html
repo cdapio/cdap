@@ -74,9 +74,9 @@
     <tbody>
       <tr ng-repeat="app in ListController.filtered = (ListController.apps | filter: ListController.searchText ) | myPaginate:ListController.currentPage | orderBy:sortable.predicate:sortable.reverse">
         <td >
-          <a ui-sref="apps.detail.overview.status({ appId: app.id })"
+          <a ui-sref="apps.detail.overview.status({ appId: app.name })"
               ng-if="app.type !== 'adapter'"
-              ng-click="MyOrderings.appClicked(app.id)">
+              ng-click="MyOrderings.appClicked(app.name)">
             <strong tooltip="{{app.name}}"
                     tooltip-enable="app.name.length > 35"
                     tooltip-append-to-body="true">

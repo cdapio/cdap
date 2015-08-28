@@ -83,9 +83,8 @@ public class StreamSerDe implements SerDe {
     }
 
     Id.Stream streamId = Id.Stream.from(streamNamespace, streamName);
-    try {
+    try (ContextManager.Context context = ContextManager.getContext(conf)) {
       // Get the stream format from the stream config.
-      ContextManager.Context context = ContextManager.getContext(conf);
       StreamConfig streamConfig = context.getStreamConfig(streamId);
       FormatSpecification formatSpec = streamConfig.getFormat();
       this.streamFormat = (AbstractStreamEventRecordFormat) RecordFormats.createInitializedFormat(formatSpec);
@@ -124,7 +123,7 @@ public class StreamSerDe implements SerDe {
 
   @Override
   public Object deserialize(Writable writable) throws SerDeException {
-    // this should always contain a StreamEvent object
+    // The writable should always contains a StreamEvent object provided by the StreamRecordReader
     ObjectWritable objectWritable = (ObjectWritable) writable;
     StreamEvent streamEvent = (StreamEvent) objectWritable.get();
 

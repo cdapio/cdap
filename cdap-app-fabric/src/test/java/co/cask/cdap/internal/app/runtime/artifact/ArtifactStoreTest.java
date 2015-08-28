@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.artifact;
 
+import co.cask.cdap.WordCountApp;
 import co.cask.cdap.api.artifact.ApplicationClass;
 import co.cask.cdap.api.artifact.ArtifactClasses;
 import co.cask.cdap.api.artifact.ArtifactDescriptor;
@@ -188,6 +189,8 @@ public class ArtifactStoreTest {
     artifactStore.delete(parentId);
     // nothing should be in the list
     Assert.assertTrue(artifactStore.getArtifacts(parentId.getNamespace()).isEmpty());
+    // shouldn't be able to see app class either
+    Assert.assertTrue(artifactStore.getApplicationClasses(Id.Namespace.DEFAULT, appClass.getClassName()).isEmpty());
   }
 
   @Test(expected = ArtifactAlreadyExistsException.class)
@@ -341,6 +344,70 @@ public class ArtifactStoreTest {
     artifactVersions = artifactStore.getArtifacts(range);
     Assert.assertEquals(1, artifactVersions.size());
     assertEqual(artifact2V1, meta2V1, contents2V1, artifactVersions.get(0));
+  }
+
+  @Test
+  public void testGetAppClasses() throws Exception {
+    // create 2 versions of the same artifact with the same app class
+    Id.Artifact app1v1Id = Id.Artifact.from(Id.Namespace.DEFAULT, "appA", "1.0.0");
+    ApplicationClass inspectionClass1 = new ApplicationClass(
+      InspectionApp.class.getName(), "v1",
+      new ReflectionSchemaGenerator().generate(InspectionApp.AConfig.class));
+    ArtifactMeta artifactMeta =
+      new ArtifactMeta(ArtifactClasses.builder().addApp(inspectionClass1).build());
+    writeArtifact(app1v1Id, artifactMeta, "my artifact contents");
+    ArtifactDetail app1v1Detail = artifactStore.getArtifact(app1v1Id);
+
+    Id.Artifact app1v2Id = Id.Artifact.from(Id.Namespace.DEFAULT, "appA", "2.0.0");
+    ApplicationClass inspectionClass2 = new ApplicationClass(
+      InspectionApp.class.getName(), "v2",
+      new ReflectionSchemaGenerator().generate(InspectionApp.AConfig.class));
+    artifactMeta = new ArtifactMeta(ArtifactClasses.builder().addApp(inspectionClass2).build());
+    writeArtifact(app1v2Id, artifactMeta, "my artifact contents");
+    ArtifactDetail app1v2Detail = artifactStore.getArtifact(app1v2Id);
+
+    // create a different artifact with the same app class
+    Id.Artifact app2v1Id = Id.Artifact.from(Id.Namespace.DEFAULT, "appB", "1.0.0");
+    artifactMeta = new ArtifactMeta(ArtifactClasses.builder().addApp(inspectionClass1).build());
+    writeArtifact(app2v1Id, artifactMeta, "other contents");
+    ArtifactDetail app2v1Detail = artifactStore.getArtifact(app2v1Id);
+
+    // create another artifact with a different app class
+    Id.Artifact app3v1Id = Id.Artifact.from(Id.Namespace.DEFAULT, "appC", "1.0.0");
+    ApplicationClass wordCountClass1 = new ApplicationClass(
+      WordCountApp.class.getName(), "v1",
+      new ReflectionSchemaGenerator().generate(InspectionApp.AConfig.class));
+    artifactMeta = new ArtifactMeta(ArtifactClasses.builder().addApp(wordCountClass1).build());
+    writeArtifact(app3v1Id, artifactMeta, "wc contents");
+    ArtifactDetail app3v1Detail = artifactStore.getArtifact(app3v1Id);
+
+    // test getting all app classes in the namespace
+    Map<ArtifactDescriptor, List<ApplicationClass>> appClasses =
+      artifactStore.getApplicationClasses(Id.Namespace.DEFAULT);
+    Map<ArtifactDescriptor, List<ApplicationClass>> expected =
+      ImmutableMap.<ArtifactDescriptor, List<ApplicationClass>>of(
+        app1v1Detail.getDescriptor(), ImmutableList.of(inspectionClass1),
+        app1v2Detail.getDescriptor(), ImmutableList.of(inspectionClass2),
+        app2v1Detail.getDescriptor(), ImmutableList.of(inspectionClass1),
+        app3v1Detail.getDescriptor(), ImmutableList.of(wordCountClass1)
+      );
+    Assert.assertEquals(expected, appClasses);
+
+    // test getting all app classes by class name
+    Map<ArtifactDescriptor, ApplicationClass> appArtifacts =
+      artifactStore.getApplicationClasses(Id.Namespace.DEFAULT, InspectionApp.class.getName());
+    Map<ArtifactDescriptor, ApplicationClass> expectedAppArtifacts = ImmutableMap.of(
+      app1v1Detail.getDescriptor(), inspectionClass1,
+      app1v2Detail.getDescriptor(), inspectionClass2,
+      app2v1Detail.getDescriptor(), inspectionClass1
+    );
+    Assert.assertEquals(expectedAppArtifacts, appArtifacts);
+
+    appArtifacts = artifactStore.getApplicationClasses(Id.Namespace.DEFAULT, WordCountApp.class.getName());
+    expectedAppArtifacts = ImmutableMap.of(app3v1Detail.getDescriptor(), wordCountClass1);
+    Assert.assertEquals(expectedAppArtifacts, appArtifacts);
+
+    Assert.assertTrue(artifactStore.getApplicationClasses(Id.Namespace.from("ghost")).isEmpty());
   }
 
   @Test

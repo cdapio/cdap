@@ -19,7 +19,9 @@ package co.cask.cdap.api.service.http;
 import com.google.common.collect.Multimap;
 
 import java.nio.ByteBuffer;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Interface with methods for processing HTTP requests.
@@ -43,8 +45,15 @@ public interface HttpServiceRequest {
 
   /**
    * @return the headers of this request; each header name can map to multiple values
+   * @deprecated Use {@link #getAllHeaders()} instead. This method will be removed in future release.
    */
+  @Deprecated
   Multimap<String, String> getHeaders();
+
+  /**
+   * @return all headers of this request; each header name can map to multiple values
+   */
+  Map<String, List<String>> getAllHeaders();
 
   /**
    * Returns all of the values for a specified header

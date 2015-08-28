@@ -29,6 +29,8 @@ import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.UnauthorizedException;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.artifact.ApplicationClassInfo;
+import co.cask.cdap.proto.artifact.ApplicationClassSummary;
 import co.cask.cdap.proto.artifact.ArtifactInfo;
 import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
@@ -60,7 +62,9 @@ import javax.inject.Inject;
 @Beta
 public class ArtifactClient {
 
-  private static final Type SUMMARIES_TYPE = new TypeToken<List<ArtifactSummary>>() { }.getType();
+  private static final Type ARTIFACT_SUMMARIES_TYPE = new TypeToken<List<ArtifactSummary>>() { }.getType();
+  private static final Type APPCLASS_SUMMARIES_TYPE = new TypeToken<List<ApplicationClassSummary>>() { }.getType();
+  private static final Type APPCLASS_INFOS_TYPE = new TypeToken<List<ApplicationClassInfo>>() { }.getType();
   private static final Type EXTENSIONS_TYPE = new TypeToken<List<String>>() { }.getType();
   private static final Type PLUGIN_SUMMARIES_TYPE = new TypeToken<List<PluginSummary>>() { }.getType();
   private static final Type PLUGIN_INFOS_TYPE = new TypeToken<List<PluginInfo>>() { }.getType();
@@ -115,7 +119,7 @@ public class ArtifactClient {
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NotFoundException(namespace);
     }
-    return ObjectResponse.<List<ArtifactSummary>>fromJsonBody(response, SUMMARIES_TYPE).getResponseObject();
+    return ObjectResponse.<List<ArtifactSummary>>fromJsonBody(response, ARTIFACT_SUMMARIES_TYPE).getResponseObject();
   }
 
   /**
@@ -155,7 +159,7 @@ public class ArtifactClient {
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new ArtifactNotFoundException(namespace, artifactName);
     }
-    return ObjectResponse.<List<ArtifactSummary>>fromJsonBody(response, SUMMARIES_TYPE).getResponseObject();
+    return ObjectResponse.<List<ArtifactSummary>>fromJsonBody(response, ARTIFACT_SUMMARIES_TYPE).getResponseObject();
   }
 
   /**
@@ -195,6 +199,73 @@ public class ArtifactClient {
       throw new ArtifactNotFoundException(artifactId);
     }
     return ObjectResponse.fromJsonBody(response, ArtifactInfo.class, GSON).getResponseObject();
+  }
+
+  /**
+   * Get summaries of all application classes in the given namespace, including classes from system artifacts.
+   *
+   * @param namespace the namespace to list application classes from
+   * @return summaries of all application classes in the given namespace, including classes from system artifacts
+   * @throws IOException if a network error occurred
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   */
+  public List<ApplicationClassSummary> getApplicationClasses(Id.Namespace namespace)
+    throws IOException, UnauthorizedException {
+    return getApplicationClasses(namespace, true);
+  }
+
+  /**
+   * Get summaries of all application classes in the given namespace,
+   * optionally including classes from system artifacts.
+   *
+   * @param namespace the namespace to list application classes from
+   * @param includeSystem whether to include application classes from system artifacts
+   * @return summaries of all application classes in the given namespace, including classes from system artifacts
+   * @throws IOException if a network error occurred
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   */
+  public List<ApplicationClassSummary> getApplicationClasses(Id.Namespace namespace, boolean includeSystem)
+    throws IOException, UnauthorizedException {
+
+    String path = String.format("classes/apps?includeSystem=%s", includeSystem);
+    URL url = config.resolveNamespacedURLV3(namespace, path);
+
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
+    return ObjectResponse.<List<ApplicationClassSummary>>fromJsonBody(
+      response, APPCLASS_SUMMARIES_TYPE).getResponseObject();
+  }
+
+  /**
+   * Get information about all application classes in the specified namespace, of the specified class name.
+   *
+   * @param namespace the namespace to list application classes from
+   * @return summaries of all application classes in the given namespace, including classes from system artifacts
+   * @throws IOException if a network error occurred
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   */
+  public List<ApplicationClassInfo> getApplicationClasses(Id.Namespace namespace, String className)
+    throws IOException, UnauthorizedException {
+    return getApplicationClasses(namespace, className, false);
+  }
+
+  /**
+   * Get information about all application classes in the specified namespace, of the specified class name.
+   *
+   * @param namespace the namespace to list application classes from
+   * @param isSystem whether the specified class name is for a class from a system artifact
+   * @return summaries of all application classes in the given namespace, including classes from system artifacts
+   * @throws IOException if a network error occurred
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   */
+  public List<ApplicationClassInfo> getApplicationClasses(Id.Namespace namespace, String className, boolean isSystem)
+    throws IOException, UnauthorizedException {
+
+    String path = String.format("classes/apps/%s?isSystem=%s", className, isSystem);
+    URL url = config.resolveNamespacedURLV3(namespace, path);
+
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
+    return ObjectResponse.<List<ApplicationClassInfo>>fromJsonBody(
+      response, APPCLASS_INFOS_TYPE, GSON).getResponseObject();
   }
 
   /**
