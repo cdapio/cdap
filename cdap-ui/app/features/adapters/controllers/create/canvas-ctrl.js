@@ -1,10 +1,6 @@
 angular.module(PKG.name + '.feature.adapters')
   .controller('CanvasController', function (myAdapterApi, MyPlumbService, $bootstrapModal, $state, $scope, $alert, CanvasFactory, MyPlumbFactory, $modalStack, $timeout, ModalConfirm, myAdapterTemplatesApi, $q, mySettings, EventPipe) {
 
-    var sourceTemplates = [],
-        transformTemplates = [],
-        sinkTemplates = [];
-
     function objectToArray(obj) {
       var arr = [];
 
@@ -19,20 +15,6 @@ angular.module(PKG.name + '.feature.adapters')
 
       return arr;
     }
-
-    mySettings.get('pluginTemplates')
-      .then(function (res) {
-        if (!angular.isObject(res)) {
-          return;
-        }
-
-        var templates = res[$state.params.namespace][MyPlumbService.metadata.template.type];
-
-        sourceTemplates = objectToArray(templates.source);
-        transformTemplates = objectToArray(templates.transform);
-        sinkTemplates = objectToArray(templates.sink);
-      });
-
 
     this.nodes = [];
     this.reloadDAG = false;
@@ -238,19 +220,15 @@ angular.module(PKG.name + '.feature.adapters')
     this.onLeftSideGroupItemClicked = function(group) {
       var prom;
       var templatedefer = $q.defer();
-      var savedTemplates;
       switch(group.name) {
         case 'source':
           prom = myAdapterApi.fetchSources({ adapterType: MyPlumbService.metadata.template.type }).$promise;
-          savedTemplates = sourceTemplates;
           break;
         case 'transform':
           prom = myAdapterApi.fetchTransforms({ adapterType: MyPlumbService.metadata.template.type }).$promise;
-          savedTemplates = transformTemplates;
           break;
         case 'sink':
           prom = myAdapterApi.fetchSinks({ adapterType: MyPlumbService.metadata.template.type }).$promise;
-          savedTemplates = sinkTemplates;
           break;
         case 'templates':
           prom = myAdapterTemplatesApi.list({
@@ -269,7 +247,8 @@ angular.module(PKG.name + '.feature.adapters')
                 return templatedefer.promise;
               });
       }
-      prom.then(function(res) {
+      prom
+      .then(function(res) {
         this.plugins.items = [];
         res.forEach(function(plugin) {
           this.plugins.items.push(
@@ -282,12 +261,27 @@ angular.module(PKG.name + '.feature.adapters')
             )
           );
         }.bind(this));
+        // This request is made only first time. Subsequent requests are fetched from
+        // cache and not actual backend calls are made unless we force it.
+        return mySettings.get('pluginTemplates');
+      }.bind(this))
+      .then(
+        function success(res) {
+          if (!angular.isObject(res)) {
+            return;
+          }
 
-        if (group.name !== 'templates') {
-          this.plugins.items = this.plugins.items.concat(savedTemplates);
+          var templates = res[$state.params.namespace][MyPlumbService.metadata.template.type];
+          if (!templates || group.name === 'templates') {
+            return;
+          }
+
+          this.plugins.items = this.plugins.items.concat(objectToArray(templates[group.name]));
+        }.bind(this),
+        function error() {
+          console.log('ERROR: fetching plugin templates');
         }
-
-      }.bind(this));
+      );
     };
 
     this.onLeftSidePanelItemClicked = function(event, item) {
