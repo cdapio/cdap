@@ -95,7 +95,16 @@ public class DataQualityApp extends AbstractApplication<DataQualityApp.ConfigCla
         "name", "logStream", "duration", DEFAULT_WORKFLOW_SCHEDULE_MINUTES + "m", "format", "clf"));
       this.datasetName = DEFAULT_DATASET_NAME;
       Set<String> aggSet = Sets.newHashSet("DiscreteValuesHistogram");
-      this.fieldAggregations = ImmutableMap.of("content_length", aggSet);
+      this.fieldAggregations = ImmutableMap.<String, Set<String>>builder()
+        .put("referrer", aggSet)
+        .put("status", aggSet)
+        .put("remote_login", aggSet)
+        .put("request", aggSet)
+        .put("user_agent", aggSet)
+        .put("auth_user", aggSet)
+        .put("content_length", aggSet)
+        .put("date", aggSet)
+        .put("remote_host", aggSet).build();
     }
 
     public ConfigClass(int workflowScheduleMinutes, DataQualitySource source,

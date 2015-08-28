@@ -24,7 +24,7 @@ What You Will Need
 
 
 Building and Starting
-======================
+=====================
 
 The Data Quality application can be built and packaged using the Apache Maven command from the project root::
 
@@ -41,8 +41,17 @@ The application has a default configuration:
 .. code:: json
 
   {
-    "workflowScheduleMinutes": 5,
+    "source": {
+      "name": "Stream",
+      "id": "logStream",
+      "properties": {
+        "duration": "5m",
+        "format": "clf",
+        "name": "logStream"
+      }
+    },
     "datasetName": "dataQuality",
+    "workflowScheduleMinutes": 5,
     "fieldAggregations": {
         "referrer": [
             "DiscreteValuesHistogram"
@@ -74,6 +83,10 @@ The application has a default configuration:
     }
   }
 
+* ``source`` : Data Quality Source
+  - ``name``: Name of the Batch Source Plugin
+  - ``id``: Unique Id that can be used to query for Data Quality metrics using DataQualityService
+  - ``properties``: Properties required by the Batch Source Plugin
 * ``workflowScheduleMinutes`` : Frequency (in minutes) with which the workflow runs the aggregation MapReduce.
 * ``datasetName`` : Name of the destination dataset.
 * ``fieldAggregations`` : Map that relates each field value to a set of aggregation functions.
@@ -86,28 +99,10 @@ To deploy the application, follow these `application deployment instructions
 Deploying the Application with Custom Configuration
 ---------------------------------------------------
 
-To deploy the application with a custom configuration, issue a curl call. For example, to deploy the application
-with this custom configuration:
+To deploy the application with a custom configuration, issue a curl call with the application configuration.
+In this example, the ``appconfig.json`` file contains the application configuration::
 
-.. code:: json
-
-  {
-      "workflowScheduleMinutes": 5,
-      "datasetName": "dataQuality",
-      "fieldAggregations": {
-          "content_length": [
-              "Mean"
-          ]
-      }
-  }
-
-
-
-you can use a curl command, in this case to a standalone CDAP installation::
-
-  $ curl -v localhost:10000/v3/namespaces/default/apps -H "X-Archive-Name: <app-jar>" -H "X-App-Config: {"workflowScheduleMinutes": 5, "sourceID": "logStream", "datasetName": "dataQuality","inputFormat": "clf", "fieldAggregations": {"content_length": ["Mean"] }}" --data-binary @<app-jar-location>
-
-Note: the application jar is located under: ``$PROJECT_HOME/target``
+  $ curl -v localhost:10000/v3/namespaces/default/apps/StreamDQ -d @appconfig.json -X PUT -H 'Content-Type: application/json'
 
 End-to-End Example
 ==================
@@ -121,13 +116,21 @@ Let's take the example of a user who wants wants to use the Data Quality Applica
 
 
 
-We would create a Data Quality Application by specifying the following config JSON:
+We would create a Data Quality Application by creating a JSON file ``appconfig.json`` that contains:
 
 .. code:: json
 
   {
       "workflowScheduleMinutes": 10,
-      "sourceID": "logStream",
+      "source": {
+        "name": "Stream",
+        "id": "logStream",
+        "properties": {
+          "duration": "5m",
+          "format": "clf",
+          "name": "logStream"
+        }
+      },
       "datasetName": "dataQuality",
       "inputFormat": "clf",
       "fieldAggregations": {
@@ -139,7 +142,7 @@ We would create a Data Quality Application by specifying the following config JS
 
 To deploy the application, issue this curl command::
 
-  $ curl -v localhost:10000/v3/namespaces/default/apps -H "X-Archive-Name: <app-jar>" -H "X-App-Config: {"workflowScheduleMinutes": 10, "sourceID": "logStream","datasetName": "dataQuality","inputFormat": "clf", "fieldAggregations": {"status": ["DiscreteValuesHistogram"] }}" --data-binary @<app-jar-location>
+  $ curl -v localhost:10000/v3/namespaces/default/apps/StreamDQ -d @appconfig.json -X PUT -H 'Content-Type: application/json'
 
 Now, let's send some data to the stream. We can do this by going to the UI (http://localhost:9999), clicking on
 "logStream" -> "Actions" -> "Send Event". Enter each of the following Apache Access Log strings in the dialog box, and hit "Send Event" (one-by-one)::
