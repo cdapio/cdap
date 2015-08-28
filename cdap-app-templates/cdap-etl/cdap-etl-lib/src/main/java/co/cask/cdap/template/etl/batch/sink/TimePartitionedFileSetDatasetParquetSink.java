@@ -107,8 +107,8 @@ public class TimePartitionedFileSetDatasetParquetSink extends
     @Description(SCHEMA_DESC)
     private String schema;
 
-    public TPFSParquetSinkConfig(String name, String schema, @Nullable String basePath) {
-      super(name, basePath);
+    public TPFSParquetSinkConfig(String name, String schema, @Nullable String basePath, @Nullable String pathFormat) {
+      super(name, basePath, pathFormat);
       this.schema = schema;
     }
   }

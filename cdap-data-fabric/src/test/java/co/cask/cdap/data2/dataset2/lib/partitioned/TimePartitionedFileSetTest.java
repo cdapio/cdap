@@ -205,13 +205,14 @@ public class TimePartitionedFileSetTest {
     Date date = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).parse("1/1/15 8:42 pm");
     Map<String, String> args = Maps.newHashMap();
     TimePartitionedFileSetArguments.setOutputPartitionTime(args, date.getTime());
+    TimePartitionedFileSetArguments.setOutputPathFormat(args, "yyyy-MM-dd/HH_mm");
     TimePartitionedFileSet ds = dsFrameworkUtil.getInstance(TPFS_INSTANCE, args);
 
     String outputPath = ds.getEmbeddedFileSet().getOutputLocation().toURI().getPath();
-    Assert.assertTrue(outputPath.endsWith("2015-01-01/20-42." + date.getTime()));
+    Assert.assertTrue(outputPath.endsWith("2015-01-01/20_42"));
 
     Map<String, String> outputConfig = ds.getOutputFormatConfiguration();
-    Assert.assertTrue(outputConfig.get(FileOutputFormat.OUTDIR).endsWith("2015-01-01/20-42." + date.getTime()));
+    Assert.assertTrue(outputConfig.get(FileOutputFormat.OUTDIR).endsWith("2015-01-01/20_42"));
 
     // test specifying output time and partition key -> time should prevail
     PartitionKey key = PartitionKey.builder()
@@ -224,7 +225,7 @@ public class TimePartitionedFileSetTest {
     TimePartitionedFileSet ds1 = dsFrameworkUtil.getInstance(TPFS_INSTANCE, args);
     TimePartitionedFileSetArguments.setOutputPartitionKey(args, key);
     outputConfig = ds1.getOutputFormatConfiguration();
-    Assert.assertTrue(outputConfig.get(FileOutputFormat.OUTDIR).endsWith("2015-01-01/20-42." + date.getTime()));
+    Assert.assertTrue(outputConfig.get(FileOutputFormat.OUTDIR).endsWith("2015-01-01/20_42"));
 
     args.clear();
     TimePartitionedFileSetArguments.setOutputPartitionKey(args, key);

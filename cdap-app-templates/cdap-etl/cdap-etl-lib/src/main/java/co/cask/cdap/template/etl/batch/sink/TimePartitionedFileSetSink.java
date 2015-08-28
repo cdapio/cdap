@@ -37,6 +37,13 @@ public abstract class TimePartitionedFileSetSink<KEY_OUT, VAL_OUT>
     "are written to. If it doesn't exist, it will be created.";
   protected static final String BASE_PATH_DESC = "The base path for the time partitioned fileset. Defaults to the " +
     "name of the dataset.";
+  protected static final String PATH_FORMAT_DESC = "The format for the path; for example: " +
+    "'yyyy-MM-dd/HH-mm,America/Los_Angeles' will create a file path ending in the format of 2015-01-01/20-42, " +
+    "with the time of the partition being the time in the PDT timezone. " +
+    "The string provided will be split on commas, with the first argument being provided to " +
+    "{@link java.text.SimpleDateFormat}, and the second (optional) argument being the timezone (defaults to UTC).  " +
+    "If left blank, then the partitions will be of the form 2015-01-01/20-42.142017372000. " +
+    "Note that each partition must have a unique file path or a runtime exception will be thrown.";
 
   protected final TPFSSinkConfig tpfsSinkConfig;
 
@@ -48,6 +55,7 @@ public abstract class TimePartitionedFileSetSink<KEY_OUT, VAL_OUT>
   public void prepareRun(BatchSinkContext context) {
     Map<String, String> sinkArgs = new HashMap<>();
     TimePartitionedFileSetArguments.setOutputPartitionTime(sinkArgs, context.getLogicalStartTime());
+    TimePartitionedFileSetArguments.setOutputPathFormat(sinkArgs, tpfsSinkConfig.filePathFormat);
     TimePartitionedFileSet sink = context.getDataset(tpfsSinkConfig.name, sinkArgs);
     context.setOutput(tpfsSinkConfig.name, sink);
   }

@@ -17,8 +17,13 @@
 package co.cask.cdap.api.dataset.lib;
 
 import co.cask.cdap.api.annotation.Beta;
+import com.google.common.base.Throwables;
 
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Map;
+import java.util.TimeZone;
 import javax.annotation.Nullable;
 
 /**
@@ -27,6 +32,7 @@ import javax.annotation.Nullable;
 @Beta
 public class TimePartitionedFileSetArguments extends PartitionedFileSetArguments {
 
+  public static final String OUTPUT_PATH_FORMAT = "output.file.path.format";
   public static final String OUTPUT_PARTITION_TIME = "output.partition.time";
   public static final String INPUT_START_TIME = "input.start.time";
   public static final String INPUT_END_TIME = "input.end.time";
@@ -51,6 +57,41 @@ public class TimePartitionedFileSetArguments extends PartitionedFileSetArguments
       return null;
     }
     return Long.parseLong(str);
+  }
+
+  /**
+   * This is the file extension for each partition when using TimePartitionedFileSet as an OutputFormatProvider.
+   * It's used to generate the end of the output file path for each partition.
+   * @param pathFormat The format for the path; for example: 'yyyy-MM-dd/HH-mm,America/Los_Angeles',
+   *                   which will create a file path ending in the format of 2015-01-01/20-42,
+   *                   with the time of the partition being the time in the timezone of Los Angeles (PST or PDT).
+   *                   The pathFormat will be the format provided to
+   *                   {@link java.text.SimpleDateFormat}. If left blank, then the partitions will be of the form
+   *                   2015-01-01/20-42.142017372000, with the time being the time UTC.
+   *                   Note that each partition must have a unique file path or a runtime exception will be thrown.
+   */
+  public static void setOutputPathFormat(Map<String, String> arguments, String pathFormat) {
+    long curTime = System.currentTimeMillis();
+    try {
+      SimpleDateFormat format = new SimpleDateFormat(pathFormat.split(",")[0]);
+      if (pathFormat.split(",").length > 1) {
+        format.setTimeZone(TimeZone.getTimeZone(pathFormat.split(",")[1]));
+      }
+      format.format(new Date(curTime));
+    } catch (Exception e) {
+      Throwables.propagate(new IOException("Invalid date format: " + pathFormat + '\n' + e));
+    }
+    arguments.put(OUTPUT_PATH_FORMAT, pathFormat);
+  }
+
+  /**
+   * This is the file extension for each partition when using TimePartitionedFileSet as an OutputFormatProvider.
+   * It's used to generate the end of the output file path for each partition.
+   * May be null.
+   */
+  @Nullable
+  public static String getOutputPathFormat(Map<String, String> arguments) {
+    return arguments.get(OUTPUT_PATH_FORMAT);
   }
 
   /**

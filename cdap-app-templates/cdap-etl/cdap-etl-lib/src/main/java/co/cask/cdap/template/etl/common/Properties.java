@@ -88,6 +88,7 @@ public final class Properties {
     public static final String BASE_PATH = "basePath";
     public static final String DURATION = "duration";
     public static final String DELAY = "delay";
+    public static final String FILE_PATH_FORMAT = "filePathFormat";
   }
 
   /**

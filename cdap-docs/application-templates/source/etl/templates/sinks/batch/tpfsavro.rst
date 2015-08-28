@@ -36,9 +36,10 @@ If it doesn't exist, it will be created.
     "name": "TPFSAvro",
     "properties": {
       "name": "users",
+      "filePathFormat": "yyyy-MM-dd/HH-mm,America/Los_Angeles"
       "schema": "{
         \"type\":\"record\",
-        \"name\":\"user\",
+        \"name\":\"user\"
         \"fields\":[
           {\"name\":\"id\",\"type\":\"long\"},
           {\"name\":\"name\",\"type\":\"string\"},
@@ -50,6 +51,8 @@ If it doesn't exist, it will be created.
 
 This example will write to a TimePartitionedFileSet named 'users'. It will write data in Avro format
 using the given schema. Every time the pipeline runs, a new partition in the TimePartitionedFileSet
-will be created based on the logical start time of the run. All data for the run will be written to
-that partition. For example, if the pipeline was scheduled to run at 10:00am on January 1, 2015,
-a new partition will be created with year 2015, month 1, day 1, hour 10, and minute 0.
+will be created based on the logical start time of the run with the output directory ending with the
+date formatted as specified. All data for the run will be written to that partition. For example, if
+the pipeline was scheduled to run at 10:00am on January 1, 2015 in Los Angeles, a new partition will
+be created with year 2015, month 1, day 1, hour 10, and minute 0, and the output directory for that
+partition would end with 2015-01-01/10-00.

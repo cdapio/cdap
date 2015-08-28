@@ -33,8 +33,13 @@ public abstract class TPFSSinkConfig extends PluginConfig {
   @Nullable
   protected String basePath;
 
-  public TPFSSinkConfig(String name, @Nullable String basePath) {
+  @Description(TimePartitionedFileSetSink.PATH_FORMAT_DESC)
+  @Nullable
+  protected String filePathFormat;
+
+  public TPFSSinkConfig(String name, @Nullable String basePath, @Nullable String filePathFormat) {
     this.name = name;
     this.basePath = basePath;
+    this.filePathFormat = filePathFormat;
   }
 }

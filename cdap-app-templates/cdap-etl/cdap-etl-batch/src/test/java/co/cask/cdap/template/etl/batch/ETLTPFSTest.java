@@ -129,7 +129,9 @@ public class ETLTPFSTest extends BaseETLBatchTest {
                                  ImmutableMap.of(Properties.TimePartitionedFileSetDataset.SCHEMA,
                                                  eventSchema.toString(),
                                                  Properties.TimePartitionedFileSetDataset.TPFS_NAME,
-                                                 newFilesetName));
+                                                 newFilesetName,
+                                                 Properties.TimePartitionedFileSetDataset.FILE_PATH_FORMAT,
+                                                 "yyyy-MM-dd/HH-mm,America/Los_Angeles"));
 
     ETLStage transform = new ETLStage("Projection", ImmutableMap.<String, String>of());
     return new ETLBatchConfig("* * * * *", source, sink, Lists.newArrayList(transform));
