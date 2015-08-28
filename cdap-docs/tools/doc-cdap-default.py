@@ -388,6 +388,7 @@ def rebuild(filepath=''):
     XML_PROP_CLOSE    = '    </property>\n\n'
     XML_CONFIG_CLOSE  = '</configuration>\n'
 
+    prop_names = {}
     xml = XML_CONFIG_OPEN
     keys = defaults.keys()
     for key in FIRST_TWO_SECTIONS:
@@ -399,6 +400,11 @@ def rebuild(filepath=''):
         props = defaults[key]
         props.sort(key = lambda p: p.name)
         for prop in props:
+            if prop_names.has_key(prop.name):
+                print ("WARNING: Duplicate entry for property \"%s\" in sections \"%s\" and \"%s\"" 
+                    % (prop.name, key, prop_names[prop.name]))
+            else:
+                prop_names[prop.name] = key
             xml += XML_PROP_OPEN
             xml += XML_NAME_SUB % prop.name
             xml += XML_VALUE_SUB % prop.value
@@ -407,9 +413,9 @@ def rebuild(filepath=''):
                 for line in textwrap.wrap(prop.description):
                     xml += XML_DESCRIP_SUB % line
             else:
-                print "WARNING: No description for property %s" % prop.name
+                print "WARNING: No description for property \"%s\"" % prop.name
                 if prop.name in exclusions:
-                    print "but is in the list of exclusions"
+                    print "but it is in the list of exclusions"
             xml += XML_DESCRIP_CLOSE
             if prop.final:
                 xml += XML_FINAL
@@ -421,6 +427,7 @@ def rebuild(filepath=''):
         f.write(XML_HEADER.encode('utf8'))
         f.write(xml)
         f.close()
+        print "New XML file in %s" % filepath
     else:
         print XML_HEADER.encode('utf8')
         for line in xml.split('\n'):
