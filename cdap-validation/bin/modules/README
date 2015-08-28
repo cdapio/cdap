@@ -6,17 +6,22 @@ modules/
           __init__.py
           helpers.py
 
-       <module1_name>/
+       config/
+                    module.json
+                    bin/
+                        config_validator.py 
+
+       service/
+                    module.json
+                    bin/
+                        service_checks.py
+
+       ...
+
+       <module2_name>/ ### example
                     module.json
                     bin/
                         module1_executable(s)
-
-             
-       <module2_name>/
-                    module.json
-                    bin/
-                        module2_ executable(s)
-
 
 ###########################################################################
 
