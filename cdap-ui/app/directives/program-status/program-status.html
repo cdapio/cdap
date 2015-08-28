@@ -3,8 +3,8 @@
     <tr>
       <td>
         <span>Status</span>
-        <span ng-if="status" ng-class="{'text-primary': status === 'COMPLETED', 'text-success': status === 'STARTED' || status === 'RUNNING', 'text-danger': status === 'FAILED' || status === 'KILLED', 'text-muted': status === 'STOPPED'}">
-          <span class="fa" ng-class="{'fa-check': status === 'COMPLETED', 'fa-play': status === 'STARTED', 'fa-refresh': status === 'RUNNING', 'fa-exclamation-triangle': status === 'FAILED' || status === 'KILLED', 'fa-stop': status === 'STOPPED'}"></span>
+        <span ng-if="status" ng-class="{'text-primary': status === 'COMPLETED', 'text-success': status === 'STARTED' || status === 'RUNNING', 'text-danger': status === 'FAILED' || status === 'KILLED', 'text-muted': status === 'STOPPED', 'text-warning': status === 'SUSPENDED'}">
+          <span class="fa" ng-class="{'fa-check': status === 'COMPLETED', 'fa-play': status === 'STARTED', 'fa-refresh': status === 'RUNNING', 'fa-exclamation-triangle': status === 'FAILED' || status === 'KILLED' || status === 'SUSPENDED', 'fa-stop': status === 'STOPPED'}"></span>
           <span ng-bind="status | caskCapitalizeFilter"></span>
         </span>
         <span ng-if="!status">Not Started</span>

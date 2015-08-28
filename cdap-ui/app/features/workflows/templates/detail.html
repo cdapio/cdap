@@ -26,32 +26,32 @@
               is-stoppable="false"
               is-restartable="true">
             </my-start-stop-button>
-            <div class="btn-group">
-              <div ui-sref="workflows.detail.history"
-                 class="btn btn-lg btn-default">
-                <span class="fa fa-clock-o"></span>
-                <span> History </span>
+            <div class="btn-group dropdown" dropdown>
+              <div class="btn btn-lg btn-default dropdown-toggle" dropdown-toggle>
+                <span class="fa fa-ellipsis-h"></span>
+                <span> More </span>
               </div>
-              <div class="btn-group dropdown" dropdown>
-                <div class="btn btn-lg btn-default dropdown-toggle" dropdown-toggle>
-                  <span class="fa fa-ellipsis-h"></span>
-                  <span> More </span>
-                </div>
-                <ul class="dropdown-menu" role="menu">
-                  <li ui-sref="admin.namespace.detail.apps.metadata({nsadmin: $state.params.namespace, appId: $state.params.appId})">
-                    <div class="btn btn-lg btn-default" ng-click="">
-                      <span class="fa fa-cogs"></span>
-                      <span> Manage </span>
-                    </div>
-                  </li>
-                  <li>
-                    <div class="btn btn-lg btn-default" ng-click="">
-                      <span class="fa fa-database"></span>
-                      <span> Metadata </span>
-                    </div>
-                  </li>
-                </ul>
-              </div>
+              <ul class="dropdown-menu" role="menu">
+                <li>
+                  <div ng-click="RunsController.openHistory()"
+                     class="btn btn-lg btn-default">
+                    <span class="fa fa-clock-o"></span>
+                    <span> History </span>
+                  </div>
+                </li>
+                <li>
+                  <div class="btn btn-lg btn-default" ng-click="RunsController.openSchedules()">
+                    <span class="fa fa-database"></span>
+                    <span> Schedules </span>
+                  </div>
+                </li>
+                <li ui-sref="admin.namespace.detail.apps.metadata({nsadmin: $state.params.namespace, appId: $state.params.appId})">
+                  <div class="btn btn-lg btn-default">
+                    <span class="fa fa-cogs"></span>
+                    <span> Manage </span>
+                  </div>
+                </li>
+              </ul>
             </div>
           </div>
         </div>
@@ -65,40 +65,109 @@
         <div dropdown is-open="dropdown.isopen" class="flex-item">
           <a class="btn btn-default dropdown-toggle"
              dropdown-toggle ng-disabled="RunsController.runs.length === 0">
-            <span class="fa fa-circle"></span>
+            <span class="fa fa-circle" ng-class="{'text-primary': RunsController.runs.selected.status === 'COMPLETED', 'text-success': RunsController.runs.selected.status === 'STARTED' || RunsController.runs.selected.status === 'RUNNING', 'text-danger': RunsController.runs.selected.status === 'FAILED' || RunsController.runs.selected.status === 'KILLED', 'text-muted': RunsController.runs.selected.status === 'STOPPED', 'text-warning': RunsController.runs.selected.status === 'SUSPENDED'}"></span>
             <span class="runid-text text-left">
               <span>{{ RunsController.runs.selected.runid }}</span>
-              <span>07-15-2015 10:51:38</span>
+              <span ng-if="RunsController.runs.selected.start">
+                {{(RunsController.runs.selected.start*1000) | amDateFormat: 'MM/DD/YY hh:mm:ss'}}
+              </span>
+              <span ng-if="!RunsController.runs.selected.start">
+                &mdash;
+              </span>
             </span>
             <span class="fa fa-caret-down"></span>
           </a>
           <ul class="dropdown-menu" role="menu">
             <li ng-repeat="run in RunsController.runs">
               <a ui-sref="workflows.detail.run({runid: run.runid})">
-                <span class="fa fa-circle"></span>
+                <span class="fa fa-circle" ng-class="{'text-primary': run.status === 'COMPLETED', 'text-success': run.status === 'STARTED' || run.status === 'RUNNING', 'text-danger': run.status === 'FAILED' || run.status === 'KILLED', 'text-muted': run.status === 'STOPPED', 'text-warning': run.status === 'SUSPENDED'}"></span>
                 <span class="runid-text">
                   <span>{{ run.runid }}</span>
-                  <span>07-15-2015 10:51:38</span>
+                  <span ng-if="run.start">
+                    {{(run.start *1000) | amDateFormat: 'MM/DD/YY hh:mm:ss'}}
+                  </span>
+                  <span ng-if="!run.start">
+                    &mdash;
+                  </span>
                 </span>
               </a>
             </li>
           </ul>
         </div>
-
         <my-program-status
           data-type="workflows"
-          data-runid="{{ RunsController.runs.selected.runid }}"
+          data-runid="RunsController.runs.selected.runid"
           data-poll-interval="1000"
           data-runs="RunsController.runs"
         ></my-program-status>
 
         <div class="stop-run flex-item">
-          <div class="btn btn-default btn-block">
-            <span>
+          <div ng-if="['RUNNING'].indexOf(RunsController.runStatus) !== -1" class="btn-group">
+            <div class="btn btn-default btn-lg"
+                 ng-click="RunsController.stop()">
               <span class="fa fa-stop text-danger"></span>
-              <span>Stop Run</span>
-            </span>
+            </div>
+            <div class="btn btn-default btn-lg btn-pause"
+                 ng-click="RunsController.suspend()">
+              <span class="fa fa-pause"></span>
+            </div>
           </div>
+
+          <div ng-if="RunsController.runStatus === 'STARTING'" class="btn-group">
+            <div class="btn btn-default btn-lg"
+                 disabled>
+              <span class="fa fa-stop text-danger"></span>
+            </div>
+            <div class="btn btn-default btn-lg btn-pause"
+                 disabled>
+              <span class="fa fa-pause"></span>
+            </div>
+          </div>
+
+          <div ng-if="RunsController.runStatus === 'STOPPING'" class="btn-group">
+            <div class="btn btn-default btn-lg"
+                 disabled>
+              <span class="fa fa-refresh fa-spin text-danger"></span>
+            </div>
+            <div class="btn btn-default btn-lg btn-pause"
+                 disabled>
+              <span class="fa fa-pause"></span>
+            </div>
+          </div>
+
+          <div ng-if="['SUSPENDING', 'RESUMING'].indexOf(RunsController.runStatus) !== -1" class="btn-group">
+            <div class="btn btn-default btn-lg"
+                 disabled>
+              <span class="fa fa-stop text-danger"></span>
+            </div>
+            <div class="btn btn-default btn-lg btn-pause"
+                 disabled>
+              <span class="fa fa-refresh fa-spin"></span>
+            </div>
+          </div>
+
+          <div ng-if="RunsController.runStatus === 'SUSPENDED'" class="btn-group">
+            <div class="btn btn-default btn-lg"
+                 ng-click="RunsController.stop()">
+              <span class="fa fa-stop text-danger"></span>
+            </div>
+            <div class="btn btn-default btn-lg btn-pause"
+                 ng-click="RunsController.resume()">
+              <span class="fa fa-eject"></span>
+            </div>
+          </div>
+
+          <div ng-if="['COMPLETED', 'FAILED', 'KILLED', 'STOPPED'].indexOf(RunsController.runStatus) !== -1" class="btn-group">
+            <div class="btn btn-default btn-lg"
+                 disabled>
+              <span class="fa fa-stop text-danger"></span>
+            </div>
+            <div class="btn btn-default btn-lg btn-pause"
+                 disabled>
+              <span class="fa fa-pause"></span>
+            </div>
+          </div>
+
         </div>
       </div>
     </div>
@@ -122,7 +191,9 @@
 </div>
 
 <div class="container">
-  <div ng-if="!$state.params.runid" ng-include="RunsController.activeTab.template" class="tab-view"></div>
-  <ui-view ng-if="$state.params.runid" role="tabpanel" class="tab-view" />
+  <div class="tab-view">
+    <div ng-if="!$state.params.runid" ng-include="RunsController.activeTab.template"></div>
+    <ui-view ng-if="$state.params.runid" role="tabpanel" />
+  </div>
 </div>
 
