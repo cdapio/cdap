@@ -16,22 +16,18 @@
 
 package co.cask.cdap.app.etl.batch;
 
+import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.template.etl.batch.config.ETLBatchConfig;
-import co.cask.cdap.template.etl.common.ETLApplication;
-import com.google.gson.Gson;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * ETL Batch Template.
  */
-public class ETLBatchApplication extends ETLApplication<ETLBatchConfig> {
+public class ETLBatchApplication extends AbstractApplication<ETLBatchConfig> {
   public static final String SCHEDULE_NAME = "etlWorkflow";
 
   @Override
   public void configure() {
-    super.configure();
     ETLBatchConfig config = getConfig();
     setDescription("Batch Extract-Transform-Load (ETL) Template");
     addMapReduce(new ETLMapReduce(config));

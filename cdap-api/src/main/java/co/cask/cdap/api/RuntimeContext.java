@@ -22,6 +22,7 @@ import java.util.Map;
  * This interface represents a context for a processor or elements of a processor.
  */
 public interface RuntimeContext {
+
   /**
    * @return A map of argument key and value.
    */

@@ -16,7 +16,11 @@
 
 package co.cask.cdap.template.etl.common;
 
+import co.cask.cdap.api.artifact.PluginConfigurer;
+import co.cask.cdap.api.templates.plugins.PluginProperties;
 import co.cask.cdap.template.etl.api.PipelineConfigurable;
+import co.cask.cdap.template.etl.api.PipelineConfigurer;
+import co.cask.cdap.template.etl.api.Transform;
 import co.cask.cdap.template.etl.api.Transformation;
 import co.cask.cdap.template.etl.api.realtime.RealtimeSink;
 import co.cask.cdap.template.etl.api.realtime.RealtimeSource;
@@ -33,9 +37,89 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Validates an ETL Pipeline by checking that the output of one stage matches the input of the next.
+ * Registers plugins needed by an ETL pipeline.
  */
-public class PipelineValidator {
+public class PipelineRegisterer {
+  private final PluginConfigurer configurer;
+
+  public PipelineRegisterer(PluginConfigurer configurer) {
+    this.configurer = configurer;
+  }
+
+  /**
+   * Registers the plugins that will be used in the pipeline
+   *
+   * @param config the config containing pipeline information
+   * @return the ids of each plugin used in the pipeline
+   */
+  public Pipeline registerPlugins(ETLConfig config) {
+    ETLStage sourceConfig = config.getSource();
+    ETLStage sinkConfig = config.getSink();
+    List<ETLStage> transformConfigs = config.getTransforms();
+    String sourcePluginId = PluginID.from(Constants.Source.PLUGINTYPE, sourceConfig.getName(), 1).getID();
+    // 2 + since we start at 1, and there is always a source.  For example, if there are 0 transforms, sink is stage 2.
+    String sinkPluginId =
+      PluginID.from(Constants.Sink.PLUGINTYPE, sinkConfig.getName(), 2 + transformConfigs.size()).getID();
+
+    // Instantiate Source, Transforms, Sink stages.
+    // Use the plugin name as the plugin id for source and sink stages since there can be only one source and one sink.
+    PipelineConfigurable source = configurer.usePlugin(Constants.Source.PLUGINTYPE, sourceConfig.getName(),
+                                                       sourcePluginId, getPluginProperties(sourceConfig));
+    if (source == null) {
+      throw new IllegalArgumentException(String.format("No Plugin of type '%s' named '%s' was found.",
+                                                       Constants.Source.PLUGINTYPE, sourceConfig.getName()));
+    }
+
+    PipelineConfigurable sink = configurer.usePlugin(Constants.Sink.PLUGINTYPE, sinkConfig.getName(),
+                                                     sinkPluginId, getPluginProperties(sinkConfig));
+    if (sink == null) {
+      throw new IllegalArgumentException(String.format("No Plugin of type '%s' named '%s' was found.",
+                                                       Constants.Sink.PLUGINTYPE, sinkConfig.getName()));
+    }
+
+    // Store transform id list to be serialized and passed to the driver program
+    List<String> transformIds = Lists.newArrayListWithCapacity(transformConfigs.size());
+    List<Transformation> transforms = Lists.newArrayListWithCapacity(transformConfigs.size());
+    for (int i = 0; i < transformConfigs.size(); i++) {
+      ETLStage transformConfig = transformConfigs.get(i);
+
+      // Generate a transformId based on transform name and the array index (since there could
+      // multiple transforms - ex, N filter transforms in the same pipeline)
+      // stage number starts from 1, plus source is always #1, so add 2 for stage number.
+      String transformId = PluginID.from(Constants.Transform.PLUGINTYPE, transformConfig.getName(), 2 + i).getID();
+      PluginProperties transformProperties = getPluginProperties(transformConfig);
+      Transform transformObj = configurer.usePlugin(Constants.Transform.PLUGINTYPE, transformConfig.getName(),
+                                                    transformId, transformProperties);
+      if (transformObj == null) {
+        throw new IllegalArgumentException(String.format("No Plugin of type '%s' named '%s' was found",
+                                                         Constants.Transform.PLUGINTYPE, transformConfig.getName()));
+      }
+
+      transformIds.add(transformId);
+      transforms.add(transformObj);
+    }
+
+    // Validate Source -> Transform -> Sink hookup
+    try {
+      validateStages(source, sink, transforms);
+      PipelineConfigurer sourceConfigurer = new DefaultPipelineConfigurer(configurer, sourcePluginId);
+      PipelineConfigurer sinkConfigurer = new DefaultPipelineConfigurer(configurer, sinkPluginId);
+      source.configurePipeline(sourceConfigurer);
+      sink.configurePipeline(sinkConfigurer);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+
+    return new Pipeline(sourcePluginId, sinkPluginId, transformIds);
+  }
+
+  private PluginProperties getPluginProperties(ETLStage config) {
+    PluginProperties.Builder builder = PluginProperties.builder();
+    if (config.getProperties() != null) {
+      builder.addAll(config.getProperties());
+    }
+    return builder.build();
+  }
 
   public static void validateStages(PipelineConfigurable source, PipelineConfigurable sink,
                                     List<Transformation> transforms) throws Exception {
