@@ -24,7 +24,7 @@ angular.module(PKG.name + '.commons')
         [ 'Arrow', { location: 1, length: 12, width: 12, height: 10, foldback: 1 } ],
         [ 'Custom', {
           create: function() {
-            return angular.element('<div><div class="label-container"><i class="fa fa-file-text-o"></i></div></div>');
+            return angular.element('<div><div class="label-container text-center"><i class="icon-SchemaEdge"></i></div></div>');
           },
           location: 0.5,
           id: 'label'
