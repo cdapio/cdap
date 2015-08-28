@@ -1,4 +1,6 @@
 @import "../../styles/variables.less";
+@import "../../../bower_components/bootstrap/less/mixins.less";
+
 @border-color: #d0d0dd;
 
 body.state-workflows {
@@ -16,6 +18,9 @@ body.state-workflows {
     }
     h3 {
       font-weight: 400;
+    }
+    .btn-lg .fa-eject {
+      .rotate(90deg);
     }
   }
 
