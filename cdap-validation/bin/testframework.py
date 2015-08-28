@@ -35,10 +35,10 @@ def test(base_vars, cluster_vars):
     # prep input variables
     # cluster_vars = {}
     input = read_file_as_json(input_json)
-    cluster_vars['host'] = input['params']['uri']
-    cluster_vars['username'] = input['params']['user']
+    cluster_vars['host'] = input['params']['host']
+    cluster_vars['user'] = input['params']['user']
     cluster_vars['password'] = input['params']['password']
-    cluster_vars['cluster'] = input['params']['cluster_name']
+    cluster_vars['cluster'] = input['params']['cluster']
     cluster_vars['modules'] = input['params']['modules']
     verbose = cluster_vars['verbose']
 

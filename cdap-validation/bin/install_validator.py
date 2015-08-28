@@ -40,9 +40,10 @@ def main(argv):
     #  'params':
     #  {
     #    'verbose': 'default',
-    #    'uri': 'http://ambari_server_fqdn:8080/',
-    #    'userpass': 'username:password',
-    #    'cluster_name': 'clustername',
+    #    'host': 'http://ambari_server_fqdn:8080/',
+    #    'user': 'username',
+    #    'pass': 'password',
+    #    'cluster': 'clustername',
     #    'modules': 'config'
     #  }
     #}

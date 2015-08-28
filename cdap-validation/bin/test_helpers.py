@@ -62,7 +62,7 @@ def vprint(content, verbose):
 def onetime_auth(host, info):
     # this should work with all, but when authentication is not set up correctly, this fails (http 403)
     passman = urllib2.HTTPPasswordMgrWithDefaultRealm()  # this creates a password manager
-    passman.add_password(None, host, info['username'], info['password'])
+    passman.add_password(None, host, info['user'], info['password'])
     authhandler = urllib2.HTTPBasicAuthHandler(passman)  # create the AuthHandler
     opener = urllib2.build_opener(authhandler)
     urllib2.install_opener(opener)
@@ -70,7 +70,7 @@ def onetime_auth(host, info):
 
 
 def run_request(host, info):
-    user = info['username']
+    user = info['user']
     passwd = info['password']
     try:
         handle = urllib2.urlopen(host)
