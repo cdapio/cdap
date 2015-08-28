@@ -31,7 +31,6 @@ REMOTE_USER=${1}                                        ### remote user
 REMOTE_HOST=${2:-127.0.0.1}                             ### remote host
 REMOTE_INCOMING_DIR=${3}                                ### target directory on remote host
 TMP_DIR='/tmp/bundles'
-S3STG_DIR=${S3STG_DIR:-/data/s3stg}
 DEB_BUNDLE="${BUILD_PACKAGE}-deb-bundle"
 RPM_BUNDLE="${BUILD_PACKAGE}-rpm-bundle"
 DEB_BUNDLE_DIR="${TMP_DIR}/${DEB_BUNDLE}"
