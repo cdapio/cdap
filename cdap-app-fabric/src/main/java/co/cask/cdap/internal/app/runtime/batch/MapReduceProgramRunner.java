@@ -65,7 +65,10 @@ import org.apache.twill.internal.ServiceListenerAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Closeable;
 import java.security.PrivilegedExceptionAction;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
@@ -156,9 +159,16 @@ public class MapReduceProgramRunner implements ProgramRunner {
       throw Throwables.propagate(e);
     }
 
-    final PluginInstantiator pluginInstantiator = createPluginInstantiator(adapterSpec, program.getClassLoader());
-    final PluginInstantiator artifactPluginInstantiator = createArtifactPluginInstantiator(program.getClassLoader());
+    // List of all Closeable resources that needs to be cleanup
+    List<Closeable> closeables = new ArrayList<>();
     try {
+      PluginInstantiator pluginInstantiator = createPluginInstantiator(adapterSpec, program.getClassLoader());
+      if (pluginInstantiator != null) {
+        closeables.add(pluginInstantiator);
+      }
+      PluginInstantiator artifactPluginInstantiator = createArtifactPluginInstantiator(program.getClassLoader());
+      closeables.add(artifactPluginInstantiator);
+
       final DynamicMapReduceContext context =
         new DynamicMapReduceContext(program, null, runId, null, options.getUserArguments(), spec,
                                     logicalStartTime, programNameInWorkflow, workflowToken, discoveryServiceClient,
@@ -177,9 +187,8 @@ public class MapReduceProgramRunner implements ProgramRunner {
       final Service mapReduceRuntimeService = new MapReduceRuntimeService(cConf, hConf, mapReduce, spec, context,
                                                                           program.getJarLocation(), locationFactory,
                                                                           streamAdmin, txSystemClient, usageRegistry);
-      mapReduceRuntimeService.addListener(createRuntimeServiceListener(program, runId, adapterSpec,
-                                                                       pluginInstantiator, arguments),
-                                          Threads.SAME_THREAD_EXECUTOR);
+      mapReduceRuntimeService.addListener(
+        createRuntimeServiceListener(program, runId, adapterSpec, closeables, arguments), Threads.SAME_THREAD_EXECUTOR);
 
       final ProgramController controller = new MapReduceProgramController(mapReduceRuntimeService, context);
 
@@ -208,9 +217,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
       }
       return controller;
     } catch (Exception e) {
-      if (pluginInstantiator != null) {
-        Closeables.closeQuietly(pluginInstantiator);
-      }
+      closeAllQuietly(closeables);
       throw Throwables.propagate(e);
     }
   }
@@ -220,7 +227,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
    */
   private Service.Listener createRuntimeServiceListener(final Program program, final RunId runId,
                                                         final AdapterDefinition adapterSpec,
-                                                        final PluginInstantiator pluginInstantiator,
+                                                        final Iterable<Closeable> closeables,
                                                         Arguments arguments) {
 
     final String twillRunId = arguments.getOption(ProgramOptionConstants.TWILL_RUN_ID);
@@ -249,9 +256,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
       @Override
       public void terminated(Service.State from) {
-        if (pluginInstantiator != null) {
-          Closeables.closeQuietly(pluginInstantiator);
-        }
+        closeAllQuietly(closeables);
         if (from == Service.State.STOPPING) {
           // Service was killed
           store.setStop(program.getId(), runId.getId(), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
@@ -265,9 +270,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
       @Override
       public void failed(Service.State from, Throwable failure) {
-        if (pluginInstantiator != null) {
-          Closeables.closeQuietly(pluginInstantiator);
-        }
+        closeAllQuietly(closeables);
         store.setStop(program.getId(), runId.getId(), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                       ProgramController.State.ERROR.getRunStatus());
       }
@@ -291,8 +294,13 @@ public class MapReduceProgramRunner implements ProgramRunner {
     return new PluginInstantiator(cConf, adapterSpec.getTemplate(), programClassLoader);
   }
 
-  @Nullable
   private PluginInstantiator createArtifactPluginInstantiator(ClassLoader programClassLoader) {
     return new PluginInstantiator(cConf, programClassLoader);
+  }
+
+  private void closeAllQuietly(Iterable<Closeable> closeables) {
+    for (Closeable c : closeables) {
+      Closeables.closeQuietly(c);
+    }
   }
 }
