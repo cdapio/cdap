@@ -17,12 +17,12 @@
 package co.cask.cdap.internal.app.runtime.schedule;
 
 import co.cask.cdap.AppWithWorkflow;
+import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
-import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.AppFabricTestHelper;
@@ -262,7 +262,6 @@ public class SchedulerServiceTest {
                                                               ImmutableMap.<String, String>of()));
     return new DefaultApplicationSpecification(
       spec.getName(),
-      spec.getArtifactId().getVersion().getVersion(),
       spec.getDescription(),
       spec.getConfiguration(),
       spec.getArtifactId(),
@@ -283,7 +282,6 @@ public class SchedulerServiceTest {
   private ApplicationSpecification deleteSchedulesFromSpec(ApplicationSpecification spec) {
     return new DefaultApplicationSpecification(
       spec.getName(),
-      spec.getArtifactId().getVersion().getVersion(),
       spec.getDescription(),
       spec.getConfiguration(),
       spec.getArtifactId(),

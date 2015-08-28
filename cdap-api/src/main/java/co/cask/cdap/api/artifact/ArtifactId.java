@@ -16,25 +16,23 @@
 
 package co.cask.cdap.api.artifact;
 
-import org.apache.twill.filesystem.Location;
+import co.cask.cdap.api.annotation.Beta;
 
 import java.util.Objects;
 
 /**
- * Uniquely describes an artifact. Artifact descriptors are ordered by whether or not they are system artifacts,
- * then by name, and finally by version.
+ * Uniquely describes an artifact.
  */
-public final class ArtifactDescriptor implements Comparable<ArtifactDescriptor> {
+@Beta
+public final class ArtifactId {
   private final String name;
   private final ArtifactVersion version;
   private final boolean isSystem;
-  private final Location location;
 
-  public ArtifactDescriptor(String name, ArtifactVersion version, boolean isSystem, Location location) {
+  public ArtifactId(String name, ArtifactVersion version, boolean isSystem) {
     this.name = name;
     this.version = version;
     this.isSystem = isSystem;
-    this.location = location;
   }
 
   public String getName() {
@@ -49,17 +47,12 @@ public final class ArtifactDescriptor implements Comparable<ArtifactDescriptor> 
     return isSystem;
   }
 
-  public Location getLocation() {
-    return location;
-  }
-
   @Override
   public String toString() {
     return "ArtifactDescriptor{" +
       "name='" + name + '\'' +
       ", version=" + version +
       ", isSystem=" + isSystem +
-      ", location=" + location +
       '}';
   }
 
@@ -72,8 +65,10 @@ public final class ArtifactDescriptor implements Comparable<ArtifactDescriptor> 
       return false;
     }
 
-    ArtifactDescriptor that = (ArtifactDescriptor) o;
-    return compareTo(that) == 0;
+    ArtifactId that = (ArtifactId) o;
+    return Objects.equals(name, that.name) &&
+      Objects.equals(version, that.version) &&
+      isSystem == that.isSystem;
   }
 
   @Override
@@ -81,16 +76,4 @@ public final class ArtifactDescriptor implements Comparable<ArtifactDescriptor> 
     return Objects.hash(name, version, isSystem);
   }
 
-  @Override
-  public int compareTo(ArtifactDescriptor other) {
-    // system artifacts are 'less than' other artifacts
-    if (isSystem != other.isSystem) {
-      return isSystem ? -1 : 1;
-    }
-    int cmp = name.compareTo(other.name);
-    if (cmp != 0) {
-      return cmp;
-    }
-    return version.compareTo(other.version);
-  }
 }

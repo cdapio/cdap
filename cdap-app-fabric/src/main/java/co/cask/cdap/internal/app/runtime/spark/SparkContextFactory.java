@@ -56,7 +56,7 @@ final class SparkContextFactory {
   ExecutionSparkContext createExecutionContext(Transaction transaction) {
     SparkSpecification spec = updateSpecExecutorResources(clientContext.getSpecification(),
                                                           clientContext.getExecutorResources());
-    return new ExecutionSparkContext(spec, clientContext.getProgramId(),
+    return new ExecutionSparkContext(clientContext.getApplicationSpecification(), spec, clientContext.getProgramId(),
                                      clientContext.getRunId(), clientContext.getProgramClassLoader(),
                                      clientContext.getLogicalStartTime(), clientContext.getRuntimeArguments(),
                                      transaction, datasetFramework, clientContext.getDiscoveryServiceClient(),

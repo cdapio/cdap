@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.spark;
 
+import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.common.Scope;
 import co.cask.cdap.api.data.DatasetInstantiationException;
@@ -89,27 +90,29 @@ public class ExecutionSparkContext extends AbstractSparkContext {
   private boolean stopped;
   private SparkFacade sparkFacade;
 
-  public ExecutionSparkContext(SparkSpecification specification, Id.Program programId, RunId runId,
+  public ExecutionSparkContext(ApplicationSpecification appSpec,
+                               SparkSpecification specification, Id.Program programId, RunId runId,
                                ClassLoader programClassLoader, long logicalStartTime,
                                Map<String, String> runtimeArguments,
                                Transaction transaction, DatasetFramework datasetFramework,
                                DiscoveryServiceClient discoveryServiceClient,
                                MetricsCollectionService metricsCollectionService,
                                Configuration hConf, StreamAdmin streamAdmin, @Nullable WorkflowToken workflowToken) {
-    this(specification, programId, runId, programClassLoader, logicalStartTime, runtimeArguments,
+    this(appSpec, specification, programId, runId, programClassLoader, logicalStartTime, runtimeArguments,
          transaction, datasetFramework, discoveryServiceClient,
          createMetricsContext(metricsCollectionService, programId, runId),
          createLoggingContext(programId, runId), hConf, streamAdmin, workflowToken);
   }
 
-  public ExecutionSparkContext(SparkSpecification specification, Id.Program programId, RunId runId,
+  public ExecutionSparkContext(ApplicationSpecification appSpec,
+                               SparkSpecification specification, Id.Program programId, RunId runId,
                                ClassLoader programClassLoader, long logicalStartTime,
                                Map<String, String> runtimeArguments,
                                Transaction transaction, DatasetFramework datasetFramework,
                                DiscoveryServiceClient discoveryServiceClient, MetricsContext metricsContext,
                                LoggingContext loggingContext, Configuration hConf, StreamAdmin streamAdmin,
                                WorkflowToken workflowToken) {
-    super(specification, programId, runId, programClassLoader, logicalStartTime,
+    super(appSpec, specification, programId, runId, programClassLoader, logicalStartTime,
           runtimeArguments, discoveryServiceClient, metricsContext, loggingContext, workflowToken);
 
     this.datasets = new HashMap<>();

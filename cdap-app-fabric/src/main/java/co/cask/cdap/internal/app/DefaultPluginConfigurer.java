@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app;
 
 import co.cask.cdap.api.artifact.ArtifactDescriptor;
+import co.cask.cdap.api.artifact.Plugin;
 import co.cask.cdap.api.artifact.PluginConfigurer;
 import co.cask.cdap.api.artifact.PluginSelector;
 import co.cask.cdap.api.templates.plugins.PluginClass;

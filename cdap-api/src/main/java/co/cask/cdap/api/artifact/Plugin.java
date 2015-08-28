@@ -14,9 +14,8 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app;
+package co.cask.cdap.api.artifact;
 
-import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.templates.plugins.PluginClass;
 import co.cask.cdap.api.templates.plugins.PluginProperties;
 
@@ -27,16 +26,16 @@ import java.util.Objects;
  * A container class for holding plugin information.
  */
 public final class Plugin {
-  private final String pluginName;
+  private final String artifactName;
   private final ArtifactVersion artifactVersion;
   private final Boolean isSystem;
   private final URI locationURI;
   private final PluginClass pluginClass;
   private final PluginProperties properties;
 
-  public Plugin(String pluginName, ArtifactVersion artifactVersion, boolean isSystem, URI locationURI,
+  public Plugin(String artifactName, ArtifactVersion artifactVersion, boolean isSystem, URI locationURI,
                 PluginClass pluginClass, PluginProperties properties) {
-    this.pluginName = pluginName;
+    this.artifactName = artifactName;
     this.artifactVersion = artifactVersion;
     this.isSystem = isSystem;
     this.locationURI = locationURI;
@@ -44,8 +43,8 @@ public final class Plugin {
     this.properties = properties;
   }
 
-  public String getPluginName() {
-    return pluginName;
+  public String getArtifactName() {
+    return artifactName;
   }
 
   /**
@@ -93,7 +92,7 @@ public final class Plugin {
     }
 
     Plugin that = (Plugin) o;
-    return Objects.equals(pluginName, that.pluginName)
+    return Objects.equals(artifactName, that.artifactName)
       && Objects.equals(artifactVersion, that.artifactVersion)
       && Objects.equals(isSystem, that.isSystem)
       && Objects.equals(locationURI, that.locationURI)
@@ -103,13 +102,13 @@ public final class Plugin {
 
   @Override
   public int hashCode() {
-    return Objects.hash(pluginName, artifactVersion, isSystem, locationURI, pluginClass, properties);
+    return Objects.hash(artifactName, artifactVersion, isSystem, locationURI, pluginClass, properties);
   }
 
   @Override
   public String toString() {
     return "AdapterPlugin{" +
-      "pluginName=" + pluginName +
+      "artifactName=" + artifactName +
       ",artifactVersion=" + artifactVersion +
       ",isSystem=" + isSystem +
       ",locationURI=" + locationURI +

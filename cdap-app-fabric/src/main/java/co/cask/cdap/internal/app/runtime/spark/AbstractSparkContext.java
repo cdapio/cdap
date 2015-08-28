@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime.spark;
 
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.ServiceDiscoverer;
+import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.common.Scope;
 import co.cask.cdap.api.data.DatasetInstantiationException;
@@ -30,6 +31,7 @@ import co.cask.cdap.api.spark.SparkContext;
 import co.cask.cdap.api.spark.SparkProgram;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.workflow.WorkflowToken;
+import co.cask.cdap.app.program.Program;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
@@ -58,6 +60,7 @@ import javax.annotation.Nullable;
  */
 public abstract class AbstractSparkContext implements SparkContext, Closeable {
 
+  private final ApplicationSpecification applicationSpecification;
   private final SparkSpecification specification;
   private final Id.Program programId;
   private final RunId runId;
@@ -72,11 +75,13 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
   private Resources executorResources;
   private SparkConf sparkConf;
 
-  protected AbstractSparkContext(SparkSpecification specification, Id.Program programId, RunId runId,
+  protected AbstractSparkContext(ApplicationSpecification applicationSpecification,
+                                 SparkSpecification specification, Id.Program programId, RunId runId,
                                  ClassLoader programClassLoader, long logicalStartTime,
                                  Map<String, String> runtimeArguments, DiscoveryServiceClient discoveryServiceClient,
                                  MetricsContext metricsContext, LoggingContext loggingContext,
                                  @Nullable WorkflowToken workflowToken) {
+    this.applicationSpecification = applicationSpecification;
     this.specification = specification;
     this.programId = programId;
     this.runId = runId;
@@ -89,6 +94,11 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
     this.executorResources = Objects.firstNonNull(specification.getExecutorResources(), new Resources());
     this.sparkConf = new SparkConf();
     this.workflowToken = workflowToken;
+  }
+
+  @Override
+  public ApplicationSpecification getApplicationSpecification() {
+    return applicationSpecification;
   }
 
   @Override

@@ -52,11 +52,12 @@ public final class ClientSparkContext extends AbstractSparkContext {
                             TransactionContext transactionContext, DatasetFramework datasetFramework,
                             DiscoveryServiceClient discoveryServiceClient,
                             MetricsCollectionService metricsCollectionService, @Nullable WorkflowToken workflowToken) {
-    super(program.getApplicationSpecification().getSpark().get(program.getName()),
-         program.getId(), runId, program.getClassLoader(), logicalStartTime,
-         runtimeArguments, discoveryServiceClient,
-         createMetricsContext(metricsCollectionService, program.getId(), runId),
-         createLoggingContext(program.getId(), runId), workflowToken);
+    super(program.getApplicationSpecification(),
+          program.getApplicationSpecification().getSpark().get(program.getName()),
+          program.getId(), runId, program.getClassLoader(), logicalStartTime,
+          runtimeArguments, discoveryServiceClient,
+          createMetricsContext(metricsCollectionService, program.getId(), runId),
+          createLoggingContext(program.getId(), runId), workflowToken);
 
     this.datasets = new ArrayList<>();
     this.transactionContext = transactionContext;

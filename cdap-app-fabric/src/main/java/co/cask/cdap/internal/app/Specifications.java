@@ -17,7 +17,7 @@
 package co.cask.cdap.internal.app;
 
 import co.cask.cdap.api.app.Application;
-import co.cask.cdap.app.ApplicationSpecification;
+import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.app.DefaultAppConfigurer;
 import co.cask.cdap.app.DefaultApplicationContext;
 

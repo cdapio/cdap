@@ -16,14 +16,9 @@
 
 package co.cask.cdap.internal.app.runtime.artifact;
 
-import co.cask.cdap.api.artifact.ArtifactVersion;
-import co.cask.cdap.api.templates.plugins.PluginClass;
-import co.cask.cdap.api.templates.plugins.PluginPropertyField;
 import co.cask.cdap.common.InvalidArtifactException;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.artifact.ArtifactRange;
 import com.google.common.base.Charsets;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Files;
 import org.junit.ClassRule;
 import org.junit.Test;

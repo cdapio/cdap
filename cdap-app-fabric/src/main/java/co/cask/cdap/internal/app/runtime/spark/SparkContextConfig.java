@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.spark;
 
+import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.app.RunIds;
@@ -46,6 +47,7 @@ public class SparkContextConfig {
    */
   public static final String HCONF_ATTR_CLUSTER_MODE = "cdap.spark.cluster.mode";
 
+  private static final String HCONF_ATTR_APP_SPEC = "cdap.spark.app.spec";
   private static final String HCONF_ATTR_PROGRAM_SPEC = "cdap.spark.program.spec";
   private static final String HCONF_ATTR_PROGRAM_ID = "cdap.spark.program.id";
   private static final String HCONF_ATTR_RUN_ID = "cdap.spark.run.id";
@@ -81,6 +83,7 @@ public class SparkContextConfig {
    * Sets configurations based on the given context.
    */
   public SparkContextConfig set(ExecutionSparkContext context) {
+    setApplicationSpecification(context.getApplicationSpecification());
     setSpecification(context.getSpecification());
     setProgramId(context.getProgramId());
     setRunId(context.getRunId().getId());
@@ -90,6 +93,10 @@ public class SparkContextConfig {
     setWorkflowToken(context.getWorkflowToken());
 
     return this;
+  }
+
+  public ApplicationSpecification getApplicationSpecification() {
+    return GSON.fromJson(hConf.get(HCONF_ATTR_APP_SPEC), ApplicationSpecification.class);
   }
 
   /**
@@ -140,6 +147,10 @@ public class SparkContextConfig {
   @Nullable
   public WorkflowToken getWorkflowToken() {
     return GSON.fromJson(hConf.get(HCONF_ATTR_WORKFLOW_TOKEN), BasicWorkflowToken.class);
+  }
+
+  private void setApplicationSpecification(ApplicationSpecification spec) {
+    hConf.set(HCONF_ATTR_APP_SPEC, GSON.toJson(spec));
   }
 
   private void setSpecification(SparkSpecification spec) {

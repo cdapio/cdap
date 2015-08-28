@@ -16,7 +16,7 @@
 
 package co.cask.cdap.internal.app.verification;
 
-import co.cask.cdap.app.ApplicationSpecification;
+import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.app.verification.AbstractVerifier;
 import co.cask.cdap.app.verification.VerifyResult;
 import co.cask.cdap.error.Err;

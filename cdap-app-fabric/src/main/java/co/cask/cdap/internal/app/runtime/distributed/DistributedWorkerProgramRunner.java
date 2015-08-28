@@ -17,8 +17,8 @@
 package co.cask.cdap.internal.app.runtime.distributed;
 
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.worker.WorkerSpecification;
-import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;

@@ -17,7 +17,9 @@
 package co.cask.cdap.internal.app.services;
 
 import co.cask.cdap.api.ProgramSpecification;
+import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.artifact.ApplicationClass;
+import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletConnection;
@@ -25,7 +27,6 @@ import co.cask.cdap.api.metrics.MetricDeleteQuery;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
-import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.deploy.Manager;
 import co.cask.cdap.app.deploy.ManagerFactory;
 import co.cask.cdap.app.program.ManifestFields;
@@ -84,6 +85,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 import javax.annotation.Nullable;
@@ -179,10 +181,10 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     if (currentSpec == null) {
       throw new ApplicationNotFoundException(appId);
     }
-    Id.Artifact currentArtifact = currentSpec.getArtifactId();
+    ArtifactId currentArtifact = currentSpec.getArtifactId();
 
     // if no artifact is given, use the current one.
-    Id.Artifact newArtifactId = currentArtifact;
+    ArtifactId newArtifactId = currentArtifact;
     // otherwise, check requested artifact is valid and use it
     ArtifactSummary requestedArtifact = appRequest.getArtifact();
     if (requestedArtifact != null) {
@@ -193,7 +195,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
           currentArtifact.getName(), requestedArtifact.getName()));
       }
 
-      if (currentArtifact.getNamespace().equals(Id.Namespace.SYSTEM) != requestedArtifact.isSystem()) {
+      if (currentArtifact.isSystem() != requestedArtifact.isSystem()) {
         throw new InvalidArtifactException("Only artifact version updates are allowed. " +
           "Cannot change from a non-system artifact to a system artifact or vice versa.");
       }
@@ -204,7 +206,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
         throw new InvalidArtifactException(String.format(
           "Requested artifact version '%s' is invalid", requestedArtifact.getVersion()));
       }
-      newArtifactId = Id.Artifact.from(currentArtifact.getNamespace(), currentArtifact.getName(), requestedVersion);
+      newArtifactId = new ArtifactId(currentArtifact.getName(), requestedVersion, currentArtifact.isSystem());
     }
 
     Object requestedConfigObj = appRequest.getConfig();
@@ -212,7 +214,9 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     String requestedConfigStr = requestedConfigObj == null ?
       currentSpec.getConfiguration() : GSON.toJson(requestedConfigObj);
 
-    return deployApp(appId.getNamespace(), appId.getId(), newArtifactId, requestedConfigStr, programTerminator);
+    Id.Artifact artifactId = Id.Artifact.from(newArtifactId.isSystem() ? Id.Namespace.SYSTEM : appId.getNamespace(),
+                                              newArtifactId.getName(), newArtifactId.getVersion());
+    return deployApp(appId.getNamespace(), appId.getId(), artifactId, requestedConfigStr, programTerminator);
   }
 
   /**
@@ -408,17 +412,17 @@ public class ApplicationLifecycleService extends AbstractIdleService {
         File tmpFile = File.createTempFile("tmpApp", ".jar", tmpDir);
         Files.copy(Locations.newInputSupplier(appJarLocation), tmpFile);
 
-        String version = appSpec.getVersion();
-        if (version == null || version.isEmpty()) {
-          // version derived from manifest.
-          JarFile jarFile = new JarFile(tmpFile);
-          Manifest manifest = jarFile.getManifest();
-          if (manifest != null && manifest.getMainAttributes() != null) {
-            version = manifest.getMainAttributes().getValue(ManifestFields.BUNDLE_VERSION);
-          }
-          // If version couldn't be found through manifest, default it to 1.0.0
-          if (version == null || version.isEmpty()) {
-            version = "1.0.0";
+        String version = "1.0.0";
+        // version derived from manifest.
+        JarFile jarFile = new JarFile(tmpFile);
+        Manifest manifest = jarFile.getManifest();
+        if (manifest != null) {
+          Attributes attributes = manifest.getMainAttributes();
+          if (attributes != null) {
+            String versionAttribute = attributes.getValue(ManifestFields.BUNDLE_VERSION);
+            if (versionAttribute != null && !versionAttribute.isEmpty()) {
+              version = versionAttribute;
+            }
           }
         }
 

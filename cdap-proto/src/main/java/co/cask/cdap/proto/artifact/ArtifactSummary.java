@@ -18,6 +18,7 @@ package co.cask.cdap.proto.artifact;
 
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.artifact.ArtifactDescriptor;
+import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.proto.Id;
 
 import java.util.Objects;
@@ -34,6 +35,10 @@ public class ArtifactSummary {
   public static ArtifactSummary from(Id.Artifact artifactId) {
     return new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion(),
                                Id.Namespace.SYSTEM.equals(artifactId.getNamespace()));
+  }
+
+  public static ArtifactSummary from(ArtifactId artifactId) {
+    return new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion(), artifactId.isSystem());
   }
 
   public static ArtifactSummary from(ArtifactDescriptor descriptor) {

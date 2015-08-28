@@ -17,13 +17,13 @@
 package co.cask.cdap.internal.app.runtime.batch;
 
 import co.cask.cdap.api.artifact.ArtifactDescriptor;
+import co.cask.cdap.api.artifact.Plugin;
 import co.cask.cdap.api.templates.plugins.PluginInfo;
 import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.lang.FilterClassLoader;
 import co.cask.cdap.common.lang.ProgramClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
-import co.cask.cdap.internal.app.Plugin;
 import co.cask.cdap.internal.app.runtime.adapter.PluginClassLoader;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerLauncher;
@@ -311,7 +311,7 @@ public class MapReduceClassLoader extends CombineClassLoader {
           locationFactory = (MapReduceContextProvider.isLocal(hConf)) ? localLocationFactory : hdfsLocationFactory;
           List<ClassLoader> pluginClassLoaders = Lists.newArrayList();
           for (Plugin plugin : plugins.values()) {
-            ArtifactDescriptor artifactDescriptor = new ArtifactDescriptor(plugin.getPluginName(),
+            ArtifactDescriptor artifactDescriptor = new ArtifactDescriptor(plugin.getArtifactName(),
                                                                            plugin.getArtifactVersion(),
                                                                            plugin.isSystem(),
                                                                            locationFactory.create(

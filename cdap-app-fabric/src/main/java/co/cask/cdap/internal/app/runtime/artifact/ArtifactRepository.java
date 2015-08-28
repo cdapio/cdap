@@ -165,7 +165,7 @@ public class ArtifactRepository {
    * @throws IOException if there as an exception reading from the meta store
    */
   public List<ApplicationClassInfo> getApplicationClasses(Id.Namespace namespace,
-                                                             String className) throws IOException {
+                                                          String className) throws IOException {
     List<ApplicationClassInfo> infos = Lists.newArrayList();
     for (Map.Entry<ArtifactDescriptor, ApplicationClass> entry :
       artifactStore.getApplicationClasses(namespace, className).entrySet()) {

@@ -16,6 +16,9 @@
 
 package co.cask.cdap.internal.app;
 
+import co.cask.cdap.api.app.ApplicationSpecification;
+import co.cask.cdap.api.artifact.ArtifactId;
+import co.cask.cdap.api.artifact.Plugin;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
@@ -24,9 +27,7 @@ import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
-import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.codec.AbstractSpecificationCodec;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
@@ -48,9 +49,6 @@ final class ApplicationSpecificationCodec extends AbstractSpecificationCodec<App
     JsonObject jsonObj = new JsonObject();
 
     jsonObj.add("name", new JsonPrimitive(src.getName()));
-    if (src.getVersion() != null) {
-      jsonObj.add("version", new JsonPrimitive(src.getVersion()));
-    }
     if (src.getConfiguration() != null) {
       jsonObj.add("configuration", new JsonPrimitive(src.getConfiguration()));
     }
@@ -78,17 +76,13 @@ final class ApplicationSpecificationCodec extends AbstractSpecificationCodec<App
 
     String name = jsonObj.get("name").getAsString();
 
-    String version = null;
-    if (jsonObj.has("version")) {
-      version = jsonObj.get("version").getAsString();
-    }
     String description = jsonObj.get("description").getAsString();
     String configuration = null;
     if (jsonObj.has("configuration")) {
       configuration = jsonObj.get("configuration").getAsString();
     }
 
-    Id.Artifact artifactId = context.deserialize(jsonObj.get("artifactId"), Id.Artifact.class);
+    ArtifactId artifactId = context.deserialize(jsonObj.get("artifactId"), ArtifactId.class);
 
     Map<String, StreamSpecification> streams = deserializeMap(jsonObj.get("streams"),
                                                               context, StreamSpecification.class);
@@ -115,7 +109,7 @@ final class ApplicationSpecificationCodec extends AbstractSpecificationCodec<App
                                                               WorkerSpecification.class);
     Map<String, Plugin> plugins = deserializeMap(jsonObj.get("plugins"), context, Plugin.class);
 
-    return new DefaultApplicationSpecification(name, version, description, configuration, artifactId, streams,
+    return new DefaultApplicationSpecification(name, description, configuration, artifactId, streams,
                                                datasetModules, datasetInstances,
                                                flows, mapReduces, sparks,
                                                workflows, services, schedules, workers, plugins);

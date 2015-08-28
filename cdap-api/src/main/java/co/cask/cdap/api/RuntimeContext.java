@@ -16,12 +16,19 @@
 
 package co.cask.cdap.api;
 
+import co.cask.cdap.api.app.ApplicationSpecification;
+
 import java.util.Map;
 
 /**
  * This interface represents a context for a processor or elements of a processor.
  */
 public interface RuntimeContext {
+
+  /**
+   * @return The application specification
+   */
+  ApplicationSpecification getApplicationSpecification();
 
   /**
    * @return A map of argument key and value.

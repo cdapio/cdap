@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.service.http;
 
+import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.metrics.MetricsContext;
@@ -273,6 +274,11 @@ public class HttpHandlerGeneratorTest {
     @Override
     public int getInstanceId() {
       return 1;
+    }
+
+    @Override
+    public ApplicationSpecification getApplicationSpecification() {
+      return null;
     }
 
     @Override

@@ -16,8 +16,8 @@
 
 package co.cask.cdap.internal.app.deploy;
 
+import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.templates.ApplicationTemplate;
-import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.deploy.ConfigResponse;
 import co.cask.cdap.app.deploy.Configurator;
 import co.cask.cdap.app.program.Archive;

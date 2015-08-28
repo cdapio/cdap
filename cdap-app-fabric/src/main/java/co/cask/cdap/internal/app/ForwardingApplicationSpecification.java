@@ -16,6 +16,9 @@
 
 package co.cask.cdap.internal.app;
 
+import co.cask.cdap.api.app.ApplicationSpecification;
+import co.cask.cdap.api.artifact.ArtifactId;
+import co.cask.cdap.api.artifact.Plugin;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
@@ -24,9 +27,7 @@ import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
-import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
-import co.cask.cdap.proto.Id;
 
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -47,11 +48,6 @@ public abstract class ForwardingApplicationSpecification implements ApplicationS
     return delegate.getName();
   }
 
-  @Override
-  public String getVersion() {
-    return delegate.getVersion();
-  }
-
   @Nullable
   @Override
   public String getConfiguration() {
@@ -64,7 +60,7 @@ public abstract class ForwardingApplicationSpecification implements ApplicationS
   }
 
   @Override
-  public Id.Artifact getArtifactId() {
+  public ArtifactId getArtifactId() {
     return delegate.getArtifactId();
   }
 

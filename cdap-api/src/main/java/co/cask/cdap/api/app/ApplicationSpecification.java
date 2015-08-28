@@ -14,8 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.app;
+package co.cask.cdap.api.app;
 
+import co.cask.cdap.api.artifact.ArtifactId;
+import co.cask.cdap.api.artifact.Plugin;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.Dataset;
@@ -31,9 +33,7 @@ import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
-import co.cask.cdap.internal.app.Plugin;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
-import co.cask.cdap.proto.Id;
 
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -49,14 +49,6 @@ public interface ApplicationSpecification {
   String getName();
 
   /**
-   * @deprecated Use {@link #getArtifactId()} instead.
-   * @return Version of the Application, according to the Bundle-Version in the jar manifest.
-   */
-  @Nullable
-  @Deprecated
-  String getVersion();
-
-  /**
    * @return Configuration string used during the creation of the Application.
    */
   @Nullable
@@ -70,7 +62,7 @@ public interface ApplicationSpecification {
   /**
    * @return ID of the artifact used to create the application.
    */
-  Id.Artifact getArtifactId();
+  ArtifactId getArtifactId();
 
   /**
    * @return An immutable {@link Map} from {@link Stream} name to {@link StreamSpecification}

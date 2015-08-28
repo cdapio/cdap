@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal;
 
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.Id;
 
 /**
