@@ -52,15 +52,15 @@ import javax.ws.rs.QueryParam;
 /**
  * Service for querying values in the data quality histogram
  */
-public class AggregationsService extends AbstractService {
-  public static final String SERVICE_NAME = "AggregationsService";
+public class DataQualityService extends AbstractService {
+  public static final String SERVICE_NAME = "DataQualityService";
   private static final Gson GSON = new Gson();
   private static final Type TOKEN_TYPE_SET_AGGREGATION_TYPE_VALUES =
     new TypeToken<HashSet<AggregationTypeValue>>() { }.getType();
 
   private final String datasetName;
 
-  public AggregationsService(String datasetName) {
+  public DataQualityService(String datasetName) {
     this.datasetName = datasetName;
   }
 
@@ -106,12 +106,12 @@ public class AggregationsService extends AbstractService {
                              @PathParam("sourceID") String sourceID,
                              @QueryParam("startTimestamp") @DefaultValue("0") long startTimestamp,
                              @QueryParam("endTimestamp") @DefaultValue("9223372036854775807")
-                                 long endTimestamp) throws IOException {
+                             long endTimestamp) throws IOException {
       AggregationsRowKey aggregationsRowKeyStart = new AggregationsRowKey(startTimestamp, sourceID);
       // scan rows inclusive of endTimestamp
       AggregationsRowKey aggregationsRowKeyEnd = new AggregationsRowKey(endTimestamp + 1, sourceID);
       Scanner scanner = dataStore.scan(aggregationsRowKeyStart.getTableRowKey(),
-                                          aggregationsRowKeyEnd.getTableRowKey());
+                                       aggregationsRowKeyEnd.getTableRowKey());
       Row row;
       Map<String, FieldDetail> fieldDetailMap = new HashMap<>();
       try {
@@ -162,7 +162,7 @@ public class AggregationsService extends AbstractService {
       // scan rows inclusive of endTimestamp
       AggregationsRowKey aggregationsRowKeyEnd = new AggregationsRowKey(endTimestamp + 1, sourceID);
       Scanner scanner = dataStore.scan(aggregationsRowKeyStart.getTableRowKey(),
-                                          aggregationsRowKeyEnd.getTableRowKey());
+                                       aggregationsRowKeyEnd.getTableRowKey());
       Row row;
       byte[] fieldNameBytes = Bytes.toBytes(fieldName);
       Set<AggregationTypeValue> commonAggregationTypeValues = new HashSet<>();
@@ -200,13 +200,13 @@ public class AggregationsService extends AbstractService {
                                             long endTimestamp) throws IOException {
       ValuesRowKey valuesRowKeyStart = new ValuesRowKey(startTimestamp, fieldName, sourceID);
       ValuesRowKey valuesRowKeyEnd = new ValuesRowKey(endTimestamp + 1,
-         fieldName, sourceID); // scan rows inclusive of endTimestamp
+                                                      fieldName, sourceID); // scan rows inclusive of endTimestamp
       try {
         Class<?> aggregationClass = Class.forName("co.cask.cdap.dq.functions." + aggregationType);
         CombinableAggregationFunction aggregationClassInstance =
           (CombinableAggregationFunction) aggregationClass.newInstance();
         Scanner scanner = dataStore.scan(valuesRowKeyStart.getTableRowKey(),
-                                            valuesRowKeyEnd.getTableRowKey());
+                                         valuesRowKeyEnd.getTableRowKey());
         Row row;
         byte[] aggregationTypeBytes = Bytes.toBytes(aggregationType);
         try {
@@ -241,12 +241,12 @@ public class AggregationsService extends AbstractService {
     @Path("sources/{sourceID}/fields/{fieldName}/aggregations/{aggregationType}/timeseries")
     @GET
     public void basicAggregationGetter(HttpServiceRequest request, HttpServiceResponder responder,
-                                  @PathParam("fieldName") String fieldName,
-                                  @PathParam("aggregationType") String aggregationType,
-                                  @PathParam("sourceID") String sourceID,
-                                  @QueryParam("startTimestamp") @DefaultValue("0") long startTimestamp,
-                                  @QueryParam("endTimestamp") @DefaultValue("9223372036854775807")
-                                  long endTimestamp) throws IOException {
+                                       @PathParam("fieldName") String fieldName,
+                                       @PathParam("aggregationType") String aggregationType,
+                                       @PathParam("sourceID") String sourceID,
+                                       @QueryParam("startTimestamp") @DefaultValue("0") long startTimestamp,
+                                       @QueryParam("endTimestamp") @DefaultValue("9223372036854775807")
+                                       long endTimestamp) throws IOException {
       ValuesRowKey valuesRowKeyStart = new ValuesRowKey(startTimestamp, fieldName, sourceID);
       ValuesRowKey valuesRowKeyEnd = new ValuesRowKey(endTimestamp + 1,
                                                       fieldName, sourceID); // scan rows inclusive of endTimestamp
@@ -256,7 +256,7 @@ public class AggregationsService extends AbstractService {
         BasicAggregationFunction aggregationClassInstance =
           (BasicAggregationFunction) aggregationClass.newInstance();
         Scanner scanner = dataStore.scan(valuesRowKeyStart.getTableRowKey(),
-                                            valuesRowKeyEnd.getTableRowKey());
+                                         valuesRowKeyEnd.getTableRowKey());
         Row row;
         byte[] aggregationTypeBytes = Bytes.toBytes(aggregationType);
         try {

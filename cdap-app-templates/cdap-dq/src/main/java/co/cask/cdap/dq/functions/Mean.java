@@ -22,7 +22,7 @@ import co.cask.cdap.dq.DataQualityWritable;
 /**
  * Average Aggregation Function
  */
-public class Average implements BasicAggregationFunction {
+public class Mean implements BasicAggregationFunction {
   private Double runningSum = 0.0;
   private Integer lengthValues = 0;
 

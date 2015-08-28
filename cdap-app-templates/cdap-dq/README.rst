@@ -42,10 +42,7 @@ The application has a default configuration:
 
   {
     "workflowScheduleMinutes": 5,
-    "sourceType": "logStream",
     "datasetName": "dataQuality",
-    "inputFormat": "clf",
-    "schema": null,
     "fieldAggregations": {
         "referrer": [
             "DiscreteValuesHistogram"
@@ -78,9 +75,6 @@ The application has a default configuration:
   }
 
 * ``workflowScheduleMinutes`` : Frequency (in minutes) with which the workflow runs the aggregation MapReduce.
-* ``sourceID`` : The name of the source. 
-* ``inputFormat`` : The format of the data being ingested by the aggregation MapReduce job 
-* ``schema`` : JSON specifying the input schema.
 * ``datasetName`` : Name of the destination dataset.
 * ``fieldAggregations`` : Map that relates each field value to a set of aggregation functions.
 
@@ -99,12 +93,10 @@ with this custom configuration:
 
   {
       "workflowScheduleMinutes": 5,
-      "sourceID": "logStream",
       "datasetName": "dataQuality",
-      "inputFormat": "clf",
       "fieldAggregations": {
           "content_length": [
-              "Average"
+              "Mean"
           ]
       }
   }
@@ -113,7 +105,7 @@ with this custom configuration:
 
 you can use a curl command, in this case to a standalone CDAP installation::
 
-  $ curl -v localhost:10000/v3/namespaces/default/apps -H "X-Archive-Name: <app-jar>" -H "X-App-Config: {"workflowScheduleMinutes": 5, "sourceID": "logStream", "datasetName": "dataQuality","inputFormat": "clf", "fieldAggregations": {"content_length": ["Average"] }}" --data-binary @<app-jar-location>
+  $ curl -v localhost:10000/v3/namespaces/default/apps -H "X-Archive-Name: <app-jar>" -H "X-App-Config: {"workflowScheduleMinutes": 5, "sourceID": "logStream", "datasetName": "dataQuality","inputFormat": "clf", "fieldAggregations": {"content_length": ["Mean"] }}" --data-binary @<app-jar-location>
 
 Note: the application jar is located under: ``$PROJECT_HOME/target``
 
@@ -190,7 +182,7 @@ Built-in Library of Aggregation Functions
 * Discrete Values Histogram: Generates a histogram that maps various values of a field to corresponding frequencies. This is only for discrete data.  
 * Histogram with Bucketing: Generates a histogram that maps various values of a field to corresponding frequencies. This is only for numerical data. 
 * Unique: Generates the number of unique values seen for a given field. 
-* Average: Generates the average of all the values seen for a given field. This is only for numerical data. 
+* Mean: Generates the mean of all the values seen for a given field. This is only for numerical data.
 * Standard Deviation: Generates the standard deviation of all the values seen for a given field. This is only for numerical data. 
 
 Extending the Application

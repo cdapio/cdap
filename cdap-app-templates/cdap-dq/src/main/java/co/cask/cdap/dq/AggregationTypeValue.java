@@ -48,7 +48,8 @@ public class AggregationTypeValue {
       return true;
     }
     AggregationTypeValue agTypeListObj = (AggregationTypeValue) obj;
-    return name.equals(agTypeListObj.name) && (isCombinable == agTypeListObj.isCombinable);
+    return Objects.equals(name, agTypeListObj.name)
+      && Objects.equals(isCombinable, agTypeListObj.isCombinable);
   }
 
   @Override

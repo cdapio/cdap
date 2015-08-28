@@ -151,11 +151,11 @@ public class DataQualityAppTest extends TestBase {
     Map<String, Set<String>> testMap = new HashMap<>();
     Set<String> testSet = new HashSet<>();
 
-    testSet.add("Average");
+    testSet.add("Mean");
     testMap.put("content_length", testSet);
 
     DataQualityApp.ConfigClass config = new DataQualityApp.ConfigClass(
-      DiscreteValuesHistogram.class.getSimpleName(), WORKFLOW_SCHEDULE_MINUTES, getStreamSource(), "avg", testMap);
+      WORKFLOW_SCHEDULE_MINUTES, getStreamSource(), "avg", testMap);
 
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "newApp2");
     AppRequest<DataQualityApp.ConfigClass> appRequest = new AppRequest<>(
@@ -166,13 +166,13 @@ public class DataQualityAppTest extends TestBase {
     mrManager.waitForFinish(180, TimeUnit.SECONDS);
 
     ServiceManager serviceManager = applicationManager.getServiceManager
-      (AggregationsService.SERVICE_NAME).start();
+      (DataQualityService.SERVICE_NAME).start();
     serviceManager.waitForStatus(true);
 
     /* Test for aggregationsGetter handler */
 
     URL url = new URL(serviceManager.getServiceURL(),
-                      "v1/sources/logStream/fields/content_length/aggregations/Average/timeseries");
+                      "v1/sources/logStream/fields/content_length/aggregations/Mean/timeseries");
     HttpResponse httpResponse = HttpRequests.execute(HttpRequest.get(url).build());
     Assert.assertEquals(HttpURLConnection.HTTP_OK, httpResponse.getResponseCode());
     String response = httpResponse.getResponseBodyAsString();
@@ -197,8 +197,7 @@ public class DataQualityAppTest extends TestBase {
     testMap.put("status", testSet);
     testMap.put("date", testSet);
 
-    DataQualityApp.ConfigClass config = new DataQualityApp.ConfigClass(
-      DiscreteValuesHistogram.class.getSimpleName(), WORKFLOW_SCHEDULE_MINUTES,
+    DataQualityApp.ConfigClass config = new DataQualityApp.ConfigClass(WORKFLOW_SCHEDULE_MINUTES,
       getStreamSource(), "histogram", testMap);
 
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "newApp3");
@@ -215,7 +214,7 @@ public class DataQualityAppTest extends TestBase {
     /* Test for the aggregationsGetter handler */
 
     ServiceManager serviceManager = applicationManager.getServiceManager
-      (AggregationsService.SERVICE_NAME).start();
+      (DataQualityService.SERVICE_NAME).start();
     serviceManager.waitForStatus(true);
     URL url = new URL(serviceManager.getServiceURL(),
                       "v1/sources/logStream/fields/content_length/aggregations/DiscreteValuesHistogram/totals");

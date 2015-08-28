@@ -34,13 +34,14 @@ import co.cask.cdap.dq.etl.MapReducePipelineConfigurer;
 import co.cask.cdap.dq.etl.MapReduceSourceContext;
 import co.cask.cdap.dq.functions.BasicAggregationFunction;
 import co.cask.cdap.dq.functions.CombinableAggregationFunction;
-import co.cask.cdap.dq.functions.DiscreteValuesHistogram;
 import co.cask.cdap.dq.rowkey.AggregationsRowKey;
 import co.cask.cdap.dq.rowkey.ValuesRowKey;
 import co.cask.cdap.template.etl.api.batch.BatchSource;
 import co.cask.cdap.template.etl.api.batch.BatchSourceContext;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import org.apache.hadoop.io.BooleanWritable;
@@ -59,7 +60,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -74,10 +74,8 @@ public class DataQualityApp extends AbstractApplication<DataQualityApp.ConfigCla
   private static final Gson GSON = new Gson();
   private static final Type TOKEN_TYPE_MAP_STRING_SET_STRING = new TypeToken<Map<String, Set<String>>>() { }.getType();
 
-  public static final String DEFAULT_AGGREGATION_NAME = DiscreteValuesHistogram.class.getSimpleName();
   public static final int DEFAULT_WORKFLOW_SCHEDULE_MINUTES = 5;
   public static final String DEFAULT_DATASET_NAME = "dataQuality";
-  public static final Map<String, Set<String>> DEFAULT_MAP = new HashMap<>();
 
   /**
    * Configuration Class for the application
@@ -86,27 +84,31 @@ public class DataQualityApp extends AbstractApplication<DataQualityApp.ConfigCla
    * inputFormat, and schema.
    */
   public static class ConfigClass extends Config {
-    private String aggregationName;
     private int workflowScheduleMinutes;
     private DataQualitySource source;
     private String datasetName;
     private Map<String, Set<String>> fieldAggregations;
 
     public ConfigClass() {
-      this.aggregationName = DEFAULT_AGGREGATION_NAME;
       this.workflowScheduleMinutes = DEFAULT_WORKFLOW_SCHEDULE_MINUTES;
       // By default use a Stream BatchSource with 'logStream' as the name and 'clf' format
       this.source = new DataQualitySource("Stream", "logStream", ImmutableMap.of(
         "name", "logStream", "duration", DEFAULT_WORKFLOW_SCHEDULE_MINUTES + "m", "format", "clf"));
       this.datasetName = DEFAULT_DATASET_NAME;
-      this.fieldAggregations = DEFAULT_MAP;
+      Set<String> aggSet = Sets.newHashSet("DiscreteValuesHistogram");
+      this.fieldAggregations = ImmutableMap.of("content_length", aggSet);
     }
 
-    public ConfigClass(String aggregationName, int workflowScheduleMinutes, DataQualitySource source,
+    public ConfigClass(int workflowScheduleMinutes, DataQualitySource source,
                        String datasetName, Map<String, Set<String>> fieldAggregations) {
-      Preconditions.checkNotNull(workflowScheduleMinutes);
-      Preconditions.checkNotNull(source);
-      this.aggregationName = aggregationName;
+      Preconditions.checkArgument(workflowScheduleMinutes > 0, "Workflow Frequency in minutes (>0) should be provided");
+      Preconditions.checkNotNull(source, "Configuration for DataQualityApp Source is missing");
+      Preconditions.checkArgument(!Strings.isNullOrEmpty(source.getName()),
+                                  "Data Quality source name should not be null or empty");
+      Preconditions.checkArgument(!Strings.isNullOrEmpty(source.getId()),
+                                  "Data Quality source id should not be null or empty");
+      Preconditions.checkArgument(!Strings.isNullOrEmpty(datasetName),
+                                  "Output Dataset name should be not be null or empty");
       this.workflowScheduleMinutes = workflowScheduleMinutes;
       this.source = source;
       this.datasetName = datasetName;
@@ -118,14 +120,13 @@ public class DataQualityApp extends AbstractApplication<DataQualityApp.ConfigCla
   public void configure() {
     ConfigClass configObj = getContext().getConfig();
     Integer scheduleMinutes = configObj.workflowScheduleMinutes;
-    addMapReduce(new FieldAggregator(configObj.aggregationName,
-                                     configObj.source,
+    addMapReduce(new FieldAggregator(configObj.source,
                                      configObj.datasetName,
                                      configObj.fieldAggregations));
     setName("DataQualityApp");
     setDescription("Application with MapReduce job to determine the data quality in a Batch Source");
     createDataset(configObj.datasetName, Table.class);
-    addService(new AggregationsService(configObj.datasetName));
+    addService(new DataQualityService(configObj.datasetName));
     addWorkflow(new DataQualityWorkflow());
     String schedule = "*/" + scheduleMinutes + " * * * *";
     scheduleWorkflow(Schedules.createTimeSchedule("Data Quality Workflow Schedule",
@@ -140,15 +141,13 @@ public class DataQualityApp extends AbstractApplication<DataQualityApp.ConfigCla
   public static final class FieldAggregator extends AbstractMapReduce {
     // Need to use the separator used in MapReduceSourceContext
     private static final String PLUGIN_ID = "input:";
-    private final String aggregationName;
     private final String datasetName;
     private final Map<String, Set<String>> fieldAggregations;
 
     private DataQualitySource source;
 
-    public FieldAggregator(String aggregationName, DataQualitySource source, String datasetName,
+    public FieldAggregator(DataQualitySource source, String datasetName,
                            Map<String, Set<String>> fieldAggregations) {
-      this.aggregationName = aggregationName;
       this.source = source;
       this.datasetName = datasetName;
       this.fieldAggregations = fieldAggregations;
@@ -166,7 +165,6 @@ public class DataQualityApp extends AbstractApplication<DataQualityApp.ConfigCla
       setName("FieldAggregator");
       setOutputDataset(datasetName);
       setProperties(ImmutableMap.<String, String>builder()
-                      .put("defaultAgg", aggregationName)
                       .put("fieldAggregations", GSON.toJson(fieldAggregations))
                       .put("sourceId", source.getId())
                       .build());
@@ -268,7 +266,6 @@ public class DataQualityApp extends AbstractApplication<DataQualityApp.ConfigCla
     private static final Gson GSON = new Gson();
     private String sourceId;
     private Map<String, Set<String>> fieldAggregations;
-    private String defaultAggregationType;
     long timeKey = 0;
 
     @Override
@@ -278,7 +275,6 @@ public class DataQualityApp extends AbstractApplication<DataQualityApp.ConfigCla
       fieldAggregations = GSON.fromJson(mapReduceContext
                                           .getSpecification().getProperties().get("fieldAggregations"),
                                         TOKEN_TYPE_MAP_STRING_SET_STRING);
-      defaultAggregationType = mapReduceContext.getSpecification().getProperties().get("defaultAgg");
     }
 
     @Override
@@ -286,10 +282,6 @@ public class DataQualityApp extends AbstractApplication<DataQualityApp.ConfigCla
       throws IOException, InterruptedException {
       LOG.debug("timestamp: {}", timeKey);
       Set<String> aggregationTypesSet = fieldAggregations.get(key.toString());
-      if (aggregationTypesSet == null) {
-        aggregationTypesSet = new HashSet<>();
-        aggregationTypesSet.add(defaultAggregationType);
-      }
       List<AggregationTypeValue> aggregationTypeValueList = new ArrayList<>();
       AggregationsRowKey aggregationsRowKey = new AggregationsRowKey(timeKey, sourceId);
       byte[] fieldColumnKey = Bytes.toBytes(key.toString());

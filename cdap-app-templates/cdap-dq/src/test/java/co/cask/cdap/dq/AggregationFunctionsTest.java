@@ -17,9 +17,9 @@
 package co.cask.cdap.dq;
 
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.dq.functions.Average;
 import co.cask.cdap.dq.functions.DiscreteValuesHistogram;
 import co.cask.cdap.dq.functions.HistogramWithBucketing;
+import co.cask.cdap.dq.functions.Mean;
 import co.cask.cdap.dq.functions.StandardDeviation;
 import co.cask.cdap.dq.functions.UniqueValues;
 import com.google.common.collect.Maps;
@@ -46,8 +46,8 @@ public class AggregationFunctionsTest {
   @Test
   public void averageReturnAggregationTest() throws Exception {
     byte[] val1 = Bytes.toBytes(10.0);
-    Average average = new Average();
-    Double averageVal = average.deserialize(val1);
+    Mean mean = new Mean();
+    Double averageVal = mean.deserialize(val1);
     Assert.assertEquals(10.0, averageVal, 0);
   }
 
@@ -94,11 +94,11 @@ public class AggregationFunctionsTest {
     DataQualityWritable val2 = new DataQualityWritable();
     val2.set(new DoubleWritable(2.0));
 
-    Average average = new Average();
-    average.add(val1);
-    average.add(val2);
+    Mean mean = new Mean();
+    mean.add(val1);
+    mean.add(val2);
 
-    byte[] output = average.aggregate();
+    byte[] output = mean.aggregate();
     Assert.assertEquals(2.0, Bytes.toDouble(output), 0);
   }
 
