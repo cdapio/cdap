@@ -44,7 +44,16 @@ def test(base_vars, cluster_vars):
 
     # confirm that all cluster_vars key/value pairs include something
     # if they do not (other than modules param, throw an error)
+    required_params = ['host', 'user', 'password', 'cluster']
+
     # iterate through keys and verify
+    for key in required_params:
+        try:
+            helpers.vprint(cluster_vars[key], verbose)
+        except KeyError:
+            print 'There is no %s input parameter!' % (key)
+            helpers.usage()
+            exit(1)
 
     for k, v in cluster_vars.iteritems():
         helpers.vprint('cluster vars: %s=%s' % (k, v), verbose)

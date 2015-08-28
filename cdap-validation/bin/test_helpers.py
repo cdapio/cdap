@@ -36,7 +36,7 @@ def usage():
     * Service Checks -- coming soon
     * Cluster Layout checks -- coming soon
  """ 
-    print 'Usage: \n'+sys.argv[0]+' [-v, --verbose | -d] -c, --cluster \'<cluster>\' [-m, --modules \'<modules>]\' -u --user <user:password> -U --uri <URI>\n'
+    print 'Usage: \n'+sys.argv[0]+' [-v, --verbose | -d] -c, --cluster \'<cluster>\' [-m, --modules \'<modules>]\' -u --userpass <user:password> -U --uri <URI>\n'
 
     print """
     -h, --help  help menu
@@ -46,10 +46,11 @@ def usage():
                         * config=configuration validation
                         * service=service checks
                         * layout=cluster layout checks
-    -u, --user          Authentication, e.g. --user 'george:pass'
+    -u, --userpass      Authentication, e.g. --user 'george:pass'
     -U, --uri           URI of Hadoop Install Manger API: e.g. --uri 'http://10.240.0.8:7180'
     -v, --verbose       Adds more output (shows successful checks)
     -d, --debug         Full debug output of validation runs (if both verbose and debug are used, the last one wins)
+    Note: cluster, userpass, and uri are required parameters
  """
 
 
