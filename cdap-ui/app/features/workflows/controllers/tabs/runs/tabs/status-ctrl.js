@@ -1,6 +1,5 @@
 // FIXME: Needs to be re-thought.
 var runparams = {},
-    alertpromise,
     params;
 
 class WorkflowsRunsStatusController {
