@@ -32,6 +32,7 @@
 
   <modules>
     <module>cdap-etl</module>
+    <module>cdap-dq</module>
   </modules>
 
 </project>

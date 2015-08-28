@@ -50,8 +50,8 @@ Standalone and Distributed CDAP
 
 - Build Standalone distribution ZIP::
 
-    MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn package -pl cdap-standalone,cdap-app-templates/cdap-etl,cdap-examples -am -amd -DskipTests -P examples,templates,dist,release,unit-tests
-    
+    MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn package -pl cdap-standalone,cdap-app-templates/cdap-etl,cdap-app-templates/cdap-dq,cdap-examples -am -amd -DskipTests -P examples,templates,dist,release,unit-tests
+
 - Build the limited set of Javadocs used in distribution ZIP::
 
     mvn clean package javadoc:javadoc -pl cdap-api -am -DskipTests -P release

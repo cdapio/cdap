@@ -331,6 +331,26 @@
                 </configuration>
               </execution>
               <execution>
+                <id>copy-dq</id>
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <outputDirectory>${stage.opt.dir}/artifacts</outputDirectory>
+                  <resources>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-app-templates/cdap-dq/target
+                      </directory>
+                      <includes>
+                        <include>cdap-dq-${project.version}.jar</include>
+                      </includes>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
+              <execution>
                 <id>copy-templates</id>
                 <phase>prepare-package</phase>
                 <goals>
