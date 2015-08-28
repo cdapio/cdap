@@ -28,23 +28,26 @@ def get_ambari_configs(host, subdir, base, cluster_info):
     # get ambari configs
     manager = 'ambari'
     verbose = cluster_info['verbose']
+    helpers.vprint('start of get_ambari_configs', verbose)
     cu = get_ambari_config_urls(host, cluster_info)
-    su = get_ambari_service_urls(host, cluster_info)
     # and do the same thing for service check URLs ==> make these more generic so they can be reused
     helpers.vprint('cu=%s' % (cu), verbose)
     config_url_href = cu.read()
     helpers.vprint('configurlref=%s' % (config_url_href), verbose)
 
     # extract the ambari config urls
+    helpers.vprint('extracting ambari config urls',verbose)
     data = json.loads(config_url_href)
     config_urls = [item['href'] for item in data['items']]
 
     # run API commands:
+    helpers.vprint('running API commands', verbose)
     # iterate through ambari config urls, and run api requests against those
     #     This creates config files in a subdirectory
     get_ambari_service_configs(config_urls, subdir, cluster_info)
 
     # process tmp configs and store results
+    helpers.vprint('storing processed configs', verbose)
     ambari_stored_configs = base[manager]['stored_results']
     store_ambari_results(subdir, ambari_stored_configs, cluster_info)
 
@@ -56,6 +59,7 @@ def get_ambari_config_urls(host, cluster_info):
     url = host + append
     helpers.vprint('url=%s' % (url), cluster_info['verbose'])
     ambari_config_urls = helpers.run_request(url, cluster_info)
+    helpers.vprint('ambari_config_urls: %s' % (ambari_config_urls), cluster_info['verbose']) 
     return ambari_config_urls
 
 
@@ -115,7 +119,9 @@ def store_ambari_results(subdir, stored_configs, cluster):
 def get_service_name(service_config_file):
     # take file name, extract first part (before first '-') treat that as the service
     # extra the part before the '-' and return it
-    service = service_config_file.split('-')[0]
+
+    service_config = service_config_file.split('/')[-1]
+    service = service_config.split('-')[0]
     if service_config_file == 'zoo.cfg':
         service = 'zookeeper'
     return service
