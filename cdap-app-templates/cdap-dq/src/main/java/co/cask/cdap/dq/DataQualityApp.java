@@ -117,6 +117,16 @@ public class DataQualityApp extends AbstractApplication<DataQualityApp.ConfigCla
                                   "Data Quality source id should not be null or empty");
       Preconditions.checkArgument(!Strings.isNullOrEmpty(datasetName),
                                   "Output Dataset name should be not be null or empty");
+      Preconditions.checkNotNull(fieldAggregations, "Field Aggregations needs to be specified");
+      Preconditions.checkArgument(!fieldAggregations.isEmpty(), "Field Aggregations should not be empty");
+      boolean validEntry = false;
+      for (Map.Entry<String, Set<String>> entry : fieldAggregations.entrySet()) {
+        if (!Strings.isNullOrEmpty(entry.getKey()) && !entry.getValue().isEmpty()) {
+          validEntry = true;
+          break;
+        }
+      }
+      Preconditions.checkArgument(validEntry, "At least one field with one or more aggregations must be provided");
       this.workflowScheduleMinutes = workflowScheduleMinutes;
       this.source = source;
       this.datasetName = datasetName;
@@ -280,15 +290,14 @@ public class DataQualityApp extends AbstractApplication<DataQualityApp.ConfigCla
     public void initialize(MapReduceContext mapReduceContext) throws Exception {
       timeKey = mapReduceContext.getLogicalStartTime();
       sourceId = mapReduceContext.getSpecification().getProperties().get("sourceId");
-      fieldAggregations = GSON.fromJson(mapReduceContext
-                                          .getSpecification().getProperties().get("fieldAggregations"),
+      fieldAggregations = GSON.fromJson(mapReduceContext.getSpecification().getProperties().get("fieldAggregations"),
                                         TOKEN_TYPE_MAP_STRING_SET_STRING);
     }
 
     @Override
     public void reduce(Text key, Iterable<DataQualityWritable> values, Context context)
       throws IOException, InterruptedException {
-      LOG.debug("timestamp: {}", timeKey);
+      LOG.trace("timestamp: {}", timeKey);
       Set<String> aggregationTypesSet = fieldAggregations.get(key.toString());
       List<AggregationTypeValue> aggregationTypeValueList = new ArrayList<>();
       AggregationsRowKey aggregationsRowKey = new AggregationsRowKey(timeKey, sourceId);
@@ -316,7 +325,8 @@ public class DataQualityApp extends AbstractApplication<DataQualityApp.ConfigCla
       byte[] aggregationTypeListBytes = Bytes.toBytes(GSON.toJson(aggregationTypeValueList));
       context.write(aggregationsRowKey.getTableRowKey(),
                     new Put(aggregationsRowKey.getTableRowKey(), fieldColumnKey, aggregationTypeListBytes));
-      //TODO: There are issues if multiple apps use the same source and same fields, but different aggregations
+      //TODO: CDAP-3538 There are issues if multiple apps use same source, same fields, same dataset
+      //same aggregations but different schedule minutes
     }
 
     @Override
