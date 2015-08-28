@@ -69,20 +69,40 @@ public abstract class MapReduceBatchContext extends BatchTransformContext implem
 
   @Override
   public PluginProperties getPluginProperties(String pluginId) {
-    return mrContext.getPluginProperties(getPluginId(pluginId));
+    // temporary hack until templates are removed, and to let this work for both apps and templates
+    try {
+      return mrContext.getPluginProperties(getPluginId(pluginId));
+    } catch (UnsupportedOperationException e) {
+      return mrContext.getPluginProps(getPluginId(pluginId));
+    }
   }
 
   @Override
   public <T> Class<T> loadPluginClass(String pluginId) {
-    return mrContext.loadPluginClass(getPluginId(pluginId));
+    // temporary hack until templates are removed, and to let this work for both apps and templates
+    try {
+      return mrContext.loadPluginClass(getPluginId(pluginId));
+    } catch (UnsupportedOperationException e) {
+      return mrContext.loadClass(getPluginId(pluginId));
+    }
   }
 
   @Override
   public <T> T newPluginInstance(String pluginId) throws InstantiationException {
-    return mrContext.newPluginInstance(getPluginId(pluginId));
+    // temporary hack until templates are removed, and to let this work for both apps and templates
+    try {
+      return mrContext.newPluginInstance(getPluginId(pluginId));
+    } catch (UnsupportedOperationException e) {
+      return mrContext.newInstance(getPluginId(pluginId));
+    }
+  }
+
+  @Override
+  public Map<String, String> getRuntimeArguments() {
+    return mrContext.getRuntimeArguments();
   }
 
   private String getPluginId(String childPluginId) {
-    return String.format("%s%s%s", pluginPrefix, Constants.ID_SEPARATOR, childPluginId);
+    return String.format("%s%s%s", pluginId, Constants.ID_SEPARATOR, childPluginId);
   }
 }

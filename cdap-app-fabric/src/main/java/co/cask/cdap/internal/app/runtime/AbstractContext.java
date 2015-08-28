@@ -236,10 +236,6 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     for (Closeable ds : datasets.values()) {
       closeDataSet(ds);
     }
-
-    if (artifactPluginInstantiator != null) {
-      Closeables.closeQuietly(artifactPluginInstantiator);
-    }
   }
 
   /**

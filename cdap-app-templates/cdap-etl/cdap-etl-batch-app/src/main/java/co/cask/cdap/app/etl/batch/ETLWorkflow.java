@@ -14,16 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.template.etl.api;
+package co.cask.cdap.app.etl.batch;
 
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.artifact.PluginConfigurer;
+import co.cask.cdap.api.workflow.AbstractWorkflow;
 
 /**
- * Configures an ETL Pipeline. Allows adding datasets and streams, which will be created when a pipeline is created.
- * Using this as a layer between plugins and CDAP's PluginConfigurer in case pipelines need etl specific methods.
+ * Workflow for scheduling Batch ETL MapReduce Driver.
  */
-@Beta
-public interface PipelineConfigurer extends PluginConfigurer {
+public class ETLWorkflow extends AbstractWorkflow {
+  public static final String NAME = "ETLWorkflow";
 
+  @Override
+  protected void configure() {
+    setName(NAME);
+    setDescription("Workflow for Batch ETL MapReduce Driver");
+    addMapReduce(ETLMapReduce.NAME);
+  }
 }

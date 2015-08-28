@@ -14,16 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.template.etl.api;
-
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.artifact.PluginConfigurer;
+package org.apache.hadoop.fs.s3native;
 
 /**
- * Configures an ETL Pipeline. Allows adding datasets and streams, which will be created when a pipeline is created.
- * Using this as a layer between plugins and CDAP's PluginConfigurer in case pipelines need etl specific methods.
+ * TODO: [CDAP-2824] - Delete this class when Hadoop dependency is updated to 2.6.0
+ * Used for testing File without actually connecting to an File instance.
  */
-@Beta
-public interface PipelineConfigurer extends PluginConfigurer {
-
+public class S3NInMemoryFileSystem extends NativeS3FileSystem {
+  public S3NInMemoryFileSystem() {
+    super(new InMemoryNativeFileSystemStore());
+  }
 }

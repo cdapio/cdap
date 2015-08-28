@@ -16,96 +16,98 @@
 
 package co.cask.cdap.template.etl.common;
 
-import co.cask.cdap.api.artifact.PluginConfigurer;
 import co.cask.cdap.api.artifact.PluginSelector;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.api.templates.AdapterConfigurer;
 import co.cask.cdap.api.templates.plugins.PluginProperties;
 import co.cask.cdap.template.etl.api.PipelineConfigurer;
 
 import javax.annotation.Nullable;
 
 /**
- * Configurer for a pipeline, that delegates all operations to a PluginConfigurer, except it prefixes plugin ids
- * to provide isolation for each etl stage. For example, a source can use a plugin with id 'jdbcdriver' and
- * a sink can also use a plugin with id 'jdbcdriver' without clobbering each other.
+ * Configurer for a pipeline, that delegates all operations to an AdapterConfigurer.
  */
-public class DefaultPipelineConfigurer implements PipelineConfigurer {
-  private final PluginConfigurer configurer;
+public class AdapterPipelineConfigurer implements PipelineConfigurer {
+  private final AdapterConfigurer adapterConfigurer;
   private final String pluginPrefix;
 
-  public DefaultPipelineConfigurer(PluginConfigurer configurer, String pluginPrefix) {
-    this.configurer = configurer;
+  public AdapterPipelineConfigurer(AdapterConfigurer adapterConfigurer, String pluginPrefix) {
+    this.adapterConfigurer = adapterConfigurer;
     this.pluginPrefix = pluginPrefix;
   }
 
   @Override
   public void addStream(Stream stream) {
-    configurer.addStream(stream);
+    adapterConfigurer.addStream(stream);
   }
 
   @Override
   public void addStream(String streamName) {
-    configurer.addStream(streamName);
+    adapterConfigurer.addStream(new Stream(streamName));
   }
 
   @Override
   public void addDatasetModule(String moduleName, Class<? extends DatasetModule> moduleClass) {
-    configurer.addDatasetModule(moduleName, moduleClass);
+    adapterConfigurer.addDatasetModule(moduleName, moduleClass);
   }
 
   @Override
   public void addDatasetType(Class<? extends Dataset> datasetClass) {
-    configurer.addDatasetType(datasetClass);
+    adapterConfigurer.addDatasetType(datasetClass);
   }
 
   @Override
   public void createDataset(String datasetName, String typeName, DatasetProperties properties) {
-    configurer.createDataset(datasetName, typeName, properties);
+    adapterConfigurer.createDataset(datasetName, typeName, properties);
   }
 
   @Override
   public void createDataset(String datasetName, String typeName) {
-    configurer.createDataset(datasetName, typeName);
+    adapterConfigurer.createDataset(datasetName, typeName, DatasetProperties.EMPTY);
   }
 
   @Override
   public void createDataset(String datasetName, Class<? extends Dataset> datasetClass, DatasetProperties props) {
-    configurer.createDataset(datasetName, datasetClass, props);
+    adapterConfigurer.createDataset(datasetName, datasetClass, props);
   }
 
   @Override
   public void createDataset(String datasetName, Class<? extends Dataset> datasetClass) {
-    configurer.createDataset(datasetName, datasetClass);
+    adapterConfigurer.createDataset(datasetName, datasetClass, DatasetProperties.EMPTY);
   }
 
   @Nullable
   @Override
   public <T> T usePlugin(String pluginType, String pluginName, String pluginId, PluginProperties properties) {
-    return configurer.usePlugin(pluginType, pluginName, getPluginId(pluginId), properties);
+    return adapterConfigurer.usePlugin(pluginType, pluginName, getPluginId(pluginId), properties);
   }
 
   @Nullable
   @Override
   public <T> T usePlugin(String pluginType, String pluginName, String pluginId, PluginProperties properties,
                          PluginSelector selector) {
-    return configurer.usePlugin(pluginType, pluginName, pluginId, properties, selector);
+    // Adapter's PluginSelector is incompatible with artifact's PluginSelector.
+    // currently not used today anyway, plus this class is going to be removed when templates are removed.
+    throw new UnsupportedOperationException();
   }
 
   @Nullable
   @Override
   public <T> Class<T> usePluginClass(String pluginType, String pluginName, String pluginId,
                                      PluginProperties properties) {
-    return configurer.usePluginClass(pluginType, pluginName, getPluginId(pluginId), properties);
+    return adapterConfigurer.usePluginClass(pluginType, pluginName, getPluginId(pluginId), properties);
   }
 
   @Nullable
   @Override
   public <T> Class<T> usePluginClass(String pluginType, String pluginName, String pluginId, PluginProperties properties,
                                      PluginSelector selector) {
-    return configurer.usePluginClass(pluginType, pluginName, pluginId, properties, selector);
+    // Adapter's PluginSelector is incompatible with artifact's PluginSelector.
+    // currently not used today anyway, plus this class is going to be removed when templates are removed.
+    throw new UnsupportedOperationException();
   }
   
   private String getPluginId(String childPluginId) {

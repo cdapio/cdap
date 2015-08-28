@@ -16,6 +16,7 @@
 
 package co.cask.cdap.template.etl.common;
 
+import co.cask.cdap.api.Config;
 import co.cask.cdap.api.Resources;
 import com.google.common.collect.Lists;
 
@@ -24,7 +25,7 @@ import java.util.List;
 /**
  * Common ETL Config.
  */
-public class ETLConfig {
+public class ETLConfig extends Config {
   private final ETLStage source;
   private final ETLStage sink;
   private final List<ETLStage> transforms;
