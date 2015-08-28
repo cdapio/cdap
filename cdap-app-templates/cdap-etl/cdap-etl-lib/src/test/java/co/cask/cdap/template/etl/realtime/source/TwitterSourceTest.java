@@ -94,6 +94,11 @@ public class TwitterSourceTest {
       tweet = value;
     }
 
+    @Override
+    public void emitError(StructuredRecord value) {
+      //no-op
+    }
+
     public StructuredRecord getTweet() {
       return tweet;
     }

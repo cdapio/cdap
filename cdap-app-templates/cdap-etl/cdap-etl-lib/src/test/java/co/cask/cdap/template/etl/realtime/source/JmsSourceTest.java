@@ -221,6 +221,15 @@ public class JmsSourceTest {
       currentValues.add(value);
     }
 
+    /**
+     * we skip the errors
+     * @param value the object to emit
+     */
+    @Override
+    public void emitError(StructuredRecord value) {
+      //no-op
+    }
+
     List<StructuredRecord> getCurrentValues() {
       return currentValues;
     }

@@ -26,17 +26,27 @@ import java.util.List;
  */
 public class MockEmitter<T> implements Emitter<T> {
   private final List<T> emitted = Lists.newArrayList();
+  private final List<T> errors = Lists.newArrayList();
 
   @Override
   public void emit(T value) {
     emitted.add(value);
   }
 
+  @Override
+  public void emitError(T value) {
+    errors.add(value);
+  }
+
   public List<T> getEmitted() {
     return emitted;
+  }
+  public List<T> getErrors() {
+    return errors;
   }
 
   public void clear() {
     emitted.clear();
+    errors.clear();
   }
 }

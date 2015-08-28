@@ -17,12 +17,18 @@
 package co.cask.cdap.template.etl.api;
 
 /**
- * Validator interface
+ * Useful for obtaining an object which implements a set of validator functions and this object
+ * is usually assigned to variable by getValidatorVariableName value.
  */
 public interface Validator {
 
   /**
-   * get Validator Object, on which the validator function's can be invoked.
+   * this name is used as variable name for the Object returned by getValidator().
+   */
+  String getValidatorVariableName();
+
+  /**
+   * get Validator Object, on which the validator function's can be invoked from user-code..
    * @return
    */
   Object getValidator();

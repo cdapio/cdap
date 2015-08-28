@@ -42,6 +42,11 @@ public class RealtimeTransformContext implements TransformContext {
   }
 
   @Override
+  public <T> T newPluginInstance(String pluginId) throws InstantiationException {
+    return context.newPluginInstance(pluginId);
+  }
+
+  @Override
   public PluginProperties getPluginProperties() {
     return context.getPluginProperties(pluginPrefix);
   }

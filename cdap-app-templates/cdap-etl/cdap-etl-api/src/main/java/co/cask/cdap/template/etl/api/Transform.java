@@ -25,7 +25,8 @@ import co.cask.cdap.api.annotation.Beta;
  * @param <OUT> Type of output object
  */
 @Beta
-public abstract class Transform<IN, OUT> implements StageLifecycle<TransformContext>, Transformation<IN, OUT> {
+public abstract class Transform<IN, OUT> implements StageLifecycle<TransformContext>,
+  Transformation<IN, OUT>, PipelineConfigurable {
 
   private TransformContext context;
 
@@ -38,6 +39,17 @@ public abstract class Transform<IN, OUT> implements StageLifecycle<TransformCont
   @Override
   public void initialize(TransformContext context) throws Exception {
     this.context = context;
+  }
+
+  /**
+   * Configure an ETL pipeline.
+   *
+   * @param pipelineConfigurer the configurer used to add required datasets and streams
+   * @throws IllegalArgumentException if the given config is invalid
+   */
+  @Override
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) throws IllegalArgumentException {
+    //no-op
   }
 
   /**

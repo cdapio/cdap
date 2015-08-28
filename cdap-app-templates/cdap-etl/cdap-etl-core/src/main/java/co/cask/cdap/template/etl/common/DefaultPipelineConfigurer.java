@@ -109,6 +109,10 @@ public class DefaultPipelineConfigurer implements PipelineConfigurer {
   }
   
   private String getPluginId(String childPluginId) {
+    // for configuring transform plugin types we don't want to include pluginPrefix
+    if (pluginPrefix == null) {
+      return childPluginId;
+    }
     return String.format("%s%s%s", pluginPrefix, Constants.ID_SEPARATOR, childPluginId);
   }
 }

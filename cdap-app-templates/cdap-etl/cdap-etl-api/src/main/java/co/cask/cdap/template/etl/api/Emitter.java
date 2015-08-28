@@ -32,4 +32,11 @@ public interface Emitter<T> {
    * @param value the object to emit
    */
   void emit(T value);
+
+  /**
+   * Emit an Error object.
+   *
+   * @param value the object to emit
+   */
+  void emitError(T value);
 }

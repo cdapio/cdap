@@ -282,6 +282,11 @@ public class KafkaSourceTest {
       entryList.add(value);
     }
 
+    @Override
+    public void emitError(StructuredRecord value) {
+      //no-op
+    }
+
     public int getInternalSize() {
       return entryList.size();
     }

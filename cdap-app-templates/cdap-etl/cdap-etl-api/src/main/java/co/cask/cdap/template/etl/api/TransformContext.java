@@ -41,4 +41,24 @@ public interface TransformContext {
    * @return {@link Metrics} for collecting metrics
    */
   Metrics getMetrics();
+
+  /**
+   * Creates a new instance of a plugin.
+   * The instance returned will have the {@link co.cask.cdap.api.templates.plugins.PluginConfig} setup with
+   * {@link PluginProperties} provided at the time when the
+   * {@link co.cask.cdap.api.templates.AdapterConfigurer#usePlugin(String, String, String, PluginProperties)}
+   * was called during the
+   * {@link co.cask.cdap.api.templates.ApplicationTemplate#configureAdapter(String,
+   * Object, co.cask.cdap.api.templates.AdapterConfigurer)} time.
+   *
+   * @param pluginId the unique identifier provide when declaring plugin usage in
+   * {@link co.cask.cdap.api.templates.AdapterConfigurer}.
+   * @param <T> the class type of the plugin
+   * @return A new instance of the plugin being specified by the arguments
+   *
+   * @throws InstantiationException if failed create a new instance.
+   * @throws UnsupportedOperationException if the program is not running under the adapter context
+   * @throws IllegalArgumentException if no plugin for the given type and name
+   */
+  <T> T newPluginInstance(String pluginId) throws InstantiationException;
 }

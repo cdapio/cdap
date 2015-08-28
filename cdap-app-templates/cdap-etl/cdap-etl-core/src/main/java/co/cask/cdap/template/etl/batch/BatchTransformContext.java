@@ -42,6 +42,11 @@ public class BatchTransformContext implements TransformContext {
   }
 
   @Override
+  public <T> T newPluginInstance(String pluginId) throws InstantiationException {
+    return context.newPluginInstance(pluginId);
+  }
+
+  @Override
   public PluginProperties getPluginProperties() {
     // temporary hack to let it support both templates and applications. Will be removed when templates are removed.
     try {
