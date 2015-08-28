@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import urllib2
+# import urllib2
 import json
 import re
 from os import listdir
@@ -29,6 +29,7 @@ def get_ambari_configs(host, subdir, base, cluster_info):
     manager = 'ambari'
     verbose = cluster_info['verbose']
     cu = get_ambari_config_urls(host, cluster_info)
+    su = get_ambari_service_urls(host, cluster_info)
     # and do the same thing for service check URLs ==> make these more generic so they can be reused
     helpers.vprint('cu=%s' % (cu), verbose)
     config_url_href = cu.read()
@@ -56,16 +57,6 @@ def get_ambari_config_urls(host, cluster_info):
     helpers.vprint('url=%s' % (url), cluster_info['verbose'])
     ambari_config_urls = helpers.run_request(url, cluster_info)
     return ambari_config_urls
-
-
-# get Ambari services urls
-def get_ambari_service_urls(host, cluster_info):
-    cluster = cluster_info['cluster']
-    append = '/clusters/' + cluster + '/services'
-    url = host + append
-    helpers.vprint('url=%s' % (url), cluster_info['verbose'])
-    ambari_service_urls = helpers.run_request(url, cluster_info)
-    return ambari_service_urls
 
 
 # get Ambari configs through config urls
