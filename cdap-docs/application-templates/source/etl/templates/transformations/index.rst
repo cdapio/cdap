@@ -14,3 +14,4 @@ Transformations
     Script <script>
     ScriptFilter <scriptfilter>
     StructuredRecordToGenericRecord <structuredrecordtogenericrecord>
+    Validator<validator>

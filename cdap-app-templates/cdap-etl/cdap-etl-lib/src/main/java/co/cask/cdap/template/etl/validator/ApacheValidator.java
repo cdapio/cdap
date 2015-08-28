@@ -40,18 +40,7 @@ import org.apache.commons.validator.routines.UrlValidator;
  */
 @Plugin(type = "validator")
 @Name("apache")
-@Description("Apache validator functions from org.apache.commons.validator.routines package. " +
-  "Includes isDate(String), isCreditCard(String), isBlankOrNull(String), isEmail(String), " +
-  "isInRange (value, min, max)[supported types : double, int, float, short]," +
-  "isInt(String), isLong(String), isShort(String), isUrl(String), matchRegex(String pattern, String input)," +
-  "maxLength(String input, int maxLength)," +
-  "maxValue(val, maxValue)[supported types : double, int, float, short]," +
-  "minLength(String input, int maxLength)," +
-  "minValue(val, minValue)[supported types : double, int, float, short]," +
-  "isValidISBN(String), isValidInet4Address(String), isValidInet6Address(String), isValidIp(String)" +
-  "isValidCountryCodeTid(String), isValidGenericTId(String), " +
-  "isValidInfrastructureTId(String),isValidLocalTId(String)," +
-  "isValidTId(String)")
+@Description("Core Validator functions.")
 public class ApacheValidator implements Validator {
 
   @Override
@@ -113,7 +102,7 @@ public class ApacheValidator implements Validator {
      * @param max
      * @return
      */
-    public static boolean isInRange (double value, double min , double max) {
+    public static boolean isInRange(double value, double min , double max) {
       return new DoubleValidator().isInRange(value, min, max);
     }
 
@@ -124,7 +113,7 @@ public class ApacheValidator implements Validator {
      * @param max
      * @return
      */
-    public static boolean isInRange (int value, int min , int max) {
+    public static boolean isInRange(int value, int min , int max) {
       return new IntegerValidator().isInRange(value, min, max);
     }
 
@@ -135,7 +124,7 @@ public class ApacheValidator implements Validator {
      * @param max
      * @return
      */
-    public static boolean isInRange (float value, float min , float max) {
+    public static boolean isInRange(float value, float min , float max) {
       return new FloatValidator().isInRange(value, min, max);
     }
 
@@ -146,7 +135,7 @@ public class ApacheValidator implements Validator {
      * @param max
      * @return
      */
-    public static boolean isInRange (short value, short min , short max) {
+    public static boolean isInRange(short value, short min , short max) {
       return new ShortValidator().isInRange(value, min, max);
     }
 
@@ -157,7 +146,7 @@ public class ApacheValidator implements Validator {
      * @param max
      * @return
      */
-    public static boolean isInRange (long value, long min , long max) {
+    public static boolean isInRange(long value, long min , long max) {
       return new LongValidator().isInRange(value, min, max);
     }
 
@@ -258,43 +247,43 @@ public class ApacheValidator implements Validator {
     }
 
     /**
-     * Checks if the value is less than or equal to the max.
+     * Checks if the value is greater than or equal to the min.
      * @param val
-     * @param maxVal
+     * @param minVal
      * @return
      */
-    public static boolean minValue(double val, double maxVal) {
-      return new GenericValidator().minValue(val, maxVal);
+    public static boolean minValue(double val, double minVal) {
+      return new GenericValidator().minValue(val, minVal);
     }
 
     /**
-     * Checks if the value is less than or equal to the max.
+     * Checks if the value is greater than or equal to the min.
      * @param val
-     * @param maxVal
+     * @param minVal
      * @return
      */
-    public static boolean minValue(long val, long maxVal) {
-      return new GenericValidator().minValue(val, maxVal);
+    public static boolean minValue(long val, long minVal) {
+      return new GenericValidator().minValue(val, minVal);
     }
 
     /**
-     * Checks if the value is less than or equal to the max.
+     * Checks if the value is greater than or equal to the min.
      * @param val
-     * @param maxVal
+     * @param minVal
      * @return
      */
-    public static boolean minValue(int val, int maxVal) {
-      return new GenericValidator().minValue(val, maxVal);
+    public static boolean minValue(int val, int minVal) {
+      return new GenericValidator().minValue(val, minVal);
     }
 
     /**
-     * Checks if the value is less than or equal to the max.
+     * Checks if the value is greater than or equal to the min.
      * @param val
-     * @param maxVal
+     * @param minVal
      * @return
      */
-    public static boolean minValue(float val, float maxVal) {
-      return new GenericValidator().minValue(val, maxVal);
+    public static boolean minValue(float val, float minVal) {
+      return new GenericValidator().minValue(val, minVal);
     }
 
     /**
