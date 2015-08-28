@@ -42,8 +42,7 @@ DEB_BUNDLE_TGZ="${DISTRIBUTED_DEB_BUNDLE}-${VERSION}.tgz"
 RPM_BUNDLE_TGZ="${DISTRIBUTED_RPM_BUNDLE}-${VERSION}.tgz"
 DEB_BUNDLE_TGZ_PATH="${DEB_BUNDLE_DIR}/${DEB_BUNDLE_TGZ}"
 RPM_BUNDLE_TGZ_PATH="${RPM_BUNDLE_DIR}/${RPM_BUNDLE_TGZ}"
-#S3STG_INCOMING="${S3STG_INCOMING:-/data/s3stg/incoming}"
-S3STG_INCOMING_PROJ="${S3STG_INCOMING}/${BUILD_PACKAGE}"
+S3STG_INCOMING="${S3STG_INCOMING:-/data/s3stg/incoming}"
 STG_DIR="${S3STG_INCOMING}/downloads/co/cask/${BUILD_PACKAGE}"
 STG_DEB_DIR="${STG_DIR}/${DISTRIBUTED_DEB_BUNDLE}/${VERSION}"
 STG_RPM_DIR="${STG_DIR}/${DISTRIBUTED_RPM_BUNDLE}/${VERSION}"
@@ -80,9 +79,8 @@ create_bundles() {
    decho ${OUTGOING_DIR}
    
    ### FIND ARTIFACTS
-   cd ${S3STG_INCOMING_PROJ} || die "Unable to cd to ${S3STG_INCOMING_PROJ} directory"
-   find . -name "${BUILD_PACKAGE}*_${VERSION}-*.deb" -exec cp '{}' ${DEB_BUNDLE_DIR}/. \; || die "Unable to copy Debian ${VERSION} packages to TMP directory"
-   find . -name "${BUILD_PACKAGE}*-${VERSION}-*.rpm" -exec cp '{}' ${RPM_BUNDLE_DIR}/. \; || die "Unable to copy ${VERSION} RPMs to TMP directory"
+   find ${S3STG_INCOMING}/${BUILD_PACKAGE} -name "${BUILD_PACKAGE}*_${VERSION}-*.deb" -exec cp '{}' ${DEB_BUNDLE_DIR}/. \; || die "Unable to copy Debian ${VERSION} packages to TMP directory"
+   find ${S3STG_INCOMING}/${BUILD_PACKAGE} -name "${BUILD_PACKAGE}*-${VERSION}-*.rpm" -exec cp '{}' ${RPM_BUNDLE_DIR}/. \; || die "Unable to copy ${VERSION} RPMs to TMP directory"
    
    # create and verify debian tarball
    cd ${DEB_BUNDLE_DIR} || die "Unable to cd to ${DEB_BUNDLE_DIR} directory"
