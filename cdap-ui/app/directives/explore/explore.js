@@ -16,7 +16,6 @@ angular.module(PKG.name + '.commons')
     function myExploreCtrl ($scope, myExploreApi, $http, $state, $bootstrapModal, myCdapUrl, $timeout, myAlert) {
         var vm = this;
 
-        var isFirstTime = true;
         vm.queries = [];
         vm.currentPage = 1;
         var params = {
@@ -38,12 +37,6 @@ angular.module(PKG.name + '.commons')
           myExploreApi.getQueries(params)
             .$promise
             .then(function (queries) {
-              if (!isFirstTime) {
-                vm.previous = vm.queries.map(function (q) { return q.query_handle; });
-              }
-
-              isFirstTime = false;
-
               vm.queries = queries;
 
               // Polling for status
