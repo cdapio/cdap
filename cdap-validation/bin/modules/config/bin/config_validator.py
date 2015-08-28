@@ -212,10 +212,11 @@ for line in f:
 
         else:
             print 'unknown type'
+            # throw non-fatal runtime error -- skip to next base ref configuration entry
 
     else:
         print 'unkown datatype'
-        #exit(1) -- initiate runtime error
+        # throw non-fatal runtime error -- skip to next base ref configuration entry
 
     helpers.vprint('result_value=%s' % (result_value), verbose)
     # format output
