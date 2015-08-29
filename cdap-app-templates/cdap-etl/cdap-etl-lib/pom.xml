@@ -184,6 +184,24 @@
         <extensions>true</extensions>
         <executions>
           <execution>
+            <id>batch-source-bundle</id>
+            <phase>prepare-package</phase>
+            <configuration>
+              <classifier>batch-source</classifier>
+              <instructions>
+                <!-- build bundle jar for batch sources for data quality artifact -->
+                <Export-Package>co.cask.cdap.template.etl.batch.source.*;co.cask.cdap.template.etl.common;
+                  org.apache.avro.mapreduce;parquet.avro;org.elasticsearch.hadoop.mr.*</Export-Package>
+                <Embed-Dependency>*;inline=false;scope=compile</Embed-Dependency>
+                <Embed-Transitive>true</Embed-Transitive>
+                <Embed-Directory>lib</Embed-Directory>
+              </instructions>
+            </configuration>
+            <goals>
+              <goal>bundle</goal>
+            </goals>
+          </execution>
+          <execution>
             <id>batch-bundle</id>
             <phase>prepare-package</phase>
             <configuration>

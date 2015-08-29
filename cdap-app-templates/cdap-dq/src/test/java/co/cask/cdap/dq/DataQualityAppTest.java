@@ -109,7 +109,7 @@ public class DataQualityAppTest extends TestBase {
     }
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test(expected = IllegalStateException.class)
   public void testInvalidConfig() throws Exception {
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "badApp");
     Map<String, Set<String>> testMap = new HashMap<>();
@@ -117,7 +117,7 @@ public class DataQualityAppTest extends TestBase {
     testMap.put("content_length", new HashSet<String>());
 
     DataQualityApp.ConfigClass config = new DataQualityApp.ConfigClass(
-      WORKFLOW_SCHEDULE_MINUTES, getStreamSource(), "avg", testMap);
+      50, getStreamSource(), "avg", null);
 
     AppRequest<DataQualityApp.ConfigClass> appRequest = new AppRequest<>(
       new ArtifactSummary(appArtifact.getName(), appArtifact.getVersion().getVersion(), false), config);
@@ -126,11 +126,17 @@ public class DataQualityAppTest extends TestBase {
 
   @Test
   public void testDefaultConfig() throws Exception {
-    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "newApp");
+    Map<String, Set<String>> testMap = new HashMap<>();
+    Set<String> testSet = new HashSet<>();
 
+    testSet.add("DiscreteValuesHistogram");
+    testMap.put("content_length", testSet);
+
+    DataQualityApp.ConfigClass config = new DataQualityApp.ConfigClass(
+      WORKFLOW_SCHEDULE_MINUTES, getStreamSource(), "dataQuality", testMap);
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "newApp");
     AppRequest<DataQualityApp.ConfigClass> appRequest = new AppRequest<>(
-      new ArtifactSummary(appArtifact.getName(), appArtifact.getVersion().getVersion(), false),
-      new DataQualityApp.ConfigClass());
+      new ArtifactSummary(appArtifact.getName(), appArtifact.getVersion().getVersion(), false), config);
     ApplicationManager applicationManager = deployApplication(appId, appRequest);
 
     MapReduceManager mrManager = applicationManager.getMapReduceManager("FieldAggregator").start();

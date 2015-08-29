@@ -1,0 +1,3 @@
+{
+  "parents": [ "cdap-dq[${project.version},${project.version}]" ]
+}

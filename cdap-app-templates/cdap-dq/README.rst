@@ -34,9 +34,9 @@ If you haven't already started a standalone CDAP installation, start it with the
 
   $ cdap.sh start
 
-Deploying Application with Default Configuration
-------------------------------------------------
-The application has a default configuration:
+Deploying Application
+---------------------
+The application can be created from the Data Quality Artifact by supplying an application configuration:
 
 .. code:: json
 
@@ -92,14 +92,7 @@ The application has a default configuration:
 * ``fieldAggregations`` : Map that relates each field value to a set of aggregation functions.
 
 
-To deploy the application, follow these `application deployment instructions
-<http://docs.cask.co/cdap/current/en/developers-manual/getting-started/building-apps.html#cdap-building-running-deploying>`__.
-
-
-Deploying the Application with Custom Configuration
----------------------------------------------------
-
-To deploy the application with a custom configuration, issue a curl call with the application configuration.
+To deploy the application with the application configuration, issue a PUT curl call.
 In this example, the ``appconfig.json`` file contains the application configuration::
 
   $ curl -v localhost:10000/v3/namespaces/default/apps/StreamDQ -d @appconfig.json -X PUT -H 'Content-Type: application/json'
@@ -113,7 +106,6 @@ Let's take the example of a user who wants wants to use the Data Quality Applica
 - Generate several histograms partitioned by time of distributions of status codes.
 - Generate the aforementioned aggregations every 10 minutes.
 - Query ranges of timestamps for aggregated histogram data.
-
 
 
 We would create a Data Quality Application by creating a JSON file ``appconfig.json`` that contains:

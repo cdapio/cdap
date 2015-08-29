@@ -402,6 +402,7 @@ public class AppFabricClient {
 
     bodyConsumer.chunk(ChannelBuffers.wrappedBuffer(Bytes.toBytes(GSON.toJson(appRequest))), mockResponder);
     bodyConsumer.finished(mockResponder);
+    verifyResponse(HttpResponseStatus.OK, mockResponder.getStatus(), "Failed to deploy app");
   }
 
   public void deployTemplate(Id.Namespace namespace, Id.ApplicationTemplate templateId) {

@@ -167,7 +167,7 @@
               </manifest>
             </archive>
             <instructions>
-              <Export-Package>co.cask.cdap.template.etl.api.*;data.quality.app.*</Export-Package>
+              <Export-Package>co.cask.cdap.template.etl.api.*</Export-Package>
               <Embed-Dependency>*;inline=false;scope=compile</Embed-Dependency>
               <Embed-Transitive>true</Embed-Transitive>
               <Embed-Directory>lib</Embed-Directory>

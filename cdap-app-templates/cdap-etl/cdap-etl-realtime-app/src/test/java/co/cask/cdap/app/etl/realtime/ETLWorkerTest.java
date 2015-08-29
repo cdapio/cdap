@@ -86,7 +86,7 @@ public class ETLWorkerTest extends ETLRealtimeBaseTest {
   @Test
   public void testEmptyProperties() throws Exception {
     // Set properties to null to test if ETLTemplate can handle it.
-    ETLStage source = new ETLStage("Test", null);
+    ETLStage source = new ETLStage("DataGenerator", null);
     ETLStage sink = new ETLStage("Stream", ImmutableMap.of(Properties.Stream.NAME, "testS"));
     ETLRealtimeConfig etlConfig = new ETLRealtimeConfig(source, sink, Lists.<ETLStage>newArrayList());
 

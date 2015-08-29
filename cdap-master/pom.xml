@@ -183,6 +183,117 @@
             <version>2.6</version>
             <executions>
               <execution>
+                <id>copy-etl-batch</id>
+                <phase>process-resources</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <outputDirectory>${stage.opt.dir}/artifacts</outputDirectory>
+                  <resources>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-etl-batch-app/target
+                      </directory>
+                      <includes>
+                        <include>cdap-etl-batch-app-${project.version}.jar</include>
+                      </includes>
+                    </resource>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-etl-lib/target
+                      </directory>
+                      <includes>
+                        <include>cdap-etl-lib-${project.version}-batch.jar</include>
+                      </includes>
+                    </resource>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-etl-lib/target/classes
+                      </directory>
+                      <filtering>true</filtering>
+                      <includes>
+                        <include>ETLBatch.json</include>
+                      </includes>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
+              <execution>
+                <id>copy-etl-realtime</id>
+                <phase>process-resources</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <outputDirectory>${stage.opt.dir}/artifacts</outputDirectory>
+                  <resources>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-etl-realtime-app/target
+                      </directory>
+                      <includes>
+                        <include>cdap-etl-realtime-app-${project.version}.jar</include>
+                      </includes>
+                    </resource>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-etl-lib/target
+                      </directory>
+                      <includes>
+                        <include>cdap-etl-lib-${project.version}-realtime.jar</include>
+                      </includes>
+                    </resource>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-etl-lib/target/classes
+                      </directory>
+                      <filtering>true</filtering>
+                      <includes>
+                        <include>ETLRealtime.json</include>
+                      </includes>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
+              <execution>
+                <id>copy-dq</id>
+                <phase>process-resources</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <outputDirectory>${stage.opt.dir}/artifacts</outputDirectory>
+                  <resources>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-app-templates/cdap-dq/target
+                      </directory>
+                      <includes>
+                        <include>cdap-dq-${project.version}.jar</include>
+                      </includes>
+                    </resource>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-etl-lib/target
+                      </directory>
+                      <includes>
+                        <include>cdap-etl-lib-${project.version}-batch-source.jar</include>
+                      </includes>
+                    </resource>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-etl-lib/target/classes
+                      </directory>
+                      <filtering>true</filtering>
+                      <includes>
+                        <include>DataQuality.json</include>
+                      </includes>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
+              <execution>
                 <id>copy-templates</id>
                 <phase>process-resources</phase>
                 <goals>
@@ -250,6 +361,27 @@
                       </excludes>
                     </resource>
                   </resources>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <version>1.7</version>
+            <executions>
+              <execution>
+                <id>rename-plugin-json</id>
+                <phase>process-resources</phase>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+                <configuration>
+                  <target>
+                    <move file="${stage.opt.dir}/artifacts/ETLBatch.json" tofile="${stage.opt.dir}/artifacts/cdap-etl-lib-${project.version}-batch.json" />
+                    <move file="${stage.opt.dir}/artifacts/ETLRealtime.json" tofile="${stage.opt.dir}/artifacts/cdap-etl-lib-${project.version}-realtime.json" />
+                    <move file="${stage.opt.dir}/artifacts/DataQuality.json" tofile="${stage.opt.dir}/artifacts/cdap-etl-lib-${project.version}-batch-source.json" />
+                  </target>
                 </configuration>
               </execution>
             </executions>
