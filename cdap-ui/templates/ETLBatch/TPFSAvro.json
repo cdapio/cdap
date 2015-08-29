@@ -4,7 +4,7 @@
     "position": [ "group1" ],
     "group1": {
        "display" : "Time Partitioned Fileset - AVRO",
-       "position" : [ "name", "basePath",  "duration", "delay", "schema"],
+       "position" : [ "name", "basePath",  "duration", "delay"],
        "fields" : {
           "name" : {
              "widget": "dataset-selector",
@@ -24,15 +24,13 @@
          "delay" : {
            "widget": "textbox",
            "label" : "Delay"
-         },
-
-          "schema" : {
-             "widget": "schema",
-             "label" : "Schema",
-             "schema-types" : [ "boolean", "int", "long", "float", "double", "bytes", "string" ],
-             "schema-default-type" : "string"
-          }
+         }
        }
     }
+  },
+  "schema" : {
+     "widget": "schema",
+     "schema-types" : [ "boolean", "int", "long", "float", "double", "bytes", "string" ],
+     "schema-default-type" : "string"
   }
 }

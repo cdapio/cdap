@@ -4,20 +4,12 @@
     "position": [ "group1" ],
     "group1": {
        "display" : "General",
-       "position" : [ "name", "schema", "schema.row.field", "case.sensitive.row.field" ],
+       "position" : [ "name", "schema.row.field", "case.sensitive.row.field" ],
        "fields" : {
           "name" : {
              "widget": "dataset-selector",
              "label": "Name",
              "description" : "Specifies the name of the table to which data will be written to"
-          },
-
-          "schema" : {
-             "widget": "schema",
-             "label": "Schema",
-             "description" : "Specify the schema for the table",
-             "schema-types" : [ "boolean", "int", "long", "float", "double", "bytes", "string" ],
-             "schema-default-type" : "string"
           },
 
           "schema.row.field" : {
@@ -37,5 +29,11 @@
           }
        }
     }
+  },
+  "schema" : {
+     "widget": "schema",
+     "description" : "Specify the schema for the table",
+     "schema-types" : [ "boolean", "int", "long", "float", "double", "bytes", "string" ],
+     "schema-default-type" : "string"
   }
 }

@@ -183,20 +183,17 @@
               class="btn btn-sm btn-default pull-right"
               ng-click="PluginEditController.schemaClear()"
               ng-if="!plugin.implicitSchema && !isDisabled"
-              ng-disabled="plugin.implicitSchema">
+              ng-disabled="plugin.implicitSchema || plugin.properties.format === 'clf' || plugin.properties.format === 'syslog'">
               Clear</button>
           </h4>
 
-          <fieldset class="clearfix" ng-disabled="isDisabled" ng-if="plugin.outputSchema || !isDisabled || plugin.properties.format === 'clf' || plugin.properties.format === 'syslog'">
+          <fieldset class="clearfix" ng-disabled="isDisabled">
             <my-schema-editor
               ng-model="plugin.outputSchema"
               data-disabled="plugin.implicitSchema"
-              ng-if="plugin.name !== 'Stream' && plugin.name !== 'Kafka'"></my-schema-editor>
-            <my-stream-properties
-              ng-model="plugin.outputSchema"
-              plugins="plugin.properties"
-              ng-if="plugin.name === 'Stream' || plugin.name === 'Kafka'"
-            ></my-stream-properties>
+              plugin-properties="plugin.properties"
+              config="PluginEditController.schemaProperties">
+            </my-schema-editor>
           </fieldset>
 
           <div ng-if="!plugin.outputSchema && isDisabled && plugin.properties.format !== 'clf' && plugin.properties.format !== 'syslog'">
@@ -300,7 +297,7 @@
                     class="btn btn-sm btn-default pull-right"
                     ng-click="PluginEditController.schemaClear()"
                     ng-if="(!plugin.implicitSchema && !isDisabled)"
-                    ng-disabled="plugin.implicitSchema">
+                    ng-disabled="plugin.implicitSchema || plugin.properties.format === 'clf' || plugin.properties.format === 'syslog'">
                     Clear
                   </button>
                 </h4>
@@ -309,12 +306,9 @@
                   <my-schema-editor
                     ng-model="plugin.outputSchema"
                     data-disabled="plugin.implicitSchema"
-                    ng-if="plugin.name !== 'Stream' && plugin.name !== 'Kafka'"></my-schema-editor>
-                  <my-stream-properties
-                    ng-model="plugin.outputSchema"
-                    plugins="plugin.properties"
-                    ng-if="plugin.name === 'Stream' || plugin.name === 'Kafka'"
-                  ></my-stream-properties>
+                    plugin-properties="plugin.properties"
+                    config="PluginEditController.schemaProperties">
+                  </my-schema-editor>
                 </fieldset>
 
                 <div ng-if="!plugin.outputSchema && isDisabled">

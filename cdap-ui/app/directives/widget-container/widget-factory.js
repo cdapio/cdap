@@ -94,14 +94,6 @@ angular.module(PKG.name + '.commons')
           'ng-init': 'model = model.length ? model : myconfig.properties.default'
         }
       },
-      'stream-properties': {
-        element: '<my-stream-properties></my-stream-properties>',
-        attributes: {
-          'ng-model': 'model',
-          'data-plugins': 'properties',
-          'data-config': 'myconfig'
-        }
-      },
       'stream-selector': {
         element: '<my-dataset-selector></my-dataset-selector>',
         attributes: {

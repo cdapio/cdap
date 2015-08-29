@@ -31,7 +31,8 @@
   </div>
 </div>
 
-<div ng-if="TemplatesController.pluginName">
+
+<div ng-if="TemplatesController.pluginName && TemplatesController.configFetched">
   <h3>Plugin Properties</h3>
 
   <label class="label-control">Template Name</label>
@@ -79,12 +80,9 @@
         <my-schema-editor
           ng-model="TemplatesController.pluginConfig['outputSchema']"
           data-disabled="TemplatesController.pluginConfig.implicitSchema"
-          ng-if="TemplatesController.pluginName !== 'Stream' && TemplatesController.pluginName !== 'Kafka'"></my-schema-editor>
-        <my-stream-properties
-          ng-model="TemplatesController.pluginConfig['outputSchema']"
-          plugins="TemplatesController.pluginConfig.properties"
-          ng-if="TemplatesController.pluginName === 'Stream' || TemplatesController.pluginName === 'Kafka'"
-        ></my-stream-properties>
+          plugin="TemplatesController.pluginConfig.properties"
+          config="TemplatesController.schemaProperties"
+          ></my-schema-editor>
       </fieldset>
 
     </div>

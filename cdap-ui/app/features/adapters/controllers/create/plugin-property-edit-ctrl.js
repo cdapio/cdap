@@ -68,6 +68,10 @@ angular.module(PKG.name + '.feature.adapters')
       )
         .then(
           function success(res) {
+            if (res.schema) {
+              this.schemaProperties = res.schema;
+            }
+
             this.groups.position = res.groups.position;
             angular.forEach(
               res.groups.position,

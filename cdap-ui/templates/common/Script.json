@@ -3,15 +3,8 @@
   "groups" : {
     "position": [ "group1" ],
     "group1": {
-       "position" : ["script", "schema" ],
+       "position" : ["script"],
        "fields" : {
-          "schema" : {
-             "widget": "schema",
-             "label": "Schema",
-             "schema-types" : [ "boolean", "int", "long", "float", "double", "bytes", "string" ],
-             "schema-default-type" : "string"
-          },
-
           "script" : {
              "widget": "javascript-editor",
              "label" : "Script",
@@ -21,5 +14,10 @@
           }
        }
     }
+  },
+  "schema" : {
+     "widget": "schema",
+     "schema-types" : [ "boolean", "int", "long", "float", "double", "bytes", "string" ],
+     "schema-default-type" : "string"
   }
 }
