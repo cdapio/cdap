@@ -1,10 +1,12 @@
 var module = angular.module(PKG.name+'.commons');
 
+var tip;
 var baseDirective = {
   restrict: 'E',
   templateUrl: 'flow-graph/flow.html',
   scope: {
     model: '=',
+    onChangeFlag: '=',
     clickContext: '=',
     click: '&'
   },
@@ -19,9 +21,10 @@ module.factory('dagreD3', function ($window) {
   return $window.dagreD3;
 });
 
-module.controller('myFlowController', function($scope) {
+module.controller('myFlowController', function($scope, myHelpers) {
   function update(newVal) {
-    if (angular.isObject(newVal) && Object.keys(newVal).length) {
+    // Avoid rendering the graph without nodes and edges.
+    if (myHelpers.objectQuery(newVal, 'nodes') && myHelpers.objectQuery(newVal, 'edges')) {
       $scope.render();
     }
   }
@@ -29,7 +32,19 @@ module.controller('myFlowController', function($scope) {
   $scope.instanceMap = {};
   $scope.labelMap = {};
 
-  $scope.$watch('model', update, true);
+  // This is done because of performance reasons.
+  // Earlier we used to have scope.$watch('model', function, true); which becomes slow with large set of
+  // nodes. So the controller/component that is using this directive need to pass in this flag and update it
+  // whenever there is a change in the model. This way the watch becomes smaller.
+
+  // The ideal solution would be to use a service and have this directive register a callback to the service.
+  // Once the service updates the data it could call the callbacks by updating them with data. This way there
+  // is no watch. This is done in adapters and we should fix this ASAP.
+  $scope.$watch('onChangeFlag', function(newVal) {
+    if (newVal) {
+      update($scope.model);
+    }
+  });
 
 });
 
@@ -109,7 +124,7 @@ module.directive('myFlowGraph', function ($filter, $state, $alert, myStreamServi
           parent.insert('text')
             .attr('x', calculateLeafBuffer(parent, leafOptions))
             .attr('y', metricCountPadding)
-            .text(numberFilter(scope.model.metrics[scope.labelMap[node.label].name]))
+            .text(numberFilter(scope.model.metrics[scope.labelMap[node.elem.__data__].name]))
             .attr('class', 'flow-shapes flowlet-event-count');
 
           node.intersect = function(point) {
@@ -144,7 +159,7 @@ module.directive('myFlowGraph', function ($filter, $state, $alert, myStreamServi
           parent.append('text')
             .attr('x', calculateLeafBuffer(parent, leafOptions))
             .attr('y', metricCountPadding)
-            .text(numberFilter(scope.model.metrics[scope.labelMap[node.label].name]))
+            .text(numberFilter(scope.model.metrics[scope.labelMap[node.elem.__data__].name]))
             .attr('class', 'flow-shapes stream-event-count');
 
           node.intersect = function(point) {
@@ -279,8 +294,8 @@ module.directive('myWorkflowGraph', function ($filter, $location) {
           ];
           var shapeSvg = parent.insert('polygon', ':first-child')
               .attr('points', points.map(function(p) { return p.x + ',' + p.y; }).join(' '));
-
-          switch(scope.model.current[node.elem.__data__]) {
+          var status = (scope.model.current && scope.model.current[node.elem.__data__]) || '';
+          switch(status) {
             case 'COMPLETED':
               shapeSvg.attr('class', 'workflow-shapes foundation-shape job-svg completed');
               break;
@@ -446,6 +461,9 @@ module.directive('myWorkflowGraph', function ($filter, $location) {
 function genericRender(scope, filter, location) {
   var nodes = scope.model.nodes;
   var edges = scope.model.edges;
+  if (tip) {
+    tip.destroy();
+  }
 
   var renderer = new dagreD3.render();
   var g = new dagreD3.graphlib.Graph();
@@ -468,7 +486,7 @@ function genericRender(scope, filter, location) {
       nodeLabel = node.name.length > 8? node.name.substr(0,5) + '...': node.name;
     }
     scope.instanceMap[node.name] = node;
-    scope.labelMap[nodeLabel] = node;
+    scope.labelMap[node.label || node.name] = node;
     g.setNode(node.name, { shape: scope.getShape(node.type), label: nodeLabel});
   });
 
@@ -494,7 +512,7 @@ function genericRender(scope, filter, location) {
   // Set up an SVG group so that we can translate the final graph and tooltip.
   var svg = d3.select(selector).attr('fill', 'white');
   var svgGroup = d3.select(selector + ' g');
-  var tip = d3.tip()
+  tip = d3.tip()
     .attr('class', 'd3-tip')
     .offset([-10, 0]);
   svg.call(tip);
@@ -606,10 +624,9 @@ function genericRender(scope, filter, location) {
     var initialScale = 1.1;
     var svgWidth = svg.node().getBoundingClientRect().width;
     if (svgWidth - g.graph().width <= 0) {
-      scope.currentScale = svgWidth / g.graph().width;
-      scope.translateX = 0;
+      scope.currentScale = (svgWidth -25) / g.graph().width;
+      scope.translateX = 25;
       scope.translateY = 0;
-
     } else {
       scope.translateX = (svgWidth - g.graph().width * initialScale) / 2;
       scope.translateY = 20;
