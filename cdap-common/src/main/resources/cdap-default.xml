@@ -1218,4 +1218,9 @@
       <value>false</value>
   </property>
 
+  <property>
+      <name>metadata.service.bind.address</name>
+      <value>0.0.0.0</value>
+      <description>Default inet address for binding Metadata HTTP service</description>
+  </property>
 </configuration>

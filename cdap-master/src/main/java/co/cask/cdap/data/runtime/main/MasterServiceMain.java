@@ -50,6 +50,7 @@ import co.cask.cdap.explore.service.ExploreServiceUtils;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
+import co.cask.cdap.metadata.service.MetadataService;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
@@ -366,6 +367,7 @@ public class MasterServiceMain extends DaemonMain {
           }
         }, RetryStrategies.exponentialDelay(200, 5000, TimeUnit.MILLISECONDS)));
         services.add(injector.getInstance(AppFabricServer.class));
+        services.add(injector.getInstance(MetadataService.class));
 
         executor = Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("master-runner"));
 

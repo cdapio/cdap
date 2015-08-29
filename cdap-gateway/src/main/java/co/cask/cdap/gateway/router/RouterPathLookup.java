@@ -125,6 +125,10 @@ public final class RouterPathLookup extends AbstractHttpHandler {
       // /v3/namespaces/{namespace-id}/data/datasets/{name}/properties
       // /v3/namespaces/{namespace-id}/data/datasets/{name}/admin/{method}
       return Constants.Service.DATASET_MANAGER;
+    } else if (matches(uriParts, "v3", "namespaces", null, "apps", null, "metadata") ||
+      matches(uriParts, "v3", "namespaces", null, "datasets", null, "metadata") ||
+      matches(uriParts, "v3", "namespaces", null, "streams", null, "metadata")) {
+      return Constants.Service.METADATA_SERVICE;
     }
     return Constants.Service.APP_FABRIC_HTTP;
   }
