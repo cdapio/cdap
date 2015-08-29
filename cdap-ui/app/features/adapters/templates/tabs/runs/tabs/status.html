@@ -8,7 +8,7 @@
 
   <my-plumb data-is-disabled="true" ng-if="nodes.length > 0" data-reloaddag="true" data-config="nodes"></my-plumb>
 
-  <div class="table-responsive">  
+  <div class="table-responsive">
     <table class="table table-bordered adapter-metrics-table" ng-if="isMetrics">
       <thead>
         <tr>
@@ -23,7 +23,7 @@
           <td>{{value.type}}</td>
           <td>{{value.node}}</td>
           <td>{{value.stage}}</td>
-          <td>
+          <td class-"metric-column">
             <div class="row text-left">
               <div class="col-sm-3 col-xs-12">
                 IN
