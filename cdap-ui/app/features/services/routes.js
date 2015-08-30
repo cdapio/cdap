@@ -36,17 +36,17 @@ angular.module(PKG.name + '.feature.services')
         controllerAs: 'RunsController',
         ncyBreadcrumb: {
           parent: 'apps.detail.overview.status',
-          label: 'Services',
-          skip: true
+          label: '{{$state.params.programId}}'
         }
       })
         .state('services.detail.run', {
           url: '/:runid',
           templateUrl: '/assets/features/services/templates/tabs/runs/run-detail.html',
-          controller: 'ServicesRunsController',
-          controllerAs: 'RunsController',
+          controller: 'ServicesRunsDetailController',
+          controllerAs: 'RunsDetailController',
           ncyBreadcrumb: {
-            label: '{{$state.params.programId}}'
+            label: '{{$state.params.runid}}',
+            parent: 'services.detail'
           }
         })
           .state('services.detail.runs.makerequest', {
@@ -62,25 +62,5 @@ angular.module(PKG.name + '.feature.services')
                 $state.go('^');
               });
             }
-          })
-
-
-        .state('services.detail.datasets', {
-          url: '/data',
-          templateUrl: '/assets/features/services/templates/tabs/data.html',
-          ncyBreadcrumb: {
-            parent: 'services.detail.runs',
-            label: 'Datasets'
-          }
-        })
-        .state('services.detail.history', {
-          url: '/history',
-          templateUrl: '/assets/features/services/templates/tabs/history.html',
-          controller: 'ServicesRunsController',
-          controllerAs: 'RunsController',
-          ncyBreadcrumb: {
-            parent: 'services.detail.runs',
-            label: 'History'
-          }
-        });
+          });
   });
