@@ -30,7 +30,6 @@ body.theme-cdap {
       font-weight: 300;
       > span {
         display: block;
-        // margin-top: 10px;
         margin-bottom: 8px;
       }
     }
@@ -119,6 +118,51 @@ body.theme-cdap {
         }
       }
     }
+    div.button-bar {
+      @media (max-width: @screen-xs-max) {
+        display: none;
+      }
+      my-start-stop-button > .btn-group, > .btn-group {
+        @media (max-width: @screen-xs-max) {
+          display: block;
+          margin-top: 20px;
+        }
+        .btn-default {
+          .border-radius(0);
+          padding-right: 0;
+          padding-left: 0;
+          width: 100px;
+          &.dropdown-toggle {
+            .dropdown-defaults(@text-align: center);
+          }
+          > span {
+            display: block;
+            &:last-child {
+              font-size: 12px;
+              margin-top: 5px;
+            }
+          }
+        }
+        ul.dropdown-menu {
+          min-width: 0;
+        }
+      }
+      .btn-default {
+        &.dropdown-toggle {
+          background-color: white;
+          border: 1px solid #dfe2e9;
+          color: @btn-default-color;
+        }
+      }
+      > .btn-group {
+        margin-left: -5px;
+        &.open {
+          .dropdown-toggle {
+            background-color: #e0e0e0;
+          }
+        }
+      }
+    }
     div.run-level {
       @media (min-width: @screen-md-min) {
         border-top: 1px solid @table-border-color;
@@ -142,9 +186,6 @@ body.theme-cdap {
         height: 60px;
         .order(1);
         span {
-          &.fa-circle {
-            color: @brand-primary;
-          }
           &.runid-text {
             padding: 0 15px;
             span {
@@ -166,9 +207,6 @@ body.theme-cdap {
             display: table-cell;
             font-weight: bold;
             vertical-align: middle;
-            &:nth-child(2) {
-
-            }
           }
         }
         .dropdown-menu {
@@ -193,31 +231,38 @@ body.theme-cdap {
         }
       }
       div.stop-run {
-        width: 100px;
         .order(3);
+        @media (max-width: @screen-xs-max) {
+          display: none;
+        }
         @media (min-width: @screen-sm-min) {
           margin-left: auto;
         }
-        .btn {
-          .cask-btn(@background: white, @border: 1px solid white, @border-radius: 0, @color: @btn-default-color, @font-size: 12px, @padding: 0);
-          border-right-color: @table-border-color;
-          border-left-color: @table-border-color;
-          @media (max-width: @screen-sm-max) {
-            border-color: @table-border-color;
-            height: 62px;
-          }
-          display: table;
-          height: 60px;
-          .transition(all 0.2s ease);
-          &:hover {
-            background-color: #e0e0e0;
-            border-top-color: #e0e0e0;
-            border-bottom-color: #e0e0e0;
-          }
-          > span {
-            display: table-cell;
-            vertical-align: middle;
-            span {
+        > div {
+          display: inline-block;
+          > .btn {
+            .cask-btn(@background: white, @border: 1px solid white, @border-radius: 0, @color: @btn-default-color, @font-size: 12px, @padding: 0);
+            border-right-color: @table-border-color;
+            border-left-color: @table-border-color;
+            width: 100px;
+            @media (max-width: @screen-sm-max) {
+              border-color: @table-border-color;
+            }
+            @media (max-width: @screen-md-max) {
+              width: 60px;
+            }
+            height: 60px;
+            line-height: 60px;
+            .transition(all 0.2s ease);
+            &.btn-pause {
+              margin-left: -4px;
+            }
+            &:hover {
+              background-color: #e0e0e0;
+              border-top-color: #e0e0e0;
+              border-bottom-color: #e0e0e0;
+            }
+            > span span {
               display: block;
               &.fa-stop {
                 margin-bottom: 3px;

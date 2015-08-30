@@ -1,7 +1,8 @@
 angular.module(PKG.name + '.feature.services')
-  .controller('ServicesRunsController', function($scope, $filter, $state, rRuns) {
+  .controller('ServicesRunsController', function($scope, $filter, $state, rRuns, $bootstrapModal) {
     var fFilter = $filter('filter');
     this.runs = rRuns;
+    this.$bootstrapModal = $bootstrapModal;
 
     if ($state.params.runid) {
       var match = fFilter(rRuns, {runid: $state.params.runid});
@@ -46,5 +47,27 @@ angular.module(PKG.name + '.feature.services')
 
     this.selectTab = function(tab) {
       this.activeTab = tab;
+    };
+
+    this.openHistory = function() {
+      this.$bootstrapModal.open({
+        size: 'lg',
+        template: '<my-program-history data-runs="runs" data-type="SERVICES"></my-program-history>',
+        controller: ['runs', '$scope', function(runs, $scope) {
+          $scope.runs = runs;
+        }],
+        resolve: {
+          runs: function() {
+            return this.runs;
+          }.bind(this)
+        }
+      });
+    };
+
+    this.openDatasets = function() {
+      this.$bootstrapModal.open({
+        size: 'lg',
+        templateUrl: '/assets/features/services/templates/tabs/data.html'
+      });
     };
   });

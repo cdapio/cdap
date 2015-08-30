@@ -1,38 +1,128 @@
 <my-breadcrumbs></my-breadcrumbs>
 
-<div class="row" program-heading>
-  <div class="col-sm-6">
-    <h2 class="programTitle">
-      <span ng-bind="$state.params.programId"> </span>
-    </h2>
-    <div class="type-block">
-      <span class="icon-service"></span>
-      <small> Type: Service </small>
+<div class="levels">
+  <div class="program-level">
+    <div class="container">
+      <div class="row" program-heading>
+        <div class="col-sm-4 col-md-6">
+          <h2 ng-bind="$state.params.programId"></h2>
+          <div class="type-block">
+            <span class="icon-service"></span>
+            <small> Type: Service </small>
+          </div>
+          <!-- TODO: Description will be added in a future PR -->
+<!--           <p ng-bind"| myEllipsis: 24"></p> -->
+          <div class="program-tags">
+            <a class="btn">Dataset</a>
+            <a class="btn">Apps</a>
+            <a class="btn">
+              <span class="fa fa-plus"></span>
+            </a>
+          </div>
+        </div>
+        <div class="col-sm-8 col-md-6">
+          <div class="button-bar text-right">
+            <my-start-stop-button
+              type="services"
+              is-stoppable="true">
+            </my-start-stop-button>
+            <div class="btn-group dropdown" dropdown>
+              <div class="btn btn-lg btn-default dropdown-toggle" dropdown-toggle>
+                <span class="fa fa-ellipsis-h"></span>
+                <span> More </span>
+              </div>
+              <ul class="dropdown-menu" role="menu">
+                <li>
+                  <div ng-click="RunsController.openHistory()"
+                     class="btn btn-lg btn-default">
+                    <span class="fa fa-clock-o"></span>
+                    <span> History </span>
+                  </div>
+                </li>
+                <li>
+                  <div ng-click="RunsController.openDatasets()"
+                     class="btn btn-lg btn-default">
+                    <span class="fa fa-database"></span>
+                    <span> Datasets </span>
+                  </div>
+                </li>
+                <li ui-sref="admin.namespace.detail.apps.metadata({nsadmin: $state.params.namespace, appId: $state.params.appId})">
+                  <div class="btn btn-lg btn-default">
+                    <span class="fa fa-cogs"></span>
+                    <span> Manage </span>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
-  <div class="col-sm-6 text-right">
-
-    <my-start-stop-button
-      type="services"
-      is-stoppable="true">
-    </my-start-stop-button>
-    <!-- END OF BUTTON GROUP -->
-
+  <div class="run-level">
+    <div class="container">
+      <div class="run-level-inner">
+        <div dropdown is-open="dropdown.isopen" class="flex-item">
+          <a class="btn btn-default dropdown-toggle"
+             dropdown-toggle ng-disabled="RunsController.runs.length === 0">
+             <span class="fa fa-circle" ng-class="{'text-primary': RunsController.runs.selected.status === 'COMPLETED', 'text-success': RunsController.runs.selected.status === 'STARTED' || RunsController.runs.selected.status === 'RUNNING', 'text-danger': RunsController.runs.selected.status === 'FAILED' || RunsController.runs.selected.status === 'KILLED', 'text-muted': RunsController.runs.selected.status === 'STOPPED', 'text-warning': RunsController.runs.selected.status === 'SUSPENDED'}"></span>
+             <span class="runid-text text-left">
+               <span>{{ RunsController.runs.selected.runid }}</span>
+               <span ng-if="RunsController.runs.selected.start">
+                 {{(RunsController.runs.selected.start*1000) | amDateFormat: 'MM/DD/YY hh:mm:ss'}}
+               </span>
+               <span ng-if="!RunsController.runs.selected.start">
+                 &mdash;
+               </span>
+             </span>
+            <span class="fa fa-caret-down"></span>
+          </a>
+          <ul class="dropdown-menu" role="menu">
+            <li ng-repeat="run in RunsController.runs">
+              <a ui-sref="services.detail.run({runid: run.runid})">
+                <span class="fa fa-circle" ng-class="{'text-primary': run.status === 'COMPLETED', 'text-success': run.status === 'STARTED' || run.status === 'RUNNING', 'text-danger': run.status === 'FAILED' || run.status === 'KILLED', 'text-muted': run.status === 'STOPPED', 'text-warning': run.status === 'SUSPENDED'}"></span>
+                <span class="runid-text">
+                  <span>{{ run.runid }}</span>
+                  <span ng-if="run.start">
+                    {{(run.start *1000) | amDateFormat: 'MM/DD/YY hh:mm:ss'}}
+                  </span>
+                  <span ng-if="!run.start">
+                    &mdash;
+                  </span>
+                </span>
+              </a>
+            </li>
+          </ul>
+        </div>
+        <my-program-status
+          data-type="services"
+          data-runid="RunsController.runs.selected.runid"
+          data-runs="RunsController.runs"
+          class="flex-item"></my-program-status>
+      </div>
+    </div>
+  </div>
+  <div class="tabs-level">
+    <div class="container">
+      <ul class="nav nav-tabs slanted-tabs" role="tablist">
+        <li role="presentation"
+            ng-repeat="tab in RunsController.tabs"
+            ng-class="{'active': tab.title == RunsController.activeTab.title}">
+          <a
+             role="tab"
+             ng-click="RunsController.selectTab(tab)">
+            {{ tab.title }}
+          </a>
+        </li>
+      </ul>
+    </div>
   </div>
 </div>
 
-<div class="cdap-subnav-end"></div>
-<ul class="nav nav-tabs slanted-tabs" role="tablist">
-  <li role="presentation" ui-sref-active="active">
-    <a ui-sref="services.detail.runs" role="tab">Runs</a>
-  </li>
-  <li role="presentation" ui-sref-active="active">
-    <a ui-sref="services.detail.datasets" role="tab">Datasets</a>
-  </li>
-  <li role="presentation" ui-sref-active="active">
-    <a ui-sref="services.detail.history" role="tab">History</a>
-  </li>
-</ul>
+<div class="container">
+  <div class="tab-view">
+    <div ng-if="!$state.params.runid" ng-include="RunsController.activeTab.template"></div>
+    <ui-view ng-if="$state.params.runid" role="tabpanel" />
+  </div>
+</div>
 
-<br/>
-<ui-view role="tabpanel"/>
