@@ -1,8 +1,5 @@
 angular.module(PKG.name + '.feature.adapters')
-  .controller('LeftPanelController', function($q, myAdapterApi, MyPlumbService, MyDAGFactory, myAdapterTemplatesApi, CanvasFactory, $alert, mySettings, $state) {
-    var sourceTemplates = [],
-        transformTemplates = [],
-        sinkTemplates = [];
+  .controller('LeftPanelController', function($q, myAdapterApi, MyAppDAGService, MyDAGFactory, myAdapterTemplatesApi, CanvasFactory, $alert, mySettings, $state) {
     this.pluginTypes = [
       {
         name: 'source',
@@ -29,7 +26,7 @@ angular.module(PKG.name + '.feature.adapters')
     this.onLeftSideGroupItemClicked = function(group) {
       var prom;
       var templatedefer = $q.defer();
-      var params = { adapterType: MyPlumbService.metadata.template.type };
+      var params = { adapterType: MyAppDAGService.metadata.template.type };
       switch(group.name) {
         case 'source':
           prom = myAdapterApi.fetchSources(params).$promise;
@@ -42,7 +39,7 @@ angular.module(PKG.name + '.feature.adapters')
           break;
         case 'templates':
           prom = myAdapterTemplatesApi.list({
-              apptype: MyPlumbService.metadata.template.type
+              apptype: MyAppDAGService.metadata.template.type
             })
               .$promise
               .then(function(res) {
@@ -81,7 +78,7 @@ angular.module(PKG.name + '.feature.adapters')
               return;
             }
 
-            var templates = res[$state.params.namespace][MyPlumbService.metadata.template.type];
+            var templates = res[$state.params.namespace][MyAppDAGService.metadata.template.type];
             if (!templates || group.name === 'templates') {
               return;
             }
@@ -102,14 +99,14 @@ angular.module(PKG.name + '.feature.adapters')
         delete this.pluginTypes[2].error;
       } else if (item.type === 'templates') {
         myAdapterTemplatesApi.get({
-          apptype: MyPlumbService.metadata.template.type,
+          apptype: MyAppDAGService.metadata.template.type,
           appname: item.name
         })
           .$promise
           .then(function(res) {
             var result = CanvasFactory.parseImportedJson(
               JSON.stringify(res),
-              MyPlumbService.metadata.template.type
+              MyAppDAGService.metadata.template.type
             );
             if (result.error) {
               $alert({
@@ -150,14 +147,14 @@ angular.module(PKG.name + '.feature.adapters')
         };
       }
 
-      MyPlumbService.addNodes(config, config.type, true);
+      MyAppDAGService.addNodes(config, config.type, true);
     };
 
     function objectToArray(obj) {
       var arr = [];
 
       angular.forEach(obj, function (val) {
-        if (val.templateType === MyPlumbService.metadata.template.type) {
+        if (val.templateType === MyAppDAGService.metadata.template.type) {
           val.icon = 'fa-plug';
           val.name = val.pluginTemplate;
 
@@ -167,19 +164,4 @@ angular.module(PKG.name + '.feature.adapters')
 
       return arr;
     }
-
-    mySettings.get('pluginTemplates')
-      .then(function (res) {
-        if (!angular.isObject(res)) {
-          return;
-        }
-
-        var templates = res[$state.params.namespace][MyPlumbService.metadata.template.type];
-
-        if (templates) {
-          sourceTemplates = objectToArray(templates.source);
-          transformTemplates = objectToArray(templates.transform);
-          sinkTemplates = objectToArray(templates.sink);
-        }
-      });
   });

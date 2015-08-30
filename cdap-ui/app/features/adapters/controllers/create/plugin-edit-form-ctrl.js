@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.adapters')
-  .controller('PluginEditController', function($scope, PluginConfigFactory, myHelpers, EventPipe, $timeout, MyPlumbService, $sce, $rootScope) {
+  .controller('PluginEditController', function($scope, PluginConfigFactory, myHelpers, EventPipe, $timeout, MyAppDAGService, $sce, $rootScope) {
     var pluginCopy;
 
     var propertiesFromBackend = Object.keys($scope.plugin._backendProperties);
@@ -18,9 +18,9 @@ angular.module(PKG.name + '.feature.adapters')
     this.configfetched = null;
     this.properties = [];
     this.noconfig = null;
-    if (MyPlumbService.metadata.template.type === 'ETLBatch') {
+    if (MyAppDAGService.metadata.template.type === 'ETLBatch') {
       this.infoPluginType = 'batch';
-    } else if (MyPlumbService.metadata.template.type === 'ETLRealtime') {
+    } else if (MyAppDAGService.metadata.template.type === 'ETLRealtime') {
       this.infoPluginType = 'real-time';
     }
 

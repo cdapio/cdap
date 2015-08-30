@@ -1,17 +1,17 @@
 /*
   Service that maintains the list of nodes and connections
-  MyPlumbService is responsible for communicating between side panel and plumb directives
+  MyAppDAGService is responsible for communicating between side panel and plumb directives
 
-  Adding Nodes from Side-Panel: -- DONE
+  Adding Nodes from Side-Panel: 
     1. When the user clicks/drag-n-drops a plugin this service is notified of it.
     2. The service then updates all the listeners who have registered for this change
     3. The plumb directive will eventually get this notification and will draw a node.
 
-  Making connections in UI in the plumb-directive: -- DONE
+  Making connections in UI in the plumb-directive: 
     1. When the user makes a connection in the UI this service gets notified of that connection.
     2. (In the future) if someone is interested then they can register for this event.
 
-  Editing Properties in canvas-ctrl: -- DONE
+  Editing Properties in canvas-ctrl: 
     1. When the user wants to edit the properties of a plugin this service gets the notification
     2. The plugin ID will be sent. Now the service should fetch the list of properties for the plugin.
     3. Create a map of properties and add it to the plugin (identified by passed in plugin ID)
@@ -19,7 +19,7 @@
     4. Now we have an object to bind to the UI (properties modal).
     5. Any edits user make on the modal should automatically get saved.
 
-  Saving/Publishing an adapter from canvas-ctrl: -- NOT DONE
+  Saving/Publishing an adapter from canvas-ctrl:
     1. When we want to publish an adapter this service will be notified
     2. It will go through the list of connections and forms the config based on the node information
         we have from the list of nodes (along with its properties).
@@ -31,7 +31,7 @@
 
 */
 angular.module(PKG.name + '.services')
-  .service('MyPlumbService', function(myAdapterApi, $q, $bootstrapModal, $state, $filter, mySettings, AdapterErrorFactory, IMPLICIT_SCHEMA, myHelpers, PluginConfigFactory, ModalConfirm, EventPipe, CanvasFactory) {
+  .service('MyAppDAGService', function(myAdapterApi, $q, $bootstrapModal, $state, $filter, mySettings, AdapterErrorFactory, IMPLICIT_SCHEMA, myHelpers, PluginConfigFactory, ModalConfirm, EventPipe, CanvasFactory) {
 
     var countSink = 0,
         countSource = 0,

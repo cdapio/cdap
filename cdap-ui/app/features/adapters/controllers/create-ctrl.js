@@ -1,9 +1,9 @@
 angular.module(PKG.name + '.feature.adapters')
-  .controller('AdapterCreateController', function(MyPlumbService, $scope, rConfig, $modalStack, EventPipe, $window, $timeout) {
+  .controller('AdapterCreateController', function(MyAppDAGService, $scope, rConfig, $modalStack, EventPipe, $window, $timeout) {
 
     var confirmOnPageExit = function (e) {
 
-      if (!MyPlumbService.isConfigTouched) { return; }
+      if (!MyAppDAGService.isConfigTouched) { return; }
       // If we haven't been passed the event get the window.event
       e = e || $window.event;
       var message = 'You have unsaved changes.';
@@ -17,7 +17,7 @@ angular.module(PKG.name + '.feature.adapters')
     $window.onbeforeunload = confirmOnPageExit;
 
     $scope.$on('$stateChangeStart', function (event) {
-      if (MyPlumbService.isConfigTouched) {
+      if (MyAppDAGService.isConfigTouched) {
         var response = confirm('You have unsaved changes. Are you sure you want to exit this page?');
         if (!response) {
           event.preventDefault();
@@ -27,7 +27,7 @@ angular.module(PKG.name + '.feature.adapters')
 
     if (rConfig) {
       $timeout(function() {
-        MyPlumbService.setNodesAndConnectionsFromDraft(rConfig);
+        MyAppDAGService.setNodesAndConnectionsFromDraft(rConfig);
       });
     }
 

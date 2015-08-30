@@ -1,8 +1,8 @@
 angular.module(PKG.name + '.commons')
-  .controller('MyDAGController', function MyDAGController(jsPlumb, $scope, $timeout, MyPlumbService, myHelpers, MyDAGFactory, $window, $popover, $rootScope, EventPipe) {
+  .controller('MyDAGController', function MyDAGController(jsPlumb, $scope, $timeout, MyAppDAGService, myHelpers, MyDAGFactory, $window, $popover, $rootScope, EventPipe) {
     this.plugins = $scope.config || [];
     this.isDisabled = $scope.isDisabled;
-    MyPlumbService.setIsDisabled(this.isDisabled);
+    MyAppDAGService.setIsDisabled(this.isDisabled);
 
     var popovers = [];
     var popoverScopes = [];
@@ -25,8 +25,8 @@ angular.module(PKG.name + '.commons')
       this.instance.detachAllConnections(nodeId);
       this.instance.remove(nodeId);
       this.plugins.splice(index, 1);
-      MyPlumbService.removeNode(nodeId);
-      MyPlumbService.setConnections(this.instance.getConnections());
+      MyAppDAGService.removeNode(nodeId);
+      MyAppDAGService.setConnections(this.instance.getConnections());
     };
 
     // Need to move this to the controller that is using this directive.
@@ -36,7 +36,7 @@ angular.module(PKG.name + '.commons')
       if (plugin.error) {
         delete plugin.error;
       }
-      MyPlumbService.editPluginProperties($scope, plugin.id, plugin.type);
+      MyAppDAGService.editPluginProperties($scope, plugin.id, plugin.type);
     };
 
     function errorNotification(errObj) {
@@ -54,7 +54,7 @@ angular.module(PKG.name + '.commons')
       });
     }
 
-    MyPlumbService.errorCallback(errorNotification.bind(this));
+    MyAppDAGService.errorCallback(errorNotification.bind(this));
 
     this.closeCanvasError = function () {
       this.canvasError = [];
@@ -124,7 +124,7 @@ angular.module(PKG.name + '.commons')
           e.el.style.left = '10px';
           returnResult = false;
         }
-        MyPlumbService.nodes[e.el.id].style = {top: e.el.style.top, left: e.el.style.left};
+        MyAppDAGService.nodes[e.el.id].style = {top: e.el.style.top, left: e.el.style.left};
         return returnResult;
       }
     }
@@ -133,7 +133,7 @@ angular.module(PKG.name + '.commons')
       var i;
       var curr, next;
 
-      var connections = MyPlumbService.connections;
+      var connections = MyAppDAGService.connections;
       for(i=0; i<connections.length; i++) {
         if (connections[i].source.indexOf('transform') !== -1) {
           curr = 'Left' + connections[i].source;
@@ -158,8 +158,8 @@ angular.module(PKG.name + '.commons')
     }
 
     function mapSchemas() {
-      var connections = MyPlumbService.connections;
-      var nodes = MyPlumbService.nodes;
+      var connections = MyAppDAGService.connections;
+      var nodes = MyAppDAGService.nodes;
       connections.forEach(function(connection) {
         var sourceNode = nodes[connection.source];
         var targetNode = nodes[connection.target];
@@ -215,12 +215,12 @@ angular.module(PKG.name + '.commons')
       popovers.push(popover);
 
       connection.bind('click', function () {
-        scope.schema = MyPlumbService.formatSchema(MyPlumbService.nodes[connection.sourceId]);
+        scope.schema = MyAppDAGService.formatSchema(MyAppDAGService.nodes[connection.sourceId]);
         popover.show();
       });
     }
 
-    MyPlumbService.registerCallBack(this.addPlugin.bind(this));
+    MyAppDAGService.registerCallBack(this.addPlugin.bind(this));
 
     $scope.$on('$destroy', function() {
       closeAllPopovers();
@@ -229,7 +229,7 @@ angular.module(PKG.name + '.commons')
       });
 
       this.instance.reset();
-      MyPlumbService.resetToDefaults();
+      MyAppDAGService.resetToDefaults();
     }.bind(this));
 
     jsPlumb.ready(function() {
@@ -250,7 +250,7 @@ angular.module(PKG.name + '.commons')
         // Whenever there is a change in the connection just copy the entire array
         // We never know if a connection was altered or removed. We don't want to 'Sync'
         // between jsPlumb's internal connection array and ours (pointless)
-        MyPlumbService.setConnections(this.instance.getConnections());
+        MyAppDAGService.setConnections(this.instance.getConnections());
       }.bind(this));
     }.bind(this));
 
@@ -268,20 +268,20 @@ angular.module(PKG.name + '.commons')
 
           createPopover(con.connection);
 
-          MyPlumbService.setConnections(this.instance.getConnections());
+          MyAppDAGService.setConnections(this.instance.getConnections());
         }.bind(this));
         this.instance.bind('connectionDetached', function(obj) {
           obj.connection.unbind('click');
-          MyPlumbService.setConnections(this.instance.getConnections());
+          MyAppDAGService.setConnections(this.instance.getConnections());
         }.bind(this));
         this.plugins = [];
-        angular.forEach(MyPlumbService.nodes, function(node) {
+        angular.forEach(MyAppDAGService.nodes, function(node) {
           this.plugins.push(node);
         }.bind(this));
         $timeout(this.drawGraph.bind(this));
     }
 
-    MyPlumbService.registerResetCallBack(resetComponent.bind(this));
+    MyAppDAGService.registerResetCallBack(resetComponent.bind(this));
     if (this.plugins.length) {
       resetComponent.call(this);
     }

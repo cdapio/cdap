@@ -1,8 +1,8 @@
 angular.module(PKG.name + '.feature.adapters')
-  .controller('CanvasController', function (MyPlumbService, $scope, $modalStack) {
+  .controller('CanvasController', function (MyAppDAGService, $scope, $modalStack) {
 
     this.nodes = [];
-    
+
     function errorNotification(errors) {
       angular.forEach(this.pluginTypes, function (type) {
         delete type.error;
@@ -12,7 +12,7 @@ angular.module(PKG.name + '.feature.adapters')
       });
     }
 
-    MyPlumbService.errorCallback(errorNotification.bind(this));
+    MyAppDAGService.errorCallback(errorNotification.bind(this));
 
     $scope.$on('$destroy', function() {
       $modalStack.dismissAll();

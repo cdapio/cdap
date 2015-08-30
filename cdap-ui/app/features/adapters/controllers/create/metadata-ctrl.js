@@ -1,11 +1,11 @@
 angular.module(PKG.name + '.feature.adapters')
-  .controller('MetadataController', function(MyPlumbService, rConfig, $stateParams, $alert, EventPipe, $bootstrapModal, ModalConfirm) {
-    this.metadata = MyPlumbService['metadata'];
+  .controller('MetadataController', function(MyAppDAGService, rConfig, $stateParams, $alert, EventPipe, $bootstrapModal, ModalConfirm) {
+    this.metadata = MyAppDAGService['metadata'];
     function resetMetadata() {
-      this.metadata = MyPlumbService['metadata'];
+      this.metadata = MyAppDAGService['metadata'];
     }
 
-    MyPlumbService.registerResetCallBack(resetMetadata.bind(this));
+    MyAppDAGService.registerResetCallBack(resetMetadata.bind(this));
 
     if ($stateParams.name) {
       this.metadata.name = $stateParams.name;
@@ -27,7 +27,7 @@ angular.module(PKG.name + '.feature.adapters')
       if (this.metadata.error) {
         delete this.metadata.error;
       }
-      MyPlumbService.isConfigTouched = true;
+      MyAppDAGService.isConfigTouched = true;
       $bootstrapModal
         .open({
           templateUrl: '/assets/features/adapters/templates/create/popovers/metadata-detail.html',
@@ -64,8 +64,8 @@ angular.module(PKG.name + '.feature.adapters')
         })
         .result
         .finally(function() {
-          MyPlumbService.metadata.name = this.metadata.name;
-          MyPlumbService.metadata.description = this.metadata.description;
+          MyAppDAGService.metadata.name = this.metadata.name;
+          MyAppDAGService.metadata.description = this.metadata.description;
         }.bind(this));
     };
 

@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.adapters')
-  .controller('RightPanelController', function(EventPipe, CanvasFactory, MyPlumbService, $scope, $timeout, $bootstrapModal, ModalConfirm, $alert, $state) {
+  .controller('RightPanelController', function(EventPipe, CanvasFactory, MyAppDAGService, $scope, $timeout, $bootstrapModal, ModalConfirm, $alert, $state) {
     this.canvasOperations = [
       {
         name: 'Settings',
@@ -34,10 +34,10 @@ angular.module(PKG.name + '.feature.adapters')
         case 'Export':
           CanvasFactory
             .exportAdapter(
-              MyPlumbService.getConfigForBackend(),
-              MyPlumbService.metadata.name,
-              MyPlumbService.nodes,
-              MyPlumbService.connections)
+              MyAppDAGService.getConfigForBackend(),
+              MyAppDAGService.metadata.name,
+              MyAppDAGService.nodes,
+              MyAppDAGService.connections)
             .then(
               function success(result) {
                 this.exportFileName = result.name;
@@ -62,7 +62,7 @@ angular.module(PKG.name + '.feature.adapters')
           });
           break;
         case 'Config':
-          config = angular.copy(MyPlumbService.getConfigForBackend());
+          config = angular.copy(MyAppDAGService.getConfigForBackend());
           $bootstrapModal.open({
             templateUrl: '/assets/features/adapters/templates/create/popovers/viewconfig.html',
             size: 'lg',
@@ -79,7 +79,7 @@ angular.module(PKG.name + '.feature.adapters')
           });
           break;
         case 'Publish':
-          MyPlumbService
+          MyAppDAGService
             .save()
             .then(
               function sucess(adapter) {
@@ -96,7 +96,7 @@ angular.module(PKG.name + '.feature.adapters')
           break;
         case 'Settings':
 
-          MyPlumbService.isConfigTouched = true;
+          MyAppDAGService.isConfigTouched = true;
           $bootstrapModal.open({
             templateUrl: '/assets/features/adapters/templates/create/popovers/settings.html',
             size: 'lg',
@@ -126,19 +126,19 @@ angular.module(PKG.name + '.feature.adapters')
             }],
             resolve: {
               'metadata': function() {
-                return MyPlumbService.metadata;
+                return MyAppDAGService.metadata;
               }
             }
           });
           break;
         case 'Save Draft':
-          MyPlumbService
+          MyAppDAGService
             .saveAsDraft()
             .then(
               function success() {
                 $alert({
                   type: 'success',
-                  content: MyPlumbService.metadata.name + ' successfully saved as draft.'
+                  content: MyAppDAGService.metadata.name + ' successfully saved as draft.'
                 });
                 $state.go('adapters.list');
               },
@@ -152,16 +152,16 @@ angular.module(PKG.name + '.feature.adapters')
     this.onImportSuccess = function(result) {
       EventPipe.emit('popovers.reset');
       $scope.config = JSON.stringify(result);
-      MyPlumbService.resetToDefaults(true);
-      MyPlumbService.setNodesAndConnectionsFromDraft(result);
+      MyAppDAGService.resetToDefaults(true);
+      MyAppDAGService.setNodesAndConnectionsFromDraft(result);
       if ($scope.config.name) {
-        MyPlumbService.metadata.name = $scope.config.name;
+        MyAppDAGService.metadata.name = $scope.config.name;
       }
     };
 
     this.importFile = function(files) {
       CanvasFactory
-        .importAdapter(files, MyPlumbService.metadata.template.type)
+        .importAdapter(files, MyAppDAGService.metadata.template.type)
         .then(
           this.onImportSuccess.bind(this),
           function error(errorEvent) {
