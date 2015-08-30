@@ -28,6 +28,7 @@ import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.io.URLConnections;
+import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.common.utils.OSDetector;
 import co.cask.cdap.data.runtime.DataFabricModules;
@@ -338,7 +339,8 @@ public class StandaloneMain {
       new ExploreClientModule(),
       new NotificationFeedServiceRuntimeModule().getStandaloneModules(),
       new NotificationServiceRuntimeModule().getStandaloneModules(),
-      new StreamAdminModules().getStandaloneModules()
+      new StreamAdminModules().getStandaloneModules(),
+      new NamespaceClientRuntimeModule().getStandaloneModules()
     );
   }
 }

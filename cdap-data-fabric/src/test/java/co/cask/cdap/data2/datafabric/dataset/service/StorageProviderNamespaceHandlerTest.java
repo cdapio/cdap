@@ -25,9 +25,9 @@ import org.junit.Test;
 import java.io.IOException;
 
 /**
- * Tests for {@link UnderlyingSystemNamespaceHandler}
+ * Tests for {@link StorageProviderNamespaceHandler}
  */
-public class UnderlyingSystemNamespaceHandlerTest extends DatasetServiceTestBase {
+public class StorageProviderNamespaceHandlerTest extends DatasetServiceTestBase {
 
   @Test
   public void test() throws IOException {
@@ -38,12 +38,12 @@ public class UnderlyingSystemNamespaceHandlerTest extends DatasetServiceTestBase
   }
 
   private HttpResponse createNamespace(String namespaceId) throws IOException {
-    HttpRequest request = HttpRequest.put(getUnderlyingNamespaceAdminUrl(namespaceId, "create")).build();
+    HttpRequest request = HttpRequest.put(getStorageProviderNamespaceAdminUrl(namespaceId, "create")).build();
     return HttpRequests.execute(request);
   }
 
   private HttpResponse deleteNamespace(String namespaceId) throws IOException {
-    HttpRequest request = HttpRequest.delete(getUnderlyingNamespaceAdminUrl(namespaceId, "delete")).build();
+    HttpRequest request = HttpRequest.delete(getStorageProviderNamespaceAdminUrl(namespaceId, "delete")).build();
     return HttpRequests.execute(request);
   }
 }

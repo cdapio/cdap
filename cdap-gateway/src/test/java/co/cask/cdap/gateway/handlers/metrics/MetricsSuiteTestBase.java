@@ -26,6 +26,7 @@ import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -166,7 +167,8 @@ public abstract class MetricsSuiteTestBase {
       new DataFabricModules().getInMemoryModules(),
       new DataSetsModules().getStandaloneModules(),
       new DataSetServiceModules().getInMemoryModules(),
-      new ExploreClientModule()
+      new ExploreClientModule(),
+      new NamespaceClientRuntimeModule().getInMemoryModules()
     ).with(new AbstractModule() {
       @Override
       protected void configure() {

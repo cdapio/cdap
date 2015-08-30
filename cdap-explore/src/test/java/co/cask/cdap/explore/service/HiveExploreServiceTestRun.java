@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -75,8 +75,6 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
   public static void start() throws Exception {
     initialize(tmpFolder);
 
-    waitForCompletionStatus(exploreService.createNamespace(OTHER_NAMESPACE_ID), 200, TimeUnit.MILLISECONDS, 200);
-
     datasetFramework.addModule(KEY_STRUCT_VALUE, new KeyStructValueTableDefinition.KeyStructValueTableModule());
     datasetFramework.addModule(OTHER_KEY_STRUCT_VALUE, new KeyStructValueTableDefinition.KeyStructValueTableModule());
 
@@ -117,8 +115,6 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
     datasetFramework.deleteInstance(OTHER_MY_TABLE);
     datasetFramework.deleteModule(KEY_STRUCT_VALUE);
     datasetFramework.deleteModule(OTHER_KEY_STRUCT_VALUE);
-
-    waitForCompletionStatus(exploreService.deleteNamespace(OTHER_NAMESPACE_ID), 200, TimeUnit.MILLISECONDS, 200);
   }
 
   @Test
@@ -167,7 +163,7 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
                         tables);
 
     tables = exploreService.getTables("foobar");
-    Assert.assertEquals(ImmutableList.of(), tables);
+    Assert.assertEquals(ImmutableList.<TableNameInfo>of(), tables);
 
     exploreClient.submit(NAMESPACE_ID, "drop table if exists test").get();
   }
@@ -400,7 +396,7 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
       List<QueryResult> secondPreview = exploreService.previewResults(handle);
       Assert.assertEquals(firstPreview, secondPreview);
 
-      Assert.assertEquals(ImmutableList.of(), exploreService.nextResults(handle, 100));
+      Assert.assertEquals(ImmutableList.<QueryResult>of(), exploreService.nextResults(handle, 100));
 
       try {
         // All results are fetched, query should be inactive now
@@ -549,6 +545,7 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
     Discoverable discoverable = new RandomEndpointStrategy(discoveryServiceClient.discover(
       Constants.Service.EXPLORE_HTTP_USER_SERVICE)).pick();
 
+    Assert.assertNotNull(discoverable);
     InetSocketAddress addr = discoverable.getSocketAddress();
     String serviceUrl = String.format("%s%s:%d?namespace=%s",
                                       Constants.Explore.Jdbc.URL_PREFIX, addr.getHostName(), addr.getPort(),

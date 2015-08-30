@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -56,7 +56,6 @@ public class ExploreMetadataTestRun extends BaseHiveExploreServiceTest {
   public static void start() throws Exception {
     initialize(tmpFolder);
 
-    waitForCompletionStatus(exploreService.createNamespace(OTHER_NAMESPACE_ID), 200, TimeUnit.MILLISECONDS, 200);
     datasetFramework.addModule(KEY_STRUCT_VALUE, new KeyStructValueTableDefinition.KeyStructValueTableModule());
     datasetFramework.addModule(OTHER_KEY_STRUCT_VALUE, new KeyStructValueTableDefinition.KeyStructValueTableModule());
 
@@ -75,8 +74,6 @@ public class ExploreMetadataTestRun extends BaseHiveExploreServiceTest {
     datasetFramework.deleteInstance(namespacedOtherTable);
     datasetFramework.deleteModule(KEY_STRUCT_VALUE);
     datasetFramework.deleteModule(OTHER_KEY_STRUCT_VALUE);
-
-    waitForCompletionStatus(exploreService.deleteNamespace(OTHER_NAMESPACE_ID), 200, TimeUnit.MILLISECONDS, 200);
   }
 
   @Test

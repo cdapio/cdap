@@ -37,12 +37,12 @@ import javax.ws.rs.PathParam;
  * {@link HttpHandler} for admin operations on underlying systems - Filesystem, HBase, Hive.
  */
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
-public class UnderlyingSystemNamespaceHandler extends AbstractHttpHandler {
+public class StorageProviderNamespaceHandler extends AbstractHttpHandler {
 
   private final StorageProviderNamespaceAdmin storageProviderNamespaceAdmin;
 
   @Inject
-  public UnderlyingSystemNamespaceHandler(StorageProviderNamespaceAdmin storageProviderNamespaceAdmin) {
+  public StorageProviderNamespaceHandler(StorageProviderNamespaceAdmin storageProviderNamespaceAdmin) {
     this.storageProviderNamespaceAdmin = storageProviderNamespaceAdmin;
   }
 
@@ -56,11 +56,7 @@ public class UnderlyingSystemNamespaceHandler extends AbstractHttpHandler {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
                            "Error while creating namespace - " + e.getMessage());
       return;
-    } catch (ExploreException e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
-                           "Error while creating namespace in Hive - " + e.getMessage());
-      return;
-    } catch (SQLException e) {
+    } catch (ExploreException | SQLException e) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
                            "Error while creating namespace in Hive - " + e.getMessage());
       return;
@@ -79,15 +75,11 @@ public class UnderlyingSystemNamespaceHandler extends AbstractHttpHandler {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
                            "Error while deleting namespace - " + e.getMessage());
       return;
-    } catch (ExploreException e) {
+    } catch (ExploreException | SQLException e) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
-                           "Error while creating namespace in Hive - " + e.getMessage());
+                           "Error while deleting namespace in Hive - " + e.getMessage());
       return;
-    } catch (SQLException e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
-                           "Error while creating namespace in Hive - " + e.getMessage());
-      return;
-  }
+    }
     responder.sendString(HttpResponseStatus.OK,
                          String.format("Deleted namespace %s successfully", namespaceId));
   }
