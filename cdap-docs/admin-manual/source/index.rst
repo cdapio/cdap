@@ -87,7 +87,7 @@ transaction service maintenance, troubleshooting, and introduces the CDAP UI.**
 .. |tx-maintenance| replace:: **Transaction Service Maintenance:**
 .. _tx-maintenance: operations/tx-maintenance.html
 
-- |tx-maintenance|_ Periodic maintenance of **Transaction Service.**
+- |tx-maintenance|_ Periodic maintenance of the **Transaction Service.**
 
 .. |troubleshooting| replace:: **Troubleshooting:**
 .. _troubleshooting: operations/troubleshooting.html

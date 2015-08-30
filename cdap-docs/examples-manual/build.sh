@@ -145,7 +145,7 @@ function download_includes() {
   test_an_include d9c7f594204f42adaac7ad866c11ed7a ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseStore.java
   
   test_an_include f8e8f0fba3d26cc26f06325b7c55d715 ../../cdap-examples/SparkKMeans/src/main/java/co/cask/cdap/examples/sparkkmeans/SparkKMeansApp.java
-  test_an_include 8632b56f39c02e695f11c74729fbc456 ../../cdap-examples/SparkPageRank/src/main/java/co/cask/cdap/examples/sparkpagerank/SparkPageRankApp.java
+  test_an_include 97e355542831d767a297b52ff09f5674 ../../cdap-examples/SparkPageRank/src/main/java/co/cask/cdap/examples/sparkpagerank/SparkPageRankApp.java
 
   test_an_include afe12d26b79607a846d3eaa58958ea5f ../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/SportResults.java
   test_an_include f58086a5f0c86aa4e8d47ea09fa3f0f1 ../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/UploadService.java
