@@ -38,7 +38,6 @@ angular.module(PKG.name + '.commons')
             }, function (res) {
               var startMs = res.start * 1000;
               $scope.start = new Date(startMs);
-              console.info('status: ', res.status, res.runid);
               $scope.status = res.status;
               $scope.duration = (res.end ? (res.end * 1000) - startMs : 0);
               if (['COMPLETED', 'KILLED', 'STOPPED', 'FAILED'].indexOf($scope.status) !== -1) {
