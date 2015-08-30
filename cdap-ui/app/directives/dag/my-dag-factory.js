@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.commons')
-  .factory('MyPlumbFactory', function() {
+  .factory('MyDAGFactory', function() {
     var defaultSettings = {
       Connector : [ 'Flowchart', {gap: 7} ],
       ConnectionsDetachable: true

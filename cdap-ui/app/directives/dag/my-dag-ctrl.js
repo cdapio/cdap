@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.commons')
-  .controller('MyPlumbController', function MyPlumbController(jsPlumb, $scope, $timeout, MyPlumbService, myHelpers, MyPlumbFactory, $window, $popover, $rootScope, EventPipe) {
+  .controller('MyDAGController', function MyDAGController(jsPlumb, $scope, $timeout, MyPlumbService, myHelpers, MyDAGFactory, $window, $popover, $rootScope, EventPipe) {
     this.plugins = $scope.config || [];
     this.isDisabled = $scope.isDisabled;
     MyPlumbService.setIsDisabled(this.isDisabled);
@@ -13,7 +13,7 @@ angular.module(PKG.name + '.commons')
       closeAllPopovers();
 
       this.plugins.push(angular.extend({
-        icon: MyPlumbFactory.getIcon(config.name)
+        icon: MyDAGFactory.getIcon(config.name)
       }, config));
       $timeout(drawNode.bind(this, config.id, type));
       $timeout(this.instance.repaintEverything);
@@ -61,7 +61,7 @@ angular.module(PKG.name + '.commons')
     };
 
     this.drawGraph = function() {
-      var graph = MyPlumbFactory.getGraph(this.plugins);
+      var graph = MyDAGFactory.getGraph(this.plugins);
       var nodes = graph.nodes()
         .map(function(node) {
           return graph.node(node);
@@ -71,11 +71,11 @@ angular.module(PKG.name + '.commons')
       marginLeft = margins.left;
 
       this.plugins.forEach(function(plugin) {
-        plugin.icon = MyPlumbFactory.getIcon(plugin.name);
+        plugin.icon = MyDAGFactory.getIcon(plugin.name);
         if (this.isDisabled) {
-          plugin.style = plugin.style || MyPlumbFactory.generateStyles(plugin.id, nodes, 0, marginLeft);
+          plugin.style = plugin.style || MyDAGFactory.generateStyles(plugin.id, nodes, 0, marginLeft);
         } else {
-          plugin.style = plugin.style || MyPlumbFactory.generateStyles(plugin.id, nodes, 200, marginLeft);
+          plugin.style = plugin.style || MyDAGFactory.generateStyles(plugin.id, nodes, 200, marginLeft);
         }
         drawNode.call(this, plugin.id, plugin.type);
       }.bind(this));
@@ -88,8 +88,8 @@ angular.module(PKG.name + '.commons')
     };
 
     function drawNode(id, type) {
-      var sourceSettings = MyPlumbFactory.getSettings().source,
-          sinkSettings = MyPlumbFactory.getSettings().sink;
+      var sourceSettings = MyDAGFactory.getSettings().source,
+          sinkSettings = MyDAGFactory.getSettings().sink;
 
       switch(type) {
         case 'source':
@@ -234,14 +234,14 @@ angular.module(PKG.name + '.commons')
 
     jsPlumb.ready(function() {
 
-      jsPlumb.setContainer('plumb-container');
+      jsPlumb.setContainer('dag-container');
       this.instance = jsPlumb.getInstance();
 
       angular.element($window).on('resize', function() {
         this.instance.repaintEverything();
       }.bind(this));
 
-      this.instance.importDefaults(MyPlumbFactory.getSettings().default);
+      this.instance.importDefaults(MyDAGFactory.getSettings().default);
 
       // Need to move this to the controller that is using this directive.
       this.instance.bind('connection', function (con) {
@@ -263,7 +263,7 @@ angular.module(PKG.name + '.commons')
 
         this.instance.reset();
         this.instance = jsPlumb.getInstance();
-        this.instance.importDefaults(MyPlumbFactory.getSettings().default);
+        this.instance.importDefaults(MyDAGFactory.getSettings().default);
         this.instance.bind('connection', function (con) {
 
           createPopover(con.connection);

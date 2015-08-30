@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.adapters')
-  .controller('LeftPanelController', function($q, myAdapterApi, MyPlumbService, MyPlumbFactory, myAdapterTemplatesApi, CanvasFactory, $alert, mySettings, $state) {
+  .controller('LeftPanelController', function($q, myAdapterApi, MyPlumbService, MyDAGFactory, myAdapterTemplatesApi, CanvasFactory, $alert, mySettings, $state) {
     var sourceTemplates = [],
         transformTemplates = [],
         sinkTemplates = [];
@@ -65,7 +65,7 @@ angular.module(PKG.name + '.feature.adapters')
               angular.extend(
                 {
                   type: group.name,
-                  icon: MyPlumbFactory.getIcon(plugin.name)
+                  icon: MyDAGFactory.getIcon(plugin.name)
                 },
                 plugin
               )
@@ -133,7 +133,7 @@ angular.module(PKG.name + '.feature.adapters')
         config = {
           id: id,
           name: item.pluginName,
-          icon: MyPlumbFactory.getIcon(item.pluginName),
+          icon: MyDAGFactory.getIcon(item.pluginName),
           type: item.pluginType,
           properties: item.properties,
           outputSchema: item.outputSchema,

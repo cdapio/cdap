@@ -3,7 +3,7 @@ commonModule.factory('jsPlumb', function ($window) {
   return $window.jsPlumb;
 });
 
-commonModule.directive('myPlumb', function() {
+commonModule.directive('myDag', function() {
   return {
     restrict: 'E',
     scope: {
@@ -29,8 +29,8 @@ commonModule.directive('myPlumb', function() {
         };
       };
     },
-    templateUrl: 'plumb/my-plumb.html',
-    controller: 'MyPlumbController',
-    controllerAs: 'MyPlumbController'
+    templateUrl: 'dag/my-dag.html',
+    controller: 'MyDAGController',
+    controllerAs: 'MyDAGController'
   };
 });
