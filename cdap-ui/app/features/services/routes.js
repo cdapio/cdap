@@ -49,7 +49,7 @@ angular.module(PKG.name + '.feature.services')
             parent: 'services.detail'
           }
         })
-          .state('services.detail.runs.makerequest', {
+          .state('services.detail.run.makerequest', {
             params: {
               requestUrl: null,
               requestMethod: null
