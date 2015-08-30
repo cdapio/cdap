@@ -29,20 +29,16 @@ angular.module(PKG.name + '.feature.adapters')
     this.onLeftSideGroupItemClicked = function(group) {
       var prom;
       var templatedefer = $q.defer();
-      var savedTemplates;
       var params = { adapterType: MyPlumbService.metadata.template.type };
       switch(group.name) {
         case 'source':
           prom = myAdapterApi.fetchSources(params).$promise;
-          savedTemplates = sourceTemplates;
           break;
         case 'transform':
           prom = myAdapterApi.fetchTransforms(params).$promise;
-          savedTemplates = transformTemplates;
           break;
         case 'sink':
           prom = myAdapterApi.fetchSinks(params).$promise;
-          savedTemplates = sinkTemplates;
           break;
         case 'templates':
           prom = myAdapterTemplatesApi.list({
@@ -61,25 +57,42 @@ angular.module(PKG.name + '.feature.adapters')
                 return templatedefer.promise;
               });
       }
-      prom.then(function(res) {
-        this.plugins.items = [];
-        res.forEach(function(plugin) {
-          this.plugins.items.push(
-            angular.extend(
-              {
-                type: group.name,
-                icon: MyPlumbFactory.getIcon(plugin.name)
-              },
-              plugin
-            )
-          );
-        }.bind(this));
+      prom
+        .then(function(res) {
+          this.plugins.items = [];
+          res.forEach(function(plugin) {
+            this.plugins.items.push(
+              angular.extend(
+                {
+                  type: group.name,
+                  icon: MyPlumbFactory.getIcon(plugin.name)
+                },
+                plugin
+              )
+            );
+          }.bind(this));
+          // This request is made only first time. Subsequent requests are fetched from
+          // cache and not actual backend calls are made unless we force it.
+          return mySettings.get('pluginTemplates');
+        }.bind(this))
+        .then(
+          function success(res) {
+            if (!angular.isObject(res)) {
+              return;
+            }
 
-        if (group.name !== 'templates') {
-          this.plugins.items = this.plugins.items.concat(savedTemplates);
-        }
+            var templates = res[$state.params.namespace][MyPlumbService.metadata.template.type];
+            if (!templates || group.name === 'templates') {
+              return;
+            }
 
-      }.bind(this));
+            this.plugins.items = this.plugins.items.concat(objectToArray(templates[group.name]));
+          }.bind(this),
+          function error() {
+            console.log('ERROR: fetching plugin templates');
+          }
+        );
+
     };
 
     this.onLeftSidePanelItemClicked = function(event, item) {
