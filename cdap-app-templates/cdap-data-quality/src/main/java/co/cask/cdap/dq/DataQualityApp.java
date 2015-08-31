@@ -40,7 +40,6 @@ import co.cask.cdap.template.etl.batch.MapReduceSourceContext;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import org.apache.hadoop.io.BooleanWritable;
@@ -68,13 +67,10 @@ import javax.annotation.Nullable;
 /**
  * Data Quality Application
  */
-public class DataQualityApp extends AbstractApplication<DataQualityApp.ConfigClass> {
+public class DataQualityApp extends AbstractApplication<DataQualityApp.DataQualityConfig> {
   private static final Logger LOG = LoggerFactory.getLogger(DataQualityApp.class);
   private static final Gson GSON = new Gson();
   private static final Type TOKEN_TYPE_MAP_STRING_SET_STRING = new TypeToken<Map<String, Set<String>>>() { }.getType();
-
-  public static final int DEFAULT_WORKFLOW_SCHEDULE_MINUTES = 5;
-  public static final String DEFAULT_DATASET_NAME = "dataQuality";
 
   /**
    * Configuration Class for the application
@@ -82,51 +78,14 @@ public class DataQualityApp extends AbstractApplication<DataQualityApp.ConfigCla
    * of the fields we want to aggregate over), workflowScheduleMinutes, source, datasetName,
    * inputFormat, and schema.
    */
-  public static class ConfigClass extends Config {
+  public static class DataQualityConfig extends Config {
     private int workflowScheduleMinutes;
     private DataQualitySource source;
     private String datasetName;
     private Map<String, Set<String>> fieldAggregations;
 
-    public ConfigClass() {
-      this.workflowScheduleMinutes = DEFAULT_WORKFLOW_SCHEDULE_MINUTES;
-      // By default use a Stream BatchSource with 'logStream' as the name and 'clf' format
-      this.source = new DataQualitySource("Stream", "logStream", ImmutableMap.of(
-        "name", "logStream", "duration", DEFAULT_WORKFLOW_SCHEDULE_MINUTES + "m", "format", "clf"));
-      this.datasetName = DEFAULT_DATASET_NAME;
-      Set<String> aggSet = Sets.newHashSet("DiscreteValuesHistogram");
-      this.fieldAggregations = ImmutableMap.<String, Set<String>>builder()
-        .put("referrer", aggSet)
-        .put("status", aggSet)
-        .put("remote_login", aggSet)
-        .put("request", aggSet)
-        .put("user_agent", aggSet)
-        .put("auth_user", aggSet)
-        .put("content_length", aggSet)
-        .put("date", aggSet)
-        .put("remote_host", aggSet).build();
-    }
-
-    public ConfigClass(int workflowScheduleMinutes, DataQualitySource source,
-                       String datasetName, Map<String, Set<String>> fieldAggregations) {
-      Preconditions.checkArgument(workflowScheduleMinutes > 0, "Workflow Frequency in minutes (>0) should be provided");
-      Preconditions.checkNotNull(source, "Configuration for DataQualityApp Source is missing");
-      Preconditions.checkArgument(!Strings.isNullOrEmpty(source.getName()),
-                                  "Data Quality source name should not be null or empty");
-      Preconditions.checkArgument(!Strings.isNullOrEmpty(source.getId()),
-                                  "Data Quality source id should not be null or empty");
-      Preconditions.checkArgument(!Strings.isNullOrEmpty(datasetName),
-                                  "Output Dataset name should be not be null or empty");
-      Preconditions.checkNotNull(fieldAggregations, "Field Aggregations needs to be specified");
-      Preconditions.checkArgument(!fieldAggregations.isEmpty(), "Field Aggregations should not be empty");
-      boolean validEntry = false;
-      for (Map.Entry<String, Set<String>> entry : fieldAggregations.entrySet()) {
-        if (!Strings.isNullOrEmpty(entry.getKey()) && !entry.getValue().isEmpty()) {
-          validEntry = true;
-          break;
-        }
-      }
-      Preconditions.checkArgument(validEntry, "At least one field with one or more aggregations must be provided");
+    public DataQualityConfig(int workflowScheduleMinutes, DataQualitySource source,
+                             String datasetName, Map<String, Set<String>> fieldAggregations) {
       this.workflowScheduleMinutes = workflowScheduleMinutes;
       this.source = source;
       this.datasetName = datasetName;
@@ -136,7 +95,28 @@ public class DataQualityApp extends AbstractApplication<DataQualityApp.ConfigCla
 
   @Override
   public void configure() {
-    ConfigClass configObj = getContext().getConfig();
+    DataQualityConfig configObj = getContext().getConfig();
+    // TODO: CDAP-3552 : Support different units for workflowSchedule - hours, days etc.
+    Preconditions.checkArgument(configObj.workflowScheduleMinutes > 0,
+                                "Workflow Frequency in minutes (>0) should be provided");
+    Preconditions.checkArgument(configObj.source != null, "Configuration for DataQualityApp Source is missing");
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(configObj.source.getName()),
+                                "Data Quality source name should not be null or empty");
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(configObj.source.getId()),
+                                "Data Quality source id should not be null or empty");
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(configObj.datasetName),
+                                "Output Dataset name should be not be null or empty");
+    Preconditions.checkArgument(configObj.fieldAggregations != null, "fieldAggregations needs to be specified");
+    Preconditions.checkArgument(!configObj.fieldAggregations.isEmpty(), "fieldAggregations should not be empty");
+    boolean validEntry = false;
+    for (Map.Entry<String, Set<String>> entry : configObj.fieldAggregations.entrySet()) {
+      if (!Strings.isNullOrEmpty(entry.getKey()) && !entry.getValue().isEmpty()) {
+        validEntry = true;
+        break;
+      }
+    }
+
+    Preconditions.checkArgument(validEntry, "At least one field with one or more aggregations must be provided");
     Integer scheduleMinutes = configObj.workflowScheduleMinutes;
     addMapReduce(new FieldAggregator(configObj.source,
                                      configObj.datasetName,

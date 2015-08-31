@@ -331,6 +331,80 @@
                 </configuration>
               </execution>
               <execution>
+                <id>copy-etl-batch</id>
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <outputDirectory>${stage.opt.dir}/artifacts</outputDirectory>
+                  <resources>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-etl-batch-app/target
+                      </directory>
+                      <includes>
+                        <include>cdap-etl-batch-app-${project.version}.jar</include>
+                      </includes>
+                    </resource>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-etl-lib/target
+                      </directory>
+                      <includes>
+                        <include>cdap-etl-lib-${project.version}-batch.jar</include>
+                      </includes>
+                    </resource>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-etl-lib/target/classes
+                      </directory>
+                      <filtering>true</filtering>
+                      <includes>
+                        <include>cdap-etl-lib-batch.json</include>
+                      </includes>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
+              <execution>
+                <id>copy-etl-realtime</id>
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <outputDirectory>${stage.opt.dir}/artifacts</outputDirectory>
+                  <resources>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-etl-realtime-app/target
+                      </directory>
+                      <includes>
+                        <include>cdap-etl-realtime-app-${project.version}.jar</include>
+                      </includes>
+                    </resource>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-etl-lib/target
+                      </directory>
+                      <includes>
+                        <include>cdap-etl-lib-${project.version}-realtime.jar</include>
+                      </includes>
+                    </resource>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-etl-lib/target/classes
+                      </directory>
+                      <filtering>true</filtering>
+                      <includes>
+                        <include>cdap-etl-lib-realtime.json</include>
+                      </includes>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
+              <execution>
                 <id>copy-dq</id>
                 <phase>prepare-package</phase>
                 <goals>
@@ -341,10 +415,27 @@
                   <resources>
                     <resource>
                       <directory>
-                        ${project.parent.basedir}/cdap-app-templates/cdap-dq/target
+                        ${project.parent.basedir}/cdap-app-templates/cdap-data-quality/target
                       </directory>
                       <includes>
-                        <include>cdap-dq-${project.version}.jar</include>
+                        <include>cdap-data-quality-${project.version}.jar</include>
+                      </includes>
+                    </resource>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-etl-lib/target
+                      </directory>
+                      <includes>
+                        <include>cdap-etl-lib-${project.version}-batch-source.jar</include>
+                      </includes>
+                    </resource>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-etl-lib/target/classes
+                      </directory>
+                      <filtering>true</filtering>
+                      <includes>
+                        <include>cdap-etl-lib-batch-source.json</include>
                       </includes>
                     </resource>
                   </resources>
@@ -478,6 +569,21 @@
             <artifactId>maven-antrun-plugin</artifactId>
             <version>1.7</version>
             <executions>
+              <!-- Rename Plugin Artifact JSON Files -->
+              <execution>
+                <id>rename-plugin-json</id>
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+                <configuration>
+                  <target>
+                    <move file="${stage.opt.dir}/artifacts/cdap-etl-lib-batch.json" tofile="${stage.opt.dir}/artifacts/cdap-etl-lib-${project.version}-batch.json" />
+                    <move file="${stage.opt.dir}/artifacts/cdap-etl-lib-realtime.json" tofile="${stage.opt.dir}/artifacts/cdap-etl-lib-${project.version}-realtime.json" />
+                    <move file="${stage.opt.dir}/artifacts/cdap-etl-lib-batch-source.json" tofile="${stage.opt.dir}/artifacts/cdap-etl-lib-${project.version}-batch-source.json" />
+                  </target>
+                </configuration>
+              </execution>
               <!-- Rename CLI jar and make CLI scripts executable -->
               <execution>
                 <id>copy-cli-bash</id>

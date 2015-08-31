@@ -273,7 +273,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
                                 @QueryParam("isSystem") @DefaultValue("false") boolean isSystem)
     throws NamespaceNotFoundException, BadRequestException {
 
-    Id.Namespace namespace = validateAndGetNamespace(namespaceId);
+    Id.Namespace namespace = validateAndGetNamespace(namespaceId, isSystem);
     Id.Artifact artifactId = validateAndGetArtifactId(namespace, artifactName, artifactVersion);
 
     try {
