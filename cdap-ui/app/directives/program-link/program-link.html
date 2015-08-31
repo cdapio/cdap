@@ -11,7 +11,7 @@
     ui-sref="services.detail({ namespace: namespace, appId: app, programId: program })">
   {{ ::program }}</a>
 <a ng-class="{ 'text-bold': bold }" ng-if="type === 'Spark'"
-    ui-sref="spark.detail.runs({ namespace: namespace, appId: app, programId: program })">
+    ui-sref="spark.detail({ namespace: namespace, appId: app, programId: program })">
   {{ ::program }}</a>
 <a ng-class="{ 'text-bold': bold }" ng-if="type === 'Worker'"
     ui-sref="worker.detail.runs({ namespace: namespace, appId: app, programId: program })">
