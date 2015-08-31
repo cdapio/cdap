@@ -53,6 +53,7 @@ import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.AdapterStatus;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
@@ -738,5 +739,31 @@ public class AdapterService extends AbstractIdleService {
     }
 
     return new ApplicationTemplateInfo(jarFile, spec.getName(), spec.getDescription(), programType, fileHash);
+  }
+
+  /**
+   * Upgrades to cdap 3.2, which has removed adapters and application templates. Deletes all adapters and
+   * adapter related schedules.
+   */
+  public void upgrade() throws SchedulerException {
+    for (NamespaceMeta namespaceMeta : store.listNamespaces()) {
+      Id.Namespace namespace = Id.Namespace.from(namespaceMeta.getName());
+      for (AdapterDefinition adapterDefinition : getAdapters(namespace)) {
+
+        Id.Program workflowId = adapterDefinition.getProgram();
+        // if its a batch adapter, delete the schdule
+        if (adapterDefinition.getScheduleSpecification() != null) {
+          String scheduleName = adapterDefinition.getScheduleSpecification().getSchedule().getName();
+          try {
+            scheduler.deleteSchedule(workflowId, SchedulableProgramType.WORKFLOW, scheduleName);
+            store.deleteSchedule(workflowId, scheduleName);
+          } catch (NotFoundException e) {
+            // ok if it's not found, means we're deleting a stopped adapter
+          }
+        }
+
+        store.removeAdapter(namespace, adapterDefinition.getName());
+      }
+    }
   }
 }

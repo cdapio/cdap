@@ -22,6 +22,7 @@ import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.KafkaClientModule;
@@ -45,6 +46,9 @@ import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.explore.guice.ExploreClientModule;
+import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
+import co.cask.cdap.internal.app.runtime.schedule.LocalSchedulerService;
+import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.cdap.internal.app.runtime.schedule.store.ScheduleStoreTableUtil;
 import co.cask.cdap.internal.app.services.ApplicationLifecycleService;
 import co.cask.cdap.internal.app.store.DefaultStore;
@@ -52,11 +56,12 @@ import co.cask.cdap.logging.save.LogSaverTableUtil;
 import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
 import co.cask.cdap.metrics.store.DefaultMetricStore;
 import co.cask.cdap.metrics.store.MetricDatasetFactory;
+import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
+import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.tephra.TransactionSystemClient;
 import co.cask.tephra.distributed.TransactionService;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -67,6 +72,7 @@ import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
+import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.twill.zookeeper.ZKClientService;
@@ -89,6 +95,8 @@ public class UpgradeTool {
   private final TransactionService txService;
   private final ZKClientService zkClientService;
   private final MDSDatasetsRegistry mdsDatasetsRegistry;
+  private final AdapterService adapterService;
+  private final SchedulerService schedulerService;
 
   private final DatasetFramework dsFramework;
 
@@ -101,8 +109,11 @@ public class UpgradeTool {
               "  1. User and System Datasets (upgrades the coprocessor jars)\n" +
               "  2. UsageRegistry Dataset Type\n" +
               "  3. Application Specifications\n" +
+              "  4. Removes all Adapters\n" +
+              "  5. Application Specifications\n" +
               "      - Adds artifacts for existing applications\n" +
               "      - Updates application metadata to include newly added artifact\n" +
+              "      - Deletes all ApplicationTemplates\n" +
               "  Note: Once you run the upgrade tool you cannot rollback to the previous version."),
     HELP("Show this help.");
 
@@ -119,6 +130,7 @@ public class UpgradeTool {
 
   public UpgradeTool() throws Exception {
     this.cConf = CConfiguration.create();
+    this.cConf.setBoolean(Constants.Scheduler.SCHEDULERS_LAZY_START, true);
     this.hConf = HBaseConfiguration.create();
     this.injector = init();
     this.txService = injector.getInstance(TransactionService.class);
@@ -126,6 +138,8 @@ public class UpgradeTool {
     this.dsFramework = injector.getInstance(DatasetFramework.class);
     this.mdsDatasetsRegistry = injector.getInstance(Key.get(MDSDatasetsRegistry.class,
                                                             Names.named("mdsDatasetsRegistry")));
+    this.adapterService = injector.getInstance(AdapterService.class);
+    this.schedulerService = injector.getInstance(SchedulerService.class);
 
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
@@ -146,14 +160,31 @@ public class UpgradeTool {
       new ZKClientModule(),
       new DiscoveryRuntimeModule().getDistributedModules(),
       new StreamAdminModules().getDistributedModules(),
-      new NotificationFeedClientModule(),
       new TwillModule(),
       new ExploreClientModule(),
-      new AppFabricServiceRuntimeModule().getDistributedModules(),
+      // overriding binding of SchedulerService to DistributedSchedulerService because
+      // the distributed implementation uses RetryOnStartFailureService, which is a service that can
+      // be in the running state even if the underlying service is not started. So we could start
+      // our scheduler, and the underlying time scheduler might not be started by the time it is used
+      // scheduler is only used by AdapterService.upgrade() and ApplicationLifecycleService.upgrade()
+      // when deleting adapters and etl applications.  This override can be removed once upgrade for those
+      // don't need to delete schedules
+      Modules
+        .override(new AppFabricServiceRuntimeModule().getDistributedModules())
+        .with(new AbstractModule() {
+          @Override
+          protected void configure() {
+            bind(SchedulerService.class).to(LocalSchedulerService.class).in(Scopes.SINGLETON);
+            // don't need real notifications for upgrade. This is required otherwise the
+            // StreamSizeScheduler in the AbstractSchedulerService won't start
+            bind(NotificationFeedManager.class).to(NoOpNotificationFeedManager.class).in(Scopes.SINGLETON);
+          }
+        }),
       new ProgramRunnerRuntimeModule().getDistributedModules(),
       new ServiceStoreModules().getDistributedModules(),
       new SystemDatasetRuntimeModule().getDistributedModules(),
-      new NotificationServiceRuntimeModule().getDistributedModules(),
+      // don't need real notifications for upgrade, so use the in-memory implementations
+      new NotificationServiceRuntimeModule().getInMemoryModules(),
       new KafkaClientModule(),
       new AbstractModule() {
         @Override
@@ -211,6 +242,7 @@ public class UpgradeTool {
     txService.startAndWait();
     initializeDSFramework(cConf, dsFramework);
     mdsDatasetsRegistry.startUp();
+    schedulerService.startAndWait();
   }
 
   /**
@@ -218,6 +250,7 @@ public class UpgradeTool {
    */
   private void stop() {
     try {
+      schedulerService.stopAndWait();
       txService.stopAndWait();
       zkClientService.stopAndWait();
       mdsDatasetsRegistry.shutDown();
@@ -322,6 +355,9 @@ public class UpgradeTool {
     UsageRegistry usageRegistry = injector.getInstance(UsageRegistry.class);
     usageRegistry.upgrade(injector.getInstance(Key.get(DatasetInstanceManager.class,
                                                        Names.named("datasetInstanceManager"))));
+
+    LOG.info("Removing Adapters ...");
+    adapterService.upgrade();
 
     LOG.info("Upgrading Apps ...");
     ApplicationLifecycleService applicationLifecycleService = injector.getInstance(ApplicationLifecycleService.class);

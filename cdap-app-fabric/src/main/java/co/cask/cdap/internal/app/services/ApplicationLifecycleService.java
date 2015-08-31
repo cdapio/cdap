@@ -63,7 +63,6 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProgramTypes;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Iterables;
@@ -329,48 +328,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       throw new NotFoundException(appId);
     }
 
-    //Delete the schedules
-    for (WorkflowSpecification workflowSpec : spec.getWorkflows().values()) {
-      Id.Program workflowProgramId = Id.Program.from(appId, ProgramType.WORKFLOW, workflowSpec.getName());
-      scheduler.deleteSchedules(workflowProgramId, SchedulableProgramType.WORKFLOW);
-    }
-
-    deleteMetrics(appId.getNamespaceId(), appId.getId());
-
-    //Delete all preferences of the application and of all its programs
-    deletePreferences(appId);
-
-    // Delete all streams and queues state of each flow
-    // TODO: This should be unified with the DeletedProgramHandlerStage
-    for (FlowSpecification flowSpecification : spec.getFlows().values()) {
-      Id.Program flowProgramId = Id.Program.from(appId, ProgramType.FLOW, flowSpecification.getName());
-
-      // Collects stream name to all group ids consuming that stream
-      Multimap<String, Long> streamGroups = HashMultimap.create();
-      for (FlowletConnection connection : flowSpecification.getConnections()) {
-        if (connection.getSourceType() == FlowletConnection.Type.STREAM) {
-          long groupId = FlowUtils.generateConsumerGroupId(flowProgramId, connection.getTargetName());
-          streamGroups.put(connection.getSourceName(), groupId);
-        }
-      }
-      // Remove all process states and group states for each stream
-      String namespace = String.format("%s.%s", flowProgramId.getApplicationId(), flowProgramId.getId());
-      for (Map.Entry<String, Collection<Long>> entry : streamGroups.asMap().entrySet()) {
-        streamConsumerFactory.dropAll(Id.Stream.from(appId.getNamespaceId(), entry.getKey()),
-                                      namespace, entry.getValue());
-      }
-
-      queueAdmin.dropAllForFlow(Id.Flow.from(appId, flowSpecification.getName()));
-    }
-    deleteProgramLocations(appId);
-
-    store.removeApplication(appId);
-
-    try {
-      usageRegistry.unregister(appId);
-    } catch (Exception e) {
-      LOG.warn("Failed to unregister usage of app: {}", appId, e);
-    }
+    deleteApp(appId, spec);
   }
 
   /**
@@ -396,13 +354,19 @@ public class ApplicationLifecycleService extends AbstractIdleService {
           continue;
         }
 
+        // if this was etlbatch or etlrealtime template
+        if ("ETLBatch".equals(appSpec.getName()) || "ETLRealtime".equals(appSpec.getName())) {
+          deleteApp(appId, appSpec);
+          continue;
+        }
+
         Location appJarLocation;
         try {
           appJarLocation = findAppJarLocation(appId);
         } catch (FileNotFoundException e) {
           // nothing we can do... skip and log a message
-          LOG.error("Unable to find the application jar for app '%s' in namespace '%s'. " +
-            "Please re-deploy the app manually after upgrade.", e);
+          LOG.error("Unable to find the application jar for app '{}' in namespace '{}'. " +
+            "Please re-deploy the app manually after upgrade.", appId.getId(), appId.getNamespaceId(), e);
           continue;
         }
 
@@ -622,5 +586,51 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     Manager<AppDeploymentInfo, ApplicationWithPrograms> manager = managerFactory.create(programTerminator);
     // TODO: (CDAP-3258) Manager needs MUCH better error handling.
     return manager.deploy(namespace, appName, deploymentInfo).get();
+  }
+
+  // deletes without performs checks that no programs are running
+  private void deleteApp(Id.Application appId, ApplicationSpecification spec) throws Exception {
+    //Delete the schedules
+    for (WorkflowSpecification workflowSpec : spec.getWorkflows().values()) {
+      Id.Program workflowProgramId = Id.Program.from(appId, ProgramType.WORKFLOW, workflowSpec.getName());
+      scheduler.deleteSchedules(workflowProgramId, SchedulableProgramType.WORKFLOW);
+    }
+
+    deleteMetrics(appId.getNamespaceId(), appId.getId());
+
+    //Delete all preferences of the application and of all its programs
+    deletePreferences(appId);
+
+    // Delete all streams and queues state of each flow
+    // TODO: This should be unified with the DeletedProgramHandlerStage
+    for (FlowSpecification flowSpecification : spec.getFlows().values()) {
+      Id.Program flowProgramId = Id.Program.from(appId, ProgramType.FLOW, flowSpecification.getName());
+
+      // Collects stream name to all group ids consuming that stream
+      Multimap<String, Long> streamGroups = HashMultimap.create();
+      for (FlowletConnection connection : flowSpecification.getConnections()) {
+        if (connection.getSourceType() == FlowletConnection.Type.STREAM) {
+          long groupId = FlowUtils.generateConsumerGroupId(flowProgramId, connection.getTargetName());
+          streamGroups.put(connection.getSourceName(), groupId);
+        }
+      }
+      // Remove all process states and group states for each stream
+      String namespace = String.format("%s.%s", flowProgramId.getApplicationId(), flowProgramId.getId());
+      for (Map.Entry<String, Collection<Long>> entry : streamGroups.asMap().entrySet()) {
+        streamConsumerFactory.dropAll(Id.Stream.from(appId.getNamespaceId(), entry.getKey()),
+          namespace, entry.getValue());
+      }
+
+      queueAdmin.dropAllForFlow(Id.Flow.from(appId, flowSpecification.getName()));
+    }
+    deleteProgramLocations(appId);
+
+    store.removeApplication(appId);
+
+    try {
+      usageRegistry.unregister(appId);
+    } catch (Exception e) {
+      LOG.warn("Failed to unregister usage of app: {}", appId, e);
+    }
   }
 }

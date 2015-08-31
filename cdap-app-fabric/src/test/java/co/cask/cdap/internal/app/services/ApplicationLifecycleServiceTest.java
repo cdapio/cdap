@@ -21,16 +21,33 @@ import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.artifact.ArtifactVersion;
+import co.cask.cdap.api.artifact.Plugin;
+import co.cask.cdap.api.data.stream.StreamSpecification;
+import co.cask.cdap.api.flow.FlowSpecification;
+import co.cask.cdap.api.mapreduce.MapReduceSpecification;
+import co.cask.cdap.api.schedule.SchedulableProgramType;
+import co.cask.cdap.api.schedule.ScheduleSpecification;
+import co.cask.cdap.api.service.ServiceSpecification;
+import co.cask.cdap.api.spark.SparkSpecification;
+import co.cask.cdap.api.worker.WorkerSpecification;
+import co.cask.cdap.api.workflow.ScheduleProgramInfo;
+import co.cask.cdap.api.workflow.WorkflowActionNode;
+import co.cask.cdap.api.workflow.WorkflowNode;
+import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.DefaultAppConfigurer;
 import co.cask.cdap.app.DefaultApplicationContext;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.internal.app.DefaultApplicationSpecification;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.internal.app.store.DefaultStore;
+import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.Id;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Files;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -39,6 +56,9 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
+import java.util.Collections;
+import java.util.Map;
+import java.util.UUID;
 import java.util.jar.Manifest;
 
 /**
@@ -175,5 +195,71 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
       store.removeApplication(appId);
       artifactRepository.clear(Id.Namespace.DEFAULT);
     }
+  }
+
+  @Test
+  public void testTemplatesDeleted() throws Exception {
+    Location dummyLocation = locationFactory.create(UUID.randomUUID().toString());
+    dummyLocation.mkdirs();
+    // manually add app spec for etl batch and realtime
+    Map<String, WorkflowSpecification> workflowSpecs = ImmutableMap.of(
+      "ETLWorkflow", new WorkflowSpecification(
+        "co.cask.cdap.template.etl.batch.ETLWorkflow", "ETLWorkflow", "", Collections.<String, String>emptyMap(),
+        ImmutableList.<WorkflowNode>of(
+          new WorkflowActionNode("ETLMapReduce",
+                                 new ScheduleProgramInfo(SchedulableProgramType.MAPREDUCE, "ETLMapReduce")))
+      ));
+    Map<String, MapReduceSpecification> mrSpecs = ImmutableMap.of(
+      "ETLMapReduce", new MapReduceSpecification(
+        "co.cask.cdap.template.etl.batch.ETLMapReduce", "ETLMapReduce", "", null, null,
+        Collections.<String>emptySet(), Collections.<String, String>emptyMap(), null, null)
+    );
+    Map<String, WorkerSpecification> workerSpecs = ImmutableMap.of(
+      "ETLWorker", new WorkerSpecification(
+        "co.cask.cdap.template.etl.realtime.ETLWorker", "ETLWorker", "", Collections.<String, String>emptyMap(),
+        Collections.<String>emptySet(), null, 1)
+    );
+    ApplicationSpecification etlBatchSpec = new DefaultApplicationSpecification(
+      "ETLBatch", "", "",
+      null,
+      Collections.<String, StreamSpecification>emptyMap(),
+      Collections.<String, String>emptyMap(),
+      Collections.<String, DatasetCreationSpec>emptyMap(),
+      Collections.<String, FlowSpecification>emptyMap(),
+      mrSpecs,
+      Collections.<String, SparkSpecification>emptyMap(),
+      workflowSpecs,
+      Collections.<String, ServiceSpecification>emptyMap(),
+      Collections.<String, ScheduleSpecification>emptyMap(),
+      Collections.<String, WorkerSpecification>emptyMap(),
+      Collections.<String, Plugin>emptyMap()
+    );
+    ApplicationSpecification etlRealtimeSpec = new DefaultApplicationSpecification(
+      "ETLRealtime", "", "",
+      null,
+      Collections.<String, StreamSpecification>emptyMap(),
+      Collections.<String, String>emptyMap(),
+      Collections.<String, DatasetCreationSpec>emptyMap(),
+      Collections.<String, FlowSpecification>emptyMap(),
+      Collections.<String, MapReduceSpecification>emptyMap(),
+      Collections.<String, SparkSpecification>emptyMap(),
+      Collections.<String, WorkflowSpecification>emptyMap(),
+      Collections.<String, ServiceSpecification>emptyMap(),
+      Collections.<String, ScheduleSpecification>emptyMap(),
+      workerSpecs,
+      Collections.<String, Plugin>emptyMap()
+    );
+    Id.Application etlBatchId = Id.Application.from(Id.Namespace.DEFAULT, "ETLBatch");
+    Id.Application etlRealtimeId = Id.Application.from(Id.Namespace.DEFAULT, "ETLRealtime");
+
+    store.addApplication(etlBatchId, etlBatchSpec, dummyLocation);
+    store.addApplication(etlRealtimeId, etlRealtimeSpec, dummyLocation);
+
+    // run upgrade
+    applicationLifecycleService.upgrade(false);
+
+    // make sure apps are gone
+    Assert.assertNull(store.getApplication(etlBatchId));
+    Assert.assertNull(store.getApplication(etlRealtimeId));
   }
 }
