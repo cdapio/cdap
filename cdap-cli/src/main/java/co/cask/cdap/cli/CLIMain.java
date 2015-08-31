@@ -288,7 +288,8 @@ public class CLIMain {
         }
 
         CLIConnectionConfig connectionConfig = new CLIConnectionConfig(
-          cliConfig.getClientConfig().getConnectionConfig(), Id.Namespace.DEFAULT, null);
+          cliConfig.getClientConfig().getConnectionConfig(),
+          cliConfig.getCurrentNamespace(), null);
         cliMain.updateCLIPrompt(connectionConfig);
 
         if (hasScriptFile) {
