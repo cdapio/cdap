@@ -39,17 +39,6 @@ angular.module(PKG.name + '.feature.flows')
       return '/metrics/query?metric=system.collect.events&aggregate=true&' + MyMetricsQueryHelper.tagsToParams(streamTags);
     }
 
-    function generateFlowletMetricsPath(flowletName) {
-      var flowletTags = {
-        namespace: $state.params.namespace,
-        app: $state.params.appId,
-        flow: $state.params.programId,
-        run: $scope.RunsController.runs.selected.runid,
-        flowlet: flowletName
-      };
-      return '/metrics/query?metric=&aggregate=true&' + MyMetricsQueryHelper.tagsToParams(flowletTags);
-    }
-
     function pollMetrics() {
       var nodes = this.data.nodes;
       // Requesting Metrics data
