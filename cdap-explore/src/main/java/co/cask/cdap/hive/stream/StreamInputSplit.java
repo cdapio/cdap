@@ -27,10 +27,18 @@ import java.io.IOException;
 import javax.annotation.Nullable;
 
 /**
- * Represents a mapred InputSplit for stream.
+ * Represents a mapred InputSplit for stream. This class must extends from {@link FileSplit}, since Hive expected so.
+ * For Stream, since we have all the knowledge in the storage handler about the stream
+ * location (and is dynamic due to advancement in stream generation id due to truncation), there is no point to
+ * use LOCATION in the table. However, for external table in Hive, if LOCATION was not set during table creation
+ * time, Hive will assume the location to be some internally managed path and will fail the query job if
+ * {@link #getPath()} doesn't return a Path that is located inside the Hive internal path. Because of this
+ * behavior, the StreamInputSplit {@link #getPath()} returns a dummy path which always match with what Hive wanted, but
+ * the {@link HiveStreamInputFormat} never use it, but using {@link #getEventPath()} instead.
  */
 public final class StreamInputSplit extends FileSplit implements Writable {
 
+  private Path eventPath;
   private Path indexPath;
   private long startTime;
   private long endTime;
@@ -45,7 +53,8 @@ public final class StreamInputSplit extends FileSplit implements Writable {
   /**
    * Constructs a split.
    *
-   * @param path Path for the stream event file.
+   * @param path the hive file path. Never used by {@link HiveStreamInputFormat}; it is just to satisfy hive.
+   * @param eventPath Path for the stream event file.
    * @param indexPath Path for the stream index file.
    * @param startTime Event start timestamp in milliseconds (inclusive).
    * @param endTime Event end timestamp in milliseconds (exclusive).
@@ -53,17 +62,32 @@ public final class StreamInputSplit extends FileSplit implements Writable {
    * @param length Size of this split.
    * @param locations List of hosts containing this split.
    */
-  StreamInputSplit(Path path, Path indexPath, long startTime, long endTime,
+  StreamInputSplit(Path path, Path eventPath, @Nullable Path indexPath, long startTime, long endTime,
                    long start, long length, @Nullable String[] locations) {
     super(path, start, length, locations);
+    this.eventPath = eventPath;
     this.indexPath = indexPath;
     this.startTime = startTime;
     this.endTime = endTime;
   }
 
   /**
+   * @deprecated Use {@link #getEventPath()} instead.
+   */
+  @Deprecated
+  @Override
+  public Path getPath() {
+    return super.getPath();
+  }
+
+  public Path getEventPath() {
+    return eventPath;
+  }
+
+  /**
    * Returns the path for index file.
    */
+  @Nullable
   public Path getIndexPath() {
     return indexPath;
   }
@@ -85,6 +109,7 @@ public final class StreamInputSplit extends FileSplit implements Writable {
   @Override
   public void write(DataOutput out) throws IOException {
     super.write(out);
+    WritableUtils.writeString(out, eventPath.toString());
     if (indexPath == null) {
       out.writeBoolean(false);
     } else {
@@ -98,6 +123,7 @@ public final class StreamInputSplit extends FileSplit implements Writable {
   @Override
   public void readFields(DataInput in) throws IOException {
     super.readFields(in);
+    eventPath = new Path(WritableUtils.readString(in));
     boolean hasIndex = in.readBoolean();
     if (hasIndex) {
       indexPath = new Path(WritableUtils.readString(in));

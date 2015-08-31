@@ -40,7 +40,6 @@ import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
-import org.apache.twill.filesystem.Location;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -89,11 +88,6 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     StreamConfig streamConfig;
     try {
       streamConfig = streamAdmin.getConfig(streamId);
-      Location streamLocation = streamConfig.getLocation();
-      if (streamLocation == null) {
-        responder.sendString(HttpResponseStatus.NOT_FOUND, "Could not find location of stream " + streamName);
-        return;
-      }
     } catch (IOException e) {
       LOG.info("Could not find stream {} to enable explore on.", streamName, e);
       responder.sendString(HttpResponseStatus.NOT_FOUND, "Could not find stream " + streamName);
@@ -101,7 +95,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     }
 
     try {
-      QueryHandle handle = exploreTableManager.enableStream(streamId, streamConfig);
+      QueryHandle handle = exploreTableManager.enableStream(streamId, streamConfig.getFormat());
       JsonObject json = new JsonObject();
       json.addProperty("handle", handle.getHandle());
       responder.sendJson(HttpResponseStatus.OK, json);

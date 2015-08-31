@@ -42,6 +42,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 import javax.annotation.concurrent.NotThreadSafe;
 
 /**
@@ -86,9 +87,9 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
    * @param startTime Timestamp in milliseconds for the event time to start reading with.
    * @return A new instance of {@link StreamDataFileReader}.
    */
-  public static StreamDataFileReader createByStartTime(InputSupplier<? extends SeekableInputStream> eventInputSupplier,
-                                                       InputSupplier<? extends InputStream> indexInputSupplier,
-                                                       long startTime) {
+  public static StreamDataFileReader createByStartTime(
+    InputSupplier<? extends SeekableInputStream> eventInputSupplier,
+    @Nullable InputSupplier<? extends InputStream> indexInputSupplier, long startTime) {
     return new StreamDataFileReader(eventInputSupplier, indexInputSupplier, startTime, 0L);
   }
 
@@ -102,13 +103,13 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
    * @return A new instance of {@link StreamDataFileReader}.
    */
   public static StreamDataFileReader createWithOffset(InputSupplier<? extends SeekableInputStream> eventInputSupplier,
-                                                      InputSupplier<? extends InputStream> indexInputSupplier,
+                                                      @Nullable InputSupplier<? extends InputStream> indexInputSupplier,
                                                       long offset) {
     return new StreamDataFileReader(eventInputSupplier, indexInputSupplier, 0L, offset);
   }
 
   private StreamDataFileReader(InputSupplier<? extends SeekableInputStream> eventInputSupplier,
-                               InputSupplier<? extends InputStream> indexInputSupplier,
+                               @Nullable InputSupplier<? extends InputStream> indexInputSupplier,
                                long startTime, long offset) {
     this.eventInputSupplier = eventInputSupplier;
     this.indexInputSupplier = indexInputSupplier;

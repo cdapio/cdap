@@ -115,8 +115,8 @@ final class StreamRecordReader implements RecordReader<Void, ObjectWritable> {
    */
   private StreamDataFileReader createReader(FileSystem fs, StreamInputSplit inputSplit) throws IOException {
     StreamDataFileReader reader = StreamDataFileReader.createWithOffset(
-      Locations.newInputSupplier(fs, inputSplit.getPath()),
-      Locations.newInputSupplier(fs, inputSplit.getIndexPath()),
+      Locations.newInputSupplier(fs, inputSplit.getEventPath()),
+      inputSplit.getIndexPath() == null ? null : Locations.newInputSupplier(fs, inputSplit.getIndexPath()),
       inputSplit.getStart());
     try {
       reader.initialize();
