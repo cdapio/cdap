@@ -781,7 +781,6 @@ public final class Constants {
   public static final String CFG_DATA_LEVELDB_CACHESIZE = "data.local.storage.cachesize";
   public static final String CFG_DATA_LEVELDB_FSYNC = "data.local.storage.fsync";
 
-
   /**
    * Defaults for Data Fabric.
    */
@@ -792,28 +791,10 @@ public final class Constants {
   public static final boolean DEFAULT_DATA_LEVELDB_FSYNC = true;
 
   /**
-   * Configuration for Metadata service.
-   */
-  public static final String CFG_RUN_HISTORY_KEEP_DAYS = "metadata.program.run.history.keepdays";
-  public static final int DEFAULT_RUN_HISTORY_KEEP_DAYS = 30;
-
-  /**
    * Config for Log Collection.
    */
   public static final String CFG_LOG_COLLECTION_ROOT = "log.collection.root";
   public static final String DEFAULT_LOG_COLLECTION_ROOT = "data/logs";
-  public static final String CFG_LOG_COLLECTION_PORT = "log.collection.bind.port";
-  public static final int DEFAULT_LOG_COLLECTION_PORT = 12157;
-  public static final String CFG_LOG_COLLECTION_THREADS = "log.collection.threads";
-  public static final int DEFAULT_LOG_COLLECTION_THREADS = 10;
-  public static final String CFG_LOG_COLLECTION_SERVER_ADDRESS = "log.collection.bind.address";
-  public static final String DEFAULT_LOG_COLLECTION_SERVER_ADDRESS = "localhost";
-
-  /**
-   * Constants related to Passport.
-   */
-  public static final String CFG_APPFABRIC_ENVIRONMENT = "appfabric.environment";
-  public static final String DEFAULT_APPFABRIC_ENVIRONMENT = "devsuite";
 
   /**
    * Used for upgrade and backwards compatability
