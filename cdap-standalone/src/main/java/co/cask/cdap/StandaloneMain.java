@@ -47,6 +47,7 @@ import co.cask.cdap.gateway.router.RouterModules;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
+import co.cask.cdap.metadata.service.MetadataService;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.metrics.query.MetricsQueryService;
@@ -78,7 +79,6 @@ public class StandaloneMain {
 
   // A special key in the CConfiguration to disable UI. It's mainly used for unit-tests that start Standalone.
   public static final String DISABLE_UI = "standalone.disable.ui";
-
   private static final Logger LOG = LoggerFactory.getLogger(StandaloneMain.class);
 
   private final UserInterfaceService userInterfaceService;
@@ -88,18 +88,17 @@ public class StandaloneMain {
   private final ServiceStore serviceStore;
   private final StreamService streamService;
   private final MetricsCollectionService metricsCollectionService;
-
   private final LogAppenderInitializer logAppenderInitializer;
   private final InMemoryTransactionService txService;
   private final boolean securityEnabled;
   private final boolean sslEnabled;
   private final CConfiguration configuration;
+  private final DatasetService datasetService;
+  private final ExploreClient exploreClient;
+  private final MetadataService metadataService;
 
   private ExternalAuthenticationServer externalAuthenticationServer;
-  private final DatasetService datasetService;
-
   private ExploreExecutorService exploreExecutorService;
-  private final ExploreClient exploreClient;
 
   private StandaloneMain(List<Module> modules, CConfiguration configuration) {
     this.configuration = configuration;
@@ -115,6 +114,7 @@ public class StandaloneMain {
     datasetService = injector.getInstance(DatasetService.class);
     serviceStore = injector.getInstance(ServiceStore.class);
     streamService = injector.getInstance(StreamService.class);
+    metadataService = injector.getInstance(MetadataService.class);
 
     if (configuration.getBoolean(DISABLE_UI, false)) {
       userInterfaceService = null;
@@ -166,6 +166,7 @@ public class StandaloneMain {
     datasetService.startAndWait();
     serviceStore.startAndWait();
     streamService.startAndWait();
+    metadataService.startAndWait();
 
     // It is recommended to initialize log appender after datasetService is started,
     // since log appender instantiates a dataset.
@@ -224,6 +225,7 @@ public class StandaloneMain {
       datasetService.stopAndWait();
       metricsQueryService.stopAndWait();
       txService.stopAndWait();
+      metadataService.stopAndWait();
 
       if (securityEnabled) {
         // auth service is on the side anyway
