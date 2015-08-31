@@ -60,7 +60,7 @@ angular.module(PKG.name + '.feature.flows')
    this.openHistory = function() {
      this.$bootstrapModal.open({
        size: 'lg',
-       template: '<my-program-history data-runs="RunsController.runs" data-type="FLOWS"></my-program-history>',
+       template: '<my-program-history data-runs="runs" data-type="FLOWS"></my-program-history>',
        controller: ['runs', '$scope', function(runs, $scope) {
          $scope.runs = runs;
        }],
