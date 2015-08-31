@@ -186,13 +186,13 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
   @Test
   public void testAppConfigWithNull() throws Exception {
-    testAppConfig(deployApplication(ConfigTestApp.class), null);
+    testAppConfig(ConfigTestApp.NAME, deployApplication(ConfigTestApp.class), null);
   }
 
   @Test
   public void testAppConfig() throws Exception {
     ConfigTestApp.ConfigClass conf = new ConfigTestApp.ConfigClass("testStream", "testDataset");
-    testAppConfig(deployApplication(ConfigTestApp.class, conf), conf);
+    testAppConfig(ConfigTestApp.NAME, deployApplication(ConfigTestApp.class, conf), conf);
   }
 
   @Test
@@ -242,10 +242,11 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
       new ConfigTestApp.ConfigClass("testStream", "testDataset")
     );
     ApplicationManager appManager = deployApplication(appId, createRequest);
-    testAppConfig(appManager, createRequest.getConfig());
+    testAppConfig(appId.getId(), appManager, createRequest.getConfig());
   }
 
-  private void testAppConfig(ApplicationManager appManager, ConfigTestApp.ConfigClass conf) throws Exception {
+  private void testAppConfig(String appName, ApplicationManager appManager,
+                             ConfigTestApp.ConfigClass conf) throws Exception {
     String streamName = conf == null ? ConfigTestApp.DEFAULT_STREAM : conf.getStreamName();
     String datasetName = conf == null ? ConfigTestApp.DEFAULT_TABLE : conf.getTableName();
 
@@ -258,8 +259,8 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     flowManager.stop();
     DataSetManager<KeyValueTable> dsManager = getDataset(datasetName);
     KeyValueTable table = dsManager.get();
-    Assert.assertEquals("abcd", Bytes.toString(table.read("abcd")));
-    Assert.assertEquals("xyz", Bytes.toString(table.read("xyz")));
+    Assert.assertEquals("abcd", Bytes.toString(table.read(appName + ".abcd")));
+    Assert.assertEquals("xyz", Bytes.toString(table.read(appName + ".xyz")));
   }
 
   @Category(SlowTests.class)
