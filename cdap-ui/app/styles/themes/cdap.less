@@ -81,6 +81,9 @@ body.theme-cdap {
         line-height: 15px;
         vertical-align: middle;
       }
+      + p {
+        margin-bottom: 0;
+      }
       [class*="icon-"] {
         font-size: 23px;
       }
@@ -103,6 +106,7 @@ body.theme-cdap {
       color: @program-text;
     }
     div.program-tags {
+      margin-top: 10px;
       a.btn {
         .cask-btn(@background: @panel-default-border, @border: 1px solid gray, @border-radius: 16px, @color: gray, @font-size: 12px, @padding: 5px 15px);
         .transition(all 0.2s ease);
@@ -153,6 +157,9 @@ body.theme-cdap {
           border: 1px solid #dfe2e9;
           color: @btn-default-color;
         }
+        &[disabled] {
+          border-right-color: #b5bccc;
+        }
       }
       > .btn-group {
         margin-left: -5px;
@@ -175,21 +182,36 @@ body.theme-cdap {
         flex-wrap: wrap;
         align-items: center;
         justify-content: flex-start;
+        @media (min-width: @screen-md-min) {
+          border-right: 1px solid @table-border-color;
+        }
       }
       // Run ID dropdown
       .dropdown {
         border-right: 1px solid @table-border-color;
         border-left: 1px solid @table-border-color;
+        width: 335px;
         @media (max-width: @screen-sm-max) {
           border-top: 1px solid @table-border-color;
         }
         height: 60px;
         .order(1);
         span {
+          &.fa-circle, &.fa-caret-down {
+            line-height: 48px;
+            vertical-align: top;
+          }
           &.runid-text {
             padding: 0 15px;
+            vertical-align: middle;
             span {
               display: block;
+              &:first-child {
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                width: 255px;
+              }
               &:last-child {
                 color: @program-text;
               }
@@ -206,26 +228,29 @@ body.theme-cdap {
           > span {
             display: table-cell;
             font-weight: bold;
-            vertical-align: middle;
+
           }
         }
         .dropdown-menu {
           width: 100%;
-          li a {
-            background-color: @table-bg;
-            color: @btn-default-color;
-            font-weight: bold;
-            padding-left: 15px;
-            display: table;
-            white-space: nowrap;
-            width: 100%;
-            &:hover, &:focus {
-              background-color: @subnav-border;
+          li {
+            height: 60px;
+            a {
+              background-color: @table-bg;
               color: @btn-default-color;
-            }
-            > span {
-              display: table-cell;
-              vertical-align: middle;
+              font-weight: bold;
+              padding: 0 15px;
+              display: table;
+              white-space: nowrap;
+              height: 100%;
+              width: 100%;
+              &:hover, &:focus {
+                background-color: @subnav-border;
+                color: @btn-default-color;
+              }
+              > span {
+                display: table-cell;
+              }
             }
           }
         }
@@ -242,7 +267,6 @@ body.theme-cdap {
           display: inline-block;
           > .btn {
             .cask-btn(@background: white, @border: 1px solid white, @border-radius: 0, @color: @btn-default-color, @font-size: 12px, @padding: 0);
-            border-right-color: @table-border-color;
             border-left-color: @table-border-color;
             width: 100px;
             @media (max-width: @screen-sm-max) {
