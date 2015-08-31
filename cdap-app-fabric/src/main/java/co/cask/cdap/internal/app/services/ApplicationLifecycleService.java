@@ -396,11 +396,13 @@ public class ApplicationLifecycleService extends AbstractIdleService {
           continue;
         }
 
-        Location appJarLocation = findAppJarLocation(appId);
-        if (appJarLocation == null) {
+        Location appJarLocation;
+        try {
+          appJarLocation = findAppJarLocation(appId);
+        } catch (FileNotFoundException e) {
           // nothing we can do... skip and log a message
-          LOG.warn("Unable to find application jar for app '%s' in namespace '%s'. " +
-            "Please re-deploy the app manually after upgrade.");
+          LOG.error("Unable to find the application jar for app '%s' in namespace '%s'. " +
+            "Please re-deploy the app manually after upgrade.", e);
           continue;
         }
 
@@ -474,35 +476,44 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     }
   }
 
-  // look up the app archive location from the store.  Most of this logic is in case that jar isn't actually
-  // there. In that case we try to find it in the expected place.
+  /**
+   * Look up the app archive location from the store.  Most of this logic is in case that jar isn't actually
+   * there. In that case we try to find it in the expected place.
+   *
+   * @param appId the id of the application to find
+   * @return the location of the jar for the application
+   * @throws FileNotFoundException if the jar file could not be found
+   * @throws IOException if there was some error reading from the meta store or filesystem
+   */
   private Location findAppJarLocation(Id.Application appId) throws IOException {
-    Location appJarLocation = store.getApplicationArchiveLocation(appId);
-    if (appJarLocation == null) {
-      return null;
+    Location recordedLocation = store.getApplicationArchiveLocation(appId);
+    if (recordedLocation == null) {
+      throw new FileNotFoundException(String.format(
+        "Could not find the location of jar for app '%s' in namespace '%s' in the metastore.",
+        appId.getId(), appId.getNamespaceId()));
     }
+
+    if (recordedLocation.exists()) {
+      return recordedLocation;
+    }
+
     // bad metadata... not sure how it gets into this state but we have seen it
-    if (!appJarLocation.exists()) {
-      // make an educated guess for where it could be
-      appJarLocation =
-        ProgramGenerationStage.getAppArchiveDirLocation(configuration, appId, namespacedLocationFactory);
-      if (!appJarLocation.exists() || !appJarLocation.isDirectory()) {
-        return null;
-      }
+    // make an educated guess for where it could be
+    Location expectedDirectory =
+      ProgramGenerationStage.getAppArchiveDirLocation(configuration, appId, namespacedLocationFactory);
+    if (expectedDirectory.exists() && expectedDirectory.isDirectory()) {
       // should be only one file there... expect it to start with the app name and end in .jar
-      boolean found = false;
-      for (Location file : appJarLocation.list()) {
+      for (Location file : expectedDirectory.list()) {
         if (file.getName().startsWith(appId.getId()) && file.getName().endsWith(".jar")) {
-          appJarLocation = file;
-          found = true;
-          break;
+          return file;
         }
       }
-      if (!found) {
-        return null;
-      }
     }
-    return appJarLocation;
+
+    // if we couldn't find it there either, error out
+    throw new FileNotFoundException(String.format(
+      "Could not find jar for app '%s' in namespace '%s'. Expected it to be at %s.",
+      appId.getId(), appId.getNamespaceId(), recordedLocation.toURI()));
   }
 
   /**
