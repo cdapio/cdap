@@ -18,7 +18,7 @@ package co.cask.cdap.app.etl.batch;
 
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.schedule.Schedules;
-import co.cask.cdap.template.etl.batch.config.ETLBatchConfig;
+import co.cask.cdap.app.etl.batch.config.ETLBatchConfig;
 
 /**
  * ETL Batch Template.
