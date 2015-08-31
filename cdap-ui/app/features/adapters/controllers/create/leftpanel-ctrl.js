@@ -114,7 +114,7 @@ angular.module(PKG.name + '.feature.adapters')
                 content: 'Imported pre-defined app has issues. Please check the JSON of the imported pre-defined app'
               });
             } else {
-              this.onImportSuccess(result);
+              MyAppDAGService.onImportSuccess.call(MyAppDAGService, result);
             }
           }.bind(this));
         return;

@@ -15,7 +15,7 @@ angular.module(PKG.name + '.feature.adapters')
       }
     };
 
-    this.configfetched = null;
+    this.configfetched = false;
     this.properties = [];
     this.noconfig = null;
     if (MyAppDAGService.metadata.template.type === 'ETLBatch') {

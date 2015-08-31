@@ -149,21 +149,13 @@ angular.module(PKG.name + '.feature.adapters')
       }
     };
 
-    this.onImportSuccess = function(result) {
-      EventPipe.emit('popovers.reset');
-      $scope.config = JSON.stringify(result);
-      MyAppDAGService.resetToDefaults(true);
-      MyAppDAGService.setNodesAndConnectionsFromDraft(result);
-      if ($scope.config.name) {
-        MyAppDAGService.metadata.name = $scope.config.name;
-      }
-    };
+
 
     this.importFile = function(files) {
       CanvasFactory
         .importAdapter(files, MyAppDAGService.metadata.template.type)
         .then(
-          this.onImportSuccess.bind(this),
+          MyAppDAGService.onImportSuccess.bind(MyAppDAGService),
           function error(errorEvent) {
             console.error('Upload config failed', errorEvent);
           }

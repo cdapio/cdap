@@ -1,184 +1,45 @@
 
-  <div class="row" >
-
-    <!-- INPUT SCHEMA -->
-    <div class="col-lg-3" ng-if="!isSource">
-      <div class="input-schema modal-content-scroll">
-          <div class="schema-inner" ng-if="inputSchema">
-            <h4>Input Schema</h4>
-            <table class="table">
-              <thead>
-                <th>
-                  <label class="control-label">Name</label>
-                </th>
-                <th>
-                  <label class="control-label">Type</label>
-                </th>
-                <th>
-                  <label class="control-label">Null</label>
-                </th>
-              </thead>
-              <tbody>
-                <tr ng-repeat="schema in inputSchema" ng-keypress="enter($event, $last)">
-                  <td class="name" ng-if="!schema.empty">
-                    <span tooltip="{{ schema.name }}"
-                          tooltip-ellipsis="{{ schema.name }}"
-                          data-ellipsis="isEllipsis"
-                          tooltip-enable="isEllipsis"
-                          tooltip-append-to-body="true">
-                      {{schema.name}}
-                    </span>
-                  </td>
-                  <td class="type" ng-if="!schema.empty">
-                    <span ng-if="schema.type.type !== 'map'">{{schema.type}}</span>
-                    <span ng-if="schema.type.type === 'map'">map&lt;string, string&gt; </span>
-                  </td>
-                  <td class="nullable text-center" ng-if="!schema.empty">
-                    <input type="checkbox" ng-model="schema.nullable" disabled>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <div class="empty-container" ng-if="!inputSchema">
-            <h4>Input Schema</h4>
-            <p>There is no input schema</p>
-          </div>
-      </div>
-    </div>
-
-    <!-- MAIN WIDGET -->
-    <div ng-class="{'col-lg-8': isSource, 'col-lg-5': isTransform }" ng-if="!isSink">
+  <div class="row" ng-if="isSource">
+    <div class="col-lg-8">
       <div class="modal-content-scroll" ng-class="{'padding-offset-right': isSource, 'padding-offset-left': isTransform}">
-
-        <form plugin-property-edit-view>
-          <fieldset ng-disabled="isDisabled">
-
-
-
-              <div ng-repeat="group in PluginEditController.config.groups.position">
-                <div class="widget-group-container">
-                  <h4>{{PluginEditController.groups[group].display}}</h4>
-                  <div ng-repeat="field in PluginEditController.groups[group].position">
-                    <div ng-if="field !== 'schema'">
-                      <div class="form-group">
-                        <label class="control-label"
-                                ng-init="title=PluginEditController.groups[group].fields[field].info;description=PluginEditController.groups[group].fields[field].description">
-                          <span>{{PluginEditController.groups[group].fields[field].label}}</span>
-                          <span class="fa fa-info-circle"
-                                tooltip="{{description}}"
-                                tooltip-placement="right"
-                                tooltip-append-to-body="true">
-                          </span>
-                          <span class="fa fa-asterisk" ng-if="plugin._backendProperties[field].required"></span>
-                        </label>
-                        <div>
-                          <div data-name="field"
-                               class="my-widget-container"
-                               data-info="{{plugin.myconfig.widget}}"
-                               ng-class="{'select-wrapper': PluginEditController.groups[group].fields[field].widget === 'select'}"
-                               data-model="plugin.properties[field]"
-                               data-myconfig="PluginEditController.groups[group].fields[field]"
-                               data-properties="plugin.properties"
-                               widget-disabled="plugin.pluginTemplate && plugin.lock[field]"
-                               widget-container>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-          </fieldset>
-
-        </form>
+        <div ng-include="'/assets/features/adapters/templates/create/popovers/plugin-edit-properties-template.html'"></div>
       </div>
     </div>
 
-    <!-- OUTPUT EDITOR -->
-    <div class="col-lg-4" ng-if="!isSink">
-      <div class="modal-content-scroll output-schema">
+    <div class="col-lg-4">
+      <div ng-include="'/assets/features/adapters/templates/create/popovers/plugin-edit-output-schema.html'"></div>
+    </div>
 
-        <div class="schema-error">
-          <ul>
-            <li class="text-danger" ng-repeat="error in errors">{{ error }}</li>
-          </ul>
-        </div>
+  </div>
 
-        <h4>
-          <span>Output Schema</span>
-          <button
-            class="btn btn-sm btn-default pull-right"
-            ng-click="PluginEditController.schemaClear()"
-            ng-if="!plugin.implicitSchema && !isDisabled"
-            ng-disabled="plugin.implicitSchema || plugin.properties.format === 'clf' || plugin.properties.format === 'syslog'">
-            Clear</button>
-        </h4>
+  <div ng-if="isTransform" class="row">
+    <div class="col-lg-3">
+      <div ng-include="'/assets/features/adapters/templates/create/popovers/plugin-edit-input-schema.html'"></div>
+    </div>
 
-        <fieldset class="clearfix" ng-disabled="isDisabled">
-          <my-schema-editor
-            ng-model="plugin.outputSchema"
-            data-disabled="plugin.implicitSchema"
-            plugin-properties="plugin.properties"
-            config="PluginEditController.schemaProperties">
-          </my-schema-editor>
-        </fieldset>
-
-        <div ng-if="!plugin.outputSchema && isDisabled && plugin.properties.format !== 'clf' && plugin.properties.format !== 'syslog'">
-          <div class="well well-lg">
-            <h4>There is no output schema</h4>
-          </div>
-        </div>
+    <div class="col-lg-5">
+      <div class="modal-content-scroll" ng-class="{'padding-offset-right': isSource, 'padding-offset-left': isTransform}">
+        <div ng-include="'/assets/features/adapters/templates/create/popovers/plugin-edit-properties-template.html'"></div>
       </div>
     </div>
 
-    <div class="col-lg-9" ng-if="isSink">
+    <div class="col-lg-4">
+      <div ng-include="'/assets/features/adapters/templates/create/popovers/plugin-edit-output-schema.html'"></div>
+    </div>
+  </div>
+
+
+  <div class="row" ng-if="isSink">
+    <div class="col-lg-3">
+      <div ng-include="'/assets/features/adapters/templates/create/popovers/plugin-edit-input-schema.html'"></div>
+    </div>
+    <div class="col-lg-9">
       <div class="modal-content-scroll">
 
         <div class="row">
           <div class="col-xs-12">
             <div class="padding-offset-left">
-              <form plugin-property-edit-view>
-                <fieldset ng-disabled="isDisabled">
-
-
-
-                    <div ng-repeat="group in PluginEditController.config.groups.position">
-                      <div class="widget-group-container">
-                        <h4>{{PluginEditController.groups[group].display}}</h4>
-                        <div ng-repeat="field in PluginEditController.groups[group].position">
-                          <div ng-if="field !== 'schema'">
-                            <div class="form-group">
-                              <label class="control-label"
-                                      ng-init="title=PluginEditController.groups[group].fields[field].info;description=PluginEditController.groups[group].fields[field].description">
-                                <span>{{PluginEditController.groups[group].fields[field].label}}</span>
-                                <span class="fa fa-info-circle"
-                                      tooltip="{{description}}"
-                                      tooltip-placement="right"
-                                      tooltip-append-to-body="true">
-                                </span>
-                                <span class="fa fa-asterisk" ng-if="plugin._backendProperties[field].required"></span>
-                              </label>
-                              <div>
-                                <div data-name="field"
-                                     class="my-widget-container"
-                                     data-model="plugin.properties[field]"
-                                     data-myconfig="PluginEditController.groups[group].fields[field]"
-                                     data-properties="plugin.properties"
-                                     widget-disabled="plugin.pluginTemplate && plugin.lock[field]"
-                                     widget-container>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                </fieldset>
-
-              </form>
+              <div ng-include="'/assets/features/adapters/templates/create/popovers/plugin-edit-properties-template.html'"></div>
             </div>
           </div>
 
@@ -223,5 +84,4 @@
 
       </div>
     </div>
-
   </div>

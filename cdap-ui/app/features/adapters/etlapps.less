@@ -285,6 +285,11 @@ body.theme-cdap.state-adapters-create {
         overflow-y: scroll;
         .border-radius(0 0 4px 4px);
 
+        // Specificity kicks in from other modal styles.
+        h3 {
+          color: @cdap-header;
+        }
+
         &.settings-modal, &.metadata-modal {
           height: auto;
         }

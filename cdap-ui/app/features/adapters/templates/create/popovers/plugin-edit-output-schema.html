@@ -1,0 +1,33 @@
+<div class="modal-content-scroll output-schema">
+
+  <div class="schema-error">
+    <ul>
+      <li class="text-danger" ng-repeat="error in errors">{{ error }}</li>
+    </ul>
+  </div>
+
+  <h4>
+    <span>Output Schema</span>
+    <button
+      class="btn btn-sm btn-default pull-right"
+      ng-click="PluginEditController.schemaClear()"
+      ng-if="!plugin.implicitSchema && !isDisabled"
+      ng-disabled="plugin.implicitSchema || plugin.properties.format === 'clf' || plugin.properties.format === 'syslog'">
+      Clear</button>
+  </h4>
+
+  <fieldset class="clearfix" ng-disabled="isDisabled">
+    <my-schema-editor
+      ng-model="plugin.outputSchema"
+      data-disabled="plugin.implicitSchema"
+      plugin-properties="plugin.properties"
+      config="PluginEditController.schemaProperties">
+    </my-schema-editor>
+  </fieldset>
+
+  <div ng-if="!plugin.outputSchema && isDisabled && plugin.properties.format !== 'clf' && plugin.properties.format !== 'syslog'">
+    <div class="well well-lg">
+      <h4>There is no output schema</h4>
+    </div>
+  </div>
+</div>

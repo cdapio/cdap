@@ -1,0 +1,42 @@
+<div class="input-schema modal-content-scroll">
+    <div class="schema-inner" ng-if="inputSchema">
+      <h4>Input Schema</h4>
+      <table class="table">
+        <thead>
+          <th>
+            <label class="control-label">Name</label>
+          </th>
+          <th>
+            <label class="control-label">Type</label>
+          </th>
+          <th>
+            <label class="control-label">Null</label>
+          </th>
+        </thead>
+        <tbody>
+          <tr ng-repeat="schema in inputSchema" ng-keypress="enter($event, $last)">
+            <td class="name" ng-if="!schema.empty">
+              <span tooltip="{{ schema.name }}"
+                    tooltip-ellipsis="{{ schema.name }}"
+                    data-ellipsis="isEllipsis"
+                    tooltip-enable="isEllipsis"
+                    tooltip-append-to-body="true">
+                {{schema.name}}
+              </span>
+            </td>
+            <td class="type" ng-if="!schema.empty">
+              <span ng-if="schema.type.type !== 'map'">{{schema.type}}</span>
+              <span ng-if="schema.type.type === 'map'">map&lt;string, string&gt; </span>
+            </td>
+            <td class="nullable text-center" ng-if="!schema.empty">
+              <input type="checkbox" ng-model="schema.nullable" disabled>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="empty-container" ng-if="!inputSchema">
+      <h4>Input Schema</h4>
+      <p>There is no input schema</p>
+    </div>
+</div>
