@@ -2,18 +2,9 @@ angular.module(PKG.name + '.feature.flows')
   .config(function($stateProvider, $urlRouterProvider, MYAUTH_ROLE) {
     $stateProvider
       .state('flows', {
-        url: '/flows',
+        url: '/flows/:programId',
         abstract: true,
         parent: 'programs',
-        data: {
-          authorizedRoles: MYAUTH_ROLE.all,
-          highlightTab: 'development'
-        },
-        template: '<ui-view/>'
-      })
-
-      .state('flows.detail', {
-        url: '/:programId',
         data: {
           authorizedRoles: MYAUTH_ROLE.all,
           highlightTab: 'development'
@@ -37,59 +28,32 @@ angular.module(PKG.name + '.feature.flows')
               });
             return defer.promise;
           }
+        },
+        template: '<ui-view/>'
+      })
 
+      .state('flows.detail', {
+        url: '/runs',
+        templateUrl: '/assets/features/flows/templates/detail.html',
+        controller: 'FlowsRunsController',
+        controllerAs: 'RunsController',
+        data: {
+          authorizedRoles: MYAUTH_ROLE.all,
+          highlightTab: 'development'
         },
         ncyBreadcrumb: {
           parent: 'apps.detail.overview.status',
-          label: 'Flows',
-          skip: true
-        },
-        templateUrl: '/assets/features/flows/templates/detail.html'
-      })
-
-      .state('flows.detail.runs', {
-        url: '/runs',
-        templateUrl: '/assets/features/flows/templates/tabs/runs.html',
-        controller: 'FlowsRunsController',
-        controllerAs: 'RunsController',
-        ncyBreadcrumb: {
           label: '{{$state.params.programId}}'
         }
       })
-        .state('flows.detail.runs.run', {
-          url: '/:runid',
-          templateUrl: '/assets/features/flows/templates/tabs/runs/run-detail.html',
-          controller: 'FlowsRunDetailController',
-          ncyBreadcrumb: {
-            label: '{{$state.params.runid}}'
-          }
-        })
 
-      .state('flows.detail.datasets', {
-        url: '/data',
-        data: {
-          authorizedRoles: MYAUTH_ROLE.all,
-          highlightTab: 'development'
-        },
-        templateUrl: '/assets/features/flows/templates/tabs/data.html',
+      .state('flows.detail.run', {
+        url: '/:runid',
+        templateUrl: '/assets/features/flows/templates/tabs/runs/run-detail.html',
+        controller: 'FlowsRunDetailController',
         ncyBreadcrumb: {
-          label: 'Datasets',
-          parent: 'flows.detail.runs'
-        }
-      })
-      .state('flows.detail.history', {
-        url: '/history',
-        data: {
-          authorizedRoles: MYAUTH_ROLE.all,
-          highlightTab: 'development'
-        },
-        templateUrl: '/assets/features/flows/templates/tabs/history.html',
-        controller: 'FlowsRunsController',
-        controllerAs: 'RunsController',
-        ncyBreadcrumb: {
-          label: 'History',
-          parent: 'flows.detail.runs'
+          label: '{{$state.params.runid}}',
+          parent: 'flows.detail'
         }
       });
-
   });
