@@ -207,7 +207,6 @@ public class CLIMainTest {
   @Test
   public void testStream() throws Exception {
     String streamId = PREFIX + "sdf123";
-    Id.Stream stream = Id.Stream.from(Id.Namespace.DEFAULT, streamId);
 
     testCommandOutputContains(cli, "create stream " + streamId, "Successfully created stream");
     testCommandOutputContains(cli, "list streams", streamId);

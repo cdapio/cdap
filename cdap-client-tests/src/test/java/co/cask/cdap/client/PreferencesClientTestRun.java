@@ -22,7 +22,6 @@ import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.ProgramNotFoundException;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
@@ -244,7 +243,7 @@ public class PreferencesClientTestRun extends ClientTestBase {
       } catch (ApplicationNotFoundException e) {
         // ok if this happens, means its already deleted.
       }
-      namespaceClient.delete(invalidNamespace.getId());
+      namespaceClient.delete(invalidNamespace);
     }
   }
 
@@ -260,12 +259,12 @@ public class PreferencesClientTestRun extends ClientTestBase {
     Assert.assertEquals(propMap, client.getNamespacePreferences(myspace, false));
     Assert.assertEquals(propMap, client.getNamespacePreferences(myspace, true));
 
-    namespaceClient.delete(myspace.getId());
+    namespaceClient.delete(myspace);
     namespaceClient.create(new NamespaceMeta.Builder().setName(myspace.getId()).build());
     Assert.assertTrue(client.getNamespacePreferences(myspace, false).isEmpty());
     Assert.assertTrue(client.getNamespacePreferences(myspace, true).isEmpty());
 
-    namespaceClient.delete(myspace.getId());
+    namespaceClient.delete(myspace);
   }
 
   @Test(expected = NotFoundException.class)

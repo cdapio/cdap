@@ -23,12 +23,10 @@ import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
-import co.cask.cdap.common.NamespaceCannotBeDeletedException;
-import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.internal.AppFabricTestHelper;
-import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
@@ -80,7 +78,7 @@ public abstract class SchedulerTestBase {
     store = injector.getInstance(Store.class);
     metricStore = injector.getInstance(MetricStore.class);
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
-    namespaceAdmin.createNamespace(NamespaceMeta.DEFAULT);
+    namespaceAdmin.create(NamespaceMeta.DEFAULT);
     runtimeService = injector.getInstance(ProgramRuntimeService.class);
   }
 
@@ -146,8 +144,8 @@ public abstract class SchedulerTestBase {
   }
 
   @AfterClass
-  public static void tearDown() throws NotFoundException, NamespaceCannotBeDeletedException {
-    namespaceAdmin.deleteNamespace(Id.Namespace.DEFAULT);
+  public static void tearDown() throws Exception {
+    namespaceAdmin.delete(Id.Namespace.DEFAULT);
   }
 
   /**

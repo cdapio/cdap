@@ -32,13 +32,13 @@ import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.http.AbstractBodyConsumer;
+import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
-import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.WriteConflictException;
@@ -57,6 +57,7 @@ import co.cask.http.BodyConsumer;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
@@ -266,9 +267,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void updateApp(HttpRequest request, HttpResponder responder,
                         @PathParam("namespace-id") final String namespaceId,
                         @PathParam("app-id") final String appName) throws NamespaceNotFoundException {
-
     Id.Namespace namespace = Id.Namespace.from(namespaceId);
-    namespaceAdmin.getNamespace(namespace);
+    ensureNamespaceExists(namespace);
 
     Id.Application appId;
     try {
@@ -349,7 +349,9 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                          final String archiveName,
                                          final String configString) throws IOException {
     final Id.Namespace namespace = Id.Namespace.from(namespaceId);
-    if (!namespaceAdmin.hasNamespace(namespace)) {
+    try {
+      ensureNamespaceExists(namespace);
+    } catch (NamespaceNotFoundException e) {
       LOG.warn("Namespace '{}' not found.", namespaceId);
       responder.sendString(HttpResponseStatus.NOT_FOUND,
                            String.format("Deploy failed - namespace '%s' not found.", namespaceId));
@@ -519,5 +521,18 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
     return new ApplicationDetail(spec.getName(), spec.getDescription(), spec.getConfiguration(),
                                  streams, datasets, programs, ArtifactSummary.from(spec.getArtifactId()));
+  }
+
+  private void ensureNamespaceExists(Id.Namespace namespace) throws NamespaceNotFoundException {
+    try {
+      namespaceAdmin.get(namespace);
+    } catch (NamespaceNotFoundException e) {
+      throw e;
+    } catch (Exception e) {
+      // This can only happen when NamespaceAdmin uses HTTP calls to interact with namespaces.
+      // In AppFabricServer, NamespaceAdmin is bound to DefaultNamespaceAdmin, which interacts directly with the MDS.
+      // Hence, this exception will never be thrown
+      throw Throwables.propagate(e);
+    }
   }
 }

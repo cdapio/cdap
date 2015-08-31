@@ -28,7 +28,7 @@ import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.http.AbstractBodyConsumer;
-import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
+import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.app.runtime.adapter.PluginClassDeserializer;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
@@ -48,6 +48,7 @@ import co.cask.http.AbstractHttpHandler;
 import co.cask.http.BodyConsumer;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Splitter;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -464,8 +465,15 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
   // and returning the system namespace if so.
   private Id.Namespace validateAndGetNamespace(String namespaceId, boolean isSystem) throws NamespaceNotFoundException {
     Id.Namespace namespace = Id.Namespace.from(namespaceId);
-    if (!namespaceAdmin.hasNamespace(namespace)) {
-      throw new NamespaceNotFoundException(namespace);
+    try {
+      namespaceAdmin.get(namespace);
+    } catch (NamespaceNotFoundException e) {
+      throw e;
+    } catch (Exception e) {
+      // This can only happen when NamespaceAdmin uses HTTP to interact with namespaces.
+      // Within AppFabric, NamespaceAdmin is bound to DefaultNamespaceAdmin which directly interacts with MDS.
+      // Hence, this should never happen.
+      throw Throwables.propagate(e);
     }
 
     return isSystem ? Id.Namespace.SYSTEM : namespace;

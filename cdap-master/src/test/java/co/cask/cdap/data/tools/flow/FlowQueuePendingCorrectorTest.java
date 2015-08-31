@@ -24,7 +24,7 @@ import org.junit.Test;
 public class FlowQueuePendingCorrectorTest {
   @Test
   public void testInjector() throws Exception {
-    FlowQueuePendingCorrector corrector = FlowQueuePendingCorrector.createCorrector();
+    FlowQueuePendingCorrector.createCorrector();
     // should not throw exception
   }
 }

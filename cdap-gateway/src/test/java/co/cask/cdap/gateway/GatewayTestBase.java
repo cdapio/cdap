@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,6 +19,7 @@ package co.cask.cdap.gateway;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.data.runtime.LocationStreamFileWriterFactory;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
@@ -34,7 +35,6 @@ import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamConsumerStateS
 import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamFileConsumerFactory;
 import co.cask.cdap.gateway.handlers.log.MockLogReader;
 import co.cask.cdap.gateway.router.NettyRouter;
-import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.internal.guice.AppFabricTestModule;
 import co.cask.cdap.logging.read.LogReader;
@@ -191,8 +191,8 @@ public abstract class GatewayTestBase {
     streamService.startAndWait();
 
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
-    namespaceAdmin.createNamespace(TEST_NAMESPACE_META1);
-    namespaceAdmin.createNamespace(TEST_NAMESPACE_META2);
+    namespaceAdmin.create(TEST_NAMESPACE_META1);
+    namespaceAdmin.create(TEST_NAMESPACE_META2);
 
     // Restart handlers to check if they are resilient across restarts.
     router = injector.getInstance(NettyRouter.class);
@@ -207,9 +207,9 @@ public abstract class GatewayTestBase {
   }
 
   public static void stopGateway(CConfiguration conf) throws Exception {
-    namespaceAdmin.deleteNamespace(Id.Namespace.from(TEST_NAMESPACE1));
-    namespaceAdmin.deleteNamespace(Id.Namespace.from(TEST_NAMESPACE2));
-    namespaceAdmin.deleteNamespace(Id.Namespace.DEFAULT);
+    namespaceAdmin.delete(Id.Namespace.from(TEST_NAMESPACE1));
+    namespaceAdmin.delete(Id.Namespace.from(TEST_NAMESPACE2));
+    namespaceAdmin.delete(Id.Namespace.DEFAULT);
     streamService.stopAndWait();
     notificationService.stopAndWait();
     appFabricServer.stopAndWait();

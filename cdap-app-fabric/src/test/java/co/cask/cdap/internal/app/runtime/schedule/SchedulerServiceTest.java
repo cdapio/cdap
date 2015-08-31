@@ -24,11 +24,9 @@ import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.store.Store;
-import co.cask.cdap.common.NamespaceCannotBeDeletedException;
-import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.app.DefaultApplicationSpecification;
-import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -77,13 +75,13 @@ public class SchedulerServiceTest {
     store = AppFabricTestHelper.getInjector().getInstance(Store.class);
     locationFactory = AppFabricTestHelper.getInjector().getInstance(LocationFactory.class);
     namespaceAdmin = AppFabricTestHelper.getInjector().getInstance(NamespaceAdmin.class);
-    namespaceAdmin.createNamespace(new NamespaceMeta.Builder().setName(namespace).build());
-    namespaceAdmin.createNamespace(NamespaceMeta.DEFAULT);
+    namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespace).build());
+    namespaceAdmin.create(NamespaceMeta.DEFAULT);
   }
 
   @AfterClass
-  public static void finish() throws NotFoundException, NamespaceCannotBeDeletedException {
-    namespaceAdmin.deleteNamespace(namespace);
+  public static void finish() throws Exception {
+    namespaceAdmin.delete(namespace);
     namespaceAdmin.deleteDatasets(Id.Namespace.DEFAULT);
     schedulerService.stopAndWait();
   }

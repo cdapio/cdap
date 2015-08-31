@@ -23,6 +23,7 @@ import co.cask.cdap.app.mapreduce.MRJobInfoFetcher;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.runtime.RuntimeModule;
 import co.cask.cdap.common.twill.MasterServiceManager;
 import co.cask.cdap.common.utils.Networks;
@@ -59,7 +60,6 @@ import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.deploy.pipeline.DeploymentInfo;
 import co.cask.cdap.internal.app.deploy.pipeline.adapter.AdapterDeploymentInfo;
 import co.cask.cdap.internal.app.namespace.DefaultNamespaceAdmin;
-import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
 import co.cask.cdap.internal.app.runtime.adapter.PluginRepository;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactStore;
@@ -334,6 +334,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
     @Provides
     @Named(Constants.AppFabric.SERVER_ADDRESS)
+    @SuppressWarnings("unused")
     public InetAddress providesHostname(CConfiguration cConf) {
       return Networks.resolve(cConf.get(Constants.AppFabric.SERVER_ADDRESS),
                               new InetSocketAddress("localhost", 0).getAddress());
@@ -344,6 +345,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
      * injection. It returns a singleton of Scheduler.
      */
     @Provides
+    @SuppressWarnings("unused")
     public Supplier<org.quartz.Scheduler> providesSchedulerSupplier(final DatasetBasedTimeScheduleStore scheduleStore,
                                                                     final CConfiguration cConf) {
       return new Supplier<org.quartz.Scheduler>() {

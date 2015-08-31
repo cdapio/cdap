@@ -31,8 +31,6 @@ import co.cask.cdap.api.templates.plugins.PluginPropertyField;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.InMemoryProgramRunnerModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
-import co.cask.cdap.common.NamespaceCannotBeDeletedException;
-import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -40,6 +38,7 @@ import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.namespace.AbstractNamespaceClient;
+import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.common.utils.OSDetector;
 import co.cask.cdap.data.runtime.DataFabricModules;
@@ -69,7 +68,6 @@ import co.cask.cdap.explore.executor.ExploreExecutorService;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.guice.ExploreRuntimeModule;
 import co.cask.cdap.internal.LocalNamespaceClient;
-import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
@@ -289,7 +287,7 @@ public class ConfigurableTestBase {
     RuntimeStats.metricStore = injector.getInstance(MetricStore.class);
     metricsManager = injector.getInstance(MetricsManager.class);
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
-    namespaceAdmin.createNamespace(NamespaceMeta.DEFAULT);
+    namespaceAdmin.create(NamespaceMeta.DEFAULT);
   }
 
   private static class MetricsManagerProvider implements Provider<MetricsManager> {
@@ -371,12 +369,12 @@ public class ConfigurableTestBase {
   }
 
   @AfterClass
-  public static void finish() throws NotFoundException, NamespaceCannotBeDeletedException {
+  public static void finish() throws Exception {
     if (--startCount != 0) {
       return;
     }
 
-    namespaceAdmin.deleteNamespace(Id.Namespace.DEFAULT);
+    namespaceAdmin.delete(Id.Namespace.DEFAULT);
     streamCoordinatorClient.stopAndWait();
     metricsQueryService.stopAndWait();
     metricsCollectionService.startAndWait();

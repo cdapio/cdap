@@ -31,7 +31,7 @@ import java.net.URL;
 import javax.inject.Inject;
 
 /**
- * Client to interact with CDAP namespaces
+ * Client that uses the specified {@link ClientConfig} to interact with CDAP namespaces
  */
 @Beta
 public class NamespaceClient extends AbstractNamespaceClient {

@@ -183,9 +183,8 @@ public final class StreamHandler extends AbstractHttpHandler {
   public void create(HttpRequest request, HttpResponder responder,
                      @PathParam("namespace-id") String namespaceId,
                      @PathParam("stream") String stream) throws Exception {
-
     // Check for namespace existence. Throws NotFoundException if namespace doesn't exist
-    namespaceClient.get(namespaceId);
+    namespaceClient.get(Id.Namespace.from(namespaceId));
 
     Id.Stream streamId;
     try {

@@ -52,12 +52,11 @@ import co.cask.cdap.app.DefaultApplicationContext;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.common.app.RunIds;
-import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.DefaultId;
 import co.cask.cdap.internal.app.Specifications;
-import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
@@ -106,7 +105,7 @@ public class DefaultStoreTest {
       AppFabricTestHelper.getInjector().getInstance(NamespacedLocationFactory.class);
     namespacedLocationFactory.get(Id.Namespace.DEFAULT).delete(true);
     NamespaceAdmin admin = AppFabricTestHelper.getInjector().getInstance(NamespaceAdmin.class);
-    admin.createNamespace(NamespaceMeta.DEFAULT);
+    admin.create(NamespaceMeta.DEFAULT);
   }
 
   @Test

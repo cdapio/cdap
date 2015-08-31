@@ -384,18 +384,18 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
                                                             TEST_NAMESPACE_META2);
     Assert.assertEquals(expectedNamespaces, Sets.newHashSet(namespaces));
 
-    NamespaceMeta namespaceMeta = namespaceClient.get(TEST_NAMESPACE1);
+    NamespaceMeta namespaceMeta = namespaceClient.get(Id.Namespace.from(TEST_NAMESPACE1));
     Assert.assertEquals(TEST_NAMESPACE_META1, namespaceMeta);
 
     try {
-      namespaceClient.get("nonExistentNamespace");
+      namespaceClient.get(Id.Namespace.from("nonExistentNamespace"));
       Assert.fail("Did not expect namespace 'nonExistentNamespace' to exist.");
     } catch (NotFoundException expected) {
       // expected
     }
 
     // test create and get
-    String fooNamespace = "fooNamespace";
+    Id.Namespace fooNamespace = Id.Namespace.from("fooNamespace");
     NamespaceMeta toCreate = new NamespaceMeta.Builder().setName(fooNamespace).build();
     namespaceClient.create(toCreate);
     NamespaceMeta receivedMeta = namespaceClient.get(fooNamespace);
