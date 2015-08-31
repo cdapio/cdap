@@ -24,18 +24,13 @@
     <version>3.2.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>cdap-dq</artifactId>
+  <artifactId>cdap-data-quality</artifactId>
   <name>CDAP Data Quality Artifact</name>
   <packaging>jar</packaging>
 
   <properties>
     <app.main.class>co.cask.cdap.dq.DataQualityApp</app.main.class>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <cdap.version>3.2.0-SNAPSHOT</cdap.version>
-    <slf4j.version>1.7.5</slf4j.version>
-    <guava.version>13.0.1</guava.version>
-    <junit.version>4.11</junit.version>
-    <hadoop.version>2.3.0</hadoop.version>
     <etl.avro.version>1.7.7</etl.avro.version>
   </properties>
 
@@ -54,24 +49,24 @@
     <dependency>
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-api</artifactId>
-      <version>${cdap.version}</version>
+      <version>${project.version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-etl-api</artifactId>
-      <version>${cdap.version}</version>
+      <version>${project.version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-etl-core</artifactId>
-      <version>${cdap.version}</version>
+      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-etl-lib</artifactId>
-      <version>${cdap.version}</version>
+      <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -90,7 +85,7 @@
     <dependency>
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-unit-test</artifactId>
-      <version>${cdap.version}</version>
+      <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -104,16 +99,6 @@
       <artifactId>junit</artifactId>
       <version>${junit.version}</version>
       <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.hadoop</groupId>
-      <artifactId>hadoop-mapreduce-client-core</artifactId>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.hadoop</groupId>
-      <artifactId>hadoop-common</artifactId>
-      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.hadoop</groupId>

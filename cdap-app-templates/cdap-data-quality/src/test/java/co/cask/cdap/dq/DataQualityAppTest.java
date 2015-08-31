@@ -116,10 +116,10 @@ public class DataQualityAppTest extends TestBase {
     // Empty aggregation set - should throw an exception while creating an application
     testMap.put("content_length", new HashSet<String>());
 
-    DataQualityApp.ConfigClass config = new DataQualityApp.ConfigClass(
+    DataQualityApp.DataQualityConfig config = new DataQualityApp.DataQualityConfig(
       50, getStreamSource(), "avg", null);
 
-    AppRequest<DataQualityApp.ConfigClass> appRequest = new AppRequest<>(
+    AppRequest<DataQualityApp.DataQualityConfig> appRequest = new AppRequest<>(
       new ArtifactSummary(appArtifact.getName(), appArtifact.getVersion().getVersion(), false), config);
     deployApplication(appId, appRequest);
   }
@@ -132,10 +132,10 @@ public class DataQualityAppTest extends TestBase {
     testSet.add("DiscreteValuesHistogram");
     testMap.put("content_length", testSet);
 
-    DataQualityApp.ConfigClass config = new DataQualityApp.ConfigClass(
+    DataQualityApp.DataQualityConfig config = new DataQualityApp.DataQualityConfig(
       WORKFLOW_SCHEDULE_MINUTES, getStreamSource(), "dataQuality", testMap);
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "newApp");
-    AppRequest<DataQualityApp.ConfigClass> appRequest = new AppRequest<>(
+    AppRequest<DataQualityApp.DataQualityConfig> appRequest = new AppRequest<>(
       new ArtifactSummary(appArtifact.getName(), appArtifact.getVersion().getVersion(), false), config);
     ApplicationManager applicationManager = deployApplication(appId, appRequest);
 
@@ -175,11 +175,11 @@ public class DataQualityAppTest extends TestBase {
     testSet.add("Mean");
     testMap.put("content_length", testSet);
 
-    DataQualityApp.ConfigClass config = new DataQualityApp.ConfigClass(
+    DataQualityApp.DataQualityConfig config = new DataQualityApp.DataQualityConfig(
       WORKFLOW_SCHEDULE_MINUTES, getStreamSource(), "avg", testMap);
 
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "newApp2");
-    AppRequest<DataQualityApp.ConfigClass> appRequest = new AppRequest<>(
+    AppRequest<DataQualityApp.DataQualityConfig> appRequest = new AppRequest<>(
       new ArtifactSummary(appArtifact.getName(), appArtifact.getVersion().getVersion(), false), config);
     ApplicationManager applicationManager = deployApplication(appId, appRequest);
 
@@ -218,11 +218,11 @@ public class DataQualityAppTest extends TestBase {
     testMap.put("status", testSet);
     testMap.put("date", testSet);
 
-    DataQualityApp.ConfigClass config = new DataQualityApp.ConfigClass(WORKFLOW_SCHEDULE_MINUTES,
+    DataQualityApp.DataQualityConfig config = new DataQualityApp.DataQualityConfig(WORKFLOW_SCHEDULE_MINUTES,
       getStreamSource(), "histogram", testMap);
 
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "newApp3");
-    AppRequest<DataQualityApp.ConfigClass> appRequest = new AppRequest<>(
+    AppRequest<DataQualityApp.DataQualityConfig> appRequest = new AppRequest<>(
       new ArtifactSummary(appArtifact.getName(), appArtifact.getVersion().getVersion(), false), config);
     ApplicationManager applicationManager = deployApplication(appId, appRequest);
 
