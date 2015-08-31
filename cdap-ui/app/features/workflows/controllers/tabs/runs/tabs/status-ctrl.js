@@ -31,6 +31,8 @@ class WorkflowsRunsStatusController {
     this.$filter = $filter;
     this.runsCtrl = $scope.RunsController;
     this.onChangeFlag = 1;
+    this.showSidepanel = false;
+    this.activeTab = 0;
 
     this.data = {
       metrics: {},
@@ -142,7 +144,7 @@ class WorkflowsRunsStatusController {
           }
         });
 
-        if (['STOPPED', 'KILLED', 'COMPLETED'].indexOf(this.runStatus) !== -1) {
+        if (['STOPPED', 'KILLED', 'COMPLETED', 'FAILED'].indexOf(this.runStatus) !== -1) {
           this.myWorkFlowApi.stopPollRunDetail(runparams);
         }
 
@@ -165,16 +167,69 @@ class WorkflowsRunsStatusController {
          this.runsCtrl.runs.selected.properties[instance.nodeId]
         ) {
         stateParams.destinationType = 'Mapreduce';
-        this.$state.go('mapreduce.detail.runs.run', stateParams);
+        this.$state.go('mapreduce.detail.run', stateParams);
 
       } else if (instance.program.programType === 'SPARK' &&
                 this.runsCtrl.runs.selected.properties[instance.nodeId]
                ) {
 
         stateParams.destinationType = 'Spark';
-        this.$state.go('spark.detail.runs.run', stateParams);
+        this.$state.go('spark.detail.run', stateParams);
       }
     }
+  }
+
+
+
+  workflowTokenClick(node) {
+    let tokenparams = angular.extend(
+      {
+        runId: this.runsCtrl.runs.selected.runid,
+        nodeId: node.nodeId
+      },
+      params
+    );
+
+    this.selectedNode = node.nodeId;
+
+    this.myWorkFlowApi.getUserNodeToken(tokenparams)
+      .$promise
+      .then (res => {
+        delete res.$promise;
+        delete res.$resolved;
+
+        this.usertokens = [];
+        angular.forEach(res, (value, key) => {
+          this.usertokens.push({
+            key: key,
+            value: value
+          });
+        });
+
+        this.showSidepanel = true;
+
+      });
+
+    this.myWorkFlowApi.getSystemNodeToken(tokenparams)
+      .$promise
+      .then (res => {
+        delete res.$promise;
+        delete res.$resolved;
+
+        this.systemtokens = [];
+        angular.forEach(res, (value, key) => {
+          this.systemtokens.push({
+            key: key,
+            value: value
+          });
+        });
+
+      });
+
+  }
+
+  closeSidepanel() {
+    this.showSidepanel = false;
   }
 
 }
