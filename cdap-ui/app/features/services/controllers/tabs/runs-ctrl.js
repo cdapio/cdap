@@ -67,7 +67,7 @@ angular.module(PKG.name + '.feature.services')
     this.openDatasets = function() {
       this.$bootstrapModal.open({
         size: 'lg',
-        templateUrl: '/assets/features/services/templates/tabs/data.html'
+        template: '<my-data-list data-level="program" data-program="service"></my-data-list>'
       });
     };
   });
