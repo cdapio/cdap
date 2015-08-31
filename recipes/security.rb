@@ -42,7 +42,7 @@ execute 'create-security-server-ssl-keystore' do
       node['cdap']['cdap_site']['security.server.ssl.enabled']
     elsif node['cdap'].key?('cdap_site') && node['cdap']['cdap_site'].key?('ssl.enabled')
       node['cdap']['cdap_site']['ssl.enabled']
-    # This one is here for compatibility, but ssl.enabled takes precidence, if set
+    # This one is here for compatibility, but ssl.enabled takes precedence, if set
     elsif node['cdap'].key?('cdap_site') && node['cdap']['cdap_site'].key?('security.server.ssl.enabled')
       node['cdap']['cdap_site']['security.server.ssl.enabled']
     else
