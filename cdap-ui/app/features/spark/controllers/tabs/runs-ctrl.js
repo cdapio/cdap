@@ -1,8 +1,9 @@
 angular.module(PKG.name + '.feature.spark')
-  .controller('SparkRunsController', function($scope, $filter, $state, rRuns) {
+  .controller('SparkRunsController', function($scope, $filter, $state, rRuns, $bootstrapModal) {
     var fFilter = $filter('filter'),
         match;
     this.runs = rRuns;
+    this.$bootstrapModal = $bootstrapModal;
 
     if ($state.params.runid) {
       match = fFilter(rRuns, {runid: $state.params.runid});
@@ -43,5 +44,20 @@ angular.module(PKG.name + '.feature.spark')
 
     this.selectTab = function(tab) {
       this.activeTab = tab;
+    };
+
+    this.openHistory = function() {
+      this.$bootstrapModal.open({
+        size: 'lg',
+        template: '<my-program-history data-runs="runs" data-type="SPARK"></my-program-history>',
+        controller: ['runs', '$scope', function(runs, $scope) {
+          $scope.runs = runs;
+        }],
+        resolve: {
+          runs: function() {
+            return this.runs;
+          }.bind(this)
+        }
+      });
     };
   });
