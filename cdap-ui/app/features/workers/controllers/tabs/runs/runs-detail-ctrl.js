@@ -1,23 +1,14 @@
 angular.module(PKG.name + '.feature.worker')
-  .controller('WorkersRunDetailController', function($scope) {
+  .controller('WorkersRunDetailController', function($scope, $filter, $state) {
 
-    $scope.tabs = [{
-      title: 'Status',
-      template: '/assets/features/workers/templates/tabs/runs/tabs/status.html'
-    },
-    {
-      title: 'Logs',
-      template: '/assets/features/workers/templates/tabs/runs/tabs/log.html'
-    }];
+    var filterFilter = $filter('filter');
+    var match = filterFilter($scope.RunsController.runs, {runid: $state.params.runid});
+    $scope.RunsController.runs.selected.runid = match[0].runid;
+    $scope.RunsController.runs.selected.status = match[0].status;
+    $scope.RunsController.runs.selected.start = match[0].start;
+    $scope.RunsController.runs.selected.end = match[0].end;
 
-    $scope.activeTab = $scope.tabs[0];
-
-    $scope.$on('$destroy', function(event) {
-      event.targetScope.runs.selected = null;
+    $scope.$on('$destroy', function() {
+      $scope.RunsController.runs.selected.runid = null;
     });
-
-    $scope.selectTab = function(tab) {
-      $scope.activeTab = tab;
-
-    };
   });
