@@ -2,7 +2,7 @@
     ui-sref="mapreduce.detail.runs({ namespace: namespace, appId: app, programId: program })">
   {{ ::program }}</a>
 <a ng-class="{ 'text-bold': bold }" ng-if="type === 'Flow'"
-    ui-sref="flows.detail.runs({ namespace: namespace, appId: app, programId: program })">
+    ui-sref="flows.detail({ namespace: namespace, appId: app, programId: program })">
   {{ ::program }}</a>
 <a ng-class="{ 'text-bold': bold }" ng-if="type === 'Workflow'"
     ui-sref="workflows.detail({ namespace: namespace, appId: app, programId: program })">
