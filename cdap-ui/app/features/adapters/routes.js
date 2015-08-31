@@ -49,8 +49,28 @@ angular.module(PKG.name + '.feature.adapters')
               return defer.promise;
             }
           },
-          controller: '_AdapterCreateController as AdapterCreateController',
-          templateUrl: '/assets/features/adapters/templates/create.html',
+          // controller: 'AdapterCreateController as AdapterCreateController',
+          views: {
+            '': {
+              templateUrl: '/assets/features/adapters/templates/create.html',
+              controller: 'AdapterCreateController as AdapterCreateController'
+            },
+            'metadata@adapters.create': {
+              templateUrl: '/assets/features/adapters/templates/create/metadata.html',
+              controller: 'MetadataController as MetadataController'
+            },
+            'canvas@adapters.create': {
+              templateUrl: '/assets/features/adapters/templates/create/canvas.html'
+            },
+            'leftpanel@adapters.create': {
+              templateUrl: '/assets/features/adapters/templates/create/leftpanel.html',
+              controller: 'LeftPanelController as LeftPanelController'
+            },
+            'rightpanel@adapters.create': {
+              templateUrl: '/assets/features/adapters/templates/create/rightpanel.html',
+              controller: 'RightPanelController as RightPanelController'
+            },
+          },
           ncyBreadcrumb: {
             skip: true
           }

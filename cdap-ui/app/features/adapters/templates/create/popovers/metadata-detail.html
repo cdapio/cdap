@@ -1,0 +1,55 @@
+<div class="modal-header">
+  <div class="col-xs-6 col-md-9">
+    <h3 class="modal-title"> Edit Metadata</p>
+  </div>
+  <div class="col-xs-6 col-md-3">
+    <div class="btn-group modal-btns">
+      <div>
+        <a class="btn" ng-click="reset()">
+          <span class="fa fa-repeat"></span>
+        </a>
+      </div>
+      <div>
+        <a class="btn" ng-click="$close('save')">
+          <span class="fa fa-floppy-o"></span>
+        </a>
+      </div>
+      <div>
+        <a class="btn" ng-click="$close('cancel')">
+          <span class="fa fa-remove"></span>
+          <span class="sr-only"> Close </span>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-body metadata-modal">
+  <form class="form-horizontal">
+
+    <div class="form-group">
+      <label class="col-sm-2 control-label">Name</label>
+      <div class="col-sm-10">
+        <input type="text"
+                ng-model="metadata['name']"
+                my-maxlength="128"
+                class="form-control" />
+        <small>Maximum 128 characters</small>
+        <small class="pull-right">{{128 - metadata['name'].length}}</small>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="col-sm-2 control-label">Description</label>
+      <div class="col-sm-10">
+        <textarea type="text"
+               ng-model="metadata['description']"
+               my-maxlength="512"
+               class="form-control"></textarea>
+        <small>Maximum 512 characters</small>
+        <small class="pull-right">{{512 - metadata['description'].length}}</small>
+      </div>
+    </div>
+
+  </form>
+</div>

@@ -1,55 +1,38 @@
-<div class="modal-header">
-  <div class="col-xs-6 col-md-7">
-    <h3 class="modal-title"> Edit Metadata</p>
-  </div>
-  <div class="col-xs-6 col-md-5">
-    <div class="btn-group modal-btns">
-      <div>
-        <a class="btn" ng-click="reset()">
-          <span class="fa fa-repeat"></span>
-        </a>
-      </div>
-      <div>
-        <a class="btn" ng-click="$close('save')">
-          <span class="fa fa-floppy-o"></span>
-        </a>
-      </div>
-      <div>
-        <a class="btn" ng-click="$close('cancel')">
-          <span class="fa fa-remove"></span>
-          <span class="sr-only"> Close </span>
-        </a>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="modal-body metadata-modal">
-  <form class="form-horizontal">
-
-    <div class="form-group">
-      <label class="col-sm-2 control-label">Name</label>
-      <div class="col-sm-10">
-        <input type="text"
-                ng-model="metadata['name']"
-                my-maxlength="128"
-                class="form-control" />
-        <small>Maximum 128 characters</small>
-        <small class="pull-right">{{128 - metadata['name'].length}}</small>
-      </div>
-    </div>
-
-    <div class="form-group">
-      <label class="col-sm-2 control-label">Description</label>
-      <div class="col-sm-10">
-        <textarea type="text"
-               ng-model="metadata['description']"
-               my-maxlength="512"
-               class="form-control"></textarea>
-        <small>Maximum 512 characters</small>
-        <small class="pull-right">{{512 - metadata['description'].length}}</small>
-      </div>
-    </div>
-
-  </form>
+<div class="adapter-name"
+ tooltip="{{ MetadataController.metadata.error }}"
+ tooltip-placement="right"
+ tooltip-toggle="MetadataController.metadata.error"
+ tooltip-append-to-body="true"
+ tooltip-class="tooltip-error"
+>
+ <div ng-click="MetadataController.showMetadataModal()">
+   <div class="application-type">
+     <span class="icon-ETLBatch" ng-if="MetadataController.metadata.template.type === 'ETLBatch'"></span>
+     <span class="icon-ETLRealtime" ng-if="MetadataController.metadata.template.type === 'ETLRealtime'"></span>
+     <span>Type: {{ MetadataController.metadata.template.type }}</span>
+   </div>
+   <h1 tooltip="{{ MetadataController.metadata.name }}"
+       tooltip-placement="right"
+       tooltip-enable="MetadataController.metadata.name.length > 38"
+       tooltip-append-to-body="true">
+     <a ng-if="MetadataController.metadata.name.length > 0">
+       {{MetadataController.metadata['name']}}
+     </a>
+     <a ng-if="MetadataController.metadata['name'].length === 0"
+         >
+       [Adapter Name]
+     </a>
+   </h1>
+   <a class="fa fa-pencil" ng-click="MetadataController.showMetadataModal()"></a>
+   <p ng-if="MetadataController.metadata['description'].length > 0"
+       tooltip="{{ MetadataController.metadata.description }}"
+       tooltip-placement="right"
+       tooltip-enable="MetadataController.metadata.description.length > 158"
+       tooltip-append-to-body="true">
+     {{MetadataController.metadata['description'] | myEllipsis: 158}}
+   </p>
+   <p ng-if="MetadataController.metadata['description'].length === 0">
+     [Adapter description]
+   </p>
+ </div>
 </div>

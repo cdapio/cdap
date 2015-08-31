@@ -6,7 +6,9 @@
     </div>
   </div>
 
-  <my-plumb data-is-disabled="true" ng-if="nodes.length > 0" data-reloaddag="true" data-config="nodes"></my-plumb>
+  <my-dag data-is-disabled="true"
+            ng-if="nodes.length > 0"
+            data-config="nodes"></my-dag>
 
   <div class="table-responsive">
     <table class="table table-bordered adapter-metrics-table" ng-if="isMetrics">
