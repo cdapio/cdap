@@ -28,7 +28,7 @@ import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.explore.guice.ExploreClientModule;
-import co.cask.cdap.internal.app.runtime.batch.AbstractMapReduceContextBuilder;
+import co.cask.cdap.internal.app.runtime.batch.AbstractMapReduceTaskContextBuilder;
 import co.cask.cdap.logging.appender.LogAppender;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.appender.kafka.KafkaLogAppender;
@@ -44,7 +44,7 @@ import org.apache.twill.zookeeper.ZKClientService;
  * Builds an instance of {@link co.cask.cdap.internal.app.runtime.batch.BasicMapReduceContext} good for
  * distributed environment. The context is to be used in remote worker (e.g. Mapper task started in YARN container)
  */
-public class DistributedMapReduceContextBuilder extends AbstractMapReduceContextBuilder {
+public class DistributedMapReduceTaskContextBuilder extends AbstractMapReduceTaskContextBuilder {
   private final CConfiguration cConf;
   private final Configuration hConf;
   private ZKClientService zkClientService;
@@ -52,7 +52,7 @@ public class DistributedMapReduceContextBuilder extends AbstractMapReduceContext
   private MetricsCollectionService metricsCollectionService;
   private LogAppenderInitializer logAppenderInitializer;
 
-  public DistributedMapReduceContextBuilder(CConfiguration cConf, Configuration hConf) {
+  public DistributedMapReduceTaskContextBuilder(CConfiguration cConf, Configuration hConf) {
     this.cConf = cConf;
     this.hConf = hConf;
   }

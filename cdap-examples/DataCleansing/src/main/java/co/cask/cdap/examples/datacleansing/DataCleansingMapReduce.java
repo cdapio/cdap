@@ -16,6 +16,7 @@
 
 package co.cask.cdap.examples.datacleansing;
 
+import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.schema.Schema;
@@ -26,6 +27,7 @@ import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
+import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
 import co.cask.cdap.api.metrics.Metrics;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
@@ -81,8 +83,9 @@ public class DataCleansingMapReduce extends AbstractMapReduce {
     Map<String, String> outputArgs = new HashMap<>();
     PartitionedFileSetArguments.setOutputPartitionKey(outputArgs, outputKey);
 
-    PartitionedFileSet outputFileSet = context.getDataset(DataCleansing.CLEAN_RECORDS, outputArgs);
-    context.setOutput(DataCleansing.CLEAN_RECORDS, outputFileSet);
+    // set up two outputs - one for invalid records and one for valid records
+    context.addOutput(DataCleansing.CLEAN_RECORDS, outputArgs);
+    context.addOutput(DataCleansing.INVALID_RECORDS, outputArgs);
 
     Job job = context.getHadoopJob();
     job.setMapperClass(SchemaMatchingFilter.class);
@@ -104,7 +107,8 @@ public class DataCleansingMapReduce extends AbstractMapReduce {
   /**
    * A Mapper which skips text that doesn't match a given schema.
    */
-  public static class SchemaMatchingFilter extends Mapper<LongWritable, Text, NullWritable, Text> {
+  public static class SchemaMatchingFilter extends Mapper<LongWritable, Text, NullWritable, Text>
+    implements ProgramLifecycle<MapReduceTaskContext<NullWritable, Text>> {
     public static final Schema DEFAULT_SCHEMA = Schema.recordOf("person",
                                                                 Schema.Field.of("pid", Schema.of(Schema.Type.LONG)),
                                                                 Schema.Field.of("name", Schema.of(Schema.Type.STRING)),
@@ -113,6 +117,16 @@ public class DataCleansingMapReduce extends AbstractMapReduce {
 
     private SimpleSchemaMatcher schemaMatcher;
     private Metrics mapMetrics;
+    private MapReduceTaskContext<NullWritable, Text> mapReduceTaskContext;
+
+    @Override
+    public void initialize(MapReduceTaskContext<NullWritable, Text> context) throws Exception {
+      this.mapReduceTaskContext = context;
+    }
+
+    @Override
+    public void destroy() {
+    }
 
     @Override
     protected void setup(Context context) throws IOException, InterruptedException {
@@ -125,13 +139,20 @@ public class DataCleansingMapReduce extends AbstractMapReduce {
       }
     }
 
-    @Override
-    public void map(LongWritable key, Text data, Context context) throws IOException, InterruptedException {
+    public void map(LongWritable key, Text data, MapReduceTaskContext<NullWritable, Text> context)
+      throws IOException, InterruptedException {
       if (!schemaMatcher.matches(data.toString())) {
-        mapMetrics.count("data.invalid", 1);
-        return;
+        context.write(DataCleansing.INVALID_RECORDS, NullWritable.get(), data);
+        mapMetrics.count("records.invalid", 1);
+      } else {
+        context.write(DataCleansing.CLEAN_RECORDS, NullWritable.get(), data);
+        mapMetrics.count("records.valid", 1);
       }
-      context.write(NullWritable.get(), data);
+    }
+
+    @Override
+    protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
+      map(key, value, this.mapReduceTaskContext);
     }
   }
 }

@@ -57,10 +57,6 @@ public class DataCleansingService extends AbstractService {
     @UseDataSet(DataCleansing.RAW_RECORDS)
     private PartitionedFileSet rawRecords;
 
-    @SuppressWarnings("unused")
-    @UseDataSet(DataCleansing.CLEAN_RECORDS)
-    private PartitionedFileSet cleanRecords;
-
     @POST
     @Path("/records/raw")
     public void write(HttpServiceRequest request, HttpServiceResponder responder) {

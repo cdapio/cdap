@@ -19,7 +19,8 @@ package co.cask.cdap.internal.app.runtime.batch.dataset;
 import co.cask.cdap.api.data.batch.SplitReader;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.internal.app.runtime.batch.BasicMapReduceContext;
-import co.cask.cdap.internal.app.runtime.batch.MapReduceContextProvider;
+import co.cask.cdap.internal.app.runtime.batch.BasicMapReduceTaskContext;
+import co.cask.cdap.internal.app.runtime.batch.MapReduceTaskContextProvider;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
@@ -31,11 +32,11 @@ import java.io.IOException;
 final class DataSetRecordReader<KEY, VALUE> extends RecordReader<KEY, VALUE> {
   private static final Logger LOG = LoggerFactory.getLogger(DataSetRecordReader.class);
   private final SplitReader<KEY, VALUE> splitReader;
-  private final MapReduceContextProvider mrContextProvider;
-  private final BasicMapReduceContext context;
+  private final MapReduceTaskContextProvider mrContextProvider;
+  private final BasicMapReduceTaskContext context;
 
   public DataSetRecordReader(final SplitReader<KEY, VALUE> splitReader,
-                             final MapReduceContextProvider mrContextProvider) {
+                             final MapReduceTaskContextProvider mrContextProvider) {
     this.splitReader = splitReader;
     this.mrContextProvider = mrContextProvider;
     this.context = mrContextProvider.get();

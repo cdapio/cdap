@@ -18,8 +18,8 @@ package co.cask.cdap.internal.app.runtime.batch.dataset;
 
 import co.cask.cdap.api.data.batch.BatchWritable;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
-import co.cask.cdap.internal.app.runtime.batch.BasicMapReduceContext;
-import co.cask.cdap.internal.app.runtime.batch.MapReduceContextProvider;
+import co.cask.cdap.internal.app.runtime.batch.BasicMapReduceTaskContext;
+import co.cask.cdap.internal.app.runtime.batch.MapReduceTaskContextProvider;
 import com.google.common.base.Throwables;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
@@ -32,11 +32,11 @@ final class DataSetRecordWriter<KEY, VALUE> extends RecordWriter<KEY, VALUE> {
   private static final Logger LOG = LoggerFactory.getLogger(DataSetRecordWriter.class);
 
   private final BatchWritable<KEY, VALUE> batchWritable;
-  private final BasicMapReduceContext mrContext;
-  private final MapReduceContextProvider mrContextProvider;
+  private final BasicMapReduceTaskContext mrContext;
+  private final MapReduceTaskContextProvider mrContextProvider;
 
   public DataSetRecordWriter(final BatchWritable<KEY, VALUE> batchWritable,
-                             final MapReduceContextProvider mrContextProvider) {
+                             final MapReduceTaskContextProvider mrContextProvider) {
     this.batchWritable = batchWritable;
     this.mrContextProvider = mrContextProvider;
     this.mrContext = mrContextProvider.get();

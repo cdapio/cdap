@@ -31,6 +31,7 @@ public class DataCleansing extends AbstractApplication {
   protected static final String NAME = "DataCleansing";
   protected static final String RAW_RECORDS = "rawRecords";
   protected static final String CLEAN_RECORDS = "cleanRecords";
+  protected static final String INVALID_RECORDS = "invalidRecords";
   protected static final String CONSUMING_STATE = "consumingState";
 
   @Override
@@ -61,6 +62,18 @@ public class DataCleansing extends AbstractApplication {
       // Properties for file set
       .setOutputFormat(TextOutputFormat.class)
       // Properties for Explore (to create a partitioned Hive table)
+      .setEnableExploreOnCreate(true)
+      .setExploreFormat("text")
+      .setExploreFormatProperty("delimiter", "\n")
+      .setExploreSchema("record STRING")
+      .build());
+
+    createDataset(INVALID_RECORDS, PartitionedFileSet.class, PartitionedFileSetProperties.builder()
+      // Properties for partitioning
+      .setPartitioning(Partitioning.builder().addLongField("time").build())
+        // Properties for file set
+      .setOutputFormat(TextOutputFormat.class)
+        // Properties for Explore (to create a partitioned Hive table)
       .setEnableExploreOnCreate(true)
       .setExploreFormat("text")
       .setExploreFormatProperty("delimiter", "\n")

@@ -61,17 +61,19 @@ public class MapperWrapper extends Mapper {
   @SuppressWarnings("unchecked")
   @Override
   public void run(Context context) throws IOException, InterruptedException {
-    MapReduceContextProvider mrContextProvider =
-      new MapReduceContextProvider(context, MapReduceMetrics.TaskType.Mapper);
-    final BasicMapReduceContext basicMapReduceContext = mrContextProvider.get();
+    MapReduceTaskContextProvider mrContextProvider =
+      new MapReduceTaskContextProvider(context, MapReduceMetrics.TaskType.Mapper);
+    final BasicMapReduceTaskContext basicMapReduceContext = mrContextProvider.get();
     LoggingContextAccessor.setLoggingContext(basicMapReduceContext.getLoggingContext());
-
-    ClassLoader programClassLoader = MapReduceContextProvider.getProgramClassLoader(context.getConfiguration());
     basicMapReduceContext.getMetricsCollectionService().startAndWait();
 
-    // now that the context is created, we need to make sure to properly close all datasets of the context
+    // this is a hook for periodic flushing of changes buffered by datasets (to avoid OOME)
+    WrappedMapper.Context flushingContext = createAutoFlushingContext(context, basicMapReduceContext);
+    basicMapReduceContext.setHadoopContext(flushingContext);
+
     try {
       String userMapper = context.getConfiguration().get(ATTR_MAPPER_CLASS);
+      ClassLoader programClassLoader = MapReduceTaskContextProvider.getProgramClassLoader(context.getConfiguration());
       Mapper delegate = createMapperInstance(programClassLoader, userMapper);
 
       // injecting runtime components, like datasets, etc.
@@ -85,14 +87,11 @@ public class MapperWrapper extends Mapper {
         throw Throwables.propagate(t);
       }
 
-      // this is a hook for periodic flushing of changes buffered by datasets (to avoid OOME)
-      WrappedMapper.Context flushingContext = createAutoFlushingContext(context, basicMapReduceContext);
-
       ClassLoader oldClassLoader;
       if (delegate instanceof ProgramLifecycle) {
         oldClassLoader = ClassLoaders.setContextClassLoader(programClassLoader);
         try {
-          ((ProgramLifecycle<BasicMapReduceContext>) delegate).initialize(basicMapReduceContext);
+          ((ProgramLifecycle) delegate).initialize(new MapReduceLifecycleContext(basicMapReduceContext));
         } catch (Exception e) {
           LOG.error("Failed to initialize mapper with {}", basicMapReduceContext, e);
           throw Throwables.propagate(e);
@@ -109,7 +108,7 @@ public class MapperWrapper extends Mapper {
       }
 
       // transaction is not finished, but we want all operations to be dispatched (some could be buffered in
-      // memory by tx agent
+      // memory by tx agent)
       try {
         basicMapReduceContext.flushOperations();
       } catch (Exception e) {
@@ -131,7 +130,7 @@ public class MapperWrapper extends Mapper {
 
     } finally {
       try {
-        basicMapReduceContext.close();
+        basicMapReduceContext.close(); // closes all datasets
       } finally {
         mrContextProvider.stop();
       }
@@ -139,7 +138,7 @@ public class MapperWrapper extends Mapper {
   }
 
   private WrappedMapper.Context createAutoFlushingContext(final Context context,
-                                                          final BasicMapReduceContext basicMapReduceContext) {
+                                                          final BasicMapReduceTaskContext basicMapReduceContext) {
     // NOTE: we will change auto-flush to take into account size of buffered data, so no need to do/test a lot with
     //       current approach
     final int flushFreq = context.getConfiguration().getInt("c.mapper.flush.freq", 10000);
