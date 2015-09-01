@@ -52,6 +52,7 @@ angular.module(PKG.name + '.feature.services')
     this.openHistory = function() {
       this.$bootstrapModal.open({
         size: 'lg',
+        windowClass: 'cdap-modal',
         template: '<my-program-history data-runs="runs" data-type="SERVICES"></my-program-history>',
         controller: ['runs', '$scope', function(runs, $scope) {
           $scope.runs = runs;
@@ -67,6 +68,7 @@ angular.module(PKG.name + '.feature.services')
     this.openDatasets = function() {
       this.$bootstrapModal.open({
         size: 'lg',
+        windowClass: 'cdap-modal',
         template: '<my-data-list data-level="program" data-program="service"></my-data-list>'
       });
     };

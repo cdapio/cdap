@@ -53,6 +53,7 @@ angular.module(PKG.name + '.feature.worker')
   this.openHistory = function() {
     this.$bootstrapModal.open({
       size: 'lg',
+      windowClass: 'cdap-modal',
       template: '<my-program-history data-runs="runs" data-type="WORKER"></my-program-history>',
       controller: ['runs', '$scope', function(runs, $scope) {
         $scope.runs = runs;

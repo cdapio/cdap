@@ -56,6 +56,7 @@ angular.module(PKG.name + '.feature.mapreduce')
     this.openHistory = function() {
       this.$bootstrapModal.open({
         size: 'lg',
+        windowClass: 'cdap-modal',
         template: '<my-program-history data-runs="runs" data-type="MAPREDUCE"></my-program-history>',
         controller: ['runs', '$scope', function(runs, $scope) {
           $scope.runs = runs;
@@ -71,6 +72,7 @@ angular.module(PKG.name + '.feature.mapreduce')
     this.openDatasets = function() {
       this.$bootstrapModal.open({
         size: 'lg',
+        windowClass: 'cdap-modal',
         template: '<my-data-list data-level="program" data-program="mapreduce"></my-data-list>'
       });
     };
