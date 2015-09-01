@@ -263,7 +263,6 @@ public class ProgramLifecycleService extends AbstractIdleService {
         if (input == null) {
           return false;
         }
-        // Check if it is actually running
         String runId = input.getPid();
         // check for program Id for the run record, if null then it is invalid program type.
         Id.Program targetProgramId = retrieveProgramIdForRunRecord(programType, runId);
