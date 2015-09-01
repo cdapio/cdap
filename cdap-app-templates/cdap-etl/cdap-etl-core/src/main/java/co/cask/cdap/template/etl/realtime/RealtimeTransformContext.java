@@ -20,6 +20,7 @@ import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.templates.plugins.PluginProperties;
 import co.cask.cdap.api.worker.WorkerContext;
 import co.cask.cdap.template.etl.api.TransformContext;
+import co.cask.cdap.template.etl.common.Constants;
 
 /**
  * Context for the Transform Stage.
@@ -39,6 +40,20 @@ public class RealtimeTransformContext implements TransformContext {
   @Override
   public Metrics getMetrics() {
     return metrics;
+  }
+
+  @Override
+  public <T> T newPluginInstance(String pluginId) throws InstantiationException {
+    return context.newPluginInstance(getPluginId(pluginId));
+  }
+
+  @Override
+  public <T> T newInstance(String pluginId) throws InstantiationException {
+    return context.newInstance(getPluginId(pluginId));
+  }
+
+  protected String getPluginId(String childPluginId) {
+    return String.format("%s%s%s", pluginId, Constants.ID_SEPARATOR, childPluginId);
   }
 
   @Override

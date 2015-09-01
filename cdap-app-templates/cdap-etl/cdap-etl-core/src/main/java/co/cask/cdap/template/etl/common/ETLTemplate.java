@@ -99,6 +99,8 @@ public abstract class ETLTemplate<T extends ETLConfig> extends ApplicationTempla
       PluginProperties transformProperties = getPluginProperties(transformConfig);
       Transform transformObj = configurer.usePlugin(Constants.Transform.PLUGINTYPE, transformConfig.getName(),
                                                     transformId, transformProperties);
+      configure(transformObj, configurer, transformId);
+
       if (transformObj == null) {
         throw new IllegalArgumentException(String.format("No Plugin of type '%s' named '%s' was found",
                                                          Constants.Transform.PLUGINTYPE, transformConfig.getName()));

@@ -79,4 +79,9 @@ public class MockRealtimeContext implements RealtimeContext {
   public <T> T newPluginInstance(String pluginId) throws InstantiationException {
     return null;
   }
+
+  @Override
+  public <T> T newInstance(String pluginId) throws InstantiationException {
+    return null;
+  }
 }

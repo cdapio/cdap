@@ -67,8 +67,4 @@ public class WorkerRealtimeContext extends RealtimeTransformContext implements R
   public <T> T newPluginInstance(String pluginId) throws InstantiationException {
     return context.newPluginInstance(getPluginId(pluginId));
   }
-
-  private String getPluginId(String childPluginId) {
-    return String.format("%s%s%s", pluginId, Constants.ID_SEPARATOR, childPluginId);
-  }
 }

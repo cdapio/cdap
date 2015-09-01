@@ -19,6 +19,7 @@ package co.cask.cdap.template.etl.realtime.source;
 import co.cask.cdap.api.data.format.Formats;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.template.etl.api.Emitter;
+import co.cask.cdap.template.etl.api.InvalidEntry;
 import co.cask.cdap.template.etl.api.realtime.SourceState;
 import co.cask.cdap.template.etl.common.MockRealtimeContext;
 import com.google.common.base.Charsets;
@@ -280,6 +281,11 @@ public class KafkaSourceTest {
     @Override
     public void emit(StructuredRecord value) {
       entryList.add(value);
+    }
+
+    @Override
+    public void emitError(InvalidEntry<StructuredRecord> value) {
+      //no-op
     }
 
     public int getInternalSize() {

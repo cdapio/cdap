@@ -16,27 +16,31 @@
 
 package co.cask.cdap.template.etl.api;
 
-import co.cask.cdap.api.annotation.Beta;
-
 /**
- * Used to emit one or more key, value pairs to the next stage.
+ * Represents a record that fails validation, with provided errorCode and errorMessage
  *
- * @param <T> Type of the object to emit
+ * @param <T> Type of the object that failed validation.
  */
-@Beta
-public interface Emitter<T> {
+public class InvalidEntry<T> {
+  private final int errorCode;
+  private final String errorMsg;
+  private final T invalidRecord;
 
-  /**
-   * Emit an object.
-   *
-   * @param value the object to emit
-   */
-  void emit(T value);
+  public InvalidEntry(int errorCode, String errorMsg, T invalidRecord) {
+    this.errorCode = errorCode;
+    this.errorMsg = errorMsg;
+    this.invalidRecord = invalidRecord;
+  }
 
-  /**
-   * Emit an Error object.
-   *
-   * @param invalidEntry {@link InvalidEntry<T>} representing the error.
-   */
-  void emitError(InvalidEntry<T> invalidEntry);
+  public int getErrorCode() {
+    return errorCode;
+  }
+
+  public String getErrorMsg() {
+    return errorMsg;
+  }
+
+  public T getInvalidRecord() {
+    return invalidRecord;
+  }
 }

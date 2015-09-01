@@ -94,7 +94,8 @@ public class PipelineRegisterer {
         throw new IllegalArgumentException(String.format("No Plugin of type '%s' named '%s' was found",
                                                          Constants.Transform.PLUGINTYPE, transformConfig.getName()));
       }
-
+      PipelineConfigurer transformConfigurer = new DefaultPipelineConfigurer(configurer, transformId);
+      transformObj.configurePipeline(transformConfigurer);
       transformIds.add(transformId);
       transforms.add(transformObj);
     }

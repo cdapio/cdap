@@ -27,8 +27,8 @@ plugins listed below are available for creating ETL adapters.
    
     Sources <sources/index>
     Transformations <transformations/index>
+    Validators <validators/index.rst>
     Sinks <sinks/index>
-    
     
 .. rubric:: Exploring Application Template Details
 
