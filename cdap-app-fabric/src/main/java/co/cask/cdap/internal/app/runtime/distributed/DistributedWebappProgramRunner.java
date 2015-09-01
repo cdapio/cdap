@@ -61,6 +61,6 @@ public final class DistributedWebappProgramRunner extends AbstractDistributedPro
     LOG.info("Launching distributed webapp: " + program.getName());
     TwillController controller = launcher.launch(new WebappTwillApplication(program, localizeResources, eventHandler));
     RunId runId = RunIds.fromString(options.getArguments().getOption(ProgramOptionConstants.RUN_ID));
-    return new WebappTwillProgramController(program.getName(), controller, runId).startListen();
+    return new WebappTwillProgramController(program.getId(), controller, runId).startListen();
   }
 }

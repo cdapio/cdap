@@ -106,7 +106,7 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
       extraClassPaths
     );
     RunId runId = RunIds.fromString(options.getArguments().getOption(ProgramOptionConstants.RUN_ID));
-    return new WorkflowTwillProgramController(program.getName(), controller, runId).startListen();
+    return new WorkflowTwillProgramController(program.getId(), controller, runId).startListen();
   }
 
   private static Configuration createConfiguration(Configuration hConf) {

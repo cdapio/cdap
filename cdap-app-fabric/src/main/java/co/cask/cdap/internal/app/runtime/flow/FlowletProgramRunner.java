@@ -254,7 +254,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
                                                              createCallback(flowlet, flowletDef.getFlowletSpec()),
                                                              dataFabricFacade, serviceHook);
 
-      FlowletProgramController controller = new FlowletProgramController(program.getName(), flowletName,
+      FlowletProgramController controller = new FlowletProgramController(program.getId(), flowletName,
                                                                          flowletContext, driver,
                                                                          queueProducerSupplierBuilder.build(),
                                                                          consumerSuppliers);

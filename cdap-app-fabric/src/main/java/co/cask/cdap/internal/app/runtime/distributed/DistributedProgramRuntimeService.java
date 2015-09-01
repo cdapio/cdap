@@ -36,7 +36,6 @@ import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
 import co.cask.cdap.internal.app.queue.SimpleQueueSpecificationGenerator;
 import co.cask.cdap.internal.app.runtime.AbstractResourceReporter;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
-import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.runtime.service.SimpleRuntimeInfo;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.proto.Containers;
@@ -280,11 +279,11 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
 
   private ProgramController createController(Program program, TwillController controller, RunId runId) {
     AbstractTwillProgramController programController = null;
-    String programId = program.getId().getId();
+    Id.Program programId = program.getId();
 
     switch (program.getType()) {
       case FLOW: {
-        FlowSpecification flowSpec = program.getApplicationSpecification().getFlows().get(programId);
+        FlowSpecification flowSpec = program.getApplicationSpecification().getFlows().get(programId.getId());
         DistributedFlowletInstanceUpdater instanceUpdater = new DistributedFlowletInstanceUpdater(
           program, controller, queueAdmin, streamAdmin, getFlowletQueues(program, flowSpec), txExecutorFactory
         );
@@ -334,9 +333,6 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
     // Loop through each flowlet
     for (Map.Entry<String, FlowletDefinition> entry : flowSpec.getFlowlets().entrySet()) {
       String flowletId = entry.getKey();
-      long groupId = FlowUtils.generateConsumerGroupId(program, flowletId);
-      int instances = entry.getValue().getInstances();
-
       // For each queue that the flowlet is a consumer, store the number of instances for this flowlet
       for (QueueSpecification queueSpec : Iterables.concat(queueSpecs.column(flowletId).values())) {
         resultBuilder.put(flowletId, queueSpec.getQueueName());

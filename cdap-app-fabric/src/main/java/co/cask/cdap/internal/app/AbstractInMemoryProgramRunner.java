@@ -138,7 +138,7 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
     public InMemoryProgramController(Table<String, Integer, ProgramController> components,
                                      RunId runId, Program program, ProgramSpecification spec,
                                      ProgramOptions options, ProgramRunnerFactory.Type type) {
-      super(program.getName(), runId);
+      super(program.getId(), runId);
       this.program = program;
       this.components = components;
       this.spec = spec;
