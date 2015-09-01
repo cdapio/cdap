@@ -1,0 +1,10 @@
+{
+  "name": "config",
+  "type": "validation",
+  "groups": [
+    {
+      "name": "config_validator",
+      "command": "bin/config_validator.py"
+    }
+  ]
+}

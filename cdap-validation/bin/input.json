@@ -1,0 +1,10 @@
+{
+  "params":
+  {
+    "verbose": "default",
+    "uri": "http://ambari.prod.continuuity.net:8080/",
+    "userpass": "admin:admin",
+    "cluster_name": "hdp20",
+    "modules": "config"
+  }
+}

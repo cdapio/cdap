@@ -1,0 +1,36 @@
+Structure of this directory:
+
+modules/
+
+       lib/
+          __init__.py
+          helpers.py
+
+       config/
+                    module.json
+                    bin/
+                        config_validator.py 
+
+       service/
+                    module.json
+                    bin/
+                        service_checks.py
+
+       ...
+
+       <module2_name>/ ### example
+                    module.json
+                    bin/
+                        module1_executable(s)
+
+###########################################################################
+
+helpers.py has functions/methods that can be used by plugin (test) modules.
+Currently:
+
+* vprint  -- function used to (only) print certain content when verbose is set to highest level (e.g. debug)
+
+* vout    -- function used for sending output to user for a given result, filtered for chosen verbosity level
+
+* convert_mult_to_bytes -- function used to convert values using 1024 multipliers to bytes, e.g.: 
+  1024m => 1073741824 bytes
