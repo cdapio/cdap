@@ -405,6 +405,12 @@ body.theme-cdap {
     }
 
     &.cdap-modal {
+      &.center .modal-dialog {
+        max-width: 80%;
+        @media (min-width: @screen-md-min) {
+          width: 900px;
+        }
+      }
       .modal-header {
         background-color: @body-bg;
         border-bottom: 1px solid @modal-table-border-color;
@@ -412,11 +418,42 @@ body.theme-cdap {
         height: 60px;
         padding: 0;
         .border-radius(4px 4px 0 0);
-        > h3 {
-          color: @cdap-header;
-          line-height: 60px;
+        > div {
           margin: 0;
           padding-left: 15px;
+          @media (max-width: @screen-sm-max) {
+            max-width: 200px;
+          }
+          h3, p {
+            @media (max-width: @screen-sm-max) {
+              white-space: nowrap;
+              text-overflow: ellipsis;
+              overflow: hidden;
+            }
+          }
+          h3 {
+            padding-top: 5px;
+            &:only-child {
+              line-height: 60px;
+              padding-top: 0;
+            }
+          }
+        }
+        > h3 {
+          padding-left: 15px;
+          @media (max-width: @screen-sm-max) {
+            max-width: 200px;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            overflow: hidden;
+          }
+        }
+        h3 {
+          color: @cdap-header;
+          font-weight: 500;
+        }
+        p {
+          color: @cdap-lightgray;
         }
         > a.btn {
           background-color: transparent;
