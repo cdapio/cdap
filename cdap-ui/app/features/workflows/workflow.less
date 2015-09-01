@@ -23,15 +23,16 @@ body.state-workflows {
       .rotate(90deg);
     }
   }
-
+  .container {
+    width: 100%;
+  }
   .schedule-heading {
     background-color: white;
     border: 1px solid @border-color;
     border-top-left-radius: @border-radius-base;
     border-top-right-radius: @border-radius-base;
     font-weight: 700;
-    padding-top: 20px;
-    height: 70px;
+    padding: 10px 0;
   }
 
   .schedule-content {
@@ -40,8 +41,8 @@ body.state-workflows {
         background-color: white;
         border: 1px solid @border-color;
         padding: 5px 0;
-        line-height: 50px;
         cursor: pointer;
+        height: 55px;
         &.active { background-color: #dcdce6; }
         p, i {
           vertical-align: middle;
@@ -55,9 +56,7 @@ body.state-workflows {
       background-color: #9d9fab;
       padding: 10px 0;
       .row {
-        line-height: 30px;
         p {
-          vertical-align: middle;
           margin-bottom: 0;
           color: white;
         }
