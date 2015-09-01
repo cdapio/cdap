@@ -17,6 +17,7 @@
 package co.cask.cdap.gateway.router;
 
 import co.cask.cdap.common.conf.Constants;
+import com.google.common.collect.ImmutableList;
 import org.jboss.netty.handler.codec.http.DefaultHttpRequest;
 import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -322,5 +323,33 @@ public class RouterPathTest {
     HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("PUT"), namespacePath);
     String result = pathLookup.getRoutingService(FALLBACKSERVICE, namespacePath, httpRequest);
     Assert.assertEquals(null, result);
+  }
+
+  @Test
+  public void testMetadataPath() {
+    // app metadata
+    assertMetadataRouting("/v3/namespaces/default//apps/WordCount//////metadata");
+    // program metadata
+    assertMetadataRouting("/v3/namespaces/default//apps/WordCount/flows/WordCountFlow/metadata");
+    // dataset metadata
+    assertMetadataRouting("/v3/namespaces/default/////datasets/ds1/metadata");
+    // stream metadata
+    assertMetadataRouting("/v3/namespaces////default////streams//s1/metadata");
+    // app tags
+    assertMetadataRouting("/v3/namespaces/default//apps/WordCount//////tags");
+    // program metadata
+    assertMetadataRouting("/v3/namespaces/default//apps/WordCount/flows/WordCountFlow/tags");
+    // dataset metadata
+    assertMetadataRouting("/v3/namespaces/default/////datasets/ds1/tags");
+    // stream metadata
+    assertMetadataRouting("/v3/namespaces////default////streams//s1/tags");
+  }
+
+  private void assertMetadataRouting(String path) {
+    for (HttpMethod method : ImmutableList.of(HttpMethod.GET, HttpMethod.POST, HttpMethod.DELETE)) {
+      HttpRequest httpRequest = new DefaultHttpRequest(VERSION, method, path);
+      String result = pathLookup.getRoutingService(FALLBACKSERVICE, path, httpRequest);
+      Assert.assertEquals(Constants.Service.DATASET_MANAGER,  result);
+    }
   }
 }

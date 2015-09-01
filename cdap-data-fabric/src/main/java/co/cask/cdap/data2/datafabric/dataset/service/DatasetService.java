@@ -27,6 +27,8 @@ import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.MDSDatasetsRegistry;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
+import co.cask.cdap.data2.metadata.service.MetadataAdmin;
+import co.cask.cdap.data2.metadata.service.MetadataHttpHandler;
 import co.cask.cdap.data2.metrics.DatasetMetricsReporter;
 import co.cask.http.NettyHttpService;
 import com.google.common.base.Objects;
@@ -82,7 +84,8 @@ public class DatasetService extends AbstractExecutionThreadService {
                         Set<DatasetMetricsReporter> metricReporters,
                         DatasetInstanceService datasetInstanceService,
                         StorageProviderNamespaceAdmin storageProviderNamespaceAdmin,
-                        AbstractNamespaceClient namespaceClient) throws Exception {
+                        AbstractNamespaceClient namespaceClient,
+                        MetadataAdmin metadataAdmin) throws Exception {
 
     this.typeManager = typeManager;
     DatasetTypeHandler datasetTypeHandler = new DatasetTypeHandler(typeManager, cConf, namespacedLocationFactory,
@@ -90,10 +93,12 @@ public class DatasetService extends AbstractExecutionThreadService {
     DatasetInstanceHandler datasetInstanceHandler = new DatasetInstanceHandler(datasetInstanceService);
     StorageProviderNamespaceHandler storageProviderNamespaceHandler =
       new StorageProviderNamespaceHandler(storageProviderNamespaceAdmin);
+    MetadataHttpHandler metadataHandler = new MetadataHttpHandler(metadataAdmin);
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf);
     builder.addHttpHandlers(ImmutableList.of(datasetTypeHandler,
                                              datasetInstanceHandler,
-                                             storageProviderNamespaceHandler));
+                                             storageProviderNamespaceHandler,
+                                             metadataHandler));
 
     builder.setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
                                                                      Constants.Service.DATASET_MANAGER)));
