@@ -2,16 +2,16 @@
   Service that maintains the list of nodes and connections
   MyAppDAGService is responsible for communicating between side panel and plumb directives
 
-  Adding Nodes from Side-Panel: 
+  Adding Nodes from Side-Panel:
     1. When the user clicks/drag-n-drops a plugin this service is notified of it.
     2. The service then updates all the listeners who have registered for this change
     3. The plumb directive will eventually get this notification and will draw a node.
 
-  Making connections in UI in the plumb-directive: 
+  Making connections in UI in the plumb-directive:
     1. When the user makes a connection in the UI this service gets notified of that connection.
     2. (In the future) if someone is interested then they can register for this event.
 
-  Editing Properties in canvas-ctrl: 
+  Editing Properties in canvas-ctrl:
     1. When the user wants to edit the properties of a plugin this service gets the notification
     2. The plugin ID will be sent. Now the service should fetch the list of properties for the plugin.
     3. Create a map of properties and add it to the plugin (identified by passed in plugin ID)
@@ -797,6 +797,16 @@ angular.module(PKG.name + '.services')
       }
       this.notifyError({});
       this.notifyResetListners();
+    };
+
+    this.onImportSuccess = function(result) {
+      EventPipe.emit('popovers.reset');
+      var config = JSON.stringify(result);
+      this.resetToDefaults(true);
+      this.setNodesAndConnectionsFromDraft(result);
+      if (config.name) {
+        this.metadata.name = config.name;
+      }
     };
 
   });
