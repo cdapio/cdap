@@ -25,7 +25,6 @@ import java.util.SortedMap;
 
 /**
  * Represents class for selecting plugin.
- * TODO: move this into cdap-api once everything is ready
  */
 @Beta
 public class PluginSelector {

@@ -28,7 +28,6 @@ import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import javax.annotation.Nullable;
 
 /**
  * Implementation of {@link HttpServiceRequest} which delegates calls to

@@ -16,6 +16,9 @@
 
 package co.cask.cdap.internal.app;
 
+import co.cask.cdap.api.app.ApplicationSpecification;
+import co.cask.cdap.api.artifact.ArtifactId;
+import co.cask.cdap.api.artifact.Plugin;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
@@ -24,9 +27,7 @@ import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
-import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
-import co.cask.cdap.proto.Id;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;
@@ -38,10 +39,9 @@ import javax.annotation.Nullable;
 public final class DefaultApplicationSpecification implements ApplicationSpecification {
 
   private final String name;
-  private final String version;
   private final String description;
   private final String configuration;
-  private final Id.Artifact artifactId;
+  private final ArtifactId artifactId;
   private final Map<String, StreamSpecification> streams;
   private final Map<String, String> datasetModules;
   private final Map<String, DatasetCreationSpec> datasetInstances;
@@ -54,8 +54,8 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
   private final Map<String, WorkerSpecification> workers;
   private final Map<String, Plugin> plugins;
 
-  public DefaultApplicationSpecification(String name, String version, String description, String configuration,
-                                         Id.Artifact artifactId,
+  public DefaultApplicationSpecification(String name, String description, String configuration,
+                                         ArtifactId artifactId,
                                          Map<String, StreamSpecification> streams,
                                          Map<String, String> datasetModules,
                                          Map<String, DatasetCreationSpec> datasetInstances,
@@ -68,7 +68,6 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
                                          Map<String, WorkerSpecification> workers,
                                          Map<String, Plugin> plugins) {
     this.name = name;
-    this.version = version;
     this.description = description;
     this.configuration = configuration;
     this.artifactId = artifactId;
@@ -86,7 +85,7 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
   }
 
   public static DefaultApplicationSpecification from(ApplicationSpecification spec) {
-    return new DefaultApplicationSpecification(spec.getName(), spec.getVersion(), spec.getDescription(),
+    return new DefaultApplicationSpecification(spec.getName(), spec.getDescription(),
                                                spec.getConfiguration(), spec.getArtifactId(),
                                                spec.getStreams(),
                                                spec.getDatasetModules(), spec.getDatasets(),
@@ -101,11 +100,6 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
     return name;
   }
 
-  @Override
-  public String getVersion() {
-    return version;
-  }
-
   @Nullable
   @Override
   public String getConfiguration() {
@@ -118,7 +112,7 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
   }
 
   @Override
-  public Id.Artifact getArtifactId() {
+  public ArtifactId getArtifactId() {
     return artifactId;
   }
 

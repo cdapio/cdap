@@ -17,7 +17,9 @@
 package co.cask.cdap.internal.app.runtime;
 
 import co.cask.cdap.api.RuntimeContext;
+import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.artifact.ArtifactDescriptor;
+import co.cask.cdap.api.artifact.Plugin;
 import co.cask.cdap.api.artifact.PluginContext;
 import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.data.DatasetContext;
@@ -33,7 +35,6 @@ import co.cask.cdap.app.services.AbstractServiceDiscoverer;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.dataset.DatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.internal.app.Plugin;
 import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
 import co.cask.cdap.proto.Id;
@@ -44,7 +45,6 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
-import com.google.common.io.Closeables;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocationFactory;
@@ -140,6 +140,11 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   }
 
   public abstract Metrics getMetrics();
+
+  @Override
+  public ApplicationSpecification getApplicationSpecification() {
+    return program.getApplicationSpecification();
+  }
 
   @Nullable
   public AdapterDefinition getAdapterSpecification() {
@@ -330,7 +335,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     Plugin plugin = getPlugin(pluginId);
     try {
       URI locationURI = plugin.getLocationURI();
-      ArtifactDescriptor artifactDescriptor = new ArtifactDescriptor(plugin.getPluginName(),
+      ArtifactDescriptor artifactDescriptor = new ArtifactDescriptor(plugin.getArtifactName(),
                                                                      plugin.getArtifactVersion(), plugin.isSystem(),
                                                                      locationFactory.create(locationURI));
       return artifactPluginInstantiator.loadClass(artifactDescriptor, plugin.getPluginClass());
@@ -351,7 +356,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     Plugin plugin = getPlugin(pluginId);
     try {
       URI locationURI = plugin.getLocationURI();
-      ArtifactDescriptor artifactDescriptor = new ArtifactDescriptor(plugin.getPluginName(),
+      ArtifactDescriptor artifactDescriptor = new ArtifactDescriptor(plugin.getArtifactName(),
                                                                      plugin.getArtifactVersion(), plugin.isSystem(),
                                                                      locationFactory.create(locationURI));
       return artifactPluginInstantiator.newInstance(artifactDescriptor, plugin.getPluginClass(),

@@ -18,8 +18,8 @@ package co.cask.cdap.internal.app.queue;
 
 import co.cask.cdap.ToyApp;
 import co.cask.cdap.WordCountApp;
+import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.flow.FlowletConnection;
-import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.queue.QueueSpecification;
 import co.cask.cdap.app.queue.QueueSpecificationGenerator;
 import co.cask.cdap.internal.DefaultId;

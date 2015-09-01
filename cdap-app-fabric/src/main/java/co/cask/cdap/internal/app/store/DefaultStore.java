@@ -17,6 +17,8 @@
 package co.cask.cdap.internal.app.store;
 
 import co.cask.cdap.api.ProgramSpecification;
+import co.cask.cdap.api.app.ApplicationSpecification;
+import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetDefinition;
@@ -32,7 +34,6 @@ import co.cask.cdap.api.workflow.WorkflowActionNode;
 import co.cask.cdap.api.workflow.WorkflowNode;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.api.workflow.WorkflowToken;
-import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.app.store.Store;
@@ -1358,7 +1359,7 @@ public class DefaultStore implements Store {
       return new Predicate<ApplicationSpecification>() {
         @Override
         public boolean apply(ApplicationSpecification input) {
-          Id.Artifact artifact = input.getArtifactId();
+          ArtifactId artifact = input.getArtifactId();
           return artifactVersion.equals(artifact.getVersion().getVersion()) && artifactName.equals(artifact.getName());
         }
       };

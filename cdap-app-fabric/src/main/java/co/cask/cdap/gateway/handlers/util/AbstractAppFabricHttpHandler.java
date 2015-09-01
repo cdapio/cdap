@@ -17,7 +17,8 @@
 package co.cask.cdap.gateway.handlers.util;
 
 import co.cask.cdap.api.ProgramSpecification;
-import co.cask.cdap.app.ApplicationSpecification;
+import co.cask.cdap.api.app.ApplicationSpecification;
+import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.NamespaceNotFoundException;
@@ -186,9 +187,9 @@ public abstract class AbstractAppFabricHttpHandler extends AbstractHttpHandler {
     for (ApplicationSpecification appSpec : store.getApplications(namespace, artifactName, artifactVersion)) {
       // null artifact id means its an application template
       // TODO: (CDAP-3359) remove generated artifact summary when ApplicationTemplates are removed
-      Id.Artifact artifactId = appSpec.getArtifactId();
+      ArtifactId artifactId = appSpec.getArtifactId();
       ArtifactSummary artifactSummary = artifactId == null ?
-        new ArtifactSummary(appSpec.getName(), appSpec.getVersion(), true) : ArtifactSummary.from(artifactId);
+        new ArtifactSummary(appSpec.getName(), null, true) : ArtifactSummary.from(artifactId);
       appRecords.add(new ApplicationRecord(artifactSummary, appSpec.getName(), appSpec.getDescription()));
     }
 

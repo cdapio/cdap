@@ -18,7 +18,7 @@ package co.cask.cdap.internal.app.deploy;
 
 import co.cask.cdap.ConfigTestApp;
 import co.cask.cdap.WordCountApp;
-import co.cask.cdap.app.ApplicationSpecification;
+import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.app.deploy.ConfigResponse;
 import co.cask.cdap.app.deploy.Configurator;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -37,7 +37,6 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 

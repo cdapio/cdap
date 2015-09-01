@@ -25,7 +25,6 @@ import co.cask.cdap.proto.ProgramType;
 import org.apache.twill.api.EventHandler;
 import org.apache.twill.api.TwillApplication;
 
-import java.io.File;
 import java.util.Map;
 
 /**

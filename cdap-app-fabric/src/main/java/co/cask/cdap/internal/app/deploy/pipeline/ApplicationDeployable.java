@@ -16,7 +16,7 @@
 
 package co.cask.cdap.internal.app.deploy.pipeline;
 
-import co.cask.cdap.app.ApplicationSpecification;
+import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.proto.Id;
 import org.apache.twill.filesystem.Location;
 

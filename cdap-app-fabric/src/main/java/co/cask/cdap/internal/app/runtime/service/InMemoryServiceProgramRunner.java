@@ -16,9 +16,9 @@
 
 package co.cask.cdap.internal.app.runtime.service;
 
+import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.ServiceSpecification;
-import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;

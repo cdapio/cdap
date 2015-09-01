@@ -16,7 +16,7 @@
 
 package co.cask.cdap.internal.app.deploy.pipeline.adapter;
 
-import co.cask.cdap.app.ApplicationSpecification;
+import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.internal.app.runtime.adapter.ApplicationTemplateInfo;
 import co.cask.cdap.proto.AdapterConfig;
 

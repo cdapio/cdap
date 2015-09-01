@@ -18,7 +18,7 @@ package co.cask.cdap.internal.app.deploy;
 
 import co.cask.cdap.api.Config;
 import co.cask.cdap.api.app.Application;
-import co.cask.cdap.app.ApplicationSpecification;
+import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.app.DefaultAppConfigurer;
 import co.cask.cdap.app.DefaultApplicationContext;
 import co.cask.cdap.app.deploy.ConfigResponse;
@@ -176,7 +176,7 @@ public final class InMemoryConfigurator implements Configurator {
     }
 
     app.configure(configurer, new DefaultApplicationContext(appConfig));
-    ApplicationSpecification specification = configurer.createSpecification(bundleVersion);
+    ApplicationSpecification specification = configurer.createSpecification();
 
     // Convert the specification to JSON.
     // We write the Application specification to output file in JSON format.

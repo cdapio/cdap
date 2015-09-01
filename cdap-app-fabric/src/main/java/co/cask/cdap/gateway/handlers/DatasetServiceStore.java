@@ -26,7 +26,6 @@ import co.cask.cdap.data2.dataset2.lib.kv.NoTxKeyValueTable;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.RestartServiceInstancesStatus;
 import co.cask.cdap.proto.RestartServiceInstancesStatus.RestartStatus;
-
 import com.google.common.base.Preconditions;
 import com.google.common.collect.DiscreteDomains;
 import com.google.common.collect.ImmutableSet;

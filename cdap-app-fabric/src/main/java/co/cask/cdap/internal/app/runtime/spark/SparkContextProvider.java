@@ -150,6 +150,7 @@ public final class SparkContextProvider {
 
       // Create the context object
       sparkContext = new ExecutionSparkContext(
+        contextConfig.getApplicationSpecification(),
         contextConfig.getSpecification(), contextConfig.getProgramId(), contextConfig.getRunId(),
         classLoader, contextConfig.getLogicalStartTime(), contextConfig.getArguments(),
         contextConfig.getTransaction(), injector.getInstance(DatasetFramework.class),
