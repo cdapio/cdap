@@ -10,11 +10,15 @@
 </div>
 
 <div ng-controller="AdapterRunDetailController">
-  <my-program-status
-    data-type="adapters"
-    data-runid="{{ runs.selected.runid }}"
-    data-runs="runs"
-  ></my-program-status>
+  <div class="row run-status">
+    <div class="col-xs-6">
+      <my-program-status
+        data-type="adapters"
+        data-runid="runs.selected.runid"
+        data-runs="runs"
+      ></my-program-status>
+    </div>
+  </div>
 </div>
 
 <br/>
