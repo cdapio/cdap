@@ -20,7 +20,7 @@
   },
   "schema" : {
      "widget": "schema",
-     "schema-types" : [ "boolean", "int", "long", "float", "double", "string" ],
+     "schema-types" : [ "boolean", "int", "long", "float", "double", "string", "map<string, string>" ],
      "schema-default-type" : "string"
   }
 }
