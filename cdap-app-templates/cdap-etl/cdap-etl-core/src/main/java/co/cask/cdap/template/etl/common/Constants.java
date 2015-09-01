@@ -75,4 +75,13 @@ public final class Constants {
       throw new AssertionError("Suppress default constructor for noninstantiability");
     }
   }
+
+  /**
+   * Constants related to error dataset used in transform
+   */
+  public static final class ErrorDataset {
+    public static final String COLUMN_ERRCODE = "errCode";
+    public static final String COLUMN_ERRMSG = "errMsg";
+    public static final String COLUMN_INVALIDENTRY = "invalidRecord";
+  }
 }
