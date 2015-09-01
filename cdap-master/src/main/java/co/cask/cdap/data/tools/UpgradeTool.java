@@ -83,9 +83,7 @@ public class UpgradeTool {
 
   private static final Logger LOG = LoggerFactory.getLogger(UpgradeTool.class);
 
-  @VisibleForTesting
-  final Injector injector;
-
+  private final Injector injector;
   private final CConfiguration cConf;
   private final Configuration hConf;
   private final TransactionService txService;
@@ -100,12 +98,9 @@ public class UpgradeTool {
   private enum Action {
     UPGRADE("Upgrades CDAP to 3.2\n" +
               "  The upgrade tool upgrades the following: \n" +
-              "  1. User Datasets\n" +
-              "      - Upgrades the coprocessor jars for tables\n" +
-              "      - Migrates the metadata for PartitionedFileSets\n" +
-              "  2. System Datasets\n" +
-              "  3. UsageRegistry Dataset Type\n" +
-              "  4. Application Specifications\n" +
+              "  1. User and System Datasets (upgrades the coprocessor jars)\n" +
+              "  2. UsageRegistry Dataset Type\n" +
+              "  3. Application Specifications\n" +
               "      - Adds artifacts for existing applications\n" +
               "      - Updates application metadata to include newly added artifact\n" +
               "  Note: Once you run the upgrade tool you cannot rollback to the previous version."),
@@ -319,10 +314,6 @@ public class UpgradeTool {
     LOG.info("Upgrading System and User Datasets ...");
     DatasetUpgrader dsUpgrade = injector.getInstance(DatasetUpgrader.class);
     dsUpgrade.upgrade();
-
-    LOG.info("Upgrading PartitionedFileSets ...");
-    PFSUpgrader pfsUpgrader = injector.getInstance(PFSUpgrader.class);
-    pfsUpgrader.upgrade();
 
     LOG.info("Upgrading QueueAdmin ...");
     QueueAdmin queueAdmin = injector.getInstance(QueueAdmin.class);
