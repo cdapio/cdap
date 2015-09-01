@@ -71,9 +71,9 @@ public class DataCleansing extends AbstractApplication {
     createDataset(INVALID_RECORDS, PartitionedFileSet.class, PartitionedFileSetProperties.builder()
       // Properties for partitioning
       .setPartitioning(Partitioning.builder().addLongField("time").build())
-        // Properties for file set
+      // Properties for file set
       .setOutputFormat(TextOutputFormat.class)
-        // Properties for Explore (to create a partitioned Hive table)
+      // Properties for Explore (to create a partitioned Hive table)
       .setEnableExploreOnCreate(true)
       .setExploreFormat("text")
       .setExploreFormatProperty("delimiter", "\n")
