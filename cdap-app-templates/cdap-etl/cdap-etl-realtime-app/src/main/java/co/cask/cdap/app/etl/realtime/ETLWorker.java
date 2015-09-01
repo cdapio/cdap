@@ -19,6 +19,8 @@ package co.cask.cdap.app.etl.realtime;
 import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.DatasetContext;
+import co.cask.cdap.api.dataset.lib.CloseableIterator;
+import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.worker.AbstractWorker;
@@ -112,16 +114,16 @@ public class ETLWorker extends AbstractWorker {
     String uniqueId = properties.get(Constants.Realtime.UNIQUE_ID);
 
     // Each worker instance should have its own unique state.
-    stateStoreKey = String.format("%s%s%s", uniqueId, SEPARATOR, context.getInstanceId());
+    final String appName = context.getApplicationSpecification().getName();
+    stateStoreKey = String.format("%s%s%s%s%s", appName, SEPARATOR, uniqueId, SEPARATOR, context.getInstanceId());
     stateStoreKeyBytes = Bytes.toBytes(stateStoreKey);
 
-    // TODO: (CDAP-3535) add this logic back once we can have access to the app name
     // Cleanup the rows in statetable for runs with same adapter name but other runids.
-    /*getContext().execute(new TxRunnable() {
+    getContext().execute(new TxRunnable() {
       @Override
       public void run(DatasetContext dsContext) throws Exception {
         KeyValueTable stateTable = dsContext.getDataset(ETLRealtimeApplication.STATE_TABLE);
-        byte[] startKey = Bytes.toBytes(String.format("%s%s", adapterName, SEPARATOR));
+        byte[] startKey = Bytes.toBytes(String.format("%s%s", appName, SEPARATOR));
         // Scan the table for adaptername: prefixes and remove rows which doesn't match the unique id of this adapter.
         CloseableIterator<KeyValue<byte[], byte[]>> rows = stateTable.scan(startKey, Bytes.stopKeyForPrefix(startKey));
         try {
@@ -135,7 +137,7 @@ public class ETLWorker extends AbstractWorker {
           rows.close();
         }
       }
-    });*/
+    });
 
     initializeSource(context);
     List<Transformation> transforms = initializeTransforms(context);
