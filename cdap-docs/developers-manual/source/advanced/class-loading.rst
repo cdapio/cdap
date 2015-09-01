@@ -12,10 +12,10 @@ In this advanced section, we talk about how we used Java class loading to design
 extensible application framework with a flexible class loading strategy. In terms of class
 loading strategy, we provide these properties for an application:
 
-- Application can choose to use any library of any version;
-- Application can define a custom plugin API for extending itself;
-- Plugins can be written for an application by implementing the application plugin API; and
-- Different plugins can choose to use any library of any version, yet all plugins are
+- an application can choose to use any library of any version;
+- an application can define a custom plugin API for extending itself;
+- plugins can be written for an application by implementing the application plugin API; and
+- different plugins can choose to use any library of any version, yet all plugins are
   usable by the same application at the same time.
 
 Parent Delegation Model
@@ -32,8 +32,7 @@ inter-operate with a set of common API classes.
 
 Class Loading in CDAP
 =====================
-Based on the parent delegation model, we’ve come up with this class loader hierarchy in
-CDAP:
+The CDAP class loader hierarchy is based on the parent delegation model as follows:
 
 .. image:: ../_images/class-loading/class-loading01.png
    :align: center
@@ -89,12 +88,3 @@ isolation behavior as described in the previous section. To do so, we alter the 
 of the YARN container for the job and make it first call the main method of our launcher
 class. The launcher class will setup the class loader hierarchy as desired and then
 delegate the call to the actual MapReduce or Spark task runner.
-
-Summary
-=======
-
-Java class loading is a powerful and important concept provided by the Java platform.
-Understanding how it works has helped us in designing a CDAP class loading strategy that
-provides isolation in class loading for applications and plugins, but with the flexibility
-to handle different use cases. With it, application developers can avoid the complexity of
-class loaders and the difficulty caused by different kinds of class loading errors.
