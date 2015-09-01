@@ -35,7 +35,8 @@ body.state-services {
         }
       }
       td {
-        a.btn-success {
+        a.btn:not([disabled]) {
+          background-color: @brand-success;
           color: white;
         }
       }
