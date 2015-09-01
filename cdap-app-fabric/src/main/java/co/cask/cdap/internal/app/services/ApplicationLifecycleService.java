@@ -363,11 +363,6 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     }
     deleteProgramLocations(appId);
 
-    Location appArchive = store.getApplicationArchiveLocation(appId);
-    Preconditions.checkNotNull(appArchive, "Could not find the location of application", appId.getId());
-    if (!appArchive.delete()) {
-      LOG.debug("Could not delete application archive");
-    }
     store.removeApplication(appId);
 
     try {
