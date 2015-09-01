@@ -303,8 +303,8 @@ public class HttpHandlerGeneratorTest {
       return new TransactionContext(null, ImmutableList.<TransactionAware>of()) {
 
         @Override
-        public void addTransactionAware(TransactionAware txAware) {
-          return;
+        public boolean addTransactionAware(TransactionAware txAware) {
+          return false;
         }
 
         @Override
