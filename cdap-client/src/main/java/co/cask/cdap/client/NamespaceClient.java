@@ -21,6 +21,8 @@ import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.UnauthorizedException;
 import co.cask.cdap.common.namespace.AbstractNamespaceClient;
+import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
 
@@ -61,5 +63,25 @@ public class NamespaceClient extends AbstractNamespaceClient {
   @Override
   protected URL resolve(String resource) throws MalformedURLException {
     return config.resolveURLV3(resource);
+  }
+
+  /**
+   * Return the {@link NamespaceMeta} for the specified namespace.
+   *
+   * @deprecated since v3.2.0. Use {@link #get(Id.Namespace)} instead.
+   */
+  @Deprecated
+  public NamespaceMeta get(String namespaceId) throws Exception {
+    return get(Id.Namespace.from(namespaceId));
+  }
+
+  /**
+   * Delete the specified namespace.
+   *
+   * @deprecated since v3.2.0. Use {@link #delete(Id.Namespace)} instead.
+   */
+  @Deprecated
+  public void delete(String namespaceId) throws Exception {
+    delete(Id.Namespace.from(namespaceId));
   }
 }
