@@ -112,8 +112,9 @@ final class StreamRecordReader<K, V> extends RecordReader<K, V> {
    * @return A {@link StreamRecordReader} that is ready for reading events as specified by the input split.
    */
   private StreamDataFileReader createReader(FileSystem fs, StreamInputSplit inputSplit) {
-    return StreamDataFileReader.createWithOffset(Locations.newInputSupplier(fs, inputSplit.getPath()),
-                                                 Locations.newInputSupplier(fs, inputSplit.getIndexPath()),
-                                                 inputSplit.getStart());
+    return StreamDataFileReader.createWithOffset(
+      Locations.newInputSupplier(fs, inputSplit.getPath()),
+      inputSplit.getIndexPath() == null ? null : Locations.newInputSupplier(fs, inputSplit.getIndexPath()),
+      inputSplit.getStart());
   }
 }

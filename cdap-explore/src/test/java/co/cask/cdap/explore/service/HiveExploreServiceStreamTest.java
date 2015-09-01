@@ -37,6 +37,7 @@ import org.apache.avro.generic.GenericRecordBuilder;
 import org.apache.avro.io.BinaryEncoder;
 import org.apache.avro.io.DatumWriter;
 import org.apache.avro.io.EncoderFactory;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -81,6 +82,11 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
     sendStreamEvent(streamId, headers, Bytes.toBytes(body1));
     sendStreamEvent(streamId, headers, Bytes.toBytes(body2));
     sendStreamEvent(streamId, headers, Bytes.toBytes(body3));
+  }
+
+  @AfterClass
+  public static void finish() throws Exception {
+    dropStream(Id.Stream.from(NAMESPACE_ID, streamName));
   }
 
   @Test
@@ -164,14 +170,18 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
   public void testStreamNameWithHyphen() throws Exception {
     Id.Stream streamId = Id.Stream.from(NAMESPACE_ID, "stream-test");
     createStream(streamId);
-    sendStreamEvent(streamId, Collections.<String, String>emptyMap(), Bytes.toBytes("Dummy"));
+    try {
+      sendStreamEvent(streamId, Collections.<String, String>emptyMap(), Bytes.toBytes("Dummy"));
 
-    // Streams with '-' are replaced with '_'
-    String cleanStreamName = "stream_test";
+      // Streams with '-' are replaced with '_'
+      String cleanStreamName = "stream_test";
 
-    runCommand(NAMESPACE_ID, "select body from " + getTableName(cleanStreamName), true,
-               Lists.newArrayList(new ColumnDesc("body", "STRING", 1, null)),
-               Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList("Dummy"))));
+      runCommand(NAMESPACE_ID, "select body from " + getTableName(cleanStreamName), true,
+                 Lists.newArrayList(new ColumnDesc("body", "STRING", 1, null)),
+                 Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList("Dummy"))));
+    } finally {
+      dropStream(streamId);
+    }
   }
 
 
@@ -180,21 +190,29 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
     Id.Stream streamId1 = Id.Stream.from(NAMESPACE_ID, "jointest1");
     Id.Stream streamId2 = Id.Stream.from(NAMESPACE_ID, "jointest2");
     createStream(streamId1);
-    createStream(streamId2);
-    sendStreamEvent(streamId1, Collections.<String, String>emptyMap(), Bytes.toBytes("ABC"));
-    sendStreamEvent(streamId1, Collections.<String, String>emptyMap(), Bytes.toBytes("XYZ"));
-    sendStreamEvent(streamId2, Collections.<String, String>emptyMap(), Bytes.toBytes("ABC"));
-    sendStreamEvent(streamId2, Collections.<String, String>emptyMap(), Bytes.toBytes("DEF"));
+    try {
+      createStream(streamId2);
+      try {
+        sendStreamEvent(streamId1, Collections.<String, String>emptyMap(), Bytes.toBytes("ABC"));
+        sendStreamEvent(streamId1, Collections.<String, String>emptyMap(), Bytes.toBytes("XYZ"));
+        sendStreamEvent(streamId2, Collections.<String, String>emptyMap(), Bytes.toBytes("ABC"));
+        sendStreamEvent(streamId2, Collections.<String, String>emptyMap(), Bytes.toBytes("DEF"));
 
-    runCommand(NAMESPACE_ID,
-               "select " + getTableName(streamId1) + ".body, " + getTableName(streamId2) + ".body" +
-                 " from " + getTableName(streamId1) + " join " + getTableName(streamId2) +
-                 " on (" + getTableName(streamId1) + ".body = " + getTableName(streamId2) + ".body)",
-               true,
-               Lists.newArrayList(new ColumnDesc(getTableName(streamId1) + ".body", "STRING", 1, null),
-                                  new ColumnDesc(getTableName(streamId2) + ".body", "STRING", 2, null)),
-               Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList("ABC", "ABC")))
-    );
+        runCommand(NAMESPACE_ID,
+                   "select " + getTableName(streamId1) + ".body, " + getTableName(streamId2) + ".body" +
+                     " from " + getTableName(streamId1) + " join " + getTableName(streamId2) +
+                     " on (" + getTableName(streamId1) + ".body = " + getTableName(streamId2) + ".body)",
+                   true,
+                   Lists.newArrayList(new ColumnDesc(getTableName(streamId1) + ".body", "STRING", 1, null),
+                                      new ColumnDesc(getTableName(streamId2) + ".body", "STRING", 2, null)),
+                   Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList("ABC", "ABC")))
+        );
+      } finally {
+        dropStream(streamId2);
+      }
+    } finally {
+      dropStream(streamId1);
+    }
   }
 
   @Test(expected = ExecutionException.class)
@@ -207,64 +225,68 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
   public void testAvroFormattedStream() throws Exception {
     Id.Stream streamId = Id.Stream.from(NAMESPACE_ID, "avroStream");
     createStream(streamId);
-    Schema schema = Schema.recordOf(
-      "purchase",
-      Schema.Field.of("user", Schema.of(Schema.Type.STRING)),
-      Schema.Field.of("num", Schema.of(Schema.Type.INT)),
-      Schema.Field.of("price", Schema.of(Schema.Type.DOUBLE))
-    );
-    FormatSpecification formatSpecification = new FormatSpecification(
-      Formats.AVRO, schema, Collections.<String, String>emptyMap());
-    StreamProperties properties = new StreamProperties(Long.MAX_VALUE, formatSpecification, 1000);
-    setStreamProperties(NAMESPACE_ID.getId(), "avroStream", properties);
+    try {
+      Schema schema = Schema.recordOf(
+        "purchase",
+        Schema.Field.of("user", Schema.of(Schema.Type.STRING)),
+        Schema.Field.of("num", Schema.of(Schema.Type.INT)),
+        Schema.Field.of("price", Schema.of(Schema.Type.DOUBLE))
+      );
+      FormatSpecification formatSpecification = new FormatSpecification(
+        Formats.AVRO, schema, Collections.<String, String>emptyMap());
+      StreamProperties properties = new StreamProperties(Long.MAX_VALUE, formatSpecification, 1000);
+      setStreamProperties(NAMESPACE_ID.getId(), "avroStream", properties);
 
-    // our schemas are compatible
-    org.apache.avro.Schema avroSchema = new org.apache.avro.Schema.Parser().parse(schema.toString());
-    sendStreamEvent(streamId, createAvroEvent(avroSchema, "userX", 5, 3.14));
-    sendStreamEvent(streamId, createAvroEvent(avroSchema, "userX", 10, 2.34));
-    sendStreamEvent(streamId, createAvroEvent(avroSchema, "userY", 1, 1.23));
-    sendStreamEvent(streamId, createAvroEvent(avroSchema, "userZ", 50, 45.67));
-    sendStreamEvent(streamId, createAvroEvent(avroSchema, "userZ", 100, 98.76));
+      // our schemas are compatible
+      org.apache.avro.Schema avroSchema = new org.apache.avro.Schema.Parser().parse(schema.toString());
+      sendStreamEvent(streamId, createAvroEvent(avroSchema, "userX", 5, 3.14));
+      sendStreamEvent(streamId, createAvroEvent(avroSchema, "userX", 10, 2.34));
+      sendStreamEvent(streamId, createAvroEvent(avroSchema, "userY", 1, 1.23));
+      sendStreamEvent(streamId, createAvroEvent(avroSchema, "userZ", 50, 45.67));
+      sendStreamEvent(streamId, createAvroEvent(avroSchema, "userZ", 100, 98.76));
 
-    Double xPrice = 5 * 3.14 + 10 * 2.34;
-    Double yPrice = 1.23;
-    Double zPrice = 50 * 45.67 + 100 * 98.76;
+      Double xPrice = 5 * 3.14 + 10 * 2.34;
+      Double yPrice = 1.23;
+      Double zPrice = 50 * 45.67 + 100 * 98.76;
 
 
-    ExploreExecutionResult result = exploreClient.submit(
-      NAMESPACE_ID,
-      "SELECT user, sum(num) as total_num, sum(price * num) as total_price " +
-        "FROM " + getTableName(streamId) + " GROUP BY user ORDER BY total_price DESC").get();
+      ExploreExecutionResult result = exploreClient.submit(
+        NAMESPACE_ID,
+        "SELECT user, sum(num) as total_num, sum(price * num) as total_price " +
+          "FROM " + getTableName(streamId) + " GROUP BY user ORDER BY total_price DESC").get();
 
-    Assert.assertTrue(result.hasNext());
-    Assert.assertEquals(
-      Lists.newArrayList(new ColumnDesc("user", "STRING", 1, null),
-                         new ColumnDesc("total_num", "BIGINT", 2, null),
-                         new ColumnDesc("total_price", "DOUBLE", 3, null)),
-      result.getResultSchema());
+      Assert.assertTrue(result.hasNext());
+      Assert.assertEquals(
+        Lists.newArrayList(new ColumnDesc("user", "STRING", 1, null),
+                           new ColumnDesc("total_num", "BIGINT", 2, null),
+                           new ColumnDesc("total_price", "DOUBLE", 3, null)),
+        result.getResultSchema());
 
-    // should get 3 rows
-    // first row should be for userZ
-    List<Object> rowColumns = result.next().getColumns();
-    // toString b/c avro returns a utf8 object for strings
-    Assert.assertEquals("userZ", rowColumns.get(0).toString());
-    Assert.assertEquals(150L, rowColumns.get(1));
-    Assert.assertTrue(Math.abs(zPrice - (Double) rowColumns.get(2)) < 0.0000001);
+      // should get 3 rows
+      // first row should be for userZ
+      List<Object> rowColumns = result.next().getColumns();
+      // toString b/c avro returns a utf8 object for strings
+      Assert.assertEquals("userZ", rowColumns.get(0).toString());
+      Assert.assertEquals(150L, rowColumns.get(1));
+      Assert.assertTrue(Math.abs(zPrice - (Double) rowColumns.get(2)) < 0.0000001);
 
-    // 2nd row, should be userX
-    rowColumns = result.next().getColumns();
-    Assert.assertEquals("userX", rowColumns.get(0).toString());
-    Assert.assertEquals(15L, rowColumns.get(1));
-    Assert.assertTrue(Math.abs(xPrice - (Double) rowColumns.get(2)) < 0.0000001);
+      // 2nd row, should be userX
+      rowColumns = result.next().getColumns();
+      Assert.assertEquals("userX", rowColumns.get(0).toString());
+      Assert.assertEquals(15L, rowColumns.get(1));
+      Assert.assertTrue(Math.abs(xPrice - (Double) rowColumns.get(2)) < 0.0000001);
 
-    // 3rd row, should be userY
-    rowColumns = result.next().getColumns();
-    Assert.assertEquals("userY", rowColumns.get(0).toString());
-    Assert.assertEquals(1L, rowColumns.get(1));
-    Assert.assertTrue(Math.abs(yPrice - (Double) rowColumns.get(2)) < 0.0000001);
+      // 3rd row, should be userY
+      rowColumns = result.next().getColumns();
+      Assert.assertEquals("userY", rowColumns.get(0).toString());
+      Assert.assertEquals(1L, rowColumns.get(1));
+      Assert.assertTrue(Math.abs(yPrice - (Double) rowColumns.get(2)) < 0.0000001);
 
-    // shouldn't be any more results
-    Assert.assertFalse(result.hasNext());
+      // shouldn't be any more results
+      Assert.assertFalse(result.hasNext());
+    } finally {
+      dropStream(streamId);
+    }
   }
 
   private static String getTableName(Id.Stream streamId) {

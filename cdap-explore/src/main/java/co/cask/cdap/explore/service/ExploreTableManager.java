@@ -18,6 +18,7 @@ package co.cask.cdap.explore.service;
 
 import co.cask.cdap.api.data.batch.RecordScannable;
 import co.cask.cdap.api.data.batch.RecordWritable;
+import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
@@ -36,17 +37,19 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
 import co.cask.cdap.data2.dataset2.lib.table.ObjectMappedTableModule;
-import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.explore.table.CreateStatementBuilder;
 import co.cask.cdap.hive.datasets.DatasetStorageHandler;
 import co.cask.cdap.hive.objectinspector.ObjectInspectorFactory;
 import co.cask.cdap.hive.stream.StreamStorageHandler;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
+import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.QueryHandle;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.StructField;
@@ -68,6 +71,11 @@ import java.util.Set;
 public class ExploreTableManager {
   private static final Logger LOG = LoggerFactory.getLogger(ExploreTableManager.class);
 
+  // A GSON object that knowns how to serialize Schema type.
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+    .create();
+
   private final ExploreService exploreService;
   private final SystemDatasetInstantiatorFactory datasetInstantiatorFactory;
 
@@ -83,36 +91,36 @@ public class ExploreTableManager {
    * stream that has already been enabled is a no-op. Assumes the stream actually exists.
    *
    * @param streamID the ID of the stream
-   * @param streamConfig the config for the stream
+   * @param formatSpec the format specification for the table
    * @return query handle for creating the Hive table for the stream
    * @throws UnsupportedTypeException if the stream schema is not compatible with Hive
    * @throws ExploreException if there was an exception submitting the create table statement
    * @throws SQLException if there was a problem with the create table statement
    */
-  public QueryHandle enableStream(Id.Stream streamID, StreamConfig streamConfig)
+  public QueryHandle enableStream(Id.Stream streamID, FormatSpecification formatSpec)
     throws UnsupportedTypeException, ExploreException, SQLException {
     String streamName = streamID.getId();
-    Location streamLocation = streamConfig.getLocation();
-    LOG.debug("Enabling explore for stream {} at location {}", streamName, streamLocation.toURI());
+    LOG.debug("Enabling explore for stream {}", streamID);
 
     // schema of a stream is always timestamp, headers, and then the schema of the body.
     List<Schema.Field> fields = Lists.newArrayList(
       Schema.Field.of("ts", Schema.of(Schema.Type.LONG)),
       Schema.Field.of("headers", Schema.mapOf(Schema.of(Schema.Type.STRING), Schema.of(Schema.Type.STRING))));
-    fields.addAll(streamConfig.getFormat().getSchema().getFields());
+    fields.addAll(formatSpec.getSchema().getFields());
     Schema schema = Schema.recordOf("streamEvent", fields);
 
     Map<String, String> serdeProperties = ImmutableMap.of(
       Constants.Explore.STREAM_NAME, streamName,
-      Constants.Explore.STREAM_NAMESPACE, streamID.getNamespaceId());
+      Constants.Explore.STREAM_NAMESPACE, streamID.getNamespaceId(),
+      Constants.Explore.FORMAT_SPEC, GSON.toJson(formatSpec));
 
-    String createStatement = new CreateStatementBuilder(streamName, getStreamTableName(streamID))
+    String tableName = getStreamTableName(streamID);
+    String createStatement = new CreateStatementBuilder(streamName, tableName)
       .setSchema(schema)
-      .setLocation(streamLocation)
       .setTableComment("CDAP Stream")
       .buildWithStorageHandler(StreamStorageHandler.class.getName(), serdeProperties);
 
-    LOG.debug("Running create statement for stream {}", streamName);
+    LOG.debug("Running create statement for stream {}: {}", streamName, createStatement);
 
     return exploreService.execute(streamID.getNamespace(), createStatement);
   }
@@ -188,7 +196,8 @@ public class ExploreTableManager {
           ((RecordScannable) dataset).getRecordType() : ((RecordWritable) dataset).getRecordType();
 
         // if the type is a structured record, use the schema property to create the table
-        if (StructuredRecord.class.equals(recordType)) {
+        // Use == because that's what same class means.
+        if (StructuredRecord.class == recordType) {
           // TODO: CDAP-3079 remove this check once RecordWritable<StructuredRecord> is supported
           if (isRecordWritable && !isRecordScannable) {
             throw new UnsupportedTypeException("StructuredRecord is not supported as a type for RecordWritable.");

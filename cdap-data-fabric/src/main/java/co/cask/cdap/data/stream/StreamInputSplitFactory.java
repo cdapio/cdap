@@ -30,7 +30,7 @@ public interface StreamInputSplitFactory<T> {
   /**
    * Create a stream input split.
    *
-   * @param path path of the split
+   * @param eventPath path of the event file for the split
    * @param indexPath path to the index file for the split
    * @param startTime start timestamp for the split
    * @param endTime end timestamp for the split
@@ -39,6 +39,6 @@ public interface StreamInputSplitFactory<T> {
    * @param locations locations
    * @return stream input split
    */
-  T createSplit(Path path, Path indexPath, long startTime, long endTime,
+  T createSplit(Path eventPath, Path indexPath, long startTime, long endTime,
                 long start, long length, @Nullable String[] locations);
 }

@@ -52,6 +52,7 @@ import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
+import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.QueryHandle;
@@ -129,6 +130,7 @@ public class BaseHiveExploreServiceTest {
   protected static DatasetService datasetService;
   protected static ExploreExecutorService exploreExecutorService;
   protected static ExploreService exploreService;
+  protected static NotificationService notificationService;
   protected static StreamHttpService streamHttpService;
   protected static StreamService streamService;
   protected static ExploreClient exploreClient;
@@ -173,6 +175,10 @@ public class BaseHiveExploreServiceTest {
     exploreClient = injector.getInstance(ExploreClient.class);
     exploreService = injector.getInstance(ExploreService.class);
     Assert.assertTrue(exploreClient.isServiceAvailable());
+
+    notificationService = injector.getInstance(NotificationService.class);
+    notificationService.startAndWait();
+
     streamService = injector.getInstance(StreamService.class);
     streamService.startAndWait();
     streamHttpService = injector.getInstance(StreamHttpService.class);
@@ -205,6 +211,7 @@ public class BaseHiveExploreServiceTest {
     Locations.deleteQuietly(namespacedLocationFactory.get(OTHER_NAMESPACE_ID), true);
     streamHttpService.stopAndWait();
     streamService.stopAndWait();
+    notificationService.stopAndWait();
     exploreClient.close();
     exploreExecutorService.stopAndWait();
     datasetService.stopAndWait();

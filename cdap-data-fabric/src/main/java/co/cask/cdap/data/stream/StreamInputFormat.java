@@ -89,9 +89,9 @@ public class StreamInputFormat<K, V> extends InputFormat<K, V> {
     .create();
   private static final StreamInputSplitFactory<InputSplit> splitFactory = new StreamInputSplitFactory<InputSplit>() {
     @Override
-    public InputSplit createSplit(Path path, Path indexPath, long startTime, long endTime,
+    public InputSplit createSplit(Path eventPath, Path indexPath, long startTime, long endTime,
                                   long start, long length, @Nullable String[] locations) {
-      return new StreamInputSplit(path, indexPath, startTime, endTime, start, length, locations);
+      return new StreamInputSplit(eventPath, indexPath, startTime, endTime, start, length, locations);
     }
   };
 

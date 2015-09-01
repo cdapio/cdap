@@ -25,9 +25,12 @@ import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.format.RecordFormats;
 import co.cask.cdap.hive.context.ContextManager;
 import co.cask.cdap.hive.serde.ObjectDeserializer;
+import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.spi.stream.AbstractStreamEventRecordFormat;
 import com.google.common.collect.Lists;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.serde2.SerDe;
 import org.apache.hadoop.hive.serde2.SerDeException;
@@ -53,6 +56,12 @@ public class StreamSerDe implements SerDe {
   // timestamp and headers are guaranteed to be the first columns in a stream table.
   // the rest of the columns are for the stream body.
   private static final int BODY_OFFSET = 2;
+
+  // A GSON object that knowns how to serialize Schema type.
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+    .create();
+
   private ObjectInspector inspector;
   private AbstractStreamEventRecordFormat<?> streamFormat;
   private ObjectDeserializer deserializer;
@@ -85,8 +94,7 @@ public class StreamSerDe implements SerDe {
     Id.Stream streamId = Id.Stream.from(streamNamespace, streamName);
     try (ContextManager.Context context = ContextManager.getContext(conf)) {
       // Get the stream format from the stream config.
-      StreamConfig streamConfig = context.getStreamConfig(streamId);
-      FormatSpecification formatSpec = streamConfig.getFormat();
+      FormatSpecification formatSpec = getFormatSpec(properties, streamId, context);
       this.streamFormat = (AbstractStreamEventRecordFormat) RecordFormats.createInitializedFormat(formatSpec);
       Schema schema = formatSpec.getSchema();
       this.deserializer = new ObjectDeserializer(properties, schema, BODY_OFFSET);
@@ -145,5 +153,20 @@ public class StreamSerDe implements SerDe {
   @Override
   public ObjectInspector getObjectInspector() throws SerDeException {
     return inspector;
+  }
+
+  /**
+   * Gets the {@link FormatSpecification} for the given stream based on the SerDe properties.
+   * For backward compatibility, if the format specification is not set in the SerDe properties, it will be
+   * fetched from the {@link StreamConfig}.
+   */
+  private FormatSpecification getFormatSpec(Properties properties,
+                                            Id.Stream streamId, ContextManager.Context context) throws IOException {
+    String formatSpec = properties.getProperty(Constants.Explore.FORMAT_SPEC);
+    if (formatSpec == null) {
+      StreamConfig config = context.getStreamConfig(streamId);
+      return config.getFormat();
+    }
+    return GSON.fromJson(formatSpec, FormatSpecification.class);
   }
 }

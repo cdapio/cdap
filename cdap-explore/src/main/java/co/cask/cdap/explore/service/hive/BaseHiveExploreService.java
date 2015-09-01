@@ -28,6 +28,7 @@ import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.explore.service.Explore;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.ExploreService;
@@ -1121,7 +1122,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
     // enable the table in the default namespace
     LOG.info("Enabling exploration on stream {}", streamID);
-    QueryHandle enableHandle = exploreTableManager.enableStream(streamID, streamAdmin.getConfig(streamID));
+    StreamConfig streamConfig = streamAdmin.getConfig(streamID);
+    QueryHandle enableHandle = exploreTableManager.enableStream(streamID, streamConfig.getFormat());
     // wait til enable is done
     QueryStatus status = waitForCompletion(enableHandle);
     // if enable failed, stop
