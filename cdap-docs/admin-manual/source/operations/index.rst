@@ -69,7 +69,7 @@ Operations
 .. |tx-maintenance| replace:: **Transaction Service Maintenance:**
 .. _tx-maintenance: tx-maintenance.html
 
-- |tx-maintenance|_ Periodic maintenance of **Transaction Service.**
+- |tx-maintenance|_ Periodic maintenance of the **Transaction Service.**
 
 
 .. |troubleshooting| replace:: **Troubleshooting:**
