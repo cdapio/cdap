@@ -521,7 +521,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
     // TODO: Remove the null check for artifact id once templates/adapters are removed
     ArtifactSummary artifactSummary = spec.getArtifactId() == null ?
-      new ArtifactSummary(spec.getName(), spec.getVersion(), true) : ArtifactSummary.from(spec.getArtifactId());
+      new ArtifactSummary(spec.getName(), null, true) : ArtifactSummary.from(spec.getArtifactId());
     return new ApplicationDetail(spec.getName(), spec.getDescription(), spec.getConfiguration(),
                                  streams, datasets, programs, artifactSummary);
   }
