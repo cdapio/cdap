@@ -18,11 +18,11 @@ package co.cask.cdap.template.etl.common;
 
 import co.cask.cdap.template.etl.api.Destroyable;
 import co.cask.cdap.template.etl.api.Transformation;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -36,35 +36,45 @@ public class TransformExecutor<IN, OUT> implements Destroyable {
 
   private static final Logger LOG = LoggerFactory.getLogger(TransformExecutor.class);
 
-  private final List<Transformation> transforms;
+  private final List<TransformationDetails> transforms;
   private final List<DefaultEmitter> emitters;
 
-  public TransformExecutor(List<Transformation> transforms, List<StageMetrics> transformMetrics) {
-    int numTransforms = transforms.size();
-    Preconditions.checkArgument(numTransforms == transformMetrics.size());
-    this.transforms = Lists.newArrayListWithCapacity(numTransforms);
+
+  public TransformExecutor(List<TransformationDetails> transformationDetailsList) {
+    int numTransforms = transformationDetailsList.size();
+    this.transforms = new ArrayList<>(numTransforms);
     this.emitters = Lists.newArrayListWithCapacity(numTransforms);
-    for (int i = 0; i < numTransforms; i++) {
-      StageMetrics stageMetrics = transformMetrics.get(i);
-      this.transforms.add(new TrackedTransform(transforms.get(i), stageMetrics));
-      this.emitters.add(new DefaultEmitter(stageMetrics));
+
+    for (TransformationDetails transformationDetails : transformationDetailsList) {
+      this.transforms.add(new TransformationDetails(transformationDetails,
+                                                    new TrackedTransform(transformationDetails.getTransformation(),
+                                                                         transformationDetails.getMetrics())));
+      this.emitters.add(new DefaultEmitter(transformationDetails.getMetrics()));
     }
   }
 
-  public Iterable<OUT> runOneIteration(IN input) throws Exception {
+  public TransformResponse<OUT> runOneIteration(IN input) throws Exception {
+    List<TransformResponse.TransformError<OUT>> errorIterators = new ArrayList<>();
     if (transforms.isEmpty()) {
-      return Lists.newArrayList((OUT) input);
+      return new TransformResponse<OUT>(Lists.newArrayList((OUT) input).iterator(), errorIterators);
     }
 
-    Transformation transform = transforms.get(0);
+    TransformationDetails transformationDetails = transforms.get(0);
     DefaultEmitter currentEmitter = emitters.get(0);
     currentEmitter.reset();
+    Transformation transform = transformationDetails.getTransformation();
     transform.transform(input, currentEmitter);
 
-    DefaultEmitter previousEmitter = currentEmitter;
+    // if there are errors in the iterator, we add it to the errorIterators list
+    if (currentEmitter.getErrorIterator().hasNext()) {
+      errorIterators.add(new TransformResponse.TransformError<OUT>(transformationDetails.getTransformId(),
+                                                                 currentEmitter.getErrorIterator()));
+    }
 
+    DefaultEmitter previousEmitter = currentEmitter;
     for (int i = 1; i < transforms.size(); i++) {
-      transform = transforms.get(i);
+      transformationDetails = transforms.get(i);
+      transform = transformationDetails.getTransformation();
       currentEmitter = emitters.get(i);
       currentEmitter.reset();
       for (Object transformedVal : previousEmitter) {
@@ -72,16 +82,23 @@ public class TransformExecutor<IN, OUT> implements Destroyable {
       }
       previousEmitter.reset();
       previousEmitter = currentEmitter;
+
+      // if there are errors in the iterator, we add it to the errorIterators list
+      if (currentEmitter.getErrorIterator().hasNext()) {
+        errorIterators.add(new TransformResponse.TransformError<OUT>(transformationDetails.getTransformId(),
+                                                                     currentEmitter.getErrorIterator()));
+      }
     }
 
-    return previousEmitter;
+    return new TransformResponse<OUT>(previousEmitter.iterator(), errorIterators);
   }
 
   @Override
   public void destroy() {
-    for (Transformation transform : transforms) {
-      if (transform instanceof Destroyable) {
-        Destroyables.destroyQuietly((Destroyable) transform);
+    for (TransformationDetails transformationDetails : transforms) {
+      Transformation transformation = transformationDetails.getTransformation();
+      if (transformation instanceof Destroyable) {
+        Destroyables.destroyQuietly((Destroyable) transformation);
       }
     }
   }

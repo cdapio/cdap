@@ -17,6 +17,10 @@
 package co.cask.cdap.template.etl.common;
 
 import co.cask.cdap.api.artifact.PluginConfigurer;
+import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.table.ConflictDetection;
+import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.templates.plugins.PluginProperties;
 import co.cask.cdap.template.etl.api.PipelineConfigurable;
 import co.cask.cdap.template.etl.api.PipelineConfigurer;
@@ -40,6 +44,13 @@ import java.util.List;
  * Registers plugins needed by an ETL pipeline.
  */
 public class PipelineRegisterer {
+
+  private static final Schema errorSchema = Schema.recordOf(
+    "error",
+    Schema.Field.of(Constants.ErrorDataset.COLUMN_ERRCODE, Schema.of(Schema.Type.INT)),
+    Schema.Field.of(Constants.ErrorDataset.COLUMN_ERRMSG, Schema.of(Schema.Type.STRING)),
+    Schema.Field.of(Constants.ErrorDataset.COLUMN_INVALIDENTRY, Schema.of(Schema.Type.STRING)));
+
   private final PluginConfigurer configurer;
 
   public PipelineRegisterer(PluginConfigurer configurer) {
@@ -50,9 +61,10 @@ public class PipelineRegisterer {
    * Registers the plugins that will be used in the pipeline
    *
    * @param config the config containing pipeline information
+   * @param errorDatasetType error dataset type class
    * @return the ids of each plugin used in the pipeline
    */
-  public Pipeline registerPlugins(ETLConfig config) {
+  public Pipeline registerPlugins(ETLConfig config, Class errorDatasetType) {
     ETLStage sourceConfig = config.getSource();
     ETLStage sinkConfig = config.getSink();
     List<ETLStage> transformConfigs = config.getTransforms();
@@ -78,8 +90,8 @@ public class PipelineRegisterer {
     }
 
     // Store transform id list to be serialized and passed to the driver program
-    List<String> transformIds = Lists.newArrayListWithCapacity(transformConfigs.size());
-    List<Transformation> transforms = Lists.newArrayListWithCapacity(transformConfigs.size());
+    List<TransformDetails> transformIds = new ArrayList<>(transformConfigs.size());
+    List<Transformation> transforms = new ArrayList<>(transformConfigs.size());
     for (int i = 0; i < transformConfigs.size(); i++) {
       ETLStage transformConfig = transformConfigs.get(i);
 
@@ -94,9 +106,18 @@ public class PipelineRegisterer {
         throw new IllegalArgumentException(String.format("No Plugin of type '%s' named '%s' was found",
                                                          Constants.Transform.PLUGINTYPE, transformConfig.getName()));
       }
+      // if the transformation is configured to write filtered records to error dataset, we create that dataset.
+      if (transformConfig.getDatasetName() != null) {
+        // TODO : can remove this after implementing CDAP-3480
+        if (errorDatasetType != null) {
+          configurer.createDataset(transformConfig.getDatasetName(), errorDatasetType, DatasetProperties.builder()
+            .add(Table.PROPERTY_SCHEMA, errorSchema.toString())
+            .build());
+        }
+      }
       PipelineConfigurer transformConfigurer = new DefaultPipelineConfigurer(configurer, transformId);
       transformObj.configurePipeline(transformConfigurer);
-      transformIds.add(transformId);
+      transformIds.add(new TransformDetails(transformId, transformConfig.getDatasetName()));
       transforms.add(transformObj);
     }
 

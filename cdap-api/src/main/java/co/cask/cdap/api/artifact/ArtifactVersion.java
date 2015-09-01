@@ -112,7 +112,7 @@ public final class ArtifactVersion implements Comparable<ArtifactVersion> {
   }
 
   public boolean isSnapshot() {
-    return suffix != null && "snapshot".equals(suffix.toLowerCase());
+    return suffix != null && suffix.toLowerCase().contains("snapshot");
   }
 
   @Override

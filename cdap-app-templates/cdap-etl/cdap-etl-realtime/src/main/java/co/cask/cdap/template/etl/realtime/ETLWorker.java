@@ -26,7 +26,6 @@ import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.worker.AbstractWorker;
 import co.cask.cdap.api.worker.WorkerContext;
 import co.cask.cdap.template.etl.api.Transform;
-import co.cask.cdap.template.etl.api.Transformation;
 import co.cask.cdap.template.etl.api.realtime.RealtimeContext;
 import co.cask.cdap.template.etl.api.realtime.RealtimeSink;
 import co.cask.cdap.template.etl.api.realtime.RealtimeSource;
@@ -38,6 +37,8 @@ import co.cask.cdap.template.etl.common.ETLStage;
 import co.cask.cdap.template.etl.common.PluginID;
 import co.cask.cdap.template.etl.common.StageMetrics;
 import co.cask.cdap.template.etl.common.TransformExecutor;
+import co.cask.cdap.template.etl.common.TransformResponse;
+import co.cask.cdap.template.etl.common.TransformationDetails;
 import co.cask.cdap.template.etl.realtime.config.ETLRealtimeConfig;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -48,6 +49,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -59,11 +61,12 @@ public class ETLWorker extends AbstractWorker {
   private static final Type STRING_LIST_TYPE = new TypeToken<List<String>>() { }.getType();
   private static final Gson GSON = new Gson();
   private static final String SEPARATOR = ":";
+  private static final String ERROR_DATASET_IDENTIFIER = "errorDataset";
+  private static final String ERROR_DATASET_TYPE = "errorDatasetType";
 
   private String adapterName;
   private RealtimeSource source;
   private RealtimeSink sink;
-  private List<Metrics> transformMetrics;
   private TransformExecutor transformExecutor;
   private DefaultEmitter sourceEmitter;
   private String stateStoreKey;
@@ -82,7 +85,6 @@ public class ETLWorker extends AbstractWorker {
   public void initialize(final WorkerContext context) throws Exception {
     super.initialize(context);
     Map<String, String> runtimeArgs = context.getRuntimeArguments();
-
     Preconditions.checkArgument(runtimeArgs.containsKey(Constants.ADAPTER_NAME));
     Preconditions.checkArgument(runtimeArgs.containsKey(Constants.CONFIG_KEY));
     Preconditions.checkArgument(runtimeArgs.containsKey(Constants.Source.PLUGINID));
@@ -119,10 +121,10 @@ public class ETLWorker extends AbstractWorker {
     });
 
     initializeSource(context, config.getSource());
-    List<Transformation> transforms = initializeTransforms(context, config.getTransforms());
+    List<TransformationDetails> transforms = initializeTransforms(context, config.getTransforms());
     initializeSink(context, config.getSink());
 
-    transformExecutor = new TransformExecutor(transforms, transformMetrics);
+    transformExecutor = new TransformExecutor(transforms);
   }
 
   private void initializeSource(WorkerContext context, ETLStage stage) throws Exception {
@@ -146,14 +148,14 @@ public class ETLWorker extends AbstractWorker {
     sink = new TrackedRealtimeSink(sink, metrics, PluginID.from(sinkPluginId));
   }
 
-  private List<Transformation> initializeTransforms(WorkerContext context, List<ETLStage> stages) throws Exception {
+  private List<TransformationDetails> initializeTransforms(WorkerContext context,
+                                                           List<ETLStage> stages) throws Exception {
     List<String> transformIds = GSON.fromJson(context.getRuntimeArguments().get(Constants.Transform.PLUGINIDS),
                                               STRING_LIST_TYPE);
-    List<Transformation> transforms = Lists.newArrayList();
+    List<TransformationDetails> transforms = new ArrayList<>();
 
     Preconditions.checkArgument(transformIds != null);
     Preconditions.checkArgument(stages.size() == transformIds.size());
-    transformMetrics = Lists.newArrayListWithCapacity(stages.size());
     for (int i = 0; i < stages.size(); i++) {
       ETLStage stage = stages.get(i);
       String transformId = transformIds.get(i);
@@ -163,8 +165,8 @@ public class ETLWorker extends AbstractWorker {
         LOG.debug("Transform Stage : {}", stage.getName());
         LOG.debug("Transform Class : {}", transform.getClass().getName());
         transform.initialize(transformContext);
-        transforms.add(transform);
-        transformMetrics.add(new StageMetrics(metrics, PluginID.from(transformId)));
+        transforms.add(new TransformationDetails(transformId, transform,
+                                                 new StageMetrics(metrics, PluginID.from(transformId))));
       } catch (InstantiationException e) {
         LOG.error("Unable to instantiate Transform : {}", stage.getName(), e);
         Throwables.propagate(e);
@@ -211,8 +213,9 @@ public class ETLWorker extends AbstractWorker {
       // to be persisted in the sink.
       for (Object sourceData : sourceEmitter) {
         try {
-          for (Object object : transformExecutor.runOneIteration(sourceData)) {
-            dataToSink.add(object);
+          TransformResponse transformResponse = transformExecutor.runOneIteration(sourceData);
+          while (transformResponse.getEmittedRecords().hasNext()) {
+            dataToSink.add(transformResponse.getEmittedRecords().next());
           }
         } catch (Exception e) {
           LOG.warn("Adapter {} : Exception thrown while processing data {}", adapterName, sourceData, e);

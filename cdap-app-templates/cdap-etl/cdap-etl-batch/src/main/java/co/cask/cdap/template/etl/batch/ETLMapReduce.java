@@ -22,7 +22,6 @@ import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.template.etl.api.Transform;
-import co.cask.cdap.template.etl.api.Transformation;
 import co.cask.cdap.template.etl.api.batch.BatchSink;
 import co.cask.cdap.template.etl.api.batch.BatchSinkContext;
 import co.cask.cdap.template.etl.api.batch.BatchSource;
@@ -34,6 +33,7 @@ import co.cask.cdap.template.etl.common.ETLStage;
 import co.cask.cdap.template.etl.common.PluginID;
 import co.cask.cdap.template.etl.common.StageMetrics;
 import co.cask.cdap.template.etl.common.TransformExecutor;
+import co.cask.cdap.template.etl.common.TransformationDetails;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
@@ -46,6 +46,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -155,33 +156,32 @@ public class ETLMapReduce extends AbstractMapReduce {
       String sourcePluginId = runtimeArgs.get(Constants.Source.PLUGINID);
       String sinkPluginId = runtimeArgs.get(Constants.Sink.PLUGINID);
       List<String> transformIds = GSON.fromJson(runtimeArgs.get(Constants.Transform.PLUGINIDS), STRING_LIST_TYPE);
-
+      StageMetrics stageMetrics;
 
       List<ETLStage> stageList = etlConfig.getTransforms();
-      List<Transformation> pipeline = Lists.newArrayListWithCapacity(stageList.size() + 2);
-      List<StageMetrics> stageMetrics = Lists.newArrayListWithCapacity(stageList.size() + 2);
+      List<TransformationDetails> pipeline = Lists.newArrayListWithCapacity(stageList.size() + 2);
       transforms = Lists.newArrayListWithCapacity(stageList.size());
 
       BatchSource source = context.newPluginInstance(sourcePluginId);
       BatchSourceContext batchSourceContext = new MapReduceSourceContext(context, mapperMetrics, sourcePluginId);
       source.initialize(batchSourceContext);
-      pipeline.add(source);
-      stageMetrics.add(new StageMetrics(mapperMetrics, PluginID.from(sourcePluginId)));
+      stageMetrics = new StageMetrics(mapperMetrics, PluginID.from(sourcePluginId));
+      pipeline.add(new TransformationDetails(sourcePluginId, source, stageMetrics));
 
-      addTransforms(stageList, pipeline, stageMetrics, transformIds, context);
+
+      addTransforms(stageList, pipeline, transformIds, context);
 
       BatchSink sink = context.newPluginInstance(sinkPluginId);
       BatchSinkContext batchSinkContext = new MapReduceSinkContext(context, mapperMetrics, sinkPluginId);
       sink.initialize(batchSinkContext);
-      pipeline.add(sink);
-      stageMetrics.add(new StageMetrics(mapperMetrics, PluginID.from(sinkPluginId)));
+      stageMetrics = new StageMetrics(mapperMetrics, PluginID.from(sinkPluginId));
+      pipeline.add(new TransformationDetails(sinkPluginId, sink, stageMetrics));
 
-      transformExecutor = new TransformExecutor<>(pipeline, stageMetrics);
+      transformExecutor = new TransformExecutor<>(pipeline);
     }
 
-    private void addTransforms(List<ETLStage> stageConfigs, List<Transformation> pipeline,
-                               List<StageMetrics> stageMetrics, List<String> transformIds,
-                               MapReduceContext context) throws Exception {
+    private void addTransforms(List<ETLStage> stageConfigs, List<TransformationDetails> pipeline,
+                               List<String> transformIds, MapReduceContext context) throws Exception {
       Preconditions.checkArgument(stageConfigs.size() == transformIds.size());
 
       for (int i = 0; i < stageConfigs.size(); i++) {
@@ -192,9 +192,9 @@ public class ETLMapReduce extends AbstractMapReduce {
         LOG.debug("Transform Stage : {}", stageConfig.getName());
         LOG.debug("Transform Class : {}", transform.getClass().getName());
         transform.initialize(transformContext);
-        pipeline.add(transform);
+        StageMetrics stageMetrics = new StageMetrics(mapperMetrics, PluginID.from(transformId));
+        pipeline.add(new TransformationDetails(transformId, transform, stageMetrics));
         transforms.add(transform);
-        stageMetrics.add(new StageMetrics(mapperMetrics, PluginID.from(transformId)));
       }
     }
 
@@ -202,7 +202,9 @@ public class ETLMapReduce extends AbstractMapReduce {
     public void map(Object key, Object value, Context context) throws IOException, InterruptedException {
       try {
         KeyValue input = new KeyValue(key, value);
-        for (KeyValue output : transformExecutor.runOneIteration(input)) {
+        Iterator<KeyValue> iterator = transformExecutor.runOneIteration(input).getEmittedRecords();
+        while (iterator.hasNext()) {
+          KeyValue output = iterator.next();
           context.write(output.getKey(), output.getValue());
         }
       } catch (Exception e) {

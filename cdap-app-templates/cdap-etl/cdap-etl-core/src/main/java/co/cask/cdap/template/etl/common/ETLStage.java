@@ -27,10 +27,16 @@ import javax.annotation.Nullable;
 public final class ETLStage {
   private final String name;
   private final Map<String, String> properties;
+  private final String datasetName;
 
-  public ETLStage(String name, Map<String, String> properties) {
+  public ETLStage(String name, Map<String, String> properties, @Nullable String datasetName) {
     this.name = name;
     this.properties = properties;
+    this.datasetName = datasetName;
+  }
+
+  public ETLStage(String name, Map<String, String> properties) {
+    this(name, properties, null);
   }
 
   public String getName() {
@@ -48,5 +54,9 @@ public final class ETLStage {
       .add("name", name)
       .add("properties", properties)
       .toString();
+  }
+
+  public String getDatasetName() {
+    return datasetName;
   }
 }

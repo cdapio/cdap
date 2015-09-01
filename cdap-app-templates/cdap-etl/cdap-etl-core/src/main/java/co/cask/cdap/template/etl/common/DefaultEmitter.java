@@ -21,6 +21,7 @@ import co.cask.cdap.template.etl.api.Emitter;
 import co.cask.cdap.template.etl.api.InvalidEntry;
 import com.google.common.collect.Lists;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -49,11 +50,17 @@ public class DefaultEmitter<T> implements Emitter<T>, Iterable<T> {
   @Override
   public void emitError(InvalidEntry<T> value) {
     errorList.add(value);
+    metrics.count("records.error", 1);
   }
 
   @Override
   public Iterator<T> iterator() {
     return entryList.iterator();
+  }
+
+  public Iterator<InvalidEntry<T>> getErrorIterator() {
+    // we have to return iterator of a copy of list, as we need reset the errorList between stages.
+    return new ArrayList<>(errorList).iterator();
   }
 
   public void reset() {
