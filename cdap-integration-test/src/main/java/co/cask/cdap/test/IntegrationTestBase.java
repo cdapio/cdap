@@ -97,7 +97,13 @@ public class IntegrationTestBase {
     Callable<Boolean> monitorCallable = new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {
-        return getMonitorClient().allSystemServicesOk();
+        // first wait for all system services to be 'OK'
+        if (!getMonitorClient().allSystemServicesOk()) {
+          return false;
+        }
+        // check that the dataset service is up
+        getNamespaceClient().list();
+        return true;
       }
     };
 
