@@ -106,7 +106,7 @@ angular.module(PKG.name+'.commons')
       modalInstance = $bootstrapModal.open({
         template: '<my-program-preferences></my-program-preferences>',
         size: 'lg',
-        windowClass: 'cdap-modal',
+        windowClass: 'center cdap-modal',
         scope: scope
       });
       return modalInstance;

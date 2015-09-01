@@ -24,7 +24,7 @@ angular.module(PKG.name+'.commons')
       modalInstance = $bootstrapModal.open({
         template: '<my-runtime-args></my-runtime-args>',
         size: 'lg',
-        windowClass: 'cdap-modal',
+        windowClass: 'center cdap-modal',
         scope: scope
       });
       return modalInstance;
