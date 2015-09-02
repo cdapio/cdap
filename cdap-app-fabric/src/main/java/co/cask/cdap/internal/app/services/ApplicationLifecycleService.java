@@ -51,6 +51,7 @@ import co.cask.cdap.gateway.handlers.AppLifecycleHttpHandler;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
+import co.cask.cdap.internal.app.deploy.pipeline.ProgramGenerationStage;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.WriteConflictException;
@@ -395,11 +396,13 @@ public class ApplicationLifecycleService extends AbstractIdleService {
           continue;
         }
 
-        Location appJarLocation = store.getApplicationArchiveLocation(appId);
-        if (appJarLocation == null) {
-          LOG.error(String.format("Unable to get location of jar for app '%s' in namespace '%s'. " +
-              "You will need to re-deploy the app after upgrade.",
-            appId.getNamespaceId(), appId.getId()));
+        Location appJarLocation;
+        try {
+          appJarLocation = findAppJarLocation(appId);
+        } catch (FileNotFoundException e) {
+          // nothing we can do... skip and log a message
+          LOG.error("Unable to find the application jar for app '%s' in namespace '%s'. " +
+            "Please re-deploy the app manually after upgrade.", e);
           continue;
         }
 
@@ -471,6 +474,46 @@ public class ApplicationLifecycleService extends AbstractIdleService {
         }
       }
     }
+  }
+
+  /**
+   * Look up the app archive location from the store.  Most of this logic is in case that jar isn't actually
+   * there. In that case we try to find it in the expected place.
+   *
+   * @param appId the id of the application to find
+   * @return the location of the jar for the application
+   * @throws FileNotFoundException if the jar file could not be found
+   * @throws IOException if there was some error reading from the meta store or filesystem
+   */
+  private Location findAppJarLocation(Id.Application appId) throws IOException {
+    Location recordedLocation = store.getApplicationArchiveLocation(appId);
+    if (recordedLocation == null) {
+      throw new FileNotFoundException(String.format(
+        "Could not find the location of jar for app '%s' in namespace '%s' in the metastore.",
+        appId.getId(), appId.getNamespaceId()));
+    }
+
+    if (recordedLocation.exists()) {
+      return recordedLocation;
+    }
+
+    // bad metadata... not sure how it gets into this state but we have seen it
+    // make an educated guess for where it could be
+    Location expectedDirectory =
+      ProgramGenerationStage.getAppArchiveDirLocation(configuration, appId, namespacedLocationFactory);
+    if (expectedDirectory.exists() && expectedDirectory.isDirectory()) {
+      // should be only one file there... expect it to start with the app name and end in .jar
+      for (Location file : expectedDirectory.list()) {
+        if (file.getName().startsWith(appId.getId()) && file.getName().endsWith(".jar")) {
+          return file;
+        }
+      }
+    }
+
+    // if we couldn't find it there either, error out
+    throw new FileNotFoundException(String.format(
+      "Could not find jar for app '%s' in namespace '%s'. Expected it to be at %s.",
+      appId.getId(), appId.getNamespaceId(), recordedLocation.toURI()));
   }
 
   /**

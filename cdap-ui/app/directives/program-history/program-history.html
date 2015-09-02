@@ -1,6 +1,11 @@
 <div ng-if="runs.length > 0">
+  <!-- Switch to ng-if when we refactor to use controller as syntax -->
+  <div class="text-right" ng-show="runs.length > 10">
+    <pagination total-items="runs.length" ng-model="currentPage"></pagination>
+  </div>
+
   <div class="table-responsive">
-    <table class="table table-curved" cask-sortable>
+    <table class="table" cask-sortable>
       <thead>
         <tr ng-class="{'sort-enabled': runs.length > 1}">
           <th data-predicate="runid"> Run ID </th>
@@ -37,13 +42,11 @@
     </table>
   </div>
 
-  <!-- Switch to ng-if when we refactor to use controller as syntax -->
-  <div class="text-center" ng-show="runs.length > 10">
-    <pagination total-items="runs.length" ng-model="currentPage"></pagination>
-  </div>
 </div>
 
 <div ng-if="runs.length === 0"
      class="well well-lg text-center">
-  <h3> No history so far.</h3>
+  <h4> No history so far.</h4>
 </div>
+
+

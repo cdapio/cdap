@@ -99,6 +99,43 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
   }
 
   @Test
+  public void testBadAppLocation() throws Exception {
+    String version = "2.8.0-SNAPSHOT";
+    Manifest manifest = new Manifest();
+    manifest.getMainAttributes().put(ManifestFields.BUNDLE_VERSION, version);
+    Location appJar = AppJarHelper.createDeploymentJar(locationFactory, AppWithMR.class, manifest);
+
+    Application app = new AppWithMR();
+    DefaultAppConfigurer configurer = new DefaultAppConfigurer(app);
+    app.configure(configurer, new DefaultApplicationContext());
+    ApplicationSpecification appSpec = configurer.createSpecification();
+
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, appSpec.getName());
+
+    try {
+      // write an app spec without an artifact id
+      store.addApplication(appId, appSpec, appJar);
+      appSpec = store.getApplication(appId);
+      Assert.assertNotNull(appSpec);
+      Assert.assertNull(appSpec.getArtifactId());
+
+      // now delete the jar
+      appJar.delete();
+
+      // run upgrade, shouldn't choke
+      applicationLifecycleService.upgrade(false);
+
+      // app won't be upgraded though. but nothing we can do
+      appSpec = store.getApplication(appId);
+      Assert.assertNull(appSpec.getArtifactId());
+    } finally {
+      appJar.delete();
+      store.removeApplication(appId);
+      artifactRepository.clear(Id.Namespace.DEFAULT);
+    }
+  }
+
+  @Test
   public void testIdempotency() throws Exception {
     String version = "3.1.0";
     Manifest manifest = new Manifest();

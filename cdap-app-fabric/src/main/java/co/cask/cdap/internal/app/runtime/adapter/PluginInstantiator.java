@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.runtime.adapter;
 
-import co.cask.cdap.api.Config;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.artifact.ArtifactDescriptor;
 import co.cask.cdap.api.artifact.ArtifactVersion;
@@ -327,7 +326,7 @@ public class PluginInstantiator implements Closeable {
     public void visit(Object instance, Type inspectType, Type declareType, Field field) throws Exception {
       TypeToken<?> declareTypeToken = TypeToken.of(declareType);
 
-      if (Config.class.equals(declareTypeToken.getRawType())) {
+      if (PluginConfig.class.equals(declareTypeToken.getRawType())) {
         if (field.getName().equals("properties")) {
           field.set(instance, properties);
         }

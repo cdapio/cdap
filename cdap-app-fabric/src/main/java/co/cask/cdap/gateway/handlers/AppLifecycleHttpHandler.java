@@ -519,11 +519,13 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       datasets.add(new DatasetDetail(datasetSpec.getInstanceName(), datasetSpec.getTypeName()));
     }
 
-    // TODO: Remove the null check for artifact id once templates/adapters are removed
-    ArtifactSummary artifactSummary = spec.getArtifactId() == null ?
-      new ArtifactSummary(spec.getName(), null, true) : ArtifactSummary.from(spec.getArtifactId());
+    // this is only required if there are old apps lying around that failed to get upgrading during
+    // the upgrade to v3.2 for some reason. In those cases artifact id will be null until they re-deploy the app.
+    // in the meantime, we don't want this api call to null pointer exception.
+    ArtifactSummary summary = spec.getArtifactId() == null ?
+      new ArtifactSummary(spec.getName(), null, false) : ArtifactSummary.from(spec.getArtifactId());
     return new ApplicationDetail(spec.getName(), spec.getDescription(), spec.getConfiguration(),
-                                 streams, datasets, programs, artifactSummary);
+      streams, datasets, programs, summary);
   }
 
   private void ensureNamespaceExists(Id.Namespace namespace) throws NamespaceNotFoundException {
