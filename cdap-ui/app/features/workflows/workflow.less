@@ -1,36 +1,26 @@
 @import "../../styles/variables.less";
+@import "../../../bower_components/bootstrap/less/mixins.less";
+
 @border-color: #d0d0dd;
 
-body.state-workflows{
-  .panel-group {
-    .panel.panel-default {
-      > .panel-heading {
-        > a {
-          color: white;
-          &:hover { text-decoration: none; }
-        }
-      }
+body.state-workflows {
+  main.container {
+    // Override container styling to accommodate full width view
+    // TODO: come up with a way to apply the 3 lines below to all program detail views
+    width: 100%;
+    padding-right: 0;
+    padding-left: 0;
+
+    h2 {
+      font-weight: 500;
+      margin-top: 0;
+      margin-bottom: 5px;
     }
-  }
-
-  .col-sm-6 > div.btn-group { margin-top: 14px; }
-  .col-xs-12 > strong {
-    color: @cdap-header;
-    font-size: 14px;
-    padding-right: 5px;
-  }
-
-  .btn-group {
-    .btn-red {
-      span.fa {
-        color: @brand-danger;
-      }
+    h3 {
+      font-weight: 400;
     }
-
-    .btn-green {
-      span.fa {
-        color: @brand-success;
-      }
+    .btn-lg .fa-eject {
+      .rotate(90deg);
     }
   }
 
@@ -40,8 +30,7 @@ body.state-workflows{
     border-top-left-radius: @border-radius-base;
     border-top-right-radius: @border-radius-base;
     font-weight: 700;
-    padding-top: 20px;
-    height: 70px;
+    padding: 10px 0;
   }
 
   .schedule-content {
@@ -50,8 +39,8 @@ body.state-workflows{
         background-color: white;
         border: 1px solid @border-color;
         padding: 5px 0;
-        line-height: 50px;
         cursor: pointer;
+        height: 55px;
         &.active { background-color: #dcdce6; }
         p, i {
           vertical-align: middle;
@@ -65,9 +54,7 @@ body.state-workflows{
       background-color: #9d9fab;
       padding: 10px 0;
       .row {
-        line-height: 30px;
         p {
-          vertical-align: middle;
           margin-bottom: 0;
           color: white;
         }

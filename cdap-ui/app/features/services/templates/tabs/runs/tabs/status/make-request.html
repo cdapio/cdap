@@ -1,4 +1,4 @@
-<div class="modal" tabindex="-1" role="dialog">
+<div class="modal cdap-modal" tabindex="-1" role="dialog">
   <div class="modal-lg modal-dialog" ng-controller="StatusMakeRequestController as RequestController">
     <div class="modal-content">
 
@@ -7,12 +7,11 @@
             ng-submit="RequestController.makeRequest()"
             novalidate>
 
-
         <div class="modal-header clearfix">
-          <h3 class="modal-title pull-left">
-            <span ng-bind="RequestController.programId"></span>
-            <small> Type: Service </small>
-          </h3>
+          <div class="pull-left">
+            <h3 class="modal-title" ng-bind="RequestController.programId"></h3>
+            <p> Type: Service </p>
+          </div>
           <a class="btn pull-right" ng-click="$hide()">
             <span class="fa fa-remove"></span>
             <span class="sr-only"> Close </span>

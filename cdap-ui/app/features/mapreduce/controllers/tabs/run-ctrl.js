@@ -1,8 +1,10 @@
 angular.module(PKG.name + '.feature.mapreduce')
-  .controller('MapreduceRunsController', function($scope, $state, $rootScope, rRuns, $filter) {
+  .controller('MapreduceRunsController', function($scope, $state, $rootScope, rRuns, $filter, $bootstrapModal, rMapreduceDetail) {
     var fFilter = $filter('filter'),
         match;
     this.runs = rRuns;
+    this.$bootstrapModal = $bootstrapModal;
+    this.description = rMapreduceDetail.description;
 
     if ($state.params.runid) {
       match = fFilter(rRuns, {runid: $state.params.runid});
@@ -52,4 +54,27 @@ angular.module(PKG.name + '.feature.mapreduce')
       this.activeTab = tab;
     };
 
+    this.openHistory = function() {
+      this.$bootstrapModal.open({
+        size: 'lg',
+        windowClass: 'center cdap-modal',
+        templateUrl: '/assets/features/mapreduce/templates/tabs/history.html',
+        controller: ['runs', '$scope', function(runs, $scope) {
+          $scope.runs = runs;
+        }],
+        resolve: {
+          runs: function() {
+            return this.runs;
+          }.bind(this)
+        }
+      });
+    };
+
+    this.openDatasets = function() {
+      this.$bootstrapModal.open({
+        size: 'lg',
+        windowClass: 'center cdap-modal',
+        templateUrl: '/assets/features/mapreduce/templates/tabs/data.html'
+      });
+    };
   });

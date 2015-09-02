@@ -16,15 +16,18 @@ body.theme-cdap {
             color: @cdap-orange;
             cursor: pointer;
           }
+          &:focus {
+            outline: none;
+          }
         }
         &.active {
           > a {
             border-right: 1px solid transparent;
             &:hover {
-              background-color: #ebecf1;
-              border-right: 1px solid #d1d3da;
-              border-top: 1px solid #d1d3da;
-              border-left: 1px solid #d1d3da;
+              background-color: @subnav-background;
+              border-right: 1px solid transparent;
+              border-top: 1px solid @nav-tabs-border-color;
+              border-left: 1px solid @nav-tabs-border-color;
               border-bottom: 1px solid transparent;
               color: @cdap-gray;
               cursor: default;
@@ -32,7 +35,7 @@ body.theme-cdap {
           }
           &.bottom-border-tab {
             > a, > a:hover, &:after {
-              border-bottom: 1px solid #d1d3da;
+              border-bottom: 1px solid @nav-tabs-border-color;
             }
             > a, > a:hover {
               border-right: 0;
@@ -44,13 +47,13 @@ body.theme-cdap {
         content: '';
         height: 100%;
         width: 15%;
-        border-right: 1px solid #d1d3da;
-        border-top: 1px solid #d1d3da;
+        border-right: 1px solid @nav-tabs-border-color;
+        border-top: 1px solid @nav-tabs-border-color;
         .skew(15deg, 0);
         position: absolute;
         top: 0;
         right: -5px;
-        background-color: #ebecf1;
+        background-color: @subnav-background;
       }
     }
   }
