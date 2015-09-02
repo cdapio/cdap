@@ -1,0 +1,77 @@
+<my-breadcrumbs></my-breadcrumbs>
+
+<div class="row">
+  <div class="col-xs-6">
+    <h2 class="pull-left"> All Drafts </h2>
+  </div>
+  <div class="col-xs-6 text-right">
+    <div class="btn-group dropdown-right h2" dropdown>
+      <button type="button" class="btn btn-default dropdown-toggle" dropdown-toggle>
+        Add App <span class="caret"></span>
+      </button>
+      <ul class="dropdown-menu dropdown-menu-right" role="menu">
+        <li>
+          <a ui-sref="adapters.create({type: 'ETLBatch'})" class="clearfix">
+            <span class="pull-left">ETLBatch App</span>
+            <i class="icon-ETLBatch pull-right"></i>
+          </a>
+        </li>
+        <li>
+          <a ui-sref="adapters.create({type: 'ETLRealtime'})" class="clearfix">
+            <span class="pull-left">ETLRealtime App</span>
+            <i class="icon-ETLRealtime pull-right"></i>
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<br/>
+<div class="row" apps-drafts-list>
+  <div ng-model="drafts" class="drafts-list-container">
+    <div class="col-lg-2 col-md-3 col-sm-3 col-xs-6"
+         ng-repeat="app in drafts">
+      <div>
+        <div class="label etlappcontainer">
+          Draft
+        </div>
+        <div class="well well-md">
+          <a href ng-click="$state.go('^.create', {name: app.name})"
+              class="content-panel">
+              <h4 tooltip="{{::app.name}}">
+                <i class="icon-ETLBatch" ng-if="app.template === 'ETLBatch'"></i>
+                <i class="icon-ETLRealtime" ng-if="app.template === 'ETLRealtime'"></i>
+                <span>{{::app.name | myEllipsis:15}}</span>
+              </h4>
+
+              <small>
+                Type: {{::app.template}}
+              </small>
+              <p class="description" tooltip="{{::app.description}}">
+                {{::app.description | myEllipsis: 50}}
+              </p>
+          </a>
+
+          <div class="clearfix action-panel"
+
+               >
+            <div class="pull-left">
+              <button class="text-danger"
+                      ng-click="caskConfirm()"
+                      cask-confirmable="deleteDraft(app.name)"
+                      data-confirmable-content="Are you sure you want to delete this adapter draft?">
+                <span class="fa fa-trash"></span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-xs-12" ng-if='drafts.length === 0'>
+      <div class="well well-lg text-center">
+        <h3>No Application Drafts. Create one now.</h3>
+      </div>
+    </div>
+  </div>
+</div>
