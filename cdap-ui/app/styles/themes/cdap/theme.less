@@ -44,6 +44,29 @@ body.theme-cdap {
   // Progress bars
   // --------------------------------------------------
 
+  .pagination {
+    > li {
+      > a, > span {
+        color: @cdap-header;
+      }
+    }
+    > .active {
+      > a, > span {
+        background-color: @cdap-header;
+        border-color: @cdap-header;
+        color: white;
+        &:hover, &:focus {
+          background-color: @cdap-header;
+          border-color: @cdap-header;
+        }
+      }
+    }
+  }
+
+  //
+  // Progress bars
+  // --------------------------------------------------
+
   // Give the progress background some depth
   .progress {
     #gradient > .vertical(@start-color: darken(@progress-bg, 4%); @end-color: @progress-bg)
@@ -416,8 +439,10 @@ body.theme-cdap {
         border-bottom: 1px solid @modal-table-border-color;
         color: @cdap-header;
         height: 60px;
+        margin-bottom: 5px;
         padding: 0;
         .border-radius(4px 4px 0 0);
+        .box-shadow(0 0 10px rgba(0, 0, 0, 0.5));
         > div {
           margin: 0;
           padding-left: 15px;
@@ -477,10 +502,26 @@ body.theme-cdap {
         h4 {
           color: @cdap-header;
         }
+        .pagination {
+          margin: 0 0 10px;
+        }
         .table {
           background-color: white;
           border: 1px solid @modal-table-border-color;
           margin: 0;
+          thead th {
+            border-right: 1px solid @modal-table-border-color;
+            border-bottom-width: 1px;
+            color: @cdap-header;
+          }
+          tbody {
+            text-align: left;
+            td {
+              border-right: 1px solid @modal-table-border-color;
+              padding-right: 8px;
+              padding-left: 8px;
+            }
+          }
         }
       }
       .modal-body {
