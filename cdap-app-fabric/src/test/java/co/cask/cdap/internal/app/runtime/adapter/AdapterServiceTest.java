@@ -22,23 +22,47 @@ import co.cask.cdap.DummyWorkerTemplate;
 import co.cask.cdap.ExtendedBatchTemplate;
 import co.cask.cdap.api.app.ApplicationConfigurer;
 import co.cask.cdap.api.app.ApplicationContext;
+import co.cask.cdap.api.app.ApplicationSpecification;
+import co.cask.cdap.api.artifact.Plugin;
+import co.cask.cdap.api.data.stream.StreamSpecification;
+import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
+import co.cask.cdap.api.mapreduce.MapReduceSpecification;
+import co.cask.cdap.api.schedule.SchedulableProgramType;
+import co.cask.cdap.api.schedule.ScheduleSpecification;
+import co.cask.cdap.api.schedule.Schedules;
+import co.cask.cdap.api.service.ServiceSpecification;
+import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.templates.ApplicationTemplate;
+import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
+import co.cask.cdap.api.workflow.ScheduleProgramInfo;
+import co.cask.cdap.api.workflow.WorkflowActionNode;
+import co.cask.cdap.api.workflow.WorkflowNode;
+import co.cask.cdap.api.workflow.WorkflowSpecification;
+import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.AdapterNotFoundException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.config.PreferencesStore;
+import co.cask.cdap.internal.app.DefaultApplicationSpecification;
+import co.cask.cdap.internal.app.services.AdapterService;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
+import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.AdapterStatus;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.templates.AdapterDefinition;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.gson.JsonObject;
 import org.apache.http.HttpResponse;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -46,8 +70,10 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
@@ -57,12 +83,16 @@ import java.util.concurrent.TimeUnit;
 public class AdapterServiceTest extends AppFabricTestBase {
   private static final Id.Namespace NAMESPACE = Id.Namespace.from(TEST_NAMESPACE1);
   private static AdapterService adapterService;
+  private static Store store;
+  private static LocationFactory locationFactory;
 
   @BeforeClass
   public static void setup() throws Exception {
     setupAdapters();
     adapterService = getInjector().getInstance(AdapterService.class);
     adapterService.registerTemplates();
+    store = getInjector().getInstance(Store.class);
+    locationFactory = getInjector().getInstance(LocationFactory.class);
   }
 
   @Test(expected = RuntimeException.class)
@@ -300,6 +330,92 @@ public class AdapterServiceTest extends AppFabricTestBase {
 
     Assert.assertTrue(streamExists(Id.Stream.from(NAMESPACE, streamName)));
     Assert.assertTrue(datasetExists(Id.DatasetInstance.from(NAMESPACE, tableName)));
+  }
+
+  @Test
+  public void testUpgrade() throws Exception {
+    // add app templates to the store
+    Location dummyLocation = locationFactory.create(UUID.randomUUID().toString());
+    dummyLocation.mkdirs();
+    // manually add app spec for etl batch and realtime
+    Map<String, WorkflowSpecification> workflowSpecs = ImmutableMap.of(
+      "ETLWorkflow", new WorkflowSpecification(
+        "co.cask.cdap.template.etl.batch.ETLWorkflow", "ETLWorkflow", "", Collections.<String, String>emptyMap(),
+        ImmutableList.<WorkflowNode>of(
+          new WorkflowActionNode("ETLMapReduce",
+            new ScheduleProgramInfo(SchedulableProgramType.MAPREDUCE, "ETLMapReduce")))
+      ));
+    Map<String, MapReduceSpecification> mrSpecs = ImmutableMap.of(
+      "ETLMapReduce", new MapReduceSpecification(
+        "co.cask.cdap.template.etl.batch.ETLMapReduce", "ETLMapReduce", "", null, null,
+        Collections.<String>emptySet(), Collections.<String, String>emptyMap(), null, null)
+    );
+    Map<String, WorkerSpecification> workerSpecs = ImmutableMap.of(
+      "ETLWorker", new WorkerSpecification(
+        "co.cask.cdap.template.etl.realtime.ETLWorker", "ETLWorker", "", Collections.<String, String>emptyMap(),
+        Collections.<String>emptySet(), null, 1)
+    );
+    ApplicationSpecification etlBatchSpec = new DefaultApplicationSpecification(
+      "ETLBatch", "", "",
+      null,
+      Collections.<String, StreamSpecification>emptyMap(),
+      Collections.<String, String>emptyMap(),
+      Collections.<String, DatasetCreationSpec>emptyMap(),
+      Collections.<String, FlowSpecification>emptyMap(),
+      mrSpecs,
+      Collections.<String, SparkSpecification>emptyMap(),
+      workflowSpecs,
+      Collections.<String, ServiceSpecification>emptyMap(),
+      Collections.<String, ScheduleSpecification>emptyMap(),
+      Collections.<String, WorkerSpecification>emptyMap(),
+      Collections.<String, Plugin>emptyMap()
+    );
+    ApplicationSpecification etlRealtimeSpec = new DefaultApplicationSpecification(
+      "ETLRealtime", "", "",
+      null,
+      Collections.<String, StreamSpecification>emptyMap(),
+      Collections.<String, String>emptyMap(),
+      Collections.<String, DatasetCreationSpec>emptyMap(),
+      Collections.<String, FlowSpecification>emptyMap(),
+      Collections.<String, MapReduceSpecification>emptyMap(),
+      Collections.<String, SparkSpecification>emptyMap(),
+      Collections.<String, WorkflowSpecification>emptyMap(),
+      Collections.<String, ServiceSpecification>emptyMap(),
+      Collections.<String, ScheduleSpecification>emptyMap(),
+      workerSpecs,
+      Collections.<String, Plugin>emptyMap()
+    );
+    Id.Application etlBatchId = Id.Application.from(Id.Namespace.DEFAULT, "ETLBatch");
+    Id.Application etlRealtimeId = Id.Application.from(Id.Namespace.DEFAULT, "ETLRealtime");
+
+    store.addApplication(etlBatchId, etlBatchSpec, dummyLocation);
+    store.addApplication(etlRealtimeId, etlRealtimeSpec, dummyLocation);
+
+    // add adapters to the store
+    AdapterDefinition batchAdapter = AdapterDefinition.builder(
+      "batch", Id.Program.from(Id.Namespace.DEFAULT, etlBatchId.getId(), ProgramType.WORKFLOW, "ETLWorkflow"))
+      .setScheduleSpec(new ScheduleSpecification(
+        Schedules.createTimeSchedule("name", "", "0 0 0 1 1"),
+        new ScheduleProgramInfo(SchedulableProgramType.WORKFLOW, "ETLWorkflow"),
+        Collections.<String, String>emptyMap()))
+      .build();
+    AdapterDefinition realtimeAdapter = AdapterDefinition.builder(
+      "realtime", Id.Program.from(Id.Namespace.DEFAULT, etlRealtimeId.getId(), ProgramType.WORKER, "ETLWorker"))
+      .setInstances(1)
+      .build();
+    store.addAdapter(Id.Namespace.DEFAULT, batchAdapter);
+    store.addAdapter(Id.Namespace.DEFAULT, realtimeAdapter);
+
+    // run upgrade
+    adapterService.upgrade();
+
+    // make sure apps are gone
+    Assert.assertNull(store.getApplication(etlBatchId));
+    Assert.assertNull(store.getApplication(etlRealtimeId));
+
+    // make sure adpaters are gone
+    Assert.assertNull(store.getAdapter(Id.Namespace.DEFAULT, "batch"));
+    Assert.assertNull(store.getAdapter(Id.Namespace.DEFAULT, "realtime"));
   }
 
   private void assertDummyConfigEquals(AdapterConfig expected, AdapterDefinition actual) {

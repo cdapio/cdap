@@ -354,12 +354,6 @@ public class ApplicationLifecycleService extends AbstractIdleService {
           continue;
         }
 
-        // if this was etlbatch or etlrealtime template
-        if ("ETLBatch".equals(appSpec.getName()) || "ETLRealtime".equals(appSpec.getName())) {
-          deleteApp(appId, appSpec);
-          continue;
-        }
-
         Location appJarLocation;
         try {
           appJarLocation = findAppJarLocation(appId);
@@ -589,7 +583,18 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   }
 
   // deletes without performs checks that no programs are running
-  private void deleteApp(Id.Application appId, ApplicationSpecification spec) throws Exception {
+
+  /**
+   * Delete the specified application without performing checks that its programs are stopped. This is package
+   * private purely for v3.2 upgrade purposes. After AdapterService is removed, this should be made private.
+   * The reason AdapterService is the one that calls this is because AdapterService is the only one that knows
+   * which applications are application templates.
+   *
+   * @param appId the id of the application to delete
+   * @param spec the spec of the application to delete
+   * @throws Exception
+   */
+  void deleteApp(Id.Application appId, ApplicationSpecification spec) throws Exception {
     //Delete the schedules
     for (WorkflowSpecification workflowSpec : spec.getWorkflows().values()) {
       Id.Program workflowProgramId = Id.Program.from(appId, ProgramType.WORKFLOW, workflowSpec.getName());

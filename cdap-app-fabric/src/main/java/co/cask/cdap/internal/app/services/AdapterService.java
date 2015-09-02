@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.adapter;
+package co.cask.cdap.internal.app.services;
 
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
@@ -44,11 +44,12 @@ import co.cask.cdap.internal.app.deploy.pipeline.DeploymentInfo;
 import co.cask.cdap.internal.app.deploy.pipeline.adapter.AdapterDeploymentInfo;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.adapter.AdapterAlreadyExistsException;
+import co.cask.cdap.internal.app.runtime.adapter.ApplicationTemplateInfo;
+import co.cask.cdap.internal.app.runtime.adapter.InvalidAdapterOperationException;
+import co.cask.cdap.internal.app.runtime.adapter.PluginRepository;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
-import co.cask.cdap.internal.app.services.ApplicationLifecycleService;
-import co.cask.cdap.internal.app.services.ProgramLifecycleService;
-import co.cask.cdap.internal.app.services.PropertiesResolver;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.AdapterStatus;
@@ -590,7 +591,7 @@ public class AdapterService extends AbstractIdleService {
     ExecutionException, InterruptedException {
     final Id.Program workerId = getProgramId(namespace, adapterSpec);
     List<RunRecordMeta> runRecords = store.getRuns(workerId, ProgramRunStatus.RUNNING, 0, Long.MAX_VALUE,
-                                                   Integer.MAX_VALUE, adapterSpec.getName());
+      Integer.MAX_VALUE, adapterSpec.getName());
     RunRecordMeta adapterRun = Iterables.getFirst(runRecords, null);
     if (adapterRun != null) {
       RunId runId = RunIds.fromString(adapterRun.getPid());
@@ -742,13 +743,24 @@ public class AdapterService extends AbstractIdleService {
   }
 
   /**
-   * Upgrades to cdap 3.2, which has removed adapters and application templates. Deletes all adapters and
-   * adapter related schedules.
+   * Upgrades to cdap 3.2, which has removed adapters and application templates. Deletes all adapters,
+   * adapter related schedules, and application templates.
    */
-  public void upgrade() throws SchedulerException {
+  public void upgrade() throws Exception {
     for (NamespaceMeta namespaceMeta : store.listNamespaces()) {
       Id.Namespace namespace = Id.Namespace.from(namespaceMeta.getName());
       for (AdapterDefinition adapterDefinition : getAdapters(namespace)) {
+
+        // try deleting the app template first. Needs to happen before deleting adapters because
+        // the only way we know that an application template exists is if there are adapters for it.
+        Id.Application appId = Id.Application.from(namespace, adapterDefinition.getTemplate());
+        LOG.info("Deleting application template {} in namespace {}.", appId.getId(), appId.getNamespaceId());
+        ApplicationSpecification appSpec = store.getApplication(appId);
+        // can be null if we failed midway through an early upgrade
+        if (appSpec != null) {
+          // throws an exception if it fails and halts the upgrade
+          applicationLifecycleService.deleteApp(appId, appSpec);
+        }
 
         Id.Program workflowId = adapterDefinition.getProgram();
         // if its a batch adapter, delete the schdule
