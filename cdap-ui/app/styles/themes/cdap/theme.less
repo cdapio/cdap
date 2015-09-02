@@ -403,6 +403,97 @@ body.theme-cdap {
         }
       }
     }
+
+    &.cdap-modal {
+      &.center .modal-dialog {
+        max-width: 80%;
+        @media (min-width: @screen-md-min) {
+          width: 900px;
+        }
+      }
+      .modal-header {
+        background-color: @body-bg;
+        border-bottom: 1px solid @modal-table-border-color;
+        color: @cdap-header;
+        height: 60px;
+        padding: 0;
+        .border-radius(4px 4px 0 0);
+        > div {
+          margin: 0;
+          padding-left: 15px;
+          @media (max-width: @screen-sm-max) {
+            max-width: 200px;
+          }
+          h3, p {
+            @media (max-width: @screen-sm-max) {
+              white-space: nowrap;
+              text-overflow: ellipsis;
+              overflow: hidden;
+            }
+          }
+          h3 {
+            padding-top: 5px;
+            &:only-child {
+              line-height: 60px;
+              padding-top: 0;
+            }
+          }
+        }
+        > h3 {
+          padding-left: 15px;
+          @media (max-width: @screen-sm-max) {
+            max-width: 200px;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            overflow: hidden;
+          }
+        }
+        h3 {
+          color: @cdap-header;
+          font-weight: 500;
+        }
+        p {
+          color: @cdap-lightgray;
+        }
+        > a.btn {
+          background-color: transparent;
+          border-left: 1px solid @modal-table-border-color;
+          width: 60px;
+          height: 60px;
+          line-height: 60px;
+          padding: 0;
+          .border-radius(0);
+          .transition(all 0.2 ease);
+          &:hover, &:focus {
+            background-color: @cdap-header;
+            color: white;
+            .border-radius(0 4px 0 0);
+          }
+        }
+      }
+      .modal-content {
+        background-color: white;
+        color: @cdap-header;
+        h4 {
+          color: @cdap-header;
+        }
+        .table {
+          background-color: white;
+          border: 1px solid @modal-table-border-color;
+          margin: 0;
+        }
+      }
+      .modal-body {
+        padding: 10px;
+        width: 100%;
+        .control-label {
+          font-weight: 400;
+        }
+        .form-control {
+          border: 1px solid @modal-table-border-color;
+        }
+      }
+    }
   }
 
   //

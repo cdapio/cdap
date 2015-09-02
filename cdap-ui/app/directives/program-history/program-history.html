@@ -1,6 +1,6 @@
 <div ng-if="runs.length > 0">
   <div class="table-responsive">
-    <table class="table table-curved" cask-sortable>
+    <table class="table" cask-sortable>
       <thead>
         <tr ng-class="{'sort-enabled': runs.length > 1}">
           <th data-predicate="runid"> Run ID </th>
@@ -45,5 +45,7 @@
 
 <div ng-if="runs.length === 0"
      class="well well-lg text-center">
-  <h3> No history so far.</h3>
+  <h4> No history so far.</h4>
 </div>
+
+

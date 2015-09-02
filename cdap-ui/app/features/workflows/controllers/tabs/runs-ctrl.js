@@ -1,12 +1,15 @@
 var params = {};
 class WorkflowsRunsController {
-  constructor($scope, $state, $filter, rRuns, myWorkFlowApi) {
+  constructor($scope, $state, $filter, rRuns, myWorkFlowApi, $bootstrapModal, rWorkflowDetail) {
     let fFilter = $filter('filter');
     this.runs = rRuns;
     this.$scope = $scope;
     this.$state = $state;
     this.myWorkFlowApi = myWorkFlowApi;
     this.runStatus = null;
+    this.$bootstrapModal = $bootstrapModal;
+    this.description = rWorkflowDetail.description;
+
 
     if ($state.params.runid) {
       var match = fFilter(rRuns, {runid: $state.params.runid});
@@ -28,7 +31,7 @@ class WorkflowsRunsController {
     $scope.$watch(
       angular.bind(this, () => this.runs.selected.runid ),
       () => {
-        if ($state.params.runid) {
+        if (this.$state.params.runid) {
           params['runId'] = this.runs.selected.runid;
           this.myWorkFlowApi
               .stopPollRunDetail(params)
@@ -99,9 +102,32 @@ class WorkflowsRunsController {
      .resumeRun(params, {});
   }
 
+  openHistory() {
+    this.$bootstrapModal.open({
+      size: 'lg',
+      windowClass: 'center cdap-modal',
+      templateUrl: '/assets/features/workflows/templates/tabs/history.html',
+      controller: ['runs', '$scope', function(runs, $scope) {
+        $scope.runs = runs;
+      }],
+      resolve: {
+        runs:() => this.runs
+      }
+    });
+  }
+
+  openSchedules() {
+    this.$bootstrapModal.open({
+      size: 'lg',
+      windowClass: 'center cdap-modal',
+      templateUrl: '/assets/features/workflows/templates/tabs/schedules.html',
+      controller: 'WorkflowsSchedulesController',
+      controllerAs: 'SchedulesController'
+    });
+  }
 }
 
-WorkflowsRunsController.$inject = ['$scope', '$state', '$filter', 'rRuns', 'myWorkFlowApi'];
+WorkflowsRunsController.$inject = ['$scope', '$state', '$filter', 'rRuns', 'myWorkFlowApi', '$bootstrapModal', 'rWorkflowDetail'];
 
 angular.module(`${PKG.name}.feature.workflows`)
   .controller('WorkflowsRunsController', WorkflowsRunsController);

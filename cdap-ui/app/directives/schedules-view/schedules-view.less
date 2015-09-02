@@ -7,8 +7,7 @@ my-schedules-view {
     border-top-left-radius: @border-radius-base;
     border-top-right-radius: @border-radius-base;
     font-weight: 700;
-    padding-top: 20px;
-    height: 70px;
+    padding: 10px 0;
   }
 
   .schedule-content {
@@ -17,8 +16,8 @@ my-schedules-view {
         background-color: white;
         border: 1px solid @border-color;
         padding: 5px 0;
-        line-height: 50px;
         cursor: pointer;
+        height: 55px;
         &.active { background-color: #dcdce6; }
         p, i {
           vertical-align: middle;
@@ -32,14 +31,23 @@ my-schedules-view {
       background-color: #9d9fab;
       padding: 10px 0;
       .row {
-        line-height: 30px;
         p {
           vertical-align: middle;
           margin-bottom: 0;
           color: white;
         }
       }
-      table { width: inherit; }
+      .table {
+        width: inherit;
+      }
+    }
+  }
+}
+
+body.state-workflows {
+  my-schedules-view {
+    .container {
+      width: 100%;
     }
   }
 }

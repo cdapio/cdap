@@ -1,74 +1,59 @@
-<div class="btn-group" dropdown>
-
-  <div ng-if="status === 'STOPPED'"
-       class="btn btn-success btn-md"
-       ng-click="do('start')">
-    <span class="fa fa-play"> </span>
-    <span>Start</span>
-  </div>
-  <div ng-if="(['RUNNING', 'STARTED', 'SUSPENDED'].indexOf(status) !== -1) && isStoppable === 'false'"
-       class="btn btn-success btn-md"
-       ng-disabled="status === 'RUNNING' && isRestartable === 'false'"
-       ng-click="do('start')">
-       <span class="fa fa-play"></span>
-       <span>Start</span>
-  </div>
-  <div ng-if="(['RUNNING', 'STARTED'].indexOf(status) !== -1) && isStoppable === 'true'"
-       class="btn btn-danger btn-md"
+<div ng-if="isStoppable === 'true'" class="btn-group">
+  <div class="btn btn-lg btn-default"
+       ng-if="(['RUNNING', 'STARTED'].indexOf(status) !== -1)"
        ng-click="do('stop')">
-    <span class="fa fa-stop"> </span>
+    <span class="fa fa-stop text-danger"></span>
     <span>Stop</span>
   </div>
-
-  <div ng-if="['STARTING', 'STOPPING'].indexOf(status) !== -1"
-       class="btn btn-md"
-       ng-class="{'btn-success': status === 'STARTING', 'btn-danger': status === 'STOPPING'}"
-       >
-    <span class="fa fa-refresh fa-spin"></span>
+  <div class="btn btn-lg btn-default"
+       ng-if="(['STOPPING', 'STARTING'].indexOf(status) !== -1)">
+    <span class="fa fa-refresh fa-spin"
+          ng-class="{'text-success': status === 'STARTING', 'text-danger': status === 'STOPPING'}"></span>
     <span>{{status | caskCapitalizeFilter}}</span>
   </div>
+  <div class="btn btn-lg btn-default"
+       ng-if="(['STOPPED', 'COMPLETED', 'FAILED', 'KILLED'].indexOf(status) !== -1)"
+       ng-click="do('start')">
+    <span class="fa fa-play text-success"></span>
+    <span>Start</span>
+  </div>
+  <div class="btn btn-lg btn-default"
+       ng-disabled="(['STOPPED', 'COMPLETED', 'FAILED', 'KILLED'].indexOf(status) === -1)"
+       ng-click="openPreferences()">
+    <span class="fa fa-wrench"></span>
+    <span>Preferences</span>
+  </div>
+  <div class="btn btn-lg btn-default"
+       ng-disabled="(['STOPPED', 'COMPLETED', 'FAILED', 'KILLED'].indexOf(status) === -1)"
+       ng-click="openRuntime()">
+    <span class="fa fa-cog"></span>
+    <span>Arguments</span>
+  </div>
+</div>
 
-  <button class="btn btn-md btn-success dropdown-toggle" dropdown-toggle ng-if="status === 'STOPPED'">
-    <span class="caret"></span>
-  </button>
-
-  <ul class="dropdown-menu dropdown-menu-right" role="menu" ng-if="status === 'STOPPED'">
-    <li>
-      <a href="#" ng-click="openRuntime()">
-        <span class="fa fa-wrench pull-right"></span>
-        <span> Runtime Arguments </span>
-      </a>
-    </li>
-    <li>
-      <a href="#" ng-click="openPreferences()">
-        <span class="fa fa-cog pull-right"></span>
-        <span> Preferences </span>
-      </a>
-    </li>
-  </ul>
-
-  <button class="btn btn-md btn-success dropdown-toggle"
-          dropdown-toggle ng-if="(['RUNNING', 'STARTED', 'SUSPENDED'].indexOf(status) !== -1) && isStoppable === 'false'"
-          ng-disabled="status === 'RUNNING' && isRestartable === 'false'">
-    <span class="caret"></span>
-  </button>
-
-  <ul class="dropdown-menu dropdown-menu-right"
-      role="menu"
-      ng-disabled="status === 'RUNNING' && isRestartable === 'false'"
-      ng-if="(['RUNNING', 'STARTED'].indexOf(status) !== -1) && isStoppable === 'false'">
-    <li>
-      <a href="#" ng-click="openRuntime()">
-        <span class="fa fa-wrench pull-right"></span>
-        <span> Runtime Arguments </span>
-      </a>
-    </li>
-    <li>
-      <a href="#" ng-click="openPreferences()">
-        <span class="fa fa-cog pull-right"></span>
-        <span> Preferences </span>
-      </a>
-    </li>
-  </ul>
-
+<div ng-if="isStoppable === 'false'" class="btn-group">
+  <div class="btn btn-lg btn-default"
+       ng-if="(['STARTING', 'STOPPING', 'STARTED'].indexOf(status) === -1)"
+       ng-click="do('start')">
+    <span class="fa fa-play text-success"></span>
+    <span>Start</span>
+  </div>
+  <div class="btn btn-lg btn-default"
+       ng-if="(['STARTING', 'STOPPING'].indexOf(status) !== -1)">
+    <span class="fa fa-refresh fa-spin"
+          ng-class="{'text-success': status === 'STARTING', 'text-danger': status === 'STOPPING'}"></span>
+    <span>{{status | caskCapitalizeFilter}}</span>
+  </div>
+  <div class="btn btn-lg btn-default"
+       ng-disabled="(['STARTING', 'STOPPING'].indexOf(status) !== -1)"
+       ng-click="openPreferences()">
+    <span class="fa fa-wrench"></span>
+    <span>Preferences</span>
+  </div>
+  <div class="btn btn-lg btn-default"
+       ng-disabled="(['STARTING', 'STOPPING'].indexOf(status) !== -1)"
+       ng-click="openRuntime()">
+    <span class="fa fa-cog"></span>
+    <span>Arguments</span>
+  </div>
 </div>
