@@ -21,6 +21,7 @@ import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
 import co.cask.cdap.template.etl.api.batch.BatchSink;
 import co.cask.cdap.template.etl.api.batch.BatchSinkContext;
+import com.google.common.base.Strings;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -55,7 +56,9 @@ public abstract class TimePartitionedFileSetSink<KEY_OUT, VAL_OUT>
   public void prepareRun(BatchSinkContext context) {
     Map<String, String> sinkArgs = new HashMap<>();
     TimePartitionedFileSetArguments.setOutputPartitionTime(sinkArgs, context.getLogicalStartTime());
-    TimePartitionedFileSetArguments.setOutputPathFormat(sinkArgs, tpfsSinkConfig.filePathFormat);
+    if (!Strings.isNullOrEmpty(tpfsSinkConfig.filePathFormat)) {
+      TimePartitionedFileSetArguments.setOutputPathFormat(sinkArgs, tpfsSinkConfig.filePathFormat);
+    }
     TimePartitionedFileSet sink = context.getDataset(tpfsSinkConfig.name, sinkArgs);
     context.setOutput(tpfsSinkConfig.name, sink);
   }
