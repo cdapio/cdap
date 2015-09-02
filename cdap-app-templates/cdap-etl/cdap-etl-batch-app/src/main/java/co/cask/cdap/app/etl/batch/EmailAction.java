@@ -19,6 +19,8 @@ package co.cask.cdap.app.etl.batch;
 import co.cask.cdap.api.workflow.AbstractWorkflowAction;
 import co.cask.cdap.api.workflow.WorkflowActionNode;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
+import co.cask.cdap.api.workflow.WorkflowContext;
+import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.template.etl.common.ETLStage;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -36,6 +38,14 @@ import javax.mail.internet.MimeMessage;
 
 /**
  * Sends an email to the specified email address after an ETL Batch Application run is completed.
+ * The user must specify a subject, the recipient's email address, and the sender's email address. Optional properties
+ * are a message (the {@link WorkflowToken} for the {@link ETLBatchApplication} run will be appended to the message),
+ * a host and port (defaults to localhost:25), a protocol (defaults to SMTP), and a username and password.
+ * <p>
+ * The action must be specified as a the only action in a list of actions in the
+ * {@link co.cask.cdap.app.etl.batch.config.ETLBatchConfig}. It must have the name "Email"
+ * or an IllegalArgumentException will be thrown.
+ * </p>
  */
 public class EmailAction extends AbstractWorkflowAction {
   private static final String NAME = "Email";
@@ -54,20 +64,52 @@ public class EmailAction extends AbstractWorkflowAction {
   public static final String PORT = "port";
 
   private Map<String, String> properties;
+  private Properties javaMailProperties;
+  private Authenticator authenticator;
 
   public EmailAction(ETLStage action) {
     super(action.getName());
     properties = action.getProperties();
   }
 
+  @Override
+  public void initialize(WorkflowContext context) throws Exception {
+    super.initialize(context);
+    properties = ((WorkflowActionNode) context.getWorkflowSpecification().getNodeIdMap()
+      .get(NAME)).getActionSpecification().getProperties();
+
+    javaMailProperties = new Properties();
+    javaMailProperties.put("mail.smtp.host", !Strings.isNullOrEmpty(properties.get(HOST)) ?
+      properties.get(HOST) : DEFAULT_HOST);
+    javaMailProperties.put("mail.smtp.port", !Strings.isNullOrEmpty(properties.get(PORT)) ?
+      Integer.parseInt(properties.get(PORT)) : DEFAULT_PORT);
+    if (!(Strings.isNullOrEmpty(properties.get(USERNAME)))) {
+      javaMailProperties.put("mail.smtp.auth", true);
+    }
+    if ("SMTPS".equalsIgnoreCase(properties.get(PROTOCOL))) {
+      javaMailProperties.put("mail.smtp.ssl.enable", true);
+    }
+    if ("TLS".equalsIgnoreCase(properties.get(PROTOCOL))) {
+      javaMailProperties.put("mail.smtp.starttls.enable", true);
+    }
+    if (!(Strings.isNullOrEmpty(properties.get(USERNAME)))) {
+      javaMailProperties.put("mail.smtp.auth", true);
+      authenticator = new Authenticator() {
+        @Override
+        public PasswordAuthentication getPasswordAuthentication() {
+          return new PasswordAuthentication(properties.get(USERNAME), properties.get(PASSWORD));
+        }
+      };
+    }
+  }
+
+  @Override
   public WorkflowActionSpecification configure() {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(properties.get(RECIPIENT_EMAIL_ADDRESS)),
                                 String.format("You must set the \'%s\' property to send an email.",
                                               RECIPIENT_EMAIL_ADDRESS));
     Preconditions.checkArgument(!Strings.isNullOrEmpty(properties.get(FROM_ADDRESS)),
                                 String.format("You must set the \'%s\' property to send an email.", FROM_ADDRESS));
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(properties.get(MESSAGE)),
-                                String.format("You must set the \'%s\' property to send an email.", MESSAGE));
     Preconditions.checkArgument(!Strings.isNullOrEmpty(properties.get(SUBJECT)),
                                 String.format("You must set the \'%s\' property to send an email.", SUBJECT));
     Preconditions.checkArgument(!(Strings.isNullOrEmpty(properties.get(USERNAME)) ^
@@ -88,35 +130,6 @@ public class EmailAction extends AbstractWorkflowAction {
 
   @Override
   public void run() {
-    properties = ((WorkflowActionNode) getContext().getWorkflowSpecification().getNodeIdMap()
-      .get(NAME)).getActionSpecification().getProperties();
-
-    Properties javaMailProperties = new Properties();
-    javaMailProperties.put("mail.smtp.host", !Strings.isNullOrEmpty(properties.get(HOST)) ?
-      properties.get(HOST) : DEFAULT_HOST);
-    javaMailProperties.put("mail.smtp.port", !Strings.isNullOrEmpty(properties.get(PORT)) ?
-      Integer.parseInt(properties.get(PORT)) : DEFAULT_PORT);
-    if (!(Strings.isNullOrEmpty(properties.get(USERNAME)))) {
-      javaMailProperties.put("mail.smtp.auth", true);
-    }
-    if ("SMTPS".equalsIgnoreCase(properties.get(PROTOCOL))) {
-      javaMailProperties.put("mail.smtp.ssl.enable", true);
-    }
-    if ("TLS".equalsIgnoreCase(properties.get(PROTOCOL))) {
-      javaMailProperties.put("mail.smtp.starttls.enable", true);
-    }
-
-    Authenticator authenticator = null;
-    if (!(Strings.isNullOrEmpty(properties.get(USERNAME)))) {
-      javaMailProperties.put("mail.smtp.auth", true);
-      authenticator = new Authenticator() {
-        @Override
-        public PasswordAuthentication getPasswordAuthentication() {
-          return new PasswordAuthentication(properties.get(USERNAME), properties.get(PASSWORD));
-        }
-      };
-    }
-
     Session session = Session.getInstance(javaMailProperties, authenticator);
     session.setDebug(true);
     try {
@@ -125,7 +138,10 @@ public class EmailAction extends AbstractWorkflowAction {
       msg.addRecipient(Message.RecipientType.TO,
                        new InternetAddress(properties.get(RECIPIENT_EMAIL_ADDRESS)));
       msg.setSubject(properties.get(SUBJECT));
-      msg.setText(properties.get(MESSAGE));
+      WorkflowToken token = getContext().getToken();
+      msg.setText(properties.get(MESSAGE) + "\nUSER Workflow Tokens:\n" + token.getAll(WorkflowToken.Scope.USER)
+                    + "\nSYSTEM Workflow Tokens:\n" + token.getAll(WorkflowToken.Scope.SYSTEM)
+      );
       Transport transport;
       if (!Strings.isNullOrEmpty(properties.get(PROTOCOL))) {
         transport = session.getTransport(properties.get(PROTOCOL));

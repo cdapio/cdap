@@ -87,7 +87,7 @@ public class ETLEmailActionTest extends BaseETLBatchTest {
     Iterator emailIter = server.getReceivedEmail();
     SmtpMessage email = (SmtpMessage) emailIter.next();
     Assert.assertEquals("Test", email.getHeaderValue("Subject"));
-    Assert.assertEquals("testing body", email.getBody());
+    Assert.assertTrue(email.getBody().startsWith("testing body"));
     Assert.assertFalse(emailIter.hasNext());
   }
 }

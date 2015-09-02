@@ -21,8 +21,6 @@ import co.cask.cdap.app.etl.batch.config.ETLBatchConfig;
 import co.cask.cdap.template.etl.common.ETLStage;
 import com.google.common.base.Throwables;
 
-import java.io.IOException;
-
 /**
  * Workflow for scheduling Batch ETL MapReduce Driver.
  */
@@ -44,9 +42,9 @@ public class ETLWorkflow extends AbstractWorkflow {
     if (config.getActions() != null) {
       for (ETLStage action : config.getActions()) {
         if (!action.getName().equals("Email")) {
-          Throwables.propagate(new IOException(String.format("Only \'Email\' actions are supported. " +
-                                                               "You cannot create an action of type %s.",
-                                                             action)));
+          throw new IllegalArgumentException(String.format("Only \'Email\' actions are supported. " +
+                                                             "You cannot create an action of type %s.",
+                                                           action.getName()));
         }
         addAction(new EmailAction(action));
       }
