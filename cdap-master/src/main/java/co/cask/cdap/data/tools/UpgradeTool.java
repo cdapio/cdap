@@ -96,7 +96,7 @@ public class UpgradeTool {
    * Set of Action available in this tool.
    */
   private enum Action {
-    UPGRADE("Upgrades CDAP to 3.2\n" +
+    UPGRADE("Upgrades CDAP to " + ProjectInfo.getVersion() + "\n" +
               "  The upgrade tool upgrades the following: \n" +
               "  1. User and System Datasets (upgrades the coprocessor jars)\n" +
               "  2. UsageRegistry Dataset Type\n" +
@@ -311,7 +311,7 @@ public class UpgradeTool {
   }
 
   private void performUpgrade() throws Exception {
-    LOG.info("Upgrading System and User Datasets ...");
+    LOG.info("Upgrading User and System Datasets ...");
     DatasetUpgrader dsUpgrade = injector.getInstance(DatasetUpgrader.class);
     dsUpgrade.upgrade();
 
