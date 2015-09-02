@@ -155,8 +155,7 @@ public class DefaultPluginConfigurer extends DefaultDatasetConfigurer implements
    */
   private void registerPlugin(String pluginId, ArtifactDescriptor artifactDescriptor, PluginClass pluginClass,
                               PluginProperties properties) {
-    plugins.put(pluginId, new Plugin(artifactDescriptor.getName(), artifactDescriptor.getVersion(),
-                                     artifactDescriptor.isSystem(), artifactDescriptor.getLocation().toURI(),
+    plugins.put(pluginId, new Plugin(artifactDescriptor.getArtifactId(), artifactDescriptor.getLocation().toURI(),
                                      pluginClass, properties));
   }
 }

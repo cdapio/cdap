@@ -20,6 +20,7 @@ import co.cask.cdap.WordCountApp;
 import co.cask.cdap.api.artifact.ApplicationClass;
 import co.cask.cdap.api.artifact.ArtifactClasses;
 import co.cask.cdap.api.artifact.ArtifactDescriptor;
+import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.templates.plugins.PluginClass;
@@ -181,7 +182,7 @@ public class ArtifactStoreTest {
     // shouldn't see it in the list
     List<ArtifactDetail> artifactList = artifactStore.getArtifacts(parentId.getNamespace());
     Assert.assertEquals(1, artifactList.size());
-    Assert.assertEquals(parentId.getName(), artifactList.get(0).getDescriptor().getName());
+    Assert.assertEquals(parentId.getName(), artifactList.get(0).getDescriptor().getArtifactId().getName());
     // shouldn't see any more plugins for parent
     Assert.assertTrue(artifactStore.getPluginClasses(parentId).isEmpty());
 
@@ -849,10 +850,10 @@ public class ArtifactStoreTest {
 
   private void assertEqual(Id.Artifact expectedId, ArtifactMeta expectedMeta,
                            String expectedContents, ArtifactDetail actual) throws IOException {
-    Assert.assertEquals(expectedId.getName(), actual.getDescriptor().getName());
-    Assert.assertEquals(expectedId.getVersion(), actual.getDescriptor().getVersion());
+    Assert.assertEquals(expectedId.getName(), actual.getDescriptor().getArtifactId().getName());
+    Assert.assertEquals(expectedId.getVersion(), actual.getDescriptor().getArtifactId().getVersion());
     Assert.assertEquals(expectedId.getNamespace().equals(Id.Namespace.SYSTEM),
-                        actual.getDescriptor().isSystem());
+                        actual.getDescriptor().getArtifactId().getScope().equals(ArtifactScope.SYSTEM));
     Assert.assertEquals(expectedMeta, actual.getMeta());
     Assert.assertEquals(expectedContents, CharStreams.toString(
       new InputStreamReader(actual.getDescriptor().getLocation().getInputStream(), Charsets.UTF_8)));

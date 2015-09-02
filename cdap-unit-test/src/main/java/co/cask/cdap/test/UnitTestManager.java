@@ -19,6 +19,7 @@ package co.cask.cdap.test;
 import co.cask.cdap.api.Config;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.app.Application;
+import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
@@ -181,7 +182,8 @@ public class UnitTestManager implements TestManager {
     appFabricClient.deployApplication(appId, appRequest);
 
     ArtifactSummary requestedArtifact = appRequest.getArtifact();
-    Id.Artifact artifactId = Id.Artifact.from(requestedArtifact.isSystem() ? Id.Namespace.SYSTEM : appId.getNamespace(),
+    Id.Artifact artifactId = Id.Artifact.from(
+      ArtifactScope.SYSTEM.equals(requestedArtifact.getScope()) ? Id.Namespace.SYSTEM : appId.getNamespace(),
       requestedArtifact.getName(), requestedArtifact.getVersion());
     ArtifactDetail artifactDetail = artifactRepository.getArtifact(artifactId);
     return appManagerFactory.create(appId, artifactDetail.getDescriptor().getLocation());

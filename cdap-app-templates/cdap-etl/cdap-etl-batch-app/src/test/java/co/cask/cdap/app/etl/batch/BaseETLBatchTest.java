@@ -75,7 +75,7 @@ public class BaseETLBatchTest extends TestBase {
   public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", false);
 
   protected static final Id.Artifact APP_ARTIFACT_ID = Id.Artifact.from(Id.Namespace.DEFAULT, "etlbatch", "3.2.0");
-  protected static final ArtifactSummary ETLBATCH_ARTIFACT = new ArtifactSummary("etlbatch", "3.2.0", false);
+  protected static final ArtifactSummary ETLBATCH_ARTIFACT = new ArtifactSummary("etlbatch", "3.2.0");
   protected static final Id.Namespace NAMESPACE = Id.Namespace.DEFAULT;
   protected static final Id.ApplicationTemplate TEMPLATE_ID = Id.ApplicationTemplate.from("ETLBatch");
   protected static final Gson GSON = new Gson();

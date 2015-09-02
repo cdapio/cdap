@@ -20,6 +20,7 @@ import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.app.ApplicationConfigurer;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.artifact.ArtifactId;
+import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.flow.AbstractFlow;
 import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.flow.FlowSpecification;
@@ -223,7 +224,7 @@ public class DefaultAppConfigurer extends DefaultPluginConfigurer implements App
     // can be null only for apps before 3.2 that were not upgraded
     ArtifactId id = artifactId == null ? null :
       new ArtifactId(artifactId.getName(), artifactId.getVersion(),
-                     artifactId.getNamespace().equals(Id.Namespace.SYSTEM));
+                     artifactId.getNamespace().equals(Id.Namespace.SYSTEM) ? ArtifactScope.SYSTEM : ArtifactScope.USER);
     return new DefaultApplicationSpecification(name, description, configuration, id, getStreams(),
                                                getDatasetModules(), getDatasetSpecs(),
                                                flows, mapReduces, sparks, workflows, services,

@@ -26,39 +26,24 @@ import java.util.Objects;
  * A container class for holding plugin information.
  */
 public final class Plugin {
-  private final String artifactName;
-  private final ArtifactVersion artifactVersion;
-  private final Boolean isSystem;
+  private final ArtifactId artifactId;
   private final URI locationURI;
   private final PluginClass pluginClass;
   private final PluginProperties properties;
 
-  public Plugin(String artifactName, ArtifactVersion artifactVersion, boolean isSystem, URI locationURI,
+  public Plugin(ArtifactId artifactId, URI locationURI,
                 PluginClass pluginClass, PluginProperties properties) {
-    this.artifactName = artifactName;
-    this.artifactVersion = artifactVersion;
-    this.isSystem = isSystem;
+    this.artifactId = artifactId;
     this.locationURI = locationURI;
     this.pluginClass = pluginClass;
     this.properties = properties;
   }
 
-  public String getArtifactName() {
-    return artifactName;
-  }
-
   /**
-   * @return {@link ArtifactVersion}
+   * @return the artifact id
    */
-  public ArtifactVersion getArtifactVersion() {
-    return artifactVersion;
-  }
-
-  /**
-   * @return true if the plugin is part of a system artifact
-   */
-  public boolean isSystem() {
-    return isSystem;
+  public ArtifactId getArtifactId() {
+    return artifactId;
   }
 
   /**
@@ -92,9 +77,7 @@ public final class Plugin {
     }
 
     Plugin that = (Plugin) o;
-    return Objects.equals(artifactName, that.artifactName)
-      && Objects.equals(artifactVersion, that.artifactVersion)
-      && Objects.equals(isSystem, that.isSystem)
+    return Objects.equals(artifactId, that.artifactId)
       && Objects.equals(locationURI, that.locationURI)
       && Objects.equals(pluginClass, that.pluginClass)
       && Objects.equals(properties, that.properties);
@@ -102,15 +85,13 @@ public final class Plugin {
 
   @Override
   public int hashCode() {
-    return Objects.hash(artifactName, artifactVersion, isSystem, locationURI, pluginClass, properties);
+    return Objects.hash(artifactId, locationURI, pluginClass, properties);
   }
 
   @Override
   public String toString() {
     return "AdapterPlugin{" +
-      "artifactName=" + artifactName +
-      ",artifactVersion=" + artifactVersion +
-      ",isSystem=" + isSystem +
+      "artifactId=" + artifactId +
       ",locationURI=" + locationURI +
       ",pluginClass=" + pluginClass +
       ",properties=" + properties +
