@@ -22,7 +22,6 @@ import co.cask.cdap.api.workflow.WorkflowAction;
 import co.cask.cdap.api.workflow.WorkflowActionNode;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.api.workflow.WorkflowNode;
-import co.cask.cdap.internal.workflow.DefaultWorkflowActionSpecification;
 import com.google.common.base.Preconditions;
 
 /**
@@ -54,7 +53,8 @@ final class WorkflowNodeCreator {
 
   static WorkflowNode createWorkflowCustomActionNode(WorkflowAction action) {
     Preconditions.checkArgument(action != null, "WorkflowAction is null.");
-    WorkflowActionSpecification spec = new DefaultWorkflowActionSpecification(action);
+    DefaultWorkflowActionConfigurer configurer = new DefaultWorkflowActionConfigurer(action);
+    WorkflowActionSpecification spec = configurer.createSpecification();
     return new WorkflowActionNode(spec.getName(), spec);
   }
 
