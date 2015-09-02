@@ -49,16 +49,11 @@ function download_readme_file_and_test() {
 }
 
 function download_includes() {
-  echo "Downloading source files includes from GitHub..."
+  echo "Downloading source files to be included from GitHub..."
   local github_url="https://raw.githubusercontent.com/caskdata"
-  
   local includes_dir=${1}
-  if [ ! -d "${includes_dir}" ]; then
-    mkdir ${includes_dir}
-    echo "Creating Includes Directory: ${includes_dir}"
-  fi
-
-  version
+  test_includes_directory ${includes_dir}
+  set_version
 
   local clients_branch="release/${CDAP_CLIENTS_RELEASE_VERSION}"
   local ingest_branch="release/${CDAP_INGEST_RELEASE_VERSION}"

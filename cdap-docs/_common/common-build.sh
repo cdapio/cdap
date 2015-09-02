@@ -14,19 +14,12 @@
 # License for the specific language governing permissions and limitations under
 # the License.
   
-# Build script for docs
-# Builds the docs (all except javadocs and PDFs) from the .rst source files using Sphinx
-# Builds the javadocs and copies them into place
-# Zips everything up so it can be staged
-# REST PDF is built as a separate target and checked in, as it is only used in SDK and not website
-# Target for building the SDK
-# Targets for both a limited and complete set of javadocs
-# Targets not included in usage are intended for internal usage by script
+# Common code for Build script for docs
+# Not called directly; included in either the main build.sh or the individual manual's build.sh
 
 API="cdap-api"
 APIDOCS="apidocs"
 APIS="apis"
-TARGET="target"
 BUILD_PDF="build-pdf"
 CDAP_DOCS="cdap-docs"
 HTML="html"
@@ -39,6 +32,7 @@ PROJECT_CAPS="CDAP"
 REFERENCE="reference-manual"
 SOURCE="source"
 SPHINX_MESSAGES="warnings.txt"
+TARGET="target"
 
 FALSE="false"
 TRUE="true"
@@ -75,27 +69,24 @@ else
   PROJECT_PATH="${SCRIPT_PATH}/../../../${2}"
 fi
 
-SDK_JAVADOCS="${PROJECT_PATH}/target/site/${APIDOCS}"
+API_JAVADOCS="${PROJECT_PATH}/target/site/${APIDOCS}"
 
 CHECK_INCLUDES="false"
-TEST_INCLUDES_LOCAL="local"
-TEST_INCLUDES_REMOTE="remote"
-if [ "x${3}" == "x" ]; then
-  TEST_INCLUDES="${TEST_INCLUDES_REMOTE}"
-else
-  TEST_INCLUDES="${3}"
-fi
 
 if [[ "${OSTYPE}" == "darwin"* ]]; then
   SPHINX_COLOR=""
+  RED='\033[0;31m'
+  BOLD='\033[1m'
+  NC='\033[0m'
+  WARNING="${RED}${BOLD}WARNING:${NC}"
 else
   SPHINX_COLOR="-N"
+  RED=''
+  BOLD=''
+  NC=''
+  WARNING="${RED}${BOLD}WARNING:${NC}"
 fi
-
-RED='\033[0;31m'
-BOLD='\033[1m'
-NC='\033[0m'
-WARNING="${RED}${BOLD}WARNING:${NC}"
+SPHINX_BUILD="sphinx-build ${SPHINX_COLOR} -b html -d ${TARGET}/doctrees"
 
 # Hash of file with "Not Found"; returned by GitHub
 NOT_FOUND_HASH="9d1ead73e678fa2f51a70a933b0bf017"
@@ -122,9 +113,9 @@ function usage() {
   cd $PROJECT_PATH
   PROJECT_PATH=`pwd`
   echo "Build script for '${PROJECT_CAPS}' docs"
-  echo "Usage: ${SCRIPT} < option > [source]"
+  echo "Usage: ${SCRIPT} <option> [source]"
   echo
-  echo "  Options (select one)"
+  echo "  Option (select one)"
   echo "    build          Clean build of javadocs and HTML docs, copy javadocs and PDFs into place, zip results"
   echo "    build-github   Clean build and zip for placing on GitHub"
   echo "    build-web      Clean build and zip for placing on docs.cask.co webserver"
@@ -135,8 +126,6 @@ function usage() {
   echo "    license-pdfs   Clean build of License Dependency PDFs"
   echo
   echo "    check-includes Check if included files have changed from source"
-  echo "    depends        Build Site listing dependencies"
-  echo "    sdk            Build SDK"
   echo "  with"
   echo "    source         Path to $PROJECT source for javadocs, if not $PROJECT_PATH"
   echo
@@ -161,13 +150,15 @@ function clean() {
   cd ${SCRIPT_PATH}
   rm -rf ${SCRIPT_PATH}/${TARGET}
   mkdir -p ${SCRIPT_PATH}/${TARGET}
+  echo "Cleaned ${SCRIPT_PATH}/${TARGET} directory"
+  echo ""
 }
 
 function build_docs() {
   clean
   cd ${SCRIPT_PATH}
   check_includes
-  sphinx-build ${SPHINX_COLOR} -w ${TARGET}/${SPHINX_MESSAGES} -b html -d ${TARGET}/doctrees ${SOURCE} ${TARGET}/html
+  ${SPHINX_BUILD} -w ${TARGET}/${SPHINX_MESSAGES} ${SOURCE} ${TARGET}/html
   display_any_messages
 }
 
@@ -175,40 +166,29 @@ function build_docs_google() {
   clean
   cd ${SCRIPT_PATH}
   check_includes
-  sphinx-build ${SPHINX_COLOR} -w ${TARGET}/${SPHINX_MESSAGES} -D googleanalytics_id=$1 -D googleanalytics_enabled=1 -b html -d ${TARGET}/doctrees ${SOURCE} ${TARGET}/html
+  ${SPHINX_BUILD} -w ${TARGET}/${SPHINX_MESSAGES} -D googleanalytics_id=$1 -D googleanalytics_enabled=1 ${SOURCE} ${TARGET}/html
   display_any_messages
 }
 
 function build_javadocs_full() {
-  cd ${PROJECT_PATH}
   set_mvn_environment
-  check_build_for_changes
   echo "build_javadocs_full: Currently not implemented"
-  return
-  # MAVEN_OPTS="-Xmx512m" mvn clean site -DskipTests
 }
 
 function build_javadocs_api() {
-  cd ${PROJECT_PATH}
   set_mvn_environment
-  check_build_for_changes
   MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn clean install -P examples,templates,release -DskipTests -Dgpg.skip=true && mvn clean site -DskipTests -P templates -DisOffline=false
 }
 
-function build_javadocs_sdk() {
-  build_javadocs_api
-  copy_javadocs_sdk
-}
-
-function copy_javadocs_sdk() {
+function copy_javadocs_api() {
   cd ${TARGET_PATH}/${HTML}
   rm -rf ${JAVADOCS}
-  cp -r ${SDK_JAVADOCS} .
+  cp -r ${API_JAVADOCS} .
   mv -f ${APIDOCS} ${JAVADOCS}
 }
 
 function build_license_pdfs() {
-  version
+  set_version
   cd ${SCRIPT_PATH}
   PROJECT_VERSION_TRIMMED=${PROJECT_VERSION%%-SNAPSHOT*}
   rm -rf ${SCRIPT_PATH}/${LICENSES_PDF}
@@ -230,7 +210,7 @@ function copy_license_pdfs() {
 }
 
 function make_zip() {
-  version
+  set_version
   if [ "x${1}" == "x" ]; then
     ZIP_DIR_NAME="${PROJECT}-docs-${PROJECT_VERSION}"
   else
@@ -243,12 +223,6 @@ function make_zip() {
   echo "${REDIRECT_EN_HTML}" > ${PROJECT_VERSION}/index.html
   # Zip everything
   zip -qr ${ZIP_DIR_NAME}.zip ${PROJECT_VERSION}/* --exclude .DS_Store
-}
-
-function build_extras() {
-  # Over-ride this function in guides where Javadocs or licenses are being built or copied.
-  # Currently performed in reference-manual
-  echo "No extras being built."
 }
 
 function build() {
@@ -266,21 +240,31 @@ function build_web() {
   build_extras
 }
 
+function build_extras() {
+  # Over-ride this function in guides where Javadocs or licenses are being built or copied.
+  # Currently performed in reference-manual
+  echo "No extras being built or copied."
+}
+
 function set_mvn_environment() {
+  cd ${PROJECT_PATH}
   if [ "$(uname)" == "Darwin" ]; then
+    # TODo: hard-coded Java version 1.7
     export JAVA_HOME=$(/usr/libexec/java_home -v 1.7)
   fi
+  # check BUILD.rst for changes
+  BUILD_RST_PATH="${PROJECT_PATH}/${BUILD_RST}"
+  test_an_include ${BUILD_RST_HASH} ${BUILD_RST_PATH}
 }
 
 function check_includes() {
   if [ "${CHECK_INCLUDES}" == "${TRUE}" ]; then
-    echo "Downloading and checking includes."
+    echo "Downloading and checking files to be included."
     # Build includes
-    TARGET_INCLUDES_DIR=${SCRIPT_PATH}/${TARGET}/${INCLUDES}
-    rm -rf ${TARGET_INCLUDES_DIR}
-    mkdir ${TARGET_INCLUDES_DIR}
-    download_includes ${TARGET_INCLUDES_DIR}
-    # Test included files
+    local target_includes_dir=${SCRIPT_PATH}/${TARGET}/${INCLUDES}
+    rm -rf ${target_includes_dir}
+    mkdir ${target_includes_dir}
+    download_includes ${target_includes_dir}
     test_includes
   else
     echo "No includes to be checked."
@@ -288,9 +272,18 @@ function check_includes() {
 }
 
 function download_includes() {
+  local includes_dir=${1}
   # $1 passed is the directory to which the downloaded files are to be written.
   # For an example of over-riding this function, see developer/build.sh
   echo "No includes to be downloaded."
+}
+
+function test_includes_directory() {
+  local includes_dir=${1}
+  if [ ! -d "${includes_dir}" ]; then
+    echo "Creating Includes Directory: ${includes_dir}"
+    mkdir ${includes_dir}
+  fi
 }
 
 function test_includes() {
@@ -332,30 +325,7 @@ function test_an_include() {
   echo -e "${m}"
 }
 
-function build_standalone() {
-  cd ${PROJECT_PATH}
-  set_mvn_environment
-  check_build_for_changes
-  mvn clean
-  MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn package -pl cdap-standalone,cdap-app-templates/cdap-etl,cdap-examples -am -amd -DskipTests -P examples,templates,dist,release,unit-tests
-}
-
-function build_sdk() {
-  build_standalone
-}
-
-function build_dependencies() {
-  cd $PROJECT_PATH
-  set_mvn_environment
-  mvn clean package site -am -Pjavadocs -DskipTests
-}
-
-function check_build_for_changes() {
-  BUILD_RST_PATH="${PROJECT_PATH}/${BUILD_RST}"
-  test_an_include ${BUILD_RST_HASH} ${BUILD_RST_PATH}
-}
-
-function version() {
+function set_version() {
   OIFS="${IFS}"
   local current_directory=`pwd`
   cd ${PROJECT_PATH}
@@ -396,7 +366,7 @@ function version() {
 }
 
 function display_version() {
-  version
+  set_version
   echo "PROJECT_PATH: ${PROJECT_PATH}"
   echo "PROJECT_VERSION: ${PROJECT_VERSION}"
   echo "PROJECT_LONG_VERSION: ${PROJECT_LONG_VERSION}"
@@ -520,13 +490,10 @@ function run_command() {
     check-includes )    check_includes;;
     docs )              build_docs;;
     license-pdfs )      build_license_pdfs;;
-    build-standalone )  build_standalone;;
     copy-javadocs )     copy_javadocs;;
     copy-license-pdfs ) copy_license_pdfs;;
-    javadocs )          build_javadocs_sdk;;
+    javadocs-api )      build_javadocs_api;;
     javadocs-full )     build_javadocs_full;;
-    depends )           build_dependencies;;
-    sdk )               build_sdk;;
     version )           display_version;;
     * )                 usage;;
   esac

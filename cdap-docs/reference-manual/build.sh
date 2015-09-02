@@ -26,8 +26,8 @@
 source ../_common/common-build.sh
 
 function build_extras() {
-  echo "Building Javadocs."
-  build_javadocs_sdk
+  echo "Copying Javadocs."
+  copy_javadocs_api
   echo "Copying license PDFs."
   copy_license_pdfs
 }

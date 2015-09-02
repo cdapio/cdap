@@ -85,7 +85,7 @@ function download_file() {
 
 function download_includes() { 
   echo_red_bold "Downloading source files includes from GitHub..."
-  version
+  set_version
   
   local includes=${1}/${TUTORIAL_WISE}
   local project_version=${PROJECT_SHORT_VERSION}

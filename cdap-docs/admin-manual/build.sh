@@ -25,15 +25,9 @@ CHECK_INCLUDES=$TRUE
 
 function download_includes() {
   echo "Building rst file from cdap-default.xml..."
-  
   local includes_dir=${1}
-  if [ ! -d "${includes_dir}" ]; then
-    echo "Creating Includes Directory: ${includes_dir}"
-    mkdir ${includes_dir}
-  fi
-
+  test_includes_directory ${includes_dir}
   python "${DEFAULT_TOOL}" -g -t "${includes_dir}/${DEFAULT_RST}"
-
 }
 
 run_command ${1}
