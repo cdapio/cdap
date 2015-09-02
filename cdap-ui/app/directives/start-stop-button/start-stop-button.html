@@ -1,6 +1,6 @@
 <div ng-if="isStoppable === 'true'" class="btn-group">
   <div class="btn btn-lg btn-default"
-       ng-if="status === 'RUNNING'"
+       ng-if="(['RUNNING', 'STARTED'].indexOf(status) !== -1)"
        ng-click="do('stop')">
     <span class="fa fa-stop text-danger"></span>
     <span>Stop</span>
@@ -33,7 +33,7 @@
 
 <div ng-if="isStoppable === 'false'" class="btn-group">
   <div class="btn btn-lg btn-default"
-       ng-if="(['STARTING', 'STOPPING'].indexOf(status) === -1)"
+       ng-if="(['STARTING', 'STOPPING', 'STARTED'].indexOf(status) === -1)"
        ng-click="do('start')">
     <span class="fa fa-play text-success"></span>
     <span>Start</span>
