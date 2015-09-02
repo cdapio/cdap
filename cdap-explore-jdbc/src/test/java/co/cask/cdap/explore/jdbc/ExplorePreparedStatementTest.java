@@ -17,6 +17,7 @@
 package co.cask.cdap.explore.jdbc;
 
 import co.cask.cdap.explore.client.ExploreClient;
+import co.cask.cdap.explore.client.MockExploreClient;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.QueryResult;
 import com.google.common.collect.ImmutableMap;
