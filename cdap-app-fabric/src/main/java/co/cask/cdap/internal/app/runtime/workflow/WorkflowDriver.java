@@ -276,6 +276,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
       throw Throwables.propagate(t);
     } finally {
       executor.shutdownNow();
+      executor.awaitTermination(Integer.MAX_VALUE, TimeUnit.NANOSECONDS);
       status.remove(node.getNodeId());
     }
     store.updateWorkflowToken(workflowId, runId.getId(), token);
