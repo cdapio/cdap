@@ -260,6 +260,7 @@ public class UpgradeTool {
             try {
               startUp();
               performUpgrade();
+              System.out.println("\nUpgrade completed successfully.\n");
             } finally {
               stop();
             }
