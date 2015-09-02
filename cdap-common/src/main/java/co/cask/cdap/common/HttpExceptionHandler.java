@@ -38,12 +38,16 @@ public class HttpExceptionHandler extends ExceptionHandler {
     if (Iterables.size(Iterables.filter(Throwables.getCausalChain(t), ServiceUnavailableException.class)) > 0) {
       responder.sendString(HttpResponseStatus.SERVICE_UNAVAILABLE, t.getMessage());
     } else if (t instanceof BadRequestException) {
+      logWarnings(request, t);
       responder.sendString(HttpResponseStatus.BAD_REQUEST, t.getMessage());
     } else if (t instanceof ConflictException) {
+      logWarnings(request, t);
       responder.sendString(HttpResponseStatus.CONFLICT, t.getMessage());
     } else if (t instanceof NotFoundException) {
+      logWarnings(request, t);
       responder.sendString(HttpResponseStatus.NOT_FOUND, t.getMessage());
     } else if (t instanceof UnauthorizedException) {
+      logWarnings(request, t);
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } else {
       LOG.error("Unexpected error: request={} {} user={}:",
@@ -51,5 +55,11 @@ public class HttpExceptionHandler extends ExceptionHandler {
                 SecurityRequestContext.getUserId().or("<null>"), t);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
+  }
+
+  private void logWarnings(HttpRequest request, Throwable t) {
+    LOG.trace("Error in handling request={} {} for user={}:",
+              request.getMethod().getName(), request.getUri(),
+              SecurityRequestContext.getUserId().or("<null>"), t);
   }
 }

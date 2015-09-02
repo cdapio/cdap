@@ -71,13 +71,9 @@ public class MRJobClient implements MRJobInfoFetcher {
 
     JobClient jobClient;
     JobStatus[] jobs;
-    try {
-      jobClient = new JobClient(hConf);
-      jobs = jobClient.getAllJobs();
-    } catch (Exception e) {
-      LOG.warn("JobClient failed to get all jobs.", e);
-      throw new IOException(e);
-    }
+
+    jobClient = new JobClient(hConf);
+    jobs = jobClient.getAllJobs();
 
     JobStatus thisJob = findJobForRunId(jobs, runId);
 
