@@ -106,6 +106,9 @@ def get_git_hash_timestamp():
 
 # -- General configuration ------------------------------------------------
 
+# TO-DO: this is temp fix, as this is also specified in the build scripts
+target = 'target'
+
 # If your documentation needs a minimal Sphinx version, state it here.
 needs_sphinx = '1.3'
 
@@ -118,14 +121,16 @@ extensions = [
     'sphinx.ext.intersphinx',
 ]
 
+_intersphinx_mapping = "../../%%s/%s/html/objects.inv" % target
+
 intersphinx_mapping = {
-  'introduction': ('../../introduction/',         os.path.abspath('../../introduction/build/html/objects.inv')),
-  'developers':   ('../../developers-manual/',    os.path.abspath('../../developers-manual/build/html/objects.inv')),
-  'apptemplates': ('../../application-templates', os.path.abspath('../../application-templates/build/html/objects.inv')),
-  'admin':        ('../../admin-manual/',         os.path.abspath('../../admin-manual/build/html/objects.inv')),
-  'integrations': ('../../integrations/',         os.path.abspath('../../integrations/build/html/objects.inv')),
-  'examples':     ('../../examples-manual',       os.path.abspath('../../examples-manual/build/html/objects.inv')),
-  'reference':    ('../../reference-manual',      os.path.abspath('../../reference-manual/build/html/objects.inv')),
+  'introduction': ('../../introduction/',         os.path.abspath(_intersphinx_mapping % 'introduction')),
+  'developers':   ('../../developers-manual/',    os.path.abspath(_intersphinx_mapping % 'developers-manual')),
+  'apptemplates': ('../../application-templates', os.path.abspath(_intersphinx_mapping % 'application-templates')),
+  'admin':        ('../../admin-manual/',         os.path.abspath(_intersphinx_mapping % 'admin-manual')),
+  'integrations': ('../../integrations/',         os.path.abspath(_intersphinx_mapping % 'integrations')),
+  'examples':     ('../../examples-manual',       os.path.abspath(_intersphinx_mapping % 'examples-manual')),
+  'reference':    ('../../reference-manual',      os.path.abspath(_intersphinx_mapping % 'reference-manual')),
 }
 
 # Add any paths that contain templates here, relative to this directory.

@@ -47,7 +47,7 @@ function check_starting_directory() {
   fi
   
   if [[ " ${MANUALS[@]}" =~ "${MANUAL} " || "${MANUAL}" == "${CDAP_DOCS}" ]]; then
-    echo "Using \"${MANUAL}\""
+    echo "Check for starting directory: Using \"${MANUAL}\""
     return 0
   else  
     echo "Did not find MANUAL \"${MANUAL}\": are you in the correct directory?"
@@ -61,15 +61,15 @@ function usage() {
   cd ${PROJECT_PATH}
   PROJECT_PATH=`pwd`
   echo "Build script for '${PROJECT_CAPS}' docs"
-  echo "Usage: ${SCRIPT} < option > [source test_includes]"
+  echo "Usage: ${SCRIPT} < option > [source]"
   echo ""
   echo "  Options (select one)"
-  echo "    all            Clean build of everything: HTML docs and Javadocs, GitHub and Web versions"
+  echo "    docs-all       Clean build of everything: HTML docs and Javadocs, GitHub and Web versions, zipped"
   echo ""
-  echo "    doc            Clean build of just the outer level HTML docs, skipping Javadocs and zipping"
-  echo "    docs           Clean build of just the HTML docs, skipping Javadocs, zipped for placing on docs.cask.co webserver"
-  echo "    docs-github    Clean build of HTML docs and Javadocs, zipped for placing on GitHub"
-  echo "    docs-web       Clean build of HTML docs and Javadocs, zipped for placing on docs.cask.co webserver"
+  echo "    doc            Clean build of just the outer level HTML docs, skipping both Javadocs and zipping"
+  echo "    docs           Clean build of just the HTML docs, skipping Javadocs, but zipped"
+  echo "    docs-github    Clean build of HTML docs and Javadocs, zipped, for placing on GitHub"
+  echo "    docs-web       Clean build of HTML docs and Javadocs, zipped, for placing on docs.cask.co webserver"
   echo ""
   echo "    javadocs       Build Javadocs"
   echo "    licenses       Clean build of License Dependency PDFs"
@@ -80,16 +80,16 @@ function usage() {
   echo ""
   echo "  with"
   echo "    source         Path to ${PROJECT} source, if not ${PROJECT_PATH}"
-  echo "    test_includes  local, remote or neither (default: remote); must specify source if used"
   echo ""
 }
 
 function run_command() {
   case "${1}" in
-    all )               build_all;;
     clean )             clean_builds;;
+    docs-all )          build_all;;
     doc )               build_docs_outer_level;;
     docs )              build_docs;;
+    docs-part )         build_docs_part;;
     docs-github-part )  build_docs_github ${ARG_2} ${ARG_3};;
     docs-github )       build_docs_github ${ARG_2} ${ARG_3};;
     docs-web-part )     build_docs_web ${ARG_2} ${ARG_3};;
@@ -105,26 +105,26 @@ function run_command() {
 
 function clean() {
   cd ${SCRIPT_PATH}
-  rm -rf ${SCRIPT_PATH}/${BUILD}/*
-  mkdir -p ${SCRIPT_PATH}/${BUILD}/${HTML}
-  mkdir -p ${SCRIPT_PATH}/${BUILD}/${SOURCE}
-  echo "Cleaned ${BUILD} directory"
+  rm -rf ${SCRIPT_PATH}/${TARGET}/*
+  mkdir -p ${SCRIPT_PATH}/${TARGET}/${HTML}
+  mkdir -p ${SCRIPT_PATH}/${TARGET}/${SOURCE}
+  echo "Cleaned ${TARGET} directory"
   echo ""
 }
 
 function copy_source() {
   echo "Copying source for ${1} (${2}) ..."
   cd ${SCRIPT_PATH}
-  mkdir -p ${SCRIPT_PATH}/${BUILD}/${SOURCE}/${1}
-  rewrite ${COMMON_PLACEHOLDER} ${BUILD}/${SOURCE}/${1}/index.rst "<placeholder>" "${2}"
+  mkdir -p ${SCRIPT_PATH}/${TARGET}/${SOURCE}/${1}
+  rewrite ${COMMON_PLACEHOLDER} ${TARGET}/${SOURCE}/${1}/index.rst "<placeholder>" "${2}"
   echo ""
 }
 
 function copy_html() {
   echo "Copying html for ${1}..."
   cd ${SCRIPT_PATH}
-  rm -rf ${SCRIPT_PATH}/${BUILD}/${HTML}/${1}
-  cp -r ${1}/${BUILD}/${HTML} ${BUILD}/${HTML}/${1}
+  rm -rf ${SCRIPT_PATH}/${TARGET}/${HTML}/${1}
+  cp -r ${1}/${TARGET}/${HTML} ${TARGET}/${HTML}/${1}
   echo ""
 }
 
@@ -148,14 +148,14 @@ function build_docs_outer_level() {
 
   # Build outer-level docs
   cd ${SCRIPT_PATH}
-  cp ${COMMON_HIGHLEVEL_PY}  ${BUILD}/${SOURCE}/conf.py
-  cp -R ${COMMON_IMAGES}     ${BUILD}/${SOURCE}/
-  cp ${COMMON_SOURCE}/*.rst  ${BUILD}/${SOURCE}/
+  cp ${COMMON_HIGHLEVEL_PY}  ${TARGET}/${SOURCE}/conf.py
+  cp -R ${COMMON_IMAGES}     ${TARGET}/${SOURCE}/
+  cp ${COMMON_SOURCE}/*.rst  ${TARGET}/${SOURCE}/
   
   if [ "x${1}" == "x" ]; then
-    sphinx-build -b html -d build/doctrees build/source build/html
+    sphinx-build ${SPHINX_COLOR} -b html -d ${TARGET}/doctrees ${TARGET}/${SOURCE} ${TARGET}/html
   else
-    sphinx-build -D googleanalytics_id=${1} -D googleanalytics_enabled=1 -b html -d build/doctrees build/source build/html
+    sphinx-build ${SPHINX_COLOR} -D googleanalytics_id=${1} -D googleanalytics_enabled=1 -b html -d ${TARGET}/doctrees ${TARGET}/${SOURCE} ${TARGET}/html
   fi
 }
   
@@ -177,10 +177,11 @@ function copy_docs_lower_level() {
   else
     project_dir=${PROJECT_VERSION}
   fi
-  rewrite ${BUILD}/${HTML}/404.html "src=\"_static"  "src=\"/cdap/${project_dir}/en/_static"
-  rewrite ${BUILD}/${HTML}/404.html "src=\"_images"  "src=\"/cdap/${project_dir}/en/_images"
-  rewrite ${BUILD}/${HTML}/404.html "/href=\"http/!s|href=\"|href=\"/cdap/${project_dir}/en/|g"
-  rewrite ${BUILD}/${HTML}/404.html "action=\"search.html"  "action=\"/cdap/${project_dir}/en/search.html"
+  local source_404="${TARGET}/${HTML}/404.html"
+  rewrite ${source_404} "src=\"_static"  "src=\"/cdap/${project_dir}/en/_static"
+  rewrite ${source_404} "src=\"_images"  "src=\"/cdap/${project_dir}/en/_images"
+  rewrite ${source_404} "/href=\"http/!s|href=\"|href=\"/cdap/${project_dir}/en/|g"
+  rewrite ${source_404} "action=\"search.html"  "action=\"/cdap/${project_dir}/en/search.html"
 }
 
 ################################################## current
@@ -199,8 +200,9 @@ function build_all() {
   run_command docs-github-part ${ARG_2} ${ARG_3}
   echo "Stashing GitHub Docs."
   cd ${SCRIPT_PATH}
-  mkdir -p ${SCRIPT_PATH}/${BUILD_TEMP}
-  mv ${SCRIPT_PATH}/${BUILD}/*.zip ${SCRIPT_PATH}/${BUILD_TEMP}
+  local target_temp="${SCRIPT_PATH}/target_temp"
+  mkdir -p ${target_temp}
+  mv ${SCRIPT_PATH}/${TARGET}/*.zip ${target_temp}
   echo ""
   echo "========================================================"
   echo "Building Web Docs."
@@ -212,8 +214,8 @@ function build_all() {
   echo "Replacing GitHub Docs."
   echo "--------------------------------------------------------"
   echo ""
-  mv ${SCRIPT_PATH}/${BUILD_TEMP}/*.zip ${SCRIPT_PATH}/${BUILD}
-  rm -rf ${SCRIPT_PATH}/${BUILD_TEMP}
+  mv ${target_temp}/*.zip ${SCRIPT_PATH}/${TARGET}
+  rm -rf ${target_temp}
   echo ""
   echo "--------------------------------------------------------"
   bell "Completed \"build_all\"."
@@ -233,6 +235,20 @@ function build_docs_javadocs() {
 }
 
 function build_docs() {
+  build_docs_part "Pass 1 of 2"
+  local warnings="$?"
+  if [ "${warnings}" == "0" ]; then 
+    build_docs_part "Pass 2 of 2"
+    return $?
+  else
+    return ${warnings}
+  fi
+}
+
+function build_docs_part() {
+  if [[ "$1" != "" ]]; then
+    echo $1
+  fi
   _build_docs "docs" ${GOOGLE_ANALYTICS_WEB} ${WEB} ${TRUE}
   return $?
 }
@@ -301,8 +317,8 @@ function zip_extras() {
   fi
   # Add .htaccess file (404 file)
   cd ${SCRIPT_PATH}
-  rewrite ${COMMON_SOURCE}/${HTACCESS} ${BUILD}/${PROJECT_VERSION}/.${HTACCESS} "<version>" "${PROJECT_VERSION}"
-  cd ${SCRIPT_PATH}/${BUILD}
+  rewrite ${COMMON_SOURCE}/${HTACCESS} ${TARGET}/${PROJECT_VERSION}/.${HTACCESS} "<version>" "${PROJECT_VERSION}"
+  cd ${SCRIPT_PATH}/${TARGET}
   zip -qr ${ZIP_DIR_NAME}.zip ${PROJECT_VERSION}/.${HTACCESS}
 }
 
@@ -340,13 +356,13 @@ function clean_builds() {
   # Removes all upper- and lower-level build directories
 
   echo ""
-  rm -rf ${SCRIPT_PATH}/${BUILD}/*
-  echo "Cleaned ${SCRIPT_PATH}/${BUILD} directory"
+  rm -rf ${SCRIPT_PATH}/${TARGET}/*
+  echo "Cleaned ${SCRIPT_PATH}/${TARGET} directory"
 
   echo ""
   for i in ${MANUALS}; do
-    rm -rf ${SCRIPT_PATH}/${i}/${BUILD}/*
-    echo "Cleaned ${SCRIPT_PATH}/${i}/${BUILD} directory"
+    rm -rf ${SCRIPT_PATH}/${i}/${TARGET}/*
+    echo "Cleaned ${SCRIPT_PATH}/${i}/${TARGET} directory"
     echo ""
   done
 }

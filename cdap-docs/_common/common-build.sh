@@ -26,7 +26,7 @@
 API="cdap-api"
 APIDOCS="apidocs"
 APIS="apis"
-BUILD="build"
+TARGET="target"
 BUILD_PDF="build-pdf"
 CDAP_DOCS="cdap-docs"
 HTML="html"
@@ -65,8 +65,8 @@ SCRIPT_PATH=`pwd`
 MANUAL=`basename ${SCRIPT_PATH}`
 
 DOC_GEN_PY="${SCRIPT_PATH}/../tools/doc-gen.py"
-BUILD_PATH="${SCRIPT_PATH}/${BUILD}"
-HTML_PATH="${BUILD_PATH}/${HTML}"
+TARGET_PATH="${SCRIPT_PATH}/${TARGET}"
+HTML_PATH="${TARGET_PATH}/${HTML}"
 SOURCE_PATH="${SCRIPT_PATH}/${SOURCE}"
 
 if [ "x${2}" == "x" ]; then
@@ -86,21 +86,16 @@ else
   TEST_INCLUDES="${3}"
 fi
 
+if [[ "${OSTYPE}" == "darwin"* ]]; then
+  SPHINX_COLOR=""
+else
+  SPHINX_COLOR="-N"
+fi
+
 RED='\033[0;31m'
 BOLD='\033[1m'
 NC='\033[0m'
 WARNING="${RED}${BOLD}WARNING:${NC}"
-
-function echo_red_bold() {
-  echo -e "${RED}${BOLD}${1}${NC}${2}"
-}
-
-function echo_clean_colors() {
-  local c="${1//${RED}/}"
-  c="${c//${BOLD}/}"
-  c="${c//${NC}/}"
-  echo -e "${c}"
-}
 
 # Hash of file with "Not Found"; returned by GitHub
 NOT_FOUND_HASH="9d1ead73e678fa2f51a70a933b0bf017"
@@ -127,7 +122,7 @@ function usage() {
   cd $PROJECT_PATH
   PROJECT_PATH=`pwd`
   echo "Build script for '${PROJECT_CAPS}' docs"
-  echo "Usage: ${SCRIPT} < option > [source test_includes]"
+  echo "Usage: ${SCRIPT} < option > [source]"
   echo
   echo "  Options (select one)"
   echo "    build          Clean build of javadocs and HTML docs, copy javadocs and PDFs into place, zip results"
@@ -144,21 +139,35 @@ function usage() {
   echo "    sdk            Build SDK"
   echo "  with"
   echo "    source         Path to $PROJECT source for javadocs, if not $PROJECT_PATH"
-  echo "    test_includes  local, remote or neither (default: remote); must specify source if used"
   echo
+}
+
+function echo_red_bold() {
+  if [[ "${OSTYPE}" == "darwin"* ]]; then
+    echo -e "${RED}${BOLD}${1}${NC}${2}"
+  else
+    echo "${1}${2}"
+  fi
+}
+
+function echo_clean_colors() {
+  local c="${1//${RED}/}"
+  c="${c//${BOLD}/}"
+  c="${c//${NC}/}"
+  echo -e "${c}"
 }
 
 function clean() {
   cd ${SCRIPT_PATH}
-  rm -rf ${SCRIPT_PATH}/${BUILD}
-  mkdir -p ${SCRIPT_PATH}/${BUILD}
+  rm -rf ${SCRIPT_PATH}/${TARGET}
+  mkdir -p ${SCRIPT_PATH}/${TARGET}
 }
 
 function build_docs() {
   clean
   cd ${SCRIPT_PATH}
   check_includes
-  sphinx-build -w ${BUILD}/${SPHINX_MESSAGES} -b html -d ${BUILD}/doctrees source ${BUILD}/html
+  sphinx-build ${SPHINX_COLOR} -w ${TARGET}/${SPHINX_MESSAGES} -b html -d ${TARGET}/doctrees ${SOURCE} ${TARGET}/html
   display_any_messages
 }
 
@@ -166,7 +175,7 @@ function build_docs_google() {
   clean
   cd ${SCRIPT_PATH}
   check_includes
-  sphinx-build -w ${BUILD}/${SPHINX_MESSAGES} -D googleanalytics_id=$1 -D googleanalytics_enabled=1 -b html -d ${BUILD}/doctrees source ${BUILD}/html
+  sphinx-build ${SPHINX_COLOR} -w ${TARGET}/${SPHINX_MESSAGES} -D googleanalytics_id=$1 -D googleanalytics_enabled=1 -b html -d ${TARGET}/doctrees ${SOURCE} ${TARGET}/html
   display_any_messages
 }
 
@@ -192,7 +201,7 @@ function build_javadocs_sdk() {
 }
 
 function copy_javadocs_sdk() {
-  cd ${BUILD_PATH}/${HTML}
+  cd ${TARGET_PATH}/${HTML}
   rm -rf ${JAVADOCS}
   cp -r ${SDK_JAVADOCS} .
   mv -f ${APIDOCS} ${JAVADOCS}
@@ -216,7 +225,7 @@ function build_license_pdfs() {
 }
 
 function copy_license_pdfs() {
-  cd ${BUILD_PATH}/${HTML}/${LICENSES}
+  cd ${TARGET_PATH}/${HTML}/${LICENSES}
   cp ${SCRIPT_PATH}/${LICENSES_PDF}/* .
 }
 
@@ -227,7 +236,7 @@ function make_zip() {
   else
     ZIP_DIR_NAME="${PROJECT}-docs-${PROJECT_VERSION}-$1"
   fi
-  cd ${SCRIPT_PATH}/${BUILD}
+  cd ${SCRIPT_PATH}/${TARGET}
   mkdir ${PROJECT_VERSION}
   mv ${HTML} ${PROJECT_VERSION}/en
   # Add a redirect index.html file
@@ -267,10 +276,10 @@ function check_includes() {
   if [ "${CHECK_INCLUDES}" == "${TRUE}" ]; then
     echo "Downloading and checking includes."
     # Build includes
-    BUILD_INCLUDES_DIR=${SCRIPT_PATH}/${BUILD}/${INCLUDES}
-    rm -rf ${BUILD_INCLUDES_DIR}
-    mkdir ${BUILD_INCLUDES_DIR}
-    download_includes ${BUILD_INCLUDES_DIR}
+    TARGET_INCLUDES_DIR=${SCRIPT_PATH}/${TARGET}/${INCLUDES}
+    rm -rf ${TARGET_INCLUDES_DIR}
+    mkdir ${TARGET_INCLUDES_DIR}
+    download_includes ${TARGET_INCLUDES_DIR}
     # Test included files
     test_includes
   else
@@ -284,7 +293,7 @@ function download_includes() {
   echo "No includes to be downloaded."
 }
 
-function test_includes () {
+function test_includes() {
   # For an example of over-riding this function, see developer/build.sh
   echo "No includes to be tested."
 }

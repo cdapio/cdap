@@ -1,4 +1,3 @@
-BUILD_TEMP="build-temp"
 COMMON="_common"
 COMMON_HTACCESS="$COMMON/htaccess"
 COMMON_IMAGES="$COMMON/_images"

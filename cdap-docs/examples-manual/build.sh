@@ -43,7 +43,7 @@ function guide_rewrite_sed() {
 
   local readme="README.rst"
   local readme_source="README_SOURCE.rst"
-  local redirect="\.\./\.\./build/_includes" # Target, 2 redirects, escaped
+  local redirect="\.\./\.\./${TARGET}/_includes" # Target, 2 redirects, escaped
   
   if curl --output /dev/null --silent --head --fail "${url}/${readme}"; then
     mkdir ${includes_dir}/${guide}
