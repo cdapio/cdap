@@ -48,7 +48,6 @@ public final class StreamServiceRuntimeModule extends RuntimeModule {
         bind(StreamFileJanitorService.class).to(NoopStreamFileJanitorService.class).in(Scopes.SINGLETON);
         bind(StreamWriterSizeCollector.class).to(BasicStreamWriterSizeCollector.class).in(Scopes.SINGLETON);
         bind(StreamService.class).to(LocalStreamService.class).in(Scopes.SINGLETON);
-        bind(AbstractNamespaceClient.class).to(DiscoveryNamespaceClient.class).in(Scopes.SINGLETON);
       }
     };
   }
@@ -61,7 +60,6 @@ public final class StreamServiceRuntimeModule extends RuntimeModule {
         bind(StreamFileJanitorService.class).to(LocalStreamFileJanitorService.class).in(Scopes.SINGLETON);
         bind(StreamWriterSizeCollector.class).to(BasicStreamWriterSizeCollector.class).in(Scopes.SINGLETON);
         bind(StreamService.class).to(LocalStreamService.class).in(Scopes.SINGLETON);
-        bind(AbstractNamespaceClient.class).to(DiscoveryNamespaceClient.class).in(Scopes.SINGLETON);
       }
     };
   }
@@ -74,7 +72,6 @@ public final class StreamServiceRuntimeModule extends RuntimeModule {
         bind(StreamFileJanitorService.class).to(DistributedStreamFileJanitorService.class).in(Scopes.SINGLETON);
         bind(StreamWriterSizeCollector.class).to(BasicStreamWriterSizeCollector.class).in(Scopes.SINGLETON);
         bind(StreamService.class).to(DistributedStreamService.class).in(Scopes.SINGLETON);
-        bind(AbstractNamespaceClient.class).to(DiscoveryNamespaceClient.class).in(Scopes.SINGLETON);
 
         Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class,
                                                                           Names.named(Constants.Stream.STREAM_HANDLER));

@@ -26,6 +26,8 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
+import co.cask.cdap.common.namespace.AbstractNamespaceClient;
+import co.cask.cdap.common.namespace.InMemoryNamespaceClient;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
@@ -48,8 +50,10 @@ import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
+import co.cask.common.http.HttpResponse;
 import co.cask.common.http.ObjectResponse;
 import co.cask.http.HttpHandler;
 import co.cask.tephra.TransactionExecutorFactory;
@@ -67,6 +71,7 @@ import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.TypeLiteral;
 import com.google.inject.name.Names;
+import org.apache.commons.httpclient.HttpStatus;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.twill.common.Threads;
@@ -77,6 +82,7 @@ import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.Services;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
@@ -100,6 +106,7 @@ public abstract class DatasetServiceTestBase {
   private DatasetOpExecutorService opExecutorService;
   private DatasetService service;
   private LocationFactory locationFactory;
+  private AbstractNamespaceClient namespaceClient;
   protected TransactionManager txManager;
   protected RemoteDatasetFramework dsFramework;
 
@@ -170,6 +177,8 @@ public abstract class DatasetServiceTestBase {
       new MDSDatasetsRegistry(txSystemClient, new InMemoryDatasetFramework(registryFactory, modules, cConf));
 
     ExploreFacade exploreFacade = new ExploreFacade(new DiscoveryExploreClient(discoveryService), cConf);
+    namespaceClient = new InMemoryNamespaceClient();
+    namespaceClient.create(NamespaceMeta.DEFAULT);
     DatasetInstanceService instanceService = new DatasetInstanceService(
       new DatasetTypeManager(cConf, mdsDatasetsRegistry, locationFactory,
                              // we don't need any default modules in this test
@@ -178,7 +187,7 @@ public abstract class DatasetServiceTestBase {
       new InMemoryDatasetOpExecutor(dsFramework),
       exploreFacade,
       cConf,
-      new UsageRegistry(txExecutorFactory, dsFramework));
+      new UsageRegistry(txExecutorFactory, dsFramework), namespaceClient);
     service = new DatasetService(cConf,
                                  namespacedLocationFactory,
                                  discoveryService,
@@ -192,8 +201,8 @@ public abstract class DatasetServiceTestBase {
                                  new HashSet<DatasetMetricsReporter>(),
                                  instanceService,
                                  new LocalStorageProviderNamespaceAdmin(cConf, namespacedLocationFactory,
-                                                                        exploreFacade)
-    );
+                                                                        exploreFacade),
+                                 namespaceClient);
 
     // Start dataset service, wait for it to be discoverable
     service.start();
@@ -213,8 +222,9 @@ public abstract class DatasetServiceTestBase {
   }
 
   @After
-  public void after() {
+  public void after() throws Exception {
     Services.chainStop(service, opExecutorService, txManager);
+    namespaceClient.delete(Id.Namespace.DEFAULT);
     Locations.deleteQuietly(locationFactory.create(Id.Namespace.DEFAULT.getId()));
   }
 
@@ -233,11 +243,15 @@ public abstract class DatasetServiceTestBase {
   }
 
   protected URL getUrl(String path) throws MalformedURLException {
-    return new URL(String.format("http://localhost:%d/%s/namespaces/%s%s",
-                                 getPort(), Constants.Gateway.API_VERSION_3_TOKEN, Id.Namespace.DEFAULT.getId(), path));
+    return getUrl(Id.Namespace.DEFAULT.getId(), path);
   }
 
-  protected URL getUnderlyingNamespaceAdminUrl(String namespace, String operation) throws MalformedURLException {
+  protected URL getUrl(String namespace, String path) throws MalformedURLException {
+    return new URL(String.format("http://localhost:%d/%s/namespaces/%s%s",
+                                 getPort(), Constants.Gateway.API_VERSION_3_TOKEN, namespace, path));
+  }
+
+  protected URL getStorageProviderNamespaceAdminUrl(String namespace, String operation) throws MalformedURLException {
     String resource = String.format("%s/namespaces/%s/data/admin/%s",
                                     Constants.Gateway.API_VERSION_3, namespace, operation);
     return new URL("http://" + "localhost" + ":" + getPort() + resource);
@@ -255,12 +269,16 @@ public abstract class DatasetServiceTestBase {
     return AppJarHelper.createDeploymentJar(lf, moduleClass, embeddedJars);
   }
 
-  protected int deployModule(String moduleName, Class moduleClass) throws Exception {
+  protected HttpResponse deployModule(String moduleName, Class moduleClass) throws Exception {
+    return deployModule(Id.DatasetModule.from(Id.Namespace.DEFAULT, moduleName), moduleClass);
+  }
+
+  protected HttpResponse deployModule(Id.DatasetModule module, Class moduleClass) throws Exception {
     Location moduleJar = createModuleJar(moduleClass);
-    HttpRequest request = HttpRequest.put(getUrl("/data/modules/" + moduleName))
+    HttpRequest request = HttpRequest.put(getUrl(module.getNamespaceId(), "/data/modules/" + module.getId()))
       .addHeader("X-Class-Name", moduleClass.getName())
       .withBody(Locations.newInputSupplier(moduleJar)).build();
-    return HttpRequests.execute(request).getResponseCode();
+    return HttpRequests.execute(request);
   }
 
   // creates a bundled jar with moduleClass and list of bundleEmbeddedJar files, moduleName and moduleClassName are
@@ -275,15 +293,38 @@ public abstract class DatasetServiceTestBase {
   }
 
   protected ObjectResponse<List<DatasetModuleMeta>> getModules() throws IOException {
-    return ObjectResponse.fromJsonBody(HttpRequests.execute(HttpRequest.get(getUrl("/data/modules")).build()),
+    return getModules(Id.Namespace.DEFAULT);
+  }
+
+  protected ObjectResponse<List<DatasetModuleMeta>> getModules(Id.Namespace namespace) throws IOException {
+    return ObjectResponse.fromJsonBody(makeModulesRequest(namespace),
                                        new TypeToken<List<DatasetModuleMeta>>() { }.getType());
   }
 
-  protected int deleteModule(String moduleName) throws Exception {
-    return HttpRequests.execute(HttpRequest.delete(getUrl("/data/modules/" + moduleName)).build()).getResponseCode();
+  protected HttpResponse makeModulesRequest(Id.Namespace namespaceId) throws IOException {
+    HttpRequest request = HttpRequest.get(getUrl(namespaceId.getId(), "/data/modules")).build();
+    return HttpRequests.execute(request);
   }
 
-  protected int deleteModules() throws IOException {
-    return HttpRequests.execute(HttpRequest.delete(getUrl("/data/modules/")).build()).getResponseCode();
+  protected HttpResponse deleteModule(String moduleName) throws Exception {
+    return deleteModule(Id.DatasetModule.from(Id.Namespace.DEFAULT, moduleName));
+  }
+
+  protected HttpResponse deleteModule(Id.DatasetModule module) throws Exception {
+    return HttpRequests.execute(
+      HttpRequest.delete(getUrl(module.getNamespaceId(), "/data/modules/" + module.getId())).build());
+  }
+
+  protected HttpResponse deleteModules() throws IOException {
+    return deleteModules(Id.Namespace.DEFAULT);
+  }
+
+  protected HttpResponse deleteModules(Id.Namespace namespace) throws IOException {
+    return HttpRequests.execute(HttpRequest.delete(getUrl(namespace.getId(), "/data/modules/")).build());
+  }
+
+  protected void assertNamespaceNotFound(HttpResponse response, Id.Namespace namespaceId) {
+    Assert.assertEquals(HttpStatus.SC_NOT_FOUND, response.getResponseCode());
+    Assert.assertTrue(response.getResponseBodyAsString().contains(namespaceId.getIdRep()));
   }
 }

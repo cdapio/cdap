@@ -95,6 +95,7 @@ public class KafkaNotificationTest extends NotificationTest {
     stopServices();
     kafkaClient.stopAndWait();
     kafkaServer.stopAndWait();
+    zkClient.stopAndWait();
     zkServer.stopAndWait();
   }
 

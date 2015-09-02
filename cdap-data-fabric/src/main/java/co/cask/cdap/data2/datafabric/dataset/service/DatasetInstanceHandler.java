@@ -88,7 +88,8 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
 
   @GET
   @Path("/data/datasets/")
-  public void list(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId) {
+  public void list(HttpRequest request, HttpResponder responder,
+                   @PathParam("namespace-id") String namespaceId) throws Exception {
     responder.sendJson(HttpResponseStatus.OK, spec2Summary(instanceService.list(Id.Namespace.from(namespaceId))));
   }
 
@@ -106,8 +107,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   public void get(HttpRequest request, HttpResponder responder,
                   @PathParam("namespace-id") String namespaceId,
                   @PathParam("name") String name,
-                  @QueryParam("owner") List<String> owners) throws NotFoundException {
-
+                  @QueryParam("owner") List<String> owners) throws Exception {
     Id.DatasetInstance instance = Id.DatasetInstance.from(namespaceId, name);
     responder.sendJson(HttpResponseStatus.OK,
                        instanceService.get(instance, strings2Ids(owners)),
@@ -128,7 +128,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     Id.Namespace namespace = Id.Namespace.from(namespaceId);
 
     LOG.info("Creating dataset {}.{}, type name: {}, typeAndProps: {}",
-      namespaceId, name, creationProperties.getTypeName(), creationProperties.getProperties());
+             namespaceId, name, creationProperties.getTypeName(), creationProperties.getProperties());
     try {
       instanceService.create(namespace, name, creationProperties);
       responder.sendStatus(HttpResponseStatus.OK);

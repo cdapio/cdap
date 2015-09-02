@@ -20,6 +20,7 @@ import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
+import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.data.runtime.LocationStreamFileWriterFactory;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
@@ -159,6 +160,7 @@ public abstract class GatewayTestBase {
         @Override
         protected void configure() {
           install(new StreamServiceRuntimeModule().getStandaloneModules());
+          install(new NamespaceClientRuntimeModule().getStandaloneModules());
 
           // It's a bit hacky to add it here. Need to refactor these
           // bindings out as it overlaps with
