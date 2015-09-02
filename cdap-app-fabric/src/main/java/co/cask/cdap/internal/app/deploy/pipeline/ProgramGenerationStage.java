@@ -138,7 +138,8 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationDeployable>
       // moves the <appfabricdir>/archive/<app-name>.jar to <appfabricdir>/<app-name>/archive/<app-name>.jar
       // Cannot do this before starting the deploy pipeline because appId could be null at that time.
       // However, it is guaranteed to be non-null from VerificationsStage onwards
-      Location newArchiveLocation = appFabricDir.append(applicationName).append(Constants.ARCHIVE_DIR);
+      Id.Application appId = Id.Application.from(namespaceId, applicationName);
+      Location newArchiveLocation = getAppArchiveDirLocation(configuration, appId, namespacedLocationFactory);
       moveAppArchiveUnderAppDirectory(input.getLocation(), newArchiveLocation);
       Location programLocation = newArchiveLocation.append(input.getLocation().getName());
       ApplicationDeployable updatedAppDeployable = new ApplicationDeployable(input.getId(), input.getSpecification(),
@@ -151,6 +152,26 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationDeployable>
       emit(new ApplicationWithPrograms(input, programs.build()));
     }
 
+  }
+
+  /**
+   * Legacy method to get the location of the directory of an application jar. This is used for cdap upgrades.
+   * New Apps use the artifact repository instead of this.
+   *
+   * @param configuration the cdap configuration
+   * @param appId the id of the application
+   * @param namespacedLocationFactory the namespaced location factory to generate locations
+   * @return the expected location of the application jar
+   * @throws IOException
+   */
+  public static Location getAppArchiveDirLocation(CConfiguration configuration, Id.Application appId,
+                                                  NamespacedLocationFactory namespacedLocationFactory)
+    throws IOException {
+    Location namespacedLocation = namespacedLocationFactory.get(appId.getNamespace());
+    // Note: deployApplication/deployAdapters have already checked for namespaceDir existence, so not checking again
+    // Make sure we have a directory to store the original artifact.
+    final Location appFabricDir = namespacedLocation.append(configuration.get(Constants.AppFabric.OUTPUT_DIR));
+    return appFabricDir.append(appId.getId()).append(Constants.ARCHIVE_DIR);
   }
 
   private void moveAppArchiveUnderAppDirectory(Location origArchiveLocation,
