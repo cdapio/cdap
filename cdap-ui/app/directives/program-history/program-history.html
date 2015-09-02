@@ -1,4 +1,9 @@
 <div ng-if="runs.length > 0">
+  <!-- Switch to ng-if when we refactor to use controller as syntax -->
+  <div class="text-right" ng-show="runs.length > 10">
+    <pagination total-items="runs.length" ng-model="currentPage"></pagination>
+  </div>
+
   <div class="table-responsive">
     <table class="table" cask-sortable>
       <thead>
@@ -37,10 +42,6 @@
     </table>
   </div>
 
-  <!-- Switch to ng-if when we refactor to use controller as syntax -->
-  <div class="text-center" ng-show="runs.length > 10">
-    <pagination total-items="runs.length" ng-model="currentPage"></pagination>
-  </div>
 </div>
 
 <div ng-if="runs.length === 0"
