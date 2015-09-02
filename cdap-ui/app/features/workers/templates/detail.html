@@ -9,8 +9,7 @@
           <div class="type-block">
             <small> Type: Worker </small>
           </div>
-          <!-- TODO: Description will be added in a future PR -->
-          <!-- <p ng-bind"| myEllipsis: 24"></p> -->
+          <p ng-bind="RunsController.description | myEllipsis: 144"></p>
           <div class="program-tags">
             <a class="btn">Dataset</a>
             <a class="btn">Apps</a>
@@ -88,7 +87,7 @@
           </ul>
         </div>
         <my-program-status
-          data-type="flow"
+          data-type="worker"
           data-runid="RunsController.runs.selected.runid"
           data-runs="RunsController.runs"
           class="flex-item"></my-program-status>

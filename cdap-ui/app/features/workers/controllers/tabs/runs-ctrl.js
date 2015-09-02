@@ -1,8 +1,9 @@
 angular.module(PKG.name + '.feature.worker')
-  .controller('WorkersRunsController', function($scope, $filter, $state, rRuns, $bootstrapModal) {
+  .controller('WorkersRunsController', function($scope, $filter, $state, rRuns, $bootstrapModal, rWorkerDetail) {
   var fFilter = $filter('filter');
 
   this.runs = rRuns;
+  this.description = rWorkerDetail.description;
   this.$bootstrapModal = $bootstrapModal;
 
   if ($state.params.runid) {

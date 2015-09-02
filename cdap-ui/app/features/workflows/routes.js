@@ -23,6 +23,14 @@ angular.module(`${PKG.name}.feature.workflows`)
                 defer.resolve(res);
               });
             return defer.promise;
+          },
+          rWorkflowDetail: function(myWorkFlowApi, $stateParams) {
+            var params = {
+              namespace: $stateParams.namespace,
+              appId: $stateParams.appId,
+              workflowId: $stateParams.programId
+            };
+            return myWorkFlowApi.get(params).$promise;
           }
         },
         template: '<ui-view/>'

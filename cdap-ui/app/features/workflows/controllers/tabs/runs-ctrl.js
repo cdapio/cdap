@@ -1,6 +1,6 @@
 var params = {};
 class WorkflowsRunsController {
-  constructor($scope, $state, $filter, rRuns, myWorkFlowApi, $bootstrapModal) {
+  constructor($scope, $state, $filter, rRuns, myWorkFlowApi, $bootstrapModal, rWorkflowDetail) {
     let fFilter = $filter('filter');
     this.runs = rRuns;
     this.$scope = $scope;
@@ -8,6 +8,8 @@ class WorkflowsRunsController {
     this.myWorkFlowApi = myWorkFlowApi;
     this.runStatus = null;
     this.$bootstrapModal = $bootstrapModal;
+    this.description = rWorkflowDetail.description;
+
 
     if ($state.params.runid) {
       var match = fFilter(rRuns, {runid: $state.params.runid});
@@ -103,7 +105,8 @@ class WorkflowsRunsController {
   openHistory() {
     this.$bootstrapModal.open({
       size: 'lg',
-      template: '<my-program-history data-runs="runs" data-type="WORKFLOWS"></my-program-history>',
+      windowClass: 'center cdap-modal',
+      templateUrl: '/assets/features/workflows/templates/tabs/history.html',
       controller: ['runs', '$scope', function(runs, $scope) {
         $scope.runs = runs;
       }],
@@ -116,6 +119,7 @@ class WorkflowsRunsController {
   openSchedules() {
     this.$bootstrapModal.open({
       size: 'lg',
+      windowClass: 'center cdap-modal',
       templateUrl: '/assets/features/workflows/templates/tabs/schedules.html',
       controller: 'WorkflowsSchedulesController',
       controllerAs: 'SchedulesController'
@@ -123,7 +127,7 @@ class WorkflowsRunsController {
   }
 }
 
-WorkflowsRunsController.$inject = ['$scope', '$state', '$filter', 'rRuns', 'myWorkFlowApi', '$bootstrapModal'];
+WorkflowsRunsController.$inject = ['$scope', '$state', '$filter', 'rRuns', 'myWorkFlowApi', '$bootstrapModal', 'rWorkflowDetail'];
 
 angular.module(`${PKG.name}.feature.workflows`)
   .controller('WorkflowsRunsController', WorkflowsRunsController);

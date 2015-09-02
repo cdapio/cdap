@@ -25,6 +25,14 @@ angular.module(PKG.name + '.feature.mapreduce')
               });
 
             return defer.promise;
+          },
+          rMapreduceDetail: function($stateParams, myMapreduceApi) {
+            var params = {
+              namespace: $stateParams.namespace,
+              appId: $stateParams.appId,
+              mapreduceId: $stateParams.programId
+            };
+            return myMapreduceApi.get(params).$promise;
           }
         },
         template: '<ui-view/>'

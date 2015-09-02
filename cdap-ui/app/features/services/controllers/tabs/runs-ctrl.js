@@ -1,9 +1,9 @@
 angular.module(PKG.name + '.feature.services')
-  .controller('ServicesRunsController', function($scope, $filter, $state, rRuns, $bootstrapModal) {
+  .controller('ServicesRunsController', function($scope, $filter, $state, rRuns, $bootstrapModal, rServiceDetail) {
     var fFilter = $filter('filter');
     this.runs = rRuns;
     this.$bootstrapModal = $bootstrapModal;
-
+    this.description = rServiceDetail.description;
     if ($state.params.runid) {
       var match = fFilter(rRuns, {runid: $state.params.runid});
       if (match.length) {

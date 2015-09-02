@@ -1,9 +1,10 @@
 angular.module(PKG.name + '.feature.mapreduce')
-  .controller('MapreduceRunsController', function($scope, $state, $rootScope, rRuns, $filter, $bootstrapModal) {
+  .controller('MapreduceRunsController', function($scope, $state, $rootScope, rRuns, $filter, $bootstrapModal, rMapreduceDetail) {
     var fFilter = $filter('filter'),
         match;
     this.runs = rRuns;
     this.$bootstrapModal = $bootstrapModal;
+    this.description = rMapreduceDetail.description;
 
     if ($state.params.runid) {
       match = fFilter(rRuns, {runid: $state.params.runid});

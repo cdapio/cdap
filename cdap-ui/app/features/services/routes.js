@@ -25,6 +25,14 @@ angular.module(PKG.name + '.feature.services')
               });
 
             return defer.promise;
+          },
+          rServiceDetail: function($stateParams, myServiceApi) {
+            var params = {
+              namespace: $stateParams.namespace,
+              appId: $stateParams.appId,
+              serviceId: $stateParams.programId
+            };
+            return myServiceApi.get(params).$promise;
           }
         },
         template: '<ui-view/>'

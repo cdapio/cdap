@@ -1,10 +1,10 @@
 angular.module(PKG.name + '.feature.spark')
-  .controller('SparkRunsController', function($scope, $filter, $state, rRuns, $bootstrapModal) {
+  .controller('SparkRunsController', function($scope, $filter, $state, rRuns, $bootstrapModal, rSparkDetail) {
     var fFilter = $filter('filter'),
         match;
     this.runs = rRuns;
     this.$bootstrapModal = $bootstrapModal;
-
+    this.description = rSparkDetail.description;
     if ($state.params.runid) {
       match = fFilter(rRuns, {runid: $state.params.runid});
       if (match.length) {

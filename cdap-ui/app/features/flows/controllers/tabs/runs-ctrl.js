@@ -1,8 +1,9 @@
 angular.module(PKG.name + '.feature.flows')
-  .controller('FlowsRunsController', function($scope, $filter, $state, rRuns, $bootstrapModal) {
+  .controller('FlowsRunsController', function($scope, $filter, $state, rRuns, $bootstrapModal, rFlowsDetail) {
   var fFilter = $filter('filter');
   this.runs = rRuns;
   this.$bootstrapModal = $bootstrapModal;
+  this.description = rFlowsDetail.description;
 
    if ($state.params.runid) {
      var match = fFilter(rRuns, {runid: $state.params.runid});

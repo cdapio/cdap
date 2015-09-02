@@ -27,6 +27,14 @@ angular.module(PKG.name + '.feature.flows')
                 defer.resolve(res);
               });
             return defer.promise;
+          },
+          rFlowsDetail: function($stateParams, myFlowsApi) {
+            var params = {
+              namespace: $stateParams.namespace,
+              appId: $stateParams.appId,
+              flowId: $stateParams.programId
+            };
+            return myFlowsApi.get(params).$promise;
           }
         },
         template: '<ui-view/>'

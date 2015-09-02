@@ -25,6 +25,14 @@ angular.module(PKG.name + '.feature.spark')
               });
 
             return defer.promise;
+          },
+          rSparkDetail: function($stateParams, mySparkApi) {
+            var params = {
+              namespace: $stateParams.namespace,
+              appId: $stateParams.appId,
+              sparkId: $stateParams.programId
+            };
+            return mySparkApi.get(params).$promise;
           }
         },
         template: '<ui-view/>'
