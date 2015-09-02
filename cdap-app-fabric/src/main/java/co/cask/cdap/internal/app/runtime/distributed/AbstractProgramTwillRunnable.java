@@ -250,11 +250,14 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
   @Override
   public void stop() {
     try {
-      LOG.info("Stopping runnable: {}", name);
+      LOG.info("Stopping runnable: {}.", name);
       controller.stop().get();
       logAppenderInitializer.close();
+    } catch (InterruptedException e) {
+      LOG.debug("Interrupted while stopping runnable: {}.", name, e);
+      Thread.currentThread().interrupt();
     } catch (Exception e) {
-      LOG.error("Fail to stop: {}", e, e);
+      LOG.error("Failed to stop runnable: {}.", name, e);
       throw Throwables.propagate(e);
     }
   }
@@ -313,11 +316,12 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
 
     try {
       state.get();
-      LOG.info("Program stopped.");
+      LOG.info("Program {} stopped.", name);
     } catch (InterruptedException e) {
-      LOG.warn("Program interrupted.", e);
+      LOG.warn("Program {} interrupted.", name, e);
+      Thread.currentThread().interrupt();
     } catch (ExecutionException e) {
-      LOG.error("Program execution failed.", e);
+      LOG.error("Program {} execution failed.", name, e);
       if (propagateServiceError()) {
         throw Throwables.propagate(Throwables.getRootCause(e));
       }

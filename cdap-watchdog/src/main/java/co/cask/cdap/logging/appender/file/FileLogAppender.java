@@ -18,7 +18,6 @@ package co.cask.cdap.logging.appender.file;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.appender.LogAppender;
@@ -63,7 +62,6 @@ public class FileLogAppender extends LogAppender {
   private final LogSaverTableUtil tableUtil;
   private final TransactionExecutorFactory txExecutorFactory;
   private final LocationFactory locationFactory;
-  private final NamespacedLocationFactory namespacedLocationFactory;
   private final String logBaseDir;
   private final int syncIntervalBytes;
   private final long retentionDurationMs;
@@ -72,7 +70,6 @@ public class FileLogAppender extends LogAppender {
   private final long checkpointIntervalMs;
   private final int logCleanupIntervalMins;
   private final ListeningScheduledExecutorService scheduledExecutor;
-  private final DatasetFramework dsFramework;
 
   private final AtomicBoolean stopped = new AtomicBoolean(false);
 
@@ -83,15 +80,12 @@ public class FileLogAppender extends LogAppender {
   public FileLogAppender(CConfiguration cConfig,
                          DatasetFramework dsFramework,
                          TransactionExecutorFactory txExecutorFactory,
-                         LocationFactory locationFactory,
-                         NamespacedLocationFactory namespacedLocationFactory) {
+                         LocationFactory locationFactory) {
     setName(APPENDER_NAME);
     this.cConf = cConfig;
     this.tableUtil = new LogSaverTableUtil(dsFramework, cConfig);
     this.txExecutorFactory = txExecutorFactory;
     this.locationFactory = locationFactory;
-    this.namespacedLocationFactory = namespacedLocationFactory;
-    this.dsFramework = dsFramework;
 
     this.logBaseDir = cConfig.get(LoggingConfiguration.LOG_BASE_DIR);
     Preconditions.checkNotNull(logBaseDir, "Log base dir cannot be null");
@@ -182,6 +176,12 @@ public class FileLogAppender extends LogAppender {
     }
 
     scheduledExecutor.shutdownNow();
+    try {
+      scheduledExecutor.awaitTermination(5, TimeUnit.MINUTES);
+    } catch (InterruptedException e) {
+      LOG.debug("Interrupted while waiting for threads to terminate.");
+      Thread.currentThread().interrupt();
+    }
     close();
     super.stop();
   }
