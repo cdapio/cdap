@@ -82,6 +82,8 @@ body.theme-cdap {
         vertical-align: middle;
       }
       + p {
+        color: @program-text;
+        font-size: 14px;
         margin-bottom: 0;
       }
       [class*="icon-"] {
@@ -108,11 +110,16 @@ body.theme-cdap {
     div.program-tags {
       margin-top: 10px;
       a.btn {
-        .cask-btn(@background: @panel-default-border, @border: 1px solid gray, @border-radius: 16px, @color: gray, @font-size: 12px, @padding: 5px 15px);
+        font-weight: 500;
+        .cask-btn(@background: @panel-default-border, @border: 1px solid @program-text, @border-radius: 16px, @color: gray, @font-size: 11px, @padding: 1px 10px 3px);
         .transition(all 0.2s ease);
         &:last-child {
-          padding-right: 10px;
-          padding-left: 10px;
+          color: @cdap-header;
+          padding-right: 7px;
+          padding-left: 7px;
+          span.fa-plus {
+            vertical-align: middle;
+          }
         }
         &:not(:last-child) {
           margin-right: 10px;
