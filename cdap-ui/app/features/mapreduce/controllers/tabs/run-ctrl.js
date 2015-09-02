@@ -46,6 +46,10 @@ angular.module(PKG.name + '.feature.mapreduce')
     {
       title: 'Logs',
       template: '/assets/features/mapreduce/templates/tabs/runs/tabs/log.html'
+    },
+    {
+      title: 'Datasets',
+      template: '/assets/features/mapreduce/templates/tabs/data.html'
     }];
 
     this.activeTab = this.tabs[0];
@@ -70,11 +74,4 @@ angular.module(PKG.name + '.feature.mapreduce')
       });
     };
 
-    this.openDatasets = function() {
-      this.$bootstrapModal.open({
-        size: 'lg',
-        windowClass: 'center cdap-modal',
-        templateUrl: '/assets/features/mapreduce/templates/tabs/data.html'
-      });
-    };
   });

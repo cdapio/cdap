@@ -46,7 +46,12 @@ angular.module(PKG.name + '.feature.flows')
    {
      title: 'Logs',
      template: '/assets/features/flows/templates/tabs/runs/tabs/log.html'
-   }];
+   },
+   {
+     title: 'Datasets',
+     template: '/assets/features/flows/templates/tabs/data.html'
+   }
+   ];
 
    this.activeTab = this.tabs[0];
 
@@ -74,11 +79,4 @@ angular.module(PKG.name + '.feature.flows')
      });
    };
 
-   this.openDatasets = function() {
-     this.$bootstrapModal.open({
-       size: 'lg',
-       windowClass: 'center cdap-modal',
-       templateUrl: '/assets/features/flows/templates/tabs/data.html'
-     });
-   };
  });
