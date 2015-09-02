@@ -36,10 +36,10 @@ angular.module(PKG.name + '.commons')
               _cdapNsPath: path,
               interval: $scope.pollInterval || 10000
             }, function (res) {
-              var startMs = res.start * 1000;
-              $scope.start = new Date(startMs);
+              var startMs = res.start;
+              $scope.start = new Date(startMs*1000);
               $scope.status = res.status;
-              $scope.duration = (res.end ? (res.end * 1000) - startMs : 0);
+              $scope.duration = (res.end ? (res.end) - startMs : 0);
               if (['COMPLETED', 'KILLED', 'STOPPED', 'FAILED'].indexOf($scope.status) !== -1) {
                 dataSrc.stopPoll(pollPromise.__pollId__);
               }
