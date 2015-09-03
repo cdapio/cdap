@@ -216,7 +216,7 @@ public class WorkflowDataset extends AbstractDataset {
     byte[] startRowKey = mdsKey.getKey();
 
     Row indexRow = table.get(startRowKey);
-    if (indexRow == null) {
+    if (indexRow.isEmpty()) {
       return null;
     }
     Map<byte[], byte[]> columns = indexRow.getColumns();
