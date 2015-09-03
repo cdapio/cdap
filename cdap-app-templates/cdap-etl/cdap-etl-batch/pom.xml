@@ -27,11 +27,11 @@
   </parent>
 
   <artifactId>cdap-etl-batch</artifactId>
-  <name>CDAP ETL App Template Batch</name>
+  <name>CDAP ETL Batch Application</name>
   <packaging>jar</packaging>
 
   <properties>
-    <app.main.class>co.cask.cdap.template.etl.batch.ETLBatchTemplate</app.main.class>
+    <app.main.class>co.cask.cdap.app.etl.batch.ETLBatchApplication</app.main.class>
   </properties>
 
   <dependencies>

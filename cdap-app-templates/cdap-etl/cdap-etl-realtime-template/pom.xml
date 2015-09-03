@@ -26,12 +26,12 @@
     <version>3.2.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>cdap-etl-realtime-app</artifactId>
-  <name>CDAP ETL Realtime App</name>
+  <artifactId>cdap-etl-realtime-template</artifactId>
+  <name>CDAP ETL App Template Realtime</name>
   <packaging>jar</packaging>
 
   <properties>
-    <app.main.class>co.cask.cdap.app.etl.realtime.ETLRealtimeApplication</app.main.class>
+    <app.main.class>co.cask.cdap.template.etl.realtime.ETLRealtimeTemplate</app.main.class>
   </properties>
 
   <dependencies>
