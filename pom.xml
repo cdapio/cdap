@@ -1267,6 +1267,11 @@
                   <exclude>**/*.json</exclude>
                   <exclude>**/*.json.template</exclude>
                   <exclude>**/MANIFEST.MF</exclude>
+                  <!-- Excludes for cdap-ui -->
+                  <exclude>**/*.editorconfig</exclude>
+                  <exclude>**/*.jshintignore</exclude>
+                  <exclude>**/*.jshintrc</exclude>
+                  <exclude>**/*.svg</exclude>
                 </excludes>
               </configuration>
             </execution>
