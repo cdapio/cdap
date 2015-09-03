@@ -27,12 +27,12 @@ import java.util.Objects;
 public final class ArtifactId {
   private final String name;
   private final ArtifactVersion version;
-  private final boolean isSystem;
+  private final ArtifactScope scope;
 
-  public ArtifactId(String name, ArtifactVersion version, boolean isSystem) {
+  public ArtifactId(String name, ArtifactVersion version, ArtifactScope scope) {
     this.name = name;
     this.version = version;
-    this.isSystem = isSystem;
+    this.scope = scope;
   }
 
   public String getName() {
@@ -43,16 +43,16 @@ public final class ArtifactId {
     return version;
   }
 
-  public boolean isSystem() {
-    return isSystem;
+  public ArtifactScope getScope() {
+    return scope;
   }
 
   @Override
   public String toString() {
-    return "ArtifactDescriptor{" +
+    return "ArtifactId{" +
       "name='" + name + '\'' +
       ", version=" + version +
-      ", isSystem=" + isSystem +
+      ", scope='" + scope + '\'' +
       '}';
   }
 
@@ -68,12 +68,12 @@ public final class ArtifactId {
     ArtifactId that = (ArtifactId) o;
     return Objects.equals(name, that.name) &&
       Objects.equals(version, that.version) &&
-      isSystem == that.isSystem;
+      Objects.equals(scope, that.scope);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, version, isSystem);
+    return Objects.hash(name, version, scope);
   }
 
 }

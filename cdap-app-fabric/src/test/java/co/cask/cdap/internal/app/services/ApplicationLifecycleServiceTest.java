@@ -20,6 +20,7 @@ import co.cask.cdap.AppWithMR;
 import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.artifact.ArtifactId;
+import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.app.DefaultAppConfigurer;
 import co.cask.cdap.app.DefaultApplicationContext;
@@ -83,13 +84,13 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
 
       // app spec should now have an artifact id
       appSpec = store.getApplication(appId);
-      Assert.assertEquals(new ArtifactId(appSpec.getName(), new ArtifactVersion("3.1.0"), false),
+      Assert.assertEquals(new ArtifactId(appSpec.getName(), new ArtifactVersion("3.1.0"), ArtifactScope.USER),
                           appSpec.getArtifactId());
 
       // run upgrade again to make sure it doesn't break anything
       applicationLifecycleService.upgrade(false);
       appSpec = store.getApplication(appId);
-      Assert.assertEquals(new ArtifactId(appSpec.getName(), new ArtifactVersion("3.1.0"), false),
+      Assert.assertEquals(new ArtifactId(appSpec.getName(), new ArtifactVersion("3.1.0"), ArtifactScope.USER),
                           appSpec.getArtifactId());
     } finally {
       appJar.delete();
@@ -168,7 +169,7 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
       // run upgrade
       applicationLifecycleService.upgrade(false);
       appSpec = store.getApplication(appId);
-      Assert.assertEquals(new ArtifactId(artifactId.getName(), artifactId.getVersion(), false),
+      Assert.assertEquals(new ArtifactId(artifactId.getName(), artifactId.getVersion(), ArtifactScope.USER),
                           appSpec.getArtifactId());
     } finally {
       appJar.delete();

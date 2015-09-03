@@ -18,35 +18,21 @@ package co.cask.cdap.api.artifact;
 
 import org.apache.twill.filesystem.Location;
 
-import java.util.Objects;
-
 /**
- * Uniquely describes an artifact. Artifact descriptors are ordered by whether or not they are system artifacts,
+ * Uniquely describes an artifact. Artifact descriptors are ordered by scope,
  * then by name, and finally by version.
  */
 public final class ArtifactDescriptor implements Comparable<ArtifactDescriptor> {
-  private final String name;
-  private final ArtifactVersion version;
-  private final boolean isSystem;
+  private final ArtifactId artifactId;
   private final Location location;
 
-  public ArtifactDescriptor(String name, ArtifactVersion version, boolean isSystem, Location location) {
-    this.name = name;
-    this.version = version;
-    this.isSystem = isSystem;
+  public ArtifactDescriptor(ArtifactId artifactId, Location location) {
+    this.artifactId = artifactId;
     this.location = location;
   }
 
-  public String getName() {
-    return name;
-  }
-
-  public ArtifactVersion getVersion() {
-    return version;
-  }
-
-  public boolean isSystem() {
-    return isSystem;
+  public ArtifactId getArtifactId() {
+    return artifactId;
   }
 
   public Location getLocation() {
@@ -56,9 +42,7 @@ public final class ArtifactDescriptor implements Comparable<ArtifactDescriptor> 
   @Override
   public String toString() {
     return "ArtifactDescriptor{" +
-      "name='" + name + '\'' +
-      ", version=" + version +
-      ", isSystem=" + isSystem +
+      "artifactId=" + artifactId +
       ", location=" + location +
       '}';
   }
@@ -78,19 +62,19 @@ public final class ArtifactDescriptor implements Comparable<ArtifactDescriptor> 
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, version, isSystem);
+    return artifactId.hashCode();
   }
 
   @Override
   public int compareTo(ArtifactDescriptor other) {
-    // system artifacts are 'less than' other artifacts
-    if (isSystem != other.isSystem) {
-      return isSystem ? -1 : 1;
-    }
-    int cmp = name.compareTo(other.name);
+    int cmp = artifactId.getScope().compareTo(other.getArtifactId().getScope());
     if (cmp != 0) {
       return cmp;
     }
-    return version.compareTo(other.version);
+    cmp = artifactId.getName().compareTo(other.getArtifactId().getName());
+    if (cmp != 0) {
+      return cmp;
+    }
+    return artifactId.getVersion().compareTo(other.getArtifactId().getVersion());
   }
 }

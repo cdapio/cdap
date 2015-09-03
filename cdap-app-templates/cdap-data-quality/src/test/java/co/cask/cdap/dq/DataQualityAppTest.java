@@ -120,7 +120,7 @@ public class DataQualityAppTest extends TestBase {
       50, getStreamSource(), "avg", null);
 
     AppRequest<DataQualityApp.DataQualityConfig> appRequest = new AppRequest<>(
-      new ArtifactSummary(appArtifact.getName(), appArtifact.getVersion().getVersion(), false), config);
+      new ArtifactSummary(appArtifact.getName(), appArtifact.getVersion().getVersion()), config);
     deployApplication(appId, appRequest);
   }
 
@@ -136,7 +136,7 @@ public class DataQualityAppTest extends TestBase {
       WORKFLOW_SCHEDULE_MINUTES, getStreamSource(), "dataQuality", testMap);
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "newApp");
     AppRequest<DataQualityApp.DataQualityConfig> appRequest = new AppRequest<>(
-      new ArtifactSummary(appArtifact.getName(), appArtifact.getVersion().getVersion(), false), config);
+      new ArtifactSummary(appArtifact.getName(), appArtifact.getVersion().getVersion()), config);
     ApplicationManager applicationManager = deployApplication(appId, appRequest);
 
     MapReduceManager mrManager = applicationManager.getMapReduceManager("FieldAggregator").start();
@@ -180,7 +180,7 @@ public class DataQualityAppTest extends TestBase {
 
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "newApp2");
     AppRequest<DataQualityApp.DataQualityConfig> appRequest = new AppRequest<>(
-      new ArtifactSummary(appArtifact.getName(), appArtifact.getVersion().getVersion(), false), config);
+      new ArtifactSummary(appArtifact.getName(), appArtifact.getVersion().getVersion()), config);
     ApplicationManager applicationManager = deployApplication(appId, appRequest);
 
     MapReduceManager mrManager = applicationManager.getMapReduceManager("FieldAggregator").start();
@@ -223,7 +223,7 @@ public class DataQualityAppTest extends TestBase {
 
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "newApp3");
     AppRequest<DataQualityApp.DataQualityConfig> appRequest = new AppRequest<>(
-      new ArtifactSummary(appArtifact.getName(), appArtifact.getVersion().getVersion(), false), config);
+      new ArtifactSummary(appArtifact.getName(), appArtifact.getVersion().getVersion()), config);
     ApplicationManager applicationManager = deployApplication(appId, appRequest);
 
     MapReduceManager mrManager = applicationManager.getMapReduceManager("FieldAggregator").start();

@@ -20,6 +20,7 @@ import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.artifact.ApplicationClass;
 import co.cask.cdap.api.artifact.ArtifactId;
+import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletConnection;
@@ -63,7 +64,6 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProgramTypes;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Iterables;
@@ -196,7 +196,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
           currentArtifact.getName(), requestedArtifact.getName()));
       }
 
-      if (currentArtifact.isSystem() != requestedArtifact.isSystem()) {
+      if (!currentArtifact.getScope().equals(requestedArtifact.getScope())) {
         throw new InvalidArtifactException("Only artifact version updates are allowed. " +
           "Cannot change from a non-system artifact to a system artifact or vice versa.");
       }
@@ -207,7 +207,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
         throw new InvalidArtifactException(String.format(
           "Requested artifact version '%s' is invalid", requestedArtifact.getVersion()));
       }
-      newArtifactId = new ArtifactId(currentArtifact.getName(), requestedVersion, currentArtifact.isSystem());
+      newArtifactId = new ArtifactId(currentArtifact.getName(), requestedVersion, currentArtifact.getScope());
     }
 
     Object requestedConfigObj = appRequest.getConfig();
@@ -215,8 +215,9 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     String requestedConfigStr = requestedConfigObj == null ?
       currentSpec.getConfiguration() : GSON.toJson(requestedConfigObj);
 
-    Id.Artifact artifactId = Id.Artifact.from(newArtifactId.isSystem() ? Id.Namespace.SYSTEM : appId.getNamespace(),
-                                              newArtifactId.getName(), newArtifactId.getVersion());
+    Id.Artifact artifactId = Id.Artifact.from(
+      newArtifactId.getScope() == ArtifactScope.SYSTEM ? Id.Namespace.SYSTEM : appId.getNamespace(),
+      newArtifactId.getName(), newArtifactId.getVersion());
     return deployApp(appId.getNamespace(), appId.getId(), artifactId, requestedConfigStr, programTerminator);
   }
 
@@ -608,7 +609,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                                             ProgramTerminator programTerminator,
                                             ArtifactDetail artifactDetail) throws Exception {
 
-    Id.Artifact artifactId = Id.Artifact.from(namespace, artifactDetail.getDescriptor());
+    Id.Artifact artifactId = Id.Artifact.from(namespace, artifactDetail.getDescriptor().getArtifactId());
     Set<ApplicationClass> appClasses = artifactDetail.getMeta().getClasses().getApps();
     if (appClasses.isEmpty()) {
       throw new InvalidArtifactException(String.format("No application classes found in artifact '%s'.", artifactId));

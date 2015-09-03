@@ -335,8 +335,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     Plugin plugin = getPlugin(pluginId);
     try {
       URI locationURI = plugin.getLocationURI();
-      ArtifactDescriptor artifactDescriptor = new ArtifactDescriptor(plugin.getArtifactName(),
-                                                                     plugin.getArtifactVersion(), plugin.isSystem(),
+      ArtifactDescriptor artifactDescriptor = new ArtifactDescriptor(plugin.getArtifactId(),
                                                                      locationFactory.create(locationURI));
       return artifactPluginInstantiator.loadClass(artifactDescriptor, plugin.getPluginClass());
     } catch (ClassNotFoundException e) {
@@ -356,8 +355,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     Plugin plugin = getPlugin(pluginId);
     try {
       URI locationURI = plugin.getLocationURI();
-      ArtifactDescriptor artifactDescriptor = new ArtifactDescriptor(plugin.getArtifactName(),
-                                                                     plugin.getArtifactVersion(), plugin.isSystem(),
+      ArtifactDescriptor artifactDescriptor = new ArtifactDescriptor(plugin.getArtifactId(),
                                                                      locationFactory.create(locationURI));
       return artifactPluginInstantiator.newInstance(artifactDescriptor, plugin.getPluginClass(),
                                                     plugin.getProperties());

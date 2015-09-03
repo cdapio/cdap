@@ -16,7 +16,8 @@
 
 package co.cask.cdap.proto;
 
-import co.cask.cdap.api.artifact.ArtifactDescriptor;
+import co.cask.cdap.api.artifact.ArtifactId;
+import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.artifact.ArtifactVersion;
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Charsets;
@@ -1320,6 +1321,11 @@ public abstract class Id {
       return String.format("%s-%s", name, version.getVersion());
     }
 
+    public ArtifactId toArtifactId() {
+      return new ArtifactId(name, version,
+                            Namespace.SYSTEM.equals(namespace) ? ArtifactScope.SYSTEM : ArtifactScope.USER);
+    }
+
     @Override
     public String toString() {
       return String.format("%s:%s-%s", namespace.getId(), name, version.getVersion());
@@ -1352,9 +1358,9 @@ public abstract class Id {
       return new Artifact(namespace, name, version);
     }
 
-    public static Artifact from(Id.Namespace namespace, ArtifactDescriptor descriptor) {
-      return new Artifact(descriptor.isSystem() ? Namespace.SYSTEM : namespace,
-                          descriptor.getName(), descriptor.getVersion());
+    public static Artifact from(Id.Namespace namespace, ArtifactId id) {
+      return new Artifact(ArtifactScope.SYSTEM.equals(id.getScope()) ? Namespace.SYSTEM : namespace,
+                          id.getName(), id.getVersion());
     }
 
     public static boolean isValidName(String name) {
