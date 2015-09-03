@@ -19,6 +19,7 @@ package co.cask.cdap.internal;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.workflow.WorkflowToken;
+import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
@@ -27,6 +28,7 @@ import co.cask.cdap.gateway.handlers.NamespaceHttpHandler;
 import co.cask.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
 import co.cask.cdap.gateway.handlers.WorkflowHttpHandler;
 import co.cask.cdap.internal.app.BufferFileInputStream;
+import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
@@ -157,7 +159,8 @@ public class AppFabricClient {
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Stop " + type + " failed");
   }
 
-  public String getStatus(String namespaceId, String appId, String flowId, ProgramType type) {
+  public String getStatus(String namespaceId, String appId, String flowId, ProgramType type)
+    throws BadRequestException, SchedulerException, NotFoundException {
     MockResponder responder = new MockResponder();
     String uri = String.format("%s/apps/%s/%s/%s/status", getNamespacePath(namespaceId), appId, type, flowId);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
@@ -316,7 +319,8 @@ public class AppFabricClient {
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Resume workflow schedules failed");
   }
 
-  public String scheduleStatus(String namespaceId, String appId, String schedId, int expectedResponseCode) {
+  public String scheduleStatus(String namespaceId, String appId, String schedId, int expectedResponseCode)
+    throws BadRequestException, SchedulerException, NotFoundException {
     MockResponder responder = new MockResponder();
     String uri = String.format("%s/apps/%s/schedules/%s/status", getNamespacePath(namespaceId), appId, schedId);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);

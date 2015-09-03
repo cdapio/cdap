@@ -69,11 +69,8 @@ public class MRJobClient implements MRJobInfoFetcher {
   public MRJobInfo getMRJobInfo(Id.Run runId) throws IOException, NotFoundException {
     Preconditions.checkArgument(ProgramType.MAPREDUCE.equals(runId.getProgram().getType()));
 
-    JobClient jobClient;
-    JobStatus[] jobs;
-
-    jobClient = new JobClient(hConf);
-    jobs = jobClient.getAllJobs();
+    JobClient jobClient = new JobClient(hConf);
+    JobStatus[] jobs = jobClient.getAllJobs();
 
     JobStatus thisJob = findJobForRunId(jobs, runId);
 
