@@ -29,6 +29,7 @@ import co.cask.cdap.proto.ProgramType;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.common.util.concurrent.Service;
 import org.apache.twill.filesystem.Location;
+import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -86,6 +87,8 @@ public class AbstractProgramRuntimeServiceTest {
           return controller.getState();
         }
       }, 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+
+      Assert.assertTrue(runtimeService.list(ProgramType.WORKER).isEmpty());
     } finally {
       runtimeService.stopAndWait();
     }

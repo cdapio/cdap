@@ -38,8 +38,10 @@ import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * A ProgramRuntimeService that keeps an in memory map for all running programs.
@@ -47,6 +49,9 @@ import java.util.Map;
 public abstract class AbstractProgramRuntimeService extends AbstractIdleService implements ProgramRuntimeService {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractProgramRuntimeService.class);
+  private static final EnumSet<ProgramController.State> COMPLETED_STATES = EnumSet.of(ProgramController.State.COMPLETED,
+                                                                                      ProgramController.State.KILLED,
+                                                                                      ProgramController.State.ERROR);
 
   private final Table<ProgramType, RunId, RuntimeInfo> runtimeInfos;
   private final ProgramRunnerFactory programRunnerFactory;
@@ -63,9 +68,6 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     ProgramOptions optionsWithRunId = addRunId(options, RunIds.generate());
     final RuntimeInfo runtimeInfo = createRuntimeInfo(runner.run(program, optionsWithRunId), program);
     programStarted(runtimeInfo);
-    synchronized (this) {
-      runtimeInfos.put(runtimeInfo.getType(), runtimeInfo.getController().getRunId(), runtimeInfo);
-    }
     return runtimeInfo;
   }
 
@@ -152,6 +154,13 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     controller.addListener(new AbstractListener() {
 
       @Override
+      public void init(ProgramController.State currentState, @Nullable Throwable cause) {
+        if (!COMPLETED_STATES.contains(currentState)) {
+          add(runtimeInfo);
+        }
+      }
+
+      @Override
       public void completed() {
         remove(runtimeInfo);
       }
@@ -166,7 +175,12 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
         remove(runtimeInfo);
       }
     }, Threads.SAME_THREAD_EXECUTOR);
+
     return runtimeInfo;
+  }
+
+  private synchronized void add(RuntimeInfo runtimeInfo) {
+    runtimeInfos.put(runtimeInfo.getType(), runtimeInfo.getController().getRunId(), runtimeInfo);
   }
 
   private synchronized void remove(RuntimeInfo info) {
