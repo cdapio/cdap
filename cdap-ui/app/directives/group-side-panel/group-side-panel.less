@@ -18,14 +18,23 @@
 @import "../../../bower_components/bootstrap/less/mixins.less";
 @import "../../styles/themes/cdap/mixins.less";
 
+.canvas-wrapper {
+  position: relative;
+}
+
 my-side-panel {
   .side-panel {
-    position: fixed;
-    top: 95px;
-    z-index: 1025;
-    width: 70px;
-    background-color: white;
-    .transition(all 0.2s ease);
+    .hydrator-filter input {
+      background-color: fade(@gray-dark, 30%);
+      border: 0;
+      color: white;
+      margin: 20px auto;
+      height: 35px;
+      width: 75%;
+      .border-radius(25px);
+      .box-shadow(none);
+      .placeholder-color(white);
+    }
     .item-heading {
       span:first-child {
         font-size: 18px;
@@ -33,76 +42,105 @@ my-side-panel {
       }
     }
     &.left {
-      left: 20px;
+      #gradient.horizontal(#A74017;#C95A33;0%;100%);
+      position: absolute;
+      top: 79px;
+      left: 0;
+      bottom: 0;
+      z-index: 1025;
       .btn.btn-info.btn-block {
         text-align: left;
       }
       .item .item-heading {
+        color: white;
+        background-color: fade(@gray-dark, 40%);
+        padding: 0 25px 0 10px;
+        height: 55px;
+        line-height: 55px;
         &.item-open {
           color: white;
         }
       }
+      &.expanded {
+        width: 290px;
+      }
     }
 
     &.right {
-      right: 20px;
-      .btn.btn-info.btn-block {
-        text-align: right;
-      }
-      .item .item-heading {
-        line-height: 70px;
-        height: 70px;
-        width: 70px;
-        @media (max-height: 550px) {
-          height: 40px;
-          line-height: 40px;
-        }
-        span:last-child {
-          display: none;
-        }
-      }
-      span.fa-sliders {
-        .rotate(90deg);
-      }
-    }
-
-    .btn.btn-info.btn-block {
       background-color: white;
-      border-bottom: 1px solid #DDD;
-      color: @cdap-header;
-      height: 30px;
-      padding: 5px 10px;
-      .border-radius(0);
-      .fa {
-        font-size: 11px;
-        &:first-child {
-          margin-right: -1px;
+      border-bottom: 1px solid #474753;
+      position: absolute;
+      top: -1px;
+      right: 0;
+      left: 0;
+      height: 80px;
+      .box-shadow(5px 0 10px fade(black, 50%));
+
+      div.btn {
+        .cask-btn(@border: 0, @border-radius: 0, @color: #202028, @padding: 0);
+        border-right: 1px solid transparent;
+        border-left: 1px solid @table-border-color;
+        height: 79px;
+        line-height: 79px;
+        width: 90px;
+        &:hover, &:focus {
+          border-left: 1px solid @table-border-color;
+        }
+      }
+
+      .adapter-metadata {
+        width: 600px;
+        padding: 15px;
+        h1 {
+          display: inline-block;
+          font-size: 20px;
+          font-weight: 500;
+          margin-top: 0;
+          margin-right: 10px;
+          a {
+            color: #202028;
+          }
+          + a {
+            color: #397cf1;
+            font-size: 16px;
+          }
+        }
+        a {
+          font-weight: 500;
+          text-decoration: none;
+          &.fa-pencil {
+            color: @cdap-lightgray;
+          }
+        }
+        p {
+          color: #666;
+          font-size: 14px;
+          font-weight: 400;
+          word-wrap: break-word;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
       }
     }
 
     &.expanded {
-      width: 120px;
 
       .item {
+        margin-bottom: 10px;
         .item-body, .item-heading {
           .name, .description {
             display: inline-block;
             vertical-align: top;
-            max-width: 70px;
             overflow-x: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
           }
         }
         .item-heading {
-          padding: 0 10px;
-          height: 50px;
-          line-height: 50px;
-          width: 120px;
+
           span {
             &:first-child {
-              font-size: 14px;
+              font-size: 21px;
               vertical-align: top;
               width: 14px;
               text-align: center;
@@ -113,21 +151,29 @@ my-side-panel {
           }
         }
         .item-body {
-          padding: 10px;
+          padding: 20px 10px 0;
           overflow-y: auto;
-          max-height: 50vh;
+          .flexbox();
+          flex-direction: row;
+          flex-wrap: wrap;
+          align-items: center;
+          justify-content: space-between;
+          // max-height: 50vh;
           // Adjust max height to prevent side panel from becoming unusable below a certain browser height
           @media (max-height: 550px) {
             max-height: 20vh;
           }
           .plugin-item {
-            width: 100px;
-            padding-left: 5px;
+            height: 40px;
+            width: 130px;
+            padding: 0 10px;
+            flex-basis: 130px;
             > .fa {
               font-size: 14px;
             }
             .name {
               font-size: 13px;
+              padding-left: 5px;
             }
           }
         }
@@ -135,7 +181,6 @@ my-side-panel {
     }
 
     .item {
-      border-bottom: 1px solid #DDD;
       color: @cdap-lightgray;
       cursor: pointer;
       font-size: 11px;
@@ -149,33 +194,7 @@ my-side-panel {
             padding-left: 5px;
           }
           &:last-child {
-            font-size: 8px;
-          }
-        }
-        &.item-open {
-          &.source {
-            background-color: @adapter-source;
-            + .item-body .plugin-item {
-              color: @adapter-source;
-            }
-          }
-          &.transform {
-            background-color: @adapter-transform;
-            + .item-body .plugin-item {
-              color: @adapter-transform;
-            }
-          }
-          &.sink {
-            background-color: @adapter-sink;
-            + .item-body .plugin-item {
-              color: @adapter-sink;
-            }
-          }
-          &.templates {
-            background-color: @cdap-header;
-            + .item-body .plugin-item {
-              color: @cdap-header;
-            }
+            font-size: 14px;
           }
         }
         .name, .description {
@@ -186,18 +205,13 @@ my-side-panel {
 
       .item-body {
         padding: 15px;
-        background-color: #9A9EAA;
-
         .plugin-item {
           background-color: white;
-          margin: 0 auto 10px;
+          margin-bottom: 10px;
           line-height: 40px;
           height: 40px;
           width: 40px;
           .border-radius(4px);
-          &:last-child {
-            margin-bottom: 4px;
-          }
           > .fa {
             font-size: 18px;
             text-align: center;

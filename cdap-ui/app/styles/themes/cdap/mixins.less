@@ -182,3 +182,22 @@
     display: none;  // Need this to hide default select in IE10
   }
 }
+
+.placeholder-color(@color: white, @font-weight: 500) {
+  &::-webkit-input-placeholder {
+    color: @color;
+    font-weight: @font-weight;
+  }
+  &:-moz-placeholder { // Firefox 18-
+    color: @color;
+    font-weight: @font-weight;
+  }
+  &::-moz-placeholder { // Firefox 19+
+    color: @color;
+    font-weight: @font-weight;
+  }
+  &:-ms-input-placeholder {
+    color: @color;
+    font-weight: @font-weight;
+  }
+}
