@@ -18,29 +18,26 @@ angular.module(PKG.name + '.feature.adapters')
   .controller('RightPanelController', function(EventPipe, CanvasFactory, MyAppDAGService, $scope, $timeout, $bootstrapModal, ModalConfirm, $alert, $state) {
     this.canvasOperations = [
       {
-        name: 'Settings',
-        icon: 'fa fa-sliders'
+        name: 'Import'
       },
       {
-        name: 'Publish',
-        icon: 'fa fa-cloud-upload'
+        name: 'Export'
       },
       {
-        name: 'Save Draft',
-        icon: 'fa fa-save'
+        name: 'Save Draft'
       },
       {
-        name: 'Config',
-        icon: 'fa fa-eye'
+        name: 'Validate'
       },
       {
-        name: 'Export',
-        icon: 'fa fa-download'
-      },
-      {
-        name: 'Import',
-        icon: 'fa fa-upload'
+        name: 'Publish'
       }
+      // {
+      //   name: 'Settings'
+      // },
+      // {
+      //   name: 'Config'
+      // }
     ];
 
     this.onRightSideGroupItemClicked = function(group) {
