@@ -24,24 +24,5 @@ if node['cdap']['version'].to_i > 2
   include_recipe 'cdap::ui'
 else
   include_recipe 'cdap::web_app'
-
-  ### Generate a certificate if SSL is enabled
-  execute 'generate-webapp-ssl-cert' do
-    ssl_enabled =
-      if node['cdap']['version'].to_f < 2.5 && node['cdap'].key?('cdap_site') &&
-         node['cdap']['cdap_site'].key?('security.server.ssl.enabled')
-        node['cdap']['cdap_site']['security.server.ssl.enabled']
-      elsif node['cdap'].key?('cdap_site') && node['cdap']['cdap_site'].key?('ssl.enabled')
-        node['cdap']['cdap_site']['ssl.enabled']
-      else
-        false
-      end
-
-    common_name = node['cdap']['security']['ssl_common_name']
-    keypath = node['cdap']['cdap_site']['dashboard.ssl.key']
-    certpath = node['cdap']['cdap_site']['dashboard.ssl.cert']
-    command "openssl req -x509 -nodes -days 3650 -newkey rsa:2048 -keyout #{keypath} -out #{certpath} -subj '/C=US/ST=CA/L=Palo Alto/OU=cdap/O=cdap/CN=#{common_name}'"
-    not_if { File.exist?(certpath) && File.exist?(keypath) }
-    only_if { ssl_enabled }
-  end
 end
+Chef::Log.warn('The cdap::web_app_init recipe is deprecated. Please, remove it from your run_list.')
