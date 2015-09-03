@@ -619,15 +619,15 @@ function genericRender(scope, filter, location) {
 
   scope.centerImage = function() {
     // Center svg.
-    var initialScale = 1.1;
+    var initialScale = 1;
     var svgWidth = svg.node().getBoundingClientRect().width;
+    var svgHeight = svg.node().getBoundingClientRect().height;
     if (svgWidth - g.graph().width <= 0) {
       scope.currentScale = svgWidth / g.graph().width;
       scope.translateX = 0;
-      scope.translateY = 0;
-
+      scope.translateY = ((svgHeight - g.graph().height) * scope.currentScale)/2;
     } else {
-      scope.translateX = (svgWidth - g.graph().width * initialScale) / 2;
+      scope.translateX = (svgWidth - g.graph().width * initialScale) / 2 + 10;
       scope.translateY = 20;
       scope.currentScale = initialScale;
     }
