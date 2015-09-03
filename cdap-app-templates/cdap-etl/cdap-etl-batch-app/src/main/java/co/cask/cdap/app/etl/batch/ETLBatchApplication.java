@@ -31,7 +31,7 @@ public class ETLBatchApplication extends AbstractApplication<ETLBatchConfig> {
     ETLBatchConfig config = getConfig();
     setDescription("Batch Extract-Transform-Load (ETL) Template");
     addMapReduce(new ETLMapReduce(config));
-    addWorkflow(new ETLWorkflow());
+    addWorkflow(new ETLWorkflow(config));
     scheduleWorkflow(Schedules.createTimeSchedule(SCHEDULE_NAME, "batch etl schedule", config.getSchedule()),
                      ETLWorkflow.NAME);
   }
