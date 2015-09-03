@@ -131,9 +131,7 @@ public class ETLTPFSTest extends BaseETLBatchTest {
                                                  Properties.TimePartitionedFileSetDataset.TPFS_NAME,
                                                  newFilesetName,
                                                  Properties.TimePartitionedFileSetDataset.FILE_PATH_FORMAT,
-                                                 "yyyy-MM-dd/HH-mm",
-                                                 Properties.TimePartitionedFileSetDataset.OUTPUT_TIME_ZONE,
-                                                 "America/Los_Angeles"));
+                                                 "yyyy-MM-dd/HH-mm"));
 
     ETLStage transform = new ETLStage("Projection", ImmutableMap.<String, String>of());
     return new ETLBatchConfig("* * * * *", source, sink, Lists.newArrayList(transform));

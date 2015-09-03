@@ -58,8 +58,9 @@ public abstract class TimePartitionedFileSetSink<KEY_OUT, VAL_OUT>
 
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
-    Preconditions.checkArgument(Strings.isNullOrEmpty(tpfsSinkConfig.filePathFormat)
-                                  && !Strings.isNullOrEmpty(tpfsSinkConfig.timeZone));
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(tpfsSinkConfig.filePathFormat)
+                                  || Strings.isNullOrEmpty(tpfsSinkConfig.timeZone),
+                                "Set the filePathFormat to set the timezone");
   }
 
   @Override
