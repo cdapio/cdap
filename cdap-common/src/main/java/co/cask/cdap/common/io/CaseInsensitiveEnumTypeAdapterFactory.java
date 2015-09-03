@@ -36,12 +36,13 @@ import java.util.Map;
  */
 public class CaseInsensitiveEnumTypeAdapterFactory implements TypeAdapterFactory {
   public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> type) {
+    @SuppressWarnings("unchecked")
     Class<T> rawType = (Class<T>) type.getRawType();
     if (!rawType.isEnum()) {
       return null;
     }
 
-    final Map<String, T> lowercaseToConstant = new HashMap<String, T>();
+    final Map<String, T> lowercaseToConstant = new HashMap<>();
     for (T constant : rawType.getEnumConstants()) {
       lowercaseToConstant.put(toLowercase(constant), constant);
     }
