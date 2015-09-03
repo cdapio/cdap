@@ -29,7 +29,8 @@ body.state-explore {
       height: 100%;
       display: inline-block;
       float: left;
-      background-color: yellow;
+      background-color: @cdap-darkness;
+      overflow-y: auto;
     }
 
 
@@ -43,7 +44,7 @@ body.state-explore {
         height: 100%;
 
         .tab-heading {
-          background-color: white;
+          background-color: @cdap-darkness;
           padding: 5px;
           height: 100%;
           overflow-y: hidden;
@@ -61,9 +62,9 @@ body.state-explore {
             position: absolute;
             white-space: nowrap;
 
-
             h3 {
               margin: 0px;
+              color: white;
             }
           }
         }
