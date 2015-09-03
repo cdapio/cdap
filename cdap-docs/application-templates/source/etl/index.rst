@@ -38,7 +38,8 @@ or real time. The  *ETLBatch* and *ETLRealtime* templates consist of a variety o
 transformations and sinks that are packaged together.
 
 The batch sources can write to any batch sinks that are available and real-time sources can
-write to any real-time sinks. Transformations work with either sinks or sources.
+write to any real-time sinks. Transformations work with either sinks or sources. Transformations
+can use *validators* to test data and check that it follows user-specified rules.
 
 This lists the available sources, sinks and transformations (transforms):
 
@@ -65,6 +66,7 @@ This lists the available sources, sinks and transformations (transforms):
          - Script
          - ScriptFilter
          - StructuredRecordToGenericRecord
+         - Validator
 
      - - **Batch Sinks**
 
@@ -90,6 +92,7 @@ This lists the available sources, sinks and transformations (transforms):
          - Script
          - ScriptFilter
          - StructuredRecordToGenericRecord
+         - Validator
 
      - - **Real-time Sinks**
 
@@ -121,7 +124,8 @@ specified in-memory.
 The sources, transformations and sinks are generically called plugins. Plugins provide a
 way to extend the functionality of existing templates. An adapter can be created with
 existing plugins or, if the user wishes, they can write their own source, transform, and
-sink plugins to add their own.
+sink plugins to add their own. You can write your own validator using functions supplied in
+either the :ref:`CoreValidator <apptemplates-etl-validators-corevalidator>` or implement your own.
 
 
 Template and Plugin Details

@@ -9,5 +9,5 @@ Validators
 .. toctree::
    :maxdepth: 1
 
-    CoreValidators <core>
+    CoreValidator <core>
 
