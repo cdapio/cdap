@@ -78,7 +78,8 @@ public class AbstractProgramRuntimeServiceTest {
     runtimeService.startAndWait();
     try {
       Program program = createDummyProgram();
-      final ProgramController controller = runtimeService.run(program, new SimpleProgramOptions(program)).getController();
+      final ProgramController controller =
+        runtimeService.run(program, new SimpleProgramOptions(program)).getController();
       Tasks.waitFor(ProgramController.State.COMPLETED, new Callable<ProgramController.State>() {
         @Override
         public ProgramController.State call() throws Exception {
