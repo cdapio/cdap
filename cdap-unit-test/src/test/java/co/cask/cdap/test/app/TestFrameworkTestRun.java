@@ -160,6 +160,11 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     } catch (IllegalStateException e) {
       // expected
     }
+
+    AppRequest<AppWithDuplicateStreams.ConfigClass> createRequest = new AppRequest<>(
+      new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()),
+      new AppWithDuplicateStreams.ConfigClass(false, false, false));
+    deployApplication(appId, createRequest);
   }
 
   @Test
