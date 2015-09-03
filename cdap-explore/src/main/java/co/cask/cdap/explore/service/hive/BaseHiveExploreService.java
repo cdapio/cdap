@@ -1156,17 +1156,6 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     return false;
   }
 
-  private SessionHandle openSession(Map<String, String> sessionConf) throws HiveSQLException {
-    SessionHandle sessionHandle = cliService.openSession("", "", sessionConf);
-    try {
-      HiveStreamRedirector.redirectToLogger(SessionState.get());
-    } catch (Throwable t) {
-      LOG.error("Error redirecting Hive output streams to logs.", t);
-    }
-
-    return sessionHandle;
-  }
-
   void closeInternal(QueryHandle handle, OperationInfo opInfo)
     throws ExploreException, SQLException {
     try {
@@ -1187,8 +1176,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     }
   }
 
-  protected SessionHandle openHiveSession(Map<String, String> sessionConf) throws HiveSQLException {
-    SessionHandle sessionHandle = cliService.openSession("", "", sessionConf);
+  private SessionHandle openHiveSession(Map<String, String> sessionConf) throws HiveSQLException {
+    SessionHandle sessionHandle = doOpenHiveSession(sessionConf);
     try {
       HiveStreamRedirector.redirectToLogger(SessionState.get());
     } catch (Throwable t) {
@@ -1196,6 +1185,10 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     }
 
     return sessionHandle;
+  }
+
+  protected SessionHandle doOpenHiveSession(Map<String, String> sessionConf) throws HiveSQLException {
+    return cliService.openSession("", "", sessionConf);
   }
 
   private void closeHiveSession(SessionHandle sessionHandle) {
