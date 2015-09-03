@@ -102,7 +102,8 @@ public abstract class AbstractProgramManager<T extends ProgramManager> implement
     }
 
     if (!statusMatched) {
-      throw new IllegalStateException("Program state not as expected. Expected " + status);
+      throw new IllegalStateException(String.format("Program state for '%s' not as expected. Expected '%s'.",
+                                                    programId, status));
     }
   }
 
