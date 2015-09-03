@@ -39,12 +39,14 @@ public abstract class TimePartitionedFileSetSink<KEY_OUT, VAL_OUT>
   protected static final String BASE_PATH_DESC = "The base path for the time partitioned fileset. Defaults to the " +
     "name of the dataset.";
   protected static final String PATH_FORMAT_DESC = "The format for the path; for example: " +
-    "'yyyy-MM-dd/HH-mm,America/Los_Angeles' will create a file path ending in the format of 2015-01-01/20-42, " +
-    "with the time of the partition being the time in the PDT timezone. " +
-    "The string provided will be split on commas, with the first argument being provided to " +
-    "{@link java.text.SimpleDateFormat}, and the second (optional) argument being the timezone (defaults to UTC).  " +
+    "'yyyy-MM-dd/HH-mm' will create a file path ending in the format of 2015-01-01/20-42. " +
+    "The string provided will be provided to SimpleDataFormat. " +
     "If left blank, then the partitions will be of the form 2015-01-01/20-42.142017372000. " +
     "Note that each partition must have a unique file path or a runtime exception will be thrown.";
+  protected static final String TIME_ZONE_DESC = "The time zone to format the partition. " +
+    "This option is only used if pathFormat is set. If left blank, defaults to UTC. " +
+    "Note that the time zone provided must be recognized by TimeZone.getTimeZone(String); " +
+    "for example: \"America/Los_Angeles\"";
 
   protected final TPFSSinkConfig tpfsSinkConfig;
 
@@ -58,6 +60,9 @@ public abstract class TimePartitionedFileSetSink<KEY_OUT, VAL_OUT>
     TimePartitionedFileSetArguments.setOutputPartitionTime(sinkArgs, context.getLogicalStartTime());
     if (!Strings.isNullOrEmpty(tpfsSinkConfig.filePathFormat)) {
       TimePartitionedFileSetArguments.setOutputPathFormat(sinkArgs, tpfsSinkConfig.filePathFormat);
+      if (!Strings.isNullOrEmpty(tpfsSinkConfig.timeZone)) {
+        TimePartitionedFileSetArguments.setOutputTimeZone(sinkArgs, tpfsSinkConfig.timeZone);
+      }
     }
     TimePartitionedFileSet sink = context.getDataset(tpfsSinkConfig.name, sinkArgs);
     context.setOutput(tpfsSinkConfig.name, sink);

@@ -4,7 +4,7 @@
     "position": [ "group1" ],
     "group1": {
        "display" : "Time Partitioned Fileset - AVRO",
-       "position" : [ "name", "basePath",  "filePathFormat", "duration", "delay"],
+       "position" : [ "name", "basePath",  "filePathFormat", "timeZone", "duration", "delay"],
        "fields" : {
           "name" : {
              "widget": "dataset-selector",
@@ -19,6 +19,11 @@
           "filePathFormat": {
             "widget": "textbox",
             "label": "Partition Directory Format"
+          },
+
+          "timeZone": {
+            "widget": "textbox",
+            "label": "Time Zone"
           },
 
          "duration" : {

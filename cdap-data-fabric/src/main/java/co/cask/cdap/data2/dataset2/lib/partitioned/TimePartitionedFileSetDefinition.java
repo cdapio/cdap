@@ -91,10 +91,10 @@ public class TimePartitionedFileSetDefinition extends PartitionedFileSetDefiniti
         if (Strings.isNullOrEmpty(outputPathFormat)) {
           path = String.format("%tF/%tH-%tM.%d", time, time, time, time);
         } else {
-          SimpleDateFormat format = new SimpleDateFormat(outputPathFormat.split(",")[0]);
-          if (outputPathFormat.split(",").length > 1) {
-            //user included a time zone
-            format.setTimeZone(TimeZone.getTimeZone(outputPathFormat.split(",")[1]));
+          SimpleDateFormat format = new SimpleDateFormat(outputPathFormat);
+          String timeZoneID = TimePartitionedFileSetArguments.getOutputTimeZone(arguments);
+          if (!Strings.isNullOrEmpty(timeZoneID)) {
+            format.setTimeZone(TimeZone.getTimeZone(timeZoneID));
           }
           path = format.format(new Date(time));
         }

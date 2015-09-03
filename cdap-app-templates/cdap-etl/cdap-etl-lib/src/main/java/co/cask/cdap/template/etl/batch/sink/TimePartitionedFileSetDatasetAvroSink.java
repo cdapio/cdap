@@ -102,8 +102,9 @@ public class TimePartitionedFileSetDatasetAvroSink extends
     @Description(SCHEMA_DESC)
     private String schema;
 
-    public TPFSAvroSinkConfig(String name, String schema, @Nullable String basePath, @Nullable String pathFormat) {
-      super(name, basePath, pathFormat);
+    public TPFSAvroSinkConfig(String name, String schema, @Nullable String basePath, @Nullable String pathFormat,
+                              @Nullable String timeZone) {
+      super(name, basePath, pathFormat, timeZone);
       this.schema = schema;
     }
   }

@@ -37,9 +37,15 @@ public abstract class TPFSSinkConfig extends PluginConfig {
   @Nullable
   protected String filePathFormat;
 
-  public TPFSSinkConfig(String name, @Nullable String basePath, @Nullable String filePathFormat) {
+  @Description(TimePartitionedFileSetSink.TIME_ZONE_DESC)
+  @Nullable
+  protected String timeZone;
+
+  public TPFSSinkConfig(String name, @Nullable String basePath,
+                        @Nullable String filePathFormat, @Nullable String timeZone) {
     this.name = name;
     this.basePath = basePath;
     this.filePathFormat = filePathFormat;
+    this.timeZone = timeZone;
   }
 }

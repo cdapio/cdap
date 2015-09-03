@@ -89,6 +89,7 @@ public final class Properties {
     public static final String DURATION = "duration";
     public static final String DELAY = "delay";
     public static final String FILE_PATH_FORMAT = "filePathFormat";
+    public static final String OUTPUT_TIME_ZONE = "timeZone";
   }
 
   /**
