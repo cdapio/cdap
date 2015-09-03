@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.runtime.distributed;
 
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.proto.Id;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.slf4j.Logger;
@@ -36,7 +37,7 @@ final class ServiceTwillProgramController extends AbstractTwillProgramController
   private final Lock lock;
   private final DistributedServiceRunnableInstanceUpdater instanceUpdater;
 
-  ServiceTwillProgramController(String programId, TwillController controller,
+  ServiceTwillProgramController(Id.Program programId, TwillController controller,
                                 DistributedServiceRunnableInstanceUpdater instanceUpdater, RunId runId) {
     super(programId, controller, runId);
     this.lock = new ReentrantLock();

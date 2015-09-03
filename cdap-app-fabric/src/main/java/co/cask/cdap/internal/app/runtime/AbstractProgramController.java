@@ -17,9 +17,10 @@
 package co.cask.cdap.internal.app.runtime;
 
 import co.cask.cdap.app.runtime.ProgramController;
+import co.cask.cdap.proto.Id;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Maps;
+import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
@@ -28,12 +29,16 @@ import org.apache.twill.common.Cancellable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.LinkedList;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentMap;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 /**
@@ -45,18 +50,44 @@ public abstract class AbstractProgramController implements ProgramController {
   private static final Logger LOG = LoggerFactory.getLogger(ProgramController.class);
 
   private final AtomicReference<State> state;
-  private final String programName;
+  private final Id.Program programId;
   private final RunId runId;
-  private final ConcurrentMap<ListenerCaller, Cancellable> listeners;
+  private final String componentName;
+  private final Map<ListenerCaller, Cancellable> listeners;
   private final Listener caller;
+  private final ExecutorService executor;
+  private final String name;
+
   private Throwable failureCause;
 
-  protected AbstractProgramController(String programName, RunId runId) {
+  protected AbstractProgramController(final Id.Program programId, RunId runId) {
+    this(programId, runId, null);
+  }
+
+  protected AbstractProgramController(Id.Program programId, RunId runId, @Nullable String componentName) {
     this.state = new AtomicReference<>(State.STARTING);
-    this.programName = programName;
+    this.programId = programId;
     this.runId = runId;
-    this.listeners = Maps.newConcurrentMap();
+    this.componentName = componentName;
+    this.listeners = new HashMap<>();
     this.caller = new MultiListenerCaller();
+    this.name = programId + (componentName == null ? "" : "-" + componentName) + "-" + runId.getId();
+
+    // Create a single thread executor that doesn't keep core thread and the thread will shutdown when there
+    // is no pending task. In this way, we don't need to shutdown the executor since there will be no thread
+    // hanging around when it is idle.
+    this.executor = new ThreadPoolExecutor(0, 1, 0, TimeUnit.SECONDS,
+                                           new LinkedBlockingQueue<Runnable>(), new ThreadFactory() {
+      @Override
+      public Thread newThread(Runnable r) {
+        return new Thread(null, r, "pcontroller-" + name);
+      }
+    });
+  }
+
+  @Override
+  public Id.Program getProgramId() {
+    return programId;
   }
 
   @Override
@@ -64,13 +95,20 @@ public abstract class AbstractProgramController implements ProgramController {
     return runId;
   }
 
+  @Nullable
+  @Override
+  public String getComponentName() {
+    return componentName;
+  }
+
   @Override
   public final ListenableFuture<ProgramController> suspend() {
     if (!state.compareAndSet(State.ALIVE, State.SUSPENDING)) {
-      return Futures.immediateFailedFuture(new IllegalStateException("Suspension not allowed").fillInStackTrace());
+      return Futures.immediateFailedFuture(
+        new IllegalStateException("Suspension not allowed for " + programId + " in " + state.get()));
     }
     final SettableFuture<ProgramController> result = SettableFuture.create();
-    executor(State.SUSPENDING).execute(new Runnable() {
+    executor.execute(new Runnable() {
       @Override
       public void run() {
         try {
@@ -91,10 +129,11 @@ public abstract class AbstractProgramController implements ProgramController {
   @Override
   public final ListenableFuture<ProgramController> resume() {
     if (!state.compareAndSet(State.SUSPENDED, State.RESUMING)) {
-      return Futures.immediateFailedFuture(new IllegalStateException("Resumption not allowed").fillInStackTrace());
+      return Futures.immediateFailedFuture(
+        new IllegalStateException("Resumption not allowed for " + name + " in " + state.get()));
     }
     final SettableFuture<ProgramController> result = SettableFuture.create();
-    executor(State.RESUMING).execute(new Runnable() {
+    executor.execute(new Runnable() {
       @Override
       public void run() {
         try {
@@ -116,10 +155,11 @@ public abstract class AbstractProgramController implements ProgramController {
     if (!state.compareAndSet(State.STARTING, State.STOPPING)
       && !state.compareAndSet(State.ALIVE, State.STOPPING)
       && !state.compareAndSet(State.SUSPENDED, State.STOPPING)) {
-      return Futures.immediateFailedFuture(new IllegalStateException("Stopping not allowed").fillInStackTrace());
+      return Futures.immediateFailedFuture(
+        new IllegalStateException("Stopping not allowed for " + name + " in " + state.get()));
     }
     final SettableFuture<ProgramController> result = SettableFuture.create();
-    executor(State.STOPPING).execute(new Runnable() {
+    executor.execute(new Runnable() {
       @Override
       public void run() {
         try {
@@ -141,11 +181,10 @@ public abstract class AbstractProgramController implements ProgramController {
    */
   protected void complete() {
     if (!state.compareAndSet(State.ALIVE, State.COMPLETED)) {
-      LOG.debug("Cannot transit to COMPLETED state from {} state: {} {}", state.get(), programName, runId);
+      LOG.debug("Cannot transit to COMPLETED state from {} state: {} {}", state.get(), name);
       return;
     }
-    LOG.debug("Program stopped: {} {}", programName, runId);
-    executor(State.COMPLETED).execute(new Runnable() {
+    executor.execute(new Runnable() {
       @Override
       public void run() {
         state.set(State.COMPLETED);
@@ -155,30 +194,49 @@ public abstract class AbstractProgramController implements ProgramController {
   }
 
   @Override
-  public final Cancellable addListener(Listener listener, Executor executor) {
+  public final Cancellable addListener(Listener listener, final Executor listenerExecutor) {
     Preconditions.checkNotNull(listener, "Listener shouldn't be null.");
-    Preconditions.checkNotNull(executor, "Executor shouldn't be null.");
-    final ListenerCaller caller = new ListenerCaller(listener, executor, state.get());
-    Cancellable cancellable = new Cancellable() {
+    Preconditions.checkNotNull(listenerExecutor, "Executor shouldn't be null.");
+
+    final ListenerCaller caller = new ListenerCaller(listener, listenerExecutor);
+    final Cancellable cancellable = new Cancellable() {
       @Override
       public void cancel() {
-        listeners.remove(caller);
+        // Simply remove the listener from the map through the executor and block on the completion
+        Futures.getUnchecked(executor.submit(new Runnable() {
+          @Override
+          public void run() {
+            listeners.remove(caller);
+          }
+        }));
       }
     };
 
-    Cancellable result = listeners.putIfAbsent(caller, cancellable);
-    if (result != null) {
-      return result;
+    try {
+      return executor.submit(new Callable<Cancellable>() {
+        @Override
+        public Cancellable call() throws Exception {
+          Cancellable existing = listeners.get(caller);
+          if (existing != null) {
+            return existing;
+          }
+          listeners.put(caller, cancellable);
+          caller.init(getState(), getFailureCause());
+          return cancellable;
+        }
+      }).get();
+    } catch (Exception e) {
+      // Not expecting exception since the Callable only do action on Map and calling caller.init, which
+      // already have exceptions handled inside the method. Also, we never shutdown the executor explicitly,
+      // there shouldn't be interrupted exception as well.
+      throw Throwables.propagate(Throwables.getRootCause(e));
     }
-
-    caller.init(state.get(), getFailureCause());
-    return cancellable;
   }
 
   @Override
   public final ListenableFuture<ProgramController> command(final String name, final Object value) {
     final SettableFuture<ProgramController> result = SettableFuture.create();
-    executor("command").execute(new Runnable() {
+    executor.execute(new Runnable() {
 
       @Override
       public void run() {
@@ -203,21 +261,17 @@ public abstract class AbstractProgramController implements ProgramController {
     return failureCause;
   }
 
-  protected final void error(Throwable t) {
-    error(t, null);
-  }
-
   /**
    * Force this controller into error state.
-   * @param t The
+   * @param t The failure cause
    */
-  protected final <V> void error(Throwable t, SettableFuture<V> future) {
-    failureCause = t;
-    state.set(State.ERROR);
-    if (future != null) {
-      future.setException(t);
-    }
-    caller.error(t);
+  protected final void error(final Throwable t) {
+    executor.execute(new Runnable() {
+      @Override
+      public void run() {
+        error(t, null);
+      }
+    });
   }
 
   /**
@@ -225,31 +279,16 @@ public abstract class AbstractProgramController implements ProgramController {
    */
   protected final void started() {
     if (!state.compareAndSet(State.STARTING, State.ALIVE)) {
-      LOG.debug("Cannot transit to ALIVE state from {} state: {} {}", state.get(), programName, runId);
+      LOG.debug("Cannot transit to ALIVE state from {} state: {}", state.get(), name);
       return;
     }
-    LOG.debug("Program started: {} {}", programName, runId);
-    executor(State.ALIVE).execute(new Runnable() {
+    executor.execute(new Runnable() {
       @Override
       public void run() {
         state.set(State.ALIVE);
         caller.alive();
       }
     });
-  }
-
-  /**
-   * Creates a new executor that execute using new thread everytime.
-   */
-  protected Executor executor(final String name) {
-    return new Executor() {
-      @Override
-      public void execute(@Nonnull Runnable command) {
-        Thread t = new Thread(command, programName + "-" + state);
-        t.setDaemon(true);
-        t.start();
-      }
-    };
   }
 
   protected abstract void doSuspend() throws Exception;
@@ -260,10 +299,23 @@ public abstract class AbstractProgramController implements ProgramController {
 
   protected abstract void doCommand(String name, Object value) throws Exception;
 
-  private Executor executor(State state) {
-    return executor(state.name());
+  /**
+   * Force this controller into error state and set the failure into the given future.
+   * This method should only be called from the single thread executor of this class.
+   * @param t The failure cause
+   */
+  private <V> void error(Throwable t, SettableFuture<V> future) {
+    failureCause = t;
+    state.set(State.ERROR);
+    if (future != null) {
+      future.setException(t);
+    }
+    caller.error(t);
   }
 
+  /**
+   * Class for making calls to multiple {@link Listener}s on state change.
+   */
   private final class MultiListenerCaller implements Listener {
 
     @Override
@@ -330,66 +382,107 @@ public abstract class AbstractProgramController implements ProgramController {
     }
   }
 
-  private static final class ListenerCaller implements Listener, Runnable {
+  /**
+   * Wrapper for making calls to {@link Listener} through an {@link Executor}.
+   */
+  private static final class ListenerCaller implements Listener {
 
     private final Listener listener;
     private final Executor executor;
-    private final State initState;
-    private final Queue<ListenerTask> tasks;
-    private State lastState;
 
-    private ListenerCaller(Listener listener, Executor executor, State initState) {
+    private ListenerCaller(Listener listener, Executor executor) {
       this.listener = listener;
       this.executor = executor;
-      this.initState = initState;
-      this.tasks = new LinkedList<>();
     }
 
     @Override
-    public void init(final State currentState, @Nullable Throwable cause) {
-      // The init state is being passed from constructor, hence ignoring the state and failure cause
-      // passed to this method
-      addTask(null);
+    public void init(final State currentState, @Nullable final Throwable cause) {
+      executor.execute(new Runnable() {
+        @Override
+        public void run() {
+          listener.init(currentState, cause);
+        }
+      });
     }
 
     @Override
     public void suspending() {
-      addTask(State.SUSPENDING);
+      executor.execute(new Runnable() {
+        @Override
+        public void run() {
+          listener.suspending();
+        }
+      });
     }
 
     @Override
     public void suspended() {
-      addTask(State.SUSPENDED);
+      executor.execute(new Runnable() {
+        @Override
+        public void run() {
+          listener.suspended();
+        }
+      });
     }
 
     @Override
     public void resuming() {
-      addTask(State.RESUMING);
+      executor.execute(new Runnable() {
+        @Override
+        public void run() {
+          listener.resuming();
+        }
+      });
     }
 
     @Override
     public void alive() {
-      addTask(State.ALIVE);
+      executor.execute(new Runnable() {
+        @Override
+        public void run() {
+          listener.alive();
+        }
+      });
     }
 
     @Override
     public void stopping() {
-      addTask(State.STOPPING);
+      executor.execute(new Runnable() {
+        @Override
+        public void run() {
+          listener.stopping();
+        }
+      });
     }
 
     @Override
     public void completed() {
-      addTask(State.COMPLETED);
+      executor.execute(new Runnable() {
+        @Override
+        public void run() {
+          listener.completed();
+        }
+      });
     }
 
     @Override
     public void killed() {
-      addTask(State.KILLED);
+      executor.execute(new Runnable() {
+        @Override
+        public void run() {
+          listener.killed();
+        }
+      });
     }
 
     @Override
     public void error(final Throwable cause) {
-      addTask(State.ERROR, cause);
+      executor.execute(new Runnable() {
+        @Override
+        public void run() {
+          listener.error(cause);
+        }
+      });
     }
 
     @Override
@@ -409,135 +502,6 @@ public abstract class AbstractProgramController implements ProgramController {
     @Override
     public int hashCode() {
       return Objects.hashCode(listener);
-    }
-
-    @Override
-    public void run() {
-      while (true) {
-        ListenerTask task;
-
-        // Get the first task in the queue, don't dequeue so that the queue does not get emptied.
-        synchronized (this) {
-          task = tasks.peek();
-        }
-
-        // If no task in the queue, break the loop as there is nothing to execute
-        if (task == null) {
-          break;
-        }
-
-        // Trigger only if state actually changed
-        if (!task.getState().equals(lastState)) {
-          // Run the task without holding lock
-          try {
-            task.run();
-          } catch (Throwable t) {
-            LOG.warn(t.getMessage(), t);
-          } finally {
-            lastState = task.getState();
-          }
-        }
-
-        // Dequeue the task that just processed and check if the queue is empty. These two operations need to be atomic.
-        // Otherwise tasks may get double executed since addTask() uses isEmpty to determine if there is need
-        // to submit task to executor.
-        synchronized (this) {
-          tasks.poll();
-          if (tasks.isEmpty()) {
-            break;
-          }
-        }
-      }
-    }
-
-    /**
-     * Adds a task to the end of the task queue.
-     *
-     * @param state State of the task. If {@code null}, the init state will be used.
-     */
-    private void addTask(@Nullable State state) {
-      addTask(state, null);
-    }
-
-    /**
-     * Adds a task to the end of the task queue.
-     *
-     * @param state state of the task. If {@code null}, the init state will be used.
-     * @param failureCause cause of the error state if not {@code null}.
-     */
-    private void addTask(@Nullable State state, @Nullable Throwable failureCause) {
-      boolean execute;
-      State taskState = (state == null) ? initState : state;
-
-      synchronized (this) {
-        // Determine if there is need to submit task to executor and add the task to the queue.
-        // These two steps need to be atomic.
-        execute = tasks.isEmpty();
-        tasks.add(new ListenerTask(listener, state == null, taskState, failureCause));
-      }
-      if (execute) {
-        executor.execute(this);
-      }
-    }
-  }
-
-  /**
-   * Represents a task to be executed as {@link Listener} callback.
-   */
-  private static final class ListenerTask implements Runnable {
-
-    private final Listener listener;
-    private final boolean initTask;
-    private final State state;
-    private final Throwable failureCause;
-
-    private ListenerTask(Listener listener, boolean initTask, State state, @Nullable Throwable failureCause) {
-      this.listener = listener;
-      this.initTask = initTask;
-      this.state = state;
-      this.failureCause = failureCause;
-    }
-
-    public State getState() {
-      return state;
-    }
-
-    @Override
-    public void run() {
-      if (initTask) {
-        listener.init(state, failureCause);
-        return;
-      }
-
-      switch (state) {
-        case STARTING:
-          // No-op
-          break;
-        case ALIVE:
-          listener.alive();
-          break;
-        case SUSPENDING:
-          listener.suspending();
-          break;
-        case SUSPENDED:
-          listener.suspended();
-          break;
-        case RESUMING:
-          listener.resuming();
-          break;
-        case STOPPING:
-          listener.stopping();
-          break;
-        case COMPLETED:
-          listener.completed();
-          break;
-        case KILLED:
-          listener.killed();
-          break;
-        case ERROR:
-          listener.error(failureCause);
-          break;
-      }
     }
   }
 }

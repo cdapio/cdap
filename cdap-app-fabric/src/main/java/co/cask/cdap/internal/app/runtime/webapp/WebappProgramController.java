@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.runtime.webapp;
 
 import co.cask.cdap.internal.app.runtime.AbstractProgramController;
+import co.cask.cdap.proto.Id;
 import co.cask.http.NettyHttpService;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Cancellable;
@@ -32,9 +33,9 @@ public class WebappProgramController extends AbstractProgramController {
   private final NettyHttpService httpService;
   private final Cancellable cancellable;
 
-  public WebappProgramController(String programName, RunId runId, NettyHttpService httpService,
+  public WebappProgramController(Id.Program programId, RunId runId, NettyHttpService httpService,
                                  Cancellable cancellable) {
-    super(programName, runId);
+    super(programId, runId);
     this.httpService = httpService;
     this.cancellable = cancellable;
     started();

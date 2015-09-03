@@ -19,6 +19,8 @@ package co.cask.cdap.app.runtime;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
+import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramType;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
@@ -50,11 +52,12 @@ public class ProgramControllerTest {
 
     int serviceCount = 1000;
     final CountDownLatch latch = new CountDownLatch(serviceCount);
+    Id.Program programId = Id.Program.from(Id.Namespace.DEFAULT, "test", ProgramType.SERVICE, "test");
     for (int i = 0; i < serviceCount; i++) {
       // Creates a controller for a guava service do nothing in start/stop.
       // The short time in start creates a chance to have out-of-order init() and alive() call if there is a race.
       Service service = new TestService(0, 0);
-      ProgramController controller = new ProgramControllerServiceAdapter(service, "Test", RunIds.generate());
+      ProgramController controller = new ProgramControllerServiceAdapter(service, programId, RunIds.generate());
       ListenableFuture<Service.State> startCompletion = service.start();
 
       controller.addListener(new AbstractListener() {

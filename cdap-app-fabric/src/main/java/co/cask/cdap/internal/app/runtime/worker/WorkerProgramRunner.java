@@ -32,6 +32,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.templates.AdapterDefinition;
 import co.cask.tephra.TransactionSystemClient;
@@ -75,9 +76,6 @@ public class WorkerProgramRunner implements ProgramRunner {
 
   @Override
   public ProgramController run(Program program, ProgramOptions options) {
-    String workerName = options.getName();
-    Preconditions.checkNotNull(workerName, "Missing worker name.");
-
     ApplicationSpecification appSpec = program.getApplicationSpecification();
     Preconditions.checkNotNull(appSpec, "Missing application specification.");
 
@@ -119,7 +117,8 @@ public class WorkerProgramRunner implements ProgramRunner {
       createArtifactPluginInstantiator(program.getClassLoader()));
     WorkerDriver worker = new WorkerDriver(program, newWorkerSpec, context);
 
-    ProgramControllerServiceAdapter controller = new WorkerControllerServiceAdapter(worker, workerName, runId);
+    ProgramController controller = new WorkerControllerServiceAdapter(worker, program.getId(), runId,
+                                                                      workerSpec.getName() + "-" + instanceId);
     worker.start();
     return controller;
   }
@@ -151,8 +150,8 @@ public class WorkerProgramRunner implements ProgramRunner {
   private static final class WorkerControllerServiceAdapter extends ProgramControllerServiceAdapter {
     private final WorkerDriver workerDriver;
 
-    WorkerControllerServiceAdapter(WorkerDriver workerDriver, String programName, RunId runId) {
-      super(workerDriver, programName, runId);
+    WorkerControllerServiceAdapter(WorkerDriver workerDriver, Id.Program programId, RunId runId, String componentName) {
+      super(workerDriver, programId, runId, componentName);
       this.workerDriver = workerDriver;
     }
 

@@ -561,6 +561,12 @@ public abstract class Id {
       return result;
     }
 
+    @Override
+    public String toString() {
+      return String.format("%s.%s.%s.%s",
+                           type.name().toLowerCase(), application.getNamespaceId(), application.getId(), id);
+    }
+
     public static Program from(Application appId, ProgramType type, String pgmId) {
       return new Program(appId, type, pgmId);
     }
