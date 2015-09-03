@@ -38,6 +38,8 @@ import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import com.google.common.base.Predicate;
+import com.google.common.base.Throwables;
+import com.google.common.collect.Collections2;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
@@ -48,6 +50,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -257,34 +260,58 @@ public class ProgramLifecycleService extends AbstractIdleService {
   void validateAndCorrectRunningRunRecords(final ProgramType programType, Set<String> processedInvalidRunRecordIds) {
     final Map<RunId, RuntimeInfo> runIdToRuntimeInfo = runtimeService.list(programType);
 
-    List<RunRecordMeta> invalidRunRecords = store.getRuns(ProgramRunStatus.RUNNING, new Predicate<RunRecordMeta>() {
+    LOG.trace("Start getting run records not actually running ...");
+    List<RunRecordMeta> notActuallyRunning = store.getRuns(ProgramRunStatus.RUNNING, new Predicate<RunRecordMeta>() {
       @Override
-      public boolean apply(@Nullable RunRecordMeta input) {
-        if (input == null) {
-          return false;
-        }
+      public boolean apply(RunRecordMeta input) {
         String runId = input.getPid();
-        // check for program Id for the run record, if null then it is invalid program type.
-        Id.Program targetProgramId = retrieveProgramIdForRunRecord(programType, runId);
-
-        // Check if run id is for the right program type and it is not actually running.
-        return (targetProgramId != null) && !runIdToRuntimeInfo.containsKey(RunIds.fromString(runId));
+        // Check if it is not actually running.
+        return !runIdToRuntimeInfo.containsKey(RunIds.fromString(runId));
       }
     });
+    LOG.trace("End getting {} run records not actually running.", notActuallyRunning.size());
+
+    final Map<String, Id.Program> runIdToProgramId = new HashMap<>();
+
+    LOG.trace("Start getting invalid run records  ...");
+    Collection<RunRecordMeta> invalidRunRecords =
+      Collections2.filter(notActuallyRunning, new Predicate<RunRecordMeta>() {
+        @Override
+        public boolean apply(RunRecordMeta input) {
+          String runId = input.getPid();
+          // check for program Id for the run record, if null then it is invalid program type.
+          Id.Program targetProgramId = retrieveProgramIdForRunRecord(programType, runId);
+
+          // Check if run id is for the right program type
+          if (targetProgramId != null) {
+            runIdToProgramId.put(runId, targetProgramId);
+            return true;
+          } else {
+            return false;
+          }
+        }
+      });
+    LOG.trace("End getting invalid run records.");
 
     if (!invalidRunRecords.isEmpty()) {
       LOG.warn("Found {} RunRecords with RUNNING status but the program is not actually running for program type {}",
                invalidRunRecords.size(), programType.getPrettyName());
+    } else {
+      LOG.trace("No RunRecords found with RUNNING status but the program is not actually running for program type {}",
+                programType.getPrettyName());
     }
 
     // Now lets correct the invalid RunRecords
     for (RunRecordMeta invalidRunRecordMeta : invalidRunRecords) {
-      String runId = invalidRunRecordMeta.getPid();
-      Id.Program targetProgramId = retrieveProgramIdForRunRecord(programType, runId);
       boolean shouldCorrect = shouldCorrectForWorkflowChildren(invalidRunRecordMeta, processedInvalidRunRecordIds);
       if (!shouldCorrect) {
+        LOG.trace("Will not correct invalid run record {} since it's parent workflow still running.",
+                  invalidRunRecordMeta);
         continue;
       }
+
+      String runId = invalidRunRecordMeta.getPid();
+      Id.Program targetProgramId = runIdToProgramId.get(runId);
 
       LOG.warn("Fixing RunRecord {} in program {} of type {} with RUNNING status but the program is not running",
                runId, targetProgramId, programType.getPrettyName());
@@ -468,6 +495,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
         RunRecordsCorrectorRunnable.LOG.debug("End correcting invalid run records.");
       } catch (Throwable t) {
         // Ignore any exception thrown since this behaves like daemon thread.
+        LOG.warn("Unable to complete correcting run records: {}", Throwables.getRootCause(t).getMessage());
         LOG.debug("Exception thrown when running run id cleaner.", t);
       }
     }
