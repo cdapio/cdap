@@ -58,8 +58,7 @@ public class HttpExceptionHandler extends ExceptionHandler {
   }
 
   private void logWarnings(HttpRequest request, Throwable t) {
-    LOG.trace("Error in handling request={} {} for user={}:",
-              request.getMethod().getName(), request.getUri(),
+    LOG.trace("Error in handling request={} {} for user={}:", request.getMethod().getName(), request.getUri(),
               SecurityRequestContext.getUserId().or("<null>"), t);
   }
 }
