@@ -35,9 +35,7 @@ public class HttpExceptionHandler extends ExceptionHandler {
 
   @Override
   public void handle(Throwable t, HttpRequest request, HttpResponder responder) {
-    if (Iterables.filter(Throwables.getCausalChain(t), ServiceNotRunningException.class).iterator().hasNext()) {
-      LOG.warn("SAGAR_TEST: {}", t.getMessage());
-      LOG.warn("SAGAR_ANOTHER_TEST: ", t);
+    if (Iterables.size(Iterables.filter(Throwables.getCausalChain(t), ServiceNotRunningException.class)) > 0) {
       responder.sendString(HttpResponseStatus.SERVICE_UNAVAILABLE, t.getMessage());
     } else if (t instanceof BadRequestException) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, t.getMessage());
