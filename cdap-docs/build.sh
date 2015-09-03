@@ -176,7 +176,7 @@ function build_javadocs() {
   echo "========================================================"
   echo "Building Javadocs"
   echo "--------------------------------------------------------"
-  echo "build_javadocs: disabled"
+  echo ""
   build_javadocs_api
   echo "--------------------------------------------------------"
   echo "Completed Build of Javadocs"
