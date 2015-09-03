@@ -152,7 +152,7 @@ public class EmailAction extends AbstractWorkflowAction {
                         properties.get(USERNAME), properties.get(PASSWORD));
       transport.sendMessage(msg, msg.getAllRecipients());
     } catch (Exception e) {
-      throw Throwables.propagate(new Throwable("Error sending email: ", e));
+      throw new RuntimeException("Error sending email: ", e);
     }
   }
 }
