@@ -205,7 +205,7 @@ public class TimePartitionedFileSetTest {
     Date date = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).parse("1/1/15 8:42 pm");
     Map<String, String> args = Maps.newHashMap();
     TimePartitionedFileSetArguments.setOutputPartitionTime(args, date.getTime());
-    TimePartitionedFileSetArguments.setOutputPathFormat(args, "yyyy-MM-dd/HH_mm");
+    TimePartitionedFileSetArguments.setOutputPathFormat(args, "yyyy-MM-dd/HH_mm", "");
     TimePartitionedFileSet ds = dsFrameworkUtil.getInstance(TPFS_INSTANCE, args);
 
     String outputPath = ds.getEmbeddedFileSet().getOutputLocation().toURI().getPath();

@@ -92,7 +92,7 @@ public class TimePartitionedFileSetDefinition extends PartitionedFileSetDefiniti
           path = String.format("%tF/%tH-%tM.%d", time, time, time, time);
         } else {
           SimpleDateFormat format = new SimpleDateFormat(outputPathFormat);
-          String timeZoneID = TimePartitionedFileSetArguments.getOutputTimeZone(arguments);
+          String timeZoneID = TimePartitionedFileSetArguments.getOutputPathTimeZone(arguments);
           if (!Strings.isNullOrEmpty(timeZoneID)) {
             format.setTimeZone(TimeZone.getTimeZone(timeZoneID));
           }

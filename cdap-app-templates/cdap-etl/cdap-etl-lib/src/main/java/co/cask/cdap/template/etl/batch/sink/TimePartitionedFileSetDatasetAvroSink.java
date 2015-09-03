@@ -59,6 +59,7 @@ public class TimePartitionedFileSetDatasetAvroSink extends
 
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
+    super.configurePipeline(pipelineConfigurer);
     String tpfsName = tpfsSinkConfig.name;
     String basePath = tpfsSinkConfig.basePath == null ? tpfsName : tpfsSinkConfig.basePath;
     pipelineConfigurer.createDataset(tpfsName, TimePartitionedFileSet.class.getName(), FileSetProperties.builder()

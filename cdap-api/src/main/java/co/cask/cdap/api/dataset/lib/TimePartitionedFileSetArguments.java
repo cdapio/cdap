@@ -17,6 +17,7 @@
 package co.cask.cdap.api.dataset.lib;
 
 import co.cask.cdap.api.annotation.Beta;
+import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 
 import java.io.IOException;
@@ -70,16 +71,24 @@ public class TimePartitionedFileSetArguments extends PartitionedFileSetArguments
    *                   {@link java.text.SimpleDateFormat}. If left blank, then the partitions will be of the form
    *                   2015-01-01/20-42.142017372000, with the time being the time UTC.
    *                   Note that each partition must have a unique file path or a runtime exception will be thrown.
+   * @param timeZone The string ID of the time zone. It is parsed by {@link TimeZone#getTimeZone(String)},
+   *                 and if the string ID is not a valid time zone, UTC is used.
    */
-  public static void setOutputPathFormat(Map<String, String> arguments, String pathFormat) {
+  public static void setOutputPathFormat(Map<String, String> arguments, String pathFormat, String timeZone) {
     long curTime = System.currentTimeMillis();
     try {
       SimpleDateFormat format = new SimpleDateFormat(pathFormat);
+      if (!Strings.isNullOrEmpty(timeZone)) {
+        format.setTimeZone(TimeZone.getTimeZone(timeZone));
+      }
       format.format(new Date(curTime));
     } catch (Exception e) {
       throw new IllegalArgumentException("Invalid date format: " + pathFormat + '\n' + e);
     }
     arguments.put(OUTPUT_PATH_FORMAT, pathFormat);
+    if (!Strings.isNullOrEmpty(timeZone)) {
+      arguments.put(OUTPUT_TIME_ZONE, timeZone);
+    }
   }
 
   /**
@@ -93,22 +102,12 @@ public class TimePartitionedFileSetArguments extends PartitionedFileSetArguments
   }
 
   /**
-   * This is the time zone to format the date in. Time zone is only used in conjunction with
-   * {@link #getOutputPathFormat(Map)} to format the output path in the correct time.
-   * @param timeZone The string ID of the time zone. It is parsed by {@link TimeZone#getTimeZone(String)},
-   *                 and if the string ID is not a valid time zone, UTC is used.
-   */
-  public static void setOutputTimeZone(Map<String, String> arguments, String timeZone) {
-    arguments.put(OUTPUT_TIME_ZONE, timeZone);
-  }
-
-  /**
    * This is the time zone used to format the date for the output partition.
    * @return The String ID of the time zone of the date.
    * May be null.
    */
   @Nullable
-  public static String getOutputTimeZone(Map<String, String> arguments) {
+  public static String getOutputPathTimeZone(Map<String, String> arguments) {
     return arguments.get(OUTPUT_TIME_ZONE);
   }
 

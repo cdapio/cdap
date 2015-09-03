@@ -19,8 +19,10 @@ package co.cask.cdap.template.etl.batch.sink;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
+import co.cask.cdap.template.etl.api.PipelineConfigurer;
 import co.cask.cdap.template.etl.api.batch.BatchSink;
 import co.cask.cdap.template.etl.api.batch.BatchSinkContext;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 
 import java.util.HashMap;
@@ -55,14 +57,18 @@ public abstract class TimePartitionedFileSetSink<KEY_OUT, VAL_OUT>
   }
 
   @Override
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
+    Preconditions.checkArgument(Strings.isNullOrEmpty(tpfsSinkConfig.filePathFormat)
+                                  && !Strings.isNullOrEmpty(tpfsSinkConfig.timeZone));
+  }
+
+  @Override
   public void prepareRun(BatchSinkContext context) {
     Map<String, String> sinkArgs = new HashMap<>();
     TimePartitionedFileSetArguments.setOutputPartitionTime(sinkArgs, context.getLogicalStartTime());
     if (!Strings.isNullOrEmpty(tpfsSinkConfig.filePathFormat)) {
-      TimePartitionedFileSetArguments.setOutputPathFormat(sinkArgs, tpfsSinkConfig.filePathFormat);
-      if (!Strings.isNullOrEmpty(tpfsSinkConfig.timeZone)) {
-        TimePartitionedFileSetArguments.setOutputTimeZone(sinkArgs, tpfsSinkConfig.timeZone);
-      }
+      TimePartitionedFileSetArguments.setOutputPathFormat(sinkArgs, tpfsSinkConfig.filePathFormat,
+                                                          tpfsSinkConfig.timeZone);
     }
     TimePartitionedFileSet sink = context.getDataset(tpfsSinkConfig.name, sinkArgs);
     context.setOutput(tpfsSinkConfig.name, sink);
