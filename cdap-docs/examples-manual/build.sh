@@ -118,7 +118,7 @@ function download_includes() {
   download_file $includes $project_img wise_flow.png                 4a79853f2b5a0ac45929d0966f7cd7f5
   download_file $includes $project_img wise_store_page.png           15bcd8dac10ab5d1c643fff7bdecc52d
 
-  echo_red_bold "Download file and any images and re-writes all the image links..."
+  echo_red_bold "Downloading files and any images and re-writing all the image links..."
   guide_rewrite_sed $1 cdap-bi-guide 
   guide_rewrite_sed $1 cdap-cube-guide 
   guide_rewrite_sed $1 cdap-etl-adapter-guide 
@@ -131,7 +131,7 @@ function download_includes() {
   guide_rewrite_sed $1 cdap-twitter-ingest-guide
   guide_rewrite_sed $1 cdap-workflow-guide
   
-  echo_red_bold "Check included example files for changes"
+  echo_red_bold "Checking included example files for changes"
   
   # Group alphabetically each example separately, files from each example together
   

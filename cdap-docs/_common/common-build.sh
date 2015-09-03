@@ -1,5 +1,3 @@
-#!/usr/bin/env bash
-
 # Copyright © 2014-2015 Cask Data, Inc.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -16,6 +14,10 @@
   
 # Common code for Build script for docs
 # Not called directly; included in either the main build.sh or the individual manual's build.sh
+
+# Optional Parameters (passed via Bamboo env variable or exported in shell):
+# BELL: Set it to for the bell function to make a sound when called
+# COLOR_LOGS: Set it for color output by Sphinx and these scripts
 
 API="cdap-api"
 APIDOCS="apidocs"
@@ -73,19 +75,20 @@ API_JAVADOCS="${PROJECT_PATH}/target/site/${APIDOCS}"
 
 CHECK_INCLUDES="false"
 
-if [[ "${OSTYPE}" == "darwin"* ]]; then
+if [[ "x${COLOR_LOGS}" != "x" ]]; then
   SPHINX_COLOR=""
-  RED='\033[0;31m'
-  BOLD='\033[1m'
-  NC='\033[0m'
-  WARNING="${RED}${BOLD}WARNING:${NC}"
+  RED="$(tput setaf 1)"
+  BOLD="$(tput bold)"
+  RED_BOLD="$(tput setaf 1; tput bold)"
+  NO_COLOR="$(tput setaf 0; tput sgr0)"
 else
   SPHINX_COLOR="-N"
+  RED_BOLD=''
   RED=''
   BOLD=''
-  NC=''
-  WARNING="${RED}${BOLD}WARNING:${NC}"
+  NO_COLOR=''
 fi
+WARNING="${RED_BOLD}WARNING:${NO_COLOR}"
 SPHINX_BUILD="sphinx-build ${SPHINX_COLOR} -b html -d ${TARGET}/doctrees"
 
 # Hash of file with "Not Found"; returned by GitHub
@@ -110,40 +113,34 @@ BUILD_RST_HASH="f54ae74bb72f9ad894766b6c0bd2d2df"
 
 
 function usage() {
-  cd $PROJECT_PATH
-  PROJECT_PATH=`pwd`
   echo "Build script for '${PROJECT_CAPS}' docs"
-  echo "Usage: ${SCRIPT} <option> [source]"
+  echo "Usage: ${SCRIPT} <action> [source]"
   echo
-  echo "  Option (select one)"
-  echo "    build          Clean build of javadocs and HTML docs, copy javadocs and PDFs into place, zip results"
-  echo "    build-github   Clean build and zip for placing on GitHub"
-  echo "    build-web      Clean build and zip for placing on docs.cask.co webserver"
+  echo "  Action (select one)"
+  echo "    build                Clean build of javadocs and HTML docs, copy javadocs and PDFs into place, zip results"
+  echo "    build-github         Clean build and zip for placing on GitHub"
+  echo "    build-web            Clean build and zip for placing on docs.cask.co webserver"
+  echo "    build-docs           Clean build of docs"
   echo
-  echo "    docs           Clean build of docs"
-  echo "    javadocs       Clean build of javadocs ($API module only) for SDK and website"
-  echo "    javadocs-full  Clean build of javadocs for all modules"
-  echo "    license-pdfs   Clean build of License Dependency PDFs"
-  echo
-  echo "    check-includes Check if included files have changed from source"
+  echo "    license-pdfs         Clean build of License Dependency PDFs"
+  echo "    check-includes       Check if included files have changed from source"
+  echo "    display-version      Print the version information"
   echo "  with"
-  echo "    source         Path to $PROJECT source for javadocs, if not $PROJECT_PATH"
+  echo "    source               Path to $PROJECT source for javadocs, if not '$PROJECT_PATH'"
+  echo "                         Path is relative to '${SCRIPT_PATH}/../..'"
   echo
 }
 
 function echo_red_bold() {
-  if [[ "${OSTYPE}" == "darwin"* ]]; then
-    echo -e "${RED}${BOLD}${1}${NC}${2}"
-  else
-    echo "${1}${2}"
-  fi
+  echo "${RED_BOLD}${1}${NO_COLOR}${2}"
 }
 
 function echo_clean_colors() {
   local c="${1//${RED}/}"
   c="${c//${BOLD}/}"
-  c="${c//${NC}/}"
-  echo -e "${c}"
+  c="${c//${RED_BOLD}/}"
+  c="${c//${NO_COLOR}/}"
+  echo "${c}"
 }
 
 function clean() {
@@ -151,7 +148,7 @@ function clean() {
   rm -rf ${SCRIPT_PATH}/${TARGET}
   mkdir -p ${SCRIPT_PATH}/${TARGET}
   echo "Cleaned ${SCRIPT_PATH}/${TARGET} directory"
-  echo ""
+  echo
 }
 
 function build_docs() {
@@ -170,23 +167,6 @@ function build_docs_google() {
   display_any_messages
 }
 
-function build_javadocs_full() {
-  set_mvn_environment
-  echo "build_javadocs_full: Currently not implemented"
-}
-
-function build_javadocs_api() {
-  set_mvn_environment
-  MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn clean install -P examples,templates,release -DskipTests -Dgpg.skip=true && mvn clean site -DskipTests -P templates -DisOffline=false
-}
-
-function copy_javadocs_api() {
-  cd ${TARGET_PATH}/${HTML}
-  rm -rf ${JAVADOCS}
-  cp -r ${API_JAVADOCS} .
-  mv -f ${APIDOCS} ${JAVADOCS}
-}
-
 function build_license_pdfs() {
   set_version
   cd ${SCRIPT_PATH}
@@ -198,15 +178,14 @@ function build_license_pdfs() {
   LIC_RST="../${REFERENCE}/source/${LICENSES}"
   PDFS="cdap-enterprise-dependencies cdap-level-1-dependencies cdap-standalone-dependencies cdap-ui-dependencies"
   for PDF in ${PDFS}; do
-    echo ""
+    echo
     echo "Building ${PDF}"
     python ${DOC_GEN_PY} -g pdf -o ${LIC_PDF}/${PDF}.pdf -b ${PROJECT_VERSION_TRIMMED} ${LIC_RST}/${PDF}.rst
   done
 }
 
 function copy_license_pdfs() {
-  cd ${TARGET_PATH}/${HTML}/${LICENSES}
-  cp ${SCRIPT_PATH}/${LICENSES_PDF}/* .
+  cp ${SCRIPT_PATH}/${LICENSES_PDF}/* ${TARGET_PATH}/${HTML}/${LICENSES}
 }
 
 function make_zip() {
@@ -248,8 +227,8 @@ function build_extras() {
 
 function set_mvn_environment() {
   cd ${PROJECT_PATH}
-  if [ "$(uname)" == "Darwin" ]; then
-    # TODo: hard-coded Java version 1.7
+  if [[ "${OSTYPE}" == "darwin"* ]]; then
+    # TODO: hard-coded Java version 1.7
     export JAVA_HOME=$(/usr/libexec/java_home -v 1.7)
   fi
   # check BUILD.rst for changes
@@ -258,8 +237,8 @@ function set_mvn_environment() {
 }
 
 function check_includes() {
-  if [ "${CHECK_INCLUDES}" == "${TRUE}" ]; then
-    echo "Downloading and checking files to be included."
+  if [ !"${CHECK_INCLUDES}" ]; then
+    echo_red_bold "Downloading and checking files to be included."
     # Build includes
     local target_includes_dir=${SCRIPT_PATH}/${TARGET}/${INCLUDES}
     rm -rf ${target_includes_dir}
@@ -272,18 +251,9 @@ function check_includes() {
 }
 
 function download_includes() {
-  local includes_dir=${1}
-  # $1 passed is the directory to which the downloaded files are to be written.
+  # $1 is passed as the directory to which the downloaded files are to be written.
   # For an example of over-riding this function, see developer/build.sh
   echo "No includes to be downloaded."
-}
-
-function test_includes_directory() {
-  local includes_dir=${1}
-  if [ ! -d "${includes_dir}" ]; then
-    echo "Creating Includes Directory: ${includes_dir}"
-    mkdir ${includes_dir}
-  fi
 }
 
 function test_includes() {
@@ -310,10 +280,10 @@ function test_an_include() {
   local m_display
   
   if [[ "${new_md5_hash}" == "${NOT_FOUND_HASH}" ]]; then
-    m="${WARNING} ${RED}${BOLD}${file_name} not found!${NC} "  
+    m="${WARNING} ${RED_BOLD}${file_name} not found!${NO_COLOR} "  
     m="${m}\nfile: ${target}"  
   elif [[ "${new_md5_hash}" != "${md5_hash}" ]]; then
-    m="${WARNING} ${RED}${BOLD}${file_name} has changed! Compare files and update hash!${NC} "   
+    m="${WARNING} ${RED_BOLD}${file_name} has changed! Compare files and update hash!${NO_COLOR} "   
     m="${m}\nfile: ${target}"   
     m="${m}\nOld MD5 Hash: ${md5_hash} New MD5 Hash: ${new_md5_hash}"   
   fi
@@ -322,7 +292,7 @@ function test_an_include() {
   else
     m="MD5 Hash for ${file_name} matches"
   fi
-  echo -e "${m}"
+  echo "${m}"
 }
 
 function set_version() {
@@ -404,20 +374,20 @@ function set_message() {
 }
 
 function display_any_messages() {
-  if [[ "x${MESSAGES}" != "x" || -s ${SPHINX_MESSAGES} ]]; then
+  if [[ "x${MESSAGES}" != "x" || -s ${TARGET}/${SPHINX_MESSAGES} ]]; then
     local m="Warning Messages for \"${MANUAL}\":"
     if [ "x${MESSAGES}" != "x" ]; then
       echo 
       echo_red_bold "${m}"
       echo 
-      echo -e "${MESSAGES}"
+      echo "${MESSAGES}"
     fi
-    if [ -s ${SPHINX_MESSAGES} ]; then
+    if [ -s ${TARGET}/${SPHINX_MESSAGES} ]; then
       m="Sphinx ${m}"
       echo
       echo_red_bold "${m}"
       echo ${m} >> ${TMP_MESSAGES_FILE}
-      cat ${SPHINX_MESSAGES} | while read line
+      cat ${TARGET}/${SPHINX_MESSAGES} | while read line
       do
         echo ${line}
         echo ${line} >> ${TMP_MESSAGES_FILE}
@@ -436,7 +406,7 @@ function display_messages_file() {
     echo >> ${TMP_MESSAGES_FILE}
     cat ${TMP_MESSAGES_FILE} | while read line
     do
-      echo -e "${line}"
+      echo "${line}"
     done
     return 1 # Indicates warning messages present
   else
@@ -456,7 +426,7 @@ function rewrite() {
     local sub_string=${2}
     echo "    $sub_string"
     if [ "$(uname)" == "Darwin" ]; then
-      sed -i '.bak' "${sub_string}" ${rewrite_source}
+      sed -i ".bak" "${sub_string}" ${rewrite_source}
       rm ${rewrite_source}.bak
     else
       sed -i "${sub_string}" ${rewrite_source}
@@ -466,7 +436,7 @@ function rewrite() {
     local new_sub_string=${3}
     echo "    ${sub_string} -> ${new_sub_string} "
     if [ "$(uname)" == "Darwin" ]; then
-      sed -i '.bak' "s|${sub_string}|${new_sub_string}|g" ${rewrite_source}
+      sed -i ".bak" "s|${sub_string}|${new_sub_string}|g" ${rewrite_source}
       rm ${rewrite_source}.bak
     else
       sed -i "s|${sub_string}|${new_sub_string}|g" ${rewrite_source}
@@ -483,18 +453,9 @@ function rewrite() {
 }
 
 function run_command() {
-  case "${1}" in
-    build )             build;;
-    build-github )      build_github;;
-    build-web )         build_web;;
-    check-includes )    check_includes;;
-    docs )              build_docs;;
-    license-pdfs )      build_license_pdfs;;
-    copy-javadocs )     copy_javadocs;;
-    copy-license-pdfs ) copy_license_pdfs;;
-    javadocs-api )      build_javadocs_api;;
-    javadocs-full )     build_javadocs_full;;
-    version )           display_version;;
-    * )                 usage;;
+  case ${1} in
+    build|build-github|build-web|build-docs)      "${1/-/_}";;
+    check-includes|display-version|license-pdfs)  "${1/-/_}";;
+    *)                                           usage;;
   esac
 }

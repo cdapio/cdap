@@ -52,7 +52,6 @@ function download_includes() {
   echo "Downloading source files to be included from GitHub..."
   local github_url="https://raw.githubusercontent.com/caskdata"
   local includes_dir=${1}
-  test_includes_directory ${includes_dir}
   set_version
 
   local clients_branch="release/${CDAP_CLIENTS_RELEASE_VERSION}"

@@ -20,42 +20,48 @@
 # Builds each of these individually, and then packages them into a single zip file for distribution.
 # _common directory holds common files and scripts.
 
-# Optional Parameter (passed via Bamboo env variable or exported in shell)
-# BELL (set it to either 'yes' or 'true', if you want the bell function to make a sound when called)
+# Optional Parameters (passed via Bamboo env variable or exported in shell):
+# BELL: Set it to for the bell function to make a sound when called
+# COLOR_LOGS: Set it for color output by Sphinx and these scripts
+# NO_JAVADOCS: Set it to not build Javadocs, no matter which actions are used (for testing)
 
 source ./vars
 source _common/common-build.sh
 
-ARG_1="${1}"
-ARG_2="${2}"
-ARG_3="${3}"
+ARG_1=${1}
+ARG_2=${2}
 
 function usage() {
-  cd ${PROJECT_PATH}
-  PROJECT_PATH=`pwd`
   echo "Build script for '${PROJECT_CAPS}' docs"
-  echo "Usage: ${SCRIPT} <option> [source]"
-  echo ""
-  echo "  Option (select one)"
+  echo "Usage: ${SCRIPT} <action> [source]"
+  echo 
+  echo "  Action (select one)"
   echo "    docs-all  Clean build of everything: HTML and Javadocs, GitHub and Web versions, zipped"
-  echo ""
+  echo 
   echo "    docs-github-only  Clean build of HTML, zipped, with GitHub code, skipping Javadocs"
   echo "    docs-web-only     Clean build of HTML, zipped, with docs.cask.co code, skipping Javadocs"
   echo "    docs              Dirty build of HTML with docs.cask.co code, skipping zipping and Javadocs"
-  echo ""
+  echo 
   echo "    docs-github  Clean build of HTML and Javadocs, zipped, for placing on GitHub"
   echo "    docs-web     Clean build of HTML and Javadocs, zipped, for placing on docs.cask.co webserver"
-  echo ""
+  echo 
   echo "    clean     Clean up any previous build's target directories"
   echo "    javadocs  Build Javadocs"
   echo "    licenses  Clean build of License Dependency PDFs"
   echo "    sdk       Build CDAP SDK"
   echo "    version   Print the version information"
-  echo ""
+  echo 
   echo "  with"
   echo "    source    Path to ${PROJECT} source, if not '${PROJECT_PATH}'"
   echo "              Path is relative to '${SCRIPT_PATH}/../..'"
-  echo ""
+  echo 
+}
+
+function error_usage() {
+  if [ $1 ]; then
+    echo_red_bold "Unknown action: " $1
+  fi
+  usage
 }
 
 function set_project_path() {
@@ -88,7 +94,7 @@ function setup() {
 }
 
 function run_command() {
-  case "${1}" in
+  case ${1} in
     docs-all )          build_all;;
     docs )              build_docs ${DOCS};;
     docs-github-only )  build_docs ${GITHUB_ONLY};;
@@ -105,9 +111,8 @@ function run_command() {
     licenses )          build_license_dependency_pdfs;;
     sdk )               build_standalone;;
     version )           print_version;;
-    doc-test )          doc_test;;
-    * )                 usage;;
-    doc )               build_docs_outer_level;;
+    docs-test )         docs_test;;
+    * )                 error_usage ${1};;
   esac
 }
 
@@ -116,23 +121,24 @@ function build_all() {
   echo "========================================================"
   echo "Building All: GitHub and Web Docs"
   echo "--------------------------------------------------------"
-  echo ""
+  echo
   clean_all_targets
   run_command javadocs 
   run_command docs-first-pass ${ARG_2} 
   run_command docs-github-part ${ARG_2} 
-  _stash_github_zip 
+#   _stash_github_zip 
   run_command docs-web-part ${ARG_2} 
-  _restore_github_zip
+#   _restore_github_zip
   echo "--------------------------------------------------------"
-  _bell "Completed \"build all\""
+  ring_bell "Completed \"build all\""
   echo "========================================================"
   echo "========================================================"
-  echo ""
+  echo
   exit 0
 }
 
 function build_docs() {
+  local warnings
   local doc_type=${1}
   local source_path=${ARG_2}
   local javadocs="${WITHOUT}"
@@ -143,45 +149,55 @@ function build_docs() {
   echo "========================================================"
   echo "Building \"${doc_type}\" (${javadocs} Javadocs)"
   echo "--------------------------------------------------------"
-  echo ""
+  echo
   if [ "${doc_type}" != "${DOCS}" ]; then
     clean_all_targets
+  else
+    clear_messages_set_messages_file
   fi
   run_command docs-first-pass ${source_path}
   if [ "${doc_type}" == "${DOCS}" ]; then
-    build_docs_outer_level ${source_path} 
+    build_docs_outer_level ${source_path}
     copy_docs_inner_level
-  fi
-  local warnings="$?"
-  if [ "${warnings}" != "0" ]; then
-    return ${warnings}
   fi
   if [ "${javadocs}" == "${WITH}" ]; then
     run_command javadocs
   fi
   if [ "${doc_type}" == "${GITHUB}" -o "${doc_type}" == "${GITHUB_ONLY}" ]; then
-    run_command docs-github-part ${source_path} 
+    run_command docs-github-part ${source_path}
+    warnings=$?
   elif [ "${doc_type}" == "${WEB}" -o "${doc_type}" == "${WEB_ONLY}" ]; then
-    run_command docs-web-part ${source_path} 
+    run_command docs-web-part ${source_path}
+    warnings=$?
+  elif [ "${doc_type}" == "${DOCS}" ]; then
+    display_messages_file
+    warnings=$?
+    cleanup_messages_file
   fi
   echo "--------------------------------------------------------"
-  _bell "Completed build of \"${doc_type}\""
+  ring_bell "Completed build of \"${doc_type}\""
   echo "========================================================"
   echo "========================================================"
-  echo ""
-  exit 0
+  echo
+  return ${warnings}
 }
 
 function build_javadocs() {
   echo "========================================================"
   echo "Building Javadocs"
   echo "--------------------------------------------------------"
-  echo ""
-  build_javadocs_api
+  echo
+  if [ ${NO_JAVADOCS} ]; then
+    echo_red_bold "Javadocs disabled."
+  else
+    build_javadocs_api
+  fi
+  local warnings=$?
   echo "--------------------------------------------------------"
   echo "Completed Build of Javadocs"
   echo "========================================================"
-  echo ""
+  echo
+  return ${warnings}
 }
 
 function build_javadocs_api() {
@@ -193,21 +209,20 @@ function build_docs_first_pass() {
   echo "========================================================"
   echo "Building First Pass of Docs"
   echo "--------------------------------------------------------"
-  echo ""
-  build_docs_inner_level "docs"
+  echo
+  build_docs_inner_level build-docs
   echo "--------------------------------------------------------"
   echo "Completed Building First Pass of Docs"
   echo "========================================================"
-  echo ""
-  return $?
+  echo
 }
 
 function build_docs_github_part() {
   echo "========================================================"
   echo "Building GitHub Docs"
   echo "--------------------------------------------------------"
-  echo ""
-  _build_docs "build-github" ${GOOGLE_ANALYTICS_GITHUB} ${GITHUB} ${FALSE}
+  echo
+  _build_docs build-github ${GOOGLE_ANALYTICS_GITHUB} ${GITHUB} ${FALSE}
   return $?
 }
 
@@ -215,29 +230,29 @@ function _stash_github_zip() {
   echo "========================================================"
   echo "Stashing GitHub Zip"
   echo "========================================================"
-  echo ""
+  echo
   cd ${SCRIPT_PATH}
   TARGET_TEMP=$(mktemp -d /tmp/cdap-docs.XXXX)
   mv ${SCRIPT_PATH}/${TARGET}/*.zip ${TARGET_TEMP}
-  echo ""
+  echo
 }
 
 function _restore_github_zip() {
   echo "========================================================"
   echo "Restoring GitHub Zip"
   echo "========================================================"
-  echo ""
+  echo
   mv ${TARGET_TEMP}/*.zip ${SCRIPT_PATH}/${TARGET}
   rm -rf ${TARGET_TEMP}
-  echo ""
+  echo
 }
 
 function build_docs_web_part() {
   echo "========================================================"
   echo "Building Web Docs"
   echo "--------------------------------------------------------"
-  echo ""
-  _build_docs "build-web" ${GOOGLE_ANALYTICS_WEB} ${WEB} ${FALSE}
+  echo
+  _build_docs build-web ${GOOGLE_ANALYTICS_WEB} ${WEB} ${FALSE}
   return $?
 }
 
@@ -246,7 +261,7 @@ function _build_docs() {
   local google_analytics_code=${2}
   local zip_target=${3}
   local zip_extras=${4}
-  echo ""
+  echo
   echo "========================================================"
   echo "========================================================"
   echo "Building target \"${doc_target}\"..."
@@ -255,19 +270,19 @@ function _build_docs() {
   build_docs_inner_level ${doc_target}
   build_docs_outer_level ${google_analytics_code}
   copy_docs_inner_level
-  _build_zip ${zip_target}
-  _zip_extras ${zip_extras}
-  echo ""
+  build_zip ${zip_target}
+  zip_extras ${zip_extras}
+  echo
   display_version
   display_messages_file
-  local warnings="$?"
+  local warnings=$?
   cleanup_messages_file
-  echo ""
+  echo
   echo "--------------------------------------------------------"
-  _bell "Building target \"${doc_target}\" completed."
+  ring_bell "Building target \"${doc_target}\" completed."
   echo "========================================================"
   echo "========================================================"
-  echo ""
+  echo
   return ${warnings}
 }
 
@@ -276,10 +291,10 @@ function build_docs_inner_level() {
     echo "========================================================"
     echo "Building \"${i}\", target \"${1}\"..."
     echo "--------------------------------------------------------"
-    echo ""
+    echo
     cd $SCRIPT_PATH/${i}
     ./build.sh ${1} ${ARG_2}
-    echo ""
+    echo
   done
 }
 
@@ -287,8 +302,8 @@ function copy_source() {
   echo "Copying source for ${1} (${2}) ..."
   cd ${SCRIPT_PATH}
   mkdir -p ${SCRIPT_PATH}/${TARGET}/${SOURCE}/${1}
-  rewrite ${COMMON_PLACEHOLDER} ${TARGET}/${SOURCE}/${1}/index.rst "<placeholder>" "${2}"
-  echo ""
+  rewrite ${COMMON_PLACEHOLDER} ${TARGET}/${SOURCE}/${1}/index.rst "<placeholder>" ${2}
+  echo
 }
 
 function build_docs_outer_level() {
@@ -296,7 +311,7 @@ function build_docs_outer_level() {
   echo "========================================================"
   echo "Building outer-level docs..."
   echo "--------------------------------------------------------"
-  echo ""
+  echo
   clean_outer_level
   set_version
   
@@ -320,21 +335,21 @@ function build_docs_outer_level() {
     google_options="-D googleanalytics_id=${google_code} -D googleanalytics_enabled=1"
   fi
   ${SPHINX_BUILD} ${google_options} ${TARGET}/${SOURCE} ${TARGET}/html
-  echo ""
+  echo
 }
   
 function copy_docs_inner_level() {
   echo "========================================================"
   echo "Copying lower-level documentation..."
   echo "--------------------------------------------------------"
-  echo ""
+  echo
 
   for i in ${MANUALS}; do
     echo "Copying html for ${i}..."
     cd ${SCRIPT_PATH}
     rm -rf ${SCRIPT_PATH}/${TARGET}/${HTML}/${i}
     cp -r ${i}/${TARGET}/${HTML} ${TARGET}/${HTML}/${i}
-    echo ""
+    echo
   done
 
   local project_dir
@@ -349,19 +364,21 @@ function copy_docs_inner_level() {
   rewrite ${source_404} "src=\"_images"  "src=\"/cdap/${project_dir}/en/_images"
   rewrite ${source_404} "/href=\"http/!s|href=\"|href=\"/cdap/${project_dir}/en/|g"
   rewrite ${source_404} "action=\"search.html"  "action=\"/cdap/${project_dir}/en/search.html"
-  echo ""
+  echo
 }
 
-function _build_zip() {
-  cd $SCRIPT_PATH
+function build_zip() {
+  cd ${SCRIPT_PATH}
   set_project_path
   make_zip ${1}
 }
 
-function _zip_extras() {
-  if [ "x${1}" == "x${FALSE}" ]; then
+function zip_extras() {
+  echo "zip_extras: $1: \"${1}\""
+  if [ !${1} ]; then
     return
   fi
+  echo "Add htaccess file"
   # Add .htaccess file (404 file)
   cd ${SCRIPT_PATH}
   rewrite ${COMMON_SOURCE}/${HTACCESS} ${TARGET}/${PROJECT_VERSION}/.${HTACCESS} "<version>" "${PROJECT_VERSION}"
@@ -375,7 +392,7 @@ function clean_outer_level() {
   mkdir -p ${SCRIPT_PATH}/${TARGET}/${HTML}
   mkdir -p ${SCRIPT_PATH}/${TARGET}/${SOURCE}
   echo "Cleaned ${SCRIPT_PATH}/${TARGET}/* directories"
-  echo ""
+  echo
 }
 
 function clean_all_targets() {
@@ -383,48 +400,57 @@ function clean_all_targets() {
   cd ${SCRIPT_PATH}
   rm -rf ${SCRIPT_PATH}/${TARGET}/*
   echo "Cleaned ${SCRIPT_PATH}/${TARGET} directories"
-  echo ""
+  echo
   for i in ${MANUALS}; do
     rm -rf ${SCRIPT_PATH}/${i}/${TARGET}/*
     echo "Cleaned ${SCRIPT_PATH}/${i}/${TARGET} directories"
-    echo ""
+    echo
   done
 }
 
 function build_license_dependency_pdfs() {
   cd ${SCRIPT_PATH}/reference-manual
   ./build.sh license-pdfs ${ARG_2} 
-  #${ARG_3}
 }
 
 function build_standalone() {
-#   cd ${SCRIPT_PATH}/developers-manual
-#   ./build.sh sdk ${ARG_2} 
-#   ${ARG_3}
   set_mvn_environment
   MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn clean package -pl cdap-standalone,cdap-app-templates/cdap-etl,cdap-examples -am -amd -DskipTests -P examples,templates,dist,release,unit-tests
 }
 
 function print_version() {
   cd ${SCRIPT_PATH}/developers-manual
-  ./build.sh version ${ARG_2} 
-  #${ARG_3}
+  ./build.sh display-version ${ARG_2} 
 }
 
-function _bell() {
+function ring_bell() {
   # Pass a message as ${1}
-  if [[ "x${BELL}" == "xyes" || "x${BELL}" == "x${TRUE}" ]]; then
-    echo -e "\a${1}"
+  if [[ "x${BELL}" != "x" ]]; then
+    echo "$(tput bel)${1}"
   else
-    echo -e "${1}"
+    echo ${1}
   fi
 }
 
-function doc_test() {
-  echo "Test..."
-  _bell "A test message"
+function docs_test2() {
+  echo_red_bold "Test2..."
+  echo "NO_JAVADOCS: ${NO_JAVADOCS}"
+  echo "End of Test2 function"
+}
+
+function docs_test() {
+  echo_red_bold "Test..."
+  echo "${WARNING}"
+  ring_bell "A test message"
+  echo "${RED_BOLD}Red bold${NO_COLOR}text"
+  echo "${BOLD}bold${RED}Red${NO_COLOR}text"
+  echo "${RED}Red${NO_COLOR}text"
+  local recover=$(docs_test2)
+  echo "recover: ${recover}"
+  local last_line=$(echo "${recover}" | tail -n1)
+  echo "last_line: ${last_line}"
   echo "Test completed."
 }
 
-setup "quiet"
+setup quiet
 run_command  ${1}

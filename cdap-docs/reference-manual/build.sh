@@ -26,10 +26,18 @@
 source ../_common/common-build.sh
 
 function build_extras() {
+  echo_red_bold "Building extras."
+  local html_path="${TARGET_PATH}/${HTML}"
+
   echo "Copying Javadocs."
-  copy_javadocs_api
+  rm -rf "${html_path}/${JAVADOCS}"
+  cp -r "${API_JAVADOCS}" "${html_path}/."
+  mv -f "${html_path}/${APIDOCS}" "${html_path}/${JAVADOCS}"
+
   echo "Copying license PDFs."
-  copy_license_pdfs
+  echo "'${SCRIPT_PATH}/${LICENSES_PDF}/*'"
+  echo "'${html_path}/${LICENSES}'"
+  cp "${SCRIPT_PATH}/${LICENSES_PDF}/*.pdf" "${html_path}/${LICENSES}"
 }
 
 run_command ${1}
