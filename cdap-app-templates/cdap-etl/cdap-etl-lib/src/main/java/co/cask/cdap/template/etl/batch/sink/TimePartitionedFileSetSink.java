@@ -46,7 +46,7 @@ public abstract class TimePartitionedFileSetSink<KEY_OUT, VAL_OUT>
     "If left blank, then the partitions will be of the form 2015-01-01/20-42.142017372000. " +
     "Note that each partition must have a unique file path or a runtime exception will be thrown.";
   protected static final String TIME_ZONE_DESC = "The time zone to format the partition. " +
-    "This option is only used if pathFormat is set. If left blank, defaults to UTC. " +
+    "This option is only used if pathFormat is set. If blank or an invalid TimeZone ID, defaults to UTC. " +
     "Note that the time zone provided must be recognized by TimeZone.getTimeZone(String); " +
     "for example: \"America/Los_Angeles\"";
 
