@@ -1,18 +1,18 @@
 <!--
   Copyright © 2015 Cask Data, Inc.
- 
+
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
   the License at
- 
+
   http://www.apache.org/licenses/LICENSE-2.0
- 
+
   Unless required by applicable law or agreed to in writing, software
   distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
   WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
   License for the specific language governing permissions and limitations under
   the License.
---> 
+-->
 
 <my-breadcrumbs></my-breadcrumbs>
 
@@ -52,7 +52,7 @@
 
       <div class="tab-content" ng-if="GlobalExploreController.activeTab === 0">
         <div class="table-responsive">
-          <table class="table table-curved">
+          <table class="table table-bordered">
             <tr>
               <td>Table</td>
               <td>{{ GlobalExploreController.selectedInfo.table_name }}</td>
@@ -99,7 +99,7 @@
 
       <div class="tab-content" ng-if="GlobalExploreController.activeTab === 1">
         <div class="table-responsive">
-          <table class="table table-curved" cask-sortable>
+          <table class="table table-bordered" cask-sortable>
             <thead>
               <tr ng-class="{'sort-enabled': GlobalExploreController.selectedInfo.schema.length > 0 }">
                 <th data-predicate="name">Name</th>
@@ -125,7 +125,7 @@
 
       <div class="tab-content" ng-if="GlobalExploreController.activeTab === 2">
         <div class="table-responsive">
-          <table class="table table-curved"
+          <table class="table table-bordered"
                  ng-if="GlobalExploreController.selectedInfo.partitioned_keys.length > 0"
                  cask-sortable>
             <thead>
@@ -143,7 +143,7 @@
           </table>
         </div>
         <div class="well text-center" ng-if="GlobalExploreController.selectedInfo.partitioned_keys.length === 0">
-          No Partitioned Keys
+          No Partition Keys
         </div>
       </div>
     </div>
@@ -158,7 +158,7 @@
 
       <div class="tab-content" ng-if="GlobalExploreController.activeTab === 3">
         <div class="table-responsive">
-          <table class="table table-curved">
+          <table class="table table-bordered">
             <tr>
               <td>Input Format</td>
               <td>{{ GlobalExploreController.selectedInfo.input_format }}</td>
@@ -187,7 +187,7 @@
             <tr>
               <td>Parameters</td>
               <td>
-                <table class="table table-curved">
+                <table class="table table-bordered">
                   <tbody>
                     <tr ng-repeat="(key, value) in GlobalExploreController.selectedInfo.parameters">
                       <td>{{ key }}</td>
@@ -211,7 +211,7 @@
             <tr>
               <td>SerDe Parameters</td>
               <td>
-                <table class="table table-curved">
+                <table class="table table-bordered">
                   <tbody>
                     <tr ng-repeat="(key, value) in GlobalExploreController.selectedInfo.serde_parameters">
                       <td>{{ key }}</td>

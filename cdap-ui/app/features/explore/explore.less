@@ -19,18 +19,31 @@
 body.state-explore {
 
   .explore-table {
-    border: 1px solid @cdap-darkness;
+    border: 1px solid #d1d4dc;
     margin-left: 0;
     margin-right: 0;
     height: 300px;
+    margin-bottom: 10px;
 
     .table-list {
       width: 300px;
       height: 100%;
       display: inline-block;
       float: left;
-      background-color: @cdap-darkness;
+      background-color: white;
       overflow-y: auto;
+
+      .list-group-item {
+        &:first-child {
+          border-top-right-radius: 0;
+          border-top-left-radius: 0;
+        }
+
+        &:last-child {
+          border-bottom-right-radius: 0;
+          border-bottom-left-radius: 0;
+        }
+      }
     }
 
 
@@ -38,6 +51,7 @@ body.state-explore {
       height: 100%;
       width: 838px;
       float: left;
+      background-color: white;
 
       .tab {
         display: inline-block;
@@ -51,7 +65,7 @@ body.state-explore {
           display: inline-block;
           width: 40px;
           position: relative;
-
+          cursor: pointer;
 
           .heading-rotate {
             transform: rotate(-90deg);
@@ -68,13 +82,14 @@ body.state-explore {
             }
           }
         }
+
         .tab-content {
           display: inline-block;
           vertical-align: top;
           overflow-y: auto;
-          top: 0;
           height: 100%;
           width: 660px;
+          background-color: white;
 
           table.table {
             margin: 0;
