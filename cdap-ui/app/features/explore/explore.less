@@ -25,7 +25,7 @@ body.state-explore {
     height: 300px;
 
     .table-list {
-      width: 30%;
+      width: 300px;
       height: 100%;
       display: inline-block;
       float: left;
@@ -35,16 +35,12 @@ body.state-explore {
 
     .explore-content {
       height: 100%;
-      width: 70%;
-      float: right;
-      display: flex;
-      flex-direction: row;
+      width: 838px;
+      float: left;
 
       .tab {
         display: inline-block;
         height: 100%;
-        position: relative;
-
 
         .tab-heading {
           background-color: white;
@@ -52,12 +48,18 @@ body.state-explore {
           height: 100%;
           overflow-y: hidden;
           display: inline-block;
-          width: 10%;
+          width: 40px;
+          position: relative;
 
 
           .heading-rotate {
-            transform: rotate(90deg);
-            // transform-origin: left top;
+            transform: rotate(-90deg);
+            vertical-align: middle;
+            top: 50%;
+            left: 0;
+            right: 0;
+            position: absolute;
+            white-space: nowrap;
 
 
             h3 {
@@ -71,7 +73,7 @@ body.state-explore {
           overflow-y: auto;
           top: 0;
           height: 100%;
-          content: 60%;
+          width: 660px;
 
           table.table {
             margin: 0;
