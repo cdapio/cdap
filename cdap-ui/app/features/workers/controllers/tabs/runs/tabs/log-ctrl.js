@@ -20,7 +20,7 @@ angular.module(PKG.name + '.feature.worker')
     var dataSrc = new MyDataSource($scope),
         basePath = '/apps/' + $state.params.appId +
                    '/workers/' + $state.params.programId +
-                   '/runs/' + $scope.runs.selected.runid;
+                   '/runs/' + $scope.RunsController.runs.selected.runid;
 
     $scope.logs = [];
 
