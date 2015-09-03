@@ -24,6 +24,16 @@ Cask Data Application Platform Release Notes
    :depth: 2
 
 
+`Release 3.0.5 <http://docs.cask.co/cdap/3.0.5/index.html>`__
+=============================================================
+
+Bug Fix
+-------
+
+- Fixed a bug that prevents streams events that are already processed from being re-processed in flows. 
+  (`CDAP-3458 <https://issues.cask.co/browse/CDAP-3458>`__).
+  
+
 `Release 3.0.4 <http://docs.cask.co/cdap/3.0.4/index.html>`__
 =============================================================
 
