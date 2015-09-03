@@ -18,7 +18,6 @@ package co.cask.cdap.test.app;
 
 import co.cask.cdap.ConfigTestApp;
 import co.cask.cdap.api.app.Application;
-import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
@@ -117,6 +116,50 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   @Before
   public void setUp() throws Exception {
     createNamespace(testSpace);
+  }
+
+  @Test
+  public void testInvalidAppWithDuplicateStreams() throws Exception {
+    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "invalid-app", "1.0.0-SNAPSHOT");
+    addAppArtifact(artifactId, AppWithDuplicateStreams.class);
+
+    Id.Artifact pluginArtifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "test-plugin", "1.0.0-SNAPSHOT");
+    addPluginArtifact(pluginArtifactId, artifactId, ToStringPlugin.class);
+
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "InvalidApp");
+
+    try {
+      AppRequest<AppWithDuplicateStreams.ConfigClass> createRequest = new AppRequest<>(
+        new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()),
+        new AppWithDuplicateStreams.ConfigClass(true, false, false));
+      deployApplication(appId, createRequest);
+      // throw an exception if we succeed with application deployment
+      Preconditions.checkState(false);
+    } catch (IllegalStateException e) {
+      // expected
+    }
+
+    try {
+      AppRequest<AppWithDuplicateStreams.ConfigClass> createRequest = new AppRequest<>(
+        new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()),
+        new AppWithDuplicateStreams.ConfigClass(false, true, false));
+      deployApplication(appId, createRequest);
+      // throw an exception if we succeed with application deployment
+      Preconditions.checkState(false);
+    } catch (IllegalStateException e) {
+      // expected
+    }
+
+    try {
+      AppRequest<AppWithDuplicateStreams.ConfigClass> createRequest = new AppRequest<>(
+        new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()),
+        new AppWithDuplicateStreams.ConfigClass(false, false, true));
+      deployApplication(appId, createRequest);
+      // throw an exception if we succeed with application deployment
+      Preconditions.checkState(false);
+    } catch (IllegalStateException e) {
+      // expected
+    }
   }
 
   @Test
