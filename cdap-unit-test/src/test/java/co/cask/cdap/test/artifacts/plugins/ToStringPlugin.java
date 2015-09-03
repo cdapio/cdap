@@ -20,6 +20,8 @@ import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.plugin.PluginConfig;
 
+import javax.annotation.Nullable;
+
 /**
  * Simple plugin for testing plugin usage in programs.
  */
@@ -33,6 +35,7 @@ public class ToStringPlugin {
   }
 
   public static class Config extends PluginConfig {
+    @Nullable
     public String toString;
   }
 
