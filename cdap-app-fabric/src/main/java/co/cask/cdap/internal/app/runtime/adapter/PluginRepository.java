@@ -153,7 +153,7 @@ public class PluginRepository {
    *
    * @param templates list of template information
    */
-  void inspectPlugins(Iterable<? extends ApplicationTemplateInfo> templates) throws IOException {
+  public void inspectPlugins(Iterable<? extends ApplicationTemplateInfo> templates) throws IOException {
     Map<String, TreeMultimap<PluginInfo, PluginClass>> result = Maps.newHashMap();
     for (ApplicationTemplateInfo info : templates) {
       result.put(info.getName(), inspectPlugins(info.getName(), info.getFile()));

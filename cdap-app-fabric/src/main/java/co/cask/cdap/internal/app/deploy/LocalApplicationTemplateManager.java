@@ -39,7 +39,7 @@ import co.cask.cdap.internal.app.deploy.pipeline.DeployDatasetModulesStage;
 import co.cask.cdap.internal.app.deploy.pipeline.DeploymentInfo;
 import co.cask.cdap.internal.app.deploy.pipeline.LocalArchiveLoaderStage;
 import co.cask.cdap.internal.app.deploy.pipeline.ProgramGenerationStage;
-import co.cask.cdap.internal.app.runtime.adapter.AdapterService;
+import co.cask.cdap.internal.app.services.AdapterService;
 import co.cask.cdap.pipeline.Pipeline;
 import co.cask.cdap.pipeline.PipelineFactory;
 import co.cask.cdap.proto.Id;
