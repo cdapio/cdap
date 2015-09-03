@@ -19,7 +19,6 @@ package co.cask.cdap.gateway.handlers.util;
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.artifact.ArtifactId;
-import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.NamespaceNotFoundException;
