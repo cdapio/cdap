@@ -18,76 +18,67 @@
 
 body.state-explore {
 
-  [explore-table] {
-    [class*="col-"] {
-      padding-right: 0;
-      margin-bottom: 15px;
+  .explore-table {
+    border: 1px solid @cdap-darkness;
+    margin-left: 0;
+    margin-right: 0;
+    height: 300px;
 
-      [class*="icon-"] {
-        vertical-align: middle;
-      }
+    .table-list {
+      width: 30%;
+      height: 100%;
+      display: inline-block;
+      float: left;
+      background-color: yellow;
+    }
 
-      .slanted-tabs {
-        .active > a {
-          color: @cdap-darkness;
-        }
-      }
 
-      .tab-content {
-        max-height: 248px;
-        overflow-y: auto;
+    .explore-content {
+      height: 100%;
+      width: 70%;
+      float: right;
+      display: flex;
+      flex-direction: row;
 
-        & > .table-curved {
-          border-radius: 0 0 8px 8px;
+      .tab {
+        display: inline-block;
+        height: 100%;
+        position: relative;
 
-          thead > tr > th { border-radius: 0; }
-          tr > td:first-child { font-weight: 700; }
-        }
-      }
 
-      .list-group {
-        .list-group-heading {
-          font-weight: 700;
-          font-size: 15px;
-        }
+        .tab-heading {
+          background-color: white;
+          padding: 5px;
+          height: 100%;
+          overflow-y: hidden;
+          display: inline-block;
+          width: 10%;
 
-        .list-group-content {
-          max-height: 247px;
-          overflow-y: auto;
-          font-size: 15px;
-          cursor: pointer;
 
-          a {
-            padding-top: 15px;
-            padding-bottom: 15px;
-            background-color: @cdap-darkness;
-            color: white;
+          .heading-rotate {
+            transform: rotate(90deg);
+            // transform-origin: left top;
 
-            &.selected {
-              color: @cdap-orange;
+
+            h3 {
+              margin: 0px;
             }
           }
         }
-      }
+        .tab-content {
+          display: inline-block;
+          vertical-align: top;
+          overflow-y: auto;
+          top: 0;
+          height: 100%;
+          content: 60%;
 
-    }
-
-    [class*="col-xs-9"] {
-      padding-right: 15px;
-    }
-
-    ul.nav.nav-tabs {
-      border-bottom: 0;
-    }
-
-    .table {
-      margin: 0;
-      &.table-curved {
-        border-collapse: collapse;
+          table.table {
+            margin: 0;
+          }
+        }
       }
     }
+
   }
-
-
-
 }
