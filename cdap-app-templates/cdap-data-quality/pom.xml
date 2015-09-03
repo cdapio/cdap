@@ -25,7 +25,7 @@
   </parent>
 
   <artifactId>cdap-data-quality</artifactId>
-  <name>CDAP Data Quality Artifact</name>
+  <name>CDAP Data Quality Application</name>
   <packaging>jar</packaging>
 
   <properties>
