@@ -57,13 +57,15 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   }
 
   @Override
-  public synchronized RuntimeInfo run(Program program, ProgramOptions options) {
+  public RuntimeInfo run(Program program, ProgramOptions options) {
     ProgramRunner runner = programRunnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getType().name()));
     Preconditions.checkNotNull(runner, "Fail to get ProgramRunner for type " + program.getType());
     ProgramOptions optionsWithRunId = addRunId(options, RunIds.generate());
     final RuntimeInfo runtimeInfo = createRuntimeInfo(runner.run(program, optionsWithRunId), program);
     programStarted(runtimeInfo);
-    runtimeInfos.put(runtimeInfo.getType(), runtimeInfo.getController().getRunId(), runtimeInfo);
+    synchronized (this) {
+      runtimeInfos.put(runtimeInfo.getType(), runtimeInfo.getController().getRunId(), runtimeInfo);
+    }
     return runtimeInfo;
   }
 
