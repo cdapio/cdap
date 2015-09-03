@@ -1963,6 +1963,7 @@
                       --directories "/opt/cdap/${package.name}"
                       --version "${package.version}"
                       --architecture all
+                      --rpm-os linux
                       --url "http://cask.co"
                       --template-value "project=${package.name}"
                       --after-install "${project.parent.basedir}/cdap-distributions/src/rpm/scripts/postinst"
