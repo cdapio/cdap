@@ -24,6 +24,16 @@ Cask Data Application Platform Release Notes
    :depth: 2
 
 
+`Release 3.0.5 <http://docs.cask.co/cdap/3.0.5/index.html>`__
+=============================================================
+
+Bug Fixes
+---------
+
+- Fixed a problem with the ``system.collect.events`` metric for a stream being lower than the 
+  ``system.process.events.in`` metric of a consuming flowlet (`CDAP-3458 <https://issues.cask.co/browse/CDAP-3458>`__).
+  
+
 `Release 3.0.4 <http://docs.cask.co/cdap/3.0.4/index.html>`__
 =============================================================
 
