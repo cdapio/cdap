@@ -22,6 +22,8 @@ import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.internal.specification.DataSetFieldExtractor;
 import co.cask.cdap.internal.specification.PropertyFieldExtractor;
 import co.cask.cdap.internal.workflow.DefaultWorkflowActionSpecification;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -44,6 +46,7 @@ public class DefaultWorkflowActionConfigurer implements WorkflowActionConfigurer
 
   public DefaultWorkflowActionConfigurer(WorkflowAction workflowAction) {
     this.name = workflowAction.getClass().getSimpleName();
+    this.description = "";
     this.className = workflowAction.getClass().getName();
     this.propertyFields = new HashMap<>();
     this.datasetFields = new HashSet<>();
@@ -56,21 +59,25 @@ public class DefaultWorkflowActionConfigurer implements WorkflowActionConfigurer
 
   @Override
   public void setName(String name) {
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(name), "Name of the WorkflowAction cannot be null or empty");
     this.name = name;
   }
 
   @Override
   public void setDescription(String description) {
+    Preconditions.checkNotNull(description, "Description of the WorkflowAction cannot be null");
     this.description = description;
   }
 
   @Override
   public void setProperties(Map<String, String> properties) {
+    Preconditions.checkNotNull(properties, "Properties of the WorkflowAction cannot be null");
     this.properties = new HashMap<>(properties);
   }
 
   @Override
   public void useDatasets(Iterable<String> datasets) {
+    Preconditions.checkNotNull(datasets, "Datasets of the WorkflowAction cannot be null");
     for (String dataset : datasets) {
       this.datasets.add(dataset);
     }
