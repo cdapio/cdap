@@ -609,7 +609,7 @@ function genericRender(scope, filter, location) {
     if (svgWidth - g.graph().width <= 0) {
       scope.currentScale = svgWidth / g.graph().width;
       scope.translateX = 0;
-      scope.translateY = (svgHeight - g.graph().height * scope.currentScale)/2;
+      scope.translateY = ((svgHeight - g.graph().height) * scope.currentScale)/2;
     } else {
       scope.translateX = (svgWidth - g.graph().width * initialScale) / 2 + 10;
       scope.translateY = 20;
