@@ -106,6 +106,33 @@ angular.module(PKG.name+'.feature.foo')
         url: '/test/settings',
         templateUrl: '/assets/features/foo/settings.html',
         controller: 'FooPlaygroundController'
+      })
+      .state('validators-test', {
+        url: '/validator',
+        templateUrl: 'assets/features/foo/validator.html',
+        controllerAs: 'ValidatorCtrl',
+        controller: function () {
+          this.inputFields = [
+            {
+              name: 'field1',
+              type: 'string'
+            },
+            {
+              name: 'field2',
+              type: 'number'
+            },
+            {
+              name: 'field3',
+              type: 'boolean'
+            }
+          ];
+
+          this.model = {
+            errorDatasetName: '',
+            properties: ''
+          };
+
+        }
       });
 
   });

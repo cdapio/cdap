@@ -14,28 +14,17 @@
  * the License.
  */
 
-angular.module(PKG.name + '.feature.foo')
-  .controller('RuleDriverController', function($scope, myAdapterValidatorsApi) {
-    this.inputFields = [
-      {
-        name: 'field1',
-        type: 'string'
+angular.module(PKG.name + '.commons')
+  .directive('myValidators', function() {
+    return {
+      restrict: 'E',
+      scope: {
+        model: '=ngModel',
+        inputSchema: '=',
+        isDisabled: '='
       },
-      {
-        name: 'field2',
-        type: 'number'
-      },
-      {
-        name: 'field3',
-        type: 'boolean'
-      }
-    ];
-
-
-    myAdapterValidatorsApi.get()
-      .$promise
-      .then(function (res) {
-        console.log('res', res);
-      });
-
+      templateUrl: 'validators/validators.html',
+      controller: 'MyValidatorsCtrl',
+      controllerAs: 'ValidatorsCtrl'
+    };
   });
