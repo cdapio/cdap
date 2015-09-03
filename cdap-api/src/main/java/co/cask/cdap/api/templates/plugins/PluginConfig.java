@@ -25,4 +25,12 @@ import co.cask.cdap.api.annotation.Beta;
 @Beta
 public abstract class PluginConfig extends Config {
 
+  private PluginProperties properties;
+
+  /**
+   * Returns the {@link PluginProperties}.
+   */
+  public final PluginProperties getProperties() {
+    return properties;
+  }
 }

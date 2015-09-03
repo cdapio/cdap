@@ -1,3 +1,19 @@
+/*
+ * Copyright © 2015 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 var module = angular.module(PKG.name+'.commons');
 
 var baseDirective = {
@@ -603,15 +619,15 @@ function genericRender(scope, filter, location) {
 
   scope.centerImage = function() {
     // Center svg.
-    var initialScale = 1.1;
+    var initialScale = 1;
     var svgWidth = svg.node().getBoundingClientRect().width;
+    var svgHeight = svg.node().getBoundingClientRect().height;
     if (svgWidth - g.graph().width <= 0) {
       scope.currentScale = svgWidth / g.graph().width;
       scope.translateX = 0;
-      scope.translateY = 0;
-
+      scope.translateY = ((svgHeight - g.graph().height) * scope.currentScale)/2;
     } else {
-      scope.translateX = (svgWidth - g.graph().width * initialScale) / 2;
+      scope.translateX = (svgWidth - g.graph().width * initialScale) / 2 + 10;
       scope.translateY = 20;
       scope.currentScale = initialScale;
     }

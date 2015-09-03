@@ -14,11 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.internal;
+package co.cask.cdap.common.namespace;
 
 import co.cask.cdap.common.UnauthorizedException;
-import co.cask.cdap.common.namespace.AbstractNamespaceClient;
-import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.common.http.HttpRequest;
@@ -30,7 +28,8 @@ import java.net.URL;
 import java.util.List;
 
 /**
- * Local implementation of {@link AbstractNamespaceClient}
+ * Local implementation of {@link AbstractNamespaceClient}. This is used in unit tests when AppFabricServer is not
+ * discoverable, however, a valid {@link NamespaceAdmin} is available.
  */
 public class LocalNamespaceClient extends AbstractNamespaceClient {
   private final NamespaceAdmin namespaceAdmin;

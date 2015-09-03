@@ -286,7 +286,17 @@ public interface DatasetFramework {
                                    @Nullable Iterable<? extends Id> owners)
     throws DatasetManagementException, IOException, ServiceNotRunningException;
 
+  /**
+   * Creates a namespace in the Storage Providers - HBase/LevelDB, Hive and HDFS/Local File System.
+   *
+   * @param namespaceId the {@link Id.Namespace} to create
+   */
   void createNamespace(Id.Namespace namespaceId) throws DatasetManagementException, ServiceNotRunningException;
 
+  /**
+   * Deletes a namespace in the Storage Providers - HBase/LevelDB, Hive and HDFS/Local File System.
+   *
+   * @param namespaceId the {@link Id.Namespace} to create
+   */
   void deleteNamespace(Id.Namespace namespaceId) throws DatasetManagementException, ServiceNotRunningException;
 }

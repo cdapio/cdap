@@ -74,6 +74,16 @@ public final class RouterPathLookup extends AbstractHttpHandler {
     } else if (matches(uriParts, "v3", "system", "services", null, "logs")) {
       //Log Handler Path /v3/system/services/<service-id>/logs
       return Constants.Service.METRICS;
+    } else if (matches(uriParts, "v3", "namespaces", null, "apps", null, "metadata") ||
+      matches(uriParts, "v3", "namespaces", null, "apps", null, null, null, "metadata") ||
+      matches(uriParts, "v3", "namespaces", null, "datasets", null, "metadata") ||
+      matches(uriParts, "v3", "namespaces", null, "streams", null, "metadata") ||
+      matches(uriParts, "v3", "namespaces", null, "apps", null, "tags") ||
+      matches(uriParts, "v3", "namespaces", null, "apps", null, null, null, "tags") ||
+      matches(uriParts, "v3", "namespaces", null, "datasets", null, "tags") ||
+      matches(uriParts, "v3", "namespaces", null, "streams", null, "tags")) {
+      // all metadata REST APIs are currently exposed from Dataset service
+      return Constants.Service.DATASET_MANAGER;
     } else if ((matches(uriParts, "v3", "namespaces", null, "streams", null, "adapters")
       || matches(uriParts, "v3", "namespaces", null, "streams", null, "programs")
       || matches(uriParts, "v3", "namespaces", null, "data", "datasets", null, "adapters")

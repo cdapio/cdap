@@ -18,6 +18,7 @@ package co.cask.cdap.test.app;
 
 import co.cask.cdap.ConfigTestApp;
 import co.cask.cdap.api.app.Application;
+import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
@@ -205,7 +206,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "AppWithPlugin");
     AppRequest createRequest = new AppRequest(
-      new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion(), false));
+      new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()));
 
     ApplicationManager appManager = deployApplication(appId, createRequest);
     WorkerManager workerManager = appManager.getWorkerManager(AppWithPlugin.WORKER);
@@ -238,7 +239,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "AppFromArtifact");
     AppRequest<ConfigTestApp.ConfigClass> createRequest = new AppRequest<>(
-      new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion(), false),
+      new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()),
       new ConfigTestApp.ConfigClass("testStream", "testDataset")
     );
     ApplicationManager appManager = deployApplication(appId, createRequest);

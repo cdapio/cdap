@@ -18,6 +18,8 @@ package co.cask.cdap.proto.artifact;
 
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.artifact.ArtifactClasses;
+import co.cask.cdap.api.artifact.ArtifactId;
+import co.cask.cdap.api.artifact.ArtifactScope;
 
 import java.util.Objects;
 
@@ -28,8 +30,12 @@ import java.util.Objects;
 public class ArtifactInfo extends ArtifactSummary {
   private final ArtifactClasses classes;
 
-  public ArtifactInfo(String name, String version, boolean isSystem, ArtifactClasses classes) {
-    super(name, version, isSystem);
+  public ArtifactInfo(ArtifactId id, ArtifactClasses classes) {
+    this(id.getName(), id.getVersion().getVersion(), id.getScope(), classes);
+  }
+
+  public ArtifactInfo(String name, String version, ArtifactScope scope, ArtifactClasses classes) {
+    super(name, version, scope);
     this.classes = classes;
   }
 
@@ -62,7 +68,7 @@ public class ArtifactInfo extends ArtifactSummary {
     return "ArtifactInfo{" +
       "name='" + name + '\'' +
       ", version='" + version + '\'' +
-      ", isSystem=" + isSystem +
+      ", scope=" + scope +
       ", classes=" + classes +
       '}';
   }

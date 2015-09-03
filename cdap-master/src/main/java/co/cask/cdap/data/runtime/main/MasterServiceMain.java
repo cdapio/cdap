@@ -32,6 +32,7 @@ import co.cask.cdap.common.guice.TwillModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.io.URLConnections;
 import co.cask.cdap.common.kerberos.SecurityUtil;
+import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.common.runtime.DaemonMain;
 import co.cask.cdap.common.service.RetryOnStartFailureService;
 import co.cask.cdap.common.service.RetryStrategies;
@@ -326,7 +327,8 @@ public class MasterServiceMain extends DaemonMain {
       new ExploreClientModule(),
       new NotificationFeedServiceRuntimeModule().getDistributedModules(),
       new NotificationServiceRuntimeModule().getDistributedModules(),
-      new StreamAdminModules().getDistributedModules()
+      new StreamAdminModules().getDistributedModules(),
+      new NamespaceClientRuntimeModule().getDistributedModules()
     );
   }
 

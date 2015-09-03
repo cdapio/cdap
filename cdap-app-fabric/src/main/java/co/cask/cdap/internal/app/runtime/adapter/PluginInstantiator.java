@@ -16,9 +16,10 @@
 
 package co.cask.cdap.internal.app.runtime.adapter;
 
-import co.cask.cdap.api.Config;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.artifact.ArtifactDescriptor;
+import co.cask.cdap.api.artifact.ArtifactId;
+import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.templates.plugins.PluginClass;
@@ -327,7 +328,7 @@ public class PluginInstantiator implements Closeable {
     public void visit(Object instance, Type inspectType, Type declareType, Field field) throws Exception {
       TypeToken<?> declareTypeToken = TypeToken.of(declareType);
 
-      if (Config.class.equals(declareTypeToken.getRawType())) {
+      if (PluginConfig.class.equals(declareTypeToken.getRawType())) {
         if (field.getName().equals("properties")) {
           field.set(instance, properties);
         }
@@ -382,8 +383,9 @@ public class PluginInstantiator implements Closeable {
 
   private ArtifactDescriptor getDescriptor(PluginInfo pluginInfo) {
     File file = new File(pluginDir, pluginInfo.getFileName());
-    return new ArtifactDescriptor(
-      pluginInfo.getName(), new ArtifactVersion(pluginInfo.getVersion().getVersion()), true, Locations.toLocation(file)
-    );
+    ArtifactId artifactId = new ArtifactId(pluginInfo.getName(),
+                                           new ArtifactVersion(pluginInfo.getVersion().getVersion()),
+                                           ArtifactScope.SYSTEM);
+    return new ArtifactDescriptor(artifactId, Locations.toLocation(file));
   }
 }

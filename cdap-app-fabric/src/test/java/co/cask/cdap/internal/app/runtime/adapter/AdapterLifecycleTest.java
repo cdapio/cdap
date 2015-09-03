@@ -20,6 +20,7 @@ import co.cask.cdap.AppWithServices;
 import co.cask.cdap.DummyBatchTemplate;
 import co.cask.cdap.DummyWorkerTemplate;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.internal.app.services.AdapterService;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.AdapterDetail;

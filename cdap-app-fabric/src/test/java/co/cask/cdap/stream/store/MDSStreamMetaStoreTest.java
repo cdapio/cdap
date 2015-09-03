@@ -25,6 +25,7 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
+import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -64,6 +65,7 @@ public class MDSStreamMetaStoreTest extends StreamMetaStoreTestBase {
       new ExploreClientModule(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new LocationRuntimeModule().getInMemoryModules(),
+      new NamespaceClientRuntimeModule().getInMemoryModules(),
       new AbstractModule() {
         @Override
         protected void configure() {

@@ -82,7 +82,7 @@ public class DistributedSparkProgramRunner extends AbstractDistributedProgramRun
       sparkAssemblyJar.getName());
 
     RunId runId = RunIds.fromString(options.getArguments().getOption(ProgramOptionConstants.RUN_ID));
-    return new SparkTwillProgramController(program.getName(), controller, runId).startListen();
+    return new SparkTwillProgramController(program.getId(), controller, runId).startListen();
   }
 
   private static Configuration createConfiguration(Configuration hConf) {

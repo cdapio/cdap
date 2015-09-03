@@ -43,6 +43,7 @@ import co.cask.cdap.data2.dataset2.SimpleKVTable;
 import co.cask.cdap.data2.dataset2.SingleTypeModule;
 import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
+import co.cask.cdap.data2.metadata.service.MockMetadataAdmin;
 import co.cask.cdap.data2.metrics.DatasetMetricsReporter;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.explore.client.DiscoveryExploreClient;
@@ -74,7 +75,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 /**
- *
+ * Tests for {@link RemoteDatasetFramework}
  */
 public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
   private TransactionManager txManager;
@@ -131,7 +132,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
       new InMemoryDatasetOpExecutor(framework),
       exploreFacade,
       cConf,
-      new UsageRegistry(txExecutorFactory, framework));
+      new UsageRegistry(txExecutorFactory, framework), NAMESPACE_CLIENT);
     service = new DatasetService(cConf,
                                  namespacedLocationFactory,
                                  discoveryService,
@@ -143,7 +144,9 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
                                  new HashSet<DatasetMetricsReporter>(),
                                  instanceService,
                                  new LocalStorageProviderNamespaceAdmin(cConf, namespacedLocationFactory,
-                                                                        exploreFacade)
+                                                                        exploreFacade),
+                                 NAMESPACE_CLIENT,
+                                 new MockMetadataAdmin()
     );
     // Start dataset service, wait for it to be discoverable
     service.start();

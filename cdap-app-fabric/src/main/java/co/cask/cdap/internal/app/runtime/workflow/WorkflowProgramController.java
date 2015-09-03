@@ -41,7 +41,7 @@ final class WorkflowProgramController extends AbstractProgramController {
   private Cancellable cancelAnnounce;
 
   WorkflowProgramController(Program program, WorkflowDriver driver, ServiceAnnouncer serviceAnnouncer, RunId runId) {
-    super(program.getName(), runId);
+    super(program.getId(), runId);
     this.driver = driver;
     this.serviceName = getServiceName(program, runId);
     this.serviceAnnouncer = serviceAnnouncer;

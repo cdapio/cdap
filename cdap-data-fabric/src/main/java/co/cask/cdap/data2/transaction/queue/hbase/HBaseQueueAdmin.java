@@ -151,12 +151,12 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
   }
 
   @Override
-  public void create(QueueName queueName) throws IOException, ServiceNotRunningException {
+  public void create(QueueName queueName) throws IOException {
     create(queueName, new Properties());
   }
 
   @Override
-  public void create(QueueName queueName, Properties properties) throws IOException, ServiceNotRunningException {
+  public void create(QueueName queueName, Properties properties) throws IOException {
     // Queue Config needs to be on separate table, otherwise disabling the queue table would makes queue config
     // not accessible by the queue region coprocessor for doing eviction.
 
@@ -262,7 +262,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
     return Id.DatasetInstance.from(namespaceId, QueueConstants.STATE_STORE_NAME);
   }
 
-  private Id.DatasetInstance createStateStoreDataset(String namespace) throws IOException, ServiceNotRunningException {
+  private Id.DatasetInstance createStateStoreDataset(String namespace) throws IOException {
     try {
       Id.DatasetInstance stateStoreId = getStateStoreId(namespace);
       DatasetProperties configProperties = DatasetProperties.builder()
@@ -271,7 +271,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
       DatasetsUtil.createIfNotExists(datasetFramework, stateStoreId,
                                      HBaseQueueDatasetModule.STATE_STORE_TYPE_NAME, configProperties);
       return stateStoreId;
-    } catch (DatasetManagementException e) {
+    } catch (DatasetManagementException | ServiceNotRunningException e) {
       throw new IOException(e);
     }
   }

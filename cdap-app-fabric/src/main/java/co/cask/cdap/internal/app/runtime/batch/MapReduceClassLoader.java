@@ -311,9 +311,7 @@ public class MapReduceClassLoader extends CombineClassLoader {
           locationFactory = (MapReduceTaskContextProvider.isLocal(hConf)) ? localLocationFactory : hdfsLocationFactory;
           List<ClassLoader> pluginClassLoaders = Lists.newArrayList();
           for (Plugin plugin : plugins.values()) {
-            ArtifactDescriptor artifactDescriptor = new ArtifactDescriptor(plugin.getArtifactName(),
-                                                                           plugin.getArtifactVersion(),
-                                                                           plugin.isSystem(),
+            ArtifactDescriptor artifactDescriptor = new ArtifactDescriptor(plugin.getArtifactId(),
                                                                            locationFactory.create(
                                                                              plugin.getLocationURI()));
             ClassLoader pluginClassLoader = artifactPluginInstantiator.getArtifactClassLoader(artifactDescriptor);

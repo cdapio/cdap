@@ -98,7 +98,6 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
   public void create(HttpRequest request, HttpResponder responder,
                      @PathParam("namespace-id") String namespaceId,
                      @PathParam("name") String name) {
-    // TODO: Use namespaceId here
     InternalDatasetCreationParams params = GSON.fromJson(request.getContent().toString(Charsets.UTF_8),
                                                          InternalDatasetCreationParams.class);
     Preconditions.checkArgument(params.getProperties() != null, "Missing required 'instanceProps' parameter.");

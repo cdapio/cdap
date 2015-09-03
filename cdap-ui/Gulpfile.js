@@ -1,3 +1,19 @@
+/*
+ * Copyright © 2015 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 var gulp = require('gulp'),
     plug = require('gulp-load-plugins')(),
     pkg = require('./package.json'),
@@ -273,6 +289,7 @@ gulp.task('tpl', function() {
     gulp.src([
       './app/directives/**/*.html'
     ])
+      .pipe(plug.minifyHtml({loose: true, quotes: true}))
       .pipe(plug.angularTemplatecache({
         module: pkg.name + '.commons'
       })),
@@ -280,6 +297,7 @@ gulp.task('tpl', function() {
     gulp.src([
       './app/features/home/home.html'
     ])
+      .pipe(plug.minifyHtml({loose: true, quotes: true}))
       .pipe(plug.angularTemplatecache({
         module: pkg.name + '.features',
         base: __dirname + '/app',
@@ -298,11 +316,13 @@ gulp.task('tpl', function() {
  */
 gulp.task('html:partials', function() {
   return gulp.src('./app/features/**/*.html')
+      .pipe(plug.minifyHtml({loose: true, quotes: true}))
       .pipe(gulp.dest('./dist/assets/features'));
 });
 
 gulp.task('html:main', function() {
   return gulp.src('./app/*.html')
+      .pipe(plug.minifyHtml({loose: true, quotes: true}))
       .pipe(gulp.dest('./dist'));
 });
 

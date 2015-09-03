@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 
 package co.cask.cdap.explore.service;
 
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.app.store.Store;
@@ -25,8 +26,8 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
-import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.common.namespace.AbstractNamespaceClient;
+import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -46,6 +47,7 @@ import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionManager;
 import com.google.common.collect.ImmutableList;
@@ -74,7 +76,7 @@ public class ExploreDisabledTest {
   private static DatasetOpExecutor dsOpExecutor;
   private static DatasetService datasetService;
   private static ExploreClient exploreClient;
-  private static NamespacedLocationFactory namespacedLocationFactory;
+  private static AbstractNamespaceClient namespaceClient;
 
   @BeforeClass
   public static void start() throws Exception {
@@ -93,15 +95,17 @@ public class ExploreDisabledTest {
 
     datasetFramework = injector.getInstance(DatasetFramework.class);
 
-    namespacedLocationFactory = injector.getInstance(NamespacedLocationFactory.class);
-
-    // This happens when you create a namespace. However, simulating that scenario by creating a directory here instead.
-    Locations.mkdirsIfNotExists(namespacedLocationFactory.get(namespaceId));
+    namespaceClient = injector.getInstance(AbstractNamespaceClient.class);
+    namespaceClient.create(new NamespaceMeta.Builder().setName(namespaceId).build());
+    // This happens when you create a namespace via REST APIs. However, since we do not start AppFabricServer in
+    // Explore tests, simulating that scenario by explicitly calling DatasetFramework APIs.
+    datasetFramework.createNamespace(namespaceId);
   }
 
   @AfterClass
   public static void stop() throws Exception {
-    Locations.deleteQuietly(namespacedLocationFactory.get(namespaceId));
+    datasetFramework.deleteNamespace(namespaceId);
+    namespaceClient.delete(namespaceId);
     exploreClient.close();
     datasetService.stopAndWait();
     dsOpExecutor.stopAndWait();
@@ -172,7 +176,8 @@ public class ExploreDisabledTest {
 
     table.write("key1", "value1");
     table.write("key2", "value2");
-    Assert.assertEquals("value1", new String(table.read("key1")));
+    byte[] value = table.read("key1");
+    Assert.assertEquals("value1", Bytes.toString(value));
 
     Assert.assertTrue(table.commitTx());
 
@@ -184,7 +189,9 @@ public class ExploreDisabledTest {
     Transaction tx2 = transactionManager.startShort(100);
     table.startTx(tx2);
 
-    Assert.assertEquals("value1", new String(table.read("key1")));
+    value = table.read("key1");
+    Assert.assertNotNull(value);
+    Assert.assertEquals("value1", Bytes.toString(value));
 
     datasetFramework.deleteInstance(instance2);
     datasetFramework.deleteModule(module2);
@@ -209,6 +216,7 @@ public class ExploreDisabledTest {
         new ExploreClientModule(),
         new StreamAdminModules().getInMemoryModules(),
         new NotificationServiceRuntimeModule().getInMemoryModules(),
+        new NamespaceClientRuntimeModule().getInMemoryModules(),
         new AbstractModule() {
           @Override
           protected void configure() {

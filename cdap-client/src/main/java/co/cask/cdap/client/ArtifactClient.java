@@ -17,6 +17,7 @@
 package co.cask.cdap.client;
 
 import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.templates.plugins.PluginClass;
 import co.cask.cdap.client.config.ClientConfig;
@@ -96,23 +97,24 @@ public class ArtifactClient {
    */
   public List<ArtifactSummary> list(Id.Namespace namespace)
     throws IOException, UnauthorizedException, NotFoundException {
-    return list(namespace, true);
+    return list(namespace, null);
   }
 
   /**
    * Lists all artifacts in the given namespace, optionally including system artifacts.
    *
    * @param namespace the namespace to list artifacts in
-   * @param includeSystem whether or not to include system artifacts
+   * @param scope the scope of the artifacts to get. If null, both user and system artifacts are listed
    * @return list of {@link ArtifactSummary}
    * @throws IOException if a network error occurred
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    * @throws NotFoundException if the namespace could not be found
    */
-  public List<ArtifactSummary> list(Id.Namespace namespace,
-                                    boolean includeSystem)
+  public List<ArtifactSummary> list(Id.Namespace namespace, @Nullable ArtifactScope scope)
     throws IOException, UnauthorizedException, NotFoundException {
-    URL url = config.resolveNamespacedURLV3(namespace, String.format("artifacts?includeSystem=%s", includeSystem));
+
+    URL url = scope == null ? config.resolveNamespacedURLV3(namespace, "artifacts") :
+      config.resolveNamespacedURLV3(namespace, String.format("artifacts?scope=%s", scope.name()));
     HttpResponse response =
       restClient.execute(HttpMethod.GET, url, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
 
@@ -134,7 +136,7 @@ public class ArtifactClient {
    */
   public List<ArtifactSummary> listVersions(Id.Namespace namespace, String artifactName)
     throws UnauthorizedException, IOException, ArtifactNotFoundException {
-    return listVersions(namespace, artifactName, false);
+    return listVersions(namespace, artifactName, null);
   }
 
   /**
@@ -142,17 +144,17 @@ public class ArtifactClient {
    *
    * @param namespace the namespace to list artifact versions in
    * @param artifactName the name of the artifact
-   * @param isSystem whether or not the artifact versions are for system artifacts
+   * @param scope the scope of artifacts to get. If none is given, the scope defaults to the user scope
    * @return list of {@link ArtifactSummary}
    * @throws IOException if a network error occurred
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    * @throws ArtifactNotFoundException if the given artifact does not exist
    */
-  public List<ArtifactSummary> listVersions(Id.Namespace namespace, String artifactName, boolean isSystem)
+  public List<ArtifactSummary> listVersions(Id.Namespace namespace, String artifactName, @Nullable ArtifactScope scope)
     throws UnauthorizedException, IOException, ArtifactNotFoundException {
 
-    URL url = config.resolveNamespacedURLV3(namespace,
-      String.format("artifacts/%s?isSystem=%s", artifactName, isSystem));
+    URL url = scope == null ? config.resolveNamespacedURLV3(namespace, String.format("artifacts/%s", artifactName)) :
+      config.resolveNamespacedURLV3(namespace, String.format("artifacts/%s?scope=%s", artifactName, scope.name()));
 
     HttpResponse response = restClient.execute(
       HttpMethod.GET, url, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);

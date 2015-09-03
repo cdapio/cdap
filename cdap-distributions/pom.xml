@@ -88,6 +88,7 @@
                     -C "${stage.dir}"
                     --version "${package.version}"
                     --architecture all
+                    --rpm-os linux
                     --url "http://www.cask.co"
                     --template-value "project=cdap"
                     --after-install "${project.basedir}/src/rpm/scripts/common-postinst"

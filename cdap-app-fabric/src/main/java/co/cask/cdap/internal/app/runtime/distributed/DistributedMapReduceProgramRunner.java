@@ -72,6 +72,6 @@ public final class DistributedMapReduceProgramRunner extends AbstractDistributed
       extraClassPaths);
 
     RunId runId = RunIds.fromString(options.getArguments().getOption(ProgramOptionConstants.RUN_ID));
-    return new MapReduceTwillProgramController(program.getName(), controller, runId).startListen();
+    return new MapReduceTwillProgramController(program.getId(), controller, runId).startListen();
   }
 }

@@ -169,7 +169,7 @@ public class ArtifactRepository {
     List<ApplicationClassInfo> infos = Lists.newArrayList();
     for (Map.Entry<ArtifactDescriptor, ApplicationClass> entry :
       artifactStore.getApplicationClasses(namespace, className).entrySet()) {
-      ArtifactSummary artifactSummary = ArtifactSummary.from(entry.getKey());
+      ArtifactSummary artifactSummary = ArtifactSummary.from(entry.getKey().getArtifactId());
       ApplicationClass appClass = entry.getValue();
       infos.add(new ApplicationClassInfo(artifactSummary, appClass.getClassName(), appClass.getConfigSchema()));
     }
@@ -465,7 +465,7 @@ public class ArtifactRepository {
   // convert details to summaries (to hide location and other unnecessary information)
   private List<ArtifactSummary> convertAndAdd(List<ArtifactSummary> summaries, Iterable<ArtifactDetail> details) {
     for (ArtifactDetail detail : details) {
-      summaries.add(ArtifactSummary.from(detail.getDescriptor()));
+      summaries.add(ArtifactSummary.from(detail.getDescriptor().getArtifactId()));
     }
     return summaries;
   }
@@ -507,9 +507,9 @@ public class ArtifactRepository {
         isInvalid = true;
         errMsg
           .append(" Parent '")
-          .append(parent.getDescriptor().getName())
+          .append(parent.getDescriptor().getArtifactId().getName())
           .append("-")
-          .append(parent.getDescriptor().getVersion().getVersion())
+          .append(parent.getDescriptor().getArtifactId().getVersion().getVersion())
           .append("' has parents.");
       }
     }
@@ -526,7 +526,7 @@ public class ArtifactRepository {
   private void addAppSummaries(List<ApplicationClassSummary> summaries, Id.Namespace namespace) {
     for (Map.Entry<ArtifactDescriptor, List<ApplicationClass>> classInfo :
       artifactStore.getApplicationClasses(namespace).entrySet()) {
-      ArtifactSummary artifactSummary = ArtifactSummary.from(classInfo.getKey());
+      ArtifactSummary artifactSummary = ArtifactSummary.from(classInfo.getKey().getArtifactId());
 
       for (ApplicationClass appClass : classInfo.getValue()) {
         summaries.add(new ApplicationClassSummary(artifactSummary, appClass.getClassName()));

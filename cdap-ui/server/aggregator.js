@@ -1,3 +1,19 @@
+/*
+ * Copyright © 2015 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 /*global require, module */
 
 var request = require('request'),
@@ -118,22 +134,24 @@ Aggregator.prototype.pushConfiguration = function(resource) {
   var pluginid = resource.pluginid;
   var config = {};
   var statusCode = 404;
+  var file;
+
   try {
     // Check if the configuration is present within the plugin for a template
-    var file = __dirname + '/../templates/' + templateid + '/' + pluginid + '.json';
+    file = __dirname + '/../templates/' + templateid + '/' + pluginid + '.json';
     config = JSON.parse(fs.readFileSync(file, 'utf8'));
     statusCode = 200;
   } catch(e1) {
-   try {
-     // Some times there might a plugin that is common across multiple templates
-     // in which case, this is stored within the common directory. So, if the
-     // template specific plugin check fails, then attempt to get it from common.
-     var file = __dirname + '/../templates/common/' + pluginid + '.json';
-     config = JSON.parse(fs.readFileSync(file, 'utf8'));
-     statusCode = 200;
-   } catch (e2) {
-     log.debug('Unable to find template %s, plugin %s', templateid, pluginid);
-   }
+    try {
+      // Some times there might a plugin that is common across multiple templates
+      // in which case, this is stored within the common directory. So, if the
+      // template specific plugin check fails, then attempt to get it from common.
+      file = __dirname + '/../templates/common/' + pluginid + '.json';
+      config = JSON.parse(fs.readFileSync(file, 'utf8'));
+      statusCode = 200;
+    } catch (e2) {
+      log.debug('Unable to find template %s, plugin %s', templateid, pluginid);
+    }
   }
   this.connection.write(JSON.stringify({
     resource: resource,

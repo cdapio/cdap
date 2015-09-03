@@ -17,19 +17,10 @@
 package co.cask.cdap.api;
 
 import co.cask.cdap.api.app.Application;
-import co.cask.cdap.api.templates.plugins.PluginProperties;
 
 /**
  * Configuration class of an configurable entity, such as {@link Application}.
  */
 public class Config {
 
-  private PluginProperties properties;
-
-  /**
-   * Returns the {@link PluginProperties}.
-   */
-  public final PluginProperties getProperties() {
-    return properties;
-  }
 }

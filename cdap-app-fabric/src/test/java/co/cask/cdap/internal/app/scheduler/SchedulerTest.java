@@ -22,6 +22,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -86,7 +87,8 @@ public class SchedulerTest {
                                     new DataFabricModules().getInMemoryModules(),
                                     new DataSetsModules().getStandaloneModules(),
                                     new DataSetServiceModules().getInMemoryModules(),
-                                    new ExploreClientModule());
+                                    new ExploreClientModule(),
+                                    new NamespaceClientRuntimeModule().getInMemoryModules());
     txService = injector.getInstance(TransactionManager.class);
     txService.startAndWait();
     dsOpsService = injector.getInstance(DatasetOpExecutor.class);

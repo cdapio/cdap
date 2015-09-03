@@ -175,7 +175,7 @@ public final class FlowProgramRunner implements ProgramRunner {
 
     FlowProgramController(Table<String, Integer, ProgramController> flowlets, RunId runId,
                           Program program, FlowSpecification flowSpec, Multimap<String, QueueName> consumerQueues) {
-      super(program.getName(), runId);
+      super(program.getId(), runId);
       this.flowlets = flowlets;
       this.program = program;
       this.flowSpec = flowSpec;
