@@ -41,6 +41,9 @@ import org.slf4j.LoggerFactory;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import javax.annotation.Nullable;
 
 /**
@@ -53,10 +56,12 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
                                                                                       ProgramController.State.KILLED,
                                                                                       ProgramController.State.ERROR);
 
+  private final ReadWriteLock runtimeInfosLock;
   private final Table<ProgramType, RunId, RuntimeInfo> runtimeInfos;
   private final ProgramRunnerFactory programRunnerFactory;
 
   protected AbstractProgramRuntimeService(ProgramRunnerFactory programRunnerFactory) {
+    this.runtimeInfosLock = new ReentrantReadWriteLock();
     this.runtimeInfos = HashBasedTable.create();
     this.programRunnerFactory = programRunnerFactory;
   }
@@ -90,28 +95,52 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     return new SimpleRuntimeInfo(controller, program);
   }
 
-  protected synchronized List<RuntimeInfo> getRuntimeInfos() {
-    return ImmutableList.copyOf(runtimeInfos.values());
+  protected List<RuntimeInfo> getRuntimeInfos() {
+    Lock lock = runtimeInfosLock.readLock();
+    lock.lock();
+    try {
+      return ImmutableList.copyOf(runtimeInfos.values());
+    } finally {
+      lock.unlock();
+    }
   }
 
   @Override
-  public synchronized RuntimeInfo lookup(Id.Program programId, RunId runId) {
-    return runtimeInfos.get(programId.getType(), runId);
+  public RuntimeInfo lookup(Id.Program programId, RunId runId) {
+    Lock lock = runtimeInfosLock.readLock();
+    lock.lock();
+    try {
+      return runtimeInfos.get(programId.getType(), runId);
+    } finally {
+      lock.unlock();
+    }
   }
 
   @Override
-  public synchronized Map<RunId, RuntimeInfo> list(ProgramType type) {
-    return ImmutableMap.copyOf(runtimeInfos.row(type));
+  public Map<RunId, RuntimeInfo> list(ProgramType type) {
+    Lock lock = runtimeInfosLock.readLock();
+    lock.lock();
+    try {
+      return ImmutableMap.copyOf(runtimeInfos.row(type));
+    } finally {
+      lock.unlock();
+    }
   }
 
   @Override
-  public synchronized Map<RunId, RuntimeInfo> list(final Id.Program program) {
-    return Maps.filterValues(list(program.getType()), new Predicate<RuntimeInfo>() {
-      @Override
-      public boolean apply(RuntimeInfo info) {
-        return info.getProgramId().equals(program);
-      }
-    });
+  public Map<RunId, RuntimeInfo> list(final Id.Program program) {
+    Lock lock = runtimeInfosLock.readLock();
+    lock.lock();
+    try {
+      return Maps.filterValues(list(program.getType()), new Predicate<RuntimeInfo>() {
+        @Override
+        public boolean apply(RuntimeInfo info) {
+          return info.getProgramId().equals(program);
+        }
+      });
+    } finally {
+      lock.unlock();
+    }
   }
 
   @Override
@@ -143,9 +172,15 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     // No-op
   }
 
-  protected synchronized void updateRuntimeInfo(ProgramType type, RunId runId, RuntimeInfo runtimeInfo) {
-    if (!runtimeInfos.contains(type, runId)) {
-      runtimeInfos.put(type, runId, programStarted(runtimeInfo));
+  protected void updateRuntimeInfo(ProgramType type, RunId runId, RuntimeInfo runtimeInfo) {
+    Lock lock = runtimeInfosLock.writeLock();
+    lock.lock();
+    try {
+      if (!runtimeInfos.contains(type, runId)) {
+        runtimeInfos.put(type, runId, programStarted(runtimeInfo));
+      }
+    } finally {
+      lock.unlock();
     }
   }
 
@@ -179,15 +214,27 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     return runtimeInfo;
   }
 
-  private synchronized void add(RuntimeInfo runtimeInfo) {
-    runtimeInfos.put(runtimeInfo.getType(), runtimeInfo.getController().getRunId(), runtimeInfo);
+  private void add(RuntimeInfo runtimeInfo) {
+    Lock lock = runtimeInfosLock.writeLock();
+    lock.lock();
+    try {
+      runtimeInfos.put(runtimeInfo.getType(), runtimeInfo.getController().getRunId(), runtimeInfo);
+    } finally {
+      lock.unlock();
+    }
   }
 
-  private synchronized void remove(RuntimeInfo info) {
-    LOG.debug("Removing RuntimeInfo: {} {} {}",
-              info.getType(), info.getProgramId().getId(), info.getController().getRunId());
-    RuntimeInfo removed = runtimeInfos.remove(info.getType(), info.getController().getRunId());
-    LOG.debug("RuntimeInfo removed: {}", removed);
+  private void remove(RuntimeInfo info) {
+    Lock lock = runtimeInfosLock.writeLock();
+    lock.lock();
+    try {
+      LOG.debug("Removing RuntimeInfo: {} {} {}",
+                info.getType(), info.getProgramId().getId(), info.getController().getRunId());
+      RuntimeInfo removed = runtimeInfos.remove(info.getType(), info.getController().getRunId());
+      LOG.debug("RuntimeInfo removed: {}", removed);
+    } finally {
+      lock.unlock();
+    }
   }
 
   protected boolean isRunning(Id.Program programId) {
