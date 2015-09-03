@@ -82,6 +82,7 @@ public final class RecordFormats {
 
     // check if it's a standard class
     Class<? extends RecordFormat> formatClass = NAME_CLASS_MAP.get(name.toLowerCase());
+    @SuppressWarnings("unchecked")
     RecordFormat<FROM, TO> format = (RecordFormat<FROM, TO>) (formatClass == null ?
       Class.forName(name).newInstance() : formatClass.newInstance());
 

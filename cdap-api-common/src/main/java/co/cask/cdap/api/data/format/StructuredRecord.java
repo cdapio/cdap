@@ -52,6 +52,7 @@ public class StructuredRecord {
    * @param <T> type of object of the field value.
    * @return value of the field.
    */
+  @SuppressWarnings("unchecked")
   public <T> T get(String fieldName) {
     return (T) fields.get(fieldName);
   }

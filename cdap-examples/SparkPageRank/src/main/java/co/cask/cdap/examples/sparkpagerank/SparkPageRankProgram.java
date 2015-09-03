@@ -149,7 +149,7 @@ public class SparkPageRankProgram implements JavaSparkProgram {
             } else {
               sparkMetrics.count(REGULAR_PAGES, 1);
             }
-            return new Tuple2(tuple._1().getBytes(Charsets.UTF_8), Integer.parseInt(pr));
+            return new Tuple2<>(tuple._1().getBytes(Charsets.UTF_8), Integer.parseInt(pr));
           }
         } catch (Exception e) {
           LOG.warn("Failed to read the Stream for service {}", SparkPageRankApp.SERVICE_HANDLERS, e);

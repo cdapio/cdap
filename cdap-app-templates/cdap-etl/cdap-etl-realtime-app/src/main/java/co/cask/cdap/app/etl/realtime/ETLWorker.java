@@ -172,8 +172,7 @@ public class ETLWorker extends AbstractWorker {
 
     Preconditions.checkArgument(transformIds != null);
     transformMetrics = Lists.newArrayListWithCapacity(transformIds.size());
-    for (int i = 0; i < transformIds.size(); i++) {
-      String transformId = transformIds.get(i);
+    for (String transformId : transformIds) {
       try {
         Transform transform = context.newInstance(transformId);
         RealtimeTransformContext transformContext = new RealtimeTransformContext(context, metrics, transformId);
