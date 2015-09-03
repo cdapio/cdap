@@ -23,6 +23,36 @@ Cask Data Application Platform Release Notes
    :backlinks: none
    :depth: 2
 
+
+`Release 3.1.2 <http://docs.cask.co/cdap/3.1.2/index.html>`__
+=============================================================
+
+Bug Fixes
+---------
+
+- `CDAP-3362 <https://issues.cask.co/browse/CDAP-3362>`__ -
+  Fixed a problem with the ``logback-container.xml`` not being copied into master services.
+
+- `CDAP-3449 <https://issues.cask.co/browse/CDAP-3449>`__ -
+  Fixed the readless increment co-processor to handle multiple readless increment columns in the same row.
+
+- `CDAP-3452 <https://issues.cask.co/browse/CDAP-3452>`__ -
+  Fixed a bug that prevented the explore service working on clusters with secure hive 0.14.
+
+- `CDAP-3458 <https://issues.cask.co/browse/CDAP-3458>`__ -
+  Fixed a bug that prevents streams events that are already processed from being re-processed in flows.
+  
+- `CDAP-3464 <https://issues.cask.co/browse/CDAP-3464>`__ -
+  Added an example in the documentation demonstrating how to prune invalid transactions from the transaction manager.
+
+- `CDAP-3482 <https://issues.cask.co/browse/CDAP-3482>`__ -
+  Fixed an issue that prevented standalone CDAP from starting on Ubuntu.
+
+- `CDAP-3530 <https://issues.cask.co/browse/CDAP-3530>`__ -
+  Improve the UI performance when rendering flow diagrams with a large number of nodes.
+
+
+
 `Release 3.1.1 <http://docs.cask.co/cdap/3.1.1/index.html>`__
 =============================================================
 
