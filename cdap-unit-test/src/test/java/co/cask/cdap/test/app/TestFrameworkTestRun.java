@@ -119,6 +119,11 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   }
 
   @Test
+  public void testInvalidAppWithDuplicateStreams() throws Exception {
+    deployApplication(AppWithDuplicateStreams.class);
+  }
+
+  @Test
   public void testFlowRuntimeArguments() throws Exception {
     ApplicationManager applicationManager = deployApplication(FilterApp.class);
     Map<String, String> args = Maps.newHashMap();

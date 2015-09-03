@@ -31,9 +31,11 @@ import co.cask.cdap.proto.Id;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -60,6 +62,10 @@ public class DefaultPluginConfigurer extends DefaultDatasetConfigurer implements
   }
 
   public void addPlugins(Map<String, Plugin> plugins) {
+    Set<String> duplicatePlugins = Sets.intersection(plugins.keySet(), this.plugins.keySet());
+    Preconditions.checkArgument(duplicatePlugins.isEmpty(),
+                                "Plugins %s have been used already. Use different names or remove duplicates",
+                                duplicatePlugins);
     this.plugins.putAll(plugins);
   }
 
@@ -155,6 +161,8 @@ public class DefaultPluginConfigurer extends DefaultDatasetConfigurer implements
    */
   private void registerPlugin(String pluginId, ArtifactDescriptor artifactDescriptor, PluginClass pluginClass,
                               PluginProperties properties) {
+    Preconditions.checkArgument(plugins.containsKey(pluginId), "Plugin %s has already been added. " +
+      "Use a different name or remove the duplicate addition", pluginId);
     plugins.put(pluginId, new Plugin(artifactDescriptor.getArtifactId(), artifactDescriptor.getLocation().toURI(),
                                      pluginClass, properties));
   }
