@@ -20,6 +20,7 @@ import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.common.ServiceNotRunningException;
 import co.cask.cdap.data2.datafabric.dataset.DatasetType;
 import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import co.cask.cdap.data2.datafabric.dataset.type.ConstantClassLoaderProvider;
@@ -100,7 +101,8 @@ public class InMemoryDatasetOpExecutor extends AbstractIdleService implements Da
 
   }
 
-  private DatasetAdmin getAdmin(Id.DatasetInstance datasetInstanceId) throws IOException, DatasetManagementException {
+  private DatasetAdmin getAdmin(Id.DatasetInstance datasetInstanceId) throws IOException, DatasetManagementException,
+    ServiceNotRunningException {
     return client.getAdmin(datasetInstanceId, null);
   }
 }

@@ -21,6 +21,7 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.common.ServiceNotRunningException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
@@ -150,12 +151,12 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
   }
 
   @Override
-  public void create(QueueName queueName) throws IOException {
+  public void create(QueueName queueName) throws IOException, ServiceNotRunningException {
     create(queueName, new Properties());
   }
 
   @Override
-  public void create(QueueName queueName, Properties properties) throws IOException {
+  public void create(QueueName queueName, Properties properties) throws IOException, ServiceNotRunningException {
     // Queue Config needs to be on separate table, otherwise disabling the queue table would makes queue config
     // not accessible by the queue region coprocessor for doing eviction.
 
@@ -261,7 +262,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
     return Id.DatasetInstance.from(namespaceId, QueueConstants.STATE_STORE_NAME);
   }
 
-  private Id.DatasetInstance createStateStoreDataset(String namespace) throws IOException {
+  private Id.DatasetInstance createStateStoreDataset(String namespace) throws IOException, ServiceNotRunningException {
     try {
       Id.DatasetInstance stateStoreId = getStateStoreId(namespace);
       DatasetProperties configProperties = DatasetProperties.builder()

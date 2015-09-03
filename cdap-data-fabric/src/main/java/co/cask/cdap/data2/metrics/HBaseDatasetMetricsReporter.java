@@ -19,6 +19,7 @@ package co.cask.cdap.data2.metrics;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
+import co.cask.cdap.common.ServiceNotRunningException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -128,7 +129,7 @@ public class HBaseDatasetMetricsReporter extends AbstractScheduledService implem
             break;
           }
         }
-      } catch (DatasetManagementException e) {
+      } catch (DatasetManagementException | ServiceNotRunningException e) {
         // No op
       }
     }

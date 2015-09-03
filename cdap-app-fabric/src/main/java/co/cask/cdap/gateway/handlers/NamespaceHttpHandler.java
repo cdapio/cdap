@@ -29,6 +29,7 @@ import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Strings;
+import com.google.common.base.Throwables;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -60,13 +61,8 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
 
   @GET
   @Path("/namespaces")
-  public void getAllNamespaces(HttpRequest request, HttpResponder responder) {
-    try {
-      responder.sendJson(HttpResponseStatus.OK, namespaceAdmin.list());
-    } catch (Exception e) {
-      LOG.error("Internal error while listing all namespaces", e);
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-    }
+  public void getAllNamespaces(HttpRequest request, HttpResponder responder) throws Exception {
+    responder.sendJson(HttpResponseStatus.OK, namespaceAdmin.list());
   }
 
   @GET

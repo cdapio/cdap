@@ -26,6 +26,7 @@ import co.cask.cdap.api.dataset.lib.Partitioning;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.common.ServiceNotRunningException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
@@ -57,7 +58,7 @@ import java.util.Map;
  */
 public abstract class AbstractDatasetFrameworkTest {
 
-  protected abstract DatasetFramework getFramework() throws DatasetManagementException;
+  protected abstract DatasetFramework getFramework() throws DatasetManagementException, ServiceNotRunningException;
 
   protected static final Map<String, DatasetModule> DEFAULT_MODULES;
   static {
@@ -274,7 +275,8 @@ public abstract class AbstractDatasetFrameworkTest {
   }
 
   @Test
-  public void testMultipleTransitiveDependencies() throws DatasetManagementException, IOException {
+  public void testMultipleTransitiveDependencies() throws DatasetManagementException, IOException,
+    ServiceNotRunningException {
     // Adding modules
     DatasetFramework framework = getFramework();
     try {
@@ -349,7 +351,7 @@ public abstract class AbstractDatasetFrameworkTest {
   }
 
   @Test
-  public void testNamespaceCreationDeletion() throws DatasetManagementException {
+  public void testNamespaceCreationDeletion() throws DatasetManagementException, ServiceNotRunningException {
     DatasetFramework framework = getFramework();
 
     Id.Namespace namespace = Id.Namespace.from("yourspace");

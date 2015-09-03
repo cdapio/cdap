@@ -21,6 +21,7 @@ import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
+import co.cask.cdap.common.ServiceNotRunningException;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.internal.app.runtime.schedule.AbstractSchedulerService;
 import co.cask.cdap.internal.app.runtime.schedule.StreamSizeScheduleState;
@@ -79,7 +80,7 @@ public class DatasetBasedStreamSizeScheduleStore {
   /**
    * Initialize this persistent store.
    */
-  public void initialize() throws IOException, DatasetManagementException {
+  public void initialize() throws IOException, DatasetManagementException, ServiceNotRunningException {
     table = tableUtil.getMetaTable();
     Preconditions.checkNotNull(table, "Could not get dataset client for data set: %s",
                                ScheduleStoreTableUtil.SCHEDULE_STORE_DATASET_NAME);

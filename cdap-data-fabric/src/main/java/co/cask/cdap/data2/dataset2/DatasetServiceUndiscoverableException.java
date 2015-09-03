@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,17 +16,15 @@
 
 package co.cask.cdap.data2.dataset2;
 
-import co.cask.cdap.common.ServiceNotRunningException;
-
 /**
- *
+ * Exception thrown when the Dataset service is not discoverable.
  */
-public class InMemoryDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
+public class DatasetServiceUndiscoverableException extends DatasetManagementException {
+  public DatasetServiceUndiscoverableException(String message) {
+    super(message);
+  }
 
-  @Override
-  protected DatasetFramework getFramework() throws DatasetManagementException, ServiceNotRunningException {
-    DatasetFramework framework = new InMemoryDatasetFramework(registryFactory, DEFAULT_MODULES, cConf);
-    framework.createNamespace(NAMESPACE_ID);
-    return framework;
+  public DatasetServiceUndiscoverableException(String message, Throwable cause) {
+    super(message, cause);
   }
 }

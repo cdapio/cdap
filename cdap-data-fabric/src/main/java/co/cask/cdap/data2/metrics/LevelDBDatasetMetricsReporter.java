@@ -19,6 +19,7 @@ package co.cask.cdap.data2.metrics;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
+import co.cask.cdap.common.ServiceNotRunningException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -93,7 +94,7 @@ public class LevelDBDatasetMetricsReporter extends AbstractScheduledService impl
   }
 
   private void report(Map<TableId, LevelDBTableService.TableStats> datasetStat)
-    throws DatasetManagementException {
+    throws DatasetManagementException, ServiceNotRunningException {
     for (Map.Entry<TableId, LevelDBTableService.TableStats> statEntry : datasetStat.entrySet()) {
       String namespace = statEntry.getKey().getNamespace().getId();
       // emit metrics for only user datasets, tables in system namespace are ignored

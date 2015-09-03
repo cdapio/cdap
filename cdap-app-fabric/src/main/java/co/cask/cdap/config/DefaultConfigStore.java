@@ -22,6 +22,7 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.common.ServiceNotRunningException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
@@ -79,7 +80,8 @@ public class DefaultConfigStore implements ConfigStore {
     });
   }
 
-  public static void setupDatasets(DatasetFramework dsFramework) throws DatasetManagementException, IOException {
+  public static void setupDatasets(DatasetFramework dsFramework) throws DatasetManagementException, IOException,
+    ServiceNotRunningException {
     dsFramework.addInstance(Table.class.getName(),
                             Id.DatasetInstance.from(Id.Namespace.SYSTEM, Constants.ConfigStore.CONFIG_TABLE),
                             DatasetProperties.EMPTY);

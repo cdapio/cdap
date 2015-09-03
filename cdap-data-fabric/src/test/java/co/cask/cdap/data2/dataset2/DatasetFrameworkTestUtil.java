@@ -22,6 +22,7 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.common.ServiceNotRunningException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.CConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
@@ -111,35 +112,37 @@ public final class DatasetFrameworkTestUtil extends ExternalResource {
     return framework;
   }
 
-  public void addModule(Id.DatasetModule moduleId, DatasetModule module) throws DatasetManagementException {
+  public void addModule(Id.DatasetModule moduleId, DatasetModule module) throws DatasetManagementException,
+    ServiceNotRunningException {
     framework.addModule(moduleId, module);
   }
 
-  public void deleteModule(Id.DatasetModule moduleId) throws DatasetManagementException {
+  public void deleteModule(Id.DatasetModule moduleId) throws DatasetManagementException, ServiceNotRunningException {
     framework.deleteModule(moduleId);
   }
 
   public void createInstance(String type, Id.DatasetInstance datasetInstanceId, DatasetProperties properties)
-    throws IOException, DatasetManagementException {
+    throws IOException, DatasetManagementException, ServiceNotRunningException {
     framework.addInstance(type, datasetInstanceId, properties);
   }
 
   public void deleteInstance(Id.DatasetInstance datasetInstanceId)
-    throws IOException, DatasetManagementException {
+    throws IOException, DatasetManagementException, ServiceNotRunningException {
     framework.deleteInstance(datasetInstanceId);
   }
 
   public <T extends Dataset> T getInstance(Id.DatasetInstance datasetInstanceId)
-    throws DatasetManagementException, IOException {
+    throws DatasetManagementException, IOException, ServiceNotRunningException {
     return getInstance(datasetInstanceId, DatasetDefinition.NO_ARGUMENTS);
   }
 
   public <T extends Dataset> T getInstance(Id.DatasetInstance datasetInstanceId, Map<String, String> arguments)
-    throws DatasetManagementException, IOException {
+    throws DatasetManagementException, IOException, ServiceNotRunningException {
     return framework.getDataset(datasetInstanceId, arguments, null);
   }
 
-  public DatasetSpecification getSpec(Id.DatasetInstance datasetInstanceId) throws DatasetManagementException {
+  public DatasetSpecification getSpec(Id.DatasetInstance datasetInstanceId) throws DatasetManagementException,
+    ServiceNotRunningException {
     return framework.getDatasetSpec(datasetInstanceId);
   }
 

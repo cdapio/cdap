@@ -20,6 +20,7 @@ import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetDefinition;
+import co.cask.cdap.common.ServiceNotRunningException;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
 import co.cask.cdap.data2.datafabric.dataset.type.DirectoryClassLoaderProvider;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -60,7 +61,7 @@ public class SystemDatasetInstantiator implements Closeable {
 
   @Nullable
   public <T extends DatasetAdmin> T getDatasetAdmin(Id.DatasetInstance datasetId)
-    throws DatasetManagementException, IOException {
+    throws DatasetManagementException, IOException, ServiceNotRunningException {
     return datasetFramework.getAdmin(datasetId, parentClassLoader, classLoaderProvider);
   }
 

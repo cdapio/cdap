@@ -19,6 +19,8 @@ package co.cask.cdap.common;
 import co.cask.cdap.common.http.SecurityRequestContext;
 import co.cask.http.ExceptionHandler;
 import co.cask.http.HttpResponder;
+import com.google.common.base.Throwables;
+import com.google.common.collect.Iterables;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
@@ -33,7 +35,11 @@ public class HttpExceptionHandler extends ExceptionHandler {
 
   @Override
   public void handle(Throwable t, HttpRequest request, HttpResponder responder) {
-    if (t instanceof BadRequestException) {
+    if (Iterables.filter(Throwables.getCausalChain(t), ServiceNotRunningException.class).iterator().hasNext()) {
+      LOG.warn("SAGAR_TEST: {}", t.getMessage());
+      LOG.warn("SAGAR_ANOTHER_TEST: ", t);
+      responder.sendString(HttpResponseStatus.SERVICE_UNAVAILABLE, t.getMessage());
+    } else if (t instanceof BadRequestException) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, t.getMessage());
     } else if (t instanceof ConflictException) {
       responder.sendString(HttpResponseStatus.CONFLICT, t.getMessage());
@@ -48,5 +54,4 @@ public class HttpExceptionHandler extends ExceptionHandler {
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
-
 }
