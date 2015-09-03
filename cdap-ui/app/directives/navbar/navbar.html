@@ -1,18 +1,18 @@
 <!--
   Copyright © 2015 Cask Data, Inc.
- 
+
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
   the License at
- 
+
   http://www.apache.org/licenses/LICENSE-2.0
- 
+
   Unless required by applicable law or agreed to in writing, software
   distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
   WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
   License for the specific language governing permissions and limitations under
   the License.
---> 
+-->
 
 <div class="navbar-header">
   <button type="button" class="navbar-toggle" ng-click="navbarCollapsed = !navbarCollapsed">
@@ -21,13 +21,23 @@
     <span class="icon-bar"></span>
     <span class="icon-bar"></span>
   </button>
-  <a class="navbar-brand" ui-sref="overview({namespace: $stateParams.namespace})">
+  <a ng-if="!$state.includes('adapters.create.*')"
+     class="navbar-brand"
+     ui-sref="overview({namespace: $stateParams.namespace})">
      <strong>CDAP</strong>
   </a>
+  <a ng-if="$state.includes('adapters.create.*')"
+     class="navbar-brand"
+     ui-sref="adapters.create">
+     <strong>Cask Hydrator V1.0</strong>
+  </a>
+  <span class="version">V1.0</span>
 </div>
 <div class="collapse navbar-collapse" ng-class="{in:navbarCollapsed}">
 
-  <ul class="nav navbar-nav" id="navbar-namespace">
+  <ul ng-if="!$state.includes('adapters.create.*')"
+      class="nav navbar-nav"
+      id="navbar-namespace">
     <li class="dropdown" ng-class="{one:namespaces.length<2}">
       <a href="" class="dropdown-toggle">
         <span ng-bind="$state.params.namespace && getDisplayName($state.params.namespace) | myEllipsis: 10" ng-if="namespaces.length > 1"></span>
@@ -37,7 +47,8 @@
     </li>
   </ul>
 
-  <nav ng-click="navbarCollapsed = false">
+  <nav ng-if="!$state.includes('adapters.create.*')"
+       ng-click="navbarCollapsed = false">
     <ul class="nav navbar-nav" ng-show="currentUser">
       <li ng-class="{active: highlightTab == 'development'}">
         <a ui-sref="overview({namespace: $stateParams.namespace})"> Development </a>
@@ -51,8 +62,33 @@
     </ul>
   </nav>
 
-  <ul class="nav navbar-nav navbar-right">
+  <nav ng-if="$state.includes('adapters.create.*')"
+       ng-click="navbarCollapsed = false"
+       >
+    <ul class="nav navbar-nav">
+      <li>
+        <a ui-sref="">
+          <span class="fa fa-rub"></span>
+          <span> My Pipelines </span>
+        </a>
+      </li>
+      <li>
+        <a ui-sref="">
+          <span class="fa fa-cog"></span>
+          <span> Configuration </span>
+        </a>
+      </li>
+      <li>
+        <a ui-sref="">
+          <span class="fa fa-user"></span>
+          <span> Joltie Neutrino </span>
+        </a>
+      </li>
+    </ul>
+  </nav>
 
+  <ul ng-if="!$state.includes('adapters.create.*')"
+      class="nav navbar-nav navbar-right">
     <li class="hidden" id="navbar-search">
       <form class="navbar-form" ng-submit="doSearch()">
         <div class="input-group input-group-sm">
@@ -72,8 +108,16 @@
         <span class="caret"></span>
       </a>
     </li>
-
   </ul>
+
+  <div ng-if="$state.includes('adapters.create.*')" class="hydrator-search">
+    <div class="input-group">
+      <input type="text" class="form-control" placeholder="Search" />
+      <span class="input-group-addon">
+        <span class="fa fa-search"></span>
+      </span>
+    </div>
+  </div>
 
   <my-error></my-error>
 </div>
