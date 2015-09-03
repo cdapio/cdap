@@ -140,15 +140,13 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
                            @Nullable @QueryParam("scope") String scope)
     throws NamespaceNotFoundException, BadRequestException {
 
-    Id.Namespace namespace = validateAndGetNamespace(namespaceId);
-
     try {
       if (scope == null) {
+        Id.Namespace namespace = validateAndGetNamespace(namespaceId);
         responder.sendJson(HttpResponseStatus.OK, artifactRepository.getArtifacts(namespace, true));
       } else {
-        ArtifactScope artifactScope = validateScope(scope);
-        Id.Namespace queryNamespace = artifactScope.equals(ArtifactScope.SYSTEM) ? Id.Namespace.SYSTEM : namespace;
-        responder.sendJson(HttpResponseStatus.OK, artifactRepository.getArtifacts(queryNamespace, false));
+        Id.Namespace namespace = validateAndGetNamespace(namespaceId, scope);
+        responder.sendJson(HttpResponseStatus.OK, artifactRepository.getArtifacts(namespace, false));
       }
     } catch (IOException e) {
       LOG.error("Exception reading artifact metadata for namespace {} from the store.", namespaceId, e);
@@ -312,16 +310,14 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
                                     @Nullable @QueryParam("scope") String scope)
     throws NamespaceNotFoundException, BadRequestException {
 
-    Id.Namespace namespace = validateAndGetNamespace(namespaceId);
-
     try {
       if (scope == null) {
+        Id.Namespace namespace = validateAndGetNamespace(namespaceId);
         responder.sendJson(HttpResponseStatus.OK, artifactRepository.getApplicationClasses(namespace, true),
           APPCLASS_SUMMARIES_TYPE, GSON);
       } else {
-        ArtifactScope artifactScope = validateScope(scope);
-        Id.Namespace queryNamespace = ArtifactScope.SYSTEM.equals(artifactScope) ? Id.Namespace.SYSTEM : namespace;
-        responder.sendJson(HttpResponseStatus.OK, artifactRepository.getApplicationClasses(queryNamespace, false),
+        Id.Namespace namespace = validateAndGetNamespace(namespaceId, scope);
+        responder.sendJson(HttpResponseStatus.OK, artifactRepository.getApplicationClasses(namespace, false),
           APPCLASS_SUMMARIES_TYPE, GSON);
       }
     } catch (IOException e) {
