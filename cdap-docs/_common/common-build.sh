@@ -383,7 +383,7 @@ function consolidate_messages() {
     while read line
     do
       echo ${line} >> ${TMP_MESSAGES_FILE}
-    done < <(echo "${MESSAGES}")
+    done <<(echo "${MESSAGES}")
     unset -v MESSAGES
   fi
   if [ -s ${TARGET}/${SPHINX_MESSAGES} ]; then
