@@ -23,6 +23,9 @@ body.state-explore {
     margin-right: 0;
     height: 300px;
     margin-bottom: 15px;
+    ::-webkit-scrollbar {
+      display: none;
+    }
 
     .table-list {
       width: 300px;
@@ -47,6 +50,7 @@ body.state-explore {
 
         &.selected {
           background-color: @table-bg;
+          color: @cdap-orange;
         }
 
         &:first-child {
