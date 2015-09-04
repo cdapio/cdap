@@ -134,14 +134,6 @@ function echo_red_bold() {
   echo "${RED_BOLD}${1}${NO_COLOR}${2}"
 }
 
-function echo_clean_colors() {
-  local c="${1//${RED}/}"
-  c="${c//${BOLD}/}"
-  c="${c//${RED_BOLD}/}"
-  c="${c//${NO_COLOR}/}"
-  echo "${c}"
-}
-
 function clean() {
   cd ${SCRIPT_PATH}
   rm -rf ${SCRIPT_PATH}/${TARGET}
@@ -350,7 +342,7 @@ function clear_messages_set_messages_file() {
   TMP_MESSAGES_FILE="${TARGET_PATH}/.$(basename $0).$$.messages"
   cat /dev/null > ${TMP_MESSAGES_FILE}
   export TMP_MESSAGES_FILE
-  echo_red_bold "Cleared Messages and Messages file: " "${TMP_MESSAGES_FILE}"
+  echo_red_bold "Cleared Messages and Messages file: " "$(basename ${TMP_MESSAGES_FILE})"
   echo
 }
 
@@ -366,13 +358,12 @@ function set_message() {
     MESSAGES="${MESSAGES}\n\n${*}"
   fi
   if [ "x${TMP_MESSAGES_FILE}" != "x" ]; then
-    local clean_m=`echo_clean_colors "${*}"`
     if [ -e ${TMP_MESSAGES_FILE} ]; then
       # As TMP_MESSAGES_FILE exists, add a blank line to start new message
       echo >> ${TMP_MESSAGES_FILE}
     fi
-    echo "Warning Message for \"${MANUAL}\":" >> ${TMP_MESSAGES_FILE}
-    echo "${clean_m}" >> ${TMP_MESSAGES_FILE}
+    echo_red_bold "Warning Message for \"${MANUAL}\":" >> ${TMP_MESSAGES_FILE}
+    echo "${*}" >> ${TMP_MESSAGES_FILE}
   fi
 }
 
@@ -396,21 +387,24 @@ function consolidate_messages() {
 }
 
 function display_messages_file() {
+  local warnings=0
   if [[ "x${TMP_MESSAGES_FILE}" != "x" && -a ${TMP_MESSAGES_FILE} ]]; then
     echo 
     echo "--------------------------------------------------------"
-    echo_red_bold "Warning Messages: ${TMP_MESSAGES_FILE}"
+    echo_red_bold "Warning Messages: $(basename ${TMP_MESSAGES_FILE})"
     echo "--------------------------------------------------------"
     echo 
-    echo >> ${TMP_MESSAGES_FILE}
     cat ${TMP_MESSAGES_FILE} | while read line
     do
       echo "${line}"
     done
-    return 1 # Indicates warning messages present
-  else
-    return 0
+    echo 
+    echo "--------------------------------------------------------"
+    echo_red_bold "End Warning Messages"
+    echo "--------------------------------------------------------"
+    warnings=1 # Indicates warning messages present
   fi
+  return ${warnings}
 }
 
 function rewrite() {

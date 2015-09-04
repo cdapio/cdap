@@ -126,11 +126,13 @@ function build_all() {
   clean_targets
   clear_messages_set_messages_file
   run_command docs-first-pass ${ARG_2} 
+  clear_messages_set_messages_file
   run_command javadocs
   run_command docs-github-part ${ARG_2} 
   stash_github_zip 
   run_command docs-web-part ${ARG_2} 
   restore_github_zip
+  display_version
   display_messages_file
   warnings=$?
   cleanup_messages_file
@@ -163,21 +165,21 @@ function build_docs() {
   if [ "${doc_type}" == "${DOCS}" ]; then
     build_docs_outer_level ${source_path}
     copy_docs_inner_level
+  else
+    clear_messages_set_messages_file
   fi
   if [ "${javadocs}" == "${WITH}" ]; then
     run_command javadocs
   fi
   if [ "${doc_type}" == "${GITHUB}" -o "${doc_type}" == "${GITHUB_ONLY}" ]; then
     run_command docs-github-part ${source_path}
-    warnings=$?
   elif [ "${doc_type}" == "${WEB}" -o "${doc_type}" == "${WEB_ONLY}" ]; then
     run_command docs-web-part ${source_path}
-    warnings=$?
-  elif [ "${doc_type}" == "${DOCS}" ]; then
-    display_messages_file
-    warnings=$?
-    cleanup_messages_file
   fi
+  display_version
+  display_messages_file
+  warnings=$?
+  cleanup_messages_file
   echo "--------------------------------------------------------"
   ring_bell "Completed build of \"${doc_type}\""
   echo "========================================================"
@@ -272,24 +274,17 @@ function _build_docs() {
   echo "========================================================"
   echo "Building target \"${doc_target}\"..."
   echo "--------------------------------------------------------"
-  clear_messages_set_messages_file
   build_docs_inner_level ${doc_target}
   build_docs_outer_level ${google_analytics_code}
   copy_docs_inner_level
   build_zip ${zip_target}
   zip_extras ${zip_extras}
   echo
-  display_version
-  display_messages_file
-  local warnings=$?
-  cleanup_messages_file
-  echo
   echo "--------------------------------------------------------"
-  ring_bell "Building target \"${doc_target}\" completed."
+  echo "Building target \"${doc_target}\" completed."
   echo "========================================================"
   echo "========================================================"
   echo
-  return ${warnings}
 }
 
 function build_docs_inner_level() {
@@ -448,9 +443,6 @@ function docs_test() {
   echo "${recover}"
   local last_line=$(echo "${recover}" | tail -n1)
   echo "last_line: ${last_line}"
-  
-#   while read line; do echo "$line"; done < <(echo "${recover}")
-
   echo "Test completed."
 }
 
