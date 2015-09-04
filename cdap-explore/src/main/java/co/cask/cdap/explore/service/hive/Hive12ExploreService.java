@@ -44,11 +44,15 @@ import org.apache.hive.service.cli.SessionHandle;
 import org.apache.hive.service.cli.thrift.TColumnValue;
 import org.apache.hive.service.cli.thrift.TRow;
 import org.apache.hive.service.cli.thrift.TRowSet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Hive 12 implementation of {@link co.cask.cdap.explore.service.ExploreService}.
@@ -61,6 +65,7 @@ import java.util.List;
  */
 @SuppressWarnings("UnusedDeclaration")
 public class Hive12ExploreService extends BaseHiveExploreService {
+  private static final Logger LOG = LoggerFactory.getLogger(Hive12ExploreService.class);
 
   @Inject
   public Hive12ExploreService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
@@ -86,7 +91,8 @@ public class Hive12ExploreService extends BaseHiveExploreService {
   protected List<QueryResult> doFetchNextResults(OperationHandle handle, FetchOrientation fetchOrientation,
                                                  int size) throws Exception {
     Class cliServiceClass = Class.forName("org.apache.hive.service.cli.CLIService");
-    Method fetchResultsMethod = cliServiceClass.getMethod("fetchResults");
+    Method fetchResultsMethod = cliServiceClass.getMethod("fetchResults", OperationHandle.class,
+                                                          FetchOrientation.class, Long.TYPE);
     Object rowSet = fetchResultsMethod.invoke(getCliService(), handle, fetchOrientation, size);
 
     ImmutableList.Builder<QueryResult> rowsBuilder = ImmutableList.builder();
@@ -128,5 +134,30 @@ public class Hive12ExploreService extends BaseHiveExploreService {
   protected OperationHandle doExecute(SessionHandle sessionHandle, String statement)
     throws HiveSQLException, ExploreException {
     return getCliService().executeStatementAsync(sessionHandle, statement, ImmutableMap.<String, String>of());
+  }
+
+  @Override
+  protected SessionHandle doOpenHiveSession(Map<String, String> sessionConf) throws HiveSQLException {
+    SessionHandle sessionHandle = super.doOpenHiveSession(sessionConf);
+
+    // HDP Hive 12 only sets SessionState when an operation is executed.
+    // The SessionState is not set during an openSession call.
+    // Hence execute a dummy statement during openSession, so that SessionState gets set.
+    OperationHandle opHandle = null;
+    try {
+      opHandle = getCliService().executeStatement(sessionHandle, "set cdap_tmp_var=1",
+                                                  Collections.<String, String>emptyMap());
+    } catch (Throwable t) {
+      LOG.error("Error setting temporary variable to set session state", t);
+    } finally {
+      if (opHandle != null) {
+        try {
+          getCliService().closeOperation(opHandle);
+        } catch (Throwable t) {
+          LOG.debug("Caught exception while closing opHandle", t);
+        }
+      }
+    }
+    return sessionHandle;
   }
 }
