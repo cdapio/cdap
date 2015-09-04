@@ -72,7 +72,7 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
   private TaskInputOutputContext<?, ?, KEYOUT, VALUEOUT> context;
 
   public BasicMapReduceTaskContext(Program program,
-                                   MapReduceMetrics.TaskType type,
+                                   @Nullable MapReduceMetrics.TaskType type,
                                    RunId runId, String taskId,
                                    Arguments runtimeArguments,
                                    Set<String> datasets,
@@ -139,9 +139,9 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
     return (T) context;
   }
 
-  public void setHadoopContext(TaskInputOutputContext<?, ?, KEYOUT, VALUEOUT> flushingContext) {
-    this.multipleOutputs = new MultipleOutputs(flushingContext);
-    this.context = flushingContext;
+  public void setHadoopContext(TaskInputOutputContext<?, ?, KEYOUT, VALUEOUT> context) {
+    this.multipleOutputs = new MultipleOutputs(context);
+    this.context = context;
   }
 
   @Override

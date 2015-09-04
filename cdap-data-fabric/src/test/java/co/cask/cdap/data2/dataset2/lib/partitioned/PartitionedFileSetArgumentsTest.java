@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data2.dataset2.lib.partitioned;
 
+import co.cask.cdap.api.dataset.lib.DynamicPartitioner;
 import co.cask.cdap.api.dataset.lib.FileSetArguments;
 import co.cask.cdap.api.dataset.lib.Partition;
 import co.cask.cdap.api.dataset.lib.PartitionFilter;
@@ -30,6 +31,7 @@ import org.junit.Test;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -46,7 +48,7 @@ public class PartitionedFileSetArgumentsTest {
 
   @Test
   public void testSetGetOutputPartitionKey() throws Exception {
-    Map<String, String> arguments = Maps.newHashMap();
+    Map<String, String> arguments = new HashMap<>();
     PartitionKey key = PartitionKey.builder()
       .addIntField("i", 42)
       .addLongField("l", 17L)
@@ -58,14 +60,14 @@ public class PartitionedFileSetArgumentsTest {
 
   @Test
   public void testSetGetOutputPartitionMetadata() throws Exception {
-    Map<String, String> arguments = Maps.newHashMap();
+    Map<String, String> arguments = new HashMap<>();
     Map<String, String> metadata = ImmutableMap.of("metakey1", "value1",
                                                    "metaKey2", "value3");
     PartitionedFileSetArguments.setOutputPartitionMetadata(arguments, metadata);
     Assert.assertEquals(metadata, PartitionedFileSetArguments.getOutputPartitionMetadata(arguments));
 
     // test also with empty metadata
-    arguments = Maps.newHashMap();
+    arguments.clear();
     PartitionedFileSetArguments.setOutputPartitionMetadata(arguments, Collections.<String, String>emptyMap());
     Assert.assertEquals(Collections.<String, String>emptyMap(),
                         PartitionedFileSetArguments.getOutputPartitionMetadata(arguments));
@@ -73,7 +75,7 @@ public class PartitionedFileSetArgumentsTest {
 
   @Test
   public void testSetGetInputPartitionFilter() throws Exception {
-    Map<String, String> arguments = Maps.newHashMap();
+    Map<String, String> arguments = new HashMap<>();
     PartitionFilter filter = PartitionFilter.builder()
       .addValueCondition("i", 42)
       .addValueCondition("l", 17L)
@@ -86,7 +88,7 @@ public class PartitionedFileSetArgumentsTest {
 
   @Test
   public void testGetPartitionPaths() throws Exception {
-    Map<String, String> arguments = Maps.newHashMap();
+    Map<String, String> arguments = new HashMap<>();
 
     Collection<String> relativePaths = Lists.newArrayList("path1", "relative/path.part100", "some\\ other*path");
     List<Partition> partitions = Lists.newArrayList();
@@ -98,9 +100,33 @@ public class PartitionedFileSetArgumentsTest {
     }
     Assert.assertEquals(relativePaths, FileSetArguments.getInputPaths(arguments));
 
-    arguments = Maps.newHashMap();
+    arguments.clear();
     PartitionedFileSetArguments.addInputPartitions(arguments, partitions.iterator());
     Assert.assertEquals(relativePaths, FileSetArguments.getInputPaths(arguments));
 
+  }
+
+  @Test
+  public void testGetDynamicPartitionerClass() throws Exception {
+    Map<String, String> arguments = new HashMap<>();
+
+    // two ways to set the DynamicPartitioner class - either the class object or the String (name)
+    PartitionedFileSetArguments.setDynamicPartitioner(arguments, TestDynamicPartitioner.class);
+    Assert.assertEquals(TestDynamicPartitioner.class.getName(),
+                        PartitionedFileSetArguments.getDynamicPartitioner(arguments));
+
+    arguments.clear();
+    PartitionedFileSetArguments.setDynamicPartitioner(arguments, TestDynamicPartitioner.class.getName());
+    Assert.assertEquals(TestDynamicPartitioner.class.getName(),
+                        PartitionedFileSetArguments.getDynamicPartitioner(arguments));
+
+  }
+
+  private static final class TestDynamicPartitioner extends DynamicPartitioner<Integer, Integer> {
+    @Override
+    public PartitionKey getPartitionKey(Integer key, Integer value) {
+      // implementation doesn't matter, since the object isn't instantiated. Just its class is used in a test case.
+      return null;
+    }
   }
 }

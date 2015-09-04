@@ -60,6 +60,9 @@ public final class DataSetOutputFormat<KEY, VALUE> extends OutputFormat<KEY, VAL
 
   @Override
   public void checkOutputSpecs(final JobContext context) throws IOException, InterruptedException {
+    if (getOutputDataSet(context.getConfiguration()) == null) {
+      throw new IllegalArgumentException("Dataset name not configured for job: " + context.getJobName());
+    }
     // TODO: validate out types? Or this is ensured by configuring job in "internal" code (i.e. not in user code)
   }
 
