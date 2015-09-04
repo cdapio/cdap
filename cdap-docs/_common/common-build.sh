@@ -15,7 +15,7 @@
 # Common code for Build script for docs
 # Not called directly; included in either the main build.sh or the individual manual's build.sh
 
-# Optional Parameters (passed via Bamboo env variable or exported in shell):
+# Optional Parameters (passed via env variable or exported in shell):
 # BELL: Set it to for the bell function to make a sound when called
 # COLOR_LOGS: Set it for color output by Sphinx and these scripts
 
@@ -72,7 +72,7 @@ fi
 
 API_JAVADOCS="${PROJECT_PATH}/target/site/${APIDOCS}"
 
-CHECK_INCLUDES="false"
+CHECK_INCLUDES=''
 
 if [[ "x${COLOR_LOGS}" != "x" ]]; then
   SPHINX_COLOR=""
@@ -125,7 +125,7 @@ function usage() {
   echo "    check-includes       Check if included files have changed from source"
   echo "    display-version      Print the version information"
   echo "  with"
-  echo "    source               Path to $PROJECT source for javadocs, if not '$PROJECT_PATH'"
+  echo "    source               Path to ${PROJECT} source for javadocs, if not '${PROJECT_PATH}'"
   echo "                         Path is relative to '${SCRIPT_PATH}/../..'"
   echo
 }
@@ -236,7 +236,7 @@ function set_mvn_environment() {
 }
 
 function check_includes() {
-  if [ !"${CHECK_INCLUDES}" ]; then
+  if [ "${CHECK_INCLUDES}" == "${TRUE}" ]; then
     echo_red_bold "Downloading and checking files to be included."
     # Build includes
     local target_includes_dir=${SCRIPT_PATH}/${TARGET}/${INCLUDES}

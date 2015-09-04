@@ -20,7 +20,7 @@
 # Builds each of these individually, and then packages them into a single zip file for distribution.
 # _common directory holds common files and scripts.
 
-# Optional Parameters (passed via Bamboo env variable or exported in shell):
+# Optional Parameters (passed via env variable or exported in shell):
 # BELL: Set it to for the bell function to make a sound when called
 # COLOR_LOGS: Set it for color output by Sphinx and these scripts
 # NO_JAVADOCS: Set it to not build Javadocs, no matter which actions are used (for testing)

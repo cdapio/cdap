@@ -21,7 +21,7 @@ source ../_common/common-build.sh
 DEFAULT_XML="../../cdap-common/src/main/resources/cdap-default.xml"
 DEFAULT_TOOL="../tools/doc-cdap-default.py"
 DEFAULT_RST="cdap-default-table.rst"
-CHECK_INCLUDES=$TRUE
+CHECK_INCLUDES=${TRUE}
 
 function download_includes() {
   echo "Building rst file from cdap-default.xml..."
