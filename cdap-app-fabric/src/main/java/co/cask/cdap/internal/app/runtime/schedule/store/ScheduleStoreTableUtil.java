@@ -18,7 +18,7 @@ package co.cask.cdap.internal.app.runtime.schedule.store;
 
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.common.ServiceNotRunningException;
+import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
@@ -51,7 +51,7 @@ public class ScheduleStoreTableUtil extends MetaTableUtil {
    * @param datasetFramework framework to add types and datasets to
    */
   public static void setupDatasets(DatasetFramework datasetFramework) throws IOException, DatasetManagementException,
-    ServiceNotRunningException {
+    ServiceUnavailableException {
     Id.DatasetInstance scheduleStoreDatasetInstance =
       Id.DatasetInstance.from(Id.Namespace.SYSTEM, SCHEDULE_STORE_DATASET_NAME);
     datasetFramework.addInstance(Table.class.getName(), scheduleStoreDatasetInstance, DatasetProperties.EMPTY);

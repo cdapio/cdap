@@ -20,9 +20,8 @@ import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.common.ServiceNotRunningException;
+import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
@@ -41,13 +40,13 @@ public abstract class MetaTableUtil {
     this.dsFramework = framework;
   }
 
-  public Table getMetaTable() throws IOException, DatasetManagementException, ServiceNotRunningException {
+  public Table getMetaTable() throws IOException, DatasetManagementException, ServiceUnavailableException {
     Id.DatasetInstance metaTableInstanceId = Id.DatasetInstance.from(Id.Namespace.SYSTEM, getMetaTableName());
     return DatasetsUtil.getOrCreateDataset(dsFramework, metaTableInstanceId, Table.class.getName(),
                                            DatasetProperties.EMPTY, DatasetDefinition.NO_ARGUMENTS, null);
   }
 
-  public void upgrade() throws IOException, DatasetManagementException, ServiceNotRunningException {
+  public void upgrade() throws IOException, DatasetManagementException, ServiceUnavailableException {
     DatasetAdmin admin = dsFramework.getAdmin(Id.DatasetInstance.from(Id.Namespace.SYSTEM, getMetaTableName()), null);
     if (admin != null) {
       admin.upgrade();

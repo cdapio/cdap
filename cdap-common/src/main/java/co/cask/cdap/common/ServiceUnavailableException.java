@@ -19,11 +19,11 @@ package co.cask.cdap.common;
 /**
  * Exception thrown when the service is not running.
  */
-public class ServiceNotRunningException extends Exception {
+public class ServiceUnavailableException extends Exception {
   private final String serviceName;
 
-  public ServiceNotRunningException(String serviceName) {
-    super("Service '" + serviceName + "' is not running. Please wait till it is up and running.");
+  public ServiceUnavailableException(String serviceName) {
+    super("Service '" + serviceName + "' is not available. Please wait till it is up and running.");
     this.serviceName = serviceName;
   }
 

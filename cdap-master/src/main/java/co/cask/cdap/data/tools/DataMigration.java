@@ -16,7 +16,7 @@
 package co.cask.cdap.data.tools;
 
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
-import co.cask.cdap.common.ServiceNotRunningException;
+import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
@@ -205,7 +205,7 @@ public class DataMigration {
    * Sets up a {@link DatasetFramework} instance for standalone usage.  NOTE: should NOT be used by applications!!!
    */
   public static DatasetFramework createRegisteredDatasetFramework(Injector injector)
-    throws DatasetManagementException, IOException, ServiceNotRunningException {
+    throws DatasetManagementException, IOException, ServiceUnavailableException {
     DatasetDefinitionRegistryFactory registryFactory = injector.getInstance(DatasetDefinitionRegistryFactory.class);
     DatasetFramework datasetFramework =
       new InMemoryDatasetFramework(registryFactory, injector.getInstance(CConfiguration.class));

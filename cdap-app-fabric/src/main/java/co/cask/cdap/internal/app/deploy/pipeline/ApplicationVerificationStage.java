@@ -34,7 +34,7 @@ import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.verification.Verifier;
 import co.cask.cdap.app.verification.VerifyResult;
-import co.cask.cdap.common.ServiceNotRunningException;
+import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.internal.app.runtime.adapter.ApplicationTemplateInfo;
@@ -118,7 +118,7 @@ public class ApplicationVerificationStage extends AbstractStage<ApplicationDeplo
 
   protected void verifyData(Id.Application appId,
                             ApplicationSpecification specification) throws DatasetManagementException,
-    ServiceNotRunningException {
+    ServiceUnavailableException {
     // NOTE: no special restrictions on dataset module names, etc
     VerifyResult result;
     for (DatasetCreationSpec dataSetCreateSpec : specification.getDatasets().values()) {

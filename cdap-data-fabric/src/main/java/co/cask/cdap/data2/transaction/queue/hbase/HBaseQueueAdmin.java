@@ -21,7 +21,7 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.common.ServiceNotRunningException;
+import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
@@ -271,7 +271,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
       DatasetsUtil.createIfNotExists(datasetFramework, stateStoreId,
                                      HBaseQueueDatasetModule.STATE_STORE_TYPE_NAME, configProperties);
       return stateStoreId;
-    } catch (DatasetManagementException | ServiceNotRunningException e) {
+    } catch (DatasetManagementException | ServiceUnavailableException e) {
       throw new IOException(e);
     }
   }

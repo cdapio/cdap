@@ -24,7 +24,7 @@ import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.TimePartitionDetail;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
-import co.cask.cdap.common.ServiceNotRunningException;
+import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.proto.Id;
@@ -277,7 +277,7 @@ public class TimePartitionedFileSetTest {
    */
   private void validateInputPaths(long time, long start, long end, final String ... expected)
     throws IOException, DatasetManagementException, InterruptedException, TransactionFailureException,
-    ServiceNotRunningException {
+    ServiceUnavailableException {
     Map<String, String> arguments = Maps.newHashMap();
     TimePartitionedFileSetArguments.setInputStartTime(arguments, time + start * MINUTE);
     TimePartitionedFileSetArguments.setInputEndTime(arguments, time + end * MINUTE);
