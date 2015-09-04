@@ -90,6 +90,7 @@ public class ExploreTableManager {
    * Enable exploration on a stream by creating a corresponding Hive table. Enabling exploration on a
    * stream that has already been enabled is a no-op. Assumes the stream actually exists.
    *
+   * @param tableName name of the Hive table to create
    * @param streamID the ID of the stream
    * @param formatSpec the format specification for the table
    * @return query handle for creating the Hive table for the stream
@@ -97,10 +98,10 @@ public class ExploreTableManager {
    * @throws ExploreException if there was an exception submitting the create table statement
    * @throws SQLException if there was a problem with the create table statement
    */
-  public QueryHandle enableStream(Id.Stream streamID, FormatSpecification formatSpec)
+  public QueryHandle enableStream(String tableName, Id.Stream streamID, FormatSpecification formatSpec)
     throws UnsupportedTypeException, ExploreException, SQLException {
     String streamName = streamID.getId();
-    LOG.debug("Enabling explore for stream {}", streamID);
+    LOG.debug("Enabling explore for stream {} with table {}", streamID, tableName);
 
     // schema of a stream is always timestamp, headers, and then the schema of the body.
     List<Schema.Field> fields = Lists.newArrayList(
@@ -114,7 +115,6 @@ public class ExploreTableManager {
       Constants.Explore.STREAM_NAMESPACE, streamID.getNamespaceId(),
       Constants.Explore.FORMAT_SPEC, GSON.toJson(formatSpec));
 
-    String tableName = getStreamTableName(streamID);
     String createStatement = new CreateStatementBuilder(streamName, tableName)
       .setSchema(schema)
       .setTableComment("CDAP Stream")
@@ -128,14 +128,15 @@ public class ExploreTableManager {
   /**
    * Disable exploration on the given stream by dropping the Hive table for the stream.
    *
+   * @param tableName name of the table to delete
    * @param streamID the ID of the stream to disable
    * @return the query handle for disabling the stream
    * @throws ExploreException if there was an exception dropping the table
    * @throws SQLException if there was a problem with the drop table statement
    */
-  public QueryHandle disableStream(Id.Stream streamID) throws ExploreException, SQLException {
-    LOG.debug("Disabling explore for stream {}", streamID);
-    String deleteStatement = generateDeleteStatement(getStreamTableName(streamID));
+  public QueryHandle disableStream(String tableName, Id.Stream streamID) throws ExploreException, SQLException {
+    LOG.debug("Disabling explore for stream {} with table {}", streamID, tableName);
+    String deleteStatement = generateDeleteStatement(tableName);
     return exploreService.execute(streamID.getNamespace(), deleteStatement);
   }
 

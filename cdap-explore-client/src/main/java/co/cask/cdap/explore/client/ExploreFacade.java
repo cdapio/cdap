@@ -16,6 +16,7 @@
 
 package co.cask.cdap.explore.client;
 
+import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -56,13 +57,16 @@ public class ExploreFacade {
    * Enables ad-hoc exploration of the given stream.
    *
    * @param stream id of the stream.
+   * @param tableName name of the Hive table to create.
+   * @param format format of the stream events.
    */
-  public void enableExploreStream(Id.Stream stream) throws ExploreException, SQLException {
+  public void enableExploreStream(Id.Stream stream, String tableName,
+                                  FormatSpecification format) throws ExploreException, SQLException {
     if (!exploreEnabled) {
       return;
     }
 
-    ListenableFuture<Void> futureSuccess = exploreClient.enableExploreStream(stream);
+    ListenableFuture<Void> futureSuccess = exploreClient.enableExploreStream(stream, tableName, format);
     handleExploreFuture(futureSuccess, "enable", "stream", stream.getId());
   }
 
@@ -70,13 +74,14 @@ public class ExploreFacade {
    * Disables ad-hoc exploration of the given stream.
    *
    * @param stream id of the stream.
+   * @param tableName name of the Hive table to delete.
    */
-  public void disableExploreStream(Id.Stream stream) throws ExploreException, SQLException {
+  public void disableExploreStream(Id.Stream stream, String tableName) throws ExploreException, SQLException {
     if (!exploreEnabled) {
       return;
     }
 
-    ListenableFuture<Void> futureSuccess = exploreClient.disableExploreStream(stream);
+    ListenableFuture<Void> futureSuccess = exploreClient.disableExploreStream(stream, tableName);
     handleExploreFuture(futureSuccess, "disable", "stream", stream.getId());
   }
 

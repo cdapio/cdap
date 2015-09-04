@@ -16,6 +16,7 @@
 
 package co.cask.cdap.explore.jdbc;
 
+import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
@@ -67,12 +68,12 @@ public class MockExploreClient extends AbstractIdleService implements ExploreCli
   }
 
   @Override
-  public ListenableFuture<Void> enableExploreStream(Id.Stream stream) {
+  public ListenableFuture<Void> enableExploreStream(Id.Stream stream, String tableName, FormatSpecification format) {
     return null;
   }
 
   @Override
-  public ListenableFuture<Void> disableExploreStream(Id.Stream stream) {
+  public ListenableFuture<Void> disableExploreStream(Id.Stream stream, String tableName) {
     return null;
   }
 

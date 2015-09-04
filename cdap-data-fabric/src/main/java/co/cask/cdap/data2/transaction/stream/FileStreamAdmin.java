@@ -29,6 +29,7 @@ import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.explore.client.ExploreFacade;
+import co.cask.cdap.internal.explore.ExploreTableNaming;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.notifications.feeds.NotificationFeedException;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
@@ -69,6 +70,7 @@ public class FileStreamAdmin implements StreamAdmin {
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .create();
+  private static final ExploreTableNaming NAMING = new ExploreTableNaming();
 
   private final NamespacedLocationFactory namespacedLocationFactory;
   private final StreamCoordinatorClient streamCoordinatorClient;
@@ -239,8 +241,8 @@ public class FileStreamAdmin implements StreamAdmin {
               Schema currSchema = oldProperties.getFormat().getSchema();
               Schema newSchema = format.getSchema();
               if (!currSchema.equals(newSchema)) {
-                alterExploreStream(streamId, false);
-                alterExploreStream(streamId, true);
+                alterExploreStream(streamId, false, null);
+                alterExploreStream(streamId, true, format);
               }
             }
 
@@ -265,17 +267,17 @@ public class FileStreamAdmin implements StreamAdmin {
   }
 
   @Override
-  public void create(Id.Stream streamId) throws Exception {
-    create(streamId, null);
+  public StreamConfig create(Id.Stream streamId) throws Exception {
+    return create(streamId, null);
   }
 
   @Override
-  public void create(final Id.Stream streamId, @Nullable final Properties props) throws Exception {
+  public StreamConfig create(final Id.Stream streamId, @Nullable final Properties props) throws Exception {
     assertNamespaceHomeExists(streamId.getNamespace());
     final Location streamLocation = getStreamLocation(streamId);
     Locations.mkdirsIfNotExists(streamLocation);
 
-    streamCoordinatorClient.createStream(streamId, new Callable<StreamConfig>() {
+    return streamCoordinatorClient.createStream(streamId, new Callable<StreamConfig>() {
       @Override
       public StreamConfig call() throws Exception {
         if (exists(streamId)) {
@@ -296,7 +298,7 @@ public class FileStreamAdmin implements StreamAdmin {
                                                ttl, streamLocation, null, threshold);
         writeConfig(config);
         createStreamFeeds(config);
-        alterExploreStream(streamId, true);
+        alterExploreStream(streamId, true, config.getFormat());
         streamMetaStore.addStream(streamId);
         return config;
       }
@@ -387,7 +389,7 @@ public class FileStreamAdmin implements StreamAdmin {
           if (!configLocation.exists()) {
             return;
           }
-          alterExploreStream(StreamUtils.getStreamIdFromLocation(streamLocation), false);
+          alterExploreStream(StreamUtils.getStreamIdFromLocation(streamLocation), false, null);
 
           if (!configLocation.delete()) {
             LOG.debug("Could not delete stream config location " + streamLocation.toURI().getPath());
@@ -486,15 +488,15 @@ public class FileStreamAdmin implements StreamAdmin {
     }
   }
 
-  private void alterExploreStream(Id.Stream stream, boolean enable) {
+  private void alterExploreStream(Id.Stream stream, boolean enable, @Nullable FormatSpecification format) {
     if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
       // It shouldn't happen.
       Preconditions.checkNotNull(exploreFacade, "Explore enabled but no ExploreFacade instance is available");
       try {
         if (enable) {
-          exploreFacade.enableExploreStream(stream);
+          exploreFacade.enableExploreStream(stream, NAMING.getTableName(stream), format);
         } else {
-          exploreFacade.disableExploreStream(stream);
+          exploreFacade.disableExploreStream(stream, NAMING.getTableName(stream));
         }
       } catch (Exception e) {
         // at this time we want to still allow using stream even if it cannot be used for exploration

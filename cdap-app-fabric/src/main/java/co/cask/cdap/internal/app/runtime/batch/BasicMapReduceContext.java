@@ -44,18 +44,13 @@ import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetOutputFormat;
 import co.cask.cdap.logging.context.MapReduceLoggingContext;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.templates.AdapterDefinition;
-import co.cask.tephra.TransactionAware;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocationFactory;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;

@@ -22,7 +22,6 @@ import co.cask.cdap.BloatedWordCountApp;
 import co.cask.cdap.ConfigTestApp;
 import co.cask.cdap.WordCountApp;
 import co.cask.cdap.api.Config;
-import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.Constants;
