@@ -17,7 +17,6 @@
 package co.cask.cdap.client;
 
 import co.cask.cdap.api.Config;
-import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.client.app.AppReturnsArgs;
 import co.cask.cdap.client.app.ConfigTestApp;
 import co.cask.cdap.client.app.ConfigurableProgramsApp;
@@ -48,6 +47,7 @@ import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -93,6 +93,13 @@ public class ApplicationClientTestRun extends ClientTestBase {
     } catch (DatasetModuleNotFoundException e) {
       // NO-OP
     }
+  }
+
+  @Test(expected = IOException.class)
+  public void testInvalidAppConfig() throws Exception {
+    Id.Application appid = Id.Application.from(Id.Namespace.DEFAULT, ConfigTestApp.NAME);
+    appClient.deploy(appid.getNamespace(),
+                     createAppJarFile(ConfigTestApp.class, ConfigTestApp.NAME, "1.0.0-SNAPSHOT"), "adad");
   }
 
   @Test
