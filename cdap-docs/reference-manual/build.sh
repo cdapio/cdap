@@ -39,7 +39,7 @@ function build_extras() {
   fi
 
   echo "Copying license PDFs."
-  cp ${SCRIPT_PATH}/${LICENSES_PDF}/*.pdf ${TARGET_PATH}/${HTML}/${LICENSES}
+  cp ${SCRIPT_PATH}/${LICENSES_PDF}/*.pdf ${html_path}/${LICENSES}
 }
 
 run_command ${1}

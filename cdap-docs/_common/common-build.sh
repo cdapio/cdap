@@ -62,7 +62,6 @@ MANUAL=`basename ${SCRIPT_PATH}`
 
 DOC_GEN_PY="${SCRIPT_PATH}/../tools/doc-gen.py"
 TARGET_PATH="${SCRIPT_PATH}/${TARGET}"
-HTML_PATH="${TARGET_PATH}/${HTML}"
 SOURCE_PATH="${SCRIPT_PATH}/${SOURCE}"
 
 if [ "x${2}" == "x" ]; then
@@ -195,13 +194,13 @@ function make_zip() {
   else
     ZIP_DIR_NAME="${PROJECT}-docs-${PROJECT_VERSION}-$1"
   fi
-  cd ${SCRIPT_PATH}/${TARGET}
+  cd ${TARGET_PATH}
   mkdir ${PROJECT_VERSION}
   mv ${HTML} ${PROJECT_VERSION}/en
   # Add a redirect index.html file
   echo "${REDIRECT_EN_HTML}" > ${PROJECT_VERSION}/index.html
   # Zip everything
-  zip -qr ${ZIP_DIR_NAME}.zip ${PROJECT_VERSION}/* --exclude .DS_Store
+  zip -qr ${ZIP_DIR_NAME}.zip ${PROJECT_VERSION}/* --exclude *.DS_Store* *.buildinfo*
 }
 
 function build() {
@@ -348,7 +347,7 @@ function display_version() {
 
 function clear_messages_set_messages_file() {
   unset -v MESSAGES
-  TMP_MESSAGES_FILE="/tmp/$(basename $0).$$.tmp"
+  TMP_MESSAGES_FILE="${TARGET_PATH}/.$(basename $0).$$.messages"
   cat /dev/null > ${TMP_MESSAGES_FILE}
   export TMP_MESSAGES_FILE
   echo_red_bold "Cleared Messages and Messages file: " "${TMP_MESSAGES_FILE}"

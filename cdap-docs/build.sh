@@ -106,7 +106,7 @@ function run_command() {
     docs-github-part )  build_docs_github_part;;
     docs-web-part )     build_docs_web_part;;
     
-    clean )             clean_all_targets;;
+    clean )             clean_targets;;
     javadocs )          build_javadocs;;
     licenses )          build_license_dependency_pdfs;;
     sdk )               build_standalone;;
@@ -123,7 +123,7 @@ function build_all() {
   echo "Building All: GitHub and Web Docs"
   echo "--------------------------------------------------------"
   echo
-  clean_all_targets
+  clean_targets
   clear_messages_set_messages_file
   run_command docs-first-pass ${ARG_2} 
   run_command javadocs
@@ -156,7 +156,7 @@ function build_docs() {
   echo "--------------------------------------------------------"
   echo
   if [ "${doc_type}" != "${DOCS}" ]; then
-    clean_all_targets
+    clean_targets
   fi
   clear_messages_set_messages_file
   run_command docs-first-pass ${source_path}
@@ -238,9 +238,8 @@ function stash_github_zip() {
   echo "Stashing GitHub Zip"
   echo "========================================================"
   echo
-  cd ${SCRIPT_PATH}
-  TARGET_TEMP=$(mktemp -d /tmp/cdap-docs-github-$$.XXXX)
-  mv ${SCRIPT_PATH}/${TARGET}/*.zip ${TARGET_TEMP}
+  TARGET_TEMP=$(mktemp -d ${TARGET_PATH}/.cdap-docs-github-$$.XXXX)
+  mv ${TARGET_PATH}/*.zip ${TARGET_TEMP}
   echo
 }
 
@@ -249,7 +248,7 @@ function restore_github_zip() {
   echo "Restoring GitHub Zip"
   echo "========================================================"
   echo
-  mv ${TARGET_TEMP}/*.zip ${SCRIPT_PATH}/${TARGET}
+  mv ${TARGET_TEMP}/*.zip ${TARGET_PATH}
   rm -rf ${TARGET_TEMP}
   echo
 }
@@ -307,9 +306,8 @@ function build_docs_inner_level() {
 
 function copy_source() {
   echo "Copying source for ${1} (${2}) ..."
-  cd ${SCRIPT_PATH}
-  mkdir -p ${SCRIPT_PATH}/${TARGET}/${SOURCE}/${1}
-  rewrite ${COMMON_PLACEHOLDER} ${TARGET}/${SOURCE}/${1}/index.rst "<placeholder>" ${2}
+  mkdir -p ${TARGET_PATH}/${SOURCE}/${1}
+  rewrite ${SCRIPT_PATH}/${COMMON_PLACEHOLDER} ${TARGET_PATH}/${SOURCE}/${1}/index.rst "<placeholder>" ${2}
   echo
 }
 
@@ -332,16 +330,15 @@ function build_docs_outer_level() {
   copy_source reference-manual      "Reference Manual"
 
   # Build outer-level docs
-  cd ${SCRIPT_PATH}
-  cp ${COMMON_HIGHLEVEL_PY}  ${TARGET}/${SOURCE}/conf.py
-  cp -R ${COMMON_IMAGES}     ${TARGET}/${SOURCE}/
-  cp ${COMMON_SOURCE}/*.rst  ${TARGET}/${SOURCE}/
+  cp ${SCRIPT_PATH}/${COMMON_HIGHLEVEL_PY}  ${TARGET_PATH}/${SOURCE}/conf.py
+  cp -R ${SCRIPT_PATH}/${COMMON_IMAGES}     ${TARGET_PATH}/${SOURCE}/
+  cp ${SCRIPT_PATH}/${COMMON_SOURCE}/*.rst  ${TARGET_PATH}/${SOURCE}/
   
   local google_options
   if [ "x${google_code}" != "x" ]; then
     google_options="-D googleanalytics_id=${google_code} -D googleanalytics_enabled=1"
   fi
-  ${SPHINX_BUILD} ${google_options} ${TARGET}/${SOURCE} ${TARGET}/html
+  ${SPHINX_BUILD} ${google_options} ${TARGET_PATH}/${SOURCE} ${TARGET_PATH}/${HTML}
   echo
 }
   
@@ -353,9 +350,8 @@ function copy_docs_inner_level() {
 
   for i in ${MANUALS}; do
     echo "Copying html for ${i}..."
-    cd ${SCRIPT_PATH}
-    rm -rf ${SCRIPT_PATH}/${TARGET}/${HTML}/${i}
-    cp -r ${i}/${TARGET}/${HTML} ${TARGET}/${HTML}/${i}
+    rm -rf ${TARGET_PATH}/${HTML}/${i}
+    cp -r ${SCRIPT_PATH}/${i}/${TARGET}/${HTML} ${TARGET_PATH}/${HTML}/${i}
     echo
   done
 
@@ -366,7 +362,7 @@ function copy_docs_inner_level() {
   else
     project_dir=${PROJECT_VERSION}
   fi
-  local source_404="${TARGET}/${HTML}/404.html"
+  local source_404="${TARGET_PATH}/${HTML}/404.html"
   rewrite ${source_404} "src=\"_static"  "src=\"/cdap/${project_dir}/en/_static"
   rewrite ${source_404} "src=\"_images"  "src=\"/cdap/${project_dir}/en/_images"
   rewrite ${source_404} "/href=\"http/!s|href=\"|href=\"/cdap/${project_dir}/en/|g"
@@ -375,7 +371,6 @@ function copy_docs_inner_level() {
 }
 
 function build_zip() {
-  cd ${SCRIPT_PATH}
   set_project_path
   make_zip ${1}
 }
@@ -384,34 +379,31 @@ function zip_extras() {
   if [[ "x${1}" == "x" ]]; then
     return
   fi
-  echo "Adding htaccess file"
-  # Add .htaccess file (404 file)
-  cd ${SCRIPT_PATH}
-  rewrite ${COMMON_SOURCE}/${HTACCESS} ${TARGET}/${PROJECT_VERSION}/.${HTACCESS} "<version>" "${PROJECT_VERSION}"
-  cd ${SCRIPT_PATH}/${TARGET}
+  echo "Adding .htaccess file (404 file)"
+  rewrite ${SCRIPT_PATH}/${COMMON_SOURCE}/${HTACCESS} ${TARGET_PATH}/${PROJECT_VERSION}/.${HTACCESS} "<version>" "${PROJECT_VERSION}"
+  cd ${TARGET_PATH}
   zip -qr ${ZIP_DIR_NAME}.zip ${PROJECT_VERSION}/.${HTACCESS}
 }
 
-function clean_outer_level() {
-  cd ${SCRIPT_PATH}
-  rm -rf ${SCRIPT_PATH}/${TARGET}/*
-  mkdir -p ${SCRIPT_PATH}/${TARGET}/${HTML}
-  mkdir -p ${SCRIPT_PATH}/${TARGET}/${SOURCE}
-  echo "Cleaned ${SCRIPT_PATH}/${TARGET}/* directories"
-  echo
-}
-
-function clean_all_targets() {
+function clean_targets() {
   # Removes all outer- and inner-level build ${TARGET} directories
-  cd ${SCRIPT_PATH}
-  rm -rf ${SCRIPT_PATH}/${TARGET}/*
-  echo "Cleaned ${SCRIPT_PATH}/${TARGET} directories"
+  rm -rf ${TARGET_PATH}
+  mkdir ${TARGET_PATH}
+  echo "Cleaned ${TARGET_PATH} directory"
   echo
   for i in ${MANUALS}; do
     rm -rf ${SCRIPT_PATH}/${i}/${TARGET}/*
     echo "Cleaned ${SCRIPT_PATH}/${i}/${TARGET} directories"
     echo
   done
+}
+
+function clean_outer_level() {
+  rm -rf ${TARGET_PATH}/*
+  mkdir -p ${TARGET_PATH}/${HTML}
+  mkdir -p ${TARGET_PATH}/${SOURCE}
+  echo "Cleaned ${TARGET_PATH}/* directories"
+  echo
 }
 
 function build_license_dependency_pdfs() {
