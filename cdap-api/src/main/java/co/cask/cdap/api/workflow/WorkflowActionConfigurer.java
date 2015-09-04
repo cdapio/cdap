@@ -14,49 +14,33 @@
  * the License.
  */
 
-package co.cask.cdap.api.flow.flowlet;
+package co.cask.cdap.api.workflow;
 
-import co.cask.cdap.api.DatasetConfigurer;
-import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.dataset.Dataset;
 
 import java.util.Map;
 
 /**
- * Configurer for configuring {@link Flowlet}.
+ * Configurer for configuring {@link WorkflowAction}
  */
-public interface FlowletConfigurer extends DatasetConfigurer {
+public interface WorkflowActionConfigurer {
 
   /**
-   * Sets the name of the {@link Flowlet}.
+   * Sets the name of the {@link WorkflowAction}
    *
-   * @param name name of the flowlet
+   * @param name name of the WorkflowAction
    */
   void setName(String name);
 
   /**
-   * Sets the description of the {@link Flowlet}.
+   * Sets the description of the {@link WorkflowAction}
    *
-   * @param description description of the flowlet
+   * @param description description of the WorkflowAction
    */
   void setDescription(String description);
 
   /**
-   * Sets the resource requirements for the {@link Flowlet}.
-   *
-   * @param resources {@link Resources}
-   */
-  void setResources(Resources resources);
-
-  /**
-   * Sets the failure policy for the {@link Flowlet}.
-   *
-   * @param failurePolicy {@link FailurePolicy}
-   */
-  void setFailurePolicy(FailurePolicy failurePolicy);
-
-  /**
-   * Sets a map of properties that will be available through {@link FlowletSpecification} at runtime.
+   * Sets a map of properties that will be available through {@link WorkflowActionSpecification} at runtime.
    *
    * @param properties properties
    */

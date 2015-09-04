@@ -36,7 +36,9 @@ public interface WorkflowAction extends Runnable {
    * Provides a specification for this {@link WorkflowAction}.
    *
    * @return An instance of {@link WorkflowSpecification}.
+   * @deprecated Use {@link AbstractWorkflowAction#configure} instead.
    */
+  @Deprecated
   WorkflowActionSpecification configure();
 
   /**
