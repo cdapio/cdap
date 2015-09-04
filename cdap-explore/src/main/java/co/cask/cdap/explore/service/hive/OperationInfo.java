@@ -28,7 +28,7 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
 * Helper class to store information about a Hive operation in progress.
 */
-abstract class OperationInfo {
+public abstract class OperationInfo {
   private final SessionHandle sessionHandle;
   private final OperationHandle operationHandle;
   private final Map<String, String> sessionConf;

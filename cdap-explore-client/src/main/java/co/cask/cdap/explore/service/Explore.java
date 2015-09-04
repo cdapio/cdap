@@ -88,7 +88,7 @@ public interface Explore {
   /**
    * Fetch a preview of the results of a Hive operation. This can be called only after the state of the operation is
    * {@link QueryStatus.OpStatus#FINISHED}. Two subsequent calls to this methods will return the same list of results.
-   * 
+   *
    * @param handle handle returned by {@link #execute(Id.Namespace, String)}.
    * @return preview list of {@link QueryResult}s.
    * @throws ExploreException on any error fetching a preview of the results.
@@ -116,6 +116,15 @@ public interface Explore {
    */
   List<QueryInfo> getQueries(Id.Namespace namespace) throws ExploreException, SQLException;
 
+  /**
+   * Get the number of active queries being executed in Hive, specifically
+   * queries that are being executed or completed queries that have not yet been closed.
+   *
+   * @param namespace namespace to count queries in.
+   * @return the number of live queries being executed.
+   * @throws ExploreException
+   */
+  int getActiveQueryCount(Id.Namespace namespace) throws ExploreException;
 
   ////// Metadata methods
 
