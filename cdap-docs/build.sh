@@ -449,7 +449,7 @@ function docs_test() {
   local last_line=$(echo "${recover}" | tail -n1)
   echo "last_line: ${last_line}"
   
-  while read line; do echo "$line"; done < <(echo "${recover}")
+#   while read line; do echo "$line"; done < <(echo "${recover}")
 
   echo "Test completed."
 }
