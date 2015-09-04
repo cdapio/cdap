@@ -194,7 +194,9 @@ public class ETLWorker extends AbstractWorker {
         transform.initialize(transformContext);
         StageMetrics stageMetrics = new StageMetrics(metrics, PluginID.from(transformId));
         transformationDetailsList.add(new TransformationDetails(transformId, transform, stageMetrics));
-        tranformIdToDatasetName.put(transformId, transformIds.get(i).getErrorDatasetName());
+        if (transformIds.get(i).getErrorDatasetName() != null) {
+          tranformIdToDatasetName.put(transformId, transformIds.get(i).getErrorDatasetName());
+        }
       } catch (InstantiationException e) {
         LOG.error("Unable to instantiate Transform", e);
         Throwables.propagate(e);

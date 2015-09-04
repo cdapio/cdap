@@ -48,7 +48,6 @@ public abstract class TimePartitionedFileSetSink<KEY_OUT, VAL_OUT>
   public void prepareRun(BatchSinkContext context) {
     Map<String, String> sinkArgs = new HashMap<>();
     TimePartitionedFileSetArguments.setOutputPartitionTime(sinkArgs, context.getLogicalStartTime());
-    TimePartitionedFileSet sink = context.getDataset(tpfsSinkConfig.name, sinkArgs);
-    context.setOutput(tpfsSinkConfig.name, sink);
+    context.addOutput(tpfsSinkConfig.name, sinkArgs);
   }
 }

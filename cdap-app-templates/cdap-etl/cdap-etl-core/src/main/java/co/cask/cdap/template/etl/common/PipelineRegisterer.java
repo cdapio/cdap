@@ -19,9 +19,12 @@ package co.cask.cdap.template.etl.common;
 import co.cask.cdap.api.artifact.PluginConfigurer;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.lib.FileSetProperties;
+import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.dataset.table.ConflictDetection;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.templates.plugins.PluginProperties;
+import co.cask.cdap.template.etl.api.InvalidEntry;
 import co.cask.cdap.template.etl.api.PipelineConfigurable;
 import co.cask.cdap.template.etl.api.PipelineConfigurer;
 import co.cask.cdap.template.etl.api.Transform;
@@ -109,9 +112,19 @@ public class PipelineRegisterer {
       // if the transformation is configured to write filtered records to error dataset, we create that dataset.
       if (transformConfig.getDatasetName() != null) {
         // TODO : can remove this after implementing CDAP-3480
-        if (errorDatasetType != null) {
+        if (errorDatasetType.getClass().getName().equals(Table.class.getName())) {
           configurer.createDataset(transformConfig.getDatasetName(), errorDatasetType, DatasetProperties.builder()
             .add(Table.PROPERTY_SCHEMA, errorSchema.toString())
+            .build());
+        } else if (errorDatasetType.getClass().getName().equals(TimePartitionedFileSet.class.getName())) {
+          configurer.createDataset(transformConfig.getDatasetName(), errorDatasetType, FileSetProperties.builder()
+            .setBasePath("error")
+            .setInputFormat(InvalidEntry.class)
+            .setOutputFormat(InvalidEntry.class)
+            .setEnableExploreOnCreate(true)
+            .setSerDe("org.apache.hadoop.hive.serde2.avro.AvroSerDe")
+            .setExploreInputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat")
+            .setExploreOutputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat")
             .build());
         }
       }

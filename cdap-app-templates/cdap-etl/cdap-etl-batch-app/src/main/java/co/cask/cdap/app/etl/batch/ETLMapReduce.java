@@ -18,8 +18,10 @@ package co.cask.cdap.app.etl.batch;
 
 import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.dataset.lib.KeyValue;
+import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
+import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.app.etl.batch.config.ETLBatchConfig;
 import co.cask.cdap.template.etl.api.Transform;
@@ -38,6 +40,7 @@ import co.cask.cdap.template.etl.common.PluginID;
 import co.cask.cdap.template.etl.common.StageMetrics;
 import co.cask.cdap.template.etl.common.TransformDetails;
 import co.cask.cdap.template.etl.common.TransformExecutor;
+import co.cask.cdap.template.etl.common.TransformResponse;
 import co.cask.cdap.template.etl.common.TransformationDetails;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
@@ -61,12 +64,15 @@ import java.util.Map;
 public class ETLMapReduce extends AbstractMapReduce {
   public static final String NAME = ETLMapReduce.class.getSimpleName();
   private static final Logger LOG = LoggerFactory.getLogger(ETLMapReduce.class);
+  private static final Type TRANSFORMDETAILS_LIST_TYPE = new TypeToken<List<TransformDetails>>() { }.getType();
   private static final Gson GSON = new Gson();
 
   private BatchSource batchSource;
   private BatchSink batchSink;
   private Metrics mrMetrics;
 
+  private static String sinkDatasetName;
+  private static Map<String, String> transformIdToDatasetName;
   // this is only visible at configure time, not at runtime
   private final ETLBatchConfig config;
 
@@ -80,8 +86,7 @@ public class ETLMapReduce extends AbstractMapReduce {
     setDescription("MapReduce driver for Batch ETL Adapters");
 
     PipelineRegisterer pipelineRegisterer = new PipelineRegisterer(getConfigurer());
-    //TODO : CDAP-3480 - passing null now, will implement error dataset using Fileset for ETLMapReduce
-    Pipeline pipelineIds = pipelineRegisterer.registerPlugins(config, null);
+    Pipeline pipelineIds = pipelineRegisterer.registerPlugins(config, TimePartitionedFileSet.class);
 
     if (config.getResources() != null) {
       setMapperResources(config.getResources());
@@ -98,11 +103,20 @@ public class ETLMapReduce extends AbstractMapReduce {
   @Override
   public void beforeSubmit(MapReduceContext context) throws Exception {
     Job job = context.getHadoopJob();
-
     Map<String, String> properties = context.getSpecification().getProperties();
     String sourcePluginId = properties.get(Constants.Source.PLUGINID);
     String sinkPluginId = properties.get(Constants.Sink.PLUGINID);
 
+    List<TransformDetails> transformDetailsList =
+      GSON.fromJson(context.getSpecification().getProperty(Constants.Transform.PLUGINIDS), TRANSFORMDETAILS_LIST_TYPE);
+
+    long currenTime = System.currentTimeMillis();
+    for (TransformDetails transformDetails : transformDetailsList) {
+      TimePartitionedFileSet tpfs = context.getDataset(transformDetails.getErrorDatasetName());
+      // add base path and time and set appropriate output format
+      tpfs.addPartition(currenTime,
+                        context.getApplicationSpecification().getName() + "/" + transformDetails.getTransformId());
+    }
     batchSource = context.newInstance(sourcePluginId);
     BatchSourceContext sourceContext = new MapReduceSourceContext(context, mrMetrics, sourcePluginId);
     batchSource.prepareRun(sourceContext);
@@ -110,6 +124,7 @@ public class ETLMapReduce extends AbstractMapReduce {
     batchSink = context.newInstance(sinkPluginId);
     BatchSinkContext sinkContext = new MapReduceSinkContext(context, mrMetrics, sinkPluginId);
     batchSink.prepareRun(sinkContext);
+    sinkDatasetName = context.getPluginProperties(sinkPluginId).getProperties().get("name");
 
     job.setMapperClass(ETLMapper.class);
     job.setNumReduceTasks(0);
@@ -187,6 +202,7 @@ public class ETLMapReduce extends AbstractMapReduce {
     private void addTransforms(List<TransformationDetails> pipeline,
                                List<TransformDetails> transformIds,
                                MapReduceContext context) throws Exception {
+      transformIdToDatasetName = new HashMap<>();
 
       for (int i = 0; i < transformIds.size(); i++) {
         String transformId = transformIds.get(i).getTransformId();
@@ -196,17 +212,36 @@ public class ETLMapReduce extends AbstractMapReduce {
         transform.initialize(transformContext);
         pipeline.add(new TransformationDetails(transformId, transform,
                                                new StageMetrics(mapperMetrics, PluginID.from(transformId))));
+        if (transformIds.get(i).getErrorDatasetName() != null) {
+          transformIdToDatasetName.put(transformId, transformIds.get(i).getErrorDatasetName());
+        }
       }
     }
 
-    @Override
-    public void map(Object key, Object value, Context context) throws IOException, InterruptedException {
+    public void map(Object key, Object value,
+                    MapReduceTaskContext<Object, Object> context) throws IOException, InterruptedException {
       try {
         KeyValue input = new KeyValue(key, value);
-        Iterator<KeyValue> iterator = transformExecutor.runOneIteration(input).getEmittedRecords();
+        TransformResponse transformResponse = transformExecutor.runOneIteration(input);
+        Iterator<KeyValue> iterator = transformResponse.getEmittedRecords();
         while (iterator.hasNext()) {
           KeyValue output = iterator.next();
-          context.write(output.getKey(), output.getValue());
+          if (sinkDatasetName != null) {
+            // writing to dataset
+            context.write(sinkDatasetName, output.getKey(), output.getValue());
+          } else {
+            // dataset is null, so writing to context. Eg: DBSink
+            context.write(output.getKey(), output.getValue());
+          }
+        }
+        List<TransformResponse.TransformError> errorList = transformResponse.getErrorRecords();
+        for (TransformResponse.TransformError errorRecords : errorList) {
+          Iterator<KeyValue> invalidEntriesIterator = errorRecords.getErrorRecords();
+          while (invalidEntriesIterator.hasNext()) {
+            KeyValue output = invalidEntriesIterator.next();
+            context.write(transformIdToDatasetName.get(errorRecords.getTransformId()),
+                                                       output.getKey(), output.getValue());
+          }
         }
       } catch (Exception e) {
         LOG.error("Exception thrown in BatchDriver Mapper : {}", e);

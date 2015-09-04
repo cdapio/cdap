@@ -20,27 +20,28 @@ import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.dataset.Dataset;
 
+import java.util.Map;
+
 /**
  * Context of a Batch Sink.
  */
 @Beta
 public interface BatchSinkContext extends BatchContext {
-
   /**
-   * Overrides the output configuration of this Batch job to write to the specified dataset by its name.
+   * Adds output configuration of this Batch job to write to the specified dataset by its name.
    *
    * @param datasetName the name of the output dataset
    */
-  void setOutput(String datasetName);
+  void addOutput(String datasetName);
 
   /**
-   * Overrides the output configuration of this Batch job to write to the specified dataset instance.
-   * Currently, the dataset passed in must either be an {@link OutputFormatProvider}.
-   * You may want to use this method instead of {@link #setOutput(String)} if your output dataset uses runtime
+   * Overrides the output configuration of this Batch job to also allow writing to the specified dataset.
+   * Currently, the dataset specified in must be an {@link OutputFormatProvider}.
+   * You may want to use this method instead of {@link #addOutput(String)} if your output dataset uses runtime
    * arguments set in your own program logic.
    *
    * @param datasetName the name of the output dataset
-   * @param dataset the output dataset
+   * @param arguments the arguments to use when instantiating the dataset
    */
-  void setOutput(String datasetName, Dataset dataset);
+  void addOutput(String datasetName, Map<String, String> arguments);
 }
