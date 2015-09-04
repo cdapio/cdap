@@ -132,7 +132,7 @@ public interface MapReduceContext extends RuntimeContext, DatasetContext, Servic
   void addOutput(String datasetName);
 
   /**
-   * Overrides the output configuration of this MapReduce job to also allow writing to the specified dataset.
+   * Updates the output configuration of this MapReduce job to also allow writing to the specified dataset.
    * Currently, the dataset specified in must be an {@link OutputFormatProvider}.
    * You may want to use this method instead of {@link #addOutput(String)} if your output dataset uses runtime
    * arguments set in your own program logic.
@@ -142,6 +142,15 @@ public interface MapReduceContext extends RuntimeContext, DatasetContext, Servic
    * @throws IllegalArgumentException if the specified dataset is not an OutputFormatProvider.
    */
   void addOutput(String datasetName, Map<String, String> arguments);
+
+  /**
+   * Updates the output configuration of this MapReduce job to also allow writing using the given OutputFormatProvider.
+   *
+   * @param outputName the name of the output
+   * @param outputFormatProvider the outputFormatProvider which specifies an OutputFormat and configuration to be used
+   *                             when writing to this output
+   */
+  void addOutput(String outputName, OutputFormatProvider outputFormatProvider);
 
   /**
    * Overrides the resources, such as memory and virtual cores, to use for each mapper of this MapReduce job.
