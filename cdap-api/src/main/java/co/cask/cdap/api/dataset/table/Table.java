@@ -26,6 +26,7 @@ import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetProperties;
 
 import java.util.List;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 /**
@@ -87,6 +88,7 @@ public interface Table extends BatchReadable<byte[], Row>, BatchWritable<byte[],
    * @param row row to read from
    * @return instance of {@link Row}: never {@code null}; returns an empty Row if nothing read
    */
+  @Nonnull
   Row get(byte[] row);
 
   /**
@@ -106,6 +108,7 @@ public interface Table extends BatchReadable<byte[], Row>, BatchWritable<byte[],
    *
    * @return instance of {@link Row}: never {@code null}; returns an empty Row if nothing read
    */
+  @Nonnull
   Row get(byte[] row, byte[][] columns);
 
   /**
@@ -120,6 +123,7 @@ public interface Table extends BatchReadable<byte[], Row>, BatchWritable<byte[],
    * @param limit maximum number of columns to return
    * @return instance of {@link Row}; never {@code null}; returns an empty Row if nothing read
    */
+  @Nonnull
   Row get(byte[] row, byte[] startColumn, byte[] stopColumn, int limit);
 
   /**
@@ -131,6 +135,7 @@ public interface Table extends BatchReadable<byte[], Row>, BatchWritable<byte[],
    * @param get defines read selection
    * @return instance of {@link Row}: never {@code null}; returns an empty Row if nothing read
    */
+  @Nonnull
   Row get(Get get);
 
   /**

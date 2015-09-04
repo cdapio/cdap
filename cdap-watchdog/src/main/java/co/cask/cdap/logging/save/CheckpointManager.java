@@ -77,8 +77,7 @@ public final class CheckpointManager {
       public Checkpoint apply(DatasetContext<Table> ctx) throws Exception {
         Row result =
           ctx.get().get(Bytes.add(rowKeyPrefix, Bytes.toBytes(partition)));
-        return result == null ? new Checkpoint(-1, -1) :
-          new Checkpoint(result.getLong(OFFSET_COLNAME, -1), result.getLong(MAX_TIME_COLNAME, -1));
+        return new Checkpoint(result.getLong(OFFSET_COLNAME, -1), result.getLong(MAX_TIME_COLNAME, -1));
       }
     });
     LOG.trace("Read checkpoint {} for partition {}", checkpoint, partition);
