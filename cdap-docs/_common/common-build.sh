@@ -379,14 +379,17 @@ function set_message() {
 function consolidate_messages() {
   local m="Warning Messages for \"${MANUAL}\":"
   if [ "x${MESSAGES}" != "x" ]; then
+    echo_red_bold "Consolidating messages" 
     echo_red_bold "${m}" >> ${TMP_MESSAGES_FILE}
-    while read line
-    do
-      echo ${line} >> ${TMP_MESSAGES_FILE}
-    done <<(echo "${MESSAGES}")
+    echo "${MESSAGES}" >> ${TMP_MESSAGES_FILE}
+#     while read line
+#     do
+#       echo ${line} >> ${TMP_MESSAGES_FILE}
+#     done <<(echo "${MESSAGES}")
     unset -v MESSAGES
   fi
   if [ -s ${TARGET}/${SPHINX_MESSAGES} ]; then
+    echo_red_bold "Consolidating Sphinx messages" 
     m="Sphinx ${m}"
     echo_red_bold "${m}" >> ${TMP_MESSAGES_FILE}
     cat ${TARGET}/${SPHINX_MESSAGES} | while read line
