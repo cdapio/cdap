@@ -117,24 +117,29 @@ function run_command() {
 }
 
 function build_all() {
+  local warnings
   echo "========================================================"
   echo "========================================================"
   echo "Building All: GitHub and Web Docs"
   echo "--------------------------------------------------------"
   echo
   clean_all_targets
-  run_command javadocs 
+  clear_messages_set_messages_file
   run_command docs-first-pass ${ARG_2} 
+  run_command javadocs
   run_command docs-github-part ${ARG_2} 
-#   _stash_github_zip 
+  stash_github_zip 
   run_command docs-web-part ${ARG_2} 
-#   _restore_github_zip
+  restore_github_zip
+  display_messages_file
+  warnings=$?
+  cleanup_messages_file
   echo "--------------------------------------------------------"
   ring_bell "Completed \"build all\""
   echo "========================================================"
   echo "========================================================"
   echo
-  exit 0
+  exit ${warnings}
 }
 
 function build_docs() {
@@ -152,9 +157,8 @@ function build_docs() {
   echo
   if [ "${doc_type}" != "${DOCS}" ]; then
     clean_all_targets
-  else
-    clear_messages_set_messages_file
   fi
+  clear_messages_set_messages_file
   run_command docs-first-pass ${source_path}
   if [ "${doc_type}" == "${DOCS}" ]; then
     build_docs_outer_level ${source_path}
@@ -191,6 +195,8 @@ function build_javadocs() {
     echo_red_bold "Javadocs disabled."
   else
     build_javadocs_api
+    USING_JAVADOCS="true"
+    export USING_JAVADOCS
   fi
   local warnings=$?
   echo "--------------------------------------------------------"
@@ -222,22 +228,23 @@ function build_docs_github_part() {
   echo "Building GitHub Docs"
   echo "--------------------------------------------------------"
   echo
-  _build_docs build-github ${GOOGLE_ANALYTICS_GITHUB} ${GITHUB} ${FALSE}
+  # Don't add the zip_extras (.htaccess files) to Github
+  _build_docs build-github ${GOOGLE_ANALYTICS_GITHUB} ${GITHUB}
   return $?
 }
 
-function _stash_github_zip() {
+function stash_github_zip() {
   echo "========================================================"
   echo "Stashing GitHub Zip"
   echo "========================================================"
   echo
   cd ${SCRIPT_PATH}
-  TARGET_TEMP=$(mktemp -d /tmp/cdap-docs.XXXX)
+  TARGET_TEMP=$(mktemp -d /tmp/cdap-docs-github-$$.XXXX)
   mv ${SCRIPT_PATH}/${TARGET}/*.zip ${TARGET_TEMP}
   echo
 }
 
-function _restore_github_zip() {
+function restore_github_zip() {
   echo "========================================================"
   echo "Restoring GitHub Zip"
   echo "========================================================"
@@ -252,7 +259,7 @@ function build_docs_web_part() {
   echo "Building Web Docs"
   echo "--------------------------------------------------------"
   echo
-  _build_docs build-web ${GOOGLE_ANALYTICS_WEB} ${WEB} ${FALSE}
+  _build_docs build-web ${GOOGLE_ANALYTICS_WEB} ${WEB} ${TRUE}
   return $?
 }
 
@@ -374,11 +381,10 @@ function build_zip() {
 }
 
 function zip_extras() {
-  echo "zip_extras: $1: \"${1}\""
-  if [ !${1} ]; then
+  if [[ "x${1}" == "x" ]]; then
     return
   fi
-  echo "Add htaccess file"
+  echo "Adding htaccess file"
   # Add .htaccess file (404 file)
   cd ${SCRIPT_PATH}
   rewrite ${COMMON_SOURCE}/${HTACCESS} ${TARGET}/${PROJECT_VERSION}/.${HTACCESS} "<version>" "${PROJECT_VERSION}"
@@ -428,7 +434,7 @@ function ring_bell() {
   if [[ "x${BELL}" != "x" ]]; then
     echo "$(tput bel)${1}"
   else
-    echo ${1}
+    echo "${1}"
   fi
 }
 
@@ -446,9 +452,13 @@ function docs_test() {
   echo "${BOLD}bold${RED}Red${NO_COLOR}text"
   echo "${RED}Red${NO_COLOR}text"
   local recover=$(docs_test2)
-  echo "recover: ${recover}"
+  echo "recover: "
+  echo "${recover}"
   local last_line=$(echo "${recover}" | tail -n1)
   echo "last_line: ${last_line}"
+  
+  while read line; do echo "$line"; done < <(echo "${recover}")
+
   echo "Test completed."
 }
 

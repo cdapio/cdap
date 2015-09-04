@@ -156,7 +156,7 @@ function build_docs() {
   cd ${SCRIPT_PATH}
   check_includes
   ${SPHINX_BUILD} -w ${TARGET}/${SPHINX_MESSAGES} ${SOURCE} ${TARGET}/html
-  display_any_messages
+  consolidate_messages
 }
 
 function build_docs_google() {
@@ -164,7 +164,7 @@ function build_docs_google() {
   cd ${SCRIPT_PATH}
   check_includes
   ${SPHINX_BUILD} -w ${TARGET}/${SPHINX_MESSAGES} -D googleanalytics_id=$1 -D googleanalytics_enabled=1 ${SOURCE} ${TARGET}/html
-  display_any_messages
+  consolidate_messages
 }
 
 function build_license_pdfs() {
@@ -347,13 +347,17 @@ function display_version() {
 }
 
 function clear_messages_set_messages_file() {
-  MESSAGES=
+  unset -v MESSAGES
   TMP_MESSAGES_FILE="/tmp/$(basename $0).$$.tmp"
+  cat /dev/null > ${TMP_MESSAGES_FILE}
   export TMP_MESSAGES_FILE
+  echo_red_bold "Cleared Messages and Messages file: " "${TMP_MESSAGES_FILE}"
+  echo
 }
 
 function cleanup_messages_file() {
   rm -f ${TMP_MESSAGES_FILE}
+  unset -v TMP_MESSAGES_FILE
 }
 
 function set_message() {
@@ -373,26 +377,23 @@ function set_message() {
   fi
 }
 
-function display_any_messages() {
-  if [[ "x${MESSAGES}" != "x" || -s ${TARGET}/${SPHINX_MESSAGES} ]]; then
-    local m="Warning Messages for \"${MANUAL}\":"
-    if [ "x${MESSAGES}" != "x" ]; then
-      echo 
-      echo_red_bold "${m}"
-      echo 
-      echo "${MESSAGES}"
-    fi
-    if [ -s ${TARGET}/${SPHINX_MESSAGES} ]; then
-      m="Sphinx ${m}"
-      echo
-      echo_red_bold "${m}"
-      echo ${m} >> ${TMP_MESSAGES_FILE}
-      cat ${TARGET}/${SPHINX_MESSAGES} | while read line
-      do
-        echo ${line}
-        echo ${line} >> ${TMP_MESSAGES_FILE}
-      done
-    fi
+function consolidate_messages() {
+  local m="Warning Messages for \"${MANUAL}\":"
+  if [ "x${MESSAGES}" != "x" ]; then
+    echo_red_bold "${m}" >> ${TMP_MESSAGES_FILE}
+    while read line
+    do
+      echo ${line} >> ${TMP_MESSAGES_FILE}
+    done < <(echo "${MESSAGES}")
+    unset -v MESSAGES
+  fi
+  if [ -s ${TARGET}/${SPHINX_MESSAGES} ]; then
+    m="Sphinx ${m}"
+    echo_red_bold "${m}" >> ${TMP_MESSAGES_FILE}
+    cat ${TARGET}/${SPHINX_MESSAGES} | while read line
+    do
+      echo ${line} >> ${TMP_MESSAGES_FILE}
+    done
   fi
 }
 

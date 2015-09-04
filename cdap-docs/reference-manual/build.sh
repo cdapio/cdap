@@ -29,15 +29,17 @@ function build_extras() {
   echo_red_bold "Building extras."
   local html_path="${TARGET_PATH}/${HTML}"
 
-  echo "Copying Javadocs."
-  rm -rf "${html_path}/${JAVADOCS}"
-  cp -r "${API_JAVADOCS}" "${html_path}/."
-  mv -f "${html_path}/${APIDOCS}" "${html_path}/${JAVADOCS}"
+  if [ "x${USING_JAVADOCS}" != "x" ]; then
+    echo "Copying Javadocs."
+    rm -rf ${html_path}/${JAVADOCS}
+    cp -r ${API_JAVADOCS} ${html_path}/.
+    mv -f ${html_path}/${APIDOCS} ${html_path}/${JAVADOCS}
+  else
+    echo "Not using Javadocs."
+  fi
 
   echo "Copying license PDFs."
-  echo "'${SCRIPT_PATH}/${LICENSES_PDF}/*'"
-  echo "'${html_path}/${LICENSES}'"
-  cp "${SCRIPT_PATH}/${LICENSES_PDF}/*.pdf" "${html_path}/${LICENSES}"
+  cp ${SCRIPT_PATH}/${LICENSES_PDF}/*.pdf ${TARGET_PATH}/${HTML}/${LICENSES}
 }
 
 run_command ${1}
