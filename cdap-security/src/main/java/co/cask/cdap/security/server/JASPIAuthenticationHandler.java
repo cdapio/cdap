@@ -111,12 +111,11 @@ public class JASPIAuthenticationHandler extends AbstractAuthenticationHandler {
 
 
         String configRegex = Constants.Security.AUTH_HANDLER_CONFIG_BASE.replace(".", "\\.").concat(".");
-        HashMap<String, String> configurables = (HashMap<String, String>) configuration.getValByRegex(configRegex);
+        Map<String, String> configurables = configuration.getValByRegex(configRegex);
 
-        for (Object o : configurables.entrySet()) {
-          Map.Entry pairs = (Map.Entry) o;
-          String key = pairs.getKey().toString();
-          String value = pairs.getValue().toString();
+        for (Map.Entry<String, String> pairs : configurables.entrySet()) {
+          String key = pairs.getKey();
+          String value = pairs.getValue();
           map.put(key.substring(key.lastIndexOf('.') + 1).trim(), value);
         }
 
