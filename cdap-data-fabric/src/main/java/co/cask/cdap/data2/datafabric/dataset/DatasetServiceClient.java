@@ -28,6 +28,7 @@ import co.cask.cdap.data2.dataset2.InstanceConflictException;
 import co.cask.cdap.data2.dataset2.ModuleConflictException;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.cdap.proto.DatasetMeta;
+import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
@@ -67,6 +68,7 @@ import javax.annotation.Nullable;
 class DatasetServiceClient {
   private static final Gson GSON = new Gson();
   private static final Type SUMMARY_LIST_TYPE = new TypeToken<List<DatasetSpecificationSummary>>() { }.getType();
+  private static final Type MODULE_META_LIST_TYPE = new TypeToken<List<DatasetModuleMeta>>() { }.getType();
 
   private final Supplier<EndpointStrategy> endpointStrategySupplier;
   private final Id.Namespace namespaceId;
@@ -121,6 +123,16 @@ class DatasetServiceClient {
     }
 
     return GSON.fromJson(response.getResponseBodyAsString(), SUMMARY_LIST_TYPE);
+  }
+
+  public Collection<DatasetModuleMeta> getAllModules() throws DatasetManagementException, ServiceNotRunningException {
+    HttpResponse response = doGet("modules");
+    if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
+      throw new DatasetManagementException(String.format("Cannot retrieve all dataset instances, details: %s",
+                                                         response));
+    }
+
+    return GSON.fromJson(response.getResponseBodyAsString(), MODULE_META_LIST_TYPE);
   }
 
   public DatasetTypeMeta getType(String typeName) throws DatasetManagementException, ServiceNotRunningException {
@@ -234,6 +246,11 @@ class DatasetServiceClient {
 
   private HttpResponse doGet(String resource) throws DatasetManagementException, ServiceNotRunningException {
     return doRequest(HttpMethod.GET, resource);
+  }
+
+  private HttpResponse doGet(String resource, Multimap<String, String> headers) throws DatasetManagementException,
+    ServiceNotRunningException {
+    return doRequest(HttpMethod.GET, resource, headers, (InputSupplier<? extends InputStream>) null);
   }
 
   private HttpResponse doPut(String resource, String body)

@@ -419,8 +419,8 @@ public class MetricsDataMigrator {
       table = DatasetsUtil.getOrCreateDataset(dsFramework, metricsDatasetInstanceId,
                                               MetricsTable.class.getName(), empty, null, null);
     } catch (DatasetManagementException | ServiceNotRunningException e) {
-      String msg = String.format("Cannot access or create table %s.", tableName);
-      LOG.error(msg);
+      String msg = String.format("Cannot access or create table %s.", tableName) + " " + e.getMessage();
+      LOG.warn(msg);
       throw new DataMigrationException(msg);
     } catch (IOException e) {
       String msg = String.format("Exception while creating table %s", tableName);
