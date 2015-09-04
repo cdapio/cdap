@@ -1,0 +1,80 @@
+/*
+ * Copyright © 2015 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+@import '../../styles/variables.less';
+@import "../../../bower_components/bootstrap/less/mixins.less";
+@import '../../styles/themes/cdap/mixins.less';
+
+body.theme-cdap.state-adapters-create {
+  div.console {
+    border-bottom: 1px solid @table-border-color;
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 290px;
+    overflow-x: hidden;
+  }
+  div.console-tabs {
+    background-color: @body-bg;
+    border-top: 1px solid @table-border-color;
+    height: 40px;
+    ul.nav-tabs {
+      border-bottom: 0;
+      li {
+        margin-bottom: 0;
+        .border-radius(0);
+        border: 0;
+        border-bottom: 1px solid @body-bg;
+        color: #666;
+        font-weight: 500;
+        line-height: inherit;
+        margin-right: 0;
+        padding: 10px 15px;
+        .border-radius(0);
+        .transition(all 0.2s ease);
+        &:hover, &:focus {
+          background-color: transparent;
+          border: 0;
+          border-bottom: 2px solid transparent;
+          cursor: pointer;
+        }
+        &.active {
+          border-bottom: 2px solid @cdap-orange;
+        }
+      }
+      + a.btn {
+        color: #666;
+        font-size: 21px;
+        padding-top: 3px;
+        padding-right: 20px;
+        padding-bottom: 3px;
+        &.active, &:active {
+          .box-shadow(none);
+        }
+      }
+    }
+  }
+  div.console-type {
+    background-color: white;
+    border-top: 1px solid @table-border-color;
+    height: 360px;
+    .transition(all 0.2s ease);
+    &.is-collapsed {
+      border-top: 1px solid @body-bg;
+      height: 0;
+    }
+  }
+}

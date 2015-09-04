@@ -15,7 +15,7 @@
 -->
 
 <div class="side-panel text-center"
-      ng-class="{'expanded': MySidePanel.isExpanded === true, 'left': MySidePanel.placement === 'left', 'right': MySidePanel.placement === 'right'}">
+      ng-class="{'expanded': MySidePanel.isExpanded === true, 'left': MySidePanel.placement === 'left', 'top': MySidePanel.placement === 'top'}">
   <div ng-if="MySidePanel.placement === 'left'" class="hydrator-filter">
     <input class="form-control" placeholder="Filter" type="text" />
   </div>
@@ -33,7 +33,7 @@
             tooltip-class="tooltip-error"
             ng-class="{'item-open': MySidePanel.openedGroup === group.name}">
         <div tooltip="{{ group.name | caskCapitalizeFilter }}"
-             tooltip-placement="{{ MySidePanel.placement === 'left' ? 'right' : 'left' }}"
+             tooltip-placement="{{ MySidePanel.placement === 'left' ? 'top' : 'left' }}"
              tooltip-enable="MySidePanel.isExpanded === false && !group.error">
           <span class="{{group.icon}}"></span>
           <span class="name">{{group.name | caskCapitalizeFilter}}</span>
@@ -61,7 +61,7 @@
     </div>
   </div>
 
-  <div ng-if="MySidePanel.placement === 'right'" class="clearfix">
+  <div ng-if="MySidePanel.placement === 'top'" class="clearfix">
     <div class="adapter-metadata pull-left">
       <div class="clearfix">
         <div class="name-type pull-left">

@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.adapters')
-  .controller('RightPanelController', function(EventPipe, CanvasFactory, MyAppDAGService, $scope, $timeout, $bootstrapModal, ModalConfirm, $alert, $state) {
+  .controller('TopPanelController', function(EventPipe, CanvasFactory, MyAppDAGService, $scope, $timeout, $bootstrapModal, ModalConfirm, $alert, $state) {
     this.canvasOperations = [
       {
         name: 'Import'
@@ -40,7 +40,7 @@ angular.module(PKG.name + '.feature.adapters')
       // }
     ];
 
-    this.onRightSideGroupItemClicked = function(group) {
+    this.onTopSideGroupItemClicked = function(group) {
       EventPipe.emit('popovers.close');
       var config;
       switch(group.name) {

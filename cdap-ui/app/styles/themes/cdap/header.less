@@ -378,26 +378,26 @@ body {
       margin: 0;
 
       [my-navbar] {
-        padding: 0;
-        margin-right: 0;
+        padding-right: 0;
+        margin: 0;
+        width: 100%;
       }
     }
-    div.navbar-header {
-      width: 205px;
-    }
+    // div.navbar-header {
+    //   width: 205px;
+    // }
     a.navbar-brand {
       background: url('@{img-path}/hydrator.png') center center / 160px 34px no-repeat;
-      float: none;
-      line-height: 60px;
+      // float: none;
+      height: 60px;
+      padding: 0 15px;
+      // margin-left: 0;
       &:focus {
         outline: none;
       }
       > strong {
         visibility: hidden;
       }
-    }
-    .version {
-      color: @table-border-color;
     }
     div.navbar-collapse {
       float: right;

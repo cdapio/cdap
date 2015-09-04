@@ -66,15 +66,16 @@ my-side-panel {
       }
     }
 
-    &.right {
+    &.top {
       background-color: white;
       border-bottom: 1px solid #474753;
       position: absolute;
       top: -1px;
       right: 0;
       left: 0;
+      z-index: 1028;
       height: 80px;
-      .box-shadow(5px 0 10px fade(black, 50%));
+      .box-shadow(0 7px 7px fade(black, 10%), 0 19px 59px fade(black, 25%););
 
       div.btn {
         .cask-btn(@border: 0, @border-radius: 0, @color: #202028, @padding: 0);
