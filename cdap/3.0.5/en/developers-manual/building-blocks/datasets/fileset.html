@@ -1,0 +1,612 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2014-2015 Cask Data, Inc." name="copyright" />
+<script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-55081520-2']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+    <title>FileSet Dataset &mdash; Cask Data Application Platform 3.0.5 Documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '3.0.5',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.0.5 Documentation" href="../../index.html" />
+    <link rel="up" title="Datasets" href="index.html" />
+    <link rel="next" title="System and Custom Datasets" href="system-custom.html" />
+    <link rel="prev" title="Table API" href="table.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="system-custom.html" title="System and Custom Datasets"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="table.html" title="Table API"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.0.5');</script>
+       
+        <li><a href="../../table-of-contents.html">CDAP Developers’ Manual</a> &raquo;</li>
+          <li><a href="../index.html" >Building Blocks</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Datasets</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="fileset-dataset">
+<span id="datasets-fileset"></span><h1>FileSet Dataset<a class="headerlink" href="#fileset-dataset" title="Permalink to this headline">¶</a></h1>
+<p>While realtime programs such as Flows normally require datasets with random access, batch-oriented
+programming paradigms such as MapReduce are more suitable for data that can be read and written sequentially.
+The most prominent form of such data is an HDFS file, and MapReduce is highly optimized for such files.
+CDAP&#8217;s abstraction for files is the FileSet Dataset.</p>
+<p>A FileSet represents a set of files on the file system that share certain properties:</p>
+<ul class="simple">
+<li>The location in the file system. All files in a FileSet are located relative to a
+base path, which is created when the FileSet is created. Deleting the
+FileSet will also delete this directory and all the files it contains.</li>
+<li>The Hadoop input and output format. They are given as dataset properties by their
+class names.  When a FileSet is used as the input or output of a MapReduce program,
+these classes are injected into the Hadoop configuration by the CDAP runtime
+system.</li>
+<li>Additional properties of the specified input and output format. Each format has its own
+properties; consult the format&#8217;s documentation for details. For example, the
+<code class="docutils literal"><span class="pre">TextOutputFormat</span></code> allows configuring the field separator character by setting the
+property <code class="docutils literal"><span class="pre">mapreduce.output.textoutputformat.separator</span></code>. These properties are also set
+into the Hadoop configuration by the CDAP runtime system.</li>
+</ul>
+<p>These properties are configured at the time the FileSet is created. They apply to all
+files in the Dataset. Every time you use a FileSet in your application code, you can
+address either the entire Dataset or, by specifying its relative path as a runtime argument,
+an individual file in the Dataset. Specifying an individual file is only supported for
+MapReduce programs.</p>
+<p>Support for FileSet datasets is experimental in CDAP 2.6.0.</p>
+<div class="section" id="creating-a-fileset">
+<h2>Creating a FileSet<a class="headerlink" href="#creating-a-fileset" title="Permalink to this headline">¶</a></h2>
+<p>To create and use a FileSet in an application, you create it as part of the application configuration:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">FileSetExample</span> <span class="kd">extends</span> <span class="n">AbstractApplication</span> <span class="o">{</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="o">...</span>
+    <span class="n">createDataset</span><span class="o">(</span><span class="s">&quot;lines&quot;</span><span class="o">,</span> <span class="n">FileSet</span><span class="o">.</span><span class="na">class</span><span class="o">,</span> <span class="n">FileSetProperties</span><span class="o">.</span><span class="na">builder</span><span class="o">()</span>
+      <span class="o">.</span><span class="na">setBasePath</span><span class="o">(</span><span class="s">&quot;example/data/lines&quot;</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">setInputFormat</span><span class="o">(</span><span class="n">TextInputFormat</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">setOutputFormat</span><span class="o">(</span><span class="n">TextOutputFormat</span><span class="o">.</span><span class="na">class</span><span class="o">).</span><span class="na">build</span><span class="o">());</span>
+      <span class="o">.</span><span class="na">setOutputProperty</span><span class="o">(</span><span class="n">TextOutputFormat</span><span class="o">.</span><span class="na">SEPERATOR</span><span class="o">,</span> <span class="s">&quot;:&quot;</span><span class="o">)</span>
+    <span class="o">...</span>
+  <span class="o">}</span>
+</pre></div>
+</div>
+<p>This creates a new FileSet named <em>lines</em> that uses <code class="docutils literal"><span class="pre">TextInputFormat</span></code> and <code class="docutils literal"><span class="pre">TextOutputFormat.</span></code>
+For the output format, we specify an additional property to make it use a colon as the separator
+between the key and the value in each line of output.</p>
+<p>Input and output formats must be implementations of the standard Apache Hadoop
+<a class="reference external" href="https://hadoop.apache.org/docs/current/api/org/apache/hadoop/mapreduce/InputFormat.html">InputFormat</a>
+and
+<a class="reference external" href="https://hadoop.apache.org/docs/current/api/org/apache/hadoop/mapreduce/OutputFormat.html">OutputFormat</a>
+specifications.</p>
+<p>If you do not specify a base path, the dataset framework will generate a path
+based on the dataset name. If you do not specify an input format, you will not be able
+to use this as the input for a MapReduce program; similarly, for the output format.</p>
+</div>
+<div class="section" id="using-a-fileset-in-mapreduce">
+<h2>Using a FileSet in MapReduce<a class="headerlink" href="#using-a-fileset-in-mapreduce" title="Permalink to this headline">¶</a></h2>
+<p>Using a FileSet as input or output of a MapReduce program is the same as for any other Dataset:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">WordCount</span> <span class="kd">extends</span> <span class="n">AbstractMapReduce</span> <span class="o">{</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="n">setInputDataset</span><span class="o">(</span><span class="s">&quot;lines&quot;</span><span class="o">);</span>
+    <span class="n">setOutputDataset</span><span class="o">(</span><span class="s">&quot;counts&quot;</span><span class="o">);</span>
+  <span class="o">}</span>
+  <span class="o">...</span>
+</pre></div>
+</div>
+<p>The MapReduce program only needs to specify the names of the input and output datasets.
+Whether they are FileSets or another type of Dataset is handled by the CDAP runtime system.</p>
+<p>However, you do need to tell CDAP the relative paths of the input and output files. Currently,
+this is only possible by specifying them as runtime arguments when the MapReduce program is started:</p>
+<div class="highlight-java"><div class="highlight"><pre>curl -v &lt;base-url&gt;/apps/FileSetExample/mapreduce/WordCount/start -d &#39;{ \
+    &quot;dataset.lines.input.paths&quot;:  &quot;monday/my.txt&quot;, \
+    &quot;dataset.counts.output.path&quot;: &quot;monday/counts.out&quot; }&#39;
+</pre></div>
+</div>
+<p>Note that for the input you can specify multiple paths separated by commas:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="s">&quot;dataset.lines.input.paths&quot;</span><span class="o">:</span>  <span class="s">&quot;monday/lines.txt,tuesday/lines.txt&quot;</span>
+</pre></div>
+</div>
+<p>If you do not specify both the input and output paths, your MapReduce program will fail with an error.</p>
+</div>
+<div class="section" id="using-a-fileset-programmatically">
+<h2>Using a FileSet Programmatically<a class="headerlink" href="#using-a-fileset-programmatically" title="Permalink to this headline">¶</a></h2>
+<p>You can interact with the files of a FileSet directly, through the <code class="docutils literal"><span class="pre">Location</span></code> abstraction
+of the file system. For example, a Service can use a FileSet by declaring it with a <code class="docutils literal"><span class="pre">&#64;UseDataSet</span></code>
+annotation, and then obtaining a <code class="docutils literal"><span class="pre">Location</span></code> for a relative path within the FileSet:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="nd">@UseDataSet</span><span class="o">(</span><span class="s">&quot;lines&quot;</span><span class="o">)</span>
+<span class="kd">private</span> <span class="n">FileSet</span> <span class="n">lines</span><span class="o">;</span>
+
+<span class="nd">@GET</span>
+<span class="nd">@Path</span><span class="o">(</span><span class="s">&quot;{fileSet}&quot;</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">read</span><span class="o">(</span><span class="n">HttpServiceRequest</span> <span class="n">request</span><span class="o">,</span> <span class="n">HttpServiceResponder</span> <span class="n">responder</span><span class="o">,</span>
+                 <span class="nd">@QueryParam</span><span class="o">(</span><span class="s">&quot;path&quot;</span><span class="o">)</span> <span class="n">String</span> <span class="n">filePath</span><span class="o">)</span> <span class="o">{</span>
+
+  <span class="n">Location</span> <span class="n">location</span> <span class="o">=</span> <span class="n">lines</span><span class="o">.</span><span class="na">getLocation</span><span class="o">(</span><span class="n">filePath</span><span class="o">);</span>
+  <span class="k">try</span> <span class="o">{</span>
+    <span class="n">InputStream</span> <span class="n">inputStream</span> <span class="o">=</span> <span class="n">location</span><span class="o">.</span><span class="na">getInputStream</span><span class="o">();</span>
+    <span class="o">...</span>
+  <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">IOException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+    <span class="o">...</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>See the Apache™ Twill®
+<a class="reference external" href="http://twill.incubator.apache.org/apidocs/org/apache/twill/filesystem/Location.html">API documentation</a>
+for additional information about the <code class="docutils literal"><span class="pre">Location</span></code> abstraction.</p>
+</div>
+</div>
+<div class="section" id="partitionedfileset">
+<h1>PartitionedFileSet<a class="headerlink" href="#partitionedfileset" title="Permalink to this headline">¶</a></h1>
+<p>While a FileSet is a convenient abstraction over actual file system interfaces, it still requires
+the application to be aware of file system paths. For example, an application that maintains data
+over time might have a new file for every month. One could come up with a naming convention that encodes
+the month into each file name, and share that convention across all applications that use this file set.
+Yet that can become tedious to manage, especially if the naming convention should ever change—then all
+applications would have to be changed simultaneously for proper functioning.</p>
+<p>The PartitionedFileSet Dataset relieves applications from understanding file name conventions. Instead,
+it associates a partition key with every file; for example the year and month associated with that file.
+Because different files cannot have the same partition key, this allows applications to address the
+data uniquely through its partition keys, or more broadly through conditions over the partition keys.
+For example, the months of February through June of a particular year, or the month of November in any
+year. By inheriting the attributes—such as format and schema—of FileSets, PartitionedFileSets
+are a powerful abstraction over data that is organized into files.</p>
+<div class="section" id="creating-a-partitionedfileset">
+<h2>Creating a PartitionedFileSet<a class="headerlink" href="#creating-a-partitionedfileset" title="Permalink to this headline">¶</a></h2>
+<p>To create and use a PartitionedFileSet in an application, you create it as part of the application
+configuration, similar to FileSets. However, the partitioning has to be given as an additional property:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+  <span class="o">...</span>
+  <span class="n">createDataset</span><span class="o">(</span><span class="s">&quot;results&quot;</span><span class="o">,</span> <span class="n">PartitionedFileSet</span><span class="o">.</span><span class="na">class</span><span class="o">,</span> <span class="n">PartitionedFileSetProperties</span><span class="o">.</span><span class="na">builder</span><span class="o">()</span>
+    <span class="c1">// Properties for partitioning</span>
+    <span class="o">.</span><span class="na">setPartitioning</span><span class="o">(</span><span class="n">Partitioning</span><span class="o">.</span><span class="na">builder</span><span class="o">().</span><span class="na">addStringField</span><span class="o">(</span><span class="s">&quot;league&quot;</span><span class="o">).</span><span class="na">addIntField</span><span class="o">(</span><span class="s">&quot;season&quot;</span><span class="o">).</span><span class="na">build</span><span class="o">())</span>
+    <span class="c1">// Properties for file set</span>
+    <span class="o">.</span><span class="na">setInputFormat</span><span class="o">(</span><span class="n">TextInputFormat</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+    <span class="o">.</span><span class="na">setOutputFormat</span><span class="o">(</span><span class="n">TextOutputFormat</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+    <span class="o">.</span><span class="na">setOutputProperty</span><span class="o">(</span><span class="n">TextOutputFormat</span><span class="o">.</span><span class="na">SEPERATOR</span><span class="o">,</span> <span class="s">&quot;,&quot;</span><span class="o">)</span>
+    <span class="o">.</span><span class="na">build</span><span class="o">());</span>
+  <span class="o">...</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>This creates a new PartitionedFileSet named <em>results</em>. Similar to FileSets, it specifies <code class="docutils literal"><span class="pre">TextInputFormat</span></code> and
+<code class="docutils literal"><span class="pre">TextOutputFormat.</span></code>; for the output format, we specify that the separator between fields is a comma.
+The difference to a FileSet is that this Dataset is partitioned by league and season. This means that every file
+added to this Dataset must have a partitioning key with a unique combination of league and season.</p>
+</div>
+<div class="section" id="reading-and-writing-partitionedfilesets">
+<h2>Reading and Writing PartitionedFileSets<a class="headerlink" href="#reading-and-writing-partitionedfilesets" title="Permalink to this headline">¶</a></h2>
+<p>You can interact with the files in a PartitionedFileSet directly through the <code class="docutils literal"><span class="pre">Location</span></code> abstraction
+of the file system. This is similar to a FileSet, but instead of a relative path, you specify a
+partition key to obtain a Partition; you can then get a Location from that Partition.</p>
+<p>For example, to read the content of a partition:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">PartitionKey</span> <span class="n">key</span> <span class="o">=</span> <span class="n">PartitionKey</span><span class="o">.</span><span class="na">builder</span><span class="o">().</span><span class="na">addStringField</span><span class="o">(...)</span>
+                                         <span class="o">.</span><span class="na">addIntField</span><span class="o">(...)</span>
+                                         <span class="o">.</span><span class="na">build</span><span class="o">());</span>
+<span class="n">Partition</span> <span class="n">partition</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="na">getPartition</span><span class="o">(</span><span class="n">key</span><span class="o">);</span>
+<span class="k">if</span> <span class="o">(</span><span class="n">partition</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+  <span class="k">try</span> <span class="o">{</span>
+    <span class="n">Location</span> <span class="n">location</span> <span class="o">=</span> <span class="n">partition</span><span class="o">.</span><span class="na">getLocation</span><span class="o">();</span>
+    <span class="n">InputStream</span> <span class="n">inputStream</span> <span class="o">=</span> <span class="n">location</span><span class="o">.</span><span class="na">getInputStream</span><span class="o">();</span>
+    <span class="o">...</span>
+  <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">IOException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+    <span class="o">...</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>Note that if the partition was written with MapReduce, the location is actually a directory
+that contains part files. In that case, list the files in the directory to find the part files:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="k">for</span> <span class="o">(</span><span class="n">Location</span> <span class="n">file</span> <span class="o">:</span> <span class="n">location</span><span class="o">.</span><span class="na">list</span><span class="o">())</span> <span class="o">{</span>
+  <span class="k">if</span> <span class="o">(</span><span class="n">file</span><span class="o">.</span><span class="na">getName</span><span class="o">().</span><span class="na">startsWith</span><span class="o">(</span><span class="s">&quot;part&quot;</span><span class="o">))</span> <span class="o">{</span>
+    <span class="n">InputStream</span> <span class="n">inputStream</span> <span class="o">=</span> <span class="n">location</span><span class="o">.</span><span class="na">getInputStream</span><span class="o">();</span>
+    <span class="o">...</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>Instead of reading a single partition, you can also specify a PartitionFilter to query the
+partitioned file set for all partitions whose keys match that filter. The PartitionFilter
+can specify either an exact value (en equality condition) or a range for the value of each
+field in the dataset&#8217;s partitioning. For example, the following code reads all partitions
+for the NFL and the &#8216;80s seasons:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">PartitionFilter</span> <span class="n">filter</span> <span class="o">=</span> <span class="n">PartitionFilter</span><span class="o">.</span><span class="na">builder</span><span class="o">().</span><span class="na">addValueCondition</span><span class="o">(</span><span class="s">&quot;league&quot;</span><span class="o">,</span> <span class="s">&quot;nfl&quot;</span><span class="o">)</span>
+                                                  <span class="o">.</span><span class="na">addRangeCondition</span><span class="o">(</span><span class="s">&quot;season&quot;</span><span class="o">,</span> <span class="mi">1980</span><span class="o">,</span> <span class="mi">1990</span><span class="o">)</span>
+                                                  <span class="o">.</span><span class="na">build</span><span class="o">());</span>
+<span class="n">Set</span><span class="o">&lt;</span><span class="n">Partition</span><span class="o">&gt;</span> <span class="n">partitions</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="na">getPartitions</span><span class="o">(</span><span class="n">filter</span><span class="o">);</span>
+<span class="k">for</span> <span class="o">(</span><span class="n">partition</span> <span class="o">:</span> <span class="n">partitions</span><span class="o">)</span> <span class="o">{</span>
+  <span class="k">try</span> <span class="o">{</span>
+    <span class="n">Location</span> <span class="n">location</span> <span class="o">=</span> <span class="n">partition</span><span class="o">.</span><span class="na">getLocation</span><span class="o">();</span>
+    <span class="n">InputStream</span> <span class="n">inputStream</span> <span class="o">=</span> <span class="n">location</span><span class="o">.</span><span class="na">getInputStream</span><span class="o">();</span>
+    <span class="o">...</span>
+  <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">IOException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+    <span class="o">...</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>Note that the upper bound for the seasons (1990) is exclusive; that is, the 1990 season is not
+included in the returned partitions. For a range condition, either the lower or the upper bound may
+be null, meaning that the filter in unbounded in that direction.</p>
+<p>Adding a partition is similar; however, instead of a Partition, you receive a <code class="docutils literal"><span class="pre">PartitionOutput</span></code>
+for the partition key. That object has methods to obtain a Location and to add the partition once
+you have written to that Location.
+For example, this code writes to a file named <code class="docutils literal"><span class="pre">part</span></code> under the location returned from the
+<code class="docutils literal"><span class="pre">PartitionOutput</span></code>:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">PartitionKey</span> <span class="n">key</span> <span class="o">=</span> <span class="o">...</span>
+<span class="n">PartitionOutput</span> <span class="n">output</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="na">getPartitionOutput</span><span class="o">(</span><span class="n">key</span><span class="o">);</span>
+<span class="k">try</span> <span class="o">{</span>
+  <span class="n">Location</span> <span class="n">location</span> <span class="o">=</span> <span class="n">output</span><span class="o">.</span><span class="na">getLocation</span><span class="o">().</span><span class="na">append</span><span class="o">(</span><span class="s">&quot;part&quot;</span><span class="o">);</span>
+  <span class="n">OutputStream</span> <span class="n">outputStream</span> <span class="o">=</span> <span class="n">location</span><span class="o">.</span><span class="na">getOutputStream</span><span class="o">());</span>
+  <span class="o">...</span>
+<span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">IOException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+  <span class="o">...</span>
+<span class="o">}</span>
+<span class="n">output</span><span class="o">.</span><span class="na">addPartition</span><span class="o">();</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="using-partitionedfilesets-in-mapreduce">
+<h2>Using PartitionedFileSets in MapReduce<a class="headerlink" href="#using-partitionedfilesets-in-mapreduce" title="Permalink to this headline">¶</a></h2>
+<p>A partitioned file set can be accessed in MapReduce in a similar fashion to a FileSet. The difference
+is that instead of input and output paths, you specify a partition filter for the input and a
+partition key for the output. For example, the MapReduce program of the SportResults example
+reads as input all partitions for the league given in its runtime arguments, and writes as output
+a partition with that league as the only key:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="nd">@Override</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">beforeSubmit</span><span class="o">(</span><span class="n">MapReduceContext</span> <span class="n">context</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+  <span class="o">...</span>
+  <span class="n">String</span> <span class="n">league</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="na">getRuntimeArguments</span><span class="o">().</span><span class="na">get</span><span class="o">(</span><span class="s">&quot;league&quot;</span><span class="o">);</span>
+
+  <span class="c1">// Configure the input to read all seasons for the league</span>
+  <span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">String</span><span class="o">&gt;</span> <span class="n">inputArgs</span> <span class="o">=</span> <span class="n">Maps</span><span class="o">.</span><span class="na">newHashMap</span><span class="o">();</span>
+  <span class="n">PartitionedFileSetArguments</span><span class="o">.</span><span class="na">setInputPartitionFilter</span><span class="o">(</span>
+    <span class="n">inputArgs</span><span class="o">,</span> <span class="n">PartitionFilter</span><span class="o">.</span><span class="na">builder</span><span class="o">().</span><span class="na">addValueCondition</span><span class="o">(</span><span class="s">&quot;league&quot;</span><span class="o">,</span> <span class="n">league</span><span class="o">).</span><span class="na">build</span><span class="o">());</span>
+  <span class="n">PartitionedFileSet</span> <span class="n">input</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="na">getDataset</span><span class="o">(</span><span class="s">&quot;results&quot;</span><span class="o">,</span> <span class="n">inputArgs</span><span class="o">);</span>
+  <span class="n">context</span><span class="o">.</span><span class="na">setInput</span><span class="o">(</span><span class="s">&quot;results&quot;</span><span class="o">,</span> <span class="n">input</span><span class="o">);</span>
+
+  <span class="c1">// Each run writes its output to a partition for the league</span>
+  <span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">String</span><span class="o">&gt;</span> <span class="n">outputArgs</span> <span class="o">=</span> <span class="n">Maps</span><span class="o">.</span><span class="na">newHashMap</span><span class="o">();</span>
+  <span class="n">outputKey</span> <span class="o">=</span> <span class="n">PartitionKey</span><span class="o">.</span><span class="na">builder</span><span class="o">().</span><span class="na">addStringField</span><span class="o">(</span><span class="s">&quot;league&quot;</span><span class="o">,</span> <span class="n">league</span><span class="o">).</span><span class="na">build</span><span class="o">();</span>
+  <span class="n">PartitionedFileSetArguments</span><span class="o">.</span><span class="na">setOutputPartitionKey</span><span class="o">(</span><span class="n">outputArgs</span><span class="o">,</span> <span class="n">outputKey</span><span class="o">);</span>
+  <span class="n">outputFileSet</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="na">getDataset</span><span class="o">(</span><span class="s">&quot;totals&quot;</span><span class="o">,</span> <span class="n">outputArgs</span><span class="o">);</span>
+  <span class="n">outputPath</span> <span class="o">=</span> <span class="n">FileSetArguments</span><span class="o">.</span><span class="na">getOutputPath</span><span class="o">(</span><span class="n">outputFileSet</span><span class="o">.</span><span class="na">getEmbeddedFileSet</span><span class="o">().</span><span class="na">getRuntimeArguments</span><span class="o">());</span>
+  <span class="n">context</span><span class="o">.</span><span class="na">setOutput</span><span class="o">(</span><span class="s">&quot;totals&quot;</span><span class="o">,</span> <span class="n">outputFileSet</span><span class="o">);</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>Here, the <code class="docutils literal"><span class="pre">beforeSubmit()</span></code> method of the MapReduce generates the runtime arguments for the
+partitioned file sets that specify the input partition filter and output partition key. This
+is convenient for starting the MapReduce, because only a single argument has to be given for
+the MapReduce run. If that code was not in the <code class="docutils literal"><span class="pre">beforeSubmit()</span></code>, you could still achieve the
+same result by specifying the partition filter and key explicitly in the MapReduce runtime arguments.
+For example, give these arguments when starting the MapReduce through a RESTful call:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="o">{</span>
+  <span class="s">&quot;dataset.results.input.partition.filter.league.value&quot;</span><span class="o">:</span> <span class="s">&quot;nfl&quot;</span><span class="o">,</span>
+  <span class="s">&quot;dataset.results.input.partition.filter.season.lower&quot;</span><span class="o">:</span> <span class="s">&quot;1980&quot;</span><span class="o">,</span>
+  <span class="s">&quot;dataset.results.input.partition.filter.season.upper&quot;</span><span class="o">:</span> <span class="s">&quot;1990&quot;</span><span class="o">,</span>
+  <span class="s">&quot;dataset.totals.output.partition.key.league&quot;</span> <span class="o">:</span> <span class="s">&quot;nfl&quot;</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="exploring-partitionedfilesets">
+<h2>Exploring PartitionedFileSets<a class="headerlink" href="#exploring-partitionedfilesets" title="Permalink to this headline">¶</a></h2>
+<p>A partitioned file set can be explored with ad-hoc queries if you enable it at creation time:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">createDataset</span><span class="o">(</span><span class="s">&quot;results&quot;</span><span class="o">,</span> <span class="n">PartitionedFileSet</span><span class="o">.</span><span class="na">class</span><span class="o">,</span> <span class="n">PartitionedFileSetProperties</span><span class="o">.</span><span class="na">builder</span><span class="o">()</span>
+  <span class="c1">// Properties for partitioning</span>
+  <span class="o">.</span><span class="na">setPartitioning</span><span class="o">(</span><span class="n">Partitioning</span><span class="o">.</span><span class="na">builder</span><span class="o">().</span><span class="na">addStringField</span><span class="o">(</span><span class="s">&quot;league&quot;</span><span class="o">).</span><span class="na">addIntField</span><span class="o">(</span><span class="s">&quot;season&quot;</span><span class="o">).</span><span class="na">build</span><span class="o">())</span>
+  <span class="c1">// Properties for file set</span>
+  <span class="o">.</span><span class="na">setInputFormat</span><span class="o">(</span><span class="n">TextInputFormat</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+  <span class="o">.</span><span class="na">setOutputFormat</span><span class="o">(</span><span class="n">TextOutputFormat</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+  <span class="o">.</span><span class="na">setOutputProperty</span><span class="o">(</span><span class="n">TextOutputFormat</span><span class="o">.</span><span class="na">SEPERATOR</span><span class="o">,</span> <span class="s">&quot;,&quot;</span><span class="o">)</span>
+  <span class="c1">// Properties for Explore (to create a partitioned Hive table)</span>
+  <span class="o">.</span><span class="na">setEnableExploreOnCreate</span><span class="o">(</span><span class="kc">true</span><span class="o">)</span>
+  <span class="o">.</span><span class="na">setExploreFormat</span><span class="o">(</span><span class="s">&quot;csv&quot;</span><span class="o">)</span>
+  <span class="o">.</span><span class="na">setExploreSchema</span><span class="o">(</span><span class="s">&quot;date STRING, winner STRING, loser STRING, winnerpoints INT, loserpoints INT&quot;</span><span class="o">)</span>
+  <span class="o">.</span><span class="na">build</span><span class="o">());</span>
+</pre></div>
+</div>
+<p>This results in the creation of an external table in Hive with the schema given in the
+<code class="docutils literal"><span class="pre">setExploreSchema()</span></code>. The supported format are <code class="docutils literal"><span class="pre">text</span></code> and <code class="docutils literal"><span class="pre">csv</span></code>. Both mean that the
+format is text. For <code class="docutils literal"><span class="pre">csv</span></code>, the field delimiter is a comma, whereas for <code class="docutils literal"><span class="pre">text</span></code>, you can
+specify the field delimiter. For example, to use a colon as the field separator:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="o">.</span><span class="na">setExploreFormat</span><span class="o">(</span><span class="s">&quot;text&quot;</span><span class="o">)</span>
+<span class="o">.</span><span class="na">setExploreFormatProperty</span><span class="o">(</span><span class="s">&quot;delimiter&quot;</span><span class="o">,</span> <span class="s">&quot;:&quot;</span><span class="o">);</span>
+</pre></div>
+</div>
+<p>If your file format is not text, you can still explore the dataset, but you need to give
+detailed instructions when creating the dataset. For example, to use Avro as the file
+format:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="o">.</span><span class="na">setEnableExploreOnCreate</span><span class="o">(</span><span class="kc">true</span><span class="o">)</span>
+<span class="o">.</span><span class="na">setSerDe</span><span class="o">(</span><span class="s">&quot;org.apache.hadoop.hive.serde2.avro.AvroSerDe&quot;</span><span class="o">)</span>
+<span class="o">.</span><span class="na">setExploreInputFormat</span><span class="o">(</span><span class="s">&quot;org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat&quot;</span><span class="o">)</span>
+<span class="o">.</span><span class="na">setExploreOutputFormat</span><span class="o">(</span><span class="s">&quot;org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat&quot;</span><span class="o">)</span>
+<span class="o">.</span><span class="na">setTableProperty</span><span class="o">(</span><span class="s">&quot;avro.schema.literal&quot;</span><span class="o">,</span> <span class="n">SCHEMA_STRING</span><span class="o">)</span>
+</pre></div>
+</div>
+<p>You need to specify the SerDe, the input format, the output format, and any additional properties
+any of these may need as table properties. This is an experimental feature and only tested for
+Avro; see the <a class="reference external" href="../../source/../../examples-manual/examples/stream-conversion.html#examples-stream-conversion" title="(in Cask Data Application Platform v3.0.5)"><span class="xref std std-ref">StreamConversion</span></a> example for more details.</p>
+</div>
+</div>
+<div class="section" id="timepartitionedfileset">
+<span id="datasets-timepartitioned-fileset"></span><h1>TimePartitionedFileSet<a class="headerlink" href="#timepartitionedfileset" title="Permalink to this headline">¶</a></h1>
+<p>TimePartitionedFileSets are a special case (and in fact, a subclass) of PartitionedFileSets, where
+the partitioning is fixed to five integers representing the year, month, day of the month, hour of the day,
+and minute of a partition&#8217;s time. For convenience, it offers methods to address the partitions by
+time instead of by partition key or filter. The time is interpreted as milliseconds since the Epoch.</p>
+<p>These convenience methods provide access to partitions by time instead of by a partition key:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="nd">@Nullable</span>
+<span class="kd">public</span> <span class="n">TimePartition</span> <span class="nf">getPartitionByTime</span><span class="o">(</span><span class="kt">long</span> <span class="n">time</span><span class="o">);</span>
+
+<span class="kd">public</span> <span class="n">Set</span><span class="o">&lt;</span><span class="n">TimePartition</span><span class="o">&gt;</span> <span class="nf">getPartitionsByTime</span><span class="o">(</span><span class="kt">long</span> <span class="n">startTime</span><span class="o">,</span> <span class="kt">long</span> <span class="n">endTime</span><span class="o">);</span>
+
+<span class="nd">@Nullable</span>
+<span class="kd">public</span> <span class="n">TimePartitionOutput</span> <span class="nf">getPartitionOutput</span><span class="o">(</span><span class="kt">long</span> <span class="n">time</span><span class="o">);</span>
+</pre></div>
+</div>
+<p>Essentially, these methods behave the same as if you had converted the time arguments into partition
+keys and then called the corresponding methods of <code class="docutils literal"><span class="pre">PartitionedFileSet</span></code> with the resulting partition keys.
+Additionally:</p>
+<ul class="simple">
+<li>The returned partitions have an extra method to retrieve the partition time as a long.</li>
+<li>The start and end times of <code class="docutils literal"><span class="pre">getPartitionsByTime()</span></code> do not correspond directly to a single partition filter,
+but to a series of partition filters. For example, to retrieve the partitions between November 2014 and
+March 2015, you need two partition filters: one for the months of November through December of 2014, and one
+for January through March of 2015. This method converts a given time range into the corresponding set
+of partition filters, retrieves the partitions for each filter, and returns the superset of all these
+partitions.</li>
+</ul>
+<div class="section" id="using-timepartitionedfilesets-in-mapreduce">
+<h2>Using TimePartitionedFileSets in MapReduce<a class="headerlink" href="#using-timepartitionedfilesets-in-mapreduce" title="Permalink to this headline">¶</a></h2>
+<p>Using time-partitioned file sets in MapReduce is similar to partitioned file sets; however, instead of
+setting an input partition filter and an output partition key, you configure an input time range and an
+output partition time in the <code class="docutils literal"><span class="pre">beforeSubmit()</span></code> of the MapReduce:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">TimePartitionedFileSetArguments</span><span class="o">.</span><span class="na">setInputStartTime</span><span class="o">(</span><span class="n">inputArgs</span><span class="o">,</span> <span class="n">startTime</span><span class="o">);</span>
+<span class="n">TimePartitionedFileSetArguments</span><span class="o">.</span><span class="na">setInputEndTime</span><span class="o">(</span><span class="n">inputArgs</span><span class="o">,</span> <span class="n">endTime</span><span class="o">);</span>
+</pre></div>
+</div>
+<p>and:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">TimePartitionedFileSetArguments</span><span class="o">.</span><span class="na">setOutputPartitionTime</span><span class="o">(</span><span class="n">outputArgs</span><span class="o">,</span> <span class="n">partitionTime</span><span class="o">);</span>
+</pre></div>
+</div>
+<p>You can achieve the same result by specifying the input time range and the output partition time
+explicitly in the MapReduce runtime arguments. For example, you could give these arguments when starting
+the MapReduce through a RESTful call:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="o">{</span>
+  <span class="s">&quot;dataset.myInput.input.start.time&quot;</span><span class="o">:</span> <span class="s">&quot;1420099200000&quot;</span><span class="o">,</span>
+  <span class="s">&quot;dataset.myInput.input.end.time&quot;</span><span class="o">:</span> <span class="s">&quot; 1422777600000&quot;</span><span class="o">,</span>
+  <span class="s">&quot;dataset.results.output.partition.time&quot;</span><span class="o">:</span> <span class="s">&quot; 1422777600000&quot;</span><span class="o">,</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>Note that the values for these times are milliseconds since the Epoch; the two times in this example represent
+the midnight time of January 1st, 2015 and February 1st, 2015.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../../table-of-contents/../../index.html"
+        rel="nofollow">CDAP Documentation v3.0.5</a></h3>
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../../table-of-contents/../../index.html"
+            rel="nofollow">Overview</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../introduction/index.html"
+            rel="nofollow">Introduction to CDAP</a></li>
+            
+      <li><div class=""></div><b><a href="../../table-of-contents/../../developers-manual/index.html"
+            rel="nofollow">Developers’ Manual</a></b></li>
+            
+      <li><div class="new-icon"></div><a href="../../table-of-contents/../../application-templates/index.html"
+            rel="nofollow">Application Templates</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../admin-manual/index.html"
+            rel="nofollow">Administration Manual</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../integrations/index.html"
+            rel="nofollow">Integrations</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../examples-manual/index.html"
+            rel="nofollow">Examples, Guides, and Tutorials</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/index.html"
+            rel="nofollow">Reference Manual</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/release-notes.html"
+            rel="nofollow">Release Notes</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/glossary.html"
+            rel="nofollow">Glossary</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/faq.html"
+            rel="nofollow">FAQ</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../search.html"
+            rel="nofollow">Search</a></li>
+    </ul>
+   </div><!--
+  Copyright © 2014-2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+
+    
+<h3 class="pagenavtitle"><a href="../../table-of-contents.html">Developers’ Manual: Table&nbsp;of&nbsp;Contents</a></h3>
+<nav class="pagenav">
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../getting-started/index.html"> Getting Started Developing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../overview/index.html"> Overview</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html"> Building Blocks</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../core.html"> Core Abstractions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../applications.html"> Applications</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../streams.html"> Streams</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html"> Datasets</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="table.html"> Table API</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="">FileSet Dataset</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#partitionedfileset">PartitionedFileSet</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#timepartitionedfileset">TimePartitionedFileSet</a></li>
+<li class="toctree-l3"><a class="reference internal" href="system-custom.html"> System and Custom Datasets</a></li>
+<li class="toctree-l3"><a class="reference internal" href="datasets-mapreduce.html"> Datasets and MapReduce</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cube.html"> Cube Dataset</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../flows-flowlets/index.html"> Flows and Flowlets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mapreduce-programs.html"> MapReduce Programs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../workflows.html"> Workflows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../schedules.html"> Schedules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../spark-programs.html"> Spark Programs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../workers.html"> Workers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../services.html"> Services</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../namespaces.html"> Namespaces</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../transaction-system.html"> Transaction System</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../security/index.html"> Security</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../testing/index.html"> Testing and Debugging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../ingesting-tools/index.html"> Ingesting Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../data-exploration/index.html"> Data Exploration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../advanced/index.html"> Advanced Topics</a></li>
+</ul>
+
+</nav>
+  <h4>Previous Topic</h4>
+  <p class="topless"><a href="table.html"
+                        title="Previous Chapter">Table API</a></p>
+  <h4>Next Topic</h4>
+  <p class="topless"><a href="system-custom.html"
+                        title="Next Chapter">System and Custom Datasets</a></p>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.0.5/cdap-docs-3.0.5-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tephra/index.html" target="_blank">Tephra</em></a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Table API" href="table.html" />Table API</a>&nbsp;&nbsp;
+    
+    </th>
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2015 Cask Data, Inc.
+    
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="System and Custom Datasets" href="system-custom.html" />System and Custom Datasets</a>
+    
+    </th>
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

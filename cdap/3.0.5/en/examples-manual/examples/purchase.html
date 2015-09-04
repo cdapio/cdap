@@ -1,0 +1,785 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Cask Data Application Platform Purchase Application" name="description" />
+<meta content="Copyright © 2014-2015 Cask Data, Inc." name="copyright" />
+<script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-55081520-2']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+    <title>Purchase &mdash; Cask Data Application Platform 3.0.5 Documentation</title>
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.0.5',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.0.5 Documentation" href="../index.html" />
+    <link rel="up" title="Examples" href="index.html" />
+    <link rel="next" title="Spark K-Means" href="spark-k-means.html" />
+    <link rel="prev" title="File Sets" href="fileset.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="spark-k-means.html" title="Spark K-Means"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="fileset.html" title="File Sets"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.0.5');</script>
+       
+        <li><a href="../table-of-contents.html">CDAP Examples, Guides, and Tutorials</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Examples</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="purchase">
+<span id="examples-purchase"></span><h1>Purchase<a class="headerlink" href="#purchase" title="Permalink to this headline">¶</a></h1>
+<p>A Cask Data Application Platform (CDAP) example demonstrating many of the CDAP components.</p>
+<div class="section" id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<p>This example demonstrates use of many of the CDAP components—streams, flows, flowlets,
+datasets, queries, MapReduce programs, workflows, and services—all in a single application.</p>
+<p>The application uses a scheduled MapReduce and workflow to read from an ObjectMappedTable dataset
+and write to an ObjectStore dataset.</p>
+<blockquote>
+<div><ul class="simple">
+<li>Send sentences of the form &#8220;Tom bought 5 apples for $10&#8221; to the <code class="docutils literal"><span class="pre">purchaseStream</span></code>.
+You can send sentences either by using a <code class="docutils literal"><span class="pre">curl</span></code> call, using the <code class="docutils literal"><span class="pre">inject-data</span></code> script
+included in the example&#8217;s <code class="docutils literal"><span class="pre">/bin</span></code> directory, or by using the CDAP UI.</li>
+<li>The <code class="docutils literal"><span class="pre">PurchaseFlow</span></code> reads the <code class="docutils literal"><span class="pre">purchaseStream</span></code> and converts every input String into a
+Purchase object and stores the object in the <em>purchases</em> dataset.</li>
+<li>User profile information for the user can be added by using <code class="docutils literal"><span class="pre">curl</span></code> calls (or another method) which are
+then stored in the <code class="docutils literal"><span class="pre">userProfiles</span></code> dataset.</li>
+<li>The <code class="docutils literal"><span class="pre">CatalogLookup</span></code> service fetches the catalog id for a given product. The <code class="docutils literal"><span class="pre">CatalogLookup</span></code> service
+is called from the PurchaseStore flowlet. The host and port of the <code class="docutils literal"><span class="pre">CatalogLookup</span></code> service is discovered
+using the Service discovery framework.</li>
+<li>The <code class="docutils literal"><span class="pre">UserProfileService</span></code> is responsible for storing and retrieving the user information
+for a given user ID from the <code class="docutils literal"><span class="pre">userProfiles</span></code> dataset. The host and port of the <code class="docutils literal"><span class="pre">UserProfileService</span></code> is
+discovered using the service discovery framework.</li>
+<li>When scheduled by the <code class="docutils literal"><span class="pre">PurchaseHistoryWorkFlow</span></code>, the <code class="docutils literal"><span class="pre">PurchaseHistoryBuilder</span></code> MapReduce
+reads the <code class="docutils literal"><span class="pre">purchases</span></code> dataset. It fetches the user profile information, if it is available, from
+the <code class="docutils literal"><span class="pre">UserProfileService</span></code> and creates a purchase history. It stores the purchase history in the
+<code class="docutils literal"><span class="pre">history</span></code> dataset every morning at 4:00 A.M. using a Time Schedule, and also every time 1MB of data
+is ingested by the <code class="docutils literal"><span class="pre">purchaseStream</span></code> using a Data Schedule.</li>
+<li>You can either manually (in the Process screen of the CDAP UI) or
+programmatically execute the <code class="docutils literal"><span class="pre">PurchaseHistoryBuilder</span></code> MapReduce to store
+customers&#8217; purchase history in the <code class="docutils literal"><span class="pre">history</span></code> dataset.</li>
+<li>Use the <code class="docutils literal"><span class="pre">PurchaseHistoryService</span></code> to retrieve from the <code class="docutils literal"><span class="pre">history</span></code> dataset the purchase history of a user.</li>
+<li>Execute a SQL query over the <code class="docutils literal"><span class="pre">history</span></code> dataset. You can do this using a series of <code class="docutils literal"><span class="pre">curl</span></code>
+calls, or more conveniently using the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v3.0.5)"><span class="xref std std-ref">Command Line Interface</span></a>.</li>
+</ul>
+</div></blockquote>
+<p><strong>Note:</strong> Because the <code class="docutils literal"><span class="pre">PurchaseHistoryWorkFlow</span></code> is only scheduled to run at 4:00 A.M.,
+you should not start it manually until after entering the first customers&#8217; purchases, or the
+<code class="docutils literal"><span class="pre">PurchaseHistoryService</span></code> will respond with a <code class="docutils literal"><span class="pre">204</span> <span class="pre">No</span> <span class="pre">Response</span></code> status code.</p>
+<p>Let&#8217;s look at some of these components, and then run the application and see the results.</p>
+<div class="section" id="the-purchase-application">
+<h3>The Purchase Application<a class="headerlink" href="#the-purchase-application" title="Permalink to this headline">¶</a></h3>
+<p>As in the other <a class="reference external" href="index.html">examples</a>, the components
+of the Application are tied together by the class <code class="docutils literal"><span class="pre">PurchaseApp</span></code>:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">PurchaseApp</span> <span class="kd">extends</span> <span class="n">AbstractApplication</span> <span class="o">{</span>
+
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">APP_NAME</span> <span class="o">=</span> <span class="s">&quot;PurchaseHistory&quot;</span><span class="o">;</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="n">setName</span><span class="o">(</span><span class="n">APP_NAME</span><span class="o">);</span>
+    <span class="n">setDescription</span><span class="o">(</span><span class="s">&quot;Purchase history application.&quot;</span><span class="o">);</span>
+
+    <span class="c1">// Ingest data into the Application via a Stream</span>
+    <span class="n">addStream</span><span class="o">(</span><span class="k">new</span> <span class="n">Stream</span><span class="o">(</span><span class="s">&quot;purchaseStream&quot;</span><span class="o">));</span>
+
+    <span class="c1">// Store processed data in a Dataset</span>
+    <span class="n">createDataset</span><span class="o">(</span><span class="s">&quot;frequentCustomers&quot;</span><span class="o">,</span> <span class="n">KeyValueTable</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+
+    <span class="c1">// Store user profiles in a Dataset</span>
+    <span class="n">createDataset</span><span class="o">(</span><span class="s">&quot;userProfiles&quot;</span><span class="o">,</span> <span class="n">KeyValueTable</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+
+    <span class="c1">// Process events in realtime using a Flow</span>
+    <span class="n">addFlow</span><span class="o">(</span><span class="k">new</span> <span class="n">PurchaseFlow</span><span class="o">());</span>
+
+    <span class="c1">// Specify a MapReduce to run on the acquired data</span>
+    <span class="n">addMapReduce</span><span class="o">(</span><span class="k">new</span> <span class="n">PurchaseHistoryBuilder</span><span class="o">());</span>
+
+    <span class="c1">// Run a Workflow that uses the MapReduce to run on the acquired data</span>
+    <span class="n">addWorkflow</span><span class="o">(</span><span class="k">new</span> <span class="n">PurchaseHistoryWorkflow</span><span class="o">());</span>
+
+    <span class="c1">// Retrieve the processed data using a Service</span>
+    <span class="n">addService</span><span class="o">(</span><span class="k">new</span> <span class="n">PurchaseHistoryService</span><span class="o">());</span>
+
+    <span class="c1">// Store and retrieve user profile data using a Service</span>
+    <span class="n">addService</span><span class="o">(</span><span class="n">UserProfileServiceHandler</span><span class="o">.</span><span class="na">SERVICE_NAME</span><span class="o">,</span> <span class="k">new</span> <span class="n">UserProfileServiceHandler</span><span class="o">());</span>
+
+    <span class="c1">// Provide a Service to Application components</span>
+    <span class="n">addService</span><span class="o">(</span><span class="k">new</span> <span class="n">CatalogLookupService</span><span class="o">());</span>
+
+    <span class="c1">// Schedule the workflow</span>
+    <span class="n">scheduleWorkflow</span><span class="o">(</span><span class="n">Schedules</span><span class="o">.</span><span class="na">createTimeSchedule</span><span class="o">(</span><span class="s">&quot;DailySchedule&quot;</span><span class="o">,</span> <span class="s">&quot;Schedule execution every day&quot;</span><span class="o">,</span> <span class="s">&quot;0 4 * * *&quot;</span><span class="o">),</span>
+                     <span class="s">&quot;PurchaseHistoryWorkflow&quot;</span><span class="o">);</span>
+
+    <span class="c1">// Schedule the workflow based on the data coming in the purchaseStream stream</span>
+    <span class="n">scheduleWorkflow</span><span class="o">(</span>
+      <span class="n">Schedules</span><span class="o">.</span><span class="na">createDataSchedule</span><span class="o">(</span><span class="s">&quot;DataSchedule&quot;</span><span class="o">,</span>
+                                   <span class="s">&quot;Schedule execution when 1 MB or more of data is ingested in the purchaseStream&quot;</span><span class="o">,</span>
+                                   <span class="n">Schedules</span><span class="o">.</span><span class="na">Source</span><span class="o">.</span><span class="na">STREAM</span><span class="o">,</span> <span class="s">&quot;purchaseStream&quot;</span><span class="o">,</span> <span class="mi">1</span><span class="o">),</span>
+      <span class="s">&quot;PurchaseHistoryWorkflow&quot;</span>
+    <span class="o">);</span>
+
+    <span class="k">try</span> <span class="o">{</span>
+      <span class="n">createDataset</span><span class="o">(</span><span class="s">&quot;history&quot;</span><span class="o">,</span> <span class="n">PurchaseHistoryStore</span><span class="o">.</span><span class="na">class</span><span class="o">,</span> <span class="n">PurchaseHistoryStore</span><span class="o">.</span><span class="na">properties</span><span class="o">());</span>
+      <span class="n">createDataset</span><span class="o">(</span><span class="s">&quot;purchases&quot;</span><span class="o">,</span> <span class="n">ObjectMappedTable</span><span class="o">.</span><span class="na">class</span><span class="o">,</span>
+                    <span class="n">ObjectMappedTableProperties</span><span class="o">.</span><span class="na">builder</span><span class="o">().</span><span class="na">setType</span><span class="o">(</span><span class="n">Purchase</span><span class="o">.</span><span class="na">class</span><span class="o">).</span><span class="na">build</span><span class="o">());</span>
+    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">UnsupportedTypeException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+      <span class="c1">// This exception is thrown by ObjectMappedTable if its parameter type cannot be</span>
+      <span class="c1">// (de)serialized (for example, if it is an interface and not a class, then there is</span>
+      <span class="c1">// no auto-magic way deserialize an object.) In this case that will not happen</span>
+      <span class="c1">// because PurchaseHistory and Purchase are actual classes.</span>
+      <span class="k">throw</span> <span class="k">new</span> <span class="n">RuntimeException</span><span class="o">(</span><span class="n">e</span><span class="o">);</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="purchasehistory-and-purchase-objectstore-data-storage">
+<h3><code class="docutils literal"><span class="pre">PurchaseHistory</span></code> and <code class="docutils literal"><span class="pre">Purchase</span></code>: ObjectStore Data Storage<a class="headerlink" href="#purchasehistory-and-purchase-objectstore-data-storage" title="Permalink to this headline">¶</a></h3>
+<p>The raw purchase data is stored in an ObjectMappedTable dataset, <em>purchases</em>,
+with this method defined in <code class="docutils literal"><span class="pre">PurchaseStore.java</span></code>:</p>
+<div class="highlight-java"><div class="highlight"><pre>  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">process</span><span class="o">(</span><span class="n">Purchase</span> <span class="n">purchase</span><span class="o">)</span> <span class="o">{</span>
+    <span class="c1">// Discover the CatalogLookup service via discovery service</span>
+    <span class="c1">// the service name is the same as the one provided in the Application configure method</span>
+    <span class="n">URL</span> <span class="n">serviceURL</span> <span class="o">=</span> <span class="n">getContext</span><span class="o">().</span><span class="na">getServiceURL</span><span class="o">(</span><span class="n">PurchaseApp</span><span class="o">.</span><span class="na">APP_NAME</span><span class="o">,</span> <span class="n">CatalogLookupService</span><span class="o">.</span><span class="na">SERVICE_NAME</span><span class="o">);</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">serviceURL</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+      <span class="n">String</span> <span class="n">catalog</span> <span class="o">=</span> <span class="n">getCatalogId</span><span class="o">(</span><span class="n">serviceURL</span><span class="o">,</span> <span class="n">purchase</span><span class="o">.</span><span class="na">getProduct</span><span class="o">());</span>
+      <span class="k">if</span> <span class="o">(</span><span class="n">catalog</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">purchase</span><span class="o">.</span><span class="na">setCatalogId</span><span class="o">(</span><span class="n">catalog</span><span class="o">);</span>
+      <span class="o">}</span>
+    <span class="o">}</span>
+    <span class="n">metrics</span><span class="o">.</span><span class="na">count</span><span class="o">(</span><span class="s">&quot;purchases.&quot;</span> <span class="o">+</span> <span class="n">purchase</span><span class="o">.</span><span class="na">getCustomer</span><span class="o">(),</span> <span class="mi">1</span><span class="o">);</span>
+
+    <span class="n">LOG</span><span class="o">.</span><span class="na">info</span><span class="o">(</span><span class="s">&quot;Purchase info: Customer {}, ProductId {}, CatalogId {}&quot;</span><span class="o">,</span>
+             <span class="n">purchase</span><span class="o">.</span><span class="na">getCustomer</span><span class="o">(),</span> <span class="n">purchase</span><span class="o">.</span><span class="na">getProduct</span><span class="o">(),</span> <span class="n">purchase</span><span class="o">.</span><span class="na">getCatalogId</span><span class="o">());</span>
+    <span class="n">store</span><span class="o">.</span><span class="na">write</span><span class="o">(</span><span class="n">Bytes</span><span class="o">.</span><span class="na">toBytes</span><span class="o">(</span><span class="n">purchase</span><span class="o">.</span><span class="na">getPurchaseTime</span><span class="o">()),</span> <span class="n">purchase</span><span class="o">);</span>
+  <span class="o">}</span>
+</pre></div>
+</div>
+<p>This method is what actually puts data into the <em>purchases</em> dataset, by writing to the
+dataset with each purchase&#8217;s timestamp and the <code class="docutils literal"><span class="pre">Purchase</span></code> Object.</p>
+<p>The purchase history for each customer is compiled by the <code class="docutils literal"><span class="pre">PurchaseHistoryWorkflow</span></code>, which uses a
+MapReduce—<code class="docutils literal"><span class="pre">PurchaseHistoryBuilder</span></code>—to aggregate all purchases into a per-customer purchase
+history. It writes to the <em>history</em> dataset, a custom dataset that embeds an <code class="docutils literal"><span class="pre">ObjectStore</span></code> and
+implements the <code class="docutils literal"><span class="pre">RecordScannable</span></code> interface to allow SQL queries over the dataset.</p>
+</div>
+<div class="section" id="purchasehistoryservice-service">
+<h3><code class="docutils literal"><span class="pre">PurchaseHistoryService</span></code> Service<a class="headerlink" href="#purchasehistoryservice-service" title="Permalink to this headline">¶</a></h3>
+<p>This service has a <code class="docutils literal"><span class="pre">history/{customer}</span></code> endpoint to obtain the purchase history of a given customer.</p>
+</div>
+<div class="section" id="userprofileservice-service">
+<h3><code class="docutils literal"><span class="pre">UserProfileService</span></code> Service<a class="headerlink" href="#userprofileservice-service" title="Permalink to this headline">¶</a></h3>
+<p>This service has two endpoints:</p>
+<p>A <code class="docutils literal"><span class="pre">user</span></code> endpoint to add a user&#8217;s profile information to the system:</p>
+<div class="highlight-java"><div class="highlight"><pre>$ cdap-cli.sh call service PurchaseHistory.UserProfileService POST user body \
+  &quot;{&#39;id&#39;:&#39;Alice&#39;,&#39;firstName&#39;:&#39;Alice&#39;,&#39;lastName&#39;:&#39;Bernard&#39;,&#39;categories&#39;:[&#39;fruits&#39;]}&quot;
+</pre></div>
+</div>
+<p>A <code class="docutils literal"><span class="pre">user/{id}</span></code> endpoint to obtain profile information for a specified user:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">$</span> <span class="n">cdap</span><span class="o">-</span><span class="n">cli</span><span class="o">.</span><span class="na">sh</span> <span class="n">call</span> <span class="n">service</span> <span class="n">PurchaseHistory</span><span class="o">.</span><span class="na">UserProfileService</span> <span class="n">GET</span> <span class="n">user</span><span class="o">/</span><span class="n">Alice</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="building-and-starting">
+<h2>Building and Starting<a class="headerlink" href="#building-and-starting" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>You can either build the example (as described <a class="reference external" href="#building-an-example-application">below</a>)
+or use the pre-built JAR file included in the CDAP SDK (as described under
+<a class="reference external" href="deploying-an-application">Deploying an Application</a>).</li>
+<li>Start CDAP.</li>
+<li>Deploy the application, as described below in <a class="reference internal" href="#running-cdap-applications">Running CDAP Applications</a>.</li>
+<li>Once the application has been deployed, you can start its components, as described in
+general in <a class="reference external" href="#starting-an-application">starting an application</a>, and detailed at the
+start of <a class="reference external" href="#running-the-example">running the example</a>.</li>
+<li>Once all components are started, <a class="reference external" href="#running-the-example">run the example</a>.</li>
+<li>When finished, you can <a class="reference external" href="#stopping-and-removing-the-application">stop and remove the application</a>.</li>
+</ul>
+</div>
+<div class="section" id="running-cdap-applications">
+<h2>Running CDAP Applications<a class="headerlink" href="#running-cdap-applications" title="Permalink to this headline">¶</a></h2>
+<p>In the examples, we refer to the Standalone CDAP as &#8220;CDAP&#8221;, and the example code that is
+running on it as an &#8220;Application&#8221;. We&#8217;ll assume that you are running your application in
+the <em>default</em> <a class="reference external" href="../source/../../developers-manual/building-blocks/namespaces.html#namespaces" title="(in Cask Data Application Platform v3.0.5)"><span class="xref std std-ref">namespace</span></a>; if not, you will need to adjust commands
+accordingly. For example, in a URL such as:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">http://localhost:10000/v3/namespaces/default/apps...</span>
+</pre></div>
+</div>
+<p>to use the namespace <em>my_namespace</em>, you would replace <code class="docutils literal"><span class="pre">default</span></code> with <code class="docutils literal"><span class="pre">my_namespace</span></code>:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">http://localhost:10000/v3/namespaces/my_namespace/apps...</span>
+</pre></div>
+</div>
+<div class="section" id="accessing-cli-curl-and-the-sdk-bin">
+<h3>Accessing CLI, curl and the SDK bin<a class="headerlink" href="#accessing-cli-curl-and-the-sdk-bin" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">For brevity in the commands given below, we will simply use <code class="docutils literal"><span class="pre">cdap-cli.sh</span></code> for the CDAP
+Command Line Interface. Substitute the actual path of <code class="docutils literal"><span class="pre">./&lt;CDAP-SDK-HOME&gt;/bin/cdap-cli.sh</span></code>,
+or <code class="docutils literal"><span class="pre">&lt;CDAP-SDK-HOME&gt;\bin\cdap-cli.bat</span></code> on Windows, as appropriate.</p>
+</li>
+<li><p class="first">A Windows-version of the application <code class="docutils literal"><span class="pre">curl</span></code> is included in the CDAP SDK as
+<code class="docutils literal"><span class="pre">libexec\bin\curl.exe</span></code>; use it as a substitute for <code class="docutils literal"><span class="pre">curl</span></code> in the examples shown below.</p>
+</li>
+<li><p class="first">If you add the SDK bin directory to your path, you can simplify the commands. From within
+the CDAP-SDK-home directory, enter:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> <span class="nb">export </span><span class="nv">PATH</span><span class="o">=</span><span class="si">${</span><span class="nv">PATH</span><span class="si">}</span>:<span class="sb">`</span><span class="nb">pwd</span><span class="sb">`</span>/bin
+</pre></div>
+</div>
+<p>or under Windows:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">&gt;</span> setx path <span class="s2">&quot;%PATH%;%CD%\bin&quot;</span>
+</pre></div>
+</div>
+<p>Note that under Windows, you&#8217;ll need to create a new command line window in order to see
+this change to the path variable.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="building-an-example-application">
+<h3>Building an Example Application<a class="headerlink" href="#building-an-example-application" title="Permalink to this headline">¶</a></h3>
+<p>From the example&#8217;s project root, build an example with the
+<a class="reference external" href="http://maven.apache.org">Apache Maven</a> command:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> mvn clean package
+</pre></div>
+</div>
+</div>
+<div class="section" id="starting-cdap">
+<h3>Starting CDAP<a class="headerlink" href="#starting-cdap" title="Permalink to this headline">¶</a></h3>
+<p>Before running an example application, check that an instance of CDAP is running and available; if not,
+follow the instructions for <a class="reference external" href="../source/../../developers-manual/getting-started/start-stop-cdap.html#start-stop-cdap" title="(in Cask Data Application Platform v3.0.5)"><span class="xref std std-ref">Starting and Stopping Standalone CDAP.</span></a></p>
+<p>If you can reach the CDAP UI through a browser at <a class="reference external" href="http://localhost:9999/">http://localhost:9999/</a>,
+CDAP is running.</p>
+</div>
+<div class="section" id="deploying-an-application">
+<h3>Deploying an Application<a class="headerlink" href="#deploying-an-application" title="Permalink to this headline">¶</a></h3>
+<p>Once CDAP is started, you can deploy an example JAR by any of these methods:</p>
+<ul>
+<li><p class="first">Use the <em>Add App</em> button found on the <a class="reference external" href="http://localhost:9999/admin/namespace/detail/default/apps"><em>Management</em></a> page of the CDAP UI to browse and upload the Jar:</p>
+<pre class="literal-block">
+examples/Purchase/target/Purchase-3.0.5.jar
+</pre>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v3.0.5)"><span class="xref std std-ref">Command Line Interface (CLI)</span></a>:</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> cdap-cli.sh deploy app examples/Purchase/target/Purchase-3.0.5.jar
+
+Successfully deployed application
+</pre>
+</div>
+<p>The CLI can be accessed under Windows using the <code class="docutils literal"><span class="pre">bin\cdap-cli.bat</span></code> script.</p>
+</li>
+<li><p class="first">Use an application such as <code class="docutils literal"><span class="pre">curl</span></code> (a Windows-version is included in the CDAP SDK in
+<code class="docutils literal"><span class="pre">libexec\bin\curl.exe</span></code>):</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> curl -w'\n' -H &quot;X-Archive-Name: Purchase-3.0.5.jar&quot; localhost:10000/v3/namespaces/default/apps \
+  --data-binary &#64;examples/Purchase/target/Purchase-3.0.5.jar
+
+Deploy Complete
+</pre>
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="starting-an-application">
+<h3>Starting an Application<a class="headerlink" href="#starting-an-application" title="Permalink to this headline">¶</a></h3>
+<p>Once an application is deployed, there are multiple methods for starting an application:</p>
+<ul>
+<li><p class="first">You can go to the application&#8217;s detail page in the CDAP UI by clicking on the
+application&#8217;s name in either the <a class="reference external" href="http://localhost:9999/ns/default"><em>Development</em></a> page or on the <a class="reference external" href="http://localhost:9999/ns/default/apps"><em>All Applications</em></a> page. Now you can
+see the status of any of the programs associated with the application and, by clicking
+on them, go to their detail page where you can start or stop them.</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v3.0.5)"><span class="xref std std-ref">Command Line Interface</span></a>.
+In each CDAP example, the CLI commands for that particular example are provided:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> cdap-cli.sh start &lt;program-type&gt; &lt;app-id.program-id&gt;
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;program-type&gt;</span></code></td>
+<td>One of <code class="docutils literal"><span class="pre">adapter</span></code>, <code class="docutils literal"><span class="pre">flow</span></code>, <code class="docutils literal"><span class="pre">mapreduce</span></code>, <code class="docutils literal"><span class="pre">service</span></code>, <code class="docutils literal"><span class="pre">spark</span></code>, <code class="docutils literal"><span class="pre">worker</span></code>, or <code class="docutils literal"><span class="pre">workflow</span></code></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;app-id&gt;</span></code></td>
+<td>Name of the application being called</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;program-id&gt;</span></code></td>
+<td>Name of the <em>adapter</em>, <em>flow</em>, <em>MapReduce</em>, <em>service</em>, <em>spark</em>, <em>worker</em> or <em>workflow</em> being called</td>
+</tr>
+</tbody>
+</table>
+</li>
+</ul>
+</div>
+<div class="section" id="stopping-an-application">
+<h3>Stopping an Application<a class="headerlink" href="#stopping-an-application" title="Permalink to this headline">¶</a></h3>
+<p>Once an application is deployed:</p>
+<ul>
+<li><p class="first">On an application&#8217;s detail page in the CDAP UI, you can click on a program to go
+to its detail page and then click the <em>Stop</em> button there; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v3.0.5)"><span class="xref std std-ref">Command Line Interface</span></a>:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> cdap-cli.sh stop &lt;program-type&gt; &lt;app-id.program-id&gt;
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="removing-an-application">
+<h3>Removing an Application<a class="headerlink" href="#removing-an-application" title="Permalink to this headline">¶</a></h3>
+<p>Once an application is stopped—all of its programs (flows, MapReduce programs,
+workflows, services, etc.) are stopped—you can go to the <a class="reference external" href="http://localhost:9999/ns/default/apps"><em>All Applications</em></a>
+page of the CDAP UI, click on the particular application to go to its detail page, click
+the <em>Actions</em> menu on the right side and select <em>Manage</em> to go to the Management pane for
+the application, then click the <em>Actions</em> menu on the right side and select <em>Delete</em>.</p>
+<p>After confirmation, the application will be deleted.</p>
+<p>From the Standalone CDAP SDK directory, you can also use the Command Line Interface:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> cdap-cli.sh delete app &lt;app-id&gt;
+</pre></div>
+</div>
+<p>Note that any storage (datasets) created or used by the application will remain, as they
+are independent of the application. Datasets can be deleted from the <a class="reference external" href="http://localhost:9999/admin/namespace/detail/default/data"><em>Datasets</em></a> page of
+the CDAP UI, or by using the <a class="reference external" href="../source/../../reference-manual/http-restful-api/index.html#restful-api" title="(in Cask Data Application Platform v3.0.5)"><span class="xref std std-ref">HTTP Restful API</span></a>, the
+<a class="reference external" href="../source/../../reference-manual/java-client-api.html#java-client-api" title="(in Cask Data Application Platform v3.0.5)"><span class="xref std std-ref">Java Client API</span></a>, or the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v3.0.5)"><span class="xref std std-ref">Command Line Interface API</span></a>.</p>
+<p>Streams can be either truncated or deleted, using similar methods.</p>
+</div>
+</div>
+<div class="section" id="running-the-example">
+<h2>Running the Example<a class="headerlink" href="#running-the-example" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="starting-the-flow">
+<h3>Starting the Flow<a class="headerlink" href="#starting-the-flow" title="Permalink to this headline">¶</a></h3>
+<p>Once the application is deployed:</p>
+<ul>
+<li><p class="first">Go to the <em>PurchaseHistory</em> <a class="reference external" href="http://localhost:9999/ns/default/apps/PurchaseHistory/overview/status">application overview page</a>,
+click <code class="docutils literal"><span class="pre">PurchaseFlow</span></code> to get to the flow detail page, then click the <em>Start</em> button; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> cdap-cli.sh start flow PurchaseHistory.PurchaseFlow
+
+<span class="go">Successfully started Flow &#39;PurchaseFlow&#39; of application &#39;PurchaseHistory&#39; with stored runtime arguments &#39;{}&#39;</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="starting-the-services">
+<h3>Starting the Services<a class="headerlink" href="#starting-the-services" title="Permalink to this headline">¶</a></h3>
+<p>Once the application is deployed:</p>
+<ul>
+<li><p class="first">Go to the <em>PurchaseHistory</em> <a class="reference external" href="http://localhost:9999/ns/default/apps/PurchaseHistory/overview/status">application overview page</a>,
+click <code class="docutils literal"><span class="pre">PurchaseHistoryService</span></code> to get to the service detail page, then click the <em>Start</em> button
+(and do the same for the <code class="docutils literal"><span class="pre">CatalogLookup</span></code> and <code class="docutils literal"><span class="pre">UserProfileService</span></code>); or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> cdap-cli.sh start service PurchaseHistory.PurchaseHistoryService
+<span class="gp">$</span> cdap-cli.sh start service PurchaseHistory.CatalogLookup
+<span class="gp">$</span> cdap-cli.sh start service PurchaseHistory.UserProfileService
+</pre></div>
+</div>
+</li>
+<li><p class="first">Or, you can send <code class="docutils literal"><span class="pre">curl</span></code> requests to CDAP:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> curl -v -X POST <span class="s1">&#39;http://localhost:10000/v3/namespaces/default/apps/PurchaseHistory/services/PurchaseHistoryService/start&#39;</span>
+<span class="gp">$</span> curl -v -X POST <span class="s1">&#39;http://localhost:10000/v3/namespaces/default/apps/PurchaseHistory/services/CatalogLookup/start&#39;</span>
+<span class="gp">$</span> curl -v -X POST <span class="s1">&#39;http://localhost:10000/v3/namespaces/default/apps/PurchaseHistory/services/UserProfileService/start&#39;</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="add-a-profile">
+<h3>Add A Profile<a class="headerlink" href="#add-a-profile" title="Permalink to this headline">¶</a></h3>
+<p>Add a <em>User Profile</em> for the user <em>Alice</em>, by running this command from the Standalone
+CDAP SDK directory, using the Command Line Interface:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> cdap-cli.sh call service PurchaseHistory.UserProfileService POST user body <span class="se">\</span>
+<span class="go">  &quot;{&#39;id&#39;:&#39;Alice&#39;,&#39;firstName&#39;:&#39;Alice&#39;,&#39;lastName&#39;:&#39;Bernard&#39;,&#39;categories&#39;:[&#39;fruits&#39;]}&quot;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="injecting-sentences">
+<h3>Injecting Sentences<a class="headerlink" href="#injecting-sentences" title="Permalink to this headline">¶</a></h3>
+<p>Inject a file of sentences by running this command from the Standalone
+CDAP SDK directory, using the Command Line Interface:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> cdap-cli.sh load stream purchaseStream examples/Purchase/resources/purchases.txt
+<span class="go">Successfully sent stream event to stream &#39;purchaseStream&#39;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="starting-the-workflow">
+<h3>Starting the Workflow<a class="headerlink" href="#starting-the-workflow" title="Permalink to this headline">¶</a></h3>
+<p>Once the sentences have been injected:</p>
+<ul>
+<li><p class="first">Go to the <em>PurchaseHistory</em> <a class="reference external" href="http://localhost:9999/ns/default/apps/PurchaseHistory/overview/status">application overview page</a>,
+click <code class="docutils literal"><span class="pre">PurchaseHistoryWorkflow</span></code> to get to the workflow detail page, then click the <em>Start</em> button; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> cdap-cli.sh start workflow PurchaseHistory.PurchaseHistoryWorkflow
+</pre></div>
+</div>
+</li>
+<li><p class="first">Or, you can send an HTTP request using the <code class="docutils literal"><span class="pre">curl</span></code> command:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> curl -v -X POST <span class="s1">&#39;http://localhost:10000/v3/namespaces/default/apps/PurchaseHistory/workflows/PurchaseHistoryWorkflow/start&#39;</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="querying-the-results">
+<h3>Querying the Results<a class="headerlink" href="#querying-the-results" title="Permalink to this headline">¶</a></h3>
+<p>To query the <em>history</em> ObjectStore through the <code class="docutils literal"><span class="pre">PurchaseHistoryService</span></code>, you can</p>
+<ul>
+<li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> cdap-cli.sh call service PurchaseHistory.PurchaseHistoryService GET <span class="nb">history</span>/Alice
+</pre></div>
+</div>
+</li>
+<li><p class="first">Or, send a query via an HTTP request using the <code class="docutils literal"><span class="pre">curl</span></code> command:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> curl -w<span class="s1">&#39;\n&#39;</span> -v <span class="s1">&#39;http://localhost:10000/v3/namespaces/default/apps/PurchaseHistory/services/PurchaseHistoryService/methods/history/Alice&#39;</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="exploring-the-results-using-sql">
+<h3>Exploring the Results Using SQL<a class="headerlink" href="#exploring-the-results-using-sql" title="Permalink to this headline">¶</a></h3>
+<p>You can use SQL to formulate ad-hoc queries over the <em>history</em> and <em>purchases</em> datasets.
+This is done by a series of <code class="docutils literal"><span class="pre">curl</span></code> calls, as described in the <a class="reference external" href="../source/../../reference-manual/http-restful-api/query.html#http-restful-api-query" title="(in Cask Data Application Platform v3.0.5)"><span class="xref std std-ref">RESTful API</span></a> section of the <a class="reference external" href="../source/../../reference-manual/index.html#reference-index" title="(in Cask Data Application Platform v3.0.5)"><span class="xref std std-ref">CDAP Reference Manual</span></a>.
+For your convenience, the SDK&#8217;s Command Line Interface can execute the series of calls.</p>
+<p>From within the SDK root directory:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> cdap-cli.sh execute <span class="s2">&quot;\&quot;SELECT * FROM dataset_history WHERE customer IN (&#39;Alice&#39;,&#39;Bob&#39;)\&quot;&quot;</span>
+</pre></div>
+</div>
+<p>This will submit the query, using the <em>history</em> table in the <code class="docutils literal"><span class="pre">cdap_user</span></code> namespace, wait
+for its completion and then retrieve and print all results, one by one (example
+reformatted to fit):</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">+===========================================================================================================================+</span>
+<span class="go">| dataset_history.customer: | dataset_history.userprofile: struct&lt;id:string | dataset_history.purchases: array&lt;struct&lt;custo |</span>
+<span class="go">| STRING                    | ,firstname:string,lastname:string,categories: | mer:string,product:string,quantity:int,price: |</span>
+<span class="go">|                           | array&lt;string&gt;&gt;                                | int,purchasetime:bigint,catalogid:string&gt;&gt;    |</span>
+<span class="go">+===========================================================================================================================+</span>
+<span class="go">| Alice                     | {&quot;id&quot;:&quot;Alice&quot;,&quot;firstname&quot;:&quot;Alice&quot;,&quot;lastname&quot;: | [{&quot;customer&quot;:&quot;Alice&quot;,&quot;product&quot;:&quot;coconut&quot;,&quot;qua |</span>
+<span class="go">|                           | &quot;Bernard&quot;,&quot;categories&quot;:[&quot;fruits&quot;]}            | ntity&quot;:2,&quot;price&quot;:5,&quot;purchasetime&quot;:14267198729 |</span>
+<span class="go">|                           |                                               | 86,&quot;catalogid&quot;:&quot;Catalog-coconut&quot;},{&quot;customer&quot; |</span>
+<span class="go">|                           |                                               | :&quot;Alice&quot;,&quot;product&quot;:&quot;grapefruit&quot;,&quot;quantity&quot;:12 |</span>
+<span class="go">|                           |                                               | ,&quot;price&quot;:10,&quot;purchasetime&quot;:1426719872968,&quot;cat |</span>
+<span class="go">|                           |                                               | alogid&quot;:&quot;Catalog-grapefruit&quot;}]                |</span>
+<span class="go">|---------------------------------------------------------------------------------------------------------------------------|</span>
+<span class="go">| Bob                       |                                               | [{&quot;customer&quot;:&quot;Bob&quot;,&quot;product&quot;:&quot;coffee&quot;,&quot;quanti |</span>
+<span class="go">|                           |                                               | ty&quot;:1,&quot;price&quot;:1,&quot;purchasetime&quot;:1426719873005, |</span>
+<span class="go">|                           |                                               | &quot;catalogid&quot;:&quot;Catalog-coffee&quot;},{&quot;customer&quot;:&quot;Bo |</span>
+<span class="go">|                           |                                               | b&quot;,&quot;product&quot;:&quot;orange&quot;,&quot;quantity&quot;:6,&quot;price&quot;:12 |</span>
+<span class="go">|                           |                                               | ,&quot;purchasetime&quot;:1426719872970,&quot;catalogid&quot;:&quot;Ca |</span>
+<span class="go">|                           |                                               | talog-orange&quot;}]                               |</span>
+<span class="go">+===========================================================================================================================+</span>
+</pre></div>
+</div>
+<p>Note that because we only submitted a single User Profile, only one result—for
+<em>Alice</em>—is returned.</p>
+<div class="section" id="explore-the-results-using-curl-and-sql">
+<h4>Explore the Results Using curl and SQL<a class="headerlink" href="#explore-the-results-using-curl-and-sql" title="Permalink to this headline">¶</a></h4>
+<p>If you prefer to use <code class="docutils literal"><span class="pre">curl</span></code> directly, here are the sequence of steps to execute:</p>
+<p>First, submit the query for execution:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> curl -w<span class="s1">&#39;\n&#39;</span> -v http://localhost:10000/v3/namespaces/default/data/explore/queries <span class="se">\</span>
+<span class="go">  -d &#39;{&quot;query&quot;: &quot;&#39;&quot;SELECT * FROM dataset_history WHERE customer IN (&#39;Alice&#39;,&#39;Bob&#39;)&quot;&#39;&quot;}&#39;</span>
+</pre></div>
+</div>
+<p>Note that due to the mix and repetition of single and double quotes, it can be tricky to escape all quotes
+correctly at the shell command prompt. On success, this will return a handle for the query, such as:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">{&quot;handle&quot;:&quot;07fd9b6a-95b3-4831-992c-7164f11c3754&quot;}</span>
+</pre></div>
+</div>
+<p>This handle is needed to inquire about the status of the query and to retrieve query results. To get the
+status, issue a GET to the query&#8217;s URL using the handle:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> curl -w<span class="s1">&#39;\n&#39;</span> -v -X GET http://localhost:10000/v3/data/explore/queries/07fd9b6a-95b3-4831-992c-7164f11c3754/status
+</pre></div>
+</div>
+<p>Because a SQL query can run for several minutes, you may have to repeat the call until it returns a status of <em>finished</em>:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">{&quot;status&quot;:&quot;FINISHED&quot;,&quot;hasResults&quot;:true}</span>
+</pre></div>
+</div>
+<p>Once execution has finished, you can retrieve the results of the query using the handle:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> curl -w<span class="s1">&#39;\n&#39;</span> -v -X POST http://localhost:10000/v3/data/explore/queries/07fd9b6a-95b3-4831-992c-7164f11c3754/next
+</pre></div>
+</div>
+<p>This will return—up to a limited number—the results in JSON format:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">[{&quot;columns&quot;:[&quot;Alice&quot;,&quot;[{\&quot;customer\&quot;:\&quot;Alice\&quot;,\&quot;product\&quot;:\&quot;grapefruit\&quot;,\&quot;quantity\&quot;:12,\&quot;price\&quot;:10</span>
+<span class="go">  \&quot;purchasetime\&quot;:1403737694225}]&quot;]},</span>
+<span class="go">{&quot;columns&quot;:[&quot;Bob&quot;,&quot;[{\&quot;customer\&quot;:\&quot;Bob\&quot;,\&quot;product\&quot;:\&quot;orange\&quot;,\&quot;quantity\&quot;:6,\&quot;price\&quot;:12</span>
+<span class="go">  \&quot;purchasetime\&quot;:1403737694226}]&quot;]}]</span>
+<span class="go">. . .</span>
+</pre></div>
+</div>
+<p>You repeat this step until the <code class="docutils literal"><span class="pre">curl</span></code> call returns an empty list. That means you have
+retrieved all of the results and you can now close the query:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> curl -v -X DELETE http://localhost:10000/v3/data/explore/queries/07fd9b6a-95b3-4831-992c-7164f11c3754
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="section" id="stopping-and-removing-the-application">
+<h2>Stopping and Removing the Application<a class="headerlink" href="#stopping-and-removing-the-application" title="Permalink to this headline">¶</a></h2>
+<p>Once done, you can stop the application as described above in <a class="reference external" href="#stopping-an-application">Stopping an Application.</a> Here is an example-specific description of the steps:</p>
+<p><strong>Stopping the Flow</strong></p>
+<ul>
+<li><p class="first">Go to the <em>PurchaseHistory</em> <a class="reference external" href="http://localhost:9999/ns/default/apps/PurchaseHistory/overview/status">application overview page</a>,
+click <code class="docutils literal"><span class="pre">PurchaseFlow</span></code> to get to the flow detail page, then click the <em>Stop</em> button; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> cdap-cli.sh stop flow PurchaseHistory.PurchaseFlow
+</pre></div>
+</div>
+</li>
+</ul>
+<p><strong>Stopping the Services</strong></p>
+<ul>
+<li><p class="first">Go to the <em>PurchaseHistory</em> <a class="reference external" href="http://localhost:9999/ns/default/apps/PurchaseHistory/overview/status">application overview page</a>,
+click <code class="docutils literal"><span class="pre">PurchaseHistoryService</span></code> to get to the service detail page, then click the <em>Stop</em> button
+(doing the same for <code class="docutils literal"><span class="pre">CatalogLookup</span></code> and <code class="docutils literal"><span class="pre">UserProfileService</span></code>); or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> cdap-cli.sh stop service PurchaseHistory.PurchaseHistoryService
+<span class="gp">$</span> cdap-cli.sh stop service PurchaseHistory.CatalogLookup
+<span class="gp">$</span> cdap-cli.sh stop service PurchaseHistory.UserProfileService
+</pre></div>
+</div>
+</li>
+</ul>
+<p><strong>Removing the Application</strong></p>
+<p>You can now remove the application as described above, <a class="reference external" href="#removing-an-application">Removing an Application</a>, or:</p>
+<ul>
+<li><p class="first">Go to the <em>PurchaseHistory</em> <a class="reference external" href="http://localhost:9999/ns/default/apps/PurchaseHistory/overview/status">application overview page</a>,
+click the <em>Actions</em> menu on the right side and select <em>Manage</em> to go to the Management pane for the application,
+then click the <em>Actions</em> menu on the right side and select <em>Delete</em> to delete the application; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> cdap-cli.sh delete app PurchaseHistory
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html"
+        rel="nofollow">CDAP Documentation v3.0.5</a></h3>
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../index.html"
+            rel="nofollow">Overview</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html"
+            rel="nofollow">Introduction to CDAP</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html"
+            rel="nofollow">Developers’ Manual</a></li>
+            
+      <li><div class="new-icon"></div><a href="../table-of-contents/../../application-templates/index.html"
+            rel="nofollow">Application Templates</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html"
+            rel="nofollow">Administration Manual</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html"
+            rel="nofollow">Integrations</a></li>
+            
+      <li><div class=""></div><b><a href="../table-of-contents/../../examples-manual/index.html"
+            rel="nofollow">Examples, Guides, and Tutorials</a></b></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html"
+            rel="nofollow">Reference Manual</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html"
+            rel="nofollow">Release Notes</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html"
+            rel="nofollow">Glossary</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/faq.html"
+            rel="nofollow">FAQ</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../search.html"
+            rel="nofollow">Search</a></li>
+    </ul>
+   </div><!--
+  Copyright © 2014-2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+
+    
+<h3 class="pagenavtitle"><a href="../table-of-contents.html">Examples, Guides, and Tutorials:<br> Table&nbsp;of&nbsp;Contents</a></h3>
+<nav class="pagenav">
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Introduction</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Examples</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="hello-world.html">Hello World</a></li>
+<li class="toctree-l2"><a class="reference internal" href="count-random.html">Count Random</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fileset.html">File Sets</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">Purchase</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#building-and-starting">Building and Starting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#running-cdap-applications">Running CDAP Applications</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#running-the-example">Running the Example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#stopping-and-removing-the-application">Stopping and Removing the Application</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="spark-k-means.html">Spark K-Means</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spark-page-rank.html">Spark Page Rank</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sport-results.html">Sport Results</a></li>
+<li class="toctree-l2"><a class="reference internal" href="stream-conversion.html">Stream Conversion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user-profiles.html">User Profiles</a></li>
+<li class="toctree-l2"><a class="reference internal" href="web-analytics.html">Web Analytics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="word-count.html">Word Count</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../how-to-guides/index.html">How-To Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/index.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps-packs.html">Apps and Packs</a></li>
+</ul>
+
+</nav>
+  <h4>Previous Topic</h4>
+  <p class="topless"><a href="fileset.html"
+                        title="Previous Chapter">File Sets</a></p>
+  <h4>Next Topic</h4>
+  <p class="topless"><a href="spark-k-means.html"
+                        title="Next Chapter">Spark K-Means</a></p>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.0.5/cdap-docs-3.0.5-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tephra/index.html" target="_blank">Tephra</em></a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="File Sets" href="fileset.html" />File Sets</a>&nbsp;&nbsp;
+    
+    </th>
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2015 Cask Data, Inc.
+    
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Spark K-Means" href="spark-k-means.html" />Spark K-Means</a>
+    
+    </th>
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

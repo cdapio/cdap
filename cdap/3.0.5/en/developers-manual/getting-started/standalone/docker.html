@@ -1,0 +1,515 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="CDAP Docker Image" name="description" />
+<meta content="Copyright © 2014 Cask Data, Inc." name="copyright" />
+<script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-55081520-2']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+    <title>Docker Image &mdash; Cask Data Application Platform 3.0.5 Documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '3.0.5',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.0.5 Documentation" href="../../index.html" />
+    <link rel="up" title="CDAP Software Development Kit (SDK)" href="index.html" />
+    <link rel="next" title="Quick Start" href="../quick-start.html" />
+    <link rel="prev" title="Virtual Machine Image" href="virtual-machine.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="../quick-start.html" title="Quick Start"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="virtual-machine.html" title="Virtual Machine Image"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.0.5');</script>
+       
+        <li><a href="../../table-of-contents.html">CDAP Developers’ Manual</a> &raquo;</li>
+          <li><a href="../index.html" >Getting Started Developing with CDAP</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">CDAP Software Development Kit (SDK)</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="docker-image">
+<h1>Docker Image<a class="headerlink" href="#docker-image" title="Permalink to this headline">¶</a></h1>
+<p>A Docker image with CDAP pre-installed is available on the Docker Hub for download.</p>
+<p>To use the <strong>Docker image</strong>:</p>
+<ul>
+<li><p class="first">Docker is available for a variety of platforms. Download and install Docker in your environment by
+following the <a class="reference external" href="https://docs.docker.com/installation">platform-specific installation instructions</a>
+from <a class="reference external" href="https://docker.com">Docker.com</a> to verify that Docker is working and has
+started correctly.</p>
+<p>If you are not running on Linux, you need to start the Docker Virtual Machine (VM) before you
+can use containers. For example, on MacOS, use:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> boot2docker start
+<span class="gp">$</span> boot2docker ip
+</pre></div>
+</div>
+<p>to determine the Docker VM&#8217;s IP address. You will need to use that address as the host
+name when either connecting to the CDAP UI or making an HTTP request.</p>
+<p>When you run <code class="docutils literal"><span class="pre">boot2docker</span> <span class="pre">start</span></code>, it will print a message on the screen such as:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">To connect the Docker client to the Docker daemon, please set:</span>
+<span class="go">    export DOCKER_HOST=tcp://192.168.59.103:2375</span>
+<span class="go">    export DOCKER_CERT_PATH=/Users/.../.boot2docker/certs/boot2docker-vm</span>
+<span class="go">    export DOCKER_TLS_VERIFY=1</span>
+</pre></div>
+</div>
+<p>It is essential to run these export commands (or command, if only one). Otherwise,
+subsequent Docker commands will fail because they can&#8217;t tell how to connect to the
+Docker VM.</p>
+</li>
+<li><p class="first">Once Docker has started, pull down the <em>CDAP Docker Image</em> from the Docker hub using:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> docker pull caskdata/cdap-standalone
+</pre></div>
+</div>
+</li>
+<li><p class="first">Start the <em>Docker CDAP Virtual Machine</em> with:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> docker run -t -i -p 9999:9999 -p 10000:10000 caskdata/cdap-standalone
+</pre></div>
+</div>
+</li>
+<li><p class="first">CDAP will start automatically once the CDAP Virtual Machine starts. CDAP’s Software
+Directory is under <code class="docutils literal"><span class="pre">/Software/cdap-sdk-</span></code><code class="docutils literal"><span class="pre">3.0.5</span></code>.</p>
+</li>
+<li><p class="first">Once CDAP starts, it will instruct you to connect to the CDAP UI with a web browser
+at <code class="docutils literal"><span class="pre">http://&lt;virtual-hostname&gt;:9999</span></code>, such as <code class="docutils literal"><span class="pre">http://6f0162922c37:9999</span></code>. Replace
+<code class="docutils literal"><span class="pre">&lt;virtual-hostname&gt;</span></code> with the Docker VM&#8217;s IP address you obtained earlier. Start a browser
+and enter the address to access the CDAP UI.</p>
+</li>
+<li><p class="first">In order to begin building CDAP applications, have our <a class="reference internal" href="index.html#system-requirements"><span>recommended software and tools</span></a> installed in your environment.</p>
+</li>
+<li><p class="first">For a full list of Docker Commands, see the <a class="reference external" href="https://docs.docker.com/reference/commandline/cli/">Docker Command Line Documentation.</a></p>
+</li>
+</ul>
+<div class="section" id="development-environment-setup">
+<h2>Development Environment Setup<a class="headerlink" href="#development-environment-setup" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="creating-an-application">
+<h3>Creating an Application<a class="headerlink" href="#creating-an-application" title="Permalink to this headline">¶</a></h3>
+<p>When writing a CDAP Application, it&#8217;s best to use an integrated development environment that
+understands the application interface to provide code-completion in writing interface
+methods.</p>
+<p>The best way to start developing a CDAP application is by using the Maven archetype:</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> mvn archetype:generate \
+      -DarchetypeGroupId=co.cask.cdap \
+      -DarchetypeArtifactId=cdap-app-archetype \
+      -DarchetypeVersion=3.0.5
+</pre>
+</div>
+<p>This creates a Maven project with all required dependencies, Maven plugins, and a simple
+application template for the development of your application. You can import this Maven project into your preferred IDE—such as
+<a class="reference external" href="https://www.jetbrains.com/idea/">IntelliJ</a> or
+<a class="reference external" href="https://www.eclipse.org/">Eclipse</a>—and start developing your first
+CDAP application.</p>
+</div>
+<div class="section" id="using-intellij">
+<h3>Using IntelliJ<a class="headerlink" href="#using-intellij" title="Permalink to this headline">¶</a></h3>
+<ol class="arabic simple">
+<li>Open <a class="reference external" href="https://www.jetbrains.com/idea/">IntelliJ</a> and import the Maven project.</li>
+<li>Go to menu <em>File -&gt; Import Project</em>...</li>
+<li>Select the <code class="docutils literal"><span class="pre">pom.xml</span></code> in the Maven project&#8217;s directory.</li>
+<li>Select the <em>Import Maven projects automatically</em> and <em>Automatically download: Sources, Documentation</em>
+boxes in the <em>Import Project from Maven</em> dialog.</li>
+<li>Click <em>Next</em>, complete the remaining dialogs, and the new CDAP project will be created and opened.</li>
+</ol>
+</div>
+<div class="section" id="using-eclipse">
+<h3>Using Eclipse<a class="headerlink" href="#using-eclipse" title="Permalink to this headline">¶</a></h3>
+<ol class="arabic simple">
+<li>In your <a class="reference external" href="https://www.eclipse.org/">Eclipse</a> installation, make sure you have the
+<a class="reference external" href="http://m2eclipse.sonatype.org">m2eclipse</a> plugin installed.</li>
+<li>Go to menu <em>File -&gt; Import</em></li>
+<li>Enter <em>maven</em> in the <em>Select an import source</em> dialog to filter for Maven options.</li>
+<li>Select <em>Existing Maven Projects</em> as the import source.</li>
+<li>Browse for the Maven project&#8217;s directory.</li>
+<li>Click <em>Finish</em>, and the new CDAP project will be imported, created and opened.</li>
+</ol>
+</div>
+</div>
+<div class="section" id="starting-and-stopping-standalone-cdap">
+<h2>Starting and Stopping Standalone CDAP<a class="headerlink" href="#starting-and-stopping-standalone-cdap" title="Permalink to this headline">¶</a></h2>
+<p>Use the <code class="docutils literal"><span class="pre">cdap.sh</span></code> script to start and stop the Standalone CDAP
+(the location will vary depending on where the CDAP SDK is installed):</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> cd cdap-sdk-3.0.5
+<span class="gp">$</span> ./bin/cdap.sh start
+. . .
+<span class="gp">$</span> ./bin/cdap.sh stop
+</pre>
+</div>
+<p>Or, if you are using Windows, use the batch script <code class="docutils literal"><span class="pre">cdap.bat</span></code> to start and stop the SDK.</p>
+<p>Note that starting CDAP is not necessary if you use either the Virtual Machine or the
+Docker image, as they both start the Standalone CDAP automatically on startup.</p>
+<p>Once CDAP is started successfully, in a web browser you will be able to see the CDAP
+UI running at <code class="docutils literal"><span class="pre">http://localhost:9999</span></code>, where you can deploy example applications and
+interact with CDAP.</p>
+<p>Note that in the case of the Docker image, you will need to substitute
+the Docker VM&#8217;s IP address for <code class="docutils literal"><span class="pre">localhost</span></code> in the web browser address bar.</p>
+</div>
+<div class="section" id="building-and-running-cdap-applications">
+<h2>Building and Running CDAP Applications<a class="headerlink" href="#building-and-running-cdap-applications" title="Permalink to this headline">¶</a></h2>
+<p>In the examples, we refer to the Standalone CDAP as &#8220;CDAP&#8221;, and the example code that is
+running on it as an &#8220;Application&#8221;. We&#8217;ll assume that you are running your application in
+the <em>default</em> <a class="reference internal" href="../../building-blocks/namespaces.html#namespaces"><span>namespace</span></a>; if not, you will need to adjust commands
+accordingly. For example, in a URL such as:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">http://localhost:10000/v3/namespaces/default/apps...</span>
+</pre></div>
+</div>
+<p>to use the namespace <em>my_namespace</em>, you would replace <code class="docutils literal"><span class="pre">default</span></code> with <code class="docutils literal"><span class="pre">my_namespace</span></code>:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">http://localhost:10000/v3/namespaces/my_namespace/apps...</span>
+</pre></div>
+</div>
+<div class="section" id="accessing-cli-curl-and-the-sdk-bin">
+<h3>Accessing CLI, curl and the SDK bin<a class="headerlink" href="#accessing-cli-curl-and-the-sdk-bin" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">For brevity in the commands given below, we will simply use <code class="docutils literal"><span class="pre">cdap-cli.sh</span></code> for the CDAP
+Command Line Interface. Substitute the actual path of <code class="docutils literal"><span class="pre">./&lt;CDAP-SDK-HOME&gt;/bin/cdap-cli.sh</span></code>,
+or <code class="docutils literal"><span class="pre">&lt;CDAP-SDK-HOME&gt;\bin\cdap-cli.bat</span></code> on Windows, as appropriate.</p>
+</li>
+<li><p class="first">A Windows-version of the application <code class="docutils literal"><span class="pre">curl</span></code> is included in the CDAP SDK as
+<code class="docutils literal"><span class="pre">libexec\bin\curl.exe</span></code>; use it as a substitute for <code class="docutils literal"><span class="pre">curl</span></code> in the examples shown below.</p>
+</li>
+<li><p class="first">If you add the SDK bin directory to your path, you can simplify the commands. From within
+the CDAP-SDK-home directory, enter:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> <span class="nb">export </span><span class="nv">PATH</span><span class="o">=</span><span class="si">${</span><span class="nv">PATH</span><span class="si">}</span>:<span class="sb">`</span><span class="nb">pwd</span><span class="sb">`</span>/bin
+</pre></div>
+</div>
+<p>or under Windows:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">&gt;</span> setx path <span class="s2">&quot;%PATH%;%CD%\bin&quot;</span>
+</pre></div>
+</div>
+<p>Note that under Windows, you&#8217;ll need to create a new command line window in order to see
+this change to the path variable.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="building-an-example-application">
+<h3>Building an Example Application<a class="headerlink" href="#building-an-example-application" title="Permalink to this headline">¶</a></h3>
+<p>From the example&#8217;s project root, build an example with the
+<a class="reference external" href="http://maven.apache.org">Apache Maven</a> command:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> mvn clean package
+</pre></div>
+</div>
+</div>
+<div class="section" id="starting-cdap">
+<h3>Starting CDAP<a class="headerlink" href="#starting-cdap" title="Permalink to this headline">¶</a></h3>
+<p>Before running an example application, check that an instance of CDAP is running and available; if not,
+follow the instructions for <a class="reference internal" href="../start-stop-cdap.html#start-stop-cdap"><span>Starting and Stopping Standalone CDAP.</span></a></p>
+<p>If you can reach the CDAP UI through a browser at <a class="reference external" href="http://localhost:9999/">http://localhost:9999/</a>,
+CDAP is running.</p>
+</div>
+<div class="section" id="deploying-an-application">
+<h3>Deploying an Application<a class="headerlink" href="#deploying-an-application" title="Permalink to this headline">¶</a></h3>
+<p>Once CDAP is started, you can deploy an example JAR by any of these methods:</p>
+<ul>
+<li><p class="first">Use the <em>Add App</em> button found on the <a class="reference external" href="http://localhost:9999/admin/namespace/detail/default/apps"><em>Management</em></a> page of the CDAP UI to browse and upload the Jar:</p>
+<pre class="literal-block">
+examples/&lt;example&gt;/target/&lt;example&gt;-3.0.5.jar
+</pre>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the <a class="reference external" href="../../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v3.0.5)"><span class="xref std std-ref">Command Line Interface (CLI)</span></a>:</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> cdap-cli.sh deploy app examples/&lt;example&gt;/target/&lt;example&gt;-3.0.5.jar
+
+Successfully deployed application
+</pre>
+</div>
+<p>The CLI can be accessed under Windows using the <code class="docutils literal"><span class="pre">bin\cdap-cli.bat</span></code> script.</p>
+</li>
+<li><p class="first">Use an application such as <code class="docutils literal"><span class="pre">curl</span></code> (a Windows-version is included in the CDAP SDK in
+<code class="docutils literal"><span class="pre">libexec\bin\curl.exe</span></code>):</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> curl -w'\n' -H &quot;X-Archive-Name: &lt;example&gt;-3.0.5.jar&quot; localhost:10000/v3/namespaces/default/apps \
+  --data-binary &#64;examples/&lt;example&gt;/target/&lt;example&gt;-3.0.5.jar
+
+Deploy Complete
+</pre>
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="starting-an-application">
+<h3>Starting an Application<a class="headerlink" href="#starting-an-application" title="Permalink to this headline">¶</a></h3>
+<p>Once an application is deployed, there are multiple methods for starting an application:</p>
+<ul>
+<li><p class="first">You can go to the application&#8217;s detail page in the CDAP UI by clicking on the
+application&#8217;s name in either the <a class="reference external" href="http://localhost:9999/ns/default"><em>Development</em></a> page or on the <a class="reference external" href="http://localhost:9999/ns/default/apps"><em>All Applications</em></a> page. Now you can
+see the status of any of the programs associated with the application and, by clicking
+on them, go to their detail page where you can start or stop them.</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the <a class="reference external" href="../../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v3.0.5)"><span class="xref std std-ref">Command Line Interface</span></a>.
+In each CDAP example, the CLI commands for that particular example are provided:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> cdap-cli.sh start &lt;program-type&gt; &lt;app-id.program-id&gt;
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;program-type&gt;</span></code></td>
+<td>One of <code class="docutils literal"><span class="pre">adapter</span></code>, <code class="docutils literal"><span class="pre">flow</span></code>, <code class="docutils literal"><span class="pre">mapreduce</span></code>, <code class="docutils literal"><span class="pre">service</span></code>, <code class="docutils literal"><span class="pre">spark</span></code>, <code class="docutils literal"><span class="pre">worker</span></code>, or <code class="docutils literal"><span class="pre">workflow</span></code></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;app-id&gt;</span></code></td>
+<td>Name of the application being called</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;program-id&gt;</span></code></td>
+<td>Name of the <em>adapter</em>, <em>flow</em>, <em>MapReduce</em>, <em>service</em>, <em>spark</em>, <em>worker</em> or <em>workflow</em> being called</td>
+</tr>
+</tbody>
+</table>
+</li>
+</ul>
+</div>
+<div class="section" id="stopping-an-application">
+<h3>Stopping an Application<a class="headerlink" href="#stopping-an-application" title="Permalink to this headline">¶</a></h3>
+<p>Once an application is deployed:</p>
+<ul>
+<li><p class="first">On an application&#8217;s detail page in the CDAP UI, you can click on a program to go
+to its detail page and then click the <em>Stop</em> button there; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the <a class="reference external" href="../../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v3.0.5)"><span class="xref std std-ref">Command Line Interface</span></a>:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> cdap-cli.sh stop &lt;program-type&gt; &lt;app-id.program-id&gt;
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="removing-an-application">
+<h3>Removing an Application<a class="headerlink" href="#removing-an-application" title="Permalink to this headline">¶</a></h3>
+<p>Once an application is stopped—all of its programs (flows, MapReduce programs,
+workflows, services, etc.) are stopped—you can go to the <a class="reference external" href="http://localhost:9999/ns/default/apps"><em>All Applications</em></a>
+page of the CDAP UI, click on the particular application to go to its detail page, click
+the <em>Actions</em> menu on the right side and select <em>Manage</em> to go to the Management pane for
+the application, then click the <em>Actions</em> menu on the right side and select <em>Delete</em>.</p>
+<p>After confirmation, the application will be deleted.</p>
+<p>From the Standalone CDAP SDK directory, you can also use the Command Line Interface:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> cdap-cli.sh delete app &lt;app-id&gt;
+</pre></div>
+</div>
+<p>Note that any storage (datasets) created or used by the application will remain, as they
+are independent of the application. Datasets can be deleted from the <a class="reference external" href="http://localhost:9999/admin/namespace/detail/default/data"><em>Datasets</em></a> page of
+the CDAP UI, or by using the <a class="reference external" href="../../source/../../reference-manual/http-restful-api/index.html#restful-api" title="(in Cask Data Application Platform v3.0.5)"><span class="xref std std-ref">HTTP Restful API</span></a>, the
+<a class="reference external" href="../../source/../../reference-manual/java-client-api.html#java-client-api" title="(in Cask Data Application Platform v3.0.5)"><span class="xref std std-ref">Java Client API</span></a>, or the <a class="reference external" href="../../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v3.0.5)"><span class="xref std std-ref">Command Line Interface API</span></a>.</p>
+<p>Streams can be either truncated or deleted, using similar methods.</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../../table-of-contents/../../index.html"
+        rel="nofollow">CDAP Documentation v3.0.5</a></h3>
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../../table-of-contents/../../index.html"
+            rel="nofollow">Overview</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../introduction/index.html"
+            rel="nofollow">Introduction to CDAP</a></li>
+            
+      <li><div class=""></div><b><a href="../../table-of-contents/../../developers-manual/index.html"
+            rel="nofollow">Developers’ Manual</a></b></li>
+            
+      <li><div class="new-icon"></div><a href="../../table-of-contents/../../application-templates/index.html"
+            rel="nofollow">Application Templates</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../admin-manual/index.html"
+            rel="nofollow">Administration Manual</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../integrations/index.html"
+            rel="nofollow">Integrations</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../examples-manual/index.html"
+            rel="nofollow">Examples, Guides, and Tutorials</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/index.html"
+            rel="nofollow">Reference Manual</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/release-notes.html"
+            rel="nofollow">Release Notes</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/glossary.html"
+            rel="nofollow">Glossary</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/faq.html"
+            rel="nofollow">FAQ</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../search.html"
+            rel="nofollow">Search</a></li>
+    </ul>
+   </div><!--
+  Copyright © 2014-2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+
+    
+<h3 class="pagenavtitle"><a href="../../table-of-contents.html">Developers’ Manual: Table&nbsp;of&nbsp;Contents</a></h3>
+<nav class="pagenav">
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../index.html"> Introduction</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html"> Getting Started Developing</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">CDAP SDK</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="zip.html">Binary Zip File</a></li>
+<li class="toctree-l3"><a class="reference internal" href="virtual-machine.html">Virtual Machine Image</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="">Docker Image</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../quick-start.html">Quick Start</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dev-env.html">Development Environment Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../start-stop-cdap.html">Starting and Stopping CDAP</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../building-apps.html">Building and Running Applications</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../overview/index.html"> Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../building-blocks/index.html"> Building Blocks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../security/index.html"> Security</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../testing/index.html"> Testing and Debugging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../ingesting-tools/index.html"> Ingesting Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../data-exploration/index.html"> Data Exploration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../advanced/index.html"> Advanced Topics</a></li>
+</ul>
+
+</nav>
+  <h4>Previous Topic</h4>
+  <p class="topless"><a href="virtual-machine.html"
+                        title="Previous Chapter">Virtual Machine Image</a></p>
+  <h4>Next Topic</h4>
+  <p class="topless"><a href="../quick-start.html"
+                        title="Next Chapter">Quick Start</a></p>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.0.5/cdap-docs-3.0.5-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tephra/index.html" target="_blank">Tephra</em></a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Virtual Machine Image" href="virtual-machine.html" />Virtual Machine Image</a>&nbsp;&nbsp;
+    
+    </th>
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2015 Cask Data, Inc.
+    
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Quick Start" href="../quick-start.html" />Quick Start</a>
+    
+    </th>
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>
