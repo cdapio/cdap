@@ -113,7 +113,8 @@ public class RemoteDatasetFramework implements DatasetFramework {
   }
 
   @Override
-  public void deleteAllModules(Id.Namespace namespaceId) throws DatasetManagementException, ServiceUnavailableException {
+  public void deleteAllModules(Id.Namespace namespaceId) throws DatasetManagementException,
+    ServiceUnavailableException {
     clientCache.getUnchecked(namespaceId).deleteModules();
   }
 

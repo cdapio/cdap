@@ -219,7 +219,8 @@ public class FileSetTest {
   }
 
   @Test(expected = IOException.class)
-  public void testExternalNonExistentPath() throws IOException, DatasetManagementException, ServiceUnavailableException {
+  public void testExternalNonExistentPath() throws IOException, DatasetManagementException,
+    ServiceUnavailableException {
     // create an external dir and create a file in it
     String absolutePath = tmpFolder.newFolder() + "/not/there";
     // attempt to create an external dataset - should fail

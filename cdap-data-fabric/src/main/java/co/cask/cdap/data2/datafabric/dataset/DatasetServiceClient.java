@@ -180,7 +180,8 @@ class DatasetServiceClient {
     }
   }
 
-  public void deleteInstance(String datasetInstanceName) throws DatasetManagementException, ServiceUnavailableException {
+  public void deleteInstance(String datasetInstanceName) throws DatasetManagementException,
+    ServiceUnavailableException {
     HttpResponse response = doDelete("datasets/" + datasetInstanceName);
     if (HttpResponseStatus.CONFLICT.getCode() == response.getResponseCode()) {
       throw new InstanceConflictException(String.format("Failed to delete instance %s due to conflict, details: %s",
