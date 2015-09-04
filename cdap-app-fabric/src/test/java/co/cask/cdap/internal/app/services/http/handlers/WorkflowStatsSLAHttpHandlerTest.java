@@ -24,6 +24,7 @@ import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.gateway.handlers.WorkflowStatsSLAHttpHandler;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.proto.Id;
@@ -49,7 +50,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Tests for {@link co.cask.cdap.gateway.handlers.WorkflowStatsSLAHttpHandler}
+ * Tests for {@link WorkflowStatsSLAHttpHandler}
  */
 public class WorkflowStatsSLAHttpHandlerTest extends AppFabricTestBase {
 

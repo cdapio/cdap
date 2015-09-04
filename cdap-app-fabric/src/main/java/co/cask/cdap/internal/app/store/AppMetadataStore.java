@@ -39,6 +39,7 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.slf4j.Logger;
@@ -57,15 +58,13 @@ import static com.google.common.base.Predicates.and;
  */
 public class AppMetadataStore extends MetadataStoreDataset {
   private static final Logger LOG = LoggerFactory.getLogger(AppMetadataStore.class);
-
   private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
-
-  public static final String TYPE_APP_META = "appMeta";
-  public static final String TYPE_STREAM = "stream";
-  public static final String TYPE_RUN_RECORD_STARTED = "runRecordStarted";
-  public static final String TYPE_RUN_RECORD_SUSPENDED = "runRecordSuspended";
-  public static final String TYPE_RUN_RECORD_COMPLETED = "runRecordCompleted";
-  public static final String TYPE_PROGRAM_ARGS = "programArgs";
+  private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+  private static final String TYPE_APP_META = "appMeta";
+  private static final String TYPE_STREAM = "stream";
+  private static final String TYPE_RUN_RECORD_STARTED = "runRecordStarted";
+  private static final String TYPE_RUN_RECORD_SUSPENDED = "runRecordSuspended";
+  private static final String TYPE_RUN_RECORD_COMPLETED = "runRecordCompleted";
   private static final String TYPE_NAMESPACE = "namespace";
   private static final String TYPE_ADAPTER = "adapter";
   private static final String WORKFLOW_TOKEN_PROPERTY_KEY = "workflowToken";
@@ -129,7 +128,8 @@ public class AppMetadataStore extends MetadataStoreDataset {
     write(key, updated);
   }
 
-  public void recordProgramStart(Id.Program program, String pid, long startTs, String adapter, String twillRunId) {
+  public void recordProgramStart(Id.Program program, String pid, long startTs, String adapter, String twillRunId,
+                                 Map<String, String> runtimeArgs) {
     MDSKey key = new MDSKey.Builder()
       .add(TYPE_RUN_RECORD_STARTED)
       .add(program.getNamespaceId())
@@ -139,7 +139,10 @@ public class AppMetadataStore extends MetadataStoreDataset {
       .add(pid)
       .build();
 
-    write(key, new RunRecordMeta(pid, startTs, null, ProgramRunStatus.RUNNING, adapter, null, twillRunId));
+
+    write(key, new RunRecordMeta(pid, startTs, null, ProgramRunStatus.RUNNING, adapter,
+                                 ImmutableMap.of("runtimeArgs",
+                                                 GSON.toJson(runtimeArgs, MAP_STRING_STRING_TYPE)), twillRunId));
   }
 
   public void recordProgramSuspend(Id.Program program, String pid) {
@@ -447,43 +450,6 @@ public class AppMetadataStore extends MetadataStoreDataset {
 
   public void deleteStream(String namespaceId, String name) {
     deleteAll(new MDSKey.Builder().add(TYPE_STREAM, namespaceId, name).build());
-  }
-
-  public void writeProgramArgs(Id.Program program, Map<String, String> args) {
-    write(new MDSKey.Builder()
-            .add(TYPE_PROGRAM_ARGS)
-            .add(program.getNamespaceId())
-            .add(program.getApplicationId())
-            .add(program.getType().name())
-            .add(program.getId())
-            .build(), new ProgramArgs(args));
-  }
-
-  public ProgramArgs getProgramArgs(Id.Program program) {
-    return getFirst(new MDSKey.Builder()
-                      .add(TYPE_PROGRAM_ARGS)
-                      .add(program.getNamespaceId())
-                      .add(program.getApplicationId())
-                      .add(program.getType().name())
-                      .add(program.getId())
-                      .build(), ProgramArgs.class);
-  }
-
-  public void deleteProgramArgs(Id.Program program) {
-    deleteAll(new MDSKey.Builder().add(TYPE_PROGRAM_ARGS)
-                .add(program.getNamespaceId())
-                .add(program.getApplicationId())
-                .add(program.getType().name())
-                .add(program.getId())
-                .build());
-  }
-
-  public void deleteProgramArgs(String namespaceId, String appId) {
-    deleteAll(new MDSKey.Builder().add(TYPE_PROGRAM_ARGS, namespaceId, appId).build());
-  }
-
-  public void deleteProgramArgs(String namespaceId) {
-    deleteAll(new MDSKey.Builder().add(TYPE_PROGRAM_ARGS, namespaceId).build());
   }
 
   public void deleteProgramHistory(String namespaceId, String appId) {

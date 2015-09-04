@@ -142,8 +142,9 @@ public class SparkProgramRunner implements ProgramRunner {
       submitter, program.getJarLocation(), txSystemClient
     );
 
-    sparkRuntimeService.addListener(createRuntimeServiceListener(program.getId(), runId, arguments),
-                                    Threads.SAME_THREAD_EXECUTOR);
+    sparkRuntimeService.addListener(
+      createRuntimeServiceListener(program.getId(), runId, arguments, options.getUserArguments()),
+      Threads.SAME_THREAD_EXECUTOR);
     ProgramController controller = new SparkProgramController(sparkRuntimeService, context);
 
     LOG.info("Starting Spark Job: {}", context.toString());
@@ -155,7 +156,7 @@ public class SparkProgramRunner implements ProgramRunner {
    * Creates a service listener to reactor on state changes on {@link SparkRuntimeService}.
    */
   private Service.Listener createRuntimeServiceListener(final Id.Program programId, final RunId runId,
-                                                        Arguments arguments) {
+                                                        Arguments arguments, final Arguments userArgs) {
 
     final String twillRunId = arguments.getOption(ProgramOptionConstants.TWILL_RUN_ID);
     final String workflowName = arguments.getOption(ProgramOptionConstants.WORKFLOW_NAME);
@@ -173,7 +174,7 @@ public class SparkProgramRunner implements ProgramRunner {
         }
 
         if (workflowName == null) {
-          store.setStart(programId, runId.getId(), startTimeInSeconds, null, twillRunId);
+          store.setStart(programId, runId.getId(), startTimeInSeconds, null, twillRunId, userArgs.asMap());
         } else {
           // Program started by Workflow
           store.setWorkflowProgramStart(programId, runId.getId(), workflowName, workflowRunId, workflowNodeId,
