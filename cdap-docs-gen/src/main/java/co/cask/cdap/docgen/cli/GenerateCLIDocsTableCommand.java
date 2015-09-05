@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.cli.docs;
+package co.cask.cdap.docgen.cli;
 
 import co.cask.cdap.cli.CommandCategory;
 import co.cask.cdap.cli.command.system.HelpCommand;
