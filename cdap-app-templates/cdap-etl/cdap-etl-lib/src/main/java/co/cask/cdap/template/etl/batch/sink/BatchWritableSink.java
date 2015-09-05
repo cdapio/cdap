@@ -60,6 +60,6 @@ public abstract class BatchWritableSink<IN, KEY_OUT, VAL_OUT> extends BatchSink<
   @Override
   public void prepareRun(BatchSinkContext context) {
     PluginProperties pluginProperties = context.getPluginProperties();
-    context.setOutput(pluginProperties.getProperties().get(Properties.BatchReadableWritable.NAME));
+    context.addOutput(pluginProperties.getProperties().get(Properties.BatchReadableWritable.NAME));
   }
 }

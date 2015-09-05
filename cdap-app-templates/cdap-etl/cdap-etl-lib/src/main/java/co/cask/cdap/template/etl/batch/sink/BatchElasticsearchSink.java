@@ -19,6 +19,7 @@ package co.cask.cdap.template.etl.batch.sink;
 import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
+import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.templates.plugins.PluginConfig;
@@ -27,11 +28,13 @@ import co.cask.cdap.template.etl.api.Emitter;
 import co.cask.cdap.template.etl.api.batch.BatchSink;
 import co.cask.cdap.template.etl.api.batch.BatchSinkContext;
 import co.cask.cdap.template.etl.common.Properties;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.Job;
 import org.elasticsearch.hadoop.mr.EsOutputFormat;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * A {@link BatchSink} that writes data to an Elasticsearch server.
@@ -66,21 +69,11 @@ public class BatchElasticsearchSink extends BatchSink<StructuredRecord, Writable
     this.config = config;
   }
 
-  private String getResource() {
-    return String.format("%s/%s", config.index, config.type);
-  }
-
   @Override
   public void prepareRun(BatchSinkContext context) {
     Job job = context.getHadoopJob();
     job.setSpeculativeExecution(false);
-    Configuration conf = job.getConfiguration();
-    conf.set("es.nodes", config.hostname);
-    conf.set("es.resource", getResource());
-    conf.set("es.input.json", "yes");
-    conf.set("es.mapping.id", config.idField);
-    job.setMapOutputValueClass(Text.class);
-    job.setOutputFormatClass(EsOutputFormat.class);
+    context.addOutput(config.index, new ElasticSearchOutputFormatProvider(config));
   }
 
   @Override
@@ -114,6 +107,29 @@ public class BatchElasticsearchSink extends BatchSink<StructuredRecord, Writable
       this.index = index;
       this.type = type;
       this.idField = idField;
+    }
+  }
+
+  private static class ElasticSearchOutputFormatProvider implements OutputFormatProvider {
+    private final Map<String, String> conf;
+
+    public ElasticSearchOutputFormatProvider(ESConfig config) {
+      this.conf = new HashMap<>();
+
+      conf.put("es.nodes", config.hostname);
+      conf.put("es.resource", String.format("%s/%s", config.index, config.type));
+      conf.put("es.input.json", "yes");
+      conf.put("es.mapping.id", config.idField);
+    }
+
+    @Override
+    public String getOutputFormatClassName() {
+      return EsOutputFormat.class.getName();
+    }
+
+    @Override
+    public Map<String, String> getOutputFormatConfiguration() {
+      return conf;
     }
   }
 }

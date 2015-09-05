@@ -18,6 +18,7 @@ package co.cask.cdap.dq;
 
 import co.cask.cdap.api.Config;
 import co.cask.cdap.api.ProgramLifecycle;
+import co.cask.cdap.api.annotation.Property;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.format.StructuredRecord;
@@ -161,10 +162,10 @@ public class DataQualityApp extends AbstractApplication<DataQualityApp.DataQuali
       // We use pluginId as the prefixId
       batchSource.configurePipeline(new MapReducePipelineConfigurer(mrConfigurer, PLUGIN_ID));
       setName("FieldAggregator");
-      setOutputDataset(datasetName);
       setProperties(ImmutableMap.<String, String>builder()
                       .put("fieldAggregations", GSON.toJson(fieldAggregations))
                       .put("sourceId", source.getId())
+                      .put("datasetName", datasetName)
                       .build());
     }
 
@@ -177,6 +178,7 @@ public class DataQualityApp extends AbstractApplication<DataQualityApp.DataQuali
       // TODO: Figure out metrics to be passed in
       BatchSourceContext sourceContext = new MapReduceSourceContext(context, null, PLUGIN_ID);
       batchSource.prepareRun(sourceContext);
+      context.addOutput(context.getSpecification().getProperty("datasetName"));
     }
   }
 
