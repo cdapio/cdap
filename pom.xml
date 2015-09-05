@@ -133,7 +133,7 @@
     <snappy.version>1.1.1.7</snappy.version>
     <shiro.version>1.2.1</shiro.version>
     <slf4j.version>1.7.5</slf4j.version>
-    <tephra.version>0.6.0</tephra.version>
+    <tephra.version>0.6.2</tephra.version>
     <thrift.version>0.9.0</thrift.version>
     <!-- TODO: Remove snapshot when twill released (CDAP-3498) -->
     <twill.version>0.7.0-incubating-SNAPSHOT</twill.version>
