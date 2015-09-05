@@ -731,6 +731,24 @@ public abstract class Id {
         return flow;
       }
 
+      @Override
+      public boolean equals(Object o) {
+        if (this == o) {
+          return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+          return false;
+        }
+        Flowlet flowlet = (Flowlet) o;
+        return Objects.equal(flow, flowlet.flow) &&
+          Objects.equal(id, flowlet.id);
+      }
+
+      @Override
+      public int hashCode() {
+        return Objects.hashCode(flow, id);
+      }
+
       /**
        * Uniquely identifies a Flowlet Queue.
        */
