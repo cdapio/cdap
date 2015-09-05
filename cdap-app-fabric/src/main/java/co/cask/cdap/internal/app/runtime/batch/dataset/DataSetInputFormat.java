@@ -20,7 +20,6 @@ import co.cask.cdap.api.data.batch.BatchReadable;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.batch.SplitReader;
 import co.cask.cdap.app.metrics.MapReduceMetrics;
-import co.cask.cdap.internal.app.runtime.batch.BasicMapReduceContext;
 import co.cask.cdap.internal.app.runtime.batch.BasicMapReduceTaskContext;
 import co.cask.cdap.internal.app.runtime.batch.MapReduceContextConfig;
 import co.cask.cdap.internal.app.runtime.batch.MapReduceTaskContextProvider;

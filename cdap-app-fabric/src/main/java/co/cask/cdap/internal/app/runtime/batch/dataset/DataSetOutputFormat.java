@@ -18,7 +18,6 @@ package co.cask.cdap.internal.app.runtime.batch.dataset;
 
 import co.cask.cdap.api.data.batch.BatchWritable;
 import co.cask.cdap.app.metrics.MapReduceMetrics;
-import co.cask.cdap.internal.app.runtime.batch.BasicMapReduceContext;
 import co.cask.cdap.internal.app.runtime.batch.BasicMapReduceTaskContext;
 import co.cask.cdap.internal.app.runtime.batch.MapReduceTaskContextProvider;
 import org.apache.hadoop.conf.Configuration;

@@ -83,14 +83,16 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
   }
 
   @Override
-  public void create(Id.Stream streamId) throws Exception {
+  public StreamConfig create(Id.Stream streamId) throws Exception {
     create(QueueName.fromStream(streamId));
+    return null;
   }
 
   @Override
-  public void create(Id.Stream streamId, @Nullable Properties props) throws Exception {
+  public StreamConfig create(Id.Stream streamId, @Nullable Properties props) throws Exception {
     create(QueueName.fromStream(streamId), props);
     streamMetaStore.addStream(streamId);
+    return null;
   }
 
   @Override

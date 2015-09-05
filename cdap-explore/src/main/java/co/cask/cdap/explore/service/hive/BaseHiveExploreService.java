@@ -44,6 +44,7 @@ import co.cask.cdap.hive.context.HConfCodec;
 import co.cask.cdap.hive.context.TxnCodec;
 import co.cask.cdap.hive.datasets.DatasetStorageHandler;
 import co.cask.cdap.hive.stream.StreamStorageHandler;
+import co.cask.cdap.internal.explore.ExploreTableNaming;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.QueryHandle;
@@ -127,6 +128,7 @@ import javax.annotation.Nullable;
 public abstract class BaseHiveExploreService extends AbstractIdleService implements ExploreService {
   private static final Logger LOG = LoggerFactory.getLogger(BaseHiveExploreService.class);
   private static final Gson GSON = new Gson();
+  private static final ExploreTableNaming NAMING = new ExploreTableNaming();
   private static final int PREVIEW_COUNT = 5;
   private static final long METASTORE_CLIENT_CLEANUP_PERIOD = 60;
   public static final String HIVE_METASTORE_TOKEN_KEY = "hive.metastore.token.signature";
@@ -1033,13 +1035,13 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       waitForDatasetService(600);
 
       String storageHandler = tableInfo.getParameters().get("storage_handler");
-      if (StreamStorageHandler.class.getName().equals(storageHandler)) {
+      if (StreamStorageHandler.class.getName().equals(storageHandler) && tableName.startsWith("cdap_")) {
         LOG.info("Upgrading stream table {}", tableName);
         upgradeStreamTable(tableInfo);
-      } else if (DatasetStorageHandler.class.getName().equals(storageHandler)) {
+      } else if (DatasetStorageHandler.class.getName().equals(storageHandler) && tableName.startsWith("cdap_")) {
         LOG.info("Upgrading record scannable dataset table {}.", tableName);
         upgradeRecordScannableTable(tableInfo);
-      } else {
+      } else if (tableName.startsWith("cdap_")) {
         LOG.info("Upgrading file set table {}.", tableName);
         // handle filesets differently since they can have partitions,
         // and dropping the table will remove all partitions
@@ -1141,7 +1143,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     // enable the table in the default namespace
     LOG.info("Enabling exploration on stream {}", streamID);
     StreamConfig streamConfig = streamAdmin.getConfig(streamID);
-    QueryHandle enableHandle = exploreTableManager.enableStream(streamID, streamConfig.getFormat());
+    QueryHandle enableHandle = exploreTableManager.enableStream(
+      NAMING.getTableName(streamID), streamID, streamConfig.getFormat());
     // wait til enable is done
     QueryStatus status = waitForCompletion(enableHandle);
     // if enable failed, stop

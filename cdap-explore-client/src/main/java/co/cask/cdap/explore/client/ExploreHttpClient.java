@@ -16,6 +16,8 @@
 
 package co.cask.cdap.explore.client;
 
+import co.cask.cdap.api.data.format.FormatSpecification;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
 import co.cask.cdap.common.conf.Constants;
@@ -28,6 +30,8 @@ import co.cask.cdap.explore.utils.ColumnsArgs;
 import co.cask.cdap.explore.utils.FunctionsArgs;
 import co.cask.cdap.explore.utils.SchemasArgs;
 import co.cask.cdap.explore.utils.TablesArgs;
+import co.cask.cdap.internal.explore.ExploreTableNaming;
+import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.QueryHandle;
@@ -45,6 +49,7 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
@@ -68,7 +73,10 @@ import javax.annotation.Nullable;
  */
 abstract class ExploreHttpClient implements Explore {
   private static final Logger LOG = LoggerFactory.getLogger(ExploreHttpClient.class);
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+    .create();
+  private static final ExploreTableNaming NAMING = new ExploreTableNaming();
 
   private static final Type MAP_TYPE_TOKEN = new TypeToken<Map<String, String>>() { }.getType();
   private static final Type TABLES_TYPE = new TypeToken<List<TableNameInfo>>() { }.getType();
@@ -90,24 +98,30 @@ abstract class ExploreHttpClient implements Explore {
     }
   }
 
-  protected QueryHandle doEnableExploreStream(Id.Stream stream) throws ExploreException {
-    HttpResponse response = doPost(String.format("namespaces/%s/data/explore/streams/%s/enable",
-                                                 stream.getNamespaceId(), stream.getId()), null, null);
+  protected QueryHandle doEnableExploreStream(Id.Stream stream, String tableName,
+                                              FormatSpecification format) throws ExploreException {
+    HttpResponse response = doPost(String.format(
+      "namespaces/%s/data/explore/streams/%s/tables/%s/enable",
+      stream.getNamespaceId(), stream.getId(), tableName), format == null ? null : GSON.toJson(format), null);
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
       return QueryHandle.fromId(parseResponseAsMap(response, "handle"));
     }
-    throw new ExploreException(String.format("Cannot enable explore on stream %s. Reason: %s",
-                                             stream.getId(), response));
+    throw new ExploreException(String.format("Cannot enable explore on stream %s with table %s. Reason: %s",
+                                             stream.getId(), tableName, response));
+  }
+
+  protected QueryHandle doDisableExploreStream(Id.Stream stream, String tableName) throws ExploreException {
+    HttpResponse response = doPost(String.format("namespaces/%s/data/explore/streams/%s/tables/%s/disable",
+                                                 stream.getNamespaceId(), stream.getId(), tableName), null, null);
+    if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
+      return QueryHandle.fromId(parseResponseAsMap(response, "handle"));
+    }
+    throw new ExploreException(String.format("Cannot disable explore on stream %s with table %s. Reason: %s",
+                                             stream.getId(), tableName, response));
   }
 
   protected QueryHandle doDisableExploreStream(Id.Stream stream) throws ExploreException {
-    HttpResponse response = doPost(String.format("namespaces/%s/data/explore/streams/%s/disable",
-                                                 stream.getNamespaceId(), stream.getId()), null, null);
-    if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
-      return QueryHandle.fromId(parseResponseAsMap(response, "handle"));
-    }
-    throw new ExploreException(String.format("Cannot disable explore on stream %s. Reason: %s",
-                                             stream.getId(), response));
+    return doDisableExploreStream(stream, NAMING.getTableName(stream));
   }
 
   protected QueryHandle doAddPartition(Id.DatasetInstance datasetInstance,

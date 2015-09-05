@@ -23,8 +23,6 @@ import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
 
-import java.io.IOException;
-
 /**
  * OutputFormat that allows instantiation of the RecordWriter, but throws {@link UnsupportedOperationException}
  * upon any attempts to write to it.

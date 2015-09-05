@@ -17,7 +17,9 @@
 package co.cask.cdap.internal.app.deploy.pipeline;
 
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.explore.client.ExploreFacade;
+import co.cask.cdap.internal.explore.ExploreTableNaming;
 import co.cask.cdap.proto.Id;
 
 import java.util.Set;
@@ -26,6 +28,8 @@ import java.util.Set;
  * Creates streams.
  */
 public class StreamCreator {
+
+  private static final ExploreTableNaming NAMING = new ExploreTableNaming();
   private final Id.Namespace namespace;
   private final StreamAdmin streamAdmin;
   private final ExploreFacade exploreFacade;
@@ -50,9 +54,9 @@ public class StreamCreator {
       Id.Stream streamId = Id.Stream.from(namespace, streamName);
       // create the stream and enable exploration if the stream doesn't already exist.
       if (!streamAdmin.exists(streamId)) {
-        streamAdmin.create(streamId);
+        StreamConfig config = streamAdmin.create(streamId);
         if (enableExplore) {
-          exploreFacade.enableExploreStream(streamId);
+          exploreFacade.enableExploreStream(streamId, NAMING.getTableName(streamId), config.getFormat());
         }
       }
     }
