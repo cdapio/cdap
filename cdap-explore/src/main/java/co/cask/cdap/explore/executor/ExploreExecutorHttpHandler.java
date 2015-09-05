@@ -23,6 +23,7 @@ import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
 import co.cask.cdap.api.dataset.lib.Partitioning;
+import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
@@ -140,7 +141,8 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   @POST
   @Path("datasets/{dataset}/enable")
   public void enableDataset(HttpRequest request, HttpResponder responder,
-                            @PathParam("namespace-id") String namespaceId, @PathParam("dataset") String datasetName) {
+                            @PathParam("namespace-id") String namespaceId, @PathParam("dataset") String datasetName)
+    throws ServiceUnavailableException {
     Id.DatasetInstance datasetID = Id.DatasetInstance.from(namespaceId, datasetName);
     DatasetSpecification datasetSpec;
     try {
@@ -181,7 +183,8 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   @POST
   @Path("datasets/{dataset}/disable")
   public void disableDataset(HttpRequest request, HttpResponder responder,
-                             @PathParam("namespace-id") String namespaceId, @PathParam("dataset") String datasetName) {
+                             @PathParam("namespace-id") String namespaceId, @PathParam("dataset") String datasetName)
+    throws ServiceUnavailableException {
 
     LOG.debug("Disabling explore for dataset instance {}", datasetName);
     Id.DatasetInstance datasetID = Id.DatasetInstance.from(namespaceId, datasetName);

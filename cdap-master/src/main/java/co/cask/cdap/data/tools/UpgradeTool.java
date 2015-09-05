@@ -21,6 +21,7 @@ import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
+import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -377,7 +378,7 @@ public class UpgradeTool {
    * Sets up a {@link DatasetFramework} instance for standalone usage.  NOTE: should NOT be used by applications!!!
    */
   private void initializeDSFramework(CConfiguration cConf, DatasetFramework datasetFramework) throws IOException,
-    DatasetManagementException {
+    DatasetManagementException, ServiceUnavailableException {
     // dataset service
     DatasetMetaTableUtil.setupDatasets(datasetFramework);
     // app metadata
