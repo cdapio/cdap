@@ -62,25 +62,24 @@ public class BusinessMetadataDataset extends AbstractDataset {
   /**
    * Add new business metadata.
    *
-   * @param targetType The target type of the metadata. Could be Application, Program, Dataset, or Stream.
    * @param targetId The target Id: app-id(ns+app) / program-id(ns+app+pgtype+pgm) /
    *                 dataset-id(ns+dataset)/stream-id(ns+stream).
    * @param key The metadata key to be added.
    * @param value The metadata value to be added.
    */
-  public void createBusinessMetadata(String targetType, Id.NamespacedId targetId, String key, String value) {
-    createBusinessMetadata(new BusinessMetadataRecord(targetType, targetId, key, value));
+  public void createBusinessMetadata(Id.NamespacedId targetId, String key, String value) {
+    createBusinessMetadata(new BusinessMetadataRecord(getTargetType(targetId), targetId, key, value));
   }
 
   /**
    * Return business metadata based on type, target id, and key.
    *
-   * @param targetType The type of the target: App | Program | Dataset | Stream.
    * @param targetId The id of the target.
    * @param key The metadata key to get.
    * @return instance of {@link BusinessMetadataRecord} for the target type, id, and key.
    */
-  public BusinessMetadataRecord getBusinessMetadata(String targetType, Id.NamespacedId targetId, String key) {
+  public BusinessMetadataRecord getBusinessMetadata(Id.NamespacedId targetId, String key) {
+    String targetType = getTargetType(targetId);
     MDSKey mdsKey = getInstanceKey(targetType, targetId, key);
     Row row = indexedTable.get(mdsKey.getKey());
     if (row.isEmpty()) {
@@ -141,5 +140,12 @@ public class BusinessMetadataDataset extends AbstractDataset {
     builder.add(key);
 
     return builder.build();
+  }
+
+  private String getTargetType(Id.NamespacedId namespacedId) {
+    if (namespacedId instanceof Id.Program) {
+      return Id.Program.class.getSimpleName();
+    }
+    return namespacedId.getClass().getSimpleName();
   }
 }
