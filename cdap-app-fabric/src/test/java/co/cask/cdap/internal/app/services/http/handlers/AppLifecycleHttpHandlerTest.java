@@ -23,6 +23,8 @@ import co.cask.cdap.ConfigTestApp;
 import co.cask.cdap.WordCountApp;
 import co.cask.cdap.api.Config;
 import co.cask.cdap.api.artifact.ArtifactScope;
+import co.cask.cdap.common.NamespaceNotFoundException;
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.handlers.AppLifecycleHttpHandler;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
@@ -53,7 +55,8 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
   public void testDeployNonExistingNamespace() throws Exception {
     HttpResponse response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, "random");
     Assert.assertEquals(404, response.getStatusLine().getStatusCode());
-    Assert.assertEquals("Deploy failed - namespace 'random' not found.", readResponse(response));
+    NotFoundException nfe = new NamespaceNotFoundException(Id.Namespace.from("random"));
+    Assert.assertEquals(nfe.getMessage(), readResponse(response));
   }
 
   /**
