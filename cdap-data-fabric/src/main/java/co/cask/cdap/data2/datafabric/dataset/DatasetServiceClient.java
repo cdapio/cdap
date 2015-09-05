@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.datafabric.dataset;
 
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
@@ -84,7 +85,8 @@ class DatasetServiceClient {
 
   @Nullable
   public DatasetMeta getInstance(String instanceName,
-                                 @Nullable Iterable<? extends Id> owners) throws DatasetManagementException {
+                                 @Nullable Iterable<? extends Id> owners) throws DatasetManagementException,
+    ServiceUnavailableException {
 
     String query = "";
     if (owners != null) {
@@ -108,11 +110,12 @@ class DatasetServiceClient {
   }
 
   @Nullable
-  public DatasetMeta getInstance(String instanceName) throws DatasetManagementException {
+  public DatasetMeta getInstance(String instanceName) throws DatasetManagementException, ServiceUnavailableException {
     return getInstance(instanceName, null);
   }
 
-  public Collection<DatasetSpecificationSummary> getAllInstances() throws DatasetManagementException {
+  public Collection<DatasetSpecificationSummary> getAllInstances() throws DatasetManagementException,
+    ServiceUnavailableException {
     HttpResponse response = doGet("datasets");
     if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
       throw new DatasetManagementException(String.format("Cannot retrieve all dataset instances, details: %s",
@@ -122,7 +125,7 @@ class DatasetServiceClient {
     return GSON.fromJson(response.getResponseBodyAsString(), SUMMARY_LIST_TYPE);
   }
 
-  public Collection<DatasetModuleMeta> getAllModules() throws DatasetManagementException {
+  public Collection<DatasetModuleMeta> getAllModules() throws DatasetManagementException, ServiceUnavailableException {
     HttpResponse response = doGet("modules");
     if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
       throw new DatasetManagementException(String.format("Cannot retrieve all dataset instances, details: %s",
@@ -132,7 +135,7 @@ class DatasetServiceClient {
     return GSON.fromJson(response.getResponseBodyAsString(), MODULE_META_LIST_TYPE);
   }
 
-  public DatasetTypeMeta getType(String typeName) throws DatasetManagementException {
+  public DatasetTypeMeta getType(String typeName) throws DatasetManagementException, ServiceUnavailableException {
     HttpResponse response = doGet("types/" + typeName);
     if (HttpResponseStatus.NOT_FOUND.getCode() == response.getResponseCode()) {
       return null;
@@ -145,7 +148,7 @@ class DatasetServiceClient {
   }
 
   public void addInstance(String datasetInstanceName, String datasetType, DatasetProperties props)
-    throws DatasetManagementException {
+    throws DatasetManagementException, ServiceUnavailableException {
     DatasetInstanceConfiguration creationProperties = new DatasetInstanceConfiguration(datasetType,
                                                                                        props.getProperties());
 
@@ -162,7 +165,7 @@ class DatasetServiceClient {
   }
 
   public void updateInstance(String datasetInstanceName, DatasetProperties props)
-    throws DatasetManagementException {
+    throws DatasetManagementException, ServiceUnavailableException {
 
     HttpResponse response = doPut("datasets/" + datasetInstanceName + "/properties",
                                   GSON.toJson(props.getProperties()));
@@ -177,7 +180,8 @@ class DatasetServiceClient {
     }
   }
 
-  public void deleteInstance(String datasetInstanceName) throws DatasetManagementException {
+  public void deleteInstance(String datasetInstanceName) throws DatasetManagementException,
+    ServiceUnavailableException {
     HttpResponse response = doDelete("datasets/" + datasetInstanceName);
     if (HttpResponseStatus.CONFLICT.getCode() == response.getResponseCode()) {
       throw new InstanceConflictException(String.format("Failed to delete instance %s due to conflict, details: %s",
@@ -190,7 +194,7 @@ class DatasetServiceClient {
   }
 
   public void addModule(String moduleName, String className, Location jarLocation)
-    throws DatasetManagementException {
+    throws DatasetManagementException, ServiceUnavailableException {
 
     HttpResponse response = doRequest(HttpMethod.PUT, "modules/" + moduleName,
                                       ImmutableMultimap.of("X-Class-Name", className),
@@ -206,7 +210,7 @@ class DatasetServiceClient {
   }
 
 
-  public void deleteModule(String moduleName) throws DatasetManagementException {
+  public void deleteModule(String moduleName) throws DatasetManagementException, ServiceUnavailableException {
     HttpResponse response = doDelete("modules/" + moduleName);
 
     if (HttpResponseStatus.CONFLICT.getCode() == response.getResponseCode()) {
@@ -219,7 +223,7 @@ class DatasetServiceClient {
     }
   }
 
-  public void deleteModules() throws DatasetManagementException {
+  public void deleteModules() throws DatasetManagementException, ServiceUnavailableException {
     HttpResponse response = doDelete("modules");
 
     if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
@@ -227,41 +231,42 @@ class DatasetServiceClient {
     }
   }
 
-  public void createNamespace() throws DatasetManagementException {
+  public void createNamespace() throws DatasetManagementException, ServiceUnavailableException {
     HttpResponse response = doPut("admin/create", GSON.toJson(namespaceId));
     if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
       throw new DatasetManagementException(String.format("Failed to create namespace, details: %s", response));
     }
   }
 
-  public void deleteNamespace() throws DatasetManagementException {
+  public void deleteNamespace() throws DatasetManagementException, ServiceUnavailableException {
     HttpResponse response = doDelete("admin/delete");
     if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
       throw new DatasetManagementException(String.format("Failed to delete namespace, details: %s", response));
     }
   }
 
-  private HttpResponse doGet(String resource) throws DatasetManagementException {
+  private HttpResponse doGet(String resource) throws DatasetManagementException, ServiceUnavailableException {
     return doRequest(HttpMethod.GET, resource);
   }
 
-  private HttpResponse doGet(String resource, Multimap<String, String> headers) throws DatasetManagementException {
+  private HttpResponse doGet(String resource, Multimap<String, String> headers) throws DatasetManagementException,
+    ServiceUnavailableException {
     return doRequest(HttpMethod.GET, resource, headers, (InputSupplier<? extends InputStream>) null);
   }
 
   private HttpResponse doPut(String resource, String body)
-    throws DatasetManagementException {
+    throws DatasetManagementException, ServiceUnavailableException {
 
     return doRequest(HttpMethod.PUT, resource, null, body);
   }
 
-  private HttpResponse doDelete(String resource) throws DatasetManagementException {
+  private HttpResponse doDelete(String resource) throws DatasetManagementException, ServiceUnavailableException {
     return doRequest(HttpMethod.DELETE, resource);
   }
 
   private HttpResponse doRequest(HttpMethod method, String resource,
                                  @Nullable Multimap<String, String> headers,
-                                 @Nullable String body) throws DatasetManagementException {
+                                 @Nullable String body) throws DatasetManagementException, ServiceUnavailableException {
 
     String url = resolve(resource);
     try {
@@ -282,7 +287,7 @@ class DatasetServiceClient {
   private HttpResponse doRequest(HttpMethod method, String resource,
                                  @Nullable Multimap<String, String> headers,
                                  @Nullable InputSupplier<? extends InputStream> body)
-    throws DatasetManagementException {
+    throws DatasetManagementException, ServiceUnavailableException {
 
     String url = resolve(resource);
     try {
@@ -307,14 +312,15 @@ class DatasetServiceClient {
     return builder;
   }
 
-  private HttpResponse doRequest(HttpMethod method, String url) throws DatasetManagementException {
+  private HttpResponse doRequest(HttpMethod method, String url) throws DatasetManagementException,
+    ServiceUnavailableException {
     return doRequest(method, url, null, (InputSupplier<? extends InputStream>) null);
   }
 
-  private String resolve(String resource) throws DatasetManagementException {
+  private String resolve(String resource) throws DatasetManagementException, ServiceUnavailableException {
     Discoverable discoverable = endpointStrategySupplier.get().pick(1, TimeUnit.SECONDS);
     if (discoverable == null) {
-      throw new DatasetManagementException("Cannot discover dataset service");
+      throw new ServiceUnavailableException("DatasetService");
     }
     InetSocketAddress addr = discoverable.getSocketAddress();
     return String.format("http://%s:%s%s/namespaces/%s/data/%s", addr.getHostName(), addr.getPort(),

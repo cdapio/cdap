@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,19 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2;
-
-import co.cask.cdap.common.ServiceUnavailableException;
+package co.cask.cdap.common;
 
 /**
- *
+ * Exception thrown when the service is not running.
  */
-public class InMemoryDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
+public class ServiceUnavailableException extends Exception {
+  private final String serviceName;
 
-  @Override
-  protected DatasetFramework getFramework() throws DatasetManagementException, ServiceUnavailableException {
-    DatasetFramework framework = new InMemoryDatasetFramework(registryFactory, DEFAULT_MODULES, cConf);
-    framework.createNamespace(NAMESPACE_ID);
-    return framework;
+  public ServiceUnavailableException(String serviceName) {
+    super("Service '" + serviceName + "' is not available. Please wait till it is up and running.");
+    this.serviceName = serviceName;
+  }
+
+  public String getServiceName() {
+    return serviceName;
   }
 }

@@ -22,6 +22,7 @@ import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricType;
 import co.cask.cdap.api.metrics.MetricValues;
+import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
@@ -417,9 +418,9 @@ public class MetricsDataMigrator {
     try {
       table = DatasetsUtil.getOrCreateDataset(dsFramework, metricsDatasetInstanceId,
                                               MetricsTable.class.getName(), empty, null, null);
-    } catch (DatasetManagementException e) {
-      String msg = String.format("Cannot access or create table %s.", tableName);
-      LOG.error(msg);
+    } catch (DatasetManagementException | ServiceUnavailableException e) {
+      String msg = String.format("Cannot access or create table %s.", tableName) + " " + e.getMessage();
+      LOG.warn(msg);
       throw new DataMigrationException(msg);
     } catch (IOException e) {
       String msg = String.format("Exception while creating table %s", tableName);
