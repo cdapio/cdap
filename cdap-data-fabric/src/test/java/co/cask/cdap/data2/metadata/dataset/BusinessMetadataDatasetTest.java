@@ -63,13 +63,13 @@ public class BusinessMetadataDatasetTest {
     Id.Program flow21 = Id.Program.from("ns1", "app2", ProgramType.FLOW, "flow21");
 
     // Create record
-    final BusinessMetadataRecord record = new BusinessMetadataRecord("program", flow21.toString(), "key1", "value1");
+    final BusinessMetadataRecord record = new BusinessMetadataRecord("program", flow21, "key1", "value1");
 
     // Save it
     dataset.createBusinessMetadata(record);
 
     // Get that record
-    final BusinessMetadataRecord result = dataset.getBusinessMetadata("program", flow21.toString(), "key1");
+    final BusinessMetadataRecord result = dataset.getBusinessMetadata("program", flow21, "key1");
 
     // Assert check
     Assert.assertEquals(record, result);

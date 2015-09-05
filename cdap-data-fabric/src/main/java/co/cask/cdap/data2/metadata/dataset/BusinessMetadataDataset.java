@@ -16,12 +16,14 @@
 package co.cask.cdap.data2.metadata.dataset;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.dataset.lib.AbstractDataset;
 import co.cask.cdap.api.dataset.lib.IndexedTable;
 import co.cask.cdap.api.dataset.table.Put;
+import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
-import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
 import co.cask.cdap.proto.BusinessMetadataRecord;
 
+import co.cask.cdap.proto.Id;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 
@@ -30,13 +32,7 @@ import java.util.Collection;
 /**
  * Implementation of Business Metadata on top of {@link IndexedTable}.
  */
-public class BusinessMetadataDataset extends MetadataStoreDataset {
-
-  /**
-   * All rows we store use single column of this name. This is same as the one in MetadataStoreDataset.
-   */
-  private static final byte[] COLUMN = Bytes.toBytes("c");
-
+public class BusinessMetadataDataset extends AbstractDataset {
   // column keys
   public static final String KEYVALUE_COLUMN = "kv";
   public static final String VALUE_COLUMN = "v";
@@ -44,7 +40,7 @@ public class BusinessMetadataDataset extends MetadataStoreDataset {
   private final IndexedTable indexedTable;
 
   public BusinessMetadataDataset(IndexedTable indexedTable) {
-    super(indexedTable);
+    super("ignore", indexedTable);
     this.indexedTable = indexedTable;
   }
 
@@ -55,7 +51,7 @@ public class BusinessMetadataDataset extends MetadataStoreDataset {
    */
   public void createBusinessMetadata(BusinessMetadataRecord metadataRecord) {
     String targetType = metadataRecord.getTargetType();
-    String targetId = metadataRecord.getTargetId();
+    Id.NamespacedId targetId = metadataRecord.getTargetId();
     String key = metadataRecord.getKey();
     MDSKey mdsKey = getInstanceKey(targetType, targetId, key);
 
@@ -72,7 +68,7 @@ public class BusinessMetadataDataset extends MetadataStoreDataset {
    * @param key The metadata key to be added.
    * @param value The metadata value to be added.
    */
-  public void createBusinessMetadata(String targetType, String targetId, String key, String value) {
+  public void createBusinessMetadata(String targetType, Id.NamespacedId targetId, String key, String value) {
     createBusinessMetadata(new BusinessMetadataRecord(targetType, targetId, key, value));
   }
 
@@ -84,37 +80,52 @@ public class BusinessMetadataDataset extends MetadataStoreDataset {
    * @param key The metadata key to get.
    * @return instance of {@link BusinessMetadataRecord} for the target type, id, and key.
    */
-  public BusinessMetadataRecord getBusinessMetadata(String targetType, String targetId, String key) {
+  public BusinessMetadataRecord getBusinessMetadata(String targetType, Id.NamespacedId targetId, String key) {
     MDSKey mdsKey = getInstanceKey(targetType, targetId, key);
-    return get(mdsKey, BusinessMetadataRecord.class);
+    Row row = indexedTable.get(mdsKey.getKey());
+    if (row.isEmpty()) {
+      return null;
+    }
+
+    byte[] keyvalue = row.get(KEYVALUE_COLUMN);
+    byte[] value = row.get(VALUE_COLUMN);
+
+    return new BusinessMetadataRecord(targetType, targetId, key, Bytes.toString(value));
+  }
+
+  private static Id.NamespacedId fromString(String type, String id) {
+    if (type.equals(Id.Program.class.getSimpleName())) {
+      return Id.Program.fromStrings(id.split("/"));
+    } else if (type.equals(Id.Application.class.getSimpleName())) {
+      return Id.Application.fromStrings(id.split("/"));
+    } else if (type.equals(Id.DatasetInstance.class.getSimpleName())) {
+      // TODO Add code
+    } else if (type.equals(Id.Stream.class.getSimpleName())) {
+      return Id.Stream.fromId(id);
+    }
+    throw new IllegalArgumentException("Illegal Type of metadata source.");
   }
 
   /**
    * Find the instance of {@link BusinessMetadataRecord} based on key.
    *
-   * @param key The metadata key to be found.
+   * @param key The metadata value to be found.
    * @return Collection of {@link BusinessMetadataRecord} fits the key.
    */
-  public Collection<BusinessMetadataRecord> findBusineesMetadataOnKey(String key) {
+  public Collection<BusinessMetadataRecord> findBusinessMetadataOnKey(String key) {
 
     // TODO ADD CODE
 
     return Lists.newArrayList();
   }
 
-  @Override
-  public <T> void write(MDSKey id, T value) {
+  private void write(MDSKey id, BusinessMetadataRecord record) {
     try {
       Put put = new Put(id.getKey());
 
-      BusinessMetadataRecord record = (BusinessMetadataRecord) value;
-
       // Now add the index columns.
       put.add(Bytes.toBytes(KEYVALUE_COLUMN), Bytes.toBytes(record.getKey() + ":" + record.getValue()));
-      put.add(Bytes.toBytes(VALUE_COLUMN), Bytes.toBytes(record.getKey()));
-
-      // Add to main "c" column for MetadataStoreDataset.
-      put.add(COLUMN, serialize(value));
+      put.add(Bytes.toBytes(VALUE_COLUMN), Bytes.toBytes(record.getValue()));
 
       indexedTable.put(put);
     } catch (Exception e) {
@@ -123,12 +134,10 @@ public class BusinessMetadataDataset extends MetadataStoreDataset {
   }
 
   // Helper method to generate key.
-  private MDSKey getInstanceKey(String targetType, String targetId, String key) {
-    // TODO Add code
-
+  private MDSKey getInstanceKey(String targetType, Id.NamespacedId targetId, String key) {
     MDSKey.Builder builder = new MDSKey.Builder();
     builder.add(targetType);
-    builder.add(targetId);
+    builder.add(targetId.toString());
     builder.add(key);
 
     return builder.build();
