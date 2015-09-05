@@ -363,6 +363,7 @@ function set_message() {
       echo >> ${TMP_MESSAGES_FILE}
     fi
     echo_red_bold "Warning Message for \"${MANUAL}\":" >> ${TMP_MESSAGES_FILE}
+    echo >> ${TMP_MESSAGES_FILE}
     echo "${*}" >> ${TMP_MESSAGES_FILE}
   fi
 }
@@ -378,7 +379,9 @@ function consolidate_messages() {
   if [ -s ${TARGET}/${SPHINX_MESSAGES} ]; then
     echo_red_bold "Consolidating Sphinx messages" 
     m="Sphinx ${m}"
+    echo >> ${TMP_MESSAGES_FILE}
     echo_red_bold "${m}" >> ${TMP_MESSAGES_FILE}
+    echo >> ${TMP_MESSAGES_FILE}
     cat ${TARGET}/${SPHINX_MESSAGES} | while read line
     do
       echo ${line} >> ${TMP_MESSAGES_FILE}
