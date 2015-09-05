@@ -23,16 +23,16 @@ import javax.annotation.Nullable;
  */
 public class BusinessMetadataRecord {
   private final String targetType;
-  private final String targetId;
+  private final Id.NamespacedId  targetId;
   private final String key;
   private final String value;
   private final String schema;
 
-  public BusinessMetadataRecord(String targetType, String targetId, String key, String value) {
+  public BusinessMetadataRecord(String targetType, Id.NamespacedId targetId, String key, String value) {
     this(targetType, targetId, key, value, null);
   }
 
-  public BusinessMetadataRecord(String targetType, String targetId, String key, String value,
+  public BusinessMetadataRecord(String targetType, Id.NamespacedId  targetId, String key, String value,
                                 @Nullable String schema) {
     this.targetType = targetType;
     this.targetId = targetId;
@@ -45,7 +45,7 @@ public class BusinessMetadataRecord {
     return targetType;
   }
 
-  public String getTargetId() {
+  public Id.NamespacedId  getTargetId() {
     return targetId;
   }
 
@@ -88,8 +88,8 @@ public class BusinessMetadataRecord {
   public String toString() {
     return "{" +
       "targetType='" + targetType + '\'' +
-      "targetId='" + targetId + '\'' +
-      "key='" + key + '\'' +
+      ", targetId='" + targetId + '\'' +
+      ", key='" + key + '\'' +
       ", value='" + value + '\'' +
       ", schema='" + (schema != null ? schema : 0) +
       '}';
