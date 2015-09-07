@@ -23,6 +23,7 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
+import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import org.jboss.netty.buffer.ChannelBuffer;
@@ -34,6 +35,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Type;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import javax.ws.rs.DELETE;
@@ -235,7 +237,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                          @PathParam("namespace-id") String namespaceId,
                          @PathParam("app-id") String appId) throws Exception {
     Id.Application app = Id.Application.from(namespaceId, appId);
-    responder.sendJson(HttpResponseStatus.OK, metadataAdmin.getTags(app));
+    responder.sendJson(HttpResponseStatus.OK, Sets.newHashSet(metadataAdmin.getTags(app)));
   }
 
   @GET
@@ -247,7 +249,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                              @PathParam("program-id") String programId) throws Exception {
     Id.Program program = Id.Program.from(Id.Application.from(namespaceId, appId),
                                          ProgramType.valueOfCategoryName(programType), programId);
-    responder.sendJson(HttpResponseStatus.OK, metadataAdmin.getTags(program));
+    responder.sendJson(HttpResponseStatus.OK, Sets.newHashSet(metadataAdmin.getTags(program)));
   }
 
   @GET
@@ -256,7 +258,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                              @PathParam("namespace-id") String namespaceId,
                              @PathParam("dataset-id") String datasetId) throws Exception {
     Id.DatasetInstance dataset = Id.DatasetInstance.from(namespaceId, datasetId);
-    responder.sendJson(HttpResponseStatus.OK, metadataAdmin.getTags(dataset));
+    responder.sendJson(HttpResponseStatus.OK, Sets.newHashSet(metadataAdmin.getTags(dataset)));
   }
 
   @GET
@@ -265,7 +267,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                             @PathParam("namespace-id") String namespaceId,
                             @PathParam("stream-id") String streamId) throws Exception {
     Id.Stream stream = Id.Stream.from(namespaceId, streamId);
-    responder.sendJson(HttpResponseStatus.OK, metadataAdmin.getTags(stream));
+    responder.sendJson(HttpResponseStatus.OK, Sets.newHashSet(metadataAdmin.getTags(stream)));
   }
 
   @DELETE
@@ -328,7 +330,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   private String[] readArray(HttpRequest request) throws BadRequestException, IOException {
     ChannelBuffer content = request.getContent();
     if (!content.readable()) {
-      throw new BadRequestException("Unable to read business metadata from request.");
+      throw new BadRequestException("Unable to read a list of keys from the request.");
     }
     try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(content), Charsets.UTF_8)) {
       List<String> toReturn = GSON.fromJson(reader, LIST_STRING_TYPE);

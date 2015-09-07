@@ -43,7 +43,9 @@ import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
-import co.cask.cdap.data2.metadata.service.MockMetadataAdmin;
+import co.cask.cdap.data2.metadata.service.BusinessMetadataStore;
+import co.cask.cdap.data2.metadata.service.DefaultMetadataAdmin;
+import co.cask.cdap.data2.metadata.service.MetadataAdmin;
 import co.cask.cdap.data2.metrics.DatasetMetricsReporter;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.explore.client.DiscoveryExploreClient;
@@ -189,6 +191,8 @@ public abstract class DatasetServiceTestBase {
       exploreFacade,
       cConf,
       new UsageRegistry(txExecutorFactory, dsFramework), namespaceClient);
+    MetadataAdmin metadataAdmin = new DefaultMetadataAdmin(namespaceClient,
+                                                           new BusinessMetadataStore(txExecutorFactory, dsFramework));
     service = new DatasetService(cConf,
                                  namespacedLocationFactory,
                                  discoveryService,
@@ -204,7 +208,7 @@ public abstract class DatasetServiceTestBase {
                                  new LocalStorageProviderNamespaceAdmin(cConf, namespacedLocationFactory,
                                                                         exploreFacade),
                                  namespaceClient,
-                                 new MockMetadataAdmin()
+                                 metadataAdmin
     );
 
     // Start dataset service, wait for it to be discoverable
