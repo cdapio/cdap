@@ -88,3 +88,5 @@ Flows and flowlets are included in just about every CDAP :ref:`application <apps
 - The :ref:`Web Analytics <examples-web-analytics>` example uses a single flowlet to
   perform analytics using access logs.
   
+- The :ref:`Purchase <examples-purchase>` example demonstrates :ref:`setting the resources
+  <flows-flowlets-resources>` used by an individual instance of a flowlet.

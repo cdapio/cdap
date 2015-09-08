@@ -71,7 +71,7 @@ with this method defined in ``PurchaseStore.java``:
 .. literalinclude:: /../../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseStore.java
    :language: java
    :start-after: @ProcessInput
-   :end-before: /**
+   :end-before: @Override
 
 This method is what actually puts data into the *purchases* dataset, by writing to the
 dataset with each purchase's timestamp and the ``Purchase`` Object.

@@ -2,6 +2,9 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2014 Cask Data, Inc.
 
+.. _flows-flowlets-instances:
+.. _flows-flowlets-resources:
+
 ===============================
 Flowlet Instances and Resources
 ===============================
