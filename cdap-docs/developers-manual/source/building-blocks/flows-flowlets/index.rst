@@ -53,7 +53,7 @@ or flowlet to flowlet), and any :ref:`Datasets <datasets-index>` used in the flo
 
 To create a flow, extend ``AbstractFlow`` and override the ``configureFlow`` method::
 
-  class MyExampleFlow extends AbstractFlow {
+  public class MyExampleFlow extends AbstractFlow {
 
     @Override
     public void configureFlow() {
@@ -82,4 +82,9 @@ Flows and flowlets are included in just about every CDAP :ref:`application <apps
   <examples-count-random>` example.
 
 - For examples of **flows with multiple flowlets,** see the :ref:`Purchase
-  <examples-purchase>` and :ref:`Count Random <examples-count-random>` examples.
+  <examples-purchase>`, :ref:`Count Random <examples-count-random>`, and
+  :ref:`Word Count <examples-word-count>` examples.
+  
+- The :ref:`Web Analytics <examples-web-analytics>` example uses a single flowlet to
+  perform analytics using access logs.
+  
