@@ -61,6 +61,7 @@ public class TimePartitionedFileSetDatasetParquetSink extends
 
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
+    super.configurePipeline(pipelineConfigurer);
     String tpfsName = tpfsSinkConfig.name;
     String basePath = tpfsSinkConfig.basePath == null ? tpfsName : tpfsSinkConfig.basePath;
     try {
@@ -107,8 +108,9 @@ public class TimePartitionedFileSetDatasetParquetSink extends
     @Description(SCHEMA_DESC)
     private String schema;
 
-    public TPFSParquetSinkConfig(String name, String schema, @Nullable String basePath) {
-      super(name, basePath);
+    public TPFSParquetSinkConfig(String name, String schema, @Nullable String basePath, @Nullable String pathFormat,
+                                 @Nullable String timeZone) {
+      super(name, basePath, pathFormat, timeZone);
       this.schema = schema;
     }
   }

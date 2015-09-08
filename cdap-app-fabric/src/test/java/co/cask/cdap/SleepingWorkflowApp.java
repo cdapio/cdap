@@ -20,7 +20,7 @@ import co.cask.cdap.api.annotation.Property;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.AbstractWorkflowAction;
-import co.cask.cdap.api.workflow.WorkflowActionSpecification;
+import co.cask.cdap.api.workflow.WorkflowActionConfigurer;
 import co.cask.cdap.api.workflow.WorkflowContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,7 +50,6 @@ public class SleepingWorkflowApp extends AbstractApplication {
     }
   }
 
-
   /**
    *
    */
@@ -68,11 +67,10 @@ public class SleepingWorkflowApp extends AbstractApplication {
     }
 
     @Override
-    public WorkflowActionSpecification configure() {
-      return WorkflowActionSpecification.Builder.with()
-        .setName(name)
-        .setDescription(name)
-        .build();
+    public void configure(WorkflowActionConfigurer configurer) {
+      super.configure(configurer);
+      setName(name);
+      setDescription(name);
     }
 
     @Override

@@ -59,6 +59,7 @@ public class TimePartitionedFileSetDatasetAvroSink extends
 
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
+    super.configurePipeline(pipelineConfigurer);
     String tpfsName = tpfsSinkConfig.name;
     String basePath = tpfsSinkConfig.basePath == null ? tpfsName : tpfsSinkConfig.basePath;
     pipelineConfigurer.createDataset(tpfsName, TimePartitionedFileSet.class.getName(), FileSetProperties.builder()
@@ -102,8 +103,9 @@ public class TimePartitionedFileSetDatasetAvroSink extends
     @Description(SCHEMA_DESC)
     private String schema;
 
-    public TPFSAvroSinkConfig(String name, String schema, @Nullable String basePath) {
-      super(name, basePath);
+    public TPFSAvroSinkConfig(String name, String schema, @Nullable String basePath, @Nullable String pathFormat,
+                              @Nullable String timeZone) {
+      super(name, basePath, pathFormat, timeZone);
       this.schema = schema;
     }
   }

@@ -197,6 +197,13 @@ public class ArtifactClientTestRun extends ClientTestBase {
     // list all artifacts named 'myapp-plugins'
     Assert.assertEquals(Sets.newHashSet(pluginArtifactSummary),
                         Sets.newHashSet(artifactClient.listVersions(Id.Namespace.DEFAULT, pluginId.getName())));
+    // artifacts should be in user scope
+    try {
+      artifactClient.listVersions(Id.Namespace.DEFAULT, pluginId.getName(), ArtifactScope.SYSTEM);
+      Assert.fail();
+    } catch (ArtifactNotFoundException e) {
+      // expected
+    }
 
     // get info about specific artifacts
     Schema myAppConfigSchema = new ReflectionSchemaGenerator().generate(MyApp.Conf.class);

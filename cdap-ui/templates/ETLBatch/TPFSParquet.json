@@ -4,7 +4,7 @@
     "position": [ "group1" ],
     "group1": {
        "display" : "Time Partitioned Fileset - Parquet",
-       "position" : [ "name", "basePath"],
+       "position" : [ "name", "basePath", "filePathFormat", "timeZone" ],
        "fields" : {
           "name" : {
              "widget": "dataset-selector",
@@ -14,6 +14,16 @@
           "basePath" : {
              "widget": "textbox",
              "label": "Dataset Base Path"
+          },
+
+          "filePathFormat": {
+            "widget": "textbox",
+            "label": "Partition Directory Format"
+          },
+
+          "timeZone": {
+            "widget": "textbox",
+            "label": "Time Zone"
           }
        }
     }

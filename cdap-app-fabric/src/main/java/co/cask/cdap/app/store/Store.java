@@ -221,21 +221,6 @@ public interface Store {
   Collection<ApplicationSpecification> getAllApplications(Id.Namespace id);
 
   /**
-   * Returns a collection of all application specs in the specified namespace, optionally filtered to contain
-   * only applications that use the specified artifact name and version.
-   *
-   * @param namespace the namespace to get application specs from
-   * @param artifactName the name of the artifact to filter on.
-   *                     If null, app specs will not be filtered by artifact name.
-   * @param artifactVersion the version of the artifact to filter on.
-   *                        If null, app specs will not be filtered by artifact version.
-   * @return collection of all application specs in the namespace
-   */
-  Collection<ApplicationSpecification> getApplications(Id.Namespace namespace,
-                                                       @Nullable String artifactName,
-                                                       @Nullable String artifactVersion);
-
-  /**
    * Returns location of the application archive.
    *
    * @param id application id

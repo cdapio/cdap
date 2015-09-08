@@ -30,18 +30,30 @@
 
 package co.cask.cdap.partitioned;
 
+import co.cask.cdap.api.dataset.lib.PartitionDetail;
+import co.cask.cdap.api.dataset.lib.PartitionFilter;
+import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.test.ApplicationManager;
+import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.MapReduceManager;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.base.TestFrameworkTestBase;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
+import com.google.common.collect.Lists;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.net.URL;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -90,6 +102,31 @@ public class MapReducePartitionConsumingTestRun extends TestFrameworkTestBase {
     Assert.assertEquals(new Long(3), getCount(serviceURL, "a"));
     Assert.assertEquals(new Long(3), getCount(serviceURL, "b"));
     Assert.assertEquals(new Long(3), getCount(serviceURL, "c"));
+
+    DataSetManager<PartitionedFileSet> outputLines = getDataset("outputLines");
+    PartitionFilter filter =
+      PartitionFilter.builder().addRangeCondition("time", 0L, System.currentTimeMillis()).build();
+    Set<PartitionDetail> partitions = outputLines.get().getPartitions(filter);
+
+    Assert.assertEquals(2, partitions.size());
+
+    // we only store the counts to the "outputLines" dataset
+    List<String> expectedCounts = Lists.newArrayList("1", "1", "2", "2", "3");
+    List<String> outputRecords = getDataFromExplore("outputLines");
+    Collections.sort(outputRecords);
+    Assert.assertEquals(expectedCounts, outputRecords);
+  }
+
+  private List<String> getDataFromExplore(String dsName) throws Exception {
+    try (Connection connection = getQueryClient()) {
+      ResultSet results = connection.prepareStatement("SELECT * FROM dataset_" + dsName).executeQuery();
+
+      List<String> cleanRecords = new ArrayList<>();
+      while (results.next()) {
+        cleanRecords.add(results.getString(1));
+      }
+      return cleanRecords;
+    }
   }
 
   private void createPartition(URL serviceUrl, String body, String time) throws IOException {

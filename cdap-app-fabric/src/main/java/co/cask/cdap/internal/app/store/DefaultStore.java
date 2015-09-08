@@ -18,7 +18,6 @@ package co.cask.cdap.internal.app.store;
 
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetDefinition;
@@ -40,6 +39,7 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.archive.ArchiveBundler;
 import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.ProgramNotFoundException;
+import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
@@ -66,7 +66,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
-import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
@@ -156,7 +155,8 @@ public class DefaultStore implements Store {
    *
    * @param framework framework to add types and datasets to
    */
-  public static void setupDatasets(DatasetFramework framework) throws IOException, DatasetManagementException {
+  public static void setupDatasets(DatasetFramework framework) throws IOException, DatasetManagementException,
+    ServiceUnavailableException {
     framework.addInstance(Table.class.getName(), Id.DatasetInstance.from(Id.Namespace.SYSTEM, APP_META_TABLE),
                           DatasetProperties.EMPTY);
     framework.addInstance(Table.class.getName(), Id.DatasetInstance.from(Id.Namespace.SYSTEM, WORKFLOW_STATS_TABLE),
@@ -702,15 +702,6 @@ public class DefaultStore implements Store {
                                });
       }
     });
-  }
-
-  @Override
-  public Collection<ApplicationSpecification> getApplications(final Id.Namespace namespace,
-                                                              @Nullable final String artifactName,
-                                                              @Nullable final String artifactVersion) {
-    Collection<ApplicationSpecification> allApps = getAllApplications(namespace);
-    Predicate<ApplicationSpecification> filterPredicate = getAppPredicate(artifactName, artifactVersion);
-    return filterPredicate == null ? allApps : Collections2.filter(allApps, filterPredicate);
   }
 
   @Nullable
@@ -1333,36 +1324,6 @@ public class DefaultStore implements Store {
     @Override
     public Iterator<WorkflowDataset> iterator() {
       return Iterators.singletonIterator(workflowDataset);
-    }
-  }
-
-  // get filter for app specs by artifact name and version. if they are null, it means don't filter.
-  private Predicate<ApplicationSpecification> getAppPredicate(@Nullable final String artifactName,
-                                                              @Nullable final String artifactVersion) {
-    if (artifactName == null && artifactVersion == null) {
-      return null;
-    } else if (artifactName == null) {
-      return new Predicate<ApplicationSpecification>() {
-        @Override
-        public boolean apply(ApplicationSpecification input) {
-          return artifactVersion.equals(input.getArtifactId().getVersion().getVersion());
-        }
-      };
-    } else if (artifactVersion == null) {
-      return new Predicate<ApplicationSpecification>() {
-        @Override
-        public boolean apply(ApplicationSpecification input) {
-          return artifactName.equals(input.getArtifactId().getName());
-        }
-      };
-    } else {
-      return new Predicate<ApplicationSpecification>() {
-        @Override
-        public boolean apply(ApplicationSpecification input) {
-          ArtifactId artifact = input.getArtifactId();
-          return artifactVersion.equals(artifact.getVersion().getVersion()) && artifactName.equals(artifact.getName());
-        }
-      };
     }
   }
 }

@@ -16,12 +16,16 @@
 
 package co.cask.cdap.partitioned;
 
+import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.batch.BatchWritable;
+import co.cask.cdap.api.data.batch.DatasetOutputCommitter;
+import co.cask.cdap.api.data.batch.OutputFormatProvider;
+import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.AbstractDataset;
 import co.cask.cdap.api.dataset.lib.BatchPartitionConsumer;
@@ -29,11 +33,13 @@ import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionOutput;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
+import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetProperties;
 import co.cask.cdap.api.dataset.lib.Partitioning;
 import co.cask.cdap.api.dataset.module.EmbeddedDataset;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
+import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
 import co.cask.cdap.api.service.AbstractService;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
@@ -51,6 +57,8 @@ import org.apache.twill.filesystem.Location;
 import java.io.IOException;
 import java.nio.channels.Channels;
 import java.nio.channels.WritableByteChannel;
+import java.util.HashMap;
+import java.util.Map;
 import javax.annotation.Nullable;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
@@ -79,6 +87,21 @@ public class AppWithMapReduceConsumingPartitions extends AbstractApplication {
       .setInputFormat(TextInputFormat.class)
       .setOutputFormat(TextOutputFormat.class)
       .setOutputProperty(TextOutputFormat.SEPERATOR, ",")
+      .build());
+
+    // Create the "outputLines" partitioned file set, configure it to work with MapReduce
+    createDataset("outputLines", PartitionedFileSet.class, PartitionedFileSetProperties.builder()
+      // Properties for partitioning
+      .setPartitioning(Partitioning.builder().addLongField("time").build())
+      // Properties for file set
+      .setInputFormat(TextInputFormat.class)
+      .setOutputFormat(TextOutputFormat.class)
+      .setOutputProperty(TextOutputFormat.SEPERATOR, ",")
+      // enable explore
+      .setEnableExploreOnCreate(true)
+      .setExploreFormat("text")
+      .setExploreFormatProperty("delimiter", "\n")
+      .setExploreSchema("record STRING")
       .build());
   }
 
@@ -134,6 +157,26 @@ public class AppWithMapReduceConsumingPartitions extends AbstractApplication {
       PartitionedFileSet lines = batchPartitionConsumer.getConfiguredDataset(context, "lines");
       context.setInput("lines", lines);
 
+      Map<String, String> outputArgs = new HashMap<>();
+      PartitionKey partitionKey = PartitionKey.builder().addLongField("time", context.getLogicalStartTime()).build();
+      PartitionedFileSetArguments.setOutputPartitionKey(outputArgs, partitionKey);
+
+      // We know that PartitionedFileSet is an OutputFormatProvider, so we set our own instance of an
+      // OutputFormatProvider (that delegates to the PFS's implementation) as an output to the MapReduce job
+      // to test MapReduceContext#addOutput(String, OutputFormatProvider)
+      final PartitionedFileSet outputLines = context.getDataset("outputLines", outputArgs);
+      context.addOutput("outputLines", new OutputFormatProvider() {
+        @Override
+        public String getOutputFormatClassName() {
+          return outputLines.getOutputFormatClassName();
+        }
+
+        @Override
+        public Map<String, String> getOutputFormatConfiguration() {
+          return outputLines.getOutputFormatConfiguration();
+        }
+      });
+
       Job job = context.getHadoopJob();
       job.setMapperClass(Tokenizer.class);
       job.setReducerClass(Counter.class);
@@ -145,6 +188,16 @@ public class AppWithMapReduceConsumingPartitions extends AbstractApplication {
       if (succeeded) {
         batchPartitionConsumer.persist(context);
       }
+
+      // We have to manually call the PFS's onSuccess, because since we only added it as an OutputFormatProvider,
+      // it doesn't get treated as a dataset (its onSuccess method won't be called by our MR framework)
+      Map<String, String> outputArgs = new HashMap<>();
+      PartitionKey partitionKey = PartitionKey.builder().addLongField("time", context.getLogicalStartTime()).build();
+      PartitionedFileSetArguments.setOutputPartitionKey(outputArgs, partitionKey);
+
+      PartitionedFileSet outputLines = context.getDataset("outputLines", outputArgs);
+      ((DatasetOutputCommitter) outputLines).onSuccess();
+
       super.onFinish(succeeded, context);
     }
 
@@ -169,7 +222,19 @@ public class AppWithMapReduceConsumingPartitions extends AbstractApplication {
     /**
      * A reducer that sums up the counts for each key.
      */
-    public static class Counter extends Reducer<Text, IntWritable, byte[], Long> {
+    public static class Counter extends Reducer<Text, IntWritable, byte[], Long>
+      implements ProgramLifecycle<MapReduceTaskContext<byte[], Long>> {
+
+      private MapReduceTaskContext<byte[], Long> mapReduceTaskContext;
+
+      @Override
+      public void initialize(MapReduceTaskContext<byte[], Long> context) throws Exception {
+        this.mapReduceTaskContext = context;
+      }
+
+      @Override
+      public void destroy() {
+      }
 
       @Override
       public void reduce(Text key, Iterable<IntWritable> values, Context context)
@@ -178,7 +243,8 @@ public class AppWithMapReduceConsumingPartitions extends AbstractApplication {
         for (IntWritable value : values) {
           sum += value.get();
         }
-        context.write(key.getBytes(), sum);
+        mapReduceTaskContext.write("counts", key.getBytes(), sum);
+        mapReduceTaskContext.write("outputLines", null, sum);
       }
     }
   }

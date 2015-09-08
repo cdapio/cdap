@@ -18,7 +18,6 @@ package co.cask.cdap.test.app;
 
 import co.cask.cdap.ConfigTestApp;
 import co.cask.cdap.api.app.Application;
-import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;

@@ -133,7 +133,7 @@
     <snappy.version>1.1.1.7</snappy.version>
     <shiro.version>1.2.1</shiro.version>
     <slf4j.version>1.7.5</slf4j.version>
-    <tephra.version>0.6.0</tephra.version>
+    <tephra.version>0.6.2</tephra.version>
     <thrift.version>0.9.0</thrift.version>
     <!-- TODO: Remove snapshot when twill released (CDAP-3498) -->
     <twill.version>0.7.0-incubating-SNAPSHOT</twill.version>
@@ -1295,6 +1295,8 @@
                   <exclude>**/*.jshintignore</exclude>
                   <exclude>**/*.jshintrc</exclude>
                   <exclude>**/*.svg</exclude>
+                  <exclude>**/bower_components/**</exclude>
+                  <exclude>**/node_modules/**</exclude>
                 </excludes>
               </configuration>
             </execution>
@@ -2158,6 +2160,7 @@
         <module>cdap-hbase-compat-1.0-cdh</module>
         <module>cdap-hbase-compat-1.0</module>
         <module>cdap-common</module>
+        <module>cdap-docs-gen</module>
         <module>cdap-watchdog-api</module>
         <module>cdap-kafka</module>
         <module>cdap-data-fabric</module>

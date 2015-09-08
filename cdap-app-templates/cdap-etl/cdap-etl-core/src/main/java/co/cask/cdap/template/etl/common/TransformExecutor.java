@@ -34,8 +34,6 @@ import java.util.List;
  */
 public class TransformExecutor<IN, OUT> implements Destroyable {
 
-  private static final Logger LOG = LoggerFactory.getLogger(TransformExecutor.class);
-
   private final List<Transformation> transforms;
   private final List<DefaultEmitter> emitters;
 
@@ -46,7 +44,7 @@ public class TransformExecutor<IN, OUT> implements Destroyable {
     this.emitters = Lists.newArrayListWithCapacity(numTransforms);
     for (int i = 0; i < numTransforms; i++) {
       StageMetrics stageMetrics = transformMetrics.get(i);
-      this.transforms.add(new TrackedTransform(transforms.get(i), stageMetrics));
+      this.transforms.add(new TrackedTransform<>(transforms.get(i), stageMetrics));
       this.emitters.add(new DefaultEmitter(stageMetrics));
     }
   }

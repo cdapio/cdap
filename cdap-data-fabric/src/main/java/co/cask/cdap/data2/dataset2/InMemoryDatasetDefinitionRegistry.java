@@ -34,13 +34,14 @@ public class InMemoryDatasetDefinitionRegistry implements DatasetDefinitionRegis
 
   @Override
   public <T extends DatasetDefinition> T get(String datasetType) {
-    DatasetDefinition def = datasetTypes.get(datasetType);
+    @SuppressWarnings("unchecked")
+    T def = (T) datasetTypes.get(datasetType);
     if (def == null) {
       String msg = "Requested dataset type does NOT exist: " + datasetType;
       LOG.debug(msg);
       throw new IllegalArgumentException(msg);
     }
-    return (T) def;
+    return def;
   }
 
   @Override

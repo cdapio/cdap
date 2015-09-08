@@ -21,9 +21,12 @@ import org.apache.hive.service.cli.SessionHandle;
 
 import java.util.Map;
 
+/**
+ * OperationInfo that represents a read-only operation.
+ */
 final class ReadOnlyOperationInfo extends OperationInfo {
-  public ReadOnlyOperationInfo(SessionHandle sessionHandle, OperationHandle operationHandle,
-                                Map<String, String> sessionConf, String statement, String namespace) {
+  ReadOnlyOperationInfo(SessionHandle sessionHandle, OperationHandle operationHandle,
+                        Map<String, String> sessionConf, String statement, String namespace) {
     super(sessionHandle, operationHandle, sessionConf, statement, System.currentTimeMillis(), namespace, true);
   }
 }

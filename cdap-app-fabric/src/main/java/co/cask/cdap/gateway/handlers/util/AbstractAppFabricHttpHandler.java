@@ -19,7 +19,6 @@ package co.cask.cdap.gateway.handlers.util;
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.artifact.ArtifactId;
-import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.NamespaceNotFoundException;
@@ -35,6 +34,7 @@ import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Closeables;
@@ -173,27 +173,6 @@ public abstract class AbstractAppFabricHttpHandler extends AbstractHttpHandler {
     } finally {
       Closeables.closeQuietly(reader);
     }
-  }
-
-  protected final void getAppRecords(HttpResponder responder, Store store,
-                                     String namespaceId,
-                                     @Nullable String artifactName,
-                                     @Nullable String artifactVersion) throws NamespaceNotFoundException {
-    Id.Namespace namespace = Id.Namespace.from(namespaceId);
-    if (store.getNamespace(namespace) == null) {
-      throw new NamespaceNotFoundException(namespace);
-    }
-
-    List<ApplicationRecord> appRecords = new ArrayList<>();
-    for (ApplicationSpecification appSpec : store.getApplications(namespace, artifactName, artifactVersion)) {
-      // possible if this particular app was deploy prior to v3.2 and upgrade failed for some reason.
-      ArtifactId artifactId = appSpec.getArtifactId();
-      ArtifactSummary artifactSummary = artifactId == null ?
-        new ArtifactSummary(appSpec.getName(), null) : ArtifactSummary.from(artifactId);
-      appRecords.add(new ApplicationRecord(artifactSummary, appSpec.getName(), appSpec.getDescription()));
-    }
-
-    responder.sendJson(HttpResponseStatus.OK, appRecords);
   }
 
   protected final void programList(HttpResponder responder, String namespaceId, ProgramType type, Store store) {

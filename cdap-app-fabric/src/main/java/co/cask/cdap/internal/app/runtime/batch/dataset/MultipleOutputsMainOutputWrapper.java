@@ -17,7 +17,6 @@
 package co.cask.cdap.internal.app.runtime.batch.dataset;
 
 import co.cask.cdap.common.lang.InstantiatorFactory;
-import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
@@ -30,7 +29,6 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -48,9 +46,9 @@ public class MultipleOutputsMainOutputWrapper<K, V> extends OutputFormat<K, V> {
   private OutputCommitter committer;
 
   @Override
-  public RecordWriter getRecordWriter(TaskAttemptContext job) throws IOException, InterruptedException {
+  public RecordWriter<K, V> getRecordWriter(TaskAttemptContext job) throws IOException, InterruptedException {
     OutputFormat<K, V> rootOutputFormat = getRootOutputFormat(job);
-    return rootOutputFormat.<K, V>getRecordWriter(job);
+    return rootOutputFormat.getRecordWriter(job);
   }
 
   @Override
@@ -83,12 +81,14 @@ public class MultipleOutputsMainOutputWrapper<K, V> extends OutputFormat<K, V> {
 
   // the root OutputFormat is used only for writing, not for checking output specs or committing of the output
   // because the root is also in the delegates, which check the output spec and commit the output.
-  private OutputFormat getRootOutputFormat(JobContext context) {
+  private OutputFormat<K, V> getRootOutputFormat(JobContext context) {
     if (innerFormat == null) {
       Configuration conf = context.getConfiguration();
-      Class c = conf.getClass(ROOT_OUTPUT_FORMAT, FileOutputFormat.class);
+      @SuppressWarnings("unchecked")
+      Class<OutputFormat<K, V>> c = (Class<OutputFormat<K, V>>) conf.getClass(ROOT_OUTPUT_FORMAT,
+                                                                              FileOutputFormat.class);
       try {
-        innerFormat = (OutputFormat) c.newInstance();
+        innerFormat = c.newInstance();
       } catch (InstantiationException | IllegalAccessException e) {
         throw new RuntimeException(e);
       }

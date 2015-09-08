@@ -60,13 +60,8 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
 
   @GET
   @Path("/namespaces")
-  public void getAllNamespaces(HttpRequest request, HttpResponder responder) {
-    try {
-      responder.sendJson(HttpResponseStatus.OK, namespaceAdmin.list());
-    } catch (Exception e) {
-      LOG.error("Internal error while listing all namespaces", e);
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-    }
+  public void getAllNamespaces(HttpRequest request, HttpResponder responder) throws Exception {
+    responder.sendJson(HttpResponseStatus.OK, namespaceAdmin.list());
   }
 
   @GET

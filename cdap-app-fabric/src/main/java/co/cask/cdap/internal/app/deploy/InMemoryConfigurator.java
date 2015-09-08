@@ -42,6 +42,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -162,20 +163,22 @@ public final class InMemoryConfigurator implements Configurator {
       configurer = artifactId == null ?
         new DefaultAppConfigurer(app, configString) :
         new DefaultAppConfigurer(artifactId, app, configString, artifactRepository, pluginInstantiator);
-    }
 
-    Config appConfig;
-    TypeToken typeToken = TypeToken.of(app.getClass());
-    TypeToken<?> configToken = typeToken.resolveType(Application.class.getTypeParameters()[0]);
-    if (Strings.isNullOrEmpty(configString)) {
-      appConfig = (Config) configToken.getRawType().newInstance();
-    } else {
-      //TODO: CDAP-2869 Handle JsonSyntax Exception better and throw a more meaningful error. This will be done when we
-      //use PluginInstantiator methods instead of GSON deserialization
-      appConfig = GSON.fromJson(configString, configToken.getType());
-    }
+      Config appConfig;
+      TypeToken typeToken = TypeToken.of(app.getClass());
+      TypeToken<?> configToken = typeToken.resolveType(Application.class.getTypeParameters()[0]);
+      if (Strings.isNullOrEmpty(configString)) {
+        appConfig = (Config) configToken.getRawType().newInstance();
+      } else {
+        try {
+          appConfig = GSON.fromJson(configString, configToken.getType());
+        } catch (JsonSyntaxException e) {
+          throw new IllegalArgumentException("Invalid JSON configuration was provided. Please check the syntax.", e);
+        }
+      }
 
-    app.configure(configurer, new DefaultApplicationContext(appConfig));
+      app.configure(configurer, new DefaultApplicationContext(appConfig));
+    }
     ApplicationSpecification specification = configurer.createSpecification();
 
     // Convert the specification to JSON.

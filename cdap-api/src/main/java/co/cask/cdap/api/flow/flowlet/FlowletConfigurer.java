@@ -56,7 +56,7 @@ public interface FlowletConfigurer extends DatasetConfigurer {
   void setFailurePolicy(FailurePolicy failurePolicy);
 
   /**
-   * Sets a set of properties that will be available through {@link FlowletSpecification} at runtime.
+   * Sets a map of properties that will be available through {@link FlowletSpecification} at runtime.
    *
    * @param properties properties
    */

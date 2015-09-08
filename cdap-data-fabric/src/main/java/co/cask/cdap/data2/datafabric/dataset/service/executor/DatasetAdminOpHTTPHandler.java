@@ -21,6 +21,7 @@ import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.common.HandlerException;
+import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
@@ -209,7 +210,7 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
   }
 
   private DatasetAdmin getDatasetAdmin(Id.DatasetInstance datasetInstanceId)
-    throws IOException, DatasetManagementException {
+    throws IOException, DatasetManagementException, ServiceUnavailableException {
 
     try (SystemDatasetInstantiator datasetInstantiator = datasetInstantiatorFactory.create()) {
       DatasetAdmin admin = datasetInstantiator.getDatasetAdmin(datasetInstanceId);

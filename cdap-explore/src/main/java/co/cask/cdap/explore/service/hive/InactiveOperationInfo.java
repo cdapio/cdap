@@ -21,6 +21,9 @@ import co.cask.cdap.proto.QueryStatus;
 
 import java.util.List;
 
+/**
+ * OperationInfo representing an inactive operation.
+ */
 final class InactiveOperationInfo extends OperationInfo {
   private final List<ColumnDesc> schema;
   private final QueryStatus status;

@@ -28,10 +28,14 @@ import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetProperties;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
+import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Map;
+import java.util.TimeZone;
 
 /**
  * Defines the partitioned dataset type. At this time, the partitions are not managed by the
@@ -82,7 +86,18 @@ public class TimePartitionedFileSetDefinition extends PartitionedFileSetDefiniti
     if (time != null) {
       // set the output path according to partition time
       if (FileSetArguments.getOutputPath(arguments) == null) {
-        String path = String.format("%tF/%tH-%tM.%d", time, time, time, time);
+        String outputPathFormat = TimePartitionedFileSetArguments.getOutputPathFormat(arguments);
+        String path;
+        if (Strings.isNullOrEmpty(outputPathFormat)) {
+          path = String.format("%tF/%tH-%tM.%d", time, time, time, time);
+        } else {
+          SimpleDateFormat format = new SimpleDateFormat(outputPathFormat);
+          String timeZoneID = TimePartitionedFileSetArguments.getOutputPathTimeZone(arguments);
+          if (!Strings.isNullOrEmpty(timeZoneID)) {
+            format.setTimeZone(TimeZone.getTimeZone(timeZoneID));
+          }
+          path = format.format(new Date(time));
+        }
         arguments = Maps.newHashMap(arguments);
         FileSetArguments.setOutputPath(arguments, path);
       }

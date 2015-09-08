@@ -55,6 +55,7 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocationFactory;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -74,6 +75,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   private final Metrics userMetrics;
   private final Map<String, Plugin> plugins;
   private final Map<String, Dataset> outputDatasets;
+  private final Map<String, OutputFormatProvider> outputFormatProviders;
 
   private String inputDatasetName;
   private List<Split> inputDataSelection;
@@ -117,9 +119,15 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
     this.reducerResources = spec.getReducerResources();
     // initialize input/output to what the spec says. These can be overwritten at runtime.
     this.inputDatasetName = spec.getInputDataSet();
+
+    // We need to keep track of the output format providers, so that the MR job can use them.
+    // We still need to keep track of outputDatasets, so MapReduceRuntimeService#onFinish can call their
+    // DatasetOutputCommitter#onSuccess.
     this.outputDatasets = new HashMap<>();
-    if (spec.getOutputDataSet() != null) {
-      this.outputDatasets.put(spec.getOutputDataSet(), null);
+    this.outputFormatProviders = new HashMap<>();
+    String outputDataSetName = spec.getOutputDataSet();
+    if (outputDataSetName != null) {
+      setOutput(outputDataSetName);
     }
 
     this.plugins = Maps.newHashMap(program.getApplicationSpecification().getPlugins());
@@ -207,7 +215,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
 
   @Override
   public void setOutput(String datasetName) {
-    this.outputDatasets.clear();
+    clearOutputs();
     addOutput(datasetName);
   }
 
@@ -215,7 +223,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   //      and not just the name
   @Override
   public void setOutput(String datasetName, Dataset dataset) {
-    this.outputDatasets.clear();
+    clearOutputs();
     addOutput(datasetName, dataset);
   }
 
@@ -233,11 +241,21 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
     addOutput(datasetName, getDataset(datasetName, arguments));
   }
 
+  @Override
+  public void addOutput(String outputName, OutputFormatProvider outputFormatProvider) {
+    this.outputFormatProviders.put(outputName, outputFormatProvider);
+  }
+
   private void addOutput(String datasetName, Dataset dataset) {
     if (!(dataset instanceof OutputFormatProvider)) {
       throw new IllegalArgumentException("Output dataset must be an OutputFormatProvider.");
     }
     this.outputDatasets.put(datasetName, dataset);
+  }
+
+  private void clearOutputs() {
+    this.outputDatasets.clear();
+    this.outputFormatProviders.clear();
   }
 
   /**
@@ -291,6 +309,10 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
         outputFormatProvider = (OutputFormatProvider) dataset;
       }
       outputFormatProviders.put(datasetName, outputFormatProvider);
+    }
+
+    for (Map.Entry<String, OutputFormatProvider> entry : this.outputFormatProviders.entrySet()) {
+      outputFormatProviders.put(entry.getKey(), entry.getValue());
     }
 
     return outputFormatProviders;

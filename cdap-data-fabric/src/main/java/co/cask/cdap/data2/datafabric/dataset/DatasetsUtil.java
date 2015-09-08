@@ -18,6 +18,7 @@ package co.cask.cdap.data2.datafabric.dataset;
 
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.InstanceConflictException;
@@ -49,7 +50,7 @@ public final class DatasetsUtil {
                                                          DatasetProperties props,
                                                          Map<String, String> arguments,
                                                          ClassLoader cl)
-    throws DatasetManagementException, IOException {
+    throws DatasetManagementException, IOException, ServiceUnavailableException {
 
     createIfNotExists(datasetFramework, datasetInstanceId, typeName, props);
     return (T) datasetFramework.getDataset(datasetInstanceId, arguments, null);
@@ -60,7 +61,8 @@ public final class DatasetsUtil {
    */
   public static void createIfNotExists(DatasetFramework datasetFramework,
                                        Id.DatasetInstance datasetInstanceId, String typeName,
-                                       DatasetProperties props) throws DatasetManagementException, IOException {
+                                       DatasetProperties props) throws DatasetManagementException, IOException,
+    ServiceUnavailableException {
 
     if (!datasetFramework.hasInstance(datasetInstanceId)) {
       try {

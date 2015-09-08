@@ -16,13 +16,15 @@
 
 package co.cask.cdap.data2.dataset2;
 
+import co.cask.cdap.common.ServiceUnavailableException;
+
 /**
  *
  */
 public class InMemoryDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
 
   @Override
-  protected DatasetFramework getFramework() throws DatasetManagementException {
+  protected DatasetFramework getFramework() throws DatasetManagementException, ServiceUnavailableException {
     DatasetFramework framework = new InMemoryDatasetFramework(registryFactory, DEFAULT_MODULES, cConf);
     framework.createNamespace(NAMESPACE_ID);
     return framework;
