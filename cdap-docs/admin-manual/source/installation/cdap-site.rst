@@ -24,7 +24,7 @@ values (obtained from ``cdap-default.xml``), descriptions, and notes.
 For information on configuring the ``cdap-site.xml`` file and CDAP for security,
 see the :ref:`configuration-security` section.
 
-.. include:: ../../build/_includes/cdap-default-table.rst
+.. include:: ../../target/_includes/cdap-default-table.rst
 
 .. _cdap-site-xml-note-final:
 

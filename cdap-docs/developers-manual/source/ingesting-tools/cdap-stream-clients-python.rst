@@ -4,7 +4,7 @@
 
 .. highlight:: console
 
-.. include:: ../../build/_includes/cdap-stream-clients-python.rst
+.. include:: ../../target/_includes/cdap-stream-clients-python.rst
 
 Source Code Repository
 ======================

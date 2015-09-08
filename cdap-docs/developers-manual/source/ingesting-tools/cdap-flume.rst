@@ -4,7 +4,7 @@
 
 .. highlight:: console
 
-.. include:: ../../build/_includes/cdap-flume.rst
+.. include:: ../../target/_includes/cdap-flume.rst
 
 Source Code Repository
 ======================
