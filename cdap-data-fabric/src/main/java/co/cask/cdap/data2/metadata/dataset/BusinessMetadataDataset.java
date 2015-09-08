@@ -26,8 +26,6 @@ import co.cask.cdap.proto.Id;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 
-import java.util.Collection;
-
 /**
  * Implementation of Business Metadata on top of {@link IndexedTable}.
  */
@@ -85,7 +83,6 @@ public class BusinessMetadataDataset extends AbstractDataset {
       return null;
     }
 
-    byte[] keyvalue = row.get(KEYVALUE_COLUMN);
     byte[] value = row.get(VALUE_COLUMN);
 
     return new BusinessMetadataRecord(targetId, key, Bytes.toString(value));
@@ -107,10 +104,10 @@ public class BusinessMetadataDataset extends AbstractDataset {
   /**
    * Find the instance of {@link BusinessMetadataRecord} based on key.
    *
-   * @param key The metadata value to be found.
-   * @return Collection of {@link BusinessMetadataRecord} fits the key.
+   * @param value The metadata value to be found.
+   * @return The {@Iterable} of {@link BusinessMetadataRecord} that fit the key.
    */
-  public Collection<BusinessMetadataRecord> findBusinessMetadataOnKey(String key) {
+  public Iterable<BusinessMetadataRecord> findBusinessMetadataOnValue(String value) {
 
     // TODO ADD CODE
 
