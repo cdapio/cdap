@@ -13,7 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.proto;
+package co.cask.cdap.data2.metadata.dataset;
+
+import co.cask.cdap.proto.Id;
 
 import java.util.Objects;
 import javax.annotation.Nullable;

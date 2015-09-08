@@ -21,9 +21,8 @@ import co.cask.cdap.api.dataset.lib.IndexedTable;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
-import co.cask.cdap.proto.BusinessMetadataRecord;
-
 import co.cask.cdap.proto.Id;
+
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 
