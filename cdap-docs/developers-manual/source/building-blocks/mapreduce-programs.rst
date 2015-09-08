@@ -49,8 +49,9 @@ implementation of three methods:
 
 The configure method is similar to the one found in flows and
 applications. It defines the name and description of the MapReduce.
-You can also specify datasets to be used as input or output and
-resources (memory and virtual cores) used by the mappers and reducers.
+You can also :ref:`specify datasets <mapreduce-datasets>` to be used as input or output
+and :ref:`specify resources <mapreduce-resources>` (memory and virtual cores) used by the
+mappers and reducers.
 
 The ``beforeSubmit()`` method is invoked at runtime, before the
 MapReduce is executed. Through a passed instance of the
@@ -165,6 +166,26 @@ declaration and (2) an injection:
 
 Additionally, a MapReduce program can interact with a dataset by using it as an input or an
 output, as described in :ref:`datasets-mapreduce-programs`.
+
+
+.. _mapreduce-resources:
+
+MapReduce and Resources
+-----------------------
+
+Both the YARN container size and the number of virtual cores used in a MapReduce job can be specified
+as part of the configuration. They can also be set at runtime through the use of runtime arguments. An
+example of this is shown in the :ref:`Purchase <examples-purchase>` example::
+
+.. literalinclude:: /../../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseStore.java
+   :language: java
+   :start-after: @ProcessInput
+   :end-before: @Override
+
+
+
+
+
 
 
 .. rubric::  Examples of Using MapReduce Programs
