@@ -135,17 +135,17 @@ There are two ways to work around this:
 Service Discovery
 -----------------
 
-Services announce the host and port they are running on so that they can be discovered—and
-accessed—by other programs.
+Services announce the host and port they are running on so that they can be discovered |---| and
+accessed |—--| by other programs.
 
 Service are announced using the name passed in the ``configure`` method. The *application name*, *service id*, and
 *hostname* required for registering the service are automatically obtained.
 
-The service can then be discovered in a flow, MapReduce, Spark, or other service using
+The service can then be discovered in a flow, MapReduce, Spark, or another service using
 the appropriate program context. You may also access a service in a different application
 by specifying the application name in the ``getServiceURL`` call.
 
-For example, in Flows::
+For example, in flows::
 
   public class GeoFlowlet extends AbstractFlowlet {
 
@@ -175,6 +175,29 @@ For example, in Flows::
       }
     }
   }
+
+Services and Resources
+----------------------
+
+When a service is configured, the resource requirements for the server that runs all
+handlers of the service can be set, both in terms of the amount of memory (in megabytes)
+and the number of virtual cores assigned.
+
+For example, in the :ref:`Purchase <examples-purchase>` example, in the configuration of
+the ``PurchaseHistoryService``, the amount of memory is specified:
+
+.. literalinclude:: /../../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseHistoryService.java
+   :language: java
+   :lines: 39-45
+
+If both the memory and the number of cores needs to be set, this can be done using::
+
+    setResources(new Resources(1024, 2));
+
+An example of setting ``Resources`` using runtime arguments is shown in :ref:`Purchase
+<examples-purchase>` example's ``PurchaseHistoryBuilder.java``.
+
+
 
 .. rubric::  Examples of Using Services
 

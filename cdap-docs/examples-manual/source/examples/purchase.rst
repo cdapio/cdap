@@ -39,9 +39,8 @@ and write to an ObjectStore dataset.
     the ``UserProfileService`` and creates a purchase history. It stores the purchase history in the
     ``history`` dataset every morning at 4:00 A.M. using a time schedule, and also every time 1MB of data
     is ingested by the ``purchaseStream`` using a data schedule.
-  - You can either manually (in the Process screen of the CDAP UI) or 
-    programmatically execute the ``PurchaseHistoryBuilder`` MapReduce to store 
-    customers' purchase history in the ``history`` dataset.
+  - You can either manually (in the Process screen of the CDAP UI) or programmatically execute the 
+    ``PurchaseHistoryBuilder`` MapReduce to store customers' purchase history in the ``history`` dataset.
   - The ``PurchaseHistoryBuilder`` MapReduce demonstrates the setting of memory used by its YARN container, both 
     as default values and as runtime arguments.
   - Use the ``PurchaseHistoryService`` to retrieve from the ``history`` dataset the purchase history of a user.
@@ -107,7 +106,12 @@ default values used in configuration and as runtime arguments:
 ``PurchaseHistoryService`` Service
 ----------------------------------
 
-This service has a ``history/{customer}`` endpoint to obtain the purchase history of a given customer.
+This service has a ``history/{customer}`` endpoint to obtain the purchase history of a given customer. It also demonstrates
+the use of ``Resources`` to configure the memory requirements of the service:
+
+.. literalinclude:: /../../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseHistoryService.java
+   :language: java
+   :lines: 39-45
 
 
 ``UserProfileService`` Service
