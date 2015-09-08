@@ -256,15 +256,6 @@ public class HBase11TableUtil extends HBaseTableUtil {
 
   @Override
   public Class<? extends Coprocessor> getTransactionDataJanitorClassForVersion() {
-    CodeSource codeSource = HBase11TableUtil.class.getProtectionDomain().getCodeSource();
-    LOG.error("HBase11TableUtil is getting loaded from {}", codeSource == null ? "<null>" : codeSource.getLocation());
-    ClassLoader classLoader = getClass().getClassLoader();
-    URL[] urls = ((URLClassLoader) classLoader).getURLs();
-
-    for (URL url: urls) {
-      LOG.info("Class is: " + url.getFile());
-    }
-
     return DefaultTransactionProcessor.class;
   }
 

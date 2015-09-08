@@ -182,6 +182,8 @@ public class IncrementHandlerTest extends AbstractIncrementHandlerTest {
 
     @Override
     public boolean flush() throws IOException {
+      // we flush all stores and don't write flush request marker to WAL. This mimics the flush behavior which we
+      // have in older versions.
       HRegion.FlushResult result = region.flushcache(true, false);
       return result.isCompactionNeeded();
     }
