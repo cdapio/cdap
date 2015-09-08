@@ -71,7 +71,6 @@ public abstract class TimePartitionedFileSetSink<KEY_OUT, VAL_OUT>
       TimePartitionedFileSetArguments.setOutputPathFormat(sinkArgs, tpfsSinkConfig.filePathFormat,
                                                           tpfsSinkConfig.timeZone);
     }
-    TimePartitionedFileSet sink = context.getDataset(tpfsSinkConfig.name, sinkArgs);
-    context.setOutput(tpfsSinkConfig.name, sink);
+    context.addOutput(tpfsSinkConfig.name, sinkArgs);
   }
 }

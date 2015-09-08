@@ -19,6 +19,7 @@ package co.cask.cdap.template.etl.batch.sink;
 import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
+import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.templates.plugins.PluginConfig;
@@ -33,17 +34,12 @@ import co.cask.cdap.template.etl.common.DBUtils;
 import co.cask.cdap.template.etl.common.ETLDBOutputFormat;
 import co.cask.cdap.template.etl.common.JDBCDriverShim;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
-import com.google.common.collect.Lists;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapred.lib.db.DBConfiguration;
-import org.apache.hadoop.mapreduce.Job;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.sql.Connection;
 import java.sql.Driver;
 import java.sql.DriverManager;
@@ -51,7 +47,8 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Sink that can be configured to export data to a database table.
@@ -99,24 +96,9 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
               dbSinkConfig.tableName, dbSinkConfig.jdbcPluginType, dbSinkConfig.jdbcPluginName,
               dbSinkConfig.connectionString, dbSinkConfig.columns);
 
-    Job job = context.getHadoopJob();
-    Configuration hConf = job.getConfiguration();
-
     // Load the plugin class to make sure it is available.
     Class<? extends Driver> driverClass = context.loadPluginClass(getJDBCPluginId());
-    if (dbSinkConfig.user == null && dbSinkConfig.password == null) {
-      DBConfiguration.configureDB(hConf, driverClass.getName(), dbSinkConfig.connectionString);
-    } else {
-      DBConfiguration.configureDB(hConf, driverClass.getName(), dbSinkConfig.connectionString,
-                                  dbSinkConfig.user, dbSinkConfig.password);
-    }
-    List<String> fields = Lists.newArrayList(Splitter.on(",").omitEmptyStrings().split(dbSinkConfig.columns));
-    try {
-      ETLDBOutputFormat.setOutput(job, dbSinkConfig.tableName, fields.toArray(new String[fields.size()]));
-    } catch (IOException e) {
-      throw Throwables.propagate(e);
-    }
-    job.setOutputFormatClass(ETLDBOutputFormat.class);
+    context.addOutput(dbSinkConfig.tableName, new DBOutputFormatProvider(dbSinkConfig, driverClass));
   }
 
   @Override
@@ -198,5 +180,32 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
 
     @Description("Name of the table to export to.")
     public String tableName;
+  }
+
+  private static class DBOutputFormatProvider implements OutputFormatProvider {
+    private final Map<String, String> conf;
+
+    public DBOutputFormatProvider(DBSinkConfig dbSinkConfig, Class<? extends Driver> driverClass) {
+      this.conf = new HashMap<>();
+
+      conf.put(DBConfiguration.DRIVER_CLASS_PROPERTY, driverClass.getName());
+      conf.put(DBConfiguration.URL_PROPERTY, dbSinkConfig.connectionString);
+      if (dbSinkConfig.user != null && dbSinkConfig.password != null) {
+        conf.put(DBConfiguration.USERNAME_PROPERTY, dbSinkConfig.user);
+        conf.put(DBConfiguration.PASSWORD_PROPERTY, dbSinkConfig.password);
+      }
+      conf.put(DBConfiguration.OUTPUT_TABLE_NAME_PROPERTY, dbSinkConfig.tableName);
+      conf.put(DBConfiguration.OUTPUT_FIELD_NAMES_PROPERTY, dbSinkConfig.columns);
+    }
+
+    @Override
+    public String getOutputFormatClassName() {
+      return ETLDBOutputFormat.class.getName();
+    }
+
+    @Override
+    public Map<String, String> getOutputFormatConfiguration() {
+      return conf;
+    }
   }
 }
