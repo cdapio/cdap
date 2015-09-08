@@ -19,8 +19,8 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import co.cask.cdap.proto.Id;
-
 import co.cask.cdap.proto.ProgramType;
+
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -46,18 +46,16 @@ public class BusinessMetadataDatasetTest {
 
   @Before
   public void before() throws Exception {
-    // TODO Add code
     dataset = getDataset();
   }
 
   @After
   public void after() throws Exception {
-    // TODO Add code
+    dataset = null;
   }
 
   @Test
   public void testAddOneMetadata() throws Exception {
-    // TODO ADD CODE
 
     Id.Program flow21 = Id.Program.from("ns1", "app2", ProgramType.FLOW, "flow21");
 
