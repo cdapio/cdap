@@ -153,8 +153,9 @@ function download_includes() {
   test_an_include a9a7fd53c199defff09e6e3c73e4e71f ../../cdap-examples/LogAnalysis/src/main/java/co/cask/cdap/examples/loganalysis/LogAnalysisApp.java
   
   test_an_include cdd3edfefe86857da8f41889d433d434 ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseApp.java
-  test_an_include 06cbfcd23086563e8ad4323a2e100535 ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseStore.java
-  
+  test_an_include 29fe1471372678115e643b0ad431b28d ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseStore.java
+  test_an_include 12e10950a1c42401d229f549b77c5b7d ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseHistoryBuilder.java
+
   test_an_include 050cde0eb54b20803e65aae63b11143d ../../cdap-examples/SparkKMeans/src/main/java/co/cask/cdap/examples/sparkkmeans/SparkKMeansApp.java
   
   test_an_include 57d7e810f37e2bd9fdcb4e25cd9d9150 ../../cdap-examples/SparkPageRank/src/main/java/co/cask/cdap/examples/sparkpagerank/SparkPageRankApp.java

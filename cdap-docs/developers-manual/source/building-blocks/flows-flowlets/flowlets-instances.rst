@@ -49,4 +49,5 @@ If only the memory requirement needs to be set, that can be done using::
 
     setResources(new Resources(1024));
 
-An example of this is shown in the 
+This is shown in the :ref:`Purchase <examples-purchase>` example, in the configuration of
+the ``PurchaseStore`` flowlet.

@@ -175,17 +175,16 @@ MapReduce and Resources
 
 Both the YARN container size and the number of virtual cores used in a MapReduce job can be specified
 as part of the configuration. They can also be set at runtime through the use of runtime arguments. An
-example of this is shown in the :ref:`Purchase <examples-purchase>` example::
+example of this is shown in the :ref:`Purchase <examples-purchase>` example, where the memory requirements
+are set:
 
 .. literalinclude:: /../../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseStore.java
    :language: java
-   :start-after: @ProcessInput
-   :end-before: @Override
+   :start-after: import java.util.Map;
+   :end-before:   /**
 
-
-
-
-
+The Resources API, if called with two arguments, sets both the memory used in megabytes
+and the number of virtual cores used.
 
 
 .. rubric::  Examples of Using MapReduce Programs
