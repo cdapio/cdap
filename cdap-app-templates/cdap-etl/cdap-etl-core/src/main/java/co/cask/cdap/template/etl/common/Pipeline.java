@@ -24,9 +24,9 @@ import java.util.List;
 public class Pipeline {
   private final String source;
   private final String sink;
-  private final List<String> transforms;
+  private final List<TransformInfo> transforms;
 
-  public Pipeline(String source, String sink, List<String> transforms) {
+  public Pipeline(String source, String sink, List<TransformInfo> transforms) {
     this.source = source;
     this.sink = sink;
     this.transforms = transforms;
@@ -40,7 +40,7 @@ public class Pipeline {
     return sink;
   }
 
-  public List<String> getTransforms() {
+  public List<TransformInfo> getTransforms() {
     return transforms;
   }
 }

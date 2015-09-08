@@ -16,44 +16,22 @@
 
 package co.cask.cdap.template.etl.common;
 
-import com.google.common.base.Objects;
-
-import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- * ETL Stage Configuration.
+ * Class to encapsulate id of the transform and the error dataset used in that transform stage.
  */
-public final class ETLStage {
-  private final String name;
-  private final Map<String, String> properties;
+public class TransformInfo {
+  private final String transformId;
   private final String errorDatasetName;
 
-  public ETLStage(String name, Map<String, String> properties, @Nullable String errorDatasetName) {
-    this.name = name;
-    this.properties = properties;
+  public TransformInfo(String transformId, @Nullable String errorDatasetName) {
+    this.transformId = transformId;
     this.errorDatasetName = errorDatasetName;
   }
 
-  public ETLStage(String name, Map<String, String> properties) {
-    this(name, properties, null);
-  }
-
-  public String getName() {
-    return name;
-  }
-
-  @Nullable
-  public Map<String, String> getProperties() {
-    return properties;
-  }
-
-  @Override
-  public String toString() {
-    return Objects.toStringHelper(this)
-      .add("name", name)
-      .add("properties", properties)
-      .toString();
+  public String getTransformId() {
+    return transformId;
   }
 
   @Nullable
