@@ -29,6 +29,12 @@ import java.util.List;
 public final class ETLRealtimeConfig extends ETLConfig {
   private final Integer instances;
 
+  public ETLRealtimeConfig(Integer instances, ETLStage source, List<ETLStage> sinks,
+                           List<ETLStage> transforms, Resources resources) {
+    super(source, sinks, transforms, resources);
+    this.instances = instances;
+  }
+
   public ETLRealtimeConfig(Integer instances, ETLStage source, ETLStage sink, List<ETLStage> transforms,
                            Resources resources) {
     super(source, sink, transforms, resources);
