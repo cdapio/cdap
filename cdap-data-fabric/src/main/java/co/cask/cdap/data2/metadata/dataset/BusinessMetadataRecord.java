@@ -24,27 +24,21 @@ import javax.annotation.Nullable;
  * Represent Busineess Metadata for CDAP.
  */
 public class BusinessMetadataRecord {
-  private final String targetType;
   private final Id.NamespacedId  targetId;
   private final String key;
   private final String value;
   private final String schema;
 
-  public BusinessMetadataRecord(String targetType, Id.NamespacedId targetId, String key, String value) {
-    this(targetType, targetId, key, value, null);
+  public BusinessMetadataRecord(Id.NamespacedId targetId, String key, String value) {
+    this(targetId, key, value, null);
   }
 
-  public BusinessMetadataRecord(String targetType, Id.NamespacedId  targetId, String key, String value,
+  public BusinessMetadataRecord(Id.NamespacedId targetId, String key, String value,
                                 @Nullable String schema) {
-    this.targetType = targetType;
     this.targetId = targetId;
     this.key = key;
     this.value = value;
     this.schema = schema;
-  }
-
-  public String getTargetType() {
-    return targetType;
   }
 
   public Id.NamespacedId  getTargetId() {
@@ -74,8 +68,7 @@ public class BusinessMetadataRecord {
 
     BusinessMetadataRecord that = (BusinessMetadataRecord) o;
 
-    return Objects.equals(targetType, that.targetType) &&
-      Objects.equals(targetId, that.targetId) &&
+    return Objects.equals(targetId, that.targetId) &&
       Objects.equals(key, that.key) &&
       Objects.equals(value, that.value) &&
       Objects.equals(schema, that.schema);
@@ -83,14 +76,13 @@ public class BusinessMetadataRecord {
 
   @Override
   public int hashCode() {
-    return Objects.hash(targetType, targetId, key, value, schema);
+    return Objects.hash(targetId, key, value, schema);
   }
 
   @Override
   public String toString() {
     return "{" +
-      "targetType='" + targetType + '\'' +
-      ", targetId='" + targetId + '\'' +
+      "targetId='" + targetId + '\'' +
       ", key='" + key + '\'' +
       ", value='" + value + '\'' +
       ", schema='" + (schema != null ? schema : 0) +

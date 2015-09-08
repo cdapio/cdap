@@ -60,8 +60,8 @@ public class BusinessMetadataDatasetTest {
     Id.Program flow21 = Id.Program.from("ns1", "app2", ProgramType.FLOW, "flow21");
 
     // Create record
-    final BusinessMetadataRecord record = new BusinessMetadataRecord(Id.Program.class.getSimpleName(),
-                                                                     flow21, "key1", "value1");
+    final BusinessMetadataRecord record = new BusinessMetadataRecord(
+      flow21, "key1", "value1");
 
     // Save it
     dataset.createBusinessMetadata(record);

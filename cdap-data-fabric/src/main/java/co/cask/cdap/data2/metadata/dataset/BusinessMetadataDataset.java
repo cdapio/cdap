@@ -49,7 +49,7 @@ public class BusinessMetadataDataset extends AbstractDataset {
    * @param metadataRecord The value of the metadata to be saved.
    */
   public void createBusinessMetadata(BusinessMetadataRecord metadataRecord) {
-    String targetType = metadataRecord.getTargetType();
+    String targetType = getTargetType(metadataRecord.getTargetId());
     Id.NamespacedId targetId = metadataRecord.getTargetId();
     String key = metadataRecord.getKey();
     MDSKey mdsKey = getInstanceKey(targetType, targetId, key);
@@ -67,7 +67,7 @@ public class BusinessMetadataDataset extends AbstractDataset {
    * @param value The metadata value to be added.
    */
   public void createBusinessMetadata(Id.NamespacedId targetId, String key, String value) {
-    createBusinessMetadata(new BusinessMetadataRecord(getTargetType(targetId), targetId, key, value));
+    createBusinessMetadata(new BusinessMetadataRecord(targetId, key, value));
   }
 
   /**
@@ -88,7 +88,7 @@ public class BusinessMetadataDataset extends AbstractDataset {
     byte[] keyvalue = row.get(KEYVALUE_COLUMN);
     byte[] value = row.get(VALUE_COLUMN);
 
-    return new BusinessMetadataRecord(targetType, targetId, key, Bytes.toString(value));
+    return new BusinessMetadataRecord(targetId, key, Bytes.toString(value));
   }
 
   private static Id.NamespacedId fromString(String type, String id) {
