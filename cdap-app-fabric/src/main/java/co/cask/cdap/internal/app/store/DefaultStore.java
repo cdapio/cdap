@@ -93,13 +93,12 @@ import javax.annotation.Nullable;
  */
 public class DefaultStore implements Store {
 
-  public static final String APP_META_TABLE = "app.meta";
   // mds is specific for metadata, we do not want to add workflow stats related information to the mds,
   // as it is not specifically metadata
   public static final String WORKFLOW_STATS_TABLE = "workflow.stats";
   private static final Logger LOG = LoggerFactory.getLogger(DefaultStore.class);
   private static final Id.DatasetInstance APP_META_INSTANCE_ID =
-    Id.DatasetInstance.from(Id.Namespace.SYSTEM, APP_META_TABLE);
+    Id.DatasetInstance.from(Id.Namespace.SYSTEM, Constants.AppMetaStore.TABLE);
   private static final Id.DatasetInstance WORKFLOW_STATS_INSTANCE_ID =
     Id.DatasetInstance.from(Id.Namespace.SYSTEM, WORKFLOW_STATS_TABLE);
 
@@ -155,12 +154,10 @@ public class DefaultStore implements Store {
    *
    * @param framework framework to add types and datasets to
    */
-  public static void setupDatasets(DatasetFramework framework) throws IOException, DatasetManagementException,
-    ServiceUnavailableException {
-    framework.addInstance(Table.class.getName(), Id.DatasetInstance.from(Id.Namespace.SYSTEM, APP_META_TABLE),
-                          DatasetProperties.EMPTY);
-    framework.addInstance(Table.class.getName(), Id.DatasetInstance.from(Id.Namespace.SYSTEM, WORKFLOW_STATS_TABLE),
-                          DatasetProperties.EMPTY);
+  public static void setupDatasets(DatasetFramework framework)
+    throws IOException, DatasetManagementException, ServiceUnavailableException {
+    framework.addInstance(Table.class.getName(), APP_META_INSTANCE_ID, DatasetProperties.EMPTY);
+    framework.addInstance(Table.class.getName(), WORKFLOW_STATS_INSTANCE_ID, DatasetProperties.EMPTY);
   }
 
   @Nullable

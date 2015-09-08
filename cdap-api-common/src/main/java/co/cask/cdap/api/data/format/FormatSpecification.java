@@ -22,6 +22,7 @@ import co.cask.cdap.api.data.schema.Schema;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
+import javax.annotation.Nullable;
 
 /**
  * Specification for a {@link RecordFormat}, including the class, schema, and settings to use for the format.
@@ -37,16 +38,21 @@ public final class FormatSpecification {
     this(null, null, Collections.<String, String>emptyMap());
   }
 
-  public FormatSpecification(String name, Schema schema, Map<String, String> settings) {
+  public FormatSpecification(String name, @Nullable Schema schema, @Nullable Map<String, String> settings) {
     this.name = name;
     this.schema = schema;
     this.settings = settings == null ? Collections.<String, String>emptyMap() : settings;
+  }
+
+  public FormatSpecification(String name, @Nullable Schema schema) {
+    this(name, schema, Collections.<String, String>emptyMap());
   }
 
   public String getName() {
     return name;
   }
 
+  @Nullable
   public Schema getSchema() {
     return schema;
   }

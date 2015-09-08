@@ -1070,6 +1070,80 @@ public abstract class Id {
       return this.namespace.equals(that.namespace) &&
         this.streamName.equals(that.streamName);
     }
+
+    /**
+     * Uniquely identifies a stream view.
+     */
+    public static final class View extends NamespacedId {
+      private final Stream stream;
+      private final String id;
+
+      public View(Stream stream, String id) {
+        Preconditions.checkNotNull(id, "ID cannot be null.");
+        Preconditions.checkArgument(isValidId(id), "ID can only contain alphanumeric, " +
+          "'-' and '_' characters: %s", id);
+        this.stream = stream;
+        this.id = id;
+      }
+
+      @Override
+      public Namespace getNamespace() {
+        return stream.getNamespace();
+      }
+
+      @Nullable
+      @Override
+      protected Id getParent() {
+        return stream;
+      }
+
+      public String getNamespaceId() {
+        return stream.getNamespace().getId();
+      }
+
+      public Id.Stream getStream() {
+        return stream;
+      }
+
+      public String getStreamId() {
+        return stream.getId();
+      }
+
+      @Override
+      public String getId() {
+        return id;
+      }
+
+      public static View from(Id.Stream streamId, String id) {
+        return new View(streamId, id);
+      }
+
+      public static View from(Namespace namespace, String streamId, String id) {
+        return new View(Id.Stream.from(namespace, streamId), id);
+      }
+
+      public static View from(String namespace, String streamId, String id) {
+        return new View(Id.Stream.from(namespace, streamId), id);
+      }
+
+      @Override
+      public boolean equals(Object o) {
+        if (this == o) {
+          return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+          return false;
+        }
+        View view = (View) o;
+        return java.util.Objects.equals(stream, view.stream) &&
+          java.util.Objects.equals(id, view.id);
+      }
+
+      @Override
+      public int hashCode() {
+        return java.util.Objects.hash(stream, id);
+      }
+    }
   }
 
   /**

@@ -16,6 +16,7 @@
 package co.cask.cdap.data.stream.service;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.data.stream.StreamViewHttpHandler;
 import co.cask.cdap.gateway.handlers.CommonHandlers;
 import co.cask.http.HttpHandler;
 import com.google.inject.PrivateModule;
@@ -34,6 +35,7 @@ public class StreamServiceModule extends PrivateModule {
                                                                       Names.named(Constants.Stream.STREAM_HANDLER));
     handlerBinder.addBinding().to(StreamHandler.class);
     handlerBinder.addBinding().to(StreamFetchHandler.class);
+    handlerBinder.addBinding().to(StreamViewHttpHandler.class);
     CommonHandlers.add(handlerBinder);
 
     bind(StreamHttpService.class).in(Scopes.SINGLETON);
