@@ -151,7 +151,7 @@ class IncrementSummingScanner implements RegionScanner {
     int addedCnt = 0;
     baseScanner.startNext();
     Cell cell;
-    while ((cell = baseScanner.peekNextCell(getBatch())) != null && (getBatch() <= 0 || addedCnt < getBatch())) {
+    while ((cell = baseScanner.peekNextCell(scannerContext)) != null && (getBatch() <= 0 || addedCnt < getBatch())) {
       // we use the "peek" semantics so that only once cell is ever emitted per iteration
       // this makes is clearer and easier to enforce that the returned results are <= limit
       if (LOG.isTraceEnabled()) {
@@ -177,7 +177,7 @@ class IncrementSummingScanner implements RegionScanner {
         }
         cells.add(cell);
         addedCnt++;
-        baseScanner.nextCell(getBatch());
+        baseScanner.nextCell(scannerContext);
         continue;
       }
 
@@ -213,7 +213,7 @@ class IncrementSummingScanner implements RegionScanner {
             // if qualifier matches previous and this is a long, add to running sum, emit
             runningSum += Bytes.toLong(cell.getValueArray(), cell.getValueOffset());
             // this cell already processed as part of the previous increment's sum, so consume it
-            baseScanner.nextCell(getBatch());
+            baseScanner.nextCell(scannerContext);
           }
           if (LOG.isTraceEnabled()) {
             LOG.trace("Including increment: sum=" + runningSum + ", cell=" + previousIncrement);
@@ -240,7 +240,7 @@ class IncrementSummingScanner implements RegionScanner {
         }
       }
       // if we made it this far, consume the current cell
-      baseScanner.nextCell(getBatch());
+      baseScanner.nextCell(scannerContext);
     }
     // emit any left over increment, if we hit the end
     if (previousIncrement != null) {
@@ -312,16 +312,17 @@ class IncrementSummingScanner implements RegionScanner {
      * Returns the next available cell for the current row, without advancing the pointer.  Calling this method
      * multiple times in a row will continue to return the same cell.
      *
-     * @param limit the limit of number of cells to return if the next batch must be fetched by the wrapped scanner
+     * @param scannerContext The {@link ScannerContext} instance encapsulating all limits that should
+     * be tracked.
      * @return the next available cell or null if no more cells are available for the current row
      * @throws IOException
      */
-    public Cell peekNextCell(int limit) throws IOException {
+    public Cell peekNextCell(ScannerContext scannerContext) throws IOException {
       if (currentIdx >= cellsToConsume.size()) {
         // finished current batch
         cellsToConsume.clear();
         currentIdx = 0;
-        hasMore = scanner.next(cellsToConsume, ScannerContext.newBuilder().setBatchLimit(limit).build());
+        hasMore = scanner.next(cellsToConsume, scannerContext);
       }
       Cell cell = null;
       if (currentIdx < cellsToConsume.size()) {
@@ -341,12 +342,13 @@ class IncrementSummingScanner implements RegionScanner {
      * Returns the next available cell for the current row and advances the pointer to the next cell.  This method
      * can be called multiple times in a row to advance through all the available cells.
      *
-     * @param limit the limit of number of cells to return if the next batch must be fetched by the wrapped scanner
+     * @param scannerContext The {@link ScannerContext} instance encapsulating all limits that should
+     * be tracked.
      * @return the next available cell or null if no more cells are available for the current row
      * @throws IOException
      */
-    public Cell nextCell(int limit) throws IOException {
-      Cell cell = peekNextCell(limit);
+    public Cell nextCell(ScannerContext scannerContext) throws IOException {
+      Cell cell = peekNextCell(scannerContext);
       if (cell != null) {
         currentIdx++;
       }
