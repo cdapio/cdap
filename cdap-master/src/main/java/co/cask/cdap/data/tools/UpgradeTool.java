@@ -130,7 +130,6 @@ public class UpgradeTool {
 
   public UpgradeTool() throws Exception {
     this.cConf = CConfiguration.create();
-    this.cConf.setBoolean(Constants.Scheduler.SCHEDULERS_LAZY_START, true);
     this.hConf = HBaseConfiguration.create();
     this.injector = init();
     this.txService = injector.getInstance(TransactionService.class);
