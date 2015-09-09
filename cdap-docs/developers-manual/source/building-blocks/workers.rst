@@ -53,8 +53,8 @@ a :ref:`RESTful API <http-restful-api-lifecycle>`::
     }
   }
 
-The size of the YARN container and the number of virtual cores allocated to it can be specified using a ``Resources``
-passed into the worker ``initialize`` method::
+The size of the YARN container and the number of virtual cores allocated to a worker can
+be specified using a ``setResources`` method in the worker ``initialize`` method::
 
     @Override
     public void initialize(WorkerContext context) {
@@ -64,8 +64,8 @@ passed into the worker ``initialize`` method::
       ...
     }
 
-In this example, each worker container will be initialized with 1024 MB of memory and 2 virtual cores. An example of this
-is demonstrated in the :ref:`Purchase <examples-purchases>` example.
+In this example, each worker container will be initialized with 1024 MB of memory and 2
+virtual cores.
 
 
 Workers and Datasets
@@ -146,8 +146,3 @@ With a ``StreamBatchWriter``, the ``close`` method` needs to be called after all
       // Handle exception
     }
   }
-
-Examples of using Workers
-=========================
-
-- The :ref:`Purchase <examples-purchases>` example demonstrates using 
