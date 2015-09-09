@@ -25,6 +25,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ForwardingListenableFuture;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -46,8 +47,8 @@ public class MockExploreClient extends AbstractIdleService implements ExploreCli
 
   public MockExploreClient(Map<String, List<ColumnDesc>> statementsToMetadata,
                            Map<String, List<QueryResult>> statementsToResults) {
-    this.statementsToMetadata = ImmutableMap.copyOf(statementsToMetadata);
-    this.statementsToResults = ImmutableMap.copyOf(statementsToResults);
+    this.statementsToMetadata = Maps.newHashMap(statementsToMetadata);
+    this.statementsToResults = Maps.newHashMap(statementsToResults);
   }
 
   public MockExploreClient() {
