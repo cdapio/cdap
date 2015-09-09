@@ -34,7 +34,6 @@ For instance, using the example of the :ref:`RoundingFlowlet <flowlets_RoundingF
 the YARN container (in megabytes) and the number of virtual cores can be set by using the Resources API
 to create a Resource instance for the flowlet::
 
-
   public class RoundingFlowlet extends AbstractFlowlet {
 
     @Override
