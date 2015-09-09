@@ -18,13 +18,23 @@ package co.cask.cdap.data2.metadata.dataset;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.AbstractDataset;
 import co.cask.cdap.api.dataset.lib.IndexedTable;
+import co.cask.cdap.api.dataset.table.Delete;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Row;
+import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.proto.Id;
 
+import com.google.common.base.Predicate;
+import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * Implementation of Business Metadata on top of {@link IndexedTable}.
@@ -75,6 +85,7 @@ public class BusinessMetadataDataset extends AbstractDataset {
    * @param key The metadata key to get.
    * @return instance of {@link BusinessMetadataRecord} for the target type, id, and key.
    */
+  @Nullable
   public BusinessMetadataRecord getBusinessMetadata(Id.NamespacedId targetId, String key) {
     String targetType = getTargetType(targetId);
     MDSKey mdsKey = getInstanceKey(targetType, targetId, key);
@@ -86,6 +97,91 @@ public class BusinessMetadataDataset extends AbstractDataset {
     byte[] value = row.get(VALUE_COLUMN);
 
     return new BusinessMetadataRecord(targetId, key, Bytes.toString(value));
+  }
+
+  /**
+   * Retrieves the business metadata for the specified {@link Id.NamespacedId}.
+   *
+   * @param targetId the specified {@link Id.NamespacedId}
+   * @return a Map representing the metadata for the specified {@link Id.NamespacedId}
+   */
+  public Map<String, String> getBusinessMetadata(Id.NamespacedId targetId) {
+    String targetType = getTargetType(targetId);
+    MDSKey mdsKey = new MDSKey.Builder().add(targetType).add(targetId.toString()).build();
+    byte[] startKey = mdsKey.getKey();
+    byte[] stopKey = Bytes.stopKeyForPrefix(startKey);
+
+    Map<String, String> metadata = new HashMap<>();
+    Scanner scan = indexedTable.scan(startKey, stopKey);
+    try {
+      Row next;
+      while ((next = scan.next()) != null) {
+        String key = getMetadataKey(next.getRow());
+        byte[] value = next.get(VALUE_COLUMN);
+        if (key == null || value == null) {
+          continue;
+        }
+        metadata.put(key, Bytes.toString(value));
+      }
+      return metadata;
+    } finally {
+      scan.close();
+    }
+  }
+
+  /**
+   * Removes all business metadata for the specified {@link Id.NamespacedId}.
+   *
+   * @param targetId the {@link Id.NamespacedId} for which metadata is to be removed.
+   */
+  public void removeMetadata(Id.NamespacedId targetId) {
+    removeMetadata(targetId, Predicates.<String>alwaysTrue());
+  }
+
+  /**
+   * Removes the specified keys from the business metadata of the specified {@link Id.NamespacedId}.
+   *
+   * @param targetId the {@link Id.NamespacedId} for which the specified metadata keys are to be removed.
+   * @param keys the keys to remove from the metadata of the specified {@link Id.NamespacedId}
+   */
+  public void removeMetadata(Id.NamespacedId targetId, String ... keys) {
+    final Set<String> keySet = Sets.newHashSet(keys);
+    removeMetadata(targetId, new Predicate<String>() {
+      @Override
+      public boolean apply(String input) {
+        return keySet.contains(input);
+      }
+    });
+  }
+
+  /**
+   * Removes all keys that satisfy a given predicate from the metadata of the specified {@link Id.NamespacedId}.
+   *
+   * @param targetId the {@link Id.NamespacedId} for which keys are to be removed.
+   * @param filter the {@link Predicate} that should be satisfied to remove a key.
+   */
+  public void removeMetadata(Id.NamespacedId targetId, Predicate<String> filter) {
+    String targetType = getTargetType(targetId);
+    MDSKey mdsKey = new MDSKey.Builder().add(targetType, targetId.toString()).build();
+    byte[] prefix = mdsKey.getKey();
+    byte[] stopKey = Bytes.stopKeyForPrefix(prefix);
+
+    Scanner scan = indexedTable.scan(prefix, stopKey);
+    try {
+      Row next;
+      while ((next = scan.next()) != null) {
+        String keyValue = next.getString(KEYVALUE_COLUMN);
+        String value = next.getString(VALUE_COLUMN);
+        if (keyValue == null && value == null) {
+          continue;
+        }
+        if (filter.apply(getMetadataKey(next.getRow()))) {
+          indexedTable.delete(new Delete(next.getRow()));
+        }
+      }
+    } finally {
+      scan.close();
+    }
   }
 
   private static Id.NamespacedId fromString(String type, String id) {
@@ -143,5 +239,13 @@ public class BusinessMetadataDataset extends AbstractDataset {
       return Id.Program.class.getSimpleName();
     }
     return namespacedId.getClass().getSimpleName();
+  }
+
+  private String getMetadataKey(byte [] rowKey) {
+    MDSKey.Splitter keySplitter = new MDSKey(rowKey).split();
+    // The rowkey is [targetType][targetId.toString][key], so skip the first 2 strings.
+    keySplitter.skipString();
+    keySplitter.skipString();
+    return keySplitter.getString();
   }
 }

@@ -28,6 +28,8 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
+import java.util.Map;
+
 /**
  * Test class for {@link BusinessMetadataDataset} class.
  */
@@ -56,21 +58,23 @@ public class BusinessMetadataDatasetTest {
 
   @Test
   public void testAddOneMetadata() throws Exception {
-
     Id.Program flow21 = Id.Program.from("ns1", "app2", ProgramType.FLOW, "flow21");
-
     // Create record
-    final BusinessMetadataRecord record = new BusinessMetadataRecord(
+    BusinessMetadataRecord record = new BusinessMetadataRecord(
       flow21, "key1", "value1");
-
     // Save it
     dataset.createBusinessMetadata(record);
-
     // Get that record
-    final BusinessMetadataRecord result = dataset.getBusinessMetadata(flow21, "key1");
-
+    BusinessMetadataRecord result = dataset.getBusinessMetadata(flow21, "key1");
     // Assert check
     Assert.assertEquals(record, result);
+    dataset.removeMetadata(flow21, "key");
+    Map<String, String> businessMetadata = dataset.getBusinessMetadata(flow21);
+    Assert.assertEquals(1, businessMetadata.size());
+    Assert.assertEquals("value1", businessMetadata.get("key1"));
+    dataset.removeMetadata(flow21);
+    businessMetadata = dataset.getBusinessMetadata(flow21);
+    Assert.assertEquals(0, businessMetadata.size());
   }
 
   private static BusinessMetadataDataset getDataset() throws Exception {

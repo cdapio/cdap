@@ -43,7 +43,9 @@ import co.cask.cdap.data2.dataset2.SimpleKVTable;
 import co.cask.cdap.data2.dataset2.SingleTypeModule;
 import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
-import co.cask.cdap.data2.metadata.service.MockMetadataAdmin;
+import co.cask.cdap.data2.metadata.service.BusinessMetadataStore;
+import co.cask.cdap.data2.metadata.service.DefaultMetadataAdmin;
+import co.cask.cdap.data2.metadata.service.MetadataAdmin;
 import co.cask.cdap.data2.metrics.DatasetMetricsReporter;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.explore.client.DiscoveryExploreClient;
@@ -133,6 +135,8 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
       exploreFacade,
       cConf,
       new UsageRegistry(txExecutorFactory, framework), NAMESPACE_CLIENT);
+    MetadataAdmin metadataAdmin = new DefaultMetadataAdmin(NAMESPACE_CLIENT,
+                                                           new BusinessMetadataStore(txExecutorFactory, framework));
     service = new DatasetService(cConf,
                                  namespacedLocationFactory,
                                  discoveryService,
@@ -146,7 +150,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
                                  new LocalStorageProviderNamespaceAdmin(cConf, namespacedLocationFactory,
                                                                         exploreFacade),
                                  NAMESPACE_CLIENT,
-                                 new MockMetadataAdmin()
+                                 metadataAdmin
     );
     // Start dataset service, wait for it to be discoverable
     service.start();
