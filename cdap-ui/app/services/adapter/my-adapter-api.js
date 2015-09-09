@@ -17,7 +17,7 @@
 angular.module(PKG.name + '.services')
   .factory('myAdapterApi', function($resource, myHelpers) {
     var templatePath = '/templates',
-        adapterPath = '/namespaces/:namespace/adapters/:adapter',
+        adapterPath = '/namespaces/:namespace/apps/:adapter',
 
         pluginsFetchPath = '/namespaces/:namespace/artifacts/:adapterType/versions/:version/extensions/',
         sourcePath = pluginsFetchPath + 'source?scope=system',
@@ -30,7 +30,7 @@ angular.module(PKG.name + '.services')
 
       },
       {
-        save: myHelpers.getConfig('PUT', 'REQUEST', adapterPath),
+        save: myHelpers.getConfig('PUT', 'REQUEST', adapterPath, false, {contentType: 'application/json'}),
         fetchTemplates: myHelpers.getConfig('GET', 'REQUEST', templatePath, true),
         fetchSources: myHelpers.getConfig('GET', 'REQUEST', sourcePath, true),
         fetchSinks: myHelpers.getConfig('GET', 'REQUEST', sinkPath, true),

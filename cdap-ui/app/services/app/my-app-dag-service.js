@@ -604,9 +604,11 @@ angular.module(PKG.name + '.services')
     // construction and validation of DAGs in UI.
     this.getConfig = function() {
       var config = {
-        name: this.metadata.name,
-        description: this.metadata.description,
-        template: this.metadata.template.type,
+        artifact: {
+          name: this.metadata.name,
+          scope: 'SYSTEM',
+          version: $rootScope.cdapVersion
+        },
         source: {
           properties: {}
         },
@@ -656,6 +658,10 @@ angular.module(PKG.name + '.services')
           if (!backendProperties[key] || properties[key] === '' || properties[key] === null) {
             delete properties[key];
           }
+          // FIXME: Remove this once https://issues.cask.co/browse/CDAP-3614 is fixed.
+          if (properties[key] && typeof properties[key] !== 'string') {
+            properties[key] = properties[key].toString();
+          }
         });
         return properties;
       }
@@ -698,8 +704,11 @@ angular.module(PKG.name + '.services')
       var config = this.getConfig();
       pruneProperties(config);
       var data = {
-        template: this.metadata.template.type,
-        description: this.metadata.description,
+        artifact: {
+          name: this.metadata.template.type,
+          scope: 'SYSTEM',
+          version: $rootScope.cdapVersion
+        },
         config: {
           source: config.source,
           sink: config.sink,
