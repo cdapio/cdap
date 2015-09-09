@@ -40,7 +40,7 @@ FALSE="false"
 TRUE="true"
 
 # Redirect placed in top to redirect to 'en' directory
-REDIRECT_EN_HTML=`cat <<EOF
+REDIRECT_EN_HTML=$(cat <<EOF
 <!DOCTYPE HTML>
 <html lang="en-US">
     <head>
@@ -54,11 +54,12 @@ REDIRECT_EN_HTML=`cat <<EOF
     <body>
     </body>
 </html>
-EOF`
+EOF
+)
 
-SCRIPT=`basename ${0}`
-SCRIPT_PATH=`pwd`
-MANUAL=`basename ${SCRIPT_PATH}`
+SCRIPT=$(basename ${0})
+SCRIPT_PATH=$(pwd)
+MANUAL=$(basename ${SCRIPT_PATH})
 
 DOC_GEN_PY="${SCRIPT_PATH}/../tools/doc-gen.py"
 TARGET_PATH="${SCRIPT_PATH}/${TARGET}"
@@ -108,7 +109,7 @@ GITHUB="github"
 
 # BUILD.rst
 BUILD_RST="BUILD.rst"
-BUILD_RST_HASH="f54ae74bb72f9ad894766b6c0bd2d2df"
+BUILD_RST_HASH="126957968d95aa006b7f0c5a7f2ff1ef"
 
 
 function usage() {
@@ -223,8 +224,9 @@ function set_mvn_environment() {
     export JAVA_HOME=$(/usr/libexec/java_home -v 1.7)
   fi
   # check BUILD.rst for changes
-  BUILD_RST_PATH="${PROJECT_PATH}/${BUILD_RST}"
-  test_an_include ${BUILD_RST_HASH} ${BUILD_RST_PATH}
+  BUILD_RST_PATH="${PROJECT_PATH}${BUILD_RST}"
+  test_an_include "${BUILD_RST_HASH}" "${BUILD_RST_PATH}"
+  echo
 }
 
 function check_includes() {
@@ -258,44 +260,47 @@ function test_an_include() {
   local md5_hash=${1}
   local target=${2}
   local new_md5_hash
-  
-  local file_name=`basename ${target}`
-  
-  if [[ "${OSTYPE}" == "darwin"* ]]; then
-    new_md5_hash=`md5 -q ${target}`
-  else
-    new_md5_hash=`md5sum ${target} | awk '{print $1}'`
-  fi
-  
   local m
-  local m_display
+  local m_display  
   
-  if [[ "${new_md5_hash}" == "${NOT_FOUND_HASH}" ]]; then
-    m="${WARNING} ${RED_BOLD}${file_name} not found!${NO_COLOR} "  
-    m="${m}\nfile: ${target}"  
-  elif [[ "${new_md5_hash}" != "${md5_hash}" ]]; then
-    m="${WARNING} ${RED_BOLD}${file_name} has changed! Compare files and update hash!${NO_COLOR} "   
-    m="${m}\nfile: ${target}"   
-    m="${m}\nOld MD5 Hash: ${md5_hash} New MD5 Hash: ${new_md5_hash}"   
+  if [[ "x${target}" != "x" ]]; then
+    local file_name=$(basename ${target})
+  
+    if [[ "${OSTYPE}" == "darwin"* ]]; then
+      new_md5_hash=$(md5 -q ${target})
+    else
+      new_md5_hash=$(md5sum ${target} | awk '{print $1}')
+    fi
+  
+    if [[ "${new_md5_hash}" == "${NOT_FOUND_HASH}" ]]; then
+      m="${WARNING} ${RED_BOLD}${file_name} not found!${NO_COLOR} "  
+      m="${m}\nfile: ${target}"  
+    elif [[ "${new_md5_hash}" != "${md5_hash}" ]]; then
+      m="${WARNING} ${RED_BOLD}${file_name} has changed! Compare files and update hash!${NO_COLOR} "   
+      m="${m}\nfile: ${target}"   
+      m="${m}\nOld MD5 Hash: ${md5_hash} New MD5 Hash: ${new_md5_hash}"   
+    fi
+  else  
+    m="No target is set for test_an_include"
   fi
   if [ "x${m}" != "x" ]; then
     set_message "${m}"
   else
     m="MD5 Hash for ${file_name} matches"
   fi
-  echo "${m}"
+  printf "${m}\n"
 }
 
 function set_version() {
   OIFS="${IFS}"
-  local current_directory=`pwd`
+  local current_directory=$(pwd)
   cd ${PROJECT_PATH}
-  PROJECT_VERSION=`grep "<version>" pom.xml`
+  PROJECT_VERSION=$(grep "<version>" pom.xml)
   PROJECT_VERSION=${PROJECT_VERSION#*<version>}
   PROJECT_VERSION=${PROJECT_VERSION%%</version>*}
-  PROJECT_LONG_VERSION=`expr "${PROJECT_VERSION}" : '\([0-9]*\.[0-9]*\.[0-9]*\)'`
-  PROJECT_SHORT_VERSION=`expr "${PROJECT_VERSION}" : '\([0-9]*\.[0-9]*\)'`
-  local full_branch=`git rev-parse --abbrev-ref HEAD`
+  PROJECT_LONG_VERSION=$(expr "${PROJECT_VERSION}" : '\([0-9]*\.[0-9]*\.[0-9]*\)')
+  PROJECT_SHORT_VERSION=$(expr "${PROJECT_VERSION}" : '\([0-9]*\.[0-9]*\)')
+  local full_branch=$(git rev-parse --abbrev-ref HEAD)
   IFS=/ read -a branch <<< "${full_branch}"
   GIT_BRANCH="${branch[1]}"
   GIT_BRANCH_PARENT="develop"
@@ -309,12 +314,12 @@ function set_version() {
   else
     # We are on a feature branch: but from develop or release?
     # This is not easy to determine. This can fail very easily.
-    local git_branch_listing=`git show-branch | grep '*' | grep -v "$(git rev-parse --abbrev-ref HEAD)" | head -n1`
+    local git_branch_listing=$(git show-branch | grep '*' | grep -v "$(git rev-parse --abbrev-ref HEAD)" | head -n1)
     if [ "x${git_branch_listing}" == "x" ]; then 
       echo_red_bold "Unable to determine parent branch as git_branch_listing empty; perhaps in a new branch with no commits"
       echo_red_bold "Using default GIT_BRANCH_PARENT: ${GIT_BRANCH_PARENT}"
     else
-      GIT_BRANCH_PARENT=`echo ${git_branch_listing} | sed 's/.*\[\(.*\)\].*/\1/' | sed 's/[\^~].*//'`
+      GIT_BRANCH_PARENT=$(echo ${git_branch_listing} | sed 's/.*\[\(.*\)\].*/\1/' | sed 's/[\^~].*//')
     fi
     if [ "${GIT_BRANCH_PARENT:0:7}" == "release" ]; then
       GIT_BRANCH_TYPE="release-feature"
@@ -340,6 +345,10 @@ function display_version() {
 function clear_messages_set_messages_file() {
   unset -v MESSAGES
   TMP_MESSAGES_FILE="${TARGET_PATH}/.$(basename $0).$$.messages"
+  if [ ! -d ${TARGET_PATH} ]; then
+    echo "Making directory ${TARGET_PATH}"
+    mkdir ${TARGET_PATH}
+  fi
   cat /dev/null > ${TMP_MESSAGES_FILE}
   export TMP_MESSAGES_FILE
   echo_red_bold "Cleared Messages and Messages file: " "$(basename ${TMP_MESSAGES_FILE})"
@@ -364,7 +373,7 @@ function set_message() {
     fi
     echo_red_bold "Warning Message for \"${MANUAL}\":" >> ${TMP_MESSAGES_FILE}
     echo >> ${TMP_MESSAGES_FILE}
-    echo "${*}" >> ${TMP_MESSAGES_FILE}
+    printf "${*}\n" >> ${TMP_MESSAGES_FILE}
   fi
 }
 
@@ -373,7 +382,7 @@ function consolidate_messages() {
   if [ "x${MESSAGES}" != "x" ]; then
     echo_red_bold "Consolidating messages" 
     echo_red_bold "${m}" >> ${TMP_MESSAGES_FILE}
-    echo "${MESSAGES}" >> ${TMP_MESSAGES_FILE}
+    printf "${MESSAGES}\n" >> ${TMP_MESSAGES_FILE}
     unset -v MESSAGES
   fi
   if [ -s ${TARGET}/${SPHINX_MESSAGES} ]; then
@@ -391,7 +400,7 @@ function consolidate_messages() {
 
 function display_messages_file() {
   local warnings=0
-  if [[ "x${TMP_MESSAGES_FILE}" != "x" && -a ${TMP_MESSAGES_FILE} ]]; then
+  if [[ "x${TMP_MESSAGES_FILE}" != "x" && -s ${TMP_MESSAGES_FILE} ]]; then
     echo 
     echo "--------------------------------------------------------"
     echo_red_bold "Warning Messages: $(basename ${TMP_MESSAGES_FILE})"

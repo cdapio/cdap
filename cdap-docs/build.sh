@@ -408,7 +408,7 @@ function build_license_dependency_pdfs() {
 
 function build_standalone() {
   set_mvn_environment
-  MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn clean package -pl cdap-standalone,cdap-app-templates/cdap-etl,cdap-examples -am -amd -DskipTests -P examples,templates,dist,release,unit-tests
+  MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn clean package -pl cdap-standalone,cdap-app-templates/cdap-etl,cdap-app-templates/cdap-data-quality,cdap-examples -am -amd -DskipTests -P examples,templates,dist,release,unit-tests
 }
 
 function print_version() {
