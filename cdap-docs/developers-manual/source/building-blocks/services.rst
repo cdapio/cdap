@@ -136,7 +136,7 @@ Service Discovery
 -----------------
 
 Services announce the host and port they are running on so that they can be discovered |---| and
-accessed |—--| by other programs.
+accessed |---| by other programs.
 
 Service are announced using the name passed in the ``configure`` method. The *application name*, *service id*, and
 *hostname* required for registering the service are automatically obtained.
