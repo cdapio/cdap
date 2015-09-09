@@ -40,7 +40,7 @@ FALSE="false"
 TRUE="true"
 
 # Redirect placed in top to redirect to 'en' directory
-REDIRECT_EN_HTML=`cat <<EOF
+REDIRECT_EN_HTML=$(cat <<EOF
 <!DOCTYPE HTML>
 <html lang="en-US">
     <head>
@@ -54,11 +54,12 @@ REDIRECT_EN_HTML=`cat <<EOF
     <body>
     </body>
 </html>
-EOF`
+EOF
+)
 
-SCRIPT=`basename ${0}`
-SCRIPT_PATH=`pwd`
-MANUAL=`basename ${SCRIPT_PATH}`
+SCRIPT=$(basename ${0})
+SCRIPT_PATH=$(pwd)
+MANUAL=$(basename ${SCRIPT_PATH})
 
 DOC_GEN_PY="${SCRIPT_PATH}/../tools/doc-gen.py"
 TARGET_PATH="${SCRIPT_PATH}/${TARGET}"
@@ -262,15 +263,13 @@ function test_an_include() {
   local m
   local m_display  
   
-  if [[ "x${target}" == "x" ]]; then
-    m="No target is set for test_an_include"
-  else  
-    local file_name=`basename ${target}`
+  if [[ "x${target}" != "x" ]]; then
+    local file_name=$(basename ${target})
   
     if [[ "${OSTYPE}" == "darwin"* ]]; then
-      new_md5_hash=`md5 -q ${target}`
+      new_md5_hash=$(md5 -q ${target})
     else
-      new_md5_hash=`md5sum ${target} | awk '{print $1}'`
+      new_md5_hash=$(md5sum ${target} | awk '{print $1}')
     fi
   
     if [[ "${new_md5_hash}" == "${NOT_FOUND_HASH}" ]]; then
@@ -281,6 +280,8 @@ function test_an_include() {
       m="${m}\nfile: ${target}"   
       m="${m}\nOld MD5 Hash: ${md5_hash} New MD5 Hash: ${new_md5_hash}"   
     fi
+  else  
+    m="No target is set for test_an_include"
   fi
   if [ "x${m}" != "x" ]; then
     set_message "${m}"
@@ -292,14 +293,14 @@ function test_an_include() {
 
 function set_version() {
   OIFS="${IFS}"
-  local current_directory=`pwd`
+  local current_directory=$(pwd)
   cd ${PROJECT_PATH}
-  PROJECT_VERSION=`grep "<version>" pom.xml`
+  PROJECT_VERSION=$(grep "<version>" pom.xml)
   PROJECT_VERSION=${PROJECT_VERSION#*<version>}
   PROJECT_VERSION=${PROJECT_VERSION%%</version>*}
-  PROJECT_LONG_VERSION=`expr "${PROJECT_VERSION}" : '\([0-9]*\.[0-9]*\.[0-9]*\)'`
-  PROJECT_SHORT_VERSION=`expr "${PROJECT_VERSION}" : '\([0-9]*\.[0-9]*\)'`
-  local full_branch=`git rev-parse --abbrev-ref HEAD`
+  PROJECT_LONG_VERSION=$(expr "${PROJECT_VERSION}" : '\([0-9]*\.[0-9]*\.[0-9]*\)')
+  PROJECT_SHORT_VERSION=$(expr "${PROJECT_VERSION}" : '\([0-9]*\.[0-9]*\)')
+  local full_branch=$(git rev-parse --abbrev-ref HEAD)
   IFS=/ read -a branch <<< "${full_branch}"
   GIT_BRANCH="${branch[1]}"
   GIT_BRANCH_PARENT="develop"
@@ -313,12 +314,12 @@ function set_version() {
   else
     # We are on a feature branch: but from develop or release?
     # This is not easy to determine. This can fail very easily.
-    local git_branch_listing=`git show-branch | grep '*' | grep -v "$(git rev-parse --abbrev-ref HEAD)" | head -n1`
+    local git_branch_listing=$(git show-branch | grep '*' | grep -v "$(git rev-parse --abbrev-ref HEAD)" | head -n1)
     if [ "x${git_branch_listing}" == "x" ]; then 
       echo_red_bold "Unable to determine parent branch as git_branch_listing empty; perhaps in a new branch with no commits"
       echo_red_bold "Using default GIT_BRANCH_PARENT: ${GIT_BRANCH_PARENT}"
     else
-      GIT_BRANCH_PARENT=`echo ${git_branch_listing} | sed 's/.*\[\(.*\)\].*/\1/' | sed 's/[\^~].*//'`
+      GIT_BRANCH_PARENT=$(echo ${git_branch_listing} | sed 's/.*\[\(.*\)\].*/\1/' | sed 's/[\^~].*//')
     fi
     if [ "${GIT_BRANCH_PARENT:0:7}" == "release" ]; then
       GIT_BRANCH_TYPE="release-feature"
@@ -344,6 +345,10 @@ function display_version() {
 function clear_messages_set_messages_file() {
   unset -v MESSAGES
   TMP_MESSAGES_FILE="${TARGET_PATH}/.$(basename $0).$$.messages"
+  if [ ! -d ${TARGET_PATH} ]; then
+    echo "Making directory ${TARGET_PATH}"
+    mkdir ${TARGET_PATH}
+  fi
   cat /dev/null > ${TMP_MESSAGES_FILE}
   export TMP_MESSAGES_FILE
   echo_red_bold "Cleared Messages and Messages file: " "$(basename ${TMP_MESSAGES_FILE})"
