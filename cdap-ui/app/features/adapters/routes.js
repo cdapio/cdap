@@ -70,6 +70,12 @@ angular.module(PKG.name + '.feature.adapters')
                 defer.resolve(false);
               }
               return defer.promise;
+            },
+            rVersion: function($state, MyDataSource) {
+              var dataSource = new MyDataSource();
+              return dataSource.request({
+                _cdapPath: '/version'
+              });
             }
           },
           // controller: 'AdapterCreateController as AdapterCreateController',

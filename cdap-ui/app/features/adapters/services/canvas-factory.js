@@ -58,11 +58,11 @@ angular.module(PKG.name + '.feature.adapters')
       returnConfig.template = {
         type: template
       };
-      if (template === 'ETLBatch') {
+      if (template === 'cdap-etl-batch-app') {
         returnConfig.template.schedule = {};
         returnConfig.template.schedule.cron =
         myHelpers.objectQuery(config, 'schedule', 'cron') || myHelpers.objectQuery(config, 'schedule');
-      } else if (template === 'ETLRealtime') {
+      } else if (template === 'cdap-etl-realtime-app') {
         returnConfig.template.instance =
         myHelpers.objectQuery(config, 'instance') || myHelpers.objectQuery(config, 'metadata', 'template', 'instance');
       }

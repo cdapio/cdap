@@ -34,9 +34,9 @@ angular.module(PKG.name + '.feature.adapters')
     this.configfetched = false;
     this.properties = [];
     this.noconfig = null;
-    if (MyAppDAGService.metadata.template.type === 'ETLBatch') {
+    if (MyAppDAGService.metadata.template.type === 'cdap-etl-batch-app') {
       this.infoPluginType = 'batch';
-    } else if (MyAppDAGService.metadata.template.type === 'ETLRealtime') {
+    } else if (MyAppDAGService.metadata.template.type === 'cdap-etl-realtime-app') {
       this.infoPluginType = 'real-time';
     }
 

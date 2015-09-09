@@ -55,9 +55,9 @@ angular.module(PKG.name + '.feature.adapters')
         MyAppDAGService.metadata.name = res.name;
         MyAppDAGService.metadata.description = res.description;
         MyAppDAGService.metadata.template.type = res.template;
-        if (res.template === 'ETLBatch') {
+        if (res.template === 'cdap-etl-batch-app') {
           MyAppDAGService.metadata.template.schedule = res.config.schedule;
-        } else if (res.template === 'ETLRealtime') {
+        } else if (res.template === 'cdap-etl-realtime-app') {
           MyAppDAGService.metadata.template.instances = res.config.instances;
         }
 
