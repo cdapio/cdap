@@ -32,12 +32,6 @@ angular.module(PKG.name + '.feature.adapters')
       {
         name: 'Publish'
       }
-      // {
-      //   name: 'Settings'
-      // },
-      // {
-      //   name: 'Config'
-      // }
     ];
 
     this.onTopSideGroupItemClicked = function(group) {
@@ -162,8 +156,6 @@ angular.module(PKG.name + '.feature.adapters')
       }
     };
 
-
-
     this.importFile = function(files) {
       CanvasFactory
         .importAdapter(files, MyAppDAGService.metadata.template.type)
@@ -174,7 +166,5 @@ angular.module(PKG.name + '.feature.adapters')
           }
         );
     };
-
-
 
   });
