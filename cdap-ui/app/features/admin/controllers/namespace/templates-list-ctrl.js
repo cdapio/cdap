@@ -34,7 +34,7 @@ angular.module(PKG.name + '.feature.admin')
       if (response) {
         vm.list = [];
 
-        ['ETLBatch', 'ETLRealtime'].forEach(function (templateType) {
+        ['cdap-etl-batch-app', 'cdap-etl-realtime-app'].forEach(function (templateType) {
           ['source', 'transform', 'sink'].forEach(function (pluginType) {
             var obj = myHelpers.objectQuery(response, $stateParams.nsadmin, templateType, pluginType);
             var pluginArray = objectToArray(obj);
