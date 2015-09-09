@@ -78,10 +78,6 @@ angular.module(PKG.name + '.feature.adapters')
               templateUrl: '/assets/features/adapters/templates/create.html',
               controller: 'AdapterCreateController as AdapterCreateController'
             },
-            'metadata@adapters.create': {
-              templateUrl: '/assets/features/adapters/templates/create/metadata.html',
-              controller: 'MetadataController as MetadataController'
-            },
             'canvas@adapters.create': {
               templateUrl: '/assets/features/adapters/templates/create/canvas.html'
             },
