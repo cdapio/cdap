@@ -31,6 +31,6 @@ public class BusinessMetadataDatasetModule implements DatasetModule {
     DatasetDefinition<IndexedTable, ? extends DatasetAdmin> indexedTableDef =
       registry.get(IndexedTable.class.getName());
     registry.add(new BusinessMetadataDefinition("businessMetadataDataset", indexedTableDef));
-    registry.add(new BusinessMetadataDefinition(BusinessMetadataDataset.class.getSimpleName(), indexedTableDef));
+    registry.add(new BusinessMetadataDefinition(BusinessMetadataDataset.class.getName(), indexedTableDef));
   }
 }
