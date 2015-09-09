@@ -44,6 +44,11 @@ public class MockTransformContext implements TransformContext {
   }
 
   @Override
+  public PluginProperties getPluginProperties(String pluginId) {
+    return null;
+  }
+
+  @Override
   public Metrics getMetrics() {
     return NoopMetrics.INSTANCE;
   }
@@ -54,7 +59,7 @@ public class MockTransformContext implements TransformContext {
   }
 
   @Override
-  public <T> T newInstance(String pluginId) throws InstantiationException {
+  public <T> Class<T> loadPluginClass(String pluginId) {
     return null;
   }
 }
