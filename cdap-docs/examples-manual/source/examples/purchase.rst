@@ -100,7 +100,7 @@ default values used in configuration and as runtime arguments:
 .. literalinclude:: /../../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseHistoryBuilder.java
    :language: java
    :lines: 40-75
-   :start-after: /**
+   :start-after: */
    :end-before: /**
 
 ``PurchaseHistoryService`` Service
