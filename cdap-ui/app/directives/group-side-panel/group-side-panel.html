@@ -15,8 +15,7 @@
 -->
 
 <div class="side-panel text-center"
-      ng-class="{'expanded': isExpanded === true, 'left': MySidePanel.placement === 'left', 'top': MySidePanel.placement === 'top'}">
-
+      ng-class="{'expanded': isExpanded === true, 'left': MySidePanel.placement === 'left'}">
   <div ng-if="MySidePanel.placement === 'left'" class="hydrator-filter clearfix">
     <input class="form-control pull-left" placeholder="Filter" type="text" />
     <div class="btn pull-right" ng-click="MySidePanel.toggleSidebar()">
@@ -60,60 +59,6 @@
           <span ng-if="plugin.icon" class="text-center fa {{plugin.icon}}"></span>
           <span ng-if="isExpanded === true" class="name">{{plugin.name | myEllipsis: 10}}</span>
         </div>
-      </div>
-    </div>
-  </div>
-
-  <div ng-if="MySidePanel.placement === 'top'" class="clearfix">
-    <div class="adapter-metadata pull-left"
-         tooltip="{{ MySidePanel.metadata.error }}"
-         tooltip-placement="right"
-         tooltip-toggle="MySidePanel.metadata.error"
-         tooltip-append-to-body="true"
-         tooltip-class="tooltip-error">
-      <div class="clearfix">
-        <div class="name-type pull-left"
-             ng-click="MySidePanel.showMetadataModal()">
-          <h1 tooltip="{{ MySidePanel.metadata.name }}"
-              tooltip-placement="right"
-              tooltip-enable="MySidePanel.metadata.name.length > 38"
-              tooltip-append-to-body="true">
-            <a ng-if="MySidePanel.metadata.name.length > 0">
-              {{MySidePanel.metadata['name'] | myEllipsis: 38}}
-            </a>
-            <a ng-if="MySidePanel.metadata['name'].length === 0">
-              Pipeline Name
-            </a>
-          </h1>
-          <a class="pipeline-type">
-            <span class="icon-ETLBatch" ng-if="MySidePanel.metadata.template.type === 'ETLBatch'"></span>
-            <span class="icon-ETLRealtime" ng-if="MySidePanel.metadata.template.type === 'ETLRealtime'"></span>
-            <span>Type: {{ MySidePanel.metadata.template.type }}</span>
-          </a>
-        </div>
-        <a class="fa fa-pencil pull-right"
-           ng-click="MySidePanel.showMetadataModal()"></a>
-      </div>
-      <p class="text-left"
-         ng-if="MySidePanel.metadata['description'].length > 0"
-         tooltip="{{ MySidePanel.metadata.description }}"
-         tooltip-placement="right"
-         tooltip-enable="MySidePanel.metadata.description.length > 158"
-         tooltip-append-to-body="true"
-         ng-click="MySidePanel.showMetadataModal()">
-        {{MySidePanel.metadata['description'] | myEllipsis: 158}}
-      </p>
-      <p class="text-left"
-         ng-if="MySidePanel.metadata['description'].length === 0"
-         ng-click="MySidePanel.showMetadataModal()">
-         Enter a description for your pipeline.
-      </p>
-    </div>
-    <div class="btn-group pull-right clearfix">
-      <div class="btn pull-left"
-           ng-repeat="group in MySidePanel.groups"
-           ng-click="MySidePanel.openGroup(group)">
-        {{group.name | caskCapitalizeFilter}}
       </div>
     </div>
   </div>
