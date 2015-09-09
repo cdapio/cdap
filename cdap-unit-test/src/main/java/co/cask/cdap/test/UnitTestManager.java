@@ -151,6 +151,7 @@ public class UnitTestManager implements TestManager {
   }
 
   @Override
+  @SuppressWarnings("unchecked")
   public ApplicationManager deployApplication(Id.Namespace namespace, Class<? extends Application> applicationClz,
                                               @Nullable Config configObject, File... bundleEmbeddedJars) {
     Preconditions.checkNotNull(applicationClz, "Application class cannot be null.");
@@ -162,12 +163,12 @@ public class UnitTestManager implements TestManager {
       if (configObject != null) {
         appConfig = GSON.toJson(configObject);
       } else {
-        configObject = (Config) configToken.getRawType().newInstance();
+        configObject = ((Class<Config>) configToken.getRawType()).newInstance();
       }
 
       Application app = applicationClz.newInstance();
       MockAppConfigurer configurer = new MockAppConfigurer(app);
-      app.configure(configurer, new DefaultApplicationContext(configObject));
+      app.configure(configurer, new DefaultApplicationContext<>(configObject));
       Location deployedJar = appFabricClient.deployApplication(namespace, configurer.getName(),
                                                                applicationClz, appConfig, bundleEmbeddedJars);
       return appManagerFactory.create(Id.Application.from(namespace, configurer.getName()), deployedJar);
