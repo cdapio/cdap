@@ -47,7 +47,7 @@
 
 */
 angular.module(PKG.name + '.services')
-  .service('MyAppDAGService', function(myAdapterApi, $q, $bootstrapModal, $state, $filter, mySettings, AdapterErrorFactory, IMPLICIT_SCHEMA, myHelpers, PluginConfigFactory, ModalConfirm, EventPipe, CanvasFactory) {
+  .service('MyAppDAGService', function(myAdapterApi, $q, $bootstrapModal, $state, $filter, mySettings, AdapterErrorFactory, IMPLICIT_SCHEMA, myHelpers, PluginConfigFactory, ModalConfirm, EventPipe, CanvasFactory, $rootScope) {
 
     var countSink = 0,
         countSource = 0,
@@ -68,7 +68,7 @@ angular.module(PKG.name + '.services')
         name: '',
         description: '',
         template: {
-          type: 'ETLBatch',
+          type: 'cdap-etl-batch-app',
           instance: 1,
           schedule: {
             cron: '* * * * *'
@@ -404,7 +404,9 @@ angular.module(PKG.name + '.services')
       // This needs to pass on a scope always. Right now there is no cleanup
       // happening
       var params = {
-        adapterType: this.metadata.template.type
+        adapterType: this.metadata.template.type,
+        version: $rootScope.cdapVersion,
+        namespace: $state.params.namespace
       };
       if (scope) {
         params.scope = scope;
@@ -704,9 +706,9 @@ angular.module(PKG.name + '.services')
           transforms: config.transforms
         }
       };
-      if (this.metadata.template.type === 'ETLRealtime') {
+      if (this.metadata.template.type === 'cdap-etl-realtime-app') {
         data.config.instances = this.metadata.template.instance;
-      } else if (this.metadata.template.type === 'ETLBatch') {
+      } else if (this.metadata.template.type === 'cdap-etl-batch-app') {
         // default value should be * * * * *
         data.config.schedule = this.metadata.template.schedule.cron;
       }

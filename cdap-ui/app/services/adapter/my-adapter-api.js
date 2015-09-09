@@ -18,9 +18,11 @@ angular.module(PKG.name + '.services')
   .factory('myAdapterApi', function($resource, myHelpers) {
     var templatePath = '/templates',
         adapterPath = '/namespaces/:namespace/adapters/:adapter',
-        sourcePath = '/templates/:adapterType/extensions/source',
-        sinkPath = '/templates/:adapterType/extensions/sink',
-        transformPath = '/templates/:adapterType/extensions/transform';
+
+        pluginsFetchPath = '/namespaces/:namespace/artifacts/:adapterType/versions/:version/extensions/',
+        sourcePath = pluginsFetchPath + 'source?scope=system',
+        sinkPath = pluginsFetchPath + 'sink?scope=system',
+        transformPath = pluginsFetchPath + 'transform?scope=system';
 
     return $resource(
       '',
@@ -33,9 +35,9 @@ angular.module(PKG.name + '.services')
         fetchSources: myHelpers.getConfig('GET', 'REQUEST', sourcePath, true),
         fetchSinks: myHelpers.getConfig('GET', 'REQUEST', sinkPath, true),
         fetchTransforms: myHelpers.getConfig('GET', 'REQUEST', transformPath, true),
-        fetchSourceProperties: myHelpers.getConfig('GET', 'REQUEST', sourcePath + '/plugins/:source', true),
-        fetchSinkProperties: myHelpers.getConfig('GET', 'REQUEST', sinkPath + '/plugins/:sink', true),
-        fetchTransformProperties: myHelpers.getConfig('GET', 'REQUEST', transformPath + '/plugins/:transform', true),
+        fetchSourceProperties: myHelpers.getConfig('GET', 'REQUEST', pluginsFetchPath + 'source/plugins/:source?scope=system', true),
+        fetchSinkProperties: myHelpers.getConfig('GET', 'REQUEST', pluginsFetchPath + 'sink/plugins/:sink?scope=system', true),
+        fetchTransformProperties: myHelpers.getConfig('GET', 'REQUEST', pluginsFetchPath + 'transform/plugins/:transform?scope=system', true),
 
         list: myHelpers.getConfig('GET', 'REQUEST', '/namespaces/:namespace/adapters', true),
         pollStatus: myHelpers.getConfig('GET', 'POLL', adapterPath + '/status'),
