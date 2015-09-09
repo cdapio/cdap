@@ -20,6 +20,8 @@ import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.MetadataSearchResultRecord;
+import co.cask.cdap.proto.MetadataSearchTargetType;
 
 import java.util.Map;
 
@@ -80,4 +82,16 @@ public interface MetadataAdmin {
    * @throws ApplicationNotFoundException if the application is not found
    */
   void removeTags(Id.NamespacedId appId, String ... tags) throws NotFoundException;
+
+  /**
+   * Execute search for metadata for particular type of CDAP object.
+   *
+   * @param searchQuery The query need to be executed for the search.
+   * @param type The particular type of CDAP object that the metadata need to be searched.
+   *
+   * @return a {@link Iterable} records for metadata search.
+   * @throws NotFoundException if there is not record found for particular query text.
+   */
+  Iterable<MetadataSearchResultRecord> searchMetadataOnType(String searchQuery, MetadataSearchTargetType type)
+    throws NotFoundException;
 }

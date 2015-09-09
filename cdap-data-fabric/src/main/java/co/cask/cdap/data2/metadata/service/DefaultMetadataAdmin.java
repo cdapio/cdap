@@ -20,6 +20,8 @@ import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.namespace.AbstractNamespaceClient;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.MetadataSearchResultRecord;
+import co.cask.cdap.proto.MetadataSearchTargetType;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 
@@ -74,6 +76,14 @@ public class DefaultMetadataAdmin implements MetadataAdmin {
   public void removeTags(Id.NamespacedId entityId, String... tags) throws NotFoundException {
     ensureEntityExists(entityId);
     businessMds.removeTags(entityId, tags);
+  }
+
+  @Override
+  public Iterable<MetadataSearchResultRecord> searchMetadataOnType(String searchQuery, MetadataSearchTargetType type)
+    throws NotFoundException {
+    // TODO Add code
+
+    return null;
   }
 
   /**
