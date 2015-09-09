@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.template.etl.common;
+package co.cask.cdap.etl.common;
 
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
