@@ -16,9 +16,6 @@
 
 package co.cask.cdap.common.conf;
 
-import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.NamespaceMeta;
-
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -158,6 +155,13 @@ public final class Constants {
     // including this key with a true value as a schedule property will ignore the suspend behavior and schedules
     // will be created normally.
     public static final String IGNORE_LAZY_START = "scheduler.ignore.lazy.start";
+  }
+
+  /**
+   * Application metadata store.
+   */
+  public static final class AppMetaStore {
+    public static final String TABLE = "app.meta";
   }
 
   /**
@@ -321,6 +325,13 @@ public final class Constants {
 
     // ZooKeeper namespace in which to keep the coordination metadata
     public static final String STREAM_ZK_COORDINATION_NAMESPACE = String.format("/%s/coordination", Service.STREAMS);
+
+    /**
+     * Stream view constants.
+     */
+    public static final class View {
+      public static final String STORE_TABLE = "explore.stream.view.table";
+    }
   }
 
   /**
@@ -696,9 +707,9 @@ public final class Constants {
     public static final String FORMAT_SPEC = "explore.format.specification";
 
     public static final String START_ON_DEMAND = "explore.start.on.demand";
-
     public static final String DATASET_NAME = "explore.dataset.name";
     public static final String DATASET_NAMESPACE = "explore.dataset.namespace";
+    public static final String VIEW_NAME = "explore.view.name";
     public static final String STREAM_NAME = "explore.stream.name";
     public static final String STREAM_NAMESPACE = "explore.stream.namespace";
     public static final String EXPLORE_CLASSPATH = "explore.classpath";

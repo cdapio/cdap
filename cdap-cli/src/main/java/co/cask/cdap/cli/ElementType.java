@@ -52,6 +52,8 @@ public enum ElementType {
   DATASET_TYPE("dataset type", new Noun("dataset type"), new Noun("Dataset type"), null, null,
                ArgumentName.DATASET_TYPE, Capability.LIST),
 
+  VIEW("view", new Noun("view"), new Noun("View"), null, null, ArgumentName.VIEW, Capability.LIST),
+
   QUERY("query", new Noun("query"), new Noun("Query"), null, null, ArgumentName.QUERY),
 
   STREAM("stream", new Noun("stream"), new Noun("Stream"), null, null, ArgumentName.STREAM, Capability.LIST),

@@ -115,8 +115,8 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
                             @PathParam("namespace-id") String namespaceId,
                             @PathParam("stream") String streamName,
                             @PathParam("table") String tableName) {
-    Id.Stream streamId = Id.Stream.from(namespaceId, streamName);
 
+    Id.Stream streamId = Id.Stream.from(namespaceId, streamName);
     try {
       // throws io exception if there is no stream
       streamAdmin.getConfig(streamId);

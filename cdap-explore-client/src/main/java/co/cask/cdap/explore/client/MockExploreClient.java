@@ -14,18 +14,17 @@
  * the License.
  */
 
-package co.cask.cdap.explore.jdbc;
+package co.cask.cdap.explore.client;
 
 import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
-import co.cask.cdap.explore.client.ExploreClient;
-import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.MetaDataInfo;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ForwardingListenableFuture;
@@ -50,6 +49,10 @@ public class MockExploreClient extends AbstractIdleService implements ExploreCli
                            Map<String, List<QueryResult>> statementsToResults) {
     this.statementsToMetadata = Maps.newHashMap(statementsToMetadata);
     this.statementsToResults = Maps.newHashMap(statementsToResults);
+  }
+
+  public MockExploreClient() {
+    this(ImmutableMap.<String, List<ColumnDesc>>of(), ImmutableMap.<String, List<QueryResult>>of());
   }
 
   @Override

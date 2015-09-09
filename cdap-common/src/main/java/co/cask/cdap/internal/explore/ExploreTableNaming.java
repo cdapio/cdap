@@ -31,7 +31,11 @@ public final class ExploreTableNaming {
     return String.format("dataset_%s", cleanTableName(datasetID.getId()));
   }
 
-  private String cleanTableName(String name) {
+  public String getTableName(Id.Stream.View viewId) {
+    return String.format("stream_%s_view_%s", cleanTableName(viewId.getStreamId()), cleanTableName(viewId.getId()));
+  }
+
+  public String cleanTableName(String name) {
     // Instance name is like cdap.user.my_table.
     // For now replace . with _ and - with _ since Hive tables cannot have . or _ in them.
     return name.replaceAll("\\.", "_").replaceAll("-", "_").toLowerCase();

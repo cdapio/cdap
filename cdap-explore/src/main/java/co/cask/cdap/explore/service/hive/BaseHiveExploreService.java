@@ -179,7 +179,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     this.metastoreClientReferenceQueue = new ReferenceQueue<>();
     this.datasetFramework = datasetFramework;
     this.streamAdmin = streamAdmin;
-    this.exploreTableManager = new ExploreTableManager(this, datasetInstantiatorFactory);
+    this.exploreTableManager = new ExploreTableManager(this, datasetInstantiatorFactory, new ExploreTableNaming());
     this.datasetInstantiatorFactory = datasetInstantiatorFactory;
 
     // Create a Timer thread to periodically collect metastore clients that are no longer in used and call close on them

@@ -27,7 +27,7 @@ source ../_common/common-build.sh
 
 CDAP_CLIENTS_RELEASE_VERSION="1.2.0"
 CDAP_INGEST_RELEASE_VERSION="1.3.0"
-CHECK_INCLUDES=$TRUE
+CHECK_INCLUDES=${TRUE}
 
 function download_readme_file_and_test() {
   # Downloads a README.rst file to a target directory, and checks that it hasn't changed.
@@ -49,16 +49,10 @@ function download_readme_file_and_test() {
 }
 
 function download_includes() {
-  echo "Downloading source files includes from GitHub..."
+  echo "Downloading source files to be included from GitHub..."
   local github_url="https://raw.githubusercontent.com/caskdata"
-  
   local includes_dir=${1}
-  if [ ! -d "${includes_dir}" ]; then
-    mkdir ${includes_dir}
-    echo "Creating Includes Directory: ${includes_dir}"
-  fi
-
-  version
+  set_version
 
   local clients_branch="release/${CDAP_CLIENTS_RELEASE_VERSION}"
   local ingest_branch="release/${CDAP_INGEST_RELEASE_VERSION}"
