@@ -483,11 +483,23 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     return Bytes.add(METADATA_PREFIX, Bytes.toBytes(metadataKey));
   }
 
+
   /**
    * Generate an output path for a given partition key.
    */
-  public static String getOutputPath(PartitionKey key) {
-    return Joiner.on("/").join(key.getFields().values());
+  // package visible for PartitionedFileSetDefinition
+  String getOutputPath(PartitionKey key) {
+    return getOutputPath(key, partitioning);
+  }
+
+  public static String getOutputPath(PartitionKey key, Partitioning partitioning) {
+    StringBuilder builder = new StringBuilder();
+    String sep = "";
+    for (String fieldName : partitioning.getFields().keySet()) {
+      builder.append(sep).append(key.getField(fieldName).toString());
+      sep = "/";
+    }
+    return builder.toString();
   }
 
   /**
@@ -569,7 +581,6 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
       return "co.cask.cdap.internal.app.runtime.batch.dataset.partitioned.DynamicPartitioningOutputFormat";
     }
     return files.getOutputFormatClassName();
-
   }
 
   @Override
@@ -582,7 +593,6 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     // copy the output partition key to the output arguments of the embedded file set
     // this will be needed by the output format to register the new partition.
     Map<String, String> outputArgs = Maps.newHashMap(files.getOutputFormatConfiguration());
-
 
     // we set the file set's output path in the definition's getDataset(), so there is no need to configure it again.
     // here we just want to validate that an output partition key was specified in the arguments.

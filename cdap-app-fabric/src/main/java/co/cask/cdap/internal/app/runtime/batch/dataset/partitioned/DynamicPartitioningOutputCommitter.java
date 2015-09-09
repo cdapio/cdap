@@ -107,14 +107,6 @@ public class DynamicPartitioningOutputCommitter extends FileOutputCommitter {
       }
     }
 
-    try {
-      mrTaskContext.flushOperations();
-    } catch (Exception e) {
-      throw new IOException(e);
-    } finally {
-      mrTaskContext.close();
-    }
-
     // We need to copy to the parent of the FileOutputFormat's outputDir, since we added a _temporary_jobId suffix to
     // the original outputDir.
     Path finalOutput = FileOutputFormat.getOutputPath(context);
@@ -126,6 +118,14 @@ public class DynamicPartitioningOutputCommitter extends FileOutputCommitter {
     // create all the necessary partitions
     for (PartitionKey partitionKey : partitionsToAdd) {
       outputDataset.getPartitionOutput(partitionKey).addPartition();
+    }
+    // close the TaskContext, which flushes dataset operations
+    try {
+      mrTaskContext.flushOperations();
+    } catch (Exception e) {
+      throw new IOException(e);
+    } finally {
+      mrTaskContext.close();
     }
 
     // delete the job-specific _temporary folder and create a _done file in the o/p folder

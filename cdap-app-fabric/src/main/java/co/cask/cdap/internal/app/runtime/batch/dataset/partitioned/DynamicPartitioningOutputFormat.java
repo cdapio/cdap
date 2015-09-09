@@ -18,7 +18,10 @@ package co.cask.cdap.internal.app.runtime.batch.dataset.partitioned;
 
 import co.cask.cdap.api.dataset.lib.DynamicPartitioner;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
+import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
+import co.cask.cdap.api.dataset.lib.Partitioning;
+import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.data2.dataset2.lib.partitioned.PartitionedFileSetDataset;
 import co.cask.cdap.internal.app.runtime.batch.BasicMapReduceTaskContext;
@@ -30,6 +33,7 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.apache.hadoop.mapreduce.TaskType;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputCommitter;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
@@ -39,6 +43,8 @@ import org.apache.hadoop.mapreduce.task.TaskAttemptContextImpl;
 import java.io.IOException;
 import java.util.TreeMap;
 
+import static org.apache.hadoop.mapreduce.TaskType.MAP;
+
 /**
  * This class extends the FileOutputFormat and allows writing dynamically to multiple partitions of a PartitionedFileSet
  * Dataset.
@@ -47,7 +53,7 @@ import java.util.TreeMap;
  * @param <V> Type of value
  */
 public class DynamicPartitioningOutputFormat<K, V> extends FileOutputFormat<K, V> {
-//      TODO: Hive doesn't allow addPartition w/o the partition location existing. verify this?
+
   public static final String HCONF_ATTR_OUTPUT_DATASET = "output.dataset.name";
 
   // TODO: keep the limit to only FileOutputFormat and FileOutputCommitter?
@@ -62,7 +68,6 @@ public class DynamicPartitioningOutputFormat<K, V> extends FileOutputFormat<K, V
    */
   @Override
   public RecordWriter<K, V> getRecordWriter(final TaskAttemptContext job) throws IOException {
-
     final String outputName = FileOutputFormat.getOutputName(job);
 
     Class<? extends DynamicPartitioner> className = job.getConfiguration()
@@ -72,7 +77,12 @@ public class DynamicPartitioningOutputFormat<K, V> extends FileOutputFormat<K, V
     final DynamicPartitioner<K, V> dynamicPartitioner =
       new InstantiatorFactory(false).get(TypeToken.of(className)).create();
 
-    final BasicMapReduceTaskContext<K, V> mrTaskContext = new MapReduceTaskContextProvider(job, null).get();
+    MapReduceMetrics.TaskType taskType = MapReduceMetrics.TaskType.from(job.getTaskAttemptID().getTaskType());
+    final BasicMapReduceTaskContext<K, V> mrTaskContext = new MapReduceTaskContextProvider(job, taskType).get();
+    String outputDatasetName = job.getConfiguration().get(HCONF_ATTR_OUTPUT_DATASET);
+    PartitionedFileSet outputDataset = mrTaskContext.getDataset(outputDatasetName);
+    final Partitioning partitioning = outputDataset.getPartitioning();
+
     dynamicPartitioner.initialize(mrTaskContext);
 
     return new RecordWriter<K, V>() {
@@ -82,7 +92,7 @@ public class DynamicPartitioningOutputFormat<K, V> extends FileOutputFormat<K, V
 
       public void write(K key, V value) throws IOException, InterruptedException {
         PartitionKey partitionKey = dynamicPartitioner.getPartitionKey(key, value);
-        String relativePath = PartitionedFileSetDataset.getOutputPath(partitionKey);
+        String relativePath = PartitionedFileSetDataset.getOutputPath(partitionKey, partitioning);
         String finalPath = relativePath + "/" + outputName;
 
         RecordWriter<K, V> rw = this.recordWriters.get(finalPath);
@@ -165,9 +175,15 @@ public class DynamicPartitioningOutputFormat<K, V> extends FileOutputFormat<K, V
     // we permit multiple jobs writing to the same output directory. We handle this by each one writing to distinct
     // paths within that directory. See createJobSpecificPath method and usages of it.
 
-    // additionally check that output dataset has been set in conf
+    // additionally check that output dataset and dynamic partitioner class name has been set in conf
     if (job.getConfiguration().get(HCONF_ATTR_OUTPUT_DATASET) == null) {
-      throw new InvalidJobConfException("Output dataset not set");
+      throw new InvalidJobConfException("Output dataset not set.");
+    }
+
+    Class<? extends DynamicPartitioner> className = job.getConfiguration()
+      .getClass(PartitionedFileSetArguments.DYNAMIC_PARTITIONER_CLASS_NAME, null, DynamicPartitioner.class);
+    if (className == null) {
+      throw new InvalidJobConfException("Dynamic Partitioner class name not set.");
     }
   }
 }

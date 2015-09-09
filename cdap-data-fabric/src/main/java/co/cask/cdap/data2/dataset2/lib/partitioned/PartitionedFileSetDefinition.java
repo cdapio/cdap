@@ -123,7 +123,7 @@ public class PartitionedFileSetDefinition extends AbstractDatasetDefinition<Part
       PartitionKey key = PartitionedFileSetArguments.getOutputPartitionKey(arguments, partitioning);
       if (key != null) {
         arguments = Maps.newHashMap(arguments);
-        FileSetArguments.setOutputPath(arguments, PartitionedFileSetDataset.getOutputPath(key));
+        FileSetArguments.setOutputPath(arguments, PartitionedFileSetDataset.getOutputPath(key, partitioning));
       }
     }
     return arguments;

@@ -41,10 +41,10 @@ public final class DataSetOutputFormat<KEY, VALUE> extends OutputFormat<KEY, VAL
   public RecordWriter<KEY, VALUE> getRecordWriter(final TaskAttemptContext context)
     throws IOException, InterruptedException {
     Configuration conf = context.getConfiguration();
-    // we don't currently allow datasets as the format between map and reduce stages, otherwise we'll have to
-    // pass in the stage here instead of hardcoding reducer.
-    MapReduceTaskContextProvider contextProvider = new MapReduceTaskContextProvider(context,
-                                                                                    MapReduceMetrics.TaskType.Reducer);
+    // we don't currently allow datasets as the format between map and reduce stages, but this can still be the output
+    // of a map-only job, so we need to determine the taskType
+    MapReduceMetrics.TaskType taskType = MapReduceMetrics.TaskType.from(context.getTaskAttemptID().getTaskType());
+    MapReduceTaskContextProvider contextProvider = new MapReduceTaskContextProvider(context, taskType);
     BasicMapReduceTaskContext mrContext = contextProvider.get();
     mrContext.getMetricsCollectionService().startAndWait();
     @SuppressWarnings("unchecked")
