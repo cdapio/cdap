@@ -24,7 +24,6 @@ import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.template.etl.common.ETLStage;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import com.google.common.base.Throwables;
 
 import java.util.Map;
 import java.util.Properties;
@@ -43,7 +42,7 @@ import javax.mail.internet.MimeMessage;
  * a host and port (defaults to localhost:25), a protocol (defaults to SMTP), and a username and password.
  * <p>
  * The action must be specified as a the only action in a list of actions in the
- * {@link co.cask.cdap.app.etl.batch.config.ETLBatchConfig}. It must have the name "Email"
+ * {@link ETLBatchConfig}. It must have the name "Email"
  * or an IllegalArgumentException will be thrown.
  * </p>
  */

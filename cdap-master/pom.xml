@@ -193,10 +193,10 @@
                   <resources>
                     <resource>
                       <directory>
-                        ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-etl-batch-app/target
+                        ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-etl-batch/target
                       </directory>
                       <includes>
-                        <include>cdap-etl-batch-app-${project.version}.jar</include>
+                        <include>cdap-etl-batch-${project.version}.jar</include>
                       </includes>
                     </resource>
                     <resource>
@@ -230,10 +230,10 @@
                   <resources>
                     <resource>
                       <directory>
-                        ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-etl-realtime-app/target
+                        ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-etl-realtime/target
                       </directory>
                       <includes>
-                        <include>cdap-etl-realtime-app-${project.version}.jar</include>
+                        <include>cdap-etl-realtime-${project.version}.jar</include>
                       </includes>
                     </resource>
                     <resource>
@@ -304,18 +304,18 @@
                   <resources>
                     <resource>
                       <directory>
-                        ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-etl-batch/target
+                        ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-etl-batch-template/target
                       </directory>
                       <includes>
-                        <include>cdap-etl-batch-${project.version}.jar</include>
+                        <include>cdap-etl-batch-template-${project.version}.jar</include>
                       </includes>
                     </resource>
                     <resource>
                       <directory>
-                        ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-etl-realtime/target
+                        ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-etl-realtime-template/target
                       </directory>
                       <includes>
-                        <include>cdap-etl-realtime-${project.version}.jar</include>
+                        <include>cdap-etl-realtime-template-${project.version}.jar</include>
                       </includes>
                     </resource>
                   </resources>

@@ -26,12 +26,12 @@
     <version>3.2.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>cdap-etl-batch-app</artifactId>
-  <name>CDAP ETL Batch Application</name>
+  <artifactId>cdap-etl-batch-template</artifactId>
+  <name>CDAP ETL App Template Batch</name>
   <packaging>jar</packaging>
 
   <properties>
-    <app.main.class>co.cask.cdap.app.etl.batch.ETLBatchApplication</app.main.class>
+    <app.main.class>co.cask.cdap.template.etl.batch.ETLBatchTemplate</app.main.class>
   </properties>
 
   <dependencies>
@@ -49,11 +49,6 @@
     <dependency>
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-etl-core</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>co.cask.cdap</groupId>
-      <artifactId>cdap-etl-common</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
@@ -81,15 +76,6 @@
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>javax.mail</groupId>
-      <artifactId>mail</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>dumbster</groupId>
-      <artifactId>dumbster</artifactId>
-      <scope>test</scope>
     </dependency>
   </dependencies>
 
