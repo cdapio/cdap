@@ -24,112 +24,60 @@
 
 my-side-panel {
   .side-panel {
-    .hydrator-filter input {
-      background-color: fade(@gray-dark, 30%);
-      border: 0;
-      color: white;
-      margin: 20px auto;
-      height: 35px;
-      width: 75%;
-      .border-radius(25px);
-      .box-shadow(none);
-      .placeholder-color(white);
-    }
-    .item-heading {
-      span:first-child {
-        font-size: 18px;
-        vertical-align: middle;
+    .hydrator-filter {
+      padding: 20px 0 20px 10px;
+      input {
+        background-color: fade(@gray-dark, 30%);
+        border: 0;
+        color: white;
+        height: 35px;
+        width: 75%;
+        .border-radius(25px);
+        .box-shadow(none);
+        .placeholder-color(white);
+      }
+      div.btn {
+        background-color: white;
+        border: 0;
+        color: #74685a;
+        font-weight: bold;
+        height: 35px;
+        width: 25px;
+        padding-left: 10px;
+        position: relative;
+        left: 6px;
+        .border-radius(90px 0 0 90px);
+        &:active, &.active {
+          .box-shadow(none);
+        }
       }
     }
+
     &.left {
-      #gradient.horizontal(#A74017;#C95A33;0%;100%);
+      // #gradient.horizontal(#A74017; #C95A33; 0%; 100%);
+      background: #aea69e;
+      background: -moz-linear-gradient(-45deg, #aea69e 0%, #74685a 100%);
+      background: -webkit-gradient(linear, left top, right bottom, color-stop(0%,#aea69e), color-stop(100%, #74685a));
+      background: -webkit-linear-gradient(-45deg, #aea69e 0%, #74685a 100%);
+      background: -o-linear-gradient(-45deg, #aea69e 0%, #74685a 100%);
+      background: -ms-linear-gradient(-45deg, #aea69e 0%, #74685a 100%);
+      background: linear-gradient(135deg, #aea69e 0%, #74685a 100%);
+      filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#aea69e', endColorstr='#74685a', GradientType=1);
       position: absolute;
-      top: 79px;
+      top: 60px;
       left: 0;
       bottom: 0;
       z-index: 1025;
-      .btn.btn-info.btn-block {
-        text-align: left;
-      }
-      .item .item-heading {
-        color: white;
-        background-color: fade(@gray-dark, 40%);
-        padding: 0 25px 0 10px;
-        height: 55px;
-        line-height: 55px;
-        &.item-open {
-          color: white;
-        }
-      }
-      &.expanded {
-        width: 290px;
-      }
-    }
-
-    &.top {
-      background-color: white;
-      border-bottom: 1px solid #474753;
-      position: absolute;
-      top: -1px;
-      right: 0;
-      left: 0;
-      z-index: 1028;
-      height: 80px;
-      .box-shadow(0 7px 7px fade(black, 10%), 0 19px 59px fade(black, 25%););
-
-      div.btn {
-        .cask-btn(@border: 0, @border-radius: 0, @color: #202028, @padding: 0);
-        border-right: 1px solid transparent;
-        border-left: 1px solid @table-border-color;
-        height: 79px;
-        line-height: 79px;
-        width: 90px;
-        &:hover, &:focus {
-          border-left: 1px solid @table-border-color;
-        }
-      }
-
-      .adapter-metadata {
-        width: 600px;
-        padding: 15px;
-        h1 {
-          display: inline-block;
-          font-size: 20px;
-          font-weight: 500;
-          margin-top: 0;
-          margin-right: 10px;
-          a {
-            color: #202028;
-          }
-          + a {
-            color: #397cf1;
-            font-size: 16px;
-          }
-        }
-        a {
-          font-weight: 500;
-          text-decoration: none;
-          &.fa-pencil {
-            color: @cdap-lightgray;
-          }
-        }
-        p {
-          color: #666;
-          font-size: 14px;
-          font-weight: 400;
-          word-wrap: break-word;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-      }
-    }
-
-    &.expanded {
+      width: 130px;
+      .transition(all 0.2s ease);
 
       .item {
+        color: @cdap-lightgray;
+        cursor: pointer;
+        font-size: 11px;
         margin-bottom: 10px;
         .item-body, .item-heading {
-          .name, .description {
+          .name {
             display: inline-block;
             vertical-align: top;
             overflow-x: hidden;
@@ -138,13 +86,22 @@ my-side-panel {
           }
         }
         .item-heading {
-
+          color: white;
+          background-color: fade(@gray-dark, 40%);
+          padding: 0 15px 0 10px;
+          height: 40px;
+          line-height: 40px;
+          &.item-open {
+            color: white;
+          }
           span {
-            &:first-child {
-              font-size: 21px;
+            line-height: inherit;
+            &[class^="icon-"] {
+              font-size: 18px;
               vertical-align: top;
               width: 14px;
               text-align: center;
+              padding-right: 5px;
             }
             &.name {
               font-size: 13px;
@@ -159,70 +116,107 @@ my-side-panel {
           flex-wrap: wrap;
           align-items: center;
           justify-content: space-between;
-          // max-height: 50vh;
           // Adjust max height to prevent side panel from becoming unusable below a certain browser height
           @media (max-height: 550px) {
             max-height: 20vh;
           }
-          .plugin-item {
-            height: 40px;
-            width: 130px;
-            padding: 0 10px;
-            flex-basis: 130px;
-            > .fa {
-              font-size: 14px;
-            }
-            .name {
-              font-size: 13px;
-              padding-left: 5px;
-            }
-          }
         }
-      }
-    }
-
-    .item {
-      color: @cdap-lightgray;
-      cursor: pointer;
-      font-size: 11px;
-      .item-heading {
-        height: 40px;
-        line-height: 40px;
-        vertical-align: middle;
-        span {
-          line-height: inherit;
-          &.name {
-            padding-left: 5px;
-          }
-          &:last-child {
-            font-size: 14px;
-          }
-        }
-        .name, .description {
-          display: none;
-        }
-
-      }
-
-      .item-body {
-        padding: 15px;
         .plugin-item {
           background-color: white;
-          margin-bottom: 10px;
           line-height: 40px;
+          margin-bottom: 10px;
+          padding: 0 10px;
           height: 40px;
-          width: 40px;
+          width: 50px;
           .border-radius(4px);
           > .fa {
-            font-size: 18px;
-            text-align: center;
+            font-size: 14px;
             height: 18px;
             width: 18px;
             vertical-align: middle;
           }
+          .name {
+            font-size: 13px;
+            padding-left: 5px;
+          }
         }
-        .name, .description {
+      }
+
+      &.expanded {
+        width: 290px;
+        .plugin-item {
+          width: 130px;
+        }
+      }
+    }
+
+    // Metadata + Actions
+    &.top {
+      background-color: white;
+      border-bottom: 1px solid #474753;
+      position: fixed;
+      top: 60px;
+      right: 0;
+      left: 0;
+      z-index: 1028;
+      height: 60px;
+      .box-shadow(0 7px 7px fade(black, 10%), 0 19px 59px fade(black, 25%););
+
+      div.btn {
+        .cask-btn(@border: 0, @border-radius: 0, @color: #74685a, @padding: 0);
+        border-right: 1px solid transparent;
+        border-left: 1px solid @table-border-color;
+        font-weight: 500;
+        height: 59px;
+        line-height: 59px;
+        width: 80px;
+        &:hover, &:focus {
+          border-left: 1px solid @table-border-color;
+        }
+        &.active, &:active {
+          .box-shadow(none);
+        }
+        @media (max-width: @screen-xs-max) {
           display: none;
+        }
+      }
+
+      .adapter-metadata {
+        width: 600px;
+        padding: 5px 15px 0;
+        @media (max-width: @screen-sm-max) {
+          max-width: 300px;
+        }
+        h1 {
+          display: inline-block;
+          font-size: 20px;
+          font-weight: 500;
+          margin-top: 0;
+          margin-right: 10px;
+          margin-bottom: 5px;
+          a {
+            color: #202028;
+          }
+          + a {
+            color: #397cf1;
+            font-size: 16px;
+          }
+        }
+        a {
+          font-weight: 500;
+          text-decoration: none;
+          &.fa-pencil {
+            color: @cdap-lightgray;
+            margin-top: 3px;
+          }
+        }
+        p {
+          color: #666;
+          font-size: 14px;
+          font-weight: 400;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
       }
     }
