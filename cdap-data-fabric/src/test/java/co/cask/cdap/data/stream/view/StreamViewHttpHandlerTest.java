@@ -109,7 +109,8 @@ public class StreamViewHttpHandlerTest {
       200,
       HttpRequest.get(resolve("/v3/namespaces/default/streams/foo/views/view1")).build(),
       ViewDetail.class);
-    Assert.assertEquals(new ViewDetail("view1", config), actualDetail);
+    Assert.assertEquals(
+      new ViewDetail("view1", new ViewSpecification(config.getFormat(), "stream_foo_view1")), actualDetail);
 
     views = execute(
       200, HttpRequest.get(resolve("/v3/namespaces/default/streams/foo/views")).build(),
@@ -126,7 +127,8 @@ public class StreamViewHttpHandlerTest {
       200,
       HttpRequest.get(resolve("/v3/namespaces/default/streams/foo/views/view2")).build(),
       ViewDetail.class);
-    Assert.assertEquals(new ViewDetail("view2", config), actualDetail);
+    Assert.assertEquals(
+      new ViewDetail("view2", new ViewSpecification(config.getFormat(), "stream_foo_view2")), actualDetail);
 
     views = execute(
       200, HttpRequest.get(resolve("/v3/namespaces/default/streams/foo/views")).build(),

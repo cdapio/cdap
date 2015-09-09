@@ -93,7 +93,7 @@ public class StreamViewClientTestRun extends ClientTestBase {
           Schema.Field.of("one", Schema.of(Schema.Type.STRING)),
           Schema.Field.of("two", Schema.of(Schema.Type.STRING)),
           Schema.Field.of("three", Schema.of(Schema.Type.STRING))));
-      ViewSpecification viewSpecification = new ViewSpecification(format);
+      ViewSpecification viewSpecification = new ViewSpecification(format, "firsttable");
       LOG.info("Creating view {} with config {}", view1, GSON.toJson(viewSpecification));
       Assert.assertEquals(true, streamViewClient.createOrUpdate(view1, viewSpecification));
 
@@ -108,16 +108,16 @@ public class StreamViewClientTestRun extends ClientTestBase {
           Schema.Field.of("one", Schema.of(Schema.Type.STRING)),
           Schema.Field.of("two", Schema.of(Schema.Type.STRING)),
           Schema.Field.of("three", Schema.of(Schema.Type.STRING))));
-      ViewSpecification newViewSpecification = new ViewSpecification(newFormat);
+      ViewSpecification newViewSpecification = new ViewSpecification(newFormat, "sometable");
       LOG.info("Updating view {} with config {}", view1, GSON.toJson(newViewSpecification));
-      Assert.assertEquals(false, streamViewClient.createOrUpdate(view1, viewSpecification));
+      Assert.assertEquals(false, streamViewClient.createOrUpdate(view1, newViewSpecification));
 
       LOG.info("Verifying that view {} has been updated", view1);
-      Assert.assertEquals(new ViewDetail(view1.getId(), viewSpecification), streamViewClient.get(view1));
+      Assert.assertEquals(new ViewDetail(view1.getId(), newViewSpecification), streamViewClient.get(view1));
       Assert.assertEquals(ImmutableList.of(view1.getId()), streamViewClient.list(stream));
 
       ExploreExecutionResult executionResult = queryClient.execute(
-        view1.getNamespace(), "select one,two,three from stream_foo_view_view1").get();
+        view1.getNamespace(), "select one,two,three from sometable").get();
       Assert.assertNotNull(executionResult.getResultSchema());
       Assert.assertEquals(3, executionResult.getResultSchema().size());
       Assert.assertEquals("one", executionResult.getResultSchema().get(0).getName());

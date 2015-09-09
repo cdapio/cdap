@@ -59,11 +59,12 @@ public class DescribeStreamViewCommand extends AbstractAuthCommand {
     ViewDetail detail = client.get(Id.Stream.View.from(streamId, arguments.get(ArgumentName.VIEW.toString())));
 
     Table table = Table.builder()
-      .setHeader("id", "format", "schema", "settings")
+      .setHeader("id", "format", "table", "schema", "settings")
       .setRows(Collections.singletonList(detail), new RowMaker<ViewDetail>() {
         @Override
         public List<?> makeRow(ViewDetail object) {
           return Lists.newArrayList(object.getId(), object.getFormat().getName(),
+                                    object.getTableName(),
                                     GSON.toJson(object.getFormat().getSchema()),
                                     GSON.toJson(object.getFormat().getSettings()));
         }

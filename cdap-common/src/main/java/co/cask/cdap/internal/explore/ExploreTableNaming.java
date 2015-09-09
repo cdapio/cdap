@@ -32,7 +32,7 @@ public final class ExploreTableNaming {
   }
 
   public String getTableName(Id.Stream.View viewId) {
-    return String.format("stream_%s_view_%s", cleanTableName(viewId.getStreamId()), cleanTableName(viewId.getId()));
+    return String.format("stream_%s_%s", cleanTableName(viewId.getStreamId()), cleanTableName(viewId.getId()));
   }
 
   public String cleanTableName(String name) {
