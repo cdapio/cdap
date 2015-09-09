@@ -1,5 +1,5 @@
 {
-    "template": "ETLBatch",
+    "template": "cdap-etl-batch-app",
     "description": "Periodically appends data from stream to Table.",
     "config": {
         "source": {
