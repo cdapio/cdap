@@ -7,7 +7,7 @@ This /examples directory contains example apps for the Cask Data Application Pla
 the API jars (plus their dependencies). However, they may also be provided in their
 compiled forms as JAR files in a release.
 
-Additional information about examples is available at the Cask documentation website:
+Additional information about these examples is available at the Cask documentation website:
 
 http://docs.cask.co/cdap/current/en/examples-manual/examples/index.html
 
@@ -47,9 +47,10 @@ HelloWorld
 
 Purchase
 --------
-- An app that uses a scheduled Workflow to start a MapReduce that reads from one
-  ObjectStore Dataset and writes to another. The app also demonstrates using ad-hoc SQL
-  queries.
+- An example application that reads purchase data from a stream, processes the data via a workflow,
+  and makes it available via ad-hoc querying and the RESTful interface of a service. It
+  uses a scheduled Workflow to start a MapReduce that reads from one ObjectStore dataset
+  and writes to another. The app demonstrates using custom datasets and ad-hoc SQL queries.
 
   - Send sentences of the form "Tom bought 5 apples for $10" to the purchaseStream.
   - The PurchaseFlow reads the purchaseStream and converts every input String into a
