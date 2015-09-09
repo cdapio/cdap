@@ -108,7 +108,7 @@ GITHUB="github"
 
 # BUILD.rst
 BUILD_RST="BUILD.rst"
-BUILD_RST_HASH="f54ae74bb72f9ad894766b6c0bd2d2df"
+BUILD_RST_HASH="79a46db1e9fb3d428c384bdea0c3d596"
 
 
 function usage() {
@@ -223,8 +223,9 @@ function set_mvn_environment() {
     export JAVA_HOME=$(/usr/libexec/java_home -v 1.7)
   fi
   # check BUILD.rst for changes
-  BUILD_RST_PATH="${PROJECT_PATH}/${BUILD_RST}"
-  test_an_include ${BUILD_RST_HASH} ${BUILD_RST_PATH}
+  BUILD_RST_PATH="${PROJECT_PATH}${BUILD_RST}"
+  test_an_include "${BUILD_RST_HASH}" "${BUILD_RST_PATH}"
+  echo
 }
 
 function check_includes() {
@@ -258,32 +259,35 @@ function test_an_include() {
   local md5_hash=${1}
   local target=${2}
   local new_md5_hash
-  
-  local file_name=`basename ${target}`
-  
-  if [[ "${OSTYPE}" == "darwin"* ]]; then
-    new_md5_hash=`md5 -q ${target}`
-  else
-    new_md5_hash=`md5sum ${target} | awk '{print $1}'`
-  fi
-  
   local m
-  local m_display
+  local m_display  
   
-  if [[ "${new_md5_hash}" == "${NOT_FOUND_HASH}" ]]; then
-    m="${WARNING} ${RED_BOLD}${file_name} not found!${NO_COLOR} "  
-    m="${m}\nfile: ${target}"  
-  elif [[ "${new_md5_hash}" != "${md5_hash}" ]]; then
-    m="${WARNING} ${RED_BOLD}${file_name} has changed! Compare files and update hash!${NO_COLOR} "   
-    m="${m}\nfile: ${target}"   
-    m="${m}\nOld MD5 Hash: ${md5_hash} New MD5 Hash: ${new_md5_hash}"   
+  if [[ "x${target}" == "x" ]]; then
+    m="No target is set for test_an_include"
+  else  
+    local file_name=`basename ${target}`
+  
+    if [[ "${OSTYPE}" == "darwin"* ]]; then
+      new_md5_hash=`md5 -q ${target}`
+    else
+      new_md5_hash=`md5sum ${target} | awk '{print $1}'`
+    fi
+  
+    if [[ "${new_md5_hash}" == "${NOT_FOUND_HASH}" ]]; then
+      m="${WARNING} ${RED_BOLD}${file_name} not found!${NO_COLOR} "  
+      m="${m}\nfile: ${target}"  
+    elif [[ "${new_md5_hash}" != "${md5_hash}" ]]; then
+      m="${WARNING} ${RED_BOLD}${file_name} has changed! Compare files and update hash!${NO_COLOR} "   
+      m="${m}\nfile: ${target}"   
+      m="${m}\nOld MD5 Hash: ${md5_hash} New MD5 Hash: ${new_md5_hash}"   
+    fi
   fi
   if [ "x${m}" != "x" ]; then
     set_message "${m}"
   else
     m="MD5 Hash for ${file_name} matches"
   fi
-  echo "${m}"
+  printf "${m}\n"
 }
 
 function set_version() {
@@ -364,7 +368,7 @@ function set_message() {
     fi
     echo_red_bold "Warning Message for \"${MANUAL}\":" >> ${TMP_MESSAGES_FILE}
     echo >> ${TMP_MESSAGES_FILE}
-    echo "${*}" >> ${TMP_MESSAGES_FILE}
+    printf "${*}\n" >> ${TMP_MESSAGES_FILE}
   fi
 }
 
@@ -373,7 +377,7 @@ function consolidate_messages() {
   if [ "x${MESSAGES}" != "x" ]; then
     echo_red_bold "Consolidating messages" 
     echo_red_bold "${m}" >> ${TMP_MESSAGES_FILE}
-    echo "${MESSAGES}" >> ${TMP_MESSAGES_FILE}
+    printf "${MESSAGES}\n" >> ${TMP_MESSAGES_FILE}
     unset -v MESSAGES
   fi
   if [ -s ${TARGET}/${SPHINX_MESSAGES} ]; then
