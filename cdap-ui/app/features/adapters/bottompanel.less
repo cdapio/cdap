@@ -25,7 +25,15 @@ body.theme-cdap.state-adapters-create {
     right: 0;
     bottom: 0;
     left: 290px;
+    z-index: 1026;
     overflow-x: hidden;
+    .transition(all 0.2s ease);
+    @media (max-width: @screen-sm-max) {
+      bottom: 27px;
+    }
+    &.collapsed {
+      left: 130px;
+    }
   }
   div.console-tabs {
     background-color: @body-bg;
@@ -56,11 +64,13 @@ body.theme-cdap.state-adapters-create {
         }
       }
       + a.btn {
+        background-color: white;
+        border: 1px solid @table-border-color;
         color: #666;
         font-size: 21px;
-        padding-top: 3px;
-        padding-right: 20px;
-        padding-bottom: 3px;
+        line-height: 25px;
+        margin: 6px 15px 6px 0;
+        padding: 0 6px;
         &.active, &:active {
           .box-shadow(none);
         }
@@ -71,10 +81,12 @@ body.theme-cdap.state-adapters-create {
     background-color: white;
     border-top: 1px solid @table-border-color;
     height: 30vh;
+    padding: 10px;
     .transition(all 0.2s ease);
     &.is-collapsed {
       border-top: 1px solid @body-bg;
       height: 0;
+      padding: 0;
     }
   }
 }

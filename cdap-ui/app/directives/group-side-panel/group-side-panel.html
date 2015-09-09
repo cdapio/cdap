@@ -15,17 +15,21 @@
 -->
 
 <div class="side-panel text-center"
-      ng-class="{'expanded': MySidePanel.isExpanded === true, 'left': MySidePanel.placement === 'left', 'top': MySidePanel.placement === 'top'}">
-  <div ng-if="MySidePanel.placement === 'left'" class="hydrator-filter">
-    <input class="form-control" placeholder="Filter" type="text" />
-  </div>
-  <div ng-if="MySidePanel.placement === 'left'">
+      ng-class="{'expanded': isExpanded === true, 'left': MySidePanel.placement === 'left', 'top': MySidePanel.placement === 'top'}">
 
+  <div ng-if="MySidePanel.placement === 'left'" class="hydrator-filter clearfix">
+    <input class="form-control pull-left" placeholder="Filter" type="text" />
+    <div class="btn pull-right" ng-click="MySidePanel.toggleSidebar()">
+      <span class="fa" ng-class="{'fa-angle-double-left': isExpanded === true, 'fa-angle-double-right': isExpanded === false}"></span>
+    </div>
+  </div>
+
+  <div ng-if="MySidePanel.placement === 'left'">
     <div class="item"
           ng-repeat="group in MySidePanel.groups"
-          ng-class="{'text-left': MySidePanel.isExpanded === true}"
+          ng-class="{'text-left': isExpanded === true}"
           ng-click="MySidePanel.openGroup(group)">
-      <div class="item-heading {{group.name}}"
+      <div class="text-left item-heading {{group.name}}"
             tooltip="{{group.error}}"
             tooltip-placement="right"
             tooltip-append-to-body="true"
@@ -34,17 +38,16 @@
             ng-class="{'item-open': MySidePanel.openedGroup === group.name}">
         <div tooltip="{{ group.name | caskCapitalizeFilter }}"
              tooltip-placement="{{ MySidePanel.placement === 'left' ? 'top' : 'left' }}"
-             tooltip-enable="MySidePanel.isExpanded === false && !group.error">
-          <span class="{{group.icon}}"></span>
+             tooltip-enable="isExpanded === false && !group.error">
+          <span ng-if="isExpanded === true" class="{{group.icon}}"></span>
           <span class="name">{{group.name | caskCapitalizeFilter}}</span>
-          <span ng-if="MySidePanel.isExpanded === true"
-                ng-class="{'fa-chevron-right': MySidePanel.openedGroup !== group.name, 'fa-chevron-down': MySidePanel.openedGroup === group.name}"
-                class="fa pull-right"></span>
+          <span class="fa pull-right"
+                ng-class="{'fa-chevron-right': MySidePanel.openedGroup !== group.name, 'fa-chevron-down': MySidePanel.openedGroup === group.name}"></span>
         </div>
       </div>
 
       <div class="item-body"
-           ng-class="{'text-left': MySidePanel.isExpanded === true}"
+           ng-class="{'text-left': isExpanded === true}"
            ng-if="MySidePanel.isSubMenu === true && MySidePanel.openedGroup === group.name">
         <div ng-repeat="plugin in MySidePanel.panel.items track by $index"
               class="plugin-item"
@@ -54,8 +57,8 @@
               popover-append-to-body="true"
               popover-trigger="mouseenter"
               ng-click="MySidePanel.onItemClicked($event, plugin)">
-          <span ng-if="plugin.icon" class="fa {{plugin.icon}}"></span>
-          <span class="name">{{plugin.name | myEllipsis: 10}}</span>
+          <span ng-if="plugin.icon" class="text-center fa {{plugin.icon}}"></span>
+          <span ng-if="isExpanded === true" class="name">{{plugin.name | myEllipsis: 10}}</span>
         </div>
       </div>
     </div>

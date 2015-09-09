@@ -15,11 +15,19 @@
  */
 
 angular.module(PKG.name + '.feature.adapters')
-  .controller('BottomPanelController', function ($scope) {
+  .controller('BottomPanelController', function ($scope, MySidebarService) {
     $scope.isCollapsed = false;
     $scope.collapseToggle = function() {
       $scope.isCollapsed = !$scope.isCollapsed;
     };
+    $scope.isExpanded = false;
+
+
+    function isExpanded(value) {
+      $scope.isExpanded = !value;
+    }
+
+    MySidebarService.registerIsExpandedCallback(isExpanded.bind(this));
 
     $scope.tabs = [
       {

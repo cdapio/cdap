@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.adapters')
-  .controller('LeftPanelController', function($q, myAdapterApi, MyAppDAGService, MyDAGFactory, myAdapterTemplatesApi, CanvasFactory, $alert, mySettings, $state) {
+  .controller('LeftPanelController', function($q, myAdapterApi, MyAppDAGService, MyDAGFactory, myAdapterTemplatesApi, CanvasFactory, $alert, mySettings, $state, MySidebarService, $scope) {
     this.pluginTypes = [
       {
         name: 'source',
@@ -38,6 +38,15 @@ angular.module(PKG.name + '.feature.adapters')
     this.plugins= {
       items: []
     };
+
+    this.panelstatus = {};
+    this.panelstatus.isExpanded = true;
+
+    $scope.$watch(function() {
+      return this.panelstatus.isExpanded;
+    }.bind(this), function() {
+      MySidebarService.setIsExpanded(this.panelstatus.isExpanded);
+    }.bind(this));
 
     this.onLeftSideGroupItemClicked = function(group) {
       var prom;

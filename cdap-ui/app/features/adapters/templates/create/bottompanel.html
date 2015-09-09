@@ -14,7 +14,7 @@
   the License.
 -->
 
-<div class="console">
+<div class="console" ng-class="{'collapsed': isExpanded}">
   <div class="console-tabs clearfix">
     <ul class="nav nav-tabs pull-left" role="tablist">
       <li ng-repeat="tab in tabs"
@@ -26,7 +26,7 @@
       </li>
     </ul>
     <a class="btn pull-right" ng-click="collapseToggle()">
-      <span class="fa" ng-class="{'fa-caret-down': !isCollapsed, 'fa-caret-up': isCollapsed}"></span>
+      <span class="fa" ng-class="{'fa-angle-double-down': !isCollapsed, 'fa-angle-double-up': isCollapsed}"></span>
     </a>
   </div>
   <div class="console-type" ng-class="{'is-collapsed': isCollapsed}">
