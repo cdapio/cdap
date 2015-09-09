@@ -395,7 +395,7 @@ function consolidate_messages() {
 
 function display_messages_file() {
   local warnings=0
-  if [[ "x${TMP_MESSAGES_FILE}" != "x" && -a ${TMP_MESSAGES_FILE} ]]; then
+  if [[ "x${TMP_MESSAGES_FILE}" != "x" && -s ${TMP_MESSAGES_FILE} ]]; then
     echo 
     echo "--------------------------------------------------------"
     echo_red_bold "Warning Messages: $(basename ${TMP_MESSAGES_FILE})"
