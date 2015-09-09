@@ -41,8 +41,8 @@ HelloWorld
 ----------
 - This is a simple HelloWorld example that uses one Stream, one Dataset, one Flow and one
   Service.
-- A Stream, to send names to.
-- A Flow, with a single Flowlet that reads the Stream and stores each name in a KeyValueTable.
+- A Dataset, a KeyValueTable.
+- A Flow, with a single Flowlet that reads from the Stream and stores each name in the KeyValueTable.
 - A Service, that reads the name from the KeyValueTable and responds with "Hello [Name]!"
 
 Purchase
