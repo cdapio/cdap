@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.runtime.batch.dataset.partitioned;
 
-import co.cask.cdap.api.dataset.lib.Partition;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.Partitioning;
@@ -111,7 +110,7 @@ public class DynamicPartitioningOutputCommitter extends FileOutputCommitter {
     // the original outputDir.
     Path finalOutput = FileOutputFormat.getOutputPath(context);
     FileSystem fs = finalOutput.getFileSystem(context.getConfiguration());
-    for (FileStatus stat: getAllCommittedTaskPaths(context)) {
+    for (FileStatus stat : getAllCommittedTaskPaths(context)) {
       mergePaths(fs, stat, finalOutput);
     }
 
@@ -130,12 +129,7 @@ public class DynamicPartitioningOutputCommitter extends FileOutputCommitter {
 
     // delete the job-specific _temporary folder and create a _done file in the o/p folder
     cleanupJob(context);
-    // True if the job requires output.dir marked on successful job.
-    // Note that by default it is set to true.
-    if (context.getConfiguration().getBoolean(SUCCESSFUL_JOB_OUTPUT_DIR_MARKER, true)) {
-      Path markerPath = new Path(finalOutput, SUCCEEDED_FILE_NAME);
-      fs.create(markerPath).close();
-    }
+    // this commitJob() omits the marking with '_SUCCESS' file, because the output directory is shared across jobs.
   }
 
   private PartitionKey getPartitionKey(Partitioning partitioning, String relativePath) {

@@ -41,6 +41,9 @@ import org.apache.hadoop.mapreduce.security.TokenCache;
 import org.apache.hadoop.mapreduce.task.TaskAttemptContextImpl;
 
 import java.io.IOException;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.TreeMap;
 
 import static org.apache.hadoop.mapreduce.TaskType.MAP;
@@ -55,10 +58,9 @@ import static org.apache.hadoop.mapreduce.TaskType.MAP;
 public class DynamicPartitioningOutputFormat<K, V> extends FileOutputFormat<K, V> {
 
   public static final String HCONF_ATTR_OUTPUT_DATASET = "output.dataset.name";
+  public static final String HCONF_ATTR_OUTPUT_FORMAT_CLASS_NAME = "output.format.class.name";
 
-  // TODO: keep the limit to only FileOutputFormat and FileOutputCommitter?
   private FileOutputFormat<K, V> fileOutputFormat;
-  private FileOutputCommitter committer;
 
   /**
    * Create a composite record writer that can write key/value data to different output files.
@@ -88,18 +90,18 @@ public class DynamicPartitioningOutputFormat<K, V> extends FileOutputFormat<K, V
     return new RecordWriter<K, V>() {
 
       // a cache storing the record writers for different output files.
-      TreeMap<String, RecordWriter<K, V>> recordWriters = new TreeMap<>();
+      Map<PartitionKey, RecordWriter<K, V>> recordWriters = new HashMap<>();
 
       public void write(K key, V value) throws IOException, InterruptedException {
         PartitionKey partitionKey = dynamicPartitioner.getPartitionKey(key, value);
-        String relativePath = PartitionedFileSetDataset.getOutputPath(partitionKey, partitioning);
-        String finalPath = relativePath + "/" + outputName;
-
-        RecordWriter<K, V> rw = this.recordWriters.get(finalPath);
+        RecordWriter<K, V> rw = this.recordWriters.get(partitionKey);
         if (rw == null) {
+          String relativePath = PartitionedFileSetDataset.getOutputPath(partitionKey, partitioning);
+          String finalPath = relativePath + "/" + outputName;
+
           // if we don't have the record writer yet for the final path, create one and add it to the cache
           rw = getBaseRecordWriter(getTaskAttemptContext(job, finalPath));
-          this.recordWriters.put(finalPath, rw);
+          this.recordWriters.put(partitionKey, rw);
         }
         rw.write(key, value);
       }
@@ -112,6 +114,7 @@ public class DynamicPartitioningOutputFormat<K, V> extends FileOutputFormat<K, V
           }
           this.recordWriters.clear();
 
+          dynamicPartitioner.destroy();
           mrTaskContext.flushOperations();
         } catch (Exception e) {
           throw new IOException(e);
@@ -139,8 +142,13 @@ public class DynamicPartitioningOutputFormat<K, V> extends FileOutputFormat<K, V
    */
   protected RecordWriter<K, V> getBaseRecordWriter(TaskAttemptContext job) throws IOException, InterruptedException {
     if (fileOutputFormat == null) {
-      // TODO: use the PFS's OutputFormat (encode in conf)
-      fileOutputFormat = new TextOutputFormat<>();
+      Class<? extends FileOutputFormat> delegateOutputFormat =
+        job.getConfiguration().getClass(HCONF_ATTR_OUTPUT_FORMAT_CLASS_NAME, null, FileOutputFormat.class);
+
+      @SuppressWarnings("unchecked")
+      FileOutputFormat<K, V> fileOutputFormat =
+        new InstantiatorFactory(false).get(TypeToken.of(delegateOutputFormat)).create();
+      this.fileOutputFormat = fileOutputFormat;
     }
     return fileOutputFormat.getRecordWriter(job);
   }
@@ -153,11 +161,8 @@ public class DynamicPartitioningOutputFormat<K, V> extends FileOutputFormat<K, V
 
   @Override
   public synchronized FileOutputCommitter getOutputCommitter(TaskAttemptContext context) throws IOException {
-    if (committer == null) {
-      final Path jobSpecificOutputPath = createJobSpecificPath(getOutputPath(context), context);
-      committer = new DynamicPartitioningOutputCommitter(jobSpecificOutputPath, context);
-    }
-    return committer;
+    final Path jobSpecificOutputPath = createJobSpecificPath(getOutputPath(context), context);
+    return new DynamicPartitioningOutputCommitter(jobSpecificOutputPath, context);
   }
 
   @Override
@@ -177,13 +182,22 @@ public class DynamicPartitioningOutputFormat<K, V> extends FileOutputFormat<K, V
 
     // additionally check that output dataset and dynamic partitioner class name has been set in conf
     if (job.getConfiguration().get(HCONF_ATTR_OUTPUT_DATASET) == null) {
-      throw new InvalidJobConfException("Output dataset not set.");
+      throw new InvalidJobConfException("The job configuration does not contain required property: "
+                                          + HCONF_ATTR_OUTPUT_DATASET);
     }
 
     Class<? extends DynamicPartitioner> className = job.getConfiguration()
       .getClass(PartitionedFileSetArguments.DYNAMIC_PARTITIONER_CLASS_NAME, null, DynamicPartitioner.class);
     if (className == null) {
-      throw new InvalidJobConfException("Dynamic Partitioner class name not set.");
+      throw new InvalidJobConfException("The job configuration does not contain required property: "
+                                          + PartitionedFileSetArguments.DYNAMIC_PARTITIONER_CLASS_NAME);
+    }
+
+    Class<? extends FileOutputFormat> delegateOutputFormatClassName =
+      job.getConfiguration().getClass(HCONF_ATTR_OUTPUT_FORMAT_CLASS_NAME, null, FileOutputFormat.class);
+    if (delegateOutputFormatClassName == null) {
+      throw new InvalidJobConfException("The job configuration does not contain required property: "
+                                          + HCONF_ATTR_OUTPUT_FORMAT_CLASS_NAME);
     }
   }
 }

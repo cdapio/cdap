@@ -605,6 +605,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
       }
       // also delegate to the files.getOutputFormatClassName()? (currently defaulting to TextOutputFormat)
       PartitionedFileSetArguments.setDynamicPartitioner(outputArgs, dynamicPartitionerClassName);
+      outputArgs.put("output.format.class.name", files.getOutputFormatClassName());
       // need dependency on DynamicPartitioningOutputFormat to avoid inlining following string?
       outputArgs.put("output.dataset.name", getName());
     }
