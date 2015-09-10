@@ -1,15 +1,15 @@
 .. meta::
-:author: Cask Data, Inc.
+    :author: Cask Data, Inc.
     :copyright: Copyright © 2015 Cask Data, Inc.
 
-===============================
+=============================
 Sinks: Batch: SnapshotParquet
-===============================
+=============================
 
 .. rubric:: Description
 
-Snapshot sink for a FileSet that writes data in Parquet format.
-At the end of every pipeline run, the last run's data will be overwritten
+A batch sink for a FileSet that writes a snapshot of data in Parquet format.
+At the end of every pipeline run, the previous run's data will be overwritten
 with the current run's data. All data for the run will be written to that
 location in the file system.
 
