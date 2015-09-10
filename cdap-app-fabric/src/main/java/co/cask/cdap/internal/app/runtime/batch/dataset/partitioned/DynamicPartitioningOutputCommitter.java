@@ -22,7 +22,6 @@ import co.cask.cdap.api.dataset.lib.Partitioning;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.runtime.batch.BasicMapReduceTaskContext;
 import co.cask.cdap.internal.app.runtime.batch.MapReduceTaskContextProvider;
-import com.google.common.collect.Lists;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.LocatedFileStatus;
@@ -38,6 +37,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -139,13 +139,19 @@ public class DynamicPartitioningOutputCommitter extends FileOutputCommitter {
       for (String relativePath : relativePaths) {
         Path pathToMark = new Path(finalOutput, relativePath);
         Path markerPath = new Path(pathToMark, SUCCEEDED_FILE_NAME);
-        fs.create(markerPath).close();
+        fs.createNewFile(markerPath);
       }
     }
   }
 
   private PartitionKey getPartitionKey(Partitioning partitioning, String relativePath) {
-    List<String> pathParts = Lists.newArrayList(relativePath.split(Path.SEPARATOR));
+    List<String> pathParts = Arrays.asList(relativePath.split(Path.SEPARATOR));
+
+    if (pathParts.size() != partitioning.getFields().size()) {
+      throw new IllegalArgumentException(
+        String.format("relativePath '%s' does not have same number of components as partitioning '%s",
+                      relativePath, partitioning));
+    }
 
     PartitionKey.Builder builder = PartitionKey.builder();
     int i = 0;
@@ -223,14 +229,6 @@ public class DynamicPartitioningOutputCommitter extends FileOutputCommitter {
     return fs.listStatus(jobAttemptPath, new CommittedTaskFilter());
   }
 
-  class CommittedTaskFilter implements PathFilter {
-    @Override
-    public boolean accept(Path path) {
-      return !PENDING_DIR_NAME.equals(path.getName());
-    }
-  }
-
-
   /**
    * given two paths as input:
    *    base: /my/base/path
@@ -239,5 +237,12 @@ public class DynamicPartitioningOutputCommitter extends FileOutputCommitter {
    */
   private String getRelative(Path base, Path file) {
     return base.toUri().relativize(file.toUri()).getPath();
+  }
+
+  private static class CommittedTaskFilter implements PathFilter {
+    @Override
+    public boolean accept(Path path) {
+      return !PENDING_DIR_NAME.equals(path.getName());
+    }
   }
 }

@@ -27,6 +27,7 @@ import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.data2.dataset2.lib.partitioned.PartitionedFileSetDataset;
 import co.cask.cdap.internal.app.runtime.batch.BasicMapReduceTaskContext;
 import co.cask.cdap.internal.app.runtime.batch.MapReduceTaskContextProvider;
+import co.cask.cdap.internal.app.runtime.batch.dataset.MultipleOutputs;
 import com.google.common.reflect.TypeToken;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.InvalidJobConfException;
@@ -34,20 +35,15 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.apache.hadoop.mapreduce.TaskType;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputCommitter;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
-import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.mapreduce.security.TokenCache;
 import org.apache.hadoop.mapreduce.task.TaskAttemptContextImpl;
 
 import java.io.IOException;
-import java.util.Comparator;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.TreeMap;
-
-import static org.apache.hadoop.mapreduce.TaskType.MAP;
 
 /**
  * This class extends the FileOutputFormat and allows writing dynamically to multiple partitions of a PartitionedFileSet
@@ -70,12 +66,12 @@ public class DynamicPartitioningOutputFormat<K, V> extends FileOutputFormat<K, V
   public RecordWriter<K, V> getRecordWriter(final TaskAttemptContext job) throws IOException {
     final String outputName = FileOutputFormat.getOutputName(job);
 
-    Class<? extends DynamicPartitioner> className = job.getConfiguration()
+    Class<? extends DynamicPartitioner> partitionerClass = job.getConfiguration()
       .getClass(PartitionedFileSetArguments.DYNAMIC_PARTITIONER_CLASS_NAME, null, DynamicPartitioner.class);
 
     @SuppressWarnings("unchecked")
     final DynamicPartitioner<K, V> dynamicPartitioner =
-      new InstantiatorFactory(false).get(TypeToken.of(className)).create();
+      new InstantiatorFactory(false).get(TypeToken.of(partitionerClass)).create();
 
     MapReduceMetrics.TaskType taskType = MapReduceMetrics.TaskType.from(job.getTaskAttemptID().getTaskType());
     final BasicMapReduceTaskContext<K, V> mrTaskContext = new MapReduceTaskContextProvider(job, taskType).get();
@@ -107,17 +103,19 @@ public class DynamicPartitioningOutputFormat<K, V> extends FileOutputFormat<K, V
       @Override
       public void close(TaskAttemptContext context) throws IOException, InterruptedException {
         try {
-          for (RecordWriter<K, V> recordWriter : this.recordWriters.values()) {
-            recordWriter.close(context);
-          }
-          this.recordWriters.clear();
+          ArrayList<RecordWriter<?, ?>> recordWriters = new ArrayList<>();
+          recordWriters.addAll(this.recordWriters.values());
+          MultipleOutputs.closeRecordWriters(recordWriters, context);
 
-          dynamicPartitioner.destroy();
           mrTaskContext.flushOperations();
         } catch (Exception e) {
           throw new IOException(e);
         } finally {
-          mrTaskContext.close();
+          try {
+            dynamicPartitioner.destroy();
+          } finally {
+            mrTaskContext.close();
+          }
         }
       }
     };
@@ -184,16 +182,16 @@ public class DynamicPartitioningOutputFormat<K, V> extends FileOutputFormat<K, V
                                           + Constants.Dataset.Partitioned.HCONF_ATTR_OUTPUT_DATASET);
     }
 
-    Class<? extends DynamicPartitioner> className = job.getConfiguration()
+    Class<? extends DynamicPartitioner> partitionerClass = job.getConfiguration()
       .getClass(PartitionedFileSetArguments.DYNAMIC_PARTITIONER_CLASS_NAME, null, DynamicPartitioner.class);
-    if (className == null) {
+    if (partitionerClass == null) {
       throw new InvalidJobConfException("The job configuration does not contain required property: "
                                           + PartitionedFileSetArguments.DYNAMIC_PARTITIONER_CLASS_NAME);
     }
 
-    Class<? extends FileOutputFormat> delegateOutputFormatClassName = job.getConfiguration()
+    Class<? extends FileOutputFormat> delegateOutputFormatClass = job.getConfiguration()
       .getClass(Constants.Dataset.Partitioned.HCONF_ATTR_OUTPUT_FORMAT_CLASS_NAME, null, FileOutputFormat.class);
-    if (delegateOutputFormatClassName == null) {
+    if (delegateOutputFormatClass == null) {
       throw new InvalidJobConfException("The job configuration does not contain required property: "
                                           + Constants.Dataset.Partitioned.HCONF_ATTR_OUTPUT_FORMAT_CLASS_NAME);
     }
