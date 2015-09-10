@@ -98,17 +98,22 @@ public class ETLWorkerTest extends ETLRealtimeBaseTest {
 
   @Test
   @Category(SlowTests.class)
-  public void testStreamSink() throws Exception {
-    long startTime = System.currentTimeMillis();
+  public void testStreamSinks() throws Exception {
     ETLStage source = new ETLStage("DataGenerator", ImmutableMap.of(DataGeneratorSource.PROPERTY_TYPE,
-                                                           DataGeneratorSource.STREAM_TYPE));
-    ETLStage sink = new ETLStage("Stream", ImmutableMap.of(Properties.Stream.NAME, "testStream"));
-    ETLRealtimeConfig etlConfig = new ETLRealtimeConfig(source, sink);
+      DataGeneratorSource.STREAM_TYPE));
+
+    List<ETLStage> sinks = Lists.newArrayList(
+      new ETLStage("Stream", ImmutableMap.of(Properties.Stream.NAME, "streamA")),
+      new ETLStage("Stream", ImmutableMap.of(Properties.Stream.NAME, "streamB")),
+      new ETLStage("Stream", ImmutableMap.of(Properties.Stream.NAME, "streamC"))
+    );
+    ETLRealtimeConfig etlConfig = new ETLRealtimeConfig(1, source, sinks, null, null);
 
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "testToStream");
     AppRequest<ETLRealtimeConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
     ApplicationManager appManager = deployApplication(appId, appRequest);
 
+    long startTime = System.currentTimeMillis();
     WorkerManager workerManager = appManager.getWorkerManager(ETLWorker.NAME);
     workerManager.start();
     // Let the worker run for 3 seconds
@@ -121,21 +126,27 @@ public class ETLWorkerTest extends ETLRealtimeBaseTest {
     TimeUnit.SECONDS.sleep(2);
     workerManager.stop();
 
-    StreamManager streamManager = getStreamManager(Id.Namespace.DEFAULT, "testStream");
+    List<StreamManager> streamManagers = Lists.newArrayList(
+      getStreamManager(Id.Namespace.DEFAULT, "streamA"),
+      getStreamManager(Id.Namespace.DEFAULT, "streamB"),
+      getStreamManager(Id.Namespace.DEFAULT, "streamC")
+    );
     long currentDiff = System.currentTimeMillis() - startTime;
-    List<StreamEvent> streamEvents = streamManager.getEvents("now-" + Long.toString(currentDiff) + "ms", "now",
-                                                             Integer.MAX_VALUE);
-    // verify that some events were sent to the stream
-    Assert.assertTrue(streamEvents.size() > 0);
-    // since we sent all identical events, verify the contents of just one of them
-    Random random = new Random();
-    StreamEvent event = streamEvents.get(random.nextInt(streamEvents.size()));
-    ByteBuffer body = event.getBody();
-    Map<String, String> headers = event.getHeaders();
-    if (headers != null && !headers.isEmpty()) {
-      Assert.assertEquals("v1", headers.get("h1"));
+    for (StreamManager streamManager : streamManagers) {
+      List<StreamEvent> streamEvents = streamManager.getEvents("now-" + Long.toString(currentDiff) + "ms", "now",
+        Integer.MAX_VALUE);
+      // verify that some events were sent to the stream
+      Assert.assertTrue(streamEvents.size() > 0);
+      // since we sent all identical events, verify the contents of just one of them
+      Random random = new Random();
+      StreamEvent event = streamEvents.get(random.nextInt(streamEvents.size()));
+      ByteBuffer body = event.getBody();
+      Map<String, String> headers = event.getHeaders();
+      if (headers != null && !headers.isEmpty()) {
+        Assert.assertEquals("v1", headers.get("h1"));
+      }
+      Assert.assertEquals("Hello", Bytes.toString(body, Charsets.UTF_8));
     }
-    Assert.assertEquals("Hello", Bytes.toString(body, Charsets.UTF_8));
   }
 
   @Test

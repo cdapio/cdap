@@ -111,7 +111,7 @@ public abstract class ETLTemplate<T extends ETLConfig> extends ApplicationTempla
     }
 
     // Validate Source -> Transform -> Sink hookup
-    PipelineRegisterer.validateStages(source, sink, transforms);
+    PipelineRegisterer.validateStages(source, Lists.newArrayList(sink), transforms);
 
     configure(source, configurer, sourcePluginId);
     configure(sink, configurer, sinkPluginId);

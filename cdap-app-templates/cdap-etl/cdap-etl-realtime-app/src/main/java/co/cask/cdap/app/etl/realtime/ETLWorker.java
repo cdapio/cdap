@@ -78,6 +78,7 @@ public class ETLWorker extends AbstractWorker {
   public static final String NAME = ETLWorker.class.getSimpleName();
   private static final Logger LOG = LoggerFactory.getLogger(ETLWorker.class);
   private static final Type TRANSFORMDETAILS_LIST_TYPE = new TypeToken<List<TransformInfo>>() { }.getType();
+  private static final Type STRING_LIST_TYPE = new TypeToken<List<String>>() { }.getType();
   private static final Gson GSON = new Gson();
   private static final String SEPARATOR = ":";
   private static final Schema ERROR_SCHEMA = Schema.recordOf(
@@ -90,7 +91,8 @@ public class ETLWorker extends AbstractWorker {
   private final ETLRealtimeConfig config;
 
   private RealtimeSource source;
-  private RealtimeSink sink;
+  private List<RealtimeSink> sinks;
+  private List<Metrics> transformMetrics;
   private TransformExecutor transformExecutor;
   private DefaultEmitter sourceEmitter;
   private String stateStoreKey;
@@ -118,7 +120,7 @@ public class ETLWorker extends AbstractWorker {
 
     Map<String, String> properties = new HashMap<>();
     properties.put(Constants.Source.PLUGINID, pluginIDs.getSource());
-    properties.put(Constants.Sink.PLUGINID, pluginIDs.getSink());
+    properties.put(Constants.Sink.PLUGINIDS, GSON.toJson(pluginIDs.getSinks()));
     properties.put(Constants.Transform.PLUGINIDS, GSON.toJson(pluginIDs.getTransforms()));
     // Generate unique id for this app creation.
     properties.put(Constants.Realtime.UNIQUE_ID, String.valueOf(System.currentTimeMillis()));
@@ -131,7 +133,7 @@ public class ETLWorker extends AbstractWorker {
     Map<String, String> properties = context.getSpecification().getProperties();
     appName = context.getApplicationSpecification().getName();
     Preconditions.checkArgument(properties.containsKey(Constants.Source.PLUGINID));
-    Preconditions.checkArgument(properties.containsKey(Constants.Sink.PLUGINID));
+    Preconditions.checkArgument(properties.containsKey(Constants.Sink.PLUGINIDS));
     Preconditions.checkArgument(properties.containsKey(Constants.Transform.PLUGINIDS));
     Preconditions.checkArgument(properties.containsKey(Constants.Realtime.UNIQUE_ID));
 
@@ -165,7 +167,7 @@ public class ETLWorker extends AbstractWorker {
 
     initializeSource(context);
     transformationDetailList = initializeTransforms(context);
-    initializeSink(context);
+    initializeSinks(context);
 
     transformExecutor = new TransformExecutor(transformationDetailList);
   }
@@ -180,13 +182,18 @@ public class ETLWorker extends AbstractWorker {
   }
 
   @SuppressWarnings("unchecked")
-  private void initializeSink(WorkerContext context) throws Exception {
-    String sinkPluginId = context.getSpecification().getProperty(Constants.Sink.PLUGINID);
-    sink = context.newInstance(sinkPluginId);
-    RealtimeContext sinkContext = new WorkerRealtimeContext(context, metrics, sinkPluginId);
-    LOG.debug("Sink Class : {}", sink.getClass().getName());
-    sink.initialize(sinkContext);
-    sink = new TrackedRealtimeSink(sink, metrics, PluginID.from(sinkPluginId));
+  private void initializeSinks(WorkerContext context) throws Exception {
+    List<String> sinkPluginIds = GSON.fromJson(context.getSpecification().getProperty(Constants.Sink.PLUGINIDS),
+                                               STRING_LIST_TYPE);
+    sinks = Lists.newArrayListWithCapacity(sinkPluginIds.size());
+    for (String sinkPluginId : sinkPluginIds) {
+      RealtimeSink sink = context.newInstance(sinkPluginId);
+      RealtimeContext sinkContext = new WorkerRealtimeContext(context, metrics, sinkPluginId);
+      LOG.debug("Sink Class : {}", sink.getClass().getName());
+      sink.initialize(sinkContext);
+      sink = new TrackedRealtimeSink(sink, metrics, PluginID.from(sinkPluginId));
+      sinks.add(sink);
+    }
   }
 
   private List<TransformDetail> initializeTransforms(WorkerContext context) throws Exception {
@@ -287,7 +294,9 @@ public class ETLWorker extends AbstractWorker {
               // Invoke the sink's write method if there is any object to be written.
               if (!dataToSink.isEmpty()) {
                 DefaultDataWriter defaultDataWriter = new DefaultDataWriter(getContext(), context);
-                sink.write(dataToSink, defaultDataWriter);
+                for (RealtimeSink sink : sinks) {
+                  sink.write(dataToSink, defaultDataWriter);
+                }
               }
 
               for (Map.Entry<String, List<InvalidEntry>> errorRecordEntry : transformIdToErrorRecords.entrySet()) {
@@ -367,6 +376,8 @@ public class ETLWorker extends AbstractWorker {
   public void destroy() {
     Destroyables.destroyQuietly(source);
     Destroyables.destroyQuietly(transformExecutor);
-    Destroyables.destroyQuietly(sink);
+    for (RealtimeSink sink : sinks) {
+      Destroyables.destroyQuietly(sink);
+    }
   }
 }

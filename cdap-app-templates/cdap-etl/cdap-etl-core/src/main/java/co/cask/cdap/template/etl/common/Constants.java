@@ -45,7 +45,9 @@ public final class Constants {
    * Constants related to Sink.
    */
   public static final class Sink {
+    // keeping plugin id (singular) here temporarily until templates are removed
     public static final String PLUGINID = "sinkId";
+    public static final String PLUGINIDS = "sinkIds";
     public static final String PLUGINTYPE = "sink";
 
     private Sink() {
