@@ -25,6 +25,7 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowMapReduceProgram;
 import co.cask.cdap.templates.AdapterDefinition;
 import co.cask.tephra.Transaction;
@@ -33,7 +34,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
 import com.google.inject.Injector;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.RunIds;
 
 import java.util.Set;
@@ -69,12 +69,12 @@ public abstract class AbstractMapReduceTaskContextBuilder {
                                          Arguments runtimeArguments,
                                          Transaction tx,
                                          Program mrProgram,
-                                         LocationFactory locationFactory,
                                          @Nullable String inputDataSetName,
                                          @Nullable String outputDataSetName,
                                          @Nullable AdapterDefinition adapterSpec,
                                          @Nullable PluginInstantiator pluginInstantiator,
-                                         @Nullable PluginInstantiator artifactPluginInstantiator) {
+                                         @Nullable PluginInstantiator artifactPluginInstantiator,
+                                         ArtifactRepository artifactRepository) {
     Injector injector = prepare();
 
     // Initializing Program
@@ -114,8 +114,8 @@ public abstract class AbstractMapReduceTaskContextBuilder {
     BasicMapReduceTaskContext context =
       new BasicMapReduceTaskContext(program, type, RunIds.fromString(runId), taskId, runtimeArguments, datasets, spec,
                                     logicalStartTime, workflowToken, discoveryServiceClient,
-                                    metricsCollectionService, datasetFramework, locationFactory,
-                                    adapterSpec, pluginInstantiator, artifactPluginInstantiator);
+                                    metricsCollectionService, datasetFramework,
+                                    adapterSpec, pluginInstantiator, artifactPluginInstantiator, artifactRepository);
 
     // propagating tx to all txAware guys
     // NOTE: tx will be committed by client code

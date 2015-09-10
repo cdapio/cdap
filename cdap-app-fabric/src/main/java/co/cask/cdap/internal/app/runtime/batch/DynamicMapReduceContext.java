@@ -32,6 +32,7 @@ import co.cask.cdap.data2.dataset2.DatasetCacheKey;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DynamicDatasetContext;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.templates.AdapterDefinition;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionSystemClient;
@@ -43,7 +44,6 @@ import com.google.common.cache.RemovalNotification;
 import com.google.common.collect.Maps;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -81,13 +81,13 @@ public class DynamicMapReduceContext extends BasicMapReduceContext implements Da
                                  MetricsCollectionService metricsCollectionService,
                                  TransactionSystemClient txClient,
                                  DatasetFramework dsFramework,
-                                 LocationFactory locationFactory,
                                  @Nullable AdapterDefinition adapterSpec,
                                  @Nullable PluginInstantiator pluginInstantiator,
-                                 @Nullable PluginInstantiator artifactPluginInstantiator) {
+                                 @Nullable PluginInstantiator artifactPluginInstantiator,
+                                 ArtifactRepository artifactRepository) {
     super(program, type, runId, taskId, runtimeArguments, Collections.<String>emptySet(), spec,
           logicalStartTime, programNameInWorkflow, workflowToken, discoveryServiceClient, metricsCollectionService,
-          dsFramework, locationFactory, adapterSpec, pluginInstantiator, artifactPluginInstantiator);
+          dsFramework, adapterSpec, pluginInstantiator, artifactPluginInstantiator, artifactRepository);
     this.datasetsCache = CacheBuilder.newBuilder()
       .removalListener(new RemovalListener<Long, Map<DatasetCacheKey, Dataset>>() {
         @Override

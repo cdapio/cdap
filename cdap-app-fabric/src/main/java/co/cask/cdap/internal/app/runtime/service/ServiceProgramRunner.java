@@ -30,6 +30,7 @@ import co.cask.cdap.internal.app.runtime.DataFabricFacadeFactory;
 import co.cask.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.services.ServiceHttpServer;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
@@ -39,7 +40,6 @@ import com.google.inject.Inject;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.ServiceAnnouncer;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.filesystem.LocationFactory;
 
 import javax.annotation.Nullable;
 
@@ -55,13 +55,13 @@ public class ServiceProgramRunner implements ProgramRunner {
   private final TransactionSystemClient txClient;
   private final ServiceAnnouncer serviceAnnouncer;
   private final DataFabricFacadeFactory dataFabricFacadeFactory;
-  private final LocationFactory locationFactory;
+  private final ArtifactRepository artifactRepository;
 
   @Inject
   public ServiceProgramRunner(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
                               DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient,
                               TransactionSystemClient txClient, ServiceAnnouncer serviceAnnouncer,
-                              DataFabricFacadeFactory dataFabricFacadeFactory, LocationFactory locationFactory) {
+                              DataFabricFacadeFactory dataFabricFacadeFactory, ArtifactRepository artifactRepository) {
     this.cConf = cConf;
     this.metricsCollectionService = metricsCollectionService;
     this.datasetFramework = datasetFramework;
@@ -69,7 +69,7 @@ public class ServiceProgramRunner implements ProgramRunner {
     this.txClient = txClient;
     this.serviceAnnouncer = serviceAnnouncer;
     this.dataFabricFacadeFactory = dataFabricFacadeFactory;
-    this.locationFactory = locationFactory;
+    this.artifactRepository = artifactRepository;
   }
 
   @Override
@@ -99,8 +99,9 @@ public class ServiceProgramRunner implements ProgramRunner {
     ServiceHttpServer component = new ServiceHttpServer(host, program, spec, runId, options.getUserArguments(),
                                       instanceId, instanceCount, serviceAnnouncer,
                                       metricsCollectionService, datasetFramework, dataFabricFacadeFactory,
-                                      txClient, discoveryServiceClient, locationFactory,
-                                      createArtifactPluginInstantiator(program.getClassLoader()));
+                                      txClient, discoveryServiceClient,
+                                      createArtifactPluginInstantiator(program.getClassLoader()),
+                                      artifactRepository);
 
     ProgramController controller = new ServiceProgramControllerAdapter(component, program.getId(), runId,
                                                                        spec.getName() + "-" + instanceId);

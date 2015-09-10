@@ -38,7 +38,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.filesystem.LocationFactory;
 
 import java.util.Map;
 import java.util.Set;
@@ -66,10 +65,10 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
                       Arguments runtimeArguments, FlowletSpecification flowletSpec,
                       MetricsCollectionService metricsCollectionService,
                       DiscoveryServiceClient discoveryServiceClient,
-                      DatasetFramework dsFramework, LocationFactory locationFactory) {
+                      DatasetFramework dsFramework) {
     super(program, runId, runtimeArguments, datasets,
           getMetricCollector(metricsCollectionService, program, flowletId, runId.getId(), instanceId),
-          dsFramework, discoveryServiceClient, locationFactory);
+          dsFramework, discoveryServiceClient);
     this.namespaceId = program.getNamespaceId();
     this.flowId = program.getName();
     this.flowletId = flowletId;

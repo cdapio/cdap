@@ -16,6 +16,8 @@
 package co.cask.cdap.internal.app.runtime.batch;
 
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.artifact.ArtifactDescriptor;
+import co.cask.cdap.api.artifact.Plugin;
 import co.cask.cdap.api.data.batch.BatchReadable;
 import co.cask.cdap.api.data.batch.DatasetOutputCommitter;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
@@ -30,6 +32,7 @@ import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.stream.StreamEventDecoder;
+import co.cask.cdap.api.templates.plugins.PluginClass;
 import co.cask.cdap.api.templates.plugins.PluginInfo;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -37,6 +40,7 @@ import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.lang.WeakReferenceDelegatorClassLoader;
+import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.twill.HadoopClassExcluder;
 import co.cask.cdap.common.utils.DirUtils;
@@ -47,6 +51,8 @@ import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import co.cask.cdap.internal.app.runtime.artifact.PluginNotExistsException;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetInputFormat;
 import co.cask.cdap.internal.app.runtime.batch.dataset.MultipleOutputs;
 import co.cask.cdap.internal.app.runtime.batch.dataset.MultipleOutputsMainOutputWrapper;
@@ -147,6 +153,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   private final StreamAdmin streamAdmin;
   private final TransactionSystemClient txClient;
   private final UsageRegistry usageRegistry;
+  private final ArtifactRepository artifactRepository;
+  private final Id.Artifact artifactId;
 
   private Job job;
   private Transaction transaction;
@@ -162,7 +170,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
                           DynamicMapReduceContext context,
                           Location programJarLocation, LocationFactory locationFactory,
                           StreamAdmin streamAdmin, TransactionSystemClient txClient,
-                          UsageRegistry usageRegistry) {
+                          UsageRegistry usageRegistry, ArtifactRepository artifactRepository) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.mapReduce = mapReduce;
@@ -173,6 +181,10 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     this.txClient = txClient;
     this.context = context;
     this.usageRegistry = usageRegistry;
+    this.artifactRepository = artifactRepository;
+    this.artifactId = context.getProgram().getApplicationSpecification().getArtifactId() != null ?
+      Id.Artifact.from(Id.Namespace.from(context.getProgram().getNamespaceId()),
+                       context.getProgram().getApplicationSpecification().getArtifactId()) : null;
   }
 
   @Override
@@ -212,6 +224,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
 
       //TODO: CDAP-3485 Not required once Templates/Adapters are removed
       Location pluginArchive = null;
+      Location artifactArchive = createArchive(context.getPlugins(), tempDir, tempLocation);
       // For local mode, everything is in the configuration classloader already, hence no need to create new jar
       if (!MapReduceTaskContextProvider.isLocal(mapredConf)) {
         // After calling beforeSubmit, we know what plugins are needed for adapter, hence construct the proper
@@ -220,13 +233,21 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         if (pluginArchive != null) {
           job.addCacheArchive(pluginArchive.toURI());
         }
+        if (artifactArchive != null) {
+          job.addCacheArchive(artifactArchive.toURI());
+        }
+      } else {
+        if (artifactArchive != null) {
+          File localDir = new File(cConf.get(Constants.AppFabric.SYSTEM_ARTIFACTS_DIR));
+          BundleJarUtil.unpackProgramJar(artifactArchive, localDir);
+        }
       }
 
       // Alter the configuration ClassLoader to a MapReduceClassLoader that supports plugin
       // It is mainly for standalone mode to have the same ClassLoader as in distributed mode
       // It can only be constructed here because we need to have all adapter plugins information
       classLoader = new MapReduceClassLoader(context.getProgram().getClassLoader(),
-                                             mapredConf,
+                                             cConf,
                                              context.getPlugins(),
                                              context.getAdapterSpecification(),
                                              context.getPluginInstantiator(),
@@ -983,6 +1004,34 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
 
     // Copy the jar to a location, based on the location factory
     Location location = targetDir.append("plugins.jar");
+    Files.copy(jarFile, Locations.newOutputSupplier(location));
+    return location;
+  }
+
+  @Nullable
+  private Location createArchive(@Nullable Map<String, Plugin> plugins, File tempDir, Location targetDir)
+    throws IOException {
+
+    if (plugins == null || plugins.isEmpty()) {
+      return null;
+    }
+
+    File jarFile = File.createTempFile("artifact", ".jar", tempDir);
+
+    try (JarOutputStream output = new JarOutputStream(new FileOutputStream(jarFile))) {
+      for (Map.Entry<String, Plugin> entry : plugins.entrySet()) {
+        Plugin plugin = entry.getValue();
+        Map.Entry<ArtifactDescriptor, PluginClass> pluginEntry = artifactRepository.getPlugin(
+          artifactId, plugin.getPluginClass().getType(), plugin.getPluginClass().getName(), plugin.getArtifactId());
+        String entryName = String.format("%s", String.format("%s.jar", entry.getKey()));
+        output.putNextEntry(new JarEntry(entryName));
+        ByteStreams.copy(Locations.newInputSupplier(pluginEntry.getKey().getLocation()), output);
+      }
+    } catch (PluginNotExistsException e) {
+      return null;
+    }
+
+    Location location = targetDir.append("artifacts.jar");
     Files.copy(jarFile, Locations.newOutputSupplier(location));
     return location;
   }

@@ -32,7 +32,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.filesystem.LocationFactory;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -55,11 +54,10 @@ final class BasicWorkflowContext extends AbstractContext implements WorkflowCont
                        long logicalStartTime, @Nullable ProgramWorkflowRunner programWorkflowRunner,
                        Map<String, String> runtimeArgs, WorkflowToken token, Program program, RunId runId,
                        MetricsCollectionService metricsCollectionService,
-                       DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient,
-                       LocationFactory locationFactory) {
+                       DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient) {
     super(program, runId, new BasicArguments(runtimeArgs), (spec == null) ? new HashSet<String>() : spec.getDatasets(),
           getMetricCollector(program, runId.getId(), metricsCollectionService),
-          datasetFramework, discoveryServiceClient, locationFactory, null, null, null);
+          datasetFramework, discoveryServiceClient);
     this.workflowSpec = workflowSpec;
     this.specification = spec;
     this.logicalStartTime = logicalStartTime;

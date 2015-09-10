@@ -97,7 +97,6 @@ import org.apache.twill.api.RunId;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.RunIds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -133,7 +132,6 @@ public final class FlowletProgramRunner implements ProgramRunner {
   private final DiscoveryServiceClient discoveryServiceClient;
   private final DatasetFramework dsFramework;
   private final UsageRegistry usageRegistry;
-  private final LocationFactory locationFactory;
 
   @Inject
   public FlowletProgramRunner(SchemaGenerator schemaGenerator,
@@ -144,8 +142,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
                               MetricsCollectionService metricsCollectionService,
                               DiscoveryServiceClient discoveryServiceClient,
                               DatasetFramework dsFramework,
-                              UsageRegistry usageRegistry,
-                              LocationFactory locationFactory) {
+                              UsageRegistry usageRegistry) {
     this.schemaGenerator = schemaGenerator;
     this.datumWriterFactory = datumWriterFactory;
     this.dataFabricFacadeFactory = dataFabricFacadeFactory;
@@ -155,7 +152,6 @@ public final class FlowletProgramRunner implements ProgramRunner {
     this.discoveryServiceClient = discoveryServiceClient;
     this.dsFramework = dsFramework;
     this.usageRegistry = usageRegistry;
-    this.locationFactory = locationFactory;
   }
 
   @SuppressWarnings("unused")
@@ -207,8 +203,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
                                                runId, instanceCount,
                                                flowletDef.getDatasets(),
                                                options.getUserArguments(), flowletDef.getFlowletSpec(),
-                                               metricsCollectionService, discoveryServiceClient, dsFramework,
-                                               locationFactory);
+                                               metricsCollectionService, discoveryServiceClient, dsFramework);
 
       // Creates tx related objects
       DataFabricFacade dataFabricFacade =

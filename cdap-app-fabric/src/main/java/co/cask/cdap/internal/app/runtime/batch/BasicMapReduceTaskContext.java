@@ -32,6 +32,7 @@ import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.batch.dataset.MultipleOutputs;
 import co.cask.cdap.logging.context.MapReduceLoggingContext;
 import co.cask.cdap.proto.Id;
@@ -41,7 +42,6 @@ import com.google.common.collect.Maps;
 import org.apache.hadoop.mapreduce.TaskInputOutputContext;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -83,14 +83,14 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
                                    DiscoveryServiceClient discoveryServiceClient,
                                    MetricsCollectionService metricsCollectionService,
                                    DatasetFramework dsFramework,
-                                   LocationFactory locationFactory,
                                    @Nullable AdapterDefinition adapterSpec,
                                    @Nullable PluginInstantiator pluginInstantiator,
-                                   @Nullable PluginInstantiator artifactPluginInstantiator) {
+                                   @Nullable PluginInstantiator artifactPluginInstantiator,
+                                   ArtifactRepository artifactRepository) {
     super(program, runId, runtimeArguments, datasets,
           getMetricCollector(program, runId.getId(), taskId, metricsCollectionService, type, adapterSpec),
-          dsFramework, discoveryServiceClient, locationFactory, adapterSpec, pluginInstantiator,
-          artifactPluginInstantiator);
+          dsFramework, discoveryServiceClient, adapterSpec, pluginInstantiator,
+          artifactPluginInstantiator, artifactRepository);
     this.logicalStartTime = logicalStartTime;
     this.workflowToken = workflowToken;
     this.metricsCollectionService = metricsCollectionService;

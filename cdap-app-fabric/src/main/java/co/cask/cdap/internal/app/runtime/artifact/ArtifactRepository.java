@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.runtime.artifact;
 import co.cask.cdap.api.artifact.ApplicationClass;
 import co.cask.cdap.api.artifact.ArtifactClasses;
 import co.cask.cdap.api.artifact.ArtifactDescriptor;
+import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.artifact.PluginSelector;
 import co.cask.cdap.api.templates.plugins.PluginClass;
@@ -219,6 +220,18 @@ public class ArtifactRepository {
                                                                String pluginName)
     throws IOException, PluginNotExistsException {
     return artifactStore.getPluginClasses(artifactId, pluginType, pluginName);
+  }
+
+  public Map.Entry<ArtifactDescriptor, PluginClass> getPlugin(Id.Artifact artifactId, String pluginType,
+                                                              String pluginName, ArtifactId pluginArtifactId)
+    throws IOException, PluginNotExistsException {
+    SortedMap<ArtifactDescriptor, PluginClass> classSortedMap = getPlugins(artifactId, pluginType, pluginName);
+    for (Map.Entry<ArtifactDescriptor, PluginClass> classEntry : classSortedMap.entrySet()) {
+      if (classEntry.getKey().getArtifactId().equals(pluginArtifactId)) {
+        return classEntry;
+      }
+    }
+    throw new PluginNotExistsException(artifactId.getNamespace(), pluginType, pluginName);
   }
 
   /**

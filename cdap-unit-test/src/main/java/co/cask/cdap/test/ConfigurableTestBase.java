@@ -341,6 +341,7 @@ public class ConfigurableTestBase {
     cConf.set(Constants.Explore.LOCAL_DATA_DIR,
               tmpFolder.newFolder("hive").getAbsolutePath());
     cConf.set(Constants.AppFabric.APP_TEMPLATE_DIR, tmpFolder.newFolder("templates").getAbsolutePath());
+    cConf.set(Constants.AppFabric.SYSTEM_ARTIFACTS_DIR, tmpFolder.newFolder("artifacts").getAbsolutePath());
     return cConf;
   }
 

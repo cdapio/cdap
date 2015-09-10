@@ -40,21 +40,17 @@ import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetOutputFormat;
 import co.cask.cdap.logging.context.MapReduceLoggingContext;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.templates.AdapterDefinition;
-import co.cask.tephra.TransactionAware;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.filesystem.LocationFactory;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -94,14 +90,14 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
                                DiscoveryServiceClient discoveryServiceClient,
                                MetricsCollectionService metricsCollectionService,
                                DatasetFramework dsFramework,
-                               LocationFactory locationFactory,
                                @Nullable AdapterDefinition adapterSpec,
                                @Nullable PluginInstantiator pluginInstantiator,
-                               @Nullable PluginInstantiator artifactPluginInstantiator) {
+                               @Nullable PluginInstantiator artifactPluginInstantiator,
+                               ArtifactRepository artifactRepository) {
     super(program, runId, runtimeArguments, datasets,
           getMetricCollector(program, runId.getId(), taskId, metricsCollectionService, type, adapterSpec),
-          dsFramework, discoveryServiceClient, locationFactory, adapterSpec, pluginInstantiator,
-          artifactPluginInstantiator);
+          dsFramework, discoveryServiceClient, adapterSpec, pluginInstantiator,
+          artifactPluginInstantiator, artifactRepository);
     this.logicalStartTime = logicalStartTime;
     this.programNameInWorkflow = programNameInWorkflow;
     this.workflowToken = workflowToken;

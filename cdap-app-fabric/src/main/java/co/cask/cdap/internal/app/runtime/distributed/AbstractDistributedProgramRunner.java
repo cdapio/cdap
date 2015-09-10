@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.internal.app.runtime.distributed;
 
+import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.templates.plugins.PluginInfo;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.Programs;
@@ -258,6 +259,11 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
       localizeResources.put(localizedName, new LocalizeResource(libJar));
     }
 
+    return localizeResources;
+  }
+
+  private Map<String, LocalizeResource> addArtifactPluginFiles(ApplicationSpecification appSpec,
+                                                               Map<String, LocalizeResource> localizeResources) {
     return localizeResources;
   }
 

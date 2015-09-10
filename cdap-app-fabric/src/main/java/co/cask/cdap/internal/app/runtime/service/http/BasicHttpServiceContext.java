@@ -28,13 +28,13 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.collect.Maps;
 import com.google.common.io.Closeables;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.filesystem.LocationFactory;
 
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -69,11 +69,11 @@ public class BasicHttpServiceContext extends AbstractContext implements Transact
                                  Program program, RunId runId, int instanceId, AtomicInteger instanceCount,
                                  Arguments runtimeArgs, MetricsCollectionService metricsCollectionService,
                                  DatasetFramework dsFramework, DiscoveryServiceClient discoveryServiceClient,
-                                 TransactionSystemClient txClient, LocationFactory locationFactory,
-                                 PluginInstantiator pluginInstantiator) {
+                                 TransactionSystemClient txClient, PluginInstantiator pluginInstantiator,
+                                 ArtifactRepository artifactRepository) {
     super(program, runId, runtimeArgs, spec.getDatasets(),
           getMetricCollector(metricsCollectionService, program, spec.getName(), runId.getId(), instanceId),
-          dsFramework, discoveryServiceClient, locationFactory, null, null, pluginInstantiator);
+          dsFramework, discoveryServiceClient, null, null, pluginInstantiator, artifactRepository);
     this.spec = spec;
     this.instanceId = instanceId;
     this.instanceCount = instanceCount;

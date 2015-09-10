@@ -75,7 +75,6 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.gson.Gson;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -127,13 +126,12 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private final Store store;
   private final Id.Workflow workflowId;
   private final CConfiguration cConf;
-  private final LocationFactory locationFactory;
 
   WorkflowDriver(Program program, ProgramOptions options, InetAddress hostname,
                  WorkflowSpecification workflowSpec, ProgramRunnerFactory programRunnerFactory,
                  MetricsCollectionService metricsCollectionService, DatasetFramework datasetFramework,
                  DiscoveryServiceClient discoveryServiceClient, TransactionSystemClient txClient,
-                 LocationFactory locationFactory, Store store, CConfiguration cConf) {
+                 Store store, CConfiguration cConf) {
     this.program = program;
     this.hostname = hostname;
     this.runtimeArgs = createRuntimeArgs(options.getUserArguments());
@@ -159,7 +157,6 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     this.datasetFramework = datasetFramework;
     this.discoveryServiceClient = discoveryServiceClient;
     this.txClient = txClient;
-    this.locationFactory = locationFactory;
     this.store = store;
     this.workflowId = Id.Workflow.from(program.getId().getApplication(), workflowSpec.getName());
     this.cConf = cConf;
@@ -437,7 +434,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
 
     WorkflowContext context = new BasicWorkflowContext(workflowSpec, null, logicalStartTime, null, runtimeArgs, token,
                                                        program, runId, metricsCollectionService,
-                                                       datasetFramework, discoveryServiceClient, locationFactory);
+                                                       datasetFramework, discoveryServiceClient);
     Iterator<WorkflowNode> iterator;
     if (predicate.apply(context)) {
       // execute the if branch
@@ -503,7 +500,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     return new BasicWorkflowContext(workflowSpec, actionSpec, logicalStartTime,
                                     workflowProgramRunnerFactory.getProgramWorkflowRunner(actionSpec, token, nodeId),
                                     runtimeArgs, token, program, runId, metricsCollectionService,
-                                    datasetFramework, discoveryServiceClient, locationFactory);
+                                    datasetFramework, discoveryServiceClient);
   }
 
   /**
