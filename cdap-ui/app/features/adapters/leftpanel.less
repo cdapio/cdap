@@ -1,0 +1,148 @@
+/*
+ * Copyright © 2015 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+@import '../../styles/variables.less';
+@import "../../../bower_components/bootstrap/less/mixins.less";
+@import '../../styles/themes/cdap/mixins.less';
+
+body.theme-cdap.state-adapters-create {
+  .canvas-wrapper {
+    position: relative;
+  }
+
+  .side-panel.left {
+    background: #aea69e;
+    background: -moz-linear-gradient(-45deg, #aea69e 0%, #74685a 100%);
+    background: -webkit-gradient(linear, left top, right bottom, color-stop(0%,#aea69e), color-stop(100%, #74685a));
+    background: -webkit-linear-gradient(-45deg, #aea69e 0%, #74685a 100%);
+    background: -o-linear-gradient(-45deg, #aea69e 0%, #74685a 100%);
+    background: -ms-linear-gradient(-45deg, #aea69e 0%, #74685a 100%);
+    background: linear-gradient(135deg, #aea69e 0%, #74685a 100%);
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#aea69e', endColorstr='#74685a', GradientType=1);
+    position: absolute;
+    top: 60px;
+    left: 0;
+    bottom: 0;
+    z-index: 1025;
+    width: 130px;
+    .transition(all 0.2s ease);
+
+    .hydrator-filter {
+      padding: 20px 0 20px 10px;
+      input {
+        background-color: fade(@gray-dark, 30%);
+        border: 0;
+        color: white;
+        height: 35px;
+        width: 75%;
+        .border-radius(25px);
+        .box-shadow(none);
+        .placeholder-color(white);
+      }
+      div.btn {
+        background-color: white;
+        border: 0;
+        color: #74685a;
+        font-weight: bold;
+        height: 35px;
+        width: 25px;
+        padding-left: 10px;
+        position: relative;
+        left: 6px;
+        .border-radius(90px 0 0 90px);
+        &:active, &.active {
+          .box-shadow(none);
+        }
+      }
+    }
+    .item {
+      color: @cdap-lightgray;
+      cursor: pointer;
+      font-size: 11px;
+      margin-bottom: 10px;
+      .item-body, .item-heading {
+        .name {
+          display: inline-block;
+          vertical-align: top;
+          overflow-x: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+      }
+      .item-heading {
+        color: white;
+        background-color: fade(@gray-dark, 40%);
+        padding: 0 15px 0 10px;
+        height: 40px;
+        line-height: 40px;
+        &.item-open {
+          color: white;
+        }
+        span {
+          line-height: inherit;
+          &[class^="icon-"] {
+            font-size: 18px;
+            vertical-align: top;
+            width: 14px;
+            text-align: center;
+            padding-right: 5px;
+          }
+          &.name {
+            font-size: 13px;
+          }
+        }
+      }
+      .item-body {
+        padding: 20px 10px 0;
+        overflow-y: auto;
+        .flexbox();
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        // Adjust max height to prevent side panel from becoming unusable below a certain browser height
+        @media (max-height: 550px) {
+          max-height: 20vh;
+        }
+      }
+      .plugin-item {
+        background-color: white;
+        line-height: 40px;
+        margin-bottom: 10px;
+        padding: 0 10px;
+        height: 40px;
+        width: 50px;
+        .border-radius(4px);
+        > .fa {
+          font-size: 14px;
+          height: 18px;
+          width: 18px;
+          vertical-align: middle;
+        }
+        .name {
+          font-size: 13px;
+          padding-left: 5px;
+        }
+      }
+    }
+    &.expanded {
+      width: 290px;
+      .item .plugin-item {
+        width: 130px;
+      }
+    }
+  }
+}
