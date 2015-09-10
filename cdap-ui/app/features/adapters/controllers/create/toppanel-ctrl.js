@@ -29,7 +29,7 @@ angular.module(PKG.name + '.feature.adapters')
       this.metadata.name = $stateParams.name;
     }
     if ($stateParams.type) {
-      if (['ETLBatch', 'ETLRealtime'].indexOf($stateParams.type) !== -1) {
+      if ([GLOBALS.etlBatch, GLOBALS.etlRealtime].indexOf($stateParams.type) !== -1) {
         this.metadata.template.type = $stateParams.type;
       } else {
         $alert({

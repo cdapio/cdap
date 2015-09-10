@@ -14,7 +14,6 @@
  * the License.
  */
 
-var alertpromise;
 angular.module(PKG.name + '.feature.admin').controller('NamespaceAppController',
 function ($scope, $state, myAppUploader, MyDataSource, myNamespace, myAdapterApi, $alert, GLOBALS) {
 
@@ -42,7 +41,7 @@ function ($scope, $state, myAppUploader, MyDataSource, myNamespace, myAdapterApi
       });
       $state.reload();
     });
-  }
+  };
 
   $scope.onFileSelected = function(files) {
     myAppUploader.upload(files, $state.params.nsadmin);
