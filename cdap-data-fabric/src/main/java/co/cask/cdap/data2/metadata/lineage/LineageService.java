@@ -18,7 +18,6 @@ package co.cask.cdap.data2.metadata.lineage;
 
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Function;
-import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
@@ -83,22 +82,10 @@ public class LineageService {
           LOG.trace("Visiting dataset {}", d);
           visitedDatasets.add(d);
           // Fetch related programs
-          Set<Relation> programRelations = lineageStore.getRelations(d, start, end);
-          // Any read access of source Dataset can be pruned,
-          // since those accessed do not contribute to lineage of source Dataset.
-          // We are only interested relations that lead to write access to source Dataset.
-          Iterable<Relation> prunedRelations =
-            Iterables.filter(programRelations,
-                             new Predicate<Relation>() {
-                               @Override
-                               public boolean apply(Relation relation) {
-                                 return !(relation.getData().equals(sourceDataset) &&
-                                   relation.getAccess() == AccessType.READ);
-                               }
-                             });
-          LOG.trace("Got pruned program relations {}", prunedRelations);
-          Iterables.addAll(relations, prunedRelations);
-          Iterables.addAll(toVisitPrograms, Iterables.transform(prunedRelations, RELATION_TO_PROGRAM_FUNCTION));
+          Iterable<Relation> programRelations = lineageStore.getRelations(d, start, end);
+          LOG.trace("Got program relations {}", programRelations);
+          Iterables.addAll(relations, programRelations);
+          Iterables.addAll(toVisitPrograms, Iterables.transform(programRelations, RELATION_TO_PROGRAM_FUNCTION));
         }
       }
 
@@ -108,9 +95,9 @@ public class LineageService {
           LOG.trace("Visiting program {}", p);
           visitedPrograms.add(p);
           // Fetch related datasets
-          Set<Relation> datasetRelations = lineageStore.getRelations(p, start, end);
+          Iterable<Relation> datasetRelations = lineageStore.getRelations(p, start, end);
           LOG.trace("Got dataset relations {}", datasetRelations);
-          relations.addAll(datasetRelations);
+          Iterables.addAll(relations, datasetRelations);
           Iterables.addAll(toVisitDatasets,
                            Iterables.transform(datasetRelations, RELATION_TO_DATASET_INSTANCE_FUNCTION));
         }
