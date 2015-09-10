@@ -23,7 +23,9 @@ body {
     padding-right: 0;
     margin: 0;
     width: 100%;
-
+    div.navbar-header {
+      float: left;
+    }
     a.navbar-brand {
       height: 60px;
       padding: 0 15px;
@@ -39,8 +41,9 @@ body {
       float: left;
       ul.navbar-nav {
         float: none;
+        margin: 0;
         a {
-          height: 60px;
+          height: 58px;
           line-height: 60px;
           padding: 0 10px;
           margin: 0 15px;
@@ -61,7 +64,7 @@ body {
         width: 275px;
       }
       input.form-control {
-        height: 60px;
+        height: 58px;
         &:focus {
           outline: none;
         }
@@ -88,13 +91,24 @@ body {
 
       nav {
         ul.navbar-nav {
-          a:hover, a:focus {
-            border-bottom: 4px solid #397cf1;
+          li {
+            float: left;
+            a {
+              color: rgb(161, 162, 166);
+              &.active, &:active, &:hover, &:focus {
+                background-color: transparent;
+                border-bottom: 4px solid #397cf1;
+                color: white;
+              }
+            }
           }
         }
       }
 
       div.hydrator-search {
+        @media (max-width: @screen-xs-max) {
+          display: none;
+        }
         input.form-control {
           background-color: #1c1c1c;
           border: 0;

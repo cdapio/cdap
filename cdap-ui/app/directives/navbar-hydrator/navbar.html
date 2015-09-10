@@ -14,14 +14,14 @@
   the License.
 -->
 
-<div class="navbar-header">
+<div class="navbar-header clearfix">
   <a class="navbar-brand"
      ui-sref="adapters.create">
      <strong>Cask Hydrator V1.0</strong>
   </a>
 </div>
 
-
+<div class="pull-right clearfix">
   <nav>
     <ul class="nav navbar-nav">
       <li>
@@ -30,7 +30,7 @@
         </a>
       </li>
       <li>
-        <a href="">
+        <a ui-sref="adapters.create" ui-sref-active="active">
           <span> Studio </span>
         </a>
       </li>
@@ -47,3 +47,4 @@
   </div>
 
   <my-error></my-error>
+</div>

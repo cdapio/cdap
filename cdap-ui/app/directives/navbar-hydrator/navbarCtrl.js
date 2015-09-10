@@ -17,6 +17,4 @@
 angular.module(PKG.name + '.commons')
   .controller('navbarHydratorCtrl', function () {
 
-
-
   });
