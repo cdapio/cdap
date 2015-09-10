@@ -45,7 +45,6 @@ import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.Transaction;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
@@ -590,12 +589,11 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
         "Output is not supported for external partitioned file set '" + spec.getName() + "'");
     }
 
-    // copy the output partition key to the output arguments of the embedded file set
-    // this will be needed by the output format to register the new partition.
+    // copy the output properties of the embedded file set to the output arguments
     Map<String, String> outputArgs = Maps.newHashMap(files.getOutputFormatConfiguration());
 
     // we set the file set's output path in the definition's getDataset(), so there is no need to configure it again.
-    // here we just want to validate that an output partition key was specified in the arguments.
+    // here we just want to validate that an output partition key or dynamic partitioner was specified in the arguments.
     PartitionKey outputKey = PartitionedFileSetArguments.getOutputPartitionKey(runtimeArguments, getPartitioning());
     if (outputKey != null) {
       PartitionedFileSetArguments.setOutputPartitionKey(outputArgs, outputKey);
@@ -621,7 +619,8 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     if (outputPath == null) {
       return;
     }
-    // we know for sure there is an output partition key (checked in getOutputFormatConfig())
+    // its possible that there is no output key, if using the DynamicPartitioner, in which case
+    // DynamicPartitioningOutputFormat is responsible for registering the partitions
     PartitionKey outputKey = PartitionedFileSetArguments.getOutputPartitionKey(runtimeArguments, getPartitioning());
     if (outputKey != null) {
       Map<String, String> metadata = PartitionedFileSetArguments.getOutputPartitionMetadata(runtimeArguments);

@@ -35,7 +35,7 @@ public abstract class DynamicPartitioner<K, V> {
    *    on that instance.
    *  </p>
    *  @param mapReduceTaskContext the mapReduceTaskContext for the task that this DynamicPartitioner is running in.
-   *
+   *  Note that the hadoop context is not available on this MapReduceTaskContext.
    */
   public void initialize(MapReduceTaskContext<K, V> mapReduceTaskContext) {
     // do nothing by default

@@ -124,6 +124,9 @@ public class PartitionedFileSetDefinition extends AbstractDatasetDefinition<Part
       if (key != null) {
         arguments = Maps.newHashMap(arguments);
         FileSetArguments.setOutputPath(arguments, PartitionedFileSetDataset.getOutputPath(key, partitioning));
+      } else if (PartitionedFileSetArguments.getDynamicPartitioner(arguments) != null) {
+        // when using DynamicPartitioner, use the baseLocation of the fileSet as the output location
+        FileSetArguments.setBaseOutputPath(arguments);
       }
     }
     return arguments;
