@@ -59,6 +59,7 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -179,7 +180,7 @@ public class ETLMapReduce extends AbstractMapReduce {
   /**
    * Mapper Driver for ETL Transforms.
    */
-  public static class ETLMapper extends Mapper implements ProgramLifecycle<MapReduceTaskContext> {
+  public static class ETLMapper extends Mapper implements ProgramLifecycle<MapReduceTaskContext<Object, Object>> {
     private static final Logger LOG = LoggerFactory.getLogger(ETLMapper.class);
     private static final Gson GSON = new Gson();
     private static final Type TRANSFORMDETAILS_LIST_TYPE = new TypeToken<List<TransformInfo>>() { }.getType();
@@ -191,7 +192,7 @@ public class ETLMapReduce extends AbstractMapReduce {
     private List<WrappedSink<Object, Object, Object>> sinks;
 
     @Override
-    public void initialize(MapReduceTaskContext context) throws Exception {
+    public void initialize(MapReduceTaskContext<Object, Object> context) throws Exception {
       // get source, transform, sink ids from program properties
       context.getSpecification().getProperties();
       Map<String, String> properties = context.getSpecification().getProperties();
@@ -213,12 +214,13 @@ public class ETLMapReduce extends AbstractMapReduce {
       addTransforms(pipeline, transformInfos, context);
 
       // get the list of sinks, and the names of the outputs each sink writes to
-      Context hadoopContext = (Context) context.getHadoopContext();
+      Context hadoopContext = context.getHadoopContext();
       String sinkOutputsStr = hadoopContext.getConfiguration().get(SINK_OUTPUTS_KEY);
       // should never happen, this is set in beforeSubmit
       Preconditions.checkNotNull(sinkOutputsStr, "Sink outputs not found in hadoop conf.");
 
       Map<String, Set<String>> sinkOutputs = GSON.fromJson(sinkOutputsStr, SINK_OUTPUTS_TYPE);
+      boolean hasOneOutput = hasOneOutput(transformInfos, sinkOutputs);
       sinks = new ArrayList<>(sinkOutputs.size());
       for (Map.Entry<String, Set<String>> sinkOutput : sinkOutputs.entrySet()) {
         String sinkPluginId = sinkOutput.getKey();
@@ -227,10 +229,30 @@ public class ETLMapReduce extends AbstractMapReduce {
         BatchSink<Object, Object, Object> sink = context.newInstance(sinkPluginId);
         runtimeContext = new MapReduceRuntimeContext(context, mapperMetrics, sinkPluginId);
         sink.initialize(runtimeContext);
-        sinks.add(new WrappedSink<>(sinkPluginId, sink, sinkOutputNames, context, mapperMetrics));
+        if (hasOneOutput) {
+          sinks.add(new SingleOutputSink<>(sinkPluginId, sink, context, mapperMetrics));
+        } else {
+          sinks.add(new MultiOutputSink<>(sinkPluginId, sink, context, mapperMetrics, sinkOutputNames));
+        }
       }
 
       transformExecutor = new TransformExecutor<>(pipeline);
+    }
+
+    // this is needed because we need to write to the context differently depending on the number of outputs
+    private boolean hasOneOutput(List<TransformInfo> transformInfos, Map<String, Set<String>> sinkOutputs) {
+      // if there are any error datasets, we know we have at least one sink, and one error dataset
+      for (TransformInfo info : transformInfos) {
+        if (info.getErrorDatasetName() != null) {
+          return false;
+        }
+      }
+      // if no error datasets, check if we have more than one sink
+      Set<String> allOutputs = new HashSet<>();
+      for (Set<String> outputs : sinkOutputs.values()) {
+        allOutputs.addAll(outputs);
+      }
+      return allOutputs.size() == 1;
     }
 
     private void addTransforms(List<TransformDetail> pipeline,
@@ -275,24 +297,54 @@ public class ETLMapReduce extends AbstractMapReduce {
   }
 
   // wrapper around sinks to help writing sink output to the correct named output
-  private static class WrappedSink<IN, KEY_OUT, VAL_OUT> {
-    private final BatchSink<IN, KEY_OUT, VAL_OUT> sink;
-    private final DefaultEmitter<KeyValue<KEY_OUT, VAL_OUT>> emitter;
-    private final Set<String> outputNames;
-    private final MapReduceTaskContext context;
+  private abstract static class WrappedSink<IN, KEY_OUT, VAL_OUT> {
+    protected final BatchSink<IN, KEY_OUT, VAL_OUT> sink;
+    protected final DefaultEmitter<KeyValue<KEY_OUT, VAL_OUT>> emitter;
+    protected final MapReduceTaskContext<KEY_OUT, VAL_OUT> context;
 
-    private WrappedSink(String sinkPluginId,
-                        BatchSink<IN, KEY_OUT, VAL_OUT> sink,
-                        Set<String> outputNames,
-                        MapReduceTaskContext context,
-                        Metrics metrics) {
+    protected WrappedSink(String sinkPluginId,
+                          BatchSink<IN, KEY_OUT, VAL_OUT> sink,
+                          MapReduceTaskContext<KEY_OUT, VAL_OUT> context,
+                          Metrics metrics) {
       this.sink = sink;
       this.emitter = new DefaultEmitter<>(new StageMetrics(metrics, PluginID.from(sinkPluginId)));
-      this.outputNames = outputNames;
       this.context = context;
     }
 
-    private void write(IN input) throws Exception {
+    protected abstract void write(IN input) throws Exception;
+  }
+
+  // need to write with a different method if there is only one output for the mapreduce
+  private static class SingleOutputSink<IN, KEY_OUT, VAL_OUT> extends WrappedSink<IN, KEY_OUT, VAL_OUT> {
+
+    protected SingleOutputSink(String sinkPluginId, BatchSink<IN, KEY_OUT, VAL_OUT> sink,
+                               MapReduceTaskContext<KEY_OUT, VAL_OUT> context, Metrics metrics) {
+      super(sinkPluginId, sink, context, metrics);
+    }
+
+    public void write(IN input) throws Exception {
+      sink.transform(input, emitter);
+      for (KeyValue<KEY_OUT, VAL_OUT> outputRecord : emitter) {
+        context.write(outputRecord.getKey(), outputRecord.getValue());
+      }
+      emitter.reset();
+    }
+  }
+
+  // writes sink output to the correct named output
+  private static class MultiOutputSink<IN, KEY_OUT, VAL_OUT> extends WrappedSink<IN, KEY_OUT, VAL_OUT> {
+    private final Set<String> outputNames;
+
+    private MultiOutputSink(String sinkPluginId,
+                            BatchSink<IN, KEY_OUT, VAL_OUT> sink,
+                            MapReduceTaskContext<KEY_OUT, VAL_OUT> context,
+                            Metrics metrics,
+                            Set<String> outputNames) {
+      super(sinkPluginId, sink, context, metrics);
+      this.outputNames = outputNames;
+    }
+
+    public void write(IN input) throws Exception {
       sink.transform(input, emitter);
       for (KeyValue outputRecord : emitter) {
         for (String outputName : outputNames) {
