@@ -453,42 +453,40 @@ Depending on your installation, you may want to set these properties:
 
 Secure Hadoop
 .............
-When running CDAP on top of Secure Hadoop and HBase (using Kerberos
-authentication), the CDAP Master process will need to obtain Kerberos credentials in order to
-authenticate with Hadoop and HBase.  In this case, the setting for ``hdfs.user`` in
-``cdap-site.xml`` will be ignored and the CDAP Master process will be identified as the
-Kerberos principal it is authenticated as.
+When running CDAP on top of a secure Hadoop cluster (using Kerberos
+authentication), the CDAP processes will need to obtain Kerberos credentials in order to
+authenticate with Hadoop, HBase, ZooKeeper, and optionally Hive.  In this case, the setting for
+``hdfs.user`` in ``cdap-site.xml`` will be ignored and the CDAP processes will be identified by the
+default authenticated Kerberos principal.
 
-**Note:** CDAP support for secure Hadoop clusters is limited to CDH 5.0.0 through CDH 5.4.4, 
+**Note:** CDAP support for secure Hadoop clusters is limited to CDH 5.0.0 through CDH 5.4.5,
 and HDP 2.0 through 2.2.
 
-In order to configure **CDAP Master for Kerberos authentication:**
+In order to configure **CDAP for Kerberos authentication:**
 
-- Create a Kerberos principal for the user running CDAP Master.  The principal name should be in
-  the form ``username/hostname@REALM``, creating a separate principal for each host where the CDAP Master
+- Create a Kerberos principal for the user running CDAP.  The principal name should be in
+  the form ``username/hostname@REALM``, creating a separate principal for each host where a CDAP process 
   will run.  This prevents simultaneous login attempts from multiple hosts from being mistaken for
   a replay attack by the Kerberos KDC.
 - Generate a keytab file for each CDAP Master Kerberos principal, and place the file as
   ``/etc/security/keytabs/cdap.keytab`` on the corresponding CDAP Master host.  The file should
   be readable only by the user running the CDAP Master process.
-- Edit ``/etc/cdap/conf/cdap-site.xml``, substituting the Kerberos principal for
-  ``CDAP_PRINCIPAL``, and your domain for ``EXAMPLE.COM``, when adding these two properties:
-  
+- Edit ``/etc/cdap/conf/cdap-site.xml`` on each host running a CDAP process, substituting the Kerberos
+  primary (user) for ``<cdap-principal>``, and your Kerberos authentication realm for ``EXAMPLE.COM``,
+  when adding these two properties:
+
   .. highlight:: xml
 
   ::
 
     <property>
       <name>cdap.master.kerberos.keytab</name>
-      <value>/etc/security/keytabs/cdap.keytab</value>
-      <description>The full path to the Kerberos keytab file containing the CDAP Master's
-      credentials.</description>
+      <value>/etc/security/keytabs/cdap.service.keytab</value>
     </property>
+
     <property>
       <name>cdap.master.kerberos.principal</name>
-      <value>CDAP_PRINCIPAL/_HOST@EXAMPLE.COM</value>
-      <description>The Kerberos principal name that should be used to login to the CDAP Master
-      process. The string "_HOST" will be substituted with the local hostname.</description>
+      <value><cdap-principal>/_HOST@EXAMPLE.COM</value>
     </property>
 
 - The ``<cdap-principal>`` is shown in the commands that follow as ``cdap``; however, you
@@ -512,7 +510,9 @@ In order to configure **CDAP Explore Service for secure Hadoop:**
 
 .. highlight:: xml
 
-- To the configuration file ``core-site.xml``, set these properties::
+- To allow CDAP to act as a Hive client, it must be given proxyuser permissions and allowed from all hosts. For example,
+  to the configuration file ``core-site.xml``, set these properties, where ``cdap`` is a system group which the ``cdap``
+  user is a member::
 
     <property>
       <name>hadoop.proxyuser.hive.groups</name>
@@ -523,57 +523,10 @@ In order to configure **CDAP Explore Service for secure Hadoop:**
       <value>*</value>
     </property>
 
-- To the configuration file ``mapred-site.xml``, set these properties, substituting your
-  domain for ``EXAMPLE.COM``, and the hostname of the node running the JHS
-  (JobHistoryServer) for ``HOSTNAME_OF_JHS``::
-
-    <property>
-      <name>mapreduce.jobhistory.keytab</name>
-      <value>/etc/security/keytabs/jhs.service.keytab</value>
-    </property>
-    <property>
-      <name>mapreduce.jobhistory.principal</name>
-        <value>jhs/_HOST@EXAMPLE.COM</value>
-      <description>The string "_HOST" will be substituted with the local hostname.</description>
-    </property>
-    <property>
-      <name>mapreduce.jobhistory.address</name>
-        <value>HOSTNAME_OF_JHS:10020</value>
-    </property>
-
-- To the configuration file ``hive-site.xml``, set these properties, substituting your
-  domain for ``EXAMPLE.COM`` (two locations)::
-
-    <property>
-      <name>hive.metastore.sasl.enabled</name>
-      <value>true</value>
-      <description>If true, the metastore thrift interface will be secured with SASL. 
-      Clients must authenticate with Kerberos.</description>
-    </property>
-    <property>
-      <name>hive.metastore.kerberos.keytab.file</name>
-      <value>/etc/security/keytabs/hive.service.keytab</value>
-      <description>The path to the Kerberos Keytab file containing the metastore thrift 
-      server's service principal.</description>
-    </property>
-    <property>
-      <name>hive.metastore.kerberos.principal</name>
-      <value>hive/_HOST@EXAMPLE.COM</value>
-      <description>The service principal for the metastore thrift server. 
-      The string "_HOST" will be substituted with the local hostname.</description>
-    </property>
-    <property>
-      <name>hive.server2.authentication</name>
-      <value>KERBEROS</value>
-    </property>
-    <property>
-      <name>hive.server2.authentication.kerberos.principal</name>
-      <value>cdap/_HOST@EXAMPLE.COM</value>
-    </property>
-    <property>
-      <name>hive.server2.authentication.kerberos.keytab</name>
-      <value>/etc/security/keytabs/cdap.service.keytab</value>
-    </property>
+- To execute Hive queries on a secure cluster, the cluster must be running the MapReduce JobHistoryServer. Consult your
+  distribution documentation on the proper configuration of this service.
+- To execute Hive queries on a secure cluster using CDAP Explore Service, the Hive MetaStore service must be configured for
+  Kerberos authentication. Consult your distribution documentation on the proper configuration of this service.
 
 With all these properties set, the CDAP Explore Service will run on secure Hadoop clusters.
 
@@ -653,7 +606,7 @@ When all the packages and dependencies have been installed, and the configuratio
 parameters set, you can start the services on each of the CDAP boxes by running the
 command::
 
-  $ for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i restart ; done
+  $ for i in /etc/init.d/cdap* ; do sudo service $i restart ; done
 
 When all the services have completed starting, the CDAP UI should then be
 accessible through a browser at port ``9999``. 
