@@ -48,7 +48,6 @@ import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
 
-
 /**
  * Mapreduce task runtime context which delegates to BasicMapReduceContext for non task-specific methods.
  * It currently also extends MapReduceContext to support backwards compatibility. Mapper and Reducer tasks could
