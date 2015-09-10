@@ -78,10 +78,6 @@ angular.module(PKG.name + '.feature.adapters')
               templateUrl: '/assets/features/adapters/templates/create.html',
               controller: 'AdapterCreateController as AdapterCreateController'
             },
-            'metadata@adapters.create': {
-              templateUrl: '/assets/features/adapters/templates/create/metadata.html',
-              controller: 'MetadataController as MetadataController'
-            },
             'canvas@adapters.create': {
               templateUrl: '/assets/features/adapters/templates/create/canvas.html'
             },
@@ -89,10 +85,14 @@ angular.module(PKG.name + '.feature.adapters')
               templateUrl: '/assets/features/adapters/templates/create/leftpanel.html',
               controller: 'LeftPanelController as LeftPanelController'
             },
-            'rightpanel@adapters.create': {
-              templateUrl: '/assets/features/adapters/templates/create/rightpanel.html',
-              controller: 'RightPanelController as RightPanelController'
+            'toppanel@adapters.create': {
+              templateUrl: '/assets/features/adapters/templates/create/toppanel.html',
+              controller: 'TopPanelController as TopPanelController'
             },
+            'bottompanel@adapters.create': {
+              templateUrl: '/assets/features/adapters/templates/create/bottompanel.html',
+              controller: 'BottomPanelController as BottomPanelController'
+            }
           },
           ncyBreadcrumb: {
             skip: true

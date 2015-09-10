@@ -25,7 +25,7 @@ angular.module(PKG.name + '.commons')
 
         isSubMenu: '@',
         placement: '@',
-        isExpanded: '@',
+        isExpanded: '=',
 
         panel: '=',
         onPanelItemClick: '&',
