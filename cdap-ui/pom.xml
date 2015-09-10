@@ -97,6 +97,36 @@
         </executions>
       </plugin>
     </plugins>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.rat</groupId>
+          <artifactId>apache-rat-plugin</artifactId>
+          <version>0.10</version>
+          <executions>
+            <execution>
+              <id>rat-check</id>
+              <phase>validate</phase>
+              <goals>
+                <goal>check</goal>
+              </goals>
+              <configuration>
+                <excludes>
+                  <exclude>**/*.editorconfig</exclude>
+                  <exclude>**/*.jshintignore</exclude>
+                  <exclude>**/*.jshintrc</exclude>
+                  <exclude>**/*.svg</exclude>
+                  <exclude>**/bower_components/**</exclude>
+                  <exclude>**/node_modules/**</exclude>
+                  <exclude>**/node/**</exclude>
+                  <exclude>**/*.json</exclude>
+                </excludes>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+      </plugins>
+    </pluginManagement>
   </build>
 
   <profiles>
