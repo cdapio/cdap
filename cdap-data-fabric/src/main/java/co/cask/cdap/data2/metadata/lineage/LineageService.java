@@ -21,6 +21,7 @@ import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
+import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,7 +29,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Service to compute Lineage based on Dataset accesses of a Program stored in {@link LineageDataset}.
+ * Service to compute Lineage based on Dataset accesses of a Program stored in {@link LineageStore}.
  */
 public class LineageService {
   private static final Logger LOG = LoggerFactory.getLogger(LineageService.class);
@@ -49,10 +50,11 @@ public class LineageService {
       }
     };
 
-  private final LineageDataset lineageDataset;
+  private final LineageStore lineageStore;
 
-  public LineageService(LineageDataset lineageDataset) {
-    this.lineageDataset = lineageDataset;
+  @Inject
+  LineageService(LineageStore lineageStore) {
+    this.lineageStore = lineageStore;
   }
 
   /**
@@ -81,7 +83,7 @@ public class LineageService {
           LOG.trace("Visiting dataset {}", d);
           visitedDatasets.add(d);
           // Fetch related programs
-          Set<Relation> programRelations = lineageDataset.getRelations(d, start, end);
+          Set<Relation> programRelations = lineageStore.getRelations(d, start, end);
           // Any read access of source Dataset can be pruned,
           // since those accessed do not contribute to lineage of source Dataset.
           // We are only interested relations that lead to write access to source Dataset.
@@ -106,7 +108,7 @@ public class LineageService {
           LOG.trace("Visiting program {}", p);
           visitedPrograms.add(p);
           // Fetch related datasets
-          Set<Relation> datasetRelations = lineageDataset.getRelations(p, start, end);
+          Set<Relation> datasetRelations = lineageStore.getRelations(p, start, end);
           LOG.trace("Got dataset relations {}", datasetRelations);
           relations.addAll(datasetRelations);
           Iterables.addAll(toVisitDatasets,

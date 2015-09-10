@@ -24,7 +24,6 @@ import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.CConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
@@ -36,13 +35,12 @@ import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.inmemory.InMemoryTxSystemClient;
 import co.cask.tephra.inmemory.MinimalTxSystemClient;
+import co.cask.tephra.runtime.TransactionModules;
 import com.google.common.base.Preconditions;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.PrivateModule;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.junit.rules.ExternalResource;
 import org.junit.rules.TemporaryFolder;
 
@@ -74,15 +72,12 @@ public final class DatasetFrameworkTestUtil extends ExternalResource {
     File localDataDir = tmpFolder.newFolder();
     cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, localDataDir.getAbsolutePath());
-    Configuration txConf = HBaseConfiguration.create();
-    CConfigurationUtil.copyTxProperties(cConf, txConf);
-    txManager = new TransactionManager(txConf);
-    txManager.startAndWait();
 
     injector = Guice.createInjector(
       new ConfigModule(cConf),
       new LocationRuntimeModule().getInMemoryModules(),
       new SystemDatasetRuntimeModule().getInMemoryModules(),
+      new TransactionModules().getInMemoryModules(),
       new PrivateModule() {
         @Override
         protected void configure() {
@@ -94,6 +89,9 @@ public final class DatasetFrameworkTestUtil extends ExternalResource {
         }
       }
     );
+
+    txManager = injector.getInstance(TransactionManager.class);
+    txManager.startAndWait();
 
     framework = injector.getInstance(DatasetFramework.class);
   }

@@ -16,12 +16,11 @@
 
 package co.cask.cdap.data2.metadata.lineage;
 
-import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.common.app.RunIds;
-import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.collect.ImmutableSet;
 import org.apache.twill.api.RunId;
 import org.junit.Assert;
@@ -39,8 +38,9 @@ public class LineageServiceTest {
 
   @Test
   public void testSimpleLineage() throws Exception {
-    LineageDataset lineageDataset = getLineageDataset("testSimpleLineage");
-    LineageService lineageService = new LineageService(lineageDataset);
+    LineageStore lineageStore = new LineageStore(getTxExecFactory(), dsFrameworkUtil.getFramework(),
+                                                 Id.DatasetInstance.from("default", "testSimpleLineage"));
+    LineageService lineageService = new LineageService(lineageStore);
 
     // Define a run
     Id.DatasetInstance datasetInstance1 = Id.DatasetInstance.from("default", "dataset1");
@@ -56,11 +56,11 @@ public class LineageServiceTest {
     Id.Run run2 = new Id.Run(program2, RunIds.generate(900).getId());
 
     // Add accesses for D3 -> P2 -> D2 -> P1 -> D1
-    lineageDataset.addAccess(run1, datasetInstance1, AccessType.WRITE, "metadata11", flowlet1);
-    lineageDataset.addAccess(run1, datasetInstance2, AccessType.READ, "metadata12", flowlet1);
+    lineageStore.addAccess(run1, datasetInstance1, AccessType.WRITE, "metadata11", flowlet1);
+    lineageStore.addAccess(run1, datasetInstance2, AccessType.READ, "metadata12", flowlet1);
 
-    lineageDataset.addAccess(run2, datasetInstance2, AccessType.WRITE, "metadata21", flowlet2);
-    lineageDataset.addAccess(run2, datasetInstance3, AccessType.READ, "metadata22", flowlet2);
+    lineageStore.addAccess(run2, datasetInstance2, AccessType.WRITE, "metadata21", flowlet2);
+    lineageStore.addAccess(run2, datasetInstance3, AccessType.READ, "metadata22", flowlet2);
 
     // Lineage for D1 should be D3 -> P2 -> D2 -> P1 -> D1
     Lineage lineage = lineageService.computeLineage(Id.DatasetInstance.from("default", "dataset1"), 500, 20000, 5);
@@ -116,9 +116,7 @@ public class LineageServiceTest {
     return RunIds.fromString(run.getId());
   }
 
-  private static LineageDataset getLineageDataset(String instanceId) throws Exception {
-    Id.DatasetInstance id = Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, instanceId);
-    return DatasetsUtil.getOrCreateDataset(dsFrameworkUtil.getFramework(), id,
-                                           LineageDataset.class.getName(), DatasetProperties.EMPTY, null, null);
+  private TransactionExecutorFactory getTxExecFactory() {
+    return dsFrameworkUtil.getInjector().getInstance(TransactionExecutorFactory.class);
   }
 }
