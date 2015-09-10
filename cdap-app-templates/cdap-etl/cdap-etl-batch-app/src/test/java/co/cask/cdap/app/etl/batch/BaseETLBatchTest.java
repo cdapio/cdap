@@ -30,8 +30,8 @@ import co.cask.cdap.template.etl.batch.sink.BatchCubeSink;
 import co.cask.cdap.template.etl.batch.sink.BatchElasticsearchSink;
 import co.cask.cdap.template.etl.batch.sink.DBSink;
 import co.cask.cdap.template.etl.batch.sink.KVTableSink;
-import co.cask.cdap.template.etl.batch.sink.SnapshotFileSetAvroSink;
-import co.cask.cdap.template.etl.batch.sink.SnapshotFileSetParquetSink;
+import co.cask.cdap.template.etl.batch.sink.SnapshotFileBatchAvroSink;
+import co.cask.cdap.template.etl.batch.sink.SnapshotFileBatchParquetSink;
 import co.cask.cdap.template.etl.batch.sink.TableSink;
 import co.cask.cdap.template.etl.batch.sink.TimePartitionedFileSetDatasetAvroSink;
 import co.cask.cdap.template.etl.batch.sink.TimePartitionedFileSetDatasetParquetSink;
@@ -96,7 +96,7 @@ public class BaseETLBatchTest extends TestBase {
       BatchCubeSink.class, DBSink.class, KVTableSink.class, TableSink.class,
       TimePartitionedFileSetDatasetAvroSink.class, AvroKeyOutputFormat.class, AvroKey.class,
       TimePartitionedFileSetDatasetParquetSink.class, AvroParquetOutputFormat.class, BatchElasticsearchSink.class,
-      SnapshotFileSetAvroSink.class, SnapshotFileSetParquetSink.class);
+      SnapshotFileBatchAvroSink.class, SnapshotFileBatchParquetSink.class);
     // add artifact for transforms
     addPluginArtifact(Id.Artifact.from(Id.Namespace.DEFAULT, "transforms", "1.0.0"), APP_ARTIFACT_ID,
       ProjectionTransform.class, ScriptFilterTransform.class, StructuredRecordToGenericRecordTransform.class);

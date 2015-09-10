@@ -157,8 +157,9 @@ public final class Properties {
    */
   public static class SnapshotFileSet {
     public static final String NAME = "name";
-    public static final String PATH = "path";
+    public static final String BASE_PATH = "basePath";
     public static final String SCHEMA = "schema";
+    public static final String PATH_EXTENSION = "pathExtension";
   }
 
   /**

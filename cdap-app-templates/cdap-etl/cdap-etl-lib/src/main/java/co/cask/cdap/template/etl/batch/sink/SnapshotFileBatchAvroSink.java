@@ -37,21 +37,23 @@ import org.apache.avro.mapreduce.AvroKeyOutputFormat;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.Job;
 
+import javax.annotation.Nullable;
+
 
 /**
- * {@link SnapshotFileSetSink} that stores data in Avro format.
+ * {@link SnapshotFileBatchSink} that stores data in Avro format.
  */
 @Plugin(type = "sink")
 @Name("SnapshotAvro")
 @Description("Sink for a SnapshotFileSet that writes data in Avro format.")
-public class SnapshotFileSetAvroSink extends SnapshotFileSetSink<AvroKey<GenericRecord>, NullWritable> {
+public class SnapshotFileBatchAvroSink extends SnapshotFileBatchSink<AvroKey<GenericRecord>, NullWritable> {
   private static final String SCHEMA_DESC = "The Avro schema of the record being written to the Sink as a JSON " +
     "Object.";
 
   private StructuredToAvroTransformer recordTransformer;
   private final SnapshotAvroSinkConfig config;
 
-  public SnapshotFileSetAvroSink(SnapshotAvroSinkConfig config) {
+  public SnapshotFileBatchAvroSink(SnapshotAvroSinkConfig config) {
     super(config);
     this.config = config;
   }
@@ -59,9 +61,8 @@ public class SnapshotFileSetAvroSink extends SnapshotFileSetSink<AvroKey<Generic
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     super.configurePipeline(pipelineConfigurer);
-    String tpfsName = config.name;
-    String basePath = config.name;
-    pipelineConfigurer.createDataset(tpfsName, FileSet.class.getName(), FileSetProperties.builder()
+    String basePath = config.basePath == null ? config.name : config.basePath;
+    pipelineConfigurer.createDataset(config.name, FileSet.class.getName(), FileSetProperties.builder()
       .setBasePath(basePath)
       .setInputFormat(AvroKeyInputFormat.class)
       .setOutputFormat(AvroKeyOutputFormat.class)
@@ -95,16 +96,16 @@ public class SnapshotFileSetAvroSink extends SnapshotFileSetSink<AvroKey<Generic
   }
 
   /**
-   * Config for SnapshotFileSetAvroSink
+   * Config for SnapshotFileBatchAvroSink
    */
-  public static class SnapshotAvroSinkConfig extends FileSetSinkConfig {
+  public static class SnapshotAvroSinkConfig extends SnapshotFileConfig {
 
     @Name(Properties.SnapshotFileSet.SCHEMA)
     @Description(SCHEMA_DESC)
     private String schema;
 
-    public SnapshotAvroSinkConfig(String name, String targetPath, String schema) {
-      super(name, targetPath);
+    public SnapshotAvroSinkConfig(String name, @Nullable String basePath, String pathExtension, String schema) {
+      super(name, basePath, pathExtension);
       this.schema = schema;
     }
   }

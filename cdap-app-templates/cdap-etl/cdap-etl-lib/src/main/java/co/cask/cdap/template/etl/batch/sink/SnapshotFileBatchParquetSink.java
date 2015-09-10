@@ -37,15 +37,16 @@ import parquet.avro.AvroParquetInputFormat;
 import parquet.avro.AvroParquetOutputFormat;
 
 import java.io.IOException;
+import javax.annotation.Nullable;
 
 
 /**
- * {@link SnapshotFileSetSink} that stores data in Parquet format.
+ * {@link SnapshotFileBatchSink} that stores data in Parquet format.
  */
 @Plugin(type = "sink")
 @Name("SnapshotParquet")
 @Description("Sink for a SnapshotFileSet that writes data in Parquet format.")
-public class SnapshotFileSetParquetSink extends SnapshotFileSetSink<Void, GenericRecord> {
+public class SnapshotFileBatchParquetSink extends SnapshotFileBatchSink<Void, GenericRecord> {
   private static final String SCHEMA_DESC = "The Parquet schema of the record being written to the Sink as a JSON " +
     "Object.";
 
@@ -54,7 +55,7 @@ public class SnapshotFileSetParquetSink extends SnapshotFileSetSink<Void, Generi
   private StructuredToAvroTransformer recordTransformer;
   private String hiveSchema;
 
-  public SnapshotFileSetParquetSink(SnapshotParquetSinkConfig config) {
+  public SnapshotFileBatchParquetSink(SnapshotParquetSinkConfig config) {
     super(config);
     this.config = config;
   }
@@ -62,8 +63,7 @@ public class SnapshotFileSetParquetSink extends SnapshotFileSetSink<Void, Generi
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     super.configurePipeline(pipelineConfigurer);
-    String tpfsName = config.name;
-    String basePath = config.name;
+    String basePath = config.basePath == null ? config.name : config.basePath;
     try {
       hiveSchema = SchemaConverter.toHiveSchema(Schema.parseJson(config.schema.toLowerCase()));
     } catch (UnsupportedTypeException | IOException e) {
@@ -100,16 +100,16 @@ public class SnapshotFileSetParquetSink extends SnapshotFileSetSink<Void, Generi
   }
 
   /**
-   * Config for SnapshotFileSetAvroSink
+   * Config for SnapshotFileBatchAvroSink
    */
-  public static class SnapshotParquetSinkConfig extends FileSetSinkConfig {
+  public static class SnapshotParquetSinkConfig extends SnapshotFileConfig {
 
     @Name(Properties.SnapshotFileSet.SCHEMA)
     @Description(SCHEMA_DESC)
     private String schema;
 
-    public SnapshotParquetSinkConfig(String name, String targetPath, String schema) {
-      super(name, targetPath);
+    public SnapshotParquetSinkConfig(String name, @Nullable String basePath, String pathExtension, String schema) {
+      super(name, basePath, pathExtension);
       this.schema = schema;
     }
   }

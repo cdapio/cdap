@@ -22,6 +22,7 @@ import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.app.etl.batch.config.ETLBatchConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.AppRequest;
+import co.cask.cdap.template.etl.batch.sink.SnapshotFileBatchSink;
 import co.cask.cdap.template.etl.common.ETLStage;
 import co.cask.cdap.template.etl.common.Properties;
 import co.cask.cdap.test.ApplicationManager;
@@ -40,7 +41,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Test for {@link co.cask.cdap.template.etl.batch.sink.SnapshotFileSetSink}.
+ * Test for {@link SnapshotFileBatchSink}.
  */
 public class ETLSnapshotTest extends BaseETLBatchTest {
   private static final String STREAM_NAME = "myStream";
@@ -80,7 +81,7 @@ public class ETLSnapshotTest extends BaseETLBatchTest {
 
     ETLStage sink = new ETLStage("SnapshotParquet", ImmutableMap.<String, String>builder()
       .put(Properties.SnapshotFileSet.NAME, "testParquet")
-      .put(Properties.SnapshotFileSet.PATH, PATH)
+      .put(Properties.SnapshotFileSet.PATH_EXTENSION, PATH)
       .put(Properties.SnapshotFileSet.SCHEMA, EVENT_SCHEMA.toString())
       .build());
 
@@ -133,7 +134,7 @@ public class ETLSnapshotTest extends BaseETLBatchTest {
 
     ETLStage sink = new ETLStage("SnapshotAvro", ImmutableMap.<String, String>builder()
       .put(Properties.SnapshotFileSet.NAME, "testAvro")
-      .put(Properties.SnapshotFileSet.PATH, PATH)
+      .put(Properties.SnapshotFileSet.PATH_EXTENSION, PATH)
       .put(Properties.SnapshotFileSet.SCHEMA, EVENT_SCHEMA.toString())
       .build());
 

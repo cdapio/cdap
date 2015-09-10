@@ -17,7 +17,6 @@
 package co.cask.cdap.template.etl.batch.sink;
 
 import co.cask.cdap.api.data.format.StructuredRecord;
-import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.template.etl.api.batch.BatchSink;
 import co.cask.cdap.template.etl.api.batch.BatchSinkContext;
 
@@ -28,15 +27,15 @@ import java.util.HashMap;
  * @param <KEY_OUT> the type of key the sink outputs
  * @param <VAL_OUT> the type of value the sink outputs
  */
-public abstract class FileSetSink<KEY_OUT, VAL_OUT> extends BatchSink<StructuredRecord, KEY_OUT, VAL_OUT> {
+public abstract class FileBatchSink<KEY_OUT, VAL_OUT> extends BatchSink<StructuredRecord, KEY_OUT, VAL_OUT> {
   public static final String NAME_DESC = "Name of the Fileset Dataset to which the records " +
     "are written to. If it doesn't exist, it will be created.";
-  public static final String PATH_DESC = "The path extension where the data will be recorded. " +
-    "The data will be stored under the name of the dataset, then under this file extension.";
+  public static final String BASE_PATH_DESC = "The path where the data will be recorded. " +
+    "Defaults to the name of the dataset";
 
   protected final FileSetSinkConfig config;
 
-  protected FileSetSink(FileSetSinkConfig config) {
+  protected FileBatchSink(FileSetSinkConfig config) {
     this.config = config;
   }
 

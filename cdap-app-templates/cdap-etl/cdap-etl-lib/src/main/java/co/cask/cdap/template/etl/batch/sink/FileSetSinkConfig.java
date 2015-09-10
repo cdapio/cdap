@@ -21,20 +21,23 @@ import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.templates.plugins.PluginConfig;
 import co.cask.cdap.template.etl.common.Properties;
 
+import javax.annotation.Nullable;
+
 /**
- * {@link PluginConfig} for {@link FileSetSink}.
+ * {@link PluginConfig} for {@link FileBatchSink}.
  */
 public abstract class FileSetSinkConfig extends PluginConfig {
   @Name(Properties.SnapshotFileSet.NAME)
-  @Description(FileSetSink.NAME_DESC)
+  @Description(FileBatchSink.NAME_DESC)
   protected String name;
 
-  @Name(Properties.SnapshotFileSet.PATH)
-  @Description(FileSetSink.PATH_DESC)
-  protected String path;
+  @Name(Properties.SnapshotFileSet.BASE_PATH)
+  @Description(FileBatchSink.BASE_PATH_DESC)
+  @Nullable
+  protected String basePath;
 
-  public FileSetSinkConfig(String name, String path) {
+  public FileSetSinkConfig(String name, @Nullable String basePath) {
     this.name = name;
-    this.path = path;
+    this.basePath = basePath;
   }
 }
