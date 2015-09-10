@@ -47,7 +47,7 @@
 
 */
 angular.module(PKG.name + '.services')
-  .service('MyAppDAGService', function(myAdapterApi, $q, $bootstrapModal, $state, $filter, mySettings, AdapterErrorFactory, IMPLICIT_SCHEMA, myHelpers, PluginConfigFactory, ModalConfirm, EventPipe, CanvasFactory, $rootScope) {
+  .service('MyAppDAGService', function(myAdapterApi, $q, $bootstrapModal, $state, $filter, mySettings, AdapterErrorFactory, IMPLICIT_SCHEMA, myHelpers, PluginConfigFactory, ModalConfirm, EventPipe, CanvasFactory, $rootScope, GLOBALS) {
 
     var countSink = 0,
         countSource = 0,
@@ -68,7 +68,7 @@ angular.module(PKG.name + '.services')
         name: '',
         description: '',
         template: {
-          type: 'cdap-etl-batch-app',
+          type: GLOBALS.etlBatch,
           instance: 1,
           schedule: {
             cron: '* * * * *'
@@ -715,9 +715,9 @@ angular.module(PKG.name + '.services')
           transforms: config.transforms
         }
       };
-      if (this.metadata.template.type === 'cdap-etl-realtime-app') {
+      if (this.metadata.template.type === GLOBALS.etlRealtime) {
         data.config.instances = this.metadata.template.instance;
-      } else if (this.metadata.template.type === 'cdap-etl-batch-app') {
+      } else if (this.metadata.template.type === GLOBALS.etlBatch) {
         // default value should be * * * * *
         data.config.schedule = this.metadata.template.schedule.cron;
       }

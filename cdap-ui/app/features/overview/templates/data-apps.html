@@ -102,13 +102,13 @@
                   </my-file-select>
                 </li>
                 <li>
-                  <a ui-sref="adapters.create({type: 'cdap-etl-batch-app'})" class="clearfix">
+                  <a ui-sref="adapters.create({type: AppsSectionCtrl.GLOBALS.etlBatch})" class="clearfix">
                     <span class="pull-left">ETL Batch App</span>
                     <i class="icon-ETLBatch pull-right"></i>
                   </a>
                 </li>
                 <li>
-                  <a ui-sref="adapters.create({type: 'cdap-etl-realtime-app'})" class="clearfix">
+                  <a ui-sref="adapters.create({type: AppsSectionCtrl.GLOBALS.etlRealtime})" class="clearfix">
                     <span class="pull-left">ETL Realtime App</span>
                     <i class="icon-ETLRealtime pull-right"></i>
                   </a>
@@ -125,21 +125,11 @@
       <ul class="list-group">
         <li class="list-group-item" ng-repeat="app in AppsSectionCtrl.apps | orderBy:AppsSectionCtrl.MyOrderings.appOrdering | limitTo:5">
           <a ui-sref="apps.detail.overview.status({appId: app.id})"
-              ng-if="app.type !== 'adapter'"
               ng-click="AppsSectionCtrl.MyOrderings.appClicked(app.id)">
             <p ng-bind="app.name"> </p>
             <div class="title-type-image">
               <span class="icon-fist"></span>
               <span> App </span>
-            </div>
-          </a>
-          <a ui-sref="adapters.detail.runs({adapterId: app.name})"
-              ng-if="app.type === 'adapter'"
-              ng-click="AppsSectionCtrl.MyOrderings.appClicked(app.id)">
-            <p ng-bind="app.name"> </p>
-            <div class="title-type-image">
-              <span class="icon-{{app.template}}"></span>
-              <span> {{app.template}} </span>
             </div>
           </a>
         </li>
@@ -164,13 +154,13 @@
             </my-file-select>
           </li>
           <li>
-            <a ui-sref="adapters.create({type: 'cdap-etl-batch-app'})" class="clearfix">
+            <a ui-sref="adapters.create({type: AppsSectionCtrl.GLOBALS.etlBatch})" class="clearfix">
               <span class="pull-left">ETL Batch App</span>
               <i class="icon-ETLBatch pull-right"></i>
             </a>
           </li>
           <li>
-            <a ui-sref="adapters.create({type: 'cdap-etl-realtime-app'})" class="clearfix">
+            <a ui-sref="adapters.create({type: AppsSectionCtrl.GLOBALS.etlRealtime})" class="clearfix">
               <span class="pull-left">ETL Realtime App</span>
               <i class="icon-ETLRealtime pull-right"></i>
             </a>

@@ -30,8 +30,8 @@
       </span>
     </h2>
     <div class="type-block">
-      <span class="icon-ETLRealtime" ng-if="template === 'cdap-etl-realtime-app'"></span>
-      <span class="icon-ETLBatch" ng-if="template === 'cdap-etl-batch-app'"></span>
+      <span class="icon-ETLRealtime" ng-if="template === GLOBALS.etlRealtime"></span>
+      <span class="icon-ETLBatch" ng-if="template === GLOBALS.etlBatch"></span>
       <small> Type: {{template}} </small>
     </div>
     <p>{{description}}</p>

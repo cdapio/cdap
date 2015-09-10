@@ -27,13 +27,13 @@
       </button>
       <ul class="dropdown-menu dropdown-menu-right" role="menu">
         <li>
-          <a ui-sref="adapters.create({type: 'cdap-etl-batch-app'})" class="clearfix">
+          <a ui-sref="adapters.create({type: GLOBALS.etlBatch})" class="clearfix">
             <span class="pull-left">ETLBatch App</span>
             <i class="icon-ETLBatch pull-right"></i>
           </a>
         </li>
         <li>
-          <a ui-sref="adapters.create({type: 'cdap-etl-realtime-app'})" class="clearfix">
+          <a ui-sref="adapters.create({type: GLOBALS.etlRealtime})" class="clearfix">
             <span class="pull-left">ETLRealtime App</span>
             <i class="icon-ETLRealtime pull-right"></i>
           </a>
@@ -56,8 +56,8 @@
           <a href ng-click="$state.go('^.create', {name: app.name})"
               class="content-panel">
               <h4 tooltip="{{::app.name}}">
-                <i class="icon-ETLBatch" ng-if="app.template === 'cdap-etl-batch-app'"></i>
-                <i class="icon-ETLRealtime" ng-if="app.template === 'cdap-etl-realtime-app'"></i>
+                <i class="icon-ETLBatch" ng-if="app.template === GLOBALS.etlBatch"></i>
+                <i class="icon-ETLRealtime" ng-if="app.template === GLOBALS.etlRealtime"></i>
                 <span>{{::app.name | myEllipsis:15}}</span>
               </h4>
 

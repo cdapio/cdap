@@ -39,6 +39,7 @@ angular.module(PKG.name + '.services')
         fetchSinkProperties: myHelpers.getConfig('GET', 'REQUEST', pluginsFetchPath + 'sink/plugins/:sink?scope=system', true),
         fetchTransformProperties: myHelpers.getConfig('GET', 'REQUEST', pluginsFetchPath + 'transform/plugins/:transform?scope=system', true),
 
+        // FIXME: This needs to be replaced with fetching etl-batch & etl-realtime separately.
         list: myHelpers.getConfig('GET', 'REQUEST', '/namespaces/:namespace/adapters', true),
         pollStatus: myHelpers.getConfig('GET', 'POLL', adapterPath + '/status'),
         stopPollStatus: myHelpers.getConfig('GET', 'POLL-STOP', adapterPath + '/status'),

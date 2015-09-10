@@ -26,8 +26,8 @@
 <div ng-if="!TemplatesController.isEdit">
   <label class="label-control">Choose Templates</label>
   <select ng-model="TemplatesController.templateType" class="form-control">
-    <option value="cdap-etl-batch-app">ETL Batch</option>
-    <option value="cdap-etl-realtime-app">ETL Realtime</option>
+    <option value="TemplatesController.GLOBALS.etlBatch">ETL Batch</option>
+    <option value="TemplatesController.GLOBALS.etlRealtime">ETL Realtime</option>
   </select>
 
   <div ng-if="TemplatesController.templateType">

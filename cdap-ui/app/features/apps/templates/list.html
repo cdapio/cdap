@@ -39,13 +39,13 @@
           </my-file-select>
         </li>
         <li>
-          <a ui-sref="adapters.create({type: 'cdap-etl-batch-app'})"  class="clearfix">
+          <a ui-sref="adapters.create({type: ListController.GLOBALS.etlBatch})"  class="clearfix">
             <span class="pull-left">ETL Batch App</span>
             <i class="icon-ETLBatch pull-right"></i>
           </a>
         </li>
         <li>
-          <a ui-sref="adapters.create({type: 'cdap-etl-realtime-app'})" class="clearfix">
+          <a ui-sref="adapters.create({type: ListController.GLOBALS.etlRealtime})" class="clearfix">
             <span class="pull-left"> ETL Realtime App</span>
             <i class="icon-ETLRealtime pull-right"></i>
           </a>
@@ -91,7 +91,6 @@
       <tr ng-repeat="app in ListController.filtered = (ListController.apps | filter: ListController.searchText ) | myPaginate:ListController.currentPage | orderBy:sortable.predicate:sortable.reverse">
         <td >
           <a ui-sref="apps.detail.overview.status({ appId: app.name })"
-              ng-if="app.type !== 'adapter'"
               ng-click="MyOrderings.appClicked(app.name)">
             <strong tooltip="{{app.name}}"
                     tooltip-enable="app.name.length > 35"
@@ -99,23 +98,10 @@
               {{ ::app.name | myEllipsis:35 }}
             </strong>
           </a>
-          <a ui-sref="adapters.detail.runs({adapterId: app.name})"
-              ng-if="app.type === 'adapter'"
-              ng-click="MyOrderings.appClicked(app.id)">
-            <strong tooltip="{{app.name}}"
-                    tooltip-enable="app.name.length > 35"
-                    tooltip-append-to-body="true">
-              {{ ::app.name | myEllipsis:35 }}
-            </strong>
-          </a>
         </td>
-        <td ng-if="app.type !== 'adapter'">
+        <td>
           <span class="icon-fist"></span>
           <span>App</span>
-        </td>
-        <td ng-if="app.type === 'adapter'">
-          <span class="icon-{{app.template}}"></span>
-          <span>{{ ::app.template }}</span>
         </td>
         <td>{{ ::app.version }}</td>
         <td>

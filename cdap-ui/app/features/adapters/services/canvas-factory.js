@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.adapters')
-  .factory('CanvasFactory', function(myHelpers, $q, $alert) {
+  .factory('CanvasFactory', function(myHelpers, $q, $alert, GLOBALS) {
     function getNodes(config) {
       var nodes = [];
       var i =0;
@@ -58,11 +58,11 @@ angular.module(PKG.name + '.feature.adapters')
       returnConfig.template = {
         type: template
       };
-      if (template === 'cdap-etl-batch-app') {
+      if (template === GLOBALS.etlBatch) {
         returnConfig.template.schedule = {};
         returnConfig.template.schedule.cron =
         myHelpers.objectQuery(config, 'schedule', 'cron') || myHelpers.objectQuery(config, 'schedule');
-      } else if (template === 'cdap-etl-realtime-app') {
+      } else if (template === GLOBALS.etlRealtime) {
         returnConfig.template.instance =
         myHelpers.objectQuery(config, 'instance') || myHelpers.objectQuery(config, 'metadata', 'template', 'instance');
       }
