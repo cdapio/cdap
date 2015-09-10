@@ -37,17 +37,17 @@ import co.cask.cdap.template.etl.api.Transformation;
  */
 @Beta
 public abstract class BatchSource<KEY_IN, VAL_IN, OUT> extends BatchConfigurable<BatchSourceContext>
-  implements Transformation<KeyValue<KEY_IN, VAL_IN>, OUT>, StageLifecycle<BatchSourceContext> {
+  implements Transformation<KeyValue<KEY_IN, VAL_IN>, OUT>, StageLifecycle<BatchRuntimeContext> {
 
   /**
    * Initialize the Batch Source stage. Executed inside the Batch Run. This method is guaranteed to be invoked
    * before any calls to {@link BatchSource#transform} are made.
    *
-   * @param context {@link BatchSourceContext}
+   * @param context {@link BatchRuntimeContext}
    * @throws Exception if there is any error during initialization
    */
   @Override
-  public void initialize(BatchSourceContext context) throws Exception {
+  public void initialize(BatchRuntimeContext context) throws Exception {
     // no-op
   }
 

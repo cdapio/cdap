@@ -30,6 +30,13 @@ public final class ETLBatchConfig extends ETLConfig {
   private final String schedule;
   private final List<ETLStage> actions;
 
+  public ETLBatchConfig(String schedule, ETLStage source, List<ETLStage> sinks, List<ETLStage> transforms,
+                        Resources resources, List<ETLStage> actions) {
+    super(source, sinks, transforms, resources);
+    this.schedule = schedule;
+    this.actions = actions;
+  }
+
   public ETLBatchConfig(String schedule, ETLStage source, ETLStage sink, List<ETLStage> transforms,
                         Resources resources, List<ETLStage> actions) {
     super(source, sink, transforms, resources);

@@ -28,7 +28,7 @@ import java.util.List;
  */
 public class ETLConfig extends Config {
   private final ETLStage source;
-  // here for backwards compatibility
+  // here for backwards compatibility. This will remain until we remove the etl templates.
   private final ETLStage sink;
   private final List<ETLStage> sinks;
   private final List<ETLStage> transforms;

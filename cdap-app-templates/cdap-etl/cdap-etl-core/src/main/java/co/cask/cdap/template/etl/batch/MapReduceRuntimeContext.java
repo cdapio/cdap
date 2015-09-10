@@ -14,22 +14,29 @@
  * the License.
  */
 
-package co.cask.cdap.template.etl.realtime;
+package co.cask.cdap.template.etl.batch;
 
+import co.cask.cdap.api.data.DatasetInstantiationException;
+import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.templates.plugins.PluginProperties;
-import co.cask.cdap.api.worker.WorkerContext;
-import co.cask.cdap.template.etl.api.TransformContext;
+import co.cask.cdap.template.etl.api.batch.BatchRuntimeContext;
 import co.cask.cdap.template.etl.common.ScopedPluginContext;
 
+import java.util.Map;
+
 /**
- * Context for the Transform Stage.
+ * Batch runtime context that delegates most operations to MapReduceTaskContext. It also extends
+ * {@link ScopedPluginContext} in order to provide plugin isolation between pipeline plugins. This means sources,
+ * transforms, and sinks don't need to worry that plugins they use conflict with plugins other sources, transforms,
+ * or sinks use.
  */
-public class RealtimeTransformContext extends ScopedPluginContext implements TransformContext {
-  private final WorkerContext context;
+public class MapReduceRuntimeContext extends ScopedPluginContext implements BatchRuntimeContext {
+  private final MapReduceTaskContext context;
   private final Metrics metrics;
 
-  public RealtimeTransformContext(WorkerContext context, Metrics metrics, String stageId) {
+  public MapReduceRuntimeContext(MapReduceTaskContext context, Metrics metrics, String stageId) {
     super(stageId);
     this.context = context;
     this.metrics = metrics;
@@ -78,5 +85,26 @@ public class RealtimeTransformContext extends ScopedPluginContext implements Tra
     } catch (UnsupportedOperationException e) {
       return context.getPluginProps(scopedPluginId);
     }
+  }
+
+  @Override
+  public long getLogicalStartTime() {
+    return context.getLogicalStartTime();
+  }
+
+  @Override
+  public Map<String, String> getRuntimeArguments() {
+    return context.getRuntimeArguments();
+  }
+
+  @Override
+  public <T extends Dataset> T getDataset(String name) throws DatasetInstantiationException {
+    return context.getDataset(name);
+  }
+
+  @Override
+  public <T extends Dataset> T getDataset(String name,
+                                          Map<String, String> arguments) throws DatasetInstantiationException {
+    return context.getDataset(name, arguments);
   }
 }

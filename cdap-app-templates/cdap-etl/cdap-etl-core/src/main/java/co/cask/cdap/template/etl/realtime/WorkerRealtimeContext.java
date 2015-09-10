@@ -18,11 +18,9 @@ package co.cask.cdap.template.etl.realtime;
 
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.templates.AdapterSpecification;
-import co.cask.cdap.api.templates.plugins.PluginProperties;
 import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.api.worker.WorkerContext;
 import co.cask.cdap.template.etl.api.realtime.RealtimeContext;
-import co.cask.cdap.template.etl.common.Constants;
 
 import javax.annotation.Nullable;
 
@@ -53,18 +51,4 @@ public class WorkerRealtimeContext extends RealtimeTransformContext implements R
     return context.getAdapterSpecification();
   }
 
-  @Override
-  public PluginProperties getPluginProperties(String pluginId) {
-    return context.getPluginProperties(getPluginId(pluginId));
-  }
-
-  @Override
-  public <T> Class<T> loadPluginClass(String pluginId) {
-    return context.loadPluginClass(getPluginId(pluginId));
-  }
-
-  @Override
-  public <T> T newPluginInstance(String pluginId) throws InstantiationException {
-    return context.newPluginInstance(getPluginId(pluginId));
-  }
 }

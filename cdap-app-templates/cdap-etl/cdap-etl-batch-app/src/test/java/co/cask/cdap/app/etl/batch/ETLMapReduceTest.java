@@ -16,6 +16,7 @@
 
 package co.cask.cdap.app.etl.batch;
 
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
@@ -231,7 +232,7 @@ public class ETLMapReduceTest extends BaseETLBatchTest {
   }
 
   @Test
-  public void testFiletoTPFS() throws Exception {
+  public void testFiletoMultipleTPFS() throws Exception {
     String filePath = "file:///tmp/test/text.txt";
     String testData = "String for testing purposes.";
 
@@ -248,11 +249,20 @@ public class ETLMapReduceTest extends BaseETLBatchTest {
       .put(Properties.File.PATH, filePath)
       .build());
 
-    ETLStage sink = new ETLStage("TPFSAvro",
-                                 ImmutableMap.of(Properties.TimePartitionedFileSetDataset.SCHEMA,
-                                                 FileBatchSource.DEFAULT_SCHEMA.toString(),
-                                                 Properties.TimePartitionedFileSetDataset.TPFS_NAME, "fileSink"));
-    ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *", source, sink, Lists.<ETLStage>newArrayList());
+    ETLStage sink1 = new ETLStage("TPFSAvro",
+                                  ImmutableMap.of(Properties.TimePartitionedFileSetDataset.SCHEMA,
+                                    FileBatchSource.DEFAULT_SCHEMA.toString(),
+                                    Properties.TimePartitionedFileSetDataset.TPFS_NAME, "fileSink1"));
+    ETLStage sink2 = new ETLStage("TPFSParquet",
+                                  ImmutableMap.of(Properties.TimePartitionedFileSetDataset.SCHEMA,
+                                    FileBatchSource.DEFAULT_SCHEMA.toString(),
+                                    Properties.TimePartitionedFileSetDataset.TPFS_NAME, "fileSink2"));
+    ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *",
+                                                  source,
+                                                  Lists.newArrayList(sink1, sink2),
+                                                  Lists.<ETLStage>newArrayList(),
+                                                  new Resources(),
+                                                  Lists.<ETLStage>newArrayList());
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(ETLBATCH_ARTIFACT, etlConfig);
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "FileToTPFS");
@@ -262,12 +272,14 @@ public class ETLMapReduceTest extends BaseETLBatchTest {
     mrManager.start();
     mrManager.waitForFinish(2, TimeUnit.MINUTES);
 
-    DataSetManager<TimePartitionedFileSet> fileSetManager = getDataset("fileSink");
-    TimePartitionedFileSet fileSet = fileSetManager.get();
-    List<GenericRecord> records = readOutput(fileSet, FileBatchSource.DEFAULT_SCHEMA);
-    Assert.assertEquals(1, records.size());
-    Assert.assertEquals(testData, records.get(0).get("body").toString());
-    fileSet.close();
+    for (String sinkName : new String[] { "fileSink1", "fileSink2" }) {
+      DataSetManager<TimePartitionedFileSet> fileSetManager = getDataset(sinkName);
+      TimePartitionedFileSet fileSet = fileSetManager.get();
+      List<GenericRecord> records = readOutput(fileSet, FileBatchSource.DEFAULT_SCHEMA);
+      Assert.assertEquals(1, records.size());
+      Assert.assertEquals(testData, records.get(0).get("body").toString());
+      fileSet.close();
+    }
   }
 
 }

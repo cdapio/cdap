@@ -57,6 +57,7 @@ import org.junit.rules.TemporaryFolder;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -116,37 +117,26 @@ public class ETLWorkerTest extends ETLRealtimeBaseTest {
     long startTime = System.currentTimeMillis();
     WorkerManager workerManager = appManager.getWorkerManager(ETLWorker.NAME);
     workerManager.start();
-    // Let the worker run for 3 seconds
-    TimeUnit.SECONDS.sleep(3);
-    workerManager.stop();
-
-    // Start again to see if the state is maintained
-    workerManager.start();
-    // Let the worker run for 2 seconds
-    TimeUnit.SECONDS.sleep(2);
-    workerManager.stop();
 
     List<StreamManager> streamManagers = Lists.newArrayList(
       getStreamManager(Id.Namespace.DEFAULT, "streamA"),
       getStreamManager(Id.Namespace.DEFAULT, "streamB"),
       getStreamManager(Id.Namespace.DEFAULT, "streamC")
     );
-    long currentDiff = System.currentTimeMillis() - startTime;
-    for (StreamManager streamManager : streamManagers) {
-      List<StreamEvent> streamEvents = streamManager.getEvents("now-" + Long.toString(currentDiff) + "ms", "now",
-        Integer.MAX_VALUE);
-      // verify that some events were sent to the stream
-      Assert.assertTrue(streamEvents.size() > 0);
-      // since we sent all identical events, verify the contents of just one of them
-      Random random = new Random();
-      StreamEvent event = streamEvents.get(random.nextInt(streamEvents.size()));
-      ByteBuffer body = event.getBody();
-      Map<String, String> headers = event.getHeaders();
-      if (headers != null && !headers.isEmpty()) {
-        Assert.assertEquals("v1", headers.get("h1"));
+
+    int retries = 0;
+    boolean succeeded = false;
+    while (retries < 10) {
+      succeeded = checkStreams(streamManagers, startTime);
+      if (succeeded) {
+        break;
       }
-      Assert.assertEquals("Hello", Bytes.toString(body, Charsets.UTF_8));
+      retries++;
+      TimeUnit.SECONDS.sleep(1);
     }
+
+    workerManager.stop();
+    Assert.assertTrue(succeeded);
   }
 
   @Test
@@ -301,5 +291,36 @@ public class ETLWorkerTest extends ETLRealtimeBaseTest {
         Uninterruptibles.sleepUninterruptibly(100, TimeUnit.MILLISECONDS);
       }
     } while (count++ < 20);
+  }
+
+  private boolean checkStreams(Collection<StreamManager> streamManagers, long startTime) throws IOException {
+    try {
+      long currentDiff = System.currentTimeMillis() - startTime;
+      for (StreamManager streamManager : streamManagers) {
+        List<StreamEvent> streamEvents = streamManager.getEvents("now-" + Long.toString(currentDiff) + "ms", "now",
+          Integer.MAX_VALUE);
+        // verify that some events were sent to the stream
+        Assert.assertTrue(streamEvents.size() > 0);
+        // since we sent all identical events, verify the contents of just one of them
+        Random random = new Random();
+        StreamEvent event = streamEvents.get(random.nextInt(streamEvents.size()));
+        ByteBuffer body = event.getBody();
+        Map<String, String> headers = event.getHeaders();
+        if (headers != null && !headers.isEmpty()) {
+          // check h1 header has value v1
+          if (!"v1".equals(headers.get("h1"))) {
+            return false;
+          }
+        }
+        // check body has content "Hello"
+        if (!"Hello".equals(Bytes.toString(body, Charsets.UTF_8))) {
+          return false;
+        }
+      }
+      return true;
+    } catch (Exception e) {
+      // streamManager.getEvents() can throw an exception if there is nothing in the stream
+      return false;
+    }
   }
 }
