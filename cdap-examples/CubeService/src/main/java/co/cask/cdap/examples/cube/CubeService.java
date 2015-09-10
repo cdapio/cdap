@@ -22,7 +22,7 @@ import co.cask.cdap.api.dataset.lib.cube.AbstractCubeHttpHandler;
 import co.cask.cdap.api.dataset.lib.cube.Cube;
 
 /**
- * Simple Cube App with Cube Service
+ * Simple Cube App with a Cube Service to access data
  */
 public class CubeService extends AbstractApplication {
 
