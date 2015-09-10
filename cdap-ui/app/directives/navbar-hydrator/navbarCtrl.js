@@ -14,28 +14,9 @@
  * the License.
  */
 
-@import "../../variables.less";
-@import "../../../../bower_components/bootstrap/less/mixins.less";
+angular.module(PKG.name + '.commons')
+  .controller('navbarHydratorCtrl', function () {
 
-body {
-  header.navbar-cdap {
-    margin-bottom: 0;
-  }
 
-  &.theme-cdap {
-    header.navbar-cdap {
-      background-color: @cdap-header;
-    }
-  }
 
-  header.navbar-hydrator {
-    height: 60px;
-    margin: 0;
-  }
-
-  &.theme-cdap {
-    header.navbar-hydrator {
-      background: url('@{img-path}/hydrator_header_bg.jpg') center center / 100% 60px no-repeat;
-    }
-  }
-}
+  });
