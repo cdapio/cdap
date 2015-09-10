@@ -31,11 +31,9 @@ import co.cask.cdap.template.etl.common.StructuredToAvroTransformer;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.mapred.AvroKey;
-import org.apache.avro.mapreduce.AvroJob;
 import org.apache.avro.mapreduce.AvroKeyInputFormat;
 import org.apache.avro.mapreduce.AvroKeyOutputFormat;
 import org.apache.hadoop.io.NullWritable;
-import org.apache.hadoop.mapreduce.MRJobConfig;
 
 import java.util.HashMap;
 import java.util.Map;

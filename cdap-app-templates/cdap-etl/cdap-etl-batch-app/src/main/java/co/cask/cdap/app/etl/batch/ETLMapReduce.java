@@ -220,6 +220,9 @@ public class ETLMapReduce extends AbstractMapReduce {
       Preconditions.checkNotNull(sinkOutputsStr, "Sink outputs not found in hadoop conf.");
 
       Map<String, Set<String>> sinkOutputs = GSON.fromJson(sinkOutputsStr, SINK_OUTPUTS_TYPE);
+      // should never happen, this is checked and set in beforeSubmit
+      Preconditions.checkArgument(!sinkOutputs.isEmpty(), "Sink outputs not found in hadoop conf.");
+
       boolean hasOneOutput = hasOneOutput(transformInfos, sinkOutputs);
       sinks = new ArrayList<>(sinkOutputs.size());
       for (Map.Entry<String, Set<String>> sinkOutput : sinkOutputs.entrySet()) {
@@ -315,6 +318,7 @@ public class ETLMapReduce extends AbstractMapReduce {
   }
 
   // need to write with a different method if there is only one output for the mapreduce
+  // TODO: remove if the fix to CDAP-3628 allows us to write using the same method
   private static class SingleOutputSink<IN, KEY_OUT, VAL_OUT> extends WrappedSink<IN, KEY_OUT, VAL_OUT> {
 
     protected SingleOutputSink(String sinkPluginId, BatchSink<IN, KEY_OUT, VAL_OUT> sink,
