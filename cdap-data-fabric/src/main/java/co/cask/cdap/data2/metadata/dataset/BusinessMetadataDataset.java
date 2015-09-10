@@ -234,6 +234,9 @@ public class BusinessMetadataDataset extends AbstractDataset {
   Id.NamespacedId getNamespaceIdFromKey(Class<? extends Id> idType, MDSKey key) {
     String type = Id.getType(idType);
     MDSKey.Splitter keySplitter = key.split();
+
+    // The rowkey is [targetType][targetId][key], so skip the first string.
+    keySplitter.skipString();
     if (type.equals(Id.Program.class.getSimpleName())) {
       String namespaceId = keySplitter.getString();
       String appId = keySplitter.getString();
