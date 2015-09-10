@@ -25,6 +25,7 @@ import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.proto.Id;
 
+import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
@@ -57,10 +58,9 @@ public class BusinessMetadataDataset extends AbstractDataset {
    * @param metadataRecord The value of the metadata to be saved.
    */
   public void createBusinessMetadata(BusinessMetadataRecord metadataRecord) {
-    String targetType = getTargetType(metadataRecord.getTargetId());
     Id.NamespacedId targetId = metadataRecord.getTargetId();
     String key = metadataRecord.getKey();
-    MDSKey mdsKey = getInstanceKey(targetType, targetId, key);
+    MDSKey mdsKey = getMDSKey(targetId, key);
 
     // Put to the default column.
     write(mdsKey, metadataRecord);
@@ -87,8 +87,7 @@ public class BusinessMetadataDataset extends AbstractDataset {
    */
   @Nullable
   public BusinessMetadataRecord getBusinessMetadata(Id.NamespacedId targetId, String key) {
-    String targetType = getTargetType(targetId);
-    MDSKey mdsKey = getInstanceKey(targetType, targetId, key);
+    MDSKey mdsKey = getMDSKey(targetId, key);
     Row row = indexedTable.get(mdsKey.getKey());
     if (row.isEmpty()) {
       return null;
@@ -107,7 +106,7 @@ public class BusinessMetadataDataset extends AbstractDataset {
    */
   public Map<String, String> getBusinessMetadata(Id.NamespacedId targetId) {
     String targetType = getTargetType(targetId);
-    MDSKey mdsKey = new MDSKey.Builder().add(targetType).add(targetId.toString()).build();
+    MDSKey mdsKey = getMDSKey(targetId, null);
     byte[] startKey = mdsKey.getKey();
     byte[] stopKey = Bytes.stopKeyForPrefix(startKey);
 
@@ -116,7 +115,7 @@ public class BusinessMetadataDataset extends AbstractDataset {
     try {
       Row next;
       while ((next = scan.next()) != null) {
-        String key = getMetadataKey(next.getRow());
+        String key = getMetadataKey(targetType, next.getRow());
         byte[] value = next.get(VALUE_COLUMN);
         if (key == null || value == null) {
           continue;
@@ -162,7 +161,7 @@ public class BusinessMetadataDataset extends AbstractDataset {
    */
   public void removeMetadata(Id.NamespacedId targetId, Predicate<String> filter) {
     String targetType = getTargetType(targetId);
-    MDSKey mdsKey = new MDSKey.Builder().add(targetType, targetId.toString()).build();
+    MDSKey mdsKey = getMDSKey(targetId, null);
     byte[] prefix = mdsKey.getKey();
     byte[] stopKey = Bytes.stopKeyForPrefix(prefix);
 
@@ -175,26 +174,13 @@ public class BusinessMetadataDataset extends AbstractDataset {
         if (keyValue == null && value == null) {
           continue;
         }
-        if (filter.apply(getMetadataKey(next.getRow()))) {
+        if (filter.apply(getMetadataKey(targetType, next.getRow()))) {
           indexedTable.delete(new Delete(next.getRow()));
         }
       }
     } finally {
       scan.close();
     }
-  }
-
-  private static Id.NamespacedId fromString(String type, String id) {
-    if (type.equals(Id.Program.class.getSimpleName())) {
-      return Id.Program.fromStrings(id.split("/"));
-    } else if (type.equals(Id.Application.class.getSimpleName())) {
-      return Id.Application.fromStrings(id.split("/"));
-    } else if (type.equals(Id.DatasetInstance.class.getSimpleName())) {
-      // TODO Add code
-    } else if (type.equals(Id.Stream.class.getSimpleName())) {
-      return Id.Stream.fromId(id);
-    }
-    throw new IllegalArgumentException("Illegal Type of metadata source.");
   }
 
   /**
@@ -208,6 +194,66 @@ public class BusinessMetadataDataset extends AbstractDataset {
     // TODO ADD CODE
 
     return Lists.newArrayList();
+  }
+
+  void addNamespaceIdToKey(final MDSKey.Builder builder, Id.NamespacedId namespacedId) {
+    String type = getTargetType(namespacedId);
+    if (type.equals(Id.Program.class.getSimpleName())) {
+      Id.Program program = (Id.Program) namespacedId;
+      String namespaceId = program.getNamespaceId();
+      String appId = program.getApplicationId();
+      String programType = program.getType().toString();
+      String programId = program.getId();
+      builder.add(namespaceId);
+      builder.add(appId);
+      builder.add(programType);
+      builder.add(programId);
+    } else if (type.equals(Id.Application.class.getSimpleName())) {
+      Id.Application application = (Id.Application) namespacedId;
+      String namespaceId = application.getNamespaceId();
+      String instanceId = application.getId();
+      builder.add(namespaceId);
+      builder.add(instanceId);
+    } else if (type.equals(Id.DatasetInstance.class.getSimpleName())) {
+      Id.DatasetInstance datasetInstance = (Id.DatasetInstance) namespacedId;
+      String namespaceId = datasetInstance.getNamespaceId();
+      String instanceId = datasetInstance.getId();
+      builder.add(namespaceId);
+      builder.add(instanceId);
+    } else if (type.equals(Id.Stream.class.getSimpleName())) {
+      Id.Stream stream = (Id.Stream) namespacedId;
+      String namespaceId = stream.getNamespaceId();
+      String instanceId = stream.getId();
+      builder.add(namespaceId);
+      builder.add(instanceId);
+    } else {
+      throw new IllegalArgumentException("Illegal Type " + type + " of metadata source.");
+    }
+  }
+
+  Id.NamespacedId getNamespaceIdFromKey(Class<? extends Id> idType, MDSKey key) {
+    String type = Id.getType(idType);
+    MDSKey.Splitter keySplitter = key.split();
+    if (type.equals(Id.Program.class.getSimpleName())) {
+      String namespaceId = keySplitter.getString();
+      String appId = keySplitter.getString();
+      String programType = keySplitter.getString();
+      String programId = keySplitter.getString();
+      return Id.Program.from(namespaceId, appId, ProgramType.valueOf(programType), programId);
+    } else if (type.equals(Id.Application.class.getSimpleName())) {
+      String namespaceId = keySplitter.getString();
+      String appId = keySplitter.getString();
+      return Id.Application.from(namespaceId, appId);
+    } else if (type.equals(Id.DatasetInstance.class.getSimpleName())) {
+      String namespaceId = keySplitter.getString();
+      String instanceId  = keySplitter.getString();
+      return Id.DatasetInstance.from(namespaceId, instanceId);
+    } else if (type.equals(Id.Stream.class.getSimpleName())) {
+      String namespaceId = keySplitter.getString();
+      String instanceId  = keySplitter.getString();
+      return Id.DatasetInstance.from(namespaceId, instanceId);
+    }
+    throw new IllegalArgumentException("Illegal Type " + type + " of metadata source.");
   }
 
   private void write(MDSKey id, BusinessMetadataRecord record) {
@@ -225,11 +271,14 @@ public class BusinessMetadataDataset extends AbstractDataset {
   }
 
   // Helper method to generate key.
-  private MDSKey getInstanceKey(String targetType, Id.NamespacedId targetId, String key) {
+  private MDSKey getMDSKey(Id.NamespacedId targetId, @Nullable String key) {
+    String targetType = getTargetType(targetId);
     MDSKey.Builder builder = new MDSKey.Builder();
     builder.add(targetType);
-    builder.add(targetId.toString());
-    builder.add(key);
+    addNamespaceIdToKey(builder, targetId);
+    if (key != null) {
+      builder.add(key);
+    }
 
     return builder.build();
   }
@@ -241,11 +290,27 @@ public class BusinessMetadataDataset extends AbstractDataset {
     return namespacedId.getClass().getSimpleName();
   }
 
-  private String getMetadataKey(byte [] rowKey) {
+  private String getMetadataKey(String type, byte[] rowKey) {
     MDSKey.Splitter keySplitter = new MDSKey(rowKey).split();
-    // The rowkey is [targetType][targetId.toString][key], so skip the first 2 strings.
+    // The rowkey is [targetType][targetId][key], so skip the first few strings.
     keySplitter.skipString();
-    keySplitter.skipString();
+    if (type.equals(Id.Program.class.getSimpleName())) {
+      keySplitter.skipString();
+      keySplitter.skipString();
+      keySplitter.skipString();
+      keySplitter.skipString();
+    } else if (type.equals(Id.Application.class.getSimpleName())) {
+      keySplitter.skipString();
+      keySplitter.skipString();
+    } else if (type.equals(Id.DatasetInstance.class.getSimpleName())) {
+      keySplitter.skipString();
+      keySplitter.skipString();
+    } else if (type.equals(Id.Stream.class.getSimpleName())) {
+      keySplitter.skipString();
+      keySplitter.skipString();
+    } else {
+      throw new IllegalArgumentException("Illegal Type " + type + " of metadata source.");
+    }
     return keySplitter.getString();
   }
 }
