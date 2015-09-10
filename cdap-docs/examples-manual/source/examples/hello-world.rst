@@ -71,7 +71,6 @@ We will see below how to retrieve this metric using the
 .. |example| replace:: HelloWorld
 .. include:: building-starting-running-cdap.txt
 
-.. highlight:: console
 
 Running the Example
 ===================
