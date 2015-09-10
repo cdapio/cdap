@@ -43,7 +43,7 @@ elements.
 
 Preferences are retained, and are persisted across different runs and restarts of
 applications and CDAP. Runtime arguments (available under the *Arguments* buttons in the
-CDAP-UI) are one-time only, for a particular invocation, and are not persisted. Use the
+CDAP UI) are one-time only, for a particular invocation, and are not persisted. Use the
 *Preferences* button with the same key-value pairs for arguments you would like persisted.
 
 Preferences Example
@@ -123,7 +123,7 @@ Examples of Using Preferences
 =============================
 Other examples of using preferences are in these CDAP examples:
 
-- :ref:`Data Cleansing <examples-data-cleansing>`: Uses a runtime argument with a MapReduce program
-- :ref:`Wikipedia Pipeline <examples-wikipedia-data-pipeline>`: Uses runtime arguments
+- :ref:`Data Cleansing: <examples-data-cleansing>` Uses a runtime argument with a MapReduce program
+- :ref:`Wikipedia Pipeline: <examples-wikipedia-data-pipeline>` Uses runtime arguments
   with a stream, MapReduce program, and a Spark program
-- :ref:`Sport Results <examples-sport-results>`: Uses a runtime argument with a MapReduce program
+- :ref:`Sport Results: <examples-sport-results>` Uses a runtime argument with a MapReduce program
