@@ -272,7 +272,7 @@ public class ETLMapReduceTest extends BaseETLBatchTest {
     mrManager.start();
     mrManager.waitForFinish(2, TimeUnit.MINUTES);
 
-    for (String sinkName : new String[] { "fileSink1", "fileSink2" } ) {
+    for (String sinkName : new String[] { "fileSink1", "fileSink2" }) {
       DataSetManager<TimePartitionedFileSet> fileSetManager = getDataset(sinkName);
       TimePartitionedFileSet fileSet = fileSetManager.get();
       List<GenericRecord> records = readOutput(fileSet, FileBatchSource.DEFAULT_SCHEMA);
