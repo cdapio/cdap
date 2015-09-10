@@ -17,8 +17,7 @@
 package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.common.AlreadyExistsException;
-import co.cask.cdap.common.NamespaceCannotBeDeletedException;
-import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
@@ -67,64 +66,42 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/namespaces/{namespace-id}")
   public void getNamespace(HttpRequest request, HttpResponder responder,
-                           @PathParam("namespace-id") String namespaceId) {
-    try {
-      NamespaceMeta ns = namespaceAdmin.get(Id.Namespace.from(namespaceId));
-      responder.sendJson(HttpResponseStatus.OK, ns);
-    } catch (NotFoundException e) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Namespace %s not found", namespaceId));
-    } catch (Exception e) {
-      LOG.error("Internal error while getting namespace '{}'", namespaceId, e);
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-    }
+                           @PathParam("namespace-id") String namespaceId) throws Exception {
+    NamespaceMeta ns = namespaceAdmin.get(Id.Namespace.from(namespaceId));
+    responder.sendJson(HttpResponseStatus.OK, ns);
   }
 
 
   @PUT
   @Path("/namespaces/{namespace-id}/properties")
   public void updateNamespaceProperties(HttpRequest request, HttpResponder responder,
-                                        @PathParam("namespace-id") String namespaceId) {
-    try {
-      NamespaceMeta meta = parseBody(request, NamespaceMeta.class);
-      namespaceAdmin.updateProperties(Id.Namespace.from(namespaceId), meta);
-      responder.sendString(HttpResponseStatus.OK, "Properties updated");
-    } catch (NotFoundException e) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Namespace %s not found", namespaceId));
-    } catch (Exception e) {
-      LOG.error("Failed to read namespace metadata request body.", e);
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-    }
+                                        @PathParam("namespace-id") String namespaceId) throws Exception {
+    NamespaceMeta meta = parseBody(request, NamespaceMeta.class);
+    namespaceAdmin.updateProperties(Id.Namespace.from(namespaceId), meta);
+    responder.sendString(HttpResponseStatus.OK, String.format("Updated properties for namespace '%s'.", namespaceId));
   }
 
   @PUT
   @Path("/namespaces/{namespace-id}")
-  public void create(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId) {
+  public void create(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId)
+    throws Exception {
     Id.Namespace namespace;
     try {
       namespace = Id.Namespace.from(namespaceId);
     } catch (IllegalArgumentException e) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST,
-                           "Namespace id can contain only alphanumeric characters or '_'.");
-      return;
+      throw new BadRequestException("Namespace id can contain only alphanumeric characters or '_'.");
     }
 
     NamespaceMeta metadata;
     try {
       metadata = parseBody(request, NamespaceMeta.class);
     } catch (JsonSyntaxException e) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid json object provided in request body.");
-      return;
-    } catch (Exception e) {
-      LOG.error("Failed to read namespace metadata request body.", e);
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-      return;
+      throw new BadRequestException("Invalid json object provided in request body.");
     }
 
     if (isReserved(namespaceId)) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST,
-                           String.format("Cannot create the namespace '%s'. '%s' is a reserved namespace.",
-                                         namespaceId, namespaceId));
-      return;
+      throw new BadRequestException(String.format("Cannot create the namespace '%s'. '%s' is a reserved namespace.",
+                                                  namespaceId, namespaceId));
     }
 
     NamespaceMeta.Builder builder = new NamespaceMeta.Builder().setName(namespace);
@@ -147,15 +124,13 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
                            String.format("Namespace '%s' created successfully.", namespaceId));
     } catch (AlreadyExistsException e) {
       responder.sendString(HttpResponseStatus.OK, String.format("Namespace '%s' already exists.", namespaceId));
-    } catch (Exception e) {
-      LOG.error("Internal error while creating namespace.", e);
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
   }
 
   @DELETE
   @Path("/unrecoverable/namespaces/{namespace-id}")
-  public void delete(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespace) {
+  public void delete(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespace)
+    throws Exception {
     if (!cConf.getBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, Constants.Dangerous.DEFAULT_UNRECOVERABLE_RESET)) {
       responder.sendString(HttpResponseStatus.FORBIDDEN,
                            String.format("Namespace '%s' cannot be deleted because '%s' is not enabled. " +
@@ -164,23 +139,14 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
       return;
     }
     Id.Namespace namespaceId = Id.Namespace.from(namespace);
-    try {
-      namespaceAdmin.delete(namespaceId);
-      responder.sendStatus(HttpResponseStatus.OK);
-    } catch (NotFoundException e) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Namespace %s not found.", namespace));
-    } catch (NamespaceCannotBeDeletedException e) {
-      responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
-    } catch (Exception e) {
-      LOG.error("Internal error while deleting namespace.", e);
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-    }
+    namespaceAdmin.delete(namespaceId);
+    responder.sendStatus(HttpResponseStatus.OK);
   }
 
   @DELETE
   @Path("/unrecoverable/namespaces/{namespace-id}/datasets")
   public void deleteDatasets(HttpRequest request, HttpResponder responder,
-                             @PathParam("namespace-id") String namespace) {
+                             @PathParam("namespace-id") String namespace) throws Exception {
     if (!cConf.getBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, Constants.Dangerous.DEFAULT_UNRECOVERABLE_RESET)) {
       responder.sendString(HttpResponseStatus.FORBIDDEN,
                            String.format("All datasets in namespace %s cannot be deleted because '%s' is not enabled." +
@@ -189,18 +155,8 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
       return;
     }
     Id.Namespace namespaceId = Id.Namespace.from(namespace);
-    try {
-      namespaceAdmin.deleteDatasets(namespaceId);
-      responder.sendStatus(HttpResponseStatus.OK);
-    } catch (NotFoundException e) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Namespace %s not found.", namespace));
-    } catch (NamespaceCannotBeDeletedException e) {
-      responder.sendString(HttpResponseStatus.CONFLICT, String.format("Datasets in namespace %s cannot be deleted. " +
-                                                                       "Reason: %s", namespace, e.getReason()));
-    } catch (Exception e) {
-      LOG.error("Internal error while deleting namespace.", e);
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-    }
+    namespaceAdmin.deleteDatasets(namespaceId);
+    responder.sendStatus(HttpResponseStatus.OK);
   }
 
   private boolean isReserved(String namespaceId) {
