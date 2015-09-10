@@ -82,14 +82,14 @@ public class ScheduleClientTestRun extends ClientTestBase {
     Assert.assertEquals(FakeApp.STREAM_TRIGGER_MB, streamSchedule.getDataTriggerMB());
 
     String status = scheduleClient.getStatus(schedule);
-    Assert.assertEquals("SCHEDULED", status);
-
-    scheduleClient.suspend(schedule);
-    status = scheduleClient.getStatus(schedule);
     Assert.assertEquals("SUSPENDED", status);
 
     scheduleClient.resume(schedule);
     status = scheduleClient.getStatus(schedule);
     Assert.assertEquals("SCHEDULED", status);
+
+    scheduleClient.suspend(schedule);
+    status = scheduleClient.getStatus(schedule);
+    Assert.assertEquals("SUSPENDED", status);
   }
 }
