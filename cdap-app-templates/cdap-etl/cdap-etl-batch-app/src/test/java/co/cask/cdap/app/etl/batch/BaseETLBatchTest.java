@@ -124,8 +124,7 @@ public class BaseETLBatchTest extends TestBase {
           String locName = file.getName();
 
           if (locName.endsWith(".avro")) {
-            DataFileStream<GenericRecord> fileStream =
-              new DataFileStream<>(file.getInputStream(), datumReader);
+            DataFileStream<GenericRecord> fileStream = new DataFileStream<>(file.getInputStream(), datumReader);
             Iterables.addAll(records, fileStream);
             fileStream.close();
           }

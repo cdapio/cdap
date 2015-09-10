@@ -29,15 +29,15 @@ import co.cask.cdap.template.etl.api.Emitter;
 import co.cask.cdap.template.etl.api.PipelineConfigurer;
 import co.cask.cdap.template.etl.api.batch.BatchRuntimeContext;
 import co.cask.cdap.template.etl.api.batch.BatchSink;
-import co.cask.cdap.template.etl.api.batch.BatchSinkContext;
 import co.cask.cdap.template.etl.common.SchemaConverter;
 import co.cask.cdap.template.etl.common.StructuredToAvroTransformer;
 import org.apache.avro.generic.GenericRecord;
-import org.apache.hadoop.mapreduce.Job;
 import parquet.avro.AvroParquetInputFormat;
 import parquet.avro.AvroParquetOutputFormat;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -81,11 +81,11 @@ public class TimePartitionedFileSetDatasetParquetSink extends
   }
 
   @Override
-  public void prepareRun(BatchSinkContext context) {
-    super.prepareRun(context);
+  protected Map<String, String> getAdditionalTPFSArguments() {
+    Map<String, String> args = new HashMap<>();
     org.apache.avro.Schema avroSchema = new org.apache.avro.Schema.Parser().parse(config.schema.toLowerCase());
-    Job job = context.getHadoopJob();
-    AvroParquetOutputFormat.setSchema(job, avroSchema);
+    args.put(FileSetProperties.OUTPUT_PROPERTIES_PREFIX + "parquet.avro.schema", avroSchema.toString());
+    return args;
   }
 
   @Override
