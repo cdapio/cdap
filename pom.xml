@@ -1297,6 +1297,7 @@
                   <exclude>**/*.svg</exclude>
                   <exclude>**/bower_components/**</exclude>
                   <exclude>**/node_modules/**</exclude>
+                  <exclude>**/node/**</exclude>
                 </excludes>
               </configuration>
             </execution>
