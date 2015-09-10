@@ -19,8 +19,7 @@ This sink is used whenever you want access to a FileSet containing exactly the m
 recent run's data in Avro format. Alternatively, it is used whenever you would like
 the output of a run to be written to a constant location in a file system. For example,
 you might want to create daily snapshots of a database by reading the entire contents of
-the table and writing to this sink, then have other programs analyze the contents of the
-specified file daily.
+a table, writing to this sink, and then other programs can analyze the contents of the specified file.
 
 .. rubric:: Properties
 
