@@ -26,7 +26,7 @@ The ``HelloWorld`` Application
 
 .. literalinclude:: /../../../cdap-examples/HelloWorld/src/main/java/co/cask/cdap/examples/helloworld/HelloWorld.java
    :language: java
-   :lines: 40-58
+   :lines: 47-57
    
 The application uses a stream called *who* to ingest data through a flow *WhoFlow* to a dataset *whom*.
 
@@ -37,15 +37,15 @@ This is a trivial flow with a single flowlet named *saver* of type ``NameSaver``
 
 .. literalinclude:: /../../../cdap-examples/HelloWorld/src/main/java/co/cask/cdap/examples/helloworld/HelloWorld.java
    :language: java
-   :lines: 63-74
+   :lines: 62-71
    
 The flowlet uses a dataset of type ``KeyValueTable`` to store the names it reads from the stream. Every time a new
-name is received, it is stored in the table under the key ``name``-and it overwrites any name that was previously
+name is received, it is stored in the table under the key ``name``, and it overwrites any name that was previously
 stored:
 
 .. literalinclude:: /../../../cdap-examples/HelloWorld/src/main/java/co/cask/cdap/examples/helloworld/HelloWorld.java
    :language: java
-   :lines: 79-100
+   :lines: 76-97
   
 Note that the flowlet also emits metrics: every time a name longer than 10 characters is received,
 the counter ``names.longnames`` is incremented by one, and the metric ``names.bytes`` is incremented
@@ -60,7 +60,7 @@ reads the name stored by the ``NameSaver`` from the key-value table. It return a
 
 .. literalinclude:: /../../../cdap-examples/HelloWorld/src/main/java/co/cask/cdap/examples/helloworld/HelloWorld.java
    :language: java
-   :lines: 105-137
+   :lines: 102-112
 
 Note that the service, like the flowlet, also emits metrics: every time the name *Jane Doe* is received,
 the counter ``greetings.count.jane_doe`` is incremented by one.
@@ -71,6 +71,7 @@ We will see below how to retrieve this metric using the
 .. |example| replace:: HelloWorld
 .. include:: building-starting-running-cdap.txt
 
+.. highlight:: console
 
 Running the Example
 ===================
