@@ -21,7 +21,7 @@ The overriding order of preferences is (from lowest to highest precedence):
 
 CDAP Instance < Namespace < Application < Program < Runtime Arguments (passed in during start of the program)
 
-Example: A configuration preference ``SAMPLE_KEY`` is set to 20 at the namespace level and is set to 10 at the
+**Example:** A configuration preference ``SAMPLE_KEY`` is set to 20 at the namespace level and is set to 10 at the
 program level. When the program is started, the value set at the program level overrides the value set at
 the namespace level and thus the value for the preference ``SAMPLE_KEY`` will be 10.
 
@@ -34,6 +34,17 @@ and can be accessed through the ``getRuntimeArguments`` method of the context:
   The ``beforeSubmit`` method can pass them to the mappers and reducers through the job configuration.
 
 - When a workflow receives preferences, it passes them to each MapReduce in the workflow.
+
+Preferences and Runtime Arguments in the CDAP UI
+================================================
+In the :ref:`CDAP UI <cdap-ui>`, preferences can be set at the different levels (as
+described above), with runtime arguments being available at the lowest level of individual
+elements.
+
+Preferences are retained, and are persisted across different runs and restarts of
+applications and CDAP. Runtime arguments (available under the *Arguments* buttons in the
+CDAP-UI) are one-time only, for a particular invocation, and are not persisted. Use the
+*Preferences* button with the same key-value pairs for arguments you would like persisted.
 
 Preferences Example
 ===================
@@ -84,7 +95,7 @@ When a workflow is configured, you may want to pass specific runtime arguments t
 and datasets used inside the workflow. To achieve this, you can prefix the runtime arguments with a ``<scope>``.
 Currently supported scopes are ``dataset``, ``mapreduce``, and ``spark``.
 
-Example: To set a runtime argument of ``read.timeout=30`` for the MapReduce program ``oneMapReduce`` in a workflow,
+**Example:** To set a runtime argument of ``read.timeout=30`` for the MapReduce program ``oneMapReduce`` in a workflow,
 the argument can be provided with a scope of ``mapreduce.oneMapReduce.read.timeout=30``. In this case, ``oneMapReduce``
 and the datasets used in ``oneMapReduce`` will receive two arguments: one with a scope of
 ``mapreduce.oneMapReduce.read.timeout=30``, and another with the scope extracted as ``read.timeout=30``.
@@ -94,7 +105,7 @@ Programs other than ``oneMapReduce`` and datasets used in them will receive only
 An argument can also be prefixed with ``<scope>.*`` to apply it to all programs or datasets in the workflow as
 represented by the scope.
 
-Example: If the runtime argument is specified as ``mapreduce.*.read.timeout=30``, all MapReduce programs and
+**Example:** If the runtime argument is specified as ``mapreduce.*.read.timeout=30``, all MapReduce programs and
 datasets used in them will receive two arguments: one with the scope ``mapreduce.*.read.timeout=30`` and another
 with the scope extracted as ``read.timeout=30``. Programs other than the MapReduce and the datasets used by them
 will receive only the single argument ``mapreduce.*.read.timeout=30``.
@@ -102,7 +113,17 @@ will receive only the single argument ``mapreduce.*.read.timeout=30``.
 Since the datasets can be used by programs running inside a workflow, a scope for them can be nested inside a
 corresponding program scope.
 
-Example: Consider the dataset ``myTable`` used by multiple programs in a workflow. The runtime argument
+**Example:** Consider the dataset ``myTable`` used by multiple programs in a workflow. The runtime argument
 ``cache.seconds=30`` for ``myTable`` can be provided as ``dataset.myTable.cache.seconds=30``. In this case,
 the argument will be set for all programs that use ``myTable``. In order to set the argument only for the MapReduce
-program ``myMR``, the dataset argument can be nested inside the program scope as ``mapreduce.myMR.dataset.myTable.cache.seconds=30``.
+program ``myMR``, the dataset argument can be nested inside the program scope as
+``mapreduce.myMR.dataset.myTable.cache.seconds=30``.
+
+Examples of Using Preferences
+=============================
+Other examples of using preferences are in these CDAP examples:
+
+- :ref:`Data Cleansing <examples-data-cleansing>`: Uses a runtime argument with a MapReduce program
+- :ref:`Wikipedia Pipeline <examples-wikipedia-data-pipeline>`: Uses runtime arguments
+  with a stream, MapReduce program, and a Spark program
+- :ref:`Sport Results <examples-sport-results>`: Uses a runtime argument with a MapReduce program
