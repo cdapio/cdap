@@ -22,6 +22,7 @@ import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
 import co.cask.cdap.api.dataset.lib.Partitioning;
 import co.cask.cdap.app.metrics.MapReduceMetrics;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.data2.dataset2.lib.partitioned.PartitionedFileSetDataset;
 import co.cask.cdap.internal.app.runtime.batch.BasicMapReduceTaskContext;
@@ -57,9 +58,6 @@ import static org.apache.hadoop.mapreduce.TaskType.MAP;
  */
 public class DynamicPartitioningOutputFormat<K, V> extends FileOutputFormat<K, V> {
 
-  public static final String HCONF_ATTR_OUTPUT_DATASET = "output.dataset.name";
-  public static final String HCONF_ATTR_OUTPUT_FORMAT_CLASS_NAME = "output.format.class.name";
-
   private FileOutputFormat<K, V> fileOutputFormat;
 
   /**
@@ -81,7 +79,7 @@ public class DynamicPartitioningOutputFormat<K, V> extends FileOutputFormat<K, V
 
     MapReduceMetrics.TaskType taskType = MapReduceMetrics.TaskType.from(job.getTaskAttemptID().getTaskType());
     final BasicMapReduceTaskContext<K, V> mrTaskContext = new MapReduceTaskContextProvider(job, taskType).get();
-    String outputDatasetName = job.getConfiguration().get(HCONF_ATTR_OUTPUT_DATASET);
+    String outputDatasetName = job.getConfiguration().get(Constants.Dataset.Partitioned.HCONF_ATTR_OUTPUT_DATASET);
     PartitionedFileSet outputDataset = mrTaskContext.getDataset(outputDatasetName);
     final Partitioning partitioning = outputDataset.getPartitioning();
 
@@ -142,8 +140,8 @@ public class DynamicPartitioningOutputFormat<K, V> extends FileOutputFormat<K, V
    */
   protected RecordWriter<K, V> getBaseRecordWriter(TaskAttemptContext job) throws IOException, InterruptedException {
     if (fileOutputFormat == null) {
-      Class<? extends FileOutputFormat> delegateOutputFormat =
-        job.getConfiguration().getClass(HCONF_ATTR_OUTPUT_FORMAT_CLASS_NAME, null, FileOutputFormat.class);
+      Class<? extends FileOutputFormat> delegateOutputFormat = job.getConfiguration()
+        .getClass(Constants.Dataset.Partitioned.HCONF_ATTR_OUTPUT_FORMAT_CLASS_NAME, null, FileOutputFormat.class);
 
       @SuppressWarnings("unchecked")
       FileOutputFormat<K, V> fileOutputFormat =
@@ -181,9 +179,9 @@ public class DynamicPartitioningOutputFormat<K, V> extends FileOutputFormat<K, V
     // paths within that directory. See createJobSpecificPath method and usages of it.
 
     // additionally check that output dataset and dynamic partitioner class name has been set in conf
-    if (job.getConfiguration().get(HCONF_ATTR_OUTPUT_DATASET) == null) {
+    if (job.getConfiguration().get(Constants.Dataset.Partitioned.HCONF_ATTR_OUTPUT_DATASET) == null) {
       throw new InvalidJobConfException("The job configuration does not contain required property: "
-                                          + HCONF_ATTR_OUTPUT_DATASET);
+                                          + Constants.Dataset.Partitioned.HCONF_ATTR_OUTPUT_DATASET);
     }
 
     Class<? extends DynamicPartitioner> className = job.getConfiguration()
@@ -193,11 +191,11 @@ public class DynamicPartitioningOutputFormat<K, V> extends FileOutputFormat<K, V
                                           + PartitionedFileSetArguments.DYNAMIC_PARTITIONER_CLASS_NAME);
     }
 
-    Class<? extends FileOutputFormat> delegateOutputFormatClassName =
-      job.getConfiguration().getClass(HCONF_ATTR_OUTPUT_FORMAT_CLASS_NAME, null, FileOutputFormat.class);
+    Class<? extends FileOutputFormat> delegateOutputFormatClassName = job.getConfiguration()
+      .getClass(Constants.Dataset.Partitioned.HCONF_ATTR_OUTPUT_FORMAT_CLASS_NAME, null, FileOutputFormat.class);
     if (delegateOutputFormatClassName == null) {
       throw new InvalidJobConfException("The job configuration does not contain required property: "
-                                          + HCONF_ATTR_OUTPUT_FORMAT_CLASS_NAME);
+                                          + Constants.Dataset.Partitioned.HCONF_ATTR_OUTPUT_FORMAT_CLASS_NAME);
     }
   }
 }

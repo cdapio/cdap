@@ -41,6 +41,7 @@ import co.cask.cdap.api.dataset.lib.Partitioning.FieldType;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.Transaction;
@@ -603,11 +604,10 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
         throw new DataSetException(
           "Either a Partition key or a DynamicPartitioner class must be given as a runtime argument.");
       }
-      // also delegate to the files.getOutputFormatClassName()? (currently defaulting to TextOutputFormat)
       PartitionedFileSetArguments.setDynamicPartitioner(outputArgs, dynamicPartitionerClassName);
-      outputArgs.put("output.format.class.name", files.getOutputFormatClassName());
-      // need dependency on DynamicPartitioningOutputFormat to avoid inlining following string?
-      outputArgs.put("output.dataset.name", getName());
+      outputArgs.put(Constants.Dataset.Partitioned.HCONF_ATTR_OUTPUT_FORMAT_CLASS_NAME,
+                     files.getOutputFormatClassName());
+      outputArgs.put(Constants.Dataset.Partitioned.HCONF_ATTR_OUTPUT_DATASET, getName());
     }
     return ImmutableMap.copyOf(outputArgs);
   }

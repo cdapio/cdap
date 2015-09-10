@@ -205,6 +205,14 @@ public final class Constants {
     public static final String DATASET_UNCHECKED_UPGRADE = "dataset.unchecked.upgrade";
 
     /**
+     * Constants for PartitionedFileSet's DynamicPartitioner
+     */
+    public static final class Partitioned {
+      public static final String HCONF_ATTR_OUTPUT_DATASET = "output.dataset.name";
+      public static final String HCONF_ATTR_OUTPUT_FORMAT_CLASS_NAME = "output.format.class.name";
+    }
+
+    /**
      * DatasetManager service configuration.
      */
     public static final class Manager {
