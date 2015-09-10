@@ -108,6 +108,7 @@ public class IntegrationTestManager implements TestManager {
   }
 
   @Override
+  @SuppressWarnings("unchecked")
   public ApplicationManager deployApplication(Id.Namespace namespace, Class<? extends Application> applicationClz,
                                               @Nullable Config configObject, File... bundleEmbeddedJars) {
     // See if the application class comes from file or jar.
@@ -125,7 +126,7 @@ public class IntegrationTestManager implements TestManager {
       if (configObject != null) {
         appConfig = GSON.toJson(configObject);
       } else {
-        configObject = (Config) configToken.getRawType().newInstance();
+        configObject = ((Class<Config>) configToken.getRawType()).newInstance();
       }
 
       // Create and deploy application jar
@@ -147,7 +148,7 @@ public class IntegrationTestManager implements TestManager {
       // Extracts application id from the application class
       Application application = applicationClz.newInstance();
       MockAppConfigurer configurer = new MockAppConfigurer(application);
-      application.configure(configurer, new DefaultApplicationContext(configObject));
+      application.configure(configurer, new DefaultApplicationContext<>(configObject));
       String applicationId = configurer.getName();
       return new RemoteApplicationManager(Id.Application.from(namespace, applicationId), clientConfig, restClient);
     } catch (Exception e) {
