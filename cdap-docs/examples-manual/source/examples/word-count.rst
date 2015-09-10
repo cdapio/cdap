@@ -108,9 +108,9 @@ In the application's `detail page
 <http://localhost:9999/ns/default/apps/WordCount/overview/status>`__, click on the
 *WordCounter* flow. This takes you to the flow details page. 
 
-Now click on the *wordStream* stream on the left side of the flow visualization, which
-brings up a pop-up window. Enter a sentence such as "Hello CDAP" and click on the *Inject*
-button. 
+Now double-click on the *wordStream* stream on the left side of the flow visualization,
+which brings up a pop-up window. Enter a sentence such as ``"Hello CDAP"`` (without the
+enclosing quotes) and click on the *Inject* button. 
 
 After you close the pop-up window (using the button in the window's upper-right), you will
 see that the counter for the stream increases to 1, the counters for the flowlets

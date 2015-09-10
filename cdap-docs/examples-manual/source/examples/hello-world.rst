@@ -114,7 +114,7 @@ the flow details page. (If you haven't already started the flow, click on the *S
 button in the right-side, below the green arrow.) The flow's *status* will read *RUNNING*
 when it is ready to receive events.
 
-Now click on the *who* stream on the left side of the flow visualization, which brings up
+Now double-click on the *who* stream on the left side of the flow visualization, which brings up
 a pop-up window. Enter a name and click the *Inject* button. After you close the pop-up
 window, you will see that the counters for both the stream and the *saver* flowlet
 increase to 1. You can repeat this step to enter more names, but remember that only the
