@@ -60,7 +60,6 @@ public enum ArgumentName {
   QUERY("query"),
   APP("app-id"),
   VIEW("view-id"),
-  APP_TEMPLATE("app-template-id"),
   HTTP_METHOD("http-method"),
   ENDPOINT("endpoint"),
   HEADERS("headers"),
@@ -78,9 +77,6 @@ public enum ArgumentName {
   NAMESPACE_DESCRIPTION("namespace-description"),
 
   INSTANCE("instance-id"),
-  ADAPTER_TYPE("adapter-type"),
-  ADAPTER("adapter-name"),
-  ADAPTER_SPEC("adapter-spec-file"),
   COMMAND_CATEGORY("command-category"),
 
   TABLE_RENDERER("table-renderer"),
