@@ -275,6 +275,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
     private final List<Class<? extends HttpHandler>> handlerClasses;
 
+    @SafeVarargs
     private AppFabricServiceModule(Class<? extends HttpHandler>... handlerClasses) {
       this.handlerClasses = ImmutableList.copyOf(handlerClasses);
     }

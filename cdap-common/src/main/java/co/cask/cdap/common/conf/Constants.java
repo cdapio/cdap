@@ -46,6 +46,7 @@ public final class Constants {
     public static final String SERVICE_INSTANCE_TABLE_NAME = "cdap.services.instances";
     /** Scheduler queue name to submit the master service app. */
     public static final String SCHEDULER_QUEUE = "master.services.scheduler.queue";
+    public static final String METADATA_SERVICE = "metadata.service";
   }
 
   /**
@@ -862,5 +863,15 @@ public final class Constants {
    */
   public static final class Namespace {
     public static final String NAMESPACES_DIR = "namespaces.dir";
+  }
+
+  /**
+   * Constants for metadata service
+   */
+  public static final class Metadata {
+    public static final String BIND_ADDRESS = "metadata.service.bind.address";
+    public static final String WORKER_THREADS = "metadata.service.worker.threads";
+    public static final String EXEC_THREADS = "metadata.service.exec.threads";
+    public static final String METADATA_HANDLERS_NAME = "metadata.handlers";
   }
 }

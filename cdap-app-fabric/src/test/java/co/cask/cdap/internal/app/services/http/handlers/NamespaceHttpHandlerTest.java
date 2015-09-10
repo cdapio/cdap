@@ -198,7 +198,8 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     response = createNamespace(METADATA_VALID, Id.Namespace.SYSTEM.getId());
     assertResponseCode(400, response);
     // we allow deleting the contents in default namespace. However, the namespace itself should never be deleted
-    deploy(AppWithDataset.class, Constants.Gateway.API_VERSION_3_TOKEN, Id.Namespace.DEFAULT.getId(), "AppWithDataSet");
+    deploy(AppWithDataset.class, Constants.Gateway.API_VERSION_3_TOKEN, Id.Namespace.DEFAULT.getId(),
+           AppWithDataset.class.getSimpleName());
     response = deleteNamespace(Id.Namespace.DEFAULT.getId());
     assertResponseCode(200, response);
     response = getNamespace(Id.Namespace.DEFAULT.getId());
@@ -366,7 +367,8 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     Assert.assertTrue(nsLocation.exists());
     Assert.assertTrue(getAppList(NAME).size() == 2);
     Assert.assertTrue(getAppDetails(NAME, "AppWithServices").get("name").getAsString().equals("AppWithServices"));
-    Assert.assertTrue(getAppDetails(NAME, "AppWithDataSet").get("name").getAsString().equals("AppWithDataSet"));
+    Assert.assertTrue(getAppDetails(NAME, AppWithDataset.class.getSimpleName()).get("name").getAsString()
+                        .equals(AppWithDataset.class.getSimpleName()));
     assertResponseCode(200, getNamespace(NAME));
     Assert.assertFalse(dsFramework.hasInstance(myDataset));
     assertResponseCode(200, deleteNamespace(NAME));

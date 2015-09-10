@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.data2.metadata.service;
+package co.cask.cdap.metadata;
 
 import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.NamespaceNotFoundException;

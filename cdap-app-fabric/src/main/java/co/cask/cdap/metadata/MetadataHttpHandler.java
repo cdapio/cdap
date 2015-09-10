@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.data2.metadata.service;
+package co.cask.cdap.metadata;
 
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.conf.Constants;
@@ -26,6 +26,7 @@ import com.google.common.base.Charsets;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.google.inject.Inject;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -35,7 +36,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Type;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import javax.ws.rs.DELETE;
@@ -54,6 +54,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   private static final Type LIST_STRING_TYPE = new TypeToken<List<String>>() { }.getType();
   private final MetadataAdmin metadataAdmin;
 
+  @Inject
   public MetadataHttpHandler(MetadataAdmin metadataAdmin) {
     this.metadataAdmin = metadataAdmin;
   }
@@ -309,8 +310,8 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   @DELETE
   @Path("/namespaces/{namespace-id}/streams/{stream-id}/tags")
   public void removeStreamTags(HttpRequest request, HttpResponder responder,
-                                   @PathParam("namespace-id") String namespaceId,
-                                   @PathParam("stream-id") String streamId) throws Exception {
+                               @PathParam("namespace-id") String namespaceId,
+                               @PathParam("stream-id") String streamId) throws Exception {
     Id.Stream stream = Id.Stream.from(namespaceId, streamId);
     metadataAdmin.removeTags(stream, readArray(request));
     responder.sendString(HttpResponseStatus.OK,

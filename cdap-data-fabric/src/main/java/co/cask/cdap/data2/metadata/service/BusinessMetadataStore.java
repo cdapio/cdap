@@ -75,7 +75,7 @@ public class BusinessMetadataStore {
    * @param entityId the {@link Id.NamespacedId} for which metadata is to be updated
    * @param metadata metadata (represented as a map) to update
    */
-  void addMetadata(final Id.NamespacedId entityId, final Map<String, String> metadata) {
+  public void addMetadata(final Id.NamespacedId entityId, final Map<String, String> metadata) {
     txnl.executeUnchecked(new TransactionExecutor.Function<BusinessMdsIterable, Void>() {
       @Override
       public Void apply(BusinessMdsIterable input) throws Exception {
@@ -90,7 +90,7 @@ public class BusinessMetadataStore {
   /**
    * Adds tags for the specified {@link Id.NamespacedId}.
    */
-  void addTags(final Id.NamespacedId entityId, final String ... tagsToAdd) {
+  public void addTags(final Id.NamespacedId entityId, final String ... tagsToAdd) {
     txnl.executeUnchecked(new TransactionExecutor.Function<BusinessMdsIterable, Void>() {
       @Override
       public Void apply(BusinessMdsIterable input) throws Exception {
@@ -106,7 +106,7 @@ public class BusinessMetadataStore {
   /**
    * @return the metadata for the specified {@link Id.NamespacedId}
    */
-  Map<String, String> getMetadata(final Id.NamespacedId entityId) {
+  public Map<String, String> getMetadata(final Id.NamespacedId entityId) {
     return txnl.executeUnchecked(new TransactionExecutor.Function<BusinessMdsIterable, Map<String, String>>() {
       @Override
       public Map<String, String> apply(BusinessMdsIterable input) throws Exception {
@@ -118,7 +118,7 @@ public class BusinessMetadataStore {
   /**
    * @return the tags for the specified {@link Id.NamespacedId}
    */
-  Iterable<String> getTags(final Id.NamespacedId entityId) {
+  public Iterable<String> getTags(final Id.NamespacedId entityId) {
     return txnl.executeUnchecked(new TransactionExecutor.Function<BusinessMdsIterable, Iterable<String>>() {
       @Override
       public Iterable<String> apply(BusinessMdsIterable input) throws Exception {
@@ -131,7 +131,7 @@ public class BusinessMetadataStore {
   /**
    * Removes all metadata for the specified {@link Id.NamespacedId}.
    */
-  void removeMetadata(final Id.NamespacedId entityId) {
+  public void removeMetadata(final Id.NamespacedId entityId) {
     txnl.executeUnchecked(new TransactionExecutor.Function<BusinessMdsIterable, Void>() {
       @Override
       public Void apply(BusinessMdsIterable input) throws Exception {
@@ -141,7 +141,7 @@ public class BusinessMetadataStore {
     });
   }
 
-  void removeMetadata(final Id.NamespacedId entityId, final String ... keys) {
+  public void removeMetadata(final Id.NamespacedId entityId, final String ... keys) {
     txnl.executeUnchecked(new TransactionExecutor.Function<BusinessMdsIterable, Void>() {
       @Override
       public Void apply(BusinessMdsIterable input) throws Exception {
@@ -154,7 +154,7 @@ public class BusinessMetadataStore {
   /**
    * Removes the specified tags from the {@link Id.NamespacedId}
    */
-  void removeTags(final Id.NamespacedId entityId, final String ... tagsToRemove) {
+  public void removeTags(final Id.NamespacedId entityId, final String ... tagsToRemove) {
     txnl.executeUnchecked(new TransactionExecutor.Function<BusinessMdsIterable, Void>() {
       @Override
       public Void apply(BusinessMdsIterable input) throws Exception {

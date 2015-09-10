@@ -36,8 +36,6 @@ import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.StaticDatasetFramework;
-import co.cask.cdap.data2.metadata.service.DefaultMetadataAdmin;
-import co.cask.cdap.data2.metadata.service.MetadataAdmin;
 import co.cask.cdap.data2.metrics.DatasetMetricsReporter;
 import co.cask.cdap.data2.metrics.HBaseDatasetMetricsReporter;
 import co.cask.cdap.data2.metrics.LevelDBDatasetMetricsReporter;
@@ -92,9 +90,6 @@ public class DataSetServiceModules extends RuntimeModule {
 
         bind(StorageProviderNamespaceAdmin.class).to(LocalStorageProviderNamespaceAdmin.class);
         expose(StorageProviderNamespaceAdmin.class);
-
-        bind(MetadataAdmin.class).to(DefaultMetadataAdmin.class);
-        expose(MetadataAdmin.class);
       }
     };
 
@@ -132,9 +127,6 @@ public class DataSetServiceModules extends RuntimeModule {
 
         bind(StorageProviderNamespaceAdmin.class).to(LocalStorageProviderNamespaceAdmin.class);
         expose(StorageProviderNamespaceAdmin.class);
-
-        bind(MetadataAdmin.class).to(DefaultMetadataAdmin.class);
-        expose(MetadataAdmin.class);
       }
     };
 
@@ -174,9 +166,6 @@ public class DataSetServiceModules extends RuntimeModule {
 
         bind(StorageProviderNamespaceAdmin.class).to(DistributedStorageProviderNamespaceAdmin.class);
         expose(StorageProviderNamespaceAdmin.class);
-
-        bind(MetadataAdmin.class).to(DefaultMetadataAdmin.class);
-        expose(MetadataAdmin.class);
       }
     };
   }
