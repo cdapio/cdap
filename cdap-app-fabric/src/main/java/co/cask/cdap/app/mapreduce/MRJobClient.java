@@ -82,6 +82,10 @@ public class MRJobClient implements MRJobInfoFetcher {
     JobStatus thisJob = findJobForRunId(jobs, runId);
 
     RunningJob runningJob = jobClient.getJob(thisJob.getJobID());
+    if (runningJob == null) {
+      throw new IllegalStateException(String.format("JobClient returned null for RunId: '%s', JobId: '%s'",
+                                                    runId, thisJob.getJobID()));
+    }
     Counters counters = runningJob.getCounters();
 
     TaskReport[] mapTaskReports = jobClient.getMapTaskReports(thisJob.getJobID());

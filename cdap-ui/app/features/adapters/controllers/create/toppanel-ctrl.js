@@ -15,12 +15,13 @@
  */
 
 angular.module(PKG.name + '.feature.adapters')
-  .controller('TopPanelController', function(EventPipe, CanvasFactory, MyAppDAGService, $scope, $timeout, $bootstrapModal, ModalConfirm, $alert, $state, $stateParams) {
+  .controller('TopPanelController', function(EventPipe, CanvasFactory, MyAppDAGService, $scope, $timeout, $bootstrapModal, ModalConfirm, $alert, $state, $stateParams, GLOBALS) {
 
     this.metadata = MyAppDAGService['metadata'];
     function resetMetadata() {
       this.metadata = MyAppDAGService['metadata'];
     }
+    this.GLOBALS = GLOBALS;
 
     MyAppDAGService.registerResetCallBack(resetMetadata.bind(this));
 
@@ -28,7 +29,7 @@ angular.module(PKG.name + '.feature.adapters')
       this.metadata.name = $stateParams.name;
     }
     if ($stateParams.type) {
-      if (['ETLBatch', 'ETLRealtime'].indexOf($stateParams.type) !== -1) {
+      if ([GLOBALS.etlBatch, GLOBALS.etlRealtime].indexOf($stateParams.type) !== -1) {
         this.metadata.template.type = $stateParams.type;
       } else {
         $alert({
@@ -179,7 +180,8 @@ angular.module(PKG.name + '.feature.adapters')
             size: 'lg',
             windowClass: 'adapter-modal',
             keyboard: true,
-            controller: ['$scope', 'metadata', 'EventPipe', function($scope, metadata, EventPipe) {
+            controller: ['$scope', 'metadata', 'EventPipe', 'GLOBALS', function($scope, metadata, EventPipe, GLOBALS) {
+              $scope.GLOBALS = GLOBALS;
               $scope.metadata = metadata;
               var metadataCopy = angular.copy(metadata);
               $scope.reset = function() {

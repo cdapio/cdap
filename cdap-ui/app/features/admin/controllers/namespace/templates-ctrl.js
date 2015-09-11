@@ -15,10 +15,11 @@
  */
 
 angular.module(PKG.name + '.feature.admin')
-  .controller('NamespaceTemplatesController', function ($scope, myAdapterApi, PluginConfigFactory, myHelpers, mySettings, $stateParams, $alert, $state) {
+  .controller('NamespaceTemplatesController', function ($scope, myAdapterApi, PluginConfigFactory, myHelpers, mySettings, $stateParams, $alert, $state, GLOBALS) {
 
     var vm = this;
 
+    vm.GLOBALS = GLOBALS;
     vm.pluginList = [];
     vm.isEdit = false;
     vm.isDisabled = false;

@@ -36,8 +36,8 @@
           </a>
         </h1>
         <a class="pipeline-type">
-          <span class="icon-ETLBatch" ng-if="TopPanelController.metadata.template.type === 'ETLBatch'"></span>
-          <span class="icon-ETLRealtime" ng-if="TopPanelController.metadata.template.type === 'ETLRealtime'"></span>
+          <span class="icon-ETLBatch" ng-if="TopPanelController.metadata.template.type === TopPanelController.GLOBALS.etlBatch"></span>
+          <span class="icon-ETLRealtime" ng-if="TopPanelController.metadata.template.type === TopPanelController.GLOBALS.etlRealtime"></span>
           <span>Type: {{ TopPanelController.metadata.template.type }}</span>
         </a>
       </div>

@@ -1,5 +1,5 @@
 {
-    "template": "ETLBatch",
+    "template": "cdap-etl-batch-app",
     "description": "Contacts Ingested are transformed in-flight and written to AVRO Time partitioned fileset.",
     "config": {
         "source": {

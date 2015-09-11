@@ -335,10 +335,18 @@ angular.module(PKG.name+'.services')
         if (resource.data) {
           generatedResource.body = resource.data;
         }
+
+
         if ($rootScope.currentUser && $rootScope.currentUser.token) {
           generatedResource.headers = {
             Authorization: 'Bearer '+ $rootScope.currentUser.token
           };
+        } else {
+          generatedResource.headers = {};
+        }
+
+        if (resource.contentType) {
+          generatedResource.headers['Content-Type'] = resource.contentType;
         }
 
         if (!resource.url) {

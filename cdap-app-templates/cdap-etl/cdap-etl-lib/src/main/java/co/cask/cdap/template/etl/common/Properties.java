@@ -153,6 +153,16 @@ public final class Properties {
   }
 
   /**
+   * Properties for SnapshotFileSets
+   */
+  public static class SnapshotFileSet {
+    public static final String NAME = "name";
+    public static final String BASE_PATH = "basePath";
+    public static final String SCHEMA = "schema";
+    public static final String PATH_EXTENSION = "pathExtension";
+  }
+
+  /**
    * Common properties for BatchWritable source and sinks
    */
   public static class BatchReadableWritable {

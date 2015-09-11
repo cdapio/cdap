@@ -42,19 +42,29 @@ public class ViewAdmin {
   }
 
   public boolean createOrUpdate(Id.Stream.View viewId, ViewSpecification spec) throws Exception {
-    if (store.exists(viewId)) {
-      explore.disableExploreStream(viewId.getStream(), naming.getTableName(viewId));
+    try {
+      ViewSpecification previousSpec = store.get(viewId);
+      if (spec.getTableName() == null) {
+        // use the previous table name
+        spec = new ViewSpecification(spec.getFormat(), previousSpec.getTableName());
+      } else if (!spec.getTableName().equals(previousSpec.getTableName())) {
+        throw new IllegalArgumentException(String.format("Cannot change table name for view %s", viewId));
+      }
+      explore.disableExploreStream(viewId.getStream(), previousSpec.getTableName());
+    } catch (NotFoundException e) {
+      // pass through
     }
-    explore.enableExploreStream(viewId.getStream(), naming.getTableName(viewId), spec.getFormat());
+
+    if (spec.getTableName() == null) {
+      spec = new ViewSpecification(spec.getFormat(), naming.getTableName(viewId));
+    }
+    explore.enableExploreStream(viewId.getStream(), spec.getTableName(), spec.getFormat());
     return store.createOrUpdate(viewId, spec);
   }
 
   public void delete(Id.Stream.View viewId) throws Exception {
-    if (!store.exists(viewId)) {
-      throw new NotFoundException(viewId);
-    }
-
-    explore.disableExploreStream(viewId.getStream(), naming.getTableName(viewId));
+    ViewSpecification spec = store.get(viewId);
+    explore.disableExploreStream(viewId.getStream(), spec.getTableName());
     store.delete(viewId);
   }
 
