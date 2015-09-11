@@ -164,10 +164,7 @@ public final class SparkContextProvider {
   }
 
   private static CConfiguration createCConf() throws MalformedURLException {
-    CConfiguration cConf = CConfiguration.create();
-    cConf.clear();
-    cConf.addResource(new File(CCONF_FILE_NAME).toURI().toURL());
-    return cConf;
+    return CConfiguration.create(new File(CCONF_FILE_NAME).toURI().toURL());
   }
 
   private static Configuration createHConf() throws MalformedURLException {

@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.runtime.batch;
 
 import co.cask.cdap.api.artifact.Plugin;
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.batch.SimpleSplit;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.workflow.WorkflowToken;
@@ -265,9 +266,7 @@ public final class MapReduceContextConfig {
   }
 
   public CConfiguration getConf() {
-    CConfiguration conf = CConfiguration.createEmpty();
-    conf.addResource(new ByteArrayInputStream(hConf.get(HCONF_ATTR_CCONF).getBytes()));
-    return conf;
+    return CConfiguration.create(new ByteArrayInputStream(Bytes.toBytes(hConf.get(HCONF_ATTR_CCONF))));
   }
 
   private void setTx(Transaction tx) {
