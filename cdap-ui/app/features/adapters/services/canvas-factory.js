@@ -105,7 +105,7 @@ angular.module(PKG.name + '.feature.adapters')
       var content = JSON.stringify(detailedConfig, null, 4);
       var blob = new Blob([content], { type: 'application/json'});
       defer.resolve({
-        name:  detailedConfig.name + '-' + detailedConfig.template,
+        name:  detailedConfig.name + '-' + detailedConfig.artifact.name,
         url: URL.createObjectURL(blob)
       });
       return defer.promise;
