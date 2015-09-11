@@ -26,7 +26,7 @@ import co.cask.cdap.data.view.InMemoryViewStore;
 import co.cask.cdap.data.view.ViewAdmin;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.explore.client.MockExploreClient;
-import co.cask.cdap.internal.explore.ExploreTableNaming;
+import co.cask.cdap.explore.utils.ExploreTableNaming;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.ViewDetail;
 import co.cask.cdap.proto.ViewSpecification;

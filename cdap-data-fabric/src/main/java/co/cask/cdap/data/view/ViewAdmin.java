@@ -18,7 +18,7 @@ package co.cask.cdap.data.view;
 
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.explore.client.ExploreFacade;
-import co.cask.cdap.internal.explore.ExploreTableNaming;
+import co.cask.cdap.explore.utils.ExploreTableNaming;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ViewSpecification;
 import com.google.inject.Inject;

@@ -17,9 +17,6 @@
 package co.cask.cdap.internal.app.deploy.pipeline;
 
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
-import co.cask.cdap.data2.transaction.stream.StreamConfig;
-import co.cask.cdap.explore.client.ExploreFacade;
-import co.cask.cdap.internal.explore.ExploreTableNaming;
 import co.cask.cdap.proto.Id;
 
 import java.util.Set;
@@ -29,18 +26,12 @@ import java.util.Set;
  */
 public class StreamCreator {
 
-  private static final ExploreTableNaming NAMING = new ExploreTableNaming();
   private final Id.Namespace namespace;
   private final StreamAdmin streamAdmin;
-  private final ExploreFacade exploreFacade;
-  private final boolean enableExplore;
 
-  public StreamCreator(Id.Namespace namespace, StreamAdmin streamAdmin,
-                       ExploreFacade exploreFacade, boolean enableExplore) {
+  public StreamCreator(Id.Namespace namespace, StreamAdmin streamAdmin) {
     this.namespace = namespace;
     this.streamAdmin = streamAdmin;
-    this.exploreFacade = exploreFacade;
-    this.enableExplore = enableExplore;
   }
 
   /**
@@ -51,14 +42,7 @@ public class StreamCreator {
    */
   public void createStreams(Set<String> streamNames) throws Exception {
     for (String streamName : streamNames) {
-      Id.Stream streamId = Id.Stream.from(namespace, streamName);
-      // create the stream and enable exploration if the stream doesn't already exist.
-      if (!streamAdmin.exists(streamId)) {
-        StreamConfig config = streamAdmin.create(streamId);
-        if (enableExplore) {
-          exploreFacade.enableExploreStream(streamId, NAMING.getTableName(streamId), config.getFormat());
-        }
-      }
+      streamAdmin.create(Id.Stream.from(namespace, streamName));
     }
   }
 }

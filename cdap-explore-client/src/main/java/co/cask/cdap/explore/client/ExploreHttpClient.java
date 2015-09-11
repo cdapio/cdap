@@ -30,7 +30,6 @@ import co.cask.cdap.explore.utils.ColumnsArgs;
 import co.cask.cdap.explore.utils.FunctionsArgs;
 import co.cask.cdap.explore.utils.SchemasArgs;
 import co.cask.cdap.explore.utils.TablesArgs;
-import co.cask.cdap.internal.explore.ExploreTableNaming;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.Id;
@@ -76,7 +75,6 @@ abstract class ExploreHttpClient implements Explore {
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .create();
-  private static final ExploreTableNaming NAMING = new ExploreTableNaming();
 
   private static final Type MAP_TYPE_TOKEN = new TypeToken<Map<String, String>>() { }.getType();
   private static final Type TABLES_TYPE = new TypeToken<List<TableNameInfo>>() { }.getType();
@@ -118,10 +116,6 @@ abstract class ExploreHttpClient implements Explore {
     }
     throw new ExploreException(String.format("Cannot disable explore on stream %s with table %s. Reason: %s",
                                              stream.getId(), tableName, response));
-  }
-
-  protected QueryHandle doDisableExploreStream(Id.Stream stream) throws ExploreException {
-    return doDisableExploreStream(stream, NAMING.getTableName(stream));
   }
 
   protected QueryHandle doAddPartition(Id.DatasetInstance datasetInstance,
