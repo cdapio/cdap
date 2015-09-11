@@ -19,14 +19,18 @@ package co.cask.cdap.metadata;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.MetadataSearchResultRecord;
+import co.cask.cdap.proto.MetadataSearchTargetType;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
+
 import com.google.common.base.Charsets;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
+
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -38,11 +42,13 @@ import java.io.Reader;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
 
 /**
  * HttpHandler for Metadata
@@ -188,8 +194,8 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   @POST
   @Path("/namespaces/{namespace-id}/apps/{app-id}/tags")
   public void addAppTags(HttpRequest request, HttpResponder responder,
-                            @PathParam("namespace-id") String namespaceId,
-                            @PathParam("app-id") String appId) throws Exception {
+                         @PathParam("namespace-id") String namespaceId,
+                         @PathParam("app-id") String appId) throws Exception {
     Id.Application app = Id.Application.from(namespaceId, appId);
     metadataAdmin.addTags(app, readArray(request));
     responder.sendString(HttpResponseStatus.OK,
@@ -343,5 +349,18 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   @Path("/metadata/history")
   public void recordRun(HttpRequest request, HttpResponder responder) {
     responder.sendString(HttpResponseStatus.OK, "Metadata recorded successfully");
+  }
+
+  // *** Search endpoints ***
+
+  @GET
+  @Path("/namespaces/{namespace-id}/metadata/search")
+  public void searchMetadata(HttpRequest request, HttpResponder responder,
+                             @PathParam("namespace-id") String namespaceId,
+                             @QueryParam("query") String searchQuery,
+                             @QueryParam("target") MetadataSearchTargetType target) throws Exception {
+    Set<MetadataSearchResultRecord> results = metadataAdmin.searchMetadata(searchQuery, target);
+
+    responder.sendJson(HttpResponseStatus.OK, results);
   }
 }
