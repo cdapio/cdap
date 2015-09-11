@@ -14,11 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.data2.metadata.service;
+package co.cask.cdap.metadata;
 
 import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.namespace.AbstractNamespaceClient;
+import co.cask.cdap.common.namespace.NamespaceAdmin;
+import co.cask.cdap.data2.metadata.service.BusinessMetadataStore;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;

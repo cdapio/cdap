@@ -1533,4 +1533,22 @@
     </description>
   </property>
 
+  <property>
+    <name>metadata.service.bind.address</name>
+    <value>0.0.0.0</value>
+    <description>Default inet address for binding Metadata HTTP service</description>
+  </property>
+
+  <property>
+    <name>metadata.service.worker.threads</name>
+    <value>${http.service.worker.threads}</value>
+    <description>Number of Netty server IO worker threads for metadata HTTP service</description>
+  </property>
+
+  <property>
+    <name>metadata.service.exec.threads</name>
+    <value>${http.service.exec.threads}</value>
+    <description>Number of Netty server executor threads for metadata HTTP service</description>
+  </property>
+
 </configuration>
