@@ -23,9 +23,7 @@ import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
-import co.cask.cdap.api.templates.ApplicationTemplate;
 import co.cask.cdap.api.templates.plugins.PluginClass;
-import co.cask.cdap.api.templates.plugins.PluginPropertyField;
 import co.cask.cdap.app.DefaultApplicationContext;
 import co.cask.cdap.app.MockAppConfigurer;
 import co.cask.cdap.app.program.ManifestFields;
@@ -34,7 +32,6 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.StickyEndpointStrategy;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
-import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.explore.jdbc.ExploreDriver;
 import co.cask.cdap.internal.AppFabricClient;
@@ -42,31 +39,24 @@ import co.cask.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.internal.test.PluginJarHelper;
-import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.test.internal.ApplicationManagerFactory;
-import co.cask.cdap.test.internal.DefaultAdapterManager;
 import co.cask.cdap.test.internal.StreamManagerFactory;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionFailureException;
 import co.cask.tephra.TransactionSystemClient;
-import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -75,13 +65,11 @@ import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.Writer;
 import java.net.InetSocketAddress;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.jar.Manifest;
 import javax.annotation.Nullable;
@@ -101,8 +89,6 @@ public class UnitTestManager implements TestManager {
   private final StreamManagerFactory streamManagerFactory;
   private final LocationFactory locationFactory;
   private final ArtifactRepository artifactRepository;
-  private final File templateDir;
-  private final File pluginDir;
   private final MetricsManager metricsManager;
   private final File tmpDir;
 
@@ -128,8 +114,6 @@ public class UnitTestManager implements TestManager {
     this.locationFactory = locationFactory;
     this.artifactRepository = artifactRepository;
     // this should have been set to a temp dir during injector setup
-    this.templateDir = new File(cConf.get(Constants.AppFabric.APP_TEMPLATE_DIR));
-    this.pluginDir = new File(cConf.get(Constants.AppFabric.APP_TEMPLATE_PLUGIN_DIR));
     this.metricsManager = metricsManager;
     this.tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
       cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
@@ -188,66 +172,6 @@ public class UnitTestManager implements TestManager {
       requestedArtifact.getName(), requestedArtifact.getVersion());
     ArtifactDetail artifactDetail = artifactRepository.getArtifact(artifactId);
     return appManagerFactory.create(appId, artifactDetail.getDescriptor().getLocation());
-  }
-
-  @Override
-  public void deployTemplate(Id.Namespace namespace, Id.ApplicationTemplate templateId,
-                             Class<? extends ApplicationTemplate> templateClz,
-                             String... exportPackages) throws IOException {
-    Manifest manifest = new Manifest();
-    StringBuilder packagesStr = new StringBuilder().append(templateClz.getPackage().getName());
-    for (String exportPackage : exportPackages) {
-      packagesStr.append(",");
-      packagesStr.append(exportPackage);
-    }
-    manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE, packagesStr.toString());
-    Location adapterJar = AppJarHelper.createDeploymentJar(locationFactory, templateClz, manifest);
-    File destination =  new File(String.format("%s/%s", templateDir.getAbsolutePath(), adapterJar.getName()));
-    Files.copy(Locations.newInputSupplier(adapterJar), destination);
-    appFabricClient.deployTemplate(namespace, templateId);
-  }
-
-  @Override
-  public void addTemplatePlugins(Id.ApplicationTemplate templateId, String jarName,
-                                 Class<?> pluginClz, Class<?>... classes) throws IOException {
-    Manifest manifest = new Manifest();
-    Set<String> exportPackages = new HashSet<>();
-    for (Class<?> cls : Iterables.concat(ImmutableList.of(pluginClz), ImmutableList.copyOf(classes))) {
-      exportPackages.add(cls.getPackage().getName());
-    }
-
-    manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE, Joiner.on(',').join(exportPackages));
-    Location pluginJar = PluginJarHelper.createPluginJar(locationFactory, manifest, pluginClz, classes);
-    File templatePluginDir = new File(pluginDir, templateId.getId());
-    DirUtils.mkdirs(templatePluginDir);
-    File destination = new File(templatePluginDir, jarName);
-    Files.copy(Locations.newInputSupplier(pluginJar), destination);
-  }
-
-  @Override
-  public void addTemplatePluginJson(Id.ApplicationTemplate templateId, String fileName, String type, String name,
-                                    String description, String className,
-                                    PluginPropertyField... fields) throws IOException {
-
-    File templateDir = new File(pluginDir, templateId.getId());
-    DirUtils.mkdirs(templateDir);
-
-    JsonObject json = new JsonObject();
-    json.addProperty("type", type);
-    json.addProperty("name", name);
-    json.addProperty("description", description);
-    json.addProperty("className", className);
-    if (fields.length > 0) {
-      Map<String, PluginPropertyField> properties = Maps.newHashMap();
-      for (PluginPropertyField field : fields) {
-        properties.put(field.getName(), field);
-      }
-      json.add("properties", GSON.toJsonTree(properties));
-    }
-    File configFile = new File(templateDir, fileName);
-    try (Writer writer = Files.newWriter(configFile, Charsets.UTF_8)) {
-      GSON.toJson(Lists.newArrayList(json), writer);
-    }
   }
 
   @Override
@@ -314,12 +238,6 @@ public class UnitTestManager implements TestManager {
   @Override
   public void deleteArtifact(Id.Artifact artifactId) throws Exception {
     artifactRepository.deleteArtifact(artifactId);
-  }
-
-  @Override
-  public AdapterManager createAdapter(Id.Adapter adapterId, AdapterConfig config) {
-    appFabricClient.createAdapter(adapterId, config);
-    return new DefaultAdapterManager(appFabricClient, adapterId);
   }
 
   @Override
