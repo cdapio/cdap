@@ -261,7 +261,9 @@ angular.module(PKG.name + '.commons')
 
       // Need to move this to the controller that is using this directive.
       this.instance.bind('connection', function (con) {
-        createPopover(con.connection);
+        if (!this.isDisabled) {
+          createPopover(con.connection);
+        }
 
         // Whenever there is a change in the connection just copy the entire array
         // We never know if a connection was altered or removed. We don't want to 'Sync'
@@ -281,8 +283,9 @@ angular.module(PKG.name + '.commons')
         this.instance = jsPlumb.getInstance();
         this.instance.importDefaults(MyDAGFactory.getSettings().default);
         this.instance.bind('connection', function (con) {
-
-          createPopover(con.connection);
+          if (!this.isDisabled) {
+            createPopover(con.connection);
+          }
 
           MyAppDAGService.setConnections(this.instance.getConnections());
         }.bind(this));
