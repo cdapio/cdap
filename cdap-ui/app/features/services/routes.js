@@ -59,7 +59,7 @@ angular.module(PKG.name + '.feature.services')
         controller: 'ServicesRunsController',
         controllerAs: 'RunsController',
         ncyBreadcrumb: {
-          parent: 'apps.detail.overview.status',
+          parent: 'apps.detail.overview.programs',
           label: '{{$state.params.programId}}'
         }
       })

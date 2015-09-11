@@ -66,7 +66,7 @@ angular.module(PKG.name + '.feature.flows')
           highlightTab: 'development'
         },
         ncyBreadcrumb: {
-          parent: 'apps.detail.overview.status',
+          parent: 'apps.detail.overview.programs',
           label: '{{$state.params.programId}}'
         }
       })
