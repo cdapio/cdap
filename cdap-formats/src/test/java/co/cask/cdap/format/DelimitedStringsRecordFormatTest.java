@@ -140,6 +140,54 @@ public class DelimitedStringsRecordFormatTest {
     format.initialize(formatSpec);
   }
 
+  @Test(expected = IllegalArgumentException.class)
+  public void testRecordMappingWithNonSimpleSchema() throws UnsupportedTypeException {
+    Schema arraySchema = Schema.arrayOf(Schema.of(Schema.Type.STRING));
+    Schema schema = Schema.recordOf("event", Schema.Field.of("f1", arraySchema));
+    FormatSpecification formatSpec =
+      new FormatSpecification(DelimitedStringsRecordFormat.class.getCanonicalName(),
+                              schema, ImmutableMap.of(DelimitedStringsRecordFormat.MAPPING, "0:f1"));
+
+    DelimitedStringsRecordFormat format = new DelimitedStringsRecordFormat();
+    format.initialize(formatSpec);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testRecordMappingTooFewMappings() throws UnsupportedTypeException {
+    Schema arraySchema = Schema.arrayOf(Schema.of(Schema.Type.STRING));
+    Schema schema = Schema.recordOf("event", Schema.Field.of("f1", arraySchema));
+    FormatSpecification formatSpec =
+      new FormatSpecification(DelimitedStringsRecordFormat.class.getCanonicalName(),
+                              schema, ImmutableMap.of(DelimitedStringsRecordFormat.MAPPING, ""));
+
+    DelimitedStringsRecordFormat format = new DelimitedStringsRecordFormat();
+    format.initialize(formatSpec);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testRecordMappingTooManyMappings() throws UnsupportedTypeException {
+    Schema arraySchema = Schema.arrayOf(Schema.of(Schema.Type.STRING));
+    Schema schema = Schema.recordOf("event", Schema.Field.of("f1", arraySchema));
+    FormatSpecification formatSpec =
+      new FormatSpecification(DelimitedStringsRecordFormat.class.getCanonicalName(),
+                              schema, ImmutableMap.of(DelimitedStringsRecordFormat.MAPPING, "0:f1,1:f2"));
+
+    DelimitedStringsRecordFormat format = new DelimitedStringsRecordFormat();
+    format.initialize(formatSpec);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testRecordMappingWrongMapping() throws UnsupportedTypeException {
+    Schema arraySchema = Schema.arrayOf(Schema.of(Schema.Type.STRING));
+    Schema schema = Schema.recordOf("event", Schema.Field.of("f1", arraySchema));
+    FormatSpecification formatSpec =
+      new FormatSpecification(DelimitedStringsRecordFormat.class.getCanonicalName(),
+                              schema, ImmutableMap.of(DelimitedStringsRecordFormat.MAPPING, "0:f2"));
+
+    DelimitedStringsRecordFormat format = new DelimitedStringsRecordFormat();
+    format.initialize(formatSpec);
+  }
+
   @Test
   public void testStringArrayFormat() throws UnsupportedTypeException, UnexpectedFormatException {
     DelimitedStringsRecordFormat format = new DelimitedStringsRecordFormat();
@@ -187,6 +235,61 @@ public class DelimitedStringsRecordFormatTest {
     String[] actual = output.get("body");
     String[] expected = body.split("\t");
     Assert.assertArrayEquals(expected, actual);
+  }
+
+  @Test
+  public void testFormatRecordWithMapping() throws UnsupportedTypeException {
+    Schema schema = Schema.recordOf(
+      "event",
+      Schema.Field.of("f3", Schema.unionOf(Schema.of(Schema.Type.FLOAT), Schema.of(Schema.Type.NULL))),
+      Schema.Field.of("f4", Schema.unionOf(Schema.of(Schema.Type.DOUBLE), Schema.of(Schema.Type.NULL))));
+
+    DelimitedStringsRecordFormat format = new DelimitedStringsRecordFormat();
+    FormatSpecification spec = new FormatSpecification(DelimitedStringsRecordFormat.class.getCanonicalName(),
+                                                       schema,
+                                                       ImmutableMap.of(
+                                                         DelimitedStringsRecordFormat.DELIMITER, ",",
+                                                         DelimitedStringsRecordFormat.MAPPING, "2:f3,3:f4"));
+    format.initialize(spec);
+    boolean booleanVal = false;
+    int intVal = Integer.MAX_VALUE;
+    float floatVal = Float.MAX_VALUE;
+    double doubleVal = Double.MAX_VALUE;
+    byte[] bytesVal = new byte[] { 0, 1, 2 };
+    String stringVal = "foo bar";
+    String[] arrayVal = new String[] { "extra1", "extra2", "extra3" };
+    String body = new StringBuilder()
+      .append(booleanVal).append(",")
+      .append(intVal).append(",")
+      .append(floatVal).append(",")
+      .append(doubleVal).append(",")
+      .append(Bytes.toStringBinary(bytesVal)).append(",")
+      .append(stringVal).append(",")
+      .append(arrayVal[0]).append(",")
+      .append(arrayVal[1]).append(",")
+      .append(arrayVal[2])
+      .toString();
+
+    StructuredRecord output = format.read(new StreamEvent(ByteBuffer.wrap(Bytes.toBytes(body))));
+    Assert.assertEquals(2, output.getSchema().getFields().size());
+    Assert.assertNull(output.get("f1"));
+    Assert.assertNull(output.get("f2"));
+    Assert.assertEquals(floatVal, output.get("f3"));
+    Assert.assertEquals(doubleVal, output.get("f4"));
+    Assert.assertNull(output.get("f5"));
+    Assert.assertNull(output.get("f6"));
+    Assert.assertNull(output.get("f7"));
+
+    // now try with null fields.
+    output = format.read(new StreamEvent(ByteBuffer.wrap(Bytes.toBytes("true,,3.14159,,,hello world,extra1"))));
+    Assert.assertEquals(2, output.getSchema().getFields().size());
+    Assert.assertNull(output.get("f1"));
+    Assert.assertNull(output.get("f2"));
+    Assert.assertTrue(Math.abs(3.14159 - (Float) output.get("f3")) < 0.000001);
+    Assert.assertNull(output.get("f4"));
+    Assert.assertNull(output.get("f5"));
+    Assert.assertNull(output.get("f6"));
+    Assert.assertNull(output.get("f7"));
   }
 
   @Test
