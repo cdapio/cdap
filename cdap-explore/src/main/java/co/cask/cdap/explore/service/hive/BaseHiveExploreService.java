@@ -37,6 +37,7 @@ import co.cask.cdap.explore.service.HandleNotFoundException;
 import co.cask.cdap.explore.service.HiveStreamRedirector;
 import co.cask.cdap.explore.service.MetaDataInfo;
 import co.cask.cdap.explore.service.TableNotFoundException;
+import co.cask.cdap.explore.utils.ExploreTableNaming;
 import co.cask.cdap.hive.context.CConfCodec;
 import co.cask.cdap.hive.context.ConfigurationUtil;
 import co.cask.cdap.hive.context.ContextManager;
@@ -44,7 +45,6 @@ import co.cask.cdap.hive.context.HConfCodec;
 import co.cask.cdap.hive.context.TxnCodec;
 import co.cask.cdap.hive.datasets.DatasetStorageHandler;
 import co.cask.cdap.hive.stream.StreamStorageHandler;
-import co.cask.cdap.internal.explore.ExploreTableNaming;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.QueryHandle;
@@ -126,16 +126,15 @@ import javax.annotation.Nullable;
  * which, if true, does not start the {@link ExploreService} when the explore HTTP services are started.
  */
 public abstract class BaseHiveExploreService extends AbstractIdleService implements ExploreService {
+
   private static final Logger LOG = LoggerFactory.getLogger(BaseHiveExploreService.class);
   private static final Gson GSON = new Gson();
-  private static final ExploreTableNaming NAMING = new ExploreTableNaming();
   private static final int PREVIEW_COUNT = 5;
   private static final long METASTORE_CLIENT_CLEANUP_PERIOD = 60;
   public static final String HIVE_METASTORE_TOKEN_KEY = "hive.metastore.token.signature";
 
   private final CConfiguration cConf;
   private final Configuration hConf;
-  private final HiveConf hiveConf;
   private final TransactionSystemClient txClient;
   private final SchedulerQueueResolver schedulerQueueResolver;
 
@@ -153,6 +152,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   private final DatasetFramework datasetFramework;
   private final ExploreTableManager exploreTableManager;
   private final SystemDatasetInstantiatorFactory datasetInstantiatorFactory;
+  private final ExploreTableNaming tableNaming;
 
   private final ThreadLocal<Supplier<IMetaStoreClient>> metastoreClientLocal;
 
@@ -166,12 +166,12 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     throws HiveSQLException, ExploreException;
 
   protected BaseHiveExploreService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
-                                   CConfiguration cConf, Configuration hConf, HiveConf hiveConf,
+                                   CConfiguration cConf, Configuration hConf,
                                    File previewsDir, StreamAdmin streamAdmin, Store store,
-                                   SystemDatasetInstantiatorFactory datasetInstantiatorFactory) {
+                                   SystemDatasetInstantiatorFactory datasetInstantiatorFactory,
+                                   ExploreTableNaming tableNaming) {
     this.cConf = cConf;
     this.hConf = hConf;
-    this.hiveConf = hiveConf;
     this.schedulerQueueResolver = new SchedulerQueueResolver(cConf, store);
     this.previewsDir = previewsDir;
     this.metastoreClientLocal = new ThreadLocal<>();
@@ -181,6 +181,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     this.streamAdmin = streamAdmin;
     this.exploreTableManager = new ExploreTableManager(this, datasetInstantiatorFactory, new ExploreTableNaming());
     this.datasetInstantiatorFactory = datasetInstantiatorFactory;
+    this.tableNaming = tableNaming;
 
     // Create a Timer thread to periodically collect metastore clients that are no longer in used and call close on them
     this.metastoreClientsExecutorService =
@@ -1144,7 +1145,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     LOG.info("Enabling exploration on stream {}", streamID);
     StreamConfig streamConfig = streamAdmin.getConfig(streamID);
     QueryHandle enableHandle = exploreTableManager.enableStream(
-      NAMING.getTableName(streamID), streamID, streamConfig.getFormat());
+      tableNaming.getTableName(streamID), streamID, streamConfig.getFormat());
     // wait til enable is done
     QueryStatus status = waitForCompletion(enableHandle);
     // if enable failed, stop

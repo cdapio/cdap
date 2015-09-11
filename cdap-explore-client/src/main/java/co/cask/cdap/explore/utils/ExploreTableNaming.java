@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.internal.explore;
+package co.cask.cdap.explore.utils;
 
 import co.cask.cdap.proto.Id;
 

@@ -19,11 +19,9 @@ package co.cask.cdap.internal.app.deploy;
 import co.cask.cdap.app.deploy.Manager;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
-import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.internal.app.deploy.pipeline.adapter.AdapterDeploymentInfo;
 import co.cask.cdap.internal.app.deploy.pipeline.adapter.AdapterRegistrationStage;
 import co.cask.cdap.internal.app.deploy.pipeline.adapter.AdapterVerificationStage;
@@ -49,8 +47,6 @@ public class LocalAdapterManager implements Manager<AdapterDeploymentInfo, Adapt
   private final CConfiguration configuration;
   private final PipelineFactory pipelineFactory;
   private final StreamAdmin streamAdmin;
-  private final ExploreFacade exploreFacade;
-  private final boolean exploreEnabled;
   private final DatasetFramework datasetFramework;
   private final DatasetFramework inMemoryDatasetFramework;
   private final Store store;
@@ -61,18 +57,15 @@ public class LocalAdapterManager implements Manager<AdapterDeploymentInfo, Adapt
   public LocalAdapterManager(CConfiguration configuration, PipelineFactory pipelineFactory,
                              DatasetFramework datasetFramework,
                              @Named("datasetMDS") DatasetFramework inMemoryDatasetFramework,
-                             StreamAdmin streamAdmin, ExploreFacade exploreFacade,
-                             Store store, PluginRepository pluginRepository,
+                             StreamAdmin streamAdmin, Store store, PluginRepository pluginRepository,
                              UsageRegistry usageRegistry) {
     this.configuration = configuration;
     this.pipelineFactory = pipelineFactory;
     this.datasetFramework = datasetFramework;
     this.inMemoryDatasetFramework = inMemoryDatasetFramework;
     this.streamAdmin = streamAdmin;
-    this.exploreFacade = exploreFacade;
     this.store = store;
     this.pluginRepository = pluginRepository;
-    this.exploreEnabled = configuration.getBoolean(Constants.Explore.EXPLORE_ENABLED);
     this.usageRegistry = usageRegistry;
   }
 
@@ -87,7 +80,7 @@ public class LocalAdapterManager implements Manager<AdapterDeploymentInfo, Adapt
     pipeline.addLast(new DeployAdapterDatasetModulesStage(configuration, namespace, templateJarLocation,
                                                           datasetFramework, inMemoryDatasetFramework));
     pipeline.addLast(new CreateAdapterDatasetInstancesStage(configuration, datasetFramework, namespace));
-    pipeline.addLast(new CreateAdapterStreamsStage(namespace, streamAdmin, exploreFacade, exploreEnabled));
+    pipeline.addLast(new CreateAdapterStreamsStage(namespace, streamAdmin));
     pipeline.addLast(new AdapterRegistrationStage(namespace, store, usageRegistry));
     return pipeline.execute(input);
   }

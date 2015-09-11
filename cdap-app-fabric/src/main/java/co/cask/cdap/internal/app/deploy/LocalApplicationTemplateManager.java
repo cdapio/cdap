@@ -20,15 +20,12 @@ import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.app.deploy.Manager;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
-import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
-import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationRegistrationStage;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationTemplateVerificationStage;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
@@ -65,9 +62,6 @@ public class LocalApplicationTemplateManager implements Manager<DeploymentInfo, 
   private final DatasetFramework datasetFramework;
   private final DatasetFramework inMemoryDatasetFramework;
   private final StreamAdmin streamAdmin;
-  private final ExploreFacade exploreFacade;
-  private final boolean exploreEnabled;
-  private final PreferencesStore preferencesStore;
   private final MetricStore metricStore;
   private final UsageRegistry usageRegistry;
 
@@ -77,9 +71,7 @@ public class LocalApplicationTemplateManager implements Manager<DeploymentInfo, 
                                          Store store, StreamConsumerFactory streamConsumerFactory,
                                          QueueAdmin queueAdmin, DatasetFramework datasetFramework,
                                          @Named("datasetMDS") DatasetFramework inMemoryDatasetFramework,
-                                         StreamAdmin streamAdmin, ExploreFacade exploreFacade,
-                                         AdapterService adapterService,
-                                         PreferencesStore preferencesStore,
+                                         StreamAdmin streamAdmin, AdapterService adapterService,
                                          @Assisted ProgramTerminator programTerminator, MetricStore metricStore,
                                          UsageRegistry usageRegistry) {
     this.configuration = configuration;
@@ -92,11 +84,8 @@ public class LocalApplicationTemplateManager implements Manager<DeploymentInfo, 
     this.datasetFramework = datasetFramework;
     this.inMemoryDatasetFramework = inMemoryDatasetFramework;
     this.streamAdmin = streamAdmin;
-    this.exploreFacade = exploreFacade;
     this.metricStore = metricStore;
-    this.exploreEnabled = configuration.getBoolean(Constants.Explore.EXPLORE_ENABLED);
     this.adapterService = adapterService;
-    this.preferencesStore = preferencesStore;
     this.usageRegistry = usageRegistry;
   }
 
@@ -109,7 +98,7 @@ public class LocalApplicationTemplateManager implements Manager<DeploymentInfo, 
     pipeline.addLast(new DeployDatasetModulesStage(configuration, namespace,
                                                    datasetFramework, inMemoryDatasetFramework));
     pipeline.addLast(new CreateDatasetInstancesStage(configuration, datasetFramework, namespace));
-    pipeline.addLast(new CreateStreamsStage(namespace, streamAdmin, exploreFacade, exploreEnabled));
+    pipeline.addLast(new CreateStreamsStage(namespace, streamAdmin));
     pipeline.addLast(new DeletedProgramHandlerStage(store, programTerminator, streamConsumerFactory,
                                                     queueAdmin, metricStore));
     pipeline.addLast(new ProgramGenerationStage(configuration, namespacedLocationFactory));

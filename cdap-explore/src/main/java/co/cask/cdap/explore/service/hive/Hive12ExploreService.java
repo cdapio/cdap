@@ -24,6 +24,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.HandleNotFoundException;
+import co.cask.cdap.explore.utils.ExploreTableNaming;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
 import co.cask.tephra.TransactionSystemClient;
@@ -34,7 +35,6 @@ import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hive.service.cli.CLIService;
 import org.apache.hive.service.cli.FetchOrientation;
 import org.apache.hive.service.cli.HiveSQLException;
@@ -69,12 +69,13 @@ public class Hive12ExploreService extends BaseHiveExploreService {
 
   @Inject
   public Hive12ExploreService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
-                              CConfiguration cConf, Configuration hConf, HiveConf hiveConf,
+                              CConfiguration cConf, Configuration hConf,
                               @Named(Constants.Explore.PREVIEWS_DIR_NAME) File previewsDir,
                               StreamAdmin streamAdmin, Store store,
-                              SystemDatasetInstantiatorFactory datasetInstantiatorFactory) {
-    super(txClient, datasetFramework, cConf, hConf, hiveConf, previewsDir,
-          streamAdmin, store, datasetInstantiatorFactory);
+                              SystemDatasetInstantiatorFactory datasetInstantiatorFactory,
+                              ExploreTableNaming tableNaming) {
+    super(txClient, datasetFramework, cConf, hConf, previewsDir,
+          streamAdmin, store, datasetInstantiatorFactory, tableNaming);
   }
 
   @Override
@@ -117,15 +118,11 @@ public class Hive12ExploreService extends BaseHiveExploreService {
       // In Hive 13, CLIService.getOperationStatus returns OperationStatus.
       // Since we use Hive 13 for dev, we need the following workaround to get Hive 12 working.
 
-      Class cliServiceClass = getCliService().getClass();
+      Class<? extends CLIService> cliServiceClass = getCliService().getClass();
       Method m = cliServiceClass.getMethod("getOperationStatus", OperationHandle.class);
       OperationState operationState = (OperationState) m.invoke(getCliService(), operationHandle);
       return new QueryStatus(QueryStatus.OpStatus.valueOf(operationState.toString()), operationHandle.hasResultSet());
-    } catch (InvocationTargetException e) {
-      throw Throwables.propagate(e);
-    } catch (NoSuchMethodException e) {
-      throw  Throwables.propagate(e);
-    } catch (IllegalAccessException e) {
+    } catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
       throw Throwables.propagate(e);
     }
   }
