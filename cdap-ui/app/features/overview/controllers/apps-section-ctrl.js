@@ -15,11 +15,12 @@
  */
 
 angular.module(PKG.name + '.feature.overview')
-  .controller('AppsSectionCtrl', function(myAppUploader, myStreamApi, myDatasetApi, MyDataSource, MyOrderings, $scope, $state, myAdapterApi, GLOBALS) {
+  .controller('AppsSectionCtrl', function(myAppUploader, myStreamApi, myDatasetApi, MyDataSource, MyOrderings, $scope, $state, myAdapterApi, GLOBALS, myAdapterFactory) {
     var dataSrc = new MyDataSource($scope);
     this.MyOrderings = MyOrderings;
     this.apps = [];
     this.GLOBALS = GLOBALS;
+    this.myAdapterFactory = myAdapterFactory;
 
     this.dataList = [];
     dataSrc.request({

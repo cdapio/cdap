@@ -15,16 +15,17 @@
  */
 
 angular.module(PKG.name + '.feature.admin').controller('NamespaceAppMetadataController',
-function ($scope, $state, $alert, $timeout, MyDataSource) {
+function ($scope, $state, $alert, $timeout, MyDataSource, myAdapterFactory) {
 
   var data = new MyDataSource($scope);
   var path = '/namespaces/' + $state.params.nsadmin + '/apps/' + $state.params.appId;
+  $scope.myAdapterFactory = myAdapterFactory;
 
   data.request({
     _cdapPath: path
   })
-    .then(function(apps) {
-      $scope.apps = apps;
+    .then(function(app) {
+      $scope.app = app;
     });
 
   $scope.deleteApp = function(app) {
