@@ -107,7 +107,7 @@ public final class LogSaverTwillRunnable extends AbstractTwillRunnable {
 
       UserGroupInformation.setConfiguration(hConf);
 
-      CConfiguration cConf = CConfiguration.create(new File(configs.get("cConf")).toURI().toURL());
+      CConfiguration cConf = CConfiguration.create(new File(configs.get("cConf")));
 
       cConf.set(Constants.LogSaver.ADDRESS, context.getHost().getCanonicalHostName());
 

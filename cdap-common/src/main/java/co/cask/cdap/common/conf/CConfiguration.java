@@ -19,7 +19,9 @@ package co.cask.cdap.common.conf;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.URL;
 
 /**
@@ -56,6 +58,22 @@ public class CConfiguration extends Configuration {
     CConfiguration conf = new CConfiguration();
     conf.addResource("cdap-default.xml");
     conf.addResource("cdap-site.xml");
+    return conf;
+  }
+
+  /**
+   * Creates an instance of configuration.
+   * @param file the file to be added to the configuration
+   * @param moreFiles the list of more files to be added to the configuration
+   * @return an instance of CConfiguration
+   * @throws MalformedURLException if the error occurred while constructing the URL
+   */
+  public static CConfiguration create(File file, File...moreFiles) throws MalformedURLException {
+    CConfiguration conf = new CConfiguration();
+    conf.addResource(file.toURI().toURL());
+    for (File anotherFile : moreFiles) {
+      conf.addResource(anotherFile.toURI().toURL());
+    }
     return conf;
   }
 

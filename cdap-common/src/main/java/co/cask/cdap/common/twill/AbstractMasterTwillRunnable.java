@@ -82,7 +82,7 @@ public abstract class AbstractMasterTwillRunnable extends AbstractTwillRunnable 
 
       UserGroupInformation.setConfiguration(hConf);
 
-      cConf = CConfiguration.create(new File(configs.get("cConf")).toURI().toURL());
+      cConf = CConfiguration.create(new File(configs.get("cConf")));
 
       LOG.debug("{} cConf {}", name, cConf);
       LOG.debug("{} HBase conf {}", name, hConf);
