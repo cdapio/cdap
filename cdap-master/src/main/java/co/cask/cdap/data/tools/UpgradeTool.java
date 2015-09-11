@@ -109,10 +109,9 @@ public class UpgradeTool {
     UPGRADE("Upgrades CDAP to " + ProjectInfo.getVersion() + "\n" +
               "  The upgrade tool upgrades the following: \n" +
               "  1. User and System Datasets (upgrades the coprocessor jars)\n" +
-              "  2. UsageRegistry Dataset Type\n" +
-              "  3. Application Specifications\n" +
-              "  4. Removes all Adapters\n" +
-              "  5. Application Specifications\n" +
+              "  2. Application Specifications\n" +
+              "  3. Removes all Adapters\n" +
+              "  4. Application Specifications\n" +
               "      - Adds artifacts for existing applications\n" +
               "      - Updates application metadata to include newly added artifact\n" +
               "      - Deletes all ApplicationTemplates\n" +
@@ -379,10 +378,6 @@ public class UpgradeTool {
     LOG.info("Upgrading QueueAdmin ...");
     QueueAdmin queueAdmin = injector.getInstance(QueueAdmin.class);
     queueAdmin.upgrade();
-
-    UsageRegistry usageRegistry = injector.getInstance(UsageRegistry.class);
-    usageRegistry.upgrade(injector.getInstance(Key.get(DatasetInstanceManager.class,
-                                                       Names.named("datasetInstanceManager"))));
 
     LOG.info("Removing Adapters ...");
     adapterService.upgrade();

@@ -192,7 +192,7 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin {
     if (transactional) {
       // tx janitor
       if (conf.getBoolean(TxConstants.DataJanitor.CFG_TX_JANITOR_ENABLE,
-                           TxConstants.DataJanitor.DEFAULT_TX_JANITOR_ENABLE)) {
+                          TxConstants.DataJanitor.DEFAULT_TX_JANITOR_ENABLE)) {
         coprocessors.add(dataJanitorClass);
       }
     }
