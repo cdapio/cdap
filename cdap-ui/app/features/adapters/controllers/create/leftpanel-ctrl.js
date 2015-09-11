@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.adapters')
-  .controller('LeftPanelController', function($q, myAdapterApi, MyAppDAGService, MyDAGFactory, myAdapterTemplatesApi, CanvasFactory, $alert, mySettings, $state, MySidebarService, $scope) {
+  .controller('LeftPanelController', function($q, myAdapterApi, MyAppDAGService, MyDAGFactory, myAdapterTemplatesApi, CanvasFactory, $alert, mySettings, $state, MySidebarService, $scope, rVersion, $stateParams) {
     this.pluginTypes = [
       {
         name: 'source',
@@ -51,7 +51,11 @@ angular.module(PKG.name + '.feature.adapters')
     this.onLeftSideGroupItemClicked = function(group) {
       var prom;
       var templatedefer = $q.defer();
-      var params = { adapterType: MyAppDAGService.metadata.template.type };
+      var params = {
+        namespace: $stateParams.namespace,
+        adapterType: MyAppDAGService.metadata.template.type,
+        version: rVersion.version
+      };
       switch(group.name) {
         case 'source':
           prom = myAdapterApi.fetchSources(params).$promise;

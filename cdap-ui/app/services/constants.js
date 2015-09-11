@@ -14,13 +14,8 @@
  * the License.
  */
 
-angular.module(PKG.name + '.feature.adapters')
-  .controller('AdpaterDetailController', function($scope, rAdapterDetail, GLOBALS) {
-    $scope.GLOBALS = GLOBALS;
-    $scope.template = rAdapterDetail.template;
-    $scope.description = rAdapterDetail.description;
-    $scope.isScheduled = false;
-    if (rAdapterDetail.schedule) {
-      $scope.isScheduled = true;
-    }
+angular.module(PKG.name + '.services')
+  .constant('GLOBALS', {
+    etlBatch: 'cdap-etl-batch-app',
+    etlRealtime: 'cdap-etl-realtime-app'
   });
