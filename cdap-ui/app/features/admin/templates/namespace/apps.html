@@ -65,18 +65,30 @@
             <tbody>
                 <tr ng-repeat="app in apps | orderBy:sortable.predicate:sortable.reverse">
                     <td>
-                        <a ui-sref="admin.namespace.detail.apps.metadata({appId: app.id})">
-                            <strong tooltip="{{app.name}}"
-                                    tooltip-enable="app.name.length > 25"
-                                    tooltip-append-to-body="true">
-                              {{ ::app.name | myEllipsis:25 }}
-                            </strong>
-                        </a>
+                      <a ui-sref="admin.namespace.detail.apps.metadata({appId: app.id})">
+                          <strong tooltip="{{app.name}}"
+                                  tooltip-enable="app.name.length > 25"
+                                  tooltip-append-to-body="true">
+                            {{ ::app.name | myEllipsis:25 }}
+                          </strong>
+                      </a>
                     </td>
                     <td>{{ ::app.version }}</td>
                     <td>
-                      <span class="icon-fist"></span>
-                      <span>App</span>
+                      <span ng-if="app.artifact.name !== GLOBALS.etlBatch && app.artifact.name !== GLOBALS.etlRealtime">
+                        <span class="icon-fist"></span>
+                        <span>App</span>
+                      </span>
+                      <span ng-if="app.artifact.name === GLOBALS.etlBatch || app.artifact.name === GLOBALS.etlRealtime">
+                        <span ng-if="app.artifact.name === GLOBALS.etlBatch">
+                          <span class="icon-ETLBatch"></span>
+                          <span>ETL Batch</span>
+                        </span>
+                        <span ng-if="app.artifact.name === GLOBALS.etlRealtime">
+                          <span class="icon-ETLRealtime"></span>
+                          <span>ETL Realtime</span>
+                        </span>
+                      </span>
                     </td>
                     <td>
                       <span tooltip="{{app.description}}"
