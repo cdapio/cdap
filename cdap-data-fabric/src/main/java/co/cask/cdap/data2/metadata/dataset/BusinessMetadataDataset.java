@@ -153,6 +153,10 @@ public class BusinessMetadataDataset extends AbstractDataset {
     }
 
     byte[] value = row.get(VALUE_COLUMN);
+    if (value == null) {
+      // This can happen when all tags are moved one by one. The row still exists, but the value is null.
+      return null;
+    }
 
     return new BusinessMetadataRecord(targetId, key, Bytes.toString(value));
   }
