@@ -94,7 +94,7 @@ public class PluginInstantiator implements Closeable {
   public PluginInstantiator(CConfiguration cConf, ClassLoader parentClassLoader) {
     this.instantiatorFactory = new InstantiatorFactory(false);
     // unused in this mode
-    this.pluginDir = new File(cConf.get(Constants.AppFabric.APP_TEMPLATE_PLUGIN_DIR));
+    this.pluginDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR), "namespaces");
 
     File tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
       cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();

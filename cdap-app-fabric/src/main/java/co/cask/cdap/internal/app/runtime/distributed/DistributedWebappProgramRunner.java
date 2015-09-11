@@ -22,6 +22,7 @@ import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
@@ -42,8 +43,9 @@ public final class DistributedWebappProgramRunner extends AbstractDistributedPro
   private static final Logger LOG = LoggerFactory.getLogger(DistributedWebappProgramRunner.class);
 
   @Inject
-  public DistributedWebappProgramRunner(TwillRunner twillRunner, Configuration hConf, CConfiguration cConf) {
-    super(twillRunner, hConf, cConf);
+  public DistributedWebappProgramRunner(TwillRunner twillRunner, Configuration hConf, CConfiguration cConf,
+                                        ArtifactRepository artifactRepository) {
+    super(twillRunner, hConf, cConf, artifactRepository);
   }
 
   @Override

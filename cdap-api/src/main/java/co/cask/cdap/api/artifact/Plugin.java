@@ -80,7 +80,7 @@ public final class Plugin {
   public String toString() {
     return "Plugin{" +
       "artifactId=" + artifactId +
-      "pluginClass=" + pluginClass +
+      ",pluginClass=" + pluginClass +
       ",properties=" + properties +
       '}';
   }

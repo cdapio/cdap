@@ -16,6 +16,10 @@
 package co.cask.cdap.internal.app.runtime.distributed;
 
 import co.cask.cdap.api.app.ApplicationSpecification;
+import co.cask.cdap.api.artifact.ArtifactDescriptor;
+import co.cask.cdap.api.artifact.ArtifactScope;
+import co.cask.cdap.api.artifact.Plugin;
+import co.cask.cdap.api.templates.plugins.PluginClass;
 import co.cask.cdap.api.templates.plugins.PluginInfo;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.Programs;
@@ -32,8 +36,11 @@ import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data.security.HBaseTokenUtils;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import co.cask.cdap.internal.app.runtime.artifact.PluginNotExistsException;
 import co.cask.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.templates.AdapterDefinition;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
@@ -87,6 +94,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
     .create();
 
   private final TwillRunner twillRunner;
+  private final ArtifactRepository artifactRepository;
   protected final Configuration hConf;
   protected final CConfiguration cConf;
   protected final EventHandler eventHandler;
@@ -134,8 +142,10 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
     public abstract TwillController launch(TwillApplication twillApplication, Iterable<String> extraClassPaths);
   }
 
-  protected AbstractDistributedProgramRunner(TwillRunner twillRunner, Configuration hConf, CConfiguration cConf) {
+  protected AbstractDistributedProgramRunner(TwillRunner twillRunner, Configuration hConf, CConfiguration cConf,
+                                             ArtifactRepository artifactRepository) {
     this.twillRunner = twillRunner;
+    this.artifactRepository = artifactRepository;
     this.hConf = hConf;
     this.cConf = cConf;
     this.eventHandler = createEventHandler(cConf);
@@ -158,6 +168,13 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
 
       Map<String, LocalizeResource> localizeResources = addAdapterPluginFiles(options,
                                                                               new HashMap<String, LocalizeResource>());
+
+      try {
+        addArtifactPluginFiles(program.getApplicationSpecification(), program.getId().getNamespace(),
+                               localizeResources);
+      } catch (PluginNotExistsException e) {
+        LOG.error(e.getMessage(), e);
+      }
 
       // Copy config files and program jar to local temp, and ask Twill to localize it to container.
       // What Twill does is to save those files in HDFS and keep using them during the lifetime of application.
@@ -229,7 +246,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
 
     // Decode the adapter spec from program system argument
     AdapterDefinition adapterSpec = GSON.fromJson(arguments.getOption(ProgramOptionConstants.ADAPTER_SPEC),
-                                                     AdapterDefinition.class);
+                                                  AdapterDefinition.class);
 
     // Get all unique PluginInfo from the adapter spec
     Set<PluginInfo> plugins = adapterSpec.getPluginInfos();
@@ -262,13 +279,31 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
     return localizeResources;
   }
 
-  private Map<String, LocalizeResource> addArtifactPluginFiles(ApplicationSpecification appSpec,
-                                                               Map<String, LocalizeResource> localizeResources) {
+  private Map<String, LocalizeResource> addArtifactPluginFiles(ApplicationSpecification appSpec, Id.Namespace namespace,
+                                                               Map<String, LocalizeResource> localizeResources)
+    throws IOException, PluginNotExistsException {
+    if (appSpec.getPlugins().isEmpty()) {
+      return localizeResources;
+    }
+
+    Map<String, Plugin> plugins = appSpec.getPlugins();
+    String localizePrefix = "data/namespaces/";
+
+    for (Plugin plugin : plugins.values()) {
+      final Map.Entry<ArtifactDescriptor, PluginClass> pluginEntry = artifactRepository.getPlugin(
+        Id.Artifact.from(namespace, appSpec.getArtifactId()), plugin.getPluginClass().getType(),
+        plugin.getPluginClass().getName(), plugin.getArtifactId());
+      ArtifactDescriptor artifactDescriptor = pluginEntry.getKey();
+      String ns = plugin.getArtifactId().getScope().equals(ArtifactScope.SYSTEM) ? "system" : namespace.getId();
+      String localizedName = String.format("%s/%s/artifacts/%s", localizePrefix, ns,
+                                           artifactDescriptor.getLocation().getName());
+      localizeResources.put(localizedName, new LocalizeResource(artifactDescriptor.getLocation().toURI(), false));
+    }
     return localizeResources;
   }
 
   /**
-   * Returns a {@link URI} for the logback.xml file to be localized to container and avaiable in the container
+   * Returns a {@link URI} for the logback.xml file to be localized to container and available in the container
    * classpath.
    */
   @Nullable

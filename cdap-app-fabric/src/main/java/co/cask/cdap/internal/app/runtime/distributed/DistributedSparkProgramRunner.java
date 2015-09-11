@@ -26,6 +26,7 @@ import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.spark.SparkContextConfig;
 import co.cask.cdap.internal.app.runtime.spark.SparkUtils;
 import co.cask.cdap.proto.ProgramType;
@@ -51,8 +52,9 @@ public class DistributedSparkProgramRunner extends AbstractDistributedProgramRun
   private static final Logger LOG = LoggerFactory.getLogger(DistributedSparkProgramRunner.class);
 
   @Inject
-  public DistributedSparkProgramRunner(TwillRunner twillRunner, Configuration hConf, CConfiguration cConf) {
-    super(twillRunner, createConfiguration(hConf), cConf);
+  public DistributedSparkProgramRunner(TwillRunner twillRunner, Configuration hConf, CConfiguration cConf,
+                                       ArtifactRepository artifactRepository) {
+    super(twillRunner, createConfiguration(hConf), cConf, artifactRepository);
   }
 
   @Override

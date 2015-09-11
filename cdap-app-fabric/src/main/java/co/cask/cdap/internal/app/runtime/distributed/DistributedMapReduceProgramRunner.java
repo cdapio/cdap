@@ -23,6 +23,7 @@ import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerHelper;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
@@ -45,8 +46,9 @@ public final class DistributedMapReduceProgramRunner extends AbstractDistributed
   private static final Logger LOG = LoggerFactory.getLogger(DistributedMapReduceProgramRunner.class);
 
   @Inject
-  public DistributedMapReduceProgramRunner(TwillRunner twillRunner, Configuration hConf, CConfiguration cConf) {
-    super(twillRunner, hConf, cConf);
+  public DistributedMapReduceProgramRunner(TwillRunner twillRunner, Configuration hConf, CConfiguration cConf,
+                                           ArtifactRepository artifactRepository) {
+    super(twillRunner, hConf, cConf, artifactRepository);
   }
 
   @Override

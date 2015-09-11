@@ -26,6 +26,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.twill.AbortOnTimeoutEventHandler;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
@@ -47,8 +48,9 @@ public class DistributedServiceProgramRunner extends AbstractDistributedProgramR
   private static final Logger LOG = LoggerFactory.getLogger(DistributedServiceProgramRunner.class);
 
   @Inject
-  DistributedServiceProgramRunner(TwillRunner twillRunner, Configuration hConfig, CConfiguration cConfig) {
-    super(twillRunner, hConfig, cConfig);
+  DistributedServiceProgramRunner(TwillRunner twillRunner, Configuration hConfig, CConfiguration cConfig,
+                                  ArtifactRepository artifactRepository) {
+    super(twillRunner, hConfig, cConfig, artifactRepository);
   }
 
   @Override
