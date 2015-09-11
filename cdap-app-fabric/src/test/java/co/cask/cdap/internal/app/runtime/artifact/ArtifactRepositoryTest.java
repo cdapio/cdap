@@ -17,7 +17,7 @@
 package co.cask.cdap.internal.app.runtime.artifact;
 
 import co.cask.cdap.api.app.Application;
-import co.cask.cdap.api.artifact.ArtifactDescriptor;
+import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.artifact.PluginSelector;
 import co.cask.cdap.api.templates.plugins.PluginClass;
@@ -36,6 +36,7 @@ import co.cask.cdap.internal.app.plugins.template.test.PluginTestAppTemplate;
 import co.cask.cdap.internal.app.plugins.template.test.api.PluginTestRunnable;
 import co.cask.cdap.internal.app.plugins.test.TestPlugin;
 import co.cask.cdap.internal.app.plugins.test.TestPlugin2;
+import co.cask.cdap.internal.app.runtime.adapter.ArtifactDescriptor;
 import co.cask.cdap.internal.app.runtime.adapter.EmptyClass;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.artifact.plugin.Plugin1;
@@ -269,7 +270,7 @@ public class ArtifactRepositoryTest {
     // Use a custom plugin selector to select with smallest version
     plugin = artifactRepository.findPlugin(APP_ARTIFACT_ID, "plugin", "TestPlugin2", new PluginSelector() {
       @Override
-      public Map.Entry<ArtifactDescriptor, PluginClass> select(SortedMap<ArtifactDescriptor, PluginClass> plugins) {
+      public Map.Entry<ArtifactId, PluginClass> select(SortedMap<ArtifactId, PluginClass> plugins) {
         return plugins.entrySet().iterator().next();
       }
     });

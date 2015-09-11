@@ -18,7 +18,6 @@ package co.cask.cdap.internal.app.runtime;
 
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.api.artifact.ArtifactDescriptor;
 import co.cask.cdap.api.artifact.Plugin;
 import co.cask.cdap.api.artifact.PluginContext;
 import co.cask.cdap.api.common.RuntimeArguments;
@@ -36,6 +35,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.dataset.DatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
+import co.cask.cdap.internal.app.runtime.adapter.ArtifactDescriptor;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.templates.AdapterDefinition;

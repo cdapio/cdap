@@ -19,13 +19,20 @@ package co.cask.cdap.metadata;
 import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.namespace.AbstractNamespaceClient;
-import co.cask.cdap.common.namespace.NamespaceAdmin;
+import co.cask.cdap.data2.metadata.dataset.BusinessMetadataRecord;
 import co.cask.cdap.data2.metadata.service.BusinessMetadataStore;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.MetadataSearchResultRecord;
+import co.cask.cdap.proto.MetadataSearchTargetType;
+
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 
+import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * Implementation of {@link MetadataAdmin} that interacts directly with {@link BusinessMetadataStore}
@@ -76,6 +83,27 @@ public class DefaultMetadataAdmin implements MetadataAdmin {
   public void removeTags(Id.NamespacedId entityId, String... tags) throws NotFoundException {
     ensureEntityExists(entityId);
     businessMds.removeTags(entityId, tags);
+  }
+
+  @Override
+  public Set<MetadataSearchResultRecord> searchMetadata(String searchQuery,
+                                                        @Nullable MetadataSearchTargetType type)
+    throws NotFoundException {
+    Iterable<BusinessMetadataRecord> results;
+    if (type == null) {
+      results = businessMds.searchMetadata(searchQuery);
+    } else {
+      results = businessMds.searchMetadataOnType(searchQuery, type);
+    }
+
+    Set<MetadataSearchResultRecord> searchResultRecords = new LinkedHashSet<>();
+    for (BusinessMetadataRecord bmr : results) {
+      MetadataSearchResultRecord msr =
+        new MetadataSearchResultRecord(bmr.getTargetId(),
+                                       (type == null ? MetadataSearchTargetType.ALL : type));
+      searchResultRecords.add(msr);
+    }
+    return searchResultRecords;
   }
 
   /**

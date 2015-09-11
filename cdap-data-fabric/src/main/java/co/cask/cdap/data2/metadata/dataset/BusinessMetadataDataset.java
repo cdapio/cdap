@@ -25,14 +25,16 @@ import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.proto.Id;
 
+import co.cask.cdap.proto.MetadataSearchTargetType;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -45,10 +47,12 @@ public class BusinessMetadataDataset extends AbstractDataset {
   public static final String KEYVALUE_COLUMN = "kv";
   public static final String VALUE_COLUMN = "v";
 
+  public static final String KEYVALUE_SEPARATOR = ":";
+
   private final IndexedTable indexedTable;
 
   public BusinessMetadataDataset(IndexedTable indexedTable) {
-    super("ignore", indexedTable);
+    super("businessMetadataIndexedTable", indexedTable);
     this.indexedTable = indexedTable;
   }
 
@@ -187,13 +191,56 @@ public class BusinessMetadataDataset extends AbstractDataset {
    * Find the instance of {@link BusinessMetadataRecord} based on key.
    *
    * @param value The metadata value to be found.
-   * @return The {@Iterable} of {@link BusinessMetadataRecord} that fit the key.
+   * @param type The target type of objects to search from.
+   * @return The {@link Iterable} of {@link BusinessMetadataRecord} that fit the value.
    */
-  public Iterable<BusinessMetadataRecord> findBusinessMetadataOnValue(String value) {
+  public List<BusinessMetadataRecord> findBusinessMetadataOnValue(String value, MetadataSearchTargetType type) {
+    return executeSearchOnColumns(BusinessMetadataDataset.VALUE_COLUMN, value, type);
+  }
 
-    // TODO ADD CODE
+  /**
+   * Find the instance of {@link BusinessMetadataRecord} for key:value pair
+   *
+   * @param keyValue The metadata value to be found.
+   * @param type The target type of objects to search from.
+   * @return The {@link Iterable} of {@link BusinessMetadataRecord} that fit the key value pair.
+   */
+  public List<BusinessMetadataRecord> findBusinessMetadataOnKeyValue(String keyValue, MetadataSearchTargetType type) {
+    return executeSearchOnColumns(BusinessMetadataDataset.KEYVALUE_COLUMN, keyValue, type);
+  }
 
-    return Lists.newArrayList();
+  // Helper method to execute IndexedTable search on target index column.
+  List<BusinessMetadataRecord> executeSearchOnColumns(String column, String searchValue,
+                                                      MetadataSearchTargetType type) {
+    List<BusinessMetadataRecord> results = new LinkedList<>();
+    Scanner scanner = indexedTable.readByIndex(Bytes.toBytes(column), Bytes.toBytes(searchValue));
+    try {
+      Row next;
+      while ((next = scanner.next()) != null) {
+        String rowValue = next.getString(VALUE_COLUMN);
+        if (rowValue == null) {
+          continue;
+        }
+
+        final byte[] rowKey = next.getRow();
+        String targetType = getTargetType(rowKey);
+
+        // Filter on target type if not ALL
+        if ((type != MetadataSearchTargetType.ALL) && (!targetType.equals(type.getInternalName()))) {
+          continue;
+        }
+
+        Id.NamespacedId targetId = getNamespaceIdFromKey(targetType, new MDSKey(rowKey));
+        String key = getMetadataKey(targetType, rowKey);
+        String value = Bytes.toString(next.get(Bytes.toBytes(BusinessMetadataDataset.VALUE_COLUMN)));
+        BusinessMetadataRecord record = new BusinessMetadataRecord(targetId, key, value);
+        results.add(record);
+      }
+    } finally {
+      scanner.close();
+    }
+
+    return results;
   }
 
   void addNamespaceIdToKey(final MDSKey.Builder builder, Id.NamespacedId namespacedId) {
@@ -202,7 +249,7 @@ public class BusinessMetadataDataset extends AbstractDataset {
       Id.Program program = (Id.Program) namespacedId;
       String namespaceId = program.getNamespaceId();
       String appId = program.getApplicationId();
-      String programType = program.getType().toString();
+      String programType = program.getType().name();
       String programId = program.getId();
       builder.add(namespaceId);
       builder.add(appId);
@@ -231,8 +278,7 @@ public class BusinessMetadataDataset extends AbstractDataset {
     }
   }
 
-  Id.NamespacedId getNamespaceIdFromKey(Class<? extends Id> idType, MDSKey key) {
-    String type = Id.getType(idType);
+  Id.NamespacedId getNamespaceIdFromKey(String type, MDSKey key) {
     MDSKey.Splitter keySplitter = key.split();
 
     // The rowkey is [targetType][targetId][key], so skip the first string.
@@ -264,7 +310,7 @@ public class BusinessMetadataDataset extends AbstractDataset {
       Put put = new Put(id.getKey());
 
       // Now add the index columns.
-      put.add(Bytes.toBytes(KEYVALUE_COLUMN), Bytes.toBytes(record.getKey() + ":" + record.getValue()));
+      put.add(Bytes.toBytes(KEYVALUE_COLUMN), Bytes.toBytes(record.getKey() + KEYVALUE_SEPARATOR + record.getValue()));
       put.add(Bytes.toBytes(VALUE_COLUMN), Bytes.toBytes(record.getValue()));
 
       indexedTable.put(put);
@@ -314,6 +360,12 @@ public class BusinessMetadataDataset extends AbstractDataset {
     } else {
       throw new IllegalArgumentException("Illegal Type " + type + " of metadata source.");
     }
+    return keySplitter.getString();
+  }
+
+  private String getTargetType(byte[] rowKey) {
+    MDSKey.Splitter keySplitter = new MDSKey(rowKey).split();
+    // The rowkey is [targetType][targetId][key]
     return keySplitter.getString();
   }
 }

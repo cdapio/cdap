@@ -13,28 +13,25 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
-package co.cask.cdap.internal.app.runtime.artifact;
-
-import co.cask.cdap.internal.app.runtime.adapter.ArtifactDescriptor;
+package co.cask.cdap.proto;
 
 /**
- * Details about an artifact, including info about the artifact itself and metadata about the contents of the artifact.
+ * Supported types for metadata search.
  */
-public class ArtifactDetail {
-  private final ArtifactDescriptor descriptor;
-  private final ArtifactMeta meta;
+public enum MetadataSearchTargetType {
+  ALL("All"),
+  APP("Application"),
+  PROGRAM("Program"),
+  DATASET("DatasetInstance"),
+  STREAM("Stream");
 
-  public ArtifactDetail(ArtifactDescriptor descriptor, ArtifactMeta meta) {
-    this.descriptor = descriptor;
-    this.meta = meta;
+  private final String internalName;
+
+  private MetadataSearchTargetType(String internalName) {
+    this.internalName = internalName;
   }
 
-  public ArtifactDescriptor getDescriptor() {
-    return descriptor;
-  }
-
-  public ArtifactMeta getMeta() {
-    return meta;
+  public String getInternalName() {
+    return internalName;
   }
 }

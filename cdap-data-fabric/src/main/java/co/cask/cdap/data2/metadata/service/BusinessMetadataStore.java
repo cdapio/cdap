@@ -25,6 +25,8 @@ import co.cask.cdap.data2.dataset2.tx.Transactional;
 import co.cask.cdap.data2.metadata.dataset.BusinessMetadataDataset;
 import co.cask.cdap.data2.metadata.dataset.BusinessMetadataRecord;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.MetadataSearchResultRecord;
+import co.cask.cdap.proto.MetadataSearchTargetType;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.base.Joiner;
@@ -59,7 +61,7 @@ public class BusinessMetadataStore {
         try {
           BusinessMetadataDataset dataset =
             DatasetsUtil.getOrCreateDataset(dsFramework, BUSINESS_METADATA_INSTANCE_ID,
-                                            BusinessMetadataDataset.class.getSimpleName(),
+                                            BusinessMetadataDataset.class.getName(),
                                             DatasetProperties.EMPTY, null, null);
             return new BusinessMdsIterable(dataset);
         } catch (DatasetManagementException | IOException | ServiceUnavailableException e) {
@@ -163,6 +165,34 @@ public class BusinessMetadataStore {
         Iterables.removeAll(existingTags, Arrays.asList(tagsToRemove));
         input.businessMds.createBusinessMetadata(entityId, "tags", Joiner.on(",").join(existingTags));
         return null;
+      }
+    });
+  }
+
+  /**
+   * Search to the underlying Business Metadata Dataset.
+   */
+  public Iterable<BusinessMetadataRecord> searchMetadata(final String searchQuery) {
+    return searchMetadataOnType(searchQuery, MetadataSearchTargetType.ALL);
+  }
+
+  /**
+   * Search to the underlying Business Metadata Dataset for a target type.
+   */
+  public Iterable<BusinessMetadataRecord> searchMetadataOnType(final String searchQuery,
+                                                               final MetadataSearchTargetType type) {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<BusinessMdsIterable,
+      Iterable<BusinessMetadataRecord>> () {
+      @Override
+      public Iterable<BusinessMetadataRecord> apply(BusinessMdsIterable input) throws Exception {
+        // Currently we support two types of search formats: value and key:value.
+        // Check for existence of separator char to make sure we did search in the right indexed column.
+        if (searchQuery.contains(BusinessMetadataDataset.KEYVALUE_SEPARATOR)) {
+          // key=value search
+          return input.businessMds.findBusinessMetadataOnKeyValue(searchQuery, type);
+        }
+        // value search
+        return input.businessMds.findBusinessMetadataOnValue(searchQuery, type);
       }
     });
   }

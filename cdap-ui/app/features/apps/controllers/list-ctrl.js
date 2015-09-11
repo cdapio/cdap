@@ -15,12 +15,13 @@
  */
 
 angular.module(PKG.name + '.feature.apps')
-  .controller('AppListController', function CdapAppList($timeout, $scope, MyDataSource, myAppUploader, $alert, $state, MyOrderings, myAdapterApi, GLOBALS) {
+  .controller('AppListController', function CdapAppList($timeout, $scope, MyDataSource, myAppUploader, $alert, $state, MyOrderings, myAdapterApi, GLOBALS, myAdapterFactory) {
     this.MyOrderings = MyOrderings;
     this.apps = [];
     this.currentPage = 1;
     this.searchText = '';
     this.GLOBALS = GLOBALS;
+    this.myAdapterFactory = myAdapterFactory;
 
     var data = new MyDataSource($scope);
 

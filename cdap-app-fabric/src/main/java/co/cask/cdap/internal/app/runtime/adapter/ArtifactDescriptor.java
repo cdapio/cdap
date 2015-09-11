@@ -14,8 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.api.artifact;
+package co.cask.cdap.internal.app.runtime.adapter;
 
+import co.cask.cdap.api.artifact.ArtifactId;
 import org.apache.twill.filesystem.Location;
 
 /**
@@ -67,14 +68,6 @@ public final class ArtifactDescriptor implements Comparable<ArtifactDescriptor> 
 
   @Override
   public int compareTo(ArtifactDescriptor other) {
-    int cmp = artifactId.getScope().compareTo(other.getArtifactId().getScope());
-    if (cmp != 0) {
-      return cmp;
-    }
-    cmp = artifactId.getName().compareTo(other.getArtifactId().getName());
-    if (cmp != 0) {
-      return cmp;
-    }
-    return artifactId.getVersion().compareTo(other.getArtifactId().getVersion());
+    return getArtifactId().compareTo(other.getArtifactId());
   }
 }

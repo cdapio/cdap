@@ -1,4 +1,4 @@
-<!--
+/*
   Copyright © 2015 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -12,12 +12,20 @@
   WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
   License for the specific language governing permissions and limitations under
   the License.
--->
+*/
 
-<br />
-<a ui-sref="adapters.create({data: StatusController.config, type: StatusController.config.artifact.name})">
-  <my-dag data-is-disabled="true"
-            ng-click="StatusController.navigateToStudio()"
-            ng-if="StatusController.nodes.length > 0"
-            data-config="StatusController.nodes"></my-dag>
-</a>
+angular.module(PKG.name + '.services')
+  .factory('myAdapterFactory', function(GLOBALS) {
+    function isCustomApp(artifactName) {
+      return artifactName !== GLOBALS.etlBatch && artifactName !== GLOBALS.etlRealtime;
+    }
+
+    function isETLApp(artifactName) {
+      return artifactName === GLOBALS.etlBatch || artifactName === GLOBALS.etlRealtime;
+    }
+
+    return {
+      isCustomApp: isCustomApp,
+      isETLApp: isETLApp
+    };
+  });

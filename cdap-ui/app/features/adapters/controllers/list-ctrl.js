@@ -15,10 +15,13 @@
  */
 
 angular.module(PKG.name + '.feature.adapters')
-  .controller('AdaptersListController', function(myAdapterApi, $stateParams) {
+  .controller('AdaptersListController', function(myAdapterApi, $stateParams, GLOBALS) {
     this.adaptersList = [];
     this.currentPage = 1;
     this.searchText = '';
+
+    this.GLOBALS = GLOBALS;
+
     myAdapterApi.list({
       namespace: $stateParams.namespace
     })

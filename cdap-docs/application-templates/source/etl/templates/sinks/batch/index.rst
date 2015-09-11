@@ -12,6 +12,8 @@ Sinks: Batch
     Cube <cube>
     Database <database>
     KVTable <kvtable>
+    SnapshotAvro <snapshotavro>
+    SnapshotParquet <snapshotparquet>
     Table <table>
     TPFSAvro <tpfsavro>
     TPFSParquet <tpfsparquet>
