@@ -205,8 +205,6 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
       scheduler.deleteAllSchedules(namespaceId);
       // Delete all applications
       applicationLifecycleService.removeAll(namespaceId);
-      // Delete all adapters
-      adapterService.removeAdapters(namespaceId);
       // Delete all meta data
       store.removeAll(namespaceId);
 

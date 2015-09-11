@@ -360,7 +360,7 @@ public class FlowQueuePendingCorrector extends AbstractIdleService {
           return new DefaultStore(cConf, locationFactory, namespacedLocationFactory, txExecutorFactory, dsFramework);
         }
 
-        // This is needed because the LocalAdapterManager, LocalApplicationManager, LocalApplicationTemplateManager
+        // This is needed because the LocalApplicationManager
         // expects a dsframework injection named datasetMDS
         @Provides
         @Singleton
