@@ -327,7 +327,7 @@ public final class ClassPath {
   @VisibleForTesting
   static ImmutableMap<URI, ClassLoader> getClassPathEntries(ClassLoader classloader, Predicate<URI> predicate) {
     LinkedHashMap<URI, ClassLoader> entries = Maps.newLinkedHashMap();
-    // Search parent first, since it's the order ClassLoader#loadClass() uses.
+    // Search parent first, since it's the order ClassLoader#loadPluginClass() uses.
     ClassLoader parent = classloader.getParent();
     if (parent != null) {
       entries.putAll(getClassPathEntries(parent, predicate));

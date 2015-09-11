@@ -16,7 +16,7 @@
 
 package co.cask.cdap.template.etl.common;
 
-import co.cask.cdap.api.templates.plugins.PluginProperties;
+import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.template.etl.api.TransformContext;
 
 /**

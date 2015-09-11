@@ -14,14 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.api.templates.plugins;
-
-import co.cask.cdap.api.annotation.Beta;
+package co.cask.cdap.templates;
 
 /**
  * Contains plugin information.
  */
-@Beta
+@Deprecated
 public final class PluginInfo implements Comparable<PluginInfo> {
 
   private final String fileName;

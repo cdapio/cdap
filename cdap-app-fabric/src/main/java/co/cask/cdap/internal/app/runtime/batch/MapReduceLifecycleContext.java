@@ -26,8 +26,7 @@ import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
-import co.cask.cdap.api.templates.AdapterSpecification;
-import co.cask.cdap.api.templates.plugins.PluginProperties;
+import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -92,10 +91,15 @@ public class MapReduceLifecycleContext<KEYOUT, VALUEOUT> implements MapReduceTas
     return delegate.getWorkflowToken();
   }
 
-  @Nullable
   @Override
-  public AdapterSpecification getAdapterSpecification() {
-    return delegate.getAdapterSpecification();
+  public <T extends Dataset> T getDataset(String name) throws DatasetInstantiationException {
+    return delegate.getDataset(name);
+  }
+
+  @Override
+  public <T extends Dataset> T getDataset(String name,
+                                          Map<String, String> arguments) throws DatasetInstantiationException {
+    return delegate.getDataset(name, arguments);
   }
 
   @Override
@@ -111,32 +115,6 @@ public class MapReduceLifecycleContext<KEYOUT, VALUEOUT> implements MapReduceTas
   @Override
   public <T> T newPluginInstance(String pluginId) throws InstantiationException {
     return delegate.newPluginInstance(pluginId);
-  }
-
-  @Override
-  public <T extends Dataset> T getDataset(String name) throws DatasetInstantiationException {
-    return delegate.getDataset(name);
-  }
-
-  @Override
-  public <T extends Dataset> T getDataset(String name,
-                                          Map<String, String> arguments) throws DatasetInstantiationException {
-    return delegate.getDataset(name, arguments);
-  }
-
-  @Override
-  public PluginProperties getPluginProps(String pluginId) {
-    return delegate.getPluginProps(pluginId);
-  }
-
-  @Override
-  public <T> Class<T> loadClass(String pluginId) {
-    return delegate.loadClass(pluginId);
-  }
-
-  @Override
-  public <T> T newInstance(String pluginId) throws InstantiationException {
-    return delegate.newInstance(pluginId);
   }
 
   @Override

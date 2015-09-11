@@ -14,15 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.plugins.template.test.api;
+package co.cask.cdap.internal.app.runtime.artifact.plugin;
+
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepositoryTest;
+import co.cask.cdap.internal.app.runtime.artifact.app.PluginTestRunnable;
 
 /**
- * A dummy class for testing template plugin classloading
+ * A empty class for the purpose of {@link ArtifactRepositoryTest} only. Have it implements a template API class
+ * for verifying classloading.
  */
-public abstract class PluginTestRunnable implements Runnable {
-
-  @Override
-  public void run() {
-    // No-op
-  }
+public final class EmptyClass extends PluginTestRunnable {
 }

@@ -14,11 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.api.artifact;
+package co.cask.cdap.api.plugin;
 
 import co.cask.cdap.api.DatasetConfigurer;
-import co.cask.cdap.api.templates.AdapterContext;
-import co.cask.cdap.api.templates.plugins.PluginProperties;
 
 import javax.annotation.Nullable;
 
@@ -28,8 +26,8 @@ import javax.annotation.Nullable;
  */
 public interface PluginConfigurer extends DatasetConfigurer {
   /**
-   * Adds a Plugin usage to the Adapter and create a new instance.
-   * The Plugin will be accessible at execution time via the {@link AdapterContext}.
+   * Adds a Plugin usage to the Application and create a new instance.
+   * The Plugin will be accessible at execution time via the {@link PluginContext}.
    *
    * @param pluginType plugin type name
    * @param pluginName plugin name
@@ -44,8 +42,8 @@ public interface PluginConfigurer extends DatasetConfigurer {
   <T> T usePlugin(String pluginType, String pluginName, String pluginId, PluginProperties properties);
 
   /**
-   * Adds a Plugin usage to the Adapter and create a new instance.
-   * The Plugin will be accessible at execution time via the {@link AdapterContext}.
+   * Adds a Plugin usage to the Application and create a new instance.
+   * The Plugin will be accessible at execution time via the {@link PluginContext}.
    *
    * @param pluginType plugin type name
    * @param pluginName plugin name
@@ -62,8 +60,8 @@ public interface PluginConfigurer extends DatasetConfigurer {
                   String pluginId, PluginProperties properties, PluginSelector selector);
 
   /**
-   * Adds a Plugin usage to the Adapter.
-   * The Plugin will be accessible at execution time via the {@link AdapterContext}.
+   * Adds a Plugin usage to the Application.
+   * The Plugin will be accessible at execution time via the {@link PluginContext}.
    *
    * @param pluginType plugin type name
    * @param pluginName plugin name
@@ -78,8 +76,8 @@ public interface PluginConfigurer extends DatasetConfigurer {
   <T> Class<T> usePluginClass(String pluginType, String pluginName, String pluginId, PluginProperties properties);
 
   /**
-   * Adds a Plugin usage to the Adapter.
-   * The Plugin will be accessible at execution time via the {@link AdapterContext}.
+   * Adds a Plugin usage to the Application.
+   * The Plugin will be accessible at execution time via the {@link PluginContext}.
    *
    * @param pluginType plugin type name
    * @param pluginName plugin name

@@ -26,7 +26,6 @@ import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowMapReduceProgram;
-import co.cask.cdap.templates.AdapterDefinition;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionAware;
 import com.google.common.base.Preconditions;
@@ -72,8 +71,6 @@ public abstract class AbstractMapReduceTaskContextBuilder {
                                          LocationFactory locationFactory,
                                          @Nullable String inputDataSetName,
                                          @Nullable String outputDataSetName,
-                                         @Nullable AdapterDefinition adapterSpec,
-                                         @Nullable PluginInstantiator pluginInstantiator,
                                          @Nullable PluginInstantiator artifactPluginInstantiator) {
     Injector injector = prepare();
 
@@ -115,7 +112,7 @@ public abstract class AbstractMapReduceTaskContextBuilder {
       new BasicMapReduceTaskContext(program, type, RunIds.fromString(runId), taskId, runtimeArguments, datasets, spec,
                                     logicalStartTime, workflowToken, discoveryServiceClient,
                                     metricsCollectionService, datasetFramework, locationFactory,
-                                    adapterSpec, pluginInstantiator, artifactPluginInstantiator);
+                                    artifactPluginInstantiator);
 
     // propagating tx to all txAware guys
     // NOTE: tx will be committed by client code

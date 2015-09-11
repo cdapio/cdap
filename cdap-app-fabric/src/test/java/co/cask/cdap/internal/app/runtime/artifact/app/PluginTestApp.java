@@ -14,15 +14,18 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.adapter;
+package co.cask.cdap.internal.app.runtime.artifact.app;
 
-import co.cask.cdap.common.ConflictException;
+import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.app.Application;
 
 /**
- * Thrown when Adapter creation is requested, but an adapter already exists.
+ * An {@link Application} for testing plugin supports.
  */
-public class AdapterAlreadyExistsException extends ConflictException {
-  public AdapterAlreadyExistsException(String adapterName) {
-    super(String.format("Adapter %s already exists.", adapterName));
+public class PluginTestApp extends AbstractApplication {
+
+  @Override
+  public void configure() {
+
   }
 }

@@ -14,9 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.api.templates.plugins;
-
-import co.cask.cdap.api.annotation.Beta;
+package co.cask.cdap.templates;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -31,7 +29,7 @@ import javax.annotation.Nullable;
  * }
  * </pre>
  */
-@Beta
+@Deprecated
 public final class PluginVersion implements Comparable<PluginVersion> {
 
   private static final Pattern PATTERN = Pattern.compile("(\\d+)(?:\\.(\\d+))?(?:\\.(\\d+))?(?:[.\\-](.*))?");

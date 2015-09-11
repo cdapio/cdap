@@ -14,26 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.proto.template;
-
-import co.cask.cdap.api.templates.ApplicationTemplate;
-import co.cask.cdap.proto.ProgramType;
-
-import java.util.Set;
+package co.cask.cdap.internal.app.runtime.artifact.app;
 
 /**
- * Contains detail information about an {@link ApplicationTemplate}.
+ * A dummy class for testing template plugin classloading
  */
-public class ApplicationTemplateDetail extends ApplicationTemplateMeta {
+public abstract class PluginTestRunnable implements Runnable {
 
-  private final Set<String> extensions;
-
-  public ApplicationTemplateDetail(String name, String description, ProgramType programType, Set<String> extensions) {
-    super(name, description, programType);
-    this.extensions = extensions;
-  }
-
-  public Set<String> getExtensions() {
-    return extensions;
+  @Override
+  public void run() {
+    // No-op
   }
 }

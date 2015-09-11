@@ -24,7 +24,6 @@ import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.template.etl.common.ETLStage;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import com.google.common.base.Throwables;
 
 import java.util.Map;
 import java.util.Properties;

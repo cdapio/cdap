@@ -19,7 +19,6 @@ package co.cask.cdap.client.common;
 import co.cask.cdap.StandaloneTester;
 import co.cask.cdap.cli.util.InstanceURIParser;
 import co.cask.cdap.client.ProgramClient;
-import co.cask.cdap.client.app.DummyWorkerTemplate;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.common.NotFoundException;
@@ -55,8 +54,7 @@ import java.util.concurrent.TimeoutException;
 public abstract class ClientTestBase {
 
   @ClassRule
-  public static final SingletonExternalResource STANDALONE =
-    new SingletonExternalResource(new StandaloneTester(DummyWorkerTemplate.class));
+  public static final SingletonExternalResource STANDALONE = new SingletonExternalResource(new StandaloneTester());
 
   @ClassRule
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();

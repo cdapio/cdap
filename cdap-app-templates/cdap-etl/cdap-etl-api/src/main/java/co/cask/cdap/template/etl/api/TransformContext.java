@@ -18,8 +18,9 @@ package co.cask.cdap.template.etl.api;
 
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.metrics.Metrics;
-import co.cask.cdap.api.templates.AdapterConfigurer;
-import co.cask.cdap.api.templates.plugins.PluginProperties;
+import co.cask.cdap.api.plugin.PluginConfig;
+import co.cask.cdap.api.plugin.PluginConfigurer;
+import co.cask.cdap.api.plugin.PluginProperties;
 
 /**
  * Context passed to ETL stages.
@@ -55,15 +56,12 @@ public interface TransformContext {
 
   /**
    * Creates a new instance of a plugin.
-   * The instance returned will have the {@link co.cask.cdap.api.templates.plugins.PluginConfig} setup with
+   * The instance returned will have the {@link PluginConfig} setup with
    * {@link PluginProperties} provided at the time when the
-   * {@link co.cask.cdap.api.templates.AdapterConfigurer#usePlugin(String, String, String, PluginProperties)}
-   * was called during the
-   * {@link co.cask.cdap.api.templates.ApplicationTemplate#configureAdapter(String,
-   * Object, co.cask.cdap.api.templates.AdapterConfigurer)} adapter configuration time.
+   * {@link PluginConfigurer#usePlugin(String, String, String, PluginProperties)}
+   * was called during application configuration time.
    *
-   * @param pluginId the unique identifier provide when declaring plugin usage in
-   * {@link co.cask.cdap.api.templates.AdapterConfigurer}
+   * @param pluginId the unique identifier provide when declaring plugin usage in {@link PluginConfigurer}
    * @param <T> the class type of the plugin
    * @return A new instance of the plugin being specified by the arguments
    *
@@ -76,7 +74,7 @@ public interface TransformContext {
   /**
    * Loads and returns a plugin class as specified by the given type and name.
    *
-   * @param pluginId the unique identifier provide when declaring plugin usage in {@link AdapterConfigurer}.
+   * @param pluginId the unique identifier provide when declaring plugin usage in {@link PluginConfigurer}.
    * @param <T> the class type of the plugin
    * @return the resulting plugin {@link Class}.
    * @throws IllegalArgumentException if no plugin for the given type and name

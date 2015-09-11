@@ -24,13 +24,12 @@ import co.cask.cdap.api.artifact.ApplicationClass;
 import co.cask.cdap.api.artifact.ArtifactClasses;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
-import co.cask.cdap.api.templates.plugins.PluginClass;
-import co.cask.cdap.api.templates.plugins.PluginConfig;
-import co.cask.cdap.api.templates.plugins.PluginPropertyField;
+import co.cask.cdap.api.plugin.PluginClass;
+import co.cask.cdap.api.plugin.PluginConfig;
+import co.cask.cdap.api.plugin.PluginPropertyField;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.common.InvalidArtifactException;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
@@ -81,38 +80,10 @@ public class ArtifactInspector {
   private final ArtifactClassLoaderFactory artifactClassLoaderFactory;
   private final ReflectionSchemaGenerator schemaGenerator;
 
-  // TODO: reduce visibility once PluginRepository is replaced by ArtifactRepository
-  public ArtifactInspector(CConfiguration cConf) {
-    this(cConf, new ArtifactClassLoaderFactory(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
-      cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile()));
-  }
-
   ArtifactInspector(CConfiguration cConf, ArtifactClassLoaderFactory artifactClassLoaderFactory) {
     this.cConf = cConf;
     this.artifactClassLoaderFactory = artifactClassLoaderFactory;
     this.schemaGenerator = new ReflectionSchemaGenerator();
-  }
-
-  /**
-   * Inspect the given artifact to determine the classes contained in the artifact.
-   * TODO: remove once PluginRepository is gone
-   *
-   * @param artifactId the id of the artifact to inspect
-   * @param artifactFile the artifact file
-   * @param template the template this plugin artifact extends
-   * @param parentClassLoader the parent classloader to use when inspecting plugins contained in the artifact.
-   *                          For example, a ProgramClassLoader created from the artifact the input artifact extends
-   * @return metadata about the classes contained in the artifact
-   * @throws IOException if there was an exception opening the jar file
-   * @throws InvalidArtifactException if inspection failed due to a problem with the artifact, such as a class not
-   *                                  found error, or if the application main class isn't really an application
-   */
-  public ArtifactClasses inspectArtifact(Id.Artifact artifactId, File artifactFile, String template,
-                                         ClassLoader parentClassLoader) throws IOException, InvalidArtifactException {
-
-    try (PluginInstantiator pluginInstantiator = new PluginInstantiator(cConf, template, parentClassLoader)) {
-      return inspectPlugins(ArtifactClasses.builder(), artifactId, artifactFile, pluginInstantiator).build();
-    }
   }
 
   /**
@@ -180,7 +151,7 @@ public class ArtifactInspector {
         TypeToken typeToken = TypeToken.of(app.getClass());
         TypeToken<?> resultToken = typeToken.resolveType(Application.class.getTypeParameters()[0]);
         Schema configSchema = null;
-        // if the user parameterized their template, like 'xyz extends ApplicationTemplate<T>',
+        // if the user parameterized their application, like 'xyz extends Application<T>',
         // we can deserialize the config into that object. Otherwise it'll just be a Config
         if (resultToken.getType() instanceof Class) {
           configSchema = schemaGenerator.generate(resultToken.getType());

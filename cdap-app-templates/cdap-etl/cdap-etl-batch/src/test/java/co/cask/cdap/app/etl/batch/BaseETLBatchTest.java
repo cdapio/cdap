@@ -18,8 +18,8 @@ package co.cask.cdap.app.etl.batch;
 
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
-import co.cask.cdap.api.templates.plugins.PluginClass;
-import co.cask.cdap.api.templates.plugins.PluginPropertyField;
+import co.cask.cdap.api.plugin.PluginClass;
+import co.cask.cdap.api.plugin.PluginPropertyField;
 import co.cask.cdap.app.test.sink.MetaKVTableSink;
 import co.cask.cdap.app.test.source.MetaKVTableSource;
 import co.cask.cdap.proto.Id;
@@ -49,7 +49,6 @@ import co.cask.cdap.test.TestConfiguration;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.google.gson.Gson;
 import org.apache.avro.file.DataFileStream;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericRecord;
@@ -78,9 +77,6 @@ public class BaseETLBatchTest extends TestBase {
 
   protected static final Id.Artifact APP_ARTIFACT_ID = Id.Artifact.from(Id.Namespace.DEFAULT, "etlbatch", "3.2.0");
   protected static final ArtifactSummary ETLBATCH_ARTIFACT = new ArtifactSummary("etlbatch", "3.2.0");
-  protected static final Id.Namespace NAMESPACE = Id.Namespace.DEFAULT;
-  protected static final Id.ApplicationTemplate TEMPLATE_ID = Id.ApplicationTemplate.from("ETLBatch");
-  protected static final Gson GSON = new Gson();
 
   @BeforeClass
   public static void setupTest() throws Exception {

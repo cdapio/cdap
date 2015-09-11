@@ -91,7 +91,7 @@ public class WorkflowStatsSLAHttpHandlerTest extends AppFabricTestBase {
       RunId mapreduceRunid = RunIds.generate(currentTimeMillis + TimeUnit.SECONDS.toMillis(2));
       store.setWorkflowProgramStart(mapreduceProgram, mapreduceRunid.getId(), workflowProgram.getId(),
                                     workflowRunId.getId(), mapreduceProgram.getId(),
-                                    RunIds.getTime(mapreduceRunid, TimeUnit.SECONDS), null, null);
+                                    RunIds.getTime(mapreduceRunid, TimeUnit.SECONDS), null);
       store.setStop(mapreduceProgram, mapreduceRunid.getId(),
                     // map-reduce job ran for 17 seconds
                     TimeUnit.MILLISECONDS.toSeconds(currentTimeMillis) + 19,
@@ -103,7 +103,7 @@ public class WorkflowStatsSLAHttpHandlerTest extends AppFabricTestBase {
         RunId sparkRunid = RunIds.generate(currentTimeMillis + TimeUnit.SECONDS.toMillis(20));
         store.setWorkflowProgramStart(sparkProgram, sparkRunid.getId(), workflowProgram.getId(),
                                       workflowRunId.getId(), sparkProgram.getId(),
-                                      RunIds.getTime(sparkRunid, TimeUnit.SECONDS), null, null);
+                                      RunIds.getTime(sparkRunid, TimeUnit.SECONDS), null);
         // spark job runs for 38 seconds
         long stopTime = TimeUnit.MILLISECONDS.toSeconds(currentTimeMillis) + 58;
         if (i == 4) {
@@ -248,7 +248,7 @@ public class WorkflowStatsSLAHttpHandlerTest extends AppFabricTestBase {
       RunId mapreduceRunid = RunIds.generate(currentTimeMillis + TimeUnit.SECONDS.toMillis(2));
       store.setWorkflowProgramStart(mapreduceProgram, mapreduceRunid.getId(), workflowProgram.getId(),
                                     workflowRunId.getId(), mapreduceProgram.getId(),
-                                    RunIds.getTime(mapreduceRunid, TimeUnit.SECONDS), null, null);
+                                    RunIds.getTime(mapreduceRunid, TimeUnit.SECONDS), null);
       store.setStop(mapreduceProgram, mapreduceRunid.getId(),
                     // map-reduce job ran for 17 seconds
                     TimeUnit.MILLISECONDS.toSeconds(currentTimeMillis) + 19,
@@ -270,7 +270,7 @@ public class WorkflowStatsSLAHttpHandlerTest extends AppFabricTestBase {
       RunId sparkRunid = RunIds.generate(currentTimeMillis + TimeUnit.SECONDS.toMillis(20));
       store.setWorkflowProgramStart(sparkProgram, sparkRunid.getId(), workflowProgram.getId(),
                                     workflowRunId.getId(), sparkProgram.getId(),
-                                    RunIds.getTime(sparkRunid, TimeUnit.SECONDS), null, null);
+                                    RunIds.getTime(sparkRunid, TimeUnit.SECONDS), null);
 
       // spark job runs for 38 seconds
       long stopTime = TimeUnit.MILLISECONDS.toSeconds(currentTimeMillis) + 58;

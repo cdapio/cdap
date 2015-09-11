@@ -19,7 +19,6 @@ package co.cask.cdap.api.mapreduce;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.ServiceDiscoverer;
-import co.cask.cdap.api.artifact.PluginContext;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.batch.BatchReadable;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
@@ -27,8 +26,7 @@ import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.schedule.Schedule;
-import co.cask.cdap.api.templates.AdapterContext;
+import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowToken;
 
@@ -39,8 +37,7 @@ import javax.annotation.Nullable;
 /**
  * MapReduce job execution context.
  */
-public interface MapReduceContext extends RuntimeContext, DatasetContext, ServiceDiscoverer, AdapterContext,
-  PluginContext {
+public interface MapReduceContext extends RuntimeContext, DatasetContext, ServiceDiscoverer, PluginContext {
 
   /**
    * @return The specification used to configure this {@link MapReduce} job instance.

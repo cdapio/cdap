@@ -17,10 +17,10 @@
 package co.cask.cdap.internal.app.runtime.adapter;
 
 import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.api.artifact.Plugin;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
+import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.schedule.Schedules;

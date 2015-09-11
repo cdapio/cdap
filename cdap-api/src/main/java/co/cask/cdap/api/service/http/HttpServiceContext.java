@@ -18,8 +18,8 @@ package co.cask.cdap.api.service.http;
 
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.ServiceDiscoverer;
-import co.cask.cdap.api.artifact.PluginContext;
 import co.cask.cdap.api.data.DatasetContext;
+import co.cask.cdap.api.plugin.PluginContext;
 
 /**
  * The context for a {@link HttpServiceHandler}. Currently contains methods to receive the

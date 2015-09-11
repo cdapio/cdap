@@ -14,11 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.api.artifact;
+package co.cask.cdap.api.plugin;
 
 import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.templates.plugins.PluginConfig;
-import co.cask.cdap.api.templates.plugins.PluginProperties;
 
 /**
  * Provides access to plugin context when a program is executing.
@@ -35,7 +33,7 @@ public interface PluginContext {
    * @throws IllegalArgumentException if pluginId is not found
    * @throws UnsupportedOperationException if the program does not support plugin
    */
-  PluginProperties getPluginProps(String pluginId);
+  PluginProperties getPluginProperties(String pluginId);
 
   /**
    * Loads and returns a plugin class as specified by the given plugin id.
@@ -46,7 +44,7 @@ public interface PluginContext {
    * @throws IllegalArgumentException if pluginId is not found
    * @throws UnsupportedOperationException if the program does not support plugin
    */
-  <T> Class<T> loadClass(String pluginId);
+  <T> Class<T> loadPluginClass(String pluginId);
 
   /**
    * Creates a new instance of a plugin. The instance returned will have the {@link PluginConfig} setup with
@@ -62,5 +60,5 @@ public interface PluginContext {
    * @throws IllegalArgumentException if pluginId is not found
    * @throws UnsupportedOperationException if the program does not support plugin
    */
-  <T> T newInstance(String pluginId) throws InstantiationException;
+  <T> T newPluginInstance(String pluginId) throws InstantiationException;
 }
