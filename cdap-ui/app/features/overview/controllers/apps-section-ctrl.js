@@ -27,6 +27,7 @@ angular.module(PKG.name + '.feature.overview')
     })
       .then(function(res) {
         this.apps = this.apps.concat(res);
+        console.info('apps: ', this.apps);
       }.bind(this));
 
     var params = {
