@@ -52,6 +52,16 @@ angular.module(PKG.name+'.feature.apps')
         .state('apps.detail.overview', {
           url: '/overview',
           templateUrl: '/assets/features/apps/templates/detail.html',
+          resolve: {
+            rAppData: function(MyDataSource, $stateParams) {
+              var datasrc = new MyDataSource();
+              return datasrc.request({
+                _cdapPath: '/namespaces/' + $stateParams.namespace + '/apps/' + $stateParams.appId
+              });
+            }
+          },
+          controller: 'AppDetailController',
+          controllerAs: 'DetailController',
           ncyBreadcrumb: {
             skip: true
           }
@@ -65,6 +75,17 @@ angular.module(PKG.name+'.feature.apps')
             controller: 'AppDetailStatusController',
             controllerAs: 'StatusController',
             templateUrl: '/assets/features/apps/templates/tabs/status.html'
+          })
+
+          .state('apps.detail.overview.programs', {
+            url: '/programs',
+            ncyBreadcrumb: {
+              parent: 'apps.list',
+              label: '{{$state.params.appId}}'
+            },
+            controller: 'AppDetailProgramsController',
+            controllerAs: 'ProgramsController',
+            templateUrl: '/assets/features/apps/templates/tabs/programs.html'
           })
 
           .state('apps.detail.overview.datasets', {

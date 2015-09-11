@@ -1,18 +1,18 @@
 <!--
   Copyright © 2015 Cask Data, Inc.
- 
+
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
   the License at
- 
+
   http://www.apache.org/licenses/LICENSE-2.0
- 
+
   Unless required by applicable law or agreed to in writing, software
   distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
   WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
   License for the specific language governing permissions and limitations under
   the License.
---> 
+-->
 
 <my-breadcrumbs></my-breadcrumbs>
   <div class="row">
@@ -21,8 +21,20 @@
         <span ng-bind="$state.params.appId"></span>
       </h2>
       <div class="type-block">
-        <span class="icon-app"></span>
-        <small> Type: App </small>
+        <span ng-if="DetailController.artifact.name !== DetailController.GLOBALS.etlBatch && DetailController.artifact.name !== DetailController.GLOBALS.etlRealtime">
+          <span class="icon-app"></span>
+          <small> Type: App </small>
+        </span>
+        <span ng-if="DetailController.artifact.name === DetailController.GLOBALS.etlBatch || DetailController.artifact.name === DetailController.GLOBALS.etlRealtime">
+          <span ng-if="DetailController.artifact.name === DetailController.GLOBALS.etlBatch">
+            <span class="icon-ETLBatch"></span>
+            <small> Type: ETL Batch </small>
+          </span>
+          <span ng-if="DetailController.artifact.name === DetailController.GLOBALS.etlRealtime">
+            <span class="icon-ETLRealtime"></span>
+            <small> Type: ETL Realtime </small>
+          </span>
+        </span>
       </div>
     </div>
     <div class="col-sm-6 text-right">
@@ -53,10 +65,24 @@
     </div>
   </div>
   <div class="cdap-subnav-end"></div>
-  <ul class="nav nav-tabs slanted-tabs" role="tablist">
+  <ul class="nav nav-tabs slanted-tabs" role="tablist" ng-if="DetailController.isHydrator">
 
     <li role="presentation" ui-sref-active="active">
       <a ui-sref="apps.detail.overview.status" ui-sref-opts="{reload: true}" role="tab">Status</a>
+    </li>
+
+    <li role="presentation" ui-sref-active="active">
+      <a ui-sref="apps.detail.overview.programs" ui-sref-opts="{reload: true}" role="tab">Programs</a>
+    </li>
+
+    <li role="presentation" ui-sref-active="active">
+      <a ui-sref="apps.detail.overview.datasets" ui-sref-opts="{reload: true}" role="tab">Datasets</a>
+    </li>
+
+  </ul>
+  <ul class="nav nav-tabs slanted-tabs" role="tablist" ng-if="!DetailController.isHydrator">
+    <li role="presentation" ui-sref-active="active">
+      <a ui-sref="apps.detail.overview.programs" ui-sref-opts="{reload: true}" role="tab">Programs</a>
     </li>
 
     <li role="presentation" ui-sref-active="active">
