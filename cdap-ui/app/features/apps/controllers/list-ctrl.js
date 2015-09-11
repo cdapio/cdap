@@ -29,7 +29,6 @@ angular.module(PKG.name + '.feature.apps')
     })
       .then(function(apps) {
         this.apps = this.apps.concat(apps);
-        console.info('apps: ', this.apps);
       }.bind(this));
     this.onFileSelected = myAppUploader.upload;
 
