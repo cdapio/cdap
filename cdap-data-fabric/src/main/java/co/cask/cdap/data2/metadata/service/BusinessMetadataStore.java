@@ -186,8 +186,8 @@ public class BusinessMetadataStore {
       @Override
       public Iterable<BusinessMetadataRecord> apply(BusinessMdsIterable input) throws Exception {
         // Currently we support two types of search formats: value and key:value.
-        // Check for exiatance of ':' char to make sure we did search in the right indexed column.
-        if (searchQuery.contains(":")) {
+        // Check for existence of separator char to make sure we did search in the right indexed column.
+        if (searchQuery.contains(BusinessMetadataDataset.KEYVALUE_SEPARATOR)) {
           // key=value search
           return input.businessMds.findBusinessMetadataOnKeyValue(searchQuery, type);
         }

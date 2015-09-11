@@ -47,6 +47,8 @@ public class BusinessMetadataDataset extends AbstractDataset {
   public static final String KEYVALUE_COLUMN = "kv";
   public static final String VALUE_COLUMN = "v";
 
+  public static final String KEYVALUE_SEPARATOR = ":";
+
   private final IndexedTable indexedTable;
 
   public BusinessMetadataDataset(IndexedTable indexedTable) {
@@ -308,7 +310,7 @@ public class BusinessMetadataDataset extends AbstractDataset {
       Put put = new Put(id.getKey());
 
       // Now add the index columns.
-      put.add(Bytes.toBytes(KEYVALUE_COLUMN), Bytes.toBytes(record.getKey() + ":" + record.getValue()));
+      put.add(Bytes.toBytes(KEYVALUE_COLUMN), Bytes.toBytes(record.getKey() + KEYVALUE_SEPARATOR + record.getValue()));
       put.add(Bytes.toBytes(VALUE_COLUMN), Bytes.toBytes(record.getValue()));
 
       indexedTable.put(put);

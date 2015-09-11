@@ -130,8 +130,9 @@ public class BusinessMetadataDatasetTest {
     dataset.createBusinessMetadata(record2);
 
     // Search for it based on value
-    List<BusinessMetadataRecord> results = dataset.findBusinessMetadataOnKeyValue("key1:value1",
-                                                                                  MetadataSearchTargetType.PROGRAM);
+    List<BusinessMetadataRecord> results =
+      dataset.findBusinessMetadataOnKeyValue("key1" + BusinessMetadataDataset.KEYVALUE_SEPARATOR + "value1",
+                                             MetadataSearchTargetType.PROGRAM);
 
     // Assert check
     Assert.assertEquals(1, results.size());
