@@ -51,7 +51,7 @@ import java.util.Map;
  * mapping configuration is required, following {@link StructuredRecordToCubeFact} documentation.
  */
 // todo: add unit-test once CDAP-2156 is resolved
-@Plugin(type = "sink")
+@Plugin(type = "batchsink")
 @Name("Cube")
 @Description("CDAP Cube Dataset Batch Sink")
 public class BatchCubeSink extends BatchWritableSink<StructuredRecord, byte[], CubeFact> {

@@ -43,7 +43,7 @@ import javax.annotation.Nullable;
 /**
  * A {@link BatchSink} to write Parquet records to a {@link TimePartitionedFileSet}.
  */
-@Plugin(type = "sink")
+@Plugin(type = "batchsink")
 @Name("TPFSParquet")
 @Description("Sink for a TimePartitionedFileSet that writes data in Parquet format.")
 public class TimePartitionedFileSetDatasetParquetSink extends

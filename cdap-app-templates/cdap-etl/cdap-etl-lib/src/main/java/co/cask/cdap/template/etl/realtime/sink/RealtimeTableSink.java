@@ -39,7 +39,7 @@ import java.util.Map;
 /**
  * Real-time sink for Table
  */
-@Plugin(type = "sink")
+@Plugin(type = "realtimesink")
 @Name("Table")
 @Description("Real Time Sink for CDAP Table dataset")
 public class RealtimeTableSink extends RealtimeSink<StructuredRecord> {

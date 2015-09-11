@@ -54,7 +54,7 @@ import java.util.Map;
 /**
  * Sink that can be configured to export data to a database table.
  */
-@Plugin(type = "sink")
+@Plugin(type = "batchsink")
 @Name("Database")
 @Description("Writes records to a database table. Each record will be written to a row in the table.")
 public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> {

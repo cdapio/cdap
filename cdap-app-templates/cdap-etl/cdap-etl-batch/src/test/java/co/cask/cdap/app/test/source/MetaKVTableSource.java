@@ -28,7 +28,7 @@ import co.cask.cdap.template.etl.batch.source.KVTableSource;
 /**
  * Test Batch Source that writes to a table in {@link BatchSource#prepareRun} and {@link BatchSource#onRunFinish}.
  */
-@Plugin(type = "source")
+@Plugin(type = "batchsource")
 @Name("MetaKVTable")
 public class MetaKVTableSource extends KVTableSource {
   public static final String META_TABLE = "sourceMetaTable";

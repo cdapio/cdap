@@ -94,7 +94,7 @@ public class ETLMapReduce extends AbstractMapReduce {
     setName(NAME);
     setDescription("MapReduce driver for Batch ETL Adapters");
 
-    PipelineRegisterer pipelineRegisterer = new PipelineRegisterer(getConfigurer());
+    PipelineRegisterer pipelineRegisterer = new PipelineRegisterer(getConfigurer(), "batch");
     //TODO : CDAP-3480 - passing null now, will implement error dataset using Fileset for ETLMapReduce
     Pipeline pipelineIds = pipelineRegisterer.registerPlugins(config, null, DatasetProperties.EMPTY);
 

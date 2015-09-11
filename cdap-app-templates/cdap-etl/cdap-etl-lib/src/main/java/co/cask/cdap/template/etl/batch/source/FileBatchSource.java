@@ -57,7 +57,7 @@ import javax.annotation.Nullable;
 /**
  * A {@link BatchSource} to use any distributed file system as a Source.
  */
-@Plugin(type = "source")
+@Plugin(type = "batchsource")
 @Name("File")
 @Description("Batch source for File Systems")
 public class FileBatchSource extends BatchSource<LongWritable, Object, StructuredRecord> {

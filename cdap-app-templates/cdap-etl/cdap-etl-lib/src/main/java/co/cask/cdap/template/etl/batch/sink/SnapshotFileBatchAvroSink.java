@@ -44,7 +44,7 @@ import javax.annotation.Nullable;
 /**
  * {@link SnapshotFileBatchSink} that stores data in Avro format.
  */
-@Plugin(type = "sink")
+@Plugin(type = "batchsink")
 @Name("SnapshotAvro")
 @Description("Sink for a SnapshotFileSet that writes data in Avro format.")
 public class SnapshotFileBatchAvroSink extends SnapshotFileBatchSink<AvroKey<GenericRecord>, NullWritable> {

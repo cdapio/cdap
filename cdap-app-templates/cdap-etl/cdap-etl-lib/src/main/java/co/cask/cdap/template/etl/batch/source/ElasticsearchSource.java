@@ -46,7 +46,7 @@ import java.io.IOException;
  * </p>
  * An exception will be thrown if the type of any of the fields do not match the type specified by the user.
  */
-@Plugin(type = "source")
+@Plugin(type = "batchsource")
 @Name("Elasticsearch")
 @Description("CDAP Elasticsearch Batch Source pulls documents from Elasticsearch " +
   "according to the query specified by the user and converts each document to a structured record " +

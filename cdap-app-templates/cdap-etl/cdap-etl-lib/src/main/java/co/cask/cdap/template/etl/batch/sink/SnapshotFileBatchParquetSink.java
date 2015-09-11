@@ -44,7 +44,7 @@ import javax.annotation.Nullable;
 /**
  * {@link SnapshotFileBatchSink} that stores data in Parquet format.
  */
-@Plugin(type = "sink")
+@Plugin(type = "batchsink")
 @Name("SnapshotParquet")
 @Description("Sink for a SnapshotFileSet that writes data in Parquet format.")
 public class SnapshotFileBatchParquetSink extends SnapshotFileBatchSink<Void, GenericRecord> {

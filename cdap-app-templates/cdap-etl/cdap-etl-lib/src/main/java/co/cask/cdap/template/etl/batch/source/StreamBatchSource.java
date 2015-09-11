@@ -52,7 +52,7 @@ import javax.annotation.Nullable;
  * A {@link BatchSource} for {@link Stream} to use {@link Stream} as Source.
  */
 @SuppressWarnings("unused")
-@Plugin(type = "source")
+@Plugin(type = "batchsource")
 @Name("Stream")
 @Description("Batch source for a stream.")
 public class StreamBatchSource extends BatchSource<LongWritable, Object, StructuredRecord> {

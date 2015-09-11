@@ -39,7 +39,7 @@ import java.util.Map;
 /**
  * CDAP Table Dataset Batch Sink.
  */
-@Plugin(type = "sink")
+@Plugin(type = "batchsink")
 @Name("Table")
 @Description("Writes records to a Table with one record field mapping to the Table rowkey," +
   " and all other record fields mapping to Table columns.")
