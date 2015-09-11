@@ -53,9 +53,7 @@ public final class RouterPathLookup extends AbstractHttpHandler {
         && !("/" + uriParts[0]).equals(Constants.Gateway.API_VERSION_3)) {
         return fallbackService;
       }
-      if (uriParts[0].equals(Constants.Gateway.API_VERSION_3_TOKEN)) {
-        return getV3RoutingService(uriParts, requestMethod);
-      }
+      return getV3RoutingService(uriParts, requestMethod);
     } catch (Exception e) {
       // Ignore exception. Default routing to app-fabric.
     }
@@ -82,7 +80,9 @@ public final class RouterPathLookup extends AbstractHttpHandler {
       matches(uriParts, "v3", "namespaces", null, "apps", null, null, null, "tags") ||
       matches(uriParts, "v3", "namespaces", null, "datasets", null, "tags") ||
       matches(uriParts, "v3", "namespaces", null, "streams", null, "tags") ||
-      matches(uriParts, "v3", "namespaces", null, "metadata", "search")) {
+      matches(uriParts, "v3", "namespaces", null, "metadata", "search") ||
+      // also route the /v3 ping api to metadata service since there is no other way of checking its status right now
+      matches(uriParts, "ping")) {
       // all metadata REST APIs are currently exposed from Dataset service
       return Constants.Service.METADATA_SERVICE;
     } else if ((matches(uriParts, "v3", "namespaces", null, "streams", null, "adapters")
