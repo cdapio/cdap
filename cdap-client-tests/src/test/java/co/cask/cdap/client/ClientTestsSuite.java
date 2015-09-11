@@ -28,7 +28,6 @@ import org.junit.runners.Suite;
 @Category(XSlowTests.class)
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-  AdapterClientTestRun.class,
   ApplicationClientTestRun.class,
   DatasetClientTestRun.class,
   MetricsClientTestRun.class,

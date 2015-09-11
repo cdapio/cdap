@@ -21,13 +21,10 @@ import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
-import co.cask.cdap.api.templates.ApplicationTemplate;
 import co.cask.cdap.api.templates.plugins.PluginClass;
-import co.cask.cdap.api.templates.plugins.PluginPropertyField;
 import co.cask.cdap.app.DefaultApplicationContext;
 import co.cask.cdap.app.MockAppConfigurer;
 import co.cask.cdap.app.program.ManifestFields;
-import co.cask.cdap.client.AdapterClient;
 import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.client.ArtifactClient;
 import co.cask.cdap.client.NamespaceClient;
@@ -37,12 +34,10 @@ import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.internal.test.PluginJarHelper;
-import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactRange;
-import co.cask.cdap.test.remote.RemoteAdapterManager;
 import co.cask.cdap.test.remote.RemoteApplicationManager;
 import co.cask.cdap.test.remote.RemoteStreamManager;
 import com.google.common.base.Joiner;
@@ -85,7 +80,6 @@ public class IntegrationTestManager implements TestManager {
   private final LocationFactory locationFactory;
   private final ProgramClient programClient;
   private final NamespaceClient namespaceClient;
-  private final AdapterClient adapterClient;
   private final File tmpFolder;
 
   public IntegrationTestManager(ClientConfig clientConfig, RESTClient restClient, File tmpFolder) {
@@ -96,7 +90,6 @@ public class IntegrationTestManager implements TestManager {
     this.applicationClient = new ApplicationClient(clientConfig, restClient);
     this.programClient = new ProgramClient(clientConfig, restClient);
     this.namespaceClient = new NamespaceClient(clientConfig, restClient);
-    this.adapterClient = new AdapterClient(clientConfig, restClient);
     this.artifactClient = new ArtifactClient(clientConfig, restClient);
   }
 
@@ -161,26 +154,6 @@ public class IntegrationTestManager implements TestManager {
                                               AppRequest appRequest) throws Exception {
     applicationClient.deploy(appId, appRequest);
     return new RemoteApplicationManager(appId, clientConfig, restClient);
-  }
-
-  @Override
-  public void deployTemplate(Id.Namespace namespace, Id.ApplicationTemplate templateId,
-                             Class<? extends ApplicationTemplate> templateClz,
-                             String... exportPackages) throws IOException {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void addTemplatePlugins(Id.ApplicationTemplate templateId, String jarName,
-                                 Class<?> pluginClz, Class<?>... classes) throws IOException {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void addTemplatePluginJson(Id.ApplicationTemplate templateId, String fileName, String type, String name,
-                                    String description, String className,
-                                    PluginPropertyField... fields) throws IOException {
-    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -273,12 +246,6 @@ public class IntegrationTestManager implements TestManager {
   @Override
   public void deleteArtifact(Id.Artifact artifactId) throws Exception {
     artifactClient.delete(artifactId);
-  }
-
-  @Override
-  public AdapterManager createAdapter(Id.Adapter adapterId, AdapterConfig config) throws Exception {
-    adapterClient.create(adapterId, config);
-    return new RemoteAdapterManager(adapterId, adapterClient);
   }
 
   @Override
