@@ -147,7 +147,7 @@ General Statistics of a Workflow program across all Successful Runs
 -------------------------------------------------------------------
 
 This request returns basic statistics about all *successful* workflow runs in a particular time interval, 
-with an analysis (optionally) based on a series of provided percentiles::
+with an analysis based on a series of (optionally) provided percentiles::
 
   GET <base-url>/namespaces/<namespace>/apps/<app-id>/workflows/<workflow-id>/statistics?
     start=<start-time>&end=<end-time>&percentile=<percentile-1>&percentile=<percentile-2>...
@@ -200,7 +200,7 @@ The query
   GET <base-url>/namespaces/default/apps/Purchase/workflows/PurchaseHistoryWorkflow/statistics?
     start=1441918778&end=1442005182&percentile=80&percentile=90&percentile=95&percentile=99
   
-could return results similar to these, pretty-printed for display::
+would return results similar to these, pretty-printed for display::
     
   {
       "startTime": 0,
@@ -250,11 +250,12 @@ could return results similar to these, pretty-printed for display::
       }
   }
   
-Statistics comparing one Run to other Runs both before and after
-----------------------------------------------------------------
+Statistics comparing a Run to other Runs Before and After
+---------------------------------------------------------
 
-This request returns a list of workflow metrics, based on a workflow run and a surrounding number of runs
-of the workflow that are spaced apart by a time interval from each other::
+This request returns a list of workflow metrics, based on a workflow run and a surrounding
+number of *successful* runs of the workflow that are spaced apart by a time interval from
+each other::
 
   GET <base-url>/namespaces/<namespace>/apps/<app-id>/workflows/<workflow-id>/runs/<run-id>/statistics?
     limit=<limit>&interval=<interval>
@@ -278,7 +279,7 @@ where
    * - ``<limit>``
      - The number of the records to compare against (before and after) the run
    * - ``<interval>``
-     - The time interval with which to space out the runs before and after
+     - The time interval with which to space out the runs before and after, with units
 
 If the query was successful, the body will contain a JSON structure of statistics.
 
@@ -299,67 +300,53 @@ If the query was successful, the body will contain a JSON structure of statistic
 
 Example
 -------
+::
 
-  GET <base-url>/namespaces/default/apps/Purchase/workflows/PurchaseHistoryWorkflow/runs/[run-id]
-    statistics?limit=20&interval=[]
+  GET <base-url>/namespaces/default/apps/Purchase/workflows/PurchaseHistoryWorkflow/runs/
+    1873ade0-58d9-11e5-b79d-8cae4cfd0e64/statistics?limit=10&interval=10s'  
   
-  
-could return results similar to these, pretty-printed for display::
+would return results similar to these, pretty-printed for display::
 
   {
-    "start_time": 1439200000,
-    "end_time":  1439279804,
-    "num_runs": 20,
-    "nodes": {
-       "node1" : {
-        "name": "PurchaseEventParser",
-        "p2": {  "runid" : "13fdssvqe423",
-                 "run_times_seconds": 15,
-                 "mappers": 4,
-                 "reducers": 3,
-                 "file_read_data_bytes": 800,
-                 "file_write_data_bytes": 900,
-                 "file_read_data_ops": 80,
-                 "file_write_data_ops": 90,
-                 "file_large_read_data_ops": 8,
-                 "hdfs_read_data_bytes": 700,
-                 "hdfs_write_data_bytes": 800,
-                 "hdfs_read_data_ops": 70,
-                 "hdfs_write_data_ops": 80,
-                 "hdfs_read_data_ops": 5,
-        "total_time_spnt_map_tasks_seconds": 100,
-        "total_time_spnt_red_tasks_seconds": 140
-                },
-        "p1": {
-                 "runid" : "245fdasfsdaw5ee",
-                 "run_time_seconds": 20,
-                 "mappers": 7,
-                 "reducers": 8,
-                 "file_read_data_bytes": 800,
-                 "file_write_data_bytes": 900,
-                 "file_read_data_ops": 80,
-                 "file_write_data_ops": 90,
-                 "file_large_read_data_ops": 8,
-                 "hdfs_read_data_bytes": 700,
-                 "hdfs_write_data_bytes": 800,
-                 "hdfs_read_data_ops": 70,
-                 "hdfs_write_data_ops": 80,
-                 "hdfs_read_data_ops": 5,
-        "total_time_spnt_by_map_tasks_seconds": 11,
-        "total_time_spnt_by_red_tasks_seconds": 9
-       },
-        "current":{},
-        "n1": {},
-        "n2": {}   
+      "startTimes": {
+          "1dd36962-58d9-11e5-82ac-8cae4cfd0e64": 1442012523,
+          "2523aa44-58d9-11e5-90fd-8cae4cfd0e64": 1442012535,
+          "1873ade0-58d9-11e5-b79d-8cae4cfd0e64": 1442012514
       },
-     "node2" : {"name": "PurchaseSpark",
-                    "p2": {},
-                    "p1": {},
-                    "curr": {},
-                    "n1": {},
-                    "n2": {}
-        }
-   }
+      "programNodesList": [
+          {
+              "programName": "PurchaseHistoryBuilder",
+              "workflowProgramDetailsList": [
+                  {
+                      "workflowRunId": "1dd36962-58d9-11e5-82ac-8cae4cfd0e64",
+                      "programRunId": "1e1c3233-58d9-11e5-a7ff-8cae4cfd0e64",
+                      "programRunStart": 1442012524,
+                      "metrics": {
+                          "MAP_INPUT_RECORDS": 19,
+                          "REDUCE_OUTPUT_RECORDS": 3,
+                          "timeTaken": 9,
+                          "MAP_OUTPUT_BYTES": 964,
+                          "MAP_OUTPUT_RECORDS": 19,
+                          "REDUCE_INPUT_RECORDS": 19
+                      }
+                  },
+                  {
+                      "workflowRunId": "1873ade0-58d9-11e5-b79d-8cae4cfd0e64",
+                      "programRunId": "188a9141-58d9-11e5-88d1-8cae4cfd0e64",
+                      "programRunStart": 1442012514,
+                      "metrics": {
+                          "MAP_INPUT_RECORDS": 19,
+                          "REDUCE_OUTPUT_RECORDS": 3,
+                          "timeTaken": 7,
+                          "MAP_OUTPUT_BYTES": 964,
+                          "MAP_OUTPUT_RECORDS": 19,
+                          "REDUCE_INPUT_RECORDS": 19
+                      }
+                  }
+              ],
+              "programType": "Mapreduce"
+          }
+      ]
   }
 
 Statistics comparing two runs against each other
@@ -389,7 +376,10 @@ where
    * - ``<other-run-id>``
      - UUID of the other workflow run to be used in the comparison
 
-If the query was successful, the body will contain a JSON structure of statistics.
+If the query was successful, the body will contain a JSON structure of statistics. Note that if either of
+the run-ids is from an *unsuccessful* run, an error message will be returned::
+
+  'The other run-id provided was not found : dbd59091-58cb-11e5-a7c6-8cae4cfd0e64' was not found
 
 .. rubric:: HTTP Responses
 
@@ -408,77 +398,44 @@ If the query was successful, the body will contain a JSON structure of statistic
 
 Example
 -------
+Comparing two runs (``14b8710a-58cd-11e5-98ca-8cae4cfd0e64`` and ``e0cc5b98-58cc-11e5-84a1-8cae4cfd0e64``)::
 
-  GET <base-url>/namespaces/default/apps/Purchase/workflows/PurchaseHistoryWorkflow/run-id/[run-id]/
-    compare?other-run-id=<other-run-id>
+  GET <base-url>/namespaces/default/apps/Purchase/workflows/PurchaseHistoryWorkflow/
+    runs/14b8710a-58cd-11e5-98ca-8cae4cfd0e64/compare?other-run-id=e0cc5b98-58cc-11e5-84a1-8cae4cfd0e64
   
-  
-could return results similar to these, pretty-printed for display::
+would return results similar to these, pretty-printed for display::
 
-[{"node1":[
-{"run1": {
-      "name": "PurchaseEventParser",
-      "type": "MapReduce",
-      "runid" : "13fdssvqe423",
-      "run_time_seconds": 15,
-       "mappers": 4,
-       "reducers": 3,
-       "file_read_data_bytes": 800,
-       "file_write_data_bytes": 900,
-       "file_read_data_ops": 80,
-       "file_write_data_ops": 90,
-       "file_large_read_data_ops": 8,
-       "hdfs_read_data_bytes": 700,
-       "hdfs_write_data_bytes": 800,
-       "hdfs_read_data_ops": 70,
-       "hdfs_write_data_ops": 80,
-       "hdfs_read_data_ops": 5,
-   "total_time_spnt_by_map_tasks_seconds": 100,
-       "total_time_spnt_by_red_tasks_seconds": 140
-    }},
-{"run2": {
-      "name": "PurchaseEventParser",
-      "type": "MapReduce",
-      "run_time_seconds": 50,
-      "mappers": 10,
-      "reducers": 10,
-      "file_read_data_bytes": 800,
-       "file_write_data_bytes": 900,
-       "file_read_data_ops": 80,
-       "file_write_data_ops": 90,
-       "file_large_read_data_ops": 8,
-       "hdfs_read_data_bytes": 700,
-       "hdfs_write_data_bytes": 800,
-       "hdfs_read_data_ops": 70,
-       "hdfs_write_data_ops": 80,
-       "hdfs_read_data_ops": 5,
-      "total_time_spnt_by_map_tasks_seconds": 20,
-      "total_time_spnt_by_red_tasks_seconds": 30
-      }}
-]},
-{"node2":[
-{"run1": {
-       "name": "PurchaseSpark",
-       "type": "Spark",
-       "executors" : 2,
-       "driver_running_stages": 4,
-       "driver_mem_used_megabytes": 17,
-       "driver_disk_space_used_megabytes": 12,
-       "driver_all_jobs": 7,
-       "driver_failed_stages": 2,
-       "filesystem.file_write_ops": 1500,
-       "filesystem.file_read_ops": 1000,
-        "filesystem.file_large_read_ops": 100,
-       "filesystem.file_write_bytes": 15000,
-       "filesystem.file_read_bytes": 10000,
-       "hdfs.file_write_ops": 1500,
-       "hdfs.file_read_ops": 1000,
-       "hdfs.file_large_read_ops": 100,
-       "hdfs.file_write_bytes": 15000,
-       "hdfs.file_read_bytes": 10000,
-       "current_pool_size": 5,
-       "max_pool_size": 8
-    }},
-{"run2" : {}}]
-}
-]
+  [
+      {
+          "programName": "PurchaseHistoryBuilder",
+          "workflowProgramDetailsList": [
+              {
+                  "workflowRunId": "14b8710a-58cd-11e5-98ca-8cae4cfd0e64",
+                  "programRunId": "14c9d62b-58cd-11e5-9105-8cae4cfd0e64",
+                  "programRunStart": 1442007354,
+                  "metrics": {
+                      "MAP_INPUT_RECORDS": 19,
+                      "REDUCE_OUTPUT_RECORDS": 3,
+                      "timeTaken": 7,
+                      "MAP_OUTPUT_BYTES": 964,
+                      "MAP_OUTPUT_RECORDS": 19,
+                      "REDUCE_INPUT_RECORDS": 19
+                  }
+              },
+              {
+                  "workflowRunId": "e0cc5b98-58cc-11e5-84a1-8cae4cfd0e64",
+                  "programRunId": "e1497ad9-58cc-11e5-9dfa-8cae4cfd0e64",
+                  "programRunStart": 1442007268,
+                  "metrics": {
+                      "MAP_INPUT_RECORDS": 19,
+                      "REDUCE_OUTPUT_RECORDS": 3,
+                      "timeTaken": 8,
+                      "MAP_OUTPUT_BYTES": 964,
+                      "MAP_OUTPUT_RECORDS": 19,
+                      "REDUCE_INPUT_RECORDS": 19
+                  }
+              }
+          ],
+          "programType": "Mapreduce"
+      }
+  ]
