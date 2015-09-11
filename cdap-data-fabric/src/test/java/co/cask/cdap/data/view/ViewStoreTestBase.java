@@ -18,16 +18,15 @@ package co.cask.cdap.data.view;
 
 import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.internal.io.SQLSchemaParser;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ViewSpecification;
-import com.google.common.base.Function;
-import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Ordering;
+import com.google.common.collect.ImmutableSet;
 import org.junit.Assert;
 import org.junit.Test;
 
-import javax.annotation.Nullable;
+import java.io.IOException;
 
 /**
  * Test the {@link ViewStore} implementations.
@@ -48,14 +47,14 @@ public abstract class ViewStoreTestBase {
     Assert.assertFalse(store.exists(view1));
 
     ViewSpecification properties = new ViewSpecification(
-      new FormatSpecification("a", Schema.of(Schema.Type.STRING)));
+      new FormatSpecification("a", createSchema("name string, props map<string, string>")));
     Assert.assertTrue("view1 should be created", store.createOrUpdate(view1, properties));
     Assert.assertTrue("view1 should exist", store.exists(view1));
     Assert.assertEquals("view1 should have the initial properties",
                         properties, new ViewSpecification(store.get(view1)));
 
     ViewSpecification properties2 = new ViewSpecification(
-      new FormatSpecification("b", Schema.of(Schema.Type.STRING)));
+      new FormatSpecification("b", createSchema("name string, age int")));
     Assert.assertFalse("view1 should be updated", store.createOrUpdate(view1, properties2));
     Assert.assertTrue("view1 should exist", store.exists(view1));
     Assert.assertEquals("view1 should have the updated properties",
@@ -64,15 +63,7 @@ public abstract class ViewStoreTestBase {
     Assert.assertTrue("view2 should be created", store.createOrUpdate(view2, properties));
     Assert.assertTrue("view3 should be created", store.createOrUpdate(view3, properties));
     Assert.assertEquals("view1, view2, and view3 should be in the stream",
-                        ImmutableList.of(view1.getId(), view2.getId(), view3.getId()),
-                        Ordering.natural().immutableSortedCopy(Collections2.transform(
-                          store.list(stream), new Function<Id.Stream.View, Comparable>() {
-                            @Nullable
-                            @Override
-                            public Comparable apply(Id.Stream.View input) {
-                              return input.getId();
-                            }
-                          })));
+                        ImmutableSet.of(view1, view2, view3), ImmutableSet.copyOf(store.list(stream)));
 
     store.delete(view1);
     Assert.assertFalse(store.exists(view1));
@@ -84,5 +75,9 @@ public abstract class ViewStoreTestBase {
     Assert.assertFalse(store.exists(view3));
 
     Assert.assertEquals(ImmutableList.of(), store.list(stream));
+  }
+
+  private Schema createSchema(String sqlSchema) throws IOException {
+    return new SQLSchemaParser(sqlSchema).parse();
   }
 }

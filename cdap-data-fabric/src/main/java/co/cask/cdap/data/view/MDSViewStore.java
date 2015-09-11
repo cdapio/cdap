@@ -24,7 +24,6 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
-import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ViewDetail;
@@ -58,13 +57,13 @@ public final class MDSViewStore implements ViewStore {
     this.executorFactory = executorFactory;
   }
 
-  private <T> T execute(TransactionExecutor.Function<MetadataStoreDataset, T> func) {
+  private <T> T execute(TransactionExecutor.Function<ViewMetadataStoreDataset, T> func) {
     try {
       Table table = DatasetsUtil.getOrCreateDataset(
         datasetFramework, STORE_DATASET_ID,
         "table", DatasetProperties.EMPTY,
         DatasetDefinition.NO_ARGUMENTS, null);
-      MetadataStoreDataset viewDataset = new MetadataStoreDataset(table);
+      ViewMetadataStoreDataset viewDataset = new ViewMetadataStoreDataset(table);
       TransactionExecutor txExecutor = Transactions.createTransactionExecutor(executorFactory, viewDataset);
       return txExecutor.execute(func, viewDataset);
     } catch (Exception e) {
@@ -74,9 +73,9 @@ public final class MDSViewStore implements ViewStore {
 
   @Override
   public boolean createOrUpdate(final Id.Stream.View viewId, final ViewSpecification spec) {
-    return execute(new TransactionExecutor.Function<MetadataStoreDataset, Boolean>() {
+    return execute(new TransactionExecutor.Function<ViewMetadataStoreDataset, Boolean>() {
       @Override
-      public Boolean apply(MetadataStoreDataset mds) throws Exception {
+      public Boolean apply(ViewMetadataStoreDataset mds) throws Exception {
         boolean created = !mds.exists(getKey(viewId));
         mds.write(getKey(viewId), new StreamViewEntry(viewId, spec));
         return created;
@@ -86,9 +85,9 @@ public final class MDSViewStore implements ViewStore {
 
   @Override
   public boolean exists(final Id.Stream.View viewId) {
-    return execute(new TransactionExecutor.Function<MetadataStoreDataset, Boolean>() {
+    return execute(new TransactionExecutor.Function<ViewMetadataStoreDataset, Boolean>() {
       @Override
-      public Boolean apply(MetadataStoreDataset mds) throws Exception {
+      public Boolean apply(ViewMetadataStoreDataset mds) throws Exception {
         return mds.exists(getKey(viewId));
       }
     });
@@ -96,9 +95,9 @@ public final class MDSViewStore implements ViewStore {
 
   @Override
   public void delete(final Id.Stream.View viewId) throws NotFoundException {
-    boolean notFound = execute(new TransactionExecutor.Function<MetadataStoreDataset, Boolean>() {
+    boolean notFound = execute(new TransactionExecutor.Function<ViewMetadataStoreDataset, Boolean>() {
       @Override
-      public Boolean apply(MetadataStoreDataset mds) throws Exception {
+      public Boolean apply(ViewMetadataStoreDataset mds) throws Exception {
         if (!mds.exists(getKey(viewId))) {
           return true;
         }
@@ -115,9 +114,9 @@ public final class MDSViewStore implements ViewStore {
   @Override
   public List<Id.Stream.View> list(final Id.Stream streamId) {
     List<StreamViewEntry> entries = execute(
-      new TransactionExecutor.Function<MetadataStoreDataset, List<StreamViewEntry>>() {
+      new TransactionExecutor.Function<ViewMetadataStoreDataset, List<StreamViewEntry>>() {
         @Override
-        public List<StreamViewEntry> apply(MetadataStoreDataset mds) throws Exception {
+        public List<StreamViewEntry> apply(ViewMetadataStoreDataset mds) throws Exception {
           return Objects.firstNonNull(
             mds.<StreamViewEntry>list(getKey(streamId), StreamViewEntry.class),
             ImmutableList.<StreamViewEntry>of());
@@ -137,9 +136,9 @@ public final class MDSViewStore implements ViewStore {
   @Override
   public ViewDetail get(final Id.Stream.View viewId) throws NotFoundException {
     StreamViewEntry entry = execute(
-      new TransactionExecutor.Function<MetadataStoreDataset, StreamViewEntry>() {
+      new TransactionExecutor.Function<ViewMetadataStoreDataset, StreamViewEntry>() {
       @Override
-      public StreamViewEntry apply(MetadataStoreDataset mds) throws Exception {
+      public StreamViewEntry apply(ViewMetadataStoreDataset mds) throws Exception {
         if (!mds.exists(getKey(viewId))) {
           return null;
         }
