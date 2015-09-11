@@ -139,14 +139,14 @@ Examples
 
 Workflow Statistics
 ===================
-These requests provide statistics across *successful* runs of a Workflow in a time
-interval. This will helps in detecting which jobs might be responsible for delays or
-problems.
+These requests provide statistics across *successful* runs of a Workflow, in a time
+interval, for a succession of runs, or between two specific runs. These requests will help
+in detecting which jobs might be responsible for delays or problems.
 
-General Statistics of a Workflow program across all Successful Runs
--------------------------------------------------------------------
+Statistics of Successful Runs
+-----------------------------
 
-This request returns basic statistics about all *successful* workflow runs in a particular time interval, 
+This request returns general statistics about all *successful* workflow runs in a particular time interval, 
 with an analysis based on a series of (optionally) provided percentiles::
 
   GET <base-url>/namespaces/<namespace>/apps/<app-id>/workflows/<workflow-id>/statistics?
@@ -250,8 +250,8 @@ would return results similar to these, pretty-printed for display::
       }
   }
   
-Statistics comparing a Run to other Runs Before and After
----------------------------------------------------------
+Comparing a Run to Runs Before and After
+----------------------------------------
 
 This request returns a list of workflow metrics, based on a workflow run and a surrounding
 number of *successful* runs of the workflow that are spaced apart by a time interval from
@@ -349,10 +349,10 @@ would return results similar to these, pretty-printed for display::
       ]
   }
 
-Statistics comparing two runs against each other
-------------------------------------------------
+Comparing Two Runs
+------------------
 
-Compare the metrics of two runs of a workflow::
+This request compares the metrics of two runs of a workflow::
 
   GET <base-url>/namespaces/<namespace>/apps/<app-id>/workflows/<workflow-id>/runs/<run-id>/compare?
     other-run-id=<other-run-id>
