@@ -88,9 +88,7 @@ public class LineageServiceTest {
         new Relation(dataset2, program1, AccessType.READ, toSet(twillRunId(run1)), toSet(flowlet1)),
         new Relation(dataset2, program2, AccessType.WRITE, toSet(twillRunId(run2)), toSet(flowlet2)),
         new Relation(dataset3, program2, AccessType.READ, toSet(twillRunId(run2)), toSet(flowlet2))
-      ),
-      ImmutableSet.of(program1, program2),
-      ImmutableSet.of(dataset1, dataset2, dataset3)
+      )
     );
 
     // Lineage for D1
@@ -101,9 +99,6 @@ public class LineageServiceTest {
 
     // Lineage for D1 for one level should be D2 -> P1 -> D1
     Lineage oneLevelLineage = lineageService.computeLineage(dataset1, 500, 20000, 1);
-
-    Assert.assertEquals(ImmutableSet.of(program1), oneLevelLineage.getPrograms());
-    Assert.assertEquals(ImmutableSet.of(dataset1, dataset2), oneLevelLineage.getData());
 
     Assert.assertEquals(
       ImmutableSet.of(
@@ -145,10 +140,8 @@ public class LineageServiceTest {
         new Relation(dataset3, program2, AccessType.WRITE, toSet(twillRunId(run2)), toSet(flowlet2)),
         new Relation(dataset4, program3, AccessType.WRITE, toSet(twillRunId(run3)), emptySet()),
         new Relation(dataset3, program3, AccessType.READ, toSet(twillRunId(run3)), emptySet())
-      ),
-      ImmutableSet.of(program1, program2, program3),
-      ImmutableSet.of(dataset1, dataset2, dataset3, dataset4)
-      );
+      )
+    );
 
     // Lineage for D1
     Assert.assertEquals(expectedLineage, lineageService.computeLineage(dataset1, 500, 20000, 100));
@@ -162,9 +155,6 @@ public class LineageServiceTest {
     //                              |<-----------------
     //
     Lineage oneLevelLineage = lineageService.computeLineage(dataset1, 500, 20000, 1);
-
-    Assert.assertEquals(ImmutableSet.of(program1, program2), oneLevelLineage.getPrograms());
-    Assert.assertEquals(ImmutableSet.of(dataset1, dataset2, dataset3), oneLevelLineage.getData());
 
     Assert.assertEquals(
       ImmutableSet.of(
@@ -195,9 +185,7 @@ public class LineageServiceTest {
       ImmutableSet.of(
         new Relation(dataset1, program1, AccessType.READ, toSet(twillRunId(run1)), toSet(flowlet1)),
         new Relation(dataset1, program1, AccessType.WRITE, toSet(twillRunId(run1)), toSet(flowlet1))
-      ),
-      ImmutableSet.of(program1),
-      ImmutableSet.of(dataset1)
+      )
     );
 
     Assert.assertEquals(expectedLineage, lineageService.computeLineage(dataset1, 500, 20000, 100));
@@ -225,9 +213,7 @@ public class LineageServiceTest {
       ImmutableSet.of(
         new Relation(dataset1, program1, AccessType.READ, toSet(twillRunId(run1)), toSet(flowlet1)),
         new Relation(dataset1, program1, AccessType.WRITE, toSet(twillRunId(run2)), toSet(flowlet1))
-      ),
-      ImmutableSet.of(program1),
-      ImmutableSet.of(dataset1)
+      )
     );
 
     Assert.assertEquals(expectedLineage, lineageService.computeLineage(dataset1, 500, 20000, 100));
@@ -283,9 +269,7 @@ public class LineageServiceTest {
         new Relation(dataset2, program4, AccessType.READ, toSet(twillRunId(run4)), emptySet()),
         new Relation(dataset3, program4, AccessType.READ, toSet(twillRunId(run4)), emptySet()),
         new Relation(dataset7, program4, AccessType.WRITE, toSet(twillRunId(run4)), emptySet())
-      ),
-      ImmutableSet.of(program1, program2, program3, program4),
-      ImmutableSet.of(dataset0, dataset1, dataset2, dataset3, dataset4, dataset5, dataset6, dataset7)
+      )
     );
 
     // Lineage for D7
@@ -357,9 +341,7 @@ public class LineageServiceTest {
         new Relation(dataset3, program5, AccessType.READ, toSet(twillRunId(run5)), emptySet()),
         new Relation(dataset6, program5, AccessType.READ, toSet(twillRunId(run5)), emptySet()),
         new Relation(dataset1, program5, AccessType.WRITE, toSet(twillRunId(run5)), emptySet())
-      ),
-      ImmutableSet.of(program1, program2, program3, program4, program5),
-      ImmutableSet.of(dataset0, dataset1, dataset2, dataset3, dataset4, dataset5, dataset6, dataset7)
+      )
     );
 
     // Lineage for D1
@@ -377,9 +359,6 @@ public class LineageServiceTest {
     //                   |
     //             D2 -> P2 -> D3
     Lineage oneLevelLineage = lineageService.computeLineage(dataset5, 500, 20000, 1);
-
-    Assert.assertEquals(ImmutableSet.of(program2, program3), oneLevelLineage.getPrograms());
-    Assert.assertEquals(ImmutableSet.of(dataset2, dataset3, dataset5, dataset6), oneLevelLineage.getData());
 
     Assert.assertEquals(
       ImmutableSet.of(

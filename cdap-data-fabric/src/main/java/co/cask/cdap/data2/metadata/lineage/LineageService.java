@@ -19,7 +19,6 @@ package co.cask.cdap.data2.metadata.lineage;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,10 +40,10 @@ public class LineageService {
       }
     };
 
-  private static final Function<Relation, Id.DatasetInstance> RELATION_TO_DATASET_INSTANCE_FUNCTION =
-    new Function<Relation, Id.DatasetInstance>() {
+  private static final Function<Relation, Id.NamespacedId> RELATION_TO_DATA_FUNCTION =
+    new Function<Relation, Id.NamespacedId>() {
       @Override
-      public Id.DatasetInstance apply(Relation input) {
+      public Id.NamespacedId apply(Relation input) {
         return input.getData();
       }
     };
@@ -66,10 +65,14 @@ public class LineageService {
    * @return lineage for sourceDataset
    */
   public Lineage computeLineage(final Id.DatasetInstance sourceDataset, long start, long end, int levels) {
+    return doComputeLineage(sourceDataset, start, end, levels);
+  }
+
+  private Lineage doComputeLineage(final Id.NamespacedId sourceDataset, long start, long end, int levels) {
     LOG.trace("Computing lineage for dataset {}, start {}, end {}, levels {}", sourceDataset, start, end, levels);
     Set<Relation> relations = new HashSet<>();
-    Set<Id.DatasetInstance> visitedDatasets = new HashSet<>();
-    Set<Id.DatasetInstance> toVisitDatasets = new HashSet<>();
+    Set<Id.NamespacedId> visitedDatasets = new HashSet<>();
+    Set<Id.NamespacedId> toVisitDatasets = new HashSet<>();
     Set<Id.Program> visitedPrograms = new HashSet<>();
     Set<Id.Program> toVisitPrograms = new HashSet<>();
 
@@ -77,12 +80,12 @@ public class LineageService {
     for (int i = 0; i < levels; ++i) {
       LOG.trace("Level {}", i);
       toVisitPrograms.clear();
-      for (Id.DatasetInstance d : toVisitDatasets) {
+      for (Id.NamespacedId d : toVisitDatasets) {
         if (!visitedDatasets.contains(d)) {
           LOG.trace("Visiting dataset {}", d);
           visitedDatasets.add(d);
           // Fetch related programs
-          Iterable<Relation> programRelations = lineageStore.getRelations(d, start, end);
+          Iterable<Relation> programRelations = getProgramRelations(d, start, end);
           LOG.trace("Got program relations {}", programRelations);
           Iterables.addAll(relations, programRelations);
           Iterables.addAll(toVisitPrograms, Iterables.transform(programRelations, RELATION_TO_PROGRAM_FUNCTION));
@@ -99,15 +102,26 @@ public class LineageService {
           LOG.trace("Got dataset relations {}", datasetRelations);
           Iterables.addAll(relations, datasetRelations);
           Iterables.addAll(toVisitDatasets,
-                           Iterables.transform(datasetRelations, RELATION_TO_DATASET_INSTANCE_FUNCTION));
+                           Iterables.transform(datasetRelations, RELATION_TO_DATA_FUNCTION));
         }
       }
     }
 
-    Lineage lineage = new Lineage(relations,
-                                  Sets.union(visitedPrograms, toVisitPrograms),
-                                  Sets.union(visitedDatasets, toVisitDatasets));
+    Lineage lineage = new Lineage(relations);
     LOG.trace("Got lineage {}", lineage);
     return lineage;
+  }
+
+  private Iterable<Relation> getProgramRelations(Id.NamespacedId data, long start, long end) {
+    if (data instanceof Id.DatasetInstance) {
+      return lineageStore.getRelations((Id.DatasetInstance) data, start, end);
+    }
+
+    // TODO: Allow stream
+//    if (data instanceof Id.Stream) {
+//      return lineageStore.getRelations((Id.Stream) data, start, end);
+//    }
+
+    throw new IllegalStateException("Unknown data type " + data);
   }
 }

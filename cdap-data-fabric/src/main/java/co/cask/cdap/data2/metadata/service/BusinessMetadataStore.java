@@ -18,6 +18,7 @@ package co.cask.cdap.data2.metadata.service;
 
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.common.ServiceUnavailableException;
+import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
@@ -25,7 +26,6 @@ import co.cask.cdap.data2.dataset2.tx.Transactional;
 import co.cask.cdap.data2.metadata.dataset.BusinessMetadataDataset;
 import co.cask.cdap.data2.metadata.dataset.BusinessMetadataRecord;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.MetadataSearchResultRecord;
 import co.cask.cdap.proto.MetadataSearchTargetType;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
@@ -33,6 +33,7 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterators;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 
 import java.io.IOException;
 import java.util.Iterator;
@@ -49,7 +50,8 @@ public class BusinessMetadataStore {
   private final Transactional<BusinessMdsIterable, BusinessMetadataDataset> txnl;
 
   @Inject
-  public BusinessMetadataStore(TransactionExecutorFactory txExecutorFactory, final DatasetFramework dsFramework) {
+  public BusinessMetadataStore(TransactionExecutorFactory txExecutorFactory,
+                               @Named(DataSetsModules.BASIC_DATASET_FRAMEWORK) final DatasetFramework dsFramework) {
     this.txnl = Transactional.of(txExecutorFactory, new Supplier<BusinessMdsIterable>() {
       @Override
       public BusinessMdsIterable get() {

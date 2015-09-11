@@ -23,15 +23,21 @@ import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
+import co.cask.cdap.data2.metadata.writer.BasicLineageWriter;
+import co.cask.cdap.data2.metadata.writer.LineageWriter;
+import co.cask.cdap.data2.metadata.writer.LineageWriterDatasetFramework;
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
+import com.google.inject.name.Names;
 
 /**
  * DataSets framework bindings
  */
 public class DataSetsModules extends RuntimeModule {
+
+  public static final String BASIC_DATASET_FRAMEWORK = "basicDatasetFramework";
 
   @Override
   public Module getInMemoryModules() {
@@ -41,7 +47,14 @@ public class DataSetsModules extends RuntimeModule {
         install(new FactoryModuleBuilder()
                   .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
                   .build(DatasetDefinitionRegistryFactory.class));
-        bind(DatasetFramework.class).to(InMemoryDatasetFramework.class).in(Scopes.SINGLETON);
+
+        bind(DatasetFramework.class)
+          .annotatedWith(Names.named(BASIC_DATASET_FRAMEWORK))
+          .to(InMemoryDatasetFramework.class).in(Scopes.SINGLETON);
+        expose(DatasetFramework.class).annotatedWith(Names.named(BASIC_DATASET_FRAMEWORK));
+
+        bind(LineageWriter.class).to(BasicLineageWriter.class);
+        bind(DatasetFramework.class).to(LineageWriterDatasetFramework.class);
         expose(DatasetFramework.class);
       }
     };
@@ -55,7 +68,14 @@ public class DataSetsModules extends RuntimeModule {
         install(new FactoryModuleBuilder()
                   .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
                   .build(DatasetDefinitionRegistryFactory.class));
-        bind(DatasetFramework.class).to(RemoteDatasetFramework.class);
+
+        bind(DatasetFramework.class)
+          .annotatedWith(Names.named(BASIC_DATASET_FRAMEWORK))
+          .to(RemoteDatasetFramework.class);
+        expose(DatasetFramework.class).annotatedWith(Names.named(BASIC_DATASET_FRAMEWORK));
+
+        bind(LineageWriter.class).to(BasicLineageWriter.class);
+        bind(DatasetFramework.class).to(LineageWriterDatasetFramework.class);
         expose(DatasetFramework.class);
       }
     };
@@ -70,7 +90,14 @@ public class DataSetsModules extends RuntimeModule {
         install(new FactoryModuleBuilder()
                   .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
                   .build(DatasetDefinitionRegistryFactory.class));
-        bind(DatasetFramework.class).to(RemoteDatasetFramework.class);
+
+        bind(DatasetFramework.class)
+          .annotatedWith(Names.named(BASIC_DATASET_FRAMEWORK))
+          .to(RemoteDatasetFramework.class);
+        expose(DatasetFramework.class).annotatedWith(Names.named(BASIC_DATASET_FRAMEWORK));
+
+        bind(LineageWriter.class).to(BasicLineageWriter.class);
+        bind(DatasetFramework.class).to(LineageWriterDatasetFramework.class);
         expose(DatasetFramework.class);
       }
     };
