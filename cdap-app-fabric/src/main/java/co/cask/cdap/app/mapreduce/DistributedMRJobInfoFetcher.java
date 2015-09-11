@@ -16,15 +16,11 @@
 
 package co.cask.cdap.app.mapreduce;
 
-import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.MRJobInfo;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-
 
 /**
  * Retrieves information about a run of a MapReduce job, using {@link MRJobClient} and
@@ -50,13 +46,8 @@ public class DistributedMRJobInfoFetcher implements MRJobInfoFetcher {
   public MRJobInfo getMRJobInfo(Id.Run runId) throws Exception {
     try {
       return mrJobClient.getMRJobInfo(runId);
-    } catch (IOException ioe) {
-      LOG.debug("Failed to get run history from JobClient for runId: {}. Falling back to Metrics system.", runId, ioe);
-      return localMRJobInfoFetcher.getMRJobInfo(runId);
-    } catch (NotFoundException nfe) {
-      // Even if we ran the MapReduce program, there is no guarantee that the JobClient will be able to find it.
-      // For example, if the MapReduce program fails before it successfully submits the job.
-      LOG.debug("Failed to find run history from JobClient for runId: {}. Falling back to Metrics system.", runId, nfe);
+    } catch (Exception e) {
+      LOG.debug("Failed to get run history from JobClient for runId: {}. Falling back to Metrics system.", runId, e);
       return localMRJobInfoFetcher.getMRJobInfo(runId);
     }
   }
