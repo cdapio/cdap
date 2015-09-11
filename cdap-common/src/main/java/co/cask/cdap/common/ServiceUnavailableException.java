@@ -19,7 +19,7 @@ package co.cask.cdap.common;
 /**
  * Exception thrown when the service is not running.
  */
-public class ServiceUnavailableException extends Exception {
+public class ServiceUnavailableException extends RuntimeException {
   private final String serviceName;
 
   public ServiceUnavailableException(String serviceName) {
