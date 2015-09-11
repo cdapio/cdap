@@ -44,9 +44,11 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
+import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.explore.guice.ExploreClientModule;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactStore;
 import co.cask.cdap.internal.app.runtime.schedule.LocalSchedulerService;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.cdap.internal.app.runtime.schedule.store.ScheduleStoreTableUtil;
@@ -115,6 +117,9 @@ public class UpgradeTool {
               "      - Updates application metadata to include newly added artifact\n" +
               "      - Deletes all ApplicationTemplates\n" +
               "  Note: Once you run the upgrade tool you cannot rollback to the previous version."),
+    UPGRADE_HBASE("After an HBase upgrade, updates the coprocessor jars of all user and \n" +
+                    "system HBase tables to a version that is compatible with the new HBase \n " +
+                    "version. All tables must be disabled prior to this step."),
     HELP("Show this help.");
 
     private final String description;
@@ -236,13 +241,15 @@ public class UpgradeTool {
   /**
    * Do the start up work
    */
-  private void startUp() throws Exception {
+  private void startUp(boolean startScheduler, boolean includeNewDatasets) throws Exception {
     // Start all the services.
     zkClientService.startAndWait();
     txService.startAndWait();
-    initializeDSFramework(cConf, dsFramework);
+    initializeDSFramework(cConf, dsFramework, includeNewDatasets);
     mdsDatasetsRegistry.startUp();
-    schedulerService.startAndWait();
+    if (startScheduler) {
+      schedulerService.startAndWait();
+    }
   }
 
   /**
@@ -250,7 +257,9 @@ public class UpgradeTool {
    */
   private void stop() {
     try {
-      schedulerService.stopAndWait();
+      if (schedulerService.isRunning()) {
+        schedulerService.stopAndWait();
+      }
       txService.stopAndWait();
       zkClientService.stopAndWait();
       mdsDatasetsRegistry.shutDown();
@@ -285,13 +294,13 @@ public class UpgradeTool {
 
     try {
       switch (action) {
-        case UPGRADE:
+        case UPGRADE: {
           System.out.println(String.format("%s - %s", action.name().toLowerCase(), action.getDescription()));
           String response = getResponse(interactive);
           if (response.equalsIgnoreCase("y") || response.equalsIgnoreCase("yes")) {
             System.out.println("Starting upgrade ...");
             try {
-              startUp();
+              startUp(true, false);
               performUpgrade();
               System.out.println("\nUpgrade completed successfully.\n");
             } finally {
@@ -301,6 +310,24 @@ public class UpgradeTool {
             System.out.println("Upgrade cancelled.");
           }
           break;
+        }
+        case UPGRADE_HBASE: {
+          System.out.println(String.format("%s - %s", action.name().toLowerCase(), action.getDescription()));
+          String response = getResponse(interactive);
+          if (response.equalsIgnoreCase("y") || response.equalsIgnoreCase("yes")) {
+            System.out.println("Starting upgrade ...");
+            try {
+              startUp(false, true);
+              performHBaseUpgrade();
+              System.out.println("\nUpgrade completed successfully.\n");
+            } finally {
+              stop();
+            }
+          } else {
+            System.out.println("Upgrade cancelled.");
+          }
+          break;
+        }
         case HELP:
           printHelp();
           break;
@@ -365,6 +392,19 @@ public class UpgradeTool {
     applicationLifecycleService.upgrade(true);
   }
 
+  private void performHBaseUpgrade() throws Exception {
+
+    System.setProperty(AbstractHBaseDataSetAdmin.SYSTEM_PROPERTY_FORCE_HBASE_UPGRADE, Boolean.TRUE.toString());
+
+    LOG.info("Upgrading User and System HBase Tables ...");
+    DatasetUpgrader dsUpgrade = injector.getInstance(DatasetUpgrader.class);
+    dsUpgrade.upgrade();
+
+    LOG.info("Upgrading QueueAdmin ...");
+    QueueAdmin queueAdmin = injector.getInstance(QueueAdmin.class);
+    queueAdmin.upgrade();
+  }
+
   public static void main(String[] args) {
     try {
       UpgradeTool upgradeTool = new UpgradeTool();
@@ -377,10 +417,16 @@ public class UpgradeTool {
   /**
    * Sets up a {@link DatasetFramework} instance for standalone usage.  NOTE: should NOT be used by applications!!!
    */
-  private void initializeDSFramework(CConfiguration cConf, DatasetFramework datasetFramework) throws IOException,
+  private void initializeDSFramework(CConfiguration cConf,
+                                     DatasetFramework datasetFramework,
+                                     boolean includeNewDatasets) throws IOException,
     DatasetManagementException, ServiceUnavailableException {
     // dataset service
     DatasetMetaTableUtil.setupDatasets(datasetFramework);
+    if (includeNewDatasets) {
+      // artifacts meta data was added in 3.2
+      ArtifactStore.setupDatasets(datasetFramework);
+    }
     // app metadata
     DefaultStore.setupDatasets(datasetFramework);
     // config store
