@@ -26,7 +26,6 @@ import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 
 import com.google.common.base.Charsets;
-import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
@@ -244,7 +243,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                          @PathParam("namespace-id") String namespaceId,
                          @PathParam("app-id") String appId) throws Exception {
     Id.Application app = Id.Application.from(namespaceId, appId);
-    responder.sendJson(HttpResponseStatus.OK, Sets.newHashSet(metadataAdmin.getTags(app)));
+    responder.sendJson(HttpResponseStatus.OK, metadataAdmin.getTags(app));
   }
 
   @GET
@@ -256,7 +255,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                              @PathParam("program-id") String programId) throws Exception {
     Id.Program program = Id.Program.from(Id.Application.from(namespaceId, appId),
                                          ProgramType.valueOfCategoryName(programType), programId);
-    responder.sendJson(HttpResponseStatus.OK, Sets.newHashSet(metadataAdmin.getTags(program)));
+    responder.sendJson(HttpResponseStatus.OK, metadataAdmin.getTags(program));
   }
 
   @GET
@@ -265,7 +264,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                              @PathParam("namespace-id") String namespaceId,
                              @PathParam("dataset-id") String datasetId) throws Exception {
     Id.DatasetInstance dataset = Id.DatasetInstance.from(namespaceId, datasetId);
-    responder.sendJson(HttpResponseStatus.OK, Sets.newHashSet(metadataAdmin.getTags(dataset)));
+    responder.sendJson(HttpResponseStatus.OK, metadataAdmin.getTags(dataset));
   }
 
   @GET
@@ -274,7 +273,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                             @PathParam("namespace-id") String namespaceId,
                             @PathParam("stream-id") String streamId) throws Exception {
     Id.Stream stream = Id.Stream.from(namespaceId, streamId);
-    responder.sendJson(HttpResponseStatus.OK, Sets.newHashSet(metadataAdmin.getTags(stream)));
+    responder.sendJson(HttpResponseStatus.OK, metadataAdmin.getTags(stream));
   }
 
   @DELETE
