@@ -27,6 +27,7 @@ import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.template.etl.api.Emitter;
 import co.cask.cdap.template.etl.api.PipelineConfigurer;
+import co.cask.cdap.template.etl.api.batch.BatchRuntimeContext;
 import co.cask.cdap.template.etl.api.batch.BatchSinkContext;
 import co.cask.cdap.template.etl.common.Properties;
 import co.cask.cdap.template.etl.common.SchemaConverter;
@@ -88,7 +89,7 @@ public class SnapshotFileBatchParquetSink extends SnapshotFileBatchSink<Void, Ge
   }
 
   @Override
-  public void initialize(BatchSinkContext context) throws Exception {
+  public void initialize(BatchRuntimeContext context) throws Exception {
     super.initialize(context);
     recordTransformer = new StructuredToAvroTransformer(config.schema);
   }
