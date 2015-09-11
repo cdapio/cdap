@@ -265,7 +265,7 @@ public final class MapReduceContextConfig {
   }
 
   public CConfiguration getConf() {
-    CConfiguration conf = CConfiguration.create();
+    CConfiguration conf = CConfiguration.createEmpty();
     conf.addResource(new ByteArrayInputStream(hConf.get(HCONF_ATTR_CCONF).getBytes()));
     return conf;
   }

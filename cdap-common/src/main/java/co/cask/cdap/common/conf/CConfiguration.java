@@ -57,6 +57,15 @@ public class CConfiguration extends Configuration {
   }
 
   /**
+   * Creates an instance of empty configuration.
+   *
+   * @return an instance of CConfiguration
+   */
+  public static CConfiguration createEmpty() {
+    return new CConfiguration();
+  }
+
+  /**
    * Creates a new instance which clones all configurations from another {@link CConfiguration}.
    */
   public static CConfiguration copy(CConfiguration other) {
