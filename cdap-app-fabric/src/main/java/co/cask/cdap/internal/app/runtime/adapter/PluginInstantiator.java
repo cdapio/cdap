@@ -17,7 +17,6 @@
 package co.cask.cdap.internal.app.runtime.adapter;
 
 import co.cask.cdap.api.annotation.Name;
-import co.cask.cdap.api.artifact.ArtifactDescriptor;
 import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.artifact.ArtifactVersion;

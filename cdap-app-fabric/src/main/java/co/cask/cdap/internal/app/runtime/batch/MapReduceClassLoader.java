@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.runtime.batch;
 
-import co.cask.cdap.api.artifact.ArtifactDescriptor;
 import co.cask.cdap.api.artifact.Plugin;
 import co.cask.cdap.api.templates.plugins.PluginInfo;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -27,6 +26,7 @@ import co.cask.cdap.common.lang.FilterClassLoader;
 import co.cask.cdap.common.lang.ProgramClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
+import co.cask.cdap.internal.app.runtime.adapter.ArtifactDescriptor;
 import co.cask.cdap.internal.app.runtime.adapter.PluginClassLoader;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerLauncher;

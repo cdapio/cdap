@@ -16,7 +16,6 @@
 
 package co.cask.cdap.gateway.handlers;
 
-import co.cask.cdap.api.artifact.ArtifactDescriptor;
 import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.templates.plugins.PluginClass;
@@ -30,6 +29,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.http.AbstractBodyConsumer;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
+import co.cask.cdap.internal.app.runtime.adapter.ArtifactDescriptor;
 import co.cask.cdap.internal.app.runtime.adapter.PluginClassDeserializer;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;

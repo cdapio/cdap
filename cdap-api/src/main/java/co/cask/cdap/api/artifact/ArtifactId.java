@@ -24,7 +24,7 @@ import java.util.Objects;
  * Uniquely describes an artifact.
  */
 @Beta
-public final class ArtifactId {
+public final class ArtifactId implements Comparable<ArtifactId> {
   private final String name;
   private final ArtifactVersion version;
   private final ArtifactScope scope;
@@ -76,4 +76,16 @@ public final class ArtifactId {
     return Objects.hash(name, version, scope);
   }
 
+  @Override
+  public int compareTo(ArtifactId other) {
+    int cmp = getScope().compareTo(other.getScope());
+    if (cmp != 0) {
+      return cmp;
+    }
+    cmp = getName().compareTo(other.getName());
+    if (cmp != 0) {
+      return cmp;
+    }
+    return getVersion().compareTo(other.getVersion());
+  }
 }
