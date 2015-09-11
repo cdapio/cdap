@@ -19,9 +19,7 @@ angular.module(PKG.name + '.commons')
     this.groups = $scope.panelGroups;
     this.placement = $scope.placement;
     this.panel = $scope.panel;
-
     this.isSubMenu = $scope.isSubMenu === 'true';
-    this.isExpanded = $scope.isExpanded === 'true';
 
     this.openGroup = function (group) {
       if (this.openedGroup === group.name && this.showGroupItems) {
@@ -45,5 +43,9 @@ angular.module(PKG.name + '.commons')
     if (this.isSubMenu) {
       this.openGroup(this.groups[0]);
     }
+
+    this.toggleSidebar = function() {
+      $scope.isExpanded = !$scope.isExpanded;
+    };
 
   });

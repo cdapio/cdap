@@ -30,8 +30,8 @@ import java.util.List;
  */
 public class MapReduceSourceContext extends MapReduceBatchContext implements BatchSourceContext {
 
-  public MapReduceSourceContext(MapReduceContext context, Metrics metrics, String prefixId) {
-    super(context, metrics, prefixId);
+  public MapReduceSourceContext(MapReduceContext context, Metrics metrics, String sourceId) {
+    super(context, metrics, sourceId);
   }
 
   @Override

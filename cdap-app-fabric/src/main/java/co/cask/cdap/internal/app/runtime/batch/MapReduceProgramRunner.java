@@ -192,7 +192,8 @@ public class MapReduceProgramRunner implements ProgramRunner {
                                                                           streamAdmin, txSystemClient, usageRegistry,
                                                                           artifactRepository);
       mapReduceRuntimeService.addListener(
-        createRuntimeServiceListener(program, runId, adapterSpec, closeables, arguments), Threads.SAME_THREAD_EXECUTOR);
+        createRuntimeServiceListener(program, runId, adapterSpec, closeables, arguments, options.getUserArguments()),
+        Threads.SAME_THREAD_EXECUTOR);
 
       final ProgramController controller = new MapReduceProgramController(mapReduceRuntimeService, context);
 
@@ -232,7 +233,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
   private Service.Listener createRuntimeServiceListener(final Program program, final RunId runId,
                                                         final AdapterDefinition adapterSpec,
                                                         final Iterable<Closeable> closeables,
-                                                        Arguments arguments) {
+                                                        Arguments arguments, final Arguments userArgs) {
 
     final String twillRunId = arguments.getOption(ProgramOptionConstants.TWILL_RUN_ID);
     final String workflowName = arguments.getOption(ProgramOptionConstants.WORKFLOW_NAME);
@@ -250,7 +251,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
         }
         String adapterName = adapterSpec == null ? null : adapterSpec.getName();
         if (workflowName == null) {
-          store.setStart(program.getId(), runId.getId(), startTimeInSeconds, adapterName, twillRunId);
+          store.setStart(program.getId(), runId.getId(), startTimeInSeconds, adapterName, twillRunId, userArgs.asMap());
         } else {
           // Program started by Workflow
           store.setWorkflowProgramStart(program.getId(), runId.getId(), workflowName, workflowRunId, workflowNodeId,

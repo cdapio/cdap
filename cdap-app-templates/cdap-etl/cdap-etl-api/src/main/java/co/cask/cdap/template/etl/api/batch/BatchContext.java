@@ -27,7 +27,7 @@ import java.util.Map;
  * Context passed to Batch Source and Sink.
  */
 @Beta
-public interface BatchContext extends DatasetContext, TransformContext, AdapterContext {
+public interface BatchContext extends DatasetContext, TransformContext {
 
   /**
    * Returns the logical start time of the Batch Job.  Logical start time is the time when this Batch

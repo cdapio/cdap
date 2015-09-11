@@ -15,7 +15,8 @@
  */
 
 angular.module(PKG.name + '.feature.adapters')
-  .controller('AdpaterDetailController', function($scope, rAdapterDetail) {
+  .controller('AdpaterDetailController', function($scope, rAdapterDetail, GLOBALS) {
+    $scope.GLOBALS = GLOBALS;
     $scope.template = rAdapterDetail.template;
     $scope.description = rAdapterDetail.description;
     $scope.isScheduled = false;

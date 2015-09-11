@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.adapters')
-  .factory('CanvasFactory', function(myHelpers, $q, $alert) {
+  .factory('CanvasFactory', function(myHelpers, $q, $alert, GLOBALS) {
     function getNodes(config) {
       var nodes = [];
       var i =0;
@@ -58,11 +58,11 @@ angular.module(PKG.name + '.feature.adapters')
       returnConfig.template = {
         type: template
       };
-      if (template === 'ETLBatch') {
+      if (template === GLOBALS.etlBatch) {
         returnConfig.template.schedule = {};
         returnConfig.template.schedule.cron =
         myHelpers.objectQuery(config, 'schedule', 'cron') || myHelpers.objectQuery(config, 'schedule');
-      } else if (template === 'ETLRealtime') {
+      } else if (template === GLOBALS.etlRealtime) {
         returnConfig.template.instance =
         myHelpers.objectQuery(config, 'instance') || myHelpers.objectQuery(config, 'metadata', 'template', 'instance');
       }
@@ -105,7 +105,7 @@ angular.module(PKG.name + '.feature.adapters')
       var content = JSON.stringify(detailedConfig, null, 4);
       var blob = new Blob([content], { type: 'application/json'});
       defer.resolve({
-        name:  detailedConfig.name + '-' + detailedConfig.template,
+        name:  detailedConfig.name + '-' + detailedConfig.artifact.name,
         url: URL.createObjectURL(blob)
       });
       return defer.promise;

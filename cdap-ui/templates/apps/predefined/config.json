@@ -1,12 +1,12 @@
 {
-  "ETLRealtime": [
+  "cdap-etl-realtime-app": [
     {
       "name": "Kafka To HBase Table",
       "file": "KafkaToHBaseTableETL-ETLRealtime.json",
       "description" : "Ingests data from Kafka into HBase"
     }
   ],
-  "ETLBatch" : [
+  "cdap-etl-batch-app" : [
      {
        "name" : "Stream2Table",
        "description" : "Ingests data from stream into a hbase table",

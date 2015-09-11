@@ -29,8 +29,11 @@ import co.cask.cdap.common.twill.MasterServiceManager;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.config.guice.ConfigStoreModule;
 import co.cask.cdap.data.stream.StreamServiceManager;
+import co.cask.cdap.data.stream.StreamViewHttpHandler;
 import co.cask.cdap.data.stream.service.StreamFetchHandler;
 import co.cask.cdap.data.stream.service.StreamHandler;
+import co.cask.cdap.data.view.MDSViewStore;
+import co.cask.cdap.data.view.ViewStore;
 import co.cask.cdap.data2.datafabric.dataset.DatasetExecutorServiceManager;
 import co.cask.cdap.explore.service.ExploreServiceManager;
 import co.cask.cdap.gateway.handlers.AdapterHttpHandler;
@@ -127,7 +130,9 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
   @Override
   public Module getInMemoryModules() {
-    return Modules.combine(new AppFabricServiceModule(StreamHandler.class, StreamFetchHandler.class),
+    return Modules.combine(new AppFabricServiceModule(
+                             StreamHandler.class, StreamFetchHandler.class,
+                             StreamViewHttpHandler.class),
                            new ConfigStoreModule().getInMemoryModule(),
                            new AbstractModule() {
                              @Override
@@ -173,7 +178,9 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
   @Override
   public Module getStandaloneModules() {
 
-    return Modules.combine(new AppFabricServiceModule(StreamHandler.class, StreamFetchHandler.class),
+    return Modules.combine(new AppFabricServiceModule(
+                             StreamHandler.class, StreamFetchHandler.class,
+                             StreamViewHttpHandler.class),
                            new ConfigStoreModule().getStandaloneModule(),
                            new AbstractModule() {
                              @Override
@@ -268,6 +275,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
     private final List<Class<? extends HttpHandler>> handlerClasses;
 
+    @SafeVarargs
     private AppFabricServiceModule(Class<? extends HttpHandler>... handlerClasses) {
       this.handlerClasses = ImmutableList.copyOf(handlerClasses);
     }
@@ -278,9 +286,12 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
       install(
         new FactoryModuleBuilder()
-          .implement(new TypeLiteral<Manager<AppDeploymentInfo, ApplicationWithPrograms>>() { },
-                     new TypeLiteral<LocalApplicationManager<AppDeploymentInfo, ApplicationWithPrograms>>() { })
-          .build(new TypeLiteral<ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms>>() { })
+          .implement(new TypeLiteral<Manager<AppDeploymentInfo, ApplicationWithPrograms>>() {
+          },
+                     new TypeLiteral<LocalApplicationManager<AppDeploymentInfo, ApplicationWithPrograms>>() {
+                     })
+          .build(new TypeLiteral<ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms>>() {
+          })
       );
       install(
         new FactoryModuleBuilder()
@@ -291,13 +302,16 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       );
       install(
         new FactoryModuleBuilder()
-          .implement(new TypeLiteral<Manager<AdapterDeploymentInfo, AdapterDefinition>>() { },
+          .implement(new TypeLiteral<Manager<AdapterDeploymentInfo, AdapterDefinition>>() {
+          },
                      LocalAdapterManager.class)
-          .build(Key.get(new TypeLiteral<ManagerFactory<AdapterDeploymentInfo, AdapterDefinition>>() { },
+          .build(Key.get(new TypeLiteral<ManagerFactory<AdapterDeploymentInfo, AdapterDefinition>>() {
+          },
                          Names.named("adapters")))
       );
 
       bind(Store.class).to(DefaultStore.class);
+      bind(ViewStore.class).to(MDSViewStore.class);
       bind(ArtifactStore.class).in(Scopes.SINGLETON);
       bind(AdapterService.class).in(Scopes.SINGLETON);
       bind(ProgramLifecycleService.class).in(Scopes.SINGLETON);

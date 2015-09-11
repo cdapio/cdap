@@ -35,9 +35,11 @@ import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
 import co.cask.common.http.ObjectResponse;
+import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
@@ -47,8 +49,10 @@ import java.io.File;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -109,15 +113,37 @@ public class ApplicationClient {
   public List<ApplicationRecord> list(Id.Namespace namespace,
                                       @Nullable String artifactName,
                                       @Nullable String artifactVersion) throws IOException, UnauthorizedException {
-    if (artifactName == null && artifactVersion == null) {
+    Set<String> names = new HashSet<>();
+    if (artifactName != null) {
+      names.add(artifactName);
+    }
+    return list(namespace, names, artifactVersion);
+  }
+
+  /**
+   * Lists all applications currently deployed, optionally filtering to only include applications that use one of
+   * the specified artifact names and the specified artifact version.
+   *
+   * @param namespace the namespace to list applications from
+   * @param artifactNames the set of artifact names to allow. If empty, no filtering will be done
+   * @param artifactVersion the version of the artifact to filter by. If null, no filtering will be done
+   * @return list of {@link ApplicationRecord ApplicationRecords}.
+   * @throws IOException if a network error occurred
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   */
+  public List<ApplicationRecord> list(Id.Namespace namespace,
+                                      Set<String> artifactNames,
+                                      @Nullable String artifactVersion) throws IOException, UnauthorizedException {
+    if (artifactNames.isEmpty() && artifactVersion == null) {
       return list(namespace);
     }
 
     String path;
-    if (artifactName != null && artifactVersion != null) {
-      path = String.format("apps?artifactName=%s&artifactVersion=%s", artifactName, artifactVersion);
-    } else if (artifactName != null) {
-      path = "apps?artifactName=" + artifactName;
+    if (!artifactNames.isEmpty() && artifactVersion != null) {
+      path = String.format("apps?artifactName=%s&artifactVersion=%s",
+                           Joiner.on(',').join(artifactNames), artifactVersion);
+    } else if (!artifactNames.isEmpty()) {
+      path = "apps?artifactName=" + Joiner.on(',').join(artifactNames);
     } else {
       path = "apps?artifactVersion=" + artifactVersion;
     }

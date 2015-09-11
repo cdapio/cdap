@@ -1,0 +1,26 @@
+{
+  "id": "SnapshotParquet",
+  "groups" : {
+    "position": [ "group1" ],
+    "group1": {
+      "display" : "Snapshot Fileset - Parquet",
+      "position" : [ "name", "path" ],
+      "fields" : {
+        "name" : {
+          "widget": "dataset-selector",
+          "label": "Dataset Name"
+        },
+
+        "path" : {
+          "widget": "textbox",
+          "label": "Snapshot Target Path"
+        }
+      }
+    }
+  },
+  "schema" : {
+    "widget": "schema",
+    "schema-types" : [ "boolean", "int", "long", "float", "double", "bytes", "string", "map<string, string>" ],
+    "schema-default-type" : "string"
+  }
+}

@@ -264,11 +264,10 @@ public class ApplicationClientTestRun extends ClientTestBase {
       appClient.waitForDeployed(appId2, 30, TimeUnit.SECONDS);
       appClient.waitForDeployed(appId3, 30, TimeUnit.SECONDS);
 
-
       // check calls that should return nothing
       // these don't match anything
       Assert.assertTrue(appClient.list(Id.Namespace.DEFAULT, "ghost", null).isEmpty());
-      Assert.assertTrue(appClient.list(Id.Namespace.DEFAULT, null, "1.0.0").isEmpty());
+      Assert.assertTrue(appClient.list(Id.Namespace.DEFAULT, (String) null, "1.0.0").isEmpty());
       Assert.assertTrue(appClient.list(Id.Namespace.DEFAULT, "ghost", "1.0.0").isEmpty());
       // these match one but not the other
       Assert.assertTrue(appClient.list(Id.Namespace.DEFAULT, "otherfake", "0.1.0-SNAPSHOT").isEmpty());
@@ -287,14 +286,22 @@ public class ApplicationClientTestRun extends ClientTestBase {
         new ApplicationRecord(new ArtifactSummary("otherfake", "1.0.0-SNAPSHOT"), appId3.getId(), ""));
       Assert.assertEquals(expected, apps);
 
+      // check filter by multiple names
+      apps = Sets.newHashSet(appClient.list(Id.Namespace.DEFAULT, ImmutableSet.of("fake", "otherfake"), null));
+      expected = ImmutableSet.of(
+        new ApplicationRecord(new ArtifactSummary("otherfake", "1.0.0-SNAPSHOT"), appId3.getId(), ""),
+        new ApplicationRecord(new ArtifactSummary("fake", "1.0.0-SNAPSHOT"), appId1.getId(), ""),
+        new ApplicationRecord(new ArtifactSummary("fake", "0.1.0-SNAPSHOT"), appId2.getId(), ""));
+      Assert.assertEquals(expected, apps);
+
       // check filter by version only
-      apps = Sets.newHashSet(appClient.list(Id.Namespace.DEFAULT, null, "0.1.0-SNAPSHOT"));
+      apps = Sets.newHashSet(appClient.list(Id.Namespace.DEFAULT, (String) null, "0.1.0-SNAPSHOT"));
       expected = ImmutableSet.of(
         new ApplicationRecord(new ArtifactSummary("fake", "0.1.0-SNAPSHOT"), appId2.getId(), "")
       );
       Assert.assertEquals(expected, apps);
 
-      apps = Sets.newHashSet(appClient.list(Id.Namespace.DEFAULT, null, "1.0.0-SNAPSHOT"));
+      apps = Sets.newHashSet(appClient.list(Id.Namespace.DEFAULT, (String) null, "1.0.0-SNAPSHOT"));
       expected = ImmutableSet.of(
         new ApplicationRecord(new ArtifactSummary("fake", "1.0.0-SNAPSHOT"), appId1.getId(), ""),
         new ApplicationRecord(new ArtifactSummary("otherfake", "1.0.0-SNAPSHOT"), appId3.getId(), "")

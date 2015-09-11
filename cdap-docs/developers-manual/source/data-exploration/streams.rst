@@ -10,7 +10,7 @@ Stream Exploration
 
 Streams are the primary method of ingesting real-time data into CDAP.
 It is often useful to be able to examine data in a stream in an ad-hoc manner through
-SQL-like queries 
+SQL-like queries
 
 Each event in a stream contains a timestamp, a map of headers, and a body. When a stream
 is created, a corresponding Hive table is created that allows queries to be run over
@@ -25,10 +25,10 @@ Stream Format
 -------------
 
 A format defines how the bytes in an event body can be read as a higher level object.
-For example, the CSV (comma separated values) format can read each value in comma-delimited text 
-as a separate column of some given type. Each format has 
+For example, the CSV (comma separated values) format can read each value in comma-delimited text
+as a separate column of some given type. Each format has
 a schema that describes the structure of data the format can read. Some formats, such as the Avro format,
-require a schema to be explicitly given. Other formats, such as the CSV format, have a default schema. 
+require a schema to be explicitly given. Other formats, such as the CSV format, have a default schema.
 
 Format is a configuration setting that can be set on a stream. This can be done either through the
 HTTP RESTful API or by using the CDAP Command Line Interface (CLI)::
@@ -45,22 +45,22 @@ all events added to the stream are readable by the format you have set on a stre
 If any stream event cannot be read by the format you have set, your entire query will fail and you
 will not get any results.
 
-Accepted formats are ``avro``, ``csv`` (comma-separated), ``tsv`` (tab-separated), ``text``, ``clf``, 
+Accepted formats are ``avro``, ``csv`` (comma-separated), ``tsv`` (tab-separated), ``text``, ``clf``,
 ``grok``, and ``syslog``.
 
 Schema
 ------
 CDAP schemas are adopted from the `Avro Schema Declaration <http://avro.apache.org/docs/1.7.3/spec.html#schemas>`__
 with a few differences:
- 
+
   * Map keys do not have to be strings, but can be of any type.
-  * No "name" property for the enum type. 
+  * No "name" property for the enum type.
   * No support of "doc" and "aliases" in record and enum types.
   * No support of "doc" and "default" in record fields.
   * No "fixed" type.
 
-There are a few additional limitations on the types of schemas that can be used for exploration: 
- 
+There are a few additional limitations on the types of schemas that can be used for exploration:
+
   * Schemas must be a record of at least one field.
   * Enums are not supported.
   * Unions are not supported, unless it is a union of a null and another type, representing a nullable type.
@@ -77,7 +77,7 @@ data types.
 Schema Syntax
 -------------
 Schemas are represented as JSON Objects, following the same format as `Avro schemas
-<http://avro.apache.org/docs/1.7.3/spec.html#schemas>`__. 
+<http://avro.apache.org/docs/1.7.3/spec.html#schemas>`__.
 The JSON representation is used by the HTTP RESTful APIs, while the CDAP CLI supports a SQL-like syntax.
 
 For example, the SQL-like schema::
@@ -90,25 +90,25 @@ is equivalent to the Avro-like JSON schema::
     "type": "record",
     "name": "rec",
     "fields": [
-      { 
+      {
         "name": "f1",
         "type": [ "int", "null" ]
       },
-      { 
+      {
         "name": "f2",
         "type": [ "string", "null" ]
       },
-      { 
+      {
         "name": "f3",
-        "type": { "type": "array", "items": [ "int", "null" ] } 
+        "type": { "type": "array", "items": [ "int", "null" ] }
       },
-      { 
-        "name": "f4", 
-        "type": { 
-          "type": "map", "keys": [ "string", "null" ], "values": [ "int", "null" ] 
+      {
+        "name": "f4",
+        "type": {
+          "type": "map", "keys": [ "string", "null" ], "values": [ "int", "null" ]
         }
       },
-      { 
+      {
         "name": "f5",
         "type": {
           "type": "record",
@@ -135,16 +135,22 @@ For example::
 CSV and TSV Formats
 -------------------
 The ``csv`` (comma separated values) and ``tsv`` (tab separated values) formats read event bodies as delimited text.
-They have two settings, ``charset`` for the text charset, and ``delimiter`` for the delimiter.
+They have three settings: ``charset`` for the text charset, ``delimiter`` for the delimiter, and ``mapping`` for
+column-index-to-schema-field mapping.
 The ``charset`` setting defaults to ``utf-8``. The ``delimiter`` setting defaults to a comma
-for the ``csv`` format and to a tab for the ``tsv`` format.
+for the ``csv`` format and to a tab for the ``tsv`` format. The ``mapping`` setting is optional, and
+is in the zero-based format ``index0:field0,index1:field1``. If provided, the CSV field order will be decided by the mapping
+rather than using the schema field order. For example, if the ``mapping`` is ``1:age,0:name``, then the stream event
+``foo,123,82`` will be parsed as ``{"age":123, "name":"foo"}``.
 
 These formats only support scalars as column types, except for the very last column, which can be an array of strings.
-All types can be nullable. If no schema is given, the default schema is an array of strings. 
+All types can be nullable. If no schema is given, the default schema is an array of strings.
 
 For example::
- 
+
   set stream format mystream csv "col1 string, col2 int not null, col3 array<string>"
+
+
 
 Avro Format
 -----------
@@ -187,7 +193,7 @@ contains three fields, we can set a format and schema on the stream to allow us 
 complicated queries::
 
   > set stream format trades csv "ticker string, num_traded int, price double"
-  > execute "select ticker, count(*) as transactions, sum(num_traded) as volume from stream_trades group by ticker order by volume desc" 
+  > execute "select ticker, count(*) as transactions, sum(num_traded) as volume from stream_trades group by ticker order by volume desc"
   +========================================================+
   | ticker: STRING | transactions: BIGINT | volume: BIGINT |
   +========================================================+
@@ -211,7 +217,7 @@ When creating your queries, keep these limitations in mind:
 - CDAP uses a custom storage handler to read streams through Hive. This means that queries must be run through
   CDAP and not directly through Hive unless you place CDAP jars in your Hive classpath. This also means that
   streams cannot be queried directly by Impala. If you wish to use Impala to explore data in a stream, you can
-  create an :ref:`adapter <apptemplates-index>` that converts stream data into a ``TimePartitionedFileSet``. 
+  create an :ref:`adapter <apptemplates-index>` that converts stream data into a ``TimePartitionedFileSet``.
 - Some versions of Hive may try to create a temporary staging directory at the table location when executing queries.
   If you are seeing permission errors, try setting ``hive.exec.stagingdir`` in your Hive configuration to ``/tmp/hive-staging``.
 

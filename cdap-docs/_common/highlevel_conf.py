@@ -53,7 +53,7 @@ def build_common_index(app, exception):
     clean(master)
     
     for manual in manuals:
-        index = load_index(builder, "../../%s/build/html" % manual)
+        index = load_index(builder, "../../%s/%s/html" % (manual, target))
         master = merge(master, index, manual)
     
     dump_search_index(builder, master)
@@ -169,7 +169,7 @@ def merger(dict1, dict2, offset):
     return dict1
 
 # JSON Creation (json-versions.js)
-# Creates a JSON file with timeline and formatting information fron the data in the 
+# Creates a JSON file with timeline and formatting information from the data in the 
 # common_conf.py ("versions_data")
 
 def _build_timeline():

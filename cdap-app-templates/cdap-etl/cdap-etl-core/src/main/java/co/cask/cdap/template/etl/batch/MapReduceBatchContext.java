@@ -61,42 +61,6 @@ public abstract class MapReduceBatchContext extends BatchTransformContext implem
     return mrContext.getDataset(name, arguments);
   }
 
-  @Nullable
-  @Override
-  public AdapterSpecification getAdapterSpecification() {
-    return mrContext.getAdapterSpecification();
-  }
-
-  @Override
-  public PluginProperties getPluginProperties(String pluginId) {
-    // temporary hack until templates are removed, and to let this work for both apps and templates
-    try {
-      return mrContext.getPluginProperties(getPluginId(pluginId));
-    } catch (UnsupportedOperationException e) {
-      return mrContext.getPluginProps(getPluginId(pluginId));
-    }
-  }
-
-  @Override
-  public <T> Class<T> loadPluginClass(String pluginId) {
-    // temporary hack until templates are removed, and to let this work for both apps and templates
-    try {
-      return mrContext.loadPluginClass(getPluginId(pluginId));
-    } catch (UnsupportedOperationException e) {
-      return mrContext.loadClass(getPluginId(pluginId));
-    }
-  }
-
-  @Override
-  public <T> T newPluginInstance(String pluginId) throws InstantiationException {
-    // temporary hack until templates are removed, and to let this work for both apps and templates
-    try {
-      return mrContext.newPluginInstance(getPluginId(pluginId));
-    } catch (UnsupportedOperationException e) {
-      return mrContext.newInstance(getPluginId(pluginId));
-    }
-  }
-
   @Override
   public Map<String, String> getRuntimeArguments() {
     return mrContext.getRuntimeArguments();

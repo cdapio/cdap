@@ -39,7 +39,9 @@ public interface MapReduceTaskContext<KEYOUT, VALUEOUT> extends RuntimeContext, 
   ServiceDiscoverer, AdapterContext, PluginContext {
 
   /**
-   * Write key and value to the named output Dataset.
+   * Write key and value to the named output Dataset. This method must only be used if the MapReduce writes to
+   * more than one output. If there is a single output, {@link #write(Object, Object)} must be used, or else
+   * data may not be written correctly.
    *
    * @param namedOutput the name of the output Dataset
    * @param key         the key
@@ -48,7 +50,8 @@ public interface MapReduceTaskContext<KEYOUT, VALUEOUT> extends RuntimeContext, 
   <K, V> void write(String namedOutput, K key, V value) throws IOException, InterruptedException;
 
   /**
-   * Write key and value to the hadoop context.
+   * Write key and value to the hadoop context. This method must only be used in the MapReduce writes to a single
+   * output. If there is more than one outputs, {@link #write(String, Object, Object)} must be used.
    *
    * @param key         the key
    * @param value       the value

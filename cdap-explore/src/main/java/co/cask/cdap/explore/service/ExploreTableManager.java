@@ -38,6 +38,7 @@ import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
 import co.cask.cdap.data2.dataset2.lib.table.ObjectMappedTableModule;
 import co.cask.cdap.explore.table.CreateStatementBuilder;
+import co.cask.cdap.explore.utils.ExploreTableNaming;
 import co.cask.cdap.hive.datasets.DatasetStorageHandler;
 import co.cask.cdap.hive.objectinspector.ObjectInspectorFactory;
 import co.cask.cdap.hive.stream.StreamStorageHandler;
@@ -78,18 +79,22 @@ public class ExploreTableManager {
 
   private final ExploreService exploreService;
   private final SystemDatasetInstantiatorFactory datasetInstantiatorFactory;
+  private final ExploreTableNaming tableNaming;
 
   @Inject
   public ExploreTableManager(ExploreService exploreService,
-                             SystemDatasetInstantiatorFactory datasetInstantiatorFactory) {
+                             SystemDatasetInstantiatorFactory datasetInstantiatorFactory,
+                             ExploreTableNaming tableNaming) {
     this.exploreService = exploreService;
     this.datasetInstantiatorFactory = datasetInstantiatorFactory;
+    this.tableNaming = tableNaming;
   }
 
   /**
    * Enable exploration on a stream by creating a corresponding Hive table. Enabling exploration on a
    * stream that has already been enabled is a no-op. Assumes the stream actually exists.
    *
+   * @param tableName name of the Hive table to create
    * @param streamID the ID of the stream
    * @param formatSpec the format specification for the table
    * @return query handle for creating the Hive table for the stream
@@ -97,16 +102,18 @@ public class ExploreTableManager {
    * @throws ExploreException if there was an exception submitting the create table statement
    * @throws SQLException if there was a problem with the create table statement
    */
-  public QueryHandle enableStream(Id.Stream streamID, FormatSpecification formatSpec)
+  public QueryHandle enableStream(String tableName, Id.Stream streamID, FormatSpecification formatSpec)
     throws UnsupportedTypeException, ExploreException, SQLException {
     String streamName = streamID.getId();
-    LOG.debug("Enabling explore for stream {}", streamID);
+    LOG.debug("Enabling explore for stream {} with table {}", streamID, tableName);
 
     // schema of a stream is always timestamp, headers, and then the schema of the body.
     List<Schema.Field> fields = Lists.newArrayList(
       Schema.Field.of("ts", Schema.of(Schema.Type.LONG)),
       Schema.Field.of("headers", Schema.mapOf(Schema.of(Schema.Type.STRING), Schema.of(Schema.Type.STRING))));
-    fields.addAll(formatSpec.getSchema().getFields());
+    if (formatSpec.getSchema() != null) {
+      fields.addAll(formatSpec.getSchema().getFields());
+    }
     Schema schema = Schema.recordOf("streamEvent", fields);
 
     Map<String, String> serdeProperties = ImmutableMap.of(
@@ -114,13 +121,12 @@ public class ExploreTableManager {
       Constants.Explore.STREAM_NAMESPACE, streamID.getNamespaceId(),
       Constants.Explore.FORMAT_SPEC, GSON.toJson(formatSpec));
 
-    String tableName = getStreamTableName(streamID);
     String createStatement = new CreateStatementBuilder(streamName, tableName)
       .setSchema(schema)
       .setTableComment("CDAP Stream")
       .buildWithStorageHandler(StreamStorageHandler.class.getName(), serdeProperties);
 
-    LOG.debug("Running create statement for stream {}: {}", streamName, createStatement);
+    LOG.debug("Running create statement for stream {} with table {}: {}", streamName, tableName, createStatement);
 
     return exploreService.execute(streamID.getNamespace(), createStatement);
   }
@@ -128,14 +134,15 @@ public class ExploreTableManager {
   /**
    * Disable exploration on the given stream by dropping the Hive table for the stream.
    *
+   * @param tableName name of the table to delete
    * @param streamID the ID of the stream to disable
    * @return the query handle for disabling the stream
    * @throws ExploreException if there was an exception dropping the table
    * @throws SQLException if there was a problem with the drop table statement
    */
-  public QueryHandle disableStream(Id.Stream streamID) throws ExploreException, SQLException {
-    LOG.debug("Disabling explore for stream {}", streamID);
-    String deleteStatement = generateDeleteStatement(getStreamTableName(streamID));
+  public QueryHandle disableStream(String tableName, Id.Stream streamID) throws ExploreException, SQLException {
+    LOG.debug("Disabling explore for stream {} with table {}", streamID, tableName);
+    String deleteStatement = generateDeleteTableStatement(tableName);
     return exploreService.execute(streamID.getNamespace(), deleteStatement);
   }
 
@@ -207,7 +214,7 @@ public class ExploreTableManager {
 
         // otherwise, derive the schema from the record type
         LOG.debug("Enabling explore for dataset instance {}", datasetName);
-        createStatement = new CreateStatementBuilder(datasetName, getDatasetTableName(datasetID))
+        createStatement = new CreateStatementBuilder(datasetName, tableNaming.getTableName(datasetID))
           .setSchema(hiveSchemaFor(recordType))
           .setTableComment("CDAP Dataset")
           .buildWithStorageHandler(DatasetStorageHandler.class.getName(), serdeProperties);
@@ -249,7 +256,7 @@ public class ExploreTableManager {
 
     try {
       Schema schema = Schema.parseJson(schemaStr);
-      String createStatement = new CreateStatementBuilder(datasetID.getId(), getDatasetTableName(datasetID))
+      String createStatement = new CreateStatementBuilder(datasetID.getId(), tableNaming.getTableName(datasetID))
         .setSchema(schema)
         .setTableComment("CDAP Dataset")
         .buildWithStorageHandler(DatasetStorageHandler.class.getName(), serdeProperties);
@@ -276,7 +283,7 @@ public class ExploreTableManager {
     throws ExploreException, SQLException, DatasetNotFoundException, ClassNotFoundException {
     LOG.debug("Disabling explore for dataset instance {}", datasetID);
 
-    String tableName = getDatasetTableName(datasetID);
+    String tableName = tableNaming.getTableName(datasetID);
     // If table does not exist, nothing to be done
     try {
       exploreService.getTableInfo(datasetID.getNamespaceId(), tableName);
@@ -289,7 +296,7 @@ public class ExploreTableManager {
     String datasetType = spec.getType();
     if (ObjectMappedTableModule.FULL_NAME.equals(datasetType) ||
       ObjectMappedTableModule.SHORT_NAME.equals(datasetType)) {
-      deleteStatement = generateDeleteStatement(tableName);
+      deleteStatement = generateDeleteTableStatement(tableName);
       LOG.debug("Running delete statement for dataset {} - {}", datasetID, deleteStatement);
       return exploreService.execute(datasetID.getNamespace(), deleteStatement);
     }
@@ -301,11 +308,11 @@ public class ExploreTableManager {
       }
 
       if (dataset instanceof RecordScannable || dataset instanceof RecordWritable) {
-        deleteStatement = generateDeleteStatement(tableName);
+        deleteStatement = generateDeleteTableStatement(tableName);
       } else if (dataset instanceof FileSet || dataset instanceof PartitionedFileSet) {
         Map<String, String> properties = spec.getProperties();
         if (FileSetProperties.isExploreEnabled(properties)) {
-          deleteStatement = generateDeleteStatement(tableName);
+          deleteStatement = generateDeleteTableStatement(tableName);
         }
       }
     } catch (IOException e) {
@@ -335,7 +342,7 @@ public class ExploreTableManager {
     throws ExploreException, SQLException {
     String addPartitionStatement = String.format(
       "ALTER TABLE %s ADD PARTITION %s LOCATION '%s'",
-      getDatasetTableName(datasetID), generateHivePartitionKey(partitionKey), fsPath);
+      tableNaming.getTableName(datasetID), generateHivePartitionKey(partitionKey), fsPath);
 
     LOG.debug("Add partition for key {} dataset {} - {}", partitionKey, datasetID, addPartitionStatement);
 
@@ -359,7 +366,7 @@ public class ExploreTableManager {
     }
     StringBuilder statement = new StringBuilder()
       .append("ALTER TABLE ")
-      .append(getDatasetTableName(datasetID))
+      .append(tableNaming.getTableName(datasetID))
       .append(" ADD");
     for (PartitionDetail partitionDetail : partitionDetails) {
       statement.append(" PARTITION")
@@ -388,31 +395,17 @@ public class ExploreTableManager {
 
     String dropPartitionStatement = String.format(
       "ALTER TABLE %s DROP PARTITION %s",
-      getDatasetTableName(datasetID), generateHivePartitionKey(partitionKey));
+      tableNaming.getTableName(datasetID), generateHivePartitionKey(partitionKey));
 
     LOG.debug("Drop partition for key {} dataset {} - {}", partitionKey, datasetID, dropPartitionStatement);
 
     return exploreService.execute(datasetID.getNamespace(), dropPartitionStatement);
   }
 
-  private String getStreamTableName(Id.Stream streamId) {
-    return cleanHiveTableName(String.format("stream_%s", streamId.getId()));
-  }
-
-  private String getDatasetTableName(Id.DatasetInstance datasetID) {
-    return cleanHiveTableName(String.format("dataset_%s", datasetID.getId()));
-  }
-
-  private String cleanHiveTableName(String name) {
-    // Instance name is like cdap.user.my_table.
-    // For now replace . with _ and - with _ since Hive tables cannot have . or _ in them.
-    return name.replaceAll("\\.", "_").replaceAll("-", "_").toLowerCase();
-  }
-
   private String generateFileSetCreateStatement(Id.DatasetInstance datasetID, Dataset dataset,
                                                 Map<String, String> properties) throws IllegalArgumentException {
 
-    String tableName = getDatasetTableName(datasetID);
+    String tableName = tableNaming.getTableName(datasetID);
     Map<String, String> tableProperties = FileSetProperties.getTableProperties(properties);
 
     Location baseLocation;
@@ -462,8 +455,8 @@ public class ExploreTableManager {
     }
   }
 
-  private String generateDeleteStatement(String name) {
-    return String.format("DROP TABLE IF EXISTS %s", cleanHiveTableName(name));
+  private String generateDeleteTableStatement(String name) {
+    return String.format("DROP TABLE IF EXISTS %s", tableNaming.cleanTableName(name));
   }
 
   private String generateHivePartitionKey(PartitionKey key) {

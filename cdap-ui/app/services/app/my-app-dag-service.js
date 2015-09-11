@@ -47,7 +47,7 @@
 
 */
 angular.module(PKG.name + '.services')
-  .service('MyAppDAGService', function(myAdapterApi, $q, $bootstrapModal, $state, $filter, mySettings, AdapterErrorFactory, IMPLICIT_SCHEMA, myHelpers, PluginConfigFactory, ModalConfirm, EventPipe, CanvasFactory) {
+  .service('MyAppDAGService', function(myAdapterApi, $q, $bootstrapModal, $state, $filter, mySettings, AdapterErrorFactory, IMPLICIT_SCHEMA, myHelpers, PluginConfigFactory, ModalConfirm, EventPipe, CanvasFactory, $rootScope, GLOBALS) {
 
     var countSink = 0,
         countSource = 0,
@@ -68,7 +68,7 @@ angular.module(PKG.name + '.services')
         name: '',
         description: '',
         template: {
-          type: 'ETLBatch',
+          type: GLOBALS.etlBatch,
           instance: 1,
           schedule: {
             cron: '* * * * *'
@@ -404,7 +404,9 @@ angular.module(PKG.name + '.services')
       // This needs to pass on a scope always. Right now there is no cleanup
       // happening
       var params = {
-        adapterType: this.metadata.template.type
+        adapterType: this.metadata.template.type,
+        version: $rootScope.cdapVersion,
+        namespace: $state.params.namespace
       };
       if (scope) {
         params.scope = scope;
@@ -602,9 +604,11 @@ angular.module(PKG.name + '.services')
     // construction and validation of DAGs in UI.
     this.getConfig = function() {
       var config = {
-        name: this.metadata.name,
-        description: this.metadata.description,
-        template: this.metadata.template.type,
+        artifact: {
+          name: this.metadata.name,
+          scope: 'SYSTEM',
+          version: $rootScope.cdapVersion
+        },
         source: {
           properties: {}
         },
@@ -654,6 +658,10 @@ angular.module(PKG.name + '.services')
           if (!backendProperties[key] || properties[key] === '' || properties[key] === null) {
             delete properties[key];
           }
+          // FIXME: Remove this once https://issues.cask.co/browse/CDAP-3614 is fixed.
+          if (properties[key] && typeof properties[key] !== 'string') {
+            properties[key] = properties[key].toString();
+          }
         });
         return properties;
       }
@@ -696,17 +704,20 @@ angular.module(PKG.name + '.services')
       var config = this.getConfig();
       pruneProperties(config);
       var data = {
-        template: this.metadata.template.type,
-        description: this.metadata.description,
+        artifact: {
+          name: this.metadata.template.type,
+          scope: 'SYSTEM',
+          version: $rootScope.cdapVersion
+        },
         config: {
           source: config.source,
           sink: config.sink,
           transforms: config.transforms
         }
       };
-      if (this.metadata.template.type === 'ETLRealtime') {
+      if (this.metadata.template.type === GLOBALS.etlRealtime) {
         data.config.instances = this.metadata.template.instance;
-      } else if (this.metadata.template.type === 'ETLBatch') {
+      } else if (this.metadata.template.type === GLOBALS.etlBatch) {
         // default value should be * * * * *
         data.config.schedule = this.metadata.template.schedule.cron;
       }

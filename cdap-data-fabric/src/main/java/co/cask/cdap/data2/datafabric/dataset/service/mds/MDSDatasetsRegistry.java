@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.datafabric.dataset.service.mds;
 
 import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.data2.datafabric.dataset.DatasetMetaTableUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
@@ -54,7 +55,7 @@ public class MDSDatasetsRegistry extends TransactionalDatasetRegistry<MDSDataset
   }
 
   @Override
-  protected MDSDatasets createContext() throws IOException, DatasetManagementException {
+  protected MDSDatasets createContext() throws IOException, DatasetManagementException, ServiceUnavailableException {
     Map<String, ? extends Dataset> datasets = ImmutableMap.of(
       // "null" for class being in system classpath, for mds it is always true
       DatasetMetaTableUtil.INSTANCE_TABLE_NAME, util.getInstanceMetaTable(),

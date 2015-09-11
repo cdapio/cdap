@@ -92,7 +92,9 @@ Then, instantiate as follows::
   AccessToken accessToken = authenticationClient.getAccessToken();
 
   // Interact with the secure CDAP instance located at example.com, port 10000, with the provided accessToken
-  ClientConfig clientConfig = new ClientConfig("example.com", 10000, accessToken);
+  ClientConfig clientConfig = ClientConfig.builder()
+    .setConnectionConfig(new ConnectionConfig("example.com", 10000, accessToken))
+    .build();
 
 .. _application-client:
 
@@ -106,17 +108,17 @@ ApplicationClient
   ApplicationClient appClient = new ApplicationClient(clientConfig);
 
   // Fetch the list of applications
-  List<ApplicationRecord> apps = appClient.list();
+  List<ApplicationRecord> apps = appClient.list(Id.Namespace.DEFAULT);
 
   // Deploy an application
-  File appJarFile = ...;
-  appClient.deploy(appJarFile);
+  File appJarFile = new File("your-app.jar");
+  appClient.deploy(Id.Namespace.DEFAULT, appJarFile);
 
   // Delete an application
-  appClient.delete("Purchase");
+  appClient.delete(Id.Application.from(Id.Namespace.DEFAULT, "Purchase"));
 
   // List programs belonging to an application
-  appClient.listPrograms("Purchase");
+  appClient.listPrograms(Id.Application.from(Id.Namespace.DEFAULT, "Purchase"));
 
 .. _preferences-client:
 
@@ -142,13 +144,13 @@ PreferencesClient
   preferencesClient.deleteInstancePreferences();
 
   // Set preferences of MyApp application which is deployed in the Dev namespace
-  preferencesClient.setApplicationPreferences("Dev", "MyApp", propMap);
+  preferencesClient.setApplicationPreferences(Id.Application.from("Dev", "MyApp"), propMap);
 
   // Get only the preferences of MyApp application which is deployed in the Dev namespace
-  Map<String, String> appPrefs = preferencesClient.getApplicationPreferences("Dev", "MyApp", false);
+  Map<String, String> appPrefs = preferencesClient.getApplicationPreferences(Id.Application.from("Dev", "MyApp"), false);
 
   // Get the resolved preferences (collapsed with higher level(s) of preferences)
-  Map<String, String> resolvedAppPrefs = preferencesClient.getApplicationPreferences("Dev", "MyApp", true);
+  Map<String, String> resolvedAppPrefs = preferencesClient.getApplicationPreferences(Id.Application.from("Dev", "MyApp"), true);
 
 .. _program-client:
 
@@ -162,35 +164,31 @@ ProgramClient
   ProgramClient programClient = new ProgramClient(clientConfig);
 
   // Start a service in the WordCount example
-  programClient.start("WordCount", ProgramType.SERVICE, "RetrieveCounts");
+  programClient.start(Id.Program.from(Id.Namespace.DEFAULT, "WordCount", ProgramType.SERVICE, "RetrieveCounts"));
 
-  // Fetch live information from the HelloWorld example
-  // Live info includes the address of an component’s container host and the container’s debug port,
   // formatted in JSON
-  programClient.getLiveInfo("HelloWorld", ProgramType.SERVICE, "greet");
+  programClient.getLiveInfo(Id.Program.from(Id.Namespace.DEFAULT, "HelloWorld", ProgramType.SERVICE, "greet"));
 
   // Fetch program logs in the WordCount example
-  programClient.getProgramLogs("WordCount", ProgramType.SERVICE, "RetrieveCounts", 0,
-                               Long.MAX_VALUE);
+  programClient.getProgramLogs(Id.Program.from(Id.Namespace.DEFAULT, "WordCount", ProgramType.SERVICE, "RetrieveCounts"), 0, Long.MAX_VALUE);
 
   // Scale a service in the HelloWorld example
-  programClient.setServiceInstances("HelloWorld", "greet", 3);
+  programClient.setServiceInstances(Id.Service.from(Id.Namespace.DEFAULT, "HelloWorld", "greet"), 3);
 
   // Stop a service in the HelloWorld example
-  programClient.stop("HelloWorld", ProgramType.SERVICE, "greet");
+  programClient.stop(Id.Program.from(Id.Namespace.DEFAULT, "HelloWorld", ProgramType.SERVICE, "greet"));
 
   // Start, scale, and stop a flow in the WordCount example
-  programClient.start("WordCount", ProgramType.FLOW, "WordCountFlow");
+  programClient.start(Id.Program.from(Id.Namespace.DEFAULT, "WordCount", ProgramType.FLOW, "WordCountFlow"));
 
-  // Fetch flow history in the WordCount example
-  programClient.getProgramHistory("WordCount", ProgramType.FLOW, "WordCountFlow");
+  // Fetch the last 10 flow runs in the WordCount example
+  programClient.getAllProgramRuns(Id.Program.from(Id.Namespace.DEFAULT, "WordCount", ProgramType.FLOW, "WordCountFlow"), 0, Long.MAX_VALUE, 10);
 
   // Scale a flowlet in the WordCount example
-  programClient.setFlowletInstances("WordCount", "WordCountFlow", "Tokenizer", 3);
+  programClient.setFlowletInstances(Id.Flow.Flowlet.from(Id.Application.from(Id.Namespace.DEFAULT, "WordCount"), "WordCountFlow", "Tokenizer"), 3);
 
   // Stop a flow in the WordCount example
-  programClient.stop("WordCount", ProgramType.FLOW, "WordCountFlow");
-
+  programClient.stop(Id.Program.from(Id.Namespace.DEFAULT, "WordCount", ProgramType.FLOW, "WordCountFlow"));
 
 .. _stream-client:
 
@@ -204,36 +202,35 @@ StreamClient
   StreamClient streamClient = new StreamClient(clientConfig);
 
   // Fetch the stream list
-  List streams = streamClient.list();
+  List streams = streamClient.list(Id.Namespace.DEFAULT);
 
   // Create a stream, using the Purchase example
-  streamClient.create("purchaseStream");
+  Id.Stream streamId = Id.Stream.from(Id.Namespace.DEFAULT, "purchases");
+  streamClient.create(streamId);
 
-  // Fetch a stream's properties, using the Purchase example
-  StreamProperties config = streamClient.getConfig("purchaseStream");
+  // Fetch a stream's properties
+  StreamProperties config = streamClient.getConfig(streamId);
 
-  // Send events to a stream, using the Purchase example
-  streamClient.sendEvent("purchaseStream", "Tom bought 5 apples for $10");
+  // Send events to a stream
+  streamClient.sendEvent(streamId, "Tom bought 5 apples for $10");
 
   // Read all events from a stream (results in events)
   List<StreamEvent> events = Lists.newArrayList();
-  streamClient.getEvents("purchaseStream", 0, Long.MAX_VALUE, Integer.MAX_VALUE, events);
+  streamClient.getEvents(streamId, 0, Long.MAX_VALUE, Integer.MAX_VALUE, events);
 
   // Read first 5 events from a stream (results in events)
-  List<StreamEvent> events = Lists.newArrayList();
+  events = Lists.newArrayList();
   streamClient.getEvents(streamId, 0, Long.MAX_VALUE, 5, events);
 
   // Read 2nd and 3rd events from a stream, after first calling getEvents
   long startTime = events.get(1).getTimestamp();
   long endTime = events.get(2).getTimestamp() + 1;
-  events.clear()
+  events.clear();
   streamClient.getEvents(streamId, startTime, endTime, Integer.MAX_VALUE, events);
 
-  //
   // Write asynchronously to a stream
-  //
-  String streamId = "testAsync";
-  List<StreamEvent> events = Lists.newArrayList();
+  streamId = Id.Stream.from(Id.Namespace.DEFAULT, "testAsync");
+  events = Lists.newArrayList();
 
   streamClient.create(streamId);
 
@@ -253,12 +250,8 @@ StreamClient
   events.clear();
   while (events.isEmpty()) {
     events.clear();
-    streamClient.getEvents(streamId, lastTimestamp + 1, Long.MAX_VALUE, msgCount, events);
+    streamClient.getEvents(streamId, 0, Long.MAX_VALUE, msgCount, events);
   }
-  //
-  // End write asynchronously
-  //
-
 
 .. _dataset-client:
 
@@ -272,17 +265,17 @@ DatasetClient
   DatasetClient datasetClient = new DatasetClient(clientConfig);
 
   // Fetch the list of datasets
-  List<DatasetSpecification> datasets = datasetClient.list();
+  List<DatasetSpecificationSummary> datasets = datasetClient.list(Id.Namespace.DEFAULT);
 
   // Create a dataset
-  datasetClient.create("someDataset", "someDatasetType");
+  Id.DatasetInstance datasetId = Id.DatasetInstance.from(Id.Namespace.DEFAULT, "someDataset");
+  datasetClient.create(datasetId, "someDatasetType");
 
   // Truncate a dataset
-  datasetClient.truncate("someDataset");
+  datasetClient.truncate(datasetId);
 
   // Delete a dataset
-  datasetClient.delete("someDataset");
-
+  datasetClient.delete(datasetId);
 
 .. _dataset-module-client:
 
@@ -296,15 +289,15 @@ DatasetModuleClient
   DatasetModuleClient datasetModuleClient = new DatasetModuleClient(clientConfig);
 
   // Add a dataset module
-  File moduleJarFile = createAppJarFile(someDatasetModule.class);
-  datasetModuleClient("someDatasetModule", SomeDatasetModule.class.getName(), moduleJarFile);
+  File moduleJarFile = createAppJarFile(SomeDatasetModule.class);
+  Id.DatasetModule datasetModuleId = Id.DatasetModule.from(Id.Namespace.DEFAULT, "someDatasetModule");
+  datasetModuleClient.add(datasetModuleId, SomeDatasetModule.class.getName(), moduleJarFile);
 
   // Fetch the dataset module information
-  DatasetModuleMeta datasetModuleMeta = datasetModuleClient.get("someDatasetModule");
+  DatasetModuleMeta datasetModuleMeta = datasetModuleClient.get(datasetModuleId);
 
   // Delete all dataset modules
-  datasetModuleClient.deleteAll();
-
+  datasetModuleClient.deleteAll(Id.Namespace.DEFAULT);
 
 .. _dataset-type-client:
 
@@ -318,11 +311,10 @@ DatasetTypeClient
   DatasetTypeClient datasetTypeClient = new DatasetTypeClient(clientConfig);
 
   // Fetch the dataset type information using the type name
-  DatasetTypeMeta datasetTypeMeta = datasetTypeClient.get("someDatasetType");
+  DatasetTypeMeta datasetTypeMeta = datasetTypeClient.get(Id.DatasetType.from(Id.Namespace.DEFAULT, "someDatasetType"));
 
   // Fetch the dataset type information using the classname
-  datasetTypeMeta = datasetTypeClient.get(SomeDataset.class.getName());
-
+  datasetTypeMeta = datasetTypeClient.get(Id.DatasetType.from(Id.Namespace.DEFAULT, SomeDataset.class.getName()));
 
 .. _query-client:
 
@@ -335,38 +327,19 @@ QueryClient
   // Construct the client used to interact with CDAP
   QueryClient queryClient = new QueryClient(clientConfig);
 
-  //
   // Perform an ad-hoc query using the Purchase example
-  //
-  String query = "SELECT * FROM dataset_history WHERE customer IN ('Alice','Bob')"
-  QueryHandle queryHandle = queryClient.execute(query);
-  QueryStatus status = new QueryStatus(null, false);
+  ListenableFuture<ExploreExecutionResult> resultFuture = queryClient.execute(Id.Namespace.DEFAULT, "SELECT * FROM dataset_history WHERE customer IN ('Alice','Bob')");
+  ExploreExecutionResult results = resultFuture.get();
 
-  while (QueryStatus.OpStatus.RUNNING == status.getStatus() ||
-         QueryStatus.OpStatus.INITIALIZED == status.getStatus() ||
-         QueryStatus.OpStatus.PENDING == status.getStatus()) {
-    Thread.sleep(1000);
-    status = queryClient.getStatus(queryHandle);
+  // Fetch schema
+  List<ColumnDesc> schema = results.getResultSchema();
+  String[] header = new String[schema.size()];
+  for (int i = 0; i < header.length; i++) {
+    ColumnDesc column = schema.get(i);
+    // Hive columns start at 1
+    int index = column.getPosition() - 1;
+    header[index] = column.getName() + ": " + column.getType();
   }
-
-  if (status.hasResults()) {
-    // Get first 20 results
-    List<QueryResult> results = queryClient.getResults(queryHandle, 20);
-    // Fetch schema
-    List<ColumnDesc> schema = queryClient.getSchema(queryHandle);
-    String[] header = new String[schema.size()];
-    for (int i = 0; i < header.length; i++) {
-      ColumnDesc column = schema.get(i);
-      // Hive columns start at 1
-      int index = column.getPosition() - 1;
-      header[index] = column.getName() + ": " + column.getType();
-    }
-  }
-
-  queryClient.delete(queryHandle);
-  //
-  // End perform an ad-hoc query
-  //
 
 .. _service-client:
 
@@ -380,8 +353,7 @@ ServiceClient
   ServiceClient serviceClient = new ServiceClient(clientConfig);
 
   // Fetch service information using the service in the PurchaseApp example
-  ServiceMeta serviceMeta = serviceClient.get("PurchaseApp", "CatalogLookup");
-
+  ServiceSpecification serviceSpec = serviceClient.get(Id.Service.from(Id.Namespace.DEFAULT, "PurchaseApp", "CatalogLookup"));
 
 .. _metrics-client:
 
@@ -394,10 +366,8 @@ MetricsClient
   // Construct the client used to interact with CDAP
   MetricsClient metricsClient = new MetricsClient(clientConfig);
 
-  // Fetch the total number of events that have been processed by a flow
-  JsonObject metric = metricsClient.getMetric("user", "/apps/HelloWorld/flows",
-                                              "process.events.processed", "aggregate=true");
-
+  // Fetch the total number of events that have been processed by a flowlet
+  RuntimeMetrics metric = metricsClient.getFlowletMetrics(Id.Flow.from("user", "HelloWorld", "someFlow"), "process.events.processed");
 
 .. _monitor-client:
 

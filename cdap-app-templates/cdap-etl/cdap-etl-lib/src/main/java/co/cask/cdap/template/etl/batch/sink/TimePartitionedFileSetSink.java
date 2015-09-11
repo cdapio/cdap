@@ -17,7 +17,6 @@
 package co.cask.cdap.template.etl.batch.sink;
 
 import co.cask.cdap.api.data.format.StructuredRecord;
-import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
 import co.cask.cdap.template.etl.api.PipelineConfigurer;
 import co.cask.cdap.template.etl.api.batch.BatchSink;
@@ -65,13 +64,20 @@ public abstract class TimePartitionedFileSetSink<KEY_OUT, VAL_OUT>
 
   @Override
   public void prepareRun(BatchSinkContext context) {
-    Map<String, String> sinkArgs = new HashMap<>();
+    Map<String, String> sinkArgs = getAdditionalTPFSArguments();
     TimePartitionedFileSetArguments.setOutputPartitionTime(sinkArgs, context.getLogicalStartTime());
     if (!Strings.isNullOrEmpty(tpfsSinkConfig.filePathFormat)) {
       TimePartitionedFileSetArguments.setOutputPathFormat(sinkArgs, tpfsSinkConfig.filePathFormat,
                                                           tpfsSinkConfig.timeZone);
     }
-    TimePartitionedFileSet sink = context.getDataset(tpfsSinkConfig.name, sinkArgs);
-    context.setOutput(tpfsSinkConfig.name, sink);
+    context.addOutput(tpfsSinkConfig.name, sinkArgs);
+  }
+
+  /**
+   * @return any additional properties that need to be set for the sink. For example, avro sink requires
+   *         setting some schema output key.
+   */
+  protected Map<String, String> getAdditionalTPFSArguments() {
+    return new HashMap<>();
   }
 }

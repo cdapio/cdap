@@ -20,6 +20,7 @@ import co.cask.cdap.api.Config;
 import co.cask.cdap.api.Resources;
 import com.google.common.collect.Lists;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -27,13 +28,25 @@ import java.util.List;
  */
 public class ETLConfig extends Config {
   private final ETLStage source;
+  // here for backwards compatibility. This will remain until we remove the etl templates.
   private final ETLStage sink;
+  private final List<ETLStage> sinks;
   private final List<ETLStage> transforms;
   private final Resources resources;
+
+  public ETLConfig(ETLStage source, List<ETLStage> sinks, List<ETLStage> transforms, Resources resources) {
+    this.source = source;
+    this.sinks = sinks;
+    this.sink = null;
+    this.transforms = transforms;
+    this.resources = resources;
+  }
 
   public ETLConfig(ETLStage source, ETLStage sink, List<ETLStage> transforms, Resources resources) {
     this.source = source;
     this.sink = sink;
+    this.sinks = new ArrayList<>();
+    this.sinks.add(sink);
     this.transforms = transforms;
     this.resources = resources;
   }
@@ -42,8 +55,13 @@ public class ETLConfig extends Config {
     return source;
   }
 
+  // keeping here temporarily until templates are removed.
   public ETLStage getSink() {
     return sink;
+  }
+
+  public List<ETLStage> getSinks() {
+    return sinks;
   }
 
   public List<ETLStage> getTransforms() {

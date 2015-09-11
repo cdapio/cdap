@@ -23,11 +23,12 @@ import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.templates.plugins.PluginConfig;
+import co.cask.cdap.etl.common.RecordWritableConverter;
 import co.cask.cdap.template.etl.api.Emitter;
+import co.cask.cdap.template.etl.api.batch.BatchRuntimeContext;
 import co.cask.cdap.template.etl.api.batch.BatchSource;
 import co.cask.cdap.template.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.template.etl.common.Properties;
-import co.cask.cdap.template.etl.common.RecordWritableConverter;
 import com.google.common.base.Strings;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.MapWritable;
@@ -72,7 +73,7 @@ public class ElasticsearchSource extends BatchSource<Text, MapWritable, Structur
   }
 
   @Override
-  public void initialize(BatchSourceContext context) {
+  public void initialize(BatchRuntimeContext context) {
     schema = parseSchema();
   }
 

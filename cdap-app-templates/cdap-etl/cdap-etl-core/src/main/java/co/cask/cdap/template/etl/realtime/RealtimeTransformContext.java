@@ -20,21 +20,19 @@ import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.templates.plugins.PluginProperties;
 import co.cask.cdap.api.worker.WorkerContext;
 import co.cask.cdap.template.etl.api.TransformContext;
-import co.cask.cdap.template.etl.common.Constants;
+import co.cask.cdap.template.etl.common.ScopedPluginContext;
 
 /**
  * Context for the Transform Stage.
  */
-public class RealtimeTransformContext implements TransformContext {
+public class RealtimeTransformContext extends ScopedPluginContext implements TransformContext {
   private final WorkerContext context;
   private final Metrics metrics;
 
-  protected final String pluginId;
-
-  public RealtimeTransformContext(WorkerContext context, Metrics metrics, String pluginId) {
+  public RealtimeTransformContext(WorkerContext context, Metrics metrics, String stageId) {
+    super(stageId);
     this.context = context;
     this.metrics = metrics;
-    this.pluginId = pluginId;
   }
 
   @Override
@@ -43,26 +41,42 @@ public class RealtimeTransformContext implements TransformContext {
   }
 
   @Override
-  public <T> T newPluginInstance(String pluginId) throws InstantiationException {
-    return context.newPluginInstance(getPluginId(pluginId));
+  protected <T> T newScopedPluginInstance(String scopedPluginId) throws InstantiationException {
+    // temporary hack to let it support both templates and applications. Will be removed when templates are removed.
+    try {
+      return context.newPluginInstance(scopedPluginId);
+    } catch (UnsupportedOperationException e) {
+      return context.newInstance(scopedPluginId);
+    }
   }
 
   @Override
-  public <T> T newInstance(String pluginId) throws InstantiationException {
-    return context.newInstance(getPluginId(pluginId));
-  }
-
-  protected String getPluginId(String childPluginId) {
-    return String.format("%s%s%s", pluginId, Constants.ID_SEPARATOR, childPluginId);
+  protected <T> Class<T> loadScopedPluginClass(String scopedPluginId) {
+    // temporary hack until templates are removed, and to let this work for both apps and templates
+    try {
+      return context.loadPluginClass(scopedPluginId);
+    } catch (UnsupportedOperationException e) {
+      return context.loadClass(scopedPluginId);
+    }
   }
 
   @Override
   public PluginProperties getPluginProperties() {
-    // hack until templates are removed
+    // temporary hack to let it support both templates and applications. Will be removed when templates are removed.
     try {
-      return context.getPluginProperties(pluginId);
+      return context.getPluginProperties(stageId);
     } catch (UnsupportedOperationException e) {
-      return context.getPluginProps(pluginId);
+      return context.getPluginProps(stageId);
+    }
+  }
+
+  @Override
+  public PluginProperties getScopedPluginProperties(String scopedPluginId) {
+    // temporary hack to let it support both templates and applications. Will be removed when templates are removed.
+    try {
+      return context.getPluginProperties(scopedPluginId);
+    } catch (UnsupportedOperationException e) {
+      return context.getPluginProps(scopedPluginId);
     }
   }
 }

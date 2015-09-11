@@ -19,6 +19,7 @@ package co.cask.cdap.data2.datafabric.dataset;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.dataset.table.OrderedTable;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.CConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
@@ -42,7 +43,6 @@ import co.cask.cdap.data2.dataset2.SimpleKVTable;
 import co.cask.cdap.data2.dataset2.SingleTypeModule;
 import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
-import co.cask.cdap.data2.metadata.service.MockMetadataAdmin;
 import co.cask.cdap.data2.metrics.DatasetMetricsReporter;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.explore.client.DiscoveryExploreClient;
@@ -132,6 +132,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
       exploreFacade,
       cConf,
       new UsageRegistry(txExecutorFactory, framework), NAMESPACE_CLIENT);
+
     service = new DatasetService(cConf,
                                  namespacedLocationFactory,
                                  discoveryService,
@@ -144,8 +145,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
                                  instanceService,
                                  new LocalStorageProviderNamespaceAdmin(cConf, namespacedLocationFactory,
                                                                         exploreFacade),
-                                 NAMESPACE_CLIENT,
-                                 new MockMetadataAdmin()
+                                 NAMESPACE_CLIENT
     );
     // Start dataset service, wait for it to be discoverable
     service.start();
@@ -169,7 +169,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
   // DatasetMetaTable util to add modules to system namespace. However, we should definitely impose these restrictions
   // in RemoteDatasetFramework.
   @Test
-  public void testSystemNamespace() throws DatasetManagementException {
+  public void testSystemNamespace() throws DatasetManagementException, ServiceUnavailableException {
     DatasetFramework framework = getFramework();
     // Adding module to system namespace should fail
     try {
@@ -196,7 +196,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
   }
 
   @After
-  public void after() throws DatasetManagementException {
+  public void after() throws DatasetManagementException, ServiceUnavailableException {
     Services.chainStop(service, opExecutorService, txManager);
     framework.deleteNamespace(NAMESPACE_ID);
     framework.deleteNamespace(Id.Namespace.SYSTEM);

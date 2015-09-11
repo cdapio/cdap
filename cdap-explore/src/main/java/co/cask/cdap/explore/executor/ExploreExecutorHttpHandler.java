@@ -16,6 +16,8 @@
 
 package co.cask.cdap.explore.executor;
 
+import co.cask.cdap.api.data.format.FormatSpecification;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetSpecification;
@@ -23,21 +25,24 @@ import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
 import co.cask.cdap.api.dataset.lib.Partitioning;
+import co.cask.cdap.common.BadRequestException;
+import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
-import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.ExploreTableManager;
+import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
@@ -62,7 +67,9 @@ import javax.ws.rs.PathParam;
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}/data/explore")
 public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(ExploreExecutorHttpHandler.class);
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+    .create();
 
   private final ExploreTableManager exploreTableManager;
   private final DatasetFramework datasetFramework;
@@ -81,39 +88,35 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   }
 
   @POST
-  @Path("streams/{stream}/enable")
+  @Path("streams/{stream}/tables/{table}/enable")
   public void enableStream(HttpRequest request, HttpResponder responder,
-                           @PathParam("namespace-id") String namespaceId, @PathParam("stream") String streamName) {
+                           @PathParam("namespace-id") String namespaceId,
+                           @PathParam("stream") String streamName,
+                           @PathParam("table") String tableName) throws Exception {
     Id.Stream streamId = Id.Stream.from(namespaceId, streamName);
-    StreamConfig streamConfig;
-    try {
-      streamConfig = streamAdmin.getConfig(streamId);
-    } catch (IOException e) {
-      LOG.info("Could not find stream {} to enable explore on.", streamName, e);
-      responder.sendString(HttpResponseStatus.NOT_FOUND, "Could not find stream " + streamName);
-      return;
-    }
-
-    try {
-      QueryHandle handle = exploreTableManager.enableStream(streamId, streamConfig.getFormat());
+    try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()))) {
+      FormatSpecification format = GSON.fromJson(reader, FormatSpecification.class);
+      if (format == null) {
+        throw new BadRequestException("Expected format in the body");
+      }
+      QueryHandle handle = exploreTableManager.enableStream(tableName, streamId, format);
       JsonObject json = new JsonObject();
       json.addProperty("handle", handle.getHandle());
       responder.sendJson(HttpResponseStatus.OK, json);
     } catch (UnsupportedTypeException e) {
       LOG.error("Exception while generating create statement for stream {}", streamName, e);
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-    } catch (Throwable t) {
-      LOG.error("Got exception enabling explore on stream {}.", streamId, t);
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, t.getMessage());
     }
   }
 
   @POST
-  @Path("streams/{stream}/disable")
+  @Path("streams/{stream}/tables/{table}/disable")
   public void disableStream(HttpRequest request, HttpResponder responder,
-                            @PathParam("namespace-id") String namespaceId, @PathParam("stream") String streamName) {
-    Id.Stream streamId = Id.Stream.from(namespaceId, streamName);
+                            @PathParam("namespace-id") String namespaceId,
+                            @PathParam("stream") String streamName,
+                            @PathParam("table") String tableName) {
 
+    Id.Stream streamId = Id.Stream.from(namespaceId, streamName);
     try {
       // throws io exception if there is no stream
       streamAdmin.getConfig(streamId);
@@ -124,7 +127,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     }
 
     try {
-      QueryHandle handle = exploreTableManager.disableStream(streamId);
+      QueryHandle handle = exploreTableManager.disableStream(tableName, streamId);
       JsonObject json = new JsonObject();
       json.addProperty("handle", handle.getHandle());
       responder.sendJson(HttpResponseStatus.OK, json);
@@ -140,7 +143,8 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   @POST
   @Path("datasets/{dataset}/enable")
   public void enableDataset(HttpRequest request, HttpResponder responder,
-                            @PathParam("namespace-id") String namespaceId, @PathParam("dataset") String datasetName) {
+                            @PathParam("namespace-id") String namespaceId, @PathParam("dataset") String datasetName)
+    throws ServiceUnavailableException {
     Id.DatasetInstance datasetID = Id.DatasetInstance.from(namespaceId, datasetName);
     DatasetSpecification datasetSpec;
     try {
@@ -181,7 +185,8 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   @POST
   @Path("datasets/{dataset}/disable")
   public void disableDataset(HttpRequest request, HttpResponder responder,
-                             @PathParam("namespace-id") String namespaceId, @PathParam("dataset") String datasetName) {
+                             @PathParam("namespace-id") String namespaceId, @PathParam("dataset") String datasetName)
+    throws ServiceUnavailableException {
 
     LOG.debug("Disabling explore for dataset instance {}", datasetName);
     Id.DatasetInstance datasetID = Id.DatasetInstance.from(namespaceId, datasetName);

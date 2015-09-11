@@ -98,7 +98,7 @@
     <commons.codec.version>1.6</commons.codec.version>
     <commons.cli.version>1.2</commons.cli.version>
     <concurrent.trees.version>2.4.0</concurrent.trees.version>
-    <cask.common.cli.version>0.7.1</cask.common.cli.version>
+    <cask.common.cli.version>0.8.0</cask.common.cli.version>
     <cask.common.version>0.7.1</cask.common.version>
     <findbugs.jsr305.version>2.0.1</findbugs.jsr305.version>
     <flume.version>1.2.0</flume.version>
@@ -133,7 +133,7 @@
     <snappy.version>1.1.1.7</snappy.version>
     <shiro.version>1.2.1</shiro.version>
     <slf4j.version>1.7.5</slf4j.version>
-    <tephra.version>0.6.0</tephra.version>
+    <tephra.version>0.6.2</tephra.version>
     <thrift.version>0.9.0</thrift.version>
     <!-- TODO: Remove snapshot when twill released (CDAP-3498) -->
     <twill.version>0.7.0-incubating-SNAPSHOT</twill.version>
@@ -1290,13 +1290,6 @@
                   <exclude>**/*.json</exclude>
                   <exclude>**/*.json.template</exclude>
                   <exclude>**/MANIFEST.MF</exclude>
-                  <!-- Excludes for cdap-ui -->
-                  <exclude>**/*.editorconfig</exclude>
-                  <exclude>**/*.jshintignore</exclude>
-                  <exclude>**/*.jshintrc</exclude>
-                  <exclude>**/*.svg</exclude>
-                  <exclude>**/bower_components/**</exclude>
-                  <exclude>**/node_modules/**</exclude>
                 </excludes>
               </configuration>
             </execution>
@@ -2160,6 +2153,7 @@
         <module>cdap-hbase-compat-1.0-cdh</module>
         <module>cdap-hbase-compat-1.0</module>
         <module>cdap-common</module>
+        <module>cdap-docs-gen</module>
         <module>cdap-watchdog-api</module>
         <module>cdap-kafka</module>
         <module>cdap-data-fabric</module>

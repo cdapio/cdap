@@ -33,11 +33,11 @@ import co.cask.cdap.data.stream.service.StreamService;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
-import co.cask.cdap.gateway.handlers.UsageHandler;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.internal.guice.AppFabricTestModule;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.internal.test.PluginJarHelper;
+import co.cask.cdap.metadata.MetadataService;
 import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -149,7 +149,7 @@ public abstract class AppFabricTestBase {
   private static StreamService streamService;
   private static StreamAdmin streamAdmin;
   private static ServiceStore serviceStore;
-  private static UsageHandler usageHandler;
+  private static MetadataService metadataService;
   private static LocationFactory locationFactory;
   private static File adapterDir;
 
@@ -164,7 +164,6 @@ public abstract class AppFabricTestBase {
     conf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder("data").getAbsolutePath());
     conf.set(Constants.AppFabric.OUTPUT_DIR, System.getProperty("java.io.tmpdir"));
     conf.set(Constants.AppFabric.TEMP_DIR, System.getProperty("java.io.tmpdir"));
-    conf.setBoolean(Constants.Scheduler.SCHEDULERS_LAZY_START, true);
     conf.set(Constants.AppFabric.APP_TEMPLATE_DIR, tmpFolder.newFolder("templates").getAbsolutePath());
     conf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
 
@@ -195,6 +194,8 @@ public abstract class AppFabricTestBase {
     serviceStore = injector.getInstance(ServiceStore.class);
     serviceStore.startAndWait();
     streamAdmin = injector.getInstance(StreamAdmin.class);
+    metadataService = injector.getInstance(MetadataService.class);
+    metadataService.startAndWait();
     locationFactory = getInjector().getInstance(LocationFactory.class);
     adapterDir = new File(conf.get(Constants.AppFabric.APP_TEMPLATE_DIR));
     createNamespaces();
@@ -210,6 +211,8 @@ public abstract class AppFabricTestBase {
     datasetService.stopAndWait();
     dsOpService.stopAndWait();
     txManager.stopAndWait();
+    serviceStore.stopAndWait();
+    metadataService.stopAndWait();
   }
 
   protected static Injector getInjector() {
@@ -234,7 +237,7 @@ public abstract class AppFabricTestBase {
 
   protected static HttpResponse doGet(String resource, Header[] headers) throws Exception {
     DefaultHttpClient client = new DefaultHttpClient();
-    HttpGet get = new HttpGet(AppFabricTestBase.getEndPoint(resource));
+    HttpGet get = new HttpGet(getEndPoint(resource));
 
     if (headers != null) {
       get.setHeaders(ObjectArrays.concat(AUTH_HEADER, headers));
@@ -251,13 +254,13 @@ public abstract class AppFabricTestBase {
   }
 
   protected static HttpPost getPost(String resource) throws Exception {
-    HttpPost post = new HttpPost(AppFabricTestBase.getEndPoint(resource));
+    HttpPost post = new HttpPost(getEndPoint(resource));
     post.setHeader(AUTH_HEADER);
     return post;
   }
 
   protected static HttpPut getPut(String resource) throws Exception {
-    HttpPut put = new HttpPut(AppFabricTestBase.getEndPoint(resource));
+    HttpPut put = new HttpPut(getEndPoint(resource));
     put.setHeader(AUTH_HEADER);
     return put;
   }
@@ -272,7 +275,7 @@ public abstract class AppFabricTestBase {
 
   protected static HttpResponse doPost(String resource, String body, Header[] headers) throws Exception {
     DefaultHttpClient client = new DefaultHttpClient();
-    HttpPost post = new HttpPost(AppFabricTestBase.getEndPoint(resource));
+    HttpPost post = new HttpPost(getEndPoint(resource));
 
     if (body != null) {
       post.setEntity(new StringEntity(body));
@@ -293,14 +296,14 @@ public abstract class AppFabricTestBase {
   }
 
   protected static HttpResponse doPut(String resource) throws Exception {
-    HttpPut put = new HttpPut(AppFabricTestBase.getEndPoint(resource));
+    HttpPut put = new HttpPut(getEndPoint(resource));
     put.setHeader(AUTH_HEADER);
     return doPut(resource, null);
   }
 
   protected static HttpResponse doPut(String resource, String body) throws Exception {
     DefaultHttpClient client = new DefaultHttpClient();
-    HttpPut put = new HttpPut(AppFabricTestBase.getEndPoint(resource));
+    HttpPut put = new HttpPut(getEndPoint(resource));
     if (body != null) {
       put.setEntity(new StringEntity(body));
     }
@@ -310,7 +313,7 @@ public abstract class AppFabricTestBase {
 
   protected static HttpResponse doDelete(String resource) throws Exception {
     DefaultHttpClient client = new DefaultHttpClient();
-    HttpDelete delete = new HttpDelete(AppFabricTestBase.getEndPoint(resource));
+    HttpDelete delete = new HttpDelete(getEndPoint(resource));
     delete.setHeader(AUTH_HEADER);
     return client.execute(delete);
   }
@@ -529,7 +532,7 @@ public abstract class AppFabricTestBase {
         Preconditions.checkState(200 == response.getStatusLine().getStatusCode());
         Map<String, String> result = GSON.fromJson(EntityUtils.toString(response.getEntity()),
                                                    MAP_STRING_STRING_TYPE);
-        return "SCHEDULED".equals(result.get("status"));
+        return result != null && "SCHEDULED".equals(result.get("status"));
       }
     }, timeout, timeoutUnit, 100, TimeUnit.MILLISECONDS);
   }
@@ -641,11 +644,6 @@ public abstract class AppFabricTestBase {
         return status.get("status").getAsString();
       }
     }, 60, TimeUnit.SECONDS, 50, TimeUnit.MILLISECONDS);
-  }
-
-  protected static void resetNamespaces() throws Exception {
-    deleteNamespaces();
-    createNamespaces();
   }
 
   private static void createNamespaces() throws Exception {

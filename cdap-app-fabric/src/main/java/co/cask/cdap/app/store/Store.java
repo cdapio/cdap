@@ -77,8 +77,10 @@ public interface Store {
    * @param startTime  start timestamp in seconds; if run id is time-based pass the time from the run id
    * @param adapter    name of the adapter associated with the run
    * @param twillRunId twill run id
+   * @param runtimeArgs the runtime arguments for this program run
    */
-  void setStart(Id.Program id, String pid, long startTime, String adapter, @Nullable String twillRunId);
+  void setStart(Id.Program id, String pid, long startTime, @Nullable String adapter, @Nullable String twillRunId,
+                Map<String, String> runtimeArgs);
 
   /**
    * Logs start of program run.
@@ -221,21 +223,6 @@ public interface Store {
   Collection<ApplicationSpecification> getAllApplications(Id.Namespace id);
 
   /**
-   * Returns a collection of all application specs in the specified namespace, optionally filtered to contain
-   * only applications that use the specified artifact name and version.
-   *
-   * @param namespace the namespace to get application specs from
-   * @param artifactName the name of the artifact to filter on.
-   *                     If null, app specs will not be filtered by artifact name.
-   * @param artifactVersion the version of the artifact to filter on.
-   *                        If null, app specs will not be filtered by artifact version.
-   * @return collection of all application specs in the namespace
-   */
-  Collection<ApplicationSpecification> getApplications(Id.Namespace namespace,
-                                                       @Nullable String artifactName,
-                                                       @Nullable String artifactVersion);
-
-  /**
    * Returns location of the application archive.
    *
    * @param id application id
@@ -315,29 +302,13 @@ public interface Store {
   void removeAll(Id.Namespace id);
 
   /**
-   * Store the user arguments needed in the run-time.
-   *
-   * @param programId id of program
-   * @param arguments Map of key value arguments
-   */
-  void storeRunArguments(Id.Program programId, Map<String, String> arguments);
-
-  /**
    * Get run time arguments for a program.
    *
-   * @param programId id of the program.
+   * @param runId id of the program run
    * @return Map of key, value pairs
    */
-  Map<String, String> getRunArguments(Id.Program programId);
+  Map<String, String> getRuntimeArguments(Id.Run runId);
 
-  /**
-   * Changes input stream for a flowlet connection
-   * @param flow defines flow that contains a flowlet which connection to change
-   * @param flowletId flowlet which connection to change
-   * @param oldValue name of the stream in stream connection to change
-   * @param newValue name of the new stream to connect to
-   */
-  void changeFlowletSteamConnection(Id.Program flow, String flowletId, String oldValue, String newValue);
   /**
    * Adds a schedule for a particular program. If the schedule with the name already exists, the method will
    * throw RuntimeException.

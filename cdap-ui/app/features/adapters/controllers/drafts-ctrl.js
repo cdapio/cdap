@@ -16,9 +16,9 @@
 
 var alertpromise;
 angular.module(PKG.name + '.feature.adapters')
-  .controller('AdapterDraftsController', function($scope, mySettings, $state, $alert, $timeout, myAlert, myHelpers) {
+  .controller('AdapterDraftsController', function($scope, mySettings, $state, $alert, $timeout, myAlert, myHelpers, GLOBALS) {
     $scope.drafts  = [];
-
+    $scope.GLOBALS = GLOBALS;
     mySettings.get('adapterDrafts')
       .then(function(res) {
         if (res && Object.keys(res).length) {

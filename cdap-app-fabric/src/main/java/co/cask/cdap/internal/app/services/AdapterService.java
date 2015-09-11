@@ -500,12 +500,11 @@ public class AdapterService extends AbstractIdleService {
     scheduler.schedule(workflowId, scheduleSpec.getProgram().getProgramType(), scheduleSpec.getSchedule(),
                        ImmutableMap.of(
                          ProgramOptionConstants.ADAPTER_NAME, adapterSpec.getName(),
-                         ProgramOptionConstants.ADAPTER_SPEC, GSON.toJson(adapterSpec),
-                         // hack for scheduler weirdness in unit tests, remove once CDAP-2281 is done
-                         Constants.Scheduler.IGNORE_LAZY_START, String.valueOf(true)
-                       ));
+                         ProgramOptionConstants.ADAPTER_SPEC, GSON.toJson(adapterSpec)));
     //TODO: Scheduler API should also manage the MDS.
     store.addSchedule(workflowId, scheduleSpec);
+    scheduler.resumeSchedule(workflowId, scheduleSpec.getProgram().getProgramType(),
+                             scheduleSpec.getSchedule().getName());
   }
 
   private void stopWorkflowAdapter(Id.Namespace namespace, AdapterDefinition adapterSpec)

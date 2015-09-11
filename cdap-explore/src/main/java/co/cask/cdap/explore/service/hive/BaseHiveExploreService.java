@@ -37,6 +37,7 @@ import co.cask.cdap.explore.service.HandleNotFoundException;
 import co.cask.cdap.explore.service.HiveStreamRedirector;
 import co.cask.cdap.explore.service.MetaDataInfo;
 import co.cask.cdap.explore.service.TableNotFoundException;
+import co.cask.cdap.explore.utils.ExploreTableNaming;
 import co.cask.cdap.hive.context.CConfCodec;
 import co.cask.cdap.hive.context.ConfigurationUtil;
 import co.cask.cdap.hive.context.ContextManager;
@@ -125,6 +126,7 @@ import javax.annotation.Nullable;
  * which, if true, does not start the {@link ExploreService} when the explore HTTP services are started.
  */
 public abstract class BaseHiveExploreService extends AbstractIdleService implements ExploreService {
+
   private static final Logger LOG = LoggerFactory.getLogger(BaseHiveExploreService.class);
   private static final Gson GSON = new Gson();
   private static final int PREVIEW_COUNT = 5;
@@ -133,7 +135,6 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
   private final CConfiguration cConf;
   private final Configuration hConf;
-  private final HiveConf hiveConf;
   private final TransactionSystemClient txClient;
   private final SchedulerQueueResolver schedulerQueueResolver;
 
@@ -151,6 +152,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   private final DatasetFramework datasetFramework;
   private final ExploreTableManager exploreTableManager;
   private final SystemDatasetInstantiatorFactory datasetInstantiatorFactory;
+  private final ExploreTableNaming tableNaming;
 
   private final ThreadLocal<Supplier<IMetaStoreClient>> metastoreClientLocal;
 
@@ -164,12 +166,12 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     throws HiveSQLException, ExploreException;
 
   protected BaseHiveExploreService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
-                                   CConfiguration cConf, Configuration hConf, HiveConf hiveConf,
+                                   CConfiguration cConf, Configuration hConf,
                                    File previewsDir, StreamAdmin streamAdmin, Store store,
-                                   SystemDatasetInstantiatorFactory datasetInstantiatorFactory) {
+                                   SystemDatasetInstantiatorFactory datasetInstantiatorFactory,
+                                   ExploreTableNaming tableNaming) {
     this.cConf = cConf;
     this.hConf = hConf;
-    this.hiveConf = hiveConf;
     this.schedulerQueueResolver = new SchedulerQueueResolver(cConf, store);
     this.previewsDir = previewsDir;
     this.metastoreClientLocal = new ThreadLocal<>();
@@ -177,8 +179,9 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     this.metastoreClientReferenceQueue = new ReferenceQueue<>();
     this.datasetFramework = datasetFramework;
     this.streamAdmin = streamAdmin;
-    this.exploreTableManager = new ExploreTableManager(this, datasetInstantiatorFactory);
+    this.exploreTableManager = new ExploreTableManager(this, datasetInstantiatorFactory, new ExploreTableNaming());
     this.datasetInstantiatorFactory = datasetInstantiatorFactory;
+    this.tableNaming = tableNaming;
 
     // Create a Timer thread to periodically collect metastore clients that are no longer in used and call close on them
     this.metastoreClientsExecutorService =
@@ -1033,13 +1036,13 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       waitForDatasetService(600);
 
       String storageHandler = tableInfo.getParameters().get("storage_handler");
-      if (StreamStorageHandler.class.getName().equals(storageHandler)) {
+      if (StreamStorageHandler.class.getName().equals(storageHandler) && tableName.startsWith("cdap_")) {
         LOG.info("Upgrading stream table {}", tableName);
         upgradeStreamTable(tableInfo);
-      } else if (DatasetStorageHandler.class.getName().equals(storageHandler)) {
+      } else if (DatasetStorageHandler.class.getName().equals(storageHandler) && tableName.startsWith("cdap_")) {
         LOG.info("Upgrading record scannable dataset table {}.", tableName);
         upgradeRecordScannableTable(tableInfo);
-      } else {
+      } else if (tableName.startsWith("cdap_")) {
         LOG.info("Upgrading file set table {}.", tableName);
         // handle filesets differently since they can have partitions,
         // and dropping the table will remove all partitions
@@ -1141,7 +1144,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     // enable the table in the default namespace
     LOG.info("Enabling exploration on stream {}", streamID);
     StreamConfig streamConfig = streamAdmin.getConfig(streamID);
-    QueryHandle enableHandle = exploreTableManager.enableStream(streamID, streamConfig.getFormat());
+    QueryHandle enableHandle = exploreTableManager.enableStream(
+      tableNaming.getTableName(streamID), streamID, streamConfig.getFormat());
     // wait til enable is done
     QueryStatus status = waitForCompletion(enableHandle);
     // if enable failed, stop

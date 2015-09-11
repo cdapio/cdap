@@ -35,15 +35,19 @@ import co.cask.cdap.proto.ScheduledRuntime;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.apache.twill.filesystem.LocationFactory;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
+import org.quartz.ObjectAlreadyExistsException;
 
 import java.util.Calendar;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.Nullable;
 
 public class SchedulerServiceTest {
   private static SchedulerService schedulerService;
@@ -56,18 +60,26 @@ public class SchedulerServiceTest {
                                                            AppWithWorkflow.SampleWorkflow.NAME);
   private static final SchedulableProgramType programType = SchedulableProgramType.WORKFLOW;
   private static final Id.Stream STREAM_ID = Id.Stream.from(namespace, "stream");
+  private static final Schedule TIME_SCHEDULE_0 =
+    Schedules.createTimeSchedule("Schedule0", "Next 10 minutes", getCron(10, TimeUnit.MINUTES));
   private static final Schedule TIME_SCHEDULE_1 =
     Schedules.createTimeSchedule("Schedule1", "Next hour", getCron(1, TimeUnit.HOURS));
   private static final Schedule TIME_SCHEDULE_2 =
     Schedules.createTimeSchedule("Schedule2", "Next day", getCron(1, TimeUnit.DAYS));
+  private static final Schedule TIME_SCHEDULE_3 =
+    Schedules.createTimeSchedule("Schedule3", "Next Week", getCron(7, TimeUnit.DAYS));
   private static final Schedule DATA_SCHEDULE_1 =
     Schedules.createDataSchedule("Schedule3", "Every 1M", Schedules.Source.STREAM, STREAM_ID.getId(), 1);
   private static final Schedule DATA_SCHEDULE_2 =
     Schedules.createDataSchedule("Schedule4", "Every 10M", Schedules.Source.STREAM, STREAM_ID.getId(), 10);
   private static final Schedule UPDATED_TIME_SCHEDULE_1 =
-    Schedules.createTimeSchedule("Schedule1", "Next 10 Minutes", getCron(10, TimeUnit.MINUTES));
+    Schedules.createTimeSchedule("Schedule1", "Next 2 Hour", getCron(2, TimeUnit.HOURS));
   private static final Schedule UPDATED_DATA_SCHEDULE_2 =
     Schedules.createDataSchedule("Schedule4", "Every 5M", Schedules.Source.STREAM, STREAM_ID.getId(), 5);
+  private ApplicationSpecification applicationSpecification;
+
+  @Rule
+  public final ExpectedException exception = ExpectedException.none();
 
   @BeforeClass
   public static void set() throws Exception {
@@ -77,6 +89,7 @@ public class SchedulerServiceTest {
     namespaceAdmin = AppFabricTestHelper.getInjector().getInstance(NamespaceAdmin.class);
     namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespace).build());
     namespaceAdmin.create(NamespaceMeta.DEFAULT);
+    AppFabricTestHelper.deployApplication(namespace, AppWithWorkflow.class);
   }
 
   @AfterClass
@@ -86,11 +99,20 @@ public class SchedulerServiceTest {
     schedulerService.stopAndWait();
   }
 
+  @Before
+  public void deployApp() throws Exception {
+    applicationSpecification = store.getApplication(appId);
+  }
+
+  @After
+  public void removeSchedules() throws SchedulerException {
+    schedulerService.deleteSchedules(program, programType);
+    applicationSpecification = deleteSchedulesFromSpec(applicationSpecification);
+    store.addApplication(appId, applicationSpecification, locationFactory.create("app"));
+  }
+
   @Test
   public void testSchedulesAcrossNamespace() throws Exception {
-    AppFabricTestHelper.deployApplication(namespace, AppWithWorkflow.class);
-    ApplicationSpecification applicationSpecification = store.getApplication(appId);
-
     schedulerService.schedule(program, programType, ImmutableList.of(TIME_SCHEDULE_1));
     store.addApplication(appId, createNewSpecification(applicationSpecification, program, programType, TIME_SCHEDULE_1),
                          locationFactory.create("app"));
@@ -114,14 +136,10 @@ public class SchedulerServiceTest {
     Assert.assertEquals(1, scheduleIdsOtherNamespace.size());
 
     Assert.assertNotEquals(scheduleIds.get(0), scheduleIdsOtherNamespace.get(0));
-
   }
 
   @Test
   public void testSimpleSchedulerLifecycle() throws Exception {
-    AppFabricTestHelper.deployApplication(namespace, AppWithWorkflow.class);
-    ApplicationSpecification applicationSpecification = store.getApplication(appId);
-
     schedulerService.schedule(program, programType, ImmutableList.of(TIME_SCHEDULE_1));
     applicationSpecification = createNewSpecification(applicationSpecification, program, programType, TIME_SCHEDULE_1);
     store.addApplication(appId, applicationSpecification, locationFactory.create("app"));
@@ -162,27 +180,70 @@ public class SchedulerServiceTest {
 
     schedulerService.deleteSchedules(program, programType);
     Assert.assertEquals(0, schedulerService.getScheduleIds(program, programType).size());
-    applicationSpecification = deleteSchedulesFromSpec(applicationSpecification);
-    store.addApplication(appId, applicationSpecification, locationFactory.create("app"));
-
     // Check the state of the old scheduleIds
     // (which should be deleted by the call to SchedulerService#delete(Program, ProgramType)
     checkState(Scheduler.ScheduleState.NOT_FOUND, scheduleIds);
   }
 
   @Test
-  public void testScheduleUpdate() throws Exception {
-    // test time schedule update
-    testScheduleUpdate(TIME_SCHEDULE_1, UPDATED_TIME_SCHEDULE_1, TimeUnit.MINUTES.toMillis(10));
-    // test stream size schedule update
-    testScheduleUpdate(DATA_SCHEDULE_2, UPDATED_DATA_SCHEDULE_2, null);
+  public void testPausedTriggers() throws Exception {
+    schedulerService.schedule(program, programType, ImmutableList.of(TIME_SCHEDULE_1, TIME_SCHEDULE_2));
+    List<String> scheduleIds = schedulerService.getScheduleIds(program, programType);
+    applicationSpecification = createNewSpecification(applicationSpecification, program, programType, TIME_SCHEDULE_1);
+    store.addApplication(appId, applicationSpecification, locationFactory.create("app"));
+    applicationSpecification = createNewSpecification(applicationSpecification, program, programType, TIME_SCHEDULE_2);
+    store.addApplication(appId, applicationSpecification, locationFactory.create("app"));
+    Assert.assertEquals(2, scheduleIds.size());
+
+    // both the schedules should be in suspended state
+    checkState(Scheduler.ScheduleState.SUSPENDED, scheduleIds);
+
+    // schedule1 should go in scheduled state on resume
+    schedulerService.resumeSchedule(program, programType, "Schedule1");
+    checkState(Scheduler.ScheduleState.SCHEDULED, "Schedule1");
+
+    // schedule2 should still be in suspended state
+    checkState(Scheduler.ScheduleState.SUSPENDED, "Schedule2");
+
+    // add a new schedule and verify its in suspended state
+    schedulerService.schedule(program, programType, ImmutableList.of(TIME_SCHEDULE_0));
+    applicationSpecification = createNewSpecification(applicationSpecification, program, programType, TIME_SCHEDULE_0);
+    store.addApplication(appId, applicationSpecification, locationFactory.create("app"));
+    checkState(Scheduler.ScheduleState.SUSPENDED, "Schedule0");
+
+    // after adding a new schedule in paused state the resumed schedule should still be in resumed state
+    checkState(Scheduler.ScheduleState.SCHEDULED, "Schedule1");
+
+    // adding the schedule again which has been resumed and moved to default group should fail and throw an exception
+    testAddingResumedSchedule(ImmutableList.of(TIME_SCHEDULE_1));
+    // adding the schedule again which has been resumed and moved to default group should fail and throw an exception
+    // even if added with other new schedules
+    testAddingResumedSchedule(ImmutableList.of(TIME_SCHEDULE_3, TIME_SCHEDULE_1));
+    // TIME_SCHEDULE_3 should not have been added as it was being added with an existing schedule
+    checkState(Scheduler.ScheduleState.NOT_FOUND, "Schedule3");
   }
 
-  private void testScheduleUpdate(Schedule oldSchedule, Schedule newSchedule, @Nullable Long durationInMillis)
-    throws Exception {
-    AppFabricTestHelper.deployApplication(namespace, AppWithWorkflow.class);
-    ApplicationSpecification applicationSpecification = store.getApplication(appId);
+  private void testAddingResumedSchedule(ImmutableList<Schedule> scheduleList) {
+    try {
+      schedulerService.schedule(program, programType, scheduleList);
+    } catch (Exception e) {
+      Assert.assertTrue(e instanceof SchedulerException);
+      Assert.assertTrue(e.getCause() instanceof ObjectAlreadyExistsException);
+    }
+  }
 
+  @Test
+  public void testTimeScheduleUpdate() throws Exception {
+    testScheduleUpdate(TIME_SCHEDULE_1, UPDATED_TIME_SCHEDULE_1);
+  }
+
+  @Test
+  public void testDataScheduleUpdate() throws Exception {
+    testScheduleUpdate(DATA_SCHEDULE_2, UPDATED_DATA_SCHEDULE_2);
+  }
+
+  private void testScheduleUpdate(Schedule oldSchedule, Schedule newSchedule)
+    throws Exception {
     schedulerService.schedule(program, programType, ImmutableList.of(oldSchedule));
     applicationSpecification = createNewSpecification(applicationSpecification, program, programType, oldSchedule);
     store.addApplication(appId, applicationSpecification, locationFactory.create("app"));
@@ -205,7 +266,7 @@ public class SchedulerServiceTest {
 
     // time schedules will have nextRuntime associated with it so verify that they are correct after update
     if (oldSchedule instanceof TimeSchedule && newSchedule instanceof TimeSchedule) {
-      verifyUpdatedNextRuntime(oldScheduledRuntimes, durationInMillis);
+      verifyUpdatedNextRuntime(oldScheduledRuntimes);
     }
 
     // the state of an resumed schedule should remain resumed even after update
@@ -213,25 +274,13 @@ public class SchedulerServiceTest {
     schedulerService.updateSchedule(program, programType, oldSchedule);
     scheduleIds = schedulerService.getScheduleIds(program, programType);
     checkState(Scheduler.ScheduleState.SCHEDULED, scheduleIds);
-
-    schedulerService.deleteSchedules(program, programType);
-    Assert.assertEquals(0, schedulerService.getScheduleIds(program, programType).size());
-    applicationSpecification = deleteSchedulesFromSpec(applicationSpecification);
-    store.addApplication(appId, applicationSpecification, locationFactory.create("app"));
   }
 
-  private void verifyUpdatedNextRuntime(List<ScheduledRuntime> oldScheduledRuntimes, Long durationInMillis)
+  private void verifyUpdatedNextRuntime(List<ScheduledRuntime> oldScheduledRuntimes)
     throws SchedulerException {
-    Assert.assertNotNull("Expected nextScheduleRuntime duration must be given for time schedules", durationInMillis);
     List<ScheduledRuntime> updatedScheduledRuntimes = schedulerService.nextScheduledRuntime(program, programType);
-
-    // after update the next schedule runtime should be in next 10 minutes from resume
-    Assert.assertTrue(updatedScheduledRuntimes.get(0).getTime() > System.currentTimeMillis() &&
-                        updatedScheduledRuntimes.get(0).getTime() < System.currentTimeMillis() +
-                          durationInMillis);
-
-    // the updated next schedule runtime must be less than the old one
-    Assert.assertTrue(updatedScheduledRuntimes.get(0).getTime() < oldScheduledRuntimes.get(0).getTime());
+    // the updated next schedule runtime must be greater than the old one
+    Assert.assertTrue(updatedScheduledRuntimes.get(0).getTime() > oldScheduledRuntimes.get(0).getTime());
   }
 
   /**
@@ -247,10 +296,14 @@ public class SchedulerServiceTest {
 
   private void checkState(Scheduler.ScheduleState expectedState, List<String> scheduleIds) throws Exception {
     for (String scheduleId : scheduleIds) {
-      int i = scheduleId.lastIndexOf(':');
-      Assert.assertEquals(expectedState, schedulerService.scheduleState(program, SchedulableProgramType.WORKFLOW,
-                                                                        scheduleId.substring(i + 1)));
+      checkState(expectedState, scheduleId);
     }
+  }
+
+  private void checkState(Scheduler.ScheduleState expectedState, String scheduleId) throws SchedulerException {
+    int i = scheduleId.lastIndexOf(':');
+    Assert.assertEquals(expectedState, schedulerService.scheduleState(program, SchedulableProgramType.WORKFLOW,
+                                                                      scheduleId.substring(i + 1)));
   }
 
   private ApplicationSpecification createNewSpecification(ApplicationSpecification spec, Id.Program programId,

@@ -32,7 +32,8 @@
         ["modifyvm", "{{ .Name }}", "--memory", "4096"],
         ["modifyvm", "{{ .Name }}", "--clipboard", "bidirectional"],
         ["modifyvm", "{{ .Name }}", "--accelerate2dvideo", "on"],
-        ["modifyvm", "{{ .Name }}", "--accelerate3d", "on"]
+        ["modifyvm", "{{ .Name }}", "--accelerate3d", "on"],
+        ["modifyvm", "{{ .Name }}", "--natpf1", "guest_ssh,tcp,127.0.0.1,2222,,22" ]
       ],
       "vm_name": "cdap-standalone-vm-{{user `sdk_version`}}",
       "name": "cdap-sdk-vm"
