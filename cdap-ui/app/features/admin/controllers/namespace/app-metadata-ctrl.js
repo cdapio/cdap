@@ -15,11 +15,11 @@
  */
 
 angular.module(PKG.name + '.feature.admin').controller('NamespaceAppMetadataController',
-function ($scope, $state, $alert, $timeout, MyDataSource, GLOBALS) {
+function ($scope, $state, $alert, $timeout, MyDataSource, myAdapterFactory) {
 
   var data = new MyDataSource($scope);
   var path = '/namespaces/' + $state.params.nsadmin + '/apps/' + $state.params.appId;
-  $scope.GLOBALS = GLOBALS;
+  $scope.myAdapterFactory = myAdapterFactory;
 
   data.request({
     _cdapPath: path

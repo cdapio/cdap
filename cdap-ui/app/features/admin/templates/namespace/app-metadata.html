@@ -57,11 +57,11 @@
           </thead>
           <tbody>
               <td>
-                <a ng-if="app.artifact.name !== GLOBALS.etlBatch && app.artifact.name !== GLOBALS.etlRealtime"
+                <a ng-if="myAdapterFactory.isCustomApp(app.artifact.name)"
                     ui-sref="apps.detail.overview.programs({namespace: $state.params.nsadmin, appId: app.name})">
                   <strong>{{ ::app.name }}</strong>
                 </a>
-                <a ng-if="app.artifact.name === GLOBALS.etlBatch || app.artifact.name === GLOBALS.etlRealtime"
+                <a ng-if="myAdapterFactory.isETLApp(app.artifact.name)"
                     ui-sref="apps.detail.overview.status({namespace: $state.params.nsadmin, appId: app.name})">
                   <strong>{{ ::app.name }}</strong>
                 </a>

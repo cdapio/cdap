@@ -75,11 +75,11 @@
                     </td>
                     <td>{{ ::app.version }}</td>
                     <td>
-                      <span ng-if="app.artifact.name !== GLOBALS.etlBatch && app.artifact.name !== GLOBALS.etlRealtime">
+                      <span ng-if="myAdapterFactory.isCustomApp(app.artifact.name)">
                         <span class="icon-fist"></span>
                         <span>App</span>
                       </span>
-                      <span ng-if="app.artifact.name === GLOBALS.etlBatch || app.artifact.name === GLOBALS.etlRealtime">
+                      <span ng-if="myAdapterFactory.isETLApp(app.artifact.name)">
                         <span ng-if="app.artifact.name === GLOBALS.etlBatch">
                           <span class="icon-ETLBatch"></span>
                           <span>ETL Batch</span>

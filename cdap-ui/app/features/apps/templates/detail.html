@@ -21,11 +21,11 @@
         <span ng-bind="$state.params.appId"></span>
       </h2>
       <div class="type-block">
-        <span ng-if="DetailController.artifact.name !== DetailController.GLOBALS.etlBatch && DetailController.artifact.name !== DetailController.GLOBALS.etlRealtime">
+        <span ng-if="DetailController.myAdapterFactory.isCustomApp(app.artifact.name)">
           <span class="icon-app"></span>
           <small> Type: App </small>
         </span>
-        <span ng-if="DetailController.artifact.name === DetailController.GLOBALS.etlBatch || DetailController.artifact.name === DetailController.GLOBALS.etlRealtime">
+        <span ng-if="DetailController.myAdapterFactory.isETLApp(app.artifact.name)">
           <span ng-if="DetailController.artifact.name === DetailController.GLOBALS.etlBatch">
             <span class="icon-ETLBatch"></span>
             <small> Type: ETL Batch </small>
@@ -65,22 +65,12 @@
     </div>
   </div>
   <div class="cdap-subnav-end"></div>
-  <ul class="nav nav-tabs slanted-tabs" role="tablist" ng-if="DetailController.isHydrator">
 
-    <li role="presentation" ui-sref-active="active">
+  <ul class="nav nav-tabs slanted-tabs" role="tablist">
+    <li role="presentation" ui-sref-active="active" ng-if="DetailController.isHydrator">
       <a ui-sref="apps.detail.overview.status" ui-sref-opts="{reload: true}" role="tab">Status</a>
     </li>
 
-    <li role="presentation" ui-sref-active="active">
-      <a ui-sref="apps.detail.overview.programs" ui-sref-opts="{reload: true}" role="tab">Programs</a>
-    </li>
-
-    <li role="presentation" ui-sref-active="active">
-      <a ui-sref="apps.detail.overview.datasets" ui-sref-opts="{reload: true}" role="tab">Datasets</a>
-    </li>
-
-  </ul>
-  <ul class="nav nav-tabs slanted-tabs" role="tablist" ng-if="!DetailController.isHydrator">
     <li role="presentation" ui-sref-active="active">
       <a ui-sref="apps.detail.overview.programs" ui-sref-opts="{reload: true}" role="tab">Programs</a>
     </li>

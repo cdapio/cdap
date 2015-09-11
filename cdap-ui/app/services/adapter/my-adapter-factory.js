@@ -13,13 +13,19 @@
   License for the specific language governing permissions and limitations under
   the License.
 */
-angular.module(PKG.name + '.feature.apps')
-  .controller('AppDetailController', function(rAppData, GLOBALS, myAdapterFactory) {
-    this.myAdapterFactory = myAdapterFactory;
-    
-    this.isHydrator = ([GLOBALS.etlBatch, GLOBALS.etlRealtime].indexOf(rAppData.artifact.name) !== -1);
-    this.artifact = {
-      name: rAppData.artifact.name
+
+angular.module(PKG.name + '.services')
+  .factory('myAdapterFactory', function(GLOBALS) {
+    function isCustomApp(artifactName) {
+      return artifactName !== GLOBALS.etlBatch && artifactName !== GLOBALS.etlRealtime;
+    }
+
+    function isETLApp(artifactName) {
+      return artifactName === GLOBALS.etlBatch || artifactName === GLOBALS.etlRealtime;
+    }
+
+    return {
+      isCustomApp: isCustomApp,
+      isETLApp: isETLApp
     };
-    this.GLOBALS = GLOBALS;
   });
