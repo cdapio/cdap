@@ -90,7 +90,17 @@
     <tbody>
       <tr ng-repeat="app in ListController.filtered = (ListController.apps | filter: ListController.searchText ) | myPaginate:ListController.currentPage | orderBy:sortable.predicate:sortable.reverse">
         <td >
+          <a ui-sref="apps.detail.overview.programs({ appId: app.name })"
+              ng-if="ListController.myAdapterFactory.isCustomApp(app.artifact.name)"
+              ng-click="MyOrderings.appClicked(app.name)">
+            <strong tooltip="{{app.name}}"
+                    tooltip-enable="app.name.length > 35"
+                    tooltip-append-to-body="true">
+              {{ ::app.name | myEllipsis:35 }}
+            </strong>
+          </a>
           <a ui-sref="apps.detail.overview.status({ appId: app.name })"
+              ng-if="ListController.myAdapterFactory.isETLApp(app.artifact.name)"
               ng-click="MyOrderings.appClicked(app.name)">
             <strong tooltip="{{app.name}}"
                     tooltip-enable="app.name.length > 35"
@@ -100,8 +110,20 @@
           </a>
         </td>
         <td>
-          <span class="icon-fist"></span>
-          <span>App</span>
+          <span ng-if="ListController.myAdapterFactory.isCustomApp(app.artifact.name)">
+            <span class="icon-fist"></span>
+            <span>App</span>
+          </span>
+          <span ng-if="ListController.myAdapterFactory.isETLApp(app.artifact.name)">
+            <span ng-if="app.artifact.name === ListController.GLOBALS.etlRealtime">
+              <span class="icon-ETLRealtime"></span>
+              <span> ETL Realtime</span>
+            </span>
+            <span ng-if="app.artifact.name === ListController.GLOBALS.etlBatch">
+              <span class="icon-ETLBatch"></span>
+              <span>ETL Batch</span>
+            </span>
+          </span>
         </td>
         <td>{{ ::app.version }}</td>
         <td>

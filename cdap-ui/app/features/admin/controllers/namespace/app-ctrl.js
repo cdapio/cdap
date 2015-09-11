@@ -15,11 +15,13 @@
  */
 
 angular.module(PKG.name + '.feature.admin').controller('NamespaceAppController',
-function ($scope, $state, myAppUploader, MyDataSource, myNamespace, myAdapterApi, $alert, GLOBALS) {
+function ($scope, $state, myAppUploader, MyDataSource, myNamespace, myAdapterApi, $alert, GLOBALS, myAdapterFactory) {
 
   $scope.apps = [];
   $scope.GLOBALS = GLOBALS;
+  $scope.myAdapterFactory = myAdapterFactory;
   $scope.nsname = myNamespace.getDisplayName($state.params.nsadmin);
+
   var myDataSrc = new MyDataSource($scope);
   var path = '/namespaces/' + $state.params.nsadmin + '/apps';
   myDataSrc.request({

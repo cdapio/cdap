@@ -15,9 +15,11 @@
  */
 
 angular.module(PKG.name + '.services')
-  .factory('myAdapterApi', function($resource, myHelpers) {
+  .factory('myAdapterApi', function($resource, myHelpers, GLOBALS) {
     var templatePath = '/templates',
         adapterPath = '/namespaces/:namespace/apps/:adapter',
+
+        listPath = '/namespaces/:namespace/apps?artifactName=' + GLOBALS.etlBatch + ',' + GLOBALS.etlRealtime,
 
         pluginsFetchPath = '/namespaces/:namespace/artifacts/:adapterType/versions/:version/extensions/',
         sourcePath = pluginsFetchPath + 'source?scope=system',
@@ -40,7 +42,7 @@ angular.module(PKG.name + '.services')
         fetchTransformProperties: myHelpers.getConfig('GET', 'REQUEST', pluginsFetchPath + 'transform/plugins/:transform?scope=system', true),
 
         // FIXME: This needs to be replaced with fetching etl-batch & etl-realtime separately.
-        list: myHelpers.getConfig('GET', 'REQUEST', '/namespaces/:namespace/adapters', true),
+        list: myHelpers.getConfig('GET', 'REQUEST', listPath, true),
         pollStatus: myHelpers.getConfig('GET', 'POLL', adapterPath + '/status'),
         stopPollStatus: myHelpers.getConfig('GET', 'POLL-STOP', adapterPath + '/status'),
         delete: myHelpers.getConfig('DELETE', 'REQUEST', adapterPath),

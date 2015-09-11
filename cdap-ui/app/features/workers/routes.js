@@ -73,7 +73,7 @@ angular.module(PKG.name + '.feature.worker')
           highlightTab: 'development'
         },
         ncyBreadcrumb: {
-          parent: 'apps.detail.overview.status',
+          parent: 'apps.detail.overview.programs',
           label: '{{$state.params.programId}}'
         }
       })

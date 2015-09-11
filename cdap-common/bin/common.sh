@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #
-# Copyright © 2014 Cask Data, Inc.
+# Copyright © 2014-2015 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -85,6 +85,8 @@ set_hbase()
   if [ -z "$HBASE_VERSION" ]; then
     HBASE_VERSION=`$JAVA -cp $CLASSPATH co.cask.tephra.util.HBaseVersion 2> /dev/null`
     retvalue=$?
+  else
+    retvalue=0
   fi
 
   # only set HBase version if previous call succeeded (may fail for components that don't use HBase)

@@ -81,59 +81,6 @@ public interface TestManager {
   ApplicationManager deployApplication(Id.Application appId, AppRequest appRequest) throws Exception;
 
   /**
-   * Deploys an {@link ApplicationTemplate}. Only supported in unit tests.
-   *
-   * @param namespace The namespace to deploy to
-   * @param templateId The id of the template. Must match the name set in
-   *                   {@link ApplicationTemplate#configure(ApplicationConfigurer, ApplicationContext)}
-   * @param templateClz The template class
-   * @param exportPackages The list of packages that should be visible to template plugins. For example,
-   *                       if your plugins implement an interface com.company.api.myinterface that is in your template,
-   *                       you will want to include 'com.company.api' in the list of export pacakges.
-   */
-  void deployTemplate(Id.Namespace namespace, Id.ApplicationTemplate templateId,
-                      Class<? extends ApplicationTemplate> templateClz,
-                      String... exportPackages) throws IOException;
-
-  /**
-   * Adds a plugins jar usable by the given template. Only supported in unit tests. Plugins added will not be visible
-   * until a call to {@link #deployTemplate(Id.Namespace, Id.ApplicationTemplate, Class, String...)} is made. The
-   * jar created will include all classes in the same package as the give classes, plus any dependencies of the
-   * given classes. If another plugin in the same package as the given plugin requires a different set of dependent
-   * classes, you must include both plugins. For example, suppose you have two plugins,
-   * com.company.myapp.functions.functionX and com.company.myapp.function.functionY, with functionX having
-   * one set of dependencies and functionY having another set of dependencies. If you only add functionX, functionY
-   * will also be included in the created jar since it is in the same package. However, only functionX's dependencies
-   * will be traced and added to the jar, so you will run into issues when the platform tries to register functionY.
-   * In this scenario, you must be certain to include specify both functionX and functionY when calling this method.
-   *
-   * @param templateId The id of the template to add the plugin for
-   * @param jarName The name to use for the plugin jar
-   * @param pluginClz A plugin class to add to the jar
-   * @param classes Additional plugin classes to add to the jar
-   * @throws IOException
-   */
-  void addTemplatePlugins(Id.ApplicationTemplate templateId, String jarName, Class<?> pluginClz,
-                          Class<?>... classes) throws IOException;
-
-  /**
-   * Add a template plugin configuration file.
-   *
-   * @param templateId the id of the template to add the plugin config for
-   * @param fileName the name of the config file. The name should match the plugin jar file that it is for. For example,
-   *                 if you added a plugin named hsql-jdbc-1.0.0.jar, the config file must be named hsql-jdbc-1.0.0.json
-   * @param type the type of plugin
-   * @param name the name of the plugin
-   * @param description the description for the plugin
-   * @param className the class name of the plugin
-   * @param fields the fields the plugin uses
-   * @throws IOException
-   */
-  void addTemplatePluginJson(Id.ApplicationTemplate templateId, String fileName, String type, String name,
-                             String description, String className,
-                             PluginPropertyField... fields) throws IOException;
-
-  /**
    * Add the specified artifact.
    *
    * @param artifactId the id of the artifact to add
@@ -265,16 +212,6 @@ public interface TestManager {
    * @param artifactId the id of the artifact to delete
    */
   void deleteArtifact(Id.Artifact artifactId) throws Exception;
-
-  /**
-   * Creates an adapter.
-   *
-   * @param adapterId The id of the adapter to create
-   * @param config The configuration for the adapter
-   * @return An {@link AdapterManager} to manage the deployed adapter.
-   * @throws Exception if there was an exception deploying the adapter.
-   */
-  AdapterManager createAdapter(Id.Adapter adapterId, AdapterConfig config) throws Exception;
 
   /**
    * Clear the state of app fabric, by removing all deployed applications, Datasets and Streams.
