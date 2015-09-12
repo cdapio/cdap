@@ -53,6 +53,9 @@ a :ref:`RESTful API <http-restful-api-lifecycle>`::
     }
   }
 
+Workers and Resources
+=====================
+
 The size of the YARN container and the number of virtual cores allocated to a worker can
 be specified using a ``setResources`` method in the worker ``initialize`` method::
 
