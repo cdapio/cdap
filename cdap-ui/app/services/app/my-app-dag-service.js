@@ -57,10 +57,12 @@ angular.module(PKG.name + '.services')
       var callbacks = angular.copy(this.callbacks);
       var errorCallbacks = angular.copy(this.errorCallbacks);
       var resetCallbacks = angular.copy(this.resetCallbacks);
+      var editPropertiesCallback = angular.copy(this.editPropertiesCallback);
 
       this.callbacks = [];
       this.errorCallbacks = [];
       this.resetCallbacks = [];
+      this.editPropertiesCallback = [];
       this.nodes = {};
       this.connections = [];
       var name = this.metadata && this.metadata.name;
@@ -91,6 +93,7 @@ angular.module(PKG.name + '.services')
         this.resetCallbacks = resetCallbacks;
         this.errorCallbacks = errorCallbacks;
         this.metadata.name = name;
+        this.editPropertiesCallback = editPropertiesCallback;
       }
     };
 
@@ -122,6 +125,16 @@ angular.module(PKG.name + '.services')
     this.notifyError = function (errorObj) {
       this.errorCallbacks.forEach(function(callback) {
         callback(errorObj);
+      });
+    };
+
+    this.registerEditPropertiesCallback = function(callback) {
+      this.editPropertiesCallback.push(callback);
+    };
+
+    this.notifyEditPropertiesCallback = function(plugin) {
+      this.editPropertiesCallback.forEach(function(callback) {
+        callback(plugin);
       });
     };
 
@@ -428,176 +441,7 @@ angular.module(PKG.name + '.services')
     }
 
     this.editPluginProperties = function (scope, pluginId) {
-      this.isConfigTouched = true;
-      var sourceConn = $filter('filter')(this.connections, { target: pluginId });
-      var sourceSchema = null;
-      var isStreamSource = false;
-
-      var clfSchema = IMPLICIT_SCHEMA.clf;
-
-      var syslogSchema = IMPLICIT_SCHEMA.syslog;
-
-      var source;
-      if (sourceConn.length) {
-        source = this.nodes[sourceConn[0].source];
-        sourceSchema = source.outputSchema;
-
-        if (source.name === 'Stream') {
-          isStreamSource = true;
-        }
-
-        if (source.properties.format && source.properties.format === 'clf') {
-          sourceSchema = clfSchema;
-        } else if (source.properties.format && source.properties.format === 'syslog') {
-          sourceSchema = syslogSchema;
-        }
-
-      } else {
-        sourceSchema = this.nodes[pluginId].properties.schema || '';
-      }
-
-      var plugin = this.nodes[pluginId];
-      var pluginCopy = angular.copy(plugin);
-
-      var modalInstance;
-
-      fetchBackendProperties.call(this, plugin, scope)
-        .then(function(plugin) {
-          modalInstance = $bootstrapModal.open({
-            backdrop: 'static',
-            templateUrl: '/assets/features/adapters/templates/create/popovers/plugin-edit-form.html',
-            controller: ['$scope', 'AdapterModel', 'type', 'inputSchema', 'isDisabled', '$bootstrapModal', 'pluginCopy', function ($scope, AdapterModel, type, inputSchema, isDisabled, $bootstrapModal, pluginCopy){
-              $scope.plugin = AdapterModel;
-              $scope.type = type;
-              $scope.isDisabled = isDisabled;
-              var input;
-              try {
-                input = JSON.parse(inputSchema);
-              } catch (e) {
-                input = null;
-              }
-
-              if (isStreamSource) {
-                // Must be in this order!!
-                if (!input) {
-                  input = {
-                    fields: [{ name: 'body', type: 'string' }]
-                  };
-                }
-
-                input.fields.unshift({
-                  name: 'headers',
-                  type: {
-                    type: 'map',
-                    keys: 'string',
-                    values: 'string'
-                  }
-                });
-
-                input.fields.unshift({
-                  name: 'ts',
-                  type: 'long'
-                });
-
-
-              }
-
-              $scope.inputSchema = input ? input.fields : null;
-              angular.forEach($scope.inputSchema, function (field) {
-                if (angular.isArray(field.type)) {
-                  field.type = field.type[0];
-                  field.nullable = true;
-                } else {
-                  field.nullable = false;
-                }
-              });
-
-
-              if (!$scope.plugin.outputSchema && input) {
-                $scope.plugin.outputSchema = angular.copy(JSON.stringify(input)) || null;
-              }
-
-              if ($scope.plugin._backendProperties.schema) {
-                $scope.$watch('plugin.outputSchema', function () {
-                  if (!$scope.plugin.outputSchema) {
-                    if ($scope.plugin.properties && $scope.plugin.properties.schema) {
-                      $scope.plugin.properties.schema = null;
-                    }
-                    return;
-                  }
-
-                  if (!$scope.plugin.properties) {
-                    $scope.plugin.properties = {};
-                  }
-                  $scope.plugin.properties.schema = $scope.plugin.outputSchema;
-                });
-              }
-
-              if (AdapterModel.type === 'source') {
-                $scope.isSource = true;
-              }
-
-              if (AdapterModel.type === 'sink') {
-                $scope.isSink = true;
-              }
-              if (AdapterModel.type === 'transform') {
-                $scope.isTransform = true;
-              }
-
-              function closeFn() {
-                $scope.$close('cancel');
-              }
-
-              ModalConfirm.confirmModalAdapter(
-                $scope,
-                $scope.plugin.properties,
-                pluginCopy.properties,
-                closeFn
-              );
-
-
-            }],
-            size: 'lg',
-            windowClass: 'adapter-modal',
-            resolve: {
-              AdapterModel: function () {
-                return plugin;
-              },
-              type: function () {
-                return this.metadata.template.type;
-              }.bind(this),
-              inputSchema: function () {
-                return sourceSchema;
-              },
-              isDisabled: function() {
-                return this.isDisabled;
-              }.bind(this),
-              pluginCopy: function () {
-                return pluginCopy;
-              },
-              isStreamSource: function () {
-                return isStreamSource;
-              }
-            }
-          });
-
-
-          modalInstance.result.then(function (res) {
-            if (res === 'cancel') {
-              this.nodes[pluginId] = angular.copy(pluginCopy);
-            }
-          }.bind(this));
-
-          // destroy modal when user clicks back button or navigate out of this view
-          scope.$on('$destroy', function () {
-            if (modalInstance) {
-              modalInstance.close();
-            }
-          });
-
-        }.bind(this));
-
-
+      this.notifyEditPropertiesCallback(this.nodes[pluginId]);
     };
 
     // Used for UI alone. Has _backendProperties and ids to plugins for

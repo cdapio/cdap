@@ -80,13 +80,136 @@ body.theme-cdap.state-adapters-create {
   div.console-type {
     background-color: white;
     border-top: 1px solid @table-border-color;
+    overflow-y: scroll;
     height: 30vh;
-    padding: 10px;
+    width: 100%;
     .transition(all 0.2s ease);
     &.is-collapsed {
       border-top: 1px solid @body-bg;
       height: 0;
       padding: 0;
+    }
+    h4 {
+      color: #9D9D9D;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .table {
+      background-color: transparent;
+      margin: 0;
+      tbody {
+        tr:last-child td {
+          border-bottom: 0;
+        }
+      }
+      th, td {
+        max-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      th {
+        border: 0;
+        padding: 0;
+        @media (min-width: @screen-lg-min) {
+          padding-left: 10px;
+        }
+        label {
+          margin-bottom: 0;
+          vertical-align: top;
+        }
+      }
+      td {
+        border: 1px solid @modal-table-border-color;
+        border-collapse: collapse;
+        height: 30px;
+        padding: 0 5px;
+        vertical-align: middle;
+        &.name {
+          width: 35%;
+          @media (min-width: @screen-lg-min) {
+            border-left: 0;
+          }
+        }
+        &.type {
+          width: 30%;
+        }
+        &.nullable {
+          width: 20%;
+        }
+        &.trash {
+          width: 15%;
+
+          a {
+            padding-left: 0;
+            padding-right: 0;
+          }
+
+          @media (min-width: @screen-lg-min) {
+            border-right: 0;
+          }
+          .btn:active {
+            .box-shadow(none);
+          }
+        }
+      }
+      .control-label {
+        font-size: 13px;
+      }
+      .form-control {
+        border: 0;
+        padding: 0;
+      }
+
+      input {
+        &[type="text"] {
+          padding-left: 5px;
+        }
+        &[type="checkbox"] {
+          margin: 0;
+        }
+      }
+      .fa-trash {
+        color: @brand-danger;
+        font-size: 15px;
+      }
+    }
+    .form-control {
+      height: 30px;
+      &:focus {
+        border-color: @table-border-color;
+        .box-shadow(none);
+      }
+    }
+    .bottompanel-header {
+      border-bottom: 1px solid @table-border-color;
+      padding: 15px 10px;
+      > div:first-child {
+        max-width: 80%;
+      }
+      h3 {
+        color: #202028;
+        font-weight: 500;
+        margin: 0 0 5px;
+      }
+      p {
+        color: #9d9d9d;
+        margin-bottom: 0;
+        span {
+          display: block;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+      }
+      .btn-group {
+        > div {
+          display: inline-block;
+        }
+      }
+    }
+    .bottompanel-body {
+      padding: 0 10px;
     }
   }
 }
