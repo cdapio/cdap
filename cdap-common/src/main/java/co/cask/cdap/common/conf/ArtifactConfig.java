@@ -14,14 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.artifact;
+package co.cask.cdap.common.conf;
 
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.common.InvalidArtifactException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.artifact.InvalidArtifactRangeException;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
 import com.google.gson.Gson;
@@ -52,23 +51,23 @@ import java.util.Set;
  * as well as plugin information for the artifact. It is comparable so that we
  * can order collections of configs such that artifacts that extends other artifacts are later in the collection.
  */
-public class SystemArtifactConfig implements Comparable<SystemArtifactConfig> {
+public class ArtifactConfig implements Comparable<ArtifactConfig> {
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(PluginClass.class, new PluginClassDeserializer())
     .registerTypeAdapter(ArtifactRange.class, new ArtifactRangeDeserializer())
-    .registerTypeAdapter(SystemArtifactConfig.class, new SystemArtifactConfigDeserializer())
+    .registerTypeAdapter(ArtifactConfig.class, new SystemArtifactConfigDeserializer())
     .create();
   private final Set<ArtifactRange> parents;
   private final Set<PluginClass> plugins;
   private File artifactFile;
   private Id.Artifact artifactId;
 
-  private SystemArtifactConfig(Set<ArtifactRange> parents, Set<PluginClass> plugins) {
+  private ArtifactConfig(Set<ArtifactRange> parents, Set<PluginClass> plugins) {
     this(null, null, parents, plugins);
   }
 
-  private SystemArtifactConfig(Id.Artifact artifactId, File artifactFile,
-                               Set<ArtifactRange> parents, Set<PluginClass> plugins) {
+  private ArtifactConfig(Id.Artifact artifactId, File artifactFile,
+                         Set<ArtifactRange> parents, Set<PluginClass> plugins) {
     this.artifactId = artifactId;
     this.artifactFile = artifactFile;
     this.parents = parents;
@@ -106,7 +105,7 @@ public class SystemArtifactConfig implements Comparable<SystemArtifactConfig> {
   }
 
   @Override
-  public int compareTo(SystemArtifactConfig that) {
+  public int compareTo(ArtifactConfig that) {
     // assumes there are no circular dependencies, since extensions should be at most 1 level deep.
     // that is, an artifact cannot have as a parent another artifact that has parents.
     boolean thisIsParentOfThat = that.hasParent(artifactId);
@@ -121,22 +120,22 @@ public class SystemArtifactConfig implements Comparable<SystemArtifactConfig> {
   }
 
   /**
-   * Read the contents of the given file and deserialize it into an SystemArtifactConfig.
+   * Read the contents of the given file and deserialize it into an ArtifactConfig.
    *
    * @param artifactId the id of the artifact this config file is for
    * @param configFile the config file to read
-   * @return the contents of the file parsed as an SystemArtifactConfig
+   * @return the contents of the file parsed as an ArtifactConfig
    * @throws IOException if there was a problem reading the file, for example if the file does not exist.
    * @throws InvalidArtifactException if there was a problem deserializing the file contents due to some invalid
    *                                  format or unexpected value.
    */
-  public static SystemArtifactConfig read(Id.Artifact artifactId,
+  public static ArtifactConfig read(Id.Artifact artifactId,
                                           File configFile,
                                           File artifactFile) throws IOException, InvalidArtifactException {
     String fileName = configFile.getName();
     try (Reader reader = Files.newReader(configFile, Charsets.UTF_8)) {
       try {
-        SystemArtifactConfig config = GSON.fromJson(reader, SystemArtifactConfig.class);
+        ArtifactConfig config = GSON.fromJson(reader, ArtifactConfig.class);
         config.artifactId = artifactId;
         config.artifactFile = artifactFile;
         return config;
@@ -154,14 +153,14 @@ public class SystemArtifactConfig implements Comparable<SystemArtifactConfig> {
    * @param artifactId the id of the artifact to create a config for
    * @return a builder for creating an artifact config
    */
-  static Builder builder(Id.Artifact artifactId, File artifactFile) {
+  public static Builder builder(Id.Artifact artifactId, File artifactFile) {
     return new Builder(artifactId, artifactFile);
   }
 
   /**
-   * Builder for creating a SystemArtifactConfig.
+   * Builder for creating a ArtifactConfig.
    */
-  static class Builder {
+  public static class Builder {
     private final Id.Artifact artifactId;
     private final File artifactFile;
     private final Set<PluginClass> plugins;
@@ -174,34 +173,31 @@ public class SystemArtifactConfig implements Comparable<SystemArtifactConfig> {
       this.parents = new HashSet<>();
     }
 
-    @VisibleForTesting
-    Builder addPlugins(PluginClass pluginClass, PluginClass... plugins) {
+    public Builder addPlugins(PluginClass pluginClass, PluginClass... plugins) {
       this.plugins.add(pluginClass);
       Collections.addAll(this.plugins, plugins);
       return this;
     }
 
-    @VisibleForTesting
-    Builder addPlugins(Collection<PluginClass> plugins) {
+    public Builder addPlugins(Collection<PluginClass> plugins) {
       this.plugins.addAll(plugins);
       return this;
     }
 
-    @VisibleForTesting
-    Builder addParents(ArtifactRange parent, ArtifactRange... parents) {
+    public Builder addParents(ArtifactRange parent, ArtifactRange... parents) {
       this.parents.add(parent);
       Collections.addAll(this.parents, parents);
       return this;
     }
 
-    SystemArtifactConfig build() {
-      return new SystemArtifactConfig(artifactId, artifactFile,
+    public ArtifactConfig build() {
+      return new ArtifactConfig(artifactId, artifactFile,
         Collections.unmodifiableSet(parents), Collections.unmodifiableSet(plugins));
     }
   }
 
   /**
-   * Deserializer for ArtifactRange in a SystemArtifactConfig. Artifact ranges are expected to be able to be
+   * Deserializer for ArtifactRange in a ArtifactConfig. Artifact ranges are expected to be able to be
    * parsed via {@link ArtifactRange#parse(String)}. Currently, system artifacts can only extend other system artifacts.
    */
   private static final class ArtifactRangeDeserializer
@@ -228,16 +224,16 @@ public class SystemArtifactConfig implements Comparable<SystemArtifactConfig> {
   }
 
   /**
-   * Serializer and Deserializer for SystemArtifactConfig. Used to make sure collections are set to empty collections
+   * Serializer and Deserializer for ArtifactConfig. Used to make sure collections are set to empty collections
    * instead of null, and to prevent some fields from being serialized.
    */
   private static final class SystemArtifactConfigDeserializer
-    implements JsonDeserializer<SystemArtifactConfig>, JsonSerializer<SystemArtifactConfig> {
+    implements JsonDeserializer<ArtifactConfig>, JsonSerializer<ArtifactConfig> {
     private static final Type PLUGINS_TYPE = new TypeToken<Set<PluginClass>>() { }.getType();
     private static final Type PARENTS_TYPE = new TypeToken<Set<ArtifactRange>>() { }.getType();
 
     @Override
-    public SystemArtifactConfig deserialize(JsonElement json, Type typeOfT,
+    public ArtifactConfig deserialize(JsonElement json, Type typeOfT,
                                             JsonDeserializationContext context) throws JsonParseException {
       if (!json.isJsonObject()) {
         throw new JsonParseException("Config file must be a JSON Object.");
@@ -250,11 +246,11 @@ public class SystemArtifactConfig implements Comparable<SystemArtifactConfig> {
       Set<PluginClass> plugins = context.deserialize(obj.get("plugins"), PLUGINS_TYPE);
       plugins = plugins == null ? Collections.<PluginClass>emptySet() : plugins;
 
-      return new SystemArtifactConfig(parents, plugins);
+      return new ArtifactConfig(parents, plugins);
     }
 
     @Override
-    public JsonElement serialize(SystemArtifactConfig src, Type typeOfSrc, JsonSerializationContext context) {
+    public JsonElement serialize(ArtifactConfig src, Type typeOfSrc, JsonSerializationContext context) {
       JsonObject obj = new JsonObject();
       obj.add("parents", context.serialize(src.getParents()));
       obj.add("plugins", context.serialize(src.getPlugins()));

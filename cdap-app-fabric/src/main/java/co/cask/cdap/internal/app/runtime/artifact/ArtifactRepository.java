@@ -19,13 +19,13 @@ package co.cask.cdap.internal.app.runtime.artifact;
 import co.cask.cdap.api.artifact.ApplicationClass;
 import co.cask.cdap.api.artifact.ArtifactClasses;
 import co.cask.cdap.api.artifact.ArtifactId;
-import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginSelector;
 import co.cask.cdap.common.ArtifactAlreadyExistsException;
 import co.cask.cdap.common.ArtifactNotFoundException;
 import co.cask.cdap.common.ArtifactRangeNotFoundException;
 import co.cask.cdap.common.InvalidArtifactException;
+import co.cask.cdap.common.conf.ArtifactConfig;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
@@ -375,13 +375,13 @@ public class ArtifactRepository {
   public void addSystemArtifacts() throws IOException, WriteConflictException {
 
     // scan the directory for artifact .jar files and config files for those artifacts
-    List<SystemArtifactConfig> systemArtifacts = new ArrayList<>();
+    List<ArtifactConfig> systemArtifacts = new ArrayList<>();
     for (File jarFile : DirUtils.listFiles(systemArtifactDir, "jar")) {
       // parse id from filename
       Id.Artifact artifactId;
       try {
-        artifactId = parse(Id.Namespace.SYSTEM, jarFile.getName());
-      } catch (InvalidArtifactException e) {
+        artifactId = Id.Artifact.parse(Id.Namespace.SYSTEM, jarFile.getName());
+      } catch (IllegalArgumentException e) {
         LOG.warn(String.format("Skipping system artifact '%s' because the name is invalid: ", e.getMessage()));
         continue;
       }
@@ -393,26 +393,26 @@ public class ArtifactRepository {
 
       try {
         // read and parse the config file if it exists. Otherwise use an empty config with the artifact filename
-        SystemArtifactConfig systemArtifactConfig = configFile.isFile() ?
-          SystemArtifactConfig.read(artifactId, configFile, jarFile) :
-          SystemArtifactConfig.builder(artifactId, jarFile).build();
+        ArtifactConfig artifactConfig = configFile.isFile() ?
+          ArtifactConfig.read(artifactId, configFile, jarFile) :
+          ArtifactConfig.builder(artifactId, jarFile).build();
 
-        validateParentSet(systemArtifactConfig.getParents());
-        validatePluginSet(systemArtifactConfig.getPlugins());
-        systemArtifacts.add(systemArtifactConfig);
+        validateParentSet(artifactConfig.getParents());
+        validatePluginSet(artifactConfig.getPlugins());
+        systemArtifacts.add(artifactConfig);
       } catch (InvalidArtifactException e) {
         LOG.warn(String.format("Could not add system artifact '%s' because it is invalid.", artifactFileName), e);
       }
     }
 
     // Need to be sure to add parent artifacts before artifacts that extend them.
-    // Sorting will accomplish this because SystemArtifactConfig is comparable based on parents
+    // Sorting will accomplish this because ArtifactConfig is comparable based on parents
     Collections.sort(systemArtifacts);
 
-    for (SystemArtifactConfig systemArtifactConfig : systemArtifacts) {
-      String fileName = systemArtifactConfig.getFile().getName();
+    for (ArtifactConfig artifactConfig : systemArtifacts) {
+      String fileName = artifactConfig.getFile().getName();
       try {
-        Id.Artifact artifactId = systemArtifactConfig.getArtifactId();
+        Id.Artifact artifactId = artifactConfig.getArtifactId();
 
         // if it's not a snapshot and it already exists, don't bother trying to add it since artifacts are immutable
         if (!artifactId.getVersion().isSnapshot()) {
@@ -425,9 +425,9 @@ public class ArtifactRepository {
         }
 
         addArtifact(artifactId,
-                    systemArtifactConfig.getFile(),
-                    systemArtifactConfig.getParents(),
-                    systemArtifactConfig.getPlugins());
+                    artifactConfig.getFile(),
+                    artifactConfig.getParents(),
+                    artifactConfig.getPlugins());
       } catch (ArtifactAlreadyExistsException e) {
         // shouldn't happen... but if it does for some reason it's fine, it means it was added some other way already.
       } catch (ArtifactRangeNotFoundException e) {
@@ -447,37 +447,6 @@ public class ArtifactRepository {
    */
   public void deleteArtifact(Id.Artifact artifactId) throws IOException {
     artifactStore.delete(artifactId);
-  }
-
-  /**
-   * Parses a string expected to be of the form {name}-{version}.jar into an {@link co.cask.cdap.proto.Id.Artifact},
-   * where name is a valid id and version is of the form expected by {@link ArtifactVersion}.
-   *
-   * @param namespace the namespace to use
-   * @param artifactStr the string to parse
-   * @return string parsed into an {@link co.cask.cdap.proto.Id.Artifact}
-   * @throws InvalidArtifactException if the string is not in the expected format
-   */
-  public static Id.Artifact parse(Id.Namespace namespace, String artifactStr) throws InvalidArtifactException {
-    if (!artifactStr.endsWith(".jar")) {
-      throw new InvalidArtifactException(String.format("Artifact name '%s' does not end in .jar", artifactStr));
-    }
-
-    // strip '.jar' from the filename
-    artifactStr = artifactStr.substring(0, artifactStr.length() - ".jar".length());
-
-    // true means try and match version as the end of the string
-    ArtifactVersion artifactVersion = new ArtifactVersion(artifactStr, true);
-    String rawVersion = artifactVersion.getVersion();
-    // this happens if it could not parse the version
-    if (rawVersion == null) {
-      throw new InvalidArtifactException(
-        String.format("Artifact name '%s' is not of the form {name}-{version}.jar", artifactStr));
-    }
-
-    // filename should be {name}-{version}.  Strip -{version} from it to get artifact name
-    String artifactName = artifactStr.substring(0, artifactStr.length() - rawVersion.length() - 1);
-    return Id.Artifact.from(namespace, artifactName, rawVersion);
   }
 
   // convert details to summaries (to hide location and other unnecessary information)

@@ -32,6 +32,7 @@ public enum ArgumentName {
   SPARK("app-id.spark-id"),
 
   APP_CONFIG("app-config"),
+  APP_CONFIG_FILE("app-config-file"),
   RUNTIME_ARGS("runtime-args"),
   HOSTNAME("hostname"),
   DATASET_TYPE("dataset-type"),
@@ -71,7 +72,6 @@ public enum ArgumentName {
   SCHEMA("schema"),
   SETTINGS("settings"),
   FREQUENCY("frequency"),
-  PLUGIN_TYPE("plugin-type"),
 
   NAMESPACE_NAME("namespace-name"),
   NAMESPACE_DESCRIPTION("namespace-description"),
@@ -83,7 +83,18 @@ public enum ArgumentName {
 
   WORKFLOW_NODE("workflow-node"),
   WORKFLOW_TOKEN_SCOPE("workflow-token-scope"),
-  WORKFLOW_TOKEN_KEY("workflow-token-key");
+  WORKFLOW_TOKEN_KEY("workflow-token-key"),
+
+  /**
+   * Artifacts
+   */
+  ARTIFACT_NAME("artifact-name"),
+  ARTIFACT_VERSION("artifact-version"),
+  ARTIFACT_PARENTS("artifact-parents"),
+  ARTIFACT_CONFIG_FILE("artifact-config"),
+  SCOPE("scope"),
+  PLUGIN_TYPE("plugin-type"),
+  PLUGIN_NAME("plugin-name");
 
   private final String name;
 

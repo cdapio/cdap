@@ -39,6 +39,7 @@ public class DefaultCommands extends CommandSet<Command> {
         .add(injector.getInstance(GeneralCommands.class))
         .add(injector.getInstance(MetricsCommands.class))
         .add(injector.getInstance(ApplicationCommands.class))
+        .add(injector.getInstance(ArtifactCommands.class))
         .add(injector.getInstance(StreamCommands.class))
         .add(injector.getInstance(ProgramCommands.class))
         .add(injector.getInstance(DatasetCommands.class))
