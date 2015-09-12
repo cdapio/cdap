@@ -19,9 +19,8 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.MetadataSearchTargetType;
-
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 import com.google.common.collect.ImmutableMap;
 import org.junit.After;
 import org.junit.Assert;

@@ -13,25 +13,13 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.proto;
+
+package co.cask.cdap.proto.metadata;
 
 /**
- * Supported types for metadata search.
+ * Represents the scope of metadata for an entity.
  */
-public enum MetadataSearchTargetType {
-  ALL("All"),
-  APP("Application"),
-  PROGRAM("Program"),
-  DATASET("DatasetInstance"),
-  STREAM("Stream");
-
-  private final String internalName;
-
-  private MetadataSearchTargetType(String internalName) {
-    this.internalName = internalName;
-  }
-
-  public String getInternalName() {
-    return internalName;
-  }
+public enum MetadataScope {
+  USER,
+  SYSTEM
 }
