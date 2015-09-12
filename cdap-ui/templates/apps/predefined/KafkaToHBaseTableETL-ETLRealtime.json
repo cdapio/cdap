@@ -1,5 +1,5 @@
 {
-    "template": "cdap-etl-realtime-app",
+    "template": "cdap-etl-realtime",
     "description": "Realtime ETL from Kafka with in-flight transformation into HBase Table.",
     "config": {
         "source": {
