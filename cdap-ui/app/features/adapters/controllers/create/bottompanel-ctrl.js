@@ -15,13 +15,20 @@
  */
 
 angular.module(PKG.name + '.feature.adapters')
-  .controller('BottomPanelController', function ($scope, MySidebarService) {
+  .controller('BottomPanelController', function ($scope, MySidebarService, MyAppDAGService) {
+
+    MyAppDAGService.registerEditPropertiesCallback(editProperties.bind(this));
+    this.tab = {};
+    this.tab.plugin = {};
+    function editProperties(plugin) {
+      this.tab.plugin = plugin;
+    }
+
     $scope.isCollapsed = false;
     $scope.collapseToggle = function() {
       $scope.isCollapsed = !$scope.isCollapsed;
     };
     $scope.isExpanded = false;
-
 
     function isExpanded(value) {
       $scope.isExpanded = !value;
