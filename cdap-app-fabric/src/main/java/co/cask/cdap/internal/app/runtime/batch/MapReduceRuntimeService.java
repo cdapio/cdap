@@ -575,27 +575,27 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
    */
   private void setOutputDatasetsIfNeeded(Job job) {
     Map<String, OutputFormatProvider> outputFormatProviders = context.getOutputFormatProviders();
+    LOG.debug("Using Datasets as output for MapReduce Job: {}", outputFormatProviders.keySet());
 
-    String rootOutputFormatClass;
-    Map<String, String> rootOutputConfig = new HashMap<>();
     if (outputFormatProviders.size() == 0) {
       // user is not going through our APIs to add output; leave the job's output format to user
       return;
     } else if (outputFormatProviders.size() == 1) {
       // If only one output is configured through the context, then set it as the root OutputFormat
       Map.Entry<String, OutputFormatProvider> next = outputFormatProviders.entrySet().iterator().next();
-      rootOutputFormatClass = next.getValue().getOutputFormatClassName();
-      rootOutputConfig = next.getValue().getOutputFormatConfiguration();
-    } else {
-      // multiple output formats configured via the context. We should use a RecordWriter that doesn't support writing
-      // as the root output format in this case to disallow writing directly on the context
-      rootOutputFormatClass = UnsupportedOutputFormat.class.getName();
+      OutputFormatProvider outputFormatProvider = next.getValue();
+      job.getConfiguration().set(Job.OUTPUT_FORMAT_CLASS_ATTR, outputFormatProvider.getOutputFormatClassName());
+      for (Map.Entry<String, String> entry : outputFormatProvider.getOutputFormatConfiguration().entrySet()) {
+        job.getConfiguration().set(entry.getKey(), entry.getValue());
+      }
+      return;
     }
-    MultipleOutputsMainOutputWrapper.setRootOutputFormat(job, rootOutputFormatClass, rootOutputConfig);
+    // multiple output formats configured via the context. We should use a RecordWriter that doesn't support writing
+    // as the root output format in this case to disallow writing directly on the context
+    MultipleOutputsMainOutputWrapper.setRootOutputFormat(job, UnsupportedOutputFormat.class.getName(),
+                                                         new HashMap<String, String>());
     job.setOutputFormatClass(MultipleOutputsMainOutputWrapper.class);
 
-
-    LOG.debug("Using Datasets as output for MapReduce Job: {}", outputFormatProviders.keySet());
     for (Map.Entry<String, OutputFormatProvider> entry : outputFormatProviders.entrySet()) {
       String outputDatasetName = entry.getKey();
       OutputFormatProvider outputFormatProvider = entry.getValue();
