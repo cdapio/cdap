@@ -45,7 +45,7 @@ public class MetricsReporterHookTestRun extends GatewayTestBase {
 
   @Test
   public void testMetricsSuccess() throws Exception {
-    String context = "tag=namespace:system&tag=component:appfabric&tag=handler:PingHandler&tag=method:ping";
+    String context = "tag=namespace:system&tag=component:metadata.service&tag=handler:PingHandler&tag=method:ping";
 
     // todo: better fix needed: CDAP-2174
     TimeUnit.SECONDS.sleep(1);

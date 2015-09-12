@@ -39,6 +39,7 @@ import co.cask.cdap.gateway.router.NettyRouter;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.internal.guice.AppFabricTestModule;
 import co.cask.cdap.logging.read.LogReader;
+import co.cask.cdap.metadata.MetadataService;
 import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.notifications.service.NotificationService;
@@ -105,6 +106,7 @@ public abstract class GatewayTestBase {
   private static DatasetService datasetService;
   private static NotificationService notificationService;
   private static StreamService streamService;
+  private static MetadataService metadataService;
   protected static NamespaceAdmin namespaceAdmin;
   private static TemporaryFolder tmpFolder = new TemporaryFolder();
 
@@ -191,6 +193,8 @@ public abstract class GatewayTestBase {
     notificationService.startAndWait();
     streamService = injector.getInstance(StreamService.class);
     streamService.startAndWait();
+    metadataService = injector.getInstance(MetadataService.class);
+    metadataService.startAndWait();
 
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
     namespaceAdmin.create(TEST_NAMESPACE_META1);
@@ -212,6 +216,7 @@ public abstract class GatewayTestBase {
     namespaceAdmin.delete(Id.Namespace.from(TEST_NAMESPACE1));
     namespaceAdmin.delete(Id.Namespace.from(TEST_NAMESPACE2));
     namespaceAdmin.delete(Id.Namespace.DEFAULT);
+    metadataService.stopAndWait();
     streamService.stopAndWait();
     notificationService.stopAndWait();
     appFabricServer.stopAndWait();

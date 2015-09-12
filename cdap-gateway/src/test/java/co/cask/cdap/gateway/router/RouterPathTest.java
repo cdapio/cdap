@@ -98,14 +98,9 @@ public class RouterPathTest {
   @Test
   public void testAppFabricPath() throws Exception {
     //Default destination for URIs will APP_FABRIC_HTTP
-    String path = "/v3/ping/";
+    String path = "/status";
     HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), path);
     String result = pathLookup.getRoutingService(FALLBACKSERVICE, path, httpRequest);
-    Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP, result);
-
-    path = "/status";
-    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), path);
-    result = pathLookup.getRoutingService(FALLBACKSERVICE, path, httpRequest);
     Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP, result);
 
     path = "/v3/monitor///abcd/";
@@ -337,14 +332,19 @@ public class RouterPathTest {
     assertMetadataRouting("/v3/namespaces////default////streams//s1/metadata");
     // app tags
     assertMetadataRouting("/v3/namespaces/default//apps/WordCount//////tags");
-    // program metadata
+    // program tags
     assertMetadataRouting("/v3/namespaces/default//apps/WordCount/flows/WordCountFlow/tags");
-    // dataset metadata
+    // dataset tags
     assertMetadataRouting("/v3/namespaces/default/////datasets/ds1/tags");
-    // stream metadata
+    // stream tags
     assertMetadataRouting("/v3/namespaces////default////streams//s1/tags");
     // search metadata
     assertMetadataRouting("/v3/namespaces/default/metadata/search");
+    // ping
+    String path = "/ping";
+    HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), path);
+    String result = pathLookup.getRoutingService(FALLBACKSERVICE, path, httpRequest);
+    Assert.assertEquals(Constants.Service.METADATA_SERVICE, result);
   }
 
   private void assertMetadataRouting(String path) {
