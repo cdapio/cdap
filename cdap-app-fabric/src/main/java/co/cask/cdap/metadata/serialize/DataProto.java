@@ -14,25 +14,22 @@
  * the License.
  */
 
-package co.cask.cdap.data2.metadata.lineage;
-
-import com.google.common.collect.ImmutableSet;
+package co.cask.cdap.metadata.serialize;
 
 import java.util.Objects;
-import java.util.Set;
 
 /**
- * Represents the data access relations between Programs and Datasets.
+ * Class to serialize {@link co.cask.cdap.proto.Id.DatasetInstance} and {@link co.cask.cdap.proto.Id.Stream}.
  */
-public class Lineage {
-  private final Set<Relation> relations;
+public class DataProto {
+  private final String namespace;
+  private final String type;
+  private final String id;
 
-  public Lineage(Set<Relation> relations) {
-    this.relations = ImmutableSet.copyOf(relations);
-  }
-
-  public Set<Relation> getRelations() {
-    return relations;
+  public DataProto(String namespace, String type, String id) {
+    this.namespace = namespace;
+    this.type = type;
+    this.id = id;
   }
 
   @Override
@@ -43,19 +40,23 @@ public class Lineage {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    Lineage lineage = (Lineage) o;
-    return Objects.equals(relations, lineage.relations);
+    DataProto data = (DataProto) o;
+    return Objects.equals(namespace, data.namespace) &&
+      Objects.equals(type, data.type) &&
+      Objects.equals(id, data.id);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(relations);
+    return Objects.hash(namespace, type, id);
   }
 
   @Override
   public String toString() {
-    return "Lineage{" +
-      "relations=" + relations +
+    return "DataProto{" +
+      "namespace='" + namespace + '\'' +
+      ", type='" + type + '\'' +
+      ", id='" + id + '\'' +
       '}';
   }
 }
