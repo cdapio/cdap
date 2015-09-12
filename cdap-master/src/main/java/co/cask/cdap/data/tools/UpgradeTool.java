@@ -117,7 +117,7 @@ public class UpgradeTool {
               "      - Deletes all ApplicationTemplates\n" +
               "  Note: Once you run the upgrade tool you cannot rollback to the previous version."),
     UPGRADE_HBASE("After an HBase upgrade, updates the coprocessor jars of all user and \n" +
-                    "system HBase tables to a version that is compatible with the new HBase \n " +
+                    "system HBase tables to a version that is compatible with the new HBase \n" +
                     "version. All tables must be disabled prior to this step."),
     HELP("Show this help.");
 
