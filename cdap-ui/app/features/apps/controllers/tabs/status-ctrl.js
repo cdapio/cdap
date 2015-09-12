@@ -65,7 +65,7 @@ angular.module(PKG.name + '.feature.apps')
         this.source = res.config.source;
         this.sink = res.config.sink;
         this.transforms = res.config.transforms;
-        this.nodes = CanvasFactory.getNodes(res.config);
+        this.nodes = CanvasFactory.getNodes(res.config, MyAppDAGService.template.type);
         this.nodes.forEach(function(node) {
           MyAppDAGService.addNodes(node, node.type);
         });
