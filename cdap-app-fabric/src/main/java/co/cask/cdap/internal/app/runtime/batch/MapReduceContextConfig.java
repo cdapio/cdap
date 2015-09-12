@@ -67,6 +67,7 @@ public final class MapReduceContextConfig {
   private static final String HCONF_ATTR_INPUT_SPLIT_CLASS = "hconf.program.input.split.class";
   private static final String HCONF_ATTR_INPUT_SPLITS = "hconf.program.input.splits";
   private static final String HCONF_ATTR_NEW_TX = "hconf.program.newtx.tx";
+  private static final String HCONF_ATTR_NAMESPACE = "hconf.program.namespace.name";
 
   private final Configuration hConf;
 
@@ -79,6 +80,7 @@ public final class MapReduceContextConfig {
   }
 
   public void set(BasicMapReduceContext context, CConfiguration conf, Transaction tx, URI programJarURI) {
+    setNamespace(context.getNamespaceId());
     setRunId(context.getRunId().getId());
     setLogicalStartTime(context.getLogicalStartTime());
     setProgramNameInWorkflow(context.getProgramNameInWorkflow());
@@ -101,6 +103,10 @@ public final class MapReduceContextConfig {
                                                   new TypeToken<Map<String, String>>() {
                                                   }.getType());
     return new BasicArguments(arguments);
+  }
+
+  private void setNamespace(String namespace) {
+    hConf.set(HCONF_ATTR_NAMESPACE, namespace);
   }
 
   private void setRunId(String runId) {
@@ -133,6 +139,10 @@ public final class MapReduceContextConfig {
     if (workflowToken != null) {
       hConf.set(HCONF_ATTR_WORKFLOW_TOKEN, GSON.toJson(workflowToken));
     }
+  }
+
+  public String getNamespace() {
+    return hConf.get(HCONF_ATTR_NAMESPACE);
   }
 
   @Nullable

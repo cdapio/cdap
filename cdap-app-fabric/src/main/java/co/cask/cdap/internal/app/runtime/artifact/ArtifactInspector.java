@@ -215,11 +215,10 @@ public class ArtifactInspector {
     }
 
     // Load the plugin class and inspect the config field.
-    ArtifactDescriptor artifactDescriptor = new ArtifactDescriptor(artifactId.toArtifactId(),
-                                                                   Locations.toLocation(artifactFile));
+    ArtifactDescriptor artifactDescriptor = new ArtifactDescriptor(artifactId, Locations.toLocation(artifactFile));
 
     try {
-      ClassLoader pluginClassLoader = pluginInstantiator.getArtifactClassLoader(artifactDescriptor);
+      ClassLoader pluginClassLoader = pluginInstantiator.getInitialClassLoader(artifactDescriptor);
       for (Class<?> cls : getPluginClasses(exportPackages, pluginClassLoader)) {
         Plugin pluginAnnotation = cls.getAnnotation(Plugin.class);
         if (pluginAnnotation == null) {

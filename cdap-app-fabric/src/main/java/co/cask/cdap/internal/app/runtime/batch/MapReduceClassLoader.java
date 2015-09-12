@@ -30,6 +30,7 @@ import co.cask.cdap.internal.app.runtime.adapter.ArtifactDescriptor;
 import co.cask.cdap.internal.app.runtime.adapter.PluginClassLoader;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerLauncher;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.templates.AdapterDefinition;
 import co.cask.cdap.templates.AdapterPlugin;
@@ -100,12 +101,12 @@ public class MapReduceClassLoader extends CombineClassLoader {
    * followed by plugin Export-Package ClassLoader and with the system ClassLoader last.
    */
   public MapReduceClassLoader(ClassLoader programClassLoader,
-                              CConfiguration cConf,
+                              CConfiguration cConf, String namespace,
                               Map<String, Plugin> plugins,
                               @Nullable AdapterDefinition adapterSpec,
                               @Nullable PluginInstantiator pluginInstantiator,
                               @Nullable PluginInstantiator artifactPluginInstantiator) {
-    this(new Parameters(programClassLoader, cConf, plugins, adapterSpec,
+    this(new Parameters(programClassLoader, cConf, namespace, plugins, adapterSpec,
                         pluginInstantiator, artifactPluginInstantiator));
   }
 
@@ -173,8 +174,8 @@ public class MapReduceClassLoader extends CombineClassLoader {
     }
 
     Parameters(MapReduceContextConfig contextConfig, ClassLoader programClassLoader) {
-      this(programClassLoader, contextConfig.getConf(), contextConfig.getPlugins(),
-           contextConfig.getAdapterSpec(),
+      this(programClassLoader, contextConfig.getConf(), contextConfig.getNamespace(),
+           contextConfig.getPlugins(), contextConfig.getAdapterSpec(),
            createPluginInstantiator(contextConfig, programClassLoader),
            createArtifactPluginInstantiator(contextConfig, programClassLoader));
     }
@@ -183,7 +184,7 @@ public class MapReduceClassLoader extends CombineClassLoader {
      * Creates from the given ProgramClassLoader with plugin classloading support.
      */
     Parameters(ClassLoader programClassLoader,
-               CConfiguration cConf,
+               CConfiguration cConf, String namespace,
                Map<String, Plugin> plugins,
                @Nullable AdapterDefinition adapterSpec,
                @Nullable PluginInstantiator pluginInstantiator,
@@ -191,7 +192,7 @@ public class MapReduceClassLoader extends CombineClassLoader {
       this.programClassLoader = programClassLoader;
       this.pluginInstantiator = pluginInstantiator;
       this.artifactPluginInstantiator = artifactPluginInstantiator;
-      this.filteredPluginClassLoaders = createFilteredPluginClassLoaders(adapterSpec, cConf,
+      this.filteredPluginClassLoaders = createFilteredPluginClassLoaders(adapterSpec, cConf, namespace,
                                                                          plugins, pluginInstantiator,
                                                                          artifactPluginInstantiator);
     }
@@ -269,7 +270,7 @@ public class MapReduceClassLoader extends CombineClassLoader {
      * The ordering of the plugins are defined by the ordering of {@link PluginInfo}.
      */
     private static List<ClassLoader> createFilteredPluginClassLoaders(@Nullable AdapterDefinition adapterSpec,
-                                                                      CConfiguration cConf,
+                                                                      CConfiguration cConf, String namespace,
                                                                       Map<String, Plugin> plugins,
                                                                       @Nullable PluginInstantiator pluginInstantiator,
                                                                       @Nullable PluginInstantiator
@@ -309,8 +310,8 @@ public class MapReduceClassLoader extends CombineClassLoader {
             Plugin plugin = pluginEntry.getValue();
             File pluginFile = new File(cConf.get(Constants.AppFabric.SYSTEM_ARTIFACTS_DIR),
                                        String.format("%s.jar", pluginEntry.getKey()));
-            ArtifactDescriptor artifactDescriptor = new ArtifactDescriptor(plugin.getArtifactId(),
-                                                                           Locations.toLocation(pluginFile));
+            Id.Artifact artifact = Id.Artifact.from(Id.Namespace.from(namespace), plugin.getArtifactId());
+            ArtifactDescriptor artifactDescriptor = new ArtifactDescriptor(artifact, Locations.toLocation(pluginFile));
             ClassLoader pluginClassLoader = artifactPluginInstantiator.getArtifactClassLoader(artifactDescriptor);
             if (pluginClassLoader instanceof PluginClassLoader) {
               Collection<String> allowedClasses = artifactPluginClasses.get(plugin);

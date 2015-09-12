@@ -230,6 +230,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         // After calling beforeSubmit, we know what plugins are needed for adapter, hence construct the proper
         // ClassLoader from here and use it for setting up the job
         pluginArchive = createPluginArchive(context.getAdapterSpecification(), tempDir, tempLocation);
+
         if (pluginArchive != null) {
           job.addCacheArchive(pluginArchive.toURI());
         }
@@ -247,7 +248,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       // It is mainly for standalone mode to have the same ClassLoader as in distributed mode
       // It can only be constructed here because we need to have all adapter plugins information
       classLoader = new MapReduceClassLoader(context.getProgram().getClassLoader(),
-                                             cConf,
+                                             cConf, context.getNamespaceId(),
                                              context.getPlugins(),
                                              context.getAdapterSpecification(),
                                              context.getPluginInstantiator(),
@@ -1017,15 +1018,22 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     }
 
     File jarFile = File.createTempFile("artifact", ".jar", tempDir);
-
     try (JarOutputStream output = new JarOutputStream(new FileOutputStream(jarFile))) {
       for (Map.Entry<String, Plugin> entry : plugins.entrySet()) {
         Plugin plugin = entry.getValue();
         Map.Entry<ArtifactDescriptor, PluginClass> pluginEntry = artifactRepository.getPlugin(
           artifactId, plugin.getPluginClass().getType(), plugin.getPluginClass().getName(), plugin.getArtifactId());
         String entryName = String.format("%s", String.format("%s.jar", entry.getKey()));
+
+        ArtifactDescriptor artifactDescriptor = pluginEntry.getKey();
+        File pluginDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR), "namespaces");
+        String artifactFile = String.format("%s/artifacts/%s/%s",
+                                            artifactDescriptor.getArtifact().getNamespace().getId(),
+                                            artifactDescriptor.getArtifact().getName(),
+                                            artifactDescriptor.getLocation().getName());
+        File artifact = new File(pluginDir, artifactFile);
         output.putNextEntry(new JarEntry(entryName));
-        ByteStreams.copy(Locations.newInputSupplier(pluginEntry.getKey().getLocation()), output);
+        ByteStreams.copy(Files.newInputStreamSupplier(artifact), output);
       }
     } catch (PluginNotExistsException e) {
       return null;

@@ -17,8 +17,6 @@
 package co.cask.cdap.internal.app.runtime.adapter;
 
 import co.cask.cdap.api.annotation.Name;
-import co.cask.cdap.api.artifact.ArtifactId;
-import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.templates.plugins.PluginClass;
@@ -35,6 +33,7 @@ import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.lang.FieldVisitor;
 import co.cask.cdap.internal.lang.Fields;
 import co.cask.cdap.internal.lang.Reflections;
+import co.cask.cdap.proto.Id;
 import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -67,6 +66,7 @@ public class PluginInstantiator implements Closeable {
 
   private static final Logger LOG = LoggerFactory.getLogger(PluginInstantiator.class);
 
+  private final LoadingCache<ArtifactDescriptor, ClassLoader> initialClassLoaders;
   private final LoadingCache<ArtifactDescriptor, ClassLoader> classLoaders;
   private final InstantiatorFactory instantiatorFactory;
   private final File tmpDir;
@@ -83,6 +83,9 @@ public class PluginInstantiator implements Closeable {
     File tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
       cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
     this.tmpDir = DirUtils.createTempDir(tmpDir);
+    this.initialClassLoaders = CacheBuilder.newBuilder()
+                                           .removalListener(new ClassLoaderRemovalListener())
+                                           .build(new InitialClassLoaderCacheLoader());
     this.classLoaders = CacheBuilder.newBuilder()
                                     .removalListener(new ClassLoaderRemovalListener())
                                     .build(new ClassLoaderCacheLoader());
@@ -92,12 +95,14 @@ public class PluginInstantiator implements Closeable {
   // This is used by ArtifactRepository
   public PluginInstantiator(CConfiguration cConf, ClassLoader parentClassLoader) {
     this.instantiatorFactory = new InstantiatorFactory(false);
-    // unused in this mode
     this.pluginDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR), "namespaces");
 
     File tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
       cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
     this.tmpDir = DirUtils.createTempDir(tmpDir);
+    this.initialClassLoaders = CacheBuilder.newBuilder()
+      .removalListener(new ClassLoaderRemovalListener())
+      .build(new InitialClassLoaderCacheLoader());
     this.classLoaders = CacheBuilder.newBuilder()
                                     .removalListener(new ClassLoaderRemovalListener())
                                     .build(new ClassLoaderCacheLoader());
@@ -115,6 +120,15 @@ public class PluginInstantiator implements Closeable {
   public ClassLoader getArtifactClassLoader(ArtifactDescriptor artifactDescriptor) throws IOException {
     try {
       return classLoaders.get(artifactDescriptor);
+    } catch (ExecutionException e) {
+      Throwables.propagateIfInstanceOf(e.getCause(), IOException.class);
+      throw Throwables.propagate(e.getCause());
+    }
+  }
+
+  public ClassLoader getInitialClassLoader(ArtifactDescriptor artifactDescriptor) throws IOException {
+    try {
+      return initialClassLoaders.get(artifactDescriptor);
     } catch (ExecutionException e) {
       Throwables.propagateIfInstanceOf(e.getCause(), IOException.class);
       throw Throwables.propagate(e.getCause());
@@ -269,6 +283,7 @@ public class PluginInstantiator implements Closeable {
   public void close() throws IOException {
     // Cleanup the ClassLoader cache and the temporary directoy for the expanded plugin jar.
     classLoaders.invalidateAll();
+    initialClassLoaders.invalidateAll();
     if (parentClassLoader instanceof Closeable) {
       Closeables.closeQuietly((Closeable) parentClassLoader);
     }
@@ -288,8 +303,20 @@ public class PluginInstantiator implements Closeable {
     @Override
     public ClassLoader load(ArtifactDescriptor key) throws Exception {
       File unpackedDir = DirUtils.createTempDir(tmpDir);
-      BundleJarUtil.unpackProgramJar(key.getLocation(), unpackedDir);
+      String artifactFile = String.format("%s/artifacts/%s/%s", key.getArtifact().getNamespace().getId(),
+                                          key.getArtifact().getName(), key.getLocation().getName());
+      File artifact = new File(pluginDir, artifactFile);
+      BundleJarUtil.unpackProgramJar(Locations.toLocation(artifact), unpackedDir);
+      return new PluginClassLoader(unpackedDir, parentClassLoader);
+    }
+  }
 
+  private final class InitialClassLoaderCacheLoader extends CacheLoader<ArtifactDescriptor, ClassLoader> {
+
+    @Override
+    public ClassLoader load(ArtifactDescriptor key) throws Exception {
+      File unpackedDir = DirUtils.createTempDir(tmpDir);
+      BundleJarUtil.unpackProgramJar(key.getLocation(), unpackedDir);
       return new PluginClassLoader(unpackedDir, parentClassLoader);
     }
   }
@@ -382,9 +409,8 @@ public class PluginInstantiator implements Closeable {
 
   private ArtifactDescriptor getDescriptor(PluginInfo pluginInfo) {
     File file = new File(pluginDir, pluginInfo.getFileName());
-    ArtifactId artifactId = new ArtifactId(pluginInfo.getName(),
-                                           new ArtifactVersion(pluginInfo.getVersion().getVersion()),
-                                           ArtifactScope.SYSTEM);
+    Id.Artifact artifactId = new Id.Artifact(Id.Namespace.from("system"), pluginInfo.getName(),
+                                             new ArtifactVersion(pluginInfo.getVersion().getVersion()));
     return new ArtifactDescriptor(artifactId, Locations.toLocation(file));
   }
 }

@@ -16,7 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.adapter;
 
-import co.cask.cdap.api.artifact.ArtifactId;
+import co.cask.cdap.proto.Id;
 import org.apache.twill.filesystem.Location;
 
 /**
@@ -24,16 +24,16 @@ import org.apache.twill.filesystem.Location;
  * then by name, and finally by version.
  */
 public final class ArtifactDescriptor implements Comparable<ArtifactDescriptor> {
-  private final ArtifactId artifactId;
+  private final Id.Artifact artifact;
   private final Location location;
 
-  public ArtifactDescriptor(ArtifactId artifactId, Location location) {
-    this.artifactId = artifactId;
+  public ArtifactDescriptor(Id.Artifact artifact, Location location) {
+    this.artifact = artifact;
     this.location = location;
   }
 
-  public ArtifactId getArtifactId() {
-    return artifactId;
+  public Id.Artifact getArtifact() {
+    return artifact;
   }
 
   public Location getLocation() {
@@ -43,7 +43,7 @@ public final class ArtifactDescriptor implements Comparable<ArtifactDescriptor> 
   @Override
   public String toString() {
     return "ArtifactDescriptor{" +
-      "artifactId=" + artifactId +
+      "artifact=" + artifact +
       ", location=" + location +
       '}';
   }
@@ -63,11 +63,11 @@ public final class ArtifactDescriptor implements Comparable<ArtifactDescriptor> 
 
   @Override
   public int hashCode() {
-    return artifactId.hashCode();
+    return artifact.hashCode();
   }
 
   @Override
   public int compareTo(ArtifactDescriptor other) {
-    return getArtifactId().compareTo(other.getArtifactId());
+    return getArtifact().compareTo(other.getArtifact());
   }
 }

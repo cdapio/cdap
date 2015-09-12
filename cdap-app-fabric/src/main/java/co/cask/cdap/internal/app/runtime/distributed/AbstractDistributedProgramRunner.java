@@ -16,7 +16,6 @@
 package co.cask.cdap.internal.app.runtime.distributed;
 
 import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.artifact.Plugin;
 import co.cask.cdap.api.templates.plugins.PluginClass;
 import co.cask.cdap.api.templates.plugins.PluginInfo;
@@ -294,8 +293,9 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
         Id.Artifact.from(namespace, appSpec.getArtifactId()), plugin.getPluginClass().getType(),
         plugin.getPluginClass().getName(), plugin.getArtifactId());
       ArtifactDescriptor artifactDescriptor = pluginEntry.getKey();
-      String ns = plugin.getArtifactId().getScope().equals(ArtifactScope.SYSTEM) ? "system" : namespace.getId();
-      String localizedName = String.format("%s/%s/artifacts/%s", localizePrefix, ns,
+      String ns = artifactDescriptor.getArtifact().getNamespace().getId();
+      String localizedName = String.format("%s/%s/artifacts/%s/%s", localizePrefix, ns,
+                                           artifactDescriptor.getArtifact().getName(),
                                            artifactDescriptor.getLocation().getName());
       localizeResources.put(localizedName, new LocalizeResource(artifactDescriptor.getLocation().toURI(), false));
     }
