@@ -44,6 +44,8 @@ import co.cask.cdap.template.etl.common.DBRecord;
 import co.cask.cdap.template.etl.transform.ProjectionTransform;
 import co.cask.cdap.template.etl.transform.ScriptFilterTransform;
 import co.cask.cdap.template.etl.transform.StructuredRecordToGenericRecordTransform;
+import co.cask.cdap.template.etl.transform.ValidatorTransform;
+import co.cask.cdap.template.etl.validator.CoreValidator;
 import co.cask.cdap.test.TestBase;
 import co.cask.cdap.test.TestConfiguration;
 import com.google.common.collect.Iterables;
@@ -54,6 +56,7 @@ import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.io.DatumReader;
 import org.apache.avro.mapred.AvroKey;
+import org.apache.avro.mapreduce.AvroKeyInputFormat;
 import org.apache.avro.mapreduce.AvroKeyOutputFormat;
 import org.apache.hadoop.fs.Path;
 import org.apache.twill.filesystem.Location;
@@ -83,19 +86,21 @@ public class BaseETLBatchTest extends TestBase {
     // add the artifact for etl batch app
     addAppArtifact(APP_ARTIFACT_ID, ETLBatchApplication.class,
       BatchSource.class.getPackage().getName(),
-      PipelineConfigurable.class.getPackage().getName());
+      PipelineConfigurable.class.getPackage().getName(),
+      "org.apache.avro.mapred", "org.apache.avro", "org.apache.avro.generic");
 
     // add artifact for batch sources and sinks
     addPluginArtifact(Id.Artifact.from(Id.Namespace.DEFAULT, "batch-plugins", "1.0.0"), APP_ARTIFACT_ID,
-      DBSource.class, KVTableSource.class, StreamBatchSource.class, TableSource.class, DBRecord.class,
-      TimePartitionedFileSetDatasetAvroSource.class,
-      BatchCubeSink.class, DBSink.class, KVTableSink.class, TableSink.class,
-      TimePartitionedFileSetDatasetAvroSink.class, AvroKeyOutputFormat.class, AvroKey.class,
-      TimePartitionedFileSetDatasetParquetSink.class, AvroParquetOutputFormat.class, BatchElasticsearchSink.class,
-      SnapshotFileBatchAvroSink.class, SnapshotFileBatchParquetSink.class);
+                      DBSource.class, KVTableSource.class, StreamBatchSource.class, TableSource.class, DBRecord.class,
+                      TimePartitionedFileSetDatasetAvroSource.class,
+                      BatchCubeSink.class, DBSink.class, KVTableSink.class, TableSink.class,
+                      TimePartitionedFileSetDatasetAvroSink.class, AvroKeyOutputFormat.class, AvroKey.class,
+                      TimePartitionedFileSetDatasetParquetSink.class, AvroParquetOutputFormat.class, BatchElasticsearchSink.class,
+                      SnapshotFileBatchAvroSink.class, SnapshotFileBatchParquetSink.class);
     // add artifact for transforms
     addPluginArtifact(Id.Artifact.from(Id.Namespace.DEFAULT, "transforms", "1.0.0"), APP_ARTIFACT_ID,
-      ProjectionTransform.class, ScriptFilterTransform.class, StructuredRecordToGenericRecordTransform.class);
+      ProjectionTransform.class, ScriptFilterTransform.class, ValidatorTransform.class, CoreValidator.class,
+      StructuredRecordToGenericRecordTransform.class);
 
     // add some test plugins
     addPluginArtifact(Id.Artifact.from(Id.Namespace.DEFAULT, "test-sources", "1.0.0"), APP_ARTIFACT_ID,

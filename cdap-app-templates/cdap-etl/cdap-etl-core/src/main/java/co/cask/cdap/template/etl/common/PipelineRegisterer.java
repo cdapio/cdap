@@ -54,9 +54,12 @@ public class PipelineRegisterer {
    *
    * @param config the config containing pipeline information
    * @param errorDatasetType error dataset type class
+   * @param errorDatasetProperties properties of the error dataset
+   * @param sinkWithErrorDataset boolean flag to indicate if the sinks uses error dataset
    * @return the ids of each plugin used in the pipeline
    */
-  public Pipeline registerPlugins(ETLConfig config, Class errorDatasetType, DatasetProperties datasetProperties) {
+  public Pipeline registerPlugins(ETLConfig config, Class errorDatasetType, DatasetProperties errorDatasetProperties,
+                                  boolean sinkWithErrorDataset) {
     ETLStage sourceConfig = config.getSource();
     List<ETLStage> transformConfigs = config.getTransforms();
     List<ETLStage> sinkConfigs = config.getSinks();
@@ -108,7 +111,7 @@ public class PipelineRegisterer {
       }
       // if the transformation is configured to write filtered records to error dataset, we create that dataset.
       if (transformConfig.getErrorDatasetName() != null) {
-        configurer.createDataset(transformConfig.getErrorDatasetName(), errorDatasetType, datasetProperties);
+        configurer.createDataset(transformConfig.getErrorDatasetName(), errorDatasetType, errorDatasetProperties);
       }
 
       PipelineConfigurer transformConfigurer = new DefaultPipelineConfigurer(configurer, transformId);
@@ -123,11 +126,10 @@ public class PipelineRegisterer {
     List<PipelineConfigurable> sinks = new ArrayList<>();
     for (ETLStage sinkConfig : sinkConfigs) {
       String sinkPluginId = PluginID.from(Constants.Sink.PLUGINTYPE, sinkConfig.getName(), pluginNum).getID();
-      // create error dataset for sink - if the pipeline is batch and error dataset is configured.
-      // batch uses datasetType TimePartitionedFileSet.
-      if (sinkConfig.getErrorDatasetName() != null &&
-        errorDatasetType.getName().equals(TimePartitionedFileSet.class.getName())) {
-        configurer.createDataset(sinkConfig.getErrorDatasetName(), errorDatasetType, datasetProperties);
+
+      // create error dataset for sink - if the sink supports it and error dataset is configured for it.
+      if (sinkWithErrorDataset && sinkConfig.getErrorDatasetName() != null) {
+        configurer.createDataset(sinkConfig.getErrorDatasetName(), errorDatasetType, errorDatasetProperties);
       }
 
       sinksInfo.add(new SinkInfo(sinkPluginId, sinkConfig.getErrorDatasetName()));

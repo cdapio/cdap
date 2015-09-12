@@ -117,7 +117,7 @@ public class ETLWorker extends AbstractWorker {
     // using table dataset type for error dataset
     Pipeline pluginIDs = registerer.registerPlugins(config, Table.class, DatasetProperties.builder()
       .add(Table.PROPERTY_SCHEMA, ERROR_SCHEMA.toString())
-      .build());
+      .build(), false);
 
     Map<String, String> properties = new HashMap<>();
     properties.put(Constants.Source.PLUGINID, pluginIDs.getSource());
@@ -184,11 +184,11 @@ public class ETLWorker extends AbstractWorker {
 
   @SuppressWarnings("unchecked")
   private void initializeSinks(WorkerContext context) throws Exception {
-    List<SinkInfo> sinkPluginIds = GSON.fromJson(context.getSpecification().getProperty(Constants.Sink.PLUGINIDS),
+    List<SinkInfo> sinkInfos = GSON.fromJson(context.getSpecification().getProperty(Constants.Sink.PLUGINIDS),
                                                  SINK_INFO_TYPE);
-    sinks = Lists.newArrayListWithCapacity(sinkPluginIds.size());
+    sinks = Lists.newArrayListWithCapacity(sinkInfos.size());
 
-    for (SinkInfo sinkInfo : sinkPluginIds) {
+    for (SinkInfo sinkInfo : sinkInfos) {
       RealtimeSink sink = context.newPluginInstance(sinkInfo.getSinkId());
       RealtimeContext sinkContext = new WorkerRealtimeContext(context, metrics, sinkInfo.getSinkId());
       LOG.debug("Sink Class : {}", sink.getClass().getName());
@@ -199,14 +199,14 @@ public class ETLWorker extends AbstractWorker {
   }
 
   private List<TransformDetail> initializeTransforms(WorkerContext context) throws Exception {
-    List<TransformInfo> transformIds =
+    List<TransformInfo> transformInfos =
       GSON.fromJson(context.getSpecification().getProperty(Constants.Transform.PLUGINIDS), TRANSFORMDETAILS_LIST_TYPE);
-    Preconditions.checkArgument(transformIds != null);
-    List<TransformDetail> transformDetailList = new ArrayList<>(transformIds.size());
-    tranformIdToDatasetName = new HashMap<>(transformIds.size());
+    Preconditions.checkArgument(transformInfos != null);
+    List<TransformDetail> transformDetailList = new ArrayList<>(transformInfos.size());
+    tranformIdToDatasetName = new HashMap<>(transformInfos.size());
 
-    for (int i = 0; i < transformIds.size(); i++) {
-      String transformId = transformIds.get(i).getTransformId();
+    for (int i = 0; i < transformInfos.size(); i++) {
+      String transformId = transformInfos.get(i).getTransformId();
       try {
         Transform transform = context.newPluginInstance(transformId);
         RealtimeTransformContext transformContext = new RealtimeTransformContext(context, metrics, transformId);
@@ -214,8 +214,8 @@ public class ETLWorker extends AbstractWorker {
         transform.initialize(transformContext);
         StageMetrics stageMetrics = new StageMetrics(metrics, PluginID.from(transformId));
         transformDetailList.add(new TransformDetail(transformId, transform, stageMetrics));
-        if (transformIds.get(i).getErrorDatasetName() != null) {
-          tranformIdToDatasetName.put(transformId, transformIds.get(i).getErrorDatasetName());
+        if (transformInfos.get(i).getErrorDatasetName() != null) {
+          tranformIdToDatasetName.put(transformId, transformInfos.get(i).getErrorDatasetName());
         }
       } catch (InstantiationException e) {
         LOG.error("Unable to instantiate Transform", e);

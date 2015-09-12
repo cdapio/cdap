@@ -52,6 +52,7 @@ import co.cask.cdap.template.etl.common.TransformDetail;
 import co.cask.cdap.template.etl.common.TransformExecutor;
 import co.cask.cdap.template.etl.common.TransformInfo;
 import co.cask.cdap.template.etl.common.TransformResponse;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
@@ -92,11 +93,16 @@ public class ETLMapReduce extends AbstractMapReduce {
   private static final Type TRANSFORMINFO_LIST_TYPE = new TypeToken<List<TransformInfo>>() { }.getType();
 
   private static final Gson GSON = new Gson();
-  private static final Schema ERROR_SCHEMA = Schema.recordOf(
+
+  @VisibleForTesting
+  static final Schema ERROR_SCHEMA = Schema.recordOf(
     "error",
     Schema.Field.of(Constants.ErrorDataset.ERRCODE, Schema.of(Schema.Type.INT)),
     Schema.Field.of(Constants.ErrorDataset.ERRMSG, Schema.of(Schema.Type.STRING)),
     Schema.Field.of(Constants.ErrorDataset.INVALIDENTRY, Schema.of(Schema.Type.STRING)));
+
+  private static final org.apache.avro.Schema AVRO_ERROR_SCHEMA =
+    new org.apache.avro.Schema.Parser().parse(ERROR_SCHEMA.toString());
 
   private BatchConfigurable<BatchSourceContext> batchSource;
   private List<BatchConfigurable<BatchSinkContext>> batchSinks;
@@ -129,7 +135,7 @@ public class ETLMapReduce extends AbstractMapReduce {
           .setExploreInputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat")
           .setExploreOutputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat")
           .setTableProperty("avro.schema.literal", ERROR_SCHEMA.toString())
-          .build());
+          .build(), true);
 
     if (config.getResources() != null) {
       setMapperResources(config.getResources());
@@ -161,7 +167,9 @@ public class ETLMapReduce extends AbstractMapReduce {
 
     // setup time partition for each error dataset
     for (TransformInfo transformInfo : transformInfos) {
-      addPropertiesToErrorDataset(transformInfo.getErrorDatasetName(), context);
+      if (transformInfo.getErrorDatasetName() != null) {
+        addPropertiesToErrorDataset(transformInfo.getErrorDatasetName(), context);
+      }
     }
 
     List<SinkOutput> sinkOutputs = new ArrayList<>();
@@ -169,17 +177,19 @@ public class ETLMapReduce extends AbstractMapReduce {
     // should never happen
     Preconditions.checkNotNull(sinkPluginIdsStr, "sink plugin ids could not be found in program properties.");
 
-    List<SinkInfo> sinkPluginIds = GSON.fromJson(sinkPluginIdsStr, SINK_INFO_TYPE);
-    batchSinks = Lists.newArrayListWithCapacity(sinkPluginIds.size());
-    for (SinkInfo sinkPluginId : sinkPluginIds) {
-      BatchConfigurable<BatchSinkContext> batchSink = context.newPluginInstance(sinkPluginId.getSinkId());
-      MapReduceSinkContext sinkContext = new MapReduceSinkContext(context, mrMetrics, sinkPluginId.getSinkId());
+    List<SinkInfo> sinkInfos = GSON.fromJson(sinkPluginIdsStr, SINK_INFO_TYPE);
+    batchSinks = Lists.newArrayListWithCapacity(sinkInfos.size());
+    for (SinkInfo sinkInfo : sinkInfos) {
+      BatchConfigurable<BatchSinkContext> batchSink = context.newPluginInstance(sinkInfo.getSinkId());
+      MapReduceSinkContext sinkContext = new MapReduceSinkContext(context, mrMetrics, sinkInfo.getSinkId());
       batchSink.prepareRun(sinkContext);
       batchSinks.add(batchSink);
-      sinkOutputs.add(new SinkOutput(sinkPluginId.getSinkId(), sinkContext.getOutputNames(),
-                                     sinkPluginId.getErrorDatasetName()));
+      sinkOutputs.add(new SinkOutput(sinkInfo.getSinkId(), sinkContext.getOutputNames(),
+                                     sinkInfo.getErrorDatasetName()));
 
-      addPropertiesToErrorDataset(sinkPluginId.getErrorDatasetName(), context);
+      if (sinkInfo.getErrorDatasetName() != null) {
+        addPropertiesToErrorDataset(sinkInfo.getErrorDatasetName(), context);
+      }
 
     }
     job.getConfiguration().set(SINK_OUTPUTS_KEY, GSON.toJson(sinkOutputs));
@@ -189,13 +199,10 @@ public class ETLMapReduce extends AbstractMapReduce {
   }
 
   private void addPropertiesToErrorDataset(String errorDatasetName, MapReduceContext context) {
-    if (errorDatasetName != null) {
-      Map<String, String> args = new HashMap<>();
-      org.apache.avro.Schema avroSchema = new org.apache.avro.Schema.Parser().parse(ERROR_SCHEMA.toString());
-      args.put(FileSetProperties.OUTPUT_PROPERTIES_PREFIX + "avro.schema.output.key", avroSchema.toString());
-      TimePartitionedFileSetArguments.setOutputPartitionTime(args, context.getLogicalStartTime());
-      context.addOutput(errorDatasetName, args);
-    }
+    Map<String, String> args = new HashMap<>();
+    args.put(FileSetProperties.OUTPUT_PROPERTIES_PREFIX + "avro.schema.output.key", ERROR_SCHEMA.toString());
+    TimePartitionedFileSetArguments.setOutputPartitionTime(args, context.getLogicalStartTime());
+    context.addOutput(errorDatasetName, args);
   }
 
   @Override
@@ -241,6 +248,7 @@ public class ETLMapReduce extends AbstractMapReduce {
     private static final Logger LOG = LoggerFactory.getLogger(ETLMapper.class);
     private static final Gson GSON = new Gson();
     private static final Type TRANSFORMDETAILS_LIST_TYPE = new TypeToken<List<TransformInfo>>() { }.getType();
+    private Set<String> transformsWithoutErrorDataset;
 
     private TransformExecutor<KeyValue, Object> transformExecutor;
     // injected by CDAP
@@ -270,6 +278,7 @@ public class ETLMapReduce extends AbstractMapReduce {
         new StageMetrics(mapperMetrics, PluginID.from(sourcePluginId))));
 
       transformErrorSinkMap = new HashMap<>();
+      transformsWithoutErrorDataset = new HashSet<>();
       addTransforms(pipeline, transformInfos, context);
 
       // get the list of sinks, and the names of the outputs each sink writes to
@@ -348,7 +357,6 @@ public class ETLMapReduce extends AbstractMapReduce {
         KeyValue<Object, Object> input = new KeyValue<>(key, value);
         TransformResponse<Object> recordsAndErrors = transformExecutor.runOneIteration(input);
         Iterator<Object> transformedRecords = recordsAndErrors.getEmittedRecords();
-        Set<String> transformsWithoutErrorDataset = new HashSet<>();
         while (transformedRecords.hasNext()) {
           Object transformedRecord = transformedRecords.next();
           for (WrappedSink<Object, Object, Object> sink : sinks) {
@@ -471,8 +479,7 @@ public class ETLMapReduce extends AbstractMapReduce {
   }
 
   private static GenericRecord getGenericRecordForInvalidEntry(InvalidEntry invalidEntry) {
-    org.apache.avro.Schema avroSchema = new org.apache.avro.Schema.Parser().parse(ERROR_SCHEMA.toString());
-    GenericRecordBuilder recordBuilder = new GenericRecordBuilder(avroSchema);
+    GenericRecordBuilder recordBuilder = new GenericRecordBuilder(AVRO_ERROR_SCHEMA);
     recordBuilder.set(Constants.ErrorDataset.ERRCODE, invalidEntry.getErrorCode());
     recordBuilder.set(Constants.ErrorDataset.ERRMSG, invalidEntry.getErrorMsg());
 
@@ -482,12 +489,12 @@ public class ETLMapReduce extends AbstractMapReduce {
       try {
         errorMsg = StructuredRecordStringConverter.toJsonString(record);
       } catch (IOException e) {
-        errorMsg =   "Exception while converting StructuredRecord to String, " + e.getCause();
+        errorMsg = "Exception while converting StructuredRecord to String, " + e.getCause();
       }
     } else {
-      errorMsg =  String.format("Error Entry is of type %s, only records of type " +
-                                  StructuredRecord.class.getName() +
-                                  "is supported currently", invalidEntry.getInvalidRecord().getClass().getName());
+      errorMsg = String.format("Error Entry is of type %s, only records of type %s is supported currently",
+                                  invalidEntry.getInvalidRecord().getClass().getName(),
+                                  StructuredRecord.class.getName());
     }
     recordBuilder.set(Constants.ErrorDataset.INVALIDENTRY, errorMsg);
     return recordBuilder.build();
