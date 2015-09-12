@@ -29,9 +29,8 @@
     <link rel="stylesheet" type="text/css" href="/assets/bundle/app.css" />
 </head>
 <body ng-controller="BodyCtrl" ng-class="bodyClass">
-
     <header class="navbar navbar-inverse navbar-fixed-top navbar-cdap"
-            ng-if="!$state.includes('adapters.**')">
+            ng-if="!$state.includes('adapters.**') && !$state.includes('login')">
       <div role="navigation" class="container" my-navbar></div>
     </header>
 

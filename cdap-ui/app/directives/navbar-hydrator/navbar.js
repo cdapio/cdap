@@ -24,7 +24,6 @@ function myNavbarHydratorDirective (myAuth, MY_CONFIG) {
   return {
     restrict: 'A',
     templateUrl: 'navbar-hydrator/navbar.html',
-    controller: 'navbarHydratorCtrl',
     link: function (scope) {
       scope.logout = myAuth.logout;
       scope.securityEnabled = MY_CONFIG.securityEnabled;
