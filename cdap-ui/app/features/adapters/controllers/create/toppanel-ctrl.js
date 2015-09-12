@@ -102,6 +102,9 @@ angular.module(PKG.name + '.feature.adapters')
       },
       {
         name: 'Publish'
+      },
+      {
+        name: 'Config'
       }
     ];
 

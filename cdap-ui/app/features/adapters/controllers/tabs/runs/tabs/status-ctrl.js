@@ -64,7 +64,7 @@ angular.module(PKG.name + '.feature.adapters')
         $scope.source = res.config.source;
         $scope.sink = res.config.sink;
         $scope.transforms = res.config.transforms;
-        $scope.nodes = CanvasFactory.getNodes(res.config);
+        $scope.nodes = CanvasFactory.getNodes(res.config, MyAppDAGService.metadata.template.type);
         $scope.nodes.forEach(function(node) {
           MyAppDAGService.addNodes(node, node.type);
         });
