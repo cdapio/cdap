@@ -35,7 +35,7 @@ import javax.annotation.Nullable;
 /**
  * Class to serialize {@link co.cask.cdap.data2.metadata.lineage.Lineage}.
  */
-public class LineageProto {
+public class LineageRecord {
   private static final Function<RunId, String> RUN_ID_STRING_FUNCTION =
     new Function<RunId, String>() {
       @Override
@@ -54,11 +54,11 @@ public class LineageProto {
 
   private final long start;
   private final long end;
-  private final Set<RelationProto> relations;
-  private final Map<String, Map<String, ProgramProto>> programs;
-  private final Map<String, Map<String, DataProto>> data;
+  private final Set<RelationRecord> relations;
+  private final Map<String, Map<String, ProgramRecord>> programs;
+  private final Map<String, Map<String, DataRecord>> data;
 
-  public LineageProto(long start, long end, Set<Relation> lineageRelations) {
+  public LineageRecord(long start, long end, Set<Relation> lineageRelations) {
     this.start = start;
     this.end = end;
     this.relations = new HashSet<>();
@@ -72,13 +72,13 @@ public class LineageProto {
     for (Relation relation : lineageRelations) {
       String dataKey = makeDataKey(relation.getData());
       String programKey = makeProgramKey(relation.getProgram());
-      RelationProto relationProto = new RelationProto(dataKey, programKey,
+      RelationRecord relationRecord = new RelationRecord(dataKey, programKey,
                                                       relation.getAccess().toString().toLowerCase(),
                                                       convertRuns(relation.getRuns()),
                                                       convertComponents(relation.getComponents()));
-      relations.add(relationProto);
-      programs.put(programKey, ImmutableMap.of("id", toProgramProto(relation.getProgram())));
-      data.put(dataKey, ImmutableMap.of("id", toDataProto(relation.getData())));
+      relations.add(relationRecord);
+      programs.put(programKey, ImmutableMap.of("id", toProgramRecord(relation.getProgram())));
+      data.put(dataKey, ImmutableMap.of("id", toDataRecord(relation.getData())));
     }
   }
 
@@ -90,7 +90,7 @@ public class LineageProto {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    LineageProto that = (LineageProto) o;
+    LineageRecord that = (LineageRecord) o;
     return Objects.equals(start, that.start) &&
       Objects.equals(end, that.end) &&
       Objects.equals(relations, that.relations) &&
@@ -105,7 +105,7 @@ public class LineageProto {
 
   @Override
   public String toString() {
-    return "LineageProto{" +
+    return "LineageRecord{" +
       "start=" + start +
       ", end=" + end +
       ", relations=" + relations +
@@ -127,8 +127,8 @@ public class LineageProto {
                                program.getApplicationId(), program.getId());
   }
 
-  private ProgramProto toProgramProto(Id.Program program) {
-    return new ProgramProto(program.getNamespaceId(), program.getApplicationId(),
+  private ProgramRecord toProgramRecord(Id.Program program) {
+    return new ProgramRecord(program.getNamespaceId(), program.getApplicationId(),
                             program.getType().getCategoryName().toLowerCase(), program.getId());
   }
 
@@ -144,13 +144,13 @@ public class LineageProto {
     throw new IllegalArgumentException("Unknown data object " + data);
   }
 
-  private DataProto toDataProto(Id.NamespacedId data) {
+  private DataRecord toDataRecord(Id.NamespacedId data) {
     if (data instanceof Id.DatasetInstance) {
-      return new DataProto(((Id.DatasetInstance) data).getNamespaceId(), "dataset", data.getId());
+      return new DataRecord(((Id.DatasetInstance) data).getNamespaceId(), "dataset", data.getId());
     }
 
     if (data instanceof Id.Stream) {
-      return new DataProto(((Id.Stream) data).getNamespaceId(), "stream", data.getId());
+      return new DataRecord(((Id.Stream) data).getNamespaceId(), "stream", data.getId());
     }
 
     throw new IllegalArgumentException("Unknown data object " + data);

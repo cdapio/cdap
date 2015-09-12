@@ -21,12 +21,12 @@ import java.util.Objects;
 /**
  * Class to serialize {@link co.cask.cdap.proto.Id.DatasetInstance} and {@link co.cask.cdap.proto.Id.Stream}.
  */
-public class DataProto {
+public class DataRecord {
   private final String namespace;
   private final String type;
   private final String id;
 
-  public DataProto(String namespace, String type, String id) {
+  public DataRecord(String namespace, String type, String id) {
     this.namespace = namespace;
     this.type = type;
     this.id = id;
@@ -40,7 +40,7 @@ public class DataProto {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    DataProto data = (DataProto) o;
+    DataRecord data = (DataRecord) o;
     return Objects.equals(namespace, data.namespace) &&
       Objects.equals(type, data.type) &&
       Objects.equals(id, data.id);
@@ -53,7 +53,7 @@ public class DataProto {
 
   @Override
   public String toString() {
-    return "DataProto{" +
+    return "DataRecord{" +
       "namespace='" + namespace + '\'' +
       ", type='" + type + '\'' +
       ", id='" + id + '\'' +
