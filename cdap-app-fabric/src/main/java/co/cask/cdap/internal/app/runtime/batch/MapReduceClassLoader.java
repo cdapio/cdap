@@ -98,8 +98,8 @@ public class MapReduceClassLoader extends CombineClassLoader {
   public MapReduceClassLoader(ClassLoader programClassLoader,
                               Configuration hConf,
                               Map<String, Plugin> plugins,
-                              @Nullable PluginInstantiator artifactPluginInstantiator) {
-    this(new Parameters(programClassLoader, hConf, plugins, artifactPluginInstantiator));
+                              @Nullable PluginInstantiator pluginInstantiator) {
+    this(new Parameters(programClassLoader, hConf, plugins, pluginInstantiator));
   }
 
   private MapReduceClassLoader(Parameters parameters) {
@@ -234,9 +234,8 @@ public class MapReduceClassLoader extends CombineClassLoader {
      */
     private static List<ClassLoader> createFilteredPluginClassLoaders(Configuration hConf,
                                                                       Map<String, Plugin> plugins,
-                                                                      @Nullable PluginInstantiator
-                                                                        artifactPluginInstantiator) {
-      if (artifactPluginInstantiator == null) {
+                                                                      @Nullable PluginInstantiator pluginInstantiator) {
+      if (pluginInstantiator == null) {
         return ImmutableList.of();
       }
 
@@ -253,7 +252,7 @@ public class MapReduceClassLoader extends CombineClassLoader {
           ArtifactDescriptor artifactDescriptor = new ArtifactDescriptor(plugin.getArtifactId(),
             locationFactory.create(
               plugin.getLocationURI()));
-          ClassLoader pluginClassLoader = artifactPluginInstantiator.getArtifactClassLoader(artifactDescriptor);
+          ClassLoader pluginClassLoader = pluginInstantiator.getArtifactClassLoader(artifactDescriptor);
           if (pluginClassLoader instanceof PluginClassLoader) {
             Collection<String> allowedClasses = artifactPluginClasses.get(plugin);
             if (!allowedClasses.isEmpty()) {

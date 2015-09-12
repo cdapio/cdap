@@ -159,14 +159,14 @@ public class MapReduceProgramRunner implements ProgramRunner {
     // List of all Closeable resources that needs to be cleanup
     List<Closeable> closeables = new ArrayList<>();
     try {
-      PluginInstantiator artifactPluginInstantiator = createArtifactPluginInstantiator(program.getClassLoader());
-      closeables.add(artifactPluginInstantiator);
+      PluginInstantiator pluginInstantiator = createArtifactPluginInstantiator(program.getClassLoader());
+      closeables.add(pluginInstantiator);
 
       final DynamicMapReduceContext context =
         new DynamicMapReduceContext(program, null, runId, null, options.getUserArguments(), spec,
                                     logicalStartTime, programNameInWorkflow, workflowToken, discoveryServiceClient,
                                     metricsCollectionService, txSystemClient, datasetFramework, locationFactory,
-                                    artifactPluginInstantiator);
+                                    pluginInstantiator);
 
 
       Reflections.visit(mapReduce, mapReduce.getClass(),

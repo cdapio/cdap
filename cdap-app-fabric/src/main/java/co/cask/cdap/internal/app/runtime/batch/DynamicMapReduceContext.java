@@ -81,10 +81,10 @@ public class DynamicMapReduceContext extends BasicMapReduceContext implements Da
                                  TransactionSystemClient txClient,
                                  DatasetFramework dsFramework,
                                  LocationFactory locationFactory,
-                                 @Nullable PluginInstantiator artifactPluginInstantiator) {
+                                 @Nullable PluginInstantiator pluginInstantiator) {
     super(program, type, runId, taskId, runtimeArguments, Collections.<String>emptySet(), spec,
           logicalStartTime, programNameInWorkflow, workflowToken, discoveryServiceClient, metricsCollectionService,
-          dsFramework, locationFactory, artifactPluginInstantiator);
+          dsFramework, locationFactory, pluginInstantiator);
     this.datasetsCache = CacheBuilder.newBuilder()
       .removalListener(new RemovalListener<Long, Map<DatasetCacheKey, Dataset>>() {
         @Override

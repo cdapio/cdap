@@ -71,7 +71,7 @@ public abstract class AbstractMapReduceTaskContextBuilder {
                                          LocationFactory locationFactory,
                                          @Nullable String inputDataSetName,
                                          @Nullable String outputDataSetName,
-                                         @Nullable PluginInstantiator artifactPluginInstantiator) {
+                                         @Nullable PluginInstantiator pluginInstantiator) {
     Injector injector = prepare();
 
     // Initializing Program
@@ -112,7 +112,7 @@ public abstract class AbstractMapReduceTaskContextBuilder {
       new BasicMapReduceTaskContext(program, type, RunIds.fromString(runId), taskId, runtimeArguments, datasets, spec,
                                     logicalStartTime, workflowToken, discoveryServiceClient,
                                     metricsCollectionService, datasetFramework, locationFactory,
-                                    artifactPluginInstantiator);
+                                    pluginInstantiator);
 
     // propagating tx to all txAware guys
     // NOTE: tx will be committed by client code

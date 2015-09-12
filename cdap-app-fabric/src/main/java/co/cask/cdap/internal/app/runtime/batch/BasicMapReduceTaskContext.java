@@ -83,11 +83,11 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
                                    MetricsCollectionService metricsCollectionService,
                                    DatasetFramework dsFramework,
                                    LocationFactory locationFactory,
-                                   @Nullable PluginInstantiator artifactPluginInstantiator) {
+                                   @Nullable PluginInstantiator pluginInstantiator) {
     super(program, runId, runtimeArguments, datasets,
           getMetricCollector(program, runId.getId(), taskId, metricsCollectionService, type),
           dsFramework, discoveryServiceClient, locationFactory,
-          artifactPluginInstantiator);
+          pluginInstantiator);
     this.logicalStartTime = logicalStartTime;
     this.workflowToken = workflowToken;
     this.metricsCollectionService = metricsCollectionService;

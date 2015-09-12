@@ -94,11 +94,11 @@ public class BasicWorkerContext extends AbstractContext implements WorkerContext
                             DiscoveryServiceClient discoveryServiceClient,
                             StreamWriterFactory streamWriterFactory,
                             LocationFactory locationFactory,
-                            @Nullable PluginInstantiator artifactPluginInstantiator) {
+                            @Nullable PluginInstantiator pluginInstantiator) {
     super(program, runId, runtimeArgs, spec.getDatasets(),
           getMetricCollector(program, runId.getId(), instanceId, metricsCollectionService),
           datasetFramework, discoveryServiceClient, locationFactory,
-          artifactPluginInstantiator);
+          pluginInstantiator);
     this.program = program;
     this.specification = spec;
     this.instanceId = instanceId;
