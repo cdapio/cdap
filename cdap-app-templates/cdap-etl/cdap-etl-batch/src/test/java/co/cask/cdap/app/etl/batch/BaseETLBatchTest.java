@@ -95,7 +95,8 @@ public class BaseETLBatchTest extends TestBase {
                       TimePartitionedFileSetDatasetAvroSource.class,
                       BatchCubeSink.class, DBSink.class, KVTableSink.class, TableSink.class,
                       TimePartitionedFileSetDatasetAvroSink.class, AvroKeyOutputFormat.class, AvroKey.class,
-                      TimePartitionedFileSetDatasetParquetSink.class, AvroParquetOutputFormat.class, BatchElasticsearchSink.class,
+                      TimePartitionedFileSetDatasetParquetSink.class, AvroParquetOutputFormat.class,
+                      BatchElasticsearchSink.class,
                       SnapshotFileBatchAvroSink.class, SnapshotFileBatchParquetSink.class);
     // add artifact for transforms
     addPluginArtifact(Id.Artifact.from(Id.Namespace.DEFAULT, "transforms", "1.0.0"), APP_ARTIFACT_ID,
