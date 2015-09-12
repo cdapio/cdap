@@ -41,17 +41,17 @@ public class DefaultMetadataAdmin implements MetadataAdmin {
   private final BusinessMetadataStore businessMds;
 
   @Inject
-  public DefaultMetadataAdmin(AbstractNamespaceClient namespaceClient, BusinessMetadataStore businessMds) {
+  DefaultMetadataAdmin(AbstractNamespaceClient namespaceClient, BusinessMetadataStore businessMds) {
     this.namespaceClient = namespaceClient;
     this.businessMds = businessMds;
   }
 
   @Override
-  public void add(Id.NamespacedId entityId, Map<String, String> metadata) throws NotFoundException {
+  public void addProperties(Id.NamespacedId entityId, Map<String, String> properties) throws NotFoundException {
     ensureEntityExists(entityId);
     // TODO: CDAP-3571 Validation
     // TODO: Check if app exists
-    businessMds.setProperties(entityId, metadata);
+    businessMds.setProperties(entityId, properties);
   }
 
   @Override
@@ -61,7 +61,7 @@ public class DefaultMetadataAdmin implements MetadataAdmin {
   }
 
   @Override
-  public Map<String, String> get(Id.NamespacedId entityId) throws NotFoundException {
+  public Map<String, String> getProperties(Id.NamespacedId entityId) throws NotFoundException {
     ensureEntityExists(entityId);
     return businessMds.getProperties(entityId);
   }
@@ -73,9 +73,21 @@ public class DefaultMetadataAdmin implements MetadataAdmin {
   }
 
   @Override
-  public void remove(Id.NamespacedId entityId, String... keys) throws NotFoundException {
+  public void removeProperties(Id.NamespacedId entityId) throws NotFoundException {
+    ensureEntityExists(entityId);
+    businessMds.removeProperties(entityId);
+  }
+
+  @Override
+  public void removeProperties(Id.NamespacedId entityId, String... keys) throws NotFoundException {
     ensureEntityExists(entityId);
     businessMds.removeProperties(entityId, keys);
+  }
+
+  @Override
+  public void removeTags(Id.NamespacedId entityId) throws NotFoundException {
+    ensureEntityExists(entityId);
+    businessMds.removeTags(entityId);
   }
 
   @Override

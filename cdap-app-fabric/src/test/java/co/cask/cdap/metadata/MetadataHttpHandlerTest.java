@@ -53,6 +53,16 @@ public class MetadataHttpHandlerTest extends AppFabricTestBase {
   private static final Type LIST_STRING_TYPE = new TypeToken<List<String>>() { }.getType();
   private static String metadataServiceUrl;
 
+  private final Id.Application application =
+    Id.Application.from(Id.Namespace.DEFAULT, AppWithDataset.class.getSimpleName());
+  private final Id.Service pingService = Id.Service.from(application, "PingService");
+  private final Id.DatasetInstance myds = Id.DatasetInstance.from(Id.Namespace.DEFAULT, "myds");
+  private final Id.Stream mystream = Id.Stream.from(Id.Namespace.DEFAULT, "mystream");
+  private final Id.Application nonExistingApp = Id.Application.from("blah", AppWithDataset.class.getSimpleName());
+  private final Id.Service nonExistingService = Id.Service.from(nonExistingApp, "PingService");
+  private final Id.DatasetInstance nonExistingDataset = Id.DatasetInstance.from("blah", "myds");
+  private final Id.Stream nonExistingStream = Id.Stream.from("blah", "mystream");
+
   @BeforeClass
   public static void setup() throws MalformedURLException {
     DiscoveryServiceClient discoveryClient = getInjector().getInstance(DiscoveryServiceClient.class);
@@ -67,69 +77,54 @@ public class MetadataHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testMetadata() throws Exception {
     Assert.assertEquals(200, deploy(AppWithDataset.class).getStatusLine().getStatusCode());
-    Id.Application application = Id.Application.from(Id.Namespace.DEFAULT, AppWithDataset.class.getSimpleName());
     // should fail because we haven't provided any metadata in the request
-    Assert.assertEquals(400, addMetadata(application).getResponseCode());
-    Map<String, String> appMetadata = ImmutableMap.of("aKey", "aValue", "aK", "aV");
-    Assert.assertEquals(200, addMetadata(application, appMetadata).getResponseCode());
-    Id.Service pingService = Id.Service.from(application, "PingService");
+    Assert.assertEquals(400, addProperties(application).getResponseCode());
+    Map<String, String> appProperties = ImmutableMap.of("aKey", "aValue", "aK", "aV");
+    Assert.assertEquals(200, addProperties(application, appProperties).getResponseCode());
     // should fail because we haven't provided any metadata in the request
-    Assert.assertEquals(400, addMetadata(pingService).getResponseCode());
-    Map<String, String> serviceMetadata = ImmutableMap.of("sKey", "sValue", "sK", "sV");
-    Assert.assertEquals(200, addMetadata(pingService, serviceMetadata).getResponseCode());
-    Id.DatasetInstance myds = Id.DatasetInstance.from(Id.Namespace.DEFAULT, "myds");
-    Assert.assertEquals(400, addMetadata(myds).getResponseCode());
-    Map<String, String> datasetMetadata = ImmutableMap.of("dKey", "dValue", "dK", "dV");
-    Assert.assertEquals(200, addMetadata(myds, datasetMetadata).getResponseCode());
-    Id.Stream mystream = Id.Stream.from(Id.Namespace.DEFAULT, "mystream");
-    Assert.assertEquals(400, addMetadata(mystream).getResponseCode());
-    Map<String, String> streamMetadata = ImmutableMap.of("stKey", "stValue", "stK", "stV");
-    Assert.assertEquals(200, addMetadata(mystream, streamMetadata).getResponseCode());
-    // retrieve metadata and verify
-    Map<String, String> metadata = getMetadata(application);
-    // TODO: Enable verification after masking tags from metadata output
-    // Assert.assertEquals(appMetadata, metadata);
-    Assert.assertEquals("aValue", metadata.get("aKey"));
-    Assert.assertEquals("aV", metadata.get("aK"));
-    metadata = getMetadata(pingService);
-    // TODO: Enable verification after masking tags from metadata output
-    // Assert.assertEquals(serviceMetadata, metadata);
-    Assert.assertEquals("sValue", metadata.get("sKey"));
-    Assert.assertEquals("sV", metadata.get("sK"));
-    metadata = getMetadata(myds);
-    // TODO: Enable verification after masking tags from metadata output
-    // Assert.assertEquals(datasetMetadata, metadata);
-    Assert.assertEquals("dValue", metadata.get("dKey"));
-    Assert.assertEquals("dV", metadata.get("dK"));
-    metadata = getMetadata(mystream);
-    // TODO: Enable verification after masking tags from metadata output
-    // Assert.assertEquals(streamMetadata, metadata);
-    Assert.assertEquals("stValue", metadata.get("stKey"));
-    Assert.assertEquals("stV", metadata.get("stK"));
-    // TODO: Enable these verifications after re-vamping metadata/tags deletion
-    /*HttpResponse response = removeMetadata(application);
-    // should fail because we haven't provided any keys to remove
-    Assert.assertEquals(400, response.getResponseCode());
-    response = removeMetadata(application, ImmutableList.of("aKey"));
-    Assert.assertEquals(200, response.getResponseCode());
-    metadata = getMetadata(application);
-    Assert.assertEquals(1, metadata.size());
-    Assert.assertEquals("aV", metadata.get("aK"));
-    response = removeMetadata(pingService, ImmutableList.of("sKey", "sK"));
-    Assert.assertEquals(200, response.getResponseCode());
-    Assert.assertTrue(metadata.isEmpty());
-    response = removeMetadata(pingService);
-    Assert.assertEquals(200, response.getResponseCode());
-    metadata = getMetadata(pingService);
-    Assert.assertTrue(metadata.isEmpty());*/
+    Assert.assertEquals(400, addProperties(pingService).getResponseCode());
+    Map<String, String> serviceProperties = ImmutableMap.of("sKey", "sValue", "sK", "sV");
+    Assert.assertEquals(200, addProperties(pingService, serviceProperties).getResponseCode());
+    Assert.assertEquals(400, addProperties(myds).getResponseCode());
+    Map<String, String> datasetProperties = ImmutableMap.of("dKey", "dValue", "dK", "dV");
+    Assert.assertEquals(200, addProperties(myds, datasetProperties).getResponseCode());
+    Assert.assertEquals(400, addProperties(mystream).getResponseCode());
+    Map<String, String> streamProperties = ImmutableMap.of("stKey", "stValue", "stK", "stV");
+    Assert.assertEquals(200, addProperties(mystream, streamProperties).getResponseCode());
+    // retrieve properties and verify
+    Map<String, String> properties = getProperties(application);
+    Assert.assertEquals(appProperties, properties);
+    properties = getProperties(pingService);
+    Assert.assertEquals(serviceProperties, properties);
+    properties = getProperties(myds);
+    Assert.assertEquals(datasetProperties, properties);
+    properties = getProperties(mystream);
+    Assert.assertEquals(streamProperties, properties);
+    // test removal
+    removeProperties(application);
+    Assert.assertTrue(getProperties(application).isEmpty());
+    removeProperties(pingService, "sKey");
+    removeProperties(pingService, "sK");
+    Assert.assertTrue(getProperties(pingService).isEmpty());
+    removeProperties(myds, "dKey");
+    Assert.assertEquals(ImmutableMap.of("dK", "dV"), getProperties(myds));
+    removeProperties(mystream, "stK");
+    Assert.assertEquals(ImmutableMap.of("stKey", "stValue"), getProperties(mystream));
+    // cleanup
+    removeProperties(application);
+    removeProperties(pingService);
+    removeProperties(myds);
+    removeProperties(mystream);
+    Assert.assertTrue(getProperties(application).isEmpty());
+    Assert.assertTrue(getProperties(pingService).isEmpty());
+    Assert.assertTrue(getProperties(myds).isEmpty());
+    Assert.assertTrue(getProperties(mystream).isEmpty());
 
     // non-existing namespace
-    Id.Application nonExisting = Id.Application.from("blah", AppWithDataset.class.getSimpleName());
-    Assert.assertEquals(404, addMetadata(nonExisting, appMetadata).getResponseCode());
-    Assert.assertEquals(
-      404, addMetadata(Id.Service.from(nonExisting, "PingService"), serviceMetadata).getResponseCode());
-    Assert.assertEquals(404, addMetadata(Id.DatasetInstance.from("blah", "myds"), datasetMetadata).getResponseCode());
-    Assert.assertEquals(404, addMetadata(Id.Stream.from("blah", "mystream"), streamMetadata).getResponseCode());
+    Assert.assertEquals(404, addProperties(nonExistingApp, appProperties).getResponseCode());
+    Assert.assertEquals(404, addProperties(nonExistingService, serviceProperties).getResponseCode());
+    Assert.assertEquals(404, addProperties(nonExistingDataset, datasetProperties).getResponseCode());
+    Assert.assertEquals(404, addProperties(nonExistingStream, streamProperties).getResponseCode());
     // cleanup
     deleteApp(application, 200);
   }
@@ -137,23 +132,19 @@ public class MetadataHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testTags() throws Exception {
     Assert.assertEquals(200, deploy(AppWithDataset.class).getStatusLine().getStatusCode());
-    Id.Application application = Id.Application.from(Id.Namespace.DEFAULT, AppWithDataset.class.getSimpleName());
     // should fail because we haven't provided any metadata in the request
     Assert.assertEquals(400, addTags(application).getResponseCode());
     List<String> appTags = ImmutableList.of("aTag", "aT");
     Assert.assertEquals(200, addTags(application, appTags).getResponseCode());
-    Id.Service pingService = Id.Service.from(application, "PingService");
     // should fail because we haven't provided any metadata in the request
     Assert.assertEquals(400, addTags(pingService).getResponseCode());
-    List<String> serviceTags = ImmutableList.of("sKey", "sK");
+    List<String> serviceTags = ImmutableList.of("sTag", "sT");
     Assert.assertEquals(200, addTags(pingService, serviceTags).getResponseCode());
-    Id.DatasetInstance myds = Id.DatasetInstance.from(Id.Namespace.DEFAULT, "myds");
     Assert.assertEquals(400, addTags(myds).getResponseCode());
-    List<String> datasetTags = ImmutableList.of("dKey", "dK");
+    List<String> datasetTags = ImmutableList.of("dTag", "dT");
     Assert.assertEquals(200, addTags(myds, datasetTags).getResponseCode());
-    Id.Stream mystream = Id.Stream.from(Id.Namespace.DEFAULT, "mystream");
     Assert.assertEquals(400, addTags(mystream).getResponseCode());
-    List<String> streamTags = ImmutableList.of("stKey", "stK");
+    List<String> streamTags = ImmutableList.of("stTag", "stT");
     Assert.assertEquals(200, addTags(mystream, streamTags).getResponseCode());
     // retrieve tags and verify
     List<String> tags = getTags(application);
@@ -168,77 +159,98 @@ public class MetadataHttpHandlerTest extends AppFabricTestBase {
     tags = getTags(mystream);
     Assert.assertTrue(tags.containsAll(streamTags));
     Assert.assertTrue(streamTags.containsAll(tags));
-    //TODO: Add deletion tests
+    // test removal
+    removeTags(application, "aTag");
+    Assert.assertEquals(ImmutableList.of("aT"), getTags(application));
+    removeTags(pingService);
+    Assert.assertTrue(getTags(pingService).isEmpty());
+    removeTags(pingService);
+    Assert.assertTrue(getTags(pingService).isEmpty());
+    removeTags(myds, "dT");
+    Assert.assertEquals(ImmutableList.of("dTag"), getTags(myds));
+    removeTags(mystream, "stT");
+    removeTags(mystream, "stTag");
+    Assert.assertTrue(getTags(mystream).isEmpty());
+    // cleanup
+    removeTags(application);
+    removeTags(pingService);
+    removeTags(myds);
+    removeTags(mystream);
+    Assert.assertTrue(getTags(application).isEmpty());
+    Assert.assertTrue(getTags(pingService).isEmpty());
+    Assert.assertTrue(getTags(myds).isEmpty());
+    Assert.assertTrue(getTags(mystream).isEmpty());
     // non-existing namespace
-    Id.Application nonExisting = Id.Application.from("blah", AppWithDataset.class.getSimpleName());
-    Assert.assertEquals(404, addTags(nonExisting, appTags).getResponseCode());
-    Assert.assertEquals(404, addTags(Id.Service.from(nonExisting, "PingService"), serviceTags).getResponseCode());
-    Assert.assertEquals(404, addTags(Id.DatasetInstance.from("blah", "myds"), datasetTags).getResponseCode());
-    Assert.assertEquals(404, addTags(Id.Stream.from("blah", "mystream"), streamTags).getResponseCode());
+    Assert.assertEquals(404, addTags(nonExistingApp, appTags).getResponseCode());
+    Assert.assertEquals(404, addTags(nonExistingService, serviceTags).getResponseCode());
+    Assert.assertEquals(404, addTags(nonExistingDataset, datasetTags).getResponseCode());
+    Assert.assertEquals(404, addTags(nonExistingStream, streamTags).getResponseCode());
     // cleanup
     deleteApp(application, 200);
   }
 
-  private HttpResponse addMetadata(Id.Application app) throws IOException {
-    return addMetadata(app, null);
+  private HttpResponse addProperties(Id.Application app) throws IOException {
+    return addProperties(app, null);
   }
 
-  private HttpResponse addMetadata(Id.Application app, @Nullable Map<String, String> metadata) throws IOException {
-    String path = getVersionedAPIPath(String.format("apps/%s/metadata", app.getId()), app.getNamespaceId());
-    if (metadata == null) {
+  private HttpResponse addProperties(Id.Application app, @Nullable Map<String, String> properties) throws IOException {
+    String path = getVersionedAPIPath(String.format("apps/%s/metadata/properties", app.getId()), app.getNamespaceId());
+    if (properties == null) {
       return makePostRequest(path);
     }
-    return makePostRequest(path, GSON.toJson(metadata));
+    return makePostRequest(path, GSON.toJson(properties));
   }
 
-  private HttpResponse addMetadata(Id.Program program) throws Exception {
-    return addMetadata(program, null);
+  private HttpResponse addProperties(Id.Program program) throws Exception {
+    return addProperties(program, null);
   }
 
-  private HttpResponse addMetadata(Id.Program program, @Nullable Map<String, String> metadata) throws IOException {
-    String path = getVersionedAPIPath(String.format("apps/%s/%s/%s/metadata", program.getApplicationId(),
+  private HttpResponse addProperties(Id.Program program, @Nullable Map<String, String> properties) throws IOException {
+    String path = getVersionedAPIPath(String.format("apps/%s/%s/%s/metadata/properties", program.getApplicationId(),
                                                     program.getType().getCategoryName(), program.getId()),
                                       program.getNamespaceId());
-    if (metadata == null) {
+    if (properties == null) {
       return makePostRequest(path);
     }
-    return makePostRequest(path, GSON.toJson(metadata));
+    return makePostRequest(path, GSON.toJson(properties));
   }
 
-  private HttpResponse addMetadata(Id.DatasetInstance dataset) throws IOException {
-    return addMetadata(dataset, null);
+  private HttpResponse addProperties(Id.DatasetInstance dataset) throws IOException {
+    return addProperties(dataset, null);
   }
 
-  private HttpResponse addMetadata(Id.DatasetInstance dataset,
-                                   @Nullable Map<String, String> metadata) throws IOException {
-    String path = getVersionedAPIPath(String.format("datasets/%s/metadata", dataset.getId()), dataset.getNamespaceId());
-    if (metadata == null) {
+  private HttpResponse addProperties(Id.DatasetInstance dataset,
+                                     @Nullable Map<String, String> properties) throws IOException {
+    String path = getVersionedAPIPath(String.format("datasets/%s/metadata/properties",
+                                                    dataset.getId()), dataset.getNamespaceId());
+    if (properties == null) {
       return makePostRequest(path);
     }
-    return makePostRequest(path, GSON.toJson(metadata));
+    return makePostRequest(path, GSON.toJson(properties));
   }
 
-  private HttpResponse addMetadata(Id.Stream stream) throws IOException {
-    return addMetadata(stream, null);
+  private HttpResponse addProperties(Id.Stream stream) throws IOException {
+    return addProperties(stream, null);
   }
 
-  private HttpResponse addMetadata(Id.Stream stream, @Nullable Map<String, String> metadata) throws IOException {
-    String path = getVersionedAPIPath(String.format("streams/%s/metadata", stream.getId()), stream.getNamespaceId());
-    if (metadata == null) {
+  private HttpResponse addProperties(Id.Stream stream, @Nullable Map<String, String> properties) throws IOException {
+    String path = getVersionedAPIPath(String.format("streams/%s/metadata/properties",
+                                                    stream.getId()), stream.getNamespaceId());
+    if (properties == null) {
       return makePostRequest(path);
     }
-    return makePostRequest(path, GSON.toJson(metadata));
+    return makePostRequest(path, GSON.toJson(properties));
   }
 
-  private Map<String, String> getMetadata(Id.Application app) throws IOException {
-    String path = getVersionedAPIPath(String.format("apps/%s/metadata", app.getId()), app.getNamespaceId());
+  private Map<String, String> getProperties(Id.Application app) throws IOException {
+    String path = getVersionedAPIPath(String.format("apps/%s/metadata/properties", app.getId()), app.getNamespaceId());
     HttpResponse response = makeGetRequest(path);
     Assert.assertEquals(200, response.getResponseCode());
     return GSON.fromJson(response.getResponseBodyAsString(), MAP_STRING_STRING_TYPE);
   }
 
-  private Map<String, String> getMetadata(Id.Program program) throws IOException {
-    String path = getVersionedAPIPath(String.format("apps/%s/%s/%s/metadata", program.getApplicationId(),
+  private Map<String, String> getProperties(Id.Program program) throws IOException {
+    String path = getVersionedAPIPath(String.format("apps/%s/%s/%s/metadata/properties", program.getApplicationId(),
                                                     program.getType().getCategoryName(), program.getId()),
                                       program.getNamespaceId());
     HttpResponse response = makeGetRequest(path);
@@ -246,18 +258,76 @@ public class MetadataHttpHandlerTest extends AppFabricTestBase {
     return GSON.fromJson(response.getResponseBodyAsString(), MAP_STRING_STRING_TYPE);
   }
 
-  private Map<String, String> getMetadata(Id.DatasetInstance dataset) throws IOException {
-    String path = getVersionedAPIPath(String.format("datasets/%s/metadata", dataset.getId()), dataset.getNamespaceId());
+  private Map<String, String> getProperties(Id.DatasetInstance dataset) throws IOException {
+    String path = getVersionedAPIPath(String.format("datasets/%s/metadata/properties",
+                                                    dataset.getId()), dataset.getNamespaceId());
     HttpResponse response = makeGetRequest(path);
     Assert.assertEquals(200, response.getResponseCode());
     return GSON.fromJson(response.getResponseBodyAsString(), MAP_STRING_STRING_TYPE);
   }
 
-  private Map<String, String> getMetadata(Id.Stream stream) throws IOException {
-    String path = getVersionedAPIPath(String.format("streams/%s/metadata", stream.getId()), stream.getNamespaceId());
+  private Map<String, String> getProperties(Id.Stream stream) throws IOException {
+    String path = getVersionedAPIPath(String.format("streams/%s/metadata/properties",
+                                                    stream.getId()), stream.getNamespaceId());
     HttpResponse response = makeGetRequest(path);
     Assert.assertEquals(200, response.getResponseCode());
     return GSON.fromJson(response.getResponseBodyAsString(), MAP_STRING_STRING_TYPE);
+  }
+
+  private void removeProperties(Id.Application app) throws IOException {
+    removeProperties(app, null);
+  }
+
+  private void removeProperties(Id.Application app, @Nullable String propertyToRemove) throws IOException {
+    String path = getVersionedAPIPath(String.format("apps/%s/metadata/properties", app.getId()), app.getNamespaceId());
+    if (propertyToRemove != null) {
+      path = String.format("%s/%s", path, propertyToRemove);
+    }
+    HttpResponse response = makeDeleteRequest(path);
+    Assert.assertEquals(200, response.getResponseCode());
+  }
+
+  private void removeProperties(Id.Program program) throws IOException {
+    removeProperties(program, null);
+  }
+
+  private void removeProperties(Id.Program program, @Nullable String propertyToRemove) throws IOException {
+    String path = getVersionedAPIPath(String.format("apps/%s/%s/%s/metadata/properties", program.getApplicationId(),
+                                                    program.getType().getCategoryName(), program.getId()),
+                                      program.getNamespaceId());
+    if (propertyToRemove != null) {
+      path = String.format("%s/%s", path, propertyToRemove);
+    }
+    HttpResponse response = makeDeleteRequest(path);
+    Assert.assertEquals(200, response.getResponseCode());
+  }
+
+  private void removeProperties(Id.DatasetInstance dataset) throws IOException {
+    removeProperties(dataset, null);
+  }
+
+  private void removeProperties(Id.DatasetInstance dataset, @Nullable String propertyToRemove) throws IOException {
+    String path = getVersionedAPIPath(String.format("datasets/%s/metadata/properties",
+                                                    dataset.getId()), dataset.getNamespaceId());
+    if (propertyToRemove != null) {
+      path = String.format("%s/%s", path, propertyToRemove);
+    }
+    HttpResponse response = makeDeleteRequest(path);
+    Assert.assertEquals(200, response.getResponseCode());
+  }
+
+  private void removeProperties(Id.Stream stream) throws IOException {
+    removeProperties(stream, null);
+  }
+
+  private void removeProperties(Id.Stream stream, @Nullable String propertyToRemove) throws IOException {
+    String path = getVersionedAPIPath(String.format("streams/%s/metadata/properties",
+                                                    stream.getId()), stream.getNamespaceId());
+    if (propertyToRemove != null) {
+      path = String.format("%s/%s", path, propertyToRemove);
+    }
+    HttpResponse response = makeDeleteRequest(path);
+    Assert.assertEquals(200, response.getResponseCode());
   }
 
   private HttpResponse addTags(Id.Application app) throws IOException {
@@ -265,7 +335,7 @@ public class MetadataHttpHandlerTest extends AppFabricTestBase {
   }
 
   private HttpResponse addTags(Id.Application app, @Nullable List<String> tags) throws IOException {
-    String path = getVersionedAPIPath(String.format("apps/%s/tags", app.getId()), app.getNamespaceId());
+    String path = getVersionedAPIPath(String.format("apps/%s/metadata/tags", app.getId()), app.getNamespaceId());
     if (tags == null) {
       return makePostRequest(path);
     }
@@ -277,7 +347,7 @@ public class MetadataHttpHandlerTest extends AppFabricTestBase {
   }
 
   private HttpResponse addTags(Id.Program program, @Nullable List<String> tags) throws IOException {
-    String path = getVersionedAPIPath(String.format("apps/%s/%s/%s/tags", program.getApplicationId(),
+    String path = getVersionedAPIPath(String.format("apps/%s/%s/%s/metadata/tags", program.getApplicationId(),
                                                     program.getType().getCategoryName(), program.getId()),
                                       program.getNamespaceId());
     if (tags == null) {
@@ -291,7 +361,8 @@ public class MetadataHttpHandlerTest extends AppFabricTestBase {
   }
 
   private HttpResponse addTags(Id.DatasetInstance dataset, @Nullable List<String> tags) throws IOException {
-    String path = getVersionedAPIPath(String.format("datasets/%s/tags", dataset.getId()), dataset.getNamespaceId());
+    String path = getVersionedAPIPath(String.format("datasets/%s/metadata/tags",
+                                                    dataset.getId()), dataset.getNamespaceId());
     if (tags == null) {
       return makePostRequest(path);
     }
@@ -303,7 +374,8 @@ public class MetadataHttpHandlerTest extends AppFabricTestBase {
   }
 
   private HttpResponse addTags(Id.Stream stream, @Nullable List<String> tags) throws IOException {
-    String path = getVersionedAPIPath(String.format("streams/%s/tags", stream.getId()), stream.getNamespaceId());
+    String path = getVersionedAPIPath(String.format("streams/%s/metadata/tags",
+                                                    stream.getId()), stream.getNamespaceId());
     if (tags == null) {
       return makePostRequest(path);
     }
@@ -311,14 +383,14 @@ public class MetadataHttpHandlerTest extends AppFabricTestBase {
   }
 
   private List<String> getTags(Id.Application app) throws IOException {
-    String path = getVersionedAPIPath(String.format("apps/%s/tags", app.getId()), app.getNamespaceId());
+    String path = getVersionedAPIPath(String.format("apps/%s/metadata/tags", app.getId()), app.getNamespaceId());
     HttpResponse response = makeGetRequest(path);
     Assert.assertEquals(200, response.getResponseCode());
     return GSON.fromJson(response.getResponseBodyAsString(), LIST_STRING_TYPE);
   }
 
   private List<String> getTags(Id.Program program) throws IOException {
-    String path = getVersionedAPIPath(String.format("apps/%s/%s/%s/tags", program.getApplicationId(),
+    String path = getVersionedAPIPath(String.format("apps/%s/%s/%s/metadata/tags", program.getApplicationId(),
                                                     program.getType().getCategoryName(), program.getId()),
                                       program.getNamespaceId());
     HttpResponse response = makeGetRequest(path);
@@ -327,17 +399,75 @@ public class MetadataHttpHandlerTest extends AppFabricTestBase {
   }
 
   private List<String> getTags(Id.DatasetInstance dataset) throws IOException {
-    String path = getVersionedAPIPath(String.format("datasets/%s/tags", dataset.getId()), dataset.getNamespaceId());
+    String path = getVersionedAPIPath(String.format("datasets/%s/metadata/tags",
+                                                    dataset.getId()), dataset.getNamespaceId());
     HttpResponse response = makeGetRequest(path);
     Assert.assertEquals(200, response.getResponseCode());
     return GSON.fromJson(response.getResponseBodyAsString(), LIST_STRING_TYPE);
   }
 
   private List<String> getTags(Id.Stream stream) throws IOException {
-    String path = getVersionedAPIPath(String.format("streams/%s/tags", stream.getId()), stream.getNamespaceId());
+    String path = getVersionedAPIPath(String.format("streams/%s/metadata/tags",
+                                                    stream.getId()), stream.getNamespaceId());
     HttpResponse response = makeGetRequest(path);
     Assert.assertEquals(200, response.getResponseCode());
     return GSON.fromJson(response.getResponseBodyAsString(), LIST_STRING_TYPE);
+  }
+
+  private void removeTags(Id.Application app) throws IOException {
+    removeTags(app, null);
+  }
+
+  private void removeTags(Id.Application app, @Nullable String tagToRemove) throws IOException {
+    String path = getVersionedAPIPath(String.format("apps/%s/metadata/tags", app.getId()), app.getNamespaceId());
+    if (tagToRemove != null) {
+      path = String.format("%s/%s", path, tagToRemove);
+    }
+    HttpResponse response = makeDeleteRequest(path);
+    Assert.assertEquals(200, response.getResponseCode());
+  }
+
+  private void removeTags(Id.Program program) throws IOException {
+    removeTags(program, null);
+  }
+
+  private void removeTags(Id.Program program, @Nullable String tagToRemove) throws IOException {
+    String path = getVersionedAPIPath(String.format("apps/%s/%s/%s/metadata/tags", program.getApplicationId(),
+                                                    program.getType().getCategoryName(), program.getId()),
+                                      program.getNamespaceId());
+    if (tagToRemove != null) {
+      path = String.format("%s/%s", path, tagToRemove);
+    }
+    HttpResponse response = makeDeleteRequest(path);
+    Assert.assertEquals(200, response.getResponseCode());
+  }
+
+  private void removeTags(Id.DatasetInstance dataset) throws IOException {
+    removeTags(dataset, null);
+  }
+
+  private void removeTags(Id.DatasetInstance dataset, @Nullable String tagToRemove) throws IOException {
+    String path = getVersionedAPIPath(String.format("datasets/%s/metadata/tags",
+                                                    dataset.getId()), dataset.getNamespaceId());
+    if (tagToRemove != null) {
+      path = String.format("%s/%s", path, tagToRemove);
+    }
+    HttpResponse response = makeDeleteRequest(path);
+    Assert.assertEquals(200, response.getResponseCode());
+  }
+
+  private void removeTags(Id.Stream stream) throws IOException {
+    removeTags(stream, null);
+  }
+
+  private void removeTags(Id.Stream stream, @Nullable String tagToRemove) throws IOException {
+    String path = getVersionedAPIPath(String.format("streams/%s/metadata/tags",
+                                                    stream.getId()), stream.getNamespaceId());
+    if (tagToRemove != null) {
+      path = String.format("%s/%s", path, tagToRemove);
+    }
+    HttpResponse response = makeDeleteRequest(path);
+    Assert.assertEquals(200, response.getResponseCode());
   }
 
   // The following methods are needed because AppFabricTestBase's doGet, doPost, doPut, doDelete are hardwired to
@@ -356,6 +486,11 @@ public class MetadataHttpHandlerTest extends AppFabricTestBase {
 
   private HttpResponse makeGetRequest(String resource) throws IOException {
     HttpRequest request = HttpRequest.get(getMetadataUrl(resource)).build();
+    return HttpRequests.execute(request);
+  }
+
+  private HttpResponse makeDeleteRequest(String resource) throws IOException {
+    HttpRequest request = HttpRequest.delete(getMetadataUrl(resource)).build();
     return HttpRequests.execute(request);
   }
 
