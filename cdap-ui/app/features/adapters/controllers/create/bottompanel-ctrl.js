@@ -22,6 +22,7 @@ angular.module(PKG.name + '.feature.adapters')
     this.tab.plugin = {};
     function editProperties(plugin) {
       this.tab.plugin = plugin;
+      $scope.selectTab($scope.tabs[2]);
     }
 
     $scope.isCollapsed = false;
