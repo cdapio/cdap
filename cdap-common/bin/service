@@ -30,7 +30,7 @@ SVCNAME=${0##*/}
 
 if [[ "${SVCNAME}" == "service" ]]; then
   echo "Create a soft link to this script as svc-<component>"
-  echo "E.g. ln -s service svc-<component>"
+  echo "Example: ln -s service svc-<component>"
   exit 1
 fi
 
@@ -42,7 +42,7 @@ export APP
 TARGET=$(readlink ${0}) # TODO: readlink isn't always available
 if [[ $? -ne 0 ]]; then
   echo "Create a soft link to this script as svc-<component>"
-  echo "E.g. ln -s service svc-<component>"
+  echo "Example: ln -s service svc-<component>"
   exit 1
 fi
 
@@ -52,7 +52,7 @@ COMPONENT_BIN="${COMPONENT_HOME}"/bin
 PKGNAME=${COMPONENT_HOME##*/}
 if [[ -z "${PKGNAME}" ]]; then
   echo "Create a soft link to this script as svc-<component>"
-  echo "E.g. ln -s service svc-<component>"
+  echo "Example: ln -s service svc-<component>"
   exit 1
 fi
 
