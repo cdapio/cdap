@@ -78,8 +78,8 @@ public final class Constants {
    * Constants related to error dataset used in transform
    */
   public static final class ErrorDataset {
-    public static final String COLUMN_ERRCODE = "errCode";
-    public static final String COLUMN_ERRMSG = "errMsg";
-    public static final String COLUMN_INVALIDENTRY = "invalidRecord";
+    public static final String ERRCODE = "errCode";
+    public static final String ERRMSG = "errMsg";
+    public static final String INVALIDENTRY = "invalidRecord";
   }
 }
