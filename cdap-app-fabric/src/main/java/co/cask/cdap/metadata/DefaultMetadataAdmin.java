@@ -24,7 +24,6 @@ import co.cask.cdap.data2.metadata.service.BusinessMetadataStore;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.MetadataSearchResultRecord;
 import co.cask.cdap.proto.MetadataSearchTargetType;
-
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 

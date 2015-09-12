@@ -16,10 +16,10 @@
 
 package co.cask.cdap.internal.app.runtime.batch;
 
-import co.cask.cdap.api.artifact.Plugin;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.batch.SimpleSplit;
 import co.cask.cdap.api.data.batch.Split;
+import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -27,7 +27,6 @@ import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetInputFormat;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetOutputFormat;
 import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
-import co.cask.cdap.templates.AdapterDefinition;
 import co.cask.tephra.Transaction;
 import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
@@ -60,7 +59,6 @@ public final class MapReduceContextConfig {
   private static final String HCONF_ATTR_LOGICAL_START_TIME = "hconf.program.logical.start.time";
   private static final String HCONF_ATTR_PROGRAM_NAME_IN_WORKFLOW = "hconf.program.name.in.workflow";
   private static final String HCONF_ATTR_WORKFLOW_TOKEN = "hconf.program.workflow.token";
-  private static final String HCONF_ATTR_ADAPTER_SPEC = "hconf.program.adapter.spec";
   private static final String HCONF_ATTR_PLUGINS = "hconf.program.plugins.map";
   private static final String HCONF_ATTR_ARGS = "hconf.program.args";
   private static final String HCONF_ATTR_PROGRAM_JAR_URI = "hconf.program.jar.uri";
@@ -84,7 +82,6 @@ public final class MapReduceContextConfig {
     setLogicalStartTime(context.getLogicalStartTime());
     setProgramNameInWorkflow(context.getProgramNameInWorkflow());
     setWorkflowToken(context.getWorkflowToken());
-    setAdapterSpec(context.getAdapterSpecification());
     setPlugins(context.getPlugins());
     setArguments(context.getRuntimeArguments());
     setProgramJarURI(programJarURI);
@@ -147,12 +144,6 @@ public final class MapReduceContextConfig {
     return token;
   }
 
-  private void setAdapterSpec(@Nullable AdapterDefinition adapterSpec) {
-    if (adapterSpec != null) {
-      hConf.set(HCONF_ATTR_ADAPTER_SPEC, GSON.toJson(adapterSpec));
-    }
-  }
-
   private void setPlugins(Map<String, Plugin> plugins) {
     hConf.set(HCONF_ATTR_PLUGINS, GSON.toJson(plugins));
   }
@@ -163,15 +154,6 @@ public final class MapReduceContextConfig {
       return null;
     }
     return GSON.fromJson(spec, new TypeToken<Map<String, Plugin>>() { }.getType());
-  }
-
-  @Nullable
-  public AdapterDefinition getAdapterSpec() {
-    String spec = hConf.get(HCONF_ATTR_ADAPTER_SPEC);
-    if (spec == null) {
-      return null;
-    }
-    return GSON.fromJson(spec, AdapterDefinition.class);
   }
 
   private void setProgramJarURI(URI programJarURI) {

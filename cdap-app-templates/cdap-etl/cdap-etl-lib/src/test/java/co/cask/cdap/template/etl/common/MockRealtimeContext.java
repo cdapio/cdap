@@ -17,13 +17,11 @@
 package co.cask.cdap.template.etl.common;
 
 import co.cask.cdap.api.metrics.Metrics;
-import co.cask.cdap.api.templates.AdapterSpecification;
-import co.cask.cdap.api.templates.plugins.PluginProperties;
+import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.template.etl.api.realtime.RealtimeContext;
 import com.google.common.collect.Maps;
 
 import java.util.Map;
-import javax.annotation.Nullable;
 
 /**
  * Mock RealtimeContext for tests.
@@ -57,12 +55,6 @@ public class MockRealtimeContext implements RealtimeContext {
   @Override
   public int getInstanceCount() {
     return 1;
-  }
-
-  @Nullable
-  @Override
-  public AdapterSpecification getAdapterSpecification() {
-    return null;
   }
 
   @Override

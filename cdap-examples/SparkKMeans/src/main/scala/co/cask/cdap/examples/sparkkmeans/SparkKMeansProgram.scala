@@ -24,7 +24,6 @@ package co.cask.cdap.examples.sparkkmeans
 
 import breeze.linalg.{DenseVector, Vector, squaredDistance}
 import co.cask.cdap.api.spark.{ScalaSparkProgram, SparkContext}
-import org.apache.spark.SparkContext._
 import org.apache.spark.rdd.NewHadoopRDD
 import org.slf4j.{Logger, LoggerFactory}
 

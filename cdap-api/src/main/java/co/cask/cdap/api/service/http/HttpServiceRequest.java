@@ -19,7 +19,6 @@ package co.cask.cdap.api.service.http;
 import com.google.common.collect.Multimap;
 
 import java.nio.ByteBuffer;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 

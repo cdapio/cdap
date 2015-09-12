@@ -25,7 +25,6 @@ import co.cask.cdap.api.spark.{ScalaSparkProgram, SparkContext}
 import org.apache.hadoop.io.{LongWritable, Text}
 import org.apache.spark.rdd.NewHadoopRDD
 import org.slf4j.{Logger, LoggerFactory}
-import org.apache.spark.SparkContext._
 
 /**
  * A spark program which counts the total number of responses for every unique response code

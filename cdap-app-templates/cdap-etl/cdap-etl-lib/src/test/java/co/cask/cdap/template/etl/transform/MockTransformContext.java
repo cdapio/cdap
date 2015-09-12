@@ -17,7 +17,7 @@
 package co.cask.cdap.template.etl.transform;
 
 import co.cask.cdap.api.metrics.Metrics;
-import co.cask.cdap.api.templates.plugins.PluginProperties;
+import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.template.etl.api.TransformContext;
 import co.cask.cdap.template.etl.common.NoopMetrics;
 import com.google.common.collect.Maps;

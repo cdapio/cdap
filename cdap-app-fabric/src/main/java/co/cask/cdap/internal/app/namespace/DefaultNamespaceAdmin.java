@@ -20,7 +20,6 @@ import co.cask.cdap.api.metrics.MetricDeleteQuery;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
-import co.cask.cdap.common.AdapterNotFoundException;
 import co.cask.cdap.common.NamespaceAlreadyExistsException;
 import co.cask.cdap.common.NamespaceCannotBeCreatedException;
 import co.cask.cdap.common.NamespaceCannotBeDeletedException;
@@ -37,18 +36,14 @@ import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
-import co.cask.cdap.internal.app.services.AdapterService;
 import co.cask.cdap.internal.app.services.ApplicationLifecycleService;
-import co.cask.cdap.proto.AdapterStatus;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceConfig;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.templates.AdapterDefinition;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Strings;
-import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
@@ -74,7 +69,6 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   private final MetricStore metricStore;
   private final Scheduler scheduler;
   private final ApplicationLifecycleService applicationLifecycleService;
-  private final AdapterService adapterService;
   private final ArtifactRepository artifactRepository;
 
   @Inject
@@ -82,7 +76,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
                                DashboardStore dashboardStore, DatasetFramework dsFramework,
                                ProgramRuntimeService runtimeService, QueueAdmin queueAdmin, StreamAdmin streamAdmin,
                                MetricStore metricStore, Scheduler scheduler,
-                               ApplicationLifecycleService applicationLifecycleService, AdapterService adapterService,
+                               ApplicationLifecycleService applicationLifecycleService,
                                ArtifactRepository artifactRepository) {
     this.queueAdmin = queueAdmin;
     this.streamAdmin = streamAdmin;
@@ -94,7 +88,6 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     this.scheduler = scheduler;
     this.metricStore = metricStore;
     this.applicationLifecycleService = applicationLifecycleService;
-    this.adapterService = adapterService;
     this.artifactRepository = artifactRepository;
   }
 
@@ -182,13 +175,6 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
                                                                 namespaceId));
     }
 
-    if (checkAdaptersStarted(namespaceId)) {
-      throw new NamespaceCannotBeDeletedException(namespaceId,
-                                                  String.format("Some adapters are in started state in namespace " +
-                                                                  "'%s', please stop them before deleting namespace",
-                                                                namespaceId));
-    }
-
     LOG.info("Deleting namespace '{}'.", namespaceId);
     try {
       // Delete Preferences associated with this namespace
@@ -227,23 +213,6 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
       throw new NamespaceCannotBeDeletedException(namespaceId, e);
     }
     LOG.info("All data for namespace '{}' deleted.", namespaceId);
-  }
-
-  private boolean checkAdaptersStarted(Id.Namespace namespaceId) {
-    for (AdapterDefinition adapterDefinition : adapterService.getAdapters(namespaceId)) {
-      AdapterStatus adapterStatus;
-      try {
-        adapterStatus = adapterService.getAdapterStatus(namespaceId, adapterDefinition.getName());
-      } catch (AdapterNotFoundException e) {
-        // should never happen, since we're querying known adapters and especially since this is executed from
-        // within a synchronized method
-        throw Throwables.propagate(e);
-      }
-      if (AdapterStatus.STARTED.equals(adapterStatus)) {
-        return true;
-      }
-    }
-    return false;
   }
 
   private void deleteMetrics(Id.Namespace namespaceId) throws Exception {

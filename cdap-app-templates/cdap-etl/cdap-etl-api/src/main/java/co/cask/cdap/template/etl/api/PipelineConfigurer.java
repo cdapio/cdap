@@ -17,7 +17,7 @@
 package co.cask.cdap.template.etl.api;
 
 import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.artifact.PluginConfigurer;
+import co.cask.cdap.api.plugin.PluginConfigurer;
 
 /**
  * Configures an ETL Pipeline. Allows adding datasets and streams, which will be created when a pipeline is created.

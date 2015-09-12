@@ -17,21 +17,17 @@
 package co.cask.cdap.internal.app.runtime.adapter;
 
 import co.cask.cdap.api.annotation.Name;
-import co.cask.cdap.api.artifact.ArtifactId;
-import co.cask.cdap.api.artifact.ArtifactScope;
-import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
-import co.cask.cdap.api.templates.plugins.PluginClass;
-import co.cask.cdap.api.templates.plugins.PluginConfig;
-import co.cask.cdap.api.templates.plugins.PluginInfo;
-import co.cask.cdap.api.templates.plugins.PluginProperties;
-import co.cask.cdap.api.templates.plugins.PluginPropertyField;
+import co.cask.cdap.api.plugin.PluginClass;
+import co.cask.cdap.api.plugin.PluginConfig;
+import co.cask.cdap.api.plugin.PluginProperties;
+import co.cask.cdap.api.plugin.PluginPropertyField;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
+import co.cask.cdap.internal.app.runtime.artifact.InvalidPluginConfigException;
 import co.cask.cdap.internal.lang.FieldVisitor;
 import co.cask.cdap.internal.lang.Fields;
 import co.cask.cdap.internal.lang.Reflections;
@@ -71,29 +67,9 @@ public class PluginInstantiator implements Closeable {
   private final InstantiatorFactory instantiatorFactory;
   private final File tmpDir;
   private final ClassLoader parentClassLoader;
-  // TODO: remove when Templates are removed
-  private final File pluginDir;
 
-  // TODO: remove when Templates are removed.
-  // This is used by PluginRepository, which works on ApplicationTemplates
-  public PluginInstantiator(CConfiguration cConf, String template, ClassLoader parentClassLoader) {
-    this.instantiatorFactory = new InstantiatorFactory(false);
-    this.pluginDir = new File(cConf.get(Constants.AppFabric.APP_TEMPLATE_PLUGIN_DIR), template);
-
-    File tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
-      cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
-    this.tmpDir = DirUtils.createTempDir(tmpDir);
-    this.classLoaders = CacheBuilder.newBuilder()
-                                    .removalListener(new ClassLoaderRemovalListener())
-                                    .build(new ClassLoaderCacheLoader());
-    this.parentClassLoader = PluginClassLoader.createParent(new File(pluginDir, "lib"), parentClassLoader);
-  }
-
-  // This is used by ArtifactRepository
   public PluginInstantiator(CConfiguration cConf, ClassLoader parentClassLoader) {
     this.instantiatorFactory = new InstantiatorFactory(false);
-    // unused in this mode
-    this.pluginDir = new File(cConf.get(Constants.AppFabric.APP_TEMPLATE_PLUGIN_DIR));
 
     File tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
       cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
@@ -122,41 +98,6 @@ public class PluginInstantiator implements Closeable {
   }
 
   /**
-   * Get the classloader for the given plugin file.
-   *
-   * @param pluginInfo information about the plugin file to get the classloader for
-   * @return the classloader used to load plugins from the given plugin file
-   * @throws IOException if there was an exception creating the classloader, since it may require unpacking jars
-   */
-  public ClassLoader getPluginClassLoader(PluginInfo pluginInfo) throws IOException {
-    return getArtifactClassLoader(getDescriptor(pluginInfo));
-  }
-
-  /**
-   * Returns the common parent ClassLoader for all plugin ClassLoader created through this class.
-   */
-  public ClassLoader getParentClassLoader() {
-    return parentClassLoader;
-  }
-
-  /**
-   * Loads and returns the {@link Class} of the given plugin class.
-   * TODO: remove once PluginRepository is gone
-   *
-   * @param pluginInfo information about the plugin. It is used for creating the ClassLoader for the plugin.
-   * @param pluginClass information about the plugin class
-   * @param <T> Type of the plugin
-   * @return the plugin Class
-   * @throws IOException if failed to expand the plugin jar to create the plugin ClassLoader
-   * @throws ClassNotFoundException if failed to load the given plugin class
-   */
-  @SuppressWarnings("unchecked")
-  public <T> Class<T> loadClass(PluginInfo pluginInfo,
-                                PluginClass pluginClass) throws IOException, ClassNotFoundException {
-    return loadClass(getDescriptor(pluginInfo), pluginClass);
-  }
-
-  /**
    * Loads and returns the {@link Class} of the given plugin class.
    *
    * @param artifactDescriptor descriptor for the artifact the plugin is from.
@@ -171,24 +112,6 @@ public class PluginInstantiator implements Closeable {
   public <T> Class<T> loadClass(ArtifactDescriptor artifactDescriptor,
                                 PluginClass pluginClass) throws IOException, ClassNotFoundException {
     return (Class<T>) getArtifactClassLoader(artifactDescriptor).loadClass(pluginClass.getClassName());
-  }
-
-  /**
-   * Creates a new instance of the given plugin class.
-   * TODO: remove once PluginRepository is gone
-   *
-   * @param pluginInfo information about the plugin. It is used for creating the ClassLoader for the plugin.
-   * @param pluginClass information about the plugin class. The plugin instance will be instantiated based on this.
-   * @param properties properties to populate into the {@link PluginConfig} of the plugin instance
-   * @param <T> Type of the plugin
-   * @return a new plugin instance
-   * @throws IOException if failed to expand the plugin jar to create the plugin ClassLoader
-   * @throws ClassNotFoundException if failed to load the given plugin class
-   */
-  @SuppressWarnings("unchecked")
-  public <T> T newInstance(PluginInfo pluginInfo, PluginClass pluginClass,
-                           PluginProperties properties) throws IOException, ClassNotFoundException {
-    return newInstance(getDescriptor(pluginInfo), pluginClass, properties);
   }
 
   /**
@@ -378,13 +301,5 @@ public class PluginInstantiator implements Closeable {
 
       throw new UnsupportedTypeException("Only primitive and String types are supported");
     }
-  }
-
-  private ArtifactDescriptor getDescriptor(PluginInfo pluginInfo) {
-    File file = new File(pluginDir, pluginInfo.getFileName());
-    ArtifactId artifactId = new ArtifactId(pluginInfo.getName(),
-                                           new ArtifactVersion(pluginInfo.getVersion().getVersion()),
-                                           ArtifactScope.SYSTEM);
-    return new ArtifactDescriptor(artifactId, Locations.toLocation(file));
   }
 }

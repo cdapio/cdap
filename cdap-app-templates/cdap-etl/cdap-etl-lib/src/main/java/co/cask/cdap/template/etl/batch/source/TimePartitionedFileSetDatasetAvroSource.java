@@ -24,7 +24,7 @@ import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
-import co.cask.cdap.api.templates.plugins.PluginConfig;
+import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.etl.common.ETLUtils;
 import co.cask.cdap.template.etl.api.Emitter;
 import co.cask.cdap.template.etl.api.PipelineConfigurer;

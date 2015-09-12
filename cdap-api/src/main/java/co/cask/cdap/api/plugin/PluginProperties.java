@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.api.templates.plugins;
+package co.cask.cdap.api.plugin;
 
 import co.cask.cdap.api.annotation.Beta;
 

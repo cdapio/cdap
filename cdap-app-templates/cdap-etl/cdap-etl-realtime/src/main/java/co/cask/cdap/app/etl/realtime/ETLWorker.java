@@ -174,7 +174,7 @@ public class ETLWorker extends AbstractWorker {
 
   private void initializeSource(WorkerContext context) throws Exception {
     String sourcePluginId = context.getSpecification().getProperty(Constants.Source.PLUGINID);
-    source = context.newInstance(sourcePluginId);
+    source = context.newPluginInstance(sourcePluginId);
     RealtimeContext sourceContext = new WorkerRealtimeContext(context, metrics, sourcePluginId);
     LOG.debug("Source Class : {}", source.getClass().getName());
     source.initialize(sourceContext);
@@ -187,7 +187,7 @@ public class ETLWorker extends AbstractWorker {
                                                STRING_LIST_TYPE);
     sinks = Lists.newArrayListWithCapacity(sinkPluginIds.size());
     for (String sinkPluginId : sinkPluginIds) {
-      RealtimeSink sink = context.newInstance(sinkPluginId);
+      RealtimeSink sink = context.newPluginInstance(sinkPluginId);
       RealtimeContext sinkContext = new WorkerRealtimeContext(context, metrics, sinkPluginId);
       LOG.debug("Sink Class : {}", sink.getClass().getName());
       sink.initialize(sinkContext);
@@ -206,7 +206,7 @@ public class ETLWorker extends AbstractWorker {
     for (int i = 0; i < transformIds.size(); i++) {
       String transformId = transformIds.get(i).getTransformId();
       try {
-        Transform transform = context.newInstance(transformId);
+        Transform transform = context.newPluginInstance(transformId);
         RealtimeTransformContext transformContext = new RealtimeTransformContext(context, metrics, transformId);
         LOG.debug("Transform Class : {}", transform.getClass().getName());
         transform.initialize(transformContext);

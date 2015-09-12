@@ -14,13 +14,23 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.adapter;
+package co.cask.cdap.api.plugin;
 
-import co.cask.cdap.internal.app.plugins.template.test.api.PluginTestRunnable;
+import co.cask.cdap.api.Config;
+import co.cask.cdap.api.annotation.Beta;
 
 /**
- * A empty class for the purpose of {@link PluginTest} only. Have it implements a template API class
- * for verifying classloading.
+ * Base class for writing configuration class for template plugin.
  */
-public final class EmptyClass extends PluginTestRunnable {
+@Beta
+public abstract class PluginConfig extends Config {
+
+  private PluginProperties properties;
+
+  /**
+   * Returns the {@link PluginProperties}.
+   */
+  public final PluginProperties getProperties() {
+    return properties;
+  }
 }

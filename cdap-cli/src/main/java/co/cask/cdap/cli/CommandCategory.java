@@ -23,7 +23,6 @@ public enum CommandCategory {
   GENERAL("General"),
   NAMESPACE("Namespace"),
   APPLICATION_LIFECYCLE("Application Lifecycle"),
-  ADAPTER_LIFECYCLE("Adapter Lifecycle"),
   DATASET("Dataset"),
   EXPLORE("Explore"),
   METRICS("Metrics"),

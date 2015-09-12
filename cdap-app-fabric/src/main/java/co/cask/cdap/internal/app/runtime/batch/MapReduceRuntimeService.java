@@ -30,7 +30,6 @@ import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.stream.StreamEventDecoder;
-import co.cask.cdap.api.templates.plugins.PluginInfo;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
@@ -56,7 +55,6 @@ import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerHel
 import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerLauncher;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.templates.AdapterDefinition;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionFailureException;
@@ -68,7 +66,6 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
-import com.google.common.io.Files;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.inject.ProvisionException;
@@ -108,7 +105,6 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
-import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.regex.Pattern;
 import javax.annotation.Nonnull;
@@ -210,27 +206,13 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       Location tempLocation = createTempLocationDirectory();
       this.cleanupTask = createCleanupTask(tempDir, tempLocation);
 
-      //TODO: CDAP-3485 Not required once Templates/Adapters are removed
-      Location pluginArchive = null;
-      // For local mode, everything is in the configuration classloader already, hence no need to create new jar
-      if (!MapReduceTaskContextProvider.isLocal(mapredConf)) {
-        // After calling beforeSubmit, we know what plugins are needed for adapter, hence construct the proper
-        // ClassLoader from here and use it for setting up the job
-        pluginArchive = createPluginArchive(context.getAdapterSpecification(), tempDir, tempLocation);
-        if (pluginArchive != null) {
-          job.addCacheArchive(pluginArchive.toURI());
-        }
-      }
-
       // Alter the configuration ClassLoader to a MapReduceClassLoader that supports plugin
       // It is mainly for standalone mode to have the same ClassLoader as in distributed mode
       // It can only be constructed here because we need to have all adapter plugins information
       classLoader = new MapReduceClassLoader(context.getProgram().getClassLoader(),
                                              mapredConf,
                                              context.getPlugins(),
-                                             context.getAdapterSpecification(),
-                                             context.getPluginInstantiator(),
-                                             context.getArtifactPluginInstantiator());
+                                             context.getPluginInstantiator());
       mapredConf.setClassLoader(new WeakReferenceDelegatorClassLoader(classLoader));
       ClassLoaders.setContextClassLoader(mapredConf.getClassLoader());
 
@@ -284,10 +266,6 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         // We remember tx, so that we can re-use it in mapreduce tasks
         // Make a copy of the conf and rewrite the template plugin directory to be the plugin archive name
         CConfiguration cConfCopy = cConf;
-        if (pluginArchive != null) {
-          cConfCopy = CConfiguration.copy(cConf);
-          cConfCopy.set(Constants.AppFabric.APP_TEMPLATE_DIR, pluginArchive.getName());
-        }
         contextConfig.set(context, cConfCopy, tx, programJar.toURI());
 
         LOG.info("Submitting MapReduce Job: {}", context);
@@ -931,60 +909,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   private Location createLauncherJar(String applicationClassPath, Location targetDir) throws IOException {
     Location launcherJar = targetDir.append("launcher.jar");
     ContainerLauncherGenerator.generateLauncherJar(applicationClassPath, MapReduceClassLoader.class.getName(),
-                                                   Locations.newOutputSupplier(launcherJar));
+      Locations.newOutputSupplier(launcherJar));
     return launcherJar;
-  }
-
-  /**
-   * Creates a JAR file that contains all the plugin jars that are needed by the job. The plugin directory
-   * structure is maintained inside the jar so that MR framework can correctly expand and recreate the required
-   * structure.
-   *
-   * @return the {@link Location} for the archive file or {@code null} if there is no plugin files need to be localized
-   */
-  @Nullable
-  private Location createPluginArchive(@Nullable AdapterDefinition adapterSpec,
-                                       File tempDir, Location targetDir) throws IOException {
-    if (adapterSpec == null) {
-      return null;
-    }
-
-    Set<PluginInfo> pluginInfos = adapterSpec.getPluginInfos();
-    if (pluginInfos.isEmpty()) {
-      return null;
-    }
-
-    // Find plugins that are used by this adapter.
-    File pluginDir = new File(cConf.get(Constants.AppFabric.APP_TEMPLATE_PLUGIN_DIR));
-    File templatePluginDir = new File(pluginDir, adapterSpec.getTemplate());
-    File jarFile = File.createTempFile("plugin", ".jar", tempDir);
-
-    String entryPrefix = pluginDir.getName() + "/" + adapterSpec.getTemplate();
-
-    try (JarOutputStream output = new JarOutputStream(new FileOutputStream(jarFile))) {
-      // Create the directory entries
-      output.putNextEntry(new JarEntry(entryPrefix + "/"));
-      output.putNextEntry(new JarEntry(entryPrefix + "/lib/"));
-
-      // copy the plugin jars
-      for (PluginInfo plugin : pluginInfos) {
-        String entryName = String.format("%s/%s", entryPrefix, plugin.getFileName());
-        output.putNextEntry(new JarEntry(entryName));
-        Files.copy(new File(templatePluginDir, plugin.getFileName()), output);
-      }
-
-      // copy the common plugin lib jars
-      for (File libJar : DirUtils.listFiles(new File(templatePluginDir, "lib"), "jar")) {
-        String entryName = String.format("%s/lib/%s", entryPrefix, libJar.getName());
-        output.putNextEntry(new JarEntry(entryName));
-        Files.copy(libJar, output);
-      }
-    }
-
-    // Copy the jar to a location, based on the location factory
-    Location location = targetDir.append("plugins.jar");
-    Files.copy(jarFile, Locations.newOutputSupplier(location));
-    return location;
   }
 
   private Runnable createCleanupTask(final Object...resources) {

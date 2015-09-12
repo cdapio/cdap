@@ -14,28 +14,18 @@
  * the License.
  */
 
-package co.cask.cdap.common.exception;
-
-import co.cask.cdap.proto.Id;
+package co.cask.cdap.internal.app.runtime.artifact;
 
 /**
- * Thrown when an ApplicationTemplate is not found
- * @deprecated Use {@link co.cask.cdap.common.ApplicationTemplateNotFoundException} instead
+ * Thrown when Plugin configuration is wrong.
  */
-@Deprecated
-public class ApplicationTemplateNotFoundException extends NotFoundException {
+public class InvalidPluginConfigException extends RuntimeException {
 
-  private final Id.ApplicationTemplate template;
-
-  public ApplicationTemplateNotFoundException(Id.ApplicationTemplate template) {
-    super(template);
-    this.template = template;
+  public InvalidPluginConfigException(String message) {
+    super(message);
   }
 
-  /**
-   * @return the template that was not found
-   */
-  public Id.ApplicationTemplate getTemplate() {
-    return template;
+  public InvalidPluginConfigException(String message, Throwable cause) {
+    super(message, cause);
   }
 }

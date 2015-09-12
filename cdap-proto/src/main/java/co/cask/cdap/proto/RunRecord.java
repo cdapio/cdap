@@ -40,25 +40,21 @@ public class RunRecord {
   @SerializedName("status")
   private final ProgramRunStatus status;
 
-  @SerializedName("adapter")
-  private final String adapterName;
-
   @SerializedName("properties")
   private final Map<String, String> properties;
 
   public RunRecord(String pid, long startTs, @Nullable Long stopTs, ProgramRunStatus status,
-                   @Nullable String adapterName, @Nullable Map<String, String> properties) {
+                   @Nullable Map<String, String> properties) {
     this.pid = pid;
     this.startTs = startTs;
     this.stopTs = stopTs;
     this.status = status;
-    this.adapterName = adapterName;
     this.properties = properties == null ? Maps.<String, String>newHashMap() : properties;
   }
 
   public RunRecord(RunRecord otherRunRecord) {
     this(otherRunRecord.getPid(), otherRunRecord.getStartTs(), otherRunRecord.getStopTs(), otherRunRecord.getStatus(),
-         otherRunRecord.getAdapterName(), otherRunRecord.getProperties());
+         otherRunRecord.getProperties());
   }
 
   public String getPid() {
@@ -76,11 +72,6 @@ public class RunRecord {
 
   public ProgramRunStatus getStatus() {
     return status;
-  }
-
-  @Nullable
-  public String getAdapterName() {
-    return adapterName;
   }
 
   public Map<String, String> getProperties() {
@@ -102,13 +93,12 @@ public class RunRecord {
       Objects.equal(this.startTs, that.startTs) &&
       Objects.equal(this.stopTs, that.stopTs) &&
       Objects.equal(this.status, that.status) &&
-      Objects.equal(this.adapterName, that.adapterName) &&
       Objects.equal(this.properties, that.properties);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(pid, startTs, stopTs, status, adapterName, properties);
+    return Objects.hashCode(pid, startTs, stopTs, status, properties);
   }
 
   @Override
@@ -118,7 +108,6 @@ public class RunRecord {
       .add("startTs", startTs)
       .add("stopTs", stopTs)
       .add("status", status)
-      .add("adapter", adapterName)
       .add("properties", properties)
       .toString();
   }

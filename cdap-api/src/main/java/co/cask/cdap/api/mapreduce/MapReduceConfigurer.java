@@ -19,7 +19,7 @@ package co.cask.cdap.api.mapreduce;
 import co.cask.cdap.api.DatasetConfigurer;
 import co.cask.cdap.api.ProgramConfigurer;
 import co.cask.cdap.api.Resources;
-import co.cask.cdap.api.artifact.PluginConfigurer;
+import co.cask.cdap.api.plugin.PluginConfigurer;
 
 /**
  * Configurer for configuring {@link MapReduce}.

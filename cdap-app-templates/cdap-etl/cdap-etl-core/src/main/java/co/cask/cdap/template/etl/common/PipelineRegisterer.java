@@ -16,9 +16,9 @@
 
 package co.cask.cdap.template.etl.common;
 
-import co.cask.cdap.api.artifact.PluginConfigurer;
 import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.templates.plugins.PluginProperties;
+import co.cask.cdap.api.plugin.PluginConfigurer;
+import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.template.etl.api.PipelineConfigurable;
 import co.cask.cdap.template.etl.api.PipelineConfigurer;
 import co.cask.cdap.template.etl.api.Transform;
