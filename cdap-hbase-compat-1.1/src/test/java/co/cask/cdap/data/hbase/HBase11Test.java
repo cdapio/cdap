@@ -17,6 +17,7 @@
 package co.cask.cdap.data.hbase;
 
 import com.google.common.base.Function;
+import com.google.common.base.Throwables;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -114,5 +115,19 @@ public class HBase11Test extends HBaseTestBase {
       throws IOException, InterruptedException {
     testUtil.waitTableAvailable(tableName, timeoutInMillis);
     testUtil.waitUntilAllRegionsAssigned(TableName.valueOf(tableName), timeoutInMillis);
+  }
+
+  @Override
+  public Runnable createFlushRegion(final HRegion region) {
+    return new Runnable() {
+      @Override
+      public void run() {
+        try {
+          region.flushcache(true, false);
+        } catch (IOException e) {
+          throw Throwables.propagate(e);
+        }
+      }
+    };
   }
 }
