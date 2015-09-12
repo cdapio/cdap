@@ -451,7 +451,8 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
                              @PathParam("artifact-version") String artifactVersion)
     throws NamespaceNotFoundException, BadRequestException {
 
-    Id.Namespace namespace = validateAndGetNamespace(namespaceId);
+    Id.Namespace namespace = Id.Namespace.SYSTEM.getId().equalsIgnoreCase(namespaceId) ?
+      Id.Namespace.SYSTEM : validateAndGetNamespace(namespaceId);
     Id.Artifact artifactId = validateAndGetArtifactId(namespace, artifactName, artifactVersion);
 
     try {
