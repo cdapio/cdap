@@ -42,7 +42,6 @@ import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.WriteConflictException;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
-import co.cask.cdap.internal.app.services.AdapterService;
 import co.cask.cdap.internal.app.services.ApplicationLifecycleService;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.AppRequest;
@@ -107,22 +106,19 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private final NamespaceAdmin namespaceAdmin;
   private final NamespacedLocationFactory namespacedLocationFactory;
   private final ApplicationLifecycleService applicationLifecycleService;
-  private final AdapterService adapterService;
   private final File tmpDir;
 
   @Inject
   public AppLifecycleHttpHandler(CConfiguration configuration,
                                  Scheduler scheduler, ProgramRuntimeService runtimeService,
                                  NamespaceAdmin namespaceAdmin, NamespacedLocationFactory namespacedLocationFactory,
-                                 ApplicationLifecycleService applicationLifecycleService,
-                                 AdapterService adapterService) {
+                                 ApplicationLifecycleService applicationLifecycleService) {
     this.configuration = configuration;
     this.namespaceAdmin = namespaceAdmin;
     this.scheduler = scheduler;
     this.runtimeService = runtimeService;
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.applicationLifecycleService = applicationLifecycleService;
-    this.adapterService = adapterService;
     this.tmpDir = new File(new File(configuration.get(Constants.CFG_LOCAL_DATA_DIR)),
                            configuration.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
   }
@@ -230,19 +226,15 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     Id.Application id = validateApplicationId(namespaceId, appId);
     // Deletion of a particular application is not allowed if that application is used by an adapter
     AppFabricServiceStatus appStatus;
-    if (!adapterService.canDeleteApp(id)) {
-      appStatus = AbstractAppFabricHttpHandler.AppFabricServiceStatus.ADAPTER_CONFLICT;
-    } else {
-      try {
-        applicationLifecycleService.removeApplication(id);
-        appStatus = AppFabricServiceStatus.OK;
-      } catch (NotFoundException nfe) {
-        appStatus = AppFabricServiceStatus.PROGRAM_NOT_FOUND;
-      } catch (CannotBeDeletedException cbde) {
-        appStatus = AppFabricServiceStatus.PROGRAM_STILL_RUNNING;
-      } catch (Exception e) {
-        appStatus = AppFabricServiceStatus.INTERNAL_ERROR;
-      }
+    try {
+      applicationLifecycleService.removeApplication(id);
+      appStatus = AppFabricServiceStatus.OK;
+    } catch (NotFoundException nfe) {
+      appStatus = AppFabricServiceStatus.PROGRAM_NOT_FOUND;
+    } catch (CannotBeDeletedException cbde) {
+      appStatus = AppFabricServiceStatus.PROGRAM_STILL_RUNNING;
+    } catch (Exception e) {
+      appStatus = AppFabricServiceStatus.INTERNAL_ERROR;
     }
     LOG.trace("Delete call for Application {} at AppFabricHttpHandler", appId);
     responder.sendString(appStatus.getCode(), appStatus.getMessage());
