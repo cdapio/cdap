@@ -28,7 +28,6 @@ import co.cask.cdap.proto.MetadataSearchTargetType;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 
-import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
@@ -52,7 +51,7 @@ public class DefaultMetadataAdmin implements MetadataAdmin {
     ensureEntityExists(entityId);
     // TODO: CDAP-3571 Validation
     // TODO: Check if app exists
-    businessMds.addMetadata(entityId, metadata);
+    businessMds.setProperties(entityId, metadata);
   }
 
   @Override
@@ -64,11 +63,11 @@ public class DefaultMetadataAdmin implements MetadataAdmin {
   @Override
   public Map<String, String> get(Id.NamespacedId entityId) throws NotFoundException {
     ensureEntityExists(entityId);
-    return businessMds.getMetadata(entityId);
+    return businessMds.getProperties(entityId);
   }
 
   @Override
-  public Iterable<String> getTags(Id.NamespacedId entityId) throws NotFoundException {
+  public Set<String> getTags(Id.NamespacedId entityId) throws NotFoundException {
     ensureEntityExists(entityId);
     return businessMds.getTags(entityId);
   }
@@ -76,7 +75,7 @@ public class DefaultMetadataAdmin implements MetadataAdmin {
   @Override
   public void remove(Id.NamespacedId entityId, String... keys) throws NotFoundException {
     ensureEntityExists(entityId);
-    businessMds.removeMetadata(entityId, keys);
+    businessMds.removeProperties(entityId, keys);
   }
 
   @Override

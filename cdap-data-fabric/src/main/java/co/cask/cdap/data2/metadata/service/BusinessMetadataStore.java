@@ -29,20 +29,15 @@ import co.cask.cdap.proto.MetadataSearchResultRecord;
 import co.cask.cdap.proto.MetadataSearchTargetType;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
-import com.google.common.base.Joiner;
-import com.google.common.base.Splitter;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 import com.google.inject.Inject;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
-import javax.annotation.Nullable;
+import java.util.Set;
 
 /**
  * Implements operations on {@link BusinessMetadataDataset} transactionally.
@@ -73,16 +68,13 @@ public class BusinessMetadataStore {
 
   /**
    * Adds/updates metadata for the specified {@link Id.NamespacedId}.
-   *
-   * @param entityId the {@link Id.NamespacedId} for which metadata is to be updated
-   * @param metadata metadata (represented as a map) to update
    */
-  public void addMetadata(final Id.NamespacedId entityId, final Map<String, String> metadata) {
+  public void setProperties(final Id.NamespacedId entityId, final Map<String, String> metadata) {
     txnl.executeUnchecked(new TransactionExecutor.Function<BusinessMdsIterable, Void>() {
       @Override
       public Void apply(BusinessMdsIterable input) throws Exception {
         for (Map.Entry<String, String> entry : metadata.entrySet()) {
-          input.businessMds.createBusinessMetadata(entityId, entry.getKey(), entry.getValue());
+          input.businessMds.setProperty(entityId, entry.getKey(), entry.getValue());
         }
         return null;
       }
@@ -96,10 +88,7 @@ public class BusinessMetadataStore {
     txnl.executeUnchecked(new TransactionExecutor.Function<BusinessMdsIterable, Void>() {
       @Override
       public Void apply(BusinessMdsIterable input) throws Exception {
-        BusinessMetadataRecord tagsRecord = input.businessMds.getBusinessMetadata(entityId, "tags");
-        Iterable<String> existingTags = getTags(tagsRecord);
-        Iterable<String> newTags = Iterables.concat(existingTags, Arrays.asList(tagsToAdd));
-        input.businessMds.createBusinessMetadata(entityId, "tags", Joiner.on(",").join(newTags));
+        input.businessMds.addTags(entityId, tagsToAdd);
         return null;
       }
     });
@@ -108,11 +97,11 @@ public class BusinessMetadataStore {
   /**
    * @return the metadata for the specified {@link Id.NamespacedId}
    */
-  public Map<String, String> getMetadata(final Id.NamespacedId entityId) {
+  public Map<String, String> getProperties(final Id.NamespacedId entityId) {
     return txnl.executeUnchecked(new TransactionExecutor.Function<BusinessMdsIterable, Map<String, String>>() {
       @Override
       public Map<String, String> apply(BusinessMdsIterable input) throws Exception {
-        return input.businessMds.getBusinessMetadata(entityId);
+        return input.businessMds.getProperties(entityId);
       }
     });
   }
@@ -120,34 +109,49 @@ public class BusinessMetadataStore {
   /**
    * @return the tags for the specified {@link Id.NamespacedId}
    */
-  public Iterable<String> getTags(final Id.NamespacedId entityId) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<BusinessMdsIterable, Iterable<String>>() {
+  public Set<String> getTags(final Id.NamespacedId entityId) {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<BusinessMdsIterable, Set<String>>() {
       @Override
-      public Iterable<String> apply(BusinessMdsIterable input) throws Exception {
-        BusinessMetadataRecord tagsRecord = input.businessMds.getBusinessMetadata(entityId, "tags");
-        return getTags(tagsRecord);
+      public Set<String> apply(BusinessMdsIterable input) throws Exception {
+        return input.businessMds.getTags(entityId);
       }
     });
   }
 
   /**
-   * Removes all metadata for the specified {@link Id.NamespacedId}.
+   * Removes all properties for the specified {@link Id.NamespacedId}.
    */
-  public void removeMetadata(final Id.NamespacedId entityId) {
+  public void removeProperties(final Id.NamespacedId entityId) {
     txnl.executeUnchecked(new TransactionExecutor.Function<BusinessMdsIterable, Void>() {
       @Override
       public Void apply(BusinessMdsIterable input) throws Exception {
-        input.businessMds.removeMetadata(entityId);
+        input.businessMds.removeProperties(entityId);
         return null;
       }
     });
   }
 
-  public void removeMetadata(final Id.NamespacedId entityId, final String ... keys) {
+  /**
+   * Removes the specified properties of the {@link Id.NamespacedId}.
+   */
+  public void removeProperties(final Id.NamespacedId entityId, final String... keys) {
     txnl.executeUnchecked(new TransactionExecutor.Function<BusinessMdsIterable, Void>() {
       @Override
       public Void apply(BusinessMdsIterable input) throws Exception {
-        input.businessMds.removeMetadata(entityId, keys);
+        input.businessMds.removeProperties(entityId, keys);
+        return null;
+      }
+    });
+  }
+
+  /**
+   * Removes all the tags from the {@link Id.NamespacedId}
+   */
+  public void removeTags(final Id.NamespacedId entityId) {
+    txnl.executeUnchecked(new TransactionExecutor.Function<BusinessMdsIterable, Void>() {
+      @Override
+      public Void apply(BusinessMdsIterable input) throws Exception {
+        input.businessMds.removeTags(entityId);
         return null;
       }
     });
@@ -160,10 +164,7 @@ public class BusinessMetadataStore {
     txnl.executeUnchecked(new TransactionExecutor.Function<BusinessMdsIterable, Void>() {
       @Override
       public Void apply(BusinessMdsIterable input) throws Exception {
-        BusinessMetadataRecord tagsRecord = input.businessMds.getBusinessMetadata(entityId, "tags");
-        Iterable<String> existingTags = getTags(tagsRecord);
-        Iterables.removeAll(existingTags, Arrays.asList(tagsToRemove));
-        input.businessMds.createBusinessMetadata(entityId, "tags", Joiner.on(",").join(existingTags));
+        input.businessMds.removeTags(entityId, tagsToRemove);
         return null;
       }
     });
@@ -182,7 +183,7 @@ public class BusinessMetadataStore {
   public Iterable<BusinessMetadataRecord> searchMetadataOnType(final String searchQuery,
                                                                final MetadataSearchTargetType type) {
     return txnl.executeUnchecked(new TransactionExecutor.Function<BusinessMdsIterable,
-      Iterable<BusinessMetadataRecord>> () {
+      Iterable<BusinessMetadataRecord>>() {
       @Override
       public Iterable<BusinessMetadataRecord> apply(BusinessMdsIterable input) throws Exception {
         // Currently we support two types of search formats: value and key:value.
@@ -195,13 +196,6 @@ public class BusinessMetadataStore {
         return input.businessMds.findBusinessMetadataOnValue(searchQuery, type);
       }
     });
-  }
-
-  private Iterable<String> getTags(@Nullable BusinessMetadataRecord tagsRecord) {
-    if (tagsRecord == null) {
-      return Collections.emptyList();
-    }
-    return Splitter.on(",").omitEmptyStrings().trimResults().split(tagsRecord.getValue());
   }
 
   private static final class BusinessMdsIterable implements Iterable<BusinessMetadataDataset> {
