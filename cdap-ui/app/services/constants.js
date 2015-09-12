@@ -16,6 +16,19 @@
 
 angular.module(PKG.name + '.services')
   .constant('GLOBALS', {
+    // Should be under property called 'artifactTypes' to be consistent. GLOBALS.etlBatch doesn't make much sense.
     etlBatch: 'cdap-etl-batch',
-    etlRealtime: 'cdap-etl-realtime'
+    etlRealtime: 'cdap-etl-realtime',
+    pluginTypes: {
+      'cdap-etl-batch': {
+        'source': 'batchsource',
+        'sink': 'batchsink',
+        'transform': 'transform'
+      },
+      'cdap-etl-realtime': {
+        'source': 'realtimesource',
+        'sink': 'realtimesink',
+        'transform': 'transform'
+      }
+    }
   });
