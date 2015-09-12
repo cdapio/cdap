@@ -21,22 +21,14 @@
     <span class="icon-bar"></span>
     <span class="icon-bar"></span>
   </button>
-  <a ng-if="!$state.includes('adapters.create.*')"
-     class="navbar-brand"
+  <a class="navbar-brand"
      ui-sref="overview({namespace: $stateParams.namespace})">
      <strong>CDAP</strong>
-  </a>
-  <a ng-if="$state.includes('adapters.create.*')"
-     class="navbar-brand"
-     ui-sref="adapters.create">
-     <strong>Cask Hydrator V1.0</strong>
   </a>
 </div>
 <div class="collapse navbar-collapse" ng-class="{in:navbarCollapsed}">
 
-  <ul ng-if="!$state.includes('adapters.create.*')"
-      class="nav navbar-nav"
-      id="navbar-namespace">
+  <ul class="nav navbar-nav" id="navbar-namespace">
     <li class="dropdown" ng-class="{one:namespaces.length<2}">
       <a href="" class="dropdown-toggle">
         <span ng-bind="$state.params.namespace && getDisplayName($state.params.namespace) | myEllipsis: 10" ng-if="namespaces.length > 1"></span>
@@ -46,8 +38,7 @@
     </li>
   </ul>
 
-  <nav ng-if="!$state.includes('adapters.create.*')"
-       ng-click="navbarCollapsed = false">
+  <nav ng-click="navbarCollapsed = false">
     <ul class="nav navbar-nav" ng-show="currentUser">
       <li ng-class="{active: highlightTab == 'development'}">
         <a ui-sref="overview({namespace: $stateParams.namespace})"> Development </a>
@@ -61,25 +52,7 @@
     </ul>
   </nav>
 
-  <nav ng-if="$state.includes('adapters.create.*')"
-       ng-click="navbarCollapsed = false"
-       >
-    <ul class="nav navbar-nav">
-      <li>
-        <a href="">
-          <span> My Pipelines </span>
-        </a>
-      </li>
-      <li>
-        <a href="">
-          <span> Studio </span>
-        </a>
-      </li>
-    </ul>
-  </nav>
-
-  <ul ng-if="!$state.includes('adapters.create.*')"
-      class="nav navbar-nav navbar-right">
+  <ul class="nav navbar-nav navbar-right">
     <li class="hidden" id="navbar-search">
       <form class="navbar-form" ng-submit="doSearch()">
         <div class="input-group input-group-sm">
@@ -100,15 +73,6 @@
       </a>
     </li>
   </ul>
-
-  <div ng-if="$state.includes('adapters.create.*')" class="hydrator-search">
-    <div class="input-group">
-      <input type="text" class="form-control" placeholder="Search" />
-      <span class="input-group-addon">
-        <span class="fa fa-search"></span>
-      </span>
-    </div>
-  </div>
 
   <my-error></my-error>
 </div>

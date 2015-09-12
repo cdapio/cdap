@@ -14,29 +14,19 @@
  * the License.
  */
 
-@import "../../variables.less";
-@import "../../../../bower_components/bootstrap/less/mixins.less";
+/**
+ * myNavbar
+ */
 
-body {
-  header.navbar-cdap {
-    margin-bottom: 0;
-  }
+angular.module(PKG.name+'.commons').directive('myNavbarHydrator',
 
-  &.theme-cdap {
-    header.navbar-cdap {
-      background-color: @cdap-header;
+function myNavbarHydratorDirective (myAuth, MY_CONFIG) {
+  return {
+    restrict: 'A',
+    templateUrl: 'navbar-hydrator/navbar.html',
+    link: function (scope) {
+      scope.logout = myAuth.logout;
+      scope.securityEnabled = MY_CONFIG.securityEnabled;
     }
-  }
-
-  header.navbar-hydrator {
-    border-top-width: 1px;
-    height: 60px;
-    margin: 0;
-  }
-
-  &.theme-cdap {
-    header.navbar-hydrator {
-      background: url('@{img-path}/hydrator_header_bg.jpg') center center / 100% 60px no-repeat;
-    }
-  }
-}
+  };
+});
