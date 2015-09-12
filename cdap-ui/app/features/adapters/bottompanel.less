@@ -18,7 +18,20 @@
 @import "../../../bower_components/bootstrap/less/mixins.less";
 @import '../../styles/themes/cdap/mixins.less';
 
-body.theme-cdap.state-adapters-create {
+body.theme-cdap.state-adapters {
+
+  &.state-adapters-detail {
+    div.console {
+      position: static;
+      min-height: 400px;
+
+      div.console-type {
+        height: inherit;
+        min-height: inherit;
+      }
+
+    }
+  }
   div.console {
     background-color: white;
     min-height: 40vh;
