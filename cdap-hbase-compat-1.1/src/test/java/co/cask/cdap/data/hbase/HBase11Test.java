@@ -130,4 +130,18 @@ public class HBase11Test extends HBaseTestBase {
       }
     };
   }
+
+  @Override
+  public Runnable createCompactRegion(final HRegion region, final boolean majorCompact) {
+    return new Runnable() {
+      @Override
+      public void run() {
+        try {
+          region.compact(majorCompact);
+        } catch (IOException e) {
+          throw Throwables.propagate(e);
+        }
+      }
+    };
+  }
 }
