@@ -70,8 +70,8 @@ enclosing context.
 The *consumer* context relates to entities that are a recipient of events, typically a
 flowlet. A consumer flowlet is the recipient of a queue. Conversely, *producers* are
 entities that emits events, such as a stream or a flowlet. Flowlets can at the same time
-be both consumers and producers. The difference between the total of the producers and the
-consumers is the :ref:`pending events <http-restful-api-metrics-pending>`.
+be both consumers and producers. The difference between the total of a producer's events and the
+consumed events is the :ref:`pending events <http-restful-api-metrics-pending>`.
 
 These are the available application contexts of CDAP:
 

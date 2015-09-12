@@ -162,7 +162,7 @@ Glossary
    Consumer
       A consumer is an entity that is a recipient of events, typically a :term:`flowlet`.
       A consumer flowlet is the recipient of a queue. The difference between the total of
-      the :term:`producers <producer>` and the consumers is the pending events.
+      a :term:`producer's <producer>` events and the consumed events is the pending events.
 
    Structured Record
       The data format used to exchange events between most of the pre-built CDAP ETL :term:`plugins <plugin>`.
