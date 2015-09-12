@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .controller('MyDAGController', function MyDAGController(jsPlumb, $scope, $timeout, MyAppDAGService, myHelpers, MyDAGFactory, $window, $popover, $rootScope, EventPipe) {
+  .controller('MyDAGController', function MyDAGController(jsPlumb, $scope, $timeout, MyAppDAGService, myHelpers, MyDAGFactory, $window, $popover, $rootScope, EventPipe, GLOBALS) {
     this.plugins = $scope.config || [];
     this.isDisabled = $scope.isDisabled;
     MyAppDAGService.setIsDisabled(this.isDisabled);
@@ -106,15 +106,15 @@ angular.module(PKG.name + '.commons')
     function drawNode(id, type) {
       var sourceSettings = MyDAGFactory.getSettings().source,
           sinkSettings = MyDAGFactory.getSettings().sink;
-
+      var artifactType = GLOBALS.pluginTypes[MyAppDAGService.metadata.template.type];
       switch(type) {
-        case 'source':
+        case artifactType.source:
           this.instance.addEndpoint(id, sourceSettings, {uuid: id});
           break;
-        case 'sink':
+        case artifactType.sink:
           this.instance.addEndpoint(id, sinkSettings, {uuid: id});
           break;
-        case 'transform':
+        case artifactType.transform:
           // Need to id each end point so that it can be used later to make connections.
           this.instance.addEndpoint(id, sourceSettings, {uuid: 'Left' + id});
           this.instance.addEndpoint(id, sinkSettings, {uuid: 'Right' + id});
