@@ -189,6 +189,16 @@ public class MetadataHttpHandlerTest extends AppFabricTestBase {
     deleteApp(application, 200);
   }
 
+  @Test
+  public void testLineage() throws Exception {
+    Id.DatasetInstance datasetInstance = Id.DatasetInstance.from("default", "dummy");
+    Assert.assertEquals(200, fetchLineage(datasetInstance, 100, 200, 10).getResponseCode());
+    Assert.assertEquals(400, fetchLineage(datasetInstance, -100, 200, 10).getResponseCode());
+    Assert.assertEquals(400, fetchLineage(datasetInstance, 100, -200, 10).getResponseCode());
+    Assert.assertEquals(400, fetchLineage(datasetInstance, 200, 100, 10).getResponseCode());
+    Assert.assertEquals(400, fetchLineage(datasetInstance, 100, 200, -10).getResponseCode());
+  }
+
   private HttpResponse addProperties(Id.Application app) throws IOException {
     return addProperties(app, null);
   }
@@ -468,6 +478,14 @@ public class MetadataHttpHandlerTest extends AppFabricTestBase {
     }
     HttpResponse response = makeDeleteRequest(path);
     Assert.assertEquals(200, response.getResponseCode());
+  }
+
+  private HttpResponse fetchLineage(Id.DatasetInstance datasetInstance, long start, long end, int levels)
+    throws IOException {
+    String path = getVersionedAPIPath(
+      String.format("datasets/%s/lineage?start=%d&end=%d&levels=%d", datasetInstance.getId(), start, end, levels),
+      datasetInstance.getNamespaceId());
+    return makePostRequest(path);
   }
 
   // The following methods are needed because AppFabricTestBase's doGet, doPost, doPut, doDelete are hardwired to

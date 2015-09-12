@@ -86,8 +86,8 @@ public final class RouterPathLookup extends AbstractHttpHandler {
       matches(uriParts, "v3", "namespaces", null, "apps", null, null, null, "metadata", "tags") ||
       matches(uriParts, "v3", "namespaces", null, "datasets", null, "metadata", "tags") ||
       matches(uriParts, "v3", "namespaces", null, "streams", null, "metadata", "tags") ||
-      matches(uriParts, "v3", "namespaces", null, "metadata", "search")) {
-      // all metadata REST APIs are currently exposed from Dataset service
+      matches(uriParts, "v3", "namespaces", null, "metadata", "search") ||
+      matches(uriParts, "v3", "namespaces", null, "datasets", null, "lineage")) {
       return Constants.Service.METADATA_SERVICE;
     } else if ((matches(uriParts, "v3", "namespaces", null, "streams", null, "adapters")
       || matches(uriParts, "v3", "namespaces", null, "streams", null, "programs")

@@ -34,6 +34,7 @@ public class MetadataServiceModule extends AbstractModule {
 
     CommonHandlers.add(handlerBinder);
     handlerBinder.addBinding().to(MetadataHttpHandler.class);
+    handlerBinder.addBinding().to(LineageHandler.class);
 
     bind(MetadataAdmin.class).to(DefaultMetadataAdmin.class);
   }

@@ -353,6 +353,8 @@ public class RouterPathTest {
     assertMetadataRouting("/v3/namespaces////default////streams//s1/metadata/tags");
     // search metadata
     assertMetadataRouting("/v3/namespaces/default/metadata/search");
+    // lineage
+    assertMetadataRouting("/v3/namespaces/default/////datasets/ds1/lineage");
   }
 
   private void assertMetadataRouting(String path) {
