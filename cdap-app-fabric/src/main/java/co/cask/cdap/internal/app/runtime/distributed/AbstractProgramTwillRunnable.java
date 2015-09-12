@@ -193,9 +193,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
 
       UserGroupInformation.setConfiguration(hConf);
 
-      cConf = CConfiguration.create();
-      cConf.clear();
-      cConf.addResource(new File(configs.get("cConf")).toURI().toURL());
+      cConf = CConfiguration.create(new File(configs.get("cConf")));
 
       // Alter the template directory to only the name part in the container directory.
       // It works in pair with the ProgramRunner.
