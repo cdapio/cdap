@@ -53,6 +53,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.util.List;
 
@@ -311,6 +312,68 @@ public class IncrementSummingScannerTest {
       r2Cell = r2.getColumnLatestCell(familyBytes, columnBytes);
       assertNotNull(r2Cell);
       assertEquals(150L, Bytes.toLong(r2Cell.getValue()));
+    } finally {
+      region.close();
+    }
+  }
+
+  @Test
+  public void testWithBatchLimit() throws Exception {
+    TableId tableId = TableId.from(Id.Namespace.DEFAULT, "testWithBatchLimit");
+    byte[] familyBytes = Bytes.toBytes("f");
+    byte[] columnBytes = Bytes.toBytes("c2");
+
+    HRegion region = createRegion(tableId, familyBytes);
+    try {
+      region.initialize();
+      long now = System.currentTimeMillis();
+      // put a non increment columns
+      Put p = new Put(Bytes.toBytes("r4"));
+      p.add(familyBytes, Bytes.toBytes("c1"), Bytes.toBytes("value1"));
+      region.put(p);
+
+      // now put some increment deltas in a column
+      p = new Put(Bytes.toBytes("r4"));
+      for (int i = 0; i < 3; i++) {
+        p.add(familyBytes, columnBytes, now - i, Bytes.toBytes(1L));
+      }
+      p.setAttribute(HBaseTable.DELTA_WRITE, TRUE);
+      region.put(p);
+
+      // put some non - increment columns
+      p = new Put(Bytes.toBytes("r4"));
+      p.add(familyBytes, Bytes.toBytes("c3"), Bytes.toBytes("value3"));
+      region.put(p);
+
+      p = new Put(Bytes.toBytes("r4"));
+      p.add(familyBytes, Bytes.toBytes("c4"), Bytes.toBytes("value4"));
+      region.put(p);
+
+      p = new Put(Bytes.toBytes("r4"));
+      p.add(familyBytes, Bytes.toBytes("c5"), Bytes.toBytes("value5"));
+      region.put(p);
+
+      // this put will appear as a "total" sum prior to all the delta puts
+      p = new Put(Bytes.toBytes("r4"));
+      p.add(familyBytes, columnBytes, now - 5, Bytes.toBytes(5L));
+      region.put(p);
+
+      Scan scan = new Scan(Bytes.toBytes("r4"));
+      scan.setMaxVersions();
+      RegionScanner scanner = new IncrementSummingScanner(region, 3, region.getScanner(scan), ScanType.USER_SCAN);
+      List<Cell> results = Lists.newArrayList();
+      scanner.next(results);
+
+      assertEquals(3, results.size());
+      Cell cell = results.get(0);
+      assertNotNull(cell);
+      assertEquals("value1", Bytes.toString(cell.getValue()));
+      cell = results.get(1);
+      assertNotNull(cell);
+      assertEquals(8L, Bytes.toLong(cell.getValue()));
+      cell = results.get(2);
+      assertNotNull(cell);
+      assertEquals("value3", Bytes.toString(cell.getValue()));
     } finally {
       region.close();
     }
