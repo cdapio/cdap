@@ -126,6 +126,11 @@ public final class ScheduleTaskRunner {
       }
 
       @Override
+      public void killed() {
+        latch.countDown();
+      }
+
+      @Override
       public void completed() {
         latch.countDown();
       }
