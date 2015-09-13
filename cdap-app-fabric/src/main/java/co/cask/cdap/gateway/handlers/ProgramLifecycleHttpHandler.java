@@ -31,6 +31,7 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.NotImplementedException;
 import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -43,8 +44,8 @@ import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
-import co.cask.cdap.internal.app.services.AdapterService;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
+import co.cask.cdap.internal.app.services.AdapterService;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.services.PropertiesResolver;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
@@ -326,7 +327,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                             @PathParam("app-id") String appId,
                             @PathParam("type") String type,
                             @PathParam("id") String id,
-                            @PathParam("action") String action) throws NotFoundException, BadRequestException {
+                            @PathParam("action") String action)
+    throws NotFoundException, BadRequestException, IOException, NotImplementedException {
 
     if (type.equals("schedules")) {
       suspendResumeSchedule(responder, namespaceId, appId, id, action);
@@ -334,21 +336,19 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
 
     if (!isValidAction(action)) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-      return;
+      throw new NotFoundException(String.format("%s action was not found", action));
     }
 
     ProgramType programType;
     try {
       programType = ProgramType.valueOfCategoryName(type);
     } catch (IllegalArgumentException e) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, "Unknown program type '" + type + "''");
-      return;
+      throw new BadRequestException(String.format("Unknown program type '%s'", type), e);
     }
 
     if ("debug".equals(action) && !isDebugAllowed(programType)) {
-      responder.sendStatus(HttpResponseStatus.NOT_IMPLEMENTED);
-      return;
+      throw new NotImplementedException(String.format("debug action is not implemented for program type %s",
+                                                      programType));
     }
     Id.Program programId = Id.Program.from(namespaceId, appId, programType, id);
     startStopProgram(request, responder, programId, action);
@@ -597,8 +597,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @POST
   @Path("/status")
   public void getStatuses(HttpRequest request, HttpResponder responder,
-                          @PathParam("namespace-id") String namespaceId) {
-    try {
+                          @PathParam("namespace-id") String namespaceId) throws IOException {
+
       List<BatchEndpointStatus> args = statusFromBatchArgs(decodeArrayArguments(request, responder));
       // if args is null, then there was an error in decoding args and response was already sent
       if (args == null) {
@@ -608,25 +608,21 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         ProgramType programType = ProgramType.valueOfPrettyName(requestedObj.getProgramType());
         Id.Program progId = Id.Program.from(namespaceId, requestedObj.getAppId(), programType,
                                             requestedObj.getProgramId());
-        // get th statuses
-        StatusMap statusMap = getStatus(progId);
-        if (statusMap.getStatus() != null) {
+        try {
+          StatusMap statusMap = getStatus(progId);
           requestedObj.setStatusCode(HttpResponseStatus.OK.getCode());
           requestedObj.setStatus(statusMap.getStatus());
-        } else {
-          requestedObj.setStatusCode(statusMap.getStatusCode());
-          requestedObj.setError(statusMap.getError());
+        } catch (BadRequestException e) {
+          requestedObj.setStatusCode(HttpResponseStatus.BAD_REQUEST.getCode());
+          requestedObj.setError(e.getMessage());
+        } catch (NotFoundException e) {
+          requestedObj.setStatusCode(HttpResponseStatus.NOT_FOUND.getCode());
+          requestedObj.setError(e.getMessage());
         }
         // set the program type to the pretty name in case the request originally didn't have pretty name
         requestedObj.setProgramType(programType.getPrettyName());
       }
       responder.sendJson(HttpResponseStatus.OK, args);
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
   }
 
   /**
@@ -1289,13 +1285,12 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   private synchronized void startStopProgram(HttpRequest request, HttpResponder responder, Id.Program programId,
-                                             String action) throws NotFoundException, BadRequestException {
+                                             String action) throws NotFoundException, BadRequestException, IOException {
     if (programId.getType() == null) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } else {
       LOG.trace("{} call from AppFabricHttpHandler for program: {}",
                 action, programId);
-      try {
         AppFabricServiceStatus status;
         if ("start".equals(action)) {
           status = start(programId, decodeArguments(request), false);
@@ -1304,24 +1299,21 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         } else if ("stop".equals(action)) {
           status = stop(programId);
         } else {
-          throw new IllegalArgumentException("action must be start, stop, or debug, but is: " + action);
+          throw new BadRequestException(String.format("Action must be start, stop, or debug, but is: %s", action));
         }
         if (status == AppFabricServiceStatus.INTERNAL_ERROR) {
-          responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-          return;
+          throw new RuntimeException(String.format("Failed to get RuntimeInfo while starting the program %s",
+                                                   programId));
         }
         responder.sendString(status.getCode(), status.getMessage());
-      } catch (SecurityException e) {
-        responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-      }
     }
   }
 
   /**
    * Starts a Program.
    */
-  private AppFabricServiceStatus start(final Id.Program id, Map<String, String> overrides, boolean debug) {
-    try {
+  private AppFabricServiceStatus start(final Id.Program id, Map<String, String> overrides,
+                                       boolean debug) throws BadRequestException, NotFoundException, IOException {
       Map<String, String> sysArgs = propertiesResolver.getSystemProperties(id);
       Map<String, String> userArgs = propertiesResolver.getUserProperties(id);
       if (overrides != null) {
@@ -1334,14 +1326,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
       ProgramRuntimeService.RuntimeInfo runtimeInfo = lifecycleService.start(id, sysArgs, userArgs, debug);
       return (runtimeInfo != null) ? AppFabricServiceStatus.OK : AppFabricServiceStatus.INTERNAL_ERROR;
-    } catch (ProgramNotFoundException e) {
-      return AppFabricServiceStatus.PROGRAM_NOT_FOUND;
-    } catch (ApplicationNotFoundException e) {
-      return AppFabricServiceStatus.APP_NOT_FOUND;
-    } catch (Throwable throwable) {
-      LOG.error(throwable.getMessage(), throwable);
-      return AppFabricServiceStatus.INTERNAL_ERROR;
-    }
   }
 
   private boolean isRunning(Id.Program id) throws BadRequestException, NotFoundException {

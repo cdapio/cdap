@@ -46,6 +46,9 @@ public class HttpExceptionHandler extends ExceptionHandler {
     } else if (t instanceof NotFoundException) {
       logWarnings(request, t);
       responder.sendString(HttpResponseStatus.NOT_FOUND, t.getMessage());
+    } else if (t instanceof NotImplementedException) {
+      logWarnings(request, t);
+      responder.sendString(HttpResponseStatus.NOT_IMPLEMENTED, t.getMessage());
     } else if (t instanceof UnauthorizedException) {
       logWarnings(request, t);
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
