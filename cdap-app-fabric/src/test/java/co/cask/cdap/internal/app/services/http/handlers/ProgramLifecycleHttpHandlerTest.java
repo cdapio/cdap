@@ -449,11 +449,11 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
       "{'appId': 'WordCountApp', 'programType': 'Service', 'programId': 'WordFrequencyService'}," +
       "{'appId': 'WordCountApp', 'programType': 'Mapreduce', 'programId': 'VoidMapReduceJob'}]");
     returnedBody = readResponse(response, LIST_OF_JSONOBJECT_TYPE);
-    Assert.assertEquals("'namespace:testnamespace2/application:WordCountApp' was not found.",
+    Assert.assertEquals(new NotFoundException(Id.Application.from("testnamespace2", "WordCountApp")).getMessage(),
                         returnedBody.get(0).get("error").getAsString());
-    Assert.assertEquals("'namespace:testnamespace2/application:WordCountApp' was not found.",
+    Assert.assertEquals(new NotFoundException(Id.Application.from("testnamespace2", "WordCountApp")).getMessage(),
                         returnedBody.get(1).get("error").getAsString());
-    Assert.assertEquals("'namespace:testnamespace2/application:WordCountApp' was not found.",
+    Assert.assertEquals(new NotFoundException(Id.Application.from("testnamespace2", "WordCountApp")).getMessage(),
                         returnedBody.get(2).get("error").getAsString());
   }
 
