@@ -16,31 +16,26 @@
 
 package co.cask.cdap.template.etl.common;
 
-import java.util.List;
+import javax.annotation.Nullable;
 
 /**
- * Keeps track of the plugin ids for the source, transforms, and sink of a pipeline
+ * Class to encapsulate id of the sink and the error dataset used in sink.
  */
-public class Pipeline {
-  private final String source;
-  private final List<SinkInfo> sinks;
-  private final List<TransformInfo> transforms;
+public class SinkInfo {
+  private final String sinkId;
+  private final String errorDatasetName;
 
-  public Pipeline(String source, List<SinkInfo> sinks, List<TransformInfo> transforms) {
-    this.source = source;
-    this.sinks = sinks;
-    this.transforms = transforms;
+  public SinkInfo(String sinkId, @Nullable String errorDatasetName) {
+    this.sinkId = sinkId;
+    this.errorDatasetName = errorDatasetName;
   }
 
-  public String getSource() {
-    return source;
+  public String getSinkId() {
+    return sinkId;
   }
 
-  public List<SinkInfo> getSinks() {
-    return sinks;
-  }
-
-  public List<TransformInfo> getTransforms() {
-    return transforms;
+  @Nullable
+  public String getErrorDatasetName() {
+    return errorDatasetName;
   }
 }

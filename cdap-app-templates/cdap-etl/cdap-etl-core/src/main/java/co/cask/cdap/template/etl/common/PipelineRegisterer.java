@@ -17,6 +17,7 @@
 package co.cask.cdap.template.etl.common;
 
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.plugin.PluginConfigurer;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.template.etl.api.PipelineConfigurable;
@@ -53,9 +54,12 @@ public class PipelineRegisterer {
    *
    * @param config the config containing pipeline information
    * @param errorDatasetType error dataset type class
+   * @param errorDatasetProperties properties of the error dataset
+   * @param sinkWithErrorDataset boolean flag to indicate if the sinks uses error dataset
    * @return the ids of each plugin used in the pipeline
    */
-  public Pipeline registerPlugins(ETLConfig config, Class errorDatasetType, DatasetProperties datasetProperties) {
+  public Pipeline registerPlugins(ETLConfig config, Class errorDatasetType, DatasetProperties errorDatasetProperties,
+                                  boolean sinkWithErrorDataset) {
     ETLStage sourceConfig = config.getSource();
     List<ETLStage> transformConfigs = config.getTransforms();
     List<ETLStage> sinkConfigs = config.getSinks();
@@ -107,11 +111,9 @@ public class PipelineRegisterer {
       }
       // if the transformation is configured to write filtered records to error dataset, we create that dataset.
       if (transformConfig.getErrorDatasetName() != null) {
-        // TODO : can remove this after implementing CDAP-3480
-        if (errorDatasetType != null) {
-          configurer.createDataset(transformConfig.getErrorDatasetName(), errorDatasetType, datasetProperties);
-        }
+        configurer.createDataset(transformConfig.getErrorDatasetName(), errorDatasetType, errorDatasetProperties);
       }
+
       PipelineConfigurer transformConfigurer = new DefaultPipelineConfigurer(configurer, transformId);
       transformObj.configurePipeline(transformConfigurer);
       transformInfos.add(new TransformInfo(transformId, transformConfig.getErrorDatasetName()));
@@ -120,11 +122,17 @@ public class PipelineRegisterer {
       pluginNum++;
     }
 
-    List<String> sinkPluginIds = new ArrayList<>();
+    List<SinkInfo> sinksInfo = new ArrayList<>();
     List<PipelineConfigurable> sinks = new ArrayList<>();
     for (ETLStage sinkConfig : sinkConfigs) {
       String sinkPluginId = PluginID.from(Constants.Sink.PLUGINTYPE, sinkConfig.getName(), pluginNum).getID();
-      sinkPluginIds.add(sinkPluginId);
+
+      // create error dataset for sink - if the sink supports it and error dataset is configured for it.
+      if (sinkWithErrorDataset && sinkConfig.getErrorDatasetName() != null) {
+        configurer.createDataset(sinkConfig.getErrorDatasetName(), errorDatasetType, errorDatasetProperties);
+      }
+
+      sinksInfo.add(new SinkInfo(sinkPluginId, sinkConfig.getErrorDatasetName()));
 
       // try to instantiate the sink
       PipelineConfigurable sink = configurer.usePlugin(Constants.Sink.PLUGINTYPE, sinkConfig.getName(),
@@ -149,7 +157,7 @@ public class PipelineRegisterer {
       throw new RuntimeException(e);
     }
 
-    return new Pipeline(sourcePluginId, sinkPluginIds, transformInfos);
+    return new Pipeline(sourcePluginId, sinksInfo, transformInfos);
   }
 
   private PluginProperties getPluginProperties(ETLStage config) {
@@ -262,8 +270,8 @@ public class PipelineRegisterer {
       Type secondType = resTypeList.get(i + 1);
       // Check if secondType can accept firstType
       Preconditions.checkArgument(TypeToken.of(secondType).isAssignableFrom(firstType),
-        "Types between stages didn't match. Mismatch between {} -> {}",
-        firstType, secondType);
+                                  "Types between stages didn't match. Mismatch between {} -> {}",
+                                  firstType, secondType);
     }
   }
 }
