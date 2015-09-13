@@ -320,19 +320,19 @@ public class AppFabricClient {
   }
 
   public String scheduleStatus(String namespaceId, String appId, String schedId, int expectedResponseCode)
-    throws BadRequestException, SchedulerException, NotFoundException {
+    throws BadRequestException, SchedulerException {
     MockResponder responder = new MockResponder();
     String uri = String.format("%s/apps/%s/schedules/%s/status", getNamespacePath(namespaceId), appId, schedId);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
-    programLifecycleHttpHandler.getStatus(request, responder, namespaceId, appId, "schedules", schedId);
+    try {
+      programLifecycleHttpHandler.getStatus(request, responder, namespaceId, appId, "schedules", schedId);
+    } catch (NotFoundException e) {
+      return "NOT_FOUND";
+    }
     verifyResponse(HttpResponseStatus.valueOf(expectedResponseCode), responder.getStatus(),
                    "Get schedules status failed");
-    if (HttpResponseStatus.NOT_FOUND.getCode() == expectedResponseCode) {
-      return "NOT_FOUND";
-    } else {
       Map<String, String> json = responder.decodeResponseContent(MAP_TYPE);
       return json.get("status");
-    }
   }
 
   private void verifyResponse(HttpResponseStatus expected, HttpResponseStatus actual, String errorMsg) {
