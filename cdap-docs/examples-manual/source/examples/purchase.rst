@@ -91,6 +91,8 @@ This service has a ``history/{customer}`` endpoint to obtain the purchase histor
 ``UserProfileService`` Service
 ------------------------------
 
+.. highlight:: console
+
 This service has two endpoints:
 
 A ``user`` endpoint to add a user's profile information to the system::

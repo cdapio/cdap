@@ -16,9 +16,9 @@
 
 package co.cask.cdap.api.app;
 
-import co.cask.cdap.api.artifact.PluginConfigurer;
 import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.mapreduce.MapReduce;
+import co.cask.cdap.api.plugin.PluginConfigurer;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.service.Service;

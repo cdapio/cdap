@@ -18,6 +18,7 @@ package co.cask.cdap.data2.metadata.lineage;
 
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.Transactions;
@@ -27,6 +28,7 @@ import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -42,7 +44,8 @@ public class LineageStore {
   private final Id.DatasetInstance lineageDatasetId;
 
   @Inject
-  LineageStore(TransactionExecutorFactory executorFactory, DatasetFramework datasetFramework) {
+  LineageStore(TransactionExecutorFactory executorFactory,
+               @Named(DataSetsModules.BASIC_DATASET_FRAMEWORK) DatasetFramework datasetFramework) {
     this(executorFactory, datasetFramework, LINEAGE_DATASET_ID);
   }
 
@@ -76,7 +79,7 @@ public class LineageStore {
    * @param component program component such as flowlet id, etc.
    */
   public void addAccess(final Id.Run run, final Id.DatasetInstance datasetInstance,
-                        final AccessType accessType, final String metadata, @Nullable final Id component) {
+                        final AccessType accessType, final String metadata, @Nullable final Id.NamespacedId component) {
     execute(new TransactionExecutor.Procedure<LineageDataset>() {
       @Override
       public void apply(LineageDataset input) throws Exception {

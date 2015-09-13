@@ -24,7 +24,7 @@ import com.google.common.annotations.VisibleForTesting;
 import java.util.List;
 
 /**
- * ETL Realtime Adapter Configuration.
+ * ETL Realtime Configuration.
  */
 public final class ETLRealtimeConfig extends ETLConfig {
   private final Integer instances;

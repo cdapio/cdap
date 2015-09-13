@@ -16,9 +16,9 @@
 
 package co.cask.cdap.internal.api;
 
-import co.cask.cdap.api.artifact.PluginConfigurer;
-import co.cask.cdap.api.artifact.PluginSelector;
-import co.cask.cdap.api.templates.plugins.PluginProperties;
+import co.cask.cdap.api.plugin.PluginConfigurer;
+import co.cask.cdap.api.plugin.PluginProperties;
+import co.cask.cdap.api.plugin.PluginSelector;
 
 import javax.annotation.Nullable;
 

@@ -27,7 +27,7 @@ import java.util.Set;
  * Represents a Dataset access by a Program.
  */
 public class Relation {
-  private final Id.DatasetInstance data;
+  private final Id.NamespacedId data;
   private final Id.Program program;
   private final AccessType access;
   private final Set<RunId> runs;
@@ -42,7 +42,7 @@ public class Relation {
     this.components = ImmutableSet.copyOf(components);
   }
 
-  public Id.DatasetInstance getData() {
+  public Id.NamespacedId getData() {
     return data;
   }
 

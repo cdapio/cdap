@@ -122,8 +122,6 @@ public class DatasetInstanceService {
       try {
         if (owner instanceof Id.Program) {
           usageRegistry.register((Id.Program) owner, instance);
-        } else if (owner instanceof Id.Adapter) {
-          usageRegistry.register((Id.Adapter) owner, instance);
         }
       } catch (Exception e) {
         LOG.warn("Failed to register usage of {} -> {}", owner, instance);

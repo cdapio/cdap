@@ -55,6 +55,7 @@ import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamPropertyListener;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.metadata.writer.ProgramContextAware;
 import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.queue.ConsumerGroupConfig;
 import co.cask.cdap.data2.queue.DequeueStrategy;
@@ -195,6 +196,13 @@ public final class FlowletProgramRunner implements ProgramRunner {
       Class<?> clz = Class.forName(flowletDef.getFlowletSpec().getClassName(), true,
                                    program.getClassLoader());
       Preconditions.checkArgument(Flowlet.class.isAssignableFrom(clz), "%s is not a Flowlet.", clz);
+
+      // Setup dataset framework context, if required
+      if (dsFramework instanceof ProgramContextAware) {
+        Id.Program programId = program.getId();
+        Id.Flow.Flowlet flowletId = Id.Flow.Flowlet.from(programId.getApplication(), programId.getId(), flowletName);
+        ((ProgramContextAware) dsFramework).initContext(new Id.Run(programId, runId.getId()), flowletId);
+      }
 
       Class<? extends Flowlet> flowletClass = (Class<? extends Flowlet>) clz;
 

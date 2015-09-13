@@ -19,7 +19,6 @@ package co.cask.cdap.app.etl.batch;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.app.etl.batch.config.ETLBatchConfig;
 import co.cask.cdap.template.etl.common.ETLStage;
-import com.google.common.base.Throwables;
 
 /**
  * Workflow for scheduling Batch ETL MapReduce Driver.

@@ -16,8 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.batch;
 
-import co.cask.cdap.api.artifact.Plugin;
-import co.cask.cdap.api.templates.plugins.PluginInfo;
+import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.CombineClassLoader;
@@ -32,7 +31,6 @@ import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerLau
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.templates.AdapterDefinition;
-import co.cask.cdap.templates.AdapterPlugin;
 import com.google.common.base.Function;
 import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
@@ -46,8 +44,10 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
+import org.apache.twill.filesystem.HDFSLocationFactory;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -102,11 +102,8 @@ public class MapReduceClassLoader extends CombineClassLoader {
   public MapReduceClassLoader(ClassLoader programClassLoader,
                               CConfiguration cConf, String namespace,
                               Map<String, Plugin> plugins,
-                              @Nullable AdapterDefinition adapterSpec,
-                              @Nullable PluginInstantiator pluginInstantiator,
-                              @Nullable PluginInstantiator artifactPluginInstantiator) {
-    this(new Parameters(programClassLoader, cConf, namespace, plugins, adapterSpec,
-                        pluginInstantiator, artifactPluginInstantiator));
+                              @Nullable PluginInstantiator pluginInstantiator) {
+    this(new Parameters(programClassLoader, cConf, namespace, plugins, pluginInstantiator));
   }
 
   private MapReduceClassLoader(Parameters parameters) {
@@ -119,13 +116,8 @@ public class MapReduceClassLoader extends CombineClassLoader {
   }
 
   @Nullable
-  public PluginInstantiator getPluginInstantiator() {
-    return parameters.getPluginInstantiator();
-  }
-
-  @Nullable
   public PluginInstantiator getArtifactPluginInstantiator() {
-    return parameters.getArtifactPluginInstantiator();
+    return parameters.getPluginInstantiator();
   }
 
   /**
@@ -148,7 +140,6 @@ public class MapReduceClassLoader extends CombineClassLoader {
 
     private final ClassLoader programClassLoader;
     private final PluginInstantiator pluginInstantiator;
-    private final PluginInstantiator artifactPluginInstantiator;
     private final List<ClassLoader> filteredPluginClassLoaders;
 
     /**
@@ -164,7 +155,6 @@ public class MapReduceClassLoader extends CombineClassLoader {
     Parameters(ClassLoader programClassLoader) {
       this.programClassLoader = programClassLoader;
       this.pluginInstantiator = null;
-      this.artifactPluginInstantiator = null;
       this.filteredPluginClassLoaders = ImmutableList.of();
     }
 
@@ -174,9 +164,7 @@ public class MapReduceClassLoader extends CombineClassLoader {
 
     Parameters(MapReduceContextConfig contextConfig, ClassLoader programClassLoader) {
       this(programClassLoader, contextConfig.getConf(), contextConfig.getNamespace(),
-           contextConfig.getPlugins(), contextConfig.getAdapterSpec(),
-           createPluginInstantiator(contextConfig, programClassLoader),
-           createArtifactPluginInstantiator(contextConfig, programClassLoader));
+           contextConfig.getPlugins(), createPluginInstantiator(contextConfig, programClassLoader));
     }
 
     /**
@@ -185,15 +173,11 @@ public class MapReduceClassLoader extends CombineClassLoader {
     Parameters(ClassLoader programClassLoader,
                CConfiguration cConf, String namespace,
                Map<String, Plugin> plugins,
-               @Nullable AdapterDefinition adapterSpec,
-               @Nullable PluginInstantiator pluginInstantiator,
-               @Nullable PluginInstantiator artifactPluginInstantiator) {
+               @Nullable PluginInstantiator pluginInstantiator) {
       this.programClassLoader = programClassLoader;
       this.pluginInstantiator = pluginInstantiator;
-      this.artifactPluginInstantiator = artifactPluginInstantiator;
-      this.filteredPluginClassLoaders = createFilteredPluginClassLoaders(adapterSpec, cConf, namespace,
-                                                                         plugins, pluginInstantiator,
-                                                                         artifactPluginInstantiator);
+      this.filteredPluginClassLoaders = createFilteredPluginClassLoaders(cConf, namespace,
+                                                                         plugins, pluginInstantiator);
     }
 
     public ClassLoader getProgramClassLoader() {
@@ -203,11 +187,6 @@ public class MapReduceClassLoader extends CombineClassLoader {
     @Nullable
     public PluginInstantiator getPluginInstantiator() {
       return pluginInstantiator;
-    }
-
-    @Nullable
-    public PluginInstantiator getArtifactPluginInstantiator() {
-      return artifactPluginInstantiator;
     }
 
     public List<ClassLoader> getFilteredPluginClassLoaders() {
@@ -247,16 +226,6 @@ public class MapReduceClassLoader extends CombineClassLoader {
      */
     @Nullable
     private static PluginInstantiator createPluginInstantiator(MapReduceContextConfig contextConfig,
-                                                               ClassLoader programClassLoader) {
-      if (contextConfig.getAdapterSpec() == null) {
-        return null;
-      }
-      return new PluginInstantiator(contextConfig.getConf(), contextConfig.getAdapterSpec().getTemplate(),
-                                    programClassLoader);
-    }
-
-    @Nullable
-    private static PluginInstantiator createArtifactPluginInstantiator(MapReduceContextConfig contextConfig,
                                                                        ClassLoader programClassLoader) {
       return new PluginInstantiator(contextConfig.getConf(), programClassLoader);
     }
@@ -265,82 +234,41 @@ public class MapReduceClassLoader extends CombineClassLoader {
      * Returns a list of {@link ClassLoader} for loading plugin classes. The ordering is:
      *
      * Plugin Lib ClassLoader, Plugin Export-Package ClassLoader, ...
-     *
-     * The ordering of the plugins are defined by the ordering of {@link PluginInfo}.
      */
-    private static List<ClassLoader> createFilteredPluginClassLoaders(@Nullable AdapterDefinition adapterSpec,
-                                                                      CConfiguration cConf, String namespace,
+    private static List<ClassLoader> createFilteredPluginClassLoaders(CConfiguration cConf, String namespace,
                                                                       Map<String, Plugin> plugins,
-                                                                      @Nullable PluginInstantiator pluginInstantiator,
-                                                                      @Nullable PluginInstantiator
-                                                                        artifactPluginInstantiator) {
-      if ((pluginInstantiator == null || adapterSpec == null) && (artifactPluginInstantiator == null)) {
+                                                                      @Nullable PluginInstantiator pluginInstantiator) {
+      if (pluginInstantiator == null) {
         return ImmutableList.of();
       }
 
       try {
-        //TODO: CDAP-3485 Remove this logic when ApplicationTemplate/Adapter are removed
-        if (pluginInstantiator != null && adapterSpec != null) {
-          // Gather all explicitly used plugin class names. It is needed for external plugin case,
-          Multimap<PluginInfo, String> adapterPluginClasses = getAdapterPluginClasses(adapterSpec);
-
-          // There should be just one plugin lib ClassLoader shared across all plugins
-          List<ClassLoader> pluginClassLoaders = Lists.newArrayList();
-          pluginClassLoaders.add(pluginInstantiator.getParentClassLoader());
-
-          for (PluginInfo pluginInfo : adapterSpec.getPluginInfos()) {
-            ClassLoader pluginClassLoader = pluginInstantiator.getPluginClassLoader(pluginInfo);
-
-            if (pluginClassLoader instanceof PluginClassLoader) {
-              // One with filter by class name
-              Collection<String> allowedClasses = adapterPluginClasses.get(pluginInfo);
-              if (!allowedClasses.isEmpty()) {
-                pluginClassLoaders.add(createClassFilteredClassLoader(allowedClasses, pluginClassLoader));
-              }
-              // One with Export-Package
-              pluginClassLoaders.add(((PluginClassLoader) pluginClassLoader).getExportPackagesClassLoader());
-            }
+        Multimap<Plugin, String> artifactPluginClasses = getArtifactPluginClasses(plugins);
+        List<ClassLoader> pluginClassLoaders = Lists.newArrayList();
+        for (Map.Entry<String, Plugin> pluginEntry : plugins.entrySet()) {
+          Plugin plugin = pluginEntry.getValue();
+          File pluginFile;
+          if (cConf.get("hereitis") != null) {
+            pluginFile = new File(cConf.get("hereitis"), String.format("%s.jar", plugin.getArtifactId().toString()));
+          } else {
+            pluginFile = new File(String.format("%s.jar", plugin.getArtifactId().toString()));
           }
-          return ImmutableList.copyOf(pluginClassLoaders);
-        } else {
-          Multimap<Plugin, String> artifactPluginClasses = getArtifactPluginClasses(plugins);
-          List<ClassLoader> pluginClassLoaders = Lists.newArrayList();
-          for (Map.Entry<String, Plugin> pluginEntry : plugins.entrySet()) {
-            Plugin plugin = pluginEntry.getValue();
-            File pluginFile;
-            if (cConf.get("hereitis") != null) {
-              pluginFile = new File(cConf.get("hereitis"), String.format("%s.jar", plugin.getArtifactId().toString()));
-            } else {
-              pluginFile = new File(String.format("%s.jar", plugin.getArtifactId().toString()));
+          Id.Artifact artifact = Id.Artifact.from(Id.Namespace.from(namespace), plugin.getArtifactId());
+          ArtifactDescriptor artifactDescriptor = new ArtifactDescriptor(artifact, Locations.toLocation(pluginFile));
+          ClassLoader pluginClassLoader = pluginInstantiator.getInitialClassLoader(artifactDescriptor);
+          if (pluginClassLoader instanceof PluginClassLoader) {
+            Collection<String> allowedClasses = artifactPluginClasses.get(plugin);
+            if (!allowedClasses.isEmpty()) {
+              pluginClassLoaders.add(createClassFilteredClassLoader(allowedClasses, pluginClassLoader));
             }
-            Id.Artifact artifact = Id.Artifact.from(Id.Namespace.from(namespace), plugin.getArtifactId());
-            ArtifactDescriptor artifactDescriptor = new ArtifactDescriptor(artifact, Locations.toLocation(pluginFile));
-            ClassLoader pluginClassLoader = artifactPluginInstantiator.getInitialClassLoader(artifactDescriptor);
-            if (pluginClassLoader instanceof PluginClassLoader) {
-              Collection<String> allowedClasses = artifactPluginClasses.get(plugin);
-              if (!allowedClasses.isEmpty()) {
-                pluginClassLoaders.add(createClassFilteredClassLoader(allowedClasses, pluginClassLoader));
-              }
-              pluginClassLoaders.add(((PluginClassLoader) pluginClassLoader).getExportPackagesClassLoader());
-            }
+            pluginClassLoaders.add(((PluginClassLoader) pluginClassLoader).getExportPackagesClassLoader());
           }
-          return ImmutableList.copyOf(pluginClassLoaders);
         }
+        return ImmutableList.copyOf(pluginClassLoaders);
       } catch (IOException e) {
         throw Throwables.propagate(e);
       }
-    }
-
-    /**
-     * Returns a {@link Multimap} from {@link PluginInfo} to set of classes used by the adapter.
-     */
-    private static Multimap<PluginInfo, String> getAdapterPluginClasses(AdapterDefinition adapterSpec) {
-      Multimap<PluginInfo, String> result = HashMultimap.create();
-      for (Map.Entry<String, AdapterPlugin> entry : adapterSpec.getPlugins().entrySet()) {
-        result.put(entry.getValue().getPluginInfo(), entry.getValue().getPluginClass().getClassName());
-      }
-      return result;
-    }
+  }
 
     private static Multimap<Plugin, String> getArtifactPluginClasses(Map<String, Plugin> plugins) {
       Multimap<Plugin, String> result = HashMultimap.create();

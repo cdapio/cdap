@@ -24,7 +24,7 @@ import com.google.common.annotations.VisibleForTesting;
 import java.util.List;
 
 /**
- * ETL Batch Adapter Configuration.
+ * ETL Batch Configuration.
  */
 public final class ETLBatchConfig extends ETLConfig {
   private final String schedule;

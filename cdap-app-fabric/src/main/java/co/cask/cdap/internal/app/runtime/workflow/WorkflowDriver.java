@@ -56,7 +56,6 @@ import co.cask.cdap.internal.workflow.DefaultWorkflowActionSpecification;
 import co.cask.cdap.internal.workflow.ProgramWorkflowAction;
 import co.cask.cdap.logging.context.WorkflowLoggingContext;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.templates.AdapterDefinition;
 import co.cask.http.NettyHttpService;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionContext;
@@ -72,7 +71,6 @@ import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import com.google.gson.Gson;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
@@ -103,7 +101,6 @@ import java.util.concurrent.locks.ReentrantLock;
 final class WorkflowDriver extends AbstractExecutionThreadService {
 
   private static final Logger LOG = LoggerFactory.getLogger(WorkflowDriver.class);
-  private static final Gson GSON = new Gson();
 
   private final Program program;
   private final InetAddress hostname;
@@ -144,14 +141,9 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                                                                          options);
     this.lock = new ReentrantLock();
     this.condition = lock.newCondition();
-    String adapterSpec = arguments.getOption(ProgramOptionConstants.ADAPTER_SPEC);
-    String adapterName = null;
-    if (adapterSpec != null) {
-      adapterName = GSON.fromJson(adapterSpec, AdapterDefinition.class).getName();
-    }
     this.loggingContext = new WorkflowLoggingContext(program.getNamespaceId(), program.getApplicationId(),
                                                      program.getName(),
-                                                     arguments.getOption(ProgramOptionConstants.RUN_ID), adapterName);
+                                                     arguments.getOption(ProgramOptionConstants.RUN_ID));
     this.runId = RunIds.fromString(options.getArguments().getOption(ProgramOptionConstants.RUN_ID));
     this.metricsCollectionService = metricsCollectionService;
     this.datasetFramework = datasetFramework;

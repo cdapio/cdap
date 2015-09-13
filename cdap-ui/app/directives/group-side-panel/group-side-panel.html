@@ -17,7 +17,7 @@
 <div class="side-panel text-center"
       ng-class="{'expanded': isExpanded === true, 'left': MySidePanel.placement === 'left'}">
   <div ng-if="MySidePanel.placement === 'left'" class="hydrator-filter clearfix">
-    <input class="form-control pull-left" placeholder="Filter" type="text" />
+    <input class="form-control pull-left" placeholder="Filter" type="text" ng-model="MySidePanel.searchText" />
     <div class="btn pull-right" ng-click="MySidePanel.toggleSidebar()">
       <span class="fa" ng-class="{'fa-angle-double-left': isExpanded === true, 'fa-angle-double-right': isExpanded === false}"></span>
     </div>
@@ -48,7 +48,7 @@
       <div class="item-body"
            ng-class="{'text-left': isExpanded === true}"
            ng-if="MySidePanel.isSubMenu === true && MySidePanel.openedGroup === group.name">
-        <div ng-repeat="plugin in MySidePanel.panel.items track by $index"
+        <div ng-repeat="plugin in MySidePanel.panel.items | filter: {name: MySidePanel.searchText} track by $index"
               class="plugin-item"
               popover="{{plugin.description}}"
               popover-title="{{plugin.name}}"

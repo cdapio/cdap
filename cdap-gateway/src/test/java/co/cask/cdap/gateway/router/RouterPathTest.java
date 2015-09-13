@@ -327,24 +327,34 @@ public class RouterPathTest {
 
   @Test
   public void testMetadataPath() {
-    // app metadata
+    // all app metadata
     assertMetadataRouting("/v3/namespaces/default//apps/WordCount//////metadata");
-    // program metadata
-    assertMetadataRouting("/v3/namespaces/default//apps/WordCount/flows/WordCountFlow/metadata");
-    // dataset metadata
-    assertMetadataRouting("/v3/namespaces/default/////datasets/ds1/metadata");
-    // stream metadata
-    assertMetadataRouting("/v3/namespaces////default////streams//s1/metadata");
-    // app tags
-    assertMetadataRouting("/v3/namespaces/default//apps/WordCount//////tags");
-    // program metadata
-    assertMetadataRouting("/v3/namespaces/default//apps/WordCount/flows/WordCountFlow/tags");
-    // dataset metadata
-    assertMetadataRouting("/v3/namespaces/default/////datasets/ds1/tags");
-    // stream metadata
-    assertMetadataRouting("/v3/namespaces////default////streams//s1/tags");
+    // all program metadata
+    assertMetadataRouting("/v3/namespaces/default//apps/WordCount//flows//WordCountFlow//metadata");
+    // all dataset metadata
+    assertMetadataRouting("/v3/namespaces/default//datasets/ds1//////metadata");
+    // all stream metadata
+    assertMetadataRouting("/v3/namespaces/default//streams/s1//////metadata");
+    // app metadata properties
+    assertMetadataRouting("/v3/namespaces/default//apps/WordCount//////metadata///////properties");
+    // program metadata properties
+    assertMetadataRouting("/v3/namespaces/default//apps/WordCount/flows/WordCountFlow/metadata/properties");
+    // dataset metadata properties
+    assertMetadataRouting("/v3/namespaces/default/////datasets/ds1/metadata/properties");
+    // stream metadata properties
+    assertMetadataRouting("/v3/namespaces////default////streams//s1/metadata/properties");
+    // app metadata tags
+    assertMetadataRouting("/v3/namespaces/default//apps/WordCount/////metadata/metadata/tags");
+    // program metadata tags
+    assertMetadataRouting("/v3/namespaces/default//apps/WordCount/flows/WordCountFlow/metadata/tags");
+    // dataset metadata tags
+    assertMetadataRouting("/v3/namespaces/default/////datasets/ds1/metadata/tags");
+    // stream metadata tags
+    assertMetadataRouting("/v3/namespaces////default////streams//s1/metadata/tags");
     // search metadata
     assertMetadataRouting("/v3/namespaces/default/metadata/search");
+    // lineage
+    assertMetadataRouting("/v3/namespaces/default/////datasets/ds1/lineage");
   }
 
   private void assertMetadataRouting(String path) {

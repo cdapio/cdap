@@ -27,7 +27,6 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowMapReduceProgram;
-import co.cask.cdap.templates.AdapterDefinition;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionAware;
 import com.google.common.base.Preconditions;
@@ -71,9 +70,7 @@ public abstract class AbstractMapReduceTaskContextBuilder {
                                          Program mrProgram,
                                          @Nullable String inputDataSetName,
                                          @Nullable String outputDataSetName,
-                                         @Nullable AdapterDefinition adapterSpec,
                                          @Nullable PluginInstantiator pluginInstantiator,
-                                         @Nullable PluginInstantiator artifactPluginInstantiator,
                                          ArtifactRepository artifactRepository) {
     Injector injector = prepare();
 
@@ -113,9 +110,8 @@ public abstract class AbstractMapReduceTaskContextBuilder {
     MapReduceSpecification spec = program.getApplicationSpecification().getMapReduce().get(program.getName());
     BasicMapReduceTaskContext context =
       new BasicMapReduceTaskContext(program, type, RunIds.fromString(runId), taskId, runtimeArguments, datasets, spec,
-                                    logicalStartTime, workflowToken, discoveryServiceClient,
-                                    metricsCollectionService, datasetFramework,
-                                    adapterSpec, pluginInstantiator, artifactPluginInstantiator, artifactRepository);
+                                    logicalStartTime, workflowToken, discoveryServiceClient, metricsCollectionService,
+                                    datasetFramework, pluginInstantiator, artifactRepository);
 
     // propagating tx to all txAware guys
     // NOTE: tx will be committed by client code

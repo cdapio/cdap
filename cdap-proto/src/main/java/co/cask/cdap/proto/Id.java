@@ -203,111 +203,6 @@ public abstract class Id {
   }
 
   /**
-   * Uniquely identifies an Adapter Type.
-   */
-  public static final class AdapterType extends NamespacedId {
-    private final Namespace namespace;
-    private final String adapterTypeId;
-
-    public AdapterType(final Namespace namespace, final String adapterTypeId) {
-      Preconditions.checkNotNull(namespace, "namespace cannot be null.");
-      Preconditions.checkNotNull(adapterTypeId, "adapterTypeId cannot be null.");
-      this.namespace = namespace;
-      this.adapterTypeId = adapterTypeId;
-    }
-
-    @Override
-    public Namespace getNamespace() {
-      return namespace;
-    }
-
-    public String getNamespaceId() {
-      return namespace.getId();
-    }
-
-    @Override
-    public String getId() {
-      return adapterTypeId;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-
-      AdapterType that = (AdapterType) o;
-      return namespace.equals(that.namespace) && adapterTypeId.equals(that.adapterTypeId);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hashCode(namespace, adapterTypeId);
-    }
-
-    public static AdapterType from(Namespace id, String adapterTypeId) {
-      return new AdapterType(id, adapterTypeId);
-    }
-
-    public static AdapterType from(String namespaceId, String adapterTypeId) {
-      return new AdapterType(Namespace.from(namespaceId), adapterTypeId);
-    }
-
-    @Override
-    public Id getParent() {
-      return namespace;
-    }
-  }
-
-  /**
-   * Uniquely identifies an Application Template.
-   */
-  public static final class ApplicationTemplate extends Id {
-    private final String template;
-
-    public ApplicationTemplate(final String template) {
-      Preconditions.checkNotNull(template, "template cannot be null.");
-      this.template = template;
-    }
-
-    @Nullable
-    @Override
-    protected Id getParent() {
-      return null;
-    }
-
-    @Override
-    public String getId() {
-      return template;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-
-      Application that = (Application) o;
-      return template.equals(that.applicationId);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hashCode(template);
-    }
-
-    public static ApplicationTemplate from(String template) {
-      return new ApplicationTemplate(template);
-    }
-  }
-
-  /**
    * Uniquely identifies an Application.
    */
   public static final class Application extends NamespacedId {
@@ -362,10 +257,6 @@ public abstract class Id {
       return new Application(Namespace.from(namespaceId), applicationId);
     }
 
-    public static Application from(Adapter adapter, String adapterSpecType) {
-      return new Application(adapter.getNamespace(), adapterSpecType);
-    }
-
     @Override
     public Id getParent() {
       return namespace;
@@ -383,80 +274,6 @@ public abstract class Id {
 
     public static Application fromStrings(String[] strings) {
       return fromStrings(strings, strings.length - 1);
-    }
-  }
-
-  /**
-   * Uniquely identifies an Adapter.
-   */
-  public static final class Adapter extends NamespacedId {
-    private final Namespace namespace;
-    private final String adapterId;
-
-    public Adapter(final Namespace namespace, final String adapterId) {
-      Preconditions.checkNotNull(namespace, "namespace cannot be null.");
-      Preconditions.checkNotNull(adapterId, "adapterId cannot be null.");
-      this.namespace = namespace;
-      this.adapterId = adapterId;
-    }
-
-    @Override
-    public Namespace getNamespace() {
-      return namespace;
-    }
-
-    public String getNamespaceId() {
-      return namespace.getId();
-    }
-
-    @Override
-    public String getId() {
-      return adapterId;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-
-      Adapter that = (Adapter) o;
-      return namespace.equals(that.namespace) && adapterId.equals(that.adapterId);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hashCode(namespace, adapterId);
-    }
-
-    public static Adapter from(Namespace id, String adapterId) {
-      return new Adapter(id, adapterId);
-    }
-
-    public static Adapter from(String namespaceId, String adapterId) {
-      return new Adapter(Namespace.from(namespaceId), adapterId);
-    }
-
-    public static Adapter fromStrings(String[] strings, int position) {
-      Preconditions.checkArgument(position == 1);
-      String[] tokens = strings[position].split(":");
-      Preconditions.checkArgument(tokens.length == 2);
-
-      String[] nextTokens = strings[position - 1].split(":");
-      Preconditions.checkArgument(nextTokens.length == 2);
-      return from(Namespace.from(nextTokens[1]), tokens[1]);
-    }
-
-    public static Adapter fromStrings(String[] strings) {
-      return fromStrings(strings, strings.length - 1);
-    }
-
-    @Override
-    public Id getParent() {
-      return namespace;
     }
   }
 

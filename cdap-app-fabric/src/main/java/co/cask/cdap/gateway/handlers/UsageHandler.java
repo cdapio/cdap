@@ -91,26 +91,6 @@ public class UsageHandler extends AbstractHttpHandler {
   }
 
   @GET
-  @Path("/namespaces/{namespace-id}/adapters/{adapter-id}/datasets")
-  public void getAdapterDatasetUsage(HttpRequest request, HttpResponder responder,
-                                     @PathParam("namespace-id") String namespaceId,
-                                     @PathParam("adapter-id") String adapterId) {
-    final Id.Adapter id = Id.Adapter.from(namespaceId, adapterId);
-    Set<? extends Id> ids = registry.getDatasets(id);
-    responder.sendJson(HttpResponseStatus.OK, ids);
-  }
-
-  @GET
-  @Path("/namespaces/{namespace-id}/adapters/{adapter-id}/streams")
-  public void getAdapterStreamUsage(HttpRequest request, HttpResponder responder,
-                                    @PathParam("namespace-id") String namespaceId,
-                                    @PathParam("adapter-id") String adapterId) {
-    final Id.Adapter id = Id.Adapter.from(namespaceId, adapterId);
-    Set<? extends Id> ids = registry.getStreams(id);
-    responder.sendJson(HttpResponseStatus.OK, ids);
-  }
-
-  @GET
   @Path("/namespaces/{namespace-id}/streams/{stream-id}/programs")
   public void getStreamProgramUsage(HttpRequest request, HttpResponder responder,
                                 @PathParam("namespace-id") String namespaceId,
@@ -121,32 +101,12 @@ public class UsageHandler extends AbstractHttpHandler {
   }
 
   @GET
-  @Path("/namespaces/{namespace-id}/streams/{stream-id}/adapters")
-  public void getStreamAdapterUsage(HttpRequest request, HttpResponder responder,
-                                    @PathParam("namespace-id") String namespaceId,
-                                    @PathParam("stream-id") String streamId) {
-    final Id.Stream id = Id.Stream.from(namespaceId, streamId);
-    Set<? extends Id> ids = registry.getAdapters(id);
-    responder.sendJson(HttpResponseStatus.OK, ids);
-  }
-
-  @GET
   @Path("/namespaces/{namespace-id}/data/datasets/{dataset-id}/programs")
   public void getDatasetAppUsage(HttpRequest request, HttpResponder responder,
                                  @PathParam("namespace-id") String namespaceId,
                                  @PathParam("dataset-id") String datasetId) {
     final Id.DatasetInstance id = Id.DatasetInstance.from(namespaceId, datasetId);
     Set<? extends Id> ids = registry.getPrograms(id);
-    responder.sendJson(HttpResponseStatus.OK, ids);
-  }
-
-  @GET
-  @Path("/namespaces/{namespace-id}/data/datasets/{dataset-id}/adapters")
-  public void getDatasetAdapterUsage(HttpRequest request, HttpResponder responder,
-                                     @PathParam("namespace-id") String namespaceId,
-                                     @PathParam("dataset-id") String datasetId) {
-    final Id.DatasetInstance id = Id.DatasetInstance.from(namespaceId, datasetId);
-    Set<? extends Id> ids = registry.getAdapters(id);
     responder.sendJson(HttpResponseStatus.OK, ids);
   }
 }

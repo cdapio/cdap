@@ -174,11 +174,11 @@ public class SparkProgramRunner implements ProgramRunner {
         }
 
         if (workflowName == null) {
-          store.setStart(programId, runId.getId(), startTimeInSeconds, null, twillRunId, userArgs.asMap());
+          store.setStart(programId, runId.getId(), startTimeInSeconds, twillRunId, userArgs.asMap());
         } else {
           // Program started by Workflow
           store.setWorkflowProgramStart(programId, runId.getId(), workflowName, workflowRunId, workflowNodeId,
-                                        startTimeInSeconds, null, twillRunId);
+                                        startTimeInSeconds, twillRunId);
         }
       }
 

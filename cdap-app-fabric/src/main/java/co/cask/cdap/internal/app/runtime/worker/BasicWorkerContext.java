@@ -17,15 +17,14 @@
 package co.cask.cdap.internal.app.runtime.worker;
 
 import co.cask.cdap.api.TxRunnable;
-import co.cask.cdap.api.artifact.Plugin;
 import co.cask.cdap.api.data.stream.StreamBatchWriter;
 import co.cask.cdap.api.data.stream.StreamWriter;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
+import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.stream.StreamEventData;
-import co.cask.cdap.api.templates.AdapterSpecification;
 import co.cask.cdap.api.worker.WorkerContext;
 import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
@@ -43,7 +42,6 @@ import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.logging.context.WorkerLoggingContext;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.templates.AdapterDefinition;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionFailureException;
 import co.cask.tephra.TransactionSystemClient;
@@ -58,6 +56,7 @@ import com.google.common.collect.Maps;
 import com.google.common.io.Closeables;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -95,21 +94,18 @@ public class BasicWorkerContext extends AbstractContext implements WorkerContext
                             TransactionSystemClient transactionSystemClient,
                             DiscoveryServiceClient discoveryServiceClient,
                             StreamWriterFactory streamWriterFactory,
-                            @Nullable AdapterDefinition adapterSpec,
                             @Nullable PluginInstantiator pluginInstantiator,
-                            @Nullable PluginInstantiator artifactPluginInstantiator,
                             ArtifactRepository artifactRepository) {
     super(program, runId, runtimeArgs, spec.getDatasets(),
-          getMetricCollector(program, runId.getId(), instanceId, metricsCollectionService, adapterSpec),
-          datasetFramework, discoveryServiceClient, adapterSpec,
-          pluginInstantiator, artifactPluginInstantiator, artifactRepository);
+          getMetricCollector(program, runId.getId(), instanceId, metricsCollectionService),
+          datasetFramework, discoveryServiceClient, pluginInstantiator, artifactRepository);
     this.program = program;
     this.specification = spec;
     this.instanceId = instanceId;
     this.instanceCount = instanceCount;
     this.transactionSystemClient = transactionSystemClient;
     this.datasetFramework = datasetFramework;
-    this.loggingContext = createLoggingContext(program.getId(), runId, adapterSpec);
+    this.loggingContext = createLoggingContext(program.getId(), runId);
     if (metricsCollectionService != null) {
       this.userMetrics = new ProgramUserMetrics(getProgramMetrics());
     } else {
@@ -153,11 +149,9 @@ public class BasicWorkerContext extends AbstractContext implements WorkerContext
       });
   }
 
-  private LoggingContext createLoggingContext(Id.Program programId, RunId runId,
-                                              @Nullable AdapterSpecification adapterSpec) {
-    String adapterName = adapterSpec == null ? null : adapterSpec.getName();
+  private LoggingContext createLoggingContext(Id.Program programId, RunId runId) {
     return new WorkerLoggingContext(programId.getNamespaceId(), programId.getApplicationId(), programId.getId(),
-                                    runId.getId(), String.valueOf(getInstanceId()), adapterName);
+                                    runId.getId(), String.valueOf(getInstanceId()));
   }
 
   @Override
@@ -171,17 +165,12 @@ public class BasicWorkerContext extends AbstractContext implements WorkerContext
 
   @Nullable
   private static MetricsContext getMetricCollector(Program program, String runId, int instanceId,
-                                                     @Nullable MetricsCollectionService service,
-                                                     @Nullable AdapterSpecification adapterSpec) {
+                                                     @Nullable MetricsCollectionService service) {
     if (service == null) {
       return null;
     }
     Map<String, String> tags = Maps.newHashMap(getMetricsContext(program, runId));
     tags.put(Constants.Metrics.Tag.INSTANCE_ID, String.valueOf(instanceId));
-
-    if (adapterSpec != null) {
-      tags.put(Constants.Metrics.Tag.ADAPTER, adapterSpec.getName());
-    }
 
     return service.getContext(tags);
   }
@@ -232,7 +221,7 @@ public class BasicWorkerContext extends AbstractContext implements WorkerContext
     // Close all existing datasets that haven't been invalidated by the cache already.
     datasetsCache.invalidateAll();
     datasetsCache.cleanUp();
-    Closeables.closeQuietly(getArtifactPluginInstantiator());
+    Closeables.closeQuietly(getPluginInstantiator());
   }
 
   @Override

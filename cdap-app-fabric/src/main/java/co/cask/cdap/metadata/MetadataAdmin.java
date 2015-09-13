@@ -20,8 +20,8 @@ import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.MetadataSearchResultRecord;
-import co.cask.cdap.proto.MetadataSearchTargetType;
+import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
+import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 
 import java.util.Map;
 import java.util.Set;
@@ -40,7 +40,7 @@ public interface MetadataAdmin {
    * @throws NamespaceNotFoundException if the namespace is not found
    * @throws ApplicationNotFoundException if the application is not found
    */
-  void add(Id.NamespacedId entityId, Map<String, String> metadata) throws NotFoundException;
+  void addProperties(Id.NamespacedId entityId, Map<String, String> properties) throws NotFoundException;
 
   /**
    * Adds the specified tags to specified {@link Id.Application}, {@link Id.Program}, {@link Id.DatasetInstance} or
@@ -57,7 +57,7 @@ public interface MetadataAdmin {
    * @throws NamespaceNotFoundException if the namespace is not found
    * @throws ApplicationNotFoundException if the application is not found
    */
-  Map<String, String> get(Id.NamespacedId entityId) throws NotFoundException;
+  Map<String, String> getProperties(Id.NamespacedId entityId) throws NotFoundException;
 
   /**
    * @return all the tags for the specified {@link Id.Application}, {@link Id.Program}, {@link Id.DatasetInstance} or
@@ -68,13 +68,31 @@ public interface MetadataAdmin {
   Iterable<String> getTags(Id.NamespacedId entityId) throws NotFoundException;
 
   /**
+   * Removes all properties from the business metadata of the specified {@link Id.Application}, {@link Id.Program},
+   * {@link Id.DatasetInstance} or {@link Id.Stream}.
+   *
+   * @throws NamespaceNotFoundException if the namespace is not found
+   * @throws ApplicationNotFoundException if the application is not found
+   */
+  void removeProperties(Id.NamespacedId entityId) throws NotFoundException;
+
+  /**
    * Removes the specified keys from the business metadata of the specified {@link Id.Application}, {@link Id.Program},
    * {@link Id.DatasetInstance} or {@link Id.Stream}.
    *
    * @throws NamespaceNotFoundException if the namespace is not found
    * @throws ApplicationNotFoundException if the application is not found
    */
-  void remove(Id.NamespacedId appId, String ... keys) throws NotFoundException;
+  void removeProperties(Id.NamespacedId entityId, String... keys) throws NotFoundException;
+
+  /**
+   * Removes all tags from the specified {@link Id.Application}, {@link Id.Program},
+   * {@link Id.DatasetInstance} or {@link Id.Stream}.
+   *
+   * @throws NamespaceNotFoundException if the namespace is not found
+   * @throws ApplicationNotFoundException if the application is not found
+   */
+  void removeTags(Id.NamespacedId entityId) throws NotFoundException;
 
   /**
    * Removes the specified tags from the specified {@link Id.Application}, {@link Id.Program},
@@ -83,7 +101,7 @@ public interface MetadataAdmin {
    * @throws NamespaceNotFoundException if the namespace is not found
    * @throws ApplicationNotFoundException if the application is not found
    */
-  void removeTags(Id.NamespacedId appId, String ... tags) throws NotFoundException;
+  void removeTags(Id.NamespacedId entityId, String ... tags) throws NotFoundException;
 
   /**
    * Execute search for metadata for particular type of CDAP object.

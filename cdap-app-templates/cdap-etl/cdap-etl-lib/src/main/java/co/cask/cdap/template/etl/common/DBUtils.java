@@ -104,7 +104,7 @@ public final class DBUtils {
         mysqlCleanupThreadClass = classLoader.loadClass("com.mysql.jdbc.AbandonedConnectionCleanupThread");
       } catch (ClassNotFoundException e) {
         // Ok to ignore, since we may not be running mysql
-        LOG.trace("Failed to load MySQL abandoned connection cleanup thread class. Presuming DB Adapter is " +
+        LOG.trace("Failed to load MySQL abandoned connection cleanup thread class. Presuming DB App is " +
                     "not being run with MySQL and ignoring", e);
         return;
       }
@@ -121,7 +121,7 @@ public final class DBUtils {
     try {
       classLoader.loadClass("oracle.jdbc.driver.OracleDriver");
     } catch (ClassNotFoundException e) {
-      LOG.debug("Oracle JDBC Driver not found. Presuming that the DB Adapter is not being run with an Oracle DB. " +
+      LOG.debug("Oracle JDBC Driver not found. Presuming that the DB App is not being run with an Oracle DB. " +
                   "Not attempting to cleanup Oracle MBean.");
       return;
     }

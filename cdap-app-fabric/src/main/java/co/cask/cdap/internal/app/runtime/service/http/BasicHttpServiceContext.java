@@ -16,10 +16,10 @@
 
 package co.cask.cdap.internal.app.runtime.service.http;
 
-import co.cask.cdap.api.artifact.Plugin;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
+import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.app.program.Program;
@@ -73,7 +73,7 @@ public class BasicHttpServiceContext extends AbstractContext implements Transact
                                  ArtifactRepository artifactRepository) {
     super(program, runId, runtimeArgs, spec.getDatasets(),
           getMetricCollector(metricsCollectionService, program, spec.getName(), runId.getId(), instanceId),
-          dsFramework, discoveryServiceClient, null, null, pluginInstantiator, artifactRepository);
+          dsFramework, discoveryServiceClient, pluginInstantiator, artifactRepository);
     this.spec = spec;
     this.instanceId = instanceId;
     this.instanceCount = instanceCount;
@@ -110,7 +110,7 @@ public class BasicHttpServiceContext extends AbstractContext implements Transact
   @Override
   public void close() {
     super.close();
-    Closeables.closeQuietly(getArtifactPluginInstantiator());
+    Closeables.closeQuietly(getPluginInstantiator());
   }
 
   @Override

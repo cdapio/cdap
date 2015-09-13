@@ -46,7 +46,6 @@ import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.templates.AdapterDefinition;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -152,8 +151,6 @@ public class MapReduceProgramRunner implements ProgramRunner {
                                     BasicWorkflowToken.class);
     }
 
-    final AdapterDefinition adapterSpec = getAdapterSpecification(arguments);
-
     MapReduce mapReduce;
     try {
       mapReduce = new InstantiatorFactory(false).get(TypeToken.of(program.<MapReduce>getMainClass())).create();
@@ -165,19 +162,14 @@ public class MapReduceProgramRunner implements ProgramRunner {
     // List of all Closeable resources that needs to be cleanup
     List<Closeable> closeables = new ArrayList<>();
     try {
-      PluginInstantiator pluginInstantiator = createPluginInstantiator(adapterSpec, program.getClassLoader());
-      if (pluginInstantiator != null) {
-        closeables.add(pluginInstantiator);
-      }
-      PluginInstantiator artifactPluginInstantiator = createArtifactPluginInstantiator(program.getClassLoader());
-      closeables.add(artifactPluginInstantiator);
+      PluginInstantiator pluginInstantiator = createArtifactPluginInstantiator(program.getClassLoader());
+      closeables.add(pluginInstantiator);
 
       final DynamicMapReduceContext context =
         new DynamicMapReduceContext(program, null, runId, null, options.getUserArguments(), spec,
                                     logicalStartTime, programNameInWorkflow, workflowToken, discoveryServiceClient,
                                     metricsCollectionService, txSystemClient, datasetFramework,
-                                    adapterSpec, pluginInstantiator, artifactPluginInstantiator, artifactRepository);
-
+                                    pluginInstantiator, artifactRepository);
 
       Reflections.visit(mapReduce, mapReduce.getClass(),
                         new PropertyFieldSetter(context.getSpecification().getProperties()),
@@ -192,7 +184,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
                                                                           streamAdmin, txSystemClient, usageRegistry,
                                                                           artifactRepository);
       mapReduceRuntimeService.addListener(
-        createRuntimeServiceListener(program, runId, adapterSpec, closeables, arguments, options.getUserArguments()),
+        createRuntimeServiceListener(program, runId, closeables, arguments, options.getUserArguments()),
         Threads.SAME_THREAD_EXECUTOR);
 
       final ProgramController controller = new MapReduceProgramController(mapReduceRuntimeService, context);
@@ -231,7 +223,6 @@ public class MapReduceProgramRunner implements ProgramRunner {
    * Creates a service listener to reactor on state changes on {@link MapReduceRuntimeService}.
    */
   private Service.Listener createRuntimeServiceListener(final Program program, final RunId runId,
-                                                        final AdapterDefinition adapterSpec,
                                                         final Iterable<Closeable> closeables,
                                                         Arguments arguments, final Arguments userArgs) {
 
@@ -249,13 +240,12 @@ public class MapReduceProgramRunner implements ProgramRunner {
           // If RunId is not time-based, use current time as start time
           startTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
         }
-        String adapterName = adapterSpec == null ? null : adapterSpec.getName();
         if (workflowName == null) {
-          store.setStart(program.getId(), runId.getId(), startTimeInSeconds, adapterName, twillRunId, userArgs.asMap());
+          store.setStart(program.getId(), runId.getId(), startTimeInSeconds, twillRunId, userArgs.asMap());
         } else {
           // Program started by Workflow
           store.setWorkflowProgramStart(program.getId(), runId.getId(), workflowName, workflowRunId, workflowNodeId,
-                                        startTimeInSeconds, adapterName, twillRunId);
+                                        startTimeInSeconds, twillRunId);
         }
       }
 
@@ -280,23 +270,6 @@ public class MapReduceProgramRunner implements ProgramRunner {
                       ProgramController.State.ERROR.getRunStatus());
       }
     };
-  }
-
-  @Nullable
-  private AdapterDefinition getAdapterSpecification(Arguments arguments) {
-    if (!arguments.hasOption(ProgramOptionConstants.ADAPTER_SPEC)) {
-      return null;
-    }
-    return GSON.fromJson(arguments.getOption(ProgramOptionConstants.ADAPTER_SPEC), AdapterDefinition.class);
-  }
-
-  @Nullable
-  private PluginInstantiator createPluginInstantiator(@Nullable AdapterDefinition adapterSpec,
-                                                      ClassLoader programClassLoader) {
-    if (adapterSpec == null) {
-      return null;
-    }
-    return new PluginInstantiator(cConf, adapterSpec.getTemplate(), programClassLoader);
   }
 
   private PluginInstantiator createArtifactPluginInstantiator(ClassLoader programClassLoader) {
