@@ -20,6 +20,7 @@ import co.cask.cdap.proto.Id;
 import com.google.common.collect.ImmutableSet;
 import org.apache.twill.api.RunId;
 
+import java.util.Collections;
 import java.util.Objects;
 import java.util.Set;
 
@@ -32,6 +33,10 @@ public class Relation {
   private final AccessType access;
   private final Set<RunId> runs;
   private final Set<Id.NamespacedId> components;
+
+  public Relation(Id.DatasetInstance data, Id.Program program, AccessType access, Set<RunId> runs) {
+    this(data, program, access, runs, Collections.<Id.NamespacedId>emptySet());
+  }
 
   public Relation(Id.DatasetInstance data, Id.Program program, AccessType access, Set<RunId> runs,
                   Set<? extends Id.NamespacedId> components) {

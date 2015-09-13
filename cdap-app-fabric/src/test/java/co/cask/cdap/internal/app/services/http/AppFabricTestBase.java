@@ -738,4 +738,34 @@ public abstract class AppFabricTestBase {
   protected boolean streamExists(Id.Stream streamID) throws Exception {
     return streamAdmin.exists(streamID);
   }
+
+  protected HttpResponse createNamespace(String id) throws Exception {
+    return doPut(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, id));
+  }
+
+  protected HttpResponse deleteNamespace(String name) throws Exception {
+    return doDelete(String.format("%s/unrecoverable/namespaces/%s", Constants.Gateway.API_VERSION_3, name));
+  }
+
+  protected HttpResponse createNamespace(String metadata, String id) throws Exception {
+    return doPut(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, id), metadata);
+  }
+
+  protected HttpResponse listAllNamespaces() throws Exception {
+    return doGet(String.format("%s/namespaces", Constants.Gateway.API_VERSION_3));
+  }
+
+  protected HttpResponse getNamespace(String name) throws Exception {
+    Preconditions.checkArgument(name != null, "namespace name cannot be null");
+    return doGet(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, name));
+  }
+
+  protected HttpResponse deleteNamespaceData(String name) throws Exception {
+    return doDelete(String.format("%s/unrecoverable/namespaces/%s/datasets", Constants.Gateway.API_VERSION_3, name));
+  }
+
+  protected HttpResponse setProperties(String id, NamespaceMeta meta) throws Exception {
+    return doPut(String.format("%s/namespaces/%s/properties", Constants.Gateway.API_VERSION_3, id),
+                 GSON.toJson(meta));
+  }
 }

@@ -38,7 +38,7 @@ public class BasicLineageWriter implements LineageWriter {
   private final LineageStore lineageStore;
 
   @Inject
-  public BasicLineageWriter(BusinessMetadataStore businessMetadataStore, LineageStore lineageStore) {
+  BasicLineageWriter(BusinessMetadataStore businessMetadataStore, LineageStore lineageStore) {
     this.businessMetadataStore = businessMetadataStore;
     this.lineageStore = lineageStore;
   }
