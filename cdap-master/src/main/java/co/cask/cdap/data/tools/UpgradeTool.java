@@ -113,7 +113,7 @@ public class UpgradeTool {
               "  3. Removes all Adapters\n" +
               "  4. Application Specifications\n" +
               "      - Adds artifacts for existing applications\n" +
-              "      - Updates application metadata to include newly added artifact\n" +
+              "      - Updates each application's metadata to include the newly added artifact\n" +
               "      - Deletes all ApplicationTemplates\n" +
               "  Note: Once you run the upgrade tool you cannot rollback to the previous version."),
     UPGRADE_HBASE("After an HBase upgrade, updates the coprocessor jars of all user and \n" +
@@ -371,13 +371,8 @@ public class UpgradeTool {
   }
 
   private void performUpgrade() throws Exception {
-    LOG.info("Upgrading User and System Datasets ...");
-    DatasetUpgrader dsUpgrade = injector.getInstance(DatasetUpgrader.class);
-    dsUpgrade.upgrade();
 
-    LOG.info("Upgrading QueueAdmin ...");
-    QueueAdmin queueAdmin = injector.getInstance(QueueAdmin.class);
-    queueAdmin.upgrade();
+    performCoprocessorUpgrade();
 
     LOG.info("Removing Adapters ...");
     adapterService.upgrade();
@@ -390,6 +385,10 @@ public class UpgradeTool {
   private void performHBaseUpgrade() throws Exception {
 
     System.setProperty(AbstractHBaseDataSetAdmin.SYSTEM_PROPERTY_FORCE_HBASE_UPGRADE, Boolean.TRUE.toString());
+    performCoprocessorUpgrade();
+  }
+
+  private void performCoprocessorUpgrade() throws Exception {
 
     LOG.info("Upgrading User and System HBase Tables ...");
     DatasetUpgrader dsUpgrade = injector.getInstance(DatasetUpgrader.class);
