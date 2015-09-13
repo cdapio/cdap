@@ -167,15 +167,19 @@ where
    * - ``<workflow-id>``
      - Name of the workflow
    * - ``<start-time>``
-     - Start time of runs; default is ``now`` (optional)
+     - Start time of runs (in seconds); default is ``now`` (optional)
    * - ``<end-time>``
-     - End time of runs; default is ``now-1d`` (optional)
+     - End time of runs (in seconds); default is ``now-1d`` (optional)
    * - ``<percentile-1>``
      - List of percentiles (each greater than zero and less than 100) to be used for generating statistics;
        if not provided, defaults to 90 (optional)
 
 If the query was successful, the body will contain a JSON structure of statistics.
 
+**Note:** When specifying start and end times, in addition to giving an absolute timestamp
+in seconds, you can specify a relative time, using ``now`` minus an increment with units.
+Examples: ``now-<n>s``, ``now-<n>m``,  ``now-<n>h``, or ``now-<n>d``.
+ 
 .. rubric:: HTTP Responses
 
 .. list-table::
