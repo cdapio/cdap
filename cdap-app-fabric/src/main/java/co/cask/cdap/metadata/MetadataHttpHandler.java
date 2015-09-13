@@ -19,9 +19,9 @@ package co.cask.cdap.metadata;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.MetadataSearchResultRecord;
-import co.cask.cdap.proto.MetadataSearchTargetType;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
+import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 

@@ -26,7 +26,7 @@ import co.cask.cdap.data2.dataset2.tx.Transactional;
 import co.cask.cdap.data2.metadata.dataset.BusinessMetadataDataset;
 import co.cask.cdap.data2.metadata.dataset.BusinessMetadataRecord;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.MetadataSearchTargetType;
+import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.base.Supplier;

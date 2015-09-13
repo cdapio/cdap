@@ -20,8 +20,8 @@ import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.MetadataSearchResultRecord;
-import co.cask.cdap.proto.MetadataSearchTargetType;
+import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
+import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 
 import java.util.Map;
 import java.util.Set;
