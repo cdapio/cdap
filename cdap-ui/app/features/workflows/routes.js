@@ -62,7 +62,7 @@ angular.module(`${PKG.name}.feature.workflows`)
             highlightTab: 'development'
           },
           ncyBreadcrumb: {
-            parent: 'apps.detail.overview.status',
+            parent: 'apps.detail.overview.programs',
             label: '{{$state.params.programId}}'
           },
           onExit: function($modalStack) {

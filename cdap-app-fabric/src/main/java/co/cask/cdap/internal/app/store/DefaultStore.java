@@ -214,7 +214,7 @@ public class DefaultStore implements Store {
               if (args == null) {
                 args = ImmutableMap.of();
               }
-              mds.apps.recordProgramStart(id, pid, nowSecs, target.getAdapterName(), target.getTwillRunId(), args);
+              mds.apps.recordProgramStart(id, pid, nowSecs, target.getTwillRunId(), args);
               break;
             case SUSPENDED:
               mds.apps.recordProgramSuspend(id, pid);
@@ -234,12 +234,12 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void setStart(final Id.Program id, final String pid, final long startTime, final String adapter,
+  public void setStart(final Id.Program id, final String pid, final long startTime,
                        final String twillRunId, final Map<String, String> runtimeArgs) {
     txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
       public Void apply(AppMds mds) throws Exception {
-        mds.apps.recordProgramStart(id, pid, startTime, adapter, twillRunId, runtimeArgs);
+        mds.apps.recordProgramStart(id, pid, startTime, twillRunId, runtimeArgs);
         return null;
       }
     });
@@ -247,7 +247,7 @@ public class DefaultStore implements Store {
 
   @Override
   public void setStart(Id.Program id, String pid, long startTime) {
-    setStart(id, pid, startTime, null, null, ImmutableMap.<String, String>of());
+    setStart(id, pid, startTime, null, ImmutableMap.<String, String>of());
   }
 
   @Override
@@ -365,18 +365,13 @@ public class DefaultStore implements Store {
 
   @Override
   public List<RunRecordMeta> getRuns(final Id.Program id, final ProgramRunStatus status,
-                                     final long startTime, final long endTime, final int limit, final String adapter) {
+                                     final long startTime, final long endTime, final int limit) {
     return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, List<RunRecordMeta>>() {
       @Override
       public List<RunRecordMeta> apply(AppMds mds) throws Exception {
-        return mds.apps.getRuns(id, status, startTime, endTime, limit, adapter);
+        return mds.apps.getRuns(id, status, startTime, endTime, limit);
       }
     });
-  }
-
-  @Override
-  public List<RunRecordMeta> getRuns(Id.Program id, ProgramRunStatus status, long startTime, long endTime, int limit) {
-    return getRuns(id, status, startTime, endTime, limit, null);
   }
 
   @Override
@@ -899,28 +894,6 @@ public class DefaultStore implements Store {
     });
   }
 
-  @Nullable
-  @Override
-  public AdapterStatus getAdapterStatus(final Id.Namespace id, final String name) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, AdapterStatus>() {
-      @Override
-      public AdapterStatus apply(AppMds mds) throws Exception {
-        return mds.apps.getAdapterStatus(id, name);
-      }
-    });
-  }
-
-  @Nullable
-  @Override
-  public AdapterStatus setAdapterStatus(final Id.Namespace id, final String name, final AdapterStatus status) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, AdapterStatus>() {
-      @Override
-      public AdapterStatus apply(AppMds mds) throws Exception {
-        return mds.apps.setAdapterStatus(id, name, status);
-      }
-    });
-  }
-
   @Override
   public Collection<AdapterDefinition> getAllAdapters(final Id.Namespace id) {
     return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Collection<AdapterDefinition>>() {
@@ -956,12 +929,12 @@ public class DefaultStore implements Store {
   @Override
   public void setWorkflowProgramStart(final Id.Program programId, final String programRunId, final String workflow,
                                       final String workflowRunId, final String workflowNodeId,
-                                      final long startTimeInSeconds, final String adapter, final String twillRunId) {
+                                      final long startTimeInSeconds, final String twillRunId) {
     txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
       public Void apply(AppMds mds) throws Exception {
         mds.apps.recordWorkflowProgramStart(programId, programRunId, workflow, workflowRunId, workflowNodeId,
-                                            startTimeInSeconds, adapter, twillRunId);
+                                            startTimeInSeconds, twillRunId);
         return null;
       }
     });

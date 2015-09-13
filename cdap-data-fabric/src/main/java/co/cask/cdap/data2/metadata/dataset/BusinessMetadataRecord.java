@@ -24,7 +24,7 @@ import javax.annotation.Nullable;
  * Represent Busineess Metadata for CDAP.
  */
 public class BusinessMetadataRecord {
-  private final Id.NamespacedId  targetId;
+  private final Id.NamespacedId targetId;
   private final String key;
   private final String value;
   private final String schema;

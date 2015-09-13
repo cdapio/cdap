@@ -16,14 +16,14 @@
 
 package co.cask.cdap.internal.app;
 
-import co.cask.cdap.api.artifact.ArtifactDescriptor;
-import co.cask.cdap.api.artifact.Plugin;
-import co.cask.cdap.api.artifact.PluginConfigurer;
-import co.cask.cdap.api.artifact.PluginSelector;
-import co.cask.cdap.api.templates.plugins.PluginClass;
-import co.cask.cdap.api.templates.plugins.PluginProperties;
-import co.cask.cdap.api.templates.plugins.PluginPropertyField;
+import co.cask.cdap.api.plugin.Plugin;
+import co.cask.cdap.api.plugin.PluginClass;
+import co.cask.cdap.api.plugin.PluginConfigurer;
+import co.cask.cdap.api.plugin.PluginProperties;
+import co.cask.cdap.api.plugin.PluginPropertyField;
+import co.cask.cdap.api.plugin.PluginSelector;
 import co.cask.cdap.internal.api.DefaultDatasetConfigurer;
+import co.cask.cdap.internal.app.runtime.adapter.ArtifactDescriptor;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.PluginNotExistsException;

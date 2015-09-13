@@ -19,8 +19,8 @@ package co.cask.cdap.api.worker;
 import co.cask.cdap.api.DatasetConfigurer;
 import co.cask.cdap.api.ProgramConfigurer;
 import co.cask.cdap.api.Resources;
-import co.cask.cdap.api.artifact.PluginConfigurer;
 import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.plugin.PluginConfigurer;
 
 /**
  * Interface for configuring {@link Worker}.

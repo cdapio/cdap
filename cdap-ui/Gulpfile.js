@@ -445,6 +445,6 @@ gulp.task('watch', ['jshint', 'watch:build'], function() {
   gulp.watch(['./app/directives/**/*.html', './app/features/home/home.html'], ['tpl']);
   gulp.watch('./app/features/**/*.html', ['html:partials']);
   gulp.watch('./app/img/**/*', ['img']);
-  gulp.watch('./app/index.html', ['html:main']);
+  gulp.watch('./app/index.html', ['html:main.dev']);
 
 });

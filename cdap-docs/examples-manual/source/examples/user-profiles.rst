@@ -120,7 +120,7 @@ Re-build the Application with Column-level Conflict Detection
 - Delete the ``profiles`` dataset, either through the CDAP Command Line Interface or
   by making a ``curl`` call::
 
-    curl -w'\n' -v localhost:10000/v3/namespaces/default/data/datasets/profiles -X DELETE
+    $ curl -w'\n' -v localhost:10000/v3/namespaces/default/data/datasets/profiles -X DELETE
 
 - Now, rebuild the application, setting the ``Table.PROPERTY_CONFLICT_LEVEL`` back to its
   original value, ``ConflictDetection.COLUMN.name()``.

@@ -29,7 +29,6 @@ import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.test.WorkerManager;
 import com.google.common.collect.ImmutableMap;
-import com.google.gson.Gson;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse;
 import org.elasticsearch.action.delete.DeleteResponse;
@@ -60,10 +59,6 @@ import static org.elasticsearch.node.NodeBuilder.nodeBuilder;
  * Test for {@link RealtimeElasticsearchSink}
  */
 public class RealtimeElasticsearchSinkTest extends ETLRealtimeBaseTest {
-  private static final Id.Namespace NAMESPACE = Id.Namespace.DEFAULT;
-  private static final Id.ApplicationTemplate TEMPLATE_ID = Id.ApplicationTemplate.from("ETLRealtime");
-  private static final Gson GSON = new Gson();
-
   private Client client;
   private Node node;
   private int port;

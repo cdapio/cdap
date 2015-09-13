@@ -22,19 +22,18 @@ import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.app.program.Program;
-import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.stream.StreamWriterFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.metadata.writer.ProgramContextAware;
 import co.cask.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.templates.AdapterDefinition;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
@@ -106,14 +105,17 @@ public class WorkerProgramRunner implements ProgramRunner {
                                                                 workerSpec.getDatasets(), newResources,
                                                                 Integer.valueOf(instances));
 
-    AdapterDefinition adapterSpec = getAdapterSpecification(options.getArguments());
+    // Setup dataset framework context, if required
+    if (datasetFramework instanceof ProgramContextAware) {
+      Id.Program programId = program.getId();
+      ((ProgramContextAware) datasetFramework).initContext(new Id.Run(programId, runId.getId()));
+    }
 
     BasicWorkerContext context = new BasicWorkerContext(
       newWorkerSpec, program, runId, instanceId, instanceCount,
       options.getUserArguments(), cConf,
       metricsCollectionService, datasetFramework,
       txClient, discoveryServiceClient, streamWriterFactory, locationFactory,
-      adapterSpec, createPluginInstantiator(adapterSpec, program.getClassLoader()),
       createArtifactPluginInstantiator(program.getClassLoader()));
     WorkerDriver worker = new WorkerDriver(program, newWorkerSpec, context);
 
@@ -121,25 +123,6 @@ public class WorkerProgramRunner implements ProgramRunner {
                                                                       workerSpec.getName() + "-" + instanceId);
     worker.start();
     return controller;
-  }
-
-  @Nullable
-  private AdapterDefinition getAdapterSpecification(Arguments arguments) {
-    // TODO: Refactor ProgramRunner class hierarchy to have common logic moved to a common parent.
-    if (!arguments.hasOption(ProgramOptionConstants.ADAPTER_SPEC)) {
-      return null;
-    }
-    return GSON.fromJson(arguments.getOption(ProgramOptionConstants.ADAPTER_SPEC), AdapterDefinition.class);
-  }
-
-  @Nullable
-  private PluginInstantiator createPluginInstantiator(@Nullable AdapterDefinition adapterSpec,
-                                                      ClassLoader programClassLoader) {
-    // TODO: Refactor ProgramRunner class hierarchy to have common logic moved to a common parent.
-    if (adapterSpec == null) {
-      return null;
-    }
-    return new PluginInstantiator(cConf, adapterSpec.getTemplate(), programClassLoader);
   }
 
   @Nullable

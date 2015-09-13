@@ -1,6 +1,8 @@
 Building and Starting
 =====================
 
+.. highlight:: console
+
 - You can either build the example (as described in :ref:`Building an Example Application 
   <cdap-building-running-example>`) or use the pre-built JAR file included in the CDAP SDK
   (as described in :ref:`Deploying an Application <cdap-building-running-deploying>`):

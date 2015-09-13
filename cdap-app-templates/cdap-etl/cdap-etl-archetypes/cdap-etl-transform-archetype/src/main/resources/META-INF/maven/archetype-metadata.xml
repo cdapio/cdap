@@ -14,9 +14,9 @@
   License for the specific language governing permissions and limitations under
   the License.
   -->
-<archetype-descriptor xmlns="http://maven.apache.org/plugins/maven-archetype-plugin/archetype/1.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/plugins/maven-archetype-plugin/archetype-descriptor/1.0.0 http://maven.apache.org/xsd/archetype-descriptor-1.0.0.xsd"
-  name="cdap-etl-realtime-sink-archetype">
+<archetype-descriptor xmlns="http://maven.apache.org/plugins/maven-archetype-plugin/archetype/1.0.0"
+                      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      name="cdap-etl-realtime-sink-archetype">
   <fileSets>
     <fileSet encoding="UTF-8" filtered="true" packaged="true">
       <directory>src/main/java</directory>

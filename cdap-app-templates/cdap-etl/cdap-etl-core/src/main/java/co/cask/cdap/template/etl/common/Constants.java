@@ -21,8 +21,6 @@ package co.cask.cdap.template.etl.common;
  */
 public final class Constants {
 
-  public static final String ADAPTER_NAME = "name";
-  public static final String CONFIG_KEY = "config";
   public static final String ID_SEPARATOR = ":";
 
   private Constants() {
@@ -45,8 +43,6 @@ public final class Constants {
    * Constants related to Sink.
    */
   public static final class Sink {
-    // keeping plugin id (singular) here temporarily until templates are removed
-    public static final String PLUGINID = "sinkId";
     public static final String PLUGINIDS = "sinkIds";
     public static final String PLUGINTYPE = "sink";
 

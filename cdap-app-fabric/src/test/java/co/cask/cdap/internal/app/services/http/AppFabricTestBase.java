@@ -19,14 +19,12 @@ package co.cask.cdap.internal.app.services.http;
 import co.cask.cdap.api.Config;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
-import co.cask.cdap.api.templates.ApplicationTemplate;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.app.store.ServiceStore;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
-import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data.stream.service.StreamService;
@@ -53,7 +51,6 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ObjectArrays;
 import com.google.common.io.ByteStreams;
-import com.google.common.io.Files;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
@@ -151,7 +148,6 @@ public abstract class AppFabricTestBase {
   private static ServiceStore serviceStore;
   private static MetadataService metadataService;
   private static LocationFactory locationFactory;
-  private static File adapterDir;
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
@@ -197,7 +193,6 @@ public abstract class AppFabricTestBase {
     metadataService = injector.getInstance(MetadataService.class);
     metadataService.startAndWait();
     locationFactory = getInjector().getInstance(LocationFactory.class);
-    adapterDir = new File(conf.get(Constants.AppFabric.APP_TEMPLATE_DIR));
     createNamespaces();
   }
 
@@ -526,12 +521,12 @@ public abstract class AppFabricTestBase {
       @Override
       public Boolean call() throws Exception {
         String statusURL = getVersionedAPIPath(String.format("apps/%s/schedules/%s/status",
-                                                             program.getApplicationId(), scheduleName),
-                                               Constants.Gateway.API_VERSION_3_TOKEN, program.getNamespaceId());
+            program.getApplicationId(), scheduleName),
+          Constants.Gateway.API_VERSION_3_TOKEN, program.getNamespaceId());
         HttpResponse response = doGet(statusURL);
         Preconditions.checkState(200 == response.getStatusLine().getStatusCode());
         Map<String, String> result = GSON.fromJson(EntityUtils.toString(response.getEntity()),
-                                                   MAP_STRING_STRING_TYPE);
+          MAP_STRING_STRING_TYPE);
         return result != null && "SCHEDULED".equals(result.get("status"));
       }
     }, timeout, timeoutUnit, 100, TimeUnit.MILLISECONDS);
@@ -634,8 +629,8 @@ public abstract class AppFabricTestBase {
       @Override
       public String call() throws Exception {
         String path = String.format("apps/%s/%s/%s/status",
-                                    programId.getApplicationId(),
-                                    programId.getType().getCategoryName(), programId.getId());
+          programId.getApplicationId(),
+          programId.getType().getCategoryName(), programId.getId());
         HttpResponse response = doGet(getVersionedAPIPath(path, programId.getNamespaceId()));
         JsonObject status = GSON.fromJson(EntityUtils.toString(response.getEntity()), JsonObject.class);
         if (status == null || !status.has("status")) {
@@ -649,11 +644,11 @@ public abstract class AppFabricTestBase {
   private static void createNamespaces() throws Exception {
 
     HttpResponse response = doPut(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, TEST_NAMESPACE1),
-                                  GSON.toJson(TEST_NAMESPACE_META1));
+      GSON.toJson(TEST_NAMESPACE_META1));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     response = doPut(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, TEST_NAMESPACE2),
-                     GSON.toJson(TEST_NAMESPACE_META2));
+      GSON.toJson(TEST_NAMESPACE_META2));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
   }
 
@@ -676,16 +671,10 @@ public abstract class AppFabricTestBase {
 
   protected HttpResponse programStatus(Id.Program program) throws Exception {
     String path = String.format("apps/%s/%s/%s/status",
-                                program.getApplicationId(),
-                                program.getType().getCategoryName(),
-                                program.getId());
+      program.getApplicationId(),
+      program.getType().getCategoryName(),
+      program.getId());
     return doGet(getVersionedAPIPath(path, program.getNamespaceId()));
-  }
-
-  protected String getAdapterStatus(Id.Adapter adapter) throws Exception {
-    String path = String.format("adapters/%s/status", adapter.getId());
-    HttpResponse response = doGet(getVersionedAPIPath(path, adapter.getNamespaceId()));
-    return getStatus(response);
   }
 
   private String getStatus(HttpResponse response) throws Exception {
@@ -698,7 +687,7 @@ public abstract class AppFabricTestBase {
   protected int suspendSchedule(String namespace, String appName, String schedule) throws Exception {
     String scheduleSuspend = String.format("apps/%s/schedules/%s/suspend", appName, schedule);
     String versionedScheduledSuspend = getVersionedAPIPath(scheduleSuspend, Constants.Gateway.API_VERSION_3_TOKEN,
-                                                           namespace);
+      namespace);
     HttpResponse response = doPost(versionedScheduledSuspend);
     return response.getStatusLine().getStatusCode();
   }
@@ -706,7 +695,7 @@ public abstract class AppFabricTestBase {
   protected int resumeSchedule(String namespace, String appName, String schedule) throws Exception {
     String scheduleResume = String.format("apps/%s/schedules/%s/resume", appName, schedule);
     HttpResponse response = doPost(getVersionedAPIPath(scheduleResume, Constants.Gateway.API_VERSION_3_TOKEN,
-                                                       namespace));
+      namespace));
     return response.getStatusLine().getStatusCode();
   }
 
@@ -750,12 +739,33 @@ public abstract class AppFabricTestBase {
     return streamAdmin.exists(streamID);
   }
 
-  protected static void setupAdapter(Class<? extends ApplicationTemplate> clz) throws IOException {
-    // Create a temp file to be included in the jar so that the jar is different every time even the same
-    // template class is given.
-    File randomFile = tmpFolder.newFile();
-    Location adapterJar = AppJarHelper.createDeploymentJar(locationFactory, clz, randomFile);
-    File destination =  new File(String.format("%s/%s.jar", adapterDir.getAbsolutePath(), clz.getSimpleName()));
-    Files.copy(Locations.newInputSupplier(adapterJar), destination);
+  protected HttpResponse createNamespace(String id) throws Exception {
+    return doPut(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, id));
+  }
+
+  protected HttpResponse deleteNamespace(String name) throws Exception {
+    return doDelete(String.format("%s/unrecoverable/namespaces/%s", Constants.Gateway.API_VERSION_3, name));
+  }
+
+  protected HttpResponse createNamespace(String metadata, String id) throws Exception {
+    return doPut(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, id), metadata);
+  }
+
+  protected HttpResponse listAllNamespaces() throws Exception {
+    return doGet(String.format("%s/namespaces", Constants.Gateway.API_VERSION_3));
+  }
+
+  protected HttpResponse getNamespace(String name) throws Exception {
+    Preconditions.checkArgument(name != null, "namespace name cannot be null");
+    return doGet(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, name));
+  }
+
+  protected HttpResponse deleteNamespaceData(String name) throws Exception {
+    return doDelete(String.format("%s/unrecoverable/namespaces/%s/datasets", Constants.Gateway.API_VERSION_3, name));
+  }
+
+  protected HttpResponse setProperties(String id, NamespaceMeta meta) throws Exception {
+    return doPut(String.format("%s/namespaces/%s/properties", Constants.Gateway.API_VERSION_3, id),
+                 GSON.toJson(meta));
   }
 }

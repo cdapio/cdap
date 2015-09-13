@@ -18,16 +18,12 @@ package co.cask.cdap.test;
 
 import co.cask.cdap.api.Config;
 import co.cask.cdap.api.app.Application;
-import co.cask.cdap.api.app.ApplicationConfigurer;
-import co.cask.cdap.api.app.ApplicationContext;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.api.templates.ApplicationTemplate;
-import co.cask.cdap.api.templates.plugins.PluginClass;
-import co.cask.cdap.api.templates.plugins.PluginPropertyField;
+import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.InMemoryProgramRunnerModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
@@ -76,7 +72,6 @@ import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
-import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.artifact.AppRequest;
@@ -464,81 +459,6 @@ public class ConfigurableTestBase {
   protected static ApplicationManager deployApplication(Id.Application appId,
                                                         AppRequest appRequest) throws Exception {
     return getTestManager().deployApplication(appId, appRequest);
-  }
-
-  /**
-   * Creates an adapter.
-   *
-   * @param adapterId The id of the adapter to create
-   * @param adapterConfig The configuration for the adapter
-   * @return An {@link AdapterManager} to manage the deployed adapter.
-   * @throws Exception if there was an exception deploying the adapter.
-   */
-  protected static AdapterManager createAdapter(Id.Adapter adapterId, AdapterConfig adapterConfig) throws Exception {
-    return getTestManager().createAdapter(adapterId, adapterConfig);
-  }
-
-  /**
-   * Deploys an {@link ApplicationTemplate}.
-   *
-   * @param namespace The namespace to deploy to
-   * @param templateId The id of the template. Must match the name set in
-   *                   {@link ApplicationTemplate#configure(ApplicationConfigurer, ApplicationContext)}
-   * @param templateClz The template class
-   * @param exportPackages The list of packages that should be visible to template plugins. For example,
-   *                       if your plugins implement an interface com.company.api.myinterface that is in your template,
-   *                       you will want to include 'com.company.api' in the list of export pacakges.
-   */
-  protected static void deployTemplate(Id.Namespace namespace, Id.ApplicationTemplate templateId,
-                                       Class<? extends ApplicationTemplate> templateClz,
-                                       String... exportPackages) throws IOException {
-    getTestManager().deployTemplate(namespace, templateId, templateClz, exportPackages);
-  }
-
-  /**
-   * Adds a plugins jar usable by the given template. Only supported in unit tests. Plugins added will not be visible
-   * until a call to {@link #deployTemplate(Id.Namespace, Id.ApplicationTemplate, Class, String...)} is made. The
-   * jar created will include all classes in the same package as the given plugin class, plus any dependencies of the
-   * that class and given additional classes.
-   * If another plugin in the same package as the given plugin requires a different set of dependent classes,
-   * you must include both plugins. For example, suppose you have two plugins,
-   * com.company.myapp.functions.functionX and com.company.myapp.function.functionY, with functionX having
-   * one set of dependencies and functionY having another set of dependencies. If you only add functionX, functionY
-   * will also be included in the created jar since it is in the same package. However, only functionX's dependencies
-   * will be traced and added to the jar, so you will run into issues when the platform tries to register functionY.
-   * In this scenario, you must be certain to include functionY in the list of classes when specifying functionX as the
-   * plugin class.
-   *
-   * @param templateId The id of the template to add the plugin for
-   * @param jarName The name to use for the plugin jar
-   * @param pluginClz A plugin class to add to the jar. Any other class that shares the same package will be included
-   *                  in the jar.
-   * @param classes Additional plugin classes whose dependencies should be added to the jar.
-   * @throws IOException
-   */
-  protected static void addTemplatePlugins(Id.ApplicationTemplate templateId, String jarName,
-                                           Class<?> pluginClz, Class<?>... classes) throws IOException {
-    getTestManager().addTemplatePlugins(templateId, jarName, pluginClz, classes);
-  }
-
-  /**
-   * Add a template plugin configuration file.
-   *
-   * @param templateId the id of the template to add the plugin config for
-   * @param fileName the name of the config file. The name should match the plugin jar file that it is for. For example,
-   *                 if you added a plugin named hsql-jdbc-1.0.0.jar, the config file must be named hsql-jdbc-1.0.0.json
-   * @param type the type of plugin
-   * @param name the name of the plugin
-   * @param description the description for the plugin
-   * @param className the class name of the plugin
-   * @param fields the fields the plugin uses
-   * @throws IOException
-   */
-  protected static void addTemplatePluginJson(Id.ApplicationTemplate templateId, String fileName,
-                                              String type, String name,
-                                              String description, String className,
-                                              PluginPropertyField... fields) throws IOException {
-    getTestManager().addTemplatePluginJson(templateId, fileName, type, name, description, className, fields);
   }
 
   /**

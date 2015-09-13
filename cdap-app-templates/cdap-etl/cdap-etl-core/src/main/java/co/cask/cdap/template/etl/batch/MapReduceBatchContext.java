@@ -20,13 +20,9 @@ import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.metrics.Metrics;
-import co.cask.cdap.api.templates.AdapterSpecification;
-import co.cask.cdap.api.templates.plugins.PluginProperties;
 import co.cask.cdap.template.etl.api.batch.BatchContext;
-import co.cask.cdap.template.etl.common.Constants;
 
 import java.util.Map;
-import javax.annotation.Nullable;
 
 /**
  * Abstract implementation of {@link BatchContext} using {@link MapReduceContext}.

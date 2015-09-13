@@ -16,7 +16,6 @@
 
 package co.cask.cdap.data2.metadata.lineage;
 
-import co.cask.cdap.proto.Id;
 import com.google.common.collect.ImmutableSet;
 
 import java.util.Objects;
@@ -27,25 +26,13 @@ import java.util.Set;
  */
 public class Lineage {
   private final Set<Relation> relations;
-  private final Set<Id.Program> programs;
-  private final Set<Id.DatasetInstance> data;
 
-  public Lineage(Set<Relation> relations, Set<Id.Program> programs, Set<Id.DatasetInstance> data) {
+  public Lineage(Set<Relation> relations) {
     this.relations = ImmutableSet.copyOf(relations);
-    this.programs = ImmutableSet.copyOf(programs);
-    this.data = ImmutableSet.copyOf(data);
   }
 
   public Set<Relation> getRelations() {
     return relations;
-  }
-
-  public Set<Id.Program> getPrograms() {
-    return programs;
-  }
-
-  public Set<Id.DatasetInstance> getData() {
-    return data;
   }
 
   @Override
@@ -57,22 +44,18 @@ public class Lineage {
       return false;
     }
     Lineage lineage = (Lineage) o;
-    return Objects.equals(relations, lineage.relations) &&
-      Objects.equals(programs, lineage.programs) &&
-      Objects.equals(data, lineage.data);
+    return Objects.equals(relations, lineage.relations);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(relations, programs, data);
+    return Objects.hash(relations);
   }
 
   @Override
   public String toString() {
     return "Lineage{" +
       "relations=" + relations +
-      ", programs=" + programs +
-      ", data=" + data +
       '}';
   }
 }

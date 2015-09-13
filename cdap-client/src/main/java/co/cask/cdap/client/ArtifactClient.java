@@ -19,7 +19,7 @@ package co.cask.cdap.client;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.templates.plugins.PluginClass;
+import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.ArtifactAlreadyExistsException;

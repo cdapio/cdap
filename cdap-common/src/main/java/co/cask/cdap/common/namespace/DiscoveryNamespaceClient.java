@@ -16,6 +16,7 @@
 
 package co.cask.cdap.common.namespace;
 
+import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
@@ -63,11 +64,11 @@ public class DiscoveryNamespaceClient extends AbstractNamespaceClient {
     return new URL(url);
   }
 
-  private InetSocketAddress getNamespaceServiceAddress() throws IOException {
+  private InetSocketAddress getNamespaceServiceAddress() {
     Discoverable discoverable = endpointStrategySupplier.get().pick(3L, TimeUnit.SECONDS);
     if (discoverable != null) {
       return discoverable.getSocketAddress();
     }
-    throw new IOException(String.format("Cannot discover service %s", Constants.Service.APP_FABRIC_HTTP));
+    throw new ServiceUnavailableException(Constants.Service.APP_FABRIC_HTTP);
   }
 }

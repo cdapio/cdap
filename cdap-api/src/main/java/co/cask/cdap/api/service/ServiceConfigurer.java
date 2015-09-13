@@ -17,7 +17,7 @@
 package co.cask.cdap.api.service;
 
 import co.cask.cdap.api.Resources;
-import co.cask.cdap.api.artifact.PluginConfigurer;
+import co.cask.cdap.api.plugin.PluginConfigurer;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 
 /**

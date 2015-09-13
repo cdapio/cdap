@@ -53,9 +53,6 @@ public class RealtimeCubeSinkTest extends ETLRealtimeBaseTest {
   @ClassRule
   public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", false);
 
-  private static final Gson GSON = new Gson();
-  private static final Id.ApplicationTemplate TEMPLATE_ID = Id.ApplicationTemplate.from("ETLRealtime");
-
   @Test
   public void test() throws Exception {
     ETLStage source = new ETLStage("DataGenerator", ImmutableMap.of(DataGeneratorSource.PROPERTY_TYPE,

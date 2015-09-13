@@ -154,7 +154,7 @@ public abstract class KafkaSimpleApiConsumer<KEY, PAYLOAD, OFFSET> {
    * @param emitter instance of {@link Emitter} to emit the messages.
    */
   public void pollMessages(Emitter<StructuredRecord> emitter) {
-    // Configure consumers late to read from Adapter SourceState
+    // Configure consumers late to read from SourceState
     if (consumerInfos == null) {
         consumerInfos = createConsumerInfos(kafkaConfigurer.getTopicPartitions());
     }

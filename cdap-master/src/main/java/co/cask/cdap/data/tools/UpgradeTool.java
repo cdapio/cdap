@@ -219,7 +219,7 @@ public class UpgradeTool {
           return new DatasetInstanceManager(mdsDatasetsRegistry);
         }
 
-        // This is needed because the LocalAdapterManager, LocalApplicationManager, LocalApplicationTemplateManager
+        // This is needed because the LocalApplicationManager
         // expects a dsframework injection named datasetMDS
         @Provides
         @Singleton

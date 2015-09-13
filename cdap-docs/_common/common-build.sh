@@ -378,6 +378,9 @@ function set_message() {
 }
 
 function consolidate_messages() {
+  if [[ "x${TMP_MESSAGES_FILE}" == "x" ]]; then
+    return
+  fi
   local m="Warning Messages for \"${MANUAL}\":"
   if [ "x${MESSAGES}" != "x" ]; then
     echo_red_bold "Consolidating messages" 

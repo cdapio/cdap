@@ -20,7 +20,7 @@ import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
 import co.cask.cdap.api.metrics.Metrics;
-import co.cask.cdap.api.templates.plugins.PluginProperties;
+import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.template.etl.api.batch.BatchRuntimeContext;
 import co.cask.cdap.template.etl.common.ScopedPluginContext;
 
@@ -49,42 +49,22 @@ public class MapReduceRuntimeContext extends ScopedPluginContext implements Batc
 
   @Override
   protected <T> T newScopedPluginInstance(String scopedPluginId) throws InstantiationException {
-    // temporary hack to let it support both templates and applications. Will be removed when templates are removed.
-    try {
-      return context.newPluginInstance(scopedPluginId);
-    } catch (UnsupportedOperationException e) {
-      return context.newInstance(scopedPluginId);
-    }
+    return context.newPluginInstance(scopedPluginId);
   }
 
   @Override
   protected <T> Class<T> loadScopedPluginClass(String scopedPluginId) {
-    // temporary hack until templates are removed, and to let this work for both apps and templates
-    try {
-      return context.loadPluginClass(scopedPluginId);
-    } catch (UnsupportedOperationException e) {
-      return context.loadClass(scopedPluginId);
-    }
+    return context.loadPluginClass(scopedPluginId);
   }
 
   @Override
   public PluginProperties getPluginProperties() {
-    // temporary hack to let it support both templates and applications. Will be removed when templates are removed.
-    try {
-      return context.getPluginProperties(stageId);
-    } catch (UnsupportedOperationException e) {
-      return context.getPluginProps(stageId);
-    }
+    return context.getPluginProperties(stageId);
   }
 
   @Override
   public PluginProperties getScopedPluginProperties(String scopedPluginId) {
-    // temporary hack to let it support both templates and applications. Will be removed when templates are removed.
-    try {
-      return context.getPluginProperties(scopedPluginId);
-    } catch (UnsupportedOperationException e) {
-      return context.getPluginProps(scopedPluginId);
-    }
+    return context.getPluginProperties(scopedPluginId);
   }
 
   @Override

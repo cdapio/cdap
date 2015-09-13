@@ -355,13 +355,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                             @PathParam("type") String type,
                             @PathParam("id") String id,
                             @PathParam("action") String action) throws NotFoundException, BadRequestException {
-    // If the app is an Application Template, then don't allow any action.
-    // Operations are only allowed through Adapter Lifecycle management.
-    if (adapterService.getApplicationTemplateInfo(appId) != null) {
-      responder.sendString(HttpResponseStatus.FORBIDDEN,
-                           "Operations on Application Templates are allowed only through Adapters.");
-      return;
-    }
 
     if (type.equals("schedules")) {
       suspendResumeSchedule(responder, namespaceId, appId, id, action);

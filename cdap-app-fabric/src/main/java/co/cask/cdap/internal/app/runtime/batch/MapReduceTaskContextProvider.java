@@ -87,8 +87,6 @@ public final class MapReduceTaskContextProvider {
                artifactLocationFactory,
                contextConfig.getInputDataSet(),
                contextConfig.getOutputDataSet(),
-               contextConfig.getAdapterSpec(),
-               getPluginInstantiator(contextConfig.getConfiguration()),
                getArtifactPluginInstantiator(contextConfig.getConfiguration())
         );
     }
@@ -146,19 +144,6 @@ public final class MapReduceTaskContextProvider {
       LOG.error("Failed to create program from {}", contextConfig.getProgramJarURI(), e);
       throw Throwables.propagate(e);
     }
-  }
-
-  @Nullable
-  private PluginInstantiator getPluginInstantiator(Configuration hConf) {
-    if (contextConfig.getAdapterSpec() == null) {
-      return null;
-    }
-
-    ClassLoader classLoader = Delegators.getDelegate(hConf.getClassLoader(), MapReduceClassLoader.class);
-    if (!(classLoader instanceof MapReduceClassLoader)) {
-      throw new IllegalArgumentException("ClassLoader is not an MapReduceClassLoader");
-    }
-    return ((MapReduceClassLoader) classLoader).getPluginInstantiator();
   }
 
   @Nullable

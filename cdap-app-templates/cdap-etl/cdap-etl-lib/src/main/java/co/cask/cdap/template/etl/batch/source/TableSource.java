@@ -27,7 +27,6 @@ import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.template.etl.api.Emitter;
 import co.cask.cdap.template.etl.api.PipelineConfigurer;
 import co.cask.cdap.template.etl.api.batch.BatchRuntimeContext;
-import co.cask.cdap.template.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.template.etl.common.Properties;
 import co.cask.cdap.template.etl.common.RowRecordTransformer;
 import co.cask.cdap.template.etl.common.TableConfig;

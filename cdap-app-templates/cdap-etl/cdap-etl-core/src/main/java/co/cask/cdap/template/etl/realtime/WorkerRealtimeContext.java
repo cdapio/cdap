@@ -17,12 +17,9 @@
 package co.cask.cdap.template.etl.realtime;
 
 import co.cask.cdap.api.metrics.Metrics;
-import co.cask.cdap.api.templates.AdapterSpecification;
 import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.api.worker.WorkerContext;
 import co.cask.cdap.template.etl.api.realtime.RealtimeContext;
-
-import javax.annotation.Nullable;
 
 /**
  * Implementation of {@link RealtimeContext} for {@link Worker} driver.
@@ -43,12 +40,6 @@ public class WorkerRealtimeContext extends RealtimeTransformContext implements R
   @Override
   public int getInstanceCount() {
     return context.getInstanceCount();
-  }
-
-  @Nullable
-  @Override
-  public AdapterSpecification getAdapterSpecification() {
-    return context.getAdapterSpecification();
   }
 
 }

@@ -18,7 +18,7 @@ package co.cask.cdap.template.etl.common;
 
 import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.annotation.Name;
-import co.cask.cdap.api.templates.plugins.PluginConfig;
+import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.template.etl.batch.sink.TableSink;
 import co.cask.cdap.template.etl.batch.source.TableSource;
 import co.cask.cdap.template.etl.realtime.sink.RealtimeTableSink;

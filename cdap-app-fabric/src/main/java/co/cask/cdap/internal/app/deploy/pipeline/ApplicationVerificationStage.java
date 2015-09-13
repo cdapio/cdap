@@ -37,7 +37,6 @@ import co.cask.cdap.app.verification.VerifyResult;
 import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
-import co.cask.cdap.internal.app.runtime.adapter.ApplicationTemplateInfo;
 import co.cask.cdap.internal.app.services.AdapterService;
 import co.cask.cdap.internal.app.verification.ApplicationVerification;
 import co.cask.cdap.internal.app.verification.DatasetCreationSpecVerifier;
@@ -91,14 +90,6 @@ public class ApplicationVerificationStage extends AbstractStage<ApplicationDeplo
 
     ApplicationSpecification specification = input.getSpecification();
     Id.Application appId = input.getId();
-
-    if (ApplicationDeployScope.USER.equals(input.getApplicationDeployScope())) {
-      ApplicationTemplateInfo applicationTemplateInfo = adapterService.getApplicationTemplateInfo(appId.getId());
-      if (applicationTemplateInfo != null) {
-        throw new RuntimeException(String.format(
-          "Cannot deploy Application %s. An ApplicationTemplate exists with a conflicting name.", appId));
-      }
-    }
 
     verifySpec(appId, specification);
     verifyData(appId, specification);

@@ -65,7 +65,6 @@ public class AppFabricServer extends AbstractIdleService {
   private final SchedulerService schedulerService;
   private final ProgramRuntimeService programRuntimeService;
   private final ApplicationLifecycleService applicationLifecycleService;
-  private final AdapterService adapterService;
   private final NotificationService notificationService;
   private final Set<String> servicesNames;
   private final Set<String> handlerHookNames;
@@ -88,7 +87,7 @@ public class AppFabricServer extends AbstractIdleService {
                          @Named(Constants.AppFabric.SERVER_ADDRESS) InetAddress hostname,
                          @Named(Constants.AppFabric.HANDLERS_BINDING) Set<HttpHandler> handlers,
                          @Nullable MetricsCollectionService metricsCollectionService,
-                         ProgramRuntimeService programRuntimeService, AdapterService adapterService,
+                         ProgramRuntimeService programRuntimeService,
                          ApplicationLifecycleService applicationLifecycleService,
                          ProgramLifecycleService programLifecycleService,
                          StreamCoordinatorClient streamCoordinatorClient,
@@ -103,7 +102,6 @@ public class AppFabricServer extends AbstractIdleService {
     this.configuration = configuration;
     this.metricsCollectionService = metricsCollectionService;
     this.programRuntimeService = programRuntimeService;
-    this.adapterService = adapterService;
     this.notificationService = notificationService;
     this.servicesNames = servicesNames;
     this.handlerHookNames = handlerHookNames;
@@ -125,7 +123,6 @@ public class AppFabricServer extends AbstractIdleService {
     notificationService.start();
     schedulerService.start();
     applicationLifecycleService.start();
-    adapterService.start();
     systemArtifactLoader.start();
     programRuntimeService.start();
     streamCoordinatorClient.start();
@@ -213,7 +210,6 @@ public class AppFabricServer extends AbstractIdleService {
     schedulerService.stopAndWait();
     applicationLifecycleService.stopAndWait();
     systemArtifactLoader.stopAndWait();
-    adapterService.stopAndWait();
     notificationService.stopAndWait();
     programLifecycleService.stopAndWait();
   }

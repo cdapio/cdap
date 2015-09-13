@@ -18,23 +18,18 @@ package co.cask.cdap.gateway.handlers.util;
 
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
-import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;
-import co.cask.cdap.proto.ApplicationRecord;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Closeables;
@@ -109,9 +104,6 @@ public abstract class AbstractAppFabricHttpHandler extends AbstractHttpHandler {
 
     public static final AppFabricServiceStatus INTERNAL_ERROR =
       new AppFabricServiceStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Internal server error");
-
-    public static final AppFabricServiceStatus ADAPTER_CONFLICT =
-      new AppFabricServiceStatus(HttpResponseStatus.FORBIDDEN, "An ApplicationTemplate exists with conflicting name.");
 
     private final HttpResponseStatus code;
     private final String message;

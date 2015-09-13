@@ -65,7 +65,6 @@ import co.cask.cdap.templates.AdapterDefinition;
 import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.inject.Injector;
@@ -168,48 +167,6 @@ public class DefaultStoreTest {
     List<RunRecordMeta> history = store.getRuns(programId, ProgramRunStatus.ALL,
                                                 0, Long.MAX_VALUE, Integer.MAX_VALUE);
     Assert.assertEquals(2, history.size());
-  }
-
-  @Test
-  public void testAdapterLogRunHistory() throws Exception {
-    String adapter = "adapter1";
-    Id.Program programId = Id.Program.from("ns1", "app1", ProgramType.WORKER, "wrk1");
-    long now = System.currentTimeMillis();
-    long nowSecs = TimeUnit.MILLISECONDS.toSeconds(now);
-    RunId run1 = RunIds.generate(now - 20000);
-
-    // Record start through an Adapter but try to stop the run outside of an adapter.
-    store.setStart(programId, run1.getId(), runIdToSecs(run1), adapter, null, ImmutableMap.<String, String>of());
-
-    // RunRecordMeta should be available through RunRecordMeta query for that Program.
-    RunRecordMeta programRun = store.getRun(programId, run1.getId());
-    Assert.assertNotNull(programRun);
-    Assert.assertEquals(run1.getId(), programRun.getPid());
-
-    store.setStop(programId, run1.getId(), nowSecs - 10, ProgramController.State.COMPLETED.getRunStatus());
-
-    RunRecordMeta adapterRun = store.getRun(programId, run1.getId());
-    Assert.assertNotNull(adapterRun);
-    Assert.assertEquals(run1.getId(), adapterRun.getPid());
-
-    // RunRecordMetas query for the Program under different Adapter name should not return anything
-    List<RunRecordMeta> records = store.getRuns(programId, ProgramRunStatus.ALL, 0, Long.MAX_VALUE, Integer.MAX_VALUE,
-                                                "invalidAdapter");
-    Assert.assertTrue(records.isEmpty());
-
-    // RunRecordMetas query for the Program should return the RunRecordMeta
-    List<RunRecordMeta> runRecords = store.getRuns(programId, ProgramRunStatus.ALL, 0, Long.MAX_VALUE,
-                                                   Integer.MAX_VALUE);
-    Assert.assertEquals(1, runRecords.size());
-    Assert.assertEquals(run1.getId(), Iterables.getFirst(runRecords, null).getPid());
-
-    List<RunRecordMeta> adapterRuns = store.getRuns(programId, ProgramRunStatus.ALL, 0, Long.MAX_VALUE,
-                                                    Integer.MAX_VALUE, adapter);
-    List<RunRecordMeta> completedRuns = store.getRuns(programId, ProgramRunStatus.COMPLETED, 0, Long.MAX_VALUE,
-                                                      Integer.MAX_VALUE, adapter);
-    Assert.assertEquals(adapterRuns, completedRuns);
-    Assert.assertEquals(1, adapterRuns.size());
-    Assert.assertEquals(run1.getId(), Iterables.getFirst(adapterRuns, null).getPid());
   }
 
   @Test
@@ -328,12 +285,12 @@ public class DefaultStoreTest {
 
     // Get run record for run5
     RunRecordMeta expectedRecord5 = new RunRecordMeta(run5.getId(), nowSecs - 8, nowSecs - 4,
-                                                      ProgramRunStatus.COMPLETED, null, noRuntimeArgsProps, null);
+                                                      ProgramRunStatus.COMPLETED, noRuntimeArgsProps, null);
     RunRecordMeta actualRecord5 = store.getRun(programId, run5.getId());
     Assert.assertEquals(expectedRecord5, actualRecord5);
 
     // Get run record for run6
-    RunRecordMeta expectedRecord6 = new RunRecordMeta(run6.getId(), nowSecs - 2, null, ProgramRunStatus.RUNNING, null,
+    RunRecordMeta expectedRecord6 = new RunRecordMeta(run6.getId(), nowSecs - 2, null, ProgramRunStatus.RUNNING,
                                                       noRuntimeArgsProps, null);
     RunRecordMeta actualRecord6 = store.getRun(programId, run6.getId());
     Assert.assertEquals(expectedRecord6, actualRecord6);
@@ -659,10 +616,10 @@ public class DefaultStoreTest {
     Id.Run mapreduceProgramRunId = new Id.Run(mapreduceProgramId, mapreduceRunId);
     Id.Run workflowProgramRunId = new Id.Run(workflowProgramId, workflowRunId);
 
-    store.setStart(flowProgramId, flowRunId, System.currentTimeMillis(), null, null, ImmutableMap.of("model", "click"));
-    store.setStart(mapreduceProgramId, mapreduceRunId, System.currentTimeMillis(), null, null,
+    store.setStart(flowProgramId, flowRunId, System.currentTimeMillis(), null, ImmutableMap.of("model", "click"));
+    store.setStart(mapreduceProgramId, mapreduceRunId, System.currentTimeMillis(), null,
                    ImmutableMap.of("path", "/data"));
-    store.setStart(workflowProgramId, workflowRunId, System.currentTimeMillis(), null, null,
+    store.setStart(workflowProgramId, workflowRunId, System.currentTimeMillis(), null,
                    ImmutableMap.of("whitelist", "cask"));
 
     Map<String, String> args = store.getRuntimeArguments(flowProgramRunId);

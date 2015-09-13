@@ -99,13 +99,11 @@ public final class LoggingContextHelper {
     } else if (tags.containsKey(WorkflowLoggingContext.TAG_WORKFLOW_ID)) {
       return new WorkflowLoggingContext(namespaceId, applicationId,
                                         tags.get(WorkflowLoggingContext.TAG_WORKFLOW_ID),
-                                        tags.get(ApplicationLoggingContext.TAG_RUNID_ID),
-                                        tags.get(ApplicationLoggingContext.TAG_ADAPTER_ID));
+                                        tags.get(ApplicationLoggingContext.TAG_RUNID_ID));
     } else if (tags.containsKey(MapReduceLoggingContext.TAG_MAP_REDUCE_JOB_ID)) {
       return new MapReduceLoggingContext(namespaceId, applicationId,
                                          tags.get(MapReduceLoggingContext.TAG_MAP_REDUCE_JOB_ID),
-                                         tags.get(ApplicationLoggingContext.TAG_RUNID_ID),
-                                         tags.get(ApplicationLoggingContext.TAG_ADAPTER_ID));
+                                         tags.get(ApplicationLoggingContext.TAG_RUNID_ID));
     } else if (tags.containsKey(SparkLoggingContext.TAG_SPARK_JOB_ID)) {
         return new SparkLoggingContext(namespaceId, applicationId, tags.get(SparkLoggingContext.TAG_SPARK_JOB_ID),
                                        tags.get(ApplicationLoggingContext.TAG_RUNID_ID));
@@ -124,8 +122,7 @@ public final class LoggingContextHelper {
     } else if (tags.containsKey(WorkerLoggingContext.TAG_WORKER_ID)) {
       return new WorkerLoggingContext(namespaceId, applicationId, tags.get(WorkerLoggingContext.TAG_WORKER_ID),
                                       tags.get(ApplicationLoggingContext.TAG_RUNID_ID),
-                                      tags.get(ApplicationLoggingContext.TAG_INSTANCE_ID),
-                                      tags.get(ApplicationLoggingContext.TAG_ADAPTER_ID));
+                                      tags.get(ApplicationLoggingContext.TAG_INSTANCE_ID));
     }
 
     throw new IllegalArgumentException("Unsupported logging context");
@@ -140,33 +137,26 @@ public final class LoggingContextHelper {
     return getLoggingContext(namespaceId, applicationId, entityId, programType, null);
   }
 
-  public static LoggingContext getLoggingContext(String namespaceId, String applicationId, String entityId,
-                                                 ProgramType programType, @Nullable String adapterName) {
-    return getLoggingContext(namespaceId, applicationId, entityId, programType, null, adapterName);
-  }
-
   public static LoggingContext getLoggingContextWithRunId(String namespaceId, String applicationId, String entityId,
-                                                          ProgramType programType, String runId,
-                                                          @Nullable String adapterName) {
-    return getLoggingContext(namespaceId, applicationId, entityId, programType, runId, adapterName);
+                                                          ProgramType programType, String runId) {
+    return getLoggingContext(namespaceId, applicationId, entityId, programType, runId);
   }
 
   public static LoggingContext getLoggingContext(String namespaceId, String applicationId, String entityId,
-                                                 ProgramType programType, @Nullable String runId,
-                                                 @Nullable String adapterName) {
+                                                 ProgramType programType, @Nullable String runId) {
     switch (programType) {
       case FLOW:
         return new FlowletLoggingContext(namespaceId, applicationId, entityId, "", runId, null);
       case WORKFLOW:
-        return new WorkflowLoggingContext(namespaceId, applicationId, entityId, runId, adapterName);
+        return new WorkflowLoggingContext(namespaceId, applicationId, entityId, runId);
       case MAPREDUCE:
-        return new MapReduceLoggingContext(namespaceId, applicationId, entityId, runId, adapterName);
+        return new MapReduceLoggingContext(namespaceId, applicationId, entityId, runId);
       case SPARK:
         return new SparkLoggingContext(namespaceId, applicationId, entityId, runId);
       case SERVICE:
         return new UserServiceLoggingContext(namespaceId, applicationId, entityId, "", runId, null);
       case WORKER:
-        return new WorkerLoggingContext(namespaceId, applicationId, entityId, runId, null, adapterName);
+        return new WorkerLoggingContext(namespaceId, applicationId, entityId, runId, null);
       default:
         throw new IllegalArgumentException(String.format("Illegal entity type for logging context: %s", programType));
     }

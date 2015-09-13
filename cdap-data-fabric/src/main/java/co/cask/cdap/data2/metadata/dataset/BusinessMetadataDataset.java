@@ -24,31 +24,60 @@ import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.proto.Id;
-
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
+import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
-import com.google.common.base.Throwables;
-import com.google.common.collect.Lists;
+import com.google.common.base.Splitter;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
- * Implementation of Business Metadata on top of {@link IndexedTable}.
+ * Dataset that manages Business Metadata using an {@link IndexedTable}.
  */
 public class BusinessMetadataDataset extends AbstractDataset {
+  private static final String TAGS_KEY = "tags";
+  private static final String TAGS_SEPARATOR = ",";
+
   // column keys
-  public static final String KEYVALUE_COLUMN = "kv";
-  public static final String VALUE_COLUMN = "v";
+  static final String KEYVALUE_COLUMN = "kv";
+  static final String VALUE_COLUMN = "v";
+
+  /**
+   * Identifies the type of metadata - property or tag
+   */
+  private static enum MetadataType {
+    PROPERTY("p"),
+    TAG("t");
+
+    private final String serializedForm;
+
+    private MetadataType(String serializedForm) {
+      this.serializedForm = serializedForm;
+    }
+
+    @Override
+    public String toString() {
+      return serializedForm;
+    }
+  }
+
+  public static final String KEYVALUE_SEPARATOR = ":";
 
   private final IndexedTable indexedTable;
 
   public BusinessMetadataDataset(IndexedTable indexedTable) {
-    super("ignore", indexedTable);
+    super("businessMetadataIndexedTable", indexedTable);
     this.indexedTable = indexedTable;
   }
 
@@ -56,57 +85,104 @@ public class BusinessMetadataDataset extends AbstractDataset {
    * Add new business metadata.
    *
    * @param metadataRecord The value of the metadata to be saved.
+   * @param metadataType {@link MetadataType} indicating the type of metadata - property or tag
    */
-  public void createBusinessMetadata(BusinessMetadataRecord metadataRecord) {
+  private void setBusinessMetadata(BusinessMetadataRecord metadataRecord, MetadataType metadataType) {
     Id.NamespacedId targetId = metadataRecord.getTargetId();
     String key = metadataRecord.getKey();
-    MDSKey mdsKey = getMDSKey(targetId, key);
+    MDSKey mdsKey = getMDSKey(targetId, metadataType, key);
 
     // Put to the default column.
     write(mdsKey, metadataRecord);
   }
 
   /**
-   * Add new business metadata.
+   * Sets a business metadata property for the specified {@link Id.NamespacedId}.
    *
    * @param targetId The target Id: app-id(ns+app) / program-id(ns+app+pgtype+pgm) /
-   *                 dataset-id(ns+dataset)/stream-id(ns+stream).
-   * @param key The metadata key to be added.
-   * @param value The metadata value to be added.
+   *                 dataset-id(ns+dataset)/stream-id(ns+stream)
+   * @param key The metadata key to be added
+   * @param value The metadata value to be added
    */
-  public void createBusinessMetadata(Id.NamespacedId targetId, String key, String value) {
-    createBusinessMetadata(new BusinessMetadataRecord(targetId, key, value));
+  public void setProperty(Id.NamespacedId targetId, String key, String value) {
+    setBusinessMetadata(new BusinessMetadataRecord(targetId, key, value), MetadataType.PROPERTY);
+  }
+
+  /**
+   * Replaces existing tags of the specified {@link Id.NamespacedId} with a new set of tags.
+   *
+   * @param targetId The target Id: app-id(ns+app) / program-id(ns+app+pgtype+pgm) /
+   *                 dataset-id(ns+dataset)/stream-id(ns+stream)
+   * @param tags the tags to set
+   */
+  private void setTags(Id.NamespacedId targetId, String ... tags) {
+    BusinessMetadataRecord tagsRecord =
+      new BusinessMetadataRecord(targetId, TAGS_KEY, Joiner.on(TAGS_SEPARATOR).join(tags));
+    setBusinessMetadata(tagsRecord, MetadataType.TAG);
+  }
+
+  /**
+   * Adds a new tag for the specified {@link Id.NamespacedId}.
+   *
+   * @param targetId the target Id: app-id(ns+app) / program-id(ns+app+pgtype+pgm) /
+   *                 dataset-id(ns+dataset)/stream-id(ns+stream).
+   * @param tagsToAdd the tags to add
+   */
+  public void addTags(Id.NamespacedId targetId, String ... tagsToAdd) {
+    Set<String> existingTags = getTags(targetId);
+    Iterable<String> newTags = Iterables.concat(existingTags, Arrays.asList(tagsToAdd));
+    BusinessMetadataRecord newTagsRecord =
+      new BusinessMetadataRecord(targetId, TAGS_KEY, Joiner.on(TAGS_SEPARATOR).join(newTags));
+    setBusinessMetadata(newTagsRecord, MetadataType.TAG);
   }
 
   /**
    * Return business metadata based on type, target id, and key.
    *
-   * @param targetId The id of the target.
-   * @param key The metadata key to get.
-   * @return instance of {@link BusinessMetadataRecord} for the target type, id, and key.
+   * @param targetId The id of the target
+   * @param metadataType {@link MetadataType} indicating the type of metadata to retrieve - property or tag
+   * @param key The metadata key to get
+   * @return instance of {@link BusinessMetadataRecord} for the target type, id, and key
    */
   @Nullable
-  public BusinessMetadataRecord getBusinessMetadata(Id.NamespacedId targetId, String key) {
-    MDSKey mdsKey = getMDSKey(targetId, key);
+  private BusinessMetadataRecord getBusinessMetadata(Id.NamespacedId targetId, MetadataType metadataType, String key) {
+    MDSKey mdsKey = getMDSKey(targetId, metadataType, key);
     Row row = indexedTable.get(mdsKey.getKey());
     if (row.isEmpty()) {
       return null;
     }
 
     byte[] value = row.get(VALUE_COLUMN);
+    if (value == null) {
+      // This can happen when all tags are moved one by one. The row still exists, but the value is null.
+      return null;
+    }
 
     return new BusinessMetadataRecord(targetId, key, Bytes.toString(value));
+  }
+
+  /**
+   * Retrieve the {@link BusinessMetadataRecord} corresponding to the specified key for the {@link Id.NamespacedId}.
+   *
+   * @param targetId the {@link Id.NamespacedId} for which the {@link BusinessMetadataRecord} is to be retrieved
+   * @param key the property key for which the {@link BusinessMetadataRecord} is to be retrieved
+   * @return the {@link BusinessMetadataRecord} corresponding to the specified key for the {@link Id.NamespacedId}
+   */
+  @Nullable
+  public BusinessMetadataRecord getProperty(Id.NamespacedId targetId, String key) {
+    return getBusinessMetadata(targetId, MetadataType.PROPERTY, key);
   }
 
   /**
    * Retrieves the business metadata for the specified {@link Id.NamespacedId}.
    *
    * @param targetId the specified {@link Id.NamespacedId}
+   * @param metadataType {@link MetadataType} indicating the type of metadata to retrieve - property or tag
    * @return a Map representing the metadata for the specified {@link Id.NamespacedId}
    */
-  public Map<String, String> getBusinessMetadata(Id.NamespacedId targetId) {
+  private Map<String, String> getBusinessMetadata(Id.NamespacedId targetId, MetadataType metadataType) {
     String targetType = getTargetType(targetId);
-    MDSKey mdsKey = getMDSKey(targetId, null);
+    MDSKey mdsKey = getMDSKey(targetId, metadataType, null);
     byte[] startKey = mdsKey.getKey();
     byte[] stopKey = Bytes.stopKeyForPrefix(startKey);
 
@@ -129,23 +205,49 @@ public class BusinessMetadataDataset extends AbstractDataset {
   }
 
   /**
+   * Retrieves all the properties for the specified {@link Id.NamespacedId}.
+   *
+   * @param targetId the {@link Id.NamespacedId} for which properties are to be retrieved
+   * @return the properties of the specified {@link Id.NamespacedId}
+   */
+  public Map<String, String> getProperties(Id.NamespacedId targetId) {
+    return getBusinessMetadata(targetId, MetadataType.PROPERTY);
+  }
+
+  /**
+   * Retrieves all the tags for the specified {@link Id.NamespacedId}.
+   *
+   * @param targetId the {@link Id.NamespacedId} for which tags are to be retrieved
+   * @return the tags of the specified {@link Id.NamespacedId}
+   */
+  public Set<String> getTags(Id.NamespacedId targetId) {
+    BusinessMetadataRecord tags = getBusinessMetadata(targetId, MetadataType.TAG, TAGS_KEY);
+    if (tags == null) {
+      return new HashSet<>();
+    }
+    return Sets.newHashSet(Splitter.on(TAGS_SEPARATOR).omitEmptyStrings().trimResults().split(tags.getValue()));
+  }
+
+  /**
    * Removes all business metadata for the specified {@link Id.NamespacedId}.
    *
-   * @param targetId the {@link Id.NamespacedId} for which metadata is to be removed.
+   * @param targetId the {@link Id.NamespacedId} for which metadata is to be removed
+   * @param metadataType {@link MetadataType} indicating the type of metadata to remove - property or tag
    */
-  public void removeMetadata(Id.NamespacedId targetId) {
-    removeMetadata(targetId, Predicates.<String>alwaysTrue());
+  private void removeMetadata(Id.NamespacedId targetId, MetadataType metadataType) {
+    removeMetadata(targetId, metadataType, Predicates.<String>alwaysTrue());
   }
 
   /**
    * Removes the specified keys from the business metadata of the specified {@link Id.NamespacedId}.
    *
-   * @param targetId the {@link Id.NamespacedId} for which the specified metadata keys are to be removed.
+   * @param targetId the {@link Id.NamespacedId} for which the specified metadata keys are to be removed
+   * @param metadataType {@link MetadataType} indicating the type of metadata to remove - property or tag
    * @param keys the keys to remove from the metadata of the specified {@link Id.NamespacedId}
    */
-  public void removeMetadata(Id.NamespacedId targetId, String ... keys) {
+  private void removeMetadata(Id.NamespacedId targetId, MetadataType metadataType, String ... keys) {
     final Set<String> keySet = Sets.newHashSet(keys);
-    removeMetadata(targetId, new Predicate<String>() {
+    removeMetadata(targetId, metadataType, new Predicate<String>() {
       @Override
       public boolean apply(String input) {
         return keySet.contains(input);
@@ -156,12 +258,13 @@ public class BusinessMetadataDataset extends AbstractDataset {
   /**
    * Removes all keys that satisfy a given predicate from the metadata of the specified {@link Id.NamespacedId}.
    *
-   * @param targetId the {@link Id.NamespacedId} for which keys are to be removed.
-   * @param filter the {@link Predicate} that should be satisfied to remove a key.
+   * @param targetId the {@link Id.NamespacedId} for which keys are to be removed
+   * @param metadataType {@link MetadataType} indicating the type of metadata to remove - property or tag
+   * @param filter the {@link Predicate} that should be satisfied to remove a key
    */
-  public void removeMetadata(Id.NamespacedId targetId, Predicate<String> filter) {
+  private void removeMetadata(Id.NamespacedId targetId, MetadataType metadataType, Predicate<String> filter) {
     String targetType = getTargetType(targetId);
-    MDSKey mdsKey = getMDSKey(targetId, null);
+    MDSKey mdsKey = getMDSKey(targetId, metadataType, null);
     byte[] prefix = mdsKey.getKey();
     byte[] stopKey = Bytes.stopKeyForPrefix(prefix);
 
@@ -184,25 +287,114 @@ public class BusinessMetadataDataset extends AbstractDataset {
   }
 
   /**
-   * Find the instance of {@link BusinessMetadataRecord} based on key.
+   * Removes the specified keys from the metadata properties of an entity.
    *
-   * @param value The metadata value to be found.
-   * @return The {@Iterable} of {@link BusinessMetadataRecord} that fit the key.
+   * @param targetId the {@link Id.NamespacedId} from which to remove the specified keys
+   * @param keys the keys to remove
    */
-  public Iterable<BusinessMetadataRecord> findBusinessMetadataOnValue(String value) {
-
-    // TODO ADD CODE
-
-    return Lists.newArrayList();
+  public void removeProperties(Id.NamespacedId targetId, String ... keys) {
+    removeMetadata(targetId, MetadataType.PROPERTY, keys);
   }
 
-  void addNamespaceIdToKey(final MDSKey.Builder builder, Id.NamespacedId namespacedId) {
+  /**
+   * Removes the specified tags from the specified entity.
+   *
+   * @param targetId the {@link Id.NamespacedId} from which to remove the specified tags
+   * @param tagsToRemove the tags to remove
+   */
+  public void removeTags(Id.NamespacedId targetId, String ... tagsToRemove) {
+    Set<String> existingTags = getTags(targetId);
+    if (existingTags.isEmpty()) {
+      // nothing to remove
+      return;
+    }
+
+    Iterables.removeAll(existingTags, Arrays.asList(tagsToRemove));
+
+    setTags(targetId, Iterables.toArray(existingTags, String.class));
+  }
+
+  /**
+   * Removes all properties from the specified entity.
+   *
+   * @param targetId the {@link Id.NamespacedId} for which to remove the properties
+   */
+  public void removeProperties(Id.NamespacedId targetId) {
+    removeMetadata(targetId, MetadataType.PROPERTY);
+  }
+
+  /**
+   * Removes all tags from the specified entity.
+   *
+   * @param targetId the {@link Id.NamespacedId} for which to remove the tags
+   */
+  public void removeTags(Id.NamespacedId targetId) {
+    removeMetadata(targetId, MetadataType.TAG);
+  }
+
+  /**
+   * Find the instance of {@link BusinessMetadataRecord} based on key.
+   *
+   * @param value The metadata value to be found
+   * @param type The target type of objects to search from
+   * @return The {@link Iterable} of {@link BusinessMetadataRecord} that fit the value
+   */
+  public List<BusinessMetadataRecord> findBusinessMetadataOnValue(String value, MetadataSearchTargetType type) {
+    return executeSearchOnColumns(BusinessMetadataDataset.VALUE_COLUMN, value, type);
+  }
+
+  /**
+   * Find the instance of {@link BusinessMetadataRecord} for key:value pair
+   *
+   * @param keyValue The metadata value to be found.
+   * @param type The target type of objects to search from.
+   * @return The {@link Iterable} of {@link BusinessMetadataRecord} that fit the key value pair.
+   */
+  public List<BusinessMetadataRecord> findBusinessMetadataOnKeyValue(String keyValue, MetadataSearchTargetType type) {
+    return executeSearchOnColumns(BusinessMetadataDataset.KEYVALUE_COLUMN, keyValue, type);
+  }
+
+  // Helper method to execute IndexedTable search on target index column.
+  List<BusinessMetadataRecord> executeSearchOnColumns(String column, String searchValue,
+                                                      MetadataSearchTargetType type) {
+    List<BusinessMetadataRecord> results = new LinkedList<>();
+    Scanner scanner = indexedTable.readByIndex(Bytes.toBytes(column), Bytes.toBytes(searchValue));
+    try {
+      Row next;
+      while ((next = scanner.next()) != null) {
+        String rowValue = next.getString(VALUE_COLUMN);
+        if (rowValue == null) {
+          continue;
+        }
+
+        final byte[] rowKey = next.getRow();
+        String targetType = getTargetType(rowKey);
+
+        // Filter on target type if not ALL
+        if ((type != MetadataSearchTargetType.ALL) && (!targetType.equals(type.getInternalName()))) {
+          continue;
+        }
+
+        Id.NamespacedId targetId = getNamespaceIdFromKey(targetType, new MDSKey(rowKey));
+        String key = getMetadataKey(targetType, rowKey);
+        String value = Bytes.toString(next.get(Bytes.toBytes(BusinessMetadataDataset.VALUE_COLUMN)));
+        BusinessMetadataRecord record = new BusinessMetadataRecord(targetId, key, value);
+        results.add(record);
+      }
+    } finally {
+      scanner.close();
+    }
+
+    return results;
+  }
+
+  private void addNamespaceIdToKey(MDSKey.Builder builder, Id.NamespacedId namespacedId) {
     String type = getTargetType(namespacedId);
     if (type.equals(Id.Program.class.getSimpleName())) {
       Id.Program program = (Id.Program) namespacedId;
       String namespaceId = program.getNamespaceId();
       String appId = program.getApplicationId();
-      String programType = program.getType().toString();
+      String programType = program.getType().name();
       String programId = program.getId();
       builder.add(namespaceId);
       builder.add(appId);
@@ -231,11 +423,10 @@ public class BusinessMetadataDataset extends AbstractDataset {
     }
   }
 
-  Id.NamespacedId getNamespaceIdFromKey(Class<? extends Id> idType, MDSKey key) {
-    String type = Id.getType(idType);
+  private Id.NamespacedId getNamespaceIdFromKey(String type, MDSKey key) {
     MDSKey.Splitter keySplitter = key.split();
 
-    // The rowkey is [targetType][targetId][key], so skip the first string.
+    // The rowkey is [targetType][targetId][metadata-type][key], so skip the first string.
     keySplitter.skipString();
     if (type.equals(Id.Program.class.getSimpleName())) {
       String namespaceId = keySplitter.getString();
@@ -260,25 +451,22 @@ public class BusinessMetadataDataset extends AbstractDataset {
   }
 
   private void write(MDSKey id, BusinessMetadataRecord record) {
-    try {
-      Put put = new Put(id.getKey());
+    Put put = new Put(id.getKey());
 
-      // Now add the index columns.
-      put.add(Bytes.toBytes(KEYVALUE_COLUMN), Bytes.toBytes(record.getKey() + ":" + record.getValue()));
-      put.add(Bytes.toBytes(VALUE_COLUMN), Bytes.toBytes(record.getValue()));
+     // Now add the index columns.
+    put.add(Bytes.toBytes(KEYVALUE_COLUMN), Bytes.toBytes(record.getKey() + KEYVALUE_SEPARATOR + record.getValue()));
+    put.add(Bytes.toBytes(VALUE_COLUMN), Bytes.toBytes(record.getValue()));
 
-      indexedTable.put(put);
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
+    indexedTable.put(put);
   }
 
   // Helper method to generate key.
-  private MDSKey getMDSKey(Id.NamespacedId targetId, @Nullable String key) {
+  private MDSKey getMDSKey(Id.NamespacedId targetId, MetadataType type, @Nullable String key) {
     String targetType = getTargetType(targetId);
     MDSKey.Builder builder = new MDSKey.Builder();
     builder.add(targetType);
     addNamespaceIdToKey(builder, targetId);
+    builder.add(type.toString());
     if (key != null) {
       builder.add(key);
     }
@@ -295,9 +483,10 @@ public class BusinessMetadataDataset extends AbstractDataset {
 
   private String getMetadataKey(String type, byte[] rowKey) {
     MDSKey.Splitter keySplitter = new MDSKey(rowKey).split();
-    // The rowkey is [targetType][targetId][key], so skip the first few strings.
+    // The rowkey is [targetType][targetId][metadata-type][key], so skip the first few strings.
     keySplitter.skipString();
     if (type.equals(Id.Program.class.getSimpleName())) {
+      keySplitter.skipString();
       keySplitter.skipString();
       keySplitter.skipString();
       keySplitter.skipString();
@@ -305,15 +494,24 @@ public class BusinessMetadataDataset extends AbstractDataset {
     } else if (type.equals(Id.Application.class.getSimpleName())) {
       keySplitter.skipString();
       keySplitter.skipString();
+      keySplitter.skipString();
     } else if (type.equals(Id.DatasetInstance.class.getSimpleName())) {
+      keySplitter.skipString();
       keySplitter.skipString();
       keySplitter.skipString();
     } else if (type.equals(Id.Stream.class.getSimpleName())) {
       keySplitter.skipString();
       keySplitter.skipString();
+      keySplitter.skipString();
     } else {
       throw new IllegalArgumentException("Illegal Type " + type + " of metadata source.");
     }
+    return keySplitter.getString();
+  }
+
+  private String getTargetType(byte[] rowKey) {
+    MDSKey.Splitter keySplitter = new MDSKey(rowKey).split();
+    // The rowkey is [targetType][targetId][metadata-type][key]
     return keySplitter.getString();
   }
 }

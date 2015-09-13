@@ -78,11 +78,16 @@ public final class RouterPathLookup extends AbstractHttpHandler {
       matches(uriParts, "v3", "namespaces", null, "apps", null, null, null, "metadata") ||
       matches(uriParts, "v3", "namespaces", null, "datasets", null, "metadata") ||
       matches(uriParts, "v3", "namespaces", null, "streams", null, "metadata") ||
-      matches(uriParts, "v3", "namespaces", null, "apps", null, "tags") ||
-      matches(uriParts, "v3", "namespaces", null, "apps", null, null, null, "tags") ||
-      matches(uriParts, "v3", "namespaces", null, "datasets", null, "tags") ||
-      matches(uriParts, "v3", "namespaces", null, "streams", null, "tags")) {
-      // all metadata REST APIs are currently exposed from Dataset service
+      matches(uriParts, "v3", "namespaces", null, "apps", null, "metadata", "properties") ||
+      matches(uriParts, "v3", "namespaces", null, "apps", null, null, null, "metadata", "properties") ||
+      matches(uriParts, "v3", "namespaces", null, "datasets", null, "metadata", "properties") ||
+      matches(uriParts, "v3", "namespaces", null, "streams", null, "metadata", "properties") ||
+      matches(uriParts, "v3", "namespaces", null, "apps", null, "metadata", "tags") ||
+      matches(uriParts, "v3", "namespaces", null, "apps", null, null, null, "metadata", "tags") ||
+      matches(uriParts, "v3", "namespaces", null, "datasets", null, "metadata", "tags") ||
+      matches(uriParts, "v3", "namespaces", null, "streams", null, "metadata", "tags") ||
+      matches(uriParts, "v3", "namespaces", null, "metadata", "search") ||
+      matches(uriParts, "v3", "namespaces", null, "datasets", null, "lineage")) {
       return Constants.Service.METADATA_SERVICE;
     } else if ((matches(uriParts, "v3", "namespaces", null, "streams", null, "adapters")
       || matches(uriParts, "v3", "namespaces", null, "streams", null, "programs")

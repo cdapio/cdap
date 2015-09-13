@@ -104,7 +104,7 @@ There are three ways to start the *WikipediaPipelineWorkflow* program:
 
 #. Send a query via an HTTP request using the ``curl`` command::
 
-    curl -w'\n' -v \
+    $ curl -w'\n' -v \
       http://localhost:10000/v3/namespaces/default/apps/WikipediaPipeline/workflows/WikipediaPipelineWorkflow/start
 
 #. From the Standalone CDAP SDK directory, use the Command Line Interface::
