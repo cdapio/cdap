@@ -20,6 +20,7 @@ import co.cask.cdap.proto.Id;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Represents the complete metadata of a {@link Id.NamespacedId} including its properties and tags.
@@ -30,7 +31,7 @@ public class MetadataRecord {
   private final Map<String, String> properties;
   private final List<String> tags;
 
-  public MetadataRecord(Map<String, String> properties, List<String> tags, Id.NamespacedId targetId) {
+  public MetadataRecord(Id.NamespacedId targetId, Map<String, String> properties, List<String> tags) {
     this(targetId, MetadataScope.USER, properties, tags);
   }
 
@@ -56,5 +57,27 @@ public class MetadataRecord {
 
   public List<String> getTags() {
     return tags;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    MetadataRecord that = (MetadataRecord) o;
+
+    return Objects.equals(targetId, that.targetId) &&
+      scope == that.scope &&
+      Objects.equals(properties, that.properties) &&
+      Objects.equals(tags, that.tags);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(targetId, scope, properties, tags);
   }
 }

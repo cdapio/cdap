@@ -642,6 +642,24 @@ public abstract class Id {
         .add("id", id).toString();
     }
 
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      Schedule that = (Schedule) o;
+      return Objects.equal(application, that.application) &&
+        Objects.equal(id, that.id);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hashCode(application, id);
+    }
+
     public static Schedule from(Application application, String id) {
       return new Schedule(application, id);
     }
