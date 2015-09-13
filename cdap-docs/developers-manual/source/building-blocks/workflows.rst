@@ -245,7 +245,7 @@ the :ref:`Wikipedia Pipeline <examples-wikipedia-data-pipeline>` example's ``Sca
 
 .. literalinclude:: /../../../cdap-examples/WikipediaPipeline/src/main/scala/co/cask/cdap/examples/wikipedia/ScalaSparkLDA.scala
    :language: scala
-   :lines: 81-87
+   :lines: 79-85
 
 
 Persisting the WorkflowToken
