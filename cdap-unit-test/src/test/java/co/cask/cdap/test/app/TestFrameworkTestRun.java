@@ -224,11 +224,11 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     List<RunRecord> serviceRun = serviceManager.getHistory(ProgramRunStatus.KILLED);
     Assert.assertFalse(serviceRun.isEmpty());
 
-//    MapReduceManager mrManager = appManager.getMapReduceManager(AppWithPlugin.MAPREDUCE);
-//    mrManager.start();
-//    mrManager.waitForFinish(10, TimeUnit.MINUTES);
-//    List<RunRecord> runRecords = mrManager.getHistory();
-//    Assert.assertNotEquals(ProgramRunStatus.FAILED, runRecords.get(0).getStatus());
+    MapReduceManager mrManager = appManager.getMapReduceManager(AppWithPlugin.MAPREDUCE);
+    mrManager.start();
+    mrManager.waitForFinish(10, TimeUnit.MINUTES);
+    List<RunRecord> runRecords = mrManager.getHistory();
+    Assert.assertNotEquals(ProgramRunStatus.FAILED, runRecords.get(0).getStatus());
   }
 
   @Test

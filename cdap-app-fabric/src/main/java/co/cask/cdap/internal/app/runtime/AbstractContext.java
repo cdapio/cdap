@@ -33,6 +33,7 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.services.AbstractServiceDiscoverer;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.data.dataset.DatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
@@ -54,6 +55,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -358,11 +360,19 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     }
     Plugin plugin = getPlugin(pluginId);
     try {
-      Map.Entry<ArtifactDescriptor, PluginClass> pluginEntry = artifactRepository.getPlugin(
-        artifactId, plugin.getPluginClass().getType(), plugin.getPluginClass().getName(), plugin.getArtifactId());
+      if (artifactRepository != null) {
+        Map.Entry<ArtifactDescriptor, PluginClass> pluginEntry = artifactRepository.getPlugin(
+          artifactId, plugin.getPluginClass().getType(), plugin.getPluginClass().getName(), plugin.getArtifactId());
 
-      return artifactPluginInstantiator.newInstance(pluginEntry.getKey(), pluginEntry.getValue(),
-                                                    plugin.getProperties());
+        return artifactPluginInstantiator.newInstance(pluginEntry.getKey(), pluginEntry.getValue(),
+                                                      plugin.getProperties());
+      } else  {
+        ArtifactDescriptor descriptor = new ArtifactDescriptor(
+          Id.Artifact.from(Id.Namespace.from(program.getNamespaceId()), plugin.getArtifactId()),
+          Locations.toLocation(new File(String.format("%s.jar", pluginId))));
+        return artifactPluginInstantiator.newInitialInstance(descriptor, plugin.getPluginClass(),
+                                                             plugin.getProperties());
+      }
     } catch (ClassNotFoundException | PluginNotExistsException e) {
       // Shouldn't happen, unless there is bug in file localization
       throw new IllegalArgumentException("Plugin class not found", e);

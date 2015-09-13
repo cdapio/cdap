@@ -19,7 +19,6 @@ package co.cask.cdap.internal.app.runtime.batch;
 import co.cask.cdap.api.artifact.Plugin;
 import co.cask.cdap.api.templates.plugins.PluginInfo;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.lang.FilterClassLoader;
@@ -308,11 +307,15 @@ public class MapReduceClassLoader extends CombineClassLoader {
           List<ClassLoader> pluginClassLoaders = Lists.newArrayList();
           for (Map.Entry<String, Plugin> pluginEntry : plugins.entrySet()) {
             Plugin plugin = pluginEntry.getValue();
-            File pluginFile = new File(cConf.get(Constants.AppFabric.SYSTEM_ARTIFACTS_DIR),
-                                       String.format("%s.jar", pluginEntry.getKey()));
+            File pluginFile;
+            if (cConf.get("hereitis") != null) {
+              pluginFile = new File(cConf.get("hereitis"), String.format("%s.jar", plugin.getArtifactId().toString()));
+            } else {
+              pluginFile = new File(String.format("%s.jar", plugin.getArtifactId().toString()));
+            }
             Id.Artifact artifact = Id.Artifact.from(Id.Namespace.from(namespace), plugin.getArtifactId());
             ArtifactDescriptor artifactDescriptor = new ArtifactDescriptor(artifact, Locations.toLocation(pluginFile));
-            ClassLoader pluginClassLoader = artifactPluginInstantiator.getArtifactClassLoader(artifactDescriptor);
+            ClassLoader pluginClassLoader = artifactPluginInstantiator.getInitialClassLoader(artifactDescriptor);
             if (pluginClassLoader instanceof PluginClassLoader) {
               Collection<String> allowedClasses = artifactPluginClasses.get(plugin);
               if (!allowedClasses.isEmpty()) {

@@ -49,11 +49,7 @@ public final class ArtifactId implements Comparable<ArtifactId> {
 
   @Override
   public String toString() {
-    return "ArtifactId{" +
-      "name='" + name + '\'' +
-      ", version=" + version +
-      ", scope='" + scope + '\'' +
-      '}';
+    return String.format("%s-%s-%s", name, version, scope);
   }
 
   @Override

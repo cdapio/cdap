@@ -108,6 +108,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -235,18 +236,21 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
           job.addCacheArchive(pluginArchive.toURI());
         }
         if (artifactArchive != null) {
+          BundleJarUtil.unpackProgramJar(artifactArchive, tempDir);
+          cConf.set("hereitis", tempDir.getAbsolutePath());
           job.addCacheArchive(artifactArchive.toURI());
         }
       } else {
         if (artifactArchive != null) {
-          File localDir = new File(cConf.get(Constants.AppFabric.SYSTEM_ARTIFACTS_DIR));
-          BundleJarUtil.unpackProgramJar(artifactArchive, localDir);
+          BundleJarUtil.unpackProgramJar(artifactArchive, tempDir);
+          cConf.set("hereitis", tempDir.getAbsolutePath());
+          job.addCacheArchive(artifactArchive.toURI());
         }
       }
 
       // Alter the configuration ClassLoader to a MapReduceClassLoader that supports plugin
       // It is mainly for standalone mode to have the same ClassLoader as in distributed mode
-      // It can only be constructed here because we need to have all adapter plugins information
+      // It can only be constructed here because we need to have all plugins information
       classLoader = new MapReduceClassLoader(context.getProgram().getClassLoader(),
                                              cConf, context.getNamespaceId(),
                                              context.getPlugins(),
@@ -1018,12 +1022,16 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     }
 
     File jarFile = File.createTempFile("artifact", ".jar", tempDir);
+    Set<String> entries = new HashSet<>();
     try (JarOutputStream output = new JarOutputStream(new FileOutputStream(jarFile))) {
       for (Map.Entry<String, Plugin> entry : plugins.entrySet()) {
         Plugin plugin = entry.getValue();
         Map.Entry<ArtifactDescriptor, PluginClass> pluginEntry = artifactRepository.getPlugin(
           artifactId, plugin.getPluginClass().getType(), plugin.getPluginClass().getName(), plugin.getArtifactId());
-        String entryName = String.format("%s", String.format("%s.jar", entry.getKey()));
+        String entryName = String.format("%s", String.format("%s.jar", plugin.getArtifactId().toString()));
+        if (entries.contains(entryName)) {
+          continue;
+        }
 
         ArtifactDescriptor artifactDescriptor = pluginEntry.getKey();
         File pluginDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR), "namespaces");
@@ -1033,6 +1041,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
                                             artifactDescriptor.getLocation().getName());
         File artifact = new File(pluginDir, artifactFile);
         output.putNextEntry(new JarEntry(entryName));
+        entries.add(entryName);
         ByteStreams.copy(Files.newInputStreamSupplier(artifact), output);
       }
     } catch (PluginNotExistsException e) {
