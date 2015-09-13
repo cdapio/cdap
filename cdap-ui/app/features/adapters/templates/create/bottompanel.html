@@ -25,9 +25,6 @@
           {{ tab.title }}
       </li>
     </ul>
-    <a class="btn pull-right" ng-click="collapseToggle()">
-      <span class="fa" ng-class="{'fa-angle-double-down': !isCollapsed, 'fa-angle-double-up': isCollapsed}"></span>
-    </a>
   </div>
   <div class="console-type" ng-class="{'is-collapsed': isCollapsed}">
     <div ng-include="activeTab.template" ng-if="tabs.length > 0"></div>

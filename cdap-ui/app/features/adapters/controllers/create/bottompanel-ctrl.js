@@ -25,10 +25,6 @@ angular.module(PKG.name + '.feature.adapters')
       $scope.selectTab($scope.tabs[2]);
     }
 
-    $scope.isCollapsed = false;
-    $scope.collapseToggle = function() {
-      $scope.isCollapsed = !$scope.isCollapsed;
-    };
     $scope.isExpanded = false;
 
     function isExpanded(value) {
