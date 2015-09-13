@@ -44,7 +44,7 @@ angular.module(PKG.name + '.feature.adapters')
       },
       {
         title: 'Pipeline Configuration',
-        template: '/assets/features/adapters/templates/partial/pipeline-config.html'
+        template: '/assets/features/adapters/templates/partial/settings.html'
       },
       {
         title: 'Node Configuration',

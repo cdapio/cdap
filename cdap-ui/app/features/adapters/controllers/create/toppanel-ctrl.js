@@ -172,44 +172,6 @@ angular.module(PKG.name + '.feature.adapters')
               }.bind(this)
             );
           break;
-        case 'Settings':
-
-          MyAppDAGService.isConfigTouched = true;
-          $bootstrapModal.open({
-            templateUrl: '/assets/features/adapters/templates/create/popovers/settings.html',
-            size: 'lg',
-            windowClass: 'adapter-modal',
-            keyboard: true,
-            controller: ['$scope', 'metadata', 'EventPipe', 'GLOBALS', function($scope, metadata, EventPipe, GLOBALS) {
-              $scope.GLOBALS = GLOBALS;
-              $scope.metadata = metadata;
-              var metadataCopy = angular.copy(metadata);
-              $scope.reset = function() {
-                $scope.metadata.template.schedule.cron = metadataCopy.template.schedule.cron;
-                $scope.metadata.template.instance = metadataCopy.template.instance;
-                EventPipe.emit('plugin.reset');
-              };
-
-              function closeFn() {
-                $scope.reset();
-                $scope.$close('cancel');
-              }
-
-              ModalConfirm.confirmModalAdapter(
-                $scope,
-                $scope.metadata,
-                metadataCopy,
-                closeFn
-              );
-
-            }],
-            resolve: {
-              'metadata': function() {
-                return MyAppDAGService.metadata;
-              }
-            }
-          });
-          break;
         case 'Save Draft':
           MyAppDAGService
             .saveAsDraft()
