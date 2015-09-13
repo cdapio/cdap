@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.adapters')
-  .controller('AdpaterSettingsController', function(MyAppDAGService, GLOBALS, EventPipe) {
+  .controller('AdapterSettingsController', function(MyAppDAGService, GLOBALS, EventPipe) {
     this.GLOBALS = GLOBALS;
     this.metadata = MyAppDAGService.metadata;
     var metadataCopy = angular.copy(MyAppDAGService.metadata);
