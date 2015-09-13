@@ -13,7 +13,6 @@ Workflow HTTP RESTful API
 
 Workflow Tokens
 ===============
-
 This interface supports accessing the value of workflow tokens set during runs of a workflow.
 Returned values can be specified for a particular scope, node or key.
 
@@ -100,7 +99,6 @@ run, such as::
 
 Examples
 --------
-
 .. list-table::
    :widths: 20 80
    :stub-columns: 1
@@ -145,7 +143,6 @@ in detecting which jobs might be responsible for delays or problems.
 
 Statistics of Successful Runs
 -----------------------------
-
 This request returns general statistics about all *successful* workflow runs in a particular time interval, 
 with an analysis based on a series of (optionally) provided percentiles::
 
@@ -198,7 +195,6 @@ Examples: ``now-<n>s``, ``now-<n>m``,  ``now-<n>h``, or ``now-<n>d``.
 Example
 -------
 The query
-
 ::
 
   GET <base-url>/namespaces/default/apps/Purchase/workflows/PurchaseHistoryWorkflow/statistics?
@@ -256,7 +252,6 @@ would return results similar to these, pretty-printed for display::
   
 Comparing a Run to Runs Before and After
 ----------------------------------------
-
 This request returns a list of workflow metrics, based on a workflow run and a surrounding
 number of *successful* runs of the workflow that are spaced apart by a time interval from
 each other::
@@ -355,7 +350,6 @@ would return results similar to these, pretty-printed for display::
 
 Comparing Two Runs
 ------------------
-
 This request compares the metrics of two runs of a workflow::
 
   GET <base-url>/namespaces/<namespace>/apps/<app-id>/workflows/<workflow-id>/runs/<run-id>/compare?
