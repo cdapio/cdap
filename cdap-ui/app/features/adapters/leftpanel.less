@@ -19,9 +19,6 @@
 @import '../../styles/themes/cdap/mixins.less';
 
 body.theme-cdap.state-adapters-create {
-  .canvas-wrapper {
-    position: relative;
-  }
 
   .side-panel.left {
     background: #aea69e;
@@ -32,12 +29,9 @@ body.theme-cdap.state-adapters-create {
     background: -ms-linear-gradient(-45deg, #aea69e 0%, #74685a 100%);
     background: linear-gradient(135deg, #aea69e 0%, #74685a 100%);
     filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#aea69e', endColorstr='#74685a', GradientType=1);
-    position: absolute;
-    top: 60px;
-    left: 0;
-    bottom: 0;
-    z-index: 1025;
+    float: left;
     width: 130px;
+    height: 100vh;
     .transition(all 0.2s ease);
 
     .hydrator-filter {
@@ -62,6 +56,7 @@ body.theme-cdap.state-adapters-create {
         padding-left: 10px;
         position: relative;
         left: 6px;
+        z-index: 1024;
         .border-radius(90px 0 0 90px);
         &:active, &.active {
           .box-shadow(none);
