@@ -50,7 +50,7 @@ public class LineageWriterDatasetFramework implements DatasetFramework, ProgramC
   private final AtomicReference<Id.NamespacedId> componentIdRef = new AtomicReference<>();
 
   @Inject
-  public LineageWriterDatasetFramework(
+  LineageWriterDatasetFramework(
     @Named(DataSetsModules.BASIC_DATASET_FRAMEWORK) DatasetFramework datasetFramework, LineageWriter lineageWriter) {
     this.delegate = datasetFramework;
     this.lineageWriter = lineageWriter;

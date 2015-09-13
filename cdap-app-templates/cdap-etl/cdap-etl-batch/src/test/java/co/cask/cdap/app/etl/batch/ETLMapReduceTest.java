@@ -48,6 +48,7 @@ import org.junit.Test;
 
 import java.lang.reflect.Method;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -119,7 +120,7 @@ public class ETLMapReduceTest extends BaseETLBatchTest {
 
   @SuppressWarnings("ConstantConditions")
   @Test
-  public void testTableToTable() throws Exception {
+  public void testTableToTableWithValidations() throws Exception {
 
     Schema schema = Schema.recordOf(
       "purchase",
@@ -135,11 +136,29 @@ public class ETLMapReduceTest extends BaseETLBatchTest {
         Properties.BatchReadableWritable.NAME, "inputTable",
         Properties.Table.PROPERTY_SCHEMA_ROW_FIELD, "rowkey",
         Properties.Table.PROPERTY_SCHEMA, schema.toString()));
+
+    String validationScript = "function isValid(input) {  " +
+      "input = JSON.parse(input); var resultMap = new java.util.HashMap(); " +
+      "var errCode = '0'; var errMsg = '';" +
+      "if (!coreValidator.maxLength(input.user, 6)) " +
+      "{ errCode = '10'; errMsg = 'user name greater than 6 characters'; resultMap.put('isValid', 'false'); } " +
+      "else { resultMap.put('isValid', 'true');}; " +
+      "resultMap.put('errorCode', errCode); " +
+      "resultMap.put('errorMsg', errMsg); " +
+      "return resultMap;};";
+    ETLStage transform = new ETLStage("Validator",
+                                      ImmutableMap.<String, String>of("validators", "core",
+                                                                      "validationScript", validationScript),
+                                      "keyErrors");
+    List<ETLStage> transformList = new ArrayList<>();
+    transformList.add(transform);
+
     ETLStage sink = new ETLStage("Table",
       ImmutableMap.of(
         Properties.BatchReadableWritable.NAME, "outputTable",
         Properties.Table.PROPERTY_SCHEMA_ROW_FIELD, "rowkey"));
-    ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *", source, sink, Lists.<ETLStage>newArrayList());
+
+    ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *", source, sink, transformList);
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(ETLBATCH_ARTIFACT, etlConfig);
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "TableToTable");
@@ -148,6 +167,8 @@ public class ETLMapReduceTest extends BaseETLBatchTest {
     // add some data to the input table
     DataSetManager<Table> inputManager = getDataset("inputTable");
     Table inputTable = inputManager.get();
+
+    // valid record, user name "samuel" is 6 chars long
     Put put = new Put(Bytes.toBytes("row1"));
     put.add("user", "samuel");
     put.add("count", 5);
@@ -155,6 +176,8 @@ public class ETLMapReduceTest extends BaseETLBatchTest {
     put.add("item", "scotch");
     inputTable.put(put);
     inputManager.flush();
+
+    // valid record, user name "jackson" is > 6 characters
     put = new Put(Bytes.toBytes("row2"));
     put.add("user", "jackson");
     put.add("count", 10);
@@ -177,10 +200,14 @@ public class ETLMapReduceTest extends BaseETLBatchTest {
     Assert.assertEquals("scotch", row.getString("item"));
 
     row = outputTable.get(Bytes.toBytes("row2"));
-    Assert.assertEquals("jackson", row.getString("user"));
-    Assert.assertEquals(10, (int) row.getInt("count"));
-    Assert.assertTrue(Math.abs(123456789 - row.getDouble("price")) < 0.000001);
-    Assert.assertEquals("island", row.getString("item"));
+    Assert.assertEquals(0, row.getColumns().size());
+
+    DataSetManager<TimePartitionedFileSet> fileSetManager = getDataset("keyErrors");
+    TimePartitionedFileSet fileSet = fileSetManager.get();
+    List<GenericRecord> records = readOutput(fileSet, ETLMapReduce.ERROR_SCHEMA);
+    Assert.assertEquals(1, records.size());
+    fileSet.close();
+
   }
 
   @Test

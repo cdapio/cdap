@@ -44,6 +44,7 @@ import co.cask.cdap.template.etl.common.Destroyables;
 import co.cask.cdap.template.etl.common.Pipeline;
 import co.cask.cdap.template.etl.common.PipelineRegisterer;
 import co.cask.cdap.template.etl.common.PluginID;
+import co.cask.cdap.template.etl.common.SinkInfo;
 import co.cask.cdap.template.etl.common.StageMetrics;
 import co.cask.cdap.template.etl.common.TransformDetail;
 import co.cask.cdap.template.etl.common.TransformExecutor;
@@ -78,14 +79,14 @@ public class ETLWorker extends AbstractWorker {
   public static final String NAME = ETLWorker.class.getSimpleName();
   private static final Logger LOG = LoggerFactory.getLogger(ETLWorker.class);
   private static final Type TRANSFORMDETAILS_LIST_TYPE = new TypeToken<List<TransformInfo>>() { }.getType();
-  private static final Type STRING_LIST_TYPE = new TypeToken<List<String>>() { }.getType();
+  private static final Type SINK_INFO_TYPE = new TypeToken<List<SinkInfo>>() { }.getType();
   private static final Gson GSON = new Gson();
   private static final String SEPARATOR = ":";
   private static final Schema ERROR_SCHEMA = Schema.recordOf(
     "error",
-    Schema.Field.of(Constants.ErrorDataset.COLUMN_ERRCODE, Schema.of(Schema.Type.INT)),
-    Schema.Field.of(Constants.ErrorDataset.COLUMN_ERRMSG, Schema.of(Schema.Type.STRING)),
-    Schema.Field.of(Constants.ErrorDataset.COLUMN_INVALIDENTRY, Schema.of(Schema.Type.STRING)));
+    Schema.Field.of(Constants.ErrorDataset.ERRCODE, Schema.of(Schema.Type.INT)),
+    Schema.Field.of(Constants.ErrorDataset.ERRMSG, Schema.of(Schema.Type.STRING)),
+    Schema.Field.of(Constants.ErrorDataset.INVALIDENTRY, Schema.of(Schema.Type.STRING)));
 
   // only visible at configure time
   private final ETLRealtimeConfig config;
@@ -116,7 +117,7 @@ public class ETLWorker extends AbstractWorker {
     // using table dataset type for error dataset
     Pipeline pluginIDs = registerer.registerPlugins(config, Table.class, DatasetProperties.builder()
       .add(Table.PROPERTY_SCHEMA, ERROR_SCHEMA.toString())
-      .build());
+      .build(), false);
 
     Map<String, String> properties = new HashMap<>();
     properties.put(Constants.Source.PLUGINID, pluginIDs.getSource());
@@ -183,28 +184,29 @@ public class ETLWorker extends AbstractWorker {
 
   @SuppressWarnings("unchecked")
   private void initializeSinks(WorkerContext context) throws Exception {
-    List<String> sinkPluginIds = GSON.fromJson(context.getSpecification().getProperty(Constants.Sink.PLUGINIDS),
-                                               STRING_LIST_TYPE);
-    sinks = Lists.newArrayListWithCapacity(sinkPluginIds.size());
-    for (String sinkPluginId : sinkPluginIds) {
-      RealtimeSink sink = context.newPluginInstance(sinkPluginId);
-      RealtimeContext sinkContext = new WorkerRealtimeContext(context, metrics, sinkPluginId);
+    List<SinkInfo> sinkInfos = GSON.fromJson(context.getSpecification().getProperty(Constants.Sink.PLUGINIDS),
+                                                 SINK_INFO_TYPE);
+    sinks = Lists.newArrayListWithCapacity(sinkInfos.size());
+
+    for (SinkInfo sinkInfo : sinkInfos) {
+      RealtimeSink sink = context.newPluginInstance(sinkInfo.getSinkId());
+      RealtimeContext sinkContext = new WorkerRealtimeContext(context, metrics, sinkInfo.getSinkId());
       LOG.debug("Sink Class : {}", sink.getClass().getName());
       sink.initialize(sinkContext);
-      sink = new TrackedRealtimeSink(sink, metrics, PluginID.from(sinkPluginId));
+      sink = new TrackedRealtimeSink(sink, metrics, PluginID.from(sinkInfo.getSinkId()));
       sinks.add(sink);
     }
   }
 
   private List<TransformDetail> initializeTransforms(WorkerContext context) throws Exception {
-    List<TransformInfo> transformIds =
+    List<TransformInfo> transformInfos =
       GSON.fromJson(context.getSpecification().getProperty(Constants.Transform.PLUGINIDS), TRANSFORMDETAILS_LIST_TYPE);
-    Preconditions.checkArgument(transformIds != null);
-    List<TransformDetail> transformDetailList = new ArrayList<>(transformIds.size());
-    tranformIdToDatasetName = new HashMap<>(transformIds.size());
+    Preconditions.checkArgument(transformInfos != null);
+    List<TransformDetail> transformDetailList = new ArrayList<>(transformInfos.size());
+    tranformIdToDatasetName = new HashMap<>(transformInfos.size());
 
-    for (int i = 0; i < transformIds.size(); i++) {
-      String transformId = transformIds.get(i).getTransformId();
+    for (int i = 0; i < transformInfos.size(); i++) {
+      String transformId = transformInfos.get(i).getTransformId();
       try {
         Transform transform = context.newPluginInstance(transformId);
         RealtimeTransformContext transformContext = new RealtimeTransformContext(context, metrics, transformId);
@@ -212,7 +214,9 @@ public class ETLWorker extends AbstractWorker {
         transform.initialize(transformContext);
         StageMetrics stageMetrics = new StageMetrics(metrics, PluginID.from(transformId));
         transformDetailList.add(new TransformDetail(transformId, transform, stageMetrics));
-        tranformIdToDatasetName.put(transformId, transformIds.get(i).getErrorDatasetName());
+        if (transformInfos.get(i).getErrorDatasetName() != null) {
+          tranformIdToDatasetName.put(transformId, transformInfos.get(i).getErrorDatasetName());
+        }
       } catch (InstantiationException e) {
         LOG.error("Unable to instantiate Transform", e);
         Throwables.propagate(e);
@@ -351,14 +355,14 @@ public class ETLWorker extends AbstractWorker {
 
   private Put constructErrorPut(byte[] rowKey, InvalidEntry entry) throws IOException {
     Put errorPut = new Put(rowKey);
-    errorPut.add(Constants.ErrorDataset.COLUMN_ERRCODE, entry.getErrorCode());
-    errorPut.add(Constants.ErrorDataset.COLUMN_ERRMSG, entry.getErrorMsg());
+    errorPut.add(Constants.ErrorDataset.ERRCODE, entry.getErrorCode());
+    errorPut.add(Constants.ErrorDataset.ERRMSG, entry.getErrorMsg());
     if (entry.getInvalidRecord() instanceof StructuredRecord) {
       StructuredRecord record = (StructuredRecord) entry.getInvalidRecord();
-      errorPut.add(Constants.ErrorDataset.COLUMN_INVALIDENTRY,
+      errorPut.add(Constants.ErrorDataset.INVALIDENTRY,
                    StructuredRecordStringConverter.toJsonString(record));
     } else {
-      errorPut.add(Constants.ErrorDataset.COLUMN_INVALIDENTRY,
+      errorPut.add(Constants.ErrorDataset.INVALIDENTRY,
                    String.format("Error Entry is of type %s, only records of type " +
                                    "co.cask.cdap.api.data.format.StructuredRecord " +
                                    "is supported currently", entry.getInvalidRecord().getClass().getName()));

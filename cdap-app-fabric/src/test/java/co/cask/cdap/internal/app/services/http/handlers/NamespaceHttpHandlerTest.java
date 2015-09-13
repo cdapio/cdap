@@ -33,7 +33,6 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceConfig;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
@@ -69,36 +68,6 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
   private static final String INVALID_NAME = "!nv@l*d/";
   private static final String OTHER_NAME = "test1";
   private static final Gson GSON = new Gson();
-
-  private HttpResponse createNamespace(String id) throws Exception {
-    return doPut(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, id));
-  }
-
-  private HttpResponse createNamespace(String metadata, String id) throws Exception {
-    return doPut(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, id), metadata);
-  }
-
-  private HttpResponse listAllNamespaces() throws Exception {
-    return doGet(String.format("%s/namespaces", Constants.Gateway.API_VERSION_3));
-  }
-
-  private HttpResponse getNamespace(String name) throws Exception {
-    Preconditions.checkArgument(name != null, "namespace name cannot be null");
-    return doGet(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, name));
-  }
-
-  private HttpResponse deleteNamespace(String name) throws Exception {
-    return doDelete(String.format("%s/unrecoverable/namespaces/%s", Constants.Gateway.API_VERSION_3, name));
-  }
-
-  private HttpResponse deleteNamespaceData(String name) throws Exception {
-    return doDelete(String.format("%s/unrecoverable/namespaces/%s/datasets", Constants.Gateway.API_VERSION_3, name));
-  }
-
-  private HttpResponse setProperties(String id, NamespaceMeta meta) throws Exception {
-    return doPut(String.format("%s/namespaces/%s/properties", Constants.Gateway.API_VERSION_3, id),
-                 GSON.toJson(meta));
-  }
 
   private void assertResponseCode(int expected, HttpResponse response) {
     Assert.assertEquals(expected, response.getStatusLine().getStatusCode());
