@@ -113,7 +113,7 @@ public class ETLWorker extends AbstractWorker {
     setName(NAME);
     setDescription("Worker Driver for Realtime ETL Adapters");
 
-    PipelineRegisterer registerer = new PipelineRegisterer(getConfigurer());
+    PipelineRegisterer registerer = new PipelineRegisterer(getConfigurer(), "realtime");
     // using table dataset type for error dataset
     Pipeline pluginIDs = registerer.registerPlugins(config, Table.class, DatasetProperties.builder()
       .add(Table.PROPERTY_SCHEMA, ERROR_SCHEMA.toString())

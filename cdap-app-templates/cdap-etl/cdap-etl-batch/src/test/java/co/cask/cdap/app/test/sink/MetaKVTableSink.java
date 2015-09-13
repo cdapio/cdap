@@ -28,7 +28,7 @@ import co.cask.cdap.template.etl.batch.sink.KVTableSink;
 /**
  * Test Batch Sink that writes to a table in {@link BatchSink#prepareRun} and {@link BatchSink#onRunFinish}.
  */
-@Plugin(type = "sink")
+@Plugin(type = "batchsink")
 @Name("MetaKVTable")
 public class MetaKVTableSink extends KVTableSink {
   public static final String META_TABLE = "sinkMetaTable";

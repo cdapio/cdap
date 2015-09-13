@@ -38,7 +38,7 @@ import javax.annotation.Nullable;
 /**
  * Realtime TestSource that emits {@link StructuredRecord} objects as needed for testing.
  */
-@Plugin(type = "source")
+@Plugin(type = "realtimesource")
 @Name("DataGenerator")
 @Description("Source that can generate test data for Real-time Stream and Table Sinks.")
 public class DataGeneratorSource extends RealtimeSource<StructuredRecord> {

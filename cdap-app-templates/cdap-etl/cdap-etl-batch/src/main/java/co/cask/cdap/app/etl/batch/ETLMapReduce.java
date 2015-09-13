@@ -122,7 +122,7 @@ public class ETLMapReduce extends AbstractMapReduce {
     setName(NAME);
     setDescription("MapReduce driver for Batch ETL Adapters");
 
-    PipelineRegisterer pipelineRegisterer = new PipelineRegisterer(getConfigurer());
+    PipelineRegisterer pipelineRegisterer = new PipelineRegisterer(getConfigurer(), "batch");
 
     Pipeline pipelineIds =
       pipelineRegisterer.registerPlugins(

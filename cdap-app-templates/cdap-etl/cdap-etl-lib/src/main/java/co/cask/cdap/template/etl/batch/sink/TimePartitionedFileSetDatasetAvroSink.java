@@ -43,7 +43,7 @@ import javax.annotation.Nullable;
 /**
  * A {@link BatchSink} to write Avro record to {@link TimePartitionedFileSet}
  */
-@Plugin(type = "sink")
+@Plugin(type = "batchsink")
 @Name("TPFSAvro")
 @Description("Sink for a TimePartitionedFileSet that writes data in Avro format.")
 public class TimePartitionedFileSetDatasetAvroSink extends

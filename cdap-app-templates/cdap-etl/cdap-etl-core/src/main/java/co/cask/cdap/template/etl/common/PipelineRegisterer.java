@@ -17,7 +17,6 @@
 package co.cask.cdap.template.etl.common;
 
 import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.plugin.PluginConfigurer;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.template.etl.api.PipelineConfigurable;
@@ -44,9 +43,14 @@ import java.util.List;
 public class PipelineRegisterer {
 
   private final PluginConfigurer configurer;
+  private final String sourcePluginType;
+  private final String sinkPluginType;
 
-  public PipelineRegisterer(PluginConfigurer configurer) {
+
+  public PipelineRegisterer(PluginConfigurer configurer, String programType) {
     this.configurer = configurer;
+    this.sourcePluginType = programType + "source";
+    this.sinkPluginType = programType + "sink";
   }
 
   /**
@@ -80,11 +84,11 @@ public class PipelineRegisterer {
 
     // plugin num starts at 1 and increments for each stage in the pipeline
     int pluginNum = 1;
-    String sourcePluginId = PluginID.from(Constants.Source.PLUGINTYPE, sourceConfig.getName(), pluginNum).getID();
+    String sourcePluginId = PluginID.from("source", sourceConfig.getName(), pluginNum).getID();
     pluginNum++;
 
     // instantiate source
-    PipelineConfigurable source = configurer.usePlugin(Constants.Source.PLUGINTYPE, sourceConfig.getName(),
+    PipelineConfigurable source = configurer.usePlugin(sourcePluginType, sourceConfig.getName(),
                                                        sourcePluginId, getPluginProperties(sourceConfig));
     if (source == null) {
       throw new IllegalArgumentException(String.format("No Plugin of type '%s' named '%s' was found.",
@@ -135,7 +139,7 @@ public class PipelineRegisterer {
       sinksInfo.add(new SinkInfo(sinkPluginId, sinkConfig.getErrorDatasetName()));
 
       // try to instantiate the sink
-      PipelineConfigurable sink = configurer.usePlugin(Constants.Sink.PLUGINTYPE, sinkConfig.getName(),
+      PipelineConfigurable sink = configurer.usePlugin(sinkPluginType, sinkConfig.getName(),
         sinkPluginId, getPluginProperties(sinkConfig));
       if (sink == null) {
         throw new IllegalArgumentException(String.format("No Plugin of type '%s' named '%s' was found. " +

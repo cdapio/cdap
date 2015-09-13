@@ -33,7 +33,7 @@ import java.util.Map;
 /**
  * CDAP Key Value Table Dataset Batch Source.
  */
-@Plugin(type = "source")
+@Plugin(type = "batchsource")
 @Name("KVTable")
 @Description("Reads the entire contents of a KeyValueTable. Outputs records with a 'key' field and a 'value' field. " +
   "Both fields are of type bytes.")

@@ -16,12 +16,9 @@
 
 <form plugin-property-edit-view>
   <fieldset ng-disabled="isDisabled">
-
-
-
+      <h4>Configuration</h4>
       <div ng-repeat="group in PluginEditController.config.groups.position">
         <div class="widget-group-container">
-          <h4>Configuration</h4>
           <div ng-repeat="field in PluginEditController.groups[group].position">
             <div ng-if="field !== 'schema'">
               <div class="form-group">

@@ -39,7 +39,7 @@ import java.util.Map;
 /**
  * CDAP Table Dataset Batch Source.
  */
-@Plugin(type = "source")
+@Plugin(type = "batchsource")
 @Name("Table")
 @Description("Reads the entire contents of a CDAP Table. Outputs one record for each row in the Table.")
 public class TableSource extends BatchReadableSource<byte[], Row, StructuredRecord> {
