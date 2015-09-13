@@ -18,6 +18,7 @@ package co.cask.cdap.proto.metadata;
 
 import co.cask.cdap.proto.Id;
 
+import java.util.Objects;
 import javax.annotation.Nullable;
 
 /**
@@ -79,5 +80,47 @@ public final class MetadataChangeRecord {
     public MetadataRecord getDeletions() {
       return deletions;
     }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+
+      MetadataDiffRecord that = (MetadataDiffRecord) o;
+
+      return Objects.equals(additions, that.additions) &&
+        Objects.equals(deletions, that.deletions);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(additions, deletions);
+    }
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    MetadataChangeRecord that = (MetadataChangeRecord) o;
+
+    return Objects.equals(previous, that.previous) &&
+      Objects.equals(changes, that.changes) &&
+      updateTime == that.updateTime &&
+      Objects.equals(updater, that.updater);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(previous, changes, updateTime, updater);
   }
 }
