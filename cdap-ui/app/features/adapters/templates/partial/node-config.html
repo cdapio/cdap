@@ -14,6 +14,6 @@
   the License.
 -->
 
-<div class="text-center">
-  <p>Node config tab</p>
+<div ng-controller="NodeConfigController">
+  <div ng-if="isValidPlugin" ng-include="'/assets/features/adapters/templates/create/popovers/plugin-edit-form.html'"></div>
 </div>
