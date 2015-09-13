@@ -20,7 +20,7 @@ import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.metadata.lineage.Lineage;
 import co.cask.cdap.data2.metadata.lineage.LineageService;
-import co.cask.cdap.metadata.serialize.LineageProto;
+import co.cask.cdap.metadata.serialize.LineageRecord;
 import co.cask.cdap.proto.Id;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
@@ -59,7 +59,7 @@ public class LineageHandler extends AbstractHttpHandler {
 
     Id.DatasetInstance datasetInstance = Id.DatasetInstance.from(namespaceId, datasetId);
     Lineage lineage = lineageService.computeLineage(datasetInstance, start, end, levels);
-    responder.sendJson(HttpResponseStatus.OK, new LineageProto(start, end, lineage.getRelations()));
+    responder.sendJson(HttpResponseStatus.OK, new LineageRecord(start, end, lineage.getRelations()));
   }
 
   private void checkArguments(long start, long end, int levels) throws BadRequestException {

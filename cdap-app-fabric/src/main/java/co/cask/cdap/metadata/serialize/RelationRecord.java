@@ -22,14 +22,14 @@ import java.util.Set;
 /**
  * Class to serialize {@link co.cask.cdap.data2.metadata.lineage.Relation}.
  */
-public class RelationProto {
+public class RelationRecord {
   private final String data;
   private final String program;
   private final String access;
   private final Set<String> runs;
   private final Set<String> components;
 
-  public RelationProto(String data, String program, String access, Set<String> runs, Set<String> components) {
+  public RelationRecord(String data, String program, String access, Set<String> runs, Set<String> components) {
     this.data = data;
     this.program = program;
     this.access = access;
@@ -45,7 +45,7 @@ public class RelationProto {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    RelationProto relation = (RelationProto) o;
+    RelationRecord relation = (RelationRecord) o;
     return Objects.equals(data, relation.data) &&
       Objects.equals(program, relation.program) &&
       Objects.equals(access, relation.access) &&
@@ -60,7 +60,7 @@ public class RelationProto {
 
   @Override
   public String toString() {
-    return "RelationProto{" +
+    return "RelationRecord{" +
       "data='" + data + '\'' +
       ", program='" + program + '\'' +
       ", access='" + access + '\'' +

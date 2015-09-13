@@ -20,7 +20,7 @@ import co.cask.cdap.AllProgramsApp;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.metadata.lineage.Relation;
-import co.cask.cdap.metadata.serialize.LineageProto;
+import co.cask.cdap.metadata.serialize.LineageRecord;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.RunRecord;
@@ -66,10 +66,10 @@ public class LineageTest extends MetadataTestBase {
       long now = System.currentTimeMillis();
       long oneHourMillis = TimeUnit.HOURS.toMillis(1);
       HttpResponse httpResponse = fetchLineage(dataset, now - oneHourMillis, now + oneHourMillis, 10);
-      LineageProto lineage = GSON.fromJson(httpResponse.getResponseBodyAsString(), LineageProto.class);
+      LineageRecord lineage = GSON.fromJson(httpResponse.getResponseBodyAsString(), LineageRecord.class);
 
-      LineageProto expected =
-        new LineageProto(now - oneHourMillis, now + oneHourMillis,
+      LineageRecord expected =
+        new LineageRecord(now - oneHourMillis, now + oneHourMillis,
                          ImmutableSet.of(
                            new Relation(dataset, flow, AccessType.UNKNOWN,
                                         ImmutableSet.of(flowRunId),

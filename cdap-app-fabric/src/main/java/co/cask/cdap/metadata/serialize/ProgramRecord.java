@@ -21,13 +21,13 @@ import java.util.Objects;
 /**
  * Class to serialize {@link co.cask.cdap.proto.Id.Program}.
  */
-public class ProgramProto {
+public class ProgramRecord {
   private final String namespace;
   private final String application;
   private final String type;
   private final String id;
 
-  public ProgramProto(String namespace, String application, String type, String id) {
+  public ProgramRecord(String namespace, String application, String type, String id) {
     this.namespace = namespace;
     this.application = application;
     this.type = type;
@@ -42,7 +42,7 @@ public class ProgramProto {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    ProgramProto program = (ProgramProto) o;
+    ProgramRecord program = (ProgramRecord) o;
     return Objects.equals(namespace, program.namespace) &&
       Objects.equals(application, program.application) &&
       Objects.equals(type, program.type) &&
@@ -56,7 +56,7 @@ public class ProgramProto {
 
   @Override
   public String toString() {
-    return "ProgramProto{" +
+    return "ProgramRecord{" +
       "namespace='" + namespace + '\'' +
       ", application='" + application + '\'' +
       ", type='" + type + '\'' +
