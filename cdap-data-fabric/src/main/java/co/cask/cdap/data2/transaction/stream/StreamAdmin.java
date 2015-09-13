@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data2.transaction.stream;
 
+import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.StreamProperties;
 
@@ -114,4 +115,13 @@ public interface StreamAdmin {
    * @param streamId the stream being used
    */
   void register(Iterable<? extends Id> owners, Id.Stream streamId);
+
+  /**
+   * Record access of stream by a program run for lineage computation.
+   *
+   * @param run program run
+   * @param streamId stream being accessed
+   * @param accessType type of access
+   */
+  void addAccess(Id.Run run, Id.Stream streamId, AccessType accessType);
 }

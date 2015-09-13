@@ -26,6 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Writes program-dataset access information along with metadata  into {@link LineageStore}.
@@ -50,7 +51,7 @@ public class BasicLineageWriter implements LineageWriter {
 
   @Override
   public void addAccess(Id.Run run, Id.DatasetInstance datasetInstance, AccessType accessType,
-                        Id.NamespacedId component) {
+                        @Nullable Id.NamespacedId component) {
     // TODO: avoid duplicate writes for a dataset instance
     String metadata = gatherMetadata(run, datasetInstance);
     LOG.debug("Writing access for run {}, dataset {}, accessType {}, component {}, metadata = {}",
@@ -58,9 +59,23 @@ public class BasicLineageWriter implements LineageWriter {
     lineageStore.addAccess(run, datasetInstance, accessType, metadata, component);
   }
 
-  private String gatherMetadata(Id.Run run, Id.DatasetInstance datasetInstance) {
+  @Override
+  public void addAccess(Id.Run run, Id.Stream stream, AccessType accessType) {
+    addAccess(run, stream, accessType, null);
+  }
+
+  @Override
+  public void addAccess(Id.Run run, Id.Stream stream, AccessType accessType, @Nullable Id.NamespacedId component) {
+    // TODO: avoid duplicate writes for a stream instance
+    String metadata = gatherMetadata(run, stream);
+    LOG.debug("Writing access for run {}, stream {}, accessType {}, component {}, metadata = {}",
+              run, stream, accessType, component, metadata);
+    lineageStore.addAccess(run, stream, accessType, metadata, component);
+  }
+
+  private String gatherMetadata(Id.Run run, Id.NamespacedId id) {
     // TODO: add app metadata and tags
-    Map<String, String> datasetMetadata = businessMetadataStore.getProperties(datasetInstance);
-    return GSON.toJson(datasetMetadata);
+    Map<String, String> dataMetadata = businessMetadataStore.getProperties(id);
+    return GSON.toJson(dataMetadata);
   }
 }

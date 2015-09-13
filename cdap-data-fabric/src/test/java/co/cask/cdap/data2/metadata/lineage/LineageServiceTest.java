@@ -37,8 +37,8 @@ public class LineageServiceTest {
   @ClassRule
   public static DatasetFrameworkTestUtil dsFrameworkUtil = new DatasetFrameworkTestUtil();
 
-  // Define datasets
-  private final Id.DatasetInstance dataset0 = Id.DatasetInstance.from("default", "dataset0");
+  // Define data
+  private final Id.Stream stream1 = Id.Stream.from("default", "stream1");
   private final Id.DatasetInstance dataset1 = Id.DatasetInstance.from("default", "dataset1");
   private final Id.DatasetInstance dataset2 = Id.DatasetInstance.from("default", "dataset2");
   private final Id.DatasetInstance dataset3 = Id.DatasetInstance.from("default", "dataset3");
@@ -229,14 +229,14 @@ public class LineageServiceTest {
     // D1 -> P1 -> D2 -> P2 -> D3
     //       |     |           |
     //       |     |           |
-    // D0 -->|     ---------------> P4 -> D7
+    // S1 -->|     ---------------> P4 -> D7
 
     LineageStore lineageStore = new LineageStore(getTxExecFactory(), dsFrameworkUtil.getFramework(),
                                                  Id.DatasetInstance.from("default", "testBranchLineage"));
     LineageService lineageService = new LineageService(lineageStore);
 
     // Add accesses
-    lineageStore.addAccess(run1, dataset0, AccessType.READ, "metadata10", flowlet1);
+    lineageStore.addAccess(run1, stream1, AccessType.READ, "metadata10", flowlet1);
     lineageStore.addAccess(run1, dataset1, AccessType.READ, "metadata11", flowlet1);
     lineageStore.addAccess(run1, dataset2, AccessType.WRITE, "metadata12", flowlet1);
     lineageStore.addAccess(run1, dataset4, AccessType.WRITE, "metadata14", flowlet1);
@@ -254,7 +254,7 @@ public class LineageServiceTest {
 
     Lineage expectedLineage = new Lineage(
       ImmutableSet.of(
-        new Relation(dataset0, program1, AccessType.READ, toSet(twillRunId(run1)), toSet(flowlet1)),
+        new Relation(stream1, program1, AccessType.READ, toSet(twillRunId(run1)), toSet(flowlet1)),
         new Relation(dataset1, program1, AccessType.READ, toSet(twillRunId(run1)), toSet(flowlet1)),
         new Relation(dataset2, program1, AccessType.WRITE, toSet(twillRunId(run1)), toSet(flowlet1)),
         new Relation(dataset4, program1, AccessType.WRITE, toSet(twillRunId(run1)), toSet(flowlet1)),
@@ -293,14 +293,14 @@ public class LineageServiceTest {
     // D1 -> P1 -> D2 -> P2 -> D3 ----------->|
     //       |     |           |
     //       |     |           |
-    // D0 -->|     ---------------> P4 -> D7
+    // S1 -->|     ---------------> P4 -> D7
 
     LineageStore lineageStore = new LineageStore(getTxExecFactory(), dsFrameworkUtil.getFramework(),
                                                  Id.DatasetInstance.from("default", "testBranchLoopLineage"));
     LineageService lineageService = new LineageService(lineageStore);
 
     // Add accesses
-    lineageStore.addAccess(run1, dataset0, AccessType.READ, "metadata10", flowlet1);
+    lineageStore.addAccess(run1, stream1, AccessType.READ, "metadata10", flowlet1);
     lineageStore.addAccess(run1, dataset1, AccessType.READ, "metadata11", flowlet1);
     lineageStore.addAccess(run1, dataset2, AccessType.WRITE, "metadata12", flowlet1);
     lineageStore.addAccess(run1, dataset4, AccessType.WRITE, "metadata14", flowlet1);
@@ -322,7 +322,7 @@ public class LineageServiceTest {
 
     Lineage expectedLineage = new Lineage(
       ImmutableSet.of(
-        new Relation(dataset0, program1, AccessType.READ, toSet(twillRunId(run1)), toSet(flowlet1)),
+        new Relation(stream1, program1, AccessType.READ, toSet(twillRunId(run1)), toSet(flowlet1)),
         new Relation(dataset1, program1, AccessType.READ, toSet(twillRunId(run1)), toSet(flowlet1)),
         new Relation(dataset2, program1, AccessType.WRITE, toSet(twillRunId(run1)), toSet(flowlet1)),
         new Relation(dataset4, program1, AccessType.WRITE, toSet(twillRunId(run1)), toSet(flowlet1)),
@@ -350,10 +350,10 @@ public class LineageServiceTest {
     Assert.assertEquals(expectedLineage, lineageService.computeLineage(dataset5, 500, 20000, 100));
     // Lineage for D7
     Assert.assertEquals(expectedLineage, lineageService.computeLineage(dataset7, 500, 20000, 100));
-    // Lineage for D0
-    Assert.assertEquals(expectedLineage, lineageService.computeLineage(dataset0, 500, 20000, 100));
+    // Lineage for S1
+    Assert.assertEquals(expectedLineage, lineageService.computeLineage(stream1, 500, 20000, 100));
 
-    // Lineage ofr D5 for one level
+    // Lineage for D5 for one level
     //                   -> D5 -> P3 -> D6
     //                   |
     //                   |
@@ -368,6 +368,27 @@ public class LineageServiceTest {
 
         new Relation(dataset5, program3, AccessType.READ, toSet(twillRunId(run3)), emptySet()),
         new Relation(dataset6, program3, AccessType.WRITE, toSet(twillRunId(run3)), emptySet())
+      ),
+      oneLevelLineage.getRelations()
+    );
+
+    // Lineage for S1 for one level
+    //
+    //       -> D4
+    //       |
+    //       |
+    // D1 -> P1 -> D2
+    //       |
+    //       |
+    // S1 -->|
+
+    oneLevelLineage = lineageService.computeLineage(stream1, 500, 20000, 1);
+    Assert.assertEquals(
+      ImmutableSet.of(
+        new Relation(stream1, program1, AccessType.READ, toSet(twillRunId(run1)), toSet(flowlet1)),
+        new Relation(dataset1, program1, AccessType.READ, toSet(twillRunId(run1)), toSet(flowlet1)),
+        new Relation(dataset2, program1, AccessType.WRITE, toSet(twillRunId(run1)), toSet(flowlet1)),
+        new Relation(dataset4, program1, AccessType.WRITE, toSet(twillRunId(run1)), toSet(flowlet1))
       ),
       oneLevelLineage.getRelations()
     );

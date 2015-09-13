@@ -62,11 +62,12 @@ public class LineageTest extends MetadataTestBase {
     Id.Application app = Id.Application.from(namespace, AllProgramsApp.NAME);
     Id.Flow flow = Id.Flow.from(app, AllProgramsApp.NoOpFlow.NAME);
     Id.DatasetInstance dataset = Id.DatasetInstance.from(namespace, AllProgramsApp.DATASET_NAME);
+    Id.Stream stream = Id.Stream.from(namespace, AllProgramsApp.STREAM_NAME);
 
     Assert.assertEquals(200, status(createNamespace(namespace)));
-    Assert.assertEquals(200,
-                        status(deploy(AllProgramsApp.class, Constants.Gateway.API_VERSION_3_TOKEN, namespace)));
     try {
+      Assert.assertEquals(200,
+                          status(deploy(AllProgramsApp.class, Constants.Gateway.API_VERSION_3_TOKEN, namespace)));
       Assert.assertEquals(200, addProperties(dataset, ImmutableMap.of("data-key1", "data-value1")).getResponseCode());
       Assert.assertEquals(ImmutableMap.of("data-key1", "data-value1"), getProperties(dataset));
 
@@ -75,7 +76,10 @@ public class LineageTest extends MetadataTestBase {
 
       long now = System.currentTimeMillis();
       long oneHourMillis = TimeUnit.HOURS.toMillis(1);
+
+      // Fetch dataset lineage
       HttpResponse httpResponse = fetchLineage(dataset, now - oneHourMillis, now + oneHourMillis, 10);
+      Assert.assertEquals(200, httpResponse.getResponseCode());
       LineageRecord lineage = GSON.fromJson(httpResponse.getResponseBodyAsString(), LineageRecord.class);
 
       LineageRecord expected =
@@ -83,15 +87,25 @@ public class LineageTest extends MetadataTestBase {
                          ImmutableSet.of(
                            new Relation(dataset, flow, AccessType.UNKNOWN,
                                         ImmutableSet.of(flowRunId),
+                                        ImmutableSet.of(Id.Flow.Flowlet.from(flow, AllProgramsApp.A.NAME))),
+                           new Relation(stream, flow, AccessType.READ,
+                                        ImmutableSet.of(flowRunId),
                                         ImmutableSet.of(Id.Flow.Flowlet.from(flow, AllProgramsApp.A.NAME)))
                          ));
       Assert.assertEquals(expected, lineage);
+
+      // Fetch stream lineage
+      httpResponse = fetchLineage(stream, now - oneHourMillis, now + oneHourMillis, 10);
+      Assert.assertEquals(200, httpResponse.getResponseCode());
+      lineage = GSON.fromJson(httpResponse.getResponseBodyAsString(), LineageRecord.class);
+
+      // same as dataset's lineage
+      Assert.assertEquals(expected, lineage);
     } finally {
       try {
-        deleteApp(app, 200);
         deleteNamespace(namespace);
       } catch (Throwable e) {
-        LOG.error("Got exception while deleting app", e);
+        LOG.error("Got exception while deleting namespace {}", namespace, e);
       }
     }
   }
@@ -107,11 +121,12 @@ public class LineageTest extends MetadataTestBase {
     Id.Program worker = Id.Program.from(app, ProgramType.WORKER, AllProgramsApp.NoOpWorker.NAME);
     Id.Program workflow = Id.Program.from(app, ProgramType.WORKFLOW, AllProgramsApp.NoOpWorkflow.NAME);
     Id.DatasetInstance dataset = Id.DatasetInstance.from(namespace, AllProgramsApp.DATASET_NAME);
+    Id.Stream stream = Id.Stream.from(namespace, AllProgramsApp.STREAM_NAME);
 
     Assert.assertEquals(200, status(createNamespace(namespace)));
-    Assert.assertEquals(200,
-                        status(deploy(AllProgramsApp.class, Constants.Gateway.API_VERSION_3_TOKEN, namespace)));
     try {
+      Assert.assertEquals(200,
+                          status(deploy(AllProgramsApp.class, Constants.Gateway.API_VERSION_3_TOKEN, namespace)));
       addProperties(dataset, ImmutableMap.of("data-key1", "data-value1"));
       Assert.assertEquals(ImmutableMap.of("data-key1", "data-value1"), getProperties(dataset));
 
@@ -136,27 +151,47 @@ public class LineageTest extends MetadataTestBase {
 
       long now = System.currentTimeMillis();
       long oneHourMillis = TimeUnit.HOURS.toMillis(1);
+
+      // Fetch dataset lineage
       HttpResponse httpResponse = fetchLineage(dataset, now - oneHourMillis, now + oneHourMillis, 10);
+      Assert.assertEquals(200, httpResponse.getResponseCode());
       LineageRecord lineage = GSON.fromJson(httpResponse.getResponseBodyAsString(), LineageRecord.class);
 
       // dataset is accessed by all programs
       LineageRecord expected =
         new LineageRecord(now - oneHourMillis, now + oneHourMillis,
                           ImmutableSet.of(
+                            // Dataset access
                             new Relation(dataset, flow, AccessType.UNKNOWN, ImmutableSet.of(flowRunId),
                                          ImmutableSet.of(Id.Flow.Flowlet.from(flow, AllProgramsApp.A.NAME))),
                             new Relation(dataset, mapreduce, AccessType.UNKNOWN, ImmutableSet.of(mrRunId)),
                             new Relation(dataset, spark, AccessType.UNKNOWN, ImmutableSet.of(sparkRunId)),
                             new Relation(dataset, mapreduce, AccessType.UNKNOWN, ImmutableSet.of(workflowMrRunId)),
                             new Relation(dataset, service, AccessType.UNKNOWN, ImmutableSet.of(serviceRunId)),
-                            new Relation(dataset, worker, AccessType.UNKNOWN, ImmutableSet.of(workerRunId))
+                            new Relation(dataset, worker, AccessType.UNKNOWN, ImmutableSet.of(workerRunId)),
+
+                            // Stream access
+                            new Relation(stream, flow, AccessType.READ, ImmutableSet.of(flowRunId),
+                                         ImmutableSet.of(Id.Flow.Flowlet.from(flow, AllProgramsApp.A.NAME))),
+                            new Relation(stream, mapreduce, AccessType.READ, ImmutableSet.of(mrRunId)),
+                            new Relation(stream, spark, AccessType.READ, ImmutableSet.of(sparkRunId)),
+                            new Relation(stream, mapreduce, AccessType.READ, ImmutableSet.of(workflowMrRunId)),
+                            new Relation(stream, worker, AccessType.WRITE, ImmutableSet.of(workerRunId))
                           ));
+      Assert.assertEquals(expected, lineage);
+
+      // Fetch stream lineage
+      httpResponse = fetchLineage(stream, now - oneHourMillis, now + oneHourMillis, 10);
+      Assert.assertEquals(200, httpResponse.getResponseCode());
+      lineage = GSON.fromJson(httpResponse.getResponseBodyAsString(), LineageRecord.class);
+
+      // stream too is accessed by all programs
       Assert.assertEquals(expected, lineage);
     } finally {
       try {
-        deleteApp(app, 200);
+        deleteNamespace(namespace);
       } catch (Throwable e) {
-        LOG.error("Got exception while deleting app", e);
+        LOG.error("Got exception while deleting namespace {}", namespace, e);
       }
     }
   }
