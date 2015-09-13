@@ -127,7 +127,7 @@ CDAP ``Mapper`` and ``Reducer`` implement `the standard Hadoop APIs
 .. _mapreduce-datasets:
 
 MapReduce and Datasets
-----------------------
+======================
 
 .. rubric: Reading and Writing to Datasets from a MapReduce program
 
@@ -171,17 +171,16 @@ output, as described in :ref:`datasets-mapreduce-programs`.
 .. _mapreduce-resources:
 
 MapReduce and Resources
------------------------
+=======================
 
 Both the YARN container size and the number of virtual cores used in a MapReduce job can be specified
 as part of the configuration. They can also be set at runtime through the use of runtime arguments. An
 example of this is shown in the :ref:`Purchase <examples-purchase>` example, where the memory requirements
 are set:
 
-.. literalinclude:: /../../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseStore.java
+.. literalinclude:: /../../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseHistoryBuilder.java
    :language: java
-   :start-after: import java.util.Map;
-   :end-before:   /**
+   :lines: 45-56
 
 The Resources API, if called with two arguments, sets both the memory used in megabytes
 and the number of virtual cores used.
