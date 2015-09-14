@@ -707,8 +707,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    */
   private void deleteAppBusinessMetadata(Id.Application appId) {
     // Remove metadata for the Application itself.
-    businessMds.removeProperties(appId);
-    businessMds.removeTags(appId);
+    businessMds.removeMetadata(appId);
 
     // Remove business metadata for the programs of the Application
     // TODO: Need to remove this we support prefix search of metadata type.
@@ -756,8 +755,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
 
     for (String programName : programNames) {
       Id.Program programId = Id.Program.from(appId.getNamespaceId(), appId.getId(), programType, programName);
-      businessMds.removeProperties(programId);
-      businessMds.removeTags(programId);
+      businessMds.removeMetadata(programId);
     }
   }
 

@@ -128,24 +128,22 @@ public class LineageWriterDatasetFramework implements DatasetFramework, ProgramC
   @Override
   public void deleteInstance(Id.DatasetInstance datasetInstanceId)
     throws DatasetManagementException, IOException, ServiceUnavailableException {
-    delegate.deleteInstance(datasetInstanceId);
     // Remove metadata for the dataset
-    businessMds.removeProperties(datasetInstanceId);
-    businessMds.removeTags(datasetInstanceId);
+    businessMds.removeMetadata(datasetInstanceId);
+    delegate.deleteInstance(datasetInstanceId);
   }
 
   @Override
   public void deleteAllInstances(Id.Namespace namespaceId)
     throws DatasetManagementException, IOException, ServiceUnavailableException {
     Collection<DatasetSpecificationSummary> datasets = this.getInstances(namespaceId);
-    delegate.deleteAllInstances(namespaceId);
     for (DatasetSpecificationSummary dataset : datasets) {
       String dsName = dataset.getName();
       Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(namespaceId, dsName);
       // Remove metadata for the dataset
-      businessMds.removeProperties(datasetInstanceId);
-      businessMds.removeTags(datasetInstanceId);
+      businessMds.removeMetadata(datasetInstanceId);
     }
+    delegate.deleteAllInstances(namespaceId);
   }
 
   @Override

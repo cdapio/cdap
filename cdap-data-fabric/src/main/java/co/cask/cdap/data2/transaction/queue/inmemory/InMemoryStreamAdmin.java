@@ -62,10 +62,9 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
   public void dropAllInNamespace(Id.Namespace namespace) throws Exception {
     queueService.resetStreamsWithPrefix(QueueName.prefixForNamedspacedStream(namespace.getId()));
     for (StreamSpecification spec : streamMetaStore.listStreams(namespace)) {
-      streamMetaStore.removeStream(Id.Stream.from(namespace, spec.getName()));
       // Remove metadata for the stream
-      businessMds.removeProperties(Id.Stream.from(namespace, spec.getName()));
-      businessMds.removeTags(Id.Stream.from(namespace, spec.getName()));
+      businessMds.removeMetadata(Id.Stream.from(namespace, spec.getName()));
+      streamMetaStore.removeStream(Id.Stream.from(namespace, spec.getName()));
     }
   }
 
@@ -114,11 +113,11 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
 
   @Override
   public void drop(Id.Stream streamId) throws Exception {
+    // Remove metadata for the stream
+    businessMds.removeMetadata(streamId);
     drop(QueueName.fromStream(streamId));
     streamMetaStore.removeStream(streamId);
-    // Remove metadata for the stream
-    businessMds.removeProperties(streamId);
-    businessMds.removeTags(streamId);
+
   }
 
   @Override

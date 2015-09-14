@@ -411,6 +411,9 @@ public class FileStreamAdmin implements StreamAdmin {
             LOG.debug("Could not delete stream config location " + streamLocation.toURI().getPath());
           }
 
+          // Remove metadata for the stream
+          businessMds.removeMetadata(streamId);
+
           // Move the stream directory to the deleted directory
           // The target directory has a timestamp appended to the stream name
           // It is for the case when a stream is created and deleted in a short period of time before
@@ -419,10 +422,6 @@ public class FileStreamAdmin implements StreamAdmin {
           Locations.mkdirsIfNotExists(deleted);
           streamLocation.renameTo(deleted.append(streamId.getId() + System.currentTimeMillis()));
           streamMetaStore.removeStream(streamId);
-
-          // Remove metadata for the stream
-          businessMds.removeProperties(streamId);
-          businessMds.removeTags(streamId);
         } catch (Exception e) {
           throw Throwables.propagate(e);
         }
