@@ -154,6 +154,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   private final UsageRegistry usageRegistry;
   private final ArtifactRepository artifactRepository;
   private final Id.Artifact artifactId;
+  private final Map<String, String> artifactFileNames;
 
   private Job job;
   private Transaction transaction;
@@ -169,7 +170,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
                           DynamicMapReduceContext context,
                           Location programJarLocation, LocationFactory locationFactory,
                           StreamAdmin streamAdmin, TransactionSystemClient txClient,
-                          UsageRegistry usageRegistry, ArtifactRepository artifactRepository) {
+                          UsageRegistry usageRegistry, ArtifactRepository artifactRepository,
+                          Map<String, String> artifactFileNames) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.mapReduce = mapReduce;
@@ -181,9 +183,9 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     this.context = context;
     this.usageRegistry = usageRegistry;
     this.artifactRepository = artifactRepository;
-    this.artifactId = context.getProgram().getApplicationSpecification().getArtifactId() != null ?
-      Id.Artifact.from(Id.Namespace.from(context.getProgram().getNamespaceId()),
-                       context.getProgram().getApplicationSpecification().getArtifactId()) : null;
+    this.artifactId = Id.Artifact.from(Id.Namespace.from(context.getProgram().getNamespaceId()),
+                                       context.getProgram().getApplicationSpecification().getArtifactId());
+    this.artifactFileNames = artifactFileNames;
   }
 
   @Override
@@ -221,21 +223,13 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       Location tempLocation = createTempLocationDirectory();
       this.cleanupTask = createCleanupTask(tempDir, tempLocation);
 
-
-      Location artifactArchive = createArchive(context.getPlugins(), tempDir, tempLocation);
       // For local mode, everything is in the configuration classloader already, hence no need to create new jar
       if (!MapReduceTaskContextProvider.isLocal(mapredConf)) {
-        // After calling beforeSubmit, we know what plugins are needed for adapter, hence construct the proper
+        // After calling beforeSubmit, we know what plugins are needed for the program, hence construct the proper
         // ClassLoader from here and use it for setting up the job
+        Location artifactArchive = createArchive(context.getPlugins(), tempDir, tempLocation);
         if (artifactArchive != null) {
           BundleJarUtil.unpackProgramJar(artifactArchive, tempDir);
-          cConf.set("hereitis", tempDir.getAbsolutePath());
-          job.addCacheArchive(artifactArchive.toURI());
-        }
-      } else {
-        if (artifactArchive != null) {
-          BundleJarUtil.unpackProgramJar(artifactArchive, tempDir);
-          cConf.set("hereitis", tempDir.getAbsolutePath());
           job.addCacheArchive(artifactArchive.toURI());
         }
       }
@@ -244,8 +238,9 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       // It is mainly for standalone mode to have the same ClassLoader as in distributed mode
       // It can only be constructed here because we need to have all plugins information
       classLoader = new MapReduceClassLoader(context.getProgram().getClassLoader(),
-                                             cConf, context.getNamespaceId(),
+                                             context.getNamespaceId(),
                                              context.getPlugins(),
+                                             artifactFileNames,
                                              context.getPluginInstantiator());
       mapredConf.setClassLoader(new WeakReferenceDelegatorClassLoader(classLoader));
       ClassLoaders.setContextClassLoader(mapredConf.getClassLoader());
@@ -300,7 +295,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         // We remember tx, so that we can re-use it in mapreduce tasks
         // Make a copy of the conf and rewrite the template plugin directory to be the plugin archive name
         CConfiguration cConfCopy = cConf;
-        contextConfig.set(context, cConfCopy, tx, programJar.toURI());
+        contextConfig.set(context, cConfCopy, tx, programJar.toURI(), artifactFileNames);
 
         LOG.info("Submitting MapReduce Job: {}", context);
         // submits job and returns immediately. Shouldn't need to set context ClassLoader.
@@ -957,7 +952,11 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
 
     File jarFile = File.createTempFile("artifact", ".jar", tempDir);
     Set<String> entries = new HashSet<>();
+    String entryPrefix = "data/namespaces";
     try (JarOutputStream output = new JarOutputStream(new FileOutputStream(jarFile))) {
+      // Create top level dir
+      output.putNextEntry(new JarEntry(entryPrefix));
+
       for (Map.Entry<String, Plugin> entry : plugins.entrySet()) {
         Plugin plugin = entry.getValue();
         Map.Entry<ArtifactDescriptor, PluginClass> pluginEntry = artifactRepository.getPlugin(

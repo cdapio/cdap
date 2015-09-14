@@ -17,7 +17,6 @@
 package co.cask.cdap.internal.app.runtime.batch;
 
 import co.cask.cdap.api.plugin.Plugin;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.lang.FilterClassLoader;
@@ -30,7 +29,6 @@ import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerLauncher;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.templates.AdapterDefinition;
 import com.google.common.base.Function;
 import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
@@ -44,10 +42,8 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
-import org.apache.twill.filesystem.HDFSLocationFactory;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -100,10 +96,11 @@ public class MapReduceClassLoader extends CombineClassLoader {
    * followed by plugin Export-Package ClassLoader and with the system ClassLoader last.
    */
   public MapReduceClassLoader(ClassLoader programClassLoader,
-                              CConfiguration cConf, String namespace,
+                              String namespace,
                               Map<String, Plugin> plugins,
-                              @Nullable PluginInstantiator pluginInstantiator) {
-    this(new Parameters(programClassLoader, cConf, namespace, plugins, pluginInstantiator));
+                              Map<String, String> artifactFileNames,
+                              PluginInstantiator pluginInstantiator) {
+    this(new Parameters(programClassLoader, namespace, plugins, artifactFileNames, pluginInstantiator));
   }
 
   private MapReduceClassLoader(Parameters parameters) {
@@ -163,21 +160,23 @@ public class MapReduceClassLoader extends CombineClassLoader {
     }
 
     Parameters(MapReduceContextConfig contextConfig, ClassLoader programClassLoader) {
-      this(programClassLoader, contextConfig.getConf(), contextConfig.getNamespace(),
-           contextConfig.getPlugins(), createPluginInstantiator(contextConfig, programClassLoader));
+      this(programClassLoader, contextConfig.getNamespace(),
+           contextConfig.getPlugins(), contextConfig.getArtifactFileNames(),
+           createPluginInstantiator(contextConfig, programClassLoader));
     }
 
     /**
      * Creates from the given ProgramClassLoader with plugin classloading support.
      */
     Parameters(ClassLoader programClassLoader,
-               CConfiguration cConf, String namespace,
+               String namespace,
                Map<String, Plugin> plugins,
-               @Nullable PluginInstantiator pluginInstantiator) {
+               Map<String, String> artifactFileNames,
+               PluginInstantiator pluginInstantiator) {
       this.programClassLoader = programClassLoader;
       this.pluginInstantiator = pluginInstantiator;
-      this.filteredPluginClassLoaders = createFilteredPluginClassLoaders(cConf, namespace,
-                                                                         plugins, pluginInstantiator);
+      this.filteredPluginClassLoaders = createFilteredPluginClassLoaders(namespace, plugins, artifactFileNames,
+                                                                         pluginInstantiator);
     }
 
     public ClassLoader getProgramClassLoader() {
@@ -235,10 +234,10 @@ public class MapReduceClassLoader extends CombineClassLoader {
      *
      * Plugin Lib ClassLoader, Plugin Export-Package ClassLoader, ...
      */
-    private static List<ClassLoader> createFilteredPluginClassLoaders(CConfiguration cConf, String namespace,
-                                                                      Map<String, Plugin> plugins,
-                                                                      @Nullable PluginInstantiator pluginInstantiator) {
-      if (pluginInstantiator == null) {
+    private static List<ClassLoader> createFilteredPluginClassLoaders(String namespace, Map<String, Plugin> plugins,
+                                                                      Map<String, String> artifactFileNames,
+                                                                      PluginInstantiator pluginInstantiator) {
+      if (plugins.isEmpty()) {
         return ImmutableList.of();
       }
 
@@ -247,15 +246,10 @@ public class MapReduceClassLoader extends CombineClassLoader {
         List<ClassLoader> pluginClassLoaders = Lists.newArrayList();
         for (Map.Entry<String, Plugin> pluginEntry : plugins.entrySet()) {
           Plugin plugin = pluginEntry.getValue();
-          File pluginFile;
-          if (cConf.get("hereitis") != null) {
-            pluginFile = new File(cConf.get("hereitis"), String.format("%s.jar", plugin.getArtifactId().toString()));
-          } else {
-            pluginFile = new File(String.format("%s.jar", plugin.getArtifactId().toString()));
-          }
+          File pluginFile = new File(artifactFileNames.get(plugin.getArtifactId().toString()));
           Id.Artifact artifact = Id.Artifact.from(Id.Namespace.from(namespace), plugin.getArtifactId());
           ArtifactDescriptor artifactDescriptor = new ArtifactDescriptor(artifact, Locations.toLocation(pluginFile));
-          ClassLoader pluginClassLoader = pluginInstantiator.getInitialClassLoader(artifactDescriptor);
+          ClassLoader pluginClassLoader = pluginInstantiator.getArtifactClassLoader(artifactDescriptor);
           if (pluginClassLoader instanceof PluginClassLoader) {
             Collection<String> allowedClasses = artifactPluginClasses.get(plugin);
             if (!allowedClasses.isEmpty()) {

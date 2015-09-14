@@ -19,13 +19,18 @@ package co.cask.cdap.internal.app.runtime.batch;
 import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.Programs;
+import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.lang.Delegators;
+import co.cask.cdap.internal.app.runtime.BasicArguments;
+import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.batch.distributed.DistributedMapReduceTaskContextBuilder;
 import co.cask.cdap.internal.app.runtime.batch.inmemory.InMemoryMapReduceTaskContextBuilder;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Maps;
+import com.google.gson.Gson;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.mapreduce.MRConfig;
@@ -38,6 +43,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -46,6 +52,7 @@ import javax.annotation.Nullable;
 public final class MapReduceTaskContextProvider {
 
   private static final Logger LOG = LoggerFactory.getLogger(MapReduceTaskContextProvider.class);
+  private static final Gson GSON = new Gson();
 
   private final TaskAttemptContext taskContext;
   private final MapReduceMetrics.TaskType type;
@@ -70,6 +77,11 @@ public final class MapReduceTaskContextProvider {
   public synchronized BasicMapReduceTaskContext get() {
     if (context == null) {
       CConfiguration cConf = contextConfig.getConf();
+      Program program = createProgram(contextConfig);
+      Map<String, String> systemArguments = Maps.newHashMap();
+      systemArguments.put(ProgramOptionConstants.PLUGIN_FILENAMES, GSON.toJson(contextConfig.getArtifactFileNames()));
+      ProgramOptions programOptions = new SimpleProgramOptions(program.getName(), new BasicArguments(systemArguments),
+                                                               contextConfig.getArguments());
       context = getBuilder(cConf)
         .build(type,
                contextConfig.getRunId(),
@@ -77,10 +89,9 @@ public final class MapReduceTaskContextProvider {
                contextConfig.getLogicalStartTime(),
                contextConfig.getProgramNameInWorkflow(),
                contextConfig.getWorkflowToken(),
-               // Change this!
-               new SimpleProgramOptions("abcd", contextConfig.getArguments(), contextConfig.getArguments()),
+               programOptions,
                contextConfig.getTx(),
-               createProgram(contextConfig),
+               program,
                contextConfig.getInputDataSet(),
                contextConfig.getOutputDataSet(),
                getPluginInstantiator(contextConfig.getConfiguration()));
