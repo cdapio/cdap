@@ -30,6 +30,29 @@ create_pid_dir() {
   mkdir -p "${PID_DIR}"
 }
 
+# usage: get_conf "explore.enabled" "${CDAP_CONF}"/cdap-site.xml false
+get_conf() {
+  local __pn=${1} __fn=${2} __default=${3} __result=
+  # Check for xmllint
+  [[ $(which xmllint 2>/dev/null) ]] || {
+    case ${PLATFORM} in
+      RHEL) echo "Cannot locate xmllint, is libxml2 installed?" ;;
+      UBUNTU) echo "Cannot locate xmllint, is libxml2-utils installed?" ;;
+      *) echo "Cannot locate xmllint, are XML tools installed?" ;;
+    esac
+    return 1
+  }
+  # Get property from file, return last result, if multiple are returned
+  __property="cat //configuration/property[name='${__pn}']/value[text()]"
+  __sed_fu='/^\//d;s/^.*<value>//;s/<\/value>.*$//'
+  __result=$(echo "${__property}" | xmllint --shell "${__fn}" | sed "${__sed_fu}" | tail -n 1)
+  # Found result, echo it and return 0
+  [[ -n "${__result}" ]] && echo ${__result} && return 0
+  # No result, echo default and return 0
+  [[ -n "${__default}" ]] && echo ${__default} && return 0
+  return 1
+}
+
 # Rotates the basic start/stop logs
 rotate_log () {
   local log=${1} num=5 prev=0
@@ -160,23 +183,51 @@ set_classpath() {
 # Hive classpath is not added as part of system classpath as hive jars bundle unrelated jars like guava,
 # and hence need to be isolated.
 set_hive_classpath() {
-  if [ -z "${HIVE_HOME}" -o -z "${HIVE_CONF_DIR}" -o -z "${HADOOP_CONF_DIR}" ]; then
-    if [[ $(which hive 2>/dev/null) ]]; then
-      HIVE_VAR_OUT=$(hive -e 'set -v' 2>/dev/null)
-      HIVE_VARS=$(echo ${HIVE_VAR_OUT} | tr ' ' '\n')
-      # Quotes preserve whitespace
-      HIVE_HOME=${HIVE_HOME:-$(echo -e "${HIVE_VARS}" | grep '^env:HIVE_HOME=' | cut -d= -f2)}
-      HIVE_CONF_DIR=${HIVE_CONF_DIR:-$(echo -e "${HIVE_VARS}" | grep '^env:HIVE_CONF_DIR=' | cut -d= -f2)}
-      HADOOP_CONF_DIR=${HADOOP_CONF_DIR:-$(echo -e "${HIVE_VARS}" | grep '^env:HADOOP_CONF_DIR=' | cut -d= -f2)}
-    fi
-  fi
+  local __explore=$(get_conf "explore.enabled" "${CDAP_CONF}"/cdap-site.xml false)
+  if [[ "${__explore}" == "true" ]]; then
+    if [ -z "${HIVE_HOME}" -o -z "${HIVE_CONF_DIR}" -o -z "${HADOOP_CONF_DIR}" ]; then
+      __secure=$(get_conf "kerberos.auth.enabled" "${CDAP_CONF}"/cdap-site.xml false)
+      if [[ "${__secure}" == "true" ]]; then
+        __principal=$(get_conf "cdap.master.kerberos.principal" "${CDAP_CONF}"/cdap-site.xml)
+        __keytab=$(get_conf "cdap.master.kerberos.keytab" "${CDAP_CONF}"/cdap-site.xml)
+        if [ -z "${__principal}" -o -z "${__keytab}" ]; then
+          echo "ERROR: Both cdap.master.kerberos.principal and cdap.master.kerberos.keytab must be configured for Kerberos-enabled clusters!"
+          return 1
+        fi
+        if [ ! -r "${__keytab}" ]; then
+          echo "ERROR: Cannot read keytab: ${__keytab}"
+          return 1
+        fi
+        if [[ $(which kinit 2>/dev/null) ]]; then
+          # Replace _HOST in principal w/ FQDN, like Hadoop does
+          kinit -kt "${__keytab}" "${__principal/_HOST/`hostname -f`}"
+          if [[ ! $? ]]; then
+            echo "ERROR: Failed executing 'kinit -kt \"${__keytab}\" \"${__principal/_HOST/`hostname -f`}\"'"
+            return 1
+          fi
+        else
+          echo "ERROR: Cannot locate kinit! Please, ensure the appropriate Kerberos utilities are installed"
+          return 1
+        fi
+      fi
 
-  # If Hive classpath is successfully determined, derive explore
-  # classpath from it and export it to use it in the launch command
-  if [ -n "${HIVE_HOME}" -a -n "${HIVE_CONF_DIR}" -a -n "${HADOOP_CONF_DIR}" ]; then
-    EXPLORE_CONF_FILES=$(ls -1 ${HIVE_CONF_DIR}/* ${HADOOP_CONF_DIR}/* | tr '\n' ':')
-    EXPLORE_CLASSPATH=$(ls -1 ${HIVE_HOME}/lib/hive-exec-* ${HIVE_HOME}/lib/*.jar | tr '\n' ':')
-    export EXPLORE_CONF_FILES EXPLORE_CLASSPATH
+      if [[ $(which hive 2>/dev/null) ]]; then
+        HIVE_VAR_OUT=$(hive -e 'set -v' 2>/dev/null)
+        HIVE_VARS=$(echo ${HIVE_VAR_OUT} | tr ' ' '\n')
+        # Quotes preserve whitespace
+        HIVE_HOME=${HIVE_HOME:-$(echo -e "${HIVE_VARS}" | grep '^env:HIVE_HOME=' | cut -d= -f2)}
+        HIVE_CONF_DIR=${HIVE_CONF_DIR:-$(echo -e "${HIVE_VARS}" | grep '^env:HIVE_CONF_DIR=' | cut -d= -f2)}
+        HADOOP_CONF_DIR=${HADOOP_CONF_DIR:-$(echo -e "${HIVE_VARS}" | grep '^env:HADOOP_CONF_DIR=' | cut -d= -f2)}
+      fi
+    fi
+
+    # If Hive classpath is successfully determined, derive explore
+    # classpath from it and export it to use it in the launch command
+    if [ -n "${HIVE_HOME}" -a -n "${HIVE_CONF_DIR}" -a -n "${HADOOP_CONF_DIR}" ]; then
+      EXPLORE_CONF_FILES=$(ls -1 ${HIVE_CONF_DIR}/* ${HADOOP_CONF_DIR}/* | tr '\n' ':')
+      EXPLORE_CLASSPATH=$(ls -1 ${HIVE_HOME}/lib/hive-exec-* ${HIVE_HOME}/lib/*.jar | tr '\n' ':')
+      export EXPLORE_CONF_FILES EXPLORE_CLASSPATH
+    fi
   fi
 }
 
@@ -193,7 +244,7 @@ check_and_set_classpath_for_dev_environment () {
   IN_DEV_ENVIRONMENT=${IN_DEV_ENVIRONMENT:-false}
 
   # for developers only, add flow and flow related stuff to class path.
-  if [[ ${IN_DEV_ENVIRONMENT} ]]; then
+  if [[ "${IN_DEV_ENVIRONMENT}" == "true" ]]; then
     echo "Constructing classpath for development environment ..."
     [[ -f "${APP_HOME}"/build/generated-classpath ]] && CLASSPATH+=":$(<${APP_HOME}/build/generated-classpath)"
     [[ -d "${APP_HOME}"/build/classes ]] && CLASSPATH+=":${APP_HOME}/build/classes/main:${APP_HOME}/conf/*"
