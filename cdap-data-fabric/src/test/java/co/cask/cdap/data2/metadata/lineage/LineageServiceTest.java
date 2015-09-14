@@ -20,7 +20,9 @@ import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.tephra.TransactionExecutorFactory;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import org.apache.twill.api.RunId;
 import org.junit.Assert;
@@ -28,6 +30,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -36,6 +39,8 @@ import java.util.Set;
 public class LineageServiceTest {
   @ClassRule
   public static DatasetFrameworkTestUtil dsFrameworkUtil = new DatasetFrameworkTestUtil();
+
+  private static final Set<MetadataRecord> EMPTY_METADATA = ImmutableSet.of();
 
   // Define data
   private final Id.Stream stream1 = Id.Stream.from("default", "stream1");
@@ -75,12 +80,19 @@ public class LineageServiceTest {
                                                  Id.DatasetInstance.from("default", "testSimpleLineage"));
     LineageService lineageService = new LineageService(lineageStore);
 
-    // Add accesses for D3 -> P2 -> D2 -> P1 -> D1
-    lineageStore.addAccess(run1, dataset1, AccessType.WRITE, "metadata11", flowlet1);
-    lineageStore.addAccess(run1, dataset2, AccessType.READ, "metadata12", flowlet1);
+    // Define metadata
+    MetadataRecord run1Meta = new MetadataRecord(program1, toMap("pk1", "pk1"), toSet("pt1"));
+    Set<MetadataRecord> run1data1 = toSet(run1Meta,
+                                          new MetadataRecord(dataset1, toMap("dk1", "dk1"), toSet("dt1")));
+    Set<MetadataRecord> run1data2 = toSet(run1Meta,
+                                          new MetadataRecord(dataset2, toMap("dk2", "dk2"), toSet("dt2")));
 
-    lineageStore.addAccess(run2, dataset2, AccessType.WRITE, "metadata21", flowlet2);
-    lineageStore.addAccess(run2, dataset3, AccessType.READ, "metadata22", flowlet2);
+    // Add accesses for D3 -> P2 -> D2 -> P1 -> D1
+    lineageStore.addAccess(run1, dataset1, AccessType.WRITE, run1data1, flowlet1);
+    lineageStore.addAccess(run1, dataset2, AccessType.READ, run1data2, flowlet1);
+
+    lineageStore.addAccess(run2, dataset2, AccessType.WRITE, EMPTY_METADATA, flowlet2);
+    lineageStore.addAccess(run2, dataset3, AccessType.READ, EMPTY_METADATA, flowlet2);
 
     Lineage expectedLineage = new Lineage(
       ImmutableSet.of(
@@ -106,6 +118,9 @@ public class LineageServiceTest {
         new Relation(dataset2, program1, AccessType.READ, toSet(twillRunId(run1)), toSet(flowlet1))
       ),
       oneLevelLineage.getRelations());
+
+    // Assert metadata
+    Assert.assertEquals(toSet(run1data1, run1data2), lineageStore.getAccesses(run1));
   }
 
   @Test
@@ -121,15 +136,15 @@ public class LineageServiceTest {
     LineageService lineageService = new LineageService(lineageStore);
 
     // Add access
-    lineageStore.addAccess(run1, dataset1, AccessType.READ, "metadata11", flowlet1);
-    lineageStore.addAccess(run1, dataset2, AccessType.WRITE, "metadata12", flowlet1);
+    lineageStore.addAccess(run1, dataset1, AccessType.READ, EMPTY_METADATA, flowlet1);
+    lineageStore.addAccess(run1, dataset2, AccessType.WRITE, EMPTY_METADATA, flowlet1);
 
-    lineageStore.addAccess(run2, dataset2, AccessType.READ, "metadata22", flowlet2);
-    lineageStore.addAccess(run2, dataset1, AccessType.WRITE, "metadata21", flowlet2);
-    lineageStore.addAccess(run2, dataset3, AccessType.WRITE, "metadata23", flowlet2);
+    lineageStore.addAccess(run2, dataset2, AccessType.READ, EMPTY_METADATA, flowlet2);
+    lineageStore.addAccess(run2, dataset1, AccessType.WRITE, EMPTY_METADATA, flowlet2);
+    lineageStore.addAccess(run2, dataset3, AccessType.WRITE, EMPTY_METADATA, flowlet2);
 
-    lineageStore.addAccess(run3, dataset3, AccessType.READ, "metadata33");
-    lineageStore.addAccess(run3, dataset4, AccessType.WRITE, "metadata34");
+    lineageStore.addAccess(run3, dataset3, AccessType.READ, EMPTY_METADATA);
+    lineageStore.addAccess(run3, dataset4, AccessType.WRITE, EMPTY_METADATA);
 
     Lineage expectedLineage = new Lineage(
       ImmutableSet.of(
@@ -178,8 +193,8 @@ public class LineageServiceTest {
     LineageService lineageService = new LineageService(lineageStore);
 
     // Add accesses
-    lineageStore.addAccess(run1, dataset1, AccessType.READ, "metadata10", flowlet1);
-    lineageStore.addAccess(run1, dataset1, AccessType.WRITE, "metadata11", flowlet1);
+    lineageStore.addAccess(run1, dataset1, AccessType.READ, EMPTY_METADATA, flowlet1);
+    lineageStore.addAccess(run1, dataset1, AccessType.WRITE, EMPTY_METADATA, flowlet1);
 
     Lineage expectedLineage = new Lineage(
       ImmutableSet.of(
@@ -204,10 +219,10 @@ public class LineageServiceTest {
     LineageService lineageService = new LineageService(lineageStore);
 
     // Add accesses
-    lineageStore.addAccess(run1, dataset1, AccessType.READ, "metadata10", flowlet1);
+    lineageStore.addAccess(run1, dataset1, AccessType.READ, EMPTY_METADATA, flowlet1);
     // Write is in a different run
     lineageStore.addAccess(new Id.Run(run1.getProgram(), run2.getId()), dataset1, AccessType.WRITE,
-                           "metadata11", flowlet1);
+                           EMPTY_METADATA, flowlet1);
 
     Lineage expectedLineage = new Lineage(
       ImmutableSet.of(
@@ -236,21 +251,21 @@ public class LineageServiceTest {
     LineageService lineageService = new LineageService(lineageStore);
 
     // Add accesses
-    lineageStore.addAccess(run1, stream1, AccessType.READ, "metadata10", flowlet1);
-    lineageStore.addAccess(run1, dataset1, AccessType.READ, "metadata11", flowlet1);
-    lineageStore.addAccess(run1, dataset2, AccessType.WRITE, "metadata12", flowlet1);
-    lineageStore.addAccess(run1, dataset4, AccessType.WRITE, "metadata14", flowlet1);
+    lineageStore.addAccess(run1, stream1, AccessType.READ, EMPTY_METADATA, flowlet1);
+    lineageStore.addAccess(run1, dataset1, AccessType.READ, EMPTY_METADATA, flowlet1);
+    lineageStore.addAccess(run1, dataset2, AccessType.WRITE, EMPTY_METADATA, flowlet1);
+    lineageStore.addAccess(run1, dataset4, AccessType.WRITE, EMPTY_METADATA, flowlet1);
 
-    lineageStore.addAccess(run2, dataset2, AccessType.READ, "metadata22", flowlet2);
-    lineageStore.addAccess(run2, dataset3, AccessType.WRITE, "metadata23", flowlet2);
-    lineageStore.addAccess(run2, dataset5, AccessType.WRITE, "metadata25", flowlet2);
+    lineageStore.addAccess(run2, dataset2, AccessType.READ, EMPTY_METADATA, flowlet2);
+    lineageStore.addAccess(run2, dataset3, AccessType.WRITE, EMPTY_METADATA, flowlet2);
+    lineageStore.addAccess(run2, dataset5, AccessType.WRITE, EMPTY_METADATA, flowlet2);
 
-    lineageStore.addAccess(run3, dataset5, AccessType.READ, "metadata35");
-    lineageStore.addAccess(run3, dataset6, AccessType.WRITE, "metadata36");
+    lineageStore.addAccess(run3, dataset5, AccessType.READ, EMPTY_METADATA);
+    lineageStore.addAccess(run3, dataset6, AccessType.WRITE, EMPTY_METADATA);
 
-    lineageStore.addAccess(run4, dataset2, AccessType.READ, "metadata42");
-    lineageStore.addAccess(run4, dataset3, AccessType.READ, "metadata43");
-    lineageStore.addAccess(run4, dataset7, AccessType.WRITE, "metadata47");
+    lineageStore.addAccess(run4, dataset2, AccessType.READ, EMPTY_METADATA);
+    lineageStore.addAccess(run4, dataset3, AccessType.READ, EMPTY_METADATA);
+    lineageStore.addAccess(run4, dataset7, AccessType.WRITE, EMPTY_METADATA);
 
     Lineage expectedLineage = new Lineage(
       ImmutableSet.of(
@@ -300,25 +315,25 @@ public class LineageServiceTest {
     LineageService lineageService = new LineageService(lineageStore);
 
     // Add accesses
-    lineageStore.addAccess(run1, stream1, AccessType.READ, "metadata10", flowlet1);
-    lineageStore.addAccess(run1, dataset1, AccessType.READ, "metadata11", flowlet1);
-    lineageStore.addAccess(run1, dataset2, AccessType.WRITE, "metadata12", flowlet1);
-    lineageStore.addAccess(run1, dataset4, AccessType.WRITE, "metadata14", flowlet1);
+    lineageStore.addAccess(run1, stream1, AccessType.READ, EMPTY_METADATA, flowlet1);
+    lineageStore.addAccess(run1, dataset1, AccessType.READ, EMPTY_METADATA, flowlet1);
+    lineageStore.addAccess(run1, dataset2, AccessType.WRITE, EMPTY_METADATA, flowlet1);
+    lineageStore.addAccess(run1, dataset4, AccessType.WRITE, EMPTY_METADATA, flowlet1);
 
-    lineageStore.addAccess(run2, dataset2, AccessType.READ, "metadata22", flowlet2);
-    lineageStore.addAccess(run2, dataset3, AccessType.WRITE, "metadata23", flowlet2);
-    lineageStore.addAccess(run2, dataset5, AccessType.WRITE, "metadata25", flowlet2);
+    lineageStore.addAccess(run2, dataset2, AccessType.READ, EMPTY_METADATA, flowlet2);
+    lineageStore.addAccess(run2, dataset3, AccessType.WRITE, EMPTY_METADATA, flowlet2);
+    lineageStore.addAccess(run2, dataset5, AccessType.WRITE, EMPTY_METADATA, flowlet2);
 
-    lineageStore.addAccess(run3, dataset5, AccessType.READ, "metadata35");
-    lineageStore.addAccess(run3, dataset6, AccessType.WRITE, "metadata36");
+    lineageStore.addAccess(run3, dataset5, AccessType.READ, EMPTY_METADATA);
+    lineageStore.addAccess(run3, dataset6, AccessType.WRITE, EMPTY_METADATA);
 
-    lineageStore.addAccess(run4, dataset2, AccessType.READ, "metadata42");
-    lineageStore.addAccess(run4, dataset3, AccessType.READ, "metadata43");
-    lineageStore.addAccess(run4, dataset7, AccessType.WRITE, "metadata47");
+    lineageStore.addAccess(run4, dataset2, AccessType.READ, EMPTY_METADATA);
+    lineageStore.addAccess(run4, dataset3, AccessType.READ, EMPTY_METADATA);
+    lineageStore.addAccess(run4, dataset7, AccessType.WRITE, EMPTY_METADATA);
 
-    lineageStore.addAccess(run5, dataset3, AccessType.READ, "metadata53");
-    lineageStore.addAccess(run5, dataset6, AccessType.READ, "metadata56");
-    lineageStore.addAccess(run5, dataset1, AccessType.WRITE, "metadata51");
+    lineageStore.addAccess(run5, dataset3, AccessType.READ, EMPTY_METADATA);
+    lineageStore.addAccess(run5, dataset6, AccessType.READ, EMPTY_METADATA);
+    lineageStore.addAccess(run5, dataset1, AccessType.WRITE, EMPTY_METADATA);
 
     Lineage expectedLineage = new Lineage(
       ImmutableSet.of(
@@ -397,6 +412,19 @@ public class LineageServiceTest {
   @SafeVarargs
   private static <T> Set<T> toSet(T... elements) {
     return ImmutableSet.copyOf(elements);
+  }
+
+  private Map<String, String> toMap(String key, String value) {
+    return ImmutableMap.of(key, value);
+  }
+
+  @SafeVarargs
+  private static Set<MetadataRecord> toSet(Set<MetadataRecord>... records) {
+    ImmutableSet.Builder<MetadataRecord> recordBuilder = ImmutableSet.builder();
+    for (Set<MetadataRecord> recordSet : records) {
+      recordBuilder.addAll(recordSet);
+    }
+    return recordBuilder.build();
   }
 
   private static Set<Id.NamespacedId> emptySet() {

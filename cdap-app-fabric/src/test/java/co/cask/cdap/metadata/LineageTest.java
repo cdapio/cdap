@@ -27,6 +27,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.test.SlowTests;
 import co.cask.common.http.HttpResponse;
 import com.google.common.base.Predicate;
@@ -41,6 +42,9 @@ import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -68,8 +72,38 @@ public class LineageTest extends MetadataTestBase {
     try {
       Assert.assertEquals(200,
                           status(deploy(AllProgramsApp.class, Constants.Gateway.API_VERSION_3_TOKEN, namespace)));
-      Assert.assertEquals(200, addProperties(dataset, ImmutableMap.of("data-key1", "data-value1")).getResponseCode());
-      Assert.assertEquals(ImmutableMap.of("data-key1", "data-value1"), getProperties(dataset));
+
+      // Add metadata to applicaton
+      ImmutableMap<String, String> appProperties = ImmutableMap.of("app-key1", "app-value1");
+      Assert.assertEquals(200, addProperties(app, appProperties).getResponseCode());
+      Assert.assertEquals(appProperties, getProperties(app));
+      ImmutableSet<String> appTags = ImmutableSet.of("app-tag1");
+      Assert.assertEquals(200, addTags(app, appTags).getResponseCode());
+      Assert.assertEquals(appTags, getTags(app));
+
+      // Add metadata to flow
+      ImmutableMap<String, String> flowProperties = ImmutableMap.of("flow-key1", "flow-value1");
+      Assert.assertEquals(200, addProperties(flow, flowProperties).getResponseCode());
+      Assert.assertEquals(flowProperties, getProperties(flow));
+      ImmutableSet<String> flowTags = ImmutableSet.of("flow-tag1", "flow-tag2");
+      Assert.assertEquals(200, addTags(flow, flowTags).getResponseCode());
+      Assert.assertEquals(flowTags, getTags(flow));
+
+      // Add metadata to dataset
+      ImmutableMap<String, String> dataProperties = ImmutableMap.of("data-key1", "data-value1");
+      Assert.assertEquals(200, addProperties(dataset, dataProperties).getResponseCode());
+      Assert.assertEquals(dataProperties, getProperties(dataset));
+      ImmutableSet<String> dataTags = ImmutableSet.of("data-tag1", "data-tag2");
+      Assert.assertEquals(200, addTags(dataset, dataTags).getResponseCode());
+      Assert.assertEquals(dataTags, getTags(dataset));
+
+      // Add metadata to stream
+      ImmutableMap<String, String> streamProperties = ImmutableMap.of("stream-key1", "stream-value1");
+      Assert.assertEquals(200, addProperties(stream, streamProperties).getResponseCode());
+      Assert.assertEquals(streamProperties, getProperties(stream));
+      ImmutableSet<String> streamTags = ImmutableSet.of("stream-tag1", "stream-tag2");
+      Assert.assertEquals(200, addTags(stream, streamTags).getResponseCode());
+      Assert.assertEquals(streamTags, getTags(stream));
 
       RunId flowRunId = runAndWait(flow);
       waitForStop(flow, true);
@@ -101,6 +135,15 @@ public class LineageTest extends MetadataTestBase {
 
       // same as dataset's lineage
       Assert.assertEquals(expected, lineage);
+
+      // Assert metadata
+      // Id.Flow needs conversion to Id.Program JIRA - CDAP-3658
+      Id.Program programForFlow = Id.Program.from(flow.getApplication(), flow.getType(), flow.getId());
+      Assert.assertEquals(toSet(new MetadataRecord(app, appProperties, appTags),
+                                new MetadataRecord(programForFlow, flowProperties, flowTags),
+                                new MetadataRecord(dataset, dataProperties, dataTags),
+                                new MetadataRecord(stream, streamProperties, streamTags)),
+                          fetchAccesses(new Id.Run(flow, flowRunId.getId())));
     } finally {
       try {
         deleteNamespace(namespace);
@@ -127,8 +170,19 @@ public class LineageTest extends MetadataTestBase {
     try {
       Assert.assertEquals(200,
                           status(deploy(AllProgramsApp.class, Constants.Gateway.API_VERSION_3_TOKEN, namespace)));
-      addProperties(dataset, ImmutableMap.of("data-key1", "data-value1"));
-      Assert.assertEquals(ImmutableMap.of("data-key1", "data-value1"), getProperties(dataset));
+
+      // Add metadata
+      ImmutableSet<String> sparkTags = ImmutableSet.of("spark-tag1", "spark-tag2");
+      addTags(spark, sparkTags);
+      Assert.assertEquals(sparkTags, getTags(spark));
+
+      ImmutableSet<String> workerTags = ImmutableSet.of("worker-tag1");
+      addTags(worker, workerTags);
+      Assert.assertEquals(workerTags, getTags(worker));
+
+      ImmutableMap<String, String> datasetProperties = ImmutableMap.of("data-key1", "data-value1");
+      addProperties(dataset, datasetProperties);
+      Assert.assertEquals(datasetProperties, getProperties(dataset));
 
       // Start all programs
       RunId flowRunId = runAndWait(flow);
@@ -187,6 +241,31 @@ public class LineageTest extends MetadataTestBase {
 
       // stream too is accessed by all programs
       Assert.assertEquals(expected, lineage);
+
+      // Assert metadata
+      // Id.Flow needs conversion to Id.Program JIRA - CDAP-3658
+      Id.Program programForFlow = Id.Program.from(flow.getApplication(), flow.getType(), flow.getId());
+      Assert.assertEquals(toSet(new MetadataRecord(app, emptyMap(), emptySet()),
+                                new MetadataRecord(programForFlow, emptyMap(), emptySet()),
+                                new MetadataRecord(dataset, datasetProperties, emptySet()),
+                                new MetadataRecord(stream, emptyMap(), emptySet())),
+                          fetchAccesses(new Id.Run(flow, flowRunId.getId())));
+
+      // Id.Worker needs conversion to Id.Program JIRA - CDAP-3658
+      Id.Program programForWorker = Id.Program.from(worker.getApplication(), worker.getType(), worker.getId());
+      Assert.assertEquals(toSet(new MetadataRecord(app, emptyMap(), emptySet()),
+                                new MetadataRecord(programForWorker, emptyMap(), workerTags),
+                                new MetadataRecord(dataset, datasetProperties, emptySet()),
+                                new MetadataRecord(stream, emptyMap(), emptySet())),
+                          fetchAccesses(new Id.Run(worker, workerRunId.getId())));
+
+      // Id.Spark needs conversion to Id.Program JIRA - CDAP-3658
+      Id.Program programForSpark = Id.Program.from(spark.getApplication(), spark.getType(), spark.getId());
+      Assert.assertEquals(toSet(new MetadataRecord(app, emptyMap(), emptySet()),
+                                new MetadataRecord(programForSpark, emptyMap(), sparkTags),
+                                new MetadataRecord(dataset, datasetProperties, emptySet()),
+                                new MetadataRecord(stream, emptyMap(), emptySet())),
+                          fetchAccesses(new Id.Run(spark, sparkRunId.getId())));
     } finally {
       try {
         deleteNamespace(namespace);
@@ -237,5 +316,18 @@ public class LineageTest extends MetadataTestBase {
 
   private int status(org.apache.http.HttpResponse response) {
     return response.getStatusLine().getStatusCode();
+  }
+
+  @SafeVarargs
+  private static <T> Set<T> toSet(T... elements) {
+    return ImmutableSet.copyOf(elements);
+  }
+
+  private Set<String> emptySet() {
+    return Collections.emptySet();
+  }
+
+  private Map<String, String> emptyMap() {
+    return Collections.emptyMap();
   }
 }

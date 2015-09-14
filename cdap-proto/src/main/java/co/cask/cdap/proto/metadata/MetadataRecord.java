@@ -80,4 +80,14 @@ public class MetadataRecord {
   public int hashCode() {
     return Objects.hash(targetId, scope, properties, tags);
   }
+
+  @Override
+  public String toString() {
+    return "MetadataRecord{" +
+      "targetId=" + targetId +
+      ", scope=" + scope +
+      ", properties=" + properties +
+      ", tags=" + tags +
+      '}';
+  }
 }

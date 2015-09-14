@@ -37,6 +37,7 @@ import com.google.inject.Inject;
 import com.google.inject.name.Named;
 
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -108,6 +109,25 @@ public class BusinessMetadataStore {
         Map<String, String> properties = input.businessMds.getProperties(entityId);
         Set<String> tags = input.businessMds.getTags(entityId);
         return new MetadataRecord(entityId, properties, tags);
+      }
+    });
+  }
+
+  /**
+   * @return a set of {@link MetadataRecord}s representing all the metadata (including properties and tags)
+   * for the specified set of {@link Id.NamespacedId}s.
+   */
+  public Set<MetadataRecord> getMetadata(final Set<Id.NamespacedId> entityIds) {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<BusinessMdsIterable, Set<MetadataRecord>>() {
+      @Override
+      public Set<MetadataRecord> apply(BusinessMdsIterable input) throws Exception {
+        Set<MetadataRecord> metadataRecords = new HashSet<>(entityIds.size());
+        for (Id.NamespacedId entityId : entityIds) {
+          Map<String, String> properties = input.businessMds.getProperties(entityId);
+          Set<String> tags = input.businessMds.getTags(entityId);
+          metadataRecords.add(new MetadataRecord(entityId, properties, tags));
+        }
+        return metadataRecords;
       }
     });
   }
