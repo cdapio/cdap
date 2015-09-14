@@ -19,7 +19,8 @@
   <div ng-if="MySidePanel.placement === 'left'" class="hydrator-filter clearfix">
     <input class="form-control pull-left" placeholder="Filter" type="text" ng-model="MySidePanel.searchText" />
     <div class="btn pull-right" ng-click="MySidePanel.toggleSidebar()">
-      <span class="fa" ng-class="{'fa-angle-double-left': isExpanded === true, 'fa-angle-double-right': isExpanded === false}"></span>
+      <span class="fa" ng-class="{'fa-angle-left': isExpanded === true, 'fa-angle-right': isExpanded === false}"></span>
+      <span class="fa" ng-class="{'fa-angle-left': isExpanded === true, 'fa-angle-right': isExpanded === false}"></span>
     </div>
   </div>
 
@@ -45,19 +46,21 @@
         </div>
       </div>
 
-      <div class="item-body"
+      <div class="item-body-wrapper"
            ng-class="{'text-left': isExpanded === true}"
            ng-if="MySidePanel.isSubMenu === true && MySidePanel.openedGroup === group.name">
-        <div ng-repeat="plugin in MySidePanel.panel.items | filter: {name: MySidePanel.searchText} track by $index"
-              class="plugin-item"
-              popover="{{plugin.description}}"
-              popover-title="{{plugin.name}}"
-              popover-placement="right"
-              popover-append-to-body="true"
-              popover-trigger="mouseenter"
-              ng-click="MySidePanel.onItemClicked($event, plugin)">
-          <span ng-if="plugin.icon" class="text-center fa {{plugin.icon}}"></span>
-          <span ng-if="isExpanded === true" class="name">{{plugin.name | myEllipsis: 10}}</span>
+        <div class="item-body">
+          <div ng-repeat="plugin in MySidePanel.panel.items | filter: {name: MySidePanel.searchText} track by $index"
+                class="plugin-item"
+                popover="{{plugin.description}}"
+                popover-title="{{plugin.name}}"
+                popover-placement="right"
+                popover-append-to-body="true"
+                popover-trigger="mouseenter"
+                ng-click="MySidePanel.onItemClicked($event, plugin)">
+            <span ng-if="plugin.icon" class="text-center fa {{plugin.icon}}"></span>
+            <span ng-if="isExpanded === true" class="name">{{plugin.name | myEllipsis: 10}}</span>
+          </div>
         </div>
       </div>
     </div>
