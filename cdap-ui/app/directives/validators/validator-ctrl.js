@@ -14,6 +14,25 @@
  * the License.
  */
 
+/**
+ * The format of vm.validationFields:
+ *
+ * vm.validationFields = {
+ *   <field name>:[
+ *     {
+ *       "fieldName": "<field name>",
+ *       "operation": true/false,
+ *       "validation": "<validator classname>.<function name>"
+ *       "arguments": {
+ *         "<argument 1>": <value 1>,
+ *         "<argument 2>": <value 2>,
+ *         ...
+ *       }
+ *     },
+ *     ...
+ *   ]
+ * }
+ **/
 angular.module(PKG.name + '.commons')
   .controller('MyValidatorsCtrl', function($scope, myAdapterValidatorsApi) {
     var vm = this;
@@ -81,17 +100,26 @@ angular.module(PKG.name + '.commons')
         flattenRulesArrays = flattenRulesArrays.concat(value);
       });
 
+      // this will get triggered when user switch the validation rule
       function deleteArguments (value, key) {
         if (validation.arguments.indexOf(key) === -1) {
           delete field.arguments[key];
         }
       }
 
+      /**
+       * This block code will go from the last property. It will create an
+       * If/Else block. If the next item in the array has AND operation, it
+       * will put the current condition in IF block. For OR, it will put the
+       * current condition in ELSE block.
+       **/
       for (var i = flattenRulesArrays.length - 1; i >= 0; i--) {
         var field = flattenRulesArrays[i];
 
+        // skipping the property if there is no function assigned for the property
         if (!field.fieldName || !field.validation) { continue; }
 
+        // skipping if the required arguments have not been set
         var validation = vm.functionMap[field.validation];
         if (validation.arguments.length > 1 &&
           (!field.arguments || Object.keys(field.arguments).length !== validation.arguments.length - 1)) {
