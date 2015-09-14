@@ -42,7 +42,6 @@ import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.proto.ProgramType;
@@ -92,7 +91,6 @@ public class MapReduceProgramRunner implements ProgramRunner {
   private final TransactionSystemClient txSystemClient;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final UsageRegistry usageRegistry;
-  private final ArtifactRepository artifactRepository;
 
   @Inject
   public MapReduceProgramRunner(CConfiguration cConf, Configuration hConf,
@@ -102,7 +100,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
                                 TransactionSystemClient txSystemClient,
                                 MetricsCollectionService metricsCollectionService,
                                 DiscoveryServiceClient discoveryServiceClient, Store store,
-                                UsageRegistry usageRegistry, ArtifactRepository artifactRepository) {
+                                UsageRegistry usageRegistry) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.locationFactory = locationFactory;
@@ -113,7 +111,6 @@ public class MapReduceProgramRunner implements ProgramRunner {
     this.discoveryServiceClient = discoveryServiceClient;
     this.store = store;
     this.usageRegistry = usageRegistry;
-    this.artifactRepository = artifactRepository;
   }
 
   @Inject (optional = true)
@@ -187,7 +184,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
       final Service mapReduceRuntimeService = new MapReduceRuntimeService(cConf, hConf, mapReduce, spec, context,
                                                                           program.getJarLocation(), locationFactory,
                                                                           streamAdmin, txSystemClient, usageRegistry,
-                                                                          artifactRepository, artifactFileNames);
+                                                                          artifactFileNames);
       mapReduceRuntimeService.addListener(
         createRuntimeServiceListener(program, runId, closeables, arguments, options.getUserArguments()),
         Threads.SAME_THREAD_EXECUTOR);

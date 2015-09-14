@@ -30,7 +30,6 @@ import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.plugin.Plugin;
-import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.stream.StreamEventDecoder;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -48,9 +47,6 @@ import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
-import co.cask.cdap.internal.app.runtime.adapter.ArtifactDescriptor;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
-import co.cask.cdap.internal.app.runtime.artifact.PluginNotExistsException;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetInputFormat;
 import co.cask.cdap.internal.app.runtime.batch.dataset.MultipleOutputs;
 import co.cask.cdap.internal.app.runtime.batch.dataset.MultipleOutputsMainOutputWrapper;
@@ -151,8 +147,6 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   private final StreamAdmin streamAdmin;
   private final TransactionSystemClient txClient;
   private final UsageRegistry usageRegistry;
-  private final ArtifactRepository artifactRepository;
-  private final Id.Artifact artifactId;
   private final Map<String, String> artifactFileNames;
 
   private Job job;
@@ -169,8 +163,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
                           DynamicMapReduceContext context,
                           Location programJarLocation, LocationFactory locationFactory,
                           StreamAdmin streamAdmin, TransactionSystemClient txClient,
-                          UsageRegistry usageRegistry, ArtifactRepository artifactRepository,
-                          Map<String, String> artifactFileNames) {
+                          UsageRegistry usageRegistry, Map<String, String> artifactFileNames) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.mapReduce = mapReduce;
@@ -181,9 +174,6 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     this.txClient = txClient;
     this.context = context;
     this.usageRegistry = usageRegistry;
-    this.artifactRepository = artifactRepository;
-    this.artifactId = Id.Artifact.from(Id.Namespace.from(context.getProgram().getNamespaceId()),
-                                       context.getProgram().getApplicationSpecification().getArtifactId());
     this.artifactFileNames = artifactFileNames;
   }
 
@@ -226,7 +216,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       if (!MapReduceTaskContextProvider.isLocal(mapredConf)) {
         // After calling beforeSubmit, we know what plugins are needed for the program, hence construct the proper
         // ClassLoader from here and use it for setting up the job
-        Location artifactArchive = createArchive(context.getPlugins(), tempDir, tempLocation);
+        Location artifactArchive = createArchive(context.getPlugins(), context.getNamespaceId(), tempDir, tempLocation);
         if (artifactArchive != null) {
           job.addCacheArchive(artifactArchive.toURI());
         }
@@ -940,7 +930,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   }
 
   @Nullable
-  private Location createArchive(@Nullable Map<String, Plugin> plugins, File tempDir, Location targetDir)
+  private Location createArchive(@Nullable Map<String, Plugin> plugins, String ns, File tempDir, Location targetDir)
     throws IOException {
 
     if (plugins == null || plugins.isEmpty()) {
@@ -958,12 +948,9 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
 
       for (Map.Entry<String, Plugin> entry : plugins.entrySet()) {
         Plugin plugin = entry.getValue();
-        Map.Entry<ArtifactDescriptor, PluginClass> pluginEntry = artifactRepository.getPlugin(
-          artifactId, plugin.getPluginClass().getType(), plugin.getPluginClass().getName(), plugin.getArtifactId());
-        ArtifactDescriptor artifactDescriptor = pluginEntry.getKey();
-        String namespace = artifactDescriptor.getArtifact().getNamespace().getId();
-        String artifactName = artifactDescriptor.getArtifact().getName();
-        String fileName = artifactDescriptor.getLocation().getName();
+        String namespace = Id.Artifact.from(Id.Namespace.from(ns), plugin.getArtifactId()).getNamespace().getId();
+        String artifactName = plugin.getArtifactId().getName();
+        String fileName = artifactFileNames.get(plugin.getArtifactId().toString());
 
         if (fileNames.contains(fileName)) {
           continue;
@@ -986,8 +973,6 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         fileNames.add(fileName);
         ByteStreams.copy(Files.newInputStreamSupplier(artifact), output);
       }
-    } catch (PluginNotExistsException e) {
-      return null;
     }
 
     Location location = targetDir.append("artifacts.jar");
