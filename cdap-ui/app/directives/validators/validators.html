@@ -84,9 +84,9 @@
                   </div>
 
                   <div class="main-rule">
-                    <select class="form-control" ng-model="rule.validation">
-                      <option ng-repeat="validator in ValidatorsCtrl.validators" value="{{ validator.className + '.' + validator.name }}">{{ validator.name }} ({{ validator.validator }})</option>
-                    </select>
+                    <select class="form-control"
+                      ng-options="validator.validationKey as validator.displayName for validator in ValidatorsCtrl.validators"
+                      ng-model="rule.validation"></select>
                   </div>
 
                   <div class="rule-arguments"

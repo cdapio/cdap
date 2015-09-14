@@ -56,7 +56,9 @@ angular.module(PKG.name + '.commons')
           angular.forEach(value.functions, function (v) {
             v.className = value.classname;
             v.validator = key;
-            vm.functionMap[v.className + '.' + v.name] = v;
+            v.validationKey = v.className + '.' + v.name;
+            v.displayName = v.name + ' (' + key + ')';
+            vm.functionMap[v.validationKey] = v;
           });
           vm.validators = vm.validators.concat(value.functions);
         });
