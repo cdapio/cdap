@@ -25,6 +25,9 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Table;
 
 import java.util.List;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * In-memory implementation of {@link ViewStore}.
@@ -32,26 +35,45 @@ import java.util.List;
 public final class InMemoryViewStore implements ViewStore {
 
   private final Table<Id.Stream.View, Id.Stream, ViewSpecification> views;
+  private final ReadWriteLock viewsLock;
 
   public InMemoryViewStore() {
-    views = HashBasedTable.create();
+    this.views = HashBasedTable.create();
+    this.viewsLock = new ReentrantReadWriteLock();
   }
 
   @Override
   public boolean createOrUpdate(Id.Stream.View viewId, ViewSpecification config) {
-    boolean created = !views.containsRow(viewId);
-    views.put(viewId, viewId.getStream(), config);
-    return created;
+    Lock lock = viewsLock.writeLock();
+    lock.lock();
+    try {
+      return views.put(viewId, viewId.getStream(), config) == null;
+    } finally {
+      lock.unlock();
+    }
   }
 
   @Override
   public boolean exists(Id.Stream.View viewId) {
-    return views.contains(viewId, viewId.getStream());
+    Lock lock = viewsLock.readLock();
+    lock.lock();
+    try {
+      return views.contains(viewId, viewId.getStream());
+    } finally {
+      lock.unlock();
+    }
   }
 
   @Override
   public void delete(Id.Stream.View viewId) throws NotFoundException {
-    ViewSpecification removed = views.remove(viewId, viewId.getStream());
+    ViewSpecification removed;
+    Lock lock = viewsLock.writeLock();
+    lock.lock();
+    try {
+      removed = views.remove(viewId, viewId.getStream());
+    } finally {
+      lock.unlock();
+    }
     if (removed == null) {
       throw new NotFoundException(viewId);
     }
@@ -59,15 +81,27 @@ public final class InMemoryViewStore implements ViewStore {
 
   @Override
   public List<Id.Stream.View> list(Id.Stream streamId) {
-    return ImmutableList.<Id.Stream.View>builder().addAll(views.column(streamId).keySet()).build();
+    Lock lock = viewsLock.readLock();
+    lock.lock();
+    try {
+      return ImmutableList.<Id.Stream.View>builder().addAll(views.column(streamId).keySet()).build();
+    } finally {
+      lock.unlock();
+    }
   }
 
   @Override
   public ViewDetail get(Id.Stream.View viewId) throws NotFoundException {
-    if (!views.containsRow(viewId)) {
-      throw new NotFoundException(viewId);
-    }
+    Lock lock = viewsLock.readLock();
+    lock.lock();
+    try {
+      if (!views.containsRow(viewId)) {
+        throw new NotFoundException(viewId);
+      }
 
-    return new ViewDetail(viewId.getId(), views.get(viewId, viewId.getStream()));
+      return new ViewDetail(viewId.getId(), views.get(viewId, viewId.getStream()));
+    } finally {
+      lock.unlock();
+    }
   }
 }
