@@ -152,14 +152,8 @@ class IncrementSummingScanner implements RegionScanner {
     int addedCnt = 0;
     baseScanner.startNext();
     Cell cell;
-    // We need to to access the batch limit (limit on number of columns) in the ScannerContext.
-    // The ScannerContext does not exposes its method to get the limits so we have a Reader under the same package
-    // which can supply us these limits given a ScannerContext. Also, we cannot depend on the limit tracking of the
-    // internal scanner as it does not differentiate between an increment cell and a non-increment cell.
-    // So, we read all the cells from the internal scanner in batches of limit and do the tracking for columns here
-    // and stop when we have reached the limit.
-    ScannerContextReader scannerContextReader = new ScannerContextReader(scannerContext);
-    int limit = scannerContextReader.getBatchLimit();
+    int limit = getBatchLimit(scannerContext);
+
     while ((cell = baseScanner.peekNextCell(scannerContext)) != null && (limit <= 0 || addedCnt < limit)) {
       // we use the "peek" semantics so that only once cell is ever emitted per iteration
       // this makes is clearer and easier to enforce that the returned results are <= limit
@@ -266,6 +260,20 @@ class IncrementSummingScanner implements RegionScanner {
       LOG.trace("nextInternal done with limit=" + getBatch() + " hasMore=" + hasMore);
     }
     return hasMore;
+  }
+
+  /**
+   * Gets the batch limit from the given {@link ScannerContext} through the help of {@link ScannerContextReader}
+   */
+  private int getBatchLimit(ScannerContext scannerContext) {
+    // We need to to access the batch limit (limit on number of columns) in the ScannerContext.
+    // The ScannerContext does not exposes its method to get the limits so we have a Reader under the same package
+    // which can supply us these limits given a ScannerContext. Also, we cannot depend on the limit tracking of the
+    // internal scanner as it does not differentiate between an increment cell and a non-increment cell.
+    // So, we read all the cells from the internal scanner in batches of limit and do the tracking for columns here
+    // and stop when we have reached the limit.
+    ScannerContextReader scannerContextReader = new ScannerContextReader(scannerContext);
+    return scannerContextReader.getBatchLimit();
   }
 
   private boolean sameCell(Cell first, Cell second) {
