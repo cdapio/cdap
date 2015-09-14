@@ -17,6 +17,8 @@
 package co.cask.cdap.proto.metadata;
 
 import co.cask.cdap.proto.Id;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 
 import java.util.Map;
 import java.util.Objects;
@@ -30,6 +32,17 @@ public class MetadataRecord {
   private final MetadataScope scope;
   private final Map<String, String> properties;
   private final Set<String> tags;
+
+  /**
+   * Returns an empty {@link MetadataRecord}
+   */
+  public MetadataRecord(Id.NamespacedId targetId) {
+    this(targetId, ImmutableMap.<String, String>of(), ImmutableSet.<String>of());
+  }
+
+  public MetadataRecord(MetadataRecord other) {
+    this(other.getTargetId(), other.getProperties(), other.getTags());
+  }
 
   public MetadataRecord(Id.NamespacedId targetId, Map<String, String> properties, Set<String> tags) {
     this(targetId, MetadataScope.USER, properties, tags);
