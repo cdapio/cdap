@@ -364,12 +364,12 @@ public abstract class Id {
       if (this == o) {
         return true;
       }
-      if (o == null || getClass() != o.getClass()) {
+      if (o == null || !Program.class.isAssignableFrom(o.getClass())) {
         return false;
       }
 
       Program program = (Program) o;
-      return application.equals(program.application) && id.equals(program.id);
+      return application.equals(program.application) && type.equals(program.type) && id.equals(program.id);
     }
 
     @Override
