@@ -191,8 +191,9 @@ The following is the generic procedure for Major/Minor version upgrades:
 .. rubric:: Upgrading CDH 5.3 to 5.4
 
 **Background:** CDH 5.3 ships with HBase 0.98 while CDH 5.4 ships with HBase 1.0. We support
-CDH 5.4 as of CDAP 3.1.0. Before upgrading from CDH 5.3 to CDH 5.4, upgrade CDAP to version
-3.1.0 or later, following the normal upgrade procedure. Start CDAP at least once to make sure
+CDH 5.4 as of CDAP 3.1.0 - however, upgrading the underlying CDH version is only supported
+since CDAP 3.2.0. Therefore, before upgrading from CDH 5.3 to CDH 5.4, upgrade CDAP to version
+3.2.0 or greater, following the normal upgrade procedure. Start CDAP at least once to make sure
 it works properly, before you upgrade to CDH 5.4.
 
 **It is important to perform these steps as described, otherwise the coprocessors may not
