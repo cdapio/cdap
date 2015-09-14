@@ -41,6 +41,7 @@ import com.google.common.cache.RemovalNotification;
 import com.google.common.io.Closeables;
 import com.google.common.primitives.Primitives;
 import com.google.common.reflect.TypeToken;
+import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,7 +65,7 @@ public class PluginInstantiator implements Closeable {
 
   private static final Logger LOG = LoggerFactory.getLogger(PluginInstantiator.class);
 
-  private final LoadingCache<ArtifactDescriptor, ClassLoader> initialClassLoaders;
+  private final LoadingCache<Location, ClassLoader> locationClassLoaders;
   private final LoadingCache<ArtifactDescriptor, ClassLoader> classLoaders;
   private final InstantiatorFactory instantiatorFactory;
   private final File tmpDir;
@@ -81,9 +82,9 @@ public class PluginInstantiator implements Closeable {
 
     this.pluginDir = new File(prefix, "namespaces");
     this.tmpDir = DirUtils.createTempDir(tmpDir);
-    this.initialClassLoaders = CacheBuilder.newBuilder()
-      .removalListener(new ClassLoaderRemovalListener())
-      .build(new InitialClassLoaderCacheLoader());
+    this.locationClassLoaders = CacheBuilder.newBuilder()
+                                            .removalListener(new LocationClassLoaderRemovalListener())
+                                            .build(new LocationClassLoaderCacheLoader());
     this.classLoaders = CacheBuilder.newBuilder()
                                     .removalListener(new ClassLoaderRemovalListener())
                                     .build(new ClassLoaderCacheLoader());
@@ -107,9 +108,17 @@ public class PluginInstantiator implements Closeable {
     }
   }
 
-  public ClassLoader getInitialClassLoader(ArtifactDescriptor artifactDescriptor) throws IOException {
+  /**
+   * Returns a {@link ClassLoader} for the given artifact identified by the given Location.
+   *
+   * @param location Location of the artifact
+   * @throws IOException if failed to expand the artifact jar to create the plugin ClassLoader
+   *
+   * @see PluginClassLoader
+   */
+  public ClassLoader getLocationArtifactClassLoader(Location location) throws IOException {
     try {
-      return initialClassLoaders.get(artifactDescriptor);
+      return locationClassLoaders.get(location);
     } catch (ExecutionException e) {
       Throwables.propagateIfInstanceOf(e.getCause(), IOException.class);
       throw Throwables.propagate(e.getCause());
@@ -134,9 +143,9 @@ public class PluginInstantiator implements Closeable {
   }
 
   @SuppressWarnings("unchecked")
-  public <T> Class<T> loadInitialClass(ArtifactDescriptor artifactDescriptor,
-                                       PluginClass pluginClass) throws IOException, ClassNotFoundException {
-    return (Class<T>) getInitialClassLoader(artifactDescriptor).loadClass(pluginClass.getClassName());
+  public <T> Class<T> loadClass(Location location,
+                                PluginClass pluginClass) throws IOException, ClassNotFoundException {
+    return (Class<T>) getLocationArtifactClassLoader(location).loadClass(pluginClass.getClassName());
   }
 
   /**
@@ -154,36 +163,27 @@ public class PluginInstantiator implements Closeable {
   @SuppressWarnings("unchecked")
   public <T> T newInstance(ArtifactDescriptor artifactDescriptor, PluginClass pluginClass,
                            PluginProperties properties) throws IOException, ClassNotFoundException {
-    ClassLoader classLoader = getArtifactClassLoader(artifactDescriptor);
-    TypeToken<?> pluginType = TypeToken.of(classLoader.loadClass(pluginClass.getClassName()));
-
-    try {
-      String configFieldName = pluginClass.getConfigFieldName();
-      // Plugin doesn't have config. Simply return a new instance.
-      if (configFieldName == null) {
-        return (T) instantiatorFactory.get(pluginType).create();
-      }
-
-      // Create the config instance
-      Field field = Fields.findField(pluginType.getType(), configFieldName);
-      TypeToken<?> configFieldType = pluginType.resolveType(field.getGenericType());
-      Object config = instantiatorFactory.get(configFieldType).create();
-      Reflections.visit(config, configFieldType.getType(),
-                        new ConfigFieldSetter(pluginClass, artifactDescriptor, properties));
-
-      // Create the plugin instance
-      return newInstance(pluginType, field, configFieldType, config);
-    } catch (NoSuchFieldException e) {
-      throw new InvalidPluginConfigException("Config field not found in plugin class: " + pluginClass, e);
-    } catch (IllegalAccessException e) {
-      throw new InvalidPluginConfigException("Failed to set plugin config field: " + pluginClass, e);
-    }
+    return newInstance(getArtifactClassLoader(artifactDescriptor), pluginClass, properties);
   }
 
+  /**
+   * Creates a new instance of the given plugin class by identifying the class loader using the given location
+   * @param location location of the plugin artifact jar
+   * @param pluginClass information about the plugin class. The plugin instnace will be instantiated based on this.
+   * @param properties properties to populate into the {@link PluginConfig} of the plugin instnace
+   * @param <T> Type of the plugin
+   * @return a new plugin instance
+   * @throws IOException if failed to expand the plugin jar to create the plugin ClassLoader
+   * @throws ClassNotFoundException if failed to load the given plugin class
+   */
   @SuppressWarnings("unchecked")
-  public <T> T newInitialInstance(ArtifactDescriptor artifactDescriptor, PluginClass pluginClass,
-                                  PluginProperties properties) throws IOException, ClassNotFoundException {
-    ClassLoader classLoader = getInitialClassLoader(artifactDescriptor);
+  public <T> T newInstance(Location location, PluginClass pluginClass,
+                           PluginProperties properties) throws IOException, ClassNotFoundException {
+    return newInstance(getLocationArtifactClassLoader(location), pluginClass, properties);
+  }
+
+  private <T> T newInstance(ClassLoader classLoader, PluginClass pluginClass, PluginProperties properties)
+    throws ClassNotFoundException {
     TypeToken<?> pluginType = TypeToken.of(classLoader.loadClass(pluginClass.getClassName()));
 
     try {
@@ -198,7 +198,7 @@ public class PluginInstantiator implements Closeable {
       TypeToken<?> configFieldType = pluginType.resolveType(field.getGenericType());
       Object config = instantiatorFactory.get(configFieldType).create();
       Reflections.visit(config, configFieldType.getType(),
-                        new ConfigFieldSetter(pluginClass, artifactDescriptor, properties));
+                        new ConfigFieldSetter(pluginClass, properties));
 
       // Create the plugin instance
       return newInstance(pluginType, field, configFieldType, config);
@@ -246,7 +246,7 @@ public class PluginInstantiator implements Closeable {
   public void close() throws IOException {
     // Cleanup the ClassLoader cache and the temporary directoy for the expanded plugin jar.
     classLoaders.invalidateAll();
-    initialClassLoaders.invalidateAll();
+    locationClassLoaders.invalidateAll();
     if (parentClassLoader instanceof Closeable) {
       Closeables.closeQuietly((Closeable) parentClassLoader);
     }
@@ -274,16 +274,6 @@ public class PluginInstantiator implements Closeable {
     }
   }
 
-  private final class InitialClassLoaderCacheLoader extends CacheLoader<ArtifactDescriptor, ClassLoader> {
-
-    @Override
-    public ClassLoader load(ArtifactDescriptor key) throws Exception {
-      File unpackedDir = DirUtils.createTempDir(tmpDir);
-      BundleJarUtil.unpackProgramJar(key.getLocation(), unpackedDir);
-      return new PluginClassLoader(unpackedDir, parentClassLoader);
-    }
-  }
-
   /**
    * A RemovalListener for closing plugin ClassLoader.
    */
@@ -298,6 +288,31 @@ public class PluginInstantiator implements Closeable {
     }
   }
 
+  private final class LocationClassLoaderCacheLoader extends CacheLoader<Location, ClassLoader> {
+
+    @Override
+    public ClassLoader load(Location location) throws Exception {
+      File unpackedDir = DirUtils.createTempDir(tmpDir);
+      BundleJarUtil.unpackProgramJar(location, unpackedDir);
+      return new PluginClassLoader(unpackedDir, parentClassLoader);
+    }
+  }
+
+  /**
+   * A RemovalListener for closing plugin ClassLoader.
+   */
+  private static final class LocationClassLoaderRemovalListener implements RemovalListener<Location, ClassLoader> {
+
+    @Override
+    public void onRemoval(RemovalNotification<Location, ClassLoader> notification) {
+      ClassLoader cl = notification.getValue();
+      if (cl instanceof Closeable) {
+        Closeables.closeQuietly((Closeable) cl);
+      }
+    }
+  }
+
+
   /**
    * A {@link FieldVisitor} for setting values into {@link PluginConfig} object based on {@link PluginProperties}.
    */
@@ -305,6 +320,10 @@ public class PluginInstantiator implements Closeable {
     private final PluginClass pluginClass;
     private final PluginProperties properties;
     private final ArtifactDescriptor artifactDescriptor;
+
+    public ConfigFieldSetter(PluginClass pluginClass, PluginProperties properties) {
+      this(pluginClass, null, properties);
+    }
 
     public ConfigFieldSetter(PluginClass pluginClass, ArtifactDescriptor artifactDescriptor,
                              PluginProperties properties) {

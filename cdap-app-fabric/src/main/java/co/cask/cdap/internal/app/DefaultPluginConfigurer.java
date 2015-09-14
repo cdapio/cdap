@@ -80,7 +80,8 @@ public class DefaultPluginConfigurer extends DefaultDatasetConfigurer implements
     }
 
     try {
-      T instance = pluginInstantiator.newInitialInstance(pluginEntry.getKey(), pluginEntry.getValue(), properties);
+      T instance = pluginInstantiator.newInstance(pluginEntry.getKey().getLocation(),
+                                                  pluginEntry.getValue(), properties);
       registerPlugin(pluginId, pluginEntry.getKey(), pluginEntry.getValue(), properties);
       return instance;
     } catch (IOException e) {
@@ -110,7 +111,7 @@ public class DefaultPluginConfigurer extends DefaultDatasetConfigurer implements
     }
 
     try {
-      Class<T> cls = pluginInstantiator.loadInitialClass(pluginEntry.getKey(), pluginEntry.getValue());
+      Class<T> cls = pluginInstantiator.loadClass(pluginEntry.getKey().getLocation(), pluginEntry.getValue());
       registerPlugin(pluginId, pluginEntry.getKey(), pluginEntry.getValue(), properties);
       return cls;
     } catch (IOException e) {
