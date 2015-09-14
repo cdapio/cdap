@@ -24,7 +24,9 @@ import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.data.runtime.DataFabricDistributedModule;
 import co.cask.cdap.data.runtime.DataSetsModules;
+import co.cask.cdap.data2.transaction.metrics.TransactionManagerMetricsCollector;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.explore.guice.ExploreClientModule;
@@ -33,9 +35,13 @@ import co.cask.cdap.logging.appender.LogAppender;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.appender.kafka.KafkaLogAppender;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
+import co.cask.tephra.distributed.ThriftClientProvider;
+import co.cask.tephra.metrics.TxMetricsCollector;
+import co.cask.tephra.runtime.TransactionModules;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Scopes;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.zookeeper.ZKClientService;
@@ -69,6 +75,7 @@ public class DistributedMapReduceTaskContextBuilder extends AbstractMapReduceTas
       new MetricsClientRuntimeModule().getDistributedModules(),
       new ExploreClientModule(),
       new DataSetsModules().getDistributedModules(),
+      new TransactionModules().getDistributedModules(),
       new AbstractModule() {
         @Override
         protected void configure() {
@@ -76,6 +83,9 @@ public class DistributedMapReduceTaskContextBuilder extends AbstractMapReduceTas
           bind(HBaseTableUtil.class).toProvider(HBaseTableUtilFactory.class);
           // For log publishing
           bind(LogAppender.class).to(KafkaLogAppender.class);
+          // For transaction modules
+          bind(TxMetricsCollector.class).to(TransactionManagerMetricsCollector.class).in(Scopes.SINGLETON);
+          bind(ThriftClientProvider.class).toProvider(DataFabricDistributedModule.ThriftClientProviderSupplier.class);
         }
       }
     );
