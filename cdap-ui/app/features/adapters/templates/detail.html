@@ -42,19 +42,51 @@
 
   </div>
 
-  <!-- Right Button Actions -->
+
+  <!-- Right Buttons Actions -->
   <div class="btn-group pull-right clearfix">
-    <div class="btn pull-left"
-         ng-repeat="action in canvasOperations">
-      {{action.name}}
+
+    <div class="btn pull-right"
+      ng-click="do('Delete')">
+      Delete
     </div>
+    <div class="btn pull-right"
+      ng-click="do('Run Once')"
+      ng-if="app.artifact.name === GLOBALS.etlBatch">
+      Run Once
+    </div>
+
+    <!-- IF ETL BATCH -->
+    <div class="btn pull-right"
+      ng-click="do('Start')"
+      ng-if="app.artifact.name === GLOBALS.etlBatch && appStatus !== 'SCHEDULED'">
+      Start
+    </div>
+    <div class="btn pull-right"
+      ng-click="do('Stop')"
+      ng-if="app.artifact.name === GLOBALS.etlBatch && appStatus === 'SCHEDULED'">
+      Stop
+    </div>
+
+    <!-- IF ETL REALTIME -->
+    <div class="btn pull-right"
+      ng-click="do('Start')"
+      ng-if="app.artifact.name === GLOBALS.etlRealtime && appStatus !== 'RUNNING'">
+      Start
+    </div>
+    <div class="btn pull-right"
+      ng-click="do('Stop')"
+      ng-if="app.artifact.name === GLOBALS.etlRealtime && appStatus === 'RUNNING'">
+      Stop
+    </div>
+
   </div>
 </div>
 
 <!-- DAG DIAGRAM -->
 <my-dag data-is-disabled="true" data-config="nodes"></my-dag>
 
-
+<!-- CONSOLE BOTTOM PANNEL -->
 <div class="console">
   <div class="console-tabs clearfix">
     <ul class="nav nav-tabs pull-left" role="tablist">

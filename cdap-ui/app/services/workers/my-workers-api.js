@@ -33,6 +33,9 @@ angular.module(PKG.name + '.services')
       runs: myHelpers.getConfig('GET', 'REQUEST', basepath + '/runs', true),
       nextLogs: myHelpers.getConfig('GET', 'REQUEST', basepath + '/runs/:runId/logs/next', true),
       prevLogs: myHelpers.getConfig('GET', 'REQUEST', basepath + '/runs/:runId/logs/prev', true),
-      runDetail: myHelpers.getConfig('GET', 'REQUEST', basepath + '/runs/:runId')
+      runDetail: myHelpers.getConfig('GET', 'REQUEST', basepath + '/runs/:runId'),
+      doAction: myHelpers.getConfig('POST', 'REQUEST', basepath + '/:action'),
+      getProgramStatus: myHelpers.getConfig('GET', 'REQUEST', basepath + '/status'),
+      pollStatus: myHelpers.getConfig('GET', 'POLL', basepath + '/status')
     });
   });

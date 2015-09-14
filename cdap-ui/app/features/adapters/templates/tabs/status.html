@@ -1,1 +1,16 @@
-<h1>Status</h1>
+<div class="text-center status-view">
+  <div class="col-xs-4">
+    <h4>Total Runs</h4>
+    <h2 class="status-value">{{ stats.numRuns }}</h2>
+  </div>
+
+  <div class="col-xs-4">
+    <h4>Average Run Time</h4>
+    <h2 class="status-value">{{ stats.avgRunTime * 1000 | amDurationFormat }}</h2>
+  </div>
+
+  <div class="col-xs-4">
+    <h4>Last Run Time</h4>
+    <h2 class="status-value">{{ stats.latestRun.end - stats.latestRun.start | amDurationFormat }}</h2>
+  </div>
+</div>
