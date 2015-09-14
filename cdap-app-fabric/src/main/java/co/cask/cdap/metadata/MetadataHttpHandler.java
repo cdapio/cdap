@@ -20,6 +20,8 @@ import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.codec.NamespacedIdCodec;
+import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
 import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 import co.cask.http.AbstractHttpHandler;
@@ -27,6 +29,7 @@ import co.cask.http.HttpResponder;
 
 import com.google.common.base.Charsets;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 
@@ -54,14 +57,58 @@ import javax.ws.rs.QueryParam;
  */
 @Path(Constants.Gateway.API_VERSION_3)
 public class MetadataHttpHandler extends AbstractHttpHandler {
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(Id.NamespacedId.class, new NamespacedIdCodec())
+    .create();
   private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
   private static final Type LIST_STRING_TYPE = new TypeToken<List<String>>() { }.getType();
+  private static final Type SET_METADATA_RECORD_TYPE = new TypeToken<Set<MetadataRecord>>() { }.getType();
   private final MetadataAdmin metadataAdmin;
 
   @Inject
   public MetadataHttpHandler(MetadataAdmin metadataAdmin) {
     this.metadataAdmin = metadataAdmin;
+  }
+
+  @GET
+  @Path("/namespaces/{namespace-id}/apps/{app-id}/metadata")
+  public void getAppMetadata(HttpRequest request, HttpResponder responder,
+                                @PathParam("namespace-id") String namespaceId,
+                                @PathParam("app-id") String appId) throws Exception {
+    responder.sendJson(HttpResponseStatus.OK, metadataAdmin.getMetadata(Id.Application.from(namespaceId, appId)),
+                       SET_METADATA_RECORD_TYPE, GSON);
+  }
+
+  @GET
+  @Path("/namespaces/{namespace-id}/apps/{app-id}/{program-type}/{program-id}/metadata")
+  public void getProgramMetadata(HttpRequest request, HttpResponder responder,
+                                    @PathParam("namespace-id") String namespaceId,
+                                    @PathParam("app-id") String appId,
+                                    @PathParam("program-type") String programType,
+                                    @PathParam("program-id") String programId) throws Exception {
+    Id.Program program = Id.Program.from(Id.Application.from(namespaceId, appId),
+                                         ProgramType.valueOfCategoryName(programType), programId);
+    responder.sendJson(HttpResponseStatus.OK, metadataAdmin.getMetadata(program),
+                       SET_METADATA_RECORD_TYPE, GSON);
+  }
+
+  @GET
+  @Path("/namespaces/{namespace-id}/datasets/{dataset-id}/metadata")
+  public void getDatasetMetadata(HttpRequest request, HttpResponder responder,
+                                 @PathParam("namespace-id") String namespaceId,
+                                 @PathParam("dataset-id") String datasetId) throws Exception {
+    responder.sendJson(HttpResponseStatus.OK,
+                       metadataAdmin.getMetadata(Id.DatasetInstance.from(namespaceId, datasetId)),
+                       SET_METADATA_RECORD_TYPE, GSON);
+  }
+
+  @GET
+  @Path("/namespaces/{namespace-id}/streams/{stream-id}/metadata")
+  public void getStreamMetadata(HttpRequest request, HttpResponder responder,
+                                @PathParam("namespace-id") String namespaceId,
+                                @PathParam("stream-id") String streamId) throws Exception {
+    responder.sendJson(HttpResponseStatus.OK, metadataAdmin.getMetadata(Id.Stream.from(namespaceId, streamId)),
+                       SET_METADATA_RECORD_TYPE, GSON);
   }
 
   @GET
@@ -142,6 +189,53 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
     Id.Stream stream = Id.Stream.from(namespaceId, streamId);
     metadataAdmin.addProperties(stream, readMetadata(request));
     responder.sendString(HttpResponseStatus.OK, "Metadata added successfully to " + stream);
+  }
+
+  @DELETE
+  @Path("/namespaces/{namespace-id}/apps/{app-id}/metadata")
+  public void removeAppMetadata(HttpRequest request, HttpResponder responder,
+                                @PathParam("namespace-id") String namespaceId,
+                                @PathParam("app-id") String appId) throws Exception {
+    Id.Application app = Id.Application.from(namespaceId, appId);
+    metadataAdmin.removeMetadata(app);
+    responder.sendString(HttpResponseStatus.OK,
+                         String.format("Metadata for app %s deleted successfully.", app));
+  }
+
+  @DELETE
+  @Path("/namespaces/{namespace-id}/apps/{app-id}/{program-type}/{program-id}/metadata")
+  public void removeProgramMetadata(HttpRequest request, HttpResponder responder,
+                                    @PathParam("namespace-id") String namespaceId,
+                                    @PathParam("app-id") String appId,
+                                    @PathParam("program-type") String programType,
+                                    @PathParam("program-id") String programId) throws Exception {
+    Id.Program program = Id.Program.from(Id.Application.from(namespaceId, appId),
+                                         ProgramType.valueOfCategoryName(programType), programId);
+    metadataAdmin.removeMetadata(program);
+    responder.sendString(HttpResponseStatus.OK,
+                         String.format("Metadata for program %s deleted successfully.", program));
+  }
+
+  @DELETE
+  @Path("/namespaces/{namespace-id}/datasets/{dataset-id}/metadata")
+  public void removeDatasetMetadata(HttpRequest request, HttpResponder responder,
+                                    @PathParam("namespace-id") String namespaceId,
+                                    @PathParam("dataset-id") String datasetId) throws Exception {
+    Id.DatasetInstance dataset = Id.DatasetInstance.from(namespaceId, datasetId);
+    metadataAdmin.removeMetadata(dataset);
+    responder.sendString(HttpResponseStatus.OK,
+                         String.format("Metadata for dataset %s deleted successfully.", dataset));
+  }
+
+  @DELETE
+  @Path("/namespaces/{namespace-id}/streams/{stream-id}/metadata")
+  public void removeStreamMetadata(HttpRequest request, HttpResponder responder,
+                                   @PathParam("namespace-id") String namespaceId,
+                                   @PathParam("stream-id") String streamId) throws Exception {
+    Id.Stream stream = Id.Stream.from(namespaceId, streamId);
+    metadataAdmin.removeMetadata(stream);
+    responder.sendString(HttpResponseStatus.OK,
+                         String.format("Metadata for stream %s deleted successfully.", stream));
   }
 
   @DELETE

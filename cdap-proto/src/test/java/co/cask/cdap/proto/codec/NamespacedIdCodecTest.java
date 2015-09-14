@@ -19,15 +19,15 @@ package co.cask.cdap.proto.codec;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.metadata.MetadataRecord;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Tests for {@link Id.NamespacedId}.
@@ -78,7 +78,7 @@ public class NamespacedIdCodecTest {
   @Test
   public void testWithMetadataRecord() {
     Map<String, String> properties = ImmutableMap.of("key1", "value1", "k1", "v1");
-    List<String> tags = ImmutableList.of("tag1", "t1");
+    Set<String> tags = ImmutableSet.of("tag1", "t1");
     // verify with Id.Application
     MetadataRecord appRecord = new MetadataRecord(app, properties, tags);
     String appRecordJson = GSON.toJson(appRecord);

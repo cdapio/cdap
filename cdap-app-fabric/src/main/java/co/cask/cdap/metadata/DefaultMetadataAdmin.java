@@ -22,9 +22,11 @@ import co.cask.cdap.common.namespace.AbstractNamespaceClient;
 import co.cask.cdap.data2.metadata.dataset.BusinessMetadataRecord;
 import co.cask.cdap.data2.metadata.service.BusinessMetadataStore;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
 import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableSet;
 import com.google.inject.Inject;
 
 import java.util.LinkedHashSet;
@@ -60,6 +62,13 @@ public class DefaultMetadataAdmin implements MetadataAdmin {
   }
 
   @Override
+  public Set<MetadataRecord> getMetadata(Id.NamespacedId entityId) throws NotFoundException {
+    ensureEntityExists(entityId);
+    // For now, we only return business metadata
+    return ImmutableSet.of(businessMds.getMetadata(entityId));
+  }
+
+  @Override
   public Map<String, String> getProperties(Id.NamespacedId entityId) throws NotFoundException {
     ensureEntityExists(entityId);
     return businessMds.getProperties(entityId);
@@ -69,6 +78,12 @@ public class DefaultMetadataAdmin implements MetadataAdmin {
   public Set<String> getTags(Id.NamespacedId entityId) throws NotFoundException {
     ensureEntityExists(entityId);
     return businessMds.getTags(entityId);
+  }
+
+  @Override
+  public void removeMetadata(Id.NamespacedId entityId) throws NotFoundException {
+    ensureEntityExists(entityId);
+    businessMds.removeMetadata(entityId);
   }
 
   @Override
