@@ -76,7 +76,7 @@ public class PluginInstantiator implements Closeable {
     File tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
       cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
     File prefix = cConf.get(Constants.AppFabric.MRTASK_PLUGIN_DIR) != null ?
-      new File(Constants.AppFabric.MRTASK_PLUGIN_DIR, cConf.get(Constants.CFG_LOCAL_DATA_DIR)) :
+      new File(cConf.get(Constants.AppFabric.MRTASK_PLUGIN_DIR), cConf.get(Constants.CFG_LOCAL_DATA_DIR)) :
       new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR));
 
     this.pluginDir = new File(prefix, "namespaces");

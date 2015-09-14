@@ -26,7 +26,6 @@ import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.spark.SparkContextConfig;
 import co.cask.cdap.internal.app.runtime.spark.SparkUtils;
 import co.cask.cdap.proto.ProgramType;
@@ -36,6 +35,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunner;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,8 +53,8 @@ public class DistributedSparkProgramRunner extends AbstractDistributedProgramRun
 
   @Inject
   public DistributedSparkProgramRunner(TwillRunner twillRunner, Configuration hConf, CConfiguration cConf,
-                                       ArtifactRepository artifactRepository) {
-    super(twillRunner, createConfiguration(hConf), cConf, artifactRepository);
+                                       LocationFactory locationFactory) {
+    super(twillRunner, createConfiguration(hConf), cConf, locationFactory);
   }
 
   @Override

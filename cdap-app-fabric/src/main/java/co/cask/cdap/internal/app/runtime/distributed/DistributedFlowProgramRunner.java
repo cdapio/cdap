@@ -30,7 +30,6 @@ import co.cask.cdap.common.twill.AbortOnTimeoutEventHandler;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.tephra.TransactionExecutorFactory;
@@ -43,6 +42,7 @@ import org.apache.twill.api.EventHandler;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunner;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,8 +62,8 @@ public final class DistributedFlowProgramRunner extends AbstractDistributedProgr
   @Inject
   DistributedFlowProgramRunner(TwillRunner twillRunner, Configuration hConfig,
                                CConfiguration cConfig, QueueAdmin queueAdmin, StreamAdmin streamAdmin,
-                               TransactionExecutorFactory txExecutorFactory, ArtifactRepository artifactRepository) {
-    super(twillRunner, hConfig, cConfig, artifactRepository);
+                               TransactionExecutorFactory txExecutorFactory, LocationFactory locationFactory) {
+    super(twillRunner, hConfig, cConfig, locationFactory);
     this.queueAdmin = queueAdmin;
     this.streamAdmin = streamAdmin;
     this.txExecutorFactory = txExecutorFactory;

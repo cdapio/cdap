@@ -27,7 +27,6 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.twill.AbortOnTimeoutEventHandler;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
@@ -37,6 +36,7 @@ import org.apache.twill.api.EventHandler;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunner;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,8 +52,8 @@ public class DistributedWorkerProgramRunner extends AbstractDistributedProgramRu
 
   @Inject
   DistributedWorkerProgramRunner(TwillRunner twillRunner, Configuration hConfig, CConfiguration cConfig,
-                                 ArtifactRepository artifactRepository) {
-    super(twillRunner, hConfig, cConfig, artifactRepository);
+                                 LocationFactory locationFactory) {
+    super(twillRunner, hConfig, cConfig, locationFactory);
   }
 
   @Override

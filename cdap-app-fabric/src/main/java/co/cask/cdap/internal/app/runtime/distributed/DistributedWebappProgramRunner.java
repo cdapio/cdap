@@ -22,7 +22,6 @@ import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
@@ -30,6 +29,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunner;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,8 +44,8 @@ public final class DistributedWebappProgramRunner extends AbstractDistributedPro
 
   @Inject
   public DistributedWebappProgramRunner(TwillRunner twillRunner, Configuration hConf, CConfiguration cConf,
-                                        ArtifactRepository artifactRepository) {
-    super(twillRunner, hConf, cConf, artifactRepository);
+                                        LocationFactory locationFactory) {
+    super(twillRunner, hConf, cConf, locationFactory);
   }
 
   @Override
