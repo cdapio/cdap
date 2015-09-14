@@ -305,7 +305,7 @@ angular.module(PKG.name + '.services')
       var initial = 0;
 
       if (type === 'source') {
-        initial = 30;
+        initial = 10;
 
         offsetLeft = countSource * 2;
         offsetTop = countSource * 70;
@@ -313,7 +313,7 @@ angular.module(PKG.name + '.services')
         countSource++;
 
       } else if (type === 'transform') {
-        initial = 50;
+        initial = 30;
 
         offsetLeft = countTransform * 2;
         offsetTop = countTransform * 70;
@@ -321,7 +321,7 @@ angular.module(PKG.name + '.services')
         countTransform++;
 
       } else if (type === 'sink') {
-        initial = 70;
+        initial = 50;
 
         offsetLeft = countSink * 2;
         offsetTop = countSink * 70;
