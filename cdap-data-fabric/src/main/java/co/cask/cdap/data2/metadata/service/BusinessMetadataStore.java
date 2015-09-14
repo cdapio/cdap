@@ -26,6 +26,7 @@ import co.cask.cdap.data2.dataset2.tx.Transactional;
 import co.cask.cdap.data2.metadata.dataset.BusinessMetadataDataset;
 import co.cask.cdap.data2.metadata.dataset.BusinessMetadataRecord;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
@@ -97,6 +98,21 @@ public class BusinessMetadataStore {
   }
 
   /**
+   * @return a {@link MetadataRecord} representing all the metadata (including properties and tags) for the specified
+   * {@link Id.NamespacedId}.
+   */
+  public MetadataRecord getMetadata(final Id.NamespacedId entityId) {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<BusinessMdsIterable, MetadataRecord>() {
+      @Override
+      public MetadataRecord apply(BusinessMdsIterable input) throws Exception {
+        Map<String, String> properties = input.businessMds.getProperties(entityId);
+        Set<String> tags = input.businessMds.getTags(entityId);
+        return new MetadataRecord(entityId, properties, tags);
+      }
+    });
+  }
+
+  /**
    * @return the metadata for the specified {@link Id.NamespacedId}
    */
   public Map<String, String> getProperties(final Id.NamespacedId entityId) {
@@ -116,6 +132,20 @@ public class BusinessMetadataStore {
       @Override
       public Set<String> apply(BusinessMdsIterable input) throws Exception {
         return input.businessMds.getTags(entityId);
+      }
+    });
+  }
+
+  /**
+   * Removes all metadata (including properties and tags) for the specified {@link Id.NamespacedId}.
+   */
+  public void removeMetadata(final Id.NamespacedId entityId) {
+    txnl.executeUnchecked(new TransactionExecutor.Function<BusinessMdsIterable, Void>() {
+      @Override
+      public Void apply(BusinessMdsIterable input) throws Exception {
+        input.businessMds.removeProperties(entityId);
+        input.businessMds.removeTags(entityId);
+        return null;
       }
     });
   }

@@ -18,9 +18,9 @@ package co.cask.cdap.proto.metadata;
 
 import co.cask.cdap.proto.Id;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * Represents the complete metadata of a {@link Id.NamespacedId} including its properties and tags.
@@ -29,14 +29,14 @@ public class MetadataRecord {
   private final Id.NamespacedId targetId;
   private final MetadataScope scope;
   private final Map<String, String> properties;
-  private final List<String> tags;
+  private final Set<String> tags;
 
-  public MetadataRecord(Id.NamespacedId targetId, Map<String, String> properties, List<String> tags) {
+  public MetadataRecord(Id.NamespacedId targetId, Map<String, String> properties, Set<String> tags) {
     this(targetId, MetadataScope.USER, properties, tags);
   }
 
   public MetadataRecord(Id.NamespacedId targetId, MetadataScope scope, Map<String, String> properties,
-                        List<String> tags) {
+                        Set<String> tags) {
     this.targetId = targetId;
     this.scope = scope;
     this.properties = properties;
@@ -55,7 +55,7 @@ public class MetadataRecord {
     return properties;
   }
 
-  public List<String> getTags() {
+  public Set<String> getTags() {
     return tags;
   }
 

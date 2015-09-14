@@ -34,6 +34,7 @@ import co.cask.tephra.runtime.TransactionInMemoryModule;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Guice;
@@ -120,56 +121,56 @@ public class KafkaMetadataChangePublisherTest {
     Id.DatasetInstance dataset = Id.DatasetInstance.from("ns1", "ds1");
     // Initial state: empty
     MetadataRecord previous = new MetadataRecord(dataset, ImmutableMap.<String, String>of(),
-                                                 ImmutableList.<String>of());
+                                                 ImmutableSet.<String>of());
     // Change 1: add one property and 1 tag
     MetadataChangeRecord.MetadataDiffRecord initialAddition = new MetadataChangeRecord.MetadataDiffRecord(
-      new MetadataRecord(dataset, ImmutableMap.of("key1", "value1"), ImmutableList.of("tag1")),
-      new MetadataRecord(dataset, ImmutableMap.<String, String>of(), ImmutableList.<String>of())
+      new MetadataRecord(dataset, ImmutableMap.of("key1", "value1"), ImmutableSet.of("tag1")),
+      new MetadataRecord(dataset, ImmutableMap.<String, String>of(), ImmutableSet.<String>of())
     );
     long updateTime = currentTime - 1000;
     changesBuilder.add(new MetadataChangeRecord(previous, initialAddition, updateTime));
     // Metadata after initial addition
-    previous = new MetadataRecord(dataset, ImmutableMap.of("key1", "value1"), ImmutableList.of("tag1"));
+    previous = new MetadataRecord(dataset, ImmutableMap.of("key1", "value1"), ImmutableSet.of("tag1"));
     // Change 1: update a property - translates to one addition and one deletion
     MetadataChangeRecord.MetadataDiffRecord propUpdated = new MetadataChangeRecord.MetadataDiffRecord(
-      new MetadataRecord(dataset, ImmutableMap.of("key1", "v1"), ImmutableList.<String>of()),
-      new MetadataRecord(dataset, ImmutableMap.of("key1", "value1"), ImmutableList.<String>of())
+      new MetadataRecord(dataset, ImmutableMap.of("key1", "v1"), ImmutableSet.<String>of()),
+      new MetadataRecord(dataset, ImmutableMap.of("key1", "value1"), ImmutableSet.<String>of())
     );
     updateTime = currentTime - 800;
     changesBuilder.add(new MetadataChangeRecord(previous, propUpdated, updateTime));
     // Metadata after property update
-    previous = new MetadataRecord(dataset, ImmutableMap.of("key1", "v1"), ImmutableList.of("tag1"));
+    previous = new MetadataRecord(dataset, ImmutableMap.of("key1", "v1"), ImmutableSet.of("tag1"));
     // Change 2: add a new property - translates to one addition
     MetadataChangeRecord.MetadataDiffRecord propAdded = new MetadataChangeRecord.MetadataDiffRecord(
-      new MetadataRecord(dataset, ImmutableMap.of("key2", "value2"), ImmutableList.<String>of()),
-      new MetadataRecord(dataset, ImmutableMap.<String, String>of(), ImmutableList.<String>of())
+      new MetadataRecord(dataset, ImmutableMap.of("key2", "value2"), ImmutableSet.<String>of()),
+      new MetadataRecord(dataset, ImmutableMap.<String, String>of(), ImmutableSet.<String>of())
     );
     updateTime = currentTime - 600;
     changesBuilder.add(new MetadataChangeRecord(previous, propAdded, updateTime));
     // Metadata after property addition
-    previous = new MetadataRecord(dataset, ImmutableMap.of("key1", "v1", "key2", "value2"), ImmutableList.of("tag1"));
+    previous = new MetadataRecord(dataset, ImmutableMap.of("key1", "v1", "key2", "value2"), ImmutableSet.of("tag1"));
     // Change 3: remove a property - translates to 1 deletion
     MetadataChangeRecord.MetadataDiffRecord propRemoved = new MetadataChangeRecord.MetadataDiffRecord(
-      new MetadataRecord(dataset, ImmutableMap.<String, String>of(), ImmutableList.<String>of()),
-      new MetadataRecord(dataset, ImmutableMap.of("key1", "v1"), ImmutableList.<String>of())
+      new MetadataRecord(dataset, ImmutableMap.<String, String>of(), ImmutableSet.<String>of()),
+      new MetadataRecord(dataset, ImmutableMap.of("key1", "v1"), ImmutableSet.<String>of())
     );
     updateTime = currentTime - 400;
     changesBuilder.add(new MetadataChangeRecord(previous, propRemoved, updateTime));
     // Metadata after property deletion
-    previous = new MetadataRecord(dataset, ImmutableMap.of("key2", "value2"), ImmutableList.of("tag1"));
+    previous = new MetadataRecord(dataset, ImmutableMap.of("key2", "value2"), ImmutableSet.of("tag1"));
     // Change 4: remove a tag - translates to 1 deletion
     MetadataChangeRecord.MetadataDiffRecord tagRemoved = new MetadataChangeRecord.MetadataDiffRecord(
-      new MetadataRecord(dataset, ImmutableMap.<String, String>of(), ImmutableList.<String>of()),
-      new MetadataRecord(dataset, ImmutableMap.<String, String>of(), ImmutableList.of("tag1"))
+      new MetadataRecord(dataset, ImmutableMap.<String, String>of(), ImmutableSet.<String>of()),
+      new MetadataRecord(dataset, ImmutableMap.<String, String>of(), ImmutableSet.of("tag1"))
     );
     updateTime = currentTime - 200;
     changesBuilder.add(new MetadataChangeRecord(previous, tagRemoved, updateTime));
     // Metadata after tag removal
-    previous = new MetadataRecord(dataset, ImmutableMap.of("key2", "value2"), ImmutableList.<String>of());
+    previous = new MetadataRecord(dataset, ImmutableMap.of("key2", "value2"), ImmutableSet.<String>of());
     // Change 5: add a tag - translates to 1 addition
     MetadataChangeRecord.MetadataDiffRecord tagAdded = new MetadataChangeRecord.MetadataDiffRecord(
-      new MetadataRecord(dataset, ImmutableMap.<String, String>of(), ImmutableList.of("tag1")),
-      new MetadataRecord(dataset, ImmutableMap.<String, String>of(), ImmutableList.<String>of())
+      new MetadataRecord(dataset, ImmutableMap.<String, String>of(), ImmutableSet.of("tag1")),
+      new MetadataRecord(dataset, ImmutableMap.<String, String>of(), ImmutableSet.<String>of())
     );
     updateTime = currentTime;
     changesBuilder.add(new MetadataChangeRecord(previous, tagAdded, updateTime));
