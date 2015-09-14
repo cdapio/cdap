@@ -980,8 +980,10 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       }
 
       conf.setInt(memoryConfKey, resources.getMemoryMB());
-      // Also set the Xmx to be smaller than the container memory.
-      conf.set(javaOptsKey, "-Xmx" + (int) (resources.getMemoryMB() * 0.8) + "m");
+      if (conf.get(javaOptsKey) == null) {
+        // Also set the Xmx to be smaller than the container memory, if not already configured.
+        conf.set(javaOptsKey, "-Xmx" + (int) (resources.getMemoryMB() * 0.8) + "m");
+      }
 
       if (vcoreConfKey != null) {
         conf.setInt(vcoreConfKey, resources.getVirtualCores());
