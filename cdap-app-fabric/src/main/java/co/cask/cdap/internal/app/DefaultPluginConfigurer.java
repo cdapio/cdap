@@ -161,7 +161,7 @@ public class DefaultPluginConfigurer extends DefaultDatasetConfigurer implements
    */
   private void registerPlugin(String pluginId, ArtifactDescriptor artifactDescriptor, PluginClass pluginClass,
                               PluginProperties properties) {
-    Preconditions.checkArgument(plugins.containsKey(pluginId), "Plugin %s has already been added. " +
+    Preconditions.checkArgument(!plugins.containsKey(pluginId), "Plugin %s has already been added. " +
       "Use a different name or remove the duplicate addition", pluginId);
     plugins.put(pluginId, new Plugin(artifactDescriptor.getArtifactId(), artifactDescriptor.getLocation().toURI(),
                                      pluginClass, properties));

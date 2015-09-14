@@ -16,20 +16,53 @@
 
 package co.cask.cdap.test.app;
 
+import co.cask.cdap.api.Config;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
+import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.worker.AbstractWorker;
 
 /**
  * App with streams, datasets added multiple times that should result in an error.
  */
-public class AppWithDuplicateStreams extends AbstractApplication {
+/**
+ * App with streams, datasets added multiple times that should result in an error.
+ */
+public class AppWithDuplicateStreams extends AbstractApplication<AppWithDuplicateStreams.ConfigClass> {
+
+  public static class ConfigClass extends Config {
+    private boolean multiStreams;
+    private boolean multiDatasets;
+    private boolean multiPlugins;
+
+    public ConfigClass() {
+      multiDatasets = false;
+      multiStreams = false;
+      multiPlugins = false;
+    }
+
+    public ConfigClass(boolean streams, boolean datasets, boolean plugins) {
+      this.multiStreams = streams;
+      this.multiDatasets = datasets;
+      this.multiPlugins = plugins;
+    }
+  }
 
   @Override
   public void configure() {
-    addStream("input3");
-    createDataset("data1", KeyValueTable.class);
-    createDataset("data2", KeyValueTable.class);
+    ConfigClass config = getConfig();
+    if (config.multiStreams) {
+      addStream("input1");
+    }
+
+    if (config.multiDatasets) {
+      createDataset("data1", KeyValueTable.class);
+    }
+
+    if (config.multiPlugins) {
+      usePlugin("t1", "n1", "plug", PluginProperties.builder().build());
+    }
+
     addWorker(new DumbWorker());
   }
 
@@ -43,8 +76,9 @@ public class AppWithDuplicateStreams extends AbstractApplication {
     @Override
     protected void configure() {
       super.configure();
-      addStream("input2");
       addStream("input1");
+      createDataset("data1", KeyValueTable.class);
+      usePlugin("t1", "n1", "plug", PluginProperties.builder().build());
     }
   }
 }
