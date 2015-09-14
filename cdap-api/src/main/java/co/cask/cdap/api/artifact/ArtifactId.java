@@ -49,7 +49,7 @@ public final class ArtifactId implements Comparable<ArtifactId> {
 
   @Override
   public String toString() {
-    return String.format("%s-%s-%s", name, version, scope);
+    return String.format("%s:%s-%s", scope, name, version);
   }
 
   @Override

@@ -228,7 +228,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       // It is mainly for standalone mode to have the same ClassLoader as in distributed mode
       // It can only be constructed here because we need to have all plugins information
       classLoader = new MapReduceClassLoader(context.getProgram().getClassLoader(),
-                                             context.getNamespaceId(),
+                                             Id.Namespace.from(context.getNamespaceId()),
                                              context.getPlugins(),
                                              artifactFileNames,
                                              context.getPluginInstantiator());

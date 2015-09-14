@@ -96,7 +96,7 @@ public class MapReduceClassLoader extends CombineClassLoader {
    * followed by plugin Export-Package ClassLoader and with the system ClassLoader last.
    */
   public MapReduceClassLoader(ClassLoader programClassLoader,
-                              String namespace,
+                              Id.Namespace namespace,
                               Map<String, Plugin> plugins,
                               Map<String, String> artifactFileNames,
                               PluginInstantiator pluginInstantiator) {
@@ -160,7 +160,7 @@ public class MapReduceClassLoader extends CombineClassLoader {
     }
 
     Parameters(MapReduceContextConfig contextConfig, ClassLoader programClassLoader) {
-      this(programClassLoader, contextConfig.getNamespace(),
+      this(programClassLoader, Id.Namespace.from(contextConfig.getNamespace()),
            contextConfig.getPlugins(), contextConfig.getArtifactFileNames(),
            createPluginInstantiator(contextConfig, programClassLoader));
     }
@@ -169,7 +169,7 @@ public class MapReduceClassLoader extends CombineClassLoader {
      * Creates from the given ProgramClassLoader with plugin classloading support.
      */
     Parameters(ClassLoader programClassLoader,
-               String namespace,
+               Id.Namespace namespace,
                Map<String, Plugin> plugins,
                Map<String, String> artifactFileNames,
                PluginInstantiator pluginInstantiator) {
@@ -234,7 +234,8 @@ public class MapReduceClassLoader extends CombineClassLoader {
      *
      * Plugin Lib ClassLoader, Plugin Export-Package ClassLoader, ...
      */
-    private static List<ClassLoader> createFilteredPluginClassLoaders(String namespace, Map<String, Plugin> plugins,
+    private static List<ClassLoader> createFilteredPluginClassLoaders(Id.Namespace namespace,
+                                                                      Map<String, Plugin> plugins,
                                                                       Map<String, String> artifactFileNames,
                                                                       PluginInstantiator pluginInstantiator) {
       if (plugins.isEmpty()) {
@@ -244,10 +245,9 @@ public class MapReduceClassLoader extends CombineClassLoader {
       try {
         Multimap<Plugin, String> artifactPluginClasses = getArtifactPluginClasses(plugins);
         List<ClassLoader> pluginClassLoaders = Lists.newArrayList();
-        for (Map.Entry<String, Plugin> pluginEntry : plugins.entrySet()) {
-          Plugin plugin = pluginEntry.getValue();
+        for (Plugin plugin : plugins.values()) {
           File pluginFile = new File(artifactFileNames.get(plugin.getArtifactId().toString()));
-          Id.Artifact artifact = Id.Artifact.from(Id.Namespace.from(namespace), plugin.getArtifactId());
+          Id.Artifact artifact = Id.Artifact.from(namespace, plugin.getArtifactId());
           ArtifactDescriptor artifactDescriptor = new ArtifactDescriptor(artifact, Locations.toLocation(pluginFile));
           ClassLoader pluginClassLoader = pluginInstantiator.getArtifactClassLoader(artifactDescriptor);
           if (pluginClassLoader instanceof PluginClassLoader) {

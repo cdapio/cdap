@@ -99,7 +99,8 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
    * @return the copy of the program options with locations of plugin artifacts included in them
    */
   private ProgramOptions addPluginLocations(ProgramOptions options, Id.Namespace namespace,
-                                            ApplicationSpecification appSpec) {
+                                            @Nullable ApplicationSpecification appSpec) {
+    // appSpec is null in an unit test
     if (appSpec == null) {
       return options;
     }
