@@ -68,15 +68,28 @@ public class LineageService {
     return doComputeLineage(sourceDataset, start, end, levels);
   }
 
-  private Lineage doComputeLineage(final Id.NamespacedId sourceDataset, long start, long end, int levels) {
-    LOG.trace("Computing lineage for dataset {}, start {}, end {}, levels {}", sourceDataset, start, end, levels);
+  /**
+   * Computes lineage for a stream between given time period.
+   *
+   * @param sourceStream stream to compute lineage for
+   * @param start start time period
+   * @param end end time period
+   * @param levels number of levels to compute lineage for
+   * @return lineage for sourceStream
+   */
+  public Lineage computeLineage(final Id.Stream sourceStream, long start, long end, int levels) {
+    return doComputeLineage(sourceStream, start, end, levels);
+  }
+
+  private Lineage doComputeLineage(final Id.NamespacedId sourceData, long start, long end, int levels) {
+    LOG.trace("Computing lineage for data {}, start {}, end {}, levels {}", sourceData, start, end, levels);
     Set<Relation> relations = new HashSet<>();
     Set<Id.NamespacedId> visitedDatasets = new HashSet<>();
     Set<Id.NamespacedId> toVisitDatasets = new HashSet<>();
     Set<Id.Program> visitedPrograms = new HashSet<>();
     Set<Id.Program> toVisitPrograms = new HashSet<>();
 
-    toVisitDatasets.add(sourceDataset);
+    toVisitDatasets.add(sourceData);
     for (int i = 0; i < levels; ++i) {
       LOG.trace("Level {}", i);
       toVisitPrograms.clear();
@@ -99,7 +112,7 @@ public class LineageService {
           visitedPrograms.add(p);
           // Fetch related datasets
           Iterable<Relation> datasetRelations = lineageStore.getRelations(p, start, end);
-          LOG.trace("Got dataset relations {}", datasetRelations);
+          LOG.trace("Got data relations {}", datasetRelations);
           Iterables.addAll(relations, datasetRelations);
           Iterables.addAll(toVisitDatasets,
                            Iterables.transform(datasetRelations, RELATION_TO_DATA_FUNCTION));
@@ -117,10 +130,9 @@ public class LineageService {
       return lineageStore.getRelations((Id.DatasetInstance) data, start, end);
     }
 
-    // TODO: Allow stream
-//    if (data instanceof Id.Stream) {
-//      return lineageStore.getRelations((Id.Stream) data, start, end);
-//    }
+    if (data instanceof Id.Stream) {
+      return lineageStore.getRelations((Id.Stream) data, start, end);
+    }
 
     throw new IllegalStateException("Unknown data type " + data);
   }

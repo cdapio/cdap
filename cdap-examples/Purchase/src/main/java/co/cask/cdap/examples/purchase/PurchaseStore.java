@@ -16,11 +16,13 @@
 
 package co.cask.cdap.examples.purchase;
 
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.ObjectMappedTable;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
+import co.cask.cdap.api.flow.flowlet.FlowletConfigurer;
 import co.cask.cdap.api.metrics.Metrics;
 import com.google.common.base.Charsets;
 import com.google.common.io.ByteStreams;
@@ -31,7 +33,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 /**
- * Store the incoming Purchase objects in the purchases DataSet.
+ * Store the incoming Purchase objects in the purchases dataset.
  */
 public class PurchaseStore extends AbstractFlowlet {
 
@@ -57,6 +59,13 @@ public class PurchaseStore extends AbstractFlowlet {
     LOG.info("Purchase info: Customer {}, ProductId {}, CatalogId {}",
              purchase.getCustomer(), purchase.getProduct(), purchase.getCatalogId());
     store.write(Bytes.toBytes(purchase.getPurchaseTime()), purchase);
+  }
+
+  @Override
+  public void configure(FlowletConfigurer configurer) {
+    super.configure(configurer);
+    setDescription("Store the incoming Purchase objects in the purchases dataset");
+    setResources(new Resources(1024));
   }
 
   /**

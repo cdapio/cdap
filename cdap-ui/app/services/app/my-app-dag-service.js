@@ -286,7 +286,8 @@ angular.module(PKG.name + '.services')
 
     this.addNodes = function(conf, type, inCreationMode) {
       this.isConfigTouched = true;
-
+      // FIXME: Utterly irrelavant place to set style. This needs to be moved ASAP.
+      var artifactType = GLOBALS.pluginTypes[this.metadata.template.type];
       var config = {
         id: conf.id,
         name: conf.name,
@@ -295,6 +296,8 @@ angular.module(PKG.name + '.services')
         description: conf.description,
         outputSchema: conf.outputSchema || '',
         pluginTemplate: conf.pluginTemplate || null,
+        errorDatasetName: conf.errorDatasetName || '',
+        validationFields: conf.validationFields || null,
         lock: conf.lock || null,
         properties: conf.properties || {},
         _backendProperties: conf._backendProperties,
@@ -304,7 +307,7 @@ angular.module(PKG.name + '.services')
       var offsetTop = 0;
       var initial = 0;
 
-      if (type === 'source') {
+      if (type === artifactType.source) {
         initial = 10;
 
         offsetLeft = countSource * 2;
@@ -320,7 +323,7 @@ angular.module(PKG.name + '.services')
 
         countTransform++;
 
-      } else if (type === 'sink') {
+      } else if (type === artifactType.sink) {
         initial = 50;
 
         offsetLeft = countSink * 2;
@@ -386,15 +389,15 @@ angular.module(PKG.name + '.services')
     this.removeNode = function (nodeId) {
       this.isConfigTouched = true;
       var type = this.nodes[nodeId].type;
-
+      var artifactTypeExtension = GLOBALS.pluginTypes[this.metadata.template.type];
       switch (type) {
-        case 'source':
+        case artifactTypeExtension.source:
           countSource--;
           break;
         case 'transform':
           countTransform--;
           break;
-        case 'sink':
+        case artifactTypeExtension.sink:
           countSink--;
           break;
       }
@@ -408,23 +411,27 @@ angular.module(PKG.name + '.services')
 
     function fetchBackendProperties(plugin, scope) {
       var defer = $q.defer();
+      var sourceType = GLOBALS.pluginTypes[this.metadata.template.type].source,
+          sinkType = GLOBALS.pluginTypes[this.metadata.template.type].sink;
 
       var propertiesApiMap = {
-        'source': myAdapterApi.fetchSourceProperties,
-        'sink': myAdapterApi.fetchSinkProperties,
         'transform': myAdapterApi.fetchTransformProperties
       };
+      propertiesApiMap[sourceType] = myAdapterApi.fetchSourceProperties;
+      propertiesApiMap[sinkType] = myAdapterApi.fetchSinkProperties;
+
       // This needs to pass on a scope always. Right now there is no cleanup
       // happening
       var params = {
+        namespace: $state.params.namespace,
         adapterType: this.metadata.template.type,
         version: $rootScope.cdapVersion,
-        namespace: $state.params.namespace
+        extensionType: plugin.type,
+        pluginName: plugin.name
       };
       if (scope) {
         params.scope = scope;
       }
-      params[plugin.type] = plugin.name;
 
       return propertiesApiMap[plugin.type](params)
         .$promise
@@ -456,31 +463,38 @@ angular.module(PKG.name + '.services')
         source: {
           properties: {}
         },
-        sink: {
-          properties: {}
-        },
+        sinks: [],
         transforms: []
       };
+      var artifactTypeExtension = GLOBALS.pluginTypes[this.metadata.template.type];
       var nodes = angular.copy(this.nodes);
 
       function addPluginToConfig(plugin, id) {
-        if (['source', 'sink'].indexOf(plugin.type) !== -1) {
-          config[plugin.type] = {
-            // Solely adding id and _backendProperties for validation.
-            // Should be removed while saving it to backend.
-            id: plugin.id,
-            name: plugin.name,
-            properties: plugin.properties || {},
-            _backendProperties: plugin._backendProperties
-          };
+
+        var pluginConfig =  {
+          // Solely adding id and _backendProperties for validation.
+          // Should be removed while saving it to backend.
+          id: plugin.id,
+          name: plugin.name,
+          properties: plugin.properties || {},
+          _backendProperties: plugin._backendProperties
+        };
+
+        if (plugin.type === artifactTypeExtension.source) {
+          config['source'] = pluginConfig;
         } else if (plugin.type === 'transform') {
-          config.transforms.push({
-            id: plugin.id,
-            name: plugin.name,
-            properties: plugin.properties || {},
-            _backendProperties: plugin._backendProperties
-          });
+          if (plugin.errorDatasetName && plugin.errorDatasetName.length > 0) {
+            pluginConfig.errorDatasetName = plugin.errorDatasetName;
+          }
+          if (plugin.validationFields) {
+            pluginConfig.validationFields = plugin.validationFields;
+          }
+
+          config['transforms'].push(pluginConfig);
+        } else if (plugin.type === artifactTypeExtension.sink) {
+          config['sinks'].push(pluginConfig);
         }
+
         delete nodes[id];
       }
 
@@ -499,7 +513,7 @@ angular.module(PKG.name + '.services')
     function pruneNonBackEndProperties(config) {
       function propertiesIterator(properties, backendProperties) {
         angular.forEach(properties, function(value, key) {
-          if (!backendProperties[key] || properties[key] === '' || properties[key] === null) {
+          if ((!backendProperties[key] && key !== 'errorDatasetName') || properties[key] === '' || properties[key] === null) {
             delete properties[key];
           }
           // FIXME: Remove this once https://issues.cask.co/browse/CDAP-3614 is fixed.
@@ -513,10 +527,14 @@ angular.module(PKG.name + '.services')
           Object.keys(config.source.properties).length > 0) {
         config.source.properties = propertiesIterator(config.source.properties, config.source._backendProperties);
       }
-      if (myHelpers.objectQuery(config, 'sink', 'properties') &&
-          Object.keys(config.sink.properties).length > 0) {
-        config.sink.properties = propertiesIterator(config.sink.properties, config.sink._backendProperties);
-      }
+
+      config.sinks.forEach(function(sink) {
+        if (myHelpers.objectQuery(sink, 'properties') &&
+            Object.keys(sink.properties).length > 0) {
+          sink.properties = propertiesIterator(sink.properties, sink._backendProperties);
+        }
+      });
+
       config.transforms.forEach(function(transform) {
         if (myHelpers.objectQuery(transform, 'properties') &&
             Object.keys(transform.properties).length > 0) {
@@ -533,10 +551,12 @@ angular.module(PKG.name + '.services')
         delete config.source._backendProperties;
         delete config.source.id;
       }
-      if (config.sink && (config.sink.id || config.sink._backendProperties)) {
-        delete config.sink._backendProperties;
-        delete config.sink.id;
-      }
+
+      config.sinks.forEach(function(sink) {
+        delete sink._backendProperties;
+        delete sink.id;
+      });
+
       config.transforms.forEach(function(t) {
         delete t._backendProperties;
         delete t.id;
@@ -555,9 +575,10 @@ angular.module(PKG.name + '.services')
         },
         config: {
           source: config.source,
-          sink: config.sink,
+          sinks: config.sinks,
           transforms: config.transforms
-        }
+        },
+        description: this.metadata.description
       };
       if (this.metadata.template.type === GLOBALS.etlRealtime) {
         data.config.instances = this.metadata.template.instance;
@@ -642,7 +663,7 @@ angular.module(PKG.name + '.services')
       var ui = data.ui;
       var config = data.config;
       var nodes = [];
-      var config1 = CanvasFactory.extractMetadataFromDraft(data.config, data);
+      var config1 = CanvasFactory.extractMetadataFromDraft(data);
 
       if (config1.name) {
         this.metadata.name = config1.name;
@@ -655,7 +676,7 @@ angular.module(PKG.name + '.services')
           nodes.push(value);
         }.bind(this));
       } else {
-        nodes = CanvasFactory.getNodes(config);
+        nodes = CanvasFactory.getNodes(config, this.metadata.template.type);
       }
       nodes.forEach(function(node) {
         this.addNodes(node, node.type);

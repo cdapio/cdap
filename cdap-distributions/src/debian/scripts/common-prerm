@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #
-# Copyright © 2014 Cask Data, Inc.
+# Copyright © 2015 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -16,8 +16,7 @@
 # the License.
 #
 
-
-#COMMON  pre remove script for <%= project %>
+# prerm script for <%= project %>
 set -e
 
 package_name="<%= project %>"

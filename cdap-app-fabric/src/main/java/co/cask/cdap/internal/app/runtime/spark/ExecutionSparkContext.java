@@ -41,6 +41,7 @@ import co.cask.cdap.data.dataset.DatasetInstantiator;
 import co.cask.cdap.data.stream.StreamInputFormat;
 import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.internal.app.runtime.spark.dataset.CloseableBatchWritable;
@@ -249,6 +250,7 @@ public class ExecutionSparkContext extends AbstractSparkContext {
       Id.Stream streamId = Id.Stream.from(getProgramId().getNamespace(), streamName);
       try {
         streamAdmin.register(getOwners(), streamId);
+        streamAdmin.addAccess(new Id.Run(getProgramId(), getRunId().getId()), streamId, AccessType.READ);
       } catch (Exception e) {
         LOG.warn("Failed to registry usage of {} -> {}", streamId, getOwners(), e);
       }

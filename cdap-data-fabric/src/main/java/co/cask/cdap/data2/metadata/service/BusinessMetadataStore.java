@@ -26,6 +26,7 @@ import co.cask.cdap.data2.dataset2.tx.Transactional;
 import co.cask.cdap.data2.metadata.dataset.BusinessMetadataDataset;
 import co.cask.cdap.data2.metadata.dataset.BusinessMetadataRecord;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
@@ -36,6 +37,7 @@ import com.google.inject.Inject;
 import com.google.inject.name.Named;
 
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -97,6 +99,40 @@ public class BusinessMetadataStore {
   }
 
   /**
+   * @return a {@link MetadataRecord} representing all the metadata (including properties and tags) for the specified
+   * {@link Id.NamespacedId}.
+   */
+  public MetadataRecord getMetadata(final Id.NamespacedId entityId) {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<BusinessMdsIterable, MetadataRecord>() {
+      @Override
+      public MetadataRecord apply(BusinessMdsIterable input) throws Exception {
+        Map<String, String> properties = input.businessMds.getProperties(entityId);
+        Set<String> tags = input.businessMds.getTags(entityId);
+        return new MetadataRecord(entityId, properties, tags);
+      }
+    });
+  }
+
+  /**
+   * @return a set of {@link MetadataRecord}s representing all the metadata (including properties and tags)
+   * for the specified set of {@link Id.NamespacedId}s.
+   */
+  public Set<MetadataRecord> getMetadata(final Set<Id.NamespacedId> entityIds) {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<BusinessMdsIterable, Set<MetadataRecord>>() {
+      @Override
+      public Set<MetadataRecord> apply(BusinessMdsIterable input) throws Exception {
+        Set<MetadataRecord> metadataRecords = new HashSet<>(entityIds.size());
+        for (Id.NamespacedId entityId : entityIds) {
+          Map<String, String> properties = input.businessMds.getProperties(entityId);
+          Set<String> tags = input.businessMds.getTags(entityId);
+          metadataRecords.add(new MetadataRecord(entityId, properties, tags));
+        }
+        return metadataRecords;
+      }
+    });
+  }
+
+  /**
    * @return the metadata for the specified {@link Id.NamespacedId}
    */
   public Map<String, String> getProperties(final Id.NamespacedId entityId) {
@@ -116,6 +152,20 @@ public class BusinessMetadataStore {
       @Override
       public Set<String> apply(BusinessMdsIterable input) throws Exception {
         return input.businessMds.getTags(entityId);
+      }
+    });
+  }
+
+  /**
+   * Removes all metadata (including properties and tags) for the specified {@link Id.NamespacedId}.
+   */
+  public void removeMetadata(final Id.NamespacedId entityId) {
+    txnl.executeUnchecked(new TransactionExecutor.Function<BusinessMdsIterable, Void>() {
+      @Override
+      public Void apply(BusinessMdsIterable input) throws Exception {
+        input.businessMds.removeProperties(entityId);
+        input.businessMds.removeTags(entityId);
+        return null;
       }
     });
   }

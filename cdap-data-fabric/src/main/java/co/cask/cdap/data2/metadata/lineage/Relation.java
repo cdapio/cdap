@@ -47,6 +47,19 @@ public class Relation {
     this.components = ImmutableSet.copyOf(components);
   }
 
+  public Relation(Id.Stream stream, Id.Program program, AccessType access, Set<RunId> runs) {
+    this(stream, program, access, runs, Collections.<Id.NamespacedId>emptySet());
+  }
+
+  public Relation(Id.Stream stream, Id.Program program, AccessType access, Set<RunId> runs,
+                  Set<? extends Id.NamespacedId> components) {
+    this.data = stream;
+    this.program = program;
+    this.access = access;
+    this.runs = ImmutableSet.copyOf(runs);
+    this.components = ImmutableSet.copyOf(components);
+  }
+
   public Id.NamespacedId getData() {
     return data;
   }

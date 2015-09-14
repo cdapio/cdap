@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.adapters')
-  .controller('LeftPanelController', function($q, myAdapterApi, MyAppDAGService, MyDAGFactory, myAdapterTemplatesApi, CanvasFactory, $alert, mySettings, $state, MySidebarService, $scope, rVersion, $stateParams) {
+  .controller('LeftPanelController', function($q, myAdapterApi, MyAppDAGService, MyDAGFactory, myAdapterTemplatesApi, CanvasFactory, $alert, mySettings, $state, MySidebarService, $scope, rVersion, $stateParams, GLOBALS) {
     this.pluginTypes = [
       {
         name: 'source',
@@ -51,19 +51,23 @@ angular.module(PKG.name + '.feature.adapters')
     this.onLeftSideGroupItemClicked = function(group) {
       var prom;
       var templatedefer = $q.defer();
+      var templateType = MyAppDAGService.metadata.template.type;
       var params = {
         namespace: $stateParams.namespace,
-        adapterType: MyAppDAGService.metadata.template.type,
+        adapterType: templateType,
         version: rVersion.version
       };
       switch(group.name) {
         case 'source':
+          params.extensionType = GLOBALS.pluginTypes[templateType].source;
           prom = myAdapterApi.fetchSources(params).$promise;
           break;
         case 'transform':
+          params.extensionType = GLOBALS.pluginTypes[templateType].transform;
           prom = myAdapterApi.fetchTransforms(params).$promise;
           break;
         case 'sink':
+          params.extensionType = GLOBALS.pluginTypes[templateType].sink;
           prom = myAdapterApi.fetchSinks(params).$promise;
           break;
         case 'templates':

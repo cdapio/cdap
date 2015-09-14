@@ -26,9 +26,9 @@ angular.module(PKG.name + '.feature.adapters')
             $scope.drafts.push({
               isdraft: true,
               name: key,
-              template: myHelpers.objectQuery(value, 'config', 'metadata', 'type') || myHelpers.objectQuery(value, 'template'),
+              template: myHelpers.objectQuery(value, 'artifact', 'name'),
               status: '-',
-              description: myHelpers.objectQuery(value, 'config', 'metadata', 'description') || myHelpers.objectQuery(value, 'description')
+              description: myHelpers.objectQuery(value, 'description')
             });
           });
         }

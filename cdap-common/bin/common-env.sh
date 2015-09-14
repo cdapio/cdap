@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #
-# Copyright © 2014 Cask Data, Inc.
+# Copyright © 2014-2015 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -17,8 +17,8 @@
 
 # Set environment variables here.
 
-# The java implementation to use.  Java 1.6 required.
-# export JAVA_HOME=/usr/java/jdk1.6.0/
+# The java implementation to use.  Java 1.7 required.
+# export JAVA_HOME=/usr/java/jdk1.7.0/
 
 # The maximum amount of heap to use, in MB. Default is 1000.
 # export HEAPSIZE=1000
@@ -38,8 +38,8 @@ export OPTS="-XX:+UseConcMarkSweepGC"
 # Where log files are stored.  $CDAP_HOME/logs by default.
 export LOG_DIR=/var/log/cdap
 
-# A string representing this instance of hbase. $USER by default.
-export IDENT_STRING=$USER
+# A string representing this instance of CDAP. $USER by default.
+export IDENT_STRING=${USER}
 
 # The scheduling priority for daemon processes.  See 'man nice'.
 # export NICENESS=10

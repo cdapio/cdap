@@ -155,7 +155,7 @@ public class DataQualityApp extends AbstractApplication<DataQualityApp.DataQuali
     public void configure() {
       super.configure();
       final MapReduceConfigurer mrConfigurer = getConfigurer();
-      BatchSource batchSource = usePlugin("source", source.getName(), PLUGIN_ID,
+      BatchSource batchSource = usePlugin("batchsource", source.getName(), PLUGIN_ID,
                                           PluginProperties.builder().addAll(source.getProperties()).build());
       Preconditions.checkNotNull(batchSource, "Could not find plugin %s of type 'source'", source.getName());
       // We use pluginId as the prefixId

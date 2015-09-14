@@ -45,7 +45,7 @@ import java.sql.Driver;
 /**
  * Batch source to read from a Database table
  */
-@Plugin(type = "source")
+@Plugin(type = "batchsource")
 @Name("Database")
 @Description("Reads from a database using a configurable SQL query." +
   " Outputs one record for each row returned by the query.")

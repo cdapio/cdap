@@ -28,7 +28,8 @@
 
   </div>
 
-  <div ng-if="isTransform" class="row">
+
+  <div ng-if="isTransform && plugin.name !== 'Validator'" class="row">
     <div class="col-lg-4">
       <div ng-include="'/assets/features/adapters/templates/create/popovers/plugin-edit-input-schema.html'"></div>
     </div>
@@ -41,6 +42,12 @@
 
     <div class="col-lg-4">
       <div ng-include="'/assets/features/adapters/templates/create/popovers/plugin-edit-output-schema.html'"></div>
+    </div>
+  </div>
+
+  <div ng-if="isTransform && plugin.name === 'Validator'" class="row">
+    <div class="col-lg-12">
+      <div ng-include="'/assets/features/adapters/templates/create/popovers/plugin-edit-validator-transform.html'"></div>
     </div>
   </div>
 

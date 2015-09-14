@@ -70,8 +70,7 @@ public class DynamicMapReduceContext extends BasicMapReduceContext implements Da
   private final DynamicDatasetContext dynamicDatasetContext;
 
   public DynamicMapReduceContext(Program program,
-                                 MapReduceMetrics.TaskType type,
-                                 RunId runId, String taskId,
+                                 RunId runId,
                                  Arguments runtimeArguments,
                                  MapReduceSpecification spec,
                                  long logicalStartTime, @Nullable String programNameInWorkflow,
@@ -82,7 +81,7 @@ public class DynamicMapReduceContext extends BasicMapReduceContext implements Da
                                  DatasetFramework dsFramework,
                                  LocationFactory locationFactory,
                                  @Nullable PluginInstantiator pluginInstantiator) {
-    super(program, type, runId, taskId, runtimeArguments, Collections.<String>emptySet(), spec,
+    super(program, runId, runtimeArguments, Collections.<String>emptySet(), spec,
           logicalStartTime, programNameInWorkflow, workflowToken, discoveryServiceClient, metricsCollectionService,
           dsFramework, locationFactory, pluginInstantiator);
     this.datasetsCache = CacheBuilder.newBuilder()

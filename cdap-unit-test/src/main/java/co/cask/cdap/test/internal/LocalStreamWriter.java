@@ -37,8 +37,8 @@ public class LocalStreamWriter implements StreamWriter {
   private final Id.Namespace namespace;
 
   @Inject
-  public LocalStreamWriter(@Assisted("namespace") Id.Namespace namespace, StreamWriterFactory streamWriterFactory) {
-    this.namespace = namespace;
+  public LocalStreamWriter(@Assisted("run") Id.Run run, StreamWriterFactory streamWriterFactory) {
+    this.namespace = run.getNamespace();
     this.streamWriterFactory = streamWriterFactory;
   }
 

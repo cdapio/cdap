@@ -78,6 +78,21 @@ public class FileSetArguments {
   }
 
   /**
+   * Sets the baseLocation of the file dataset as the output location in the runtime arguments for a file dataset.
+   */
+  public static void setBaseOutputPath(Map<String, String> arguments) {
+    // use null to indicate to use the base location of the file dataset as the output path
+    arguments.put(OUTPUT_PATH, null);
+  }
+
+  /**
+   * @return whether to use the base location of the file dataset as the output location.
+   */
+  public static boolean isBaseOutputPath(Map<String, String> arguments) {
+    return arguments.containsKey(OUTPUT_PATH) && arguments.get(OUTPUT_PATH) == null;
+  }
+
+  /**
    * Sets the output path in the runtime arguments for a file dataset.
    */
   public static void setOutputPath(Map<String, String> arguments, String path) {

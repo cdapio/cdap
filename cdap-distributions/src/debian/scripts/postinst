@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #
-# Copyright © 2014 Cask Data, Inc.
+# Copyright © 2015 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -16,8 +16,7 @@
 # the License.
 #
 
-
-# post install script for <%= project %>
+# postinstall script for <%= project %>
 set -e
 
 package_name="<%= project %>"
@@ -34,7 +33,7 @@ case "$1" in
     chmod +x /opt/cdap/$package_name/bin/service
 
     if stat -t /opt/cdap/$package_name/conf/*-env.sh >/dev/null 2>&1 ; then
-      find /opt/cdap/$package_name/conf -name '*-env.sh' | xargs -n1 basename | sed 's/-env.sh//' | while read svcname; do
+      find -L /opt/cdap/$package_name/conf -name '*-env.sh' | xargs -n1 basename | sed 's/-env.sh//' | while read svcname; do
         # refresh internal symlinks
         if [ -h "/opt/cdap/$package_name/bin/svc-$svcname" ]; then
           unlink /opt/cdap/$package_name/bin/svc-$svcname

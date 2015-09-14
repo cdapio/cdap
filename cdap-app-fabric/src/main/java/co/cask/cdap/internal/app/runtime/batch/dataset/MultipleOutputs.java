@@ -282,8 +282,19 @@ public class MultipleOutputs implements Closeable {
    */
   @SuppressWarnings("unchecked")
   public void close() {
+    closeRecordWriters(recordWriters.values(), context);
+  }
+
+  /**
+   * Closes a collection of RecordWriters, suppressing any exceptions until close is called on each of them.
+   *
+   * @param recordWriters The Collection of RecordWriters to close
+   * @param context The context to pass during close of each RecordWriter
+   */
+  public static void closeRecordWriters(Iterable<RecordWriter<?, ?>> recordWriters,
+                                        TaskAttemptContext context) {
     RuntimeException ex = null;
-    for (RecordWriter writer : recordWriters.values()) {
+    for (RecordWriter writer : recordWriters) {
       try {
         writer.close(context);
       } catch (IOException | InterruptedException e) {

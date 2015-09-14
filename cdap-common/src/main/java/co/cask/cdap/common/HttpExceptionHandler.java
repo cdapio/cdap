@@ -38,12 +38,19 @@ public class HttpExceptionHandler extends ExceptionHandler {
     if (Iterables.size(Iterables.filter(Throwables.getCausalChain(t), ServiceUnavailableException.class)) > 0) {
       responder.sendString(HttpResponseStatus.SERVICE_UNAVAILABLE, t.getMessage());
     } else if (t instanceof BadRequestException) {
+      logWithTrace(request, t);
       responder.sendString(HttpResponseStatus.BAD_REQUEST, t.getMessage());
     } else if (t instanceof ConflictException) {
+      logWithTrace(request, t);
       responder.sendString(HttpResponseStatus.CONFLICT, t.getMessage());
     } else if (t instanceof NotFoundException) {
+      logWithTrace(request, t);
       responder.sendString(HttpResponseStatus.NOT_FOUND, t.getMessage());
+    } else if (t instanceof NotImplementedException) {
+      logWithTrace(request, t);
+      responder.sendString(HttpResponseStatus.NOT_IMPLEMENTED, t.getMessage());
     } else if (t instanceof UnauthorizedException) {
+      logWithTrace(request, t);
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } else {
       LOG.error("Unexpected error: request={} {} user={}:",
@@ -51,5 +58,10 @@ public class HttpExceptionHandler extends ExceptionHandler {
                 SecurityRequestContext.getUserId().or("<null>"), t);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
+  }
+
+  private void logWithTrace(HttpRequest request, Throwable t) {
+    LOG.trace("Error in handling request={} {} for user={}:", request.getMethod().getName(), request.getUri(),
+              SecurityRequestContext.getUserId().or("<null>"), t);
   }
 }

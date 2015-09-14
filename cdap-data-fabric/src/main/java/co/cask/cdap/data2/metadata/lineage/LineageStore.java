@@ -23,6 +23,7 @@ import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.annotations.VisibleForTesting;
@@ -65,7 +66,8 @@ public class LineageStore {
    * @param accessType access type
    * @param metadata metadata to store for the access
    */
-  public void addAccess(Id.Run run, Id.DatasetInstance datasetInstance, AccessType accessType, String metadata) {
+  public void addAccess(Id.Run run, Id.DatasetInstance datasetInstance, AccessType accessType,
+                        Set<MetadataRecord> metadata) {
     addAccess(run, datasetInstance, accessType, metadata, null);
   }
 
@@ -79,11 +81,57 @@ public class LineageStore {
    * @param component program component such as flowlet id, etc.
    */
   public void addAccess(final Id.Run run, final Id.DatasetInstance datasetInstance,
-                        final AccessType accessType, final String metadata, @Nullable final Id.NamespacedId component) {
+                        final AccessType accessType, final Set<MetadataRecord> metadata,
+                        @Nullable final Id.NamespacedId component) {
     execute(new TransactionExecutor.Procedure<LineageDataset>() {
       @Override
       public void apply(LineageDataset input) throws Exception {
         input.addAccess(run, datasetInstance, accessType, metadata, component);
+      }
+    });
+  }
+
+  /**
+   * Add a program-stream access.
+   *
+   * @param run program run information
+   * @param stream stream accessed by the program
+   * @param accessType access type
+   * @param metadata metadata to store for the access
+   */
+  public void addAccess(Id.Run run, Id.Stream stream, AccessType accessType, Set<MetadataRecord> metadata) {
+    addAccess(run, stream, accessType, metadata, null);
+  }
+
+  /**
+   * Add a program-stream access.
+   *
+   * @param run program run information
+   * @param stream stream accessed by the program
+   * @param accessType access type
+   * @param metadata metadata to store for the access
+   * @param component program component such as flowlet id, etc.
+   */
+  public void addAccess(final Id.Run run, final Id.Stream stream,
+                        final AccessType accessType, final Set<MetadataRecord> metadata,
+                        @Nullable final Id.NamespacedId component) {
+    execute(new TransactionExecutor.Procedure<LineageDataset>() {
+      @Override
+      public void apply(LineageDataset input) throws Exception {
+        input.addAccess(run, stream, accessType, metadata, component);
+      }
+    });
+  }
+
+  /**
+   * @return a set of {@link MetadataRecord}s (associated with both program and data it accesses)
+   * for a given program run.
+   */
+  public Set<MetadataRecord> getAccesses(final Id.Run run) {
+    return execute(new TransactionExecutor.Function<LineageDataset, Set<MetadataRecord>>() {
+      @Override
+      public Set<MetadataRecord> apply(LineageDataset input) throws Exception {
+        return input.getAccesses(run);
       }
     });
   }
@@ -101,6 +149,23 @@ public class LineageStore {
       @Override
       public Set<Relation> apply(LineageDataset input) throws Exception {
         return input.getRelations(datasetInstance, start, end);
+      }
+    });
+  }
+
+  /**
+   * Fetch program-stream access information for a dataset for a given period.
+   *
+   * @param stream stream for which to fetch access information
+   * @param start start time period
+   * @param end end time period
+   * @return program-stream access information
+   */
+  public Set<Relation> getRelations(final Id.Stream stream, final long start, final long end) {
+    return execute(new TransactionExecutor.Function<LineageDataset, Set<Relation>>() {
+      @Override
+      public Set<Relation> apply(LineageDataset input) throws Exception {
+        return input.getRelations(stream, start, end);
       }
     });
   }
