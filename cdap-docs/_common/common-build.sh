@@ -366,15 +366,6 @@ function set_message() {
   else
     MESSAGES="${MESSAGES}\n\n${*}"
   fi
-  if [ "x${TMP_MESSAGES_FILE}" != "x" ]; then
-    if [ -e ${TMP_MESSAGES_FILE} ]; then
-      # As TMP_MESSAGES_FILE exists, add a blank line to start new message
-      echo >> ${TMP_MESSAGES_FILE}
-    fi
-    echo_red_bold "Warning Message for \"${MANUAL}\":" >> ${TMP_MESSAGES_FILE}
-    echo >> ${TMP_MESSAGES_FILE}
-    printf "${*}\n" >> ${TMP_MESSAGES_FILE}
-  fi
 }
 
 function consolidate_messages() {
@@ -382,9 +373,13 @@ function consolidate_messages() {
     return
   fi
   local m="Warning Messages for \"${MANUAL}\":"
+  local l="--------------------------------------------------------"
   if [ "x${MESSAGES}" != "x" ]; then
     echo_red_bold "Consolidating messages" 
+    echo >> ${TMP_MESSAGES_FILE}
     echo_red_bold "${m}" >> ${TMP_MESSAGES_FILE}
+    echo ${l} >> ${TMP_MESSAGES_FILE}
+    echo >> ${TMP_MESSAGES_FILE}
     printf "${MESSAGES}\n" >> ${TMP_MESSAGES_FILE}
     unset -v MESSAGES
   fi
@@ -393,6 +388,7 @@ function consolidate_messages() {
     m="Sphinx ${m}"
     echo >> ${TMP_MESSAGES_FILE}
     echo_red_bold "${m}" >> ${TMP_MESSAGES_FILE}
+    echo ${l} >> ${TMP_MESSAGES_FILE}
     echo >> ${TMP_MESSAGES_FILE}
     cat ${TARGET}/${SPHINX_MESSAGES} | while read line
     do
@@ -417,6 +413,7 @@ function display_messages_file() {
     echo "--------------------------------------------------------"
     echo_red_bold "End Warning Messages"
     echo "--------------------------------------------------------"
+    echo
     warnings=1 # Indicates warning messages present
   fi
   return ${warnings}
