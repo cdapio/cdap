@@ -37,6 +37,9 @@ public enum ElementType {
   APP("app", new Noun("application"), new Noun("Application"), null, null,
       ArgumentName.APP, Capability.LIST, Capability.PREFERENCES),
 
+  ARTIFACT("artifact", new Noun("artifact"), new Noun("Artifact"), null, null,
+           ArgumentName.ARTIFACT_NAME, Capability.LIST),
+
   DATASET("dataset", new Noun("dataset"), new Noun("Dataset"), null, null,
           ArgumentName.DATASET, Capability.LIST),
 

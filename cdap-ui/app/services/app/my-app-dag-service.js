@@ -296,6 +296,8 @@ angular.module(PKG.name + '.services')
         description: conf.description,
         outputSchema: conf.outputSchema || '',
         pluginTemplate: conf.pluginTemplate || null,
+        errorDatasetName: conf.errorDatasetName || '',
+        validationFields: conf.validationFields || null,
         lock: conf.lock || null,
         properties: conf.properties || {},
         _backendProperties: conf._backendProperties,
@@ -306,7 +308,7 @@ angular.module(PKG.name + '.services')
       var initial = 0;
 
       if (type === artifactType.source) {
-        initial = 30;
+        initial = 10;
 
         offsetLeft = countSource * 2;
         offsetTop = countSource * 70;
@@ -314,7 +316,7 @@ angular.module(PKG.name + '.services')
         countSource++;
 
       } else if (type === 'transform') {
-        initial = 50;
+        initial = 30;
 
         offsetLeft = countTransform * 2;
         offsetTop = countTransform * 70;
@@ -322,7 +324,7 @@ angular.module(PKG.name + '.services')
         countTransform++;
 
       } else if (type === artifactType.sink) {
-        initial = 70;
+        initial = 50;
 
         offsetLeft = countSink * 2;
         offsetTop = countSink * 70;
@@ -481,6 +483,13 @@ angular.module(PKG.name + '.services')
         if (plugin.type === artifactTypeExtension.source) {
           config['source'] = pluginConfig;
         } else if (plugin.type === 'transform') {
+          if (plugin.errorDatasetName && plugin.errorDatasetName.length > 0) {
+            pluginConfig.errorDatasetName = plugin.errorDatasetName;
+          }
+          if (plugin.validationFields) {
+            pluginConfig.validationFields = plugin.validationFields;
+          }
+
           config['transforms'].push(pluginConfig);
         } else if (plugin.type === artifactTypeExtension.sink) {
           config['sinks'].push(pluginConfig);
@@ -504,7 +513,7 @@ angular.module(PKG.name + '.services')
     function pruneNonBackEndProperties(config) {
       function propertiesIterator(properties, backendProperties) {
         angular.forEach(properties, function(value, key) {
-          if (!backendProperties[key] || properties[key] === '' || properties[key] === null) {
+          if ((!backendProperties[key] && key !== 'errorDatasetName') || properties[key] === '' || properties[key] === null) {
             delete properties[key];
           }
           // FIXME: Remove this once https://issues.cask.co/browse/CDAP-3614 is fixed.

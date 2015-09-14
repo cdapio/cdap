@@ -55,7 +55,7 @@ public class MetadataService extends AbstractIdleService {
   @Inject
   MetadataService(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
                   DiscoveryService discoveryService,
-                  @Named(Constants.Metadata.METADATA_HANDLERS_NAME) Set<HttpHandler> handlers) {
+                  @Named(Constants.Metadata.HANDLERS_NAME) Set<HttpHandler> handlers) {
     this.cConf = cConf;
     this.metricsCollectionService = metricsCollectionService;
     this.discoveryService = discoveryService;
@@ -69,9 +69,9 @@ public class MetadataService extends AbstractIdleService {
       .addHttpHandlers(handlers)
       .setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
                                                                 Constants.Service.METADATA_SERVICE)))
-      .setHost(cConf.get(Constants.Metadata.BIND_ADDRESS))
-      .setWorkerThreadPoolSize(cConf.getInt(Constants.Metadata.WORKER_THREADS))
-      .setExecThreadPoolSize(cConf.getInt(Constants.Metadata.EXEC_THREADS))
+      .setHost(cConf.get(Constants.Metadata.SERVICE_BIND_ADDRESS))
+      .setWorkerThreadPoolSize(cConf.getInt(Constants.Metadata.SERVICE_WORKER_THREADS))
+      .setExecThreadPoolSize(cConf.getInt(Constants.Metadata.SERVICE_EXEC_THREADS))
       .setConnectionBacklog(20000)
       .build();
     httpService.addListener(new ServiceListenerAdapter() {

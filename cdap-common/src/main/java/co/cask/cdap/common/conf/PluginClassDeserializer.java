@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.artifact;
+package co.cask.cdap.common.conf;
 
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.plugin.PluginClass;

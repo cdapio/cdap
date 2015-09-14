@@ -19,37 +19,32 @@
 @import '../../styles/themes/cdap/mixins.less';
 
 body.theme-cdap.state-adapters-create {
-  .canvas-wrapper {
-    position: relative;
-  }
 
   .side-panel.left {
-    background: #aea69e;
-    background: -moz-linear-gradient(-45deg, #aea69e 0%, #74685a 100%);
-    background: -webkit-gradient(linear, left top, right bottom, color-stop(0%,#aea69e), color-stop(100%, #74685a));
-    background: -webkit-linear-gradient(-45deg, #aea69e 0%, #74685a 100%);
-    background: -o-linear-gradient(-45deg, #aea69e 0%, #74685a 100%);
-    background: -ms-linear-gradient(-45deg, #aea69e 0%, #74685a 100%);
-    background: linear-gradient(135deg, #aea69e 0%, #74685a 100%);
-    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#aea69e', endColorstr='#74685a', GradientType=1);
-    position: absolute;
-    top: 60px;
-    left: 0;
-    bottom: 0;
-    z-index: 1025;
+    background: #c7c7c6;
+    background-image: url('@{img-path}/hydrator_bg_pattern.png'), -moz-linear-gradient(-45deg, #c7c7c6 0%, #a0a0a0 100%);
+    background-image: url('@{img-path}/hydrator_bg_pattern.png'), -webkit-gradient(linear, left top, right bottom, color-stop(0%,#c7c7c6), color-stop(100%,#a0a0a0));
+    background-image: url('@{img-path}/hydrator_bg_pattern.png'), -webkit-linear-gradient(-45deg, #c7c7c6 0%,#a0a0a0 100%);
+    background-image: url('@{img-path}/hydrator_bg_pattern.png'), -o-linear-gradient(-45deg, #c7c7c6 0%,#a0a0a0 100%);
+    background-image: url('@{img-path}/hydrator_bg_pattern.png'), -ms-linear-gradient(-45deg, #c7c7c6 0%,#a0a0a0 100%);
+    background-image: url('@{img-path}/hydrator_bg_pattern.png'), linear-gradient(135deg, #c7c7c6 0%,#a0a0a0 100%);
+    filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#c7c7c6', endColorstr='#a0a0a0'), progid:DXImageTransform.Microsoft.AlphaImageLoader(src='@{img-path}/hydrator_bg_pattern.png', sizingMethod='crop');
+    float: left;
     width: 130px;
+    height: 100vh;
     .transition(all 0.2s ease);
-
     .hydrator-filter {
       padding: 20px 0 20px 10px;
       input {
-        background-color: fade(@gray-dark, 30%);
+        background-color: fade(@gray-dark, 25%);
+        background-image: url('@{img-path}/hydrator_bg_pattern.png');
+        background-repeat: repeat;
         border: 0;
         color: white;
         height: 35px;
         width: 75%;
         .border-radius(25px);
-        .box-shadow(none);
+        .box-shadow(inset 0 2px 5px 0 rgba(0, 0, 0, 0.33));
         .placeholder-color(white);
       }
       div.btn {
@@ -62,17 +57,36 @@ body.theme-cdap.state-adapters-create {
         padding-left: 10px;
         position: relative;
         left: 6px;
+        z-index: 1024;
         .border-radius(90px 0 0 90px);
+        .box-shadow(0 1px 5px 0 fade(black, 33%));
         &:active, &.active {
           .box-shadow(none);
+        }
+        &:after {
+          display: block;
+          content: "";
+          border-left: 4px solid transparent;
+          border-right: 4px solid transparent;
+          border-bottom: 4px solid #666;
+          position: absolute;
+          bottom: -3.5px;
+          right: 0.5px;
+          .rotate(-45deg);
+        }
+        > span {
+          font-weight: 600;
+          &:last-child {
+            position: relative;
+            right: 3px;
+          }
         }
       }
     }
     .item {
       color: @cdap-lightgray;
       cursor: pointer;
-      font-size: 11px;
-      margin-bottom: 10px;
+      font-size: 14px;
       .item-body, .item-heading {
         .name {
           display: inline-block;
@@ -84,11 +98,13 @@ body.theme-cdap.state-adapters-create {
       }
       .item-heading {
         color: white;
-        background-color: fade(@gray-dark, 40%);
+        background-color: fade(@gray-dark, 45);
+        border-bottom: 1px solid #c7c7c6;
         padding: 0 15px 0 10px;
         height: 40px;
         line-height: 40px;
         &.item-open {
+          border-bottom-color: transparent;
           color: white;
         }
         span {
@@ -105,13 +121,16 @@ body.theme-cdap.state-adapters-create {
           }
         }
       }
-      .item-body {
-        padding: 20px 10px 0;
+      .item-body-wrapper {
+        height: 149px;
         overflow-y: auto;
+      }
+      .item-body {
+        padding: 10px 10px 0;
         .flexbox();
         flex-direction: row;
         flex-wrap: wrap;
-        align-items: center;
+        align-items: baseline;
         justify-content: space-between;
         // Adjust max height to prevent side panel from becoming unusable below a certain browser height
         @media (max-height: 550px) {
@@ -120,20 +139,28 @@ body.theme-cdap.state-adapters-create {
       }
       .plugin-item {
         background-color: white;
+        border: 1px solid transparent;
+        color: #666;
         line-height: 40px;
-        margin-bottom: 10px;
+        margin-bottom: 6px;
         padding: 0 10px;
         height: 40px;
         width: 50px;
         .border-radius(4px);
+        .transition(all 0.2s ease);
+        &:hover, &:focus {
+          background-color: fade(black, 45%);
+          border: 1px dashed #999;
+          color: white;
+        }
         > .fa {
-          font-size: 14px;
+          font-size: 12px;
           height: 18px;
           width: 18px;
           vertical-align: middle;
         }
         .name {
-          font-size: 13px;
+          font-size: 11px;
           padding-left: 5px;
         }
       }

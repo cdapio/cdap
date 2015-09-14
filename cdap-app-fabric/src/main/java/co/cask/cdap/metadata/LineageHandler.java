@@ -20,14 +20,23 @@ import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.metadata.lineage.Lineage;
 import co.cask.cdap.data2.metadata.lineage.LineageService;
+import co.cask.cdap.data2.metadata.lineage.LineageStore;
 import co.cask.cdap.metadata.serialize.LineageRecord;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.codec.NamespacedIdCodec;
+import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
+import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
+import java.lang.reflect.Type;
+import java.util.Set;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -39,11 +48,18 @@ import javax.ws.rs.QueryParam;
  */
 @Path(Constants.Gateway.API_VERSION_3)
 public class LineageHandler extends AbstractHttpHandler {
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(Id.NamespacedId.class, new NamespacedIdCodec())
+    .create();
+  private static final Type SET_METADATA_RECORD_TYPE = new TypeToken<Set<MetadataRecord>>() { }.getType();
+
   private final LineageService lineageService;
+  private final LineageStore lineageStore;
 
   @Inject
-  LineageHandler(LineageService lineageService) {
+  LineageHandler(LineageService lineageService, LineageStore lineageStore) {
     this.lineageService = lineageService;
+    this.lineageStore = lineageStore;
   }
 
   @GET
@@ -59,7 +75,8 @@ public class LineageHandler extends AbstractHttpHandler {
 
     Id.DatasetInstance datasetInstance = Id.DatasetInstance.from(namespaceId, datasetId);
     Lineage lineage = lineageService.computeLineage(datasetInstance, start, end, levels);
-    responder.sendJson(HttpResponseStatus.OK, new LineageRecord(start, end, lineage.getRelations()));
+    responder.sendJson(HttpResponseStatus.OK, new LineageRecord(start, end, lineage.getRelations()),
+                       LineageRecord.class, GSON);
   }
 
   @GET
@@ -75,7 +92,22 @@ public class LineageHandler extends AbstractHttpHandler {
 
     Id.Stream streamId = Id.Stream.from(namespaceId, stream);
     Lineage lineage = lineageService.computeLineage(streamId, start, end, levels);
-    responder.sendJson(HttpResponseStatus.OK, new LineageRecord(start, end, lineage.getRelations()));
+    responder.sendJson(HttpResponseStatus.OK, new LineageRecord(start, end, lineage.getRelations()),
+                       LineageRecord.class, GSON);
+  }
+
+  @GET
+  @Path("/namespaces/{namespace-id}/apps/{app-id}/{program-type}/{program-id}/runs/{run-id}/metadata/accesses")
+  public void getAccessesForRun(HttpRequest request, HttpResponder responder,
+                                @PathParam("namespace-id") String namespaceId,
+                                @PathParam("app-id") String appId,
+                                @PathParam("program-type") String programType,
+                                @PathParam("program-id") String programId,
+                                @PathParam("run-id") String runId) throws Exception {
+    Id.Run run = new Id.Run(
+      Id.Program.from(namespaceId, appId, ProgramType.valueOfCategoryName(programType), programId),
+      runId);
+    responder.sendJson(HttpResponseStatus.OK, lineageStore.getAccesses(run), SET_METADATA_RECORD_TYPE, GSON);
   }
 
   private void checkArguments(long start, long end, int levels) throws BadRequestException {

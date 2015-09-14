@@ -141,8 +141,7 @@ function download_includes() {
   test_an_include 77d244f968d508d9ea2d91e463065b68 ../../cdap-examples/CountRandom/src/main/java/co/cask/cdap/examples/countrandom/NumberSplitter.java
   test_an_include 9f963a17090976d2c15a4d092bd9e8de ../../cdap-examples/CountRandom/src/main/java/co/cask/cdap/examples/countrandom/NumberCounter.java
   
-  test_an_include 64599f425033bbf0537dacd1f2d615d8 ../../cdap-examples/DataCleansing/src/main/java/co/cask/cdap/examples/datacleansing/DataCleansing.java
-  test_an_include d807b8ed114c25b8af546e0309089478 ../../cdap-examples/DataCleansing/src/main/java/co/cask/cdap/examples/datacleansing/DataCleansingMapReduce.java
+  test_an_include 1064c8ce80d70df4bb8d4c62a4549e64 ../../cdap-examples/DataCleansing/src/main/java/co/cask/cdap/examples/datacleansing/DataCleansingMapReduce.java
 
   test_an_include 8a7b4aacee88800cd82d96b07280cc64 ../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/FileSetExample.java
   test_an_include 2ad024c8093bea2b3cb9b5fa14f1224b ../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/FileSetService.java
@@ -154,7 +153,7 @@ function download_includes() {
   
   test_an_include cdd3edfefe86857da8f41889d433d434 ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseApp.java
   test_an_include 29fe1471372678115e643b0ad431b28d ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseStore.java
-  test_an_include 12e10950a1c42401d229f549b77c5b7d ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseHistoryBuilder.java
+  test_an_include f03add3234d3f30b7994506baf1de085 ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseHistoryBuilder.java
   test_an_include 80216a08a2b3d480e4a081722408222f ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseHistoryService.java
 
   test_an_include 050cde0eb54b20803e65aae63b11143d ../../cdap-examples/SparkKMeans/src/main/java/co/cask/cdap/examples/sparkkmeans/SparkKMeansApp.java

@@ -16,7 +16,7 @@
 angular.module(PKG.name + '.feature.apps')
   .controller('AppDetailController', function(rAppData, GLOBALS, myAdapterFactory) {
     this.myAdapterFactory = myAdapterFactory;
-    
+
     this.isHydrator = ([GLOBALS.etlBatch, GLOBALS.etlRealtime].indexOf(rAppData.artifact.name) !== -1);
     this.artifact = {
       name: rAppData.artifact.name

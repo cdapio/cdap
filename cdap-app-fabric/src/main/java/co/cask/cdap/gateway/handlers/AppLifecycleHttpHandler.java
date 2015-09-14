@@ -369,8 +369,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     // but the caller catches all exceptions and responds with a 500
     final Id.Artifact artifactId;
     try {
-      artifactId = ArtifactRepository.parse(namespace, archiveName);
-    } catch (InvalidArtifactException e) {
+      artifactId = Id.Artifact.parse(namespace, archiveName);
+    } catch (IllegalArgumentException e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
       return null;
     }

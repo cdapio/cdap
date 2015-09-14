@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.artifact;
+package co.cask.cdap.common.conf;
 
 import co.cask.cdap.common.InvalidArtifactException;
 import co.cask.cdap.proto.Id;
@@ -30,7 +30,7 @@ import java.io.IOException;
 
 /**
  */
-public class SystemArtifactConfigTest {
+public class ArtifactConfigTest {
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
@@ -41,7 +41,7 @@ public class SystemArtifactConfigTest {
       writer.write("I am invalid.");
     }
 
-    SystemArtifactConfig.read(Id.Artifact.from(Id.Namespace.SYSTEM, "r1", "1.0.0"), configFile, null);
+    ArtifactConfig.read(Id.Artifact.from(Id.Namespace.SYSTEM, "r1", "1.0.0"), configFile, null);
   }
 
   @Test(expected = InvalidArtifactException.class)
@@ -51,7 +51,7 @@ public class SystemArtifactConfigTest {
       writer.write("{ \"plugins\": [ { \"name\": \"something\" } ] }");
     }
 
-    SystemArtifactConfig.read(Id.Artifact.from(Id.Namespace.SYSTEM, "r1", "1.0.0"), configFile, null);
+    ArtifactConfig.read(Id.Artifact.from(Id.Namespace.SYSTEM, "r1", "1.0.0"), configFile, null);
   }
 
   @Test(expected = InvalidArtifactException.class)
@@ -61,7 +61,7 @@ public class SystemArtifactConfigTest {
       writer.write("{ \"parents\": [ \"r2:[1.0.0,2.0.0) \" ] }");
     }
 
-    SystemArtifactConfig.read(Id.Artifact.from(Id.Namespace.SYSTEM, "r1", "1.0.0"), configFile, null);
+    ArtifactConfig.read(Id.Artifact.from(Id.Namespace.SYSTEM, "r1", "1.0.0"), configFile, null);
   }
 
   @Test(expected = InvalidArtifactException.class)
@@ -71,7 +71,7 @@ public class SystemArtifactConfigTest {
       writer.write("{ \"parents\": [ \"r!2[1.0.0,2.0.0) \" ] }");
     }
 
-    SystemArtifactConfig.read(Id.Artifact.from(Id.Namespace.SYSTEM, "r1", "1.0.0"), configFile, null);
+    ArtifactConfig.read(Id.Artifact.from(Id.Namespace.SYSTEM, "r1", "1.0.0"), configFile, null);
   }
 
   @Test(expected = InvalidArtifactException.class)
@@ -81,6 +81,6 @@ public class SystemArtifactConfigTest {
       writer.write("{ \"parents\": [ \"r2(2.0.0,1.0.0) \" ] }");
     }
 
-    SystemArtifactConfig.read(Id.Artifact.from(Id.Namespace.SYSTEM, "r1", "1.0.0"), configFile, null);
+    ArtifactConfig.read(Id.Artifact.from(Id.Namespace.SYSTEM, "r1", "1.0.0"), configFile, null);
   }
 }

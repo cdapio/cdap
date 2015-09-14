@@ -331,6 +331,24 @@ function makeApp (authAddress, cdapConfig) {
     }
   ]);
 
+  app.get('/validators', [
+    function (req, res) {
+      var filePath = __dirname + '/../templates/validators/validators.json';
+      var config = {};
+      var validators = {};
+
+      try {
+        validators = JSON.parse(fs.readFileSync(filePath));
+        res.send(validators);
+      } catch(e) {
+        config.error = e.code;
+        config.message = 'Error reading validators.json';
+        log.debug(config.message);
+        res.status(404).send(config);
+      }
+    }
+  ]);
+
   // any other path, serve index.html
   app.all('*', [
     function (req, res) {

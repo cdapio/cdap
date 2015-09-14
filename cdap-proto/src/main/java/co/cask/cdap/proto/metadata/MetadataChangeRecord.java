@@ -100,6 +100,14 @@ public final class MetadataChangeRecord {
     public int hashCode() {
       return Objects.hash(additions, deletions);
     }
+
+    @Override
+    public String toString() {
+      return "MetadataDiffRecord{" +
+        "additions=" + additions +
+        ", deletions=" + deletions +
+        '}';
+    }
   }
 
   @Override
@@ -122,5 +130,15 @@ public final class MetadataChangeRecord {
   @Override
   public int hashCode() {
     return Objects.hash(previous, changes, updateTime, updater);
+  }
+
+  @Override
+  public String toString() {
+    return "MetadataChangeRecord{" +
+      "previous=" + previous +
+      ", changes=" + changes +
+      ", updateTime=" + updateTime +
+      ", updater='" + updater + '\'' +
+      '}';
   }
 }

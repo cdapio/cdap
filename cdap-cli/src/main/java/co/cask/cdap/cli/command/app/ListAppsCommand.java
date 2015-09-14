@@ -14,8 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.cli.command;
+package co.cask.cdap.cli.command.app;
 
+import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
@@ -24,11 +25,14 @@ import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.proto.ApplicationRecord;
 import co.cask.common.cli.Arguments;
+import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 
 import java.io.PrintStream;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Lists all applications.
@@ -45,24 +49,35 @@ public class ListAppsCommand extends AbstractAuthCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
+    String artifactNamesStr = arguments.getOptional(ArgumentName.ARTIFACT_NAME.toString());
+    String artifactVersion = arguments.getOptional(ArgumentName.ARTIFACT_VERSION.toString());
+    Set<String> artifactNames = new HashSet<>();
+    if (artifactNamesStr != null) {
+      for (String name : Splitter.on(',').trimResults().split(artifactNamesStr)) {
+        artifactNames.add(name);
+      }
+    }
     Table table = Table.builder()
-      .setHeader("id", "description")
-      .setRows(appClient.list(cliConfig.getCurrentNamespace()), new RowMaker<ApplicationRecord>() {
-        @Override
-        public List<?> makeRow(ApplicationRecord object) {
-          return Lists.newArrayList(object.getName(), object.getDescription());
-        }
-      }).build();
+      .setHeader("id", "description", "artifactName", "artifactVersion", "artifactScope")
+      .setRows(appClient.list(cliConfig.getCurrentNamespace(), artifactNames, artifactVersion),
+        new RowMaker<ApplicationRecord>() {
+          @Override
+          public List<?> makeRow(ApplicationRecord object) {
+            return Lists.newArrayList(object.getName(), object.getDescription(),
+              object.getArtifact().getName(), object.getArtifact().getVersion(), object.getArtifact().getScope());
+          }
+        }).build();
     cliConfig.getTableRenderer().render(cliConfig, output, table);
   }
 
   @Override
   public String getPattern() {
-    return "list apps";
+    return String.format("list apps [<%s>] [<%s>]", ArgumentName.ARTIFACT_NAME, ArgumentName.ARTIFACT_VERSION);
   }
 
   @Override
   public String getDescription() {
-    return String.format("Lists all %s.", ElementType.APP.getNamePlural());
+    return String.format("Lists all %s, optionally filtered by artifact name and version.",
+      ElementType.APP.getNamePlural());
   }
 }

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.metadata;
+package co.cask.cdap.data2.metadata.publisher;
 
 import co.cask.cdap.proto.metadata.MetadataChangeRecord;
 
