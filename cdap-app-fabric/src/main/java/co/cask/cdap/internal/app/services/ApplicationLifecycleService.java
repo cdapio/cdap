@@ -712,8 +712,9 @@ public class ApplicationLifecycleService extends AbstractIdleService {
 
     // Remove business metadata for the programs of the Application
     // TODO: Need to remove this we support prefix search of metadata type.
+    ApplicationSpecification appSpec = store.getApplication(appId);
     for (ProgramType programType : ProgramType.values()) {
-      deleteProgramBusinessMetadataForApp(programType, appId);
+      deleteProgramBusinessMetadataForApp(programType, appId, appSpec);
     }
   }
 
@@ -721,10 +722,9 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    *  Delete the business metadata for a program type in an application.
    *  TODO: Need to remove this we support prefix search of metadata type.
    */
-  private void deleteProgramBusinessMetadataForApp(ProgramType programType, Id.Application appId) {
-    ApplicationSpecification appSpec = store.getApplication(appId);
+  private void deleteProgramBusinessMetadataForApp(ProgramType programType, Id.Application appId,
+                                                   ApplicationSpecification appSpec) {
     Set<String> programNames = null;
-
     switch (programType) {
       case FLOW:
         programNames = appSpec.getFlows().keySet();
