@@ -180,7 +180,7 @@ are set:
 
 .. literalinclude:: /../../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseHistoryBuilder.java
    :language: java
-   :lines: 45-56
+   :lines: 44-55
 
 The Resources API, if called with two arguments, sets both the memory used in megabytes
 and the number of virtual cores used.
