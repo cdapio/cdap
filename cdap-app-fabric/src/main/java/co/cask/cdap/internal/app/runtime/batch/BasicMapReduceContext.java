@@ -31,11 +31,9 @@ import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.workflow.WorkflowToken;
-import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
@@ -78,8 +76,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   private Resources reducerResources;
 
   public BasicMapReduceContext(Program program,
-                               MapReduceMetrics.TaskType type,
-                               RunId runId, String taskId,
+                               RunId runId,
                                ProgramOptions programOptions,
                                Set<String> datasets,
                                MapReduceSpecification spec,
@@ -88,9 +85,10 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
                                @Nullable WorkflowToken workflowToken,
                                DiscoveryServiceClient discoveryServiceClient,
                                MetricsCollectionService metricsCollectionService,
-                               DatasetFramework dsFramework, PluginInstantiator pluginInstantiator) {
+                               DatasetFramework dsFramework,
+                               @Nullable PluginInstantiator pluginInstantiator) {
     super(program, runId, programOptions, datasets,
-          getMetricCollector(program, runId.getId(), taskId, metricsCollectionService, type),
+          getMetricsCollector(program, runId.getId(), metricsCollectionService),
           dsFramework, discoveryServiceClient, pluginInstantiator);
     this.logicalStartTime = logicalStartTime;
     this.programNameInWorkflow = programNameInWorkflow;
@@ -337,19 +335,14 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   }
 
   @Nullable
-  private static MetricsContext getMetricCollector(Program program, String runId, String taskId,
-                                                   @Nullable MetricsCollectionService service,
-                                                   @Nullable MapReduceMetrics.TaskType type) {
+  private static MetricsContext getMetricsCollector(Program program, String runId,
+                                                    @Nullable MetricsCollectionService service) {
     if (service == null) {
       return null;
     }
 
     Map<String, String> tags = Maps.newHashMap();
     tags.putAll(getMetricsContext(program, runId));
-    if (type != null) {
-      tags.put(Constants.Metrics.Tag.MR_TASK_TYPE, type.getId());
-      tags.put(Constants.Metrics.Tag.INSTANCE_ID, taskId);
-    }
 
     return service.getContext(tags);
   }

@@ -42,6 +42,7 @@ import co.cask.cdap.common.twill.HadoopClassExcluder;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data.stream.StreamInputFormat;
 import co.cask.cdap.data.stream.StreamUtils;
+import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
@@ -638,6 +639,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
 
     try {
       usageRegistry.register(context.getProgram().getId(), streamId);
+      streamAdmin.addAccess(new Id.Run(context.getProgram().getId(), context.getRunId().getId()),
+                            streamId, AccessType.READ);
     } catch (Exception e) {
       LOG.warn("Failed to register usage {} -> {}", context.getProgram().getId(), streamId, e);
     }

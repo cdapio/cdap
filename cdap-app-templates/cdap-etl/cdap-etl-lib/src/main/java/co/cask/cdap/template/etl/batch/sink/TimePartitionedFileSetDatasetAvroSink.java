@@ -24,6 +24,7 @@ import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.template.etl.api.Emitter;
+import co.cask.cdap.template.etl.api.InvalidEntry;
 import co.cask.cdap.template.etl.api.PipelineConfigurer;
 import co.cask.cdap.template.etl.api.batch.BatchRuntimeContext;
 import co.cask.cdap.template.etl.api.batch.BatchSink;
@@ -42,7 +43,7 @@ import javax.annotation.Nullable;
 /**
  * A {@link BatchSink} to write Avro record to {@link TimePartitionedFileSet}
  */
-@Plugin(type = "sink")
+@Plugin(type = "batchsink")
 @Name("TPFSAvro")
 @Description("Sink for a TimePartitionedFileSet that writes data in Avro format.")
 public class TimePartitionedFileSetDatasetAvroSink extends
@@ -92,6 +93,8 @@ public class TimePartitionedFileSetDatasetAvroSink extends
   public void transform(StructuredRecord input,
                         Emitter<KeyValue<AvroKey<GenericRecord>, NullWritable>> emitter) throws Exception {
     emitter.emit(new KeyValue<>(new AvroKey<>(recordTransformer.transform(input)), NullWritable.get()));
+    InvalidEntry entry = new InvalidEntry(100, "dummy", input);
+    emitter.emitError(entry);
   }
 
   /**

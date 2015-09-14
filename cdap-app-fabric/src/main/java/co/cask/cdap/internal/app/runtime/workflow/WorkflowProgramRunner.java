@@ -28,8 +28,10 @@ import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.metadata.writer.ProgramContextAware;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
@@ -86,14 +88,20 @@ public class WorkflowProgramRunner implements ProgramRunner {
     WorkflowSpecification workflowSpec = appSpec.getWorkflows().get(program.getName());
     Preconditions.checkNotNull(workflowSpec, "Missing WorkflowSpecification for %s", program.getName());
 
+    RunId runId = RunIds.fromString(options.getArguments().getOption(ProgramOptionConstants.RUN_ID));
+
+    // Setup dataset framework context, if required
+    if (datasetFramework instanceof ProgramContextAware) {
+      Id.Program programId = program.getId();
+      ((ProgramContextAware) datasetFramework).initContext(new Id.Run(programId, runId.getId()));
+    }
+
     WorkflowDriver driver = new WorkflowDriver(program, options, hostname, workflowSpec, programRunnerFactory,
                                                metricsCollectionService, datasetFramework,
                                                discoveryServiceClient, txClient, store, cConf);
 
     // Controller needs to be created before starting the driver so that the state change of the driver
     // service can be fully captured by the controller.
-    RunId runId = RunIds.fromString(options.getArguments().getOption(ProgramOptionConstants.RUN_ID));
-
     ProgramController controller = new WorkflowProgramController(program, driver, serviceAnnouncer, runId);
     driver.start();
 

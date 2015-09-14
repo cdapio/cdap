@@ -61,7 +61,7 @@ public final class MapReduceTaskContextProvider {
   private BasicMapReduceTaskContext context;
   private AbstractMapReduceTaskContextBuilder contextBuilder;
 
-  public MapReduceTaskContextProvider(TaskAttemptContext context, MapReduceMetrics.TaskType type) {
+  public MapReduceTaskContextProvider(TaskAttemptContext context, @Nullable MapReduceMetrics.TaskType type) {
     this.taskContext = context;
     this.type = type;
     this.contextConfig = new MapReduceContextConfig(context.getConfiguration());
@@ -74,7 +74,7 @@ public final class MapReduceTaskContextProvider {
    * inside cannot load program classes. It is used for the cases where only the application specification is needed,
    * but no need to load any class from it.
    */
-  public synchronized BasicMapReduceTaskContext get() {
+  public synchronized <K, V> BasicMapReduceTaskContext<K, V> get() {
     if (context == null) {
       CConfiguration cConf = contextConfig.getConf();
       Program program = createProgram(contextConfig);

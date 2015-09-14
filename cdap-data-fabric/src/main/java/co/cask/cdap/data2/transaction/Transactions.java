@@ -108,7 +108,7 @@ public final class Transactions {
       result = callable.call();
     } catch (Throwable t) {
       // Abort will always throw with the TransactionFailureException.
-      txContext.abort(new TransactionFailureException("Failed to execute method " + name + "inside a transaction", t));
+      txContext.abort(new TransactionFailureException("Failed to execute method " + name + " inside a transaction", t));
     }
 
     // If commit failed, the tx will be aborted and exception will be raised

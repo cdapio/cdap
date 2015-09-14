@@ -46,7 +46,7 @@ import javax.annotation.Nullable;
  * Users should pass in the following runtime arguments with appropriate OAuth credentials
  * ConsumerKey, ConsumerSecret, AccessToken, AccessTokenSecret.
  */
-@Plugin(type = "source")
+@Plugin(type = "realtimesource")
 @Name("Twitter")
 @Description("Samples tweets in real-time. Output records contain the fields " +
   "id (long), message (string), lang (nullable string), time (nullable long), favCount (int), " +

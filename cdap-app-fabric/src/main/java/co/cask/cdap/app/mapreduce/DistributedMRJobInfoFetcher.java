@@ -38,12 +38,12 @@ public class DistributedMRJobInfoFetcher implements MRJobInfoFetcher {
   }
 
   /**
-   * Attempts to use MRJobClient to retrieve job information of a particular run.Metrics System
+   * Attempts to use MRJobClient to retrieve job information of a particular run.
    * If there is an IOException or NotFoundException, it will fall back to the Metrics System via MapReduceMetricsInfo.
    * @param runId for which information will be returned.
    * @return a {@link MRJobInfo} containing information about a particular MapReduce program run.
    */
-  public MRJobInfo getMRJobInfo(Id.Run runId) throws Exception {
+  public MRJobInfo getMRJobInfo(Id.Run runId) {
     try {
       return mrJobClient.getMRJobInfo(runId);
     } catch (Exception e) {

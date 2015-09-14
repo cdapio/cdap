@@ -58,7 +58,7 @@ public class DataCleansing extends AbstractApplication {
 
     createDataset(CLEAN_RECORDS, PartitionedFileSet.class, PartitionedFileSetProperties.builder()
       // Properties for partitioning
-      .setPartitioning(Partitioning.builder().addLongField("time").build())
+      .setPartitioning(Partitioning.builder().addLongField("time").addIntField("zip").build())
       // Properties for file set
       .setOutputFormat(TextOutputFormat.class)
       // Properties for Explore (to create a partitioned Hive table)

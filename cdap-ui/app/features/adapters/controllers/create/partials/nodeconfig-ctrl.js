@@ -16,7 +16,7 @@
 
 
 angular.module(PKG.name + '.feature.adapters')
-  .controller('NodeConfigController', function($scope, IMPLICIT_SCHEMA, MyAppDAGService, $filter, $q, $rootScope, myAdapterApi, $state, $timeout) {
+  .controller('NodeConfigController', function($scope, IMPLICIT_SCHEMA, MyAppDAGService, $filter, $q, $rootScope, myAdapterApi, $state, $timeout, GLOBALS) {
     $scope.plugin = $scope.BottomPanelController.tab.plugin;
     $scope.isValidPlugin = Object.keys($scope.plugin).length;
     $scope.type = MyAppDAGService.metadata.template.type;
@@ -30,7 +30,6 @@ angular.module(PKG.name + '.feature.adapters')
       if (!Object.keys($scope.BottomPanelController.tab.plugin).length) {
         return;
       }
-      console.info('plugin updated');
       $scope.plugin = $scope.BottomPanelController.tab.plugin;
       $scope.isValidPlugin = false;
       $timeout(function() {
@@ -76,6 +75,7 @@ angular.module(PKG.name + '.feature.adapters')
       fetchBackendProperties
         .call(this, $scope.plugin, $scope)
         .then(function() {
+          var artifactTypeExtension = GLOBALS.pluginTypes[MyAppDAGService.metadata.template.type];
           try {
             input = JSON.parse(sourceSchema);
           } catch (e) {
@@ -135,11 +135,11 @@ angular.module(PKG.name + '.feature.adapters')
             });
           }
 
-          if ($scope.plugin.type === 'source') {
+          if ($scope.plugin.type === artifactTypeExtension.source) {
             $scope.isSource = true;
           }
 
-          if ($scope.plugin.type === 'sink') {
+          if ($scope.plugin.type === artifactTypeExtension.sink) {
             $scope.isSink = true;
           }
           if ($scope.plugin.type === 'transform') {
@@ -151,23 +151,27 @@ angular.module(PKG.name + '.feature.adapters')
 
     function fetchBackendProperties(plugin, scope) {
       var defer = $q.defer();
+      var sourceType = GLOBALS.pluginTypes[MyAppDAGService.metadata.template.type].source,
+          sinkType = GLOBALS.pluginTypes[MyAppDAGService.metadata.template.type].sink;
 
       var propertiesApiMap = {
-        'source': myAdapterApi.fetchSourceProperties,
-        'sink': myAdapterApi.fetchSinkProperties,
         'transform': myAdapterApi.fetchTransformProperties
       };
+      propertiesApiMap[sourceType] = myAdapterApi.fetchSourceProperties;
+      propertiesApiMap[sinkType] = myAdapterApi.fetchSinkProperties;
+
       // This needs to pass on a scope always. Right now there is no cleanup
       // happening
       var params = {
+        namespace: $state.params.namespace,
         adapterType: MyAppDAGService.metadata.template.type,
         version: $rootScope.cdapVersion,
-        namespace: $state.params.namespace
+        extensionType: plugin.type,
+        pluginName: plugin.name
       };
       if (scope) {
         params.scope = scope;
       }
-      params[plugin.type] = plugin.name;
 
       return propertiesApiMap[plugin.type](params)
         .$promise

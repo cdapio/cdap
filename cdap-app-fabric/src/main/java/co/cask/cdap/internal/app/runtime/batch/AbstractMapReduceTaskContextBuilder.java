@@ -58,7 +58,7 @@ public abstract class AbstractMapReduceTaskContextBuilder {
    * @param outputDataSetName name of the output dataset if specified for this mapreduce job, null otherwise
    * @return instance of {@link BasicMapReduceTaskContext}
    */
-  public BasicMapReduceTaskContext build(MapReduceMetrics.TaskType type,
+  public BasicMapReduceTaskContext build(@Nullable MapReduceMetrics.TaskType type,
                                          String runId,
                                          String taskId,
                                          long logicalStartTime,

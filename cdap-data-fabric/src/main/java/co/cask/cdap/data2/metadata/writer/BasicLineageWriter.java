@@ -26,6 +26,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import javax.annotation.Nullable;
 
 /**
  * Writes program-dataset access information along with metadata  into {@link LineageStore}.
@@ -37,8 +41,10 @@ public class BasicLineageWriter implements LineageWriter {
   private final BusinessMetadataStore businessMetadataStore;
   private final LineageStore lineageStore;
 
+  private final ConcurrentMap<CheckKey, Boolean> registered = new ConcurrentHashMap<>();
+
   @Inject
-  public BasicLineageWriter(BusinessMetadataStore businessMetadataStore, LineageStore lineageStore) {
+  BasicLineageWriter(BusinessMetadataStore businessMetadataStore, LineageStore lineageStore) {
     this.businessMetadataStore = businessMetadataStore;
     this.lineageStore = lineageStore;
   }
@@ -50,17 +56,76 @@ public class BasicLineageWriter implements LineageWriter {
 
   @Override
   public void addAccess(Id.Run run, Id.DatasetInstance datasetInstance, AccessType accessType,
-                        Id.NamespacedId component) {
-    // TODO: avoid duplicate writes for a dataset instance
+                        @Nullable Id.NamespacedId component) {
+    if (alreadyRegistered(run, datasetInstance, accessType, component)) {
+      return;
+    }
+
     String metadata = gatherMetadata(run, datasetInstance);
     LOG.debug("Writing access for run {}, dataset {}, accessType {}, component {}, metadata = {}",
               run, datasetInstance, accessType, component, metadata);
     lineageStore.addAccess(run, datasetInstance, accessType, metadata, component);
   }
 
-  private String gatherMetadata(Id.Run run, Id.DatasetInstance datasetInstance) {
+  @Override
+  public void addAccess(Id.Run run, Id.Stream stream, AccessType accessType) {
+    addAccess(run, stream, accessType, null);
+  }
+
+  @Override
+  public void addAccess(Id.Run run, Id.Stream stream, AccessType accessType, @Nullable Id.NamespacedId component) {
+    if (alreadyRegistered(run, stream, accessType, component)) {
+      return;
+    }
+
+    String metadata = gatherMetadata(run, stream);
+    LOG.debug("Writing access for run {}, stream {}, accessType {}, component {}, metadata = {}",
+              run, stream, accessType, component, metadata);
+    lineageStore.addAccess(run, stream, accessType, metadata, component);
+  }
+
+  private String gatherMetadata(Id.Run run, Id.NamespacedId id) {
     // TODO: add app metadata and tags
-    Map<String, String> datasetMetadata = businessMetadataStore.getProperties(datasetInstance);
-    return GSON.toJson(datasetMetadata);
+    Map<String, String> dataMetadata = businessMetadataStore.getProperties(id);
+    return GSON.toJson(dataMetadata);
+  }
+
+  private boolean alreadyRegistered(Id.Run run, Id.NamespacedId data, AccessType accessType,
+                                    @Nullable Id.NamespacedId component) {
+    return registered.putIfAbsent(new CheckKey(run, data, accessType, component), true) != null;
+  }
+
+  private static final class CheckKey {
+    private final Id.Run run;
+    private final Id.NamespacedId data;
+    private final AccessType accessType;
+    private final Id.NamespacedId component;
+
+    public CheckKey(Id.Run run, Id.NamespacedId data, AccessType accessType, @Nullable Id.NamespacedId component) {
+      this.run = run;
+      this.data = data;
+      this.accessType = accessType;
+      this.component = component;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (!(o instanceof CheckKey)) {
+        return false;
+      }
+      CheckKey checkKey = (CheckKey) o;
+      return Objects.equals(run, checkKey.run) &&
+        Objects.equals(data, checkKey.data) &&
+        Objects.equals(accessType, checkKey.accessType) &&
+        Objects.equals(component, checkKey.component);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(run, data, accessType, component);
+    }
   }
 }

@@ -48,7 +48,7 @@ import javax.annotation.Nullable;
 /**
  * A {@link BatchSource} to read Avro record from {@link TimePartitionedFileSet}
  */
-@Plugin(type = "source")
+@Plugin(type = "batchsource")
 @Name("TPFSAvro")
 @Description("Reads from a TimePartitionedFileSet whose data is in Avro format.")
 public class TimePartitionedFileSetDatasetAvroSource extends

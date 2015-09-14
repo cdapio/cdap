@@ -18,15 +18,20 @@ package co.cask.cdap.metadata;
 
 import co.cask.cdap.AppWithDataset;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.metadata.MetadataRecord;
+import co.cask.cdap.proto.metadata.MetadataScope;
 import co.cask.common.http.HttpResponse;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Tests for {@link MetadataHttpHandler}
@@ -35,7 +40,7 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
 
   private final Id.Application application =
     Id.Application.from(Id.Namespace.DEFAULT, AppWithDataset.class.getSimpleName());
-  private final Id.Service pingService = Id.Service.from(application, "PingService");
+  private final Id.Program pingService = Id.Program.from(application, ProgramType.SERVICE, "PingService");
   private final Id.DatasetInstance myds = Id.DatasetInstance.from(Id.Namespace.DEFAULT, "myds");
   private final Id.Stream mystream = Id.Stream.from(Id.Namespace.DEFAULT, "mystream");
   private final Id.Application nonExistingApp = Id.Application.from("blah", AppWithDataset.class.getSimpleName());
@@ -43,9 +48,13 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
   private final Id.DatasetInstance nonExistingDataset = Id.DatasetInstance.from("blah", "myds");
   private final Id.Stream nonExistingStream = Id.Stream.from("blah", "mystream");
 
-  @Test
-  public void testMetadata() throws Exception {
+  @Before
+  public void before() throws Exception {
     Assert.assertEquals(200, deploy(AppWithDataset.class).getStatusLine().getStatusCode());
+  }
+
+  @Test
+  public void testProperties() throws IOException {
     // should fail because we haven't provided any metadata in the request
     Assert.assertEquals(400, addProperties(application).getResponseCode());
     Map<String, String> appProperties = ImmutableMap.of("aKey", "aValue", "aK", "aV");
@@ -94,29 +103,26 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     Assert.assertEquals(404, addProperties(nonExistingService, serviceProperties).getResponseCode());
     Assert.assertEquals(404, addProperties(nonExistingDataset, datasetProperties).getResponseCode());
     Assert.assertEquals(404, addProperties(nonExistingStream, streamProperties).getResponseCode());
-    // cleanup
-    deleteApp(application, 200);
   }
 
   @Test
-  public void testTags() throws Exception {
-    Assert.assertEquals(200, deploy(AppWithDataset.class).getStatusLine().getStatusCode());
+  public void testTags() throws IOException {
     // should fail because we haven't provided any metadata in the request
     Assert.assertEquals(400, addTags(application).getResponseCode());
-    List<String> appTags = ImmutableList.of("aTag", "aT");
+    Set<String> appTags = ImmutableSet.of("aTag", "aT");
     Assert.assertEquals(200, addTags(application, appTags).getResponseCode());
     // should fail because we haven't provided any metadata in the request
     Assert.assertEquals(400, addTags(pingService).getResponseCode());
-    List<String> serviceTags = ImmutableList.of("sTag", "sT");
+    Set<String> serviceTags = ImmutableSet.of("sTag", "sT");
     Assert.assertEquals(200, addTags(pingService, serviceTags).getResponseCode());
     Assert.assertEquals(400, addTags(myds).getResponseCode());
-    List<String> datasetTags = ImmutableList.of("dTag", "dT");
+    Set<String> datasetTags = ImmutableSet.of("dTag", "dT");
     Assert.assertEquals(200, addTags(myds, datasetTags).getResponseCode());
     Assert.assertEquals(400, addTags(mystream).getResponseCode());
-    List<String> streamTags = ImmutableList.of("stTag", "stT");
+    Set<String> streamTags = ImmutableSet.of("stTag", "stT");
     Assert.assertEquals(200, addTags(mystream, streamTags).getResponseCode());
     // retrieve tags and verify
-    List<String> tags = getTags(application);
+    Set<String> tags = getTags(application);
     Assert.assertTrue(tags.containsAll(appTags));
     Assert.assertTrue(appTags.containsAll(tags));
     tags = getTags(pingService);
@@ -130,13 +136,13 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     Assert.assertTrue(streamTags.containsAll(tags));
     // test removal
     removeTags(application, "aTag");
-    Assert.assertEquals(ImmutableList.of("aT"), getTags(application));
+    Assert.assertEquals(ImmutableSet.of("aT"), getTags(application));
     removeTags(pingService);
     Assert.assertTrue(getTags(pingService).isEmpty());
     removeTags(pingService);
     Assert.assertTrue(getTags(pingService).isEmpty());
     removeTags(myds, "dT");
-    Assert.assertEquals(ImmutableList.of("dTag"), getTags(myds));
+    Assert.assertEquals(ImmutableSet.of("dTag"), getTags(myds));
     removeTags(mystream, "stT");
     removeTags(mystream, "stTag");
     Assert.assertTrue(getTags(mystream).isEmpty());
@@ -154,8 +160,66 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     Assert.assertEquals(404, addTags(nonExistingService, serviceTags).getResponseCode());
     Assert.assertEquals(404, addTags(nonExistingDataset, datasetTags).getResponseCode());
     Assert.assertEquals(404, addTags(nonExistingStream, streamTags).getResponseCode());
+  }
+
+  @Test
+  public void testMetadata() throws IOException {
+    assertCleanState();
+    // Remove when nothing exists
+    removeAllMetadata();
+    assertCleanState();
+    // Add some properties and tags
+    Map<String, String> appProperties = ImmutableMap.of("aKey", "aValue");
+    Map<String, String> serviceProperties = ImmutableMap.of("sKey", "sValue");
+    Map<String, String> datasetProperties = ImmutableMap.of("dKey", "dValue");
+    Map<String, String> streamProperties = ImmutableMap.of("stKey", "stValue");
+    Set<String> appTags = ImmutableSet.of("aTag");
+    Set<String> serviceTags = ImmutableSet.of("sTag");
+    Set<String> datasetTags = ImmutableSet.of("dTag");
+    Set<String> streamTags = ImmutableSet.of("stTag");
+    Assert.assertEquals(200, addProperties(application, appProperties).getResponseCode());
+    Assert.assertEquals(200, addProperties(pingService, serviceProperties).getResponseCode());
+    Assert.assertEquals(200, addProperties(myds, datasetProperties).getResponseCode());
+    Assert.assertEquals(200, addProperties(mystream, streamProperties).getResponseCode());
+    Assert.assertEquals(200, addTags(application, appTags).getResponseCode());
+    Assert.assertEquals(200, addTags(pingService, serviceTags).getResponseCode());
+    Assert.assertEquals(200, addTags(myds, datasetTags).getResponseCode());
+    Assert.assertEquals(200, addTags(mystream, streamTags).getResponseCode());
+    // verify app
+    Set<MetadataRecord> metadataRecords = getMetadata(application);
+    Assert.assertEquals(1, metadataRecords.size());
+    MetadataRecord metadata = metadataRecords.iterator().next();
+    Assert.assertEquals(MetadataScope.USER, metadata.getScope());
+    Assert.assertEquals(application, metadata.getTargetId());
+    Assert.assertEquals(appProperties, metadata.getProperties());
+    Assert.assertEquals(appTags, metadata.getTags());
+    // verify service
+    metadataRecords = getMetadata(pingService);
+    Assert.assertEquals(1, metadataRecords.size());
+    metadata = metadataRecords.iterator().next();
+    Assert.assertEquals(MetadataScope.USER, metadata.getScope());
+    Assert.assertEquals(pingService, metadata.getTargetId());
+    Assert.assertEquals(serviceProperties, metadata.getProperties());
+    Assert.assertEquals(serviceTags, metadata.getTags());
+    // verify dataset
+    metadataRecords = getMetadata(myds);
+    Assert.assertEquals(1, metadataRecords.size());
+    metadata = metadataRecords.iterator().next();
+    Assert.assertEquals(MetadataScope.USER, metadata.getScope());
+    Assert.assertEquals(myds, metadata.getTargetId());
+    Assert.assertEquals(datasetProperties, metadata.getProperties());
+    Assert.assertEquals(datasetTags, metadata.getTags());
+    // verify service
+    metadataRecords = getMetadata(mystream);
+    Assert.assertEquals(1, metadataRecords.size());
+    metadata = metadataRecords.iterator().next();
+    Assert.assertEquals(MetadataScope.USER, metadata.getScope());
+    Assert.assertEquals(mystream, metadata.getTargetId());
+    Assert.assertEquals(streamProperties, metadata.getProperties());
+    Assert.assertEquals(streamTags, metadata.getTags());
     // cleanup
-    deleteApp(application, 200);
+    removeAllMetadata();
+    assertCleanState();
   }
 
   @Test
@@ -168,11 +232,51 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     Assert.assertEquals(400, fetchLineage(datasetInstance, 100, 200, -10).getResponseCode());
   }
 
+  @After
+  public void after() throws Exception {
+    deleteApp(application, 200);
+  }
+
+  private void removeAllMetadata() throws IOException {
+    removeMetadata(application);
+    removeMetadata(pingService);
+    removeMetadata(myds);
+    removeMetadata(mystream);
+  }
+
+  private void assertCleanState() throws IOException {
+    // Assert clean state
+    Set<MetadataRecord> appMetadatas = getMetadata(application);
+    // only user metadata right now.
+    Assert.assertEquals(1, appMetadatas.size());
+    MetadataRecord appMetadata = appMetadatas.iterator().next();
+    Assert.assertTrue(appMetadata.getProperties().isEmpty());
+    Assert.assertTrue(appMetadata.getTags().isEmpty());
+    Set<MetadataRecord> serviceMetadatas = getMetadata(pingService);
+    // only user metadata right now.
+    Assert.assertEquals(1, serviceMetadatas.size());
+    MetadataRecord serviceMetadata = serviceMetadatas.iterator().next();
+    Assert.assertTrue(serviceMetadata.getProperties().isEmpty());
+    Assert.assertTrue(serviceMetadata.getTags().isEmpty());
+    Set<MetadataRecord> datasetMetadatas = getMetadata(myds);
+    // only user metadata right now.
+    Assert.assertEquals(1, datasetMetadatas.size());
+    MetadataRecord datasetMetadata = datasetMetadatas.iterator().next();
+    Assert.assertTrue(datasetMetadata.getProperties().isEmpty());
+    Assert.assertTrue(datasetMetadata.getTags().isEmpty());
+    Set<MetadataRecord> streamMetadatas = getMetadata(mystream);
+    // only user metadata right now.
+    Assert.assertEquals(1, streamMetadatas.size());
+    MetadataRecord streamMetadata = streamMetadatas.iterator().next();
+    Assert.assertTrue(streamMetadata.getProperties().isEmpty());
+    Assert.assertTrue(streamMetadata.getTags().isEmpty());
+  }
+
   private HttpResponse addProperties(Id.Application app) throws IOException {
     return addProperties(app, null);
   }
 
-  private HttpResponse addProperties(Id.Program program) throws Exception {
+  private HttpResponse addProperties(Id.Program program) throws IOException {
     return addProperties(program, null);
   }
 

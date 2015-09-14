@@ -57,7 +57,7 @@ import javax.naming.Context;
  * JMS Consumer and send the message as String to the CDAP ETL Template flow via {@link Emitter}
  * </p>
  */
-@Plugin(type = "source")
+@Plugin(type = "realtimesource")
 @Name("JMS")
 @Description("JMS Real-time Source: Emits a record with a field 'message' of type String.")
 public class JmsSource extends RealtimeSource<StructuredRecord> {

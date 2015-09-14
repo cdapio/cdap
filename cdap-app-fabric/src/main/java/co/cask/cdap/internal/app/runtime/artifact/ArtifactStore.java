@@ -31,10 +31,12 @@ import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.common.ArtifactAlreadyExistsException;
 import co.cask.cdap.common.ArtifactNotFoundException;
+import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.tx.DatasetContext;
 import co.cask.cdap.data2.dataset2.tx.Transactional;
 import co.cask.cdap.internal.app.runtime.adapter.ArtifactDescriptor;
@@ -139,6 +141,8 @@ public class ArtifactStore {
   private static final String PLUGIN_PREFIX = "p";
   private static final String APPCLASS_PREFIX = "a";
   private static final Id.DatasetInstance META_ID = Id.DatasetInstance.from(Id.Namespace.SYSTEM, "artifact.meta");
+  private static final DatasetProperties META_PROPERTIES =
+    DatasetProperties.builder().add(Table.PROPERTY_CONFLICT_LEVEL, ConflictDetection.COLUMN.name()).build();
 
   private final LocationFactory locationFactory;
   private final NamespacedLocationFactory namespacedLocationFactory;
@@ -162,14 +166,23 @@ public class ArtifactStore {
         try {
           return DatasetContext.of((Table) DatasetsUtil.getOrCreateDataset(
             datasetFramework, META_ID, Table.class.getName(),
-            DatasetProperties.builder().add(Table.PROPERTY_CONFLICT_LEVEL, ConflictDetection.COLUMN.name()).build(),
-            DatasetDefinition.NO_ARGUMENTS, null));
+            META_PROPERTIES, DatasetDefinition.NO_ARGUMENTS, null));
         } catch (Exception e) {
           // there's nothing much we can do here
           throw Throwables.propagate(e);
         }
       }
     });
+  }
+
+  /**
+   * Adds datasets and types to the given {@link DatasetFramework} used by artifact store.
+   *
+   * @param framework framework to add types and datasets to
+   */
+  public static void setupDatasets(DatasetFramework framework) throws IOException, DatasetManagementException,
+    ServiceUnavailableException {
+    framework.addInstance(Table.class.getName(), META_ID, META_PROPERTIES);
   }
 
   /**

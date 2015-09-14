@@ -16,6 +16,10 @@
 
 package co.cask.cdap.app.metrics;
 
+import org.apache.hadoop.mapreduce.TaskType;
+
+import javax.annotation.Nullable;
+
 /**
  * Metrics collector for MapReduce job.
  * todo: extract TaskType enum in its own class
@@ -48,6 +52,18 @@ public final class MapReduceMetrics {
 
     public String getId() {
       return id;
+    }
+
+    @Nullable
+    public static TaskType from(org.apache.hadoop.mapreduce.TaskType hadoopTaskType) {
+      switch (hadoopTaskType) {
+        case MAP:
+          return MapReduceMetrics.TaskType.Mapper;
+        case REDUCE:
+          return MapReduceMetrics.TaskType.Reducer;
+        default:
+          return null;
+      }
     }
   }
 

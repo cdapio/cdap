@@ -36,7 +36,6 @@ import com.google.inject.name.Named;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
 
 /**
@@ -45,12 +44,10 @@ import javax.annotation.Nullable;
 public class LineageWriterDatasetFramework implements DatasetFramework, ProgramContextAware {
   private final DatasetFramework delegate;
   private final LineageWriter lineageWriter;
-
-  private final AtomicReference<Id.Run> runRef = new AtomicReference<>();
-  private final AtomicReference<Id.NamespacedId> componentIdRef = new AtomicReference<>();
+  private final ProgramContext programContext = new ProgramContext();
 
   @Inject
-  public LineageWriterDatasetFramework(
+  LineageWriterDatasetFramework(
     @Named(DataSetsModules.BASIC_DATASET_FRAMEWORK) DatasetFramework datasetFramework, LineageWriter lineageWriter) {
     this.delegate = datasetFramework;
     this.lineageWriter = lineageWriter;
@@ -58,13 +55,12 @@ public class LineageWriterDatasetFramework implements DatasetFramework, ProgramC
 
   @Override
   public void initContext(Id.Run run) {
-    runRef.set(run);
+    programContext.initContext(run);
   }
 
   @Override
   public void initContext(Id.Run run, Id.NamespacedId componentId) {
-    runRef.set(run);
-    componentIdRef.set(componentId);
+    programContext.initContext(run, componentId);
   }
 
   @Override
@@ -199,8 +195,9 @@ public class LineageWriterDatasetFramework implements DatasetFramework, ProgramC
   }
 
   private <T extends Dataset> void writeLineage(Id.DatasetInstance datasetInstanceId, T dataset) {
-    if (dataset != null && runRef.get() != null) {
-      lineageWriter.addAccess(runRef.get(), datasetInstanceId, AccessType.UNKNOWN, componentIdRef.get());
+    if (dataset != null && programContext.getRun() != null) {
+      lineageWriter.addAccess(programContext.getRun(), datasetInstanceId, AccessType.UNKNOWN,
+                              programContext.getComponentId());
     }
   }
 }

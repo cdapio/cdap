@@ -25,7 +25,6 @@ import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.workflow.WorkflowToken;
-import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.data2.dataset2.DatasetCacheKey;
@@ -42,6 +41,7 @@ import com.google.common.cache.RemovalNotification;
 import com.google.common.collect.Maps;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -69,8 +69,7 @@ public class DynamicMapReduceContext extends BasicMapReduceContext implements Da
   private final DynamicDatasetContext dynamicDatasetContext;
 
   public DynamicMapReduceContext(Program program,
-                                 MapReduceMetrics.TaskType type,
-                                 RunId runId, String taskId,
+                                 RunId runId,
                                  ProgramOptions programOptions,
                                  MapReduceSpecification spec,
                                  long logicalStartTime, @Nullable String programNameInWorkflow,
@@ -79,8 +78,8 @@ public class DynamicMapReduceContext extends BasicMapReduceContext implements Da
                                  MetricsCollectionService metricsCollectionService,
                                  TransactionSystemClient txClient,
                                  DatasetFramework dsFramework,
-                                 PluginInstantiator pluginInstantiator) {
-    super(program, type, runId, taskId, programOptions, Collections.<String>emptySet(), spec,
+                                 @Nullable PluginInstantiator pluginInstantiator) {
+    super(program, runId, programOptions, Collections.<String>emptySet(), spec,
           logicalStartTime, programNameInWorkflow, workflowToken, discoveryServiceClient, metricsCollectionService,
           dsFramework, pluginInstantiator);
     this.datasetsCache = CacheBuilder.newBuilder()

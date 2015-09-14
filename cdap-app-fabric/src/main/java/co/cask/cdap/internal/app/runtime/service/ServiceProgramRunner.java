@@ -26,6 +26,7 @@ import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.metadata.writer.ProgramContextAware;
 import co.cask.cdap.internal.app.runtime.DataFabricFacadeFactory;
 import co.cask.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
@@ -92,6 +93,12 @@ public class ServiceProgramRunner implements ProgramRunner {
 
     String host = options.getArguments().getOption(ProgramOptionConstants.HOST);
     Preconditions.checkArgument(host != null, "No hostname is provided");
+
+    // Setup dataset framework context, if required
+    if (datasetFramework instanceof ProgramContextAware) {
+      Id.Program programId = program.getId();
+      ((ProgramContextAware) datasetFramework).initContext(new Id.Run(programId, runId.getId()));
+    }
 
     ServiceHttpServer component = new ServiceHttpServer(host, program, spec, runId, options,
                                       instanceId, instanceCount, serviceAnnouncer,

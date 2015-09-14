@@ -46,7 +46,7 @@ public interface Flowlet extends ProgramLifecycle<FlowletContext> {
   /**
    *  Initializes a Flowlet.
    *  <p>
-   *    This method will be called only once per {@link Flowlet} instance..
+   *    This method will be called only once per {@link Flowlet} instance.
    *  </p>
    *  @param context An instance of {@link FlowletContext}
    *  @throws Exception If there is any error during initialization.

@@ -21,11 +21,14 @@ import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.codec.NamespacedIdCodec;
+import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.ServiceDiscovered;
@@ -36,8 +39,8 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
@@ -45,8 +48,11 @@ import javax.annotation.Nullable;
  * Base class for metadata tests.
  */
 public abstract class MetadataTestBase extends AppFabricTestBase {
-  private static final Gson GSON = new Gson();
-  private static final Type LIST_STRING_TYPE = new TypeToken<List<String>>() { }.getType();
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(Id.NamespacedId.class, new NamespacedIdCodec())
+    .create();
+  private static final Type SET_STRING_TYPE = new TypeToken<Set<String>>() { }.getType();
+  private static final Type SET_METADATA_RECORD_TYPE = new TypeToken<Set<MetadataRecord>>() { }.getType();
   private static String metadataServiceUrl;
 
   @BeforeClass
@@ -99,6 +105,38 @@ public abstract class MetadataTestBase extends AppFabricTestBase {
     return makePostRequest(path, GSON.toJson(properties));
   }
 
+  protected Set<MetadataRecord> getMetadata(Id.Application app) throws IOException {
+    String path = getVersionedAPIPath(String.format("apps/%s/metadata", app.getId()), app.getNamespaceId());
+    HttpResponse response = makeGetRequest(path);
+    Assert.assertEquals(200, response.getResponseCode());
+    return GSON.fromJson(response.getResponseBodyAsString(), SET_METADATA_RECORD_TYPE);
+  }
+
+  protected Set<MetadataRecord> getMetadata(Id.Program program) throws IOException {
+    String path = getVersionedAPIPath(String.format("apps/%s/%s/%s/metadata", program.getApplicationId(),
+                                                    program.getType().getCategoryName(), program.getId()),
+                                      program.getNamespaceId());
+    HttpResponse response = makeGetRequest(path);
+    Assert.assertEquals(200, response.getResponseCode());
+    return GSON.fromJson(response.getResponseBodyAsString(), SET_METADATA_RECORD_TYPE);
+  }
+
+  protected Set<MetadataRecord> getMetadata(Id.DatasetInstance dataset) throws IOException {
+    String path = getVersionedAPIPath(String.format("datasets/%s/metadata",
+                                                    dataset.getId()), dataset.getNamespaceId());
+    HttpResponse response = makeGetRequest(path);
+    Assert.assertEquals(200, response.getResponseCode());
+    return GSON.fromJson(response.getResponseBodyAsString(), SET_METADATA_RECORD_TYPE);
+  }
+
+  protected Set<MetadataRecord> getMetadata(Id.Stream stream) throws IOException {
+    String path = getVersionedAPIPath(String.format("streams/%s/metadata",
+                                                    stream.getId()), stream.getNamespaceId());
+    HttpResponse response = makeGetRequest(path);
+    Assert.assertEquals(200, response.getResponseCode());
+    return GSON.fromJson(response.getResponseBodyAsString(), SET_METADATA_RECORD_TYPE);
+  }
+
   protected Map<String, String> getProperties(Id.Application app) throws IOException {
     String path = getVersionedAPIPath(String.format("apps/%s/metadata/properties", app.getId()), app.getNamespaceId());
     HttpResponse response = makeGetRequest(path);
@@ -129,6 +167,34 @@ public abstract class MetadataTestBase extends AppFabricTestBase {
     HttpResponse response = makeGetRequest(path);
     Assert.assertEquals(200, response.getResponseCode());
     return GSON.fromJson(response.getResponseBodyAsString(), MAP_STRING_STRING_TYPE);
+  }
+
+  protected void removeMetadata(Id.Application app) throws IOException {
+    String path = getVersionedAPIPath(String.format("apps/%s/metadata", app.getId()), app.getNamespaceId());
+    HttpResponse response = makeDeleteRequest(path);
+    Assert.assertEquals(200, response.getResponseCode());
+  }
+
+  protected void removeMetadata(Id.Program program) throws IOException {
+    String path = getVersionedAPIPath(String.format("apps/%s/%s/%s/metadata", program.getApplicationId(),
+                                                    program.getType().getCategoryName(), program.getId()),
+                                      program.getNamespaceId());
+    HttpResponse response = makeDeleteRequest(path);
+    Assert.assertEquals(200, response.getResponseCode());
+  }
+
+  protected void removeMetadata(Id.DatasetInstance dataset) throws IOException {
+    String path = getVersionedAPIPath(String.format("datasets/%s/metadata",
+                                                    dataset.getId()), dataset.getNamespaceId());
+    HttpResponse response = makeDeleteRequest(path);
+    Assert.assertEquals(200, response.getResponseCode());
+  }
+
+  protected void removeMetadata(Id.Stream stream) throws IOException {
+    String path = getVersionedAPIPath(String.format("streams/%s/metadata",
+                                                    stream.getId()), stream.getNamespaceId());
+    HttpResponse response = makeDeleteRequest(path);
+    Assert.assertEquals(200, response.getResponseCode());
   }
 
   protected void removeProperties(Id.Application app) throws IOException {
@@ -187,7 +253,7 @@ public abstract class MetadataTestBase extends AppFabricTestBase {
     Assert.assertEquals(200, response.getResponseCode());
   }
 
-  protected HttpResponse addTags(Id.Application app, @Nullable List<String> tags) throws IOException {
+  protected HttpResponse addTags(Id.Application app, @Nullable Set<String> tags) throws IOException {
     String path = getVersionedAPIPath(String.format("apps/%s/metadata/tags", app.getId()), app.getNamespaceId());
     if (tags == null) {
       return makePostRequest(path);
@@ -195,7 +261,7 @@ public abstract class MetadataTestBase extends AppFabricTestBase {
     return makePostRequest(path, GSON.toJson(tags));
   }
 
-  protected HttpResponse addTags(Id.Program program, @Nullable List<String> tags) throws IOException {
+  protected HttpResponse addTags(Id.Program program, @Nullable Set<String> tags) throws IOException {
     String path = getVersionedAPIPath(String.format("apps/%s/%s/%s/metadata/tags", program.getApplicationId(),
                                                     program.getType().getCategoryName(), program.getId()),
                                       program.getNamespaceId());
@@ -205,7 +271,7 @@ public abstract class MetadataTestBase extends AppFabricTestBase {
     return makePostRequest(path, GSON.toJson(tags));
   }
 
-  protected HttpResponse addTags(Id.DatasetInstance dataset, @Nullable List<String> tags) throws IOException {
+  protected HttpResponse addTags(Id.DatasetInstance dataset, @Nullable Set<String> tags) throws IOException {
     String path = getVersionedAPIPath(String.format("datasets/%s/metadata/tags",
                                                     dataset.getId()), dataset.getNamespaceId());
     if (tags == null) {
@@ -214,7 +280,7 @@ public abstract class MetadataTestBase extends AppFabricTestBase {
     return makePostRequest(path, GSON.toJson(tags));
   }
 
-  protected HttpResponse addTags(Id.Stream stream, @Nullable List<String> tags) throws IOException {
+  protected HttpResponse addTags(Id.Stream stream, @Nullable Set<String> tags) throws IOException {
     String path = getVersionedAPIPath(String.format("streams/%s/metadata/tags",
                                                     stream.getId()), stream.getNamespaceId());
     if (tags == null) {
@@ -223,36 +289,36 @@ public abstract class MetadataTestBase extends AppFabricTestBase {
     return makePostRequest(path, GSON.toJson(tags));
   }
 
-  protected List<String> getTags(Id.Application app) throws IOException {
+  protected Set<String> getTags(Id.Application app) throws IOException {
     String path = getVersionedAPIPath(String.format("apps/%s/metadata/tags", app.getId()), app.getNamespaceId());
     HttpResponse response = makeGetRequest(path);
     Assert.assertEquals(200, response.getResponseCode());
-    return GSON.fromJson(response.getResponseBodyAsString(), LIST_STRING_TYPE);
+    return GSON.fromJson(response.getResponseBodyAsString(), SET_STRING_TYPE);
   }
 
-  protected List<String> getTags(Id.Program program) throws IOException {
+  protected Set<String> getTags(Id.Program program) throws IOException {
     String path = getVersionedAPIPath(String.format("apps/%s/%s/%s/metadata/tags", program.getApplicationId(),
                                                     program.getType().getCategoryName(), program.getId()),
                                       program.getNamespaceId());
     HttpResponse response = makeGetRequest(path);
     Assert.assertEquals(200, response.getResponseCode());
-    return GSON.fromJson(response.getResponseBodyAsString(), LIST_STRING_TYPE);
+    return GSON.fromJson(response.getResponseBodyAsString(), SET_STRING_TYPE);
   }
 
-  protected List<String> getTags(Id.DatasetInstance dataset) throws IOException {
+  protected Set<String> getTags(Id.DatasetInstance dataset) throws IOException {
     String path = getVersionedAPIPath(String.format("datasets/%s/metadata/tags",
                                                     dataset.getId()), dataset.getNamespaceId());
     HttpResponse response = makeGetRequest(path);
     Assert.assertEquals(200, response.getResponseCode());
-    return GSON.fromJson(response.getResponseBodyAsString(), LIST_STRING_TYPE);
+    return GSON.fromJson(response.getResponseBodyAsString(), SET_STRING_TYPE);
   }
 
-  protected List<String> getTags(Id.Stream stream) throws IOException {
+  protected Set<String> getTags(Id.Stream stream) throws IOException {
     String path = getVersionedAPIPath(String.format("streams/%s/metadata/tags",
                                                     stream.getId()), stream.getNamespaceId());
     HttpResponse response = makeGetRequest(path);
     Assert.assertEquals(200, response.getResponseCode());
-    return GSON.fromJson(response.getResponseBodyAsString(), LIST_STRING_TYPE);
+    return GSON.fromJson(response.getResponseBodyAsString(), SET_STRING_TYPE);
   }
 
   protected void removeTags(Id.Application app) throws IOException {
@@ -316,7 +382,15 @@ public abstract class MetadataTestBase extends AppFabricTestBase {
     String path = getVersionedAPIPath(
       String.format("datasets/%s/lineage?start=%d&end=%d&levels=%d", datasetInstance.getId(), start, end, levels),
       datasetInstance.getNamespaceId());
-    return makePostRequest(path);
+    return makeGetRequest(path);
+  }
+
+  protected HttpResponse fetchLineage(Id.Stream stream, long start, long end, int levels)
+    throws IOException {
+    String path = getVersionedAPIPath(
+      String.format("streams/%s/lineage?start=%d&end=%d&levels=%d", stream.getId(), start, end, levels),
+      stream.getNamespaceId());
+    return makeGetRequest(path);
   }
 
   // The following methods are needed because AppFabricTestBase's doGet, doPost, doPut, doDelete are hardwired to

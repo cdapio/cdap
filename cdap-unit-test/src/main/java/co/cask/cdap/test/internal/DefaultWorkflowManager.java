@@ -18,8 +18,10 @@ package co.cask.cdap.test.internal;
 
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.workflow.WorkflowToken;
+import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.internal.AppFabricClient;
+import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.WorkflowTokenDetail;
 import co.cask.cdap.proto.WorkflowTokenNodeDetail;
@@ -86,8 +88,12 @@ public class DefaultWorkflowManager extends AbstractProgramManager<WorkflowManag
 
       @Override
       public String status(int expectedCode) {
-        return appFabricClient.scheduleStatus(programId.getNamespaceId(), programId.getApplicationId(),
-                                              schedName, expectedCode);
+        try {
+          return appFabricClient.scheduleStatus(programId.getNamespaceId(), programId.getApplicationId(),
+                                                schedName, expectedCode);
+        } catch (Exception e) {
+          throw Throwables.propagate(e);
+        }
       }
     };
   }

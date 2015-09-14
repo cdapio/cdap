@@ -19,6 +19,8 @@ package co.cask.cdap.data2.metadata.writer;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.proto.Id;
 
+import javax.annotation.Nullable;
+
 /**
  * Defines an interface to record program-dataset access records.
  */
@@ -41,5 +43,25 @@ public interface LineageWriter {
    * @param component program component such as flowlet id, etc.
    */
   void addAccess(Id.Run run, Id.DatasetInstance datasetInstance,
-                 AccessType accessType, Id.NamespacedId component);
+                 AccessType accessType, @Nullable Id.NamespacedId component);
+
+  /**
+   * Add a program-stream access.
+   *
+   * @param run program run information
+   * @param stream stream accessed by the program
+   * @param accessType access type
+   */
+  void addAccess(Id.Run run, Id.Stream stream, AccessType accessType);
+
+  /**
+   * Add a program-stream access.
+   *
+   * @param run program run information
+   * @param stream stream accessed by the program
+   * @param accessType access type
+   * @param component program component such as flowlet id, etc.
+   */
+  void addAccess(Id.Run run, Id.Stream stream,
+                 AccessType accessType, @Nullable Id.NamespacedId component);
 }

@@ -41,12 +41,12 @@ angular.module(PKG.name + '.feature.apps')
           console.log('ERRPR in configuration from backend: ', e);
         }
         this.config = {
-          name: $state.params.adapterId,
-          template: res.artifact.name,
+          name: $state.params.appId,
+          artifact: res.artifact,
           description: res.description,
           config: {
             source: res.config.source,
-            sink: res.config.sink,
+            sinks: res.config.sinks,
             transforms: res.config.transforms,
             instances: res.instance,
             schedule: res.config.schedule
@@ -61,11 +61,7 @@ angular.module(PKG.name + '.feature.apps')
         } else if (res.artifact.name === GLOBALS.etlRealtime) {
           MyAppDAGService.metadata.template.instances = res.config.instances;
         }
-
-        this.source = res.config.source;
-        this.sink = res.config.sink;
-        this.transforms = res.config.transforms;
-        this.nodes = CanvasFactory.getNodes(res.config);
+        this.nodes = CanvasFactory.getNodes(res.config, MyAppDAGService.metadata.template.type);
         this.nodes.forEach(function(node) {
           MyAppDAGService.addNodes(node, node.type);
         });

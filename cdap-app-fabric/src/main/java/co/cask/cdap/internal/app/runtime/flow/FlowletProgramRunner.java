@@ -198,10 +198,11 @@ public final class FlowletProgramRunner implements ProgramRunner {
       Preconditions.checkArgument(Flowlet.class.isAssignableFrom(clz), "%s is not a Flowlet.", clz);
 
       // Setup dataset framework context, if required
+      Id.Program programId = program.getId();
+      Id.Flow.Flowlet flowletId = Id.Flow.Flowlet.from(programId.getApplication(), programId.getId(), flowletName);
+      Id.Run run = new Id.Run(programId, runId.getId());
       if (dsFramework instanceof ProgramContextAware) {
-        Id.Program programId = program.getId();
-        Id.Flow.Flowlet flowletId = Id.Flow.Flowlet.from(programId.getApplication(), programId.getId(), flowletName);
-        ((ProgramContextAware) dsFramework).initContext(new Id.Run(programId, runId.getId()), flowletId);
+        ((ProgramContextAware) dsFramework).initContext(run, flowletId);
       }
 
       Class<? extends Flowlet> flowletClass = (Class<? extends Flowlet>) clz;
@@ -216,6 +217,9 @@ public final class FlowletProgramRunner implements ProgramRunner {
       // Creates tx related objects
       DataFabricFacade dataFabricFacade =
         dataFabricFacadeFactory.create(program, flowletContext.getDatasetInstantiator());
+      if (dataFabricFacade instanceof ProgramContextAware) {
+        ((ProgramContextAware) dataFabricFacade).initContext(run, flowletId);
+      }
 
       // Creates QueueSpecification
       Table<Node, String, Set<QueueSpecification>> queueSpecs =

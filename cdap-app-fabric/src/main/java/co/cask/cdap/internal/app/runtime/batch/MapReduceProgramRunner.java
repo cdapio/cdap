@@ -36,6 +36,7 @@ import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.common.LogWriter;
 import co.cask.cdap.common.logging.logback.CAppender;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.metadata.writer.ProgramContextAware;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
@@ -44,6 +45,7 @@ import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import co.cask.cdap.internal.lang.Reflections;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
@@ -151,6 +153,12 @@ public class MapReduceProgramRunner implements ProgramRunner {
                                     BasicWorkflowToken.class);
     }
 
+    // Setup dataset framework context, if required
+    if (datasetFramework instanceof ProgramContextAware) {
+      Id.Program programId = program.getId();
+      ((ProgramContextAware) datasetFramework).initContext(new Id.Run(programId, runId.getId()));
+    }
+
     MapReduce mapReduce;
     try {
       mapReduce = new InstantiatorFactory(false).get(TypeToken.of(program.<MapReduce>getMainClass())).create();
@@ -166,7 +174,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
       closeables.add(pluginInstantiator);
 
       final DynamicMapReduceContext context =
-        new DynamicMapReduceContext(program, null, runId, null, options, spec,
+        new DynamicMapReduceContext(program, runId, options, spec,
                                     logicalStartTime, programNameInWorkflow, workflowToken, discoveryServiceClient,
                                     metricsCollectionService, txSystemClient, datasetFramework,
                                     pluginInstantiator);

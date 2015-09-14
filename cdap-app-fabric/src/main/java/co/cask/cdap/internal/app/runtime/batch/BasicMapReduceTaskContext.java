@@ -47,7 +47,6 @@ import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
 
-
 /**
  * Mapreduce task runtime context which delegates to BasicMapReduceContext for non task-specific methods.
  * It currently also extends MapReduceContext to support backwards compatibility. Mapper and Reducer tasks could
@@ -71,7 +70,7 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
   private TaskInputOutputContext<?, ?, KEYOUT, VALUEOUT> context;
 
   public BasicMapReduceTaskContext(Program program,
-                                   MapReduceMetrics.TaskType type,
+                                   @Nullable MapReduceMetrics.TaskType type,
                                    RunId runId, String taskId,
                                    ProgramOptions programOptions,
                                    Set<String> datasets,
@@ -136,9 +135,9 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
     return (T) context;
   }
 
-  public void setHadoopContext(TaskInputOutputContext<?, ?, KEYOUT, VALUEOUT> flushingContext) {
-    this.multipleOutputs = new MultipleOutputs(flushingContext);
-    this.context = flushingContext;
+  public void setHadoopContext(TaskInputOutputContext<?, ?, KEYOUT, VALUEOUT> context) {
+    this.multipleOutputs = new MultipleOutputs(context);
+    this.context = context;
   }
 
   @Override

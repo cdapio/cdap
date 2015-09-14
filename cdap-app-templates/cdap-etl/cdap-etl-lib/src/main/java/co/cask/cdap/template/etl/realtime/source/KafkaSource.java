@@ -51,7 +51,7 @@ import javax.annotation.Nullable;
  *  This implementation have dependency on {@code Kafka} version 0.8.x.
  * </p>
  */
-@Plugin(type = "source")
+@Plugin(type = "realtimesource")
 @Name("Kafka")
 @Description("Kafka Real-time Source: Emits a record with the schema specified by the user. " +
   "If no schema is specified, it will emit a record with two fields: 'key' (nullable string) and 'message' (bytes).")

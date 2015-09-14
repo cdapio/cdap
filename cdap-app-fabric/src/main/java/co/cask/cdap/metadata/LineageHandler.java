@@ -29,7 +29,7 @@ import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
 import javax.ws.rs.DefaultValue;
-import javax.ws.rs.POST;
+import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
@@ -46,7 +46,7 @@ public class LineageHandler extends AbstractHttpHandler {
     this.lineageService = lineageService;
   }
 
-  @POST
+  @GET
   @Path("/namespaces/{namespace-id}/datasets/{dataset-id}/lineage")
   public void datasetLineage(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") String namespaceId,
@@ -59,6 +59,22 @@ public class LineageHandler extends AbstractHttpHandler {
 
     Id.DatasetInstance datasetInstance = Id.DatasetInstance.from(namespaceId, datasetId);
     Lineage lineage = lineageService.computeLineage(datasetInstance, start, end, levels);
+    responder.sendJson(HttpResponseStatus.OK, new LineageRecord(start, end, lineage.getRelations()));
+  }
+
+  @GET
+  @Path("/namespaces/{namespace-id}/streams/{stream-id}/lineage")
+  public void streamLineage(HttpRequest request, HttpResponder responder,
+                             @PathParam("namespace-id") String namespaceId,
+                             @PathParam("stream-id") String stream,
+                             @QueryParam("start") @DefaultValue("-1") long start,
+                             @QueryParam("end") @DefaultValue("-1") long end,
+                             @QueryParam("levels") @DefaultValue("10") int levels) throws Exception {
+
+    checkArguments(start, end, levels);
+
+    Id.Stream streamId = Id.Stream.from(namespaceId, stream);
+    Lineage lineage = lineageService.computeLineage(streamId, start, end, levels);
     responder.sendJson(HttpResponseStatus.OK, new LineageRecord(start, end, lineage.getRelations()));
   }
 

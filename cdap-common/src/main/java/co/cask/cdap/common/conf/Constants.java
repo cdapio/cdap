@@ -206,6 +206,14 @@ public final class Constants {
     public static final String DATASET_UNCHECKED_UPGRADE = "dataset.unchecked.upgrade";
 
     /**
+     * Constants for PartitionedFileSet's DynamicPartitioner
+     */
+    public static final class Partitioned {
+      public static final String HCONF_ATTR_OUTPUT_DATASET = "output.dataset.name";
+      public static final String HCONF_ATTR_OUTPUT_FORMAT_CLASS_NAME = "output.format.class.name";
+    }
+
+    /**
      * DatasetManager service configuration.
      */
     public static final class Manager {
@@ -874,5 +882,6 @@ public final class Constants {
     public static final String WORKER_THREADS = "metadata.service.worker.threads";
     public static final String EXEC_THREADS = "metadata.service.exec.threads";
     public static final String METADATA_HANDLERS_NAME = "metadata.handlers";
+    public static final String METADATA_UPDATES_KAFKA_TOPIC = "metadata.updates.kafka.topic";
   }
 }
