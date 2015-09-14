@@ -729,10 +729,10 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       programTypeToNames.put(ProgramType.SERVICE, appSpec.getServices().keySet());
     }
     if (appSpec.getSpark() != null) {
-      programTypeToNames.put(ProgramType.SERVICE, appSpec.getSpark().keySet());
+      programTypeToNames.put(ProgramType.SPARK, appSpec.getSpark().keySet());
     }
     if (appSpec.getWorkers() != null) {
-      programTypeToNames.put(ProgramType.WORKER, appSpec.getWorkflows().keySet());
+      programTypeToNames.put(ProgramType.WORKER, appSpec.getWorkers().keySet());
     }
 
     for (ProgramType programType : programTypeToNames.keySet()) {
