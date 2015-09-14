@@ -31,7 +31,9 @@ angular.module(PKG.name + '.feature.adapters')
           id: transform.name + '-transform-' + (++i),
           name: transform.name,
           type: 'transform',
-          properties: transform.properties
+          properties: transform.properties,
+          errorDatasetName: transform.errorDatasetName,
+          validationFields: transform.validationFields
         });
       });
       config.sinks.forEach(function(sink) {
