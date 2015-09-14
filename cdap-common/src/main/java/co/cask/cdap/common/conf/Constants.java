@@ -877,10 +877,11 @@ public final class Constants {
    * Constants for metadata service
    */
   public static final class Metadata {
-    public static final String BIND_ADDRESS = "metadata.service.bind.address";
-    public static final String WORKER_THREADS = "metadata.service.worker.threads";
-    public static final String EXEC_THREADS = "metadata.service.exec.threads";
-    public static final String METADATA_HANDLERS_NAME = "metadata.handlers";
-    public static final String METADATA_UPDATES_KAFKA_TOPIC = "metadata.updates.kafka.topic";
+    public static final String SERVICE_BIND_ADDRESS = "metadata.service.bind.address";
+    public static final String SERVICE_WORKER_THREADS = "metadata.service.worker.threads";
+    public static final String SERVICE_EXEC_THREADS = "metadata.service.exec.threads";
+    public static final String HANDLERS_NAME = "metadata.handlers";
+    public static final String UPDATES_KAFKA_TOPIC = "metadata.updates.kafka.topic";
+    public static final String UPDATES_PUBLISH_ENABLED = "metadata.updates.publish.enabled";
   }
 }

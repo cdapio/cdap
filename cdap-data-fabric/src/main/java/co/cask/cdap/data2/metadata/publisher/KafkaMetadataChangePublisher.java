@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.metadata;
+package co.cask.cdap.data2.metadata.publisher;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -57,7 +57,7 @@ public class KafkaMetadataChangePublisher implements MetadataChangePublisher {
   @Inject
   KafkaMetadataChangePublisher(CConfiguration cConf, final KafkaClient kafkaClient) {
     this.ack = KafkaPublisher.Ack.FIRE_AND_FORGET;
-    this.topic = cConf.get(Constants.Metadata.METADATA_UPDATES_KAFKA_TOPIC);
+    this.topic = cConf.get(Constants.Metadata.UPDATES_KAFKA_TOPIC);
     this.publishers = CacheBuilder.newBuilder().build(new CacheLoader<String, KafkaPublisher>() {
       @Override
       @SuppressWarnings("NullableProblems")

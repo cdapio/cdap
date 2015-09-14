@@ -1558,4 +1558,13 @@
     <description>Kafka topic to which metadata update notifications are published</description>
   </property>
 
+  <property>
+    <name>metadata.updates.publish.enabled</name>
+    <value>true</value>
+    <description>
+      Determines if metadata updates will be published to Apache Kafka. External systems can subscribe to the
+      Kafka topic determined by ${metadata.updates.kafka.topic} to receive notifications of metadata updates.
+    </description>
+  </property>
+
 </configuration>

@@ -23,6 +23,9 @@ import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
+import co.cask.cdap.data2.metadata.publisher.KafkaMetadataChangePublisher;
+import co.cask.cdap.data2.metadata.publisher.MetadataChangePublisher;
+import co.cask.cdap.data2.metadata.publisher.NoOpMetadataChangePublisher;
 import co.cask.cdap.data2.metadata.writer.BasicLineageWriter;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
 import co.cask.cdap.data2.metadata.writer.LineageWriterDatasetFramework;
@@ -41,6 +44,10 @@ public class DataSetsModules extends RuntimeModule {
 
   @Override
   public Module getInMemoryModules() {
+    return getInMemoryModules(false);
+  }
+
+  public Module getInMemoryModules(final boolean publishRequired) {
     return new PrivateModule() {
       @Override
       protected void configure() {
@@ -57,6 +64,12 @@ public class DataSetsModules extends RuntimeModule {
         expose(LineageWriter.class);
         bind(DatasetFramework.class).to(LineageWriterDatasetFramework.class);
         expose(DatasetFramework.class);
+        if (publishRequired) {
+          bind(MetadataChangePublisher.class).to(KafkaMetadataChangePublisher.class);
+        } else {
+          bind(MetadataChangePublisher.class).to(NoOpMetadataChangePublisher.class);
+        }
+        expose(MetadataChangePublisher.class);
       }
     };
   }
@@ -79,13 +92,18 @@ public class DataSetsModules extends RuntimeModule {
         expose(LineageWriter.class);
         bind(DatasetFramework.class).to(LineageWriterDatasetFramework.class);
         expose(DatasetFramework.class);
+        bind(MetadataChangePublisher.class).to(NoOpMetadataChangePublisher.class);
+        expose(MetadataChangePublisher.class);
       }
     };
-
   }
 
   @Override
   public Module getDistributedModules() {
+    return getDistributedModules(true);
+  }
+
+  public Module getDistributedModules(final boolean publishRequired) {
     return new PrivateModule() {
       @Override
       protected void configure() {
@@ -102,6 +120,12 @@ public class DataSetsModules extends RuntimeModule {
         expose(LineageWriter.class);
         bind(DatasetFramework.class).to(LineageWriterDatasetFramework.class);
         expose(DatasetFramework.class);
+        if (publishRequired) {
+          bind(MetadataChangePublisher.class).to(KafkaMetadataChangePublisher.class);
+        } else {
+          bind(MetadataChangePublisher.class).to(NoOpMetadataChangePublisher.class);
+        }
+        expose(MetadataChangePublisher.class);
       }
     };
   }
