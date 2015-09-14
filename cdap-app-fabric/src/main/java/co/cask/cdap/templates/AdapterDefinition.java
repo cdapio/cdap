@@ -19,8 +19,6 @@ package co.cask.cdap.templates;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
-import co.cask.cdap.api.templates.AdapterSpecification;
-import co.cask.cdap.api.templates.plugins.PluginInfo;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
@@ -33,14 +31,13 @@ import com.google.gson.JsonElement;
 import java.lang.reflect.Type;
 import java.util.EnumSet;
 import java.util.Map;
-import java.util.NavigableSet;
-import java.util.TreeSet;
 import javax.annotation.Nullable;
 
 /**
- * Specification of an adapter.
+ * Specification of an adapter. Only here because needed for CDAP upgrade.
  */
-public final class AdapterDefinition implements AdapterSpecification {
+@Deprecated
+public final class AdapterDefinition {
 
   private static final Gson GSON = new Gson();
   private static final EnumSet<ProgramType> ADAPTER_PROGRAM_TYPES = EnumSet.of(ProgramType.WORKFLOW,
@@ -84,17 +81,14 @@ public final class AdapterDefinition implements AdapterSpecification {
     this.resources = resources;
   }
 
-  @Override
   public String getName() {
     return name;
   }
 
-  @Override
   public String getDescription() {
     return description;
   }
 
-  @Override
   public String getTemplate() {
     return program.getApplicationId();
   }
@@ -107,7 +101,6 @@ public final class AdapterDefinition implements AdapterSpecification {
     return runtimeArgs;
   }
 
-  @Override
   public ScheduleSpecification getScheduleSpecification() {
     return scheduleSpec;
   }
@@ -120,23 +113,8 @@ public final class AdapterDefinition implements AdapterSpecification {
     return datasets;
   }
 
-  public Map<String, String> getDatasetModules() {
-    return datasetModules;
-  }
-
   public Map<String, AdapterPlugin> getPlugins() {
     return plugins;
-  }
-
-  /**
-   * Returns set of {@link PluginInfo} for the plugins in this specification.
-   */
-  public NavigableSet<PluginInfo> getPluginInfos() {
-    NavigableSet<PluginInfo> result = new TreeSet<>();
-    for (AdapterPlugin plugin : plugins.values()) {
-      result.add(plugin.getPluginInfo());
-    }
-    return result;
   }
 
   @Nullable
@@ -153,14 +131,8 @@ public final class AdapterDefinition implements AdapterSpecification {
     return config;
   }
 
-  @Override
   public <T> T getConfig(Type configType) {
     return config == null ? null : GSON.<T>fromJson(config, configType);
-  }
-
-  @Override
-  public String getConfigString() {
-    return config == null ? null : config.toString();
   }
 
   public static Builder builder(String name, Id.Program program) {
@@ -217,11 +189,6 @@ public final class AdapterDefinition implements AdapterSpecification {
 
     public Builder setDatasets(Map<String, DatasetCreationSpec> datasets) {
       this.datasets = ImmutableMap.copyOf(datasets);
-      return this;
-    }
-
-    public Builder setDatasetModules(Map<String, String> modules) {
-      this.datasetModules = ImmutableMap.copyOf(modules);
       return this;
     }
 

@@ -88,8 +88,6 @@ public class UsageRegistry {
           // TODO: CDAP-2251: remove redundancy
           if (user instanceof Id.Program) {
             register((Id.Program) user, streamId);
-          } else if (user instanceof Id.Adapter) {
-            register((Id.Adapter) user, streamId);
           }
         }
         return null;
@@ -121,8 +119,6 @@ public class UsageRegistry {
           // TODO: CDAP-2251: remove redundancy
           if (user instanceof Id.Program) {
             register((Id.Program) user, datasetId);
-          } else if (user instanceof Id.Adapter) {
-            register((Id.Adapter) user, datasetId);
           }
         }
         return null;
@@ -157,22 +153,6 @@ public class UsageRegistry {
   }
 
   /**
-   * Registers usage of a dataset by an adapter.
-   *
-   * @param adapterId adapter
-   * @param datasetInstanceId dataset
-   */
-  public void register(final Id.Adapter adapterId, final Id.DatasetInstance datasetInstanceId) {
-    txnl.executeUnchecked(new TransactionExecutor.Function<UsageDatasetIterable, Void>() {
-      @Override
-      public Void apply(UsageDatasetIterable input) throws Exception {
-        input.getUsageDataset().register(adapterId, datasetInstanceId);
-        return null;
-      }
-    });
-  }
-
-  /**
    * Registers usage of a stream by a program.
    *
    * @param programId program
@@ -189,22 +169,6 @@ public class UsageRegistry {
   }
 
   /**
-   * Registers usage of a stream by an adapter.
-   *
-   * @param adapterId adapter
-   * @param streamId stream
-   */
-  public void register(final Id.Adapter adapterId, final Id.Stream streamId) {
-    txnl.executeUnchecked(new TransactionExecutor.Function<UsageDatasetIterable, Void>() {
-      @Override
-      public Void apply(UsageDatasetIterable input) throws Exception {
-        input.getUsageDataset().register(adapterId, streamId);
-        return null;
-      }
-    });
-  }
-
-  /**
    * Unregisters all usage information of an application.
    *
    * @param applicationId application
@@ -214,21 +178,6 @@ public class UsageRegistry {
       @Override
       public Void apply(UsageDatasetIterable input) throws Exception {
         input.getUsageDataset().unregister(applicationId);
-        return null;
-      }
-    });
-  }
-
-  /**
-   * Unregisters all usage information of an adapter.
-   *
-   * @param adapterId application
-   */
-  public void unregister(final Id.Adapter adapterId) {
-    txnl.executeUnchecked(new TransactionExecutor.Function<UsageDatasetIterable, Void>() {
-      @Override
-      public Void apply(UsageDatasetIterable input) throws Exception {
-        input.getUsageDataset().unregister(adapterId);
         return null;
       }
     });
@@ -270,24 +219,6 @@ public class UsageRegistry {
     });
   }
 
-  public Set<Id.DatasetInstance> getDatasets(final Id.Adapter id) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<UsageDatasetIterable, Set<Id.DatasetInstance>>() {
-      @Override
-      public Set<Id.DatasetInstance> apply(UsageDatasetIterable input) throws Exception {
-        return input.getUsageDataset().getDatasets(id);
-      }
-    });
-  }
-
-  public Set<Id.Stream> getStreams(final Id.Adapter id) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<UsageDatasetIterable, Set<Id.Stream>>() {
-      @Override
-      public Set<Id.Stream> apply(UsageDatasetIterable input) throws Exception {
-        return input.getUsageDataset().getStreams(id);
-      }
-    });
-  }
-
   public Set<Id.Program> getPrograms(final Id.Stream id) {
     return txnl.executeUnchecked(new TransactionExecutor.Function<UsageDatasetIterable, Set<Id.Program>>() {
       @Override
@@ -297,29 +228,11 @@ public class UsageRegistry {
     });
   }
 
-  public Set<Id.Adapter> getAdapters(final Id.Stream id) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<UsageDatasetIterable, Set<Id.Adapter>>() {
-      @Override
-      public Set<Id.Adapter> apply(UsageDatasetIterable input) throws Exception {
-        return input.getUsageDataset().getAdapters(id);
-      }
-    });
-  }
-
   public Set<Id.Program> getPrograms(final Id.DatasetInstance id) {
     return txnl.executeUnchecked(new TransactionExecutor.Function<UsageDatasetIterable, Set<Id.Program>>() {
       @Override
       public Set<Id.Program> apply(UsageDatasetIterable input) throws Exception {
         return input.getUsageDataset().getPrograms(id);
-      }
-    });
-  }
-
-  public Set<Id.Adapter> getAdapters(final Id.DatasetInstance id) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<UsageDatasetIterable, Set<Id.Adapter>>() {
-      @Override
-      public Set<Id.Adapter> apply(UsageDatasetIterable input) throws Exception {
-        return input.getUsageDataset().getAdapters(id);
       }
     });
   }

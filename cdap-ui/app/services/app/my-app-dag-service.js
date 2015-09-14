@@ -47,7 +47,7 @@
 
 */
 angular.module(PKG.name + '.services')
-  .service('MyAppDAGService', function(myAdapterApi, $q, $bootstrapModal, $state, $filter, mySettings, AdapterErrorFactory, IMPLICIT_SCHEMA, myHelpers, PluginConfigFactory, ModalConfirm, EventPipe, CanvasFactory) {
+  .service('MyAppDAGService', function(myAdapterApi, $q, $bootstrapModal, $state, $filter, mySettings, AdapterErrorFactory, IMPLICIT_SCHEMA, myHelpers, PluginConfigFactory, ModalConfirm, EventPipe, CanvasFactory, $rootScope, GLOBALS) {
 
     var countSink = 0,
         countSource = 0,
@@ -57,10 +57,12 @@ angular.module(PKG.name + '.services')
       var callbacks = angular.copy(this.callbacks);
       var errorCallbacks = angular.copy(this.errorCallbacks);
       var resetCallbacks = angular.copy(this.resetCallbacks);
+      var editPropertiesCallback = angular.copy(this.editPropertiesCallback);
 
       this.callbacks = [];
       this.errorCallbacks = [];
       this.resetCallbacks = [];
+      this.editPropertiesCallback = [];
       this.nodes = {};
       this.connections = [];
       var name = this.metadata && this.metadata.name;
@@ -68,7 +70,7 @@ angular.module(PKG.name + '.services')
         name: '',
         description: '',
         template: {
-          type: 'ETLBatch',
+          type: GLOBALS.etlBatch,
           instance: 1,
           schedule: {
             cron: '* * * * *'
@@ -91,6 +93,7 @@ angular.module(PKG.name + '.services')
         this.resetCallbacks = resetCallbacks;
         this.errorCallbacks = errorCallbacks;
         this.metadata.name = name;
+        this.editPropertiesCallback = editPropertiesCallback;
       }
     };
 
@@ -122,6 +125,16 @@ angular.module(PKG.name + '.services')
     this.notifyError = function (errorObj) {
       this.errorCallbacks.forEach(function(callback) {
         callback(errorObj);
+      });
+    };
+
+    this.registerEditPropertiesCallback = function(callback) {
+      this.editPropertiesCallback.push(callback);
+    };
+
+    this.notifyEditPropertiesCallback = function(plugin) {
+      this.editPropertiesCallback.forEach(function(callback) {
+        callback(plugin);
       });
     };
 
@@ -273,7 +286,8 @@ angular.module(PKG.name + '.services')
 
     this.addNodes = function(conf, type, inCreationMode) {
       this.isConfigTouched = true;
-
+      // FIXME: Utterly irrelavant place to set style. This needs to be moved ASAP.
+      var artifactType = GLOBALS.pluginTypes[this.metadata.template.type];
       var config = {
         id: conf.id,
         name: conf.name,
@@ -291,7 +305,7 @@ angular.module(PKG.name + '.services')
       var offsetTop = 0;
       var initial = 0;
 
-      if (type === 'source') {
+      if (type === artifactType.source) {
         initial = 30;
 
         offsetLeft = countSource * 2;
@@ -307,7 +321,7 @@ angular.module(PKG.name + '.services')
 
         countTransform++;
 
-      } else if (type === 'sink') {
+      } else if (type === artifactType.sink) {
         initial = 70;
 
         offsetLeft = countSink * 2;
@@ -373,15 +387,15 @@ angular.module(PKG.name + '.services')
     this.removeNode = function (nodeId) {
       this.isConfigTouched = true;
       var type = this.nodes[nodeId].type;
-
+      var artifactTypeExtension = GLOBALS.pluginTypes[this.metadata.template.type];
       switch (type) {
-        case 'source':
+        case artifactTypeExtension.source:
           countSource--;
           break;
         case 'transform':
           countTransform--;
           break;
-        case 'sink':
+        case artifactTypeExtension.sink:
           countSink--;
           break;
       }
@@ -395,21 +409,27 @@ angular.module(PKG.name + '.services')
 
     function fetchBackendProperties(plugin, scope) {
       var defer = $q.defer();
+      var sourceType = GLOBALS.pluginTypes[this.metadata.template.type].source,
+          sinkType = GLOBALS.pluginTypes[this.metadata.template.type].sink;
 
       var propertiesApiMap = {
-        'source': myAdapterApi.fetchSourceProperties,
-        'sink': myAdapterApi.fetchSinkProperties,
         'transform': myAdapterApi.fetchTransformProperties
       };
+      propertiesApiMap[sourceType] = myAdapterApi.fetchSourceProperties;
+      propertiesApiMap[sinkType] = myAdapterApi.fetchSinkProperties;
+
       // This needs to pass on a scope always. Right now there is no cleanup
       // happening
       var params = {
-        adapterType: this.metadata.template.type
+        namespace: $state.params.namespace,
+        adapterType: this.metadata.template.type,
+        version: $rootScope.cdapVersion,
+        extensionType: plugin.type,
+        pluginName: plugin.name
       };
       if (scope) {
         params.scope = scope;
       }
-      params[plugin.type] = plugin.name;
 
       return propertiesApiMap[plugin.type](params)
         .$promise
@@ -426,213 +446,46 @@ angular.module(PKG.name + '.services')
     }
 
     this.editPluginProperties = function (scope, pluginId) {
-      this.isConfigTouched = true;
-      var sourceConn = $filter('filter')(this.connections, { target: pluginId });
-      var sourceSchema = null;
-      var isStreamSource = false;
-
-      var clfSchema = IMPLICIT_SCHEMA.clf;
-
-      var syslogSchema = IMPLICIT_SCHEMA.syslog;
-
-      var source;
-      if (sourceConn.length) {
-        source = this.nodes[sourceConn[0].source];
-        sourceSchema = source.outputSchema;
-
-        if (source.name === 'Stream') {
-          isStreamSource = true;
-        }
-
-        if (source.properties.format && source.properties.format === 'clf') {
-          sourceSchema = clfSchema;
-        } else if (source.properties.format && source.properties.format === 'syslog') {
-          sourceSchema = syslogSchema;
-        }
-
-      } else {
-        sourceSchema = this.nodes[pluginId].properties.schema || '';
-      }
-
-      var plugin = this.nodes[pluginId];
-      var pluginCopy = angular.copy(plugin);
-
-      var modalInstance;
-
-      fetchBackendProperties.call(this, plugin, scope)
-        .then(function(plugin) {
-          modalInstance = $bootstrapModal.open({
-            backdrop: 'static',
-            templateUrl: '/assets/features/adapters/templates/create/popovers/plugin-edit-form.html',
-            controller: ['$scope', 'AdapterModel', 'type', 'inputSchema', 'isDisabled', '$bootstrapModal', 'pluginCopy', function ($scope, AdapterModel, type, inputSchema, isDisabled, $bootstrapModal, pluginCopy){
-              $scope.plugin = AdapterModel;
-              $scope.type = type;
-              $scope.isDisabled = isDisabled;
-              var input;
-              try {
-                input = JSON.parse(inputSchema);
-              } catch (e) {
-                input = null;
-              }
-
-              if (isStreamSource) {
-                // Must be in this order!!
-                if (!input) {
-                  input = {
-                    fields: [{ name: 'body', type: 'string' }]
-                  };
-                }
-
-                input.fields.unshift({
-                  name: 'headers',
-                  type: {
-                    type: 'map',
-                    keys: 'string',
-                    values: 'string'
-                  }
-                });
-
-                input.fields.unshift({
-                  name: 'ts',
-                  type: 'long'
-                });
-
-
-              }
-
-              $scope.inputSchema = input ? input.fields : null;
-              angular.forEach($scope.inputSchema, function (field) {
-                if (angular.isArray(field.type)) {
-                  field.type = field.type[0];
-                  field.nullable = true;
-                } else {
-                  field.nullable = false;
-                }
-              });
-
-
-              if (!$scope.plugin.outputSchema && input) {
-                $scope.plugin.outputSchema = angular.copy(JSON.stringify(input)) || null;
-              }
-
-              if ($scope.plugin._backendProperties.schema) {
-                $scope.$watch('plugin.outputSchema', function () {
-                  if (!$scope.plugin.outputSchema) {
-                    if ($scope.plugin.properties && $scope.plugin.properties.schema) {
-                      $scope.plugin.properties.schema = null;
-                    }
-                    return;
-                  }
-
-                  if (!$scope.plugin.properties) {
-                    $scope.plugin.properties = {};
-                  }
-                  $scope.plugin.properties.schema = $scope.plugin.outputSchema;
-                });
-              }
-
-              if (AdapterModel.type === 'source') {
-                $scope.isSource = true;
-              }
-
-              if (AdapterModel.type === 'sink') {
-                $scope.isSink = true;
-              }
-              if (AdapterModel.type === 'transform') {
-                $scope.isTransform = true;
-              }
-
-              function closeFn() {
-                $scope.$close('cancel');
-              }
-
-              ModalConfirm.confirmModalAdapter(
-                $scope,
-                $scope.plugin.properties,
-                pluginCopy.properties,
-                closeFn
-              );
-
-
-            }],
-            size: 'lg',
-            windowClass: 'adapter-modal',
-            resolve: {
-              AdapterModel: function () {
-                return plugin;
-              },
-              type: function () {
-                return this.metadata.template.type;
-              }.bind(this),
-              inputSchema: function () {
-                return sourceSchema;
-              },
-              isDisabled: function() {
-                return this.isDisabled;
-              }.bind(this),
-              pluginCopy: function () {
-                return pluginCopy;
-              },
-              isStreamSource: function () {
-                return isStreamSource;
-              }
-            }
-          });
-
-
-          modalInstance.result.then(function (res) {
-            if (res === 'cancel') {
-              this.nodes[pluginId] = angular.copy(pluginCopy);
-            }
-          }.bind(this));
-
-          // destroy modal when user clicks back button or navigate out of this view
-          scope.$on('$destroy', function () {
-            if (modalInstance) {
-              modalInstance.close();
-            }
-          });
-
-        }.bind(this));
-
-
+      this.notifyEditPropertiesCallback(this.nodes[pluginId]);
     };
 
     // Used for UI alone. Has _backendProperties and ids to plugins for
     // construction and validation of DAGs in UI.
     this.getConfig = function() {
       var config = {
-        name: this.metadata.name,
-        description: this.metadata.description,
-        template: this.metadata.template.type,
+        artifact: {
+          name: this.metadata.name,
+          scope: 'SYSTEM',
+          version: $rootScope.cdapVersion
+        },
         source: {
           properties: {}
         },
-        sink: {
-          properties: {}
-        },
+        sinks: [],
         transforms: []
       };
+      var artifactTypeExtension = GLOBALS.pluginTypes[this.metadata.template.type];
       var nodes = angular.copy(this.nodes);
 
       function addPluginToConfig(plugin, id) {
-        if (['source', 'sink'].indexOf(plugin.type) !== -1) {
-          config[plugin.type] = {
-            // Solely adding id and _backendProperties for validation.
-            // Should be removed while saving it to backend.
-            id: plugin.id,
-            name: plugin.name,
-            properties: plugin.properties || {},
-            _backendProperties: plugin._backendProperties
-          };
+
+        var pluginConfig =  {
+          // Solely adding id and _backendProperties for validation.
+          // Should be removed while saving it to backend.
+          id: plugin.id,
+          name: plugin.name,
+          properties: plugin.properties || {},
+          _backendProperties: plugin._backendProperties
+        };
+
+        if (plugin.type === artifactTypeExtension.source) {
+          config['source'] = pluginConfig;
         } else if (plugin.type === 'transform') {
-          config.transforms.push({
-            id: plugin.id,
-            name: plugin.name,
-            properties: plugin.properties || {},
-            _backendProperties: plugin._backendProperties
-          });
+          config['transforms'].push(pluginConfig);
+        } else if (plugin.type === artifactTypeExtension.sink) {
+          config['sinks'].push(pluginConfig);
         }
+
         delete nodes[id];
       }
 
@@ -654,6 +507,10 @@ angular.module(PKG.name + '.services')
           if (!backendProperties[key] || properties[key] === '' || properties[key] === null) {
             delete properties[key];
           }
+          // FIXME: Remove this once https://issues.cask.co/browse/CDAP-3614 is fixed.
+          if (properties[key] && typeof properties[key] !== 'string') {
+            properties[key] = properties[key].toString();
+          }
         });
         return properties;
       }
@@ -661,10 +518,14 @@ angular.module(PKG.name + '.services')
           Object.keys(config.source.properties).length > 0) {
         config.source.properties = propertiesIterator(config.source.properties, config.source._backendProperties);
       }
-      if (myHelpers.objectQuery(config, 'sink', 'properties') &&
-          Object.keys(config.sink.properties).length > 0) {
-        config.sink.properties = propertiesIterator(config.sink.properties, config.sink._backendProperties);
-      }
+
+      config.sinks.forEach(function(sink) {
+        if (myHelpers.objectQuery(sink, 'properties') &&
+            Object.keys(sink.properties).length > 0) {
+          sink.properties = propertiesIterator(sink.properties, sink._backendProperties);
+        }
+      });
+
       config.transforms.forEach(function(transform) {
         if (myHelpers.objectQuery(transform, 'properties') &&
             Object.keys(transform.properties).length > 0) {
@@ -681,10 +542,12 @@ angular.module(PKG.name + '.services')
         delete config.source._backendProperties;
         delete config.source.id;
       }
-      if (config.sink && (config.sink.id || config.sink._backendProperties)) {
-        delete config.sink._backendProperties;
-        delete config.sink.id;
-      }
+
+      config.sinks.forEach(function(sink) {
+        delete sink._backendProperties;
+        delete sink.id;
+      });
+
       config.transforms.forEach(function(t) {
         delete t._backendProperties;
         delete t.id;
@@ -696,17 +559,21 @@ angular.module(PKG.name + '.services')
       var config = this.getConfig();
       pruneProperties(config);
       var data = {
-        template: this.metadata.template.type,
-        description: this.metadata.description,
+        artifact: {
+          name: this.metadata.template.type,
+          scope: 'SYSTEM',
+          version: $rootScope.cdapVersion
+        },
         config: {
           source: config.source,
-          sink: config.sink,
+          sinks: config.sinks,
           transforms: config.transforms
-        }
+        },
+        description: this.metadata.description
       };
-      if (this.metadata.template.type === 'ETLRealtime') {
+      if (this.metadata.template.type === GLOBALS.etlRealtime) {
         data.config.instances = this.metadata.template.instance;
-      } else if (this.metadata.template.type === 'ETLBatch') {
+      } else if (this.metadata.template.type === GLOBALS.etlBatch) {
         // default value should be * * * * *
         data.config.schedule = this.metadata.template.schedule.cron;
       }
@@ -787,7 +654,7 @@ angular.module(PKG.name + '.services')
       var ui = data.ui;
       var config = data.config;
       var nodes = [];
-      var config1 = CanvasFactory.extractMetadataFromDraft(data.config, data);
+      var config1 = CanvasFactory.extractMetadataFromDraft(data);
 
       if (config1.name) {
         this.metadata.name = config1.name;
@@ -800,7 +667,7 @@ angular.module(PKG.name + '.services')
           nodes.push(value);
         }.bind(this));
       } else {
-        nodes = CanvasFactory.getNodes(config);
+        nodes = CanvasFactory.getNodes(config, this.metadata.template.type);
       }
       nodes.forEach(function(node) {
         this.addNodes(node, node.type);

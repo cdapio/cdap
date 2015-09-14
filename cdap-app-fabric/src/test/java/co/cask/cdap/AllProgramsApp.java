@@ -32,12 +32,15 @@ import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.service.AbstractService;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
+import co.cask.cdap.api.service.http.HttpServiceRequest;
+import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.api.spark.AbstractSpark;
 import co.cask.cdap.api.spark.JavaSparkProgram;
 import co.cask.cdap.api.spark.SparkContext;
 import co.cask.cdap.api.worker.AbstractWorker;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.AbstractWorkflowAction;
+import com.google.common.io.ByteStreams;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
@@ -49,7 +52,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.net.URLConnection;
 import java.nio.ByteBuffer;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
 
 /**
  * App that contains all program types. Used to test Metadata store.
@@ -196,6 +204,7 @@ public class AllProgramsApp extends AbstractApplication {
         setName(NAME);
         setDescription("NoOp Workflow description");
         addAction(new NoOpAction());
+        addMapReduce(NoOpMR.NAME);
     }
   }
 
@@ -233,8 +242,22 @@ public class AllProgramsApp extends AbstractApplication {
             table.write("NOOP", "NOOP");
           }
         });
+        makeServiceCall();
       } catch (Exception e) {
         LOG.error("Worker ran into error", e);
+      }
+    }
+
+    private void makeServiceCall() throws IOException {
+      URL serviceURL = getContext().getServiceURL(NoOpService.NAME);
+      if (serviceURL != null) {
+        URL endpoint = new URL(serviceURL.toString() + NoOpService.ENDPOINT);
+        LOG.info("Calling service endpoint {}", endpoint);
+        URLConnection urlConnection = endpoint.openConnection();
+        urlConnection.connect();
+        try (InputStream inputStream = urlConnection.getInputStream()) {
+          ByteStreams.toByteArray(inputStream);
+        }
       }
     }
   }
@@ -245,16 +268,26 @@ public class AllProgramsApp extends AbstractApplication {
   public static class NoOpService extends AbstractService {
 
     public static final String NAME = "NoOpService";
+    public static final String ENDPOINT = "no-op";
 
     @Override
     protected void configure() {
       addHandler(new NoOpHandler());
     }
 
-    private class NoOpHandler extends AbstractHttpServiceHandler {
+    public class NoOpHandler extends AbstractHttpServiceHandler {
       @Override
       protected void configure() {
         useDatasets(DATASET_NAME);
+      }
+
+      @Path(ENDPOINT)
+      @GET
+      public void handler(HttpServiceRequest request, HttpServiceResponder responder) {
+        LOG.info("Endpoint {} called in service {}", ENDPOINT, NAME);
+        KeyValueTable table = getContext().getDataset(DATASET_NAME);
+        table.write("no-op-service", "no-op-service");
+        responder.sendStatus(200);
       }
     }
   }

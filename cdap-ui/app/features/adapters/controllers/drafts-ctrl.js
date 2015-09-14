@@ -16,9 +16,9 @@
 
 var alertpromise;
 angular.module(PKG.name + '.feature.adapters')
-  .controller('AdapterDraftsController', function($scope, mySettings, $state, $alert, $timeout, myAlert, myHelpers) {
+  .controller('AdapterDraftsController', function($scope, mySettings, $state, $alert, $timeout, myAlert, myHelpers, GLOBALS) {
     $scope.drafts  = [];
-
+    $scope.GLOBALS = GLOBALS;
     mySettings.get('adapterDrafts')
       .then(function(res) {
         if (res && Object.keys(res).length) {
@@ -26,9 +26,9 @@ angular.module(PKG.name + '.feature.adapters')
             $scope.drafts.push({
               isdraft: true,
               name: key,
-              template: myHelpers.objectQuery(value, 'config', 'metadata', 'type') || myHelpers.objectQuery(value, 'template'),
+              template: myHelpers.objectQuery(value, 'artifact', 'name'),
               status: '-',
-              description: myHelpers.objectQuery(value, 'config', 'metadata', 'description') || myHelpers.objectQuery(value, 'description')
+              description: myHelpers.objectQuery(value, 'description')
             });
           });
         }

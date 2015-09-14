@@ -17,7 +17,7 @@
 package co.cask.cdap.api.artifact;
 
 import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.templates.plugins.PluginClass;
+import co.cask.cdap.api.plugin.PluginClass;
 
 import java.util.Collections;
 import java.util.HashSet;

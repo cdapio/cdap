@@ -19,7 +19,6 @@ package co.cask.cdap.data2.datafabric.dataset.service;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.DatasetAlreadyExistsException;
-import co.cask.cdap.common.DatasetNotFoundException;
 import co.cask.cdap.common.DatasetTypeNotFoundException;
 import co.cask.cdap.common.HandlerException;
 import co.cask.cdap.common.NotFoundException;
@@ -230,8 +229,6 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
         String ownerId = parts[1];
         if (ownerType.equals(Id.getType(Id.Program.class))) {
           return Id.Program.fromStrings(ownerId.split("/"));
-        } else if (ownerType.equals(Id.getType(Id.Adapter.class))) {
-          return Id.Adapter.fromStrings(ownerId.split("/"));
         } else {
           return null;
         }

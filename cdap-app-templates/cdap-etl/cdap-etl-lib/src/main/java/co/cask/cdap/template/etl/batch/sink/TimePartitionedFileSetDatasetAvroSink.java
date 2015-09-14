@@ -24,25 +24,26 @@ import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.template.etl.api.Emitter;
+import co.cask.cdap.template.etl.api.InvalidEntry;
 import co.cask.cdap.template.etl.api.PipelineConfigurer;
+import co.cask.cdap.template.etl.api.batch.BatchRuntimeContext;
 import co.cask.cdap.template.etl.api.batch.BatchSink;
-import co.cask.cdap.template.etl.api.batch.BatchSinkContext;
 import co.cask.cdap.template.etl.common.StructuredToAvroTransformer;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.mapred.AvroKey;
-import org.apache.avro.mapreduce.AvroJob;
 import org.apache.avro.mapreduce.AvroKeyInputFormat;
 import org.apache.avro.mapreduce.AvroKeyOutputFormat;
 import org.apache.hadoop.io.NullWritable;
-import org.apache.hadoop.mapreduce.Job;
 
+import java.util.HashMap;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
  * A {@link BatchSink} to write Avro record to {@link TimePartitionedFileSet}
  */
-@Plugin(type = "sink")
+@Plugin(type = "batchsink")
 @Name("TPFSAvro")
 @Description("Sink for a TimePartitionedFileSet that writes data in Avro format.")
 public class TimePartitionedFileSetDatasetAvroSink extends
@@ -75,16 +76,15 @@ public class TimePartitionedFileSetDatasetAvroSink extends
   }
 
   @Override
-  public void prepareRun(BatchSinkContext context) {
-    super.prepareRun(context);
+  protected Map<String, String> getAdditionalTPFSArguments() {
+    Map<String, String> args = new HashMap<>();
     Schema avroSchema = new Schema.Parser().parse(config.schema);
-    Job job = context.getHadoopJob();
-    AvroJob.setOutputKeySchema(job, avroSchema);
+    args.put(FileSetProperties.OUTPUT_PROPERTIES_PREFIX + "avro.schema.output.key", avroSchema.toString());
+    return args;
   }
 
-
   @Override
-  public void initialize(BatchSinkContext context) throws Exception {
+  public void initialize(BatchRuntimeContext context) throws Exception {
     super.initialize(context);
     recordTransformer = new StructuredToAvroTransformer(config.schema);
   }
@@ -93,6 +93,8 @@ public class TimePartitionedFileSetDatasetAvroSink extends
   public void transform(StructuredRecord input,
                         Emitter<KeyValue<AvroKey<GenericRecord>, NullWritable>> emitter) throws Exception {
     emitter.emit(new KeyValue<>(new AvroKey<>(recordTransformer.transform(input)), NullWritable.get()));
+    InvalidEntry entry = new InvalidEntry(100, "dummy", input);
+    emitter.emitError(entry);
   }
 
   /**

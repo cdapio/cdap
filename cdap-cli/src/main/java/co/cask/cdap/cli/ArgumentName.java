@@ -59,7 +59,7 @@ public enum ArgumentName {
   DATASET_MODULE_JAR_CLASSNAME("module-jar-classname"),
   QUERY("query"),
   APP("app-id"),
-  APP_TEMPLATE("app-template-id"),
+  VIEW("view-id"),
   HTTP_METHOD("http-method"),
   ENDPOINT("endpoint"),
   HEADERS("headers"),
@@ -77,9 +77,6 @@ public enum ArgumentName {
   NAMESPACE_DESCRIPTION("namespace-description"),
 
   INSTANCE("instance-id"),
-  ADAPTER_TYPE("adapter-type"),
-  ADAPTER("adapter-name"),
-  ADAPTER_SPEC("adapter-spec-file"),
   COMMAND_CATEGORY("command-category"),
 
   TABLE_RENDERER("table-renderer"),

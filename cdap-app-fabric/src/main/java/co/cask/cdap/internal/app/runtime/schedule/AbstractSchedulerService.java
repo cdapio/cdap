@@ -23,8 +23,6 @@ import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.proto.Id;
@@ -51,31 +49,21 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
   private static final Logger LOG = LoggerFactory.getLogger(AbstractSchedulerService.class);
   private final TimeScheduler timeScheduler;
   private final StreamSizeScheduler streamSizeScheduler;
-  private final CConfiguration cConf;
   private final Store store;
 
-  public AbstractSchedulerService(TimeScheduler timeScheduler, StreamSizeScheduler streamSizeScheduler,
-                                  CConfiguration cConf, Store store) {
+  public AbstractSchedulerService(TimeScheduler timeScheduler, StreamSizeScheduler streamSizeScheduler, Store store) {
     this.timeScheduler = timeScheduler;
     this.streamSizeScheduler = streamSizeScheduler;
-    this.cConf = cConf;
     this.store = store;
-  }
-
-  private boolean isLazyStart() {
-    return cConf.getBoolean(Constants.Scheduler.SCHEDULERS_LAZY_START, false);
   }
 
   /**
    * Start the scheduler services, by initializing them and starting them
-   * right away if lazy start is not active.
    */
   protected final void startSchedulers() throws SchedulerException {
     try {
       timeScheduler.init();
-      if (!isLazyStart()) {
-        timeScheduler.lazyStart();
-      }
+      timeScheduler.start();
       LOG.info("Started time scheduler");
     } catch (Throwable t) {
       Throwables.propagateIfInstanceOf(t, SchedulerException.class);
@@ -84,31 +72,11 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
 
     try {
       streamSizeScheduler.init();
-      if (!isLazyStart()) {
-        streamSizeScheduler.lazyStart();
-      }
+      streamSizeScheduler.start();
       LOG.info("Started stream size scheduler");
     } catch (Throwable t) {
       Throwables.propagateIfInstanceOf(t, SchedulerException.class);
       throw new SchedulerException(t);
-    }
-  }
-
-  private void lazyStart(Scheduler scheduler) throws SchedulerException {
-    if (scheduler instanceof TimeScheduler) {
-      try {
-        timeScheduler.lazyStart();
-      } catch (Throwable t) {
-        Throwables.propagateIfInstanceOf(t, SchedulerException.class);
-        throw new SchedulerException(t);
-      }
-    } else if (scheduler instanceof StreamSizeScheduler) {
-      try {
-        streamSizeScheduler.lazyStart();
-      } catch (Throwable t) {
-        Throwables.propagateIfInstanceOf(t, SchedulerException.class);
-        throw new SchedulerException(t);
-      }
     }
   }
 
@@ -157,30 +125,6 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
     scheduler = getScheduler(schedule);
 
     scheduler.schedule(programId, programType, schedule, properties);
-    doLazyStart(programId, programType, schedule, properties);
-  }
-
-  private void doLazyStart(Id.Program programId, SchedulableProgramType programType, Schedule schedule,
-                           Map<String, String> properties) throws SchedulerException {
-    Scheduler scheduler = getScheduler(schedule);
-    if (isLazyStart()) {
-      // TODO: CDAP-2281 figure out a better way to handle schedules in unit tests
-      String ignoreLazy = properties.get(Constants.Scheduler.IGNORE_LAZY_START);
-      boolean shouldNotSuspend = ignoreLazy != null && Boolean.valueOf(ignoreLazy);
-      if (shouldNotSuspend) {
-        // normally in lazy mode, the scheduler is started on calls to resume.
-        // If this schedule should be active right now instead of requiring a call to resume,
-        // we need to start the scheduler here.
-        lazyStart(scheduler);
-      } else {
-        try {
-          scheduler.suspendSchedule(programId, programType, schedule.getName());
-        } catch (NotFoundException e) {
-          // Should not happen - we just created it. Could have been deleted just in between
-          LOG.info("Schedule could not be suspended - it did not exist: {}", schedule.getName());
-        }
-      }
-    }
   }
 
   @Override
@@ -229,9 +173,6 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
   public void resumeSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName)
     throws NotFoundException, SchedulerException {
     Scheduler scheduler = getSchedulerForSchedule(program, scheduleName);
-    if (!isStarted(scheduler) && isLazyStart()) {
-      lazyStart(scheduler);
-    }
     scheduler.resumeSchedule(program, programType, scheduleName);
   }
 

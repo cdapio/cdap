@@ -18,7 +18,6 @@ package co.cask.cdap.dq;
 
 import co.cask.cdap.api.Config;
 import co.cask.cdap.api.ProgramLifecycle;
-import co.cask.cdap.api.annotation.Property;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.format.StructuredRecord;
@@ -28,9 +27,9 @@ import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceConfigurer;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
+import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.api.stream.GenericStreamEventData;
-import co.cask.cdap.api.templates.plugins.PluginProperties;
 import co.cask.cdap.dq.functions.BasicAggregationFunction;
 import co.cask.cdap.dq.functions.CombinableAggregationFunction;
 import co.cask.cdap.dq.rowkey.AggregationsRowKey;
@@ -156,7 +155,7 @@ public class DataQualityApp extends AbstractApplication<DataQualityApp.DataQuali
     public void configure() {
       super.configure();
       final MapReduceConfigurer mrConfigurer = getConfigurer();
-      BatchSource batchSource = usePlugin("source", source.getName(), PLUGIN_ID,
+      BatchSource batchSource = usePlugin("batchsource", source.getName(), PLUGIN_ID,
                                           PluginProperties.builder().addAll(source.getProperties()).build());
       Preconditions.checkNotNull(batchSource, "Could not find plugin %s of type 'source'", source.getName());
       // We use pluginId as the prefixId
@@ -174,7 +173,7 @@ public class DataQualityApp extends AbstractApplication<DataQualityApp.DataQuali
       Job job = context.getHadoopJob();
       job.setMapperClass(AggregationMapper.class);
       job.setReducerClass(AggregationReducer.class);
-      BatchSource batchSource = context.newInstance(PLUGIN_ID);
+      BatchSource batchSource = context.newPluginInstance(PLUGIN_ID);
       // TODO: Figure out metrics to be passed in
       BatchSourceContext sourceContext = new MapReduceSourceContext(context, null, PLUGIN_ID);
       batchSource.prepareRun(sourceContext);

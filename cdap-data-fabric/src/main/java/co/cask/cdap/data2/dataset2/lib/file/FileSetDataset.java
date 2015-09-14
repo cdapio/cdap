@@ -138,6 +138,9 @@ public final class FileSetDataset implements FileSet {
   }
 
   private Location determineOutputLocation() {
+    if (FileSetArguments.isBaseOutputPath(runtimeArguments)) {
+      return baseLocation;
+    }
     String outputPath = FileSetArguments.getOutputPath(runtimeArguments);
     return outputPath == null ? null : createLocation(outputPath);
   }

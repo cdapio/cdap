@@ -16,13 +16,13 @@
 
 package co.cask.cdap.template.etl.common;
 
-import co.cask.cdap.api.artifact.PluginConfigurer;
-import co.cask.cdap.api.artifact.PluginSelector;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
-import co.cask.cdap.api.templates.plugins.PluginProperties;
+import co.cask.cdap.api.plugin.PluginConfigurer;
+import co.cask.cdap.api.plugin.PluginProperties;
+import co.cask.cdap.api.plugin.PluginSelector;
 import co.cask.cdap.template.etl.api.PipelineConfigurer;
 
 import javax.annotation.Nullable;

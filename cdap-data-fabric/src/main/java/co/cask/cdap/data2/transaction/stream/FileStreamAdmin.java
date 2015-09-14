@@ -27,9 +27,11 @@ import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamFileOffset;
 import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
+import co.cask.cdap.data2.metadata.lineage.AccessType;
+import co.cask.cdap.data2.metadata.writer.LineageWriter;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.explore.client.ExploreFacade;
-import co.cask.cdap.internal.explore.ExploreTableNaming;
+import co.cask.cdap.explore.utils.ExploreTableNaming;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.notifications.feeds.NotificationFeedException;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
@@ -70,7 +72,6 @@ public class FileStreamAdmin implements StreamAdmin {
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .create();
-  private static final ExploreTableNaming NAMING = new ExploreTableNaming();
 
   private final NamespacedLocationFactory namespacedLocationFactory;
   private final StreamCoordinatorClient streamCoordinatorClient;
@@ -79,7 +80,9 @@ public class FileStreamAdmin implements StreamAdmin {
   private final NotificationFeedManager notificationFeedManager;
   private final String streamBaseDirPath;
   private final UsageRegistry usageRegistry;
+  private final LineageWriter lineageWriter;
   private final StreamMetaStore streamMetaStore;
+  private final ExploreTableNaming tableNaming;
   private ExploreFacade exploreFacade;
 
   @Inject
@@ -89,7 +92,9 @@ public class FileStreamAdmin implements StreamAdmin {
                          StreamConsumerStateStoreFactory stateStoreFactory,
                          NotificationFeedManager notificationFeedManager,
                          UsageRegistry usageRegistry,
-                         StreamMetaStore streamMetaStore) {
+                         LineageWriter lineageWriter,
+                         StreamMetaStore streamMetaStore,
+                         ExploreTableNaming tableNaming) {
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.cConf = cConf;
     this.notificationFeedManager = notificationFeedManager;
@@ -97,7 +102,9 @@ public class FileStreamAdmin implements StreamAdmin {
     this.streamCoordinatorClient = streamCoordinatorClient;
     this.stateStoreFactory = stateStoreFactory;
     this.usageRegistry = usageRegistry;
+    this.lineageWriter = lineageWriter;
     this.streamMetaStore = streamMetaStore;
+    this.tableNaming = tableNaming;
   }
 
   @SuppressWarnings("unused")
@@ -346,6 +353,11 @@ public class FileStreamAdmin implements StreamAdmin {
     usageRegistry.registerAll(owners, streamId);
   }
 
+  @Override
+  public void addAccess(Id.Run run, Id.Stream streamId, AccessType accessType) {
+    lineageWriter.addAccess(run, streamId, accessType);
+  }
+
   /**
    * Returns the location that points the config file for the given stream.
    */
@@ -494,9 +506,9 @@ public class FileStreamAdmin implements StreamAdmin {
       Preconditions.checkNotNull(exploreFacade, "Explore enabled but no ExploreFacade instance is available");
       try {
         if (enable) {
-          exploreFacade.enableExploreStream(stream, NAMING.getTableName(stream), format);
+          exploreFacade.enableExploreStream(stream, tableNaming.getTableName(stream), format);
         } else {
-          exploreFacade.disableExploreStream(stream, NAMING.getTableName(stream));
+          exploreFacade.disableExploreStream(stream, tableNaming.getTableName(stream));
         }
       } catch (Exception e) {
         // at this time we want to still allow using stream even if it cannot be used for exploration

@@ -27,22 +27,23 @@ import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.template.etl.api.Emitter;
 import co.cask.cdap.template.etl.api.PipelineConfigurer;
+import co.cask.cdap.template.etl.api.batch.BatchRuntimeContext;
 import co.cask.cdap.template.etl.api.batch.BatchSink;
-import co.cask.cdap.template.etl.api.batch.BatchSinkContext;
 import co.cask.cdap.template.etl.common.SchemaConverter;
 import co.cask.cdap.template.etl.common.StructuredToAvroTransformer;
 import org.apache.avro.generic.GenericRecord;
-import org.apache.hadoop.mapreduce.Job;
 import parquet.avro.AvroParquetInputFormat;
 import parquet.avro.AvroParquetOutputFormat;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
  * A {@link BatchSink} to write Parquet records to a {@link TimePartitionedFileSet}.
  */
-@Plugin(type = "sink")
+@Plugin(type = "batchsink")
 @Name("TPFSParquet")
 @Description("Sink for a TimePartitionedFileSet that writes data in Parquet format.")
 public class TimePartitionedFileSetDatasetParquetSink extends
@@ -80,15 +81,15 @@ public class TimePartitionedFileSetDatasetParquetSink extends
   }
 
   @Override
-  public void prepareRun(BatchSinkContext context) {
-    super.prepareRun(context);
+  protected Map<String, String> getAdditionalTPFSArguments() {
+    Map<String, String> args = new HashMap<>();
     org.apache.avro.Schema avroSchema = new org.apache.avro.Schema.Parser().parse(config.schema.toLowerCase());
-    Job job = context.getHadoopJob();
-    AvroParquetOutputFormat.setSchema(job, avroSchema);
+    args.put(FileSetProperties.OUTPUT_PROPERTIES_PREFIX + "parquet.avro.schema", avroSchema.toString());
+    return args;
   }
 
   @Override
-  public void initialize(BatchSinkContext context) throws Exception {
+  public void initialize(BatchRuntimeContext context) throws Exception {
     super.initialize(context);
     recordTransformer = new StructuredToAvroTransformer(config.schema);
   }

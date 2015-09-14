@@ -16,10 +16,9 @@
 
 package co.cask.cdap.gateway.handlers;
 
-import co.cask.cdap.api.artifact.ArtifactDescriptor;
 import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.templates.plugins.PluginClass;
+import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.common.ArtifactAlreadyExistsException;
 import co.cask.cdap.common.ArtifactNotFoundException;
@@ -30,9 +29,10 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.http.AbstractBodyConsumer;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
-import co.cask.cdap.internal.app.runtime.adapter.PluginClassDeserializer;
+import co.cask.cdap.internal.app.runtime.adapter.ArtifactDescriptor;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import co.cask.cdap.internal.app.runtime.artifact.PluginClassDeserializer;
 import co.cask.cdap.internal.app.runtime.artifact.PluginNotExistsException;
 import co.cask.cdap.internal.app.runtime.artifact.WriteConflictException;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
@@ -451,7 +451,8 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
                              @PathParam("artifact-version") String artifactVersion)
     throws NamespaceNotFoundException, BadRequestException {
 
-    Id.Namespace namespace = validateAndGetNamespace(namespaceId);
+    Id.Namespace namespace = Id.Namespace.SYSTEM.getId().equalsIgnoreCase(namespaceId) ?
+      Id.Namespace.SYSTEM : validateAndGetNamespace(namespaceId);
     Id.Artifact artifactId = validateAndGetArtifactId(namespace, artifactName, artifactVersion);
 
     try {

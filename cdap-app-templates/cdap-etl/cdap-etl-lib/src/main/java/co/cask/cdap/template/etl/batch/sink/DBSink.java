@@ -22,10 +22,11 @@ import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.dataset.lib.KeyValue;
-import co.cask.cdap.api.templates.plugins.PluginConfig;
-import co.cask.cdap.api.templates.plugins.PluginProperties;
+import co.cask.cdap.api.plugin.PluginConfig;
+import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.template.etl.api.Emitter;
 import co.cask.cdap.template.etl.api.PipelineConfigurer;
+import co.cask.cdap.template.etl.api.batch.BatchRuntimeContext;
 import co.cask.cdap.template.etl.api.batch.BatchSink;
 import co.cask.cdap.template.etl.api.batch.BatchSinkContext;
 import co.cask.cdap.template.etl.common.DBConfig;
@@ -53,7 +54,7 @@ import java.util.Map;
 /**
  * Sink that can be configured to export data to a database table.
  */
-@Plugin(type = "sink")
+@Plugin(type = "batchsink")
 @Name("Database")
 @Description("Writes records to a database table. Each record will be written to a row in the table.")
 public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> {
@@ -102,7 +103,7 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
   }
 
   @Override
-  public void initialize(BatchSinkContext context) throws Exception {
+  public void initialize(BatchRuntimeContext context) throws Exception {
     super.initialize(context);
     driverClass = context.loadPluginClass(getJDBCPluginId());
     setResultSetMetadata();

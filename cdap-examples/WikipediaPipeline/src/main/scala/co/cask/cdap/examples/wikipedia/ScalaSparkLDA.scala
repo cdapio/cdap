@@ -16,19 +16,17 @@
 
 package co.cask.cdap.examples.wikipedia
 
-import co.cask.cdap.api.common.Bytes
-import co.cask.cdap.api.dataset.table.Table
-import co.cask.cdap.api.dataset.table.Put
-import co.cask.cdap.api.spark.{SparkContext, ScalaSparkProgram}
-import co.cask.cdap.api.workflow.Value
-import co.cask.cdap.api.workflow.WorkflowToken
-import org.apache.spark.{AccumulatorParam, Accumulator}
-import org.apache.spark.mllib.clustering.{LDAModel, LDA}
-import org.apache.spark.mllib.linalg.{Vector, Vectors}
-import org.apache.spark.rdd.{RDD, NewHadoopRDD}
-
 import java.text.BreakIterator
 import java.util
+
+import co.cask.cdap.api.common.Bytes
+import co.cask.cdap.api.dataset.table.{Put, Table}
+import co.cask.cdap.api.spark.{ScalaSparkProgram, SparkContext}
+import co.cask.cdap.api.workflow.{Value, WorkflowToken}
+import org.apache.spark.mllib.clustering.{LDA, LDAModel}
+import org.apache.spark.mllib.linalg.{Vector, Vectors}
+import org.apache.spark.rdd.{NewHadoopRDD, RDD}
+import org.apache.spark.{Accumulator, AccumulatorParam}
 
 import scala.collection.mutable
 

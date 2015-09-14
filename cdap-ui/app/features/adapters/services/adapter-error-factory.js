@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.adapters')
-  .factory('AdapterErrorFactory', function () {
+  .factory('AdapterErrorFactory', function (GLOBALS) {
 
     function isModelValid (nodes, connections, metadata, config) {
       var validationRules = [
@@ -47,13 +47,14 @@ angular.module(PKG.name + '.feature.adapters')
 
     function hasExactlyOneSourceAndSink(nodes, connections, metadata, config, errors) {
       var source = [], sink = [];
+      var artifactType = GLOBALS.pluginTypes[metadata.template.type];
 
       angular.forEach(nodes, function (value, key) {
         switch (value.type) {
-          case 'sink':
+          case artifactType.sink:
             sink.push(key);
             break;
-          case 'source':
+          case artifactType.source:
             source.push(key);
             break;
         }
@@ -110,9 +111,13 @@ angular.module(PKG.name + '.feature.adapters')
       if(config.source.name && !isValidPlugin(config.source)) {
         errors[config.source.id] = 'Source is missing required fields';
       }
-      if (config.sink.name && !isValidPlugin(config.sink)) {
-        errors[config.sink.id] = 'Sink is missing required fields';
-      }
+
+      config.sinks.forEach(function(sink) {
+        if (sink.name && !isValidPlugin(sink)) {
+          errors[sink.id] = 'Sink is missing required fields';
+        }
+      });
+
       config.transforms.forEach(function(transform) {
         if (transform.name && !isValidPlugin(transform)) {
           errors[transform.id] = 'Transform is missing required fields';
@@ -145,7 +150,7 @@ angular.module(PKG.name + '.feature.adapters')
       2. If it does start with source && end with sink, check that all connections were traversed
     */
     function checkForUnconnectedNodes(nodes, connections, metadata, config, errors) {
-
+      var artifactType = GLOBALS.pluginTypes[metadata.template.type];
       var nodesCopy = angular.copy(nodes);
 
       // at this point in the checking, I can assume that there is only 1 source and 1 sink
@@ -155,10 +160,10 @@ angular.module(PKG.name + '.feature.adapters')
 
       angular.forEach(nodes, function (value, key) {
         switch (value.type) {
-          case 'source':
+          case artifactType.source:
             source = key;
             break;
-          case 'sink':
+          case artifactType.sink:
             sink = key;
             break;
           case 'transform':

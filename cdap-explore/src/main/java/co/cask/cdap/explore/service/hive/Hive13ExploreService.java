@@ -24,6 +24,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.HandleNotFoundException;
+import co.cask.cdap.explore.utils.ExploreTableNaming;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
 import co.cask.tephra.TransactionSystemClient;
@@ -52,13 +53,14 @@ import java.util.List;
 public class Hive13ExploreService extends BaseHiveExploreService {
 
   @Inject
-  public Hive13ExploreService(TransactionSystemClient txClient, DatasetFramework datasetFramework, CConfiguration cConf,
-                              Configuration hConf, HiveConf hiveConf,
+  public Hive13ExploreService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
+                              CConfiguration cConf, Configuration hConf,
                               @Named(Constants.Explore.PREVIEWS_DIR_NAME) File previewsDir,
                               StreamAdmin streamAdmin, Store store,
-                              SystemDatasetInstantiatorFactory datasetInstantiatorFactory) {
-    super(txClient, datasetFramework, cConf, hConf, hiveConf, previewsDir,
-          streamAdmin, store, datasetInstantiatorFactory);
+                              SystemDatasetInstantiatorFactory datasetInstantiatorFactory,
+                              ExploreTableNaming tableNaming) {
+    super(txClient, datasetFramework, cConf, hConf, previewsDir,
+          streamAdmin, store, datasetInstantiatorFactory, tableNaming);
     // This config sets the time Hive CLI getOperationStatus method will wait for the status of
     // a running query.
     System.setProperty(HiveConf.ConfVars.HIVE_SERVER2_LONG_POLLING_TIMEOUT.toString(), "50");
@@ -84,10 +86,7 @@ public class Hive13ExploreService extends BaseHiveExploreService {
 
     ImmutableList.Builder<QueryResult> rowsBuilder = ImmutableList.builder();
     for (Object[] row : rowSet) {
-      List<Object> cols = Lists.newArrayList();
-      for (int i = 0; i < row.length; i++) {
-        cols.add(row[i]);
-      }
+      List<Object> cols = Lists.newArrayList(row);
       rowsBuilder.add(new QueryResult(cols));
     }
     return rowsBuilder.build();

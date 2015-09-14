@@ -39,7 +39,6 @@ import org.junit.Test;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Type;
 import java.util.List;
-import javax.annotation.Nullable;
 
 /**
  * Test LogHandler.
@@ -59,66 +58,66 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
 
   @Test
   public void testFlowNext() throws Exception {
-    testNext("testApp1", "flows", "testFlow1", true, MockLogReader.TEST_NAMESPACE, null);
-    testNextNoMax("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE, null);
-    testNextFilter("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE, null);
-    testNextNoFrom("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE, null);
-    testNext("testApp1", "flows", "testFlow1", false, MockLogReader.TEST_NAMESPACE, null);
-    testNextRunId("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE, null);
+    testNext("testApp1", "flows", "testFlow1", true, MockLogReader.TEST_NAMESPACE);
+    testNextNoMax("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE);
+    testNextFilter("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE);
+    testNextNoFrom("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE);
+    testNext("testApp1", "flows", "testFlow1", false, MockLogReader.TEST_NAMESPACE);
+    testNextRunId("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE);
   }
 
   @Test
   public void testServiceNext() throws Exception {
-    testNext("testApp4", "services", "testService1", true, MockLogReader.TEST_NAMESPACE, null);
-    testNextNoMax("testApp4", "services", "testService1", MockLogReader.TEST_NAMESPACE, null);
-    testNextFilter("testApp4", "services", "testService1", MockLogReader.TEST_NAMESPACE, null);
-    testNextNoFrom("testApp4", "services", "testService1", MockLogReader.TEST_NAMESPACE, null);
-    testNext("testApp4", "services", "testService1", false, MockLogReader.TEST_NAMESPACE, null);
-    testNextRunId("testApp4", "services", "testService1", MockLogReader.TEST_NAMESPACE, null);
+    testNext("testApp4", "services", "testService1", true, MockLogReader.TEST_NAMESPACE);
+    testNextNoMax("testApp4", "services", "testService1", MockLogReader.TEST_NAMESPACE);
+    testNextFilter("testApp4", "services", "testService1", MockLogReader.TEST_NAMESPACE);
+    testNextNoFrom("testApp4", "services", "testService1", MockLogReader.TEST_NAMESPACE);
+    testNext("testApp4", "services", "testService1", false, MockLogReader.TEST_NAMESPACE);
+    testNextRunId("testApp4", "services", "testService1", MockLogReader.TEST_NAMESPACE);
   }
 
   @Test
   public void testMapReduceNext() throws Exception {
-    testNext("testApp3", "mapreduce", "testMapReduce1", true, Id.Namespace.DEFAULT.getId(), null);
+    testNext("testApp3", "mapreduce", "testMapReduce1", true, Id.Namespace.DEFAULT.getId());
     try {
-      testNext("testApp3", "mapreduce", "testMapReduce1", true, MockLogReader.TEST_NAMESPACE, null);
+      testNext("testApp3", "mapreduce", "testMapReduce1", true, MockLogReader.TEST_NAMESPACE);
       Assert.fail();
     } catch (AssertionError e) {
       // this must fail
     }
-    testNextNoMax("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId(), null);
-    testNextFilter("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId(), null);
-    testNextNoFrom("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId(), null);
-    testNextRunId("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId(), null);
+    testNextNoMax("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId());
+    testNextFilter("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId());
+    testNextNoFrom("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId());
+    testNextRunId("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId());
   }
 
   @Test
   public void testFlowPrev() throws Exception {
-    testPrev("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE, null);
-    testPrevNoMax("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE, null);
-    testPrevFilter("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE, null);
-    testPrevNoFrom("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE, null);
-    testPrevRunId("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE, null);
+    testPrev("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE);
+    testPrevNoMax("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE);
+    testPrevFilter("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE);
+    testPrevNoFrom("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE);
+    testPrevRunId("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE);
   }
 
   @Test
   public void testServicePrev() throws Exception {
-    testPrev("testApp4", "services", "testService1", MockLogReader.TEST_NAMESPACE, null);
-    testPrevNoMax("testApp4", "services", "testService1", MockLogReader.TEST_NAMESPACE, null);
-    testPrevFilter("testApp4", "services", "testService1", MockLogReader.TEST_NAMESPACE, null);
-    testPrevNoFrom("testApp4", "services", "testService1", MockLogReader.TEST_NAMESPACE, null);
-    testPrevRunId("testApp4", "services", "testService1", MockLogReader.TEST_NAMESPACE, null);
+    testPrev("testApp4", "services", "testService1", MockLogReader.TEST_NAMESPACE);
+    testPrevNoMax("testApp4", "services", "testService1", MockLogReader.TEST_NAMESPACE);
+    testPrevFilter("testApp4", "services", "testService1", MockLogReader.TEST_NAMESPACE);
+    testPrevNoFrom("testApp4", "services", "testService1", MockLogReader.TEST_NAMESPACE);
+    testPrevRunId("testApp4", "services", "testService1", MockLogReader.TEST_NAMESPACE);
   }
 
   @Test
   public void testMapReducePrev() throws Exception {
-    testPrev("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId(), null);
-    testPrevNoMax("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId(), null);
-    testPrevFilter("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId(), null);
-    testPrevNoFrom("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId(), null);
-    testPrevRunId("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId(), null);
+    testPrev("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId());
+    testPrevNoMax("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId());
+    testPrevFilter("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId());
+    testPrevNoFrom("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId());
+    testPrevRunId("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId());
     try {
-      testPrevNoMax("testApp3", "mapreduce", "testMapReduce1", MockLogReader.TEST_NAMESPACE, null);
+      testPrevNoMax("testApp3", "mapreduce", "testMapReduce1", MockLogReader.TEST_NAMESPACE);
     } catch (AssertionError e) {
       // this should fail.
       return;
@@ -128,11 +127,11 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
 
   @Test
   public void testFlowLogs() throws Exception {
-    testLogs("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE, null);
-    testLogsFilter("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE, null);
-    testLogsRunId("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE, null);
+    testLogs("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE);
+    testLogsFilter("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE);
+    testLogsRunId("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE);
     try {
-      testLogs("testApp1", "flows", "testFlow1", Id.Namespace.DEFAULT.getId(), null);
+      testLogs("testApp1", "flows", "testFlow1", Id.Namespace.DEFAULT.getId());
     } catch (AssertionError e) {
       // should fail
       return;
@@ -142,18 +141,18 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
 
   @Test
   public void testServiceLogs() throws Exception {
-    testLogs("testApp4", "services", "testService1", MockLogReader.TEST_NAMESPACE, null);
-    testLogsFilter("testApp4", "services", "testService1", MockLogReader.TEST_NAMESPACE, null);
-    testLogsRunId("testApp4", "services", "testService1", MockLogReader.TEST_NAMESPACE, null);
+    testLogs("testApp4", "services", "testService1", MockLogReader.TEST_NAMESPACE);
+    testLogsFilter("testApp4", "services", "testService1", MockLogReader.TEST_NAMESPACE);
+    testLogsRunId("testApp4", "services", "testService1", MockLogReader.TEST_NAMESPACE);
   }
 
   @Test
   public void testMapReduceLogs() throws Exception {
-    testLogs("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId(), null);
-    testLogsFilter("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId(), null);
-    testLogsRunId("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId(), null);
+    testLogs("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId());
+    testLogsFilter("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId());
+    testLogsRunId("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId());
     try {
-      testLogsFilter("testApp3", "mapreduce", "testMapReduce1", MockLogReader.TEST_NAMESPACE, null);
+      testLogsFilter("testApp3", "mapreduce", "testMapReduce1", MockLogReader.TEST_NAMESPACE);
     } catch (AssertionError e) {
       // should fail
       return;
@@ -162,98 +161,26 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
   }
 
   @Test
-  public void testAdapterLogs() throws Exception {
-    testLogs("testTemplate1", "mapreduce", "testMapReduce1", MockLogReader.TEST_NAMESPACE, "testAdapter1");
-    // also test that the same logs appear as mapreduce logs as well
-    testLogs("testTemplate1", "mapreduce", "testMapReduce1", MockLogReader.TEST_NAMESPACE, null);
-    testLogsFilter("testTemplate1", "mapreduce", "testMapReduce1", MockLogReader.TEST_NAMESPACE, "testAdapter1");
-    // tests adapter logs with run id
-    testLogsRunId("testTemplate1", "mapreduce", "testMapReduce1", MockLogReader.TEST_NAMESPACE, "testAdapter1");
-    try {
-      // in default namespace, mapreduce was run outside of adapter, so shouldn't find adapter logs
-      testLogs("testTemplate1", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId(), "testAdapter1");
-    } catch (AssertionError e) {
-      // Expected exception
-      return;
-    }
-    Assert.fail();
-  }
-
-  @Test
-  public void testAdapterLogsNext() throws Exception {
-    testNext("testTemplate1", "mapreduce", "testMapReduce1", true, MockLogReader.TEST_NAMESPACE, "testAdapter1");
-    testNextNoMax("testTemplate1", "mapreduce", "testMapReduce1", MockLogReader.TEST_NAMESPACE, "testAdapter1");
-    testNextFilter("testTemplate1", "mapreduce", "testMapReduce1", MockLogReader.TEST_NAMESPACE, "testAdapter1");
-    testNextNoFrom("testTemplate1", "mapreduce", "testMapReduce1", MockLogReader.TEST_NAMESPACE, "testAdapter1");
-    try {
-      testNext("testTemplate1", "mapreduce", "testMapReduce1", true, Id.Namespace.DEFAULT.getId(), "testAdapter1");
-    } catch (AssertionError e) {
-      // this must fail
-      return;
-    }
-    Assert.fail();
-  }
-
-  @Test
-  public void testAdapterLogsPrev() throws Exception {
-    testPrev("testTemplate1", "mapreduce", "testMapReduce1", MockLogReader.TEST_NAMESPACE, "testAdapter1");
-    testPrevNoMax("testTemplate1", "mapreduce", "testMapReduce1", MockLogReader.TEST_NAMESPACE, "testAdapter1");
-    testPrevFilter("testTemplate1", "mapreduce", "testMapReduce1", MockLogReader.TEST_NAMESPACE, "testAdapter1");
-    testPrevNoFrom("testTemplate1", "mapreduce", "testMapReduce1", MockLogReader.TEST_NAMESPACE, "testAdapter1");
-    try {
-      testPrevNoMax("testTemplate1", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId(), "testAdapter1");
-    } catch (AssertionError e) {
-      // this must fail.
-      return;
-    }
-    Assert.fail();
-  }
-
-  @Test
   public void testWorkflowLogs() throws Exception {
-    testLogs("testTemplate1", "workflows", "testWorkflow1", MockLogReader.TEST_NAMESPACE, "testAdapter1");
-    testLogsFilter("testTemplate1", "workflows", "testWorkflow1", MockLogReader.TEST_NAMESPACE, "testAdapter1");
-    try {
-      // in default namespace, we did not produce logs through adapters
-      testNext("testTemplate1", "workflows", "testWorkflow1", true, Id.Namespace.DEFAULT.getId(), "testAdapter1");
-    } catch (AssertionError e) {
-      // this must fail
-      return;
-    }
-    Assert.fail();
+    testLogs("testTemplate1", "workflows", "testWorkflow1", MockLogReader.TEST_NAMESPACE);
+    testLogsFilter("testTemplate1", "workflows", "testWorkflow1", MockLogReader.TEST_NAMESPACE);
   }
 
   @Test
   public void testWorkflowLogsNext() throws Exception {
-    testNext("testTemplate1", "workflows", "testWorkflow1", true, MockLogReader.TEST_NAMESPACE, "testAdapter1");
-    testNextNoMax("testTemplate1", "workflows", "testWorkflow1", MockLogReader.TEST_NAMESPACE, "testAdapter1");
-    testNextFilter("testTemplate1", "workflows", "testWorkflow1", MockLogReader.TEST_NAMESPACE, "testAdapter1");
-    testNextNoFrom("testTemplate1", "workflows", "testWorkflow1", MockLogReader.TEST_NAMESPACE, "testAdapter1");
-    try {
-      // in default namespace, we did not produce logs through adapters
-      testNext("testTemplate1", "workflows", "testWorkflow1", true, Id.Namespace.DEFAULT.getId(), "testAdapter1");
-    } catch (AssertionError e) {
-      // this must fail
-      return;
-    }
-    Assert.fail();
+    testNext("testTemplate1", "workflows", "testWorkflow1", true, MockLogReader.TEST_NAMESPACE);
+    testNextNoMax("testTemplate1", "workflows", "testWorkflow1", MockLogReader.TEST_NAMESPACE);
+    testNextFilter("testTemplate1", "workflows", "testWorkflow1", MockLogReader.TEST_NAMESPACE);
+    testNextNoFrom("testTemplate1", "workflows", "testWorkflow1", MockLogReader.TEST_NAMESPACE);
   }
 
   @Test
   public void testWorkflowLogsPrev() throws Exception {
-    testPrev("testTemplate1", "workflows", "testWorkflow1", MockLogReader.TEST_NAMESPACE, "testAdapter1");
-    testPrevNoMax("testTemplate1", "workflows", "testWorkflow1", MockLogReader.TEST_NAMESPACE, "testAdapter1");
-    testPrevFilter("testTemplate1", "workflows", "testWorkflow1", MockLogReader.TEST_NAMESPACE, "testAdapter1");
-    testPrevNoFrom("testTemplate1", "workflows", "testWorkflow1", MockLogReader.TEST_NAMESPACE, "testAdapter1");
-    testPrevRunId("testTemplate1", "workflows", "testWorkflow1", MockLogReader.TEST_NAMESPACE, "testAdapter1");
-    try {
-      // in default namespace, we did not produce logs through adapters
-      testPrevNoMax("testTemplate1", "workflows", "testWorkflow1", Id.Namespace.DEFAULT.getId(), "testAdapter1");
-    } catch (AssertionError e) {
-      // this should fail.
-      return;
-    }
-    Assert.fail();
+    testPrev("testTemplate1", "workflows", "testWorkflow1", MockLogReader.TEST_NAMESPACE);
+    testPrevNoMax("testTemplate1", "workflows", "testWorkflow1", MockLogReader.TEST_NAMESPACE);
+    testPrevFilter("testTemplate1", "workflows", "testWorkflow1", MockLogReader.TEST_NAMESPACE);
+    testPrevNoFrom("testTemplate1", "workflows", "testWorkflow1", MockLogReader.TEST_NAMESPACE);
+    testPrevRunId("testTemplate1", "workflows", "testWorkflow1", MockLogReader.TEST_NAMESPACE);
   }
 
   @Test
@@ -264,13 +191,11 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     testNextSystemLogs(Constants.Service.MASTER_SERVICES);
   }
 
-  private void testNext(String appId, String entityType, String entityId, boolean escape, String namespace,
-                        @Nullable String adapterId)
+  private void testNext(String appId, String entityType, String entityId, boolean escape, String namespace)
     throws Exception {
     String img = escape ? "&lt;img&gt;" : "<img>";
     String nextUrl = String.format("apps/%s/%s/%s/logs/next?fromOffset=%s&max=10&escape=%s",
                                    appId, entityType, entityId, getFromOffset(5), escape);
-    nextUrl = getUrlWithAdapterId(nextUrl, adapterId, "&");
     HttpResponse response = doGet(getVersionedAPIPath(nextUrl, namespace));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     String out = EntityUtils.toString(response.getEntity());
@@ -287,11 +212,9 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     }
   }
 
-  private void testNextNoMax(String appId, String entityType, String entityId, String namespace,
-                             @Nullable String adapterId) throws Exception {
+  private void testNextNoMax(String appId, String entityType, String entityId, String namespace) throws Exception {
     String nextNoMaxUrl = String.format("apps/%s/%s/%s/logs/next?fromOffset=%s",
                                         appId, entityType, entityId, getFromOffset(10));
-    nextNoMaxUrl = getUrlWithAdapterId(nextNoMaxUrl, adapterId, "&");
     HttpResponse response = doGet(getVersionedAPIPath(nextNoMaxUrl, namespace));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     String out = EntityUtils.toString(response.getEntity());
@@ -308,11 +231,9 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     }
   }
 
-  private void testNextFilter(String appId, String entityType, String entityId, String namespace,
-                              @Nullable String adapterId) throws Exception {
+  private void testNextFilter(String appId, String entityType, String entityId, String namespace) throws Exception {
     String nextFilterUrl = String.format("apps/%s/%s/%s/logs/next?fromOffset=%s&max=16&filter=loglevel=ERROR", appId,
                                          entityType, entityId, getFromOffset(12));
-    nextFilterUrl = getUrlWithAdapterId(nextFilterUrl, adapterId, "&");
     HttpResponse response = doGet(getVersionedAPIPath(nextFilterUrl, namespace));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     String out = EntityUtils.toString(response.getEntity());
@@ -329,10 +250,8 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     }
   }
 
-  private void testNextNoFrom(String appId, String entityType, String entityId, String namespace,
-                              @Nullable String adapterId) throws Exception {
+  private void testNextNoFrom(String appId, String entityType, String entityId, String namespace) throws Exception {
     String nextNoFromUrl = String.format("apps/%s/%s/%s/logs/next", appId, entityType, entityId);
-    nextNoFromUrl = getUrlWithAdapterId(nextNoFromUrl, adapterId, "?");
     HttpResponse response = doGet(getVersionedAPIPath(nextNoFromUrl, namespace));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     String out = EntityUtils.toString(response.getEntity());
@@ -349,8 +268,7 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     }
   }
 
-  private void testNextRunId(String appId, String entityType, String entityId, String namespace,
-                             @Nullable String adapterId) throws Exception {
+  private void testNextRunId(String appId, String entityType, String entityId, String namespace) throws Exception {
     Id.Program id = Id.Program.from(namespace, appId, ProgramType.valueOfCategoryName(entityType), entityId);
     RunRecord runRecord = mockLogReader.getRunRecord(id);
     int expectedEvents = 20;
@@ -359,7 +277,6 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     }
     String nextNoFromUrl = String.format("apps/%s/%s/%s/runs/%s/logs/next?max=100",
                                          appId, entityType, entityId, runRecord.getPid());
-    nextNoFromUrl = getUrlWithAdapterId(nextNoFromUrl, adapterId, "&");
     HttpResponse response = doGet(getVersionedAPIPath(nextNoFromUrl, namespace));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     String out = EntityUtils.toString(response.getEntity());
@@ -376,11 +293,9 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     }
   }
 
-  private void testPrev(String appId, String entityType, String entityId, String namespace,
-                        @Nullable String adapterId) throws Exception {
+  private void testPrev(String appId, String entityType, String entityId, String namespace) throws Exception {
     String prevUrl = String.format("apps/%s/%s/%s/logs/prev?fromOffset=%s&max=10",
                                    appId, entityType, entityId, getToOffset(25));
-    prevUrl = getUrlWithAdapterId(prevUrl, adapterId, "&");
     HttpResponse response = doGet(getVersionedAPIPath(prevUrl, namespace));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     String out = EntityUtils.toString(response.getEntity());
@@ -397,15 +312,7 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     }
   }
 
-  private String getUrlWithAdapterId(String prevUrl, @Nullable String adapterId, String joiner) {
-    if (adapterId != null) {
-       return String.format("%s%sadapterid=%s", prevUrl, joiner, adapterId);
-    }
-    return prevUrl;
-  }
-
-  private void testPrevRunId(String appId, String entityType, String entityId, String namespace,
-                             @Nullable String adapterId) throws Exception {
+  private void testPrevRunId(String appId, String entityType, String entityId, String namespace) throws Exception {
     Id.Program id = Id.Program.from(namespace, appId, ProgramType.valueOfCategoryName(entityType), entityId);
     RunRecord runRecord = mockLogReader.getRunRecord(id);
     int expectedEvents = 20;
@@ -414,7 +321,6 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     }
     String prevRunIdUrl = String.format("apps/%s/%s/%s/runs/%s/logs/prev?max=100",
                                         appId, entityType, entityId, runRecord.getPid());
-    prevRunIdUrl = getUrlWithAdapterId(prevRunIdUrl, adapterId, "&");
     HttpResponse response = doGet(getVersionedAPIPath(prevRunIdUrl, namespace));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     String out = EntityUtils.toString(response.getEntity());
@@ -445,11 +351,9 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
   }
 
-  private void testPrevNoMax(String appId, String entityType, String entityId, String namespace,
-                             @Nullable String adapterId) throws Exception {
+  private void testPrevNoMax(String appId, String entityType, String entityId, String namespace) throws Exception {
     String prevNoMaxUrl = String.format("apps/%s/%s/%s/logs/prev?fromOffset=%s",
                                         appId, entityType, entityId, getToOffset(70));
-    prevNoMaxUrl = getUrlWithAdapterId(prevNoMaxUrl, adapterId, "&");
     HttpResponse response = doGet(getVersionedAPIPath(prevNoMaxUrl, namespace));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     String out = EntityUtils.toString(response.getEntity());
@@ -466,11 +370,9 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     }
   }
 
-  private void testPrevFilter(String appId, String entityType, String entityId, String namespace,
-                              @Nullable String adapterId) throws Exception {
+  private void testPrevFilter(String appId, String entityType, String entityId, String namespace) throws Exception {
     String prevFilterUrl = String.format("apps/%s/%s/%s/logs/prev?fromOffset=%s&max=16&filter=loglevel=ERROR",
                                          appId, entityType, entityId, getToOffset(41));
-    prevFilterUrl = getUrlWithAdapterId(prevFilterUrl, adapterId, "&");
     HttpResponse response = doGet(getVersionedAPIPath(prevFilterUrl, namespace));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     String out = EntityUtils.toString(response.getEntity());
@@ -487,10 +389,8 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     }
   }
 
-  private void testPrevNoFrom(String appId, String entityType, String entityId, String namespace,
-                              @Nullable String adapterId) throws Exception {
+  private void testPrevNoFrom(String appId, String entityType, String entityId, String namespace) throws Exception {
     String prevNoFrom = String.format("apps/%s/%s/%s/logs/prev", appId, entityType, entityId);
-    prevNoFrom = getUrlWithAdapterId(prevNoFrom, adapterId, "?");
     HttpResponse response = doGet(getVersionedAPIPath(prevNoFrom, namespace));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     String out = EntityUtils.toString(response.getEntity());
@@ -507,13 +407,11 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     }
   }
 
-  private void testLogs(String appId, String entityType, String entityId, String namespace,
-                        @Nullable String adapterId) throws Exception {
+  private void testLogs(String appId, String entityType, String entityId, String namespace) throws Exception {
     long startTime = MockLogReader.getMockTimeSecs(20);
     long stopTime = MockLogReader.getMockTimeSecs(35);
     String logsUrl = String.format("apps/%s/%s/%s/logs?start=%s&stop=%s",
                                    appId, entityType, entityId, startTime, stopTime);
-    logsUrl = getUrlWithAdapterId(logsUrl, adapterId, "&");
     HttpResponse response = doGet(getVersionedAPIPath(logsUrl, namespace));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     String out = EntityUtils.toString(response.getEntity());
@@ -528,14 +426,12 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
 
     // Try with invalid time range -> start > stop
     logsUrl = String.format("apps/%s/%s/%s/logs?start=%s&stop=%s",
-                                   appId, entityType, entityId, 350, 300);
-    logsUrl = getUrlWithAdapterId(logsUrl, adapterId, "&");
+      appId, entityType, entityId, 350, 300);
     response = doGet(getVersionedAPIPath(logsUrl, namespace));
     Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.getCode(), response.getStatusLine().getStatusCode());
   }
 
-  private void testLogsRunId(String appId, String entityType, String entityId, String namespace,
-                             @Nullable String adapterId) throws Exception {
+  private void testLogsRunId(String appId, String entityType, String entityId, String namespace) throws Exception {
     Id.Program id = Id.Program.from(namespace, appId, ProgramType.valueOfCategoryName(entityType), entityId);
     RunRecord runRecord = mockLogReader.getRunRecord(id);
     int expectedEvents = 20;
@@ -546,7 +442,6 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     long stopTime = MockLogReader.getMockTimeSecs(100);
     String nextNoFromUrl = String.format("apps/%s/%s/%s/runs/%s/logs?start=%s&stop=%s",
                                          appId, entityType, entityId, runRecord.getPid(), startTime, stopTime);
-    nextNoFromUrl = getUrlWithAdapterId(nextNoFromUrl, adapterId, "&");
     HttpResponse response = doGet(getVersionedAPIPath(nextNoFromUrl, namespace));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     String out = EntityUtils.toString(response.getEntity());
@@ -560,13 +455,11 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     }
   }
 
-  private void testLogsFilter(String appId, String entityType, String entityId, String namespace,
-                              @Nullable String adapterId) throws Exception {
+  private void testLogsFilter(String appId, String entityType, String entityId, String namespace) throws Exception {
     long startTime = MockLogReader.getMockTimeSecs(20);
     long stopTime = MockLogReader.getMockTimeSecs(35);
     String logsFilterUrl = String.format("apps/%s/%s/%s/logs?start=%s&stop=%s&filter=loglevel=ERROR", appId,
                                          entityType, entityId, startTime, stopTime);
-    logsFilterUrl = getUrlWithAdapterId(logsFilterUrl, adapterId, "&");
     HttpResponse response = doGet(getVersionedAPIPath(logsFilterUrl, namespace));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     String out = EntityUtils.toString(response.getEntity());

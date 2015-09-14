@@ -1,0 +1,215 @@
+/*
+ * Copyright © 2015 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+@import '../../styles/variables.less';
+@import "../../../bower_components/bootstrap/less/mixins.less";
+@import '../../styles/themes/cdap/mixins.less';
+
+body.theme-cdap.state-adapters-create {
+  div.console {
+    border-bottom: 1px solid @table-border-color;
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 290px;
+    z-index: 1026;
+    overflow-x: hidden;
+    .transition(all 0.2s ease);
+    @media (max-width: @screen-sm-max) {
+      bottom: 27px;
+    }
+    &.collapsed {
+      left: 130px;
+    }
+  }
+  div.console-tabs {
+    background-color: @body-bg;
+    border-top: 1px solid @table-border-color;
+    height: 40px;
+    ul.nav-tabs {
+      border-bottom: 0;
+      li {
+        margin-bottom: 0;
+        .border-radius(0);
+        border: 0;
+        border-bottom: 1px solid @body-bg;
+        color: #666;
+        font-weight: 500;
+        line-height: inherit;
+        margin-right: 0;
+        padding: 10px 15px;
+        .border-radius(0);
+        .transition(all 0.2s ease);
+        &:hover, &:focus {
+          background-color: transparent;
+          border: 0;
+          border-bottom: 2px solid transparent;
+          cursor: pointer;
+        }
+        &.active {
+          border-bottom: 2px solid @cdap-orange;
+        }
+      }
+      + a.btn {
+        background-color: white;
+        border: 1px solid @table-border-color;
+        color: #666;
+        font-size: 21px;
+        line-height: 25px;
+        margin: 6px 15px 6px 0;
+        padding: 0 6px;
+        &.active, &:active {
+          .box-shadow(none);
+        }
+      }
+    }
+  }
+  div.console-type {
+    background-color: white;
+    border-top: 1px solid @table-border-color;
+    overflow-y: scroll;
+    height: 30vh;
+    width: 100%;
+    .transition(all 0.2s ease);
+    &.is-collapsed {
+      border-top: 1px solid @body-bg;
+      height: 0;
+      padding: 0;
+    }
+    h4 {
+      color: #9D9D9D;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .table {
+      background-color: transparent;
+      margin: 0;
+      tbody {
+        tr:last-child td {
+          border-bottom: 0;
+        }
+      }
+      th, td {
+        max-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      th {
+        border: 0;
+        padding: 0;
+        @media (min-width: @screen-lg-min) {
+          padding-left: 10px;
+        }
+        label {
+          margin-bottom: 0;
+          vertical-align: top;
+        }
+      }
+      td {
+        border: 1px solid @modal-table-border-color;
+        border-collapse: collapse;
+        height: 30px;
+        padding: 0 5px;
+        vertical-align: middle;
+        &.name {
+          width: 35%;
+          @media (min-width: @screen-lg-min) {
+            border-left: 0;
+          }
+        }
+        &.type {
+          width: 30%;
+        }
+        &.nullable {
+          width: 20%;
+        }
+        &.trash {
+          width: 15%;
+
+          a {
+            padding-left: 0;
+            padding-right: 0;
+          }
+
+          @media (min-width: @screen-lg-min) {
+            border-right: 0;
+          }
+          .btn:active {
+            .box-shadow(none);
+          }
+        }
+      }
+      .control-label {
+        font-size: 13px;
+      }
+      .form-control {
+        border: 0;
+        padding: 0;
+      }
+
+      input {
+        &[type="text"] {
+          padding-left: 5px;
+        }
+        &[type="checkbox"] {
+          margin: 0;
+        }
+      }
+      .fa-trash {
+        color: @brand-danger;
+        font-size: 15px;
+      }
+    }
+    .form-control {
+      height: 30px;
+      &:focus {
+        border-color: @table-border-color;
+        .box-shadow(none);
+      }
+    }
+    .bottompanel-header {
+      border-bottom: 1px solid @table-border-color;
+      padding: 15px 10px;
+      > div:first-child {
+        max-width: 80%;
+      }
+      h3 {
+        color: #202028;
+        font-weight: 500;
+        margin: 0 0 5px;
+      }
+      p {
+        color: #9d9d9d;
+        margin-bottom: 0;
+        span {
+          display: block;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+      }
+      .btn-group {
+        > div {
+          display: inline-block;
+        }
+      }
+    }
+    .bottompanel-body {
+      padding: 0 10px;
+    }
+  }
+}

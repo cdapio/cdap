@@ -28,9 +28,6 @@ import java.util.Set;
  */
 public enum ElementType {
 
-  ADAPTER("adapter", new Noun("adapter"), new Noun("Adapter"), null, null,
-          ArgumentName.ADAPTER),
-
   INSTANCE("instance", new Noun("instance"), new Noun("Instance"), null, null,
            ArgumentName.INSTANCE, Capability.PREFERENCES),
 
@@ -40,9 +37,6 @@ public enum ElementType {
   APP("app", new Noun("application"), new Noun("Application"), null, null,
       ArgumentName.APP, Capability.LIST, Capability.PREFERENCES),
 
-  APP_TEMPLATE("app-template", new Noun("application template"), new Noun("Application Template"), null, null,
-      ArgumentName.APP_TEMPLATE, Capability.LIST),
-
   DATASET("dataset", new Noun("dataset"), new Noun("Dataset"), null, null,
           ArgumentName.DATASET, Capability.LIST),
 
@@ -51,6 +45,8 @@ public enum ElementType {
 
   DATASET_TYPE("dataset type", new Noun("dataset type"), new Noun("Dataset type"), null, null,
                ArgumentName.DATASET_TYPE, Capability.LIST),
+
+  VIEW("view", new Noun("view"), new Noun("View"), null, null, ArgumentName.VIEW, Capability.LIST),
 
   QUERY("query", new Noun("query"), new Noun("Query"), null, null, ArgumentName.QUERY),
 

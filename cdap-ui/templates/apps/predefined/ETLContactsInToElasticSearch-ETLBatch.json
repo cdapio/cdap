@@ -1,5 +1,9 @@
 {
-    "template": "ETLBatch",
+    "artifact": {
+        "name": "cdap-etl-batch",
+        "scope": "SYSTEM",
+        "version": "3.2.0-SNAPSHOT"
+    },
     "description": "Contacts Ingested are transformed in-flight and written to AVRO Time partitioned fileset.",
     "config": {
         "source": {
@@ -11,10 +15,10 @@
                 "format": "csv"
             }
         },
-        "sink": {
+        "sinks": [{
             "name": "Elasticsearch",
             "properties": {}
-        },
+        }],
         "transforms": [
             {
                 "name": "Script",

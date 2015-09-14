@@ -37,17 +37,17 @@ import co.cask.cdap.template.etl.api.Transformation;
  */
 @Beta
 public abstract class BatchSink<IN, KEY_OUT, VAL_OUT> extends BatchConfigurable<BatchSinkContext>
-  implements Transformation<IN, KeyValue<KEY_OUT, VAL_OUT>>, StageLifecycle<BatchSinkContext> {
+  implements Transformation<IN, KeyValue<KEY_OUT, VAL_OUT>>, StageLifecycle<BatchRuntimeContext> {
 
   /**
    * Initialize the Batch Sink stage. Executed inside the Batch Run. This method is guaranteed to be invoked
    * before any calls to {@link BatchSink#transform} are made.
    *
-   * @param context {@link BatchSinkContext}
+   * @param context {@link BatchRuntimeContext}
    * @throws Exception if there is any error during initialization
    */
   @Override
-  public void initialize(BatchSinkContext context) throws Exception {
+  public void initialize(BatchRuntimeContext context) throws Exception {
     // no-op
   }
 

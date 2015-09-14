@@ -26,8 +26,8 @@ import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
+import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.api.stream.GenericStreamEventData;
-import co.cask.cdap.api.templates.plugins.PluginConfig;
 import co.cask.cdap.etl.common.ETLUtils;
 import co.cask.cdap.template.etl.api.Emitter;
 import co.cask.cdap.template.etl.api.PipelineConfigurer;
@@ -52,7 +52,7 @@ import javax.annotation.Nullable;
  * A {@link BatchSource} for {@link Stream} to use {@link Stream} as Source.
  */
 @SuppressWarnings("unused")
-@Plugin(type = "source")
+@Plugin(type = "batchsource")
 @Name("Stream")
 @Description("Batch source for a stream.")
 public class StreamBatchSource extends BatchSource<LongWritable, Object, StructuredRecord> {

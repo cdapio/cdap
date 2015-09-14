@@ -24,7 +24,7 @@ import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
-import co.cask.cdap.api.templates.plugins.PluginConfig;
+import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.etl.common.ETLUtils;
 import co.cask.cdap.template.etl.api.Emitter;
 import co.cask.cdap.template.etl.api.PipelineConfigurer;
@@ -48,7 +48,7 @@ import javax.annotation.Nullable;
 /**
  * A {@link BatchSource} to read Avro record from {@link TimePartitionedFileSet}
  */
-@Plugin(type = "source")
+@Plugin(type = "batchsource")
 @Name("TPFSAvro")
 @Description("Reads from a TimePartitionedFileSet whose data is in Avro format.")
 public class TimePartitionedFileSetDatasetAvroSource extends

@@ -75,10 +75,11 @@ public interface Store {
    * @param id         Info about program
    * @param pid        run id
    * @param startTime  start timestamp in seconds; if run id is time-based pass the time from the run id
-   * @param adapter    name of the adapter associated with the run
    * @param twillRunId twill run id
+   * @param runtimeArgs the runtime arguments for this program run
    */
-  void setStart(Id.Program id, String pid, long startTime, String adapter, @Nullable String twillRunId);
+  void setStart(Id.Program id, String pid, long startTime, @Nullable String twillRunId,
+                Map<String, String> runtimeArgs);
 
   /**
    * Logs start of program run.
@@ -112,21 +113,6 @@ public interface Store {
    * @param pid     run id
    */
   void setResume(Id.Program id, String pid);
-
-  /**
-   * Fetches run records for particular program. Returns only finished runs.
-   * Returned ProgramRunRecords are sorted by their startTime.
-   *
-   * @param id        program id.
-   * @param status    status of the program running/completed/failed or all
-   * @param startTime fetch run history that has started after the startTime in seconds
-   * @param endTime   fetch run history that has started before the endTime in seconds
-   * @param limit     max number of entries to fetch for this history call
-   * @param adapter   name of the adapter associated with the runs
-   * @return          list of logged runs
-   */
-  List<RunRecordMeta> getRuns(Id.Program id, ProgramRunStatus status, long startTime, long endTime, int limit,
-                              String adapter);
 
   /**
    * Fetches run records for particular program. Returns only finished runs.
@@ -300,29 +286,13 @@ public interface Store {
   void removeAll(Id.Namespace id);
 
   /**
-   * Store the user arguments needed in the run-time.
-   *
-   * @param programId id of program
-   * @param arguments Map of key value arguments
-   */
-  void storeRunArguments(Id.Program programId, Map<String, String> arguments);
-
-  /**
    * Get run time arguments for a program.
    *
-   * @param programId id of the program.
+   * @param runId id of the program run
    * @return Map of key, value pairs
    */
-  Map<String, String> getRunArguments(Id.Program programId);
+  Map<String, String> getRuntimeArguments(Id.Run runId);
 
-  /**
-   * Changes input stream for a flowlet connection
-   * @param flow defines flow that contains a flowlet which connection to change
-   * @param flowletId flowlet which connection to change
-   * @param oldValue name of the stream in stream connection to change
-   * @param newValue name of the new stream to connect to
-   */
-  void changeFlowletSteamConnection(Id.Program flow, String flowletId, String oldValue, String newValue);
   /**
    * Adds a schedule for a particular program. If the schedule with the name already exists, the method will
    * throw RuntimeException.
@@ -400,63 +370,52 @@ public interface Store {
   /**
    * Adds adapter spec to the store, with status = {@link AdapterStatus#STARTED}. Will overwrite the existing spec.
    *
+   * @deprecated only used for cdap upgrade
    * @param id Namespace id
    * @param adapterSpec adapter specification of the adapter being added
    */
+  @Deprecated
   void addAdapter(Id.Namespace id, AdapterDefinition adapterSpec);
 
   /**
    * Fetch the adapter identified by the name in a give namespace.
    *
+   * @deprecated only used for cdap upgrade
    * @param id  Namespace id.
    * @param name Adapter name
    * @return an instance of {@link AdapterDefinition}.
    */
   @Nullable
+  @Deprecated
   AdapterDefinition getAdapter(Id.Namespace id, String name);
-
-  /**
-   * Fetch the status for an adapter identified by the name in a give namespace.
-   *
-   * @param id  Namespace id.
-   * @param name Adapter name
-   * @return status of specified adapter.
-   */
-  @Nullable
-  AdapterStatus getAdapterStatus(Id.Namespace id, String name);
-
-  /**
-   * Set the status for an adapter identified by the name in a give namespace.
-   *
-   * @param id  Namespace id.
-   * @param name Adapter name
-   * @param status Status to set
-   * @return previous status of adapter, or null if specified adapter is not found.
-   */
-  @Nullable
-  AdapterStatus setAdapterStatus(Id.Namespace id, String name, AdapterStatus status);
 
   /**
    * Fetch all the adapters in a given namespace.
    *
+   * @deprecated only used for cdap upgrade
    * @param id Namespace id.
    * @return {@link Collection} of Adapter Specifications.
    */
+  @Deprecated
   Collection<AdapterDefinition> getAllAdapters(Id.Namespace id);
 
   /**
    * Remove the adapter specified by the name in a given namespace.
    *
+   * @deprecated only used for cdap upgrade
    * @param id Namespace id.
    * @param name Adapter name.
    */
+  @Deprecated
   void removeAdapter(Id.Namespace id, String name);
 
   /**
    * Remove all the adapters in a given namespace.
    *
+   * @deprecated only used in unit test and cdap upgrade
    * @param id Namespace id.
    */
+  @Deprecated
   void removeAllAdapters(Id.Namespace id);
 
   /**
@@ -467,12 +426,10 @@ public interface Store {
    * @param workflowRunId       Id of the Workflow run which started this program
    * @param workflowNodeId      Id of the node in the Workflow which represents this program
    * @param startTimeInSeconds  Start timestamp in seconds; if run id is time-based pass the time from the run id
-   * @param adapter             The name of the adapter associated with the run
    * @param twillRunId          RunId generated by twill when running in distributed mode
    */
   void setWorkflowProgramStart(Id.Program programId, String programRunId, String workflow, String workflowRunId,
-                               String workflowNodeId, long startTimeInSeconds, @Nullable String adapter,
-                               @Nullable String twillRunId);
+                               String workflowNodeId, long startTimeInSeconds, @Nullable String twillRunId);
 
   /**
    * Updates the {@link WorkflowToken} for a specified run of a workflow.

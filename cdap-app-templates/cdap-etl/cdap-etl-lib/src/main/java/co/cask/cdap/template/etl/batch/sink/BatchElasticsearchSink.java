@@ -22,7 +22,7 @@ import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.dataset.lib.KeyValue;
-import co.cask.cdap.api.templates.plugins.PluginConfig;
+import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.etl.common.StructuredRecordStringConverter;
 import co.cask.cdap.template.etl.api.Emitter;
 import co.cask.cdap.template.etl.api.batch.BatchSink;
@@ -48,7 +48,7 @@ import java.util.Map;
  * https://www.elastic.co/guide/en/elasticsearch/guide/current/_index_settings.html.
  * <p/>
  */
-@Plugin(type = "sink")
+@Plugin(type = "batchsink")
 @Name("Elasticsearch")
 @Description("CDAP Elasticsearch Batch Sink takes the structured record from the input source and converts it " +
   "to a JSON string, then indexes it in Elasticsearch using the index, type, and id specified by the user. " +

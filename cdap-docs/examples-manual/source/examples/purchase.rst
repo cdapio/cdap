@@ -25,6 +25,7 @@ and write to an ObjectStore dataset.
     included in the example's ``/bin`` directory, or by using the CDAP UI.
   - The ``PurchaseFlow`` reads the ``purchaseStream`` and converts every input string into a
     Purchase object and stores the object in the *purchases* dataset.
+  - The ``PurchaseStore`` flowlet demonstrates the setting of memory used by its YARN container. 
   - User profile information for the user can be added by using ``curl`` calls (or another method) which are
     then stored in the ``userProfiles`` dataset.
   - The ``CatalogLookup`` service fetches the catalog id for a given product. The ``CatalogLookup`` service
@@ -38,9 +39,10 @@ and write to an ObjectStore dataset.
     the ``UserProfileService`` and creates a purchase history. It stores the purchase history in the
     ``history`` dataset every morning at 4:00 A.M. using a time schedule, and also every time 1MB of data
     is ingested by the ``purchaseStream`` using a data schedule.
-  - You can either manually (in the Process screen of the CDAP UI) or 
-    programmatically execute the ``PurchaseHistoryBuilder`` MapReduce to store 
-    customers' purchase history in the ``history`` dataset.
+  - You can either manually (in the Process screen of the CDAP UI) or programmatically execute the 
+    ``PurchaseHistoryBuilder`` MapReduce to store customers' purchase history in the ``history`` dataset.
+  - The ``PurchaseHistoryBuilder`` MapReduce demonstrates the setting of memory used by its YARN container, both 
+    as default values and as runtime arguments.
   - Use the ``PurchaseHistoryService`` to retrieve from the ``history`` dataset the purchase history of a user.
   - Execute a SQL query over the ``history`` dataset. You can do this using a series of ``curl``
     calls, or more conveniently using the :ref:`Command Line Interface <cli>`.
@@ -71,7 +73,7 @@ with this method defined in ``PurchaseStore.java``:
 .. literalinclude:: /../../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseStore.java
    :language: java
    :start-after: @ProcessInput
-   :end-before: /**
+   :end-before: @Override
 
 This method is what actually puts data into the *purchases* dataset, by writing to the
 dataset with each purchase's timestamp and the ``Purchase`` Object.
@@ -81,15 +83,41 @@ MapReduce |---| ``PurchaseHistoryBuilder`` |---| to aggregate all purchases into
 history. It writes to the *history* dataset, a custom dataset that embeds an ``ObjectStore`` and 
 implements the ``RecordScannable`` interface to allow SQL queries over the dataset.
 
+The memory requirements of the flowlet ``PurchaseStore`` are set in its ``configure`` method:
+
+.. literalinclude:: /../../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseStore.java
+   :language: java
+   :lines: 60-71
+   :start-after: }
+   :end-before:   /**
+
+``PurchaseHistoryBuilder`` MapReduce
+------------------------------------
+
+This MapReduce program demonstrates the setting of the YARN container resources, both as
+default values used in configuration and as runtime arguments:
+
+.. literalinclude:: /../../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseHistoryBuilder.java
+   :language: java
+   :lines: 40-75
+   :start-after: */
+   :end-before: /**
 
 ``PurchaseHistoryService`` Service
 ----------------------------------
 
-This service has a ``history/{customer}`` endpoint to obtain the purchase history of a given customer.
+This service has a ``history/{customer}`` endpoint to obtain the purchase history of a given customer. It also demonstrates
+the use of ``Resources`` to configure the memory requirements of the service:
+
+.. literalinclude:: /../../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseHistoryService.java
+   :language: java
+   :lines: 39-45
 
 
 ``UserProfileService`` Service
 ------------------------------
+
+.. highlight:: console
 
 This service has two endpoints:
 

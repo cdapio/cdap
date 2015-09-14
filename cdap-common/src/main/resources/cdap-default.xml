@@ -405,10 +405,11 @@
   <property>
     <name>data.tx.snapshot.codecs</name>
     <value>
-            co.cask.cdap.data2.transaction.snapshot.SnapshotCodecV1,
-            co.cask.cdap.data2.transaction.snapshot.SnapshotCodecV2,
-            co.cask.tephra.snapshot.SnapshotCodecV3
-        </value>
+      co.cask.cdap.data2.transaction.snapshot.SnapshotCodecV1,
+      co.cask.cdap.data2.transaction.snapshot.SnapshotCodecV2,
+      co.cask.tephra.snapshot.SnapshotCodecV3,
+      co.cask.tephra.snapshot.SnapshotCodecV4
+    </value>
     <description>
       Specifies the class names of all supported transaction state codecs
     </description>
@@ -1531,6 +1532,30 @@
     <description>
       Router address to which CDAP UI connects
     </description>
+  </property>
+
+  <property>
+    <name>metadata.service.bind.address</name>
+    <value>0.0.0.0</value>
+    <description>Default inet address for binding Metadata HTTP service</description>
+  </property>
+
+  <property>
+    <name>metadata.service.worker.threads</name>
+    <value>${http.service.worker.threads}</value>
+    <description>Number of Netty server IO worker threads for metadata HTTP service</description>
+  </property>
+
+  <property>
+    <name>metadata.service.exec.threads</name>
+    <value>${http.service.exec.threads}</value>
+    <description>Number of Netty server executor threads for metadata HTTP service</description>
+  </property>
+
+  <property>
+    <name>metadata.updates.kafka.topic</name>
+    <value>metadata-updates</value>
+    <description>Kafka topic to which metadata update notifications are published</description>
   </property>
 
 </configuration>

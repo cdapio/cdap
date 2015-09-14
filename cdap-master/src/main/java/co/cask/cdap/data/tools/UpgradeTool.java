@@ -23,7 +23,6 @@ import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
 import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.KafkaClientModule;
@@ -45,6 +44,8 @@ import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
+import co.cask.cdap.data2.metadata.writer.LineageWriter;
+import co.cask.cdap.data2.metadata.writer.NoOpLineageWriter;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.explore.guice.ExploreClientModule;
@@ -134,7 +135,6 @@ public class UpgradeTool {
 
   public UpgradeTool() throws Exception {
     this.cConf = CConfiguration.create();
-    this.cConf.setBoolean(Constants.Scheduler.SCHEDULERS_LAZY_START, true);
     this.hConf = HBaseConfiguration.create();
     this.injector = init();
     this.txService = injector.getInstance(TransactionService.class);
@@ -204,6 +204,8 @@ public class UpgradeTool {
           bind(MetricDatasetFactory.class).to(DefaultMetricDatasetFactory.class).in(Scopes.SINGLETON);
           bind(MetricStore.class).to(DefaultMetricStore.class);
           bind(DatasetFramework.class).to(InMemoryDatasetFramework.class).in(Scopes.SINGLETON);
+          // Upgrade tool does not need to record lineage for now.
+          bind(LineageWriter.class).to(NoOpLineageWriter.class);
         }
 
         @Provides
@@ -224,7 +226,7 @@ public class UpgradeTool {
           return new DatasetInstanceManager(mdsDatasetsRegistry);
         }
 
-        // This is needed because the LocalAdapterManager, LocalApplicationManager, LocalApplicationTemplateManager
+        // This is needed because the LocalApplicationManager
         // expects a dsframework injection named datasetMDS
         @Provides
         @Singleton

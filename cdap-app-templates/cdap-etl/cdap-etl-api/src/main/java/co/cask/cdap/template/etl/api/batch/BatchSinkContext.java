@@ -18,7 +18,6 @@ package co.cask.cdap.template.etl.api.batch;
 
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
-import co.cask.cdap.api.dataset.Dataset;
 
 import java.util.Map;
 

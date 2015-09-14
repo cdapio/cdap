@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -30,7 +30,6 @@ import co.cask.cdap.explore.utils.ColumnsArgs;
 import co.cask.cdap.explore.utils.FunctionsArgs;
 import co.cask.cdap.explore.utils.SchemasArgs;
 import co.cask.cdap.explore.utils.TablesArgs;
-import co.cask.cdap.internal.explore.ExploreTableNaming;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.Id;
@@ -76,7 +75,6 @@ abstract class ExploreHttpClient implements Explore {
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .create();
-  private static final ExploreTableNaming NAMING = new ExploreTableNaming();
 
   private static final Type MAP_TYPE_TOKEN = new TypeToken<Map<String, String>>() { }.getType();
   private static final Type TABLES_TYPE = new TypeToken<List<TableNameInfo>>() { }.getType();
@@ -120,10 +118,6 @@ abstract class ExploreHttpClient implements Explore {
                                              stream.getId(), tableName, response));
   }
 
-  protected QueryHandle doDisableExploreStream(Id.Stream stream) throws ExploreException {
-    return doDisableExploreStream(stream, NAMING.getTableName(stream));
-  }
-
   protected QueryHandle doAddPartition(Id.DatasetInstance datasetInstance,
                                        PartitionKey key, String path) throws ExploreException {
     Map<String, String> args = Maps.newHashMap();
@@ -136,7 +130,7 @@ abstract class ExploreHttpClient implements Explore {
       return QueryHandle.fromId(parseResponseAsMap(response, "handle"));
     }
     throw new ExploreException(String.format("Cannot add partition with key %s to dataset %s. Reason: %s",
-                                             key, datasetInstance.getId(), response));
+                                             key, datasetInstance.toString(), response));
   }
 
   protected QueryHandle doDropPartition(Id.DatasetInstance datasetInstance, PartitionKey key) throws ExploreException {
@@ -149,7 +143,7 @@ abstract class ExploreHttpClient implements Explore {
       return QueryHandle.fromId(parseResponseAsMap(response, "handle"));
     }
     throw new ExploreException(String.format("Cannot drop partition with key %s from dataset %s. Reason: %s",
-                                             key, datasetInstance.getId(), response));
+                                             key, datasetInstance.toString(), response));
   }
 
   protected QueryHandle doEnableExploreDataset(Id.DatasetInstance datasetInstance) throws ExploreException {
@@ -159,7 +153,7 @@ abstract class ExploreHttpClient implements Explore {
       return QueryHandle.fromId(parseResponseAsMap(response, "handle"));
     }
     throw new ExploreException(String.format("Cannot enable explore on dataset %s. Reason: %s",
-                                             datasetInstance.getId(), response));
+                                             datasetInstance.toString(), response));
   }
 
   protected QueryHandle doDisableExploreDataset(Id.DatasetInstance datasetInstance) throws ExploreException {
@@ -170,7 +164,7 @@ abstract class ExploreHttpClient implements Explore {
       return QueryHandle.fromId(parseResponseAsMap(response, "handle"));
     }
     throw new ExploreException(String.format("Cannot disable explore on dataset %s. Reason: %s",
-                                             datasetInstance.getId(), response));
+                                             datasetInstance.toString(), response));
   }
 
   @Override

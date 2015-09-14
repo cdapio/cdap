@@ -18,7 +18,9 @@ package co.cask.cdap.template.etl.api;
 
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.metrics.Metrics;
-import co.cask.cdap.api.templates.plugins.PluginProperties;
+import co.cask.cdap.api.plugin.PluginConfig;
+import co.cask.cdap.api.plugin.PluginConfigurer;
+import co.cask.cdap.api.plugin.PluginProperties;
 
 /**
  * Context passed to ETL stages.
@@ -34,6 +36,16 @@ public interface TransformContext {
   PluginProperties getPluginProperties();
 
   /**
+   * Gets the {@link PluginProperties} associated with the given plugin id used by the stage.
+   *
+   * @param pluginId the unique identifier provided when declaring plugin usage at configure time.
+   * @return the {@link PluginProperties}.
+   * @throws IllegalArgumentException if no plugin for the given type and name
+   * @throws UnsupportedOperationException if the program is not running under the adapter context
+   */
+  PluginProperties getPluginProperties(String pluginId);
+
+  /**
    * Get an instance of {@link Metrics}, used to collect metrics. Note that metric names are not scoped by
    * the stage they are emitted from. A metric called 'reads' emitted in one stage will be aggregated with
    * those emitted in another stage.
@@ -44,15 +56,12 @@ public interface TransformContext {
 
   /**
    * Creates a new instance of a plugin.
-   * The instance returned will have the {@link co.cask.cdap.api.templates.plugins.PluginConfig} setup with
+   * The instance returned will have the {@link PluginConfig} setup with
    * {@link PluginProperties} provided at the time when the
-   * {@link co.cask.cdap.api.templates.AdapterConfigurer#usePlugin(String, String, String, PluginProperties)}
-   * was called during the
-   * {@link co.cask.cdap.api.templates.ApplicationTemplate#configureAdapter(String,
-   * Object, co.cask.cdap.api.templates.AdapterConfigurer)} adapter configuration time.
+   * {@link PluginConfigurer#usePlugin(String, String, String, PluginProperties)}
+   * was called during application configuration time.
    *
-   * @param pluginId the unique identifier provide when declaring plugin usage in
-   * {@link co.cask.cdap.api.templates.AdapterConfigurer}
+   * @param pluginId the unique identifier provide when declaring plugin usage in {@link PluginConfigurer}
    * @param <T> the class type of the plugin
    * @return A new instance of the plugin being specified by the arguments
    *
@@ -63,19 +72,13 @@ public interface TransformContext {
   <T> T newPluginInstance(String pluginId) throws InstantiationException;
 
   /**
-   * Creates a new instance of a plugin.
-   * The instance returned will have the {@link co.cask.cdap.api.templates.plugins.PluginConfig} setup with
-   * {@link PluginProperties} provided at the time when the
-   * {@link co.cask.cdap.api.artifact.PluginConfigurer#usePlugin(String, String, String, PluginProperties)}
-   * was called during the program configuration time.
+   * Loads and returns a plugin class as specified by the given type and name.
    *
-   * @param pluginId the unique identifier provide when declaring plugin usage in the program
+   * @param pluginId the unique identifier provide when declaring plugin usage in {@link PluginConfigurer}.
    * @param <T> the class type of the plugin
-   * @return A new instance of the plugin being specified by the arguments
-   *
-   * @throws InstantiationException if failed create a new instance
-   * @throws IllegalArgumentException if pluginId is not found
-   * @throws UnsupportedOperationException if the program does not support plugin
+   * @return the resulting plugin {@link Class}.
+   * @throws IllegalArgumentException if no plugin for the given type and name
+   * @throws UnsupportedOperationException if the program is not running under the adapter context
    */
-  <T> T newInstance(String pluginId) throws InstantiationException;
+  <T> Class<T> loadPluginClass(String pluginId);
 }

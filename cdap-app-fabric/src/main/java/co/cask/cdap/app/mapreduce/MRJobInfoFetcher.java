@@ -16,8 +16,11 @@
 
 package co.cask.cdap.app.mapreduce;
 
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.MRJobInfo;
+
+import java.io.IOException;
 
 /**
  * Retrieves information about a run of a MapReduce job.
@@ -25,9 +28,11 @@ import co.cask.cdap.proto.MRJobInfo;
 public interface MRJobInfoFetcher {
 
   /**
+   *
    * @param runId for which information will be returned.
    * @return a {@link MRJobInfo} containing information about a particular MapReduce program run.
+   * @throws IOException if there is failure to communicate through the JobClient.
+   * @throws NotFoundException if a Job with the given runId is not found.
    */
-  MRJobInfo getMRJobInfo(Id.Run runId) throws Exception;
-
+  MRJobInfo getMRJobInfo(Id.Run runId) throws IOException, NotFoundException;
 }

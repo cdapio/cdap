@@ -33,6 +33,9 @@ my-dag {
       border: 1px solid #dddddd;
       background-color: #f6f6f6;
       border-radius: 4px;
+      .box {
+        cursor: pointer;
+      }
     }
 
     .box {
@@ -62,7 +65,7 @@ my-dag {
         margin-bottom: 10px;
       }
 
-      &.source {
+      &.realtimesource,&.batchsource {
         background-image: url('@{img-path}/ico_source.png');
         height: 117px;
         width: 92px;
@@ -76,7 +79,7 @@ my-dag {
         left: 50vw;
       }
 
-      &.sink {
+      &.realtimesink,&.batchsink {
         background-image: url('@{img-path}/ico_sink.png');
         height: 117px;
         width: 92px;

@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.admin')
-  .controller('NamespaceTemplatesListController', function ($scope, mySettings, $stateParams, $alert, myHelpers) {
+  .controller('NamespaceTemplatesListController', function ($scope, mySettings, $stateParams, $alert, myHelpers, GLOBALS) {
 
     var vm = this;
     vm.list = [];
@@ -34,7 +34,7 @@ angular.module(PKG.name + '.feature.admin')
       if (response) {
         vm.list = [];
 
-        ['ETLBatch', 'ETLRealtime'].forEach(function (templateType) {
+        [ GLOBALS.etlBatch, GLOBALS.etlRealtime].forEach(function (templateType) {
           ['source', 'transform', 'sink'].forEach(function (pluginType) {
             var obj = myHelpers.objectQuery(response, $stateParams.nsadmin, templateType, pluginType);
             var pluginArray = objectToArray(obj);

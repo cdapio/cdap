@@ -16,7 +16,7 @@
 
 angular.module(PKG.name + '.feature.adapters')
   // TODO: We should use rAdapterDetail here since this data is already resolved at adapter.detail state
-  .controller('AdapterRunDetailStatusController', function($scope, $state, myAdapterApi, CanvasFactory, MyAppDAGService, DashboardHelper, MyDataSource, MyMetricsQueryHelper) {
+  .controller('AdapterRunDetailStatusController', function($scope, $state, myAdapterApi, CanvasFactory, MyAppDAGService, DashboardHelper, MyDataSource, MyMetricsQueryHelper, GLOBALS) {
 
     var datasrc = new MyDataSource($scope);
 
@@ -55,16 +55,16 @@ angular.module(PKG.name + '.feature.adapters')
         MyAppDAGService.metadata.name = res.name;
         MyAppDAGService.metadata.description = res.description;
         MyAppDAGService.metadata.template.type = res.template;
-        if (res.template === 'ETLBatch') {
+        if (res.template === GLOBALS.etlBatch) {
           MyAppDAGService.metadata.template.schedule = res.config.schedule;
-        } else if (res.template === 'ETLRealtime') {
+        } else if (res.template === GLOBALS.etlRealtime) {
           MyAppDAGService.metadata.template.instances = res.config.instances;
         }
 
         $scope.source = res.config.source;
         $scope.sink = res.config.sink;
         $scope.transforms = res.config.transforms;
-        $scope.nodes = CanvasFactory.getNodes(res.config);
+        $scope.nodes = CanvasFactory.getNodes(res.config, MyAppDAGService.metadata.template.type);
         $scope.nodes.forEach(function(node) {
           MyAppDAGService.addNodes(node, node.type);
         });

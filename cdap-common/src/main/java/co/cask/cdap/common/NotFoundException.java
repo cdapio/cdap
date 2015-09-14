@@ -26,8 +26,7 @@ public class NotFoundException extends Exception {
   private final Object object;
 
   public NotFoundException(Object object, String objectString) {
-    super(String.format("'%s' was not found", objectString));
-    this.object = object;
+    this(object, objectString, null);
   }
 
   public NotFoundException(Object object) {
@@ -36,6 +35,15 @@ public class NotFoundException extends Exception {
 
   public NotFoundException(Id id) {
     this(id, id.getIdRep());
+  }
+
+  public NotFoundException(Id id, Throwable cause) {
+    this(id, id.getIdRep(), cause);
+  }
+
+  public NotFoundException(Object object, String objectString, Throwable cause) {
+    super(String.format("'%s' was not found.", objectString), cause);
+    this.object = object;
   }
 
   public Object getObject() {

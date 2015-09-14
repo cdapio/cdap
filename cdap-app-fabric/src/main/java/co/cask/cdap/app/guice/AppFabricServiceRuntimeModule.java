@@ -29,14 +29,15 @@ import co.cask.cdap.common.twill.MasterServiceManager;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.config.guice.ConfigStoreModule;
 import co.cask.cdap.data.stream.StreamServiceManager;
+import co.cask.cdap.data.stream.StreamViewHttpHandler;
 import co.cask.cdap.data.stream.service.StreamFetchHandler;
 import co.cask.cdap.data.stream.service.StreamHandler;
+import co.cask.cdap.data.view.MDSViewStore;
+import co.cask.cdap.data.view.ViewStore;
 import co.cask.cdap.data2.datafabric.dataset.DatasetExecutorServiceManager;
 import co.cask.cdap.explore.service.ExploreServiceManager;
-import co.cask.cdap.gateway.handlers.AdapterHttpHandler;
 import co.cask.cdap.gateway.handlers.AppFabricDataHttpHandler;
 import co.cask.cdap.gateway.handlers.AppLifecycleHttpHandler;
-import co.cask.cdap.gateway.handlers.ApplicationTemplateHandler;
 import co.cask.cdap.gateway.handlers.ArtifactHttpHandler;
 import co.cask.cdap.gateway.handlers.CommonHandlers;
 import co.cask.cdap.gateway.handlers.ConfigHandler;
@@ -52,15 +53,10 @@ import co.cask.cdap.gateway.handlers.UsageHandler;
 import co.cask.cdap.gateway.handlers.VersionHandler;
 import co.cask.cdap.gateway.handlers.WorkflowHttpHandler;
 import co.cask.cdap.gateway.handlers.WorkflowStatsSLAHttpHandler;
-import co.cask.cdap.internal.app.deploy.LocalAdapterManager;
 import co.cask.cdap.internal.app.deploy.LocalApplicationManager;
-import co.cask.cdap.internal.app.deploy.LocalApplicationTemplateManager;
 import co.cask.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
-import co.cask.cdap.internal.app.deploy.pipeline.DeploymentInfo;
-import co.cask.cdap.internal.app.deploy.pipeline.adapter.AdapterDeploymentInfo;
 import co.cask.cdap.internal.app.namespace.DefaultNamespaceAdmin;
-import co.cask.cdap.internal.app.runtime.adapter.PluginRepository;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactStore;
 import co.cask.cdap.internal.app.runtime.batch.InMemoryTransactionServiceManager;
 import co.cask.cdap.internal.app.runtime.distributed.TransactionServiceManager;
@@ -87,13 +83,11 @@ import co.cask.cdap.logging.run.LogSaverStatusServiceManager;
 import co.cask.cdap.metrics.runtime.MetricsProcessorStatusServiceManager;
 import co.cask.cdap.metrics.runtime.MetricsServiceManager;
 import co.cask.cdap.pipeline.PipelineFactory;
-import co.cask.cdap.templates.AdapterDefinition;
 import co.cask.http.HttpHandler;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.AbstractModule;
-import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
@@ -127,7 +121,9 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
   @Override
   public Module getInMemoryModules() {
-    return Modules.combine(new AppFabricServiceModule(StreamHandler.class, StreamFetchHandler.class),
+    return Modules.combine(new AppFabricServiceModule(
+                             StreamHandler.class, StreamFetchHandler.class,
+                             StreamViewHttpHandler.class),
                            new ConfigStoreModule().getInMemoryModule(),
                            new AbstractModule() {
                              @Override
@@ -173,7 +169,9 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
   @Override
   public Module getStandaloneModules() {
 
-    return Modules.combine(new AppFabricServiceModule(StreamHandler.class, StreamFetchHandler.class),
+    return Modules.combine(new AppFabricServiceModule(
+                             StreamHandler.class, StreamFetchHandler.class,
+                             StreamViewHttpHandler.class),
                            new ConfigStoreModule().getStandaloneModule(),
                            new AbstractModule() {
                              @Override
@@ -268,6 +266,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
     private final List<Class<? extends HttpHandler>> handlerClasses;
 
+    @SafeVarargs
     private AppFabricServiceModule(Class<? extends HttpHandler>... handlerClasses) {
       this.handlerClasses = ImmutableList.copyOf(handlerClasses);
     }
@@ -279,29 +278,15 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       install(
         new FactoryModuleBuilder()
           .implement(new TypeLiteral<Manager<AppDeploymentInfo, ApplicationWithPrograms>>() { },
-                     new TypeLiteral<LocalApplicationManager<AppDeploymentInfo, ApplicationWithPrograms>>() { })
+            new TypeLiteral<LocalApplicationManager<AppDeploymentInfo, ApplicationWithPrograms>>() { })
           .build(new TypeLiteral<ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms>>() { })
-      );
-      install(
-        new FactoryModuleBuilder()
-          .implement(new TypeLiteral<Manager<DeploymentInfo, ApplicationWithPrograms>>() { },
-                     LocalApplicationTemplateManager.class)
-          .build(Key.get(new TypeLiteral<ManagerFactory<DeploymentInfo, ApplicationWithPrograms>>() { },
-                         Names.named("templates")))
-      );
-      install(
-        new FactoryModuleBuilder()
-          .implement(new TypeLiteral<Manager<AdapterDeploymentInfo, AdapterDefinition>>() { },
-                     LocalAdapterManager.class)
-          .build(Key.get(new TypeLiteral<ManagerFactory<AdapterDeploymentInfo, AdapterDefinition>>() { },
-                         Names.named("adapters")))
       );
 
       bind(Store.class).to(DefaultStore.class);
+      bind(ViewStore.class).to(MDSViewStore.class);
       bind(ArtifactStore.class).in(Scopes.SINGLETON);
       bind(AdapterService.class).in(Scopes.SINGLETON);
       bind(ProgramLifecycleService.class).in(Scopes.SINGLETON);
-      bind(PluginRepository.class).in(Scopes.SINGLETON);
       bind(NamespaceAdmin.class).to(DefaultNamespaceAdmin.class).in(Scopes.SINGLETON);
 
       Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(
@@ -321,8 +306,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       handlerBinder.addBinding().to(PreferencesHttpHandler.class);
       handlerBinder.addBinding().to(ConsoleSettingsHttpHandler.class);
       handlerBinder.addBinding().to(TransactionHttpHandler.class);
-      handlerBinder.addBinding().to(AdapterHttpHandler.class);
-      handlerBinder.addBinding().to(ApplicationTemplateHandler.class);
       handlerBinder.addBinding().to(WorkflowHttpHandler.class);
       handlerBinder.addBinding().to(ArtifactHttpHandler.class);
       handlerBinder.addBinding().to(WorkflowStatsSLAHttpHandler.class);

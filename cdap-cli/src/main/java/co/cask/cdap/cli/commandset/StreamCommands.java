@@ -31,6 +31,10 @@ import co.cask.cdap.cli.command.SetStreamNotificationThresholdCommand;
 import co.cask.cdap.cli.command.SetStreamPropertiesCommand;
 import co.cask.cdap.cli.command.SetStreamTTLCommand;
 import co.cask.cdap.cli.command.TruncateStreamCommand;
+import co.cask.cdap.cli.command.stream.view.CreateOrUpdateStreamViewCommand;
+import co.cask.cdap.cli.command.stream.view.DeleteStreamViewCommand;
+import co.cask.cdap.cli.command.stream.view.DescribeStreamViewCommand;
+import co.cask.cdap.cli.command.stream.view.ListStreamViewsCommand;
 import co.cask.common.cli.Command;
 import co.cask.common.cli.CommandSet;
 import com.google.common.collect.ImmutableList;
@@ -59,6 +63,11 @@ public class StreamCommands extends CommandSet<Command> implements Categorized {
         .add(injector.getInstance(SendStreamEventCommand.class))
         .add(injector.getInstance(LoadStreamCommand.class))
         .add(injector.getInstance(GetStreamStatsCommand.class))
+        // views
+        .add(injector.getInstance(CreateOrUpdateStreamViewCommand.class))
+        .add(injector.getInstance(DeleteStreamViewCommand.class))
+        .add(injector.getInstance(DescribeStreamViewCommand.class))
+        .add(injector.getInstance(ListStreamViewsCommand.class))
         .build());
   }
 

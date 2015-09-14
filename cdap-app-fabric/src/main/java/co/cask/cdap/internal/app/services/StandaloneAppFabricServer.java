@@ -55,7 +55,6 @@ public class StandaloneAppFabricServer extends AppFabricServer {
                                    @Named(Constants.AppFabric.HANDLERS_BINDING) Set<HttpHandler> handlers,
                                    @Nullable MetricsCollectionService metricsCollectionService,
                                    ProgramRuntimeService programRuntimeService,
-                                   AdapterService adapterService,
                                    ApplicationLifecycleService applicationLifecycleService,
                                    ProgramLifecycleService programLifecycleService,
                                    StreamCoordinatorClient streamCoordinatorClient,
@@ -65,7 +64,7 @@ public class StandaloneAppFabricServer extends AppFabricServer {
                                    MetricStore metricStore,
                                    SystemArtifactLoader systemArtifactLoader) {
     super(configuration, discoveryService, schedulerService, notificationService, hostname, handlers,
-          metricsCollectionService, programRuntimeService, adapterService, applicationLifecycleService,
+          metricsCollectionService, programRuntimeService, applicationLifecycleService,
           programLifecycleService, streamCoordinatorClient, servicesNames, handlerHookNames, defaultNamespaceEnsurer,
           systemArtifactLoader);
     this.metricStore = metricStore;

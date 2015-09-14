@@ -26,7 +26,7 @@ If it doesn't exist, it will be created.
 
 **basePath:** Base path for the TimePartitionedFileSet. Defaults to the name of the dataset.
 
-**filePathFormat:"** Format for the time partition, as used by SimpleDateFormat.
+**filePathFormat:** Format for the time partition, as used by SimpleDateFormat.
 Defaults to formatting partitions as 2015-01-01/20-42.142017372000.
 
 **timeZone:** The string ID for the TimeZone to format the date in. Defaults to using UTC.

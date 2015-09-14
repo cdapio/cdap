@@ -32,6 +32,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.metadata.writer.ProgramContextAware;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
@@ -115,6 +116,12 @@ public class SparkProgramRunner implements ProgramRunner {
                                     BasicWorkflowToken.class);
     }
 
+    // Setup dataset framework context, if required
+    if (datasetFramework instanceof ProgramContextAware) {
+      Id.Program programId = program.getId();
+      ((ProgramContextAware) datasetFramework).initContext(new Id.Run(programId, runId.getId()));
+    }
+
     ClientSparkContext context = new ClientSparkContext(program, runId, logicalStartTime,
                                                         options.getUserArguments().asMap(),
                                                         new TransactionContext(txSystemClient), datasetFramework,
@@ -142,8 +149,9 @@ public class SparkProgramRunner implements ProgramRunner {
       submitter, program.getJarLocation(), txSystemClient
     );
 
-    sparkRuntimeService.addListener(createRuntimeServiceListener(program.getId(), runId, arguments),
-                                    Threads.SAME_THREAD_EXECUTOR);
+    sparkRuntimeService.addListener(
+      createRuntimeServiceListener(program.getId(), runId, arguments, options.getUserArguments()),
+      Threads.SAME_THREAD_EXECUTOR);
     ProgramController controller = new SparkProgramController(sparkRuntimeService, context);
 
     LOG.info("Starting Spark Job: {}", context.toString());
@@ -155,7 +163,7 @@ public class SparkProgramRunner implements ProgramRunner {
    * Creates a service listener to reactor on state changes on {@link SparkRuntimeService}.
    */
   private Service.Listener createRuntimeServiceListener(final Id.Program programId, final RunId runId,
-                                                        Arguments arguments) {
+                                                        Arguments arguments, final Arguments userArgs) {
 
     final String twillRunId = arguments.getOption(ProgramOptionConstants.TWILL_RUN_ID);
     final String workflowName = arguments.getOption(ProgramOptionConstants.WORKFLOW_NAME);
@@ -173,11 +181,11 @@ public class SparkProgramRunner implements ProgramRunner {
         }
 
         if (workflowName == null) {
-          store.setStart(programId, runId.getId(), startTimeInSeconds, null, twillRunId);
+          store.setStart(programId, runId.getId(), startTimeInSeconds, twillRunId, userArgs.asMap());
         } else {
           // Program started by Workflow
           store.setWorkflowProgramStart(programId, runId.getId(), workflowName, workflowRunId, workflowNodeId,
-                                        startTimeInSeconds, null, twillRunId);
+                                        startTimeInSeconds, twillRunId);
         }
       }
 

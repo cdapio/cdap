@@ -60,6 +60,20 @@ public class MetadataStoreDataset extends AbstractDataset {
     return GSON.fromJson(Bytes.toString(serialized), typeOfT);
   }
 
+  public boolean exists(MDSKey id) {
+    Row row = table.get(id.getKey());
+    if (row.isEmpty()) {
+      return false;
+    }
+
+    byte[] value = row.get(COLUMN);
+    if (value == null) {
+      return false;
+    }
+
+    return true;
+  }
+
   @Nullable
   public <T> T get(MDSKey id, Type typeOfT) {
     Row row = table.get(id.getKey());

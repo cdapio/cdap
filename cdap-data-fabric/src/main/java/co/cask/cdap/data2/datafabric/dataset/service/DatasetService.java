@@ -27,8 +27,6 @@ import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.MDSDatasetsRegistry;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
-import co.cask.cdap.data2.metadata.service.MetadataAdmin;
-import co.cask.cdap.data2.metadata.service.MetadataHttpHandler;
 import co.cask.cdap.data2.metrics.DatasetMetricsReporter;
 import co.cask.http.NettyHttpService;
 import com.google.common.base.Objects;
@@ -63,11 +61,10 @@ public class DatasetService extends AbstractExecutionThreadService {
   private final DiscoveryServiceClient discoveryServiceClient;
   private final DatasetOpExecutor opExecutorClient;
   private final Set<DatasetMetricsReporter> metricReporters;
-  private Cancellable cancelDiscovery;
-
   private final DatasetTypeManager typeManager;
   private final MDSDatasetsRegistry mdsDatasets;
 
+  private Cancellable cancelDiscovery;
   private Cancellable opExecutorServiceWatch;
   private SettableFuture<ServiceDiscovered> opExecutorDiscovered;
   private volatile boolean stopping = false;
@@ -84,8 +81,7 @@ public class DatasetService extends AbstractExecutionThreadService {
                         Set<DatasetMetricsReporter> metricReporters,
                         DatasetInstanceService datasetInstanceService,
                         StorageProviderNamespaceAdmin storageProviderNamespaceAdmin,
-                        AbstractNamespaceClient namespaceClient,
-                        MetadataAdmin metadataAdmin) throws Exception {
+                        AbstractNamespaceClient namespaceClient) throws Exception {
 
     this.typeManager = typeManager;
     DatasetTypeHandler datasetTypeHandler = new DatasetTypeHandler(typeManager, cConf, namespacedLocationFactory,
@@ -93,12 +89,10 @@ public class DatasetService extends AbstractExecutionThreadService {
     DatasetInstanceHandler datasetInstanceHandler = new DatasetInstanceHandler(datasetInstanceService);
     StorageProviderNamespaceHandler storageProviderNamespaceHandler =
       new StorageProviderNamespaceHandler(storageProviderNamespaceAdmin);
-    MetadataHttpHandler metadataHandler = new MetadataHttpHandler(metadataAdmin);
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf);
     builder.addHttpHandlers(ImmutableList.of(datasetTypeHandler,
                                              datasetInstanceHandler,
-                                             storageProviderNamespaceHandler,
-                                             metadataHandler));
+                                             storageProviderNamespaceHandler));
 
     builder.setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
                                                                      Constants.Service.DATASET_MANAGER)));

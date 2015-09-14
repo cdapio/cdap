@@ -25,7 +25,7 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.api.templates.plugins.PluginConfig;
+import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.template.etl.api.Emitter;
 import co.cask.cdap.template.etl.api.PipelineConfigurer;
 import co.cask.cdap.template.etl.api.batch.BatchSource;
@@ -57,7 +57,7 @@ import javax.annotation.Nullable;
 /**
  * A {@link BatchSource} to use any distributed file system as a Source.
  */
-@Plugin(type = "source")
+@Plugin(type = "batchsource")
 @Name("File")
 @Description("Batch source for File Systems")
 public class FileBatchSource extends BatchSource<LongWritable, Object, StructuredRecord> {

@@ -17,7 +17,6 @@ package co.cask.cdap.internal.app.store;
 
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.RunRecord;
-
 import com.google.common.base.Objects;
 import com.google.gson.annotations.SerializedName;
 
@@ -33,29 +32,24 @@ public final class RunRecordMeta extends RunRecord {
   private final String twillRunId;
 
   public RunRecordMeta(String pid, long startTs, @Nullable Long stopTs, ProgramRunStatus status,
-                       @Nullable String adapterName, @Nullable Map<String, String> properties,
+                       @Nullable Map<String, String> properties,
                        @Nullable String twillRunId) {
-    super(pid, startTs, stopTs, status, adapterName, properties);
+    super(pid, startTs, stopTs, status, properties);
     this.twillRunId = twillRunId;
   }
 
-  public RunRecordMeta(String pid, long startTs, @Nullable Long stopTs, ProgramRunStatus status,
-                   @Nullable String adapterName) {
-    this(pid, startTs, stopTs, status, adapterName, null, null);
-  }
-
   public RunRecordMeta(String pid, long startTs, @Nullable Long stopTs, ProgramRunStatus status) {
-    this(pid, startTs, stopTs, status, null, null, null);
+    this(pid, startTs, stopTs, status, null, null);
   }
 
   public RunRecordMeta(RunRecordMeta started, @Nullable Long stopTs, ProgramRunStatus status) {
-    this(started.getPid(), started.getStartTs(), stopTs, status, started.getAdapterName(), started.getProperties(),
+    this(started.getPid(), started.getStartTs(), stopTs, status, started.getProperties(),
          started.getTwillRunId());
   }
 
   public RunRecordMeta(RunRecordMeta existing, Map<String, String> updatedProperties) {
     this(existing.getPid(), existing.getStartTs(), existing.getStopTs(), existing.getStatus(),
-         existing.getAdapterName(), updatedProperties, existing.getTwillRunId());
+         updatedProperties, existing.getTwillRunId());
   }
 
   @Nullable
@@ -77,15 +71,13 @@ public final class RunRecordMeta extends RunRecord {
       Objects.equal(this.getStartTs(), that.getStartTs()) &&
       Objects.equal(this.getStopTs(), that.getStopTs()) &&
       Objects.equal(this.getStatus(), that.getStatus()) &&
-      Objects.equal(this.getAdapterName(), that.getAdapterName()) &&
       Objects.equal(this.getProperties(), that.getProperties()) &&
       Objects.equal(this.getTwillRunId(), that.getTwillRunId());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(twillRunId, getPid(), getStartTs(), getStopTs(), getStatus(), getAdapterName(),
-                            getProperties());
+    return Objects.hashCode(twillRunId, getPid(), getStartTs(), getStopTs(), getStatus(), getProperties());
   }
 
   @Override
@@ -95,7 +87,6 @@ public final class RunRecordMeta extends RunRecord {
       .add("startTs", getStartTs())
       .add("stopTs", getStopTs())
       .add("status", getStatus())
-      .add("adapter", getAdapterName())
       .add("twillrunid", twillRunId)
       .add("properties", getProperties())
       .toString();

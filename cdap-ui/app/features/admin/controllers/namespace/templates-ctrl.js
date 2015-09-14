@@ -15,10 +15,11 @@
  */
 
 angular.module(PKG.name + '.feature.admin')
-  .controller('NamespaceTemplatesController', function ($scope, myAdapterApi, PluginConfigFactory, myHelpers, mySettings, $stateParams, $alert, $state) {
+  .controller('NamespaceTemplatesController', function ($scope, myAdapterApi, PluginConfigFactory, myHelpers, mySettings, $stateParams, $alert, $state, GLOBALS, $rootScope) {
 
     var vm = this;
 
+    vm.GLOBALS = GLOBALS;
     vm.pluginList = [];
     vm.isEdit = false;
     vm.isDisabled = false;
@@ -73,15 +74,23 @@ angular.module(PKG.name + '.feature.admin')
         vm.configFetched = false;
 
         var prom;
+        var params = {
+          adapterType: vm.templateType,
+          namespace: $stateParams.namespace,
+          version: $rootScope.cdapVersion
+        };
         switch (vm.pluginType) {
           case 'source':
-            prom = myAdapterApi.fetchSources({ adapterType: vm.templateType }).$promise;
+            params.extensionType = GLOBALS.pluginTypes[vm.templateType].source;
+            prom = myAdapterApi.fetchSources(params).$promise;
             break;
           case 'transform':
-            prom = myAdapterApi.fetchTransforms({ adapterType: vm.templateType }).$promise;
+            params.extensionType = GLOBALS.pluginTypes[vm.templateType].transform;
+            prom = myAdapterApi.fetchTransforms(params).$promise;
             break;
           case 'sink':
-            prom = myAdapterApi.fetchSinks({ adapterType: vm.templateType }).$promise;
+            params.extensionType = GLOBALS.pluginTypes[vm.templateType].sink;
+            prom = myAdapterApi.fetchSinks(params).$promise;
             break;
         }
         prom.then(function (res) {

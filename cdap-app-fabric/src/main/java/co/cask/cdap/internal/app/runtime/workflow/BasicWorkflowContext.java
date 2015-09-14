@@ -15,10 +15,10 @@
  */
 package co.cask.cdap.internal.app.runtime.workflow;
 
-import co.cask.cdap.api.artifact.Plugin;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
+import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
@@ -59,7 +59,7 @@ final class BasicWorkflowContext extends AbstractContext implements WorkflowCont
                        LocationFactory locationFactory) {
     super(program, runId, new BasicArguments(runtimeArgs), (spec == null) ? new HashSet<String>() : spec.getDatasets(),
           getMetricCollector(program, runId.getId(), metricsCollectionService),
-          datasetFramework, discoveryServiceClient, locationFactory, null, null, null);
+          datasetFramework, discoveryServiceClient, locationFactory, null);
     this.workflowSpec = workflowSpec;
     this.specification = spec;
     this.logicalStartTime = logicalStartTime;

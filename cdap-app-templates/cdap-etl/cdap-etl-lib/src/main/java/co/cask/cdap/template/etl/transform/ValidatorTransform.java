@@ -21,8 +21,8 @@ import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.metrics.Metrics;
-import co.cask.cdap.api.templates.plugins.PluginConfig;
-import co.cask.cdap.api.templates.plugins.PluginProperties;
+import co.cask.cdap.api.plugin.PluginConfig;
+import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.template.etl.api.Emitter;
 import co.cask.cdap.template.etl.api.InvalidEntry;
 import co.cask.cdap.template.etl.api.PipelineConfigurer;
@@ -108,11 +108,7 @@ public class ValidatorTransform extends Transform<StructuredRecord, StructuredRe
   public void initialize(TransformContext context) throws Exception {
     List<Validator> validators = new ArrayList<>();
     for (String pluginId : config.validators.split("\\s*,\\s*")) {
-      try {
-        validators.add((Validator) context.newPluginInstance(pluginId));
-      } catch (UnsupportedOperationException e) {
-        validators.add((Validator) context.newInstance(pluginId));
-      }
+      validators.add((Validator) context.newPluginInstance(pluginId));
     }
     try {
       setUpInitialScript(context, validators);

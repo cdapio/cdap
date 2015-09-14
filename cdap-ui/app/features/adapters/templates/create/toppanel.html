@@ -1,0 +1,80 @@
+<!--
+  Copyright © 2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+<div class="side-panel top text-center clearfix">
+  <div class="adapter-metadata pull-left"
+       tooltip="{{ TopPanelController.metadata.error }}"
+       tooltip-placement="right"
+       tooltip-toggle="TopPanelController.metadata.error"
+       tooltip-append-to-body="true"
+       tooltip-class="tooltip-error">
+    <div class="clearfix">
+      <div class="name-type pull-left"
+           ng-click="TopPanelController.showMetadataModal()">
+        <h1 tooltip="{{ TopPanelController.metadata.name }}"
+            tooltip-placement="right"
+            tooltip-enable="TopPanelController.metadata.name.length > 38"
+            tooltip-append-to-body="true">
+          <a ng-if="TopPanelController.metadata.name.length > 0">
+            {{TopPanelController.metadata['name'] | myEllipsis: 38}}
+          </a>
+          <a ng-if="TopPanelController.metadata['name'].length === 0">
+            Pipeline Name
+          </a>
+        </h1>
+        <a class="pipeline-type">
+          <span class="icon-ETLBatch" ng-if="TopPanelController.metadata.template.type === TopPanelController.GLOBALS.etlBatch"></span>
+          <span class="icon-ETLRealtime" ng-if="TopPanelController.metadata.template.type === TopPanelController.GLOBALS.etlRealtime"></span>
+          <span>Type: {{ TopPanelController.metadata.template.type }}</span>
+        </a>
+      </div>
+      <a class="fa fa-pencil pull-right"
+         ng-click="TopPanelController.showMetadataModal()"></a>
+    </div>
+    <p class="text-left"
+       ng-if="TopPanelController.metadata['description'].length > 0"
+       tooltip="{{ TopPanelController.metadata.description }}"
+       tooltip-placement="right"
+       tooltip-enable="TopPanelController.metadata.description.length > 158"
+       tooltip-append-to-body="true"
+       ng-click="TopPanelController.showMetadataModal()">
+      {{TopPanelController.metadata['description'] | myEllipsis: 158}}
+    </p>
+    <p class="text-left"
+       ng-if="TopPanelController.metadata['description'].length === 0"
+       ng-click="TopPanelController.showMetadataModal()">
+       Enter a description for your pipeline.
+    </p>
+  </div>
+  <div class="btn-group pull-right clearfix">
+    <div class="btn pull-left"
+         ng-repeat="action in TopPanelController.canvasOperations"
+         ng-click="TopPanelController.onTopSideGroupItemClicked(action)"
+         >
+      {{action.name}}
+    </div>
+  </div>
+
+</div>
+
+<!-- Hidden links for downloading/uploading configs -->
+<a class="sr-only" id="adapter-export-config-link" href="{{TopPanelController.url}}" download="{{TopPanelController.exportFileName}}.json">Export</a>
+<my-file-select class="sr-only"
+                id="adapter-import-config-link"
+                data-button-icon="fa-upload"
+                on-file-select="TopPanelController.importFile($files)"
+                data-button-label="Import">
+</my-file-select>

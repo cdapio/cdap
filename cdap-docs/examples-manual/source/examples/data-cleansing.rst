@@ -30,7 +30,7 @@ of the application are tied together by the class ``DataCleansing``:
 
 .. literalinclude:: /../../../cdap-examples/DataCleansing/src/main/java/co/cask/cdap/examples/datacleansing/DataCleansing.java
    :language: java
-   :lines: 27-
+   :lines: 30-
 
 Data Storage
 ------------
