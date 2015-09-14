@@ -48,10 +48,10 @@ body {
           padding: 0 10px;
           margin: 0 15px;
           span {
+            font-size: 14px;
             font-weight: 500;
           }
           &:hover, &:focus {
-            border-bottom: 4px solid #397cf1;
             cursor: pointer;
           }
         }
@@ -85,8 +85,25 @@ body {
 
   &.theme-cdap {
     [my-navbar-hydrator] {
+      div.navbar-header {
+        position: relative;
+      }
       a.navbar-brand {
         background: url('@{img-path}/hydrator.png') center center / 160px 34px no-repeat;
+      }
+      a.cdap-link {
+        position: absolute;
+        width: 60px;
+        height: 20px;
+        background-color: @cdap-orange;
+        border-radius: 0 0 16px 16px;
+        top: -1px;
+        span {
+          background: url('@{img-path}/cdap_logotype.png') center center / 40px 12px no-repeat;
+          opacity: 0.45;
+          display: block;
+          height: inherit;
+        }
       }
 
       nav {
@@ -94,7 +111,7 @@ body {
           li {
             float: left;
             a {
-              color: rgb(161, 162, 166);
+              color: fade(white, 45%);
               &.active, &:active, &:hover, &:focus {
                 background-color: transparent;
                 border-bottom: 4px solid #397cf1;

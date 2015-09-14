@@ -15,6 +15,8 @@
  */
 
 @import "../../styles/variables.less";
+@import "../../styles/themes/cdap/mixins.less";
+
 my-dag {
   display: block;
   overflow: auto;
@@ -39,19 +41,18 @@ my-dag {
     }
 
     .box {
-      background-repeat: no-repeat;
+      background-color: white;
       position: absolute;
       text-align: center;
       cursor: move;
       left: 100px;
       top: 250px;
-      color: white;
-      padding: 20px 10px 10px;
+      padding: 0;
       overflow: hidden;
-
-      div.icon {
-        font-size: 300%;
-      }
+      line-height: 40px;
+      height: 46px;
+      width: 56px;
+      .border-radius(6px);
       .icon.fa, .fa.fa-close {
         cursor: pointer;
       }
@@ -63,29 +64,27 @@ my-dag {
         overflow: hidden;
         text-overflow: ellipsis;
         margin-bottom: 10px;
+        position: relative;
+        top: 20px;
       }
 
-      &.realtimesource,&.batchsource {
-        background-image: url('@{img-path}/ico_source.png');
-        height: 117px;
-        width: 92px;
+      &.realtimesource, &.batchsource {
+        border: 3px solid #48c038;
+        color:#48c038;
         left: 10vw;
       }
 
       &.transform {
-        background-image: url('@{img-path}/ico_transform.png');
-        height: 117px;
-        width: 102px;
+        border: 3px solid #4586f3;
+        color: #4586f3;
         left: 30vw;
       }
 
-      &.realtimesink,&.batchsink {
-        background-image: url('@{img-path}/ico_sink.png');
-        height: 117px;
-        width: 92px;
+      &.realtimesink, &.batchsink {
+        border: 3px solid #ff791f;
+        color: #ff791f;
         left: 50vw;
       }
-
 
       .label-as-badge {
         border-radius: 50%;
