@@ -213,10 +213,11 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       this.cleanupTask = createCleanupTask(tempDir, tempLocation);
 
       // For local mode, everything is in the configuration classloader already, hence no need to create new jar
+      Location artifactArchive = null;
       if (!MapReduceTaskContextProvider.isLocal(mapredConf)) {
         // After calling beforeSubmit, we know what plugins are needed for the program, hence construct the proper
         // ClassLoader from here and use it for setting up the job
-        Location artifactArchive = createArchive(context.getPlugins(), context.getNamespaceId(), tempDir, tempLocation);
+        artifactArchive = createArchive(context.getPlugins(), context.getNamespaceId(), tempDir, tempLocation);
         if (artifactArchive != null) {
           job.addCacheArchive(artifactArchive.toURI());
         }
@@ -282,6 +283,9 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       try {
         // We remember tx, so that we can re-use it in mapreduce tasks
         CConfiguration cConfCopy = cConf;
+        if (artifactArchive != null) {
+          cConfCopy.set(Constants.AppFabric.MRTASK_PLUGIN_DIR, artifactArchive.getName());
+        }
         contextConfig.set(context, cConfCopy, tx, programJar.toURI(), artifactFileNames);
 
         LOG.info("Submitting MapReduce Job: {}", context);
@@ -941,7 +945,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     Set<String> fileNames = new HashSet<>();
     Set<String> artifactNames = new HashSet<>();
     Set<String> namespaces = new HashSet<>();
-    String entryPrefix = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR), "namespaces").getPath();
+    String entryPrefix = "data/namespaces/";
     try (JarOutputStream output = new JarOutputStream(new FileOutputStream(jarFile))) {
       // Create top level dir
       output.putNextEntry(new JarEntry(entryPrefix));
@@ -971,7 +975,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         File artifact = new File(pluginDir, artifactFile);
         output.putNextEntry(new JarEntry(artifact.getPath()));
         fileNames.add(fileName);
-        ByteStreams.copy(Files.newInputStreamSupplier(artifact), output);
+        Files.copy(artifact, output);
       }
     }
 

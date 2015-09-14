@@ -75,7 +75,11 @@ public class PluginInstantiator implements Closeable {
     this.instantiatorFactory = new InstantiatorFactory(false);
     File tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
       cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
-    this.pluginDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR), "namespaces");
+    File prefix = cConf.get(Constants.AppFabric.MRTASK_PLUGIN_DIR) != null ?
+      new File(Constants.AppFabric.MRTASK_PLUGIN_DIR, cConf.get(Constants.CFG_LOCAL_DATA_DIR)) :
+      new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR));
+
+    this.pluginDir = new File(prefix, "namespaces");
     this.tmpDir = DirUtils.createTempDir(tmpDir);
     this.initialClassLoaders = CacheBuilder.newBuilder()
       .removalListener(new ClassLoaderRemovalListener())
@@ -129,6 +133,12 @@ public class PluginInstantiator implements Closeable {
     return (Class<T>) getArtifactClassLoader(artifactDescriptor).loadClass(pluginClass.getClassName());
   }
 
+  @SuppressWarnings("unchecked")
+  public <T> Class<T> loadInitialClass(ArtifactDescriptor artifactDescriptor,
+                                       PluginClass pluginClass) throws IOException, ClassNotFoundException {
+    return (Class<T>) getInitialClassLoader(artifactDescriptor).loadClass(pluginClass.getClassName());
+  }
+
   /**
    * Creates a new instance of the given plugin class.
    *
@@ -145,6 +155,35 @@ public class PluginInstantiator implements Closeable {
   public <T> T newInstance(ArtifactDescriptor artifactDescriptor, PluginClass pluginClass,
                            PluginProperties properties) throws IOException, ClassNotFoundException {
     ClassLoader classLoader = getArtifactClassLoader(artifactDescriptor);
+    TypeToken<?> pluginType = TypeToken.of(classLoader.loadClass(pluginClass.getClassName()));
+
+    try {
+      String configFieldName = pluginClass.getConfigFieldName();
+      // Plugin doesn't have config. Simply return a new instance.
+      if (configFieldName == null) {
+        return (T) instantiatorFactory.get(pluginType).create();
+      }
+
+      // Create the config instance
+      Field field = Fields.findField(pluginType.getType(), configFieldName);
+      TypeToken<?> configFieldType = pluginType.resolveType(field.getGenericType());
+      Object config = instantiatorFactory.get(configFieldType).create();
+      Reflections.visit(config, configFieldType.getType(),
+                        new ConfigFieldSetter(pluginClass, artifactDescriptor, properties));
+
+      // Create the plugin instance
+      return newInstance(pluginType, field, configFieldType, config);
+    } catch (NoSuchFieldException e) {
+      throw new InvalidPluginConfigException("Config field not found in plugin class: " + pluginClass, e);
+    } catch (IllegalAccessException e) {
+      throw new InvalidPluginConfigException("Failed to set plugin config field: " + pluginClass, e);
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  public <T> T newInitialInstance(ArtifactDescriptor artifactDescriptor, PluginClass pluginClass,
+                                  PluginProperties properties) throws IOException, ClassNotFoundException {
+    ClassLoader classLoader = getInitialClassLoader(artifactDescriptor);
     TypeToken<?> pluginType = TypeToken.of(classLoader.loadClass(pluginClass.getClassName()));
 
     try {

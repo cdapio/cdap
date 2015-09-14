@@ -97,6 +97,7 @@ public final class Constants {
     public static final String MAPREDUCE_INCLUDE_CUSTOM_CLASSES = "mapreduce.include.custom.format.classes";
     public static final String PROGRAM_RUNID_CORRECTOR_INTERVAL_SECONDS = "app.program.runid.corrector.interval";
     public static final String SYSTEM_ARTIFACTS_DIR = "app.artifact.dir";
+    public static final String MRTASK_PLUGIN_DIR = "mrtask.plugin.dir";
 
     /**
      * Guice named bindings.
