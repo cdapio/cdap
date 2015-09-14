@@ -112,7 +112,7 @@ public class DefaultMetadataAdmin implements MetadataAdmin {
 
   @Override
   public Set<MetadataSearchResultRecord> searchMetadata(String searchQuery,
-                                                        @Nullable MetadataSearchTargetType type)
+                                                        @Nullable final MetadataSearchTargetType type)
     throws NotFoundException {
     Iterable<BusinessMetadataRecord> results;
     if (type == null) {
@@ -123,12 +123,33 @@ public class DefaultMetadataAdmin implements MetadataAdmin {
 
     Set<MetadataSearchResultRecord> searchResultRecords = new LinkedHashSet<>();
     for (BusinessMetadataRecord bmr : results) {
-      MetadataSearchResultRecord msr =
-        new MetadataSearchResultRecord(bmr.getTargetId(),
-                                       (type == null ? MetadataSearchTargetType.ALL : type));
+      MetadataSearchTargetType finalType = type;
+      if (finalType == null) {
+        Id.NamespacedId namespacedId = bmr.getTargetId();
+        String targetType = getTargetType(namespacedId);
+        finalType = getMetadataSearchTarget(targetType);
+      }
+
+      MetadataSearchResultRecord msr = new MetadataSearchResultRecord(bmr.getTargetId(), finalType);
       searchResultRecords.add(msr);
     }
     return searchResultRecords;
+  }
+
+  private MetadataSearchTargetType getMetadataSearchTarget(String targetType) {
+    for (MetadataSearchTargetType metadataSearchTargetType : MetadataSearchTargetType.values()) {
+      if (metadataSearchTargetType.getInternalName().equals(targetType)) {
+        return metadataSearchTargetType;
+      }
+    }
+    return MetadataSearchTargetType.ALL;
+  }
+
+  private String getTargetType(Id.NamespacedId namespacedId) {
+    if (namespacedId instanceof Id.Program) {
+      return Id.Program.class.getSimpleName();
+    }
+    return namespacedId.getClass().getSimpleName();
   }
 
   /**
