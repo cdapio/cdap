@@ -38,7 +38,6 @@ import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.lang.WeakReferenceDelegatorClassLoader;
-import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.twill.HadoopClassExcluder;
 import co.cask.cdap.common.utils.DirUtils;
@@ -229,7 +228,6 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         // ClassLoader from here and use it for setting up the job
         Location artifactArchive = createArchive(context.getPlugins(), tempDir, tempLocation);
         if (artifactArchive != null) {
-          BundleJarUtil.unpackProgramJar(artifactArchive, tempDir);
           job.addCacheArchive(artifactArchive.toURI());
         }
       }
@@ -293,7 +291,6 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       Transaction tx = txClient.startLong();
       try {
         // We remember tx, so that we can re-use it in mapreduce tasks
-        // Make a copy of the conf and rewrite the template plugin directory to be the plugin archive name
         CConfiguration cConfCopy = cConf;
         contextConfig.set(context, cConfCopy, tx, programJar.toURI(), artifactFileNames);
 
@@ -951,8 +948,10 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     }
 
     File jarFile = File.createTempFile("artifact", ".jar", tempDir);
-    Set<String> entries = new HashSet<>();
-    String entryPrefix = "data/namespaces";
+    Set<String> fileNames = new HashSet<>();
+    Set<String> artifactNames = new HashSet<>();
+    Set<String> namespaces = new HashSet<>();
+    String entryPrefix = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR), "namespaces").getPath();
     try (JarOutputStream output = new JarOutputStream(new FileOutputStream(jarFile))) {
       // Create top level dir
       output.putNextEntry(new JarEntry(entryPrefix));
@@ -961,20 +960,30 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         Plugin plugin = entry.getValue();
         Map.Entry<ArtifactDescriptor, PluginClass> pluginEntry = artifactRepository.getPlugin(
           artifactId, plugin.getPluginClass().getType(), plugin.getPluginClass().getName(), plugin.getArtifactId());
-        String entryName = String.format("%s", String.format("%s.jar", plugin.getArtifactId().toString()));
-        if (entries.contains(entryName)) {
+        ArtifactDescriptor artifactDescriptor = pluginEntry.getKey();
+        String namespace = artifactDescriptor.getArtifact().getNamespace().getId();
+        String artifactName = artifactDescriptor.getArtifact().getName();
+        String fileName = artifactDescriptor.getLocation().getName();
+
+        if (fileNames.contains(fileName)) {
           continue;
         }
 
-        ArtifactDescriptor artifactDescriptor = pluginEntry.getKey();
-        File pluginDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR), "namespaces");
-        String artifactFile = String.format("%s/artifacts/%s/%s",
-                                            artifactDescriptor.getArtifact().getNamespace().getId(),
-                                            artifactDescriptor.getArtifact().getName(),
-                                            artifactDescriptor.getLocation().getName());
+        if (!namespaces.contains(namespace)) {
+          output.putNextEntry(new JarEntry(String.format("%s/%s/", entryPrefix, namespace)));
+          namespaces.add(namespace);
+        }
+
+        if (!artifactNames.contains(artifactName)) {
+          output.putNextEntry(new JarEntry(String.format("%s/%s/artifacts/%s/", entryPrefix, namespace, artifactName)));
+          artifactNames.add(artifactName);
+        }
+
+        File pluginDir = new File(entryPrefix);
+        String artifactFile = String.format("%s/artifacts/%s/%s", namespace, artifactName, fileName);
         File artifact = new File(pluginDir, artifactFile);
-        output.putNextEntry(new JarEntry(entryName));
-        entries.add(entryName);
+        output.putNextEntry(new JarEntry(artifact.getPath()));
+        fileNames.add(fileName);
         ByteStreams.copy(Files.newInputStreamSupplier(artifact), output);
       }
     } catch (PluginNotExistsException e) {
