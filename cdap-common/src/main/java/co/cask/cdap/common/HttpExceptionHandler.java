@@ -53,10 +53,9 @@ public class HttpExceptionHandler extends ExceptionHandler {
       logWithTrace(request, t);
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } else {
-      LOG.error("Unexpected error: request={} {} user={}:",
-                request.getMethod().getName(), request.getUri(),
+      LOG.error("Unexpected error: request={} {} user={}:", request.getMethod().getName(), request.getUri(),
                 SecurityRequestContext.getUserId().or("<null>"), t);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, Throwables.getRootCause(t).getMessage());
     }
   }
 
