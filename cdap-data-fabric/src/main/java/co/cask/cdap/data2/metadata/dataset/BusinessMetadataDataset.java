@@ -445,7 +445,7 @@ public class BusinessMetadataDataset extends AbstractDataset {
     } else if (type.equals(Id.Stream.class.getSimpleName())) {
       String namespaceId = keySplitter.getString();
       String instanceId  = keySplitter.getString();
-      return Id.DatasetInstance.from(namespaceId, instanceId);
+      return Id.Stream.from(namespaceId, instanceId);
     }
     throw new IllegalArgumentException("Illegal Type " + type + " of metadata source.");
   }
@@ -484,9 +484,12 @@ public class BusinessMetadataDataset extends AbstractDataset {
   private String getMetadataKey(String type, byte[] rowKey) {
     MDSKey.Splitter keySplitter = new MDSKey(rowKey).split();
     // The rowkey is [targetType][targetId][metadata-type][key], so skip the first few strings.
+
+    // Skip targetType
     keySplitter.skipString();
+
+    // Skip targetId
     if (type.equals(Id.Program.class.getSimpleName())) {
-      keySplitter.skipString();
       keySplitter.skipString();
       keySplitter.skipString();
       keySplitter.skipString();
@@ -494,18 +497,19 @@ public class BusinessMetadataDataset extends AbstractDataset {
     } else if (type.equals(Id.Application.class.getSimpleName())) {
       keySplitter.skipString();
       keySplitter.skipString();
-      keySplitter.skipString();
     } else if (type.equals(Id.DatasetInstance.class.getSimpleName())) {
-      keySplitter.skipString();
       keySplitter.skipString();
       keySplitter.skipString();
     } else if (type.equals(Id.Stream.class.getSimpleName())) {
       keySplitter.skipString();
       keySplitter.skipString();
-      keySplitter.skipString();
     } else {
       throw new IllegalArgumentException("Illegal Type " + type + " of metadata source.");
     }
+
+    // Skip metadata-type
+    keySplitter.skipString();
+
     return keySplitter.getString();
   }
 
