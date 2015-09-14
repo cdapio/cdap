@@ -16,7 +16,7 @@
 # for more information.
 
 # If running CDAP on HDP 2.2+ the full HDP version string including iteration
-#   number must be passed in as an option
+#   number must be passed in as an option.
 # export OPTS="${OPTS} -Dhdp.version=2.2.6.0-2800"
 
 # Ensure SPARK_HOME is set for Spark support.
