@@ -39,7 +39,6 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
@@ -318,7 +317,7 @@ public class ApplicationClient {
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    */
   public void deploy(Id.Application appId,
-                     AppRequest<? extends Config> createRequest) throws IOException, UnauthorizedException {
+                     AppRequest<?> createRequest) throws IOException, UnauthorizedException {
     URL url = config.resolveNamespacedURLV3(appId.getNamespace(), "apps/" + appId.getId());
     HttpRequest request = HttpRequest.put(url)
       .addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
@@ -337,7 +336,7 @@ public class ApplicationClient {
    * @throws NotFoundException if the app or requested artifact could not be found
    * @throws BadRequestException if the request is invalid
    */
-  public void update(Id.Application appId, AppRequest<? extends Config> updateRequest)
+  public void update(Id.Application appId, AppRequest<?> updateRequest)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
 
     URL url = config.resolveNamespacedURLV3(appId.getNamespace(), String.format("apps/%s/update", appId.getId()));
@@ -349,7 +348,7 @@ public class ApplicationClient {
 
     int responseCode = response.getResponseCode();
     if (responseCode == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException(response.getResponseBodyAsString());
+      throw new NotFoundException("app or app artifact");
     } else if (responseCode == HttpURLConnection.HTTP_BAD_REQUEST) {
       throw new BadRequestException(response.getResponseBodyAsString());
     }

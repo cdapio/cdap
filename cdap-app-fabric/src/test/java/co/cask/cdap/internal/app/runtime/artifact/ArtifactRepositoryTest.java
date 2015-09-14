@@ -25,6 +25,7 @@ import co.cask.cdap.api.plugin.PluginPropertyField;
 import co.cask.cdap.api.plugin.PluginSelector;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.common.InvalidArtifactException;
+import co.cask.cdap.common.conf.ArtifactConfig;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
@@ -143,7 +144,7 @@ public class ArtifactRepositoryTest {
       new PluginClass("typeB", "manual2", "desc", "co.cask.otherclassname", null, emptyMap)
     );
     File pluginConfigFile = new File(systemArtifactsDir, "myPlugin-1.0.0.json");
-    SystemArtifactConfig pluginConfig = SystemArtifactConfig.builder(pluginArtifactId, pluginConfigFile)
+    ArtifactConfig pluginConfig = ArtifactConfig.builder(pluginArtifactId, pluginConfigFile)
       .addParents(new ArtifactRange(
         Id.Namespace.SYSTEM, "PluginTest", new ArtifactVersion("0.9.0"), new ArtifactVersion("2.0.0")))
       // add a dummy plugin to test explicit addition of plugins through the config file
