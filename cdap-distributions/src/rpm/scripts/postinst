@@ -14,7 +14,7 @@
 # the License.
 #
 
-# post install script for <%= project %>
+# postinstall script for <%= project %>
 
 package_name="<%= project %>"
 version="<%= @version %>"

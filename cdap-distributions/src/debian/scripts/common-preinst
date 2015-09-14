@@ -16,7 +16,7 @@
 # the License.
 #
 
-#COMMON  post install script for <%= project %>
+# preinstall script for <%= project %>
 set -e
 
 package_name="<%= project %>"

@@ -16,7 +16,7 @@
 # the License.
 #
 
-# post remove script for <%= project %>
+# postrm script for <%= project %>
 set -e
 
 package_name="<%= project %>"
