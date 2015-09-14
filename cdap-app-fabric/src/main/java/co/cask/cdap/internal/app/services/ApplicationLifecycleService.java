@@ -691,9 +691,9 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     }
     deleteProgramLocations(appId);
 
-    store.removeApplication(appId);
-
     deleteAppBusinessMetadata(appId);
+
+    store.removeApplication(appId);
 
     try {
       usageRegistry.unregister(appId);
