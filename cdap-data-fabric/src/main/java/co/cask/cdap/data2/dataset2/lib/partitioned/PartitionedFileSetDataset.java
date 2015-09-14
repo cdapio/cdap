@@ -41,6 +41,7 @@ import co.cask.cdap.api.dataset.lib.Partitioning.FieldType;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.Transaction;
@@ -373,7 +374,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
       throw new UnsupportedOperationException(
         "Output is not supported for external partitioned file set '" + spec.getName() + "'");
     }
-    return new BasicPartitionOutput(this, getOutputPath(partitioning, key), key);
+    return new BasicPartitionOutput(this, getOutputPath(key), key);
   }
 
   @Override
@@ -482,11 +483,16 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     return Bytes.add(METADATA_PREFIX, Bytes.toBytes(metadataKey));
   }
 
+
   /**
    * Generate an output path for a given partition key.
    */
   // package visible for PartitionedFileSetDefinition
-  static String getOutputPath(Partitioning partitioning, PartitionKey key) {
+  String getOutputPath(PartitionKey key) {
+    return getOutputPath(key, partitioning);
+  }
+
+  public static String getOutputPath(PartitionKey key, Partitioning partitioning) {
     StringBuilder builder = new StringBuilder();
     String sep = "";
     for (String fieldName : partitioning.getFields().keySet()) {
@@ -566,6 +572,14 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
 
   @Override
   public String getOutputFormatClassName() {
+    if (isExternal) {
+      throw new UnsupportedOperationException(
+        "Output is not supported for external partitioned file set '" + spec.getName() + "'");
+    }
+    PartitionKey outputKey = PartitionedFileSetArguments.getOutputPartitionKey(runtimeArguments, getPartitioning());
+    if (outputKey == null) {
+      return "co.cask.cdap.internal.app.runtime.batch.dataset.partitioned.DynamicPartitioningOutputFormat";
+    }
     return files.getOutputFormatClassName();
   }
 
@@ -575,16 +589,26 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
       throw new UnsupportedOperationException(
         "Output is not supported for external partitioned file set '" + spec.getName() + "'");
     }
-    // we set the file set's output path in the definition's getDataset(), so there is no need to configure it again.
-    // here we just want to validate that an output partition key was specified in the arguments.
-    PartitionKey outputKey = PartitionedFileSetArguments.getOutputPartitionKey(runtimeArguments, getPartitioning());
-    if (outputKey == null) {
-      throw new DataSetException("Partition key must be given for the new output partition as a runtime argument.");
-    }
-    // copy the output partition key to the output arguments of the embedded file set
-    // this will be needed by the output format to register the new partition.
+
+    // copy the output properties of the embedded file set to the output arguments
     Map<String, String> outputArgs = Maps.newHashMap(files.getOutputFormatConfiguration());
-    PartitionedFileSetArguments.setOutputPartitionKey(outputArgs, outputKey);
+
+    // we set the file set's output path in the definition's getDataset(), so there is no need to configure it again.
+    // here we just want to validate that an output partition key or dynamic partitioner was specified in the arguments.
+    PartitionKey outputKey = PartitionedFileSetArguments.getOutputPartitionKey(runtimeArguments, getPartitioning());
+    if (outputKey != null) {
+      PartitionedFileSetArguments.setOutputPartitionKey(outputArgs, outputKey);
+    } else {
+      String dynamicPartitionerClassName = PartitionedFileSetArguments.getDynamicPartitioner(runtimeArguments);
+      if (dynamicPartitionerClassName == null) {
+        throw new DataSetException(
+          "Either a Partition key or a DynamicPartitioner class must be given as a runtime argument.");
+      }
+      PartitionedFileSetArguments.setDynamicPartitioner(outputArgs, dynamicPartitionerClassName);
+      outputArgs.put(Constants.Dataset.Partitioned.HCONF_ATTR_OUTPUT_FORMAT_CLASS_NAME,
+                     files.getOutputFormatClassName());
+      outputArgs.put(Constants.Dataset.Partitioned.HCONF_ATTR_OUTPUT_DATASET, getName());
+    }
     return ImmutableMap.copyOf(outputArgs);
   }
 
@@ -596,10 +620,13 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     if (outputPath == null) {
       return;
     }
-    // we know for sure there is an output partition key (checked in getOutputFormatConfig())
+    // its possible that there is no output key, if using the DynamicPartitioner, in which case
+    // DynamicPartitioningOutputFormat is responsible for registering the partitions
     PartitionKey outputKey = PartitionedFileSetArguments.getOutputPartitionKey(runtimeArguments, getPartitioning());
-    Map<String, String> metadata = PartitionedFileSetArguments.getOutputPartitionMetadata(runtimeArguments);
-    addPartition(outputKey, outputPath, metadata);
+    if (outputKey != null) {
+      Map<String, String> metadata = PartitionedFileSetArguments.getOutputPartitionMetadata(runtimeArguments);
+      addPartition(outputKey, outputPath, metadata);
+    }
   }
 
   @Override
