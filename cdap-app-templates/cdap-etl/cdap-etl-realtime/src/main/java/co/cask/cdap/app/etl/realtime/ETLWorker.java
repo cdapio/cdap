@@ -85,7 +85,9 @@ public class ETLWorker extends AbstractWorker {
   private static final Schema ERROR_SCHEMA = Schema.recordOf(
     "error",
     Schema.Field.of(Constants.ErrorDataset.ERRCODE, Schema.of(Schema.Type.INT)),
-    Schema.Field.of(Constants.ErrorDataset.ERRMSG, Schema.of(Schema.Type.STRING)),
+
+    Schema.Field.of(Constants.ErrorDataset.ERRMSG, Schema.unionOf(Schema.of(Schema.Type.STRING),
+                                                                  Schema.of(Schema.Type.NULL))),
     Schema.Field.of(Constants.ErrorDataset.INVALIDENTRY, Schema.of(Schema.Type.STRING)));
 
   // only visible at configure time
@@ -307,14 +309,15 @@ public class ETLWorker extends AbstractWorker {
                 String transformId = errorRecordEntry.getKey();
                 final String datasetName = tranformIdToDatasetName.get(transformId);
                 Table errorTable = context.getDataset(datasetName);
-                byte[] currentTime = Bytes.toBytes(System.currentTimeMillis());
+                long timeInMillis = System.currentTimeMillis();
+                byte[] currentTime = Bytes.toBytes(timeInMillis);
                 String transformIdentifier = appName + SEPARATOR + transformId;
                 for (InvalidEntry invalidEntry : errorRecordEntry.getValue()) {
                   // using random uuid as we want to write each record uniquely,
                   // but we are not concerned about the uuid while scanning later.
                   byte[] rowKey = Bytes.concat(currentTime,
                                                Bytes.toBytes(transformIdentifier), Bytes.toBytes(UUID.randomUUID()));
-                  Put errorPut = constructErrorPut(rowKey, invalidEntry);
+                  Put errorPut = constructErrorPut(rowKey, invalidEntry, timeInMillis);
                   errorTable.write(rowKey, errorPut);
                 }
               }
@@ -353,10 +356,10 @@ public class ETLWorker extends AbstractWorker {
     return transformIdToErrorListMap;
   }
 
-  private Put constructErrorPut(byte[] rowKey, InvalidEntry entry) throws IOException {
+  private Put constructErrorPut(byte[] rowKey, InvalidEntry entry, long timeInMillis) throws IOException {
     Put errorPut = new Put(rowKey);
     errorPut.add(Constants.ErrorDataset.ERRCODE, entry.getErrorCode());
-    errorPut.add(Constants.ErrorDataset.ERRMSG, entry.getErrorMsg());
+    errorPut.add(Constants.ErrorDataset.TIMESTAMP, timeInMillis);
     if (entry.getInvalidRecord() instanceof StructuredRecord) {
       StructuredRecord record = (StructuredRecord) entry.getInvalidRecord();
       errorPut.add(Constants.ErrorDataset.INVALIDENTRY,
