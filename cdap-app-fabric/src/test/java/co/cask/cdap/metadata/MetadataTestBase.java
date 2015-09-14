@@ -316,7 +316,15 @@ public abstract class MetadataTestBase extends AppFabricTestBase {
     String path = getVersionedAPIPath(
       String.format("datasets/%s/lineage?start=%d&end=%d&levels=%d", datasetInstance.getId(), start, end, levels),
       datasetInstance.getNamespaceId());
-    return makePostRequest(path);
+    return makeGetRequest(path);
+  }
+
+  protected HttpResponse fetchLineage(Id.Stream stream, long start, long end, int levels)
+    throws IOException {
+    String path = getVersionedAPIPath(
+      String.format("streams/%s/lineage?start=%d&end=%d&levels=%d", stream.getId(), start, end, levels),
+      stream.getNamespaceId());
+    return makeGetRequest(path);
   }
 
   // The following methods are needed because AppFabricTestBase's doGet, doPost, doPut, doDelete are hardwired to

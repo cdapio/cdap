@@ -54,6 +54,7 @@ public class DataSetsModules extends RuntimeModule {
         expose(DatasetFramework.class).annotatedWith(Names.named(BASIC_DATASET_FRAMEWORK));
 
         bind(LineageWriter.class).to(BasicLineageWriter.class);
+        expose(LineageWriter.class);
         bind(DatasetFramework.class).to(LineageWriterDatasetFramework.class);
         expose(DatasetFramework.class);
       }
@@ -75,6 +76,7 @@ public class DataSetsModules extends RuntimeModule {
         expose(DatasetFramework.class).annotatedWith(Names.named(BASIC_DATASET_FRAMEWORK));
 
         bind(LineageWriter.class).to(BasicLineageWriter.class);
+        expose(LineageWriter.class);
         bind(DatasetFramework.class).to(LineageWriterDatasetFramework.class);
         expose(DatasetFramework.class);
       }
@@ -97,6 +99,7 @@ public class DataSetsModules extends RuntimeModule {
         expose(DatasetFramework.class).annotatedWith(Names.named(BASIC_DATASET_FRAMEWORK));
 
         bind(LineageWriter.class).to(BasicLineageWriter.class);
+        expose(LineageWriter.class);
         bind(DatasetFramework.class).to(LineageWriterDatasetFramework.class);
         expose(DatasetFramework.class);
       }

@@ -27,6 +27,8 @@ import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamFileOffset;
 import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
+import co.cask.cdap.data2.metadata.lineage.AccessType;
+import co.cask.cdap.data2.metadata.writer.LineageWriter;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.explore.utils.ExploreTableNaming;
@@ -78,6 +80,7 @@ public class FileStreamAdmin implements StreamAdmin {
   private final NotificationFeedManager notificationFeedManager;
   private final String streamBaseDirPath;
   private final UsageRegistry usageRegistry;
+  private final LineageWriter lineageWriter;
   private final StreamMetaStore streamMetaStore;
   private final ExploreTableNaming tableNaming;
   private ExploreFacade exploreFacade;
@@ -89,6 +92,7 @@ public class FileStreamAdmin implements StreamAdmin {
                          StreamConsumerStateStoreFactory stateStoreFactory,
                          NotificationFeedManager notificationFeedManager,
                          UsageRegistry usageRegistry,
+                         LineageWriter lineageWriter,
                          StreamMetaStore streamMetaStore,
                          ExploreTableNaming tableNaming) {
     this.namespacedLocationFactory = namespacedLocationFactory;
@@ -98,6 +102,7 @@ public class FileStreamAdmin implements StreamAdmin {
     this.streamCoordinatorClient = streamCoordinatorClient;
     this.stateStoreFactory = stateStoreFactory;
     this.usageRegistry = usageRegistry;
+    this.lineageWriter = lineageWriter;
     this.streamMetaStore = streamMetaStore;
     this.tableNaming = tableNaming;
   }
@@ -346,6 +351,11 @@ public class FileStreamAdmin implements StreamAdmin {
   @Override
   public void register(Iterable<? extends Id> owners, Id.Stream streamId) {
     usageRegistry.registerAll(owners, streamId);
+  }
+
+  @Override
+  public void addAccess(Id.Run run, Id.Stream streamId, AccessType accessType) {
+    lineageWriter.addAccess(run, streamId, accessType);
   }
 
   /**

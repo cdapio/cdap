@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data.stream;
 
+import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.proto.Id;
@@ -81,5 +82,9 @@ public class NoopStreamAdmin implements StreamAdmin {
 
   @Override
   public void register(Iterable<? extends Id> owners, Id.Stream streamId) {
+  }
+
+  @Override
+  public void addAccess(Id.Run run, Id.Stream streamId, AccessType accessType) {
   }
 }

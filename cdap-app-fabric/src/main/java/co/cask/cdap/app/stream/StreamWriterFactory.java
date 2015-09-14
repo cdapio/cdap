@@ -27,10 +27,10 @@ import java.util.List;
  */
 public interface StreamWriterFactory {
   /**
-   * @param namespace the namespace that the {@link StreamWriter} belongs to
    * @param owners the owners of the {@link StreamWriter}
+   * @param run run information
    * @return a {@link StreamWriter} for the specified namespaceId
    */
-  StreamWriter create(@Assisted("namespace") Id.Namespace namespace, @Assisted("owners") List<Id> owners);
+  StreamWriter create(@Assisted("run") Id.Run run, @Assisted("owners") List<Id> owners);
 }
 

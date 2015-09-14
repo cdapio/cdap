@@ -112,7 +112,7 @@ public class BasicWorkerContext extends AbstractContext implements WorkerContext
       this.userMetrics = null;
     }
     this.runtimeArgs = runtimeArgs.asMap();
-    this.streamWriter = streamWriterFactory.create(program.getId().getNamespace(), getOwners());
+    this.streamWriter = streamWriterFactory.create(new Id.Run(program.getId(), runId.getId()), getOwners());
     this.plugins = Maps.newHashMap(program.getApplicationSpecification().getPlugins());
 
     // The cache expiry should be greater than (2 * transaction.timeout) and at least 2 hours.

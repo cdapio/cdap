@@ -89,6 +89,37 @@ public class LineageStore {
   }
 
   /**
+   * Add a program-stream access.
+   *
+   * @param run program run information
+   * @param stream stream accessed by the program
+   * @param accessType access type
+   * @param metadata metadata to store for the access
+   */
+  public void addAccess(Id.Run run, Id.Stream stream, AccessType accessType, String metadata) {
+    addAccess(run, stream, accessType, metadata, null);
+  }
+
+  /**
+   * Add a program-stream access.
+   *
+   * @param run program run information
+   * @param stream stream accessed by the program
+   * @param accessType access type
+   * @param metadata metadata to store for the access
+   * @param component program component such as flowlet id, etc.
+   */
+  public void addAccess(final Id.Run run, final Id.Stream stream,
+                        final AccessType accessType, final String metadata, @Nullable final Id.NamespacedId component) {
+    execute(new TransactionExecutor.Procedure<LineageDataset>() {
+      @Override
+      public void apply(LineageDataset input) throws Exception {
+        input.addAccess(run, stream, accessType, metadata, component);
+      }
+    });
+  }
+
+  /**
    * Fetch program-dataset access information for a dataset for a given period.
    *
    * @param datasetInstance dataset for which to fetch access information
@@ -101,6 +132,23 @@ public class LineageStore {
       @Override
       public Set<Relation> apply(LineageDataset input) throws Exception {
         return input.getRelations(datasetInstance, start, end);
+      }
+    });
+  }
+
+  /**
+   * Fetch program-stream access information for a dataset for a given period.
+   *
+   * @param stream stream for which to fetch access information
+   * @param start start time period
+   * @param end end time period
+   * @return program-stream access information
+   */
+  public Set<Relation> getRelations(final Id.Stream stream, final long start, final long end) {
+    return execute(new TransactionExecutor.Function<LineageDataset, Set<Relation>>() {
+      @Override
+      public Set<Relation> apply(LineageDataset input) throws Exception {
+        return input.getRelations(stream, start, end);
       }
     });
   }
