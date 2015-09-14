@@ -726,22 +726,34 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     Set<String> programNames = null;
     switch (programType) {
       case FLOW:
-        programNames = appSpec.getFlows().keySet();
+        if (appSpec.getFlows() != null) {
+          programNames = appSpec.getFlows().keySet();
+        }
         break;
       case MAPREDUCE:
-        programNames = appSpec.getMapReduce().keySet();
+        if (appSpec.getMapReduce() != null) {
+          programNames = appSpec.getMapReduce().keySet();
+        }
         break;
       case WORKFLOW:
-        programNames = appSpec.getWorkflows().keySet();
+        if (appSpec.getWorkflows() != null) {
+          programNames = appSpec.getWorkflows().keySet();
+        }
         break;
       case SERVICE:
-        programNames = appSpec.getServices().keySet();
+        if (appSpec.getServices() != null) {
+          programNames = appSpec.getServices().keySet();
+        }
         break;
       case SPARK:
-        programNames = appSpec.getSpark().keySet();
+        if (appSpec.getSpark() != null) {
+          programNames = appSpec.getSpark().keySet();
+        }
         break;
       case WORKER:
-        programNames = appSpec.getWorkers().keySet();
+        if (appSpec.getWorkers() != null) {
+          programNames = appSpec.getWorkers().keySet();
+        }
         break;
       default:
         LOG.info("Unable to remove business metadata for unsupported program type: " + programType.name());
