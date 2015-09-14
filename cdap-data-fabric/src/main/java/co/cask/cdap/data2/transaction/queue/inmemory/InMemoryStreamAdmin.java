@@ -20,6 +20,7 @@ import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
+import co.cask.cdap.data2.metadata.service.BusinessMetadataStore;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
@@ -42,16 +43,19 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
   private final StreamMetaStore streamMetaStore;
   private final UsageRegistry usageRegistry;
   private final LineageWriter lineageWriter;
+  private final BusinessMetadataStore businessMds;
 
   @Inject
   public InMemoryStreamAdmin(InMemoryQueueService queueService,
                              UsageRegistry usageRegistry,
                              LineageWriter lineageWriter,
-                             StreamMetaStore streamMetaStore) {
+                             StreamMetaStore streamMetaStore,
+                             BusinessMetadataStore businessMds) {
     super(queueService);
     this.usageRegistry = usageRegistry;
     this.streamMetaStore = streamMetaStore;
     this.lineageWriter = lineageWriter;
+    this.businessMds = businessMds;
   }
 
   @Override
@@ -59,6 +63,9 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
     queueService.resetStreamsWithPrefix(QueueName.prefixForNamedspacedStream(namespace.getId()));
     for (StreamSpecification spec : streamMetaStore.listStreams(namespace)) {
       streamMetaStore.removeStream(Id.Stream.from(namespace, spec.getName()));
+      // Remove metadata for the stream
+      businessMds.removeProperties(Id.Stream.from(namespace, spec.getName()));
+      businessMds.removeTags(Id.Stream.from(namespace, spec.getName()));
     }
   }
 
@@ -109,6 +116,9 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
   public void drop(Id.Stream streamId) throws Exception {
     drop(QueueName.fromStream(streamId));
     streamMetaStore.removeStream(streamId);
+    // Remove metadata for the stream
+    businessMds.removeProperties(streamId);
+    businessMds.removeTags(streamId);
   }
 
   @Override
