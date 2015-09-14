@@ -15,9 +15,9 @@
 # Example environment variables. Please refer to the CDAP Administration Manual
 # for more information.
 
-# If running CDAP on HDP 2.2+ the full HDP version string must be passed in as
-#   an option, for example "2.2.6.0-2800".
-# export OPTS="${OPTS} -Dhdp.version=2.2.4.2-2"
+# If running CDAP on HDP 2.2+ the full HDP version string including iteration
+#   number must be passed in as an option
+# export OPTS="${OPTS} -Dhdp.version=2.2.6.0-2800"
 
 # Ensure SPARK_HOME is set for Spark support.
 # export SPARK_HOME="/usr/lib/spark"
