@@ -33,6 +33,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
+import com.google.common.base.Throwables;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -105,23 +106,28 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
       return options;
     }
 
-    try {
-      Id.Artifact appArtifactId = Id.Artifact.from(namespace, appSpec.getArtifactId());
-      ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
-      builder.putAll(options.getArguments().asMap());
-      Map<String, String> artifactLocations = Maps.newHashMap();
-      for (Map.Entry<String, Plugin> pluginEntry : appSpec.getPlugins().entrySet()) {
-        Plugin plugin = pluginEntry.getValue();
-        Map.Entry<ArtifactDescriptor, PluginClass> artifactEntry = artifactRepository.getPlugin(
+    Id.Artifact appArtifactId = Id.Artifact.from(namespace, appSpec.getArtifactId());
+    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+    builder.putAll(options.getArguments().asMap());
+    Map<String, String> artifactLocations = Maps.newHashMap();
+    for (Map.Entry<String, Plugin> pluginEntry : appSpec.getPlugins().entrySet()) {
+      Plugin plugin = pluginEntry.getValue();
+      Map.Entry<ArtifactDescriptor, PluginClass> artifactEntry;
+      try {
+        artifactEntry = artifactRepository.getPlugin(
           appArtifactId, plugin.getPluginClass().getType(), plugin.getPluginClass().getName(), plugin.getArtifactId());
-        artifactLocations.put(plugin.getArtifactId().toString(), artifactEntry.getKey().getLocation().getName());
+      } catch (IOException e) {
+        throw Throwables.propagate(e);
+      } catch (PluginNotExistsException e) {
+        throw new IllegalArgumentException(String.format("Plugin of type %s, name %s could not be found",
+                                                         plugin.getPluginClass().getType(),
+                                                         plugin.getPluginClass().getName()), e);
       }
-      builder.put(ProgramOptionConstants.PLUGIN_FILENAMES, GSON.toJson(artifactLocations));
-      return new SimpleProgramOptions(options.getName(), new BasicArguments(builder.build()),
-                                      options.getUserArguments(), options.isDebug());
-    } catch (PluginNotExistsException | IOException e) {
-      return options;
+      artifactLocations.put(plugin.getArtifactId().toString(), artifactEntry.getKey().getLocation().getName());
     }
+    builder.put(ProgramOptionConstants.PLUGIN_FILENAMES, GSON.toJson(artifactLocations));
+    return new SimpleProgramOptions(options.getName(), new BasicArguments(builder.build()),
+                                    options.getUserArguments(), options.isDebug());
   }
 
   /**

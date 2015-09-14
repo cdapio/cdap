@@ -223,6 +223,16 @@ public class ArtifactRepository {
     return artifactStore.getPluginClasses(artifactId, pluginType, pluginName);
   }
 
+  /**
+   * Returns a {@link Map.Entry} representing the plugin information for the plugin being requested.
+   * @param artifactId the id of the artifact to get plugins for
+   * @param pluginType plugin type name
+   * @param pluginName plugin name
+   * @param pluginArtifactId {@link ArtifactId} plugin's artifact id
+   * @return the entry found
+   * @throws IOException if there was an exception reading plugin metadata from the artifact store
+   * @throws PluginNotExistsException if no plugins of the given type and name are available to the given artifact
+   */
   public Map.Entry<ArtifactDescriptor, PluginClass> getPlugin(Id.Artifact artifactId, String pluginType,
                                                               String pluginName, ArtifactId pluginArtifactId)
     throws IOException, PluginNotExistsException {
@@ -242,7 +252,7 @@ public class ArtifactRepository {
    * @param pluginType plugin type name
    * @param pluginName plugin name
    * @param selector for selecting which plugin to use
-   * @return the entry found or {@code null} if none was found
+   * @return the entry found
    * @throws IOException if there was an exception reading plugin metadata from the artifact store
    * @throws PluginNotExistsException if no plugins of the given type and name are available to the given artifact
    */
