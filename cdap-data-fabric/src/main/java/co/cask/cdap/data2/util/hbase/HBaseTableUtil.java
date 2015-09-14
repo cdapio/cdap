@@ -19,6 +19,7 @@ package co.cask.cdap.data2.util.hbase;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.utils.ProjectInfo;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.hbase.wd.AbstractRowKeyDistributor;
 import co.cask.cdap.proto.Id;
@@ -302,7 +303,8 @@ public abstract class HBaseTableUtil {
 
         // Copy jar file into HDFS
         // Target path is the jarDir + jarMD5.jar
-        final Location targetPath = jarDir.append("coprocessor" + hasher.hash().toString() + ".jar");
+        final Location targetPath = jarDir.append("coprocessor-" + ProjectInfo.getVersion()
+                                                    + "-" + hasher.hash().toString() + ".jar");
 
         // If the file exists and having same since, assume the file doesn't changed
         if (targetPath.exists() && targetPath.length() == jarFile.length()) {
