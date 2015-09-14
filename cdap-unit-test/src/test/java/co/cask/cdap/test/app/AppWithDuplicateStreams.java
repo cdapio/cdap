@@ -24,7 +24,7 @@ import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.worker.AbstractWorker;
 
 /**
- * App with streams, datasets added multiple times that should result in an error.
+ * App with streams, datasets, plugins added multiple times that should result in an error.
  */
 public class AppWithDuplicateStreams extends AbstractApplication<AppWithDuplicateStreams.ConfigClass> {
 
