@@ -27,7 +27,7 @@ chown -R cdap.cdap /var/run/cdap
 chown -R cdap.cdap /var/cdap/run
 chmod +x /opt/cdap/$package_name/bin/service
 if stat -t /opt/cdap/$package_name/conf/*-env.sh >/dev/null 2>&1 ; then
-  find /opt/cdap/$package_name/conf -name '*-env.sh' | xargs -n1 basename | sed 's/-env.sh//' | while read svcname; do
+  find -L /opt/cdap/$package_name/conf -name '*-env.sh' | xargs -n1 basename | sed 's/-env.sh//' | while read svcname; do
     if [[ -h /opt/cdap/$package_name/bin/svc-$svcname ]]; then
       unlink /opt/cdap/$package_name/bin/svc-$svcname
     fi

@@ -22,7 +22,7 @@ version="<%= @version %>"
 # if remaining packages after uninstall, perform conditional restart
 if [ $1 -ge 1 ]; then 
   if stat -t /opt/cdap/$package_name/conf/*-env.sh >/dev/null 2>&1 ; then
-    find /opt/cdap/$package_name/conf -name '*-env.sh' | xargs -n1 basename | sed 's/-env.sh//' | while read svcname; do
+    find -L /opt/cdap/$package_name/conf -name '*-env.sh' | xargs -n1 basename | sed 's/-env.sh//' | while read svcname; do
       for svcname in `ls /opt/cdap/$package_name/conf/*-env.sh | xargs -n1 basename | sed 's/-env.sh//'` ; do
         service cdap-$svcname condrestart > /dev/null 2>&1
       done
