@@ -20,13 +20,14 @@ import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.metadata.lineage.LineageStore;
 import co.cask.cdap.data2.metadata.service.BusinessMetadataStore;
 import co.cask.cdap.proto.Id;
-import com.google.gson.Gson;
+import co.cask.cdap.proto.metadata.MetadataRecord;
+import com.google.common.collect.ImmutableSet;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import javax.annotation.Nullable;
@@ -36,12 +37,11 @@ import javax.annotation.Nullable;
  */
 public class BasicLineageWriter implements LineageWriter {
   private static final Logger LOG = LoggerFactory.getLogger(BasicLineageWriter.class);
-  private static final Gson GSON = new Gson();
 
   private final BusinessMetadataStore businessMetadataStore;
   private final LineageStore lineageStore;
 
-  private final ConcurrentMap<CheckKey, Boolean> registered = new ConcurrentHashMap<>();
+  private final ConcurrentMap<DataAccessKey, Boolean> registered = new ConcurrentHashMap<>();
 
   @Inject
   BasicLineageWriter(BusinessMetadataStore businessMetadataStore, LineageStore lineageStore) {
@@ -61,7 +61,7 @@ public class BasicLineageWriter implements LineageWriter {
       return;
     }
 
-    String metadata = gatherMetadata(run, datasetInstance);
+    Set<MetadataRecord> metadata = gatherMetadata(run, datasetInstance);
     LOG.debug("Writing access for run {}, dataset {}, accessType {}, component {}, metadata = {}",
               run, datasetInstance, accessType, component, metadata);
     lineageStore.addAccess(run, datasetInstance, accessType, metadata, component);
@@ -78,30 +78,36 @@ public class BasicLineageWriter implements LineageWriter {
       return;
     }
 
-    String metadata = gatherMetadata(run, stream);
+    Set<MetadataRecord> metadata = gatherMetadata(run, stream);
     LOG.debug("Writing access for run {}, stream {}, accessType {}, component {}, metadata = {}",
               run, stream, accessType, component, metadata);
     lineageStore.addAccess(run, stream, accessType, metadata, component);
   }
 
-  private String gatherMetadata(Id.Run run, Id.NamespacedId id) {
-    // TODO: add app metadata and tags
-    Map<String, String> dataMetadata = businessMetadataStore.getProperties(id);
-    return GSON.toJson(dataMetadata);
+  /**
+   * Gathers metadata for application, program and data associated with the run.
+   * @param run program run
+   * @param id dataset or stream used by the run
+   * @return metadata for associated entities
+   */
+  private Set<MetadataRecord> gatherMetadata(Id.Run run, Id.NamespacedId id) {
+    // Note: when metadata of system scope is added, lineage writer will probably need to fetch it from
+    // MetadataAdmin class
+    return businessMetadataStore.getMetadata(ImmutableSet.of(run.getProgram().getApplication(), run.getProgram(), id));
   }
 
   private boolean alreadyRegistered(Id.Run run, Id.NamespacedId data, AccessType accessType,
                                     @Nullable Id.NamespacedId component) {
-    return registered.putIfAbsent(new CheckKey(run, data, accessType, component), true) != null;
+    return registered.putIfAbsent(new DataAccessKey(run, data, accessType, component), true) != null;
   }
 
-  private static final class CheckKey {
+  private static final class DataAccessKey {
     private final Id.Run run;
     private final Id.NamespacedId data;
     private final AccessType accessType;
     private final Id.NamespacedId component;
 
-    public CheckKey(Id.Run run, Id.NamespacedId data, AccessType accessType, @Nullable Id.NamespacedId component) {
+    public DataAccessKey(Id.Run run, Id.NamespacedId data, AccessType accessType, @Nullable Id.NamespacedId component) {
       this.run = run;
       this.data = data;
       this.accessType = accessType;
@@ -113,14 +119,14 @@ public class BasicLineageWriter implements LineageWriter {
       if (this == o) {
         return true;
       }
-      if (!(o instanceof CheckKey)) {
+      if (!(o instanceof DataAccessKey)) {
         return false;
       }
-      CheckKey checkKey = (CheckKey) o;
-      return Objects.equals(run, checkKey.run) &&
-        Objects.equals(data, checkKey.data) &&
-        Objects.equals(accessType, checkKey.accessType) &&
-        Objects.equals(component, checkKey.component);
+      DataAccessKey dataAccessKey = (DataAccessKey) o;
+      return Objects.equals(run, dataAccessKey.run) &&
+        Objects.equals(data, dataAccessKey.data) &&
+        Objects.equals(accessType, dataAccessKey.accessType) &&
+        Objects.equals(component, dataAccessKey.component);
     }
 
     @Override
