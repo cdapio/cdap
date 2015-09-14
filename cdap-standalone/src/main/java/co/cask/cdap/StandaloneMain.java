@@ -346,7 +346,7 @@ public class StandaloneMain {
       new NotificationServiceRuntimeModule().getStandaloneModules(),
       new StreamAdminModules().getStandaloneModules(),
       new NamespaceClientRuntimeModule().getStandaloneModules(),
-      new MetadataServiceModule()
+      new MetadataServiceModule().getStandaloneModules()
     );
   }
 }

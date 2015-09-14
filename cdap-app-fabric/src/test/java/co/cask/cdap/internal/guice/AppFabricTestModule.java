@@ -104,7 +104,7 @@ public final class AppFabricTestModule extends AbstractModule {
     install(new StreamAdminModules().getInMemoryModules());
     install(new StreamServiceRuntimeModule().getInMemoryModules());
     install(new NamespaceClientRuntimeModule().getStandaloneModules());
-    install(new MetadataServiceModule());
+    install(new MetadataServiceModule().getInMemoryModules());
   }
 
   private Scheduler createNoopScheduler() {

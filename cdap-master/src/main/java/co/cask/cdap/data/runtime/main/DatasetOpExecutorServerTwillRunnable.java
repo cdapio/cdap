@@ -89,7 +89,7 @@ public class DatasetOpExecutorServerTwillRunnable extends AbstractMasterTwillRun
       new LoggingModules().getDistributedModules(),
       new ExploreClientModule(),
       new NamespaceClientRuntimeModule().getDistributedModules(),
-      new MetadataServiceModule());
+      new MetadataServiceModule().getDistributedModules());
 
     injector.getInstance(LogAppenderInitializer.class).initialize();
     LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Id.Namespace.SYSTEM.getId(),

@@ -881,5 +881,6 @@ public final class Constants {
     public static final String WORKER_THREADS = "metadata.service.worker.threads";
     public static final String EXEC_THREADS = "metadata.service.exec.threads";
     public static final String METADATA_HANDLERS_NAME = "metadata.handlers";
+    public static final String METADATA_UPDATES_KAFKA_TOPIC = "metadata.updates.kafka.topic";
   }
 }
