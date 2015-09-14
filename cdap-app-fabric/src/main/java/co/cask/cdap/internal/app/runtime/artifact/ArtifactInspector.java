@@ -103,7 +103,7 @@ public class ArtifactInspector {
     ArtifactClasses.Builder builder = inspectApplications(artifactId, ArtifactClasses.builder(), artifactFile);
 
     try (PluginInstantiator pluginInstantiator = new PluginInstantiator(cConf, parentClassLoader)) {
-      inspectPlugins(builder, artifactId, artifactFile, pluginInstantiator);
+      inspectPlugins(builder, artifactFile, pluginInstantiator);
     }
 
     return builder.build();
@@ -174,8 +174,8 @@ public class ArtifactInspector {
   /**
    * Inspects the plugin file and extracts plugin classes information.
    */
-  private ArtifactClasses.Builder inspectPlugins(ArtifactClasses.Builder builder, Id.Artifact artifactId,
-                                                 File artifactFile, PluginInstantiator pluginInstantiator)
+  private ArtifactClasses.Builder inspectPlugins(ArtifactClasses.Builder builder, File artifactFile,
+                                                 PluginInstantiator pluginInstantiator)
     throws IOException, InvalidArtifactException {
 
     // See if there are export packages. Plugins should be in those packages
@@ -186,8 +186,7 @@ public class ArtifactInspector {
 
     // Load the plugin class and inspect the config field.
     try {
-      ClassLoader pluginClassLoader = pluginInstantiator.getLocationArtifactClassLoader(
-        Locations.toLocation(artifactFile));
+      ClassLoader pluginClassLoader = pluginInstantiator.getArtifactClassLoader(Locations.toLocation(artifactFile));
       for (Class<?> cls : getPluginClasses(exportPackages, pluginClassLoader)) {
         Plugin pluginAnnotation = cls.getAnnotation(Plugin.class);
         if (pluginAnnotation == null) {

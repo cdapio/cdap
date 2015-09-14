@@ -116,7 +116,7 @@ public class PluginInstantiator implements Closeable {
    *
    * @see PluginClassLoader
    */
-  public ClassLoader getLocationArtifactClassLoader(Location location) throws IOException {
+  public ClassLoader getArtifactClassLoader(Location location) throws IOException {
     try {
       return locationClassLoaders.get(location);
     } catch (ExecutionException e) {
@@ -145,7 +145,7 @@ public class PluginInstantiator implements Closeable {
   @SuppressWarnings("unchecked")
   public <T> Class<T> loadClass(Location location,
                                 PluginClass pluginClass) throws IOException, ClassNotFoundException {
-    return (Class<T>) getLocationArtifactClassLoader(location).loadClass(pluginClass.getClassName());
+    return (Class<T>) getArtifactClassLoader(location).loadClass(pluginClass.getClassName());
   }
 
   /**
@@ -179,7 +179,7 @@ public class PluginInstantiator implements Closeable {
   @SuppressWarnings("unchecked")
   public <T> T newInstance(Location location, PluginClass pluginClass,
                            PluginProperties properties) throws IOException, ClassNotFoundException {
-    return newInstance(getLocationArtifactClassLoader(location), pluginClass, properties);
+    return newInstance(getArtifactClassLoader(location), pluginClass, properties);
   }
 
   private <T> T newInstance(ClassLoader classLoader, PluginClass pluginClass, PluginProperties properties)
