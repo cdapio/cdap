@@ -255,7 +255,7 @@ public class DefaultMetricStore implements MetricStore {
   }
 
   @Override
-  public Collection<MetricTimeSeries> query(MetricDataQuery query) throws Exception {
+  public Collection<MetricTimeSeries> query(MetricDataQuery query) {
     Collection<TimeSeries> cubeResult = cube.get().query(buildCubeQuery(query));
     List<MetricTimeSeries> result = Lists.newArrayList();
     for (TimeSeries timeSeries : cubeResult) {
