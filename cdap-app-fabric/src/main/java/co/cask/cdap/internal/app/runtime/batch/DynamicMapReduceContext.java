@@ -41,7 +41,6 @@ import com.google.common.cache.RemovalNotification;
 import com.google.common.collect.Maps;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -109,7 +108,8 @@ public class DynamicMapReduceContext extends BasicMapReduceContext implements Da
     this.dynamicDatasetContext = new DynamicDatasetContext(getProgram().getId().getNamespace(),
                                                            txContext, getProgramMetrics(), dsFramework,
                                                            program.getClassLoader(),
-                                                           programOptions.getArguments().asMap(), null, getOwners()) {
+                                                           programOptions.getUserArguments().asMap(), null,
+                                                           getOwners()) {
       @Nullable
       @Override
       protected LoadingCache<Long, Map<DatasetCacheKey, Dataset>> getDatasetsCache() {
