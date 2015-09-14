@@ -100,6 +100,10 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
    */
   private ProgramOptions addPluginLocations(ProgramOptions options, Id.Namespace namespace,
                                             ApplicationSpecification appSpec) {
+    if (appSpec == null) {
+      return options;
+    }
+
     try {
       Id.Artifact appArtifactId = Id.Artifact.from(namespace, appSpec.getArtifactId());
       ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
