@@ -30,7 +30,6 @@ import co.cask.cdap.internal.app.runtime.DataFabricFacadeFactory;
 import co.cask.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.services.ServiceHttpServer;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
@@ -55,13 +54,12 @@ public class ServiceProgramRunner implements ProgramRunner {
   private final TransactionSystemClient txClient;
   private final ServiceAnnouncer serviceAnnouncer;
   private final DataFabricFacadeFactory dataFabricFacadeFactory;
-  private final ArtifactRepository artifactRepository;
 
   @Inject
   public ServiceProgramRunner(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
                               DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient,
                               TransactionSystemClient txClient, ServiceAnnouncer serviceAnnouncer,
-                              DataFabricFacadeFactory dataFabricFacadeFactory, ArtifactRepository artifactRepository) {
+                              DataFabricFacadeFactory dataFabricFacadeFactory) {
     this.cConf = cConf;
     this.metricsCollectionService = metricsCollectionService;
     this.datasetFramework = datasetFramework;
@@ -69,7 +67,6 @@ public class ServiceProgramRunner implements ProgramRunner {
     this.txClient = txClient;
     this.serviceAnnouncer = serviceAnnouncer;
     this.dataFabricFacadeFactory = dataFabricFacadeFactory;
-    this.artifactRepository = artifactRepository;
   }
 
   @Override
@@ -96,12 +93,11 @@ public class ServiceProgramRunner implements ProgramRunner {
     String host = options.getArguments().getOption(ProgramOptionConstants.HOST);
     Preconditions.checkArgument(host != null, "No hostname is provided");
 
-    ServiceHttpServer component = new ServiceHttpServer(host, program, spec, runId, options.getUserArguments(),
+    ServiceHttpServer component = new ServiceHttpServer(host, program, spec, runId, options,
                                       instanceId, instanceCount, serviceAnnouncer,
                                       metricsCollectionService, datasetFramework, dataFabricFacadeFactory,
                                       txClient, discoveryServiceClient,
-                                      createArtifactPluginInstantiator(program.getClassLoader()),
-                                      artifactRepository);
+                                      createArtifactPluginInstantiator(program.getClassLoader()));
 
     ProgramController controller = new ServiceProgramControllerAdapter(component, program.getId(), runId,
                                                                        spec.getName() + "-" + instanceId);

@@ -22,10 +22,9 @@ import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.app.program.Program;
-import co.cask.cdap.app.runtime.Arguments;
+import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowMapReduceProgram;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionAware;
@@ -65,13 +64,12 @@ public abstract class AbstractMapReduceTaskContextBuilder {
                                          long logicalStartTime,
                                          String programNameInWorkflow,
                                          @Nullable WorkflowToken workflowToken,
-                                         Arguments runtimeArguments,
+                                         ProgramOptions programOptions,
                                          Transaction tx,
                                          Program mrProgram,
                                          @Nullable String inputDataSetName,
                                          @Nullable String outputDataSetName,
-                                         @Nullable PluginInstantiator pluginInstantiator,
-                                         ArtifactRepository artifactRepository) {
+                                         @Nullable PluginInstantiator pluginInstantiator) {
     Injector injector = prepare();
 
     // Initializing Program
@@ -109,9 +107,9 @@ public abstract class AbstractMapReduceTaskContextBuilder {
     // Creating mapreduce job context
     MapReduceSpecification spec = program.getApplicationSpecification().getMapReduce().get(program.getName());
     BasicMapReduceTaskContext context =
-      new BasicMapReduceTaskContext(program, type, RunIds.fromString(runId), taskId, runtimeArguments, datasets, spec,
+      new BasicMapReduceTaskContext(program, type, RunIds.fromString(runId), taskId, programOptions, datasets, spec,
                                     logicalStartTime, workflowToken, discoveryServiceClient, metricsCollectionService,
-                                    datasetFramework, pluginInstantiator, artifactRepository);
+                                    datasetFramework, pluginInstantiator);
 
     // propagating tx to all txAware guys
     // NOTE: tx will be committed by client code

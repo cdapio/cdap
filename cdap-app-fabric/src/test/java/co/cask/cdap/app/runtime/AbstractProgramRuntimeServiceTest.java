@@ -69,7 +69,7 @@ public class AbstractProgramRuntimeServiceTest {
       }
     };
 
-    ProgramRuntimeService runtimeService = new AbstractProgramRuntimeService(runnerFactory) {
+    ProgramRuntimeService runtimeService = new AbstractProgramRuntimeService(runnerFactory, null) {
       @Override
       public ProgramLiveInfo getLiveInfo(Id.Program programId) {
         return new ProgramLiveInfo(programId, "runtime") { };

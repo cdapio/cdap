@@ -26,13 +26,12 @@ import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.app.program.Program;
-import co.cask.cdap.app.runtime.Arguments;
+import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.batch.dataset.MultipleOutputs;
 import co.cask.cdap.logging.context.MapReduceLoggingContext;
 import co.cask.cdap.proto.Id;
@@ -41,7 +40,6 @@ import com.google.common.collect.Maps;
 import org.apache.hadoop.mapreduce.TaskInputOutputContext;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -75,7 +73,7 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
   public BasicMapReduceTaskContext(Program program,
                                    MapReduceMetrics.TaskType type,
                                    RunId runId, String taskId,
-                                   Arguments runtimeArguments,
+                                   ProgramOptions programOptions,
                                    Set<String> datasets,
                                    MapReduceSpecification spec,
                                    long logicalStartTime,
@@ -83,11 +81,10 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
                                    DiscoveryServiceClient discoveryServiceClient,
                                    MetricsCollectionService metricsCollectionService,
                                    DatasetFramework dsFramework,
-                                   @Nullable PluginInstantiator pluginInstantiator,
-                                   ArtifactRepository artifactRepository) {
-    super(program, runId, runtimeArguments, datasets,
+                                   PluginInstantiator pluginInstantiator) {
+    super(program, runId, programOptions, datasets,
           getMetricCollector(program, runId.getId(), taskId, metricsCollectionService, type),
-          dsFramework, discoveryServiceClient, pluginInstantiator, artifactRepository);
+          dsFramework, discoveryServiceClient, pluginInstantiator);
     this.logicalStartTime = logicalStartTime;
     this.workflowToken = workflowToken;
     this.metricsCollectionService = metricsCollectionService;

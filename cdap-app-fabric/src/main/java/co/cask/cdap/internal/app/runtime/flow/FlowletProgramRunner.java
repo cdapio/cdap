@@ -210,7 +210,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
       flowletContext = new BasicFlowletContext(program, flowletName, instanceId,
                                                runId, instanceCount,
                                                flowletDef.getDatasets(),
-                                               options.getUserArguments(), flowletDef.getFlowletSpec(),
+                                               options, flowletDef.getFlowletSpec(),
                                                metricsCollectionService, discoveryServiceClient, dsFramework);
 
       // Creates tx related objects

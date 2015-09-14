@@ -29,7 +29,7 @@ import co.cask.cdap.api.worker.WorkerContext;
 import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.app.program.Program;
-import co.cask.cdap.app.runtime.Arguments;
+import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.stream.StreamWriterFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -39,7 +39,6 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DynamicDatasetContext;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.logging.context.WorkerLoggingContext;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionContext;
@@ -56,7 +55,6 @@ import com.google.common.collect.Maps;
 import com.google.common.io.Closeables;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -88,17 +86,16 @@ public class BasicWorkerContext extends AbstractContext implements WorkerContext
   private final Map<String, Plugin> plugins;
 
   public BasicWorkerContext(WorkerSpecification spec, Program program, RunId runId, int instanceId,
-                            int instanceCount, Arguments runtimeArgs, CConfiguration cConf,
+                            int instanceCount, ProgramOptions programOptions, CConfiguration cConf,
                             MetricsCollectionService metricsCollectionService,
                             DatasetFramework datasetFramework,
                             TransactionSystemClient transactionSystemClient,
                             DiscoveryServiceClient discoveryServiceClient,
                             StreamWriterFactory streamWriterFactory,
-                            @Nullable PluginInstantiator pluginInstantiator,
-                            ArtifactRepository artifactRepository) {
-    super(program, runId, runtimeArgs, spec.getDatasets(),
+                            PluginInstantiator pluginInstantiator) {
+    super(program, runId, programOptions, spec.getDatasets(),
           getMetricCollector(program, runId.getId(), instanceId, metricsCollectionService),
-          datasetFramework, discoveryServiceClient, pluginInstantiator, artifactRepository);
+          datasetFramework, discoveryServiceClient, pluginInstantiator);
     this.program = program;
     this.specification = spec;
     this.instanceId = instanceId;
@@ -111,7 +108,7 @@ public class BasicWorkerContext extends AbstractContext implements WorkerContext
     } else {
       this.userMetrics = null;
     }
-    this.runtimeArgs = runtimeArgs.asMap();
+    this.runtimeArgs = Maps.newHashMap(programOptions.getUserArguments().asMap());
     this.streamWriter = streamWriterFactory.create(program.getId().getNamespace(), getOwners());
     this.plugins = Maps.newHashMap(program.getApplicationSpecification().getPlugins());
 

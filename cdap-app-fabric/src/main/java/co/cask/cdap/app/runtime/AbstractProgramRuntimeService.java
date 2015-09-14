@@ -15,6 +15,9 @@
  */
 package co.cask.cdap.app.runtime;
 
+import co.cask.cdap.api.app.ApplicationSpecification;
+import co.cask.cdap.api.plugin.Plugin;
+import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
@@ -22,6 +25,9 @@ import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
+import co.cask.cdap.internal.app.runtime.adapter.ArtifactDescriptor;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import co.cask.cdap.internal.app.runtime.artifact.PluginNotExistsException;
 import co.cask.cdap.internal.app.runtime.service.SimpleRuntimeInfo;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
@@ -33,11 +39,13 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Table;
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.gson.Gson;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -55,15 +63,19 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   private static final EnumSet<ProgramController.State> COMPLETED_STATES = EnumSet.of(ProgramController.State.COMPLETED,
                                                                                       ProgramController.State.KILLED,
                                                                                       ProgramController.State.ERROR);
+  private static final Gson GSON = new Gson();
 
   private final ReadWriteLock runtimeInfosLock;
   private final Table<ProgramType, RunId, RuntimeInfo> runtimeInfos;
   private final ProgramRunnerFactory programRunnerFactory;
+  private final ArtifactRepository artifactRepository;
 
-  protected AbstractProgramRuntimeService(ProgramRunnerFactory programRunnerFactory) {
+  protected AbstractProgramRuntimeService(ProgramRunnerFactory programRunnerFactory,
+                                          ArtifactRepository artifactRepository) {
     this.runtimeInfosLock = new ReentrantReadWriteLock();
     this.runtimeInfos = HashBasedTable.create();
     this.programRunnerFactory = programRunnerFactory;
+    this.artifactRepository = artifactRepository;
   }
 
   @Override
@@ -71,9 +83,40 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     ProgramRunner runner = programRunnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getType().name()));
     Preconditions.checkNotNull(runner, "Fail to get ProgramRunner for type " + program.getType());
     ProgramOptions optionsWithRunId = addRunId(options, RunIds.generate());
-    final RuntimeInfo runtimeInfo = createRuntimeInfo(runner.run(program, optionsWithRunId), program);
+    ProgramOptions optionsWithPlugins = addPluginLocations(optionsWithRunId,
+                                                           Id.Namespace.from(program.getNamespaceId()),
+                                                           program.getApplicationSpecification());
+    final RuntimeInfo runtimeInfo = createRuntimeInfo(runner.run(program, optionsWithPlugins), program);
     programStarted(runtimeInfo);
     return runtimeInfo;
+  }
+
+  /**
+   * Return the copy of the {@link ProgramOptions} including locations of plugin artifacts in it.
+   * @param options the {@link ProgramOptions} in which the locations of plugin artifacts needs to be included
+   * @param namespace namespace of the Program
+   * @param appSpec program's Application Specification
+   * @return the copy of the program options with locations of plugin artifacts included in them
+   */
+  private ProgramOptions addPluginLocations(ProgramOptions options, Id.Namespace namespace,
+                                            ApplicationSpecification appSpec) {
+    try {
+      Id.Artifact appArtifactId = Id.Artifact.from(namespace, appSpec.getArtifactId());
+      ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+      builder.putAll(options.getArguments().asMap());
+      Map<String, String> artifactLocations = Maps.newHashMap();
+      for (Map.Entry<String, Plugin> pluginEntry : appSpec.getPlugins().entrySet()) {
+        Plugin plugin = pluginEntry.getValue();
+        Map.Entry<ArtifactDescriptor, PluginClass> artifactEntry = artifactRepository.getPlugin(
+          appArtifactId, plugin.getPluginClass().getType(), plugin.getPluginClass().getName(), plugin.getArtifactId());
+        artifactLocations.put(plugin.getArtifactId().toString(), artifactEntry.getKey().getLocation().getName());
+      }
+      builder.put(ProgramOptionConstants.PLUGIN_FILENAMES, GSON.toJson(artifactLocations));
+      return new SimpleProgramOptions(options.getName(), new BasicArguments(builder.build()),
+                                      options.getUserArguments(), options.isDebug());
+    } catch (PluginNotExistsException | IOException e) {
+      return options;
+    }
   }
 
   /**

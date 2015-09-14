@@ -28,6 +28,7 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
+import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.apache.twill.api.RunId;
@@ -55,7 +56,10 @@ final class BasicWorkflowContext extends AbstractContext implements WorkflowCont
                        Map<String, String> runtimeArgs, WorkflowToken token, Program program, RunId runId,
                        MetricsCollectionService metricsCollectionService,
                        DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient) {
-    super(program, runId, new BasicArguments(runtimeArgs), (spec == null) ? new HashSet<String>() : spec.getDatasets(),
+    super(program, runId,
+          // Fix this please
+          new SimpleProgramOptions("abcd", new BasicArguments(runtimeArgs), new BasicArguments(runtimeArgs)),
+          (spec == null) ? new HashSet<String>() : spec.getDatasets(),
           getMetricCollector(program, runId.getId(), metricsCollectionService),
           datasetFramework, discoveryServiceClient);
     this.workflowSpec = workflowSpec;

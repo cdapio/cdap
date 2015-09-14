@@ -24,7 +24,7 @@ import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.app.program.Program;
-import co.cask.cdap.app.runtime.Arguments;
+import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.utils.ImmutablePair;
@@ -62,11 +62,11 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
   BasicFlowletContext(Program program, final String flowletId,
                       int instanceId, RunId runId,
                       int instanceCount, Set<String> datasets,
-                      Arguments runtimeArguments, FlowletSpecification flowletSpec,
+                      ProgramOptions programOptions, FlowletSpecification flowletSpec,
                       MetricsCollectionService metricsCollectionService,
                       DiscoveryServiceClient discoveryServiceClient,
                       DatasetFramework dsFramework) {
-    super(program, runId, runtimeArguments, datasets,
+    super(program, runId, programOptions, datasets,
           getMetricCollector(metricsCollectionService, program, flowletId, runId.getId(), instanceId),
           dsFramework, discoveryServiceClient);
     this.namespaceId = program.getNamespaceId();

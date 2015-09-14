@@ -27,12 +27,11 @@ import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.app.program.Program;
-import co.cask.cdap.app.runtime.Arguments;
+import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.data2.dataset2.DatasetCacheKey;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DynamicDatasetContext;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.cache.CacheBuilder;
@@ -72,7 +71,7 @@ public class DynamicMapReduceContext extends BasicMapReduceContext implements Da
   public DynamicMapReduceContext(Program program,
                                  MapReduceMetrics.TaskType type,
                                  RunId runId, String taskId,
-                                 Arguments runtimeArguments,
+                                 ProgramOptions programOptions,
                                  MapReduceSpecification spec,
                                  long logicalStartTime, @Nullable String programNameInWorkflow,
                                  @Nullable WorkflowToken workflowToken,
@@ -80,11 +79,10 @@ public class DynamicMapReduceContext extends BasicMapReduceContext implements Da
                                  MetricsCollectionService metricsCollectionService,
                                  TransactionSystemClient txClient,
                                  DatasetFramework dsFramework,
-                                 @Nullable PluginInstantiator pluginInstantiator,
-                                 ArtifactRepository artifactRepository) {
-    super(program, type, runId, taskId, runtimeArguments, Collections.<String>emptySet(), spec,
+                                 PluginInstantiator pluginInstantiator) {
+    super(program, type, runId, taskId, programOptions, Collections.<String>emptySet(), spec,
           logicalStartTime, programNameInWorkflow, workflowToken, discoveryServiceClient, metricsCollectionService,
-          dsFramework, pluginInstantiator, artifactRepository);
+          dsFramework, pluginInstantiator);
     this.datasetsCache = CacheBuilder.newBuilder()
       .removalListener(new RemovalListener<Long, Map<DatasetCacheKey, Dataset>>() {
         @Override
@@ -112,7 +110,7 @@ public class DynamicMapReduceContext extends BasicMapReduceContext implements Da
     this.dynamicDatasetContext = new DynamicDatasetContext(getProgram().getId().getNamespace(),
                                                            txContext, getProgramMetrics(), dsFramework,
                                                            program.getClassLoader(),
-                                                           runtimeArguments.asMap(), null, getOwners()) {
+                                                           programOptions.getArguments().asMap(), null, getOwners()) {
       @Nullable
       @Override
       protected LoadingCache<Long, Map<DatasetCacheKey, Dataset>> getDatasetsCache() {

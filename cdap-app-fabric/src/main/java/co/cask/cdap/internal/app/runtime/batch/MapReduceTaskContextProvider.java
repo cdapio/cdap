@@ -21,8 +21,8 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.lang.Delegators;
+import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.batch.distributed.DistributedMapReduceTaskContextBuilder;
 import co.cask.cdap.internal.app.runtime.batch.inmemory.InMemoryMapReduceTaskContextBuilder;
 import com.google.common.base.Throwables;
@@ -53,7 +53,6 @@ public final class MapReduceTaskContextProvider {
   private final LocationFactory locationFactory;
   private BasicMapReduceTaskContext context;
   private AbstractMapReduceTaskContextBuilder contextBuilder;
-  private ArtifactRepository artifactRepository;
 
   public MapReduceTaskContextProvider(TaskAttemptContext context, MapReduceMetrics.TaskType type) {
     this.taskContext = context;
@@ -61,7 +60,6 @@ public final class MapReduceTaskContextProvider {
     this.contextConfig = new MapReduceContextConfig(context.getConfiguration());
     this.locationFactory = new LocalLocationFactory();
     this.contextBuilder = null;
-    this.artifactRepository = null;
   }
 
   /**
@@ -79,14 +77,13 @@ public final class MapReduceTaskContextProvider {
                contextConfig.getLogicalStartTime(),
                contextConfig.getProgramNameInWorkflow(),
                contextConfig.getWorkflowToken(),
-               contextConfig.getArguments(),
+               // Change this!
+               new SimpleProgramOptions("abcd", contextConfig.getArguments(), contextConfig.getArguments()),
                contextConfig.getTx(),
                createProgram(contextConfig),
                contextConfig.getInputDataSet(),
                contextConfig.getOutputDataSet(),
-               getPluginInstantiator(contextConfig.getConfiguration()),
-               artifactRepository
-        );
+               getPluginInstantiator(contextConfig.getConfiguration()));
     }
     return context;
   }
