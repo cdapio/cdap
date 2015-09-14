@@ -27,6 +27,7 @@ import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
+import co.cask.cdap.data2.metadata.service.BusinessMetadataStore;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import com.google.common.annotations.VisibleForTesting;
@@ -45,12 +46,14 @@ public class LineageWriterDatasetFramework implements DatasetFramework, ProgramC
   private final DatasetFramework delegate;
   private final LineageWriter lineageWriter;
   private final ProgramContext programContext = new ProgramContext();
+  private final BusinessMetadataStore businessMds;
 
   @Inject
-  LineageWriterDatasetFramework(
-    @Named(DataSetsModules.BASIC_DATASET_FRAMEWORK) DatasetFramework datasetFramework, LineageWriter lineageWriter) {
+  LineageWriterDatasetFramework(@Named(DataSetsModules.BASIC_DATASET_FRAMEWORK) DatasetFramework datasetFramework,
+                                LineageWriter lineageWriter, BusinessMetadataStore businessMds) {
     this.delegate = datasetFramework;
     this.lineageWriter = lineageWriter;
+    this.businessMds = businessMds;
   }
 
   @Override
@@ -126,12 +129,23 @@ public class LineageWriterDatasetFramework implements DatasetFramework, ProgramC
   public void deleteInstance(Id.DatasetInstance datasetInstanceId)
     throws DatasetManagementException, IOException, ServiceUnavailableException {
     delegate.deleteInstance(datasetInstanceId);
+    // Remove metadata for the dataset
+    businessMds.removeProperties(datasetInstanceId);
+    businessMds.removeTags(datasetInstanceId);
   }
 
   @Override
   public void deleteAllInstances(Id.Namespace namespaceId)
     throws DatasetManagementException, IOException, ServiceUnavailableException {
+    Collection<DatasetSpecificationSummary> datasets = this.getInstances(namespaceId);
     delegate.deleteAllInstances(namespaceId);
+    for (DatasetSpecificationSummary dataset : datasets) {
+      String dsName = dataset.getName();
+      Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(namespaceId, dsName);
+      // Remove metadata for the dataset
+      businessMds.removeProperties(datasetInstanceId);
+      businessMds.removeTags(datasetInstanceId);
+    }
   }
 
   @Override
