@@ -157,7 +157,7 @@ public class LineageDataset extends AbstractDataset {
    * @return a set of {@link MetadataRecord}s (associated with both program and data it accesses)
    * for a given program run.
    */
-  public Set<MetadataRecord> getAccesses(Id.Run run) {
+  public Set<MetadataRecord> getRunMetadata(Id.Run run) {
     ImmutableSet.Builder<MetadataRecord> recordBuilder = ImmutableSet.builder();
     byte[] startKey = getRunScanStartKey(run);
     Scanner scanner = accessRegistryTable.scan(startKey, Bytes.stopKeyForPrefix(startKey));

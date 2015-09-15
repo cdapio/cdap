@@ -143,7 +143,7 @@ public class LineageTest extends MetadataTestBase {
                                 new MetadataRecord(programForFlow, flowProperties, flowTags),
                                 new MetadataRecord(dataset, dataProperties, dataTags),
                                 new MetadataRecord(stream, streamProperties, streamTags)),
-                          fetchAccesses(new Id.Run(flow, flowRunId.getId())));
+                          fetchRunMetadata(new Id.Run(flow, flowRunId.getId())));
     } finally {
       try {
         deleteNamespace(namespace);
@@ -249,7 +249,7 @@ public class LineageTest extends MetadataTestBase {
                                 new MetadataRecord(programForFlow, emptyMap(), emptySet()),
                                 new MetadataRecord(dataset, datasetProperties, emptySet()),
                                 new MetadataRecord(stream, emptyMap(), emptySet())),
-                          fetchAccesses(new Id.Run(flow, flowRunId.getId())));
+                          fetchRunMetadata(new Id.Run(flow, flowRunId.getId())));
 
       // Id.Worker needs conversion to Id.Program JIRA - CDAP-3658
       Id.Program programForWorker = Id.Program.from(worker.getApplication(), worker.getType(), worker.getId());
@@ -257,7 +257,7 @@ public class LineageTest extends MetadataTestBase {
                                 new MetadataRecord(programForWorker, emptyMap(), workerTags),
                                 new MetadataRecord(dataset, datasetProperties, emptySet()),
                                 new MetadataRecord(stream, emptyMap(), emptySet())),
-                          fetchAccesses(new Id.Run(worker, workerRunId.getId())));
+                          fetchRunMetadata(new Id.Run(worker, workerRunId.getId())));
 
       // Id.Spark needs conversion to Id.Program JIRA - CDAP-3658
       Id.Program programForSpark = Id.Program.from(spark.getApplication(), spark.getType(), spark.getId());
@@ -265,7 +265,7 @@ public class LineageTest extends MetadataTestBase {
                                 new MetadataRecord(programForSpark, emptyMap(), sparkTags),
                                 new MetadataRecord(dataset, datasetProperties, emptySet()),
                                 new MetadataRecord(stream, emptyMap(), emptySet())),
-                          fetchAccesses(new Id.Run(spark, sparkRunId.getId())));
+                          fetchRunMetadata(new Id.Run(spark, sparkRunId.getId())));
     } finally {
       try {
         deleteNamespace(namespace);

@@ -71,8 +71,8 @@ public class LineageDatasetTest {
     Assert.assertEquals(expected, relations.iterator().next());
 
     // Assert metadata
-    System.out.println(lineageDataset.getAccesses(run));
-    Assert.assertEquals(metadataRecords, lineageDataset.getAccesses(run));
+    System.out.println(lineageDataset.getRunMetadata(run));
+    Assert.assertEquals(metadataRecords, lineageDataset.getRunMetadata(run));
   }
 
   @Test
@@ -179,16 +179,16 @@ public class LineageDatasetTest {
     );
 
     // Verify metadata
-    Assert.assertEquals(metaProgram1Data1Run1, lineageDataset.getAccesses(run11));
-    Assert.assertEquals(2, lineageDataset.getAccesses(run11).size());
+    Assert.assertEquals(metaProgram1Data1Run1, lineageDataset.getRunMetadata(run11));
+    Assert.assertEquals(2, lineageDataset.getRunMetadata(run11).size());
     Assert.assertEquals(toSet(metaProgram2Data2Run2, metaProgram2Stream1Run2),
-                        lineageDataset.getAccesses(run22));
-    Assert.assertEquals(3, lineageDataset.getAccesses(run22).size());
+                        lineageDataset.getRunMetadata(run22));
+    Assert.assertEquals(3, lineageDataset.getRunMetadata(run22).size());
     Assert.assertEquals(toSet(metaProgram2Stream2Run3, metaProgram2Data2Run3),
-                        lineageDataset.getAccesses(run23));
-    Assert.assertEquals(3, lineageDataset.getAccesses(run23).size());
-    Assert.assertEquals(metaProgram3Data2Run4, lineageDataset.getAccesses(run34));
-    Assert.assertEquals(2, lineageDataset.getAccesses(run34).size());
+                        lineageDataset.getRunMetadata(run23));
+    Assert.assertEquals(3, lineageDataset.getRunMetadata(run23).size());
+    Assert.assertEquals(metaProgram3Data2Run4, lineageDataset.getRunMetadata(run34));
+    Assert.assertEquals(2, lineageDataset.getRunMetadata(run34).size());
   }
 
   private static LineageDataset getLineageDataset(String instanceId) throws Exception {
