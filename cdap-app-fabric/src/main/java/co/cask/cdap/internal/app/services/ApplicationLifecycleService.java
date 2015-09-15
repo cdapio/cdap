@@ -45,6 +45,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.config.PreferencesStore;
+import co.cask.cdap.data2.metadata.service.BusinessMetadataStore;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
@@ -68,6 +69,7 @@ import co.cask.cdap.proto.artifact.ArtifactSummary;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -85,6 +87,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -126,6 +130,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   private final MetricStore metricStore;
   private final ArtifactRepository artifactRepository;
   private final ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms> managerFactory;
+  private final BusinessMetadataStore businessMds;
 
   @Inject
   public ApplicationLifecycleService(ProgramRuntimeService runtimeService, Store store, CConfiguration configuration,
@@ -134,7 +139,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                                      StreamConsumerFactory streamConsumerFactory, UsageRegistry usageRegistry,
                                      PreferencesStore preferencesStore, MetricStore metricStore,
                                      ArtifactRepository artifactRepository,
-                                     ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms> managerFactory) {
+                                     ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms> managerFactory,
+                                     BusinessMetadataStore businessMds) {
     this.runtimeService = runtimeService;
     this.store = store;
     this.configuration = configuration;
@@ -147,6 +153,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     this.metricStore = metricStore;
     this.artifactRepository = artifactRepository;
     this.managerFactory = managerFactory;
+    this.businessMds = businessMds;
   }
 
   @Override
@@ -686,12 +693,54 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     }
     deleteProgramLocations(appId);
 
+    ApplicationSpecification appSpec = store.getApplication(appId);
+    deleteAppBusinessMetadata(appId, appSpec);
+
     store.removeApplication(appId);
 
     try {
       usageRegistry.unregister(appId);
     } catch (Exception e) {
       LOG.warn("Failed to unregister usage of app: {}", appId, e);
+    }
+  }
+
+  /**
+   * Delete the business metadata for the application and the programs.
+   */
+  private void deleteAppBusinessMetadata(Id.Application appId, ApplicationSpecification appSpec) {
+    // Remove metadata for the Application itself.
+    businessMds.removeMetadata(appId);
+
+    // Remove business metadata for the programs of the Application
+    // TODO: Need to remove this we support prefix search of metadata type.
+    // See https://issues.cask.co/browse/CDAP-3669
+    Map<ProgramType, Set<String>> programTypeToNames = new HashMap<>();
+    if (appSpec.getFlows() != null) {
+      programTypeToNames.put(ProgramType.FLOW, appSpec.getFlows().keySet());
+    }
+    if (appSpec.getMapReduce() != null) {
+      programTypeToNames.put(ProgramType.MAPREDUCE, appSpec.getMapReduce().keySet());
+    }
+    if (appSpec.getWorkflows() != null) {
+      programTypeToNames.put(ProgramType.WORKFLOW, appSpec.getWorkflows().keySet());
+    }
+    if (appSpec.getServices() != null) {
+      programTypeToNames.put(ProgramType.SERVICE, appSpec.getServices().keySet());
+    }
+    if (appSpec.getSpark() != null) {
+      programTypeToNames.put(ProgramType.SPARK, appSpec.getSpark().keySet());
+    }
+    if (appSpec.getWorkers() != null) {
+      programTypeToNames.put(ProgramType.WORKER, appSpec.getWorkers().keySet());
+    }
+
+    for (Map.Entry<ProgramType, Set<String>> entry : programTypeToNames.entrySet()) {
+      Set<String> programNames = entry.getValue();
+      for (String programName : programNames) {
+        Id.Program programId = Id.Program.from(appId.getNamespaceId(), appId.getId(), entry.getKey(), programName);
+        businessMds.removeMetadata(programId);
+      }
     }
   }
 
