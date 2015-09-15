@@ -32,6 +32,7 @@ import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.conf.StringUtils;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramType;
 import co.cask.common.cli.Arguments;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
@@ -79,8 +80,8 @@ public class CallServiceCommand extends AbstractCommand implements Categorized {
 
     String appId = appAndServiceId[0];
     String serviceId = appAndServiceId[1];
-    Id.Service service = Id.Service.from(
-      Id.Application.from(cliConfig.getCurrentNamespace(), appId), serviceId);
+    Id.Program service = Id.Program.from(
+      Id.Application.from(cliConfig.getCurrentNamespace(), appId), ProgramType.SERVICE, serviceId);
 
     String method = arguments.get(ArgumentName.HTTP_METHOD.toString());
     String path = arguments.get(ArgumentName.ENDPOINT.toString());

@@ -60,7 +60,7 @@ public class InMemoryQueueAdmin implements QueueAdmin {
   }
 
   @Override
-  public void clearAllForFlow(Id.Flow flowId) throws Exception {
+  public void clearAllForFlow(Id.Program flowId) throws Exception {
     queueService.truncateAllWithPrefix(QueueName.prefixForFlow(flowId));
   }
 
@@ -80,7 +80,7 @@ public class InMemoryQueueAdmin implements QueueAdmin {
   }
 
   @Override
-  public void dropAllForFlow(Id.Flow flowId) throws Exception {
+  public void dropAllForFlow(Id.Program flowId) throws Exception {
     queueService.resetQueuesWithPrefix(QueueName.prefixForFlow(flowId));
   }
 

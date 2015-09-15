@@ -29,11 +29,11 @@ import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.cdap.proto.DatasetMeta;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.codec.NamespacedIdCodec;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
-import com.google.common.base.Function;
-import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
@@ -52,6 +52,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.List;
@@ -76,6 +77,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetInstanceHandler.class);
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(DatasetSpecification.class, new DatasetSpecificationAdapter())
+    .registerTypeAdapter(Id.NamespacedId.class, new NamespacedIdCodec())
     .create();
 
   private final DatasetInstanceService instanceService;
@@ -97,8 +99,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
    *
    * @param namespaceId namespace of the dataset instance
    * @param name name of the dataset instance
-   * @param owners a list of owners of the dataset instance, in the form @{code <type>::<id>}
-   *               (e.g. "program::namespace:default/application:PurchaseHistory/program:flow:PurchaseFlow")
+   * @param owners a UTF-8-encoded JSON list of Id owners of the dataset instance
    * @throws NotFoundException if the dataset instance was not found
    */
   @GET
@@ -106,10 +107,10 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   public void get(HttpRequest request, HttpResponder responder,
                   @PathParam("namespace-id") String namespaceId,
                   @PathParam("name") String name,
-                  @QueryParam("owner") List<String> owners) throws Exception {
+                  @QueryParam("owners") String owners) throws Exception {
     Id.DatasetInstance instance = Id.DatasetInstance.from(namespaceId, name);
     responder.sendJson(HttpResponseStatus.OK,
-                       instanceService.get(instance, strings2Ids(owners)),
+                       instanceService.get(instance, decodeOwners(owners)),
                        DatasetMeta.class, GSON);
   }
 
@@ -214,26 +215,11 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     responder.sendStatus(HttpResponseStatus.NOT_IMPLEMENTED);
   }
 
-  private List<? extends Id> strings2Ids(List<String> strings) {
-    return Lists.transform(strings, new Function<String, Id>() {
-      @Nullable
-      @Override
-      public Id apply(@Nullable String input) {
-        if (input == null) {
-          return null;
-        }
-
-        String[] parts = input.split("::", 2);
-        Preconditions.checkArgument(parts.length == 2);
-        String ownerType = parts[0];
-        String ownerId = parts[1];
-        if (ownerType.equals(Id.getType(Id.Program.class))) {
-          return Id.Program.fromStrings(ownerId.split("/"));
-        } else {
-          return null;
-        }
-      }
-    });
+  private List<Id.NamespacedId> decodeOwners(@Nullable String owners) throws UnsupportedEncodingException {
+    if (owners == null) {
+      return ImmutableList.of();
+    }
+    return GSON.fromJson(owners, new TypeToken<List<Id.NamespacedId>>() { }.getType());
   }
 
   private Collection<DatasetSpecificationSummary> spec2Summary(Collection<DatasetSpecification> specs) {

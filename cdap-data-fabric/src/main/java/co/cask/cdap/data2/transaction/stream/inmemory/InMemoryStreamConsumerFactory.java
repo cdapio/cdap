@@ -24,6 +24,7 @@ import co.cask.cdap.data2.transaction.stream.QueueToStreamConsumer;
 import co.cask.cdap.data2.transaction.stream.StreamConsumer;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.inject.Inject;
@@ -68,6 +69,7 @@ public final class InMemoryStreamConsumerFactory implements StreamConsumerFactor
     Preconditions.checkArgument(namespaceParts.hasNext(), invalidNamespaceError);
     String flowId = namespaceParts.next();
 
-    queueService.truncateAllWithPrefix(QueueName.prefixForFlow(Id.Flow.from(streamId.getNamespaceId(), appId, flowId)));
+    queueService.truncateAllWithPrefix(QueueName.prefixForFlow(Id.Program.from(
+      streamId.getNamespaceId(), appId, ProgramType.FLOW, flowId)));
   }
 }

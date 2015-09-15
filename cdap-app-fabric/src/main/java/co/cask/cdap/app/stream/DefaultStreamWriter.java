@@ -67,13 +67,13 @@ public class DefaultStreamWriter implements StreamWriter {
   /**
    * The owners of this {@link StreamWriter}.
    */
-  private final List<Id> owners;
+  private final List<? extends Id.NamespacedId> owners;
   private final Id.Run run;
   private final LineageWriter lineageWriter;
 
   @Inject
   public DefaultStreamWriter(@Assisted("run") Id.Run run,
-                             @Assisted("owners") List<Id> owners,
+                             @Assisted("owners") List<? extends Id.NamespacedId> owners,
                              UsageRegistry usageRegistry,
                              LineageWriter lineageWriter,
                              DiscoveryServiceClient discoveryServiceClient) {

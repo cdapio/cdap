@@ -327,6 +327,6 @@ public abstract class DatasetServiceTestBase {
 
   protected void assertNamespaceNotFound(HttpResponse response, Id.Namespace namespaceId) {
     Assert.assertEquals(HttpStatus.SC_NOT_FOUND, response.getResponseCode());
-    Assert.assertTrue(response.getResponseBodyAsString().contains(namespaceId.getIdRep()));
+    Assert.assertTrue(response.getResponseBodyAsString().contains(namespaceId.toString()));
   }
 }

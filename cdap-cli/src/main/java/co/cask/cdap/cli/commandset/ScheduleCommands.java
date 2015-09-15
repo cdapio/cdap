@@ -30,6 +30,7 @@ import co.cask.cdap.client.ScheduleClient;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramType;
 import co.cask.common.cli.Arguments;
 import co.cask.common.cli.Command;
 import co.cask.common.cli.CommandSet;
@@ -203,7 +204,8 @@ public class ScheduleCommands extends CommandSet<Command> implements Categorized
 
       final String appId = programIdParts[0];
       String workflowName = programIdParts[1];
-      Id.Workflow workflowId = Id.Workflow.from(cliConfig.getCurrentNamespace(), appId, workflowName);
+      Id.Program workflowId = Id.Program.from(cliConfig.getCurrentNamespace(), appId,
+                                              ProgramType.WORKFLOW, workflowName);
 
       List<ScheduleSpecification> list = scheduleClient.list(workflowId);
       Table table = Table.builder()

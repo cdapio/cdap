@@ -24,6 +24,7 @@ import co.cask.cdap.client.ServiceClient;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.UnauthorizedException;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramType;
 import co.cask.common.cli.completers.PrefixCompleter;
 import com.google.common.collect.Lists;
 
@@ -59,8 +60,10 @@ public class HttpEndpointPrefixCompleter extends PrefixCompleter {
     Map<String, String> arguments = ArgumentParser.getArguments(buffer, PATTERN);
     ProgramIdArgument programIdArgument = ArgumentParser.parseProgramId(arguments.get(PROGRAM_ID));
     if (programIdArgument != null) {
-      Id.Service service = Id.Service.from(cliConfig.getCurrentNamespace(),
-                                           programIdArgument.getAppId(), programIdArgument.getProgramId());
+      Id.Program service = Id.Program.from(cliConfig.getCurrentNamespace(),
+                                           programIdArgument.getAppId(),
+                                           ProgramType.SERVICE,
+                                           programIdArgument.getProgramId());
       completer.setEndpoints(getEndpoints(service, arguments.get(METHOD)));
     } else {
       completer.setEndpoints(Collections.<String>emptyList());
@@ -68,7 +71,7 @@ public class HttpEndpointPrefixCompleter extends PrefixCompleter {
     return super.complete(buffer, cursor, candidates);
   }
 
-  public Collection<String> getEndpoints(Id.Service serviceId, String method) {
+  public Collection<String> getEndpoints(Id.Program serviceId, String method) {
     Collection<String> httpEndpoints = Lists.newArrayList();
     try {
       for (ServiceHttpEndpoint endpoint : serviceClient.getEndpoints(serviceId)) {

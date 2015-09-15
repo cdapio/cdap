@@ -318,7 +318,7 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
     if (appSpec == null) {
       throw new NotFoundException(appId);
     }
-    Id.Workflow workflowId = Id.Workflow.from(appId, workflow);
+    Id.Program workflowId = Id.Program.from(appId, ProgramType.WORKFLOW, workflow);
     if (!appSpec.getWorkflows().containsKey(workflow)) {
       throw new NotFoundException(workflowId);
     }

@@ -161,7 +161,7 @@ public class CLIMainTest {
   public void testProgram() throws Exception {
     String flowId = FakeApp.FLOWS.get(0);
     Id.Application app = Id.Application.from(Id.Namespace.DEFAULT, FakeApp.NAME);
-    Id.Flow flow = Id.Flow.from(app, flowId);
+    Id.Program flow = Id.Program.from(app, ProgramType.FLOW, flowId);
 
     String qualifiedFlowId = FakeApp.NAME + "." + flowId;
     testCommandOutputContains(cli, "start flow " + qualifiedFlowId, "Successfully started flow");
@@ -295,7 +295,8 @@ public class CLIMainTest {
 
   @Test
   public void testService() throws Exception {
-    Id.Service service = Id.Service.from(Id.Namespace.DEFAULT, FakeApp.NAME, PrefixedEchoHandler.NAME);
+    Id.Program service = Id.Program.from(Id.Namespace.DEFAULT, FakeApp.NAME,
+                                         ProgramType.SERVICE, PrefixedEchoHandler.NAME);
     String qualifiedServiceId = String.format("%s.%s", FakeApp.NAME, PrefixedEchoHandler.NAME);
     testCommandOutputContains(cli, "start service " + qualifiedServiceId, "Successfully started service");
     assertProgramStatus(programClient, service, "RUNNING");
@@ -313,7 +314,8 @@ public class CLIMainTest {
   @Test
   public void testRuntimeArgs() throws Exception {
     String qualifiedServiceId = String.format("%s.%s", FakeApp.NAME, PrefixedEchoHandler.NAME);
-    Id.Service service = Id.Service.from(Id.Namespace.DEFAULT, FakeApp.NAME, PrefixedEchoHandler.NAME);
+    Id.Program service = Id.Program.from(Id.Namespace.DEFAULT, FakeApp.NAME,
+                                         ProgramType.SERVICE, PrefixedEchoHandler.NAME);
 
     Map<String, String> runtimeArgs = ImmutableMap.of("sdf", "bacon");
     String runtimeArgsKV = Joiner.on(",").withKeyValueSeparator("=").join(runtimeArgs);
@@ -482,7 +484,7 @@ public class CLIMainTest {
   @Test
   public void testWorkflowToken() throws Exception {
     Id.Application fakeAppId = Id.Application.from(Id.Namespace.DEFAULT, FakeApp.NAME);
-    Id.Workflow fakeWorkflowId = Id.Workflow.from(fakeAppId, FakeWorkflow.NAME);
+    Id.Program fakeWorkflowId = Id.Program.from(fakeAppId, ProgramType.WORKFLOW, FakeWorkflow.NAME);
     String workflow = String.format("%s.%s", FakeApp.NAME, FakeWorkflow.NAME);
     File doneFile = TMP_FOLDER.newFile("fake.done");
     Map<String, String> runtimeArgs = ImmutableMap.of("done.file", doneFile.getAbsolutePath());

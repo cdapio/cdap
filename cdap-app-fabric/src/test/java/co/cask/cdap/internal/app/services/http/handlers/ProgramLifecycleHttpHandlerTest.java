@@ -125,8 +125,10 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     HttpResponse response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
-    Id.Flow wordcountFlow1 = Id.Flow.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, WORDCOUNT_FLOW_NAME);
-    Id.Flow wordcountFlow2 = Id.Flow.from(TEST_NAMESPACE2, WORDCOUNT_APP_NAME, WORDCOUNT_FLOW_NAME);
+    Id.Program wordcountFlow1 = Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME,
+                                                ProgramType.FLOW, WORDCOUNT_FLOW_NAME);
+    Id.Program wordcountFlow2 = Id.Program.from(TEST_NAMESPACE2, WORDCOUNT_APP_NAME,
+                                                ProgramType.FLOW, WORDCOUNT_FLOW_NAME);
 
     // flow is stopped initially
     Assert.assertEquals(STOPPED, getProgramStatus(wordcountFlow1));
@@ -392,8 +394,11 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(new NotFoundException(Id.Program.from("testnamespace1", "WordCountApp", ProgramType.FLOW,
                                                               "NotExist")).getMessage(),
                         returnedBody.get(0).get("error").getAsString());
-    Assert.assertEquals("'namespace:testnamespace1/application:WordCountApp/program:flows:NotExist' was not found.",
-                        returnedBody.get(0).get("error").getAsString());
+    // namespace:testnamespace1/application:WordCountApp/program:flows:NotExist
+    Assert.assertEquals(
+      String.format("'%s' was not found.",
+                    Id.Program.from(TEST_NAMESPACE1, "WordCountApp", ProgramType.FLOW, "NotExist").toString()),
+      returnedBody.get(0).get("error").getAsString());
     // The programType should be consistent. Second object should have proper status
     Assert.assertEquals("Flow", returnedBody.get(1).get("programType").getAsString());
     Assert.assertEquals(STOPPED, returnedBody.get(1).get("status").getAsString());
@@ -781,9 +786,11 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     HttpResponse response = deploy(AppWithServices.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
-    Id.Service service1 = Id.Service.from(Id.Namespace.from(TEST_NAMESPACE1), APP_WITH_SERVICES_APP_ID,
+    Id.Program service1 = Id.Program.from(Id.Namespace.from(TEST_NAMESPACE1), APP_WITH_SERVICES_APP_ID,
+                                          ProgramType.SERVICE,
                                           APP_WITH_SERVICES_SERVICE_NAME);
-    Id.Service service2 = Id.Service.from(Id.Namespace.from(TEST_NAMESPACE2), APP_WITH_SERVICES_APP_ID,
+    Id.Program service2 = Id.Program.from(Id.Namespace.from(TEST_NAMESPACE2), APP_WITH_SERVICES_APP_ID,
+                                          ProgramType.SERVICE,
                                           APP_WITH_SERVICES_SERVICE_NAME);
 
     // start service in wrong namespace
@@ -894,7 +901,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
       });
   }
 
-  private ServiceInstances getServiceInstances(Id.Service serviceId) throws Exception {
+  private ServiceInstances getServiceInstances(Id.Program serviceId) throws Exception {
     String instanceUrl = String.format("apps/%s/services/%s/instances", serviceId.getApplicationId(),
                                        serviceId.getId());
     String versionedInstanceUrl = getVersionedAPIPath(instanceUrl, Constants.Gateway.API_VERSION_3_TOKEN,
@@ -904,7 +911,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     return readResponse(response, ServiceInstances.class);
   }
 
-  private int setServiceInstances(Id.Service serviceId, int instances) throws Exception {
+  private int setServiceInstances(Id.Program serviceId, int instances) throws Exception {
     String instanceUrl = String.format("apps/%s/services/%s/instances", serviceId.getApplicationId(),
                                        serviceId.getId());
     String versionedInstanceUrl = getVersionedAPIPath(instanceUrl, Constants.Gateway.API_VERSION_3_TOKEN,
@@ -913,7 +920,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     return doPut(versionedInstanceUrl, instancesBody).getStatusLine().getStatusCode();
   }
 
-  private HttpResponse callService(Id.Service serviceId, HttpMethod method, String endpoint) throws Exception {
+  private HttpResponse callService(Id.Program serviceId, HttpMethod method, String endpoint) throws Exception {
     String serviceUrl = String.format("apps/%s/service/%s/methods/%s",
                                       serviceId.getApplicationId(), serviceId.getId(), endpoint);
     String versionedServiceUrl = getVersionedAPIPath(serviceUrl, Constants.Gateway.API_VERSION_3_TOKEN,

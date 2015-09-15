@@ -26,6 +26,7 @@ import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.explore.client.FixedAddressExploreClient;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.collect.Lists;
@@ -71,7 +72,7 @@ public class QueryClientTestRun extends ClientTestBase {
     namespaceClient.create(new NamespaceMeta.Builder().setName(namespace).build());
 
     Id.Application app = Id.Application.from(namespace, FakeApp.NAME);
-    Id.Flow flow = Id.Flow.from(app, FakeFlow.NAME);
+    Id.Program flow = Id.Program.from(app, ProgramType.FLOW, FakeFlow.NAME);
     Id.DatasetInstance dataset = Id.DatasetInstance.from(namespace, FakeApp.DS_NAME);
 
     appClient.deploy(namespace, createAppJarFile(FakeApp.class));

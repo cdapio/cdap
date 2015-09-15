@@ -40,12 +40,12 @@ public class NamespacedIdCodecTest {
   private final Id.Namespace ns = Id.Namespace.from("ns");
   private final Id.Application app = Id.Application.from(ns, "app");
   private final Id.Program program = Id.Program.from(app, ProgramType.CUSTOM_ACTION, "action");
-  private final Id.Flow flow = Id.Flow.from(app, "flow");
-  private final Id.Flow.Flowlet flowlet = Id.Flow.Flowlet.from(flow, "flowlet");
-  private final Id.Service service = Id.Service.from(app, "service");
+  private final Id.Program flow = Id.Program.from(app, ProgramType.FLOW, "flow");
+  private final Id.Flowlet flowlet = Id.Flowlet.from(flow, "flowlet");
+  private final Id.Program service = Id.Program.from(app, ProgramType.SERVICE, "service");
   private final Id.Schedule schedule = Id.Schedule.from(app, "schedule");
-  private final Id.Worker worker = Id.Worker.from(app, "worker");
-  private final Id.Workflow workflow = Id.Workflow.from(app, "workflow");
+  private final Id.Program worker = Id.Program.from(app, ProgramType.WORKER, "worker");
+  private final Id.Program workflow = Id.Program.from(app, ProgramType.WORKFLOW, "workflow");
   private final Id.DatasetInstance dataset = Id.DatasetInstance.from(ns, "ds");
   private final Id.Stream stream = Id.Stream.from(ns, "stream");
 

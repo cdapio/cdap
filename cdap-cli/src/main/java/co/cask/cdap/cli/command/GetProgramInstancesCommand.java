@@ -24,6 +24,7 @@ import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramType;
 import co.cask.common.cli.Arguments;
 
 import java.io.PrintStream;
@@ -56,7 +57,7 @@ public class GetProgramInstancesCommand extends AbstractAuthCommand {
         }
         String flowId = programIdParts[1];
         String flowletName = programIdParts[2];
-        Id.Flow.Flowlet flowlet = Id.Flow.Flowlet.from(appId, flowId, flowletName);
+        Id.Flowlet flowlet = Id.Flowlet.from(appId, flowId, flowletName);
         instances = programClient.getFlowletInstances(flowlet);
         break;
       case WORKER:
@@ -64,7 +65,7 @@ public class GetProgramInstancesCommand extends AbstractAuthCommand {
           throw new CommandInputError(this);
         }
         String workerId = programIdParts[1];
-        Id.Worker worker = Id.Worker.from(appId, workerId);
+        Id.Program worker = Id.Program.from(appId, ProgramType.WORKER, workerId);
         instances = programClient.getWorkerInstances(worker);
         break;
       case SERVICE:
@@ -72,7 +73,7 @@ public class GetProgramInstancesCommand extends AbstractAuthCommand {
           throw new CommandInputError(this);
         }
         String serviceName = programIdParts[1];
-        Id.Service service = Id.Service.from(appId, serviceName);
+        Id.Program service = Id.Program.from(appId, ProgramType.SERVICE, serviceName);
         instances = programClient.getServiceInstances(service);
         break;
       default:

@@ -238,7 +238,8 @@ public interface DatasetFramework {
    */
   @Nullable
   <T extends Dataset> T getDataset(Id.DatasetInstance datasetInstanceId, @Nullable Map<String, String> arguments,
-                                   @Nullable ClassLoader classLoader, @Nullable Iterable<? extends Id> owners)
+                                   @Nullable ClassLoader classLoader,
+                                   @Nullable Iterable<? extends Id.NamespacedId> owners)
     throws DatasetManagementException, IOException;
 
   /**
@@ -277,7 +278,7 @@ public interface DatasetFramework {
   <T extends Dataset> T getDataset(Id.DatasetInstance datasetInstanceId, @Nullable Map<String, String> arguments,
                                    @Nullable ClassLoader classLoader,
                                    DatasetClassLoaderProvider classLoaderProvider,
-                                   @Nullable Iterable<? extends Id> owners)
+                                   @Nullable Iterable<? extends Id.NamespacedId> owners)
     throws DatasetManagementException, IOException;
 
   /**

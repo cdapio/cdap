@@ -29,7 +29,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.List;
 import javax.annotation.concurrent.NotThreadSafe;
 
 /**
@@ -47,24 +46,27 @@ final class ConsumerSupplier<T> implements Supplier<T>, Closeable {
   private final int numGroups;
   private final UsageRegistry usageRegistry;
   private final Id.Namespace namespace;
-  private final List<Id> owners;
+  private final Iterable<? extends Id.NamespacedId> owners;
   private ConsumerConfig consumerConfig;
   private Closeable consumer;
 
-  static <T> ConsumerSupplier<T> create(Id.Namespace namespace, List<Id> owners, UsageRegistry usageRegistry,
+  static <T> ConsumerSupplier<T> create(Id.Namespace namespace, Iterable<? extends Id.NamespacedId> owners,
+                                        UsageRegistry usageRegistry,
                                         DataFabricFacade dataFabricFacade,
                                         QueueName queueName, ConsumerConfig consumerConfig) {
     return create(namespace, owners, usageRegistry, dataFabricFacade, queueName, consumerConfig, -1);
   }
 
-  static <T> ConsumerSupplier<T> create(Id.Namespace namespace, List<Id> owners, UsageRegistry usageRegistry,
+  static <T> ConsumerSupplier<T> create(Id.Namespace namespace, Iterable<? extends Id.NamespacedId> owners,
+                                        UsageRegistry usageRegistry,
                                         DataFabricFacade dataFabricFacade, QueueName queueName,
                                         ConsumerConfig consumerConfig, int numGroups) {
     return new ConsumerSupplier<>(namespace, owners, usageRegistry, dataFabricFacade,
                                    queueName, consumerConfig, numGroups);
   }
 
-  private ConsumerSupplier(Id.Namespace namespace, List<Id> owners, UsageRegistry usageRegistry,
+  private ConsumerSupplier(Id.Namespace namespace, Iterable<? extends Id.NamespacedId> owners,
+                           UsageRegistry usageRegistry,
                            DataFabricFacade dataFabricFacade, QueueName queueName,
                            ConsumerConfig consumerConfig, int numGroups) {
     this.namespace = namespace;

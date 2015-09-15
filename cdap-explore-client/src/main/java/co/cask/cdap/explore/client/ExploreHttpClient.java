@@ -137,7 +137,7 @@ abstract class ExploreHttpClient implements Explore {
     Map<String, String> args = Maps.newHashMap();
     PartitionedFileSetArguments.setOutputPartitionKey(args, key);
     HttpResponse response = doPost(String.format("namespaces/%s/data/explore/datasets/%s/deletePartition",
-                                                 datasetInstance.getNamespace(), datasetInstance.getId()),
+                                                 datasetInstance.getNamespaceId(), datasetInstance.getId()),
                                      GSON.toJson(args), null);
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
       return QueryHandle.fromId(parseResponseAsMap(response, "handle"));
@@ -148,7 +148,8 @@ abstract class ExploreHttpClient implements Explore {
 
   protected QueryHandle doEnableExploreDataset(Id.DatasetInstance datasetInstance) throws ExploreException {
     HttpResponse response = doPost(String.format("namespaces/%s/data/explore/datasets/%s/enable",
-                                                 datasetInstance.getNamespace(), datasetInstance.getId()), null, null);
+                                                 datasetInstance.getNamespaceId(),
+                                                 datasetInstance.getId()), null, null);
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
       return QueryHandle.fromId(parseResponseAsMap(response, "handle"));
     }

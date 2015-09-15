@@ -83,7 +83,7 @@ public abstract class ClientTestBase {
     verifyProgramNames(expected, Lists.newArrayList(Iterables.concat(map.values())));
   }
 
-  protected void assertFlowletInstances(ProgramClient programClient, Id.Flow.Flowlet flowlet, int numInstances)
+  protected void assertFlowletInstances(ProgramClient programClient, Id.Flowlet flowlet, int numInstances)
     throws IOException, NotFoundException, UnauthorizedException {
 
     int actualInstances;

@@ -56,16 +56,16 @@ public class LineageGeneratorTest extends MetadataTestBase {
 
   // Define programs and runs
   private final Id.Program program1 = Id.Program.from("default", "app1", ProgramType.FLOW, "flow1");
-  private final Id.Flow.Flowlet flowlet1 =
-    Id.Flow.Flowlet.from(program1.getApplication(), program1.getId(), "flowlet1");
+  private final Id.Flowlet flowlet1 =
+    Id.Flowlet.from(program1.getApplication(), program1.getId(), "flowlet1");
   private final Id.Run run1 = new Id.Run(program1, RunIds.generate(10000).getId());
 
   private final Id.Program program2 = Id.Program.from("default", "app2", ProgramType.FLOW, "flow2");
-  private final Id.Flow.Flowlet flowlet2 =
-    Id.Flow.Flowlet.from(program2.getApplication(), program2.getId(), "flowlet2");
+  private final Id.Flowlet flowlet2 =
+    Id.Flowlet.from(program2.getApplication(), program2.getId(), "flowlet2");
   private final Id.Run run2 = new Id.Run(program2, RunIds.generate(900).getId());
 
-  private final Id.Program program3 = Id.Worker.from("default", "app3", ProgramType.WORKER, "worker3");
+  private final Id.Program program3 = Id.Program.from("default", "app3", ProgramType.WORKER, "worker3");
   private final Id.Run run3 = new Id.Run(program3, RunIds.generate(800).getId());
 
   private final Id.Program program4 = Id.Program.from("default", "app4", ProgramType.SERVICE, "service4");

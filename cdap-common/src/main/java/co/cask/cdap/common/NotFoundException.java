@@ -34,11 +34,11 @@ public class NotFoundException extends Exception {
   }
 
   public NotFoundException(Id id) {
-    this(id, id.getIdRep());
+    this(id, id.toString());
   }
 
   public NotFoundException(Id id, Throwable cause) {
-    this(id, id.getIdRep(), cause);
+    this(id, id.toString(), cause);
   }
 
   public NotFoundException(Object object, String objectString, Throwable cause) {

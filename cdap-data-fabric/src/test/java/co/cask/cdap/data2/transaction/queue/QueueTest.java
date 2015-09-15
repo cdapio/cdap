@@ -17,7 +17,6 @@
 package co.cask.cdap.data2.transaction.queue;
 
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.queue.ConsumerGroupConfig;
@@ -28,6 +27,7 @@ import co.cask.cdap.data2.queue.QueueConsumer;
 import co.cask.cdap.data2.queue.QueueEntry;
 import co.cask.cdap.data2.queue.QueueProducer;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.SlowTests;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionAware;
@@ -395,13 +395,13 @@ public abstract class QueueTest {
   @Test
   public void testClearAllForFlowWithNoQueues() throws Exception {
     queueAdmin.dropAllInNamespace(Id.Namespace.DEFAULT);
-    queueAdmin.clearAllForFlow(Id.Flow.from(Id.Namespace.DEFAULT.getId(), "app", "flow"));
+    queueAdmin.clearAllForFlow(Id.Program.from(Id.Namespace.DEFAULT.getId(), "app", ProgramType.FLOW, "flow"));
   }
 
   @Test
   public void testDropAllForFlowWithNoQueues() throws Exception {
     queueAdmin.dropAllInNamespace(Id.Namespace.DEFAULT);
-    queueAdmin.dropAllForFlow(Id.Flow.from(Id.Namespace.DEFAULT.getId(), "app", "flow"));
+    queueAdmin.dropAllForFlow(Id.Program.from(Id.Namespace.DEFAULT.getId(), "app", ProgramType.FLOW, "flow"));
   }
 
   @Test
@@ -688,7 +688,7 @@ public abstract class QueueTest {
     verifyConsumerConfigExists(queueName1, queueName2);
 
     // clear/drop all queues for flow1
-    Id.Flow flow1Id = Id.Flow.from(Id.Namespace.DEFAULT.getId(), app, "flow1");
+    Id.Program flow1Id = Id.Program.from(Id.Namespace.DEFAULT.getId(), app, ProgramType.FLOW, "flow1");
     if (doDrop) {
       queueAdmin.dropAllForFlow(flow1Id);
     } else {

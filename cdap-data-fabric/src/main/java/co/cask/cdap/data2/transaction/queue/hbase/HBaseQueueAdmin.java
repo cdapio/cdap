@@ -38,6 +38,7 @@ import co.cask.cdap.data2.util.hbase.HTableDescriptorBuilder;
 import co.cask.cdap.hbase.wd.AbstractRowKeyDistributor;
 import co.cask.cdap.hbase.wd.RowKeyDistributorByHashPrefix;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramType;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
@@ -182,7 +183,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
   }
 
   @Override
-  public void clearAllForFlow(Id.Flow flowId) throws Exception {
+  public void clearAllForFlow(Id.Program flowId) throws Exception {
     // all queues for a flow are in one table
     truncate(getDataTableId(flowId));
     // we also have to delete the config for these queues
@@ -198,7 +199,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
   }
 
   @Override
-  public void dropAllForFlow(Id.Flow flowId) throws Exception {
+  public void dropAllForFlow(Id.Program flowId) throws Exception {
     // all queues for a flow are in one table
     drop(getDataTableId(flowId));
     // we also have to delete the config for these queues
@@ -306,7 +307,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
     }
   }
 
-  private void deleteFlowConfigs(Id.Flow flowId) throws Exception {
+  private void deleteFlowConfigs(Id.Program flowId) throws Exception {
     // It's a bit hacky here since we know how the HBaseConsumerStateStore works.
     // Maybe we need another Dataset set that works across all queues.
     final QueueName prefixName = QueueName.from(URI.create(
@@ -379,7 +380,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
   }
 
   @Override
-  public TableId getDataTableId(Id.Flow flowId) {
+  public TableId getDataTableId(Id.Program flowId) {
     return getDataTableId(flowId, type);
   }
 
@@ -392,13 +393,14 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
     if (!queueName.isQueue()) {
       throw new IllegalArgumentException("'" + queueName + "' is not a valid name for a queue.");
     }
-    return getDataTableId(Id.Flow.from(queueName.getFirstComponent(),
-                                       queueName.getSecondComponent(),
-                                       queueName.getThirdComponent()),
+    return getDataTableId(Id.Program.from(queueName.getFirstComponent(),
+                                          queueName.getSecondComponent(),
+                                          ProgramType.FLOW,
+                                          queueName.getThirdComponent()),
                           queueType);
   }
 
-  public TableId getDataTableId(Id.Flow flowId, QueueConstants.QueueType queueType) {
+  public TableId getDataTableId(Id.Program flowId, QueueConstants.QueueType queueType) {
     String tableName = String.format("%s.%s.%s.%s", Id.Namespace.SYSTEM.getId(), queueType, flowId.getApplicationId(),
                                      flowId.getId());
     return TableId.from(flowId.getNamespaceId(), tableName);

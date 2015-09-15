@@ -26,16 +26,10 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Iterables;
 
-import javax.annotation.Nullable;
-
 /**
  * Contains collection of classes representing different types of Ids.
  */
 public abstract class Id {
-
-  public static String getType(Class<? extends Id> type) {
-    return type.getSimpleName().toLowerCase();
-  }
 
   private static final CharMatcher namespaceMatcher =
     CharMatcher.inRange('A', 'Z')
@@ -59,32 +53,18 @@ public abstract class Id {
     return datasetIdCharMatcher.matchesAllOf(datasetId);
   }
 
+  public static String getIdType(Class<? extends Id> cls) {
+    return cls.getSimpleName().toLowerCase();
+  }
+
+  public static boolean isType(String string, Class<? extends Id> expectedType) {
+    String[] parts = string.split(":", 2);
+    return parts.length == 2 && getIdType(expectedType).equals(parts[0]);
+  }
+
   public String getIdType() {
-    return getType(this.getClass());
+    return getIdType(getClass());
   }
-
-  protected String getIdForRep() {
-    return getId();
-  }
-
-  public String getIdRep() {
-    Id parent = getParent();
-    if (parent == null) {
-      return getIdType() + ":" + getIdForRep();
-    } else {
-      return parent.getIdRep() + "/" + getIdType() + ":" + getIdForRep();
-    }
-  }
-
-  @Override
-  public String toString() {
-    return getIdRep();
-  }
-
-  @Nullable
-  protected abstract Id getParent();
-
-  public abstract String getId();
 
   /**
    * Indicates that the ID belongs to a namespace.
@@ -108,13 +88,11 @@ public abstract class Id {
       return new QueryHandle(id);
     }
 
-    @Nullable
     @Override
-    protected Id getParent() {
-      return null;
+    public String toString() {
+      return String.format("%s:%s", getIdType(), id);
     }
 
-    @Override
     public String getId() {
       return id;
     }
@@ -135,15 +113,9 @@ public abstract class Id {
       return new SystemService(id);
     }
 
-    @Nullable
     @Override
-    protected Id getParent() {
-      return null;
-    }
-
-    @Override
-    public String getId() {
-      return id;
+    public String toString() {
+      return String.format("%s:%s", getIdType(), id);
     }
   }
 
@@ -163,9 +135,17 @@ public abstract class Id {
       this.id = id;
     }
 
-    @Override
+    public static Namespace from(String namespace) {
+      return new Namespace(namespace);
+    }
+
     public String getId() {
       return id;
+    }
+
+    @Override
+    public String toString() {
+      return String.format("%s:%s", getIdType(), id);
     }
 
     @Override
@@ -184,22 +164,6 @@ public abstract class Id {
     public int hashCode() {
       return id.hashCode();
     }
-
-    public static Namespace from(String namespace) {
-      return new Namespace(namespace);
-    }
-
-    @Nullable
-    @Override
-    protected Id getParent() {
-      return null;
-    }
-
-    // TODO: remove (use super toString() which returns getIdRep())
-    @Override
-    public String toString() {
-      return id;
-    }
   }
 
   /**
@@ -217,16 +181,28 @@ public abstract class Id {
       this.applicationId = applicationId;
     }
 
+    public static Application from(Namespace id, String applicationId) {
+      return new Application(id, applicationId);
+    }
+
+    public static Application from(String namespaceId, String applicationId) {
+      return new Application(Namespace.from(namespaceId), applicationId);
+    }
+
     @Override
     public Namespace getNamespace() {
       return namespace;
+    }
+
+    @Override
+    public String toString() {
+      return String.format("%s:%s.%s", getIdType(), namespace.getId(), applicationId);
     }
 
     public String getNamespaceId() {
       return namespace.getId();
     }
 
-    @Override
     public String getId() {
       return applicationId;
     }
@@ -248,33 +224,6 @@ public abstract class Id {
     public int hashCode() {
       return Objects.hashCode(namespace, applicationId);
     }
-
-    public static Application from(Namespace id, String applicationId) {
-      return new Application(id, applicationId);
-    }
-
-    public static Application from(String namespaceId, String applicationId) {
-      return new Application(Namespace.from(namespaceId), applicationId);
-    }
-
-    @Override
-    public Id getParent() {
-      return namespace;
-    }
-
-    public static Application fromStrings(String[] strings, int position) {
-      Preconditions.checkArgument(position == 1);
-      String[] tokens = strings[position].split(":");
-      Preconditions.checkArgument(tokens.length == 2);
-
-      String[] nextTokens = strings[position - 1].split(":");
-      Preconditions.checkArgument(nextTokens.length == 2);
-      return from(Namespace.from(nextTokens[1]), tokens[1]);
-    }
-
-    public static Application fromStrings(String[] strings) {
-      return fromStrings(strings, strings.length - 1);
-    }
   }
 
 
@@ -291,6 +240,14 @@ public abstract class Id {
       this.id = id;
     }
 
+    @Override
+    public String toString() {
+      return String.format("%s:%s.%s.%s.%s.%s", getIdType(),
+                           program.getNamespaceId(),
+                           program.getApplicationId(),
+                           program.getType().getPrettyName().toLowerCase(), program.getId(), id);
+    }
+
     public Program getProgram() {
       return program;
     }
@@ -300,13 +257,6 @@ public abstract class Id {
       return program.getNamespace();
     }
 
-    @Nullable
-    @Override
-    protected Id getParent() {
-      return program;
-    }
-
-    @Override
     public String getId() {
       return id;
     }
@@ -329,7 +279,32 @@ public abstract class Id {
       this.id = id;
     }
 
+    public static Program from(Application appId, ProgramType type, String pgmId) {
+      return new Program(appId, type, pgmId);
+    }
+
+    public static Program from(Id.Namespace namespaceId, String appId, ProgramType type, String pgmId) {
+      return new Program(new Application(namespaceId, appId), type, pgmId);
+    }
+
+    public static Program from(String namespaceId, String appId, ProgramType type, String pgmId) {
+      return new Program(new Application(new Namespace(namespaceId), appId), type, pgmId);
+    }
+
     @Override
+    public String toString() {
+      return String.format("%s:%s.%s.%s.%s", getIdType(),
+                           application.getNamespaceId(),
+                           application.getId(),
+                           type.getPrettyName().toLowerCase(),
+                           id);
+    }
+
+    @Override
+    public String getIdType() {
+      return getIdType(Program.class);
+    }
+
     public String getId() {
       return id;
     }
@@ -355,16 +330,11 @@ public abstract class Id {
     }
 
     @Override
-    protected String getIdForRep() {
-      return type.getCategoryName() + ":" + id;
-    }
-
-    @Override
     public boolean equals(Object o) {
       if (this == o) {
         return true;
       }
-      if (o == null || !Program.class.isAssignableFrom(o.getClass())) {
+      if (o == null || !getClass().equals(o.getClass())) {
         return false;
       }
 
@@ -378,225 +348,102 @@ public abstract class Id {
       result = 31 * result + id.hashCode();
       return result;
     }
+  }
+
+  /**
+   * Uniquely identifies a Flowlet.
+   */
+  public static class Flowlet extends NamespacedId {
+
+    private final Program flow;
+    private final String id;
+
+    private Flowlet(Program flow, String id) {
+      Preconditions.checkArgument(flow != null, "flow cannot be null");
+      Preconditions.checkArgument(flow.getType() == ProgramType.FLOW, "must be parented to a flow");
+      Preconditions.checkArgument(id != null, "id cannot be null");
+      this.flow = flow;
+      this.id = id;
+    }
+
+    public static Flowlet from(Program flow, String id) {
+      return new Flowlet(flow, id);
+    }
+
+    public static Flowlet from(Application app, String flowId, String id) {
+      return new Flowlet(Id.Program.from(app, ProgramType.FLOW, flowId), id);
+    }
 
     @Override
     public String toString() {
-      return String.format("%s.%s.%s.%s",
-                           type.name().toLowerCase(), application.getNamespaceId(), application.getId(), id);
-    }
-
-    public static Program from(Application appId, ProgramType type, String pgmId) {
-      return new Program(appId, type, pgmId);
-    }
-
-    public static Program from(Id.Namespace namespaceId, String appId, ProgramType type, String pgmId) {
-      return new Program(new Application(namespaceId, appId), type, pgmId);
-    }
-
-    public static Program from(String namespaceId, String appId, ProgramType type, String pgmId) {
-      return new Program(new Application(new Namespace(namespaceId), appId), type, pgmId);
-    }
-
-    /**
-     * @param strings from {@link Id#toString()}, split by "/"
-     * @param position index into the string where parsing should begin
-     * @return the {@link Program}
-     */
-    public static Program fromStrings(String[] strings, int position) {
-      Preconditions.checkArgument(position >= 1);
-
-      String[] tokens = strings[position].split(":");
-      Preconditions.checkArgument(tokens.length == 3);
-      ProgramType programType = ProgramType.valueOfCategoryName(tokens[1]);
-      String programId = tokens[2];
-      return from(Application.fromStrings(strings, position - 1), programType, programId);
-    }
-
-    /**
-     * @param strings from {@link Id#toString()}, split by "/"
-     * @return the {@link Program}
-     */
-    public static Program fromStrings(String[] strings) {
-      return fromStrings(strings, strings.length - 1);
+      return String.format("%s:%s.%s.%s.%s.%s", getIdType(), flow.getNamespaceId(), flow.getApplicationId(),
+                           flow.getType().getPrettyName().toLowerCase(), flow.getId(), id);
     }
 
     @Override
-    public Id getParent() {
-      return application;
-    }
-  }
-
-  /**
-   * Uniquely identifies a Worker.
-   */
-  public static class Worker extends Program {
-
-    private Worker(Application application, String id) {
-      super(application, ProgramType.WORKER, id);
+    public Namespace getNamespace() {
+      return flow.getNamespace();
     }
 
-    public static Worker from(Application application, String id) {
-      return new Worker(application, id);
+    public String getId() {
+      return id;
     }
 
-    public static Worker from(Namespace namespace, String appId, String id) {
-      return new Worker(new Application(namespace, appId), id);
-    }
-  }
-
-  /**
-   * Uniquely identifies a Service.
-   */
-  public static class Service extends Program {
-
-    private Service(Application application, String id) {
-      super(application, ProgramType.SERVICE, id);
+    public Program getFlow() {
+      return flow;
     }
 
-    public static Service from(Application application, String id) {
-      return new Service(application, id);
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      Flowlet flowlet = (Flowlet) o;
+      return Objects.equal(flow, flowlet.flow) &&
+        Objects.equal(id, flowlet.id);
     }
 
-    public static Service from(Namespace namespace, String application, String id) {
-      return new Service(Id.Application.from(namespace, application), id);
-    }
-  }
-
-  /**
-   * Uniquely identifies a Workflow.
-   */
-  public static class Workflow extends Program {
-
-    private Workflow(Application application, String id) {
-      super(application, ProgramType.WORKFLOW, id);
-    }
-
-    public static Workflow from(Application application, String id) {
-      return new Workflow(application, id);
-    }
-
-    public static Workflow from(Namespace namespace, String application, String id) {
-      return new Workflow(Id.Application.from(namespace, application), id);
-    }
-  }
-
-  /**
-   * Uniquely identifies a Flow.
-   */
-  public static class Flow extends Program {
-
-    private Flow(Application application, String id) {
-      super(application, ProgramType.FLOW, id);
-    }
-
-    public static Flow from(Application application, String flowId) {
-      return new Flow(application, flowId);
-    }
-
-    public static Flow from(String appId, String flowId) {
-      return new Flow(Id.Application.from(Namespace.DEFAULT, appId), flowId);
-    }
-
-    public static Flow from(String namespaceId, String appId, String flowId) {
-      return new Flow(Id.Application.from(namespaceId, appId), flowId);
-    }
-
-    public static Flow from(Id.Namespace namespaceId, String appId, String flowId) {
-      return new Flow(Id.Application.from(namespaceId, appId), flowId);
+    @Override
+    public int hashCode() {
+      return Objects.hashCode(flow, id);
     }
 
     /**
-     * Uniquely identifies a Flowlet.
+     * Uniquely identifies a Flowlet Queue.
      */
-    public static class Flowlet extends NamespacedId {
+    public static final class Queue extends NamespacedId {
 
-      private final Flow flow;
+      private final Flowlet producer;
       private final String id;
 
-      private Flowlet(Flow flow, String id) {
-        Preconditions.checkArgument(flow != null, "flow cannot be null");
-        Preconditions.checkArgument(id != null, "id cannot be null");
-        this.flow = flow;
+      public Queue(Flowlet producer, String id) {
+        this.producer = producer;
         this.id = id;
       }
 
-      public static Flowlet from(Flow flow, String id) {
-        return new Flowlet(flow, id);
-      }
-
-      public static Flowlet from(Application app, String flowId, String id) {
-        return new Flowlet(new Flow(app, flowId), id);
-      }
-
       @Override
-      public Namespace getNamespace() {
-        return flow.getNamespace();
+      public String toString() {
+        return String.format("%s:%s.%s.%s.%s.%s", getIdType(),
+                             producer.getFlow().getNamespaceId(),
+                             producer.getFlow().getApplicationId(),
+                             producer.getFlow().getType().getPrettyName().toLowerCase(),
+                             producer.getId(), id);
       }
 
-      @Nullable
-      @Override
-      protected Id getParent() {
-        return flow;
+      public Flowlet getProducer() {
+        return producer;
       }
 
-      @Override
       public String getId() {
         return id;
       }
 
-      public Flow getFlow() {
-        return flow;
-      }
-
       @Override
-      public boolean equals(Object o) {
-        if (this == o) {
-          return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-          return false;
-        }
-        Flowlet flowlet = (Flowlet) o;
-        return Objects.equal(flow, flowlet.flow) &&
-          Objects.equal(id, flowlet.id);
-      }
-
-      @Override
-      public int hashCode() {
-        return Objects.hashCode(flow, id);
-      }
-
-      /**
-       * Uniquely identifies a Flowlet Queue.
-       */
-      public static final class Queue extends NamespacedId {
-
-        private final Flowlet producer;
-        private final String id;
-
-        public Queue(Flowlet producer, String id) {
-          this.producer = producer;
-          this.id = id;
-        }
-
-        public Flowlet getProducer() {
-          return producer;
-        }
-
-        public String getId() {
-          return id;
-        }
-
-        @Nullable
-        @Override
-        protected Id getParent() {
-          return producer;
-        }
-
-        @Override
-        public Namespace getNamespace() {
-          return producer.getNamespace();
-        }
+      public Namespace getNamespace() {
+        return producer.getNamespace();
       }
     }
   }
@@ -616,12 +463,21 @@ public abstract class Id {
       this.id = id;
     }
 
-    @Override
-    public Id getParent() {
-      return application;
+    public static Schedule from(Application application, String id) {
+      return new Schedule(application, id);
+    }
+
+    public static Schedule from(Namespace namespace, String appId, String id) {
+      return new Schedule(Id.Application.from(namespace, appId), id);
     }
 
     @Override
+    public String toString() {
+      return String.format("%s:%s.%s.%s", getIdType(),
+                           application.getNamespaceId(),
+                           application.getId(), id);
+    }
+
     public String getId() {
       return id;
     }
@@ -633,13 +489,6 @@ public abstract class Id {
 
     public Application getApplication() {
       return application;
-    }
-
-    @Override
-    public String toString() {
-      return Objects.toStringHelper(this)
-        .add("application", application)
-        .add("id", id).toString();
     }
 
     @Override
@@ -658,14 +507,6 @@ public abstract class Id {
     @Override
     public int hashCode() {
       return Objects.hashCode(application, id);
-    }
-
-    public static Schedule from(Application application, String id) {
-      return new Schedule(application, id);
-    }
-
-    public static Schedule from(Namespace namespace, String appId, String id) {
-      return new Schedule(Id.Application.from(namespace, appId), id);
     }
   }
 
@@ -710,17 +551,17 @@ public abstract class Id {
       this.description = description;
     }
 
+    @Override
+    public String toString() {
+      return String.format("%s:%s.%s.%s", getIdType(),
+                           namespace.getId(),
+                           category, name);
+    }
+
     public String getCategory() {
       return category;
     }
 
-    @Nullable
-    @Override
-    protected Id getParent() {
-      return namespace;
-    }
-
-    @Override
     public String getId() {
       return name;
     }
@@ -796,16 +637,6 @@ public abstract class Id {
     }
 
     @Override
-    public String toString() {
-      return Objects.toStringHelper(this)
-        .add("namespace", namespace)
-        .add("category", category)
-        .add("name", name)
-        .add("description", description)
-        .toString();
-    }
-
-    @Override
     public boolean equals(Object o) {
       if (this == o) {
         return true;
@@ -848,26 +679,6 @@ public abstract class Id {
       this.streamName = streamName;
     }
 
-    @Override
-    public Namespace getNamespace() {
-      return namespace;
-    }
-
-    @Nullable
-    @Override
-    protected Id getParent() {
-      return namespace;
-    }
-
-    public String getNamespaceId() {
-      return namespace.getId();
-    }
-
-    @Override
-    public String getId() {
-      return streamName;
-    }
-
     public static Stream from(Namespace id, String streamName) {
       return new Stream(id, streamName);
     }
@@ -885,9 +696,29 @@ public abstract class Id {
       return from(namespace, streamName);
     }
 
+    @Override
+    public String toString() {
+      return String.format("%s:%s.%s", getIdType(),
+                           namespace.getId(),
+                           streamName);
+    }
+
+    @Override
+    public Namespace getNamespace() {
+      return namespace;
+    }
+
+    public String getId() {
+      return streamName;
+    }
+
+    public String getNamespaceId() {
+      return namespace.getId();
+    }
+
     public String toId() {
       if (id == null) {
-        id = String.format("%s.%s", namespace, streamName);
+        id = String.format("%s.%s", namespace.getId(), streamName);
       }
       return id;
     }
@@ -939,15 +770,29 @@ public abstract class Id {
         this.id = id;
       }
 
+      public static View from(Id.Stream streamId, String id) {
+        return new View(streamId, id);
+      }
+
+      public static View from(Namespace namespace, String streamId, String id) {
+        return new View(Id.Stream.from(namespace, streamId), id);
+      }
+
+      public static View from(String namespace, String streamId, String id) {
+        return new View(Id.Stream.from(namespace, streamId), id);
+      }
+
+      @Override
+      public String toString() {
+        return String.format("%s:%s.%s.%s", getIdType(),
+                             stream.getNamespaceId(),
+                             stream.getId(),
+                             id);
+      }
+
       @Override
       public Namespace getNamespace() {
         return stream.getNamespace();
-      }
-
-      @Nullable
-      @Override
-      protected Id getParent() {
-        return stream;
       }
 
       public String getNamespaceId() {
@@ -962,21 +807,8 @@ public abstract class Id {
         return stream.getId();
       }
 
-      @Override
       public String getId() {
         return id;
-      }
-
-      public static View from(Id.Stream streamId, String id) {
-        return new View(streamId, id);
-      }
-
-      public static View from(Namespace namespace, String streamId, String id) {
-        return new View(Id.Stream.from(namespace, streamId), id);
-      }
-
-      public static View from(String namespace, String streamId, String id) {
-        return new View(Id.Stream.from(namespace, streamId), id);
       }
 
       @Override
@@ -1015,6 +847,19 @@ public abstract class Id {
       this.typeName = typeName;
     }
 
+    public static DatasetType from(Namespace id, String typeId) {
+      return new DatasetType(id, typeId);
+    }
+
+    public static DatasetType from(String namespaceId, String typeId) {
+      return new DatasetType(Namespace.from(namespaceId), typeId);
+    }
+
+    @Override
+    public String toString() {
+      return String.format("%s:%s.%s", getIdType(), namespace.getId(), typeName);
+    }
+
     @Override
     public Namespace getNamespace() {
       return namespace;
@@ -1046,29 +891,6 @@ public abstract class Id {
       return Objects.hashCode(namespace, typeName);
     }
 
-    @Override
-    public String toString() {
-      return Objects.toStringHelper(this)
-        .add("namespace", namespace)
-        .add("typeName", typeName)
-        .toString();
-    }
-
-    public static DatasetType from(Namespace id, String typeId) {
-      return new DatasetType(id, typeId);
-    }
-
-    public static DatasetType from(String namespaceId, String typeId) {
-      return new DatasetType(Namespace.from(namespaceId), typeId);
-    }
-
-    @Nullable
-    @Override
-    protected Id getParent() {
-      return namespace;
-    }
-
-    @Override
     public String getId() {
       return typeName;
     }
@@ -1090,6 +912,19 @@ public abstract class Id {
       this.moduleId = moduleId;
     }
 
+    public static DatasetModule from(Namespace id, String moduleId) {
+      return new DatasetModule(id, moduleId);
+    }
+
+    public static DatasetModule from(String namespaceId, String moduleId) {
+      return new DatasetModule(Namespace.from(namespaceId), moduleId);
+    }
+
+    @Override
+    public String toString() {
+      return String.format("%s:%s.%s", getIdType(), namespace.getId(), moduleId);
+    }
+
     @Override
     public Namespace getNamespace() {
       return namespace;
@@ -1097,12 +932,6 @@ public abstract class Id {
 
     public String getNamespaceId() {
       return namespace.getId();
-    }
-
-    @Nullable
-    @Override
-    protected Id getParent() {
-      return namespace;
     }
 
     public String getId() {
@@ -1126,22 +955,6 @@ public abstract class Id {
     public int hashCode() {
       return Objects.hashCode(namespace, moduleId);
     }
-
-    @Override
-    public String toString() {
-      return Objects.toStringHelper(this)
-       .add("namespace", namespace)
-       .add("module", moduleId)
-       .toString();
-    }
-
-    public static DatasetModule from(Namespace id, String moduleId) {
-      return new DatasetModule(id, moduleId);
-    }
-
-    public static DatasetModule from(String namespaceId, String moduleId) {
-      return new DatasetModule(Namespace.from(namespaceId), moduleId);
-    }
   }
 
   /**
@@ -1160,6 +973,19 @@ public abstract class Id {
       this.instanceId = instanceId;
     }
 
+    public static DatasetInstance from(Namespace id, String instanceId) {
+      return new DatasetInstance(id, instanceId);
+    }
+
+    public static DatasetInstance from(String namespaceId, String instanceId) {
+      return new DatasetInstance(Namespace.from(namespaceId), instanceId);
+    }
+
+    @Override
+    public String toString() {
+      return String.format("%s:%s.%s", getIdType(), namespace.getId(), instanceId);
+    }
+
     @Override
     public Namespace getNamespace() {
       return namespace;
@@ -1167,12 +993,6 @@ public abstract class Id {
 
     public String getNamespaceId() {
       return namespace.getId();
-    }
-
-    @Nullable
-    @Override
-    protected Id getParent() {
-      return namespace;
     }
 
     public String getId() {
@@ -1196,14 +1016,6 @@ public abstract class Id {
     public int hashCode() {
       return Objects.hashCode(namespace, instanceId);
     }
-
-    public static DatasetInstance from(Namespace id, String instanceId) {
-      return new DatasetInstance(id, instanceId);
-    }
-
-    public static DatasetInstance from(String namespaceId, String instanceId) {
-      return new DatasetInstance(Namespace.from(namespaceId), instanceId);
-    }
   }
 
   /**
@@ -1223,58 +1035,6 @@ public abstract class Id {
       this.namespace = namespace;
       this.name = name;
       this.version = version;
-    }
-
-    public Namespace getNamespace() {
-      return namespace;
-    }
-
-    public String getName() {
-      return name;
-    }
-
-    public ArtifactVersion getVersion() {
-      return version;
-    }
-
-    @Nullable
-    @Override
-    protected Id getParent() {
-      return null;
-    }
-
-    @Override
-    public String getId() {
-      return String.format("%s-%s", name, version.getVersion());
-    }
-
-    public ArtifactId toArtifactId() {
-      return new ArtifactId(name, version,
-                            Namespace.SYSTEM.equals(namespace) ? ArtifactScope.SYSTEM : ArtifactScope.USER);
-    }
-
-    @Override
-    public String toString() {
-      return String.format("%s:%s-%s", namespace.getId(), name, version.getVersion());
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-
-      Artifact that = (Artifact) o;
-
-      return this.compareTo(that) == 0;
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hashCode(namespace, name, version);
     }
 
     public static Artifact from(Namespace namespace, String name, String version) {
@@ -1323,6 +1083,51 @@ public abstract class Id {
 
     public static boolean isValidName(String name) {
       return isValidId(name);
+    }
+
+    @Override
+    public String toString() {
+      return String.format("%s:%s.%s.%s", getIdType(), namespace.getId(), name, version.getVersion());
+    }
+
+    public Namespace getNamespace() {
+      return namespace;
+    }
+
+    public String getName() {
+      return name;
+    }
+
+    public ArtifactVersion getVersion() {
+      return version;
+    }
+
+    public String getId() {
+      return String.format("%s-%s", name, version.getVersion());
+    }
+
+    public ArtifactId toArtifactId() {
+      return new ArtifactId(name, version,
+                            Namespace.SYSTEM.equals(namespace) ? ArtifactScope.SYSTEM : ArtifactScope.USER);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+
+      Artifact that = (Artifact) o;
+
+      return this.compareTo(that) == 0;
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hashCode(namespace, name, version);
     }
 
     @Override

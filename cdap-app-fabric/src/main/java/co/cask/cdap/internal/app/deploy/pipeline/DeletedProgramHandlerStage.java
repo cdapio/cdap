@@ -102,7 +102,7 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
                                         namespace, entry.getValue());
         }
 
-        queueAdmin.dropAllForFlow(Id.Flow.from(programId.getApplication(), programId.getId()));
+        queueAdmin.dropAllForFlow(Id.Program.from(programId.getApplication(), ProgramType.FLOW, programId.getId()));
         deletedFlows.add(programId.getId());
       }
     }

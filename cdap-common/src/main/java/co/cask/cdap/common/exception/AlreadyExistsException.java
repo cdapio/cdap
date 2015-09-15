@@ -28,7 +28,7 @@ public class AlreadyExistsException extends ConflictException {
   private final Id objectId;
 
   public AlreadyExistsException(Id id) {
-    super(String.format("'%s' already exists", id.getIdRep()));
+    super(String.format("'%s' already exists", id));
     this.objectId = id;
   }
 

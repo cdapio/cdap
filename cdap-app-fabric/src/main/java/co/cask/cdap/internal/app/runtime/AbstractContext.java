@@ -62,7 +62,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
 
   private final Program program;
   private final RunId runId;
-  private final List<Id> owners;
+  private final List<Id.Program> owners;
   private final Map<String, String> runtimeArguments;
   private final Map<String, Dataset> datasets;
 
@@ -95,7 +95,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     this.runId = runId;
     this.runtimeArguments = ImmutableMap.copyOf(arguments.asMap());
     this.discoveryServiceClient = discoveryServiceClient;
-    this.owners = createOwners(program.getId());
+    this.owners = ImmutableList.of(program.getId());
 
     this.programMetrics = metricsContext;
     this.dsInstantiator = new DatasetInstantiator(program.getId().getNamespace(), dsFramework,
@@ -108,13 +108,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     this.pluginInstantiator = pluginInstantiator;
   }
 
-  private List<Id> createOwners(Id.Program programId) {
-    ImmutableList.Builder<Id> result = ImmutableList.builder();
-    result.add(programId);
-    return result.build();
-  }
-
-  public List<Id> getOwners() {
+  public List<Id.Program> getOwners() {
     return owners;
   }
 

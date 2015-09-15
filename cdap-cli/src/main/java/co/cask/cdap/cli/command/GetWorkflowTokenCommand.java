@@ -28,6 +28,7 @@ import co.cask.cdap.client.WorkflowClient;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.UnauthorizedException;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.WorkflowTokenDetail;
 import co.cask.cdap.proto.WorkflowTokenNodeDetail;
 import co.cask.common.cli.Arguments;
@@ -63,7 +64,7 @@ public class GetWorkflowTokenCommand extends AbstractCommand {
     if (programIdParts.length < 2) {
       throw new CommandInputError(this);
     }
-    Id.Workflow workflowId = Id.Workflow.from(appId, programIdParts[1]);
+    Id.Program workflowId = Id.Program.from(appId, ProgramType.WORKFLOW, programIdParts[1]);
     Id.Run runId = new Id.Run(workflowId, arguments.get(ArgumentName.RUN_ID.toString()));
     WorkflowToken.Scope workflowTokenScope = null;
     if (arguments.hasArgument(ArgumentName.WORKFLOW_TOKEN_SCOPE.toString())) {

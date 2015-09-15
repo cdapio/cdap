@@ -199,7 +199,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
 
       // Setup dataset framework context, if required
       Id.Program programId = program.getId();
-      Id.Flow.Flowlet flowletId = Id.Flow.Flowlet.from(programId.getApplication(), programId.getId(), flowletName);
+      Id.Flowlet flowletId = Id.Flowlet.from(programId.getApplication(), programId.getId(), flowletName);
       Id.Run run = new Id.Run(programId, runId.getId());
       if (dsFramework instanceof ProgramContextAware) {
         ((ProgramContextAware) dsFramework).initContext(run, flowletId);
@@ -518,10 +518,10 @@ public final class FlowletProgramRunner implements ProgramRunner {
     final ImmutableList.Builder<ConsumerSupplier<?>> queueConsumerSupplierBuilder,
     final SchemaCache schemaCache) {
 
-    final Id.Program program = Id.Flow.from(flowletContext.getNamespaceId(),
-                                            flowletContext.getApplicationId(),
-                                            ProgramType.FLOW,
-                                            flowletContext.getFlowId());
+    final Id.Program program = Id.Program.from(flowletContext.getNamespaceId(),
+                                               flowletContext.getApplicationId(),
+                                               ProgramType.FLOW,
+                                               flowletContext.getFlowId());
     return new ProcessSpecificationFactory() {
       @Override
       public <T> ProcessSpecification create(Set<String> inputNames, Schema schema, TypeToken<T> dataType,

@@ -263,13 +263,13 @@ public class DefaultStore implements Store {
 
     // This block has been added so that completed workflow runs can be logged to the workflow dataset
     if (id.getType() == ProgramType.WORKFLOW && runStatus == ProgramRunStatus.COMPLETED) {
-      Id.Workflow workflow = Id.Workflow.from(id.getApplication(), id.getId());
+      Id.Program workflow = Id.Program.from(id.getApplication(), ProgramType.WORKFLOW, id.getId());
       recordCompletedWorkflow(workflow, pid);
     }
     // todo: delete old history data
   }
 
-  private void recordCompletedWorkflow(final Id.Workflow id, String pid) {
+  private void recordCompletedWorkflow(final Id.Program id, String pid) {
     final RunRecordMeta run = getRun(id, pid);
     if (run == null) {
       return;
@@ -327,7 +327,7 @@ public class DefaultStore implements Store {
   }
 
   @Nullable
-  public WorkflowStatistics getWorkflowStatistics(final Id.Workflow id, final long startTime,
+  public WorkflowStatistics getWorkflowStatistics(final Id.Program id, final long startTime,
                                                   final long endTime, final List<Double> percentiles) {
     return txnlWorkflow.executeUnchecked(new TransactionExecutor.Function
       <WorkflowStatsDataset, WorkflowStatistics>() {
@@ -339,7 +339,7 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public WorkflowDataset.WorkflowRunRecord getWorkflowRun(final Id.Workflow workflowId, final String runId) {
+  public WorkflowDataset.WorkflowRunRecord getWorkflowRun(final Id.Program workflowId, final String runId) {
     return txnlWorkflow.executeUnchecked(new TransactionExecutor.Function
       <WorkflowStatsDataset, WorkflowDataset.WorkflowRunRecord>() {
       @Override
@@ -350,7 +350,7 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public Collection<WorkflowDataset.WorkflowRunRecord> retrieveSpacedRecords(final Id.Workflow workflow,
+  public Collection<WorkflowDataset.WorkflowRunRecord> retrieveSpacedRecords(final Id.Program workflow,
                                                                              final String runId,
                                                                              final int limit,
                                                                              final long timeInterval) {
@@ -941,7 +941,7 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void updateWorkflowToken(final Id.Workflow workflowId, final String workflowRunId, final WorkflowToken token) {
+  public void updateWorkflowToken(final Id.Program workflowId, final String workflowRunId, final WorkflowToken token) {
     txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
       public Void apply(AppMds mds) throws Exception {
@@ -952,7 +952,7 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public WorkflowToken getWorkflowToken(final Id.Workflow workflowId, final String workflowRunId) {
+  public WorkflowToken getWorkflowToken(final Id.Program workflowId, final String workflowRunId) {
     return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, WorkflowToken>() {
       @Override
       public WorkflowToken apply(AppMds mds) throws Exception {

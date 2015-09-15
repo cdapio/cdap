@@ -62,7 +62,7 @@ public class RemoteApplicationManager extends AbstractApplicationManager {
 
   @Override
   public FlowManager getFlowManager(String flowName) {
-    Id.Flow flowId = Id.Flow.from(application, flowName);
+    Id.Program flowId = Id.Program.from(application, ProgramType.FLOW, flowName);
     return new RemoteFlowManager(flowId, clientConfig, restClient, this);
   }
 
@@ -80,19 +80,19 @@ public class RemoteApplicationManager extends AbstractApplicationManager {
 
   @Override
   public WorkflowManager getWorkflowManager(String workflowName) {
-    Id.Workflow programId = Id.Workflow.from(application, workflowName);
+    Id.Program programId = Id.Program.from(application, ProgramType.WORKFLOW, workflowName);
     return new RemoteWorkflowManager(programId, clientConfig, restClient, this);
   }
 
   @Override
   public ServiceManager getServiceManager(String serviceName) {
-    Id.Service programId = Id.Service.from(application, serviceName);
+    Id.Program programId = Id.Program.from(application, ProgramType.SERVICE, serviceName);
     return new RemoteServiceManager(programId, clientConfig, restClient, this);
   }
 
   @Override
   public WorkerManager getWorkerManager(String workerName) {
-    Id.Worker programId = Id.Worker.from(application, workerName);
+    Id.Program programId = Id.Program.from(application, ProgramType.WORKER, workerName);
     return new RemoteWorkerManager(programId, clientConfig, restClient, this);
   }
 

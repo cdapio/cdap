@@ -415,9 +415,9 @@ public class LineageDataset extends AbstractDataset {
   }
 
   private void addComponent(MDSKey.Builder keyBuilder, Id component) {
-    if (component instanceof Id.Flow.Flowlet) {
+    if (component instanceof Id.Flowlet) {
       keyBuilder.add(FLOWLET_MARKER)
-        .add(component.getId());
+        .add(((Id.Flowlet) component).getId());
     } else {
       keyBuilder.add(NONE_MARKER);
     }
@@ -447,7 +447,7 @@ public class LineageDataset extends AbstractDataset {
         return null;
 
       case FLOWLET_MARKER :
-        return Id.Flow.Flowlet.from(program.getApplication(), program.getId(), splitter.getString());
+        return Id.Flowlet.from(program.getApplication(), program.getId(), splitter.getString());
 
       default:
         throw new IllegalStateException("Invalid row with component marker " + marker);

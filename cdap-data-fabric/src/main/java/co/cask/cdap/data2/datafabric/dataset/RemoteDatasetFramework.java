@@ -23,6 +23,7 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.data2.datafabric.dataset.type.ConstantClassLoaderProvider;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
@@ -199,7 +200,8 @@ public class RemoteDatasetFramework implements DatasetFramework {
   public <T extends Dataset> T getDataset(
     Id.DatasetInstance datasetInstanceId, Map<String, String> arguments,
     @Nullable ClassLoader classLoader,
-    @Nullable Iterable<? extends Id> owners) throws DatasetManagementException, IOException {
+    @Nullable Iterable<? extends Id.NamespacedId> owners)
+    throws DatasetManagementException, IOException, ServiceUnavailableException {
 
     return getDataset(datasetInstanceId, arguments, classLoader, new ConstantClassLoaderProvider(classLoader), owners);
   }
@@ -218,7 +220,8 @@ public class RemoteDatasetFramework implements DatasetFramework {
     Id.DatasetInstance datasetInstanceId, @Nullable Map<String, String> arguments,
     ClassLoader classLoader,
     DatasetClassLoaderProvider classLoaderProvider,
-    @Nullable Iterable<? extends Id> owners) throws DatasetManagementException, IOException {
+    @Nullable Iterable<? extends Id.NamespacedId> owners) throws DatasetManagementException, IOException,
+    ServiceUnavailableException {
 
     DatasetMeta instanceInfo = clientCache.getUnchecked(datasetInstanceId.getNamespace())
       .getInstance(datasetInstanceId.getId(), owners);

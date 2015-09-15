@@ -57,7 +57,7 @@ public class DatasetInstantiator implements DatasetContext {
   public DatasetInstantiator(Id.Namespace namespace,
                              DatasetFramework datasetFramework,
                              ClassLoader classLoader,
-                             @Nullable Iterable<? extends Id> owners,
+                             @Nullable Iterable<? extends Id.NamespacedId> owners,
                              @Nullable MetricsContext metricsContext) {
     this.namespace = namespace;
     this.metricsContext = metricsContext;

@@ -38,9 +38,9 @@ public class RemoteServiceManager extends AbstractProgramManager<ServiceManager>
   private final MetricsClient metricsClient;
   private final ProgramClient programClient;
   private final ServiceClient serviceClient;
-  private final Id.Service serviceId;
+  private final Id.Program serviceId;
 
-  public RemoteServiceManager(Id.Service programId, ClientConfig clientConfig, RESTClient restClient,
+  public RemoteServiceManager(Id.Program programId, ClientConfig clientConfig, RESTClient restClient,
                               RemoteApplicationManager remoteApplicationManager) {
     super(programId, remoteApplicationManager);
     this.serviceId = programId;

@@ -365,7 +365,7 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   public <T extends Dataset> T getDataset(Id.DatasetInstance datasetInstanceId,
                                           Map<String, String> arguments,
                                           @Nullable ClassLoader classLoader,
-                                          @Nullable Iterable<? extends Id> owners) throws IOException {
+                                          @Nullable Iterable<? extends Id.NamespacedId> owners) throws IOException {
     readLock.lock();
     try {
       DatasetSpecification spec = instances.get(datasetInstanceId.getNamespace(), datasetInstanceId);
@@ -394,7 +394,7 @@ public class InMemoryDatasetFramework implements DatasetFramework {
                                           @Nullable Map<String, String> arguments,
                                           @Nullable ClassLoader parentClassLoader,
                                           DatasetClassLoaderProvider classLoaderProvider,
-                                          @Nullable Iterable<? extends Id> owners) throws IOException {
+                                          @Nullable Iterable<? extends Id.NamespacedId> owners) throws IOException {
     readLock.lock();
     try {
       DatasetSpecification spec = instances.get(datasetInstanceId.getNamespace(), datasetInstanceId);

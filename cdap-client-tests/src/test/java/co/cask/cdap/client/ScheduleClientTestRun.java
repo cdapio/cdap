@@ -23,6 +23,7 @@ import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.XSlowTests;
 import org.junit.After;
 import org.junit.Assert;
@@ -40,7 +41,7 @@ public class ScheduleClientTestRun extends ClientTestBase {
 
   private final Id.Namespace namespace = Id.Namespace.DEFAULT;
   private final Id.Application app = Id.Application.from(namespace, FakeApp.NAME);
-  private final Id.Workflow workflow = Id.Workflow.from(app, FakeWorkflow.NAME);
+  private final Id.Program workflow = Id.Program.from(app, ProgramType.WORKFLOW, FakeWorkflow.NAME);
   private final Id.Schedule schedule = Id.Schedule.from(app, FakeApp.SCHEDULE_NAME);
 
   private ScheduleClient scheduleClient;

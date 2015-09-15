@@ -1131,7 +1131,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
   public void testWorkflowToken() throws Exception {
     Assert.assertEquals(200, deploy(AppWithWorkflow.class).getStatusLine().getStatusCode());
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, AppWithWorkflow.NAME);
-    Id.Workflow workflowId = Id.Workflow.from(appId, AppWithWorkflow.SampleWorkflow.NAME);
+    Id.Program workflowId = Id.Program.from(appId, ProgramType.WORKFLOW, AppWithWorkflow.SampleWorkflow.NAME);
     String outputPath = new File(tmpFolder.newFolder(), "output").getAbsolutePath();
     startProgram(workflowId, ImmutableMap.of("inputPath", createInput("input"),
                                              "outputPath", outputPath));
@@ -1177,7 +1177,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
                         tokenDataAtNode.get(AppWithWorkflow.DummyAction.TOKEN_KEY));
   }
 
-  private WorkflowTokenDetail getWorkflowToken(Id.Workflow workflowId, String runId,
+  private WorkflowTokenDetail getWorkflowToken(Id.Program workflowId, String runId,
                                                @Nullable WorkflowToken.Scope scope,
                                                @Nullable String key) throws Exception {
     String workflowTokenUrl = String.format("apps/%s/workflows/%s/runs/%s/token", workflowId.getApplicationId(),
@@ -1188,7 +1188,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     return readResponse(response, new TypeToken<WorkflowTokenDetail>() { }.getType(), GSON);
   }
 
-  private WorkflowTokenNodeDetail getWorkflowToken(Id.Workflow workflowId, String runId, String nodeName,
+  private WorkflowTokenNodeDetail getWorkflowToken(Id.Program workflowId, String runId, String nodeName,
                                                    @Nullable WorkflowToken.Scope scope,
                                                    @Nullable String key) throws Exception {
     String workflowTokenUrl = String.format("apps/%s/workflows/%s/runs/%s/nodes/%s/token",
@@ -1230,7 +1230,8 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
   public void testWorkflowTokenPut() throws Exception {
     Assert.assertEquals(200, deploy(WorkflowTokenTestPutApp.class).getStatusLine().getStatusCode());
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, WorkflowTokenTestPutApp.NAME);
-    Id.Workflow workflowId = Id.Workflow.from(appId, WorkflowTokenTestPutApp.WorkflowTokenTestPut.NAME);
+    Id.Program workflowId = Id.Program.from(appId, ProgramType.WORKFLOW,
+                                            WorkflowTokenTestPutApp.WorkflowTokenTestPut.NAME);
     Id.Program mapReduceId = Id.Program.from(appId, ProgramType.MAPREDUCE, WorkflowTokenTestPutApp.RecordCounter.NAME);
     Id.Program sparkId = Id.Program.from(appId, ProgramType.SPARK, WorkflowTokenTestPutApp.SparkTestApp.NAME);
 
