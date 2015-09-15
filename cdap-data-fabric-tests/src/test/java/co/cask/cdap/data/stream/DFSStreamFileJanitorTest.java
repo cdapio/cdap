@@ -18,7 +18,6 @@ package co.cask.cdap.data.stream;
 
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
@@ -30,13 +29,11 @@ import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data.stream.service.InMemoryStreamMetaStore;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
-import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
 import co.cask.cdap.proto.Id;
-import co.cask.tephra.TransactionManager;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -63,8 +60,6 @@ public class DFSStreamFileJanitorTest extends StreamFileJanitorTestBase {
   private static MiniDFSCluster dfsCluster;
   private static StreamFileWriterFactory fileWriterFactory;
   private static StreamCoordinatorClient streamCoordinatorClient;
-  private static TransactionManager txManager;
-  private static DatasetService datasetService;
 
   @BeforeClass
   public static void init() throws IOException {
@@ -75,11 +70,6 @@ public class DFSStreamFileJanitorTest extends StreamFileJanitorTestBase {
     FileSystem fileSystem = dfsCluster.getFileSystem();
     final HDFSLocationFactory lf = new HDFSLocationFactory(fileSystem);
     final NamespacedLocationFactory nlf = new DefaultNamespacedLocationFactory(cConf, lf);
-
-    cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
-    cConf.set(Constants.AppFabric.OUTPUT_DIR, System.getProperty("java.io.tmpdir"));
-    cConf.set(Constants.AppFabric.TEMP_DIR, System.getProperty("java.io.tmpdir"));
-    cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
 
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf, hConf),
@@ -113,11 +103,6 @@ public class DFSStreamFileJanitorTest extends StreamFileJanitorTestBase {
       }
     );
 
-    txManager = injector.getInstance(TransactionManager.class);
-    txManager.startAndWait();
-    datasetService = injector.getInstance(DatasetService.class);
-    datasetService.startAndWait();
-
     locationFactory = injector.getInstance(LocationFactory.class);
     namespacedLocationFactory = injector.getInstance(NamespacedLocationFactory.class);
     streamAdmin = injector.getInstance(StreamAdmin.class);
@@ -128,8 +113,6 @@ public class DFSStreamFileJanitorTest extends StreamFileJanitorTestBase {
 
   @AfterClass
   public static void finish() {
-    datasetService.stopAndWait();
-    txManager.stopAndWait();
     streamCoordinatorClient.stopAndWait();
     dfsCluster.shutdown();
   }

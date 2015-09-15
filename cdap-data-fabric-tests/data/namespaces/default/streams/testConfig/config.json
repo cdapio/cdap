@@ -1,0 +1,1 @@
+{"partitionDuration":3600000,"indexInterval":10000,"ttl":99000,"format":{"name":"text","schema":{"type":"record","name":"stringBody","fields":[{"name":"body","type":"string"}]},"settings":{}},"notificationThresholdMB":99}

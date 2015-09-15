@@ -26,6 +26,9 @@ import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.metadata.publisher.KafkaMetadataChangePublisher;
 import co.cask.cdap.data2.metadata.publisher.MetadataChangePublisher;
 import co.cask.cdap.data2.metadata.publisher.NoOpMetadataChangePublisher;
+import co.cask.cdap.data2.metadata.service.BusinessMetadataStore;
+import co.cask.cdap.data2.metadata.service.DistributedBusinessMetadataStore;
+import co.cask.cdap.data2.metadata.service.InMemoryBusinessMetadataStore;
 import co.cask.cdap.data2.metadata.writer.BasicLineageWriter;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
 import co.cask.cdap.data2.metadata.writer.LineageWriterDatasetFramework;
@@ -55,6 +58,9 @@ public class DataSetsModules extends RuntimeModule {
                   .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
                   .build(DatasetDefinitionRegistryFactory.class));
 
+        bind(BusinessMetadataStore.class).to(InMemoryBusinessMetadataStore.class);
+        expose(BusinessMetadataStore.class);
+
         bind(DatasetFramework.class)
           .annotatedWith(Names.named(BASIC_DATASET_FRAMEWORK))
           .to(InMemoryDatasetFramework.class).in(Scopes.SINGLETON);
@@ -83,6 +89,9 @@ public class DataSetsModules extends RuntimeModule {
                   .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
                   .build(DatasetDefinitionRegistryFactory.class));
 
+        bind(BusinessMetadataStore.class).to(DistributedBusinessMetadataStore.class);
+        expose(BusinessMetadataStore.class);
+
         bind(DatasetFramework.class)
           .annotatedWith(Names.named(BASIC_DATASET_FRAMEWORK))
           .to(RemoteDatasetFramework.class);
@@ -110,7 +119,6 @@ public class DataSetsModules extends RuntimeModule {
         install(new FactoryModuleBuilder()
                   .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
                   .build(DatasetDefinitionRegistryFactory.class));
-
         bind(DatasetFramework.class)
           .annotatedWith(Names.named(BASIC_DATASET_FRAMEWORK))
           .to(RemoteDatasetFramework.class);
@@ -122,10 +130,13 @@ public class DataSetsModules extends RuntimeModule {
         expose(DatasetFramework.class);
         if (publishRequired) {
           bind(MetadataChangePublisher.class).to(KafkaMetadataChangePublisher.class);
+          bind(BusinessMetadataStore.class).to(DistributedBusinessMetadataStore.class);
         } else {
           bind(MetadataChangePublisher.class).to(NoOpMetadataChangePublisher.class);
+          bind(BusinessMetadataStore.class).to(InMemoryBusinessMetadataStore.class);
         }
         expose(MetadataChangePublisher.class);
+        expose(BusinessMetadataStore.class);
       }
     };
   }
