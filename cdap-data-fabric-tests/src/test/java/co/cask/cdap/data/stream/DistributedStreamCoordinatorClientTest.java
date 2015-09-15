@@ -26,6 +26,8 @@ import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data.stream.service.InMemoryStreamMetaStore;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
+import co.cask.cdap.data2.metadata.service.BusinessMetadataStore;
+import co.cask.cdap.data2.metadata.service.InMemoryBusinessMetadataStore;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import com.google.inject.AbstractModule;
@@ -74,7 +76,12 @@ public class DistributedStreamCoordinatorClientTest extends StreamCoordinatorTes
       new ZKClientModule(),
       new DiscoveryRuntimeModule().getDistributedModules(),
       new DataFabricModules().getDistributedModules(),
-      new DataSetsModules().getDistributedModules(false),
+      Modules.override(new DataSetsModules().getDistributedModules(false)).with(new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(BusinessMetadataStore.class).to(InMemoryBusinessMetadataStore.class);
+        }
+      }),
       new TransactionMetricsModule(),
       new NotificationFeedServiceRuntimeModule().getInMemoryModules(),
       new AbstractModule() {
