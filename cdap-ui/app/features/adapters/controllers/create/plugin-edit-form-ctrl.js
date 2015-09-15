@@ -49,7 +49,7 @@ angular.module(PKG.name + '.feature.adapters')
       this.infoUrl = [
         'http://docs.cask.co/cdap/',
         $rootScope.cdapVersion,
-        '/en/application-templates/etl/templates/',
+        '/en/included-apps-manual/etl/templates/',
         this.infoPluginCategory,
         '/',
         this.infoPluginName,
@@ -59,7 +59,7 @@ angular.module(PKG.name + '.feature.adapters')
       this.infoUrl = [
         'http://docs.cask.co/cdap/',
         $rootScope.cdapVersion ,
-        '/en/application-templates/etl/templates/',
+        '/en/included-apps-manual/etl/templates/',
         this.infoPluginCategory,
         '/',
         this.infoPluginType,
