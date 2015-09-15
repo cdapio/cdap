@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.adapters')
-  .controller('AdpaterDetailController', function($scope, rAdapterDetail, GLOBALS, MyAppDAGService, CanvasFactory, $state, myWorkFlowApi, myWorkersApi, myMapreduceApi, $timeout, MyDataSource, MyMetricsQueryHelper, $filter, myAppsApi) {
+  .controller('AdpaterDetailController', function($scope, rAdapterDetail, GLOBALS, MyAppDAGService, CanvasFactory, $state, myWorkFlowApi, myWorkersApi, myMapreduceApi, $timeout, MyDataSource, MyMetricsQueryHelper, $filter, myAppsApi, AdapterDetail) {
     $scope.GLOBALS = GLOBALS;
     $scope.template = rAdapterDetail.template;
     $scope.description = rAdapterDetail.description;
@@ -26,6 +26,8 @@ angular.module(PKG.name + '.feature.adapters')
         sinks = [];
 
     $scope.app = rAdapterDetail;
+
+    AdapterDetail.initialize(rAdapterDetail, $state, $scope);
 
     $scope.tabs = [
       {
