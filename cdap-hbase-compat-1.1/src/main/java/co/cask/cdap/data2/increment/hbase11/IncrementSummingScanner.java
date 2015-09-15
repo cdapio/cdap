@@ -30,11 +30,12 @@ import org.apache.hadoop.hbase.regionserver.Region;
 import org.apache.hadoop.hbase.regionserver.RegionScanner;
 import org.apache.hadoop.hbase.regionserver.ScanType;
 import org.apache.hadoop.hbase.regionserver.ScannerContext;
-import org.apache.hadoop.hbase.regionserver.ScannerContextReader;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -43,6 +44,24 @@ import java.util.List;
  */
 class IncrementSummingScanner implements RegionScanner {
   private static final Log LOG = LogFactory.getLog(IncrementSummingScanner.class);
+  private static final Field SCANNER_CONTEXT_LIMITS_FIELD;
+  private static final Method GET_BATCH_METHOD;
+
+  static {
+    try {
+      Field limitsField = ScannerContext.class.getDeclaredField("limits");
+      limitsField.setAccessible(true);
+      SCANNER_CONTEXT_LIMITS_FIELD = limitsField;
+
+      Class<?> limitFieldsClass = limitsField.getType();
+      Method getBatchMethod = limitFieldsClass.getDeclaredMethod("getBatch");
+      getBatchMethod.setAccessible(true);
+      GET_BATCH_METHOD = getBatchMethod;
+    } catch (Exception e) {
+      LOG.error("Failed to get ScannerContext.LimitFields.getBatch method through reflection.");
+      throw new IllegalStateException(e);
+    }
+  }
 
   private final Region region;
   private final WrappedScanner baseScanner;
@@ -263,17 +282,20 @@ class IncrementSummingScanner implements RegionScanner {
   }
 
   /**
-   * Gets the batch limit from the given {@link ScannerContext} through the help of {@link ScannerContextReader}
+   * Gets the batch limit from the given {@link ScannerContext} through reflection.
    */
   private int getBatchLimit(ScannerContext scannerContext) {
     // We need to to access the batch limit (limit on number of columns) in the ScannerContext.
-    // The ScannerContext does not exposes its method to get the limits so we have a Reader under the same package
-    // which can supply us these limits given a ScannerContext. Also, we cannot depend on the limit tracking of the
+    // The ScannerContext does not exposes its method to get the limits and has it as an integer inside a classs
+    // LimitFields. So get this through reflection. Also, we cannot depend on the limit tracking of the
     // internal scanner as it does not differentiate between an increment cell and a non-increment cell.
-    // So, we read all the cells from the internal scanner in batches of limit and do the tracking for columns here
-    // and stop when we have reached the limit.
-    ScannerContextReader scannerContextReader = new ScannerContextReader(scannerContext);
-    return scannerContextReader.getBatchLimit();
+    // So, we read all the cells from the internal scanner in batches of limit and do the tracking for columns
+    // by ourselves.
+    try {
+      return (Integer) GET_BATCH_METHOD.invoke(SCANNER_CONTEXT_LIMITS_FIELD.get(scannerContext));
+    } catch (Exception e) {
+      throw e instanceof RuntimeException ? (RuntimeException) e : new RuntimeException(e);
+    }
   }
 
   private boolean sameCell(Cell first, Cell second) {
