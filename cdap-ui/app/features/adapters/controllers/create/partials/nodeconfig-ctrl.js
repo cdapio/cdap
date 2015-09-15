@@ -16,22 +16,67 @@
 
 
 angular.module(PKG.name + '.feature.adapters')
-  .controller('NodeConfigController', function($scope, IMPLICIT_SCHEMA, MyAppDAGService, $filter, $q, $rootScope, myAdapterApi, $state, $timeout, GLOBALS) {
-    $scope.plugin = $scope.BottomPanelController.tab.plugin;
-    $scope.isValidPlugin = Object.keys($scope.plugin).length;
+  .controller('NodeConfigController', function($scope, IMPLICIT_SCHEMA, MyAppDAGService, $filter, $q, $rootScope, myAdapterApi, $state, $timeout, GLOBALS, MyNodeConfigService, $bootstrapModal) {
+
     $scope.type = MyAppDAGService.metadata.template.type;
 
-    if (!$scope.plugin) {
-      return;
-    }
-    $scope.$watch(function() {
-      return $scope.BottomPanelController.tab.plugin;
-    }, function() {
-      if (!Object.keys($scope.BottomPanelController.tab.plugin).length) {
-        return;
+    $scope.data = {};
+    $scope.data.isModelTouched = false;
+
+    MyNodeConfigService.registerPluginCallback(onPluginChange);
+
+    function onPluginChange(plugin) {
+      var defer = $q.defer();
+      if (!$scope.data.isModelTouched) {
+        switchPlugin(plugin);
+        defer.resolve(true);
+      } else {
+        confirmPluginSwitch()
+          .then(
+            function yes() {
+              switchPlugin(plugin);
+            },
+            function no() {
+              console.log('User chose to stay in the same plugin');
+            }
+          );
+        defer.resolve(false);
       }
-      $scope.plugin = $scope.BottomPanelController.tab.plugin;
+      return defer.promise;
+    }
+
+    function confirmPluginSwitch() {
+      var defer = $q.defer();
+
+      var confirmInstance = $bootstrapModal.open({
+        keyboard: false,
+        templateUrl: '/assets/features/adapters/templates/partial/confirm.html',
+        windowClass: 'modal-confirm',
+        controller: ['$scope', function ($scope) {
+          $scope.continue = function () {
+            $scope.$close('close');
+          };
+
+          $scope.cancel = function () {
+            $scope.$close('keep open');
+          };
+        }]
+      });
+      confirmInstance.result.then(function (closing) {
+        if (closing === 'close') {
+          defer.resolve(true);
+        } else {
+          defer.reject(false);
+        }
+      });
+      return defer.promise;
+    }
+
+    function switchPlugin(plugin) {
+      $scope.plugin = plugin;
       $scope.isValidPlugin = false;
+      // falsify the ng-if in the template for one tick so that the template gets reloaded
+      // there by reloading the controller.
       $timeout(function() {
         $scope.isValidPlugin = Object.keys($scope.plugin).length;
         $scope.isSource = false;
@@ -39,7 +84,7 @@ angular.module(PKG.name + '.feature.adapters')
         $scope.isSink = false;
         configurePluginInfo();
       });
-    });
+    }
 
     function configurePluginInfo() {
       var pluginId = $scope.plugin.id;
