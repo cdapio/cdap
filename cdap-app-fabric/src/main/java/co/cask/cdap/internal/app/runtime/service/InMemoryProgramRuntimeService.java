@@ -65,7 +65,7 @@ public final class InMemoryProgramRuntimeService extends AbstractProgramRuntimeS
   @Inject
   public InMemoryProgramRuntimeService(ProgramRunnerFactory programRunnerFactory, CConfiguration cConf,
                                        ArtifactRepository artifactRepository) {
-    super(programRunnerFactory, artifactRepository);
+    super(cConf, programRunnerFactory, artifactRepository);
     this.cConf = cConf;
   }
 

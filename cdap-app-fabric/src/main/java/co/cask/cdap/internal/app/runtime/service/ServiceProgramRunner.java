@@ -41,6 +41,7 @@ import org.apache.twill.api.RunId;
 import org.apache.twill.api.ServiceAnnouncer;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
+import java.io.File;
 import javax.annotation.Nullable;
 
 /**
@@ -104,7 +105,7 @@ public class ServiceProgramRunner implements ProgramRunner {
                                       instanceId, instanceCount, serviceAnnouncer,
                                       metricsCollectionService, datasetFramework, dataFabricFacadeFactory,
                                       txClient, discoveryServiceClient,
-                                      createArtifactPluginInstantiator(program.getClassLoader()));
+                                      createArtifactPluginInstantiator(options, program.getClassLoader()));
 
     ProgramController controller = new ServiceProgramControllerAdapter(component, program.getId(), runId,
                                                                        spec.getName() + "-" + instanceId);
@@ -113,8 +114,9 @@ public class ServiceProgramRunner implements ProgramRunner {
   }
 
   @Nullable
-  private PluginInstantiator createArtifactPluginInstantiator(ClassLoader classLoader) {
-    return new PluginInstantiator(cConf, classLoader);
+  private PluginInstantiator createArtifactPluginInstantiator(ProgramOptions options, ClassLoader classLoader) {
+    return new PluginInstantiator(
+      cConf, classLoader, new File(options.getArguments().getOption(ProgramOptionConstants.PLUGIN_FILENAMES)));
   }
 
   private static final class ServiceProgramControllerAdapter extends ProgramControllerServiceAdapter {

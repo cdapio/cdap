@@ -67,6 +67,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
+import java.io.File;
 import java.lang.reflect.Type;
 import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
@@ -170,7 +171,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
     // List of all Closeable resources that needs to be cleanup
     List<Closeable> closeables = new ArrayList<>();
     try {
-      PluginInstantiator pluginInstantiator = createArtifactPluginInstantiator(program.getClassLoader());
+      PluginInstantiator pluginInstantiator = createPluginInstantiator(options, program.getClassLoader());
       closeables.add(pluginInstantiator);
 
       final DynamicMapReduceContext context =
@@ -187,12 +188,9 @@ public class MapReduceProgramRunner implements ProgramRunner {
       // note: this sets logging context on the thread level
       LoggingContextAccessor.setLoggingContext(context.getLoggingContext());
 
-      Map<String, String> artifactFileNames = GSON.fromJson(
-        options.getArguments().getOption(ProgramOptionConstants.PLUGIN_FILENAMES), STRING_MAP_TYPE);
       final Service mapReduceRuntimeService = new MapReduceRuntimeService(cConf, hConf, mapReduce, spec, context,
                                                                           program.getJarLocation(), locationFactory,
-                                                                          streamAdmin, txSystemClient, usageRegistry,
-                                                                          artifactFileNames);
+                                                                          streamAdmin, txSystemClient, usageRegistry);
       mapReduceRuntimeService.addListener(
         createRuntimeServiceListener(program, runId, closeables, arguments, options.getUserArguments()),
         Threads.SAME_THREAD_EXECUTOR);
@@ -282,8 +280,9 @@ public class MapReduceProgramRunner implements ProgramRunner {
     };
   }
 
-  private PluginInstantiator createArtifactPluginInstantiator(ClassLoader programClassLoader) {
-    return new PluginInstantiator(cConf, programClassLoader);
+  private PluginInstantiator createPluginInstantiator(ProgramOptions options, ClassLoader programClassLoader) {
+    return new PluginInstantiator(cConf, programClassLoader,
+                                  new File(options.getArguments().getOption(ProgramOptionConstants.PLUGIN_FILENAMES)));
   }
 
   private void closeAllQuietly(Iterable<Closeable> closeables) {

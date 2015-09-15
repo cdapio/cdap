@@ -31,11 +31,9 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.services.AbstractServiceDiscoverer;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.data.dataset.DatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
-import co.cask.cdap.internal.app.runtime.adapter.ArtifactDescriptor;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Preconditions;
@@ -43,17 +41,13 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
-import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -65,15 +59,12 @@ import javax.annotation.Nullable;
 public abstract class AbstractContext extends AbstractServiceDiscoverer
   implements DatasetContext, RuntimeContext, PluginContext {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractContext.class);
-  private static final Gson GSON = new Gson();
-  private static final Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
   private final Program program;
   private final RunId runId;
   private final List<Id> owners;
   private final Map<String, String> runtimeArguments;
   private final Map<String, Dataset> datasets;
-  private final Map<String, String> artifactLocations;
 
   private final MetricsContext programMetrics;
 
@@ -115,8 +106,6 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     // todo: initialized datasets should be managed by DatasetContext (ie. DatasetInstantiator): refactor further
     this.datasets = Datasets.createDatasets(dsInstantiator, datasets, runtimeArguments);
     this.pluginInstantiator = pluginInstantiator;
-    this.artifactLocations = GSON.fromJson(
-      programOptions.getArguments().getOption(ProgramOptionConstants.PLUGIN_FILENAMES), STRING_MAP_TYPE);
   }
 
   private List<Id> createOwners(Id.Program programId) {
@@ -259,10 +248,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     }
     Plugin plugin = getPlugin(pluginId);
     try {
-      String fileName = artifactLocations.get(plugin.getArtifactId().toString());
-      Id.Artifact artifactId = Id.Artifact.from(program.getId().getNamespace(), plugin.getArtifactId());
-      ArtifactDescriptor descriptor = new ArtifactDescriptor(artifactId, Locations.toLocation(new File(fileName)));
-      return pluginInstantiator.loadClass(descriptor, plugin.getPluginClass());
+      return pluginInstantiator.loadClass(plugin);
     } catch (ClassNotFoundException e) {
       // Shouldn't happen, unless there is bug in file localization
       throw new IllegalArgumentException("Plugin class not found", e);
@@ -279,10 +265,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     }
     Plugin plugin = getPlugin(pluginId);
     try {
-      String fileName = artifactLocations.get(plugin.getArtifactId().toString());
-      Id.Artifact artifactId = Id.Artifact.from(program.getId().getNamespace(), plugin.getArtifactId());
-      ArtifactDescriptor descriptor = new ArtifactDescriptor(artifactId, Locations.toLocation(new File(fileName)));
-      return pluginInstantiator.newInstance(descriptor, plugin.getPluginClass(), plugin.getProperties());
+      return pluginInstantiator.newInstance(plugin);
     } catch (ClassNotFoundException e) {
       // Shouldn't happen, unless there is bug in file localization
       throw new IllegalArgumentException("Plugin class not found", e);

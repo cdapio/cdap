@@ -23,13 +23,11 @@ import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.lang.Delegators;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
-import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.batch.distributed.DistributedMapReduceTaskContextBuilder;
 import co.cask.cdap.internal.app.runtime.batch.inmemory.InMemoryMapReduceTaskContextBuilder;
 import com.google.common.base.Throwables;
-import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -43,7 +41,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -78,9 +75,7 @@ public final class MapReduceTaskContextProvider {
     if (context == null) {
       CConfiguration cConf = contextConfig.getConf();
       Program program = createProgram(contextConfig);
-      Map<String, String> systemArguments = Maps.newHashMap();
-      systemArguments.put(ProgramOptionConstants.PLUGIN_FILENAMES, GSON.toJson(contextConfig.getArtifactFileNames()));
-      ProgramOptions programOptions = new SimpleProgramOptions(program.getName(), new BasicArguments(systemArguments),
+      ProgramOptions programOptions = new SimpleProgramOptions(program.getName(), new BasicArguments(),
                                                                contextConfig.getArguments());
       context = getBuilder(cConf)
         .build(type,
@@ -152,13 +147,12 @@ public final class MapReduceTaskContextProvider {
     }
   }
 
-  @Nullable
   private PluginInstantiator getPluginInstantiator(Configuration hConf) {
     ClassLoader classLoader = Delegators.getDelegate(hConf.getClassLoader(), MapReduceClassLoader.class);
     if (!(classLoader instanceof MapReduceClassLoader)) {
       throw new IllegalArgumentException("ClassLoader is not an MapReduceClassLoader");
     }
-    return ((MapReduceClassLoader) classLoader).getArtifactPluginInstantiator();
+    return ((MapReduceClassLoader) classLoader).getPluginInstantiator();
   }
 
   /**

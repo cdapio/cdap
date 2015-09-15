@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime.adapter;
 
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
+import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.api.plugin.PluginProperties;
@@ -66,21 +67,22 @@ public class PluginInstantiator implements Closeable {
   private static final Logger LOG = LoggerFactory.getLogger(PluginInstantiator.class);
 
   private final LoadingCache<Location, ClassLoader> locationClassLoaders;
-  private final LoadingCache<ArtifactDescriptor, ClassLoader> classLoaders;
+  private final LoadingCache<Plugin, ClassLoader> classLoaders;
   private final InstantiatorFactory instantiatorFactory;
   private final File tmpDir;
   private final File pluginDir;
   private final ClassLoader parentClassLoader;
 
   public PluginInstantiator(CConfiguration cConf, ClassLoader parentClassLoader) {
+    this(cConf, parentClassLoader, null);
+  }
+
+  public PluginInstantiator(CConfiguration cConf, ClassLoader parentClassLoader, File pluginDir) {
     this.instantiatorFactory = new InstantiatorFactory(false);
     File tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
       cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
-    File prefix = cConf.get(Constants.AppFabric.MRTASK_PLUGIN_DIR) != null ?
-      new File(cConf.get(Constants.AppFabric.MRTASK_PLUGIN_DIR), cConf.get(Constants.CFG_LOCAL_DATA_DIR)) :
-      new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR));
 
-    this.pluginDir = new File(prefix, "namespaces");
+    this.pluginDir = pluginDir;
     this.tmpDir = DirUtils.createTempDir(tmpDir);
     this.locationClassLoaders = CacheBuilder.newBuilder()
                                             .removalListener(new LocationClassLoaderRemovalListener())
@@ -94,14 +96,14 @@ public class PluginInstantiator implements Closeable {
   /**
    * Returns a {@link ClassLoader} for the given artifact.
    *
-   * @param artifactDescriptor descriptor for the artifact
+   * @param plugin {@link Plugin}
    * @throws IOException if failed to expand the artifact jar to create the plugin ClassLoader
    *
    * @see PluginClassLoader
    */
-  public ClassLoader getArtifactClassLoader(ArtifactDescriptor artifactDescriptor) throws IOException {
+  public ClassLoader getArtifactClassLoader(Plugin plugin) throws IOException {
     try {
-      return classLoaders.get(artifactDescriptor);
+      return classLoaders.get(plugin);
     } catch (ExecutionException e) {
       Throwables.propagateIfInstanceOf(e.getCause(), IOException.class);
       throw Throwables.propagate(e.getCause());
@@ -126,22 +128,29 @@ public class PluginInstantiator implements Closeable {
   }
 
   /**
-   * Loads and returns the {@link Class} of the given plugin class.
+   * Loads and returns the {@link Class} of the given plugin.
    *
-   * @param artifactDescriptor descriptor for the artifact the plugin is from.
-   *                           It is used for creating the ClassLoader for the plugin.
-   * @param pluginClass information about the plugin class
+   * @param plugin {@link Plugin}
    * @param <T> Type of the plugin
    * @return the plugin Class
    * @throws IOException if failed to expand the plugin jar to create the plugin ClassLoader
    * @throws ClassNotFoundException if failed to load the given plugin class
    */
   @SuppressWarnings("unchecked")
-  public <T> Class<T> loadClass(ArtifactDescriptor artifactDescriptor,
-                                PluginClass pluginClass) throws IOException, ClassNotFoundException {
-    return (Class<T>) getArtifactClassLoader(artifactDescriptor).loadClass(pluginClass.getClassName());
+  public <T> Class<T> loadClass(Plugin plugin) throws IOException, ClassNotFoundException {
+    return (Class<T>) getArtifactClassLoader(plugin).loadClass(plugin.getPluginClass().getClassName());
   }
 
+  /**
+   * Loads and returns the {@link Class} of the given plugin class.
+   *
+   * @param location location of the plugin
+   * @param pluginClass the plugin class
+   * @param <T> Type of the plugin
+   * @return the plugin class
+   * @throws IOException if failed to expand the plugin jar to create the plugin classloader
+   * @throws ClassNotFoundException if failed to load the given plugin class
+   */
   @SuppressWarnings("unchecked")
   public <T> Class<T> loadClass(Location location,
                                 PluginClass pluginClass) throws IOException, ClassNotFoundException {
@@ -151,19 +160,15 @@ public class PluginInstantiator implements Closeable {
   /**
    * Creates a new instance of the given plugin class.
    *
-   * @param artifactDescriptor descriptor for the artifact the plugin is from.
-   *                           It is used for creating the ClassLoader for the plugin.
-   * @param pluginClass information about the plugin class. The plugin instance will be instantiated based on this.
-   * @param properties properties to populate into the {@link PluginConfig} of the plugin instance
+   * @param plugin {@link Plugin}
    * @param <T> Type of the plugin
    * @return a new plugin instance
    * @throws IOException if failed to expand the plugin jar to create the plugin ClassLoader
    * @throws ClassNotFoundException if failed to load the given plugin class
    */
   @SuppressWarnings("unchecked")
-  public <T> T newInstance(ArtifactDescriptor artifactDescriptor, PluginClass pluginClass,
-                           PluginProperties properties) throws IOException, ClassNotFoundException {
-    return newInstance(getArtifactClassLoader(artifactDescriptor), pluginClass, properties);
+  public <T> T newInstance(Plugin plugin) throws IOException, ClassNotFoundException {
+    return newInstance(getArtifactClassLoader(plugin), plugin.getPluginClass(), plugin.getProperties());
   }
 
   /**
@@ -261,14 +266,12 @@ public class PluginInstantiator implements Closeable {
   /**
    * A CacheLoader for creating plugin ClassLoader.
    */
-  private final class ClassLoaderCacheLoader extends CacheLoader<ArtifactDescriptor, ClassLoader> {
+  private final class ClassLoaderCacheLoader extends CacheLoader<Plugin, ClassLoader> {
 
     @Override
-    public ClassLoader load(ArtifactDescriptor key) throws Exception {
+    public ClassLoader load(Plugin plugin) throws Exception {
       File unpackedDir = DirUtils.createTempDir(tmpDir);
-      String artifactFile = String.format("%s/artifacts/%s/%s", key.getArtifact().getNamespace().getId(),
-                                          key.getArtifact().getName(), key.getLocation().getName());
-      File artifact = new File(pluginDir, artifactFile);
+      File artifact = new File(pluginDir, String.format("%s.jar", plugin.getArtifactId().toString()));
       BundleJarUtil.unpackProgramJar(Locations.toLocation(artifact), unpackedDir);
       return new PluginClassLoader(unpackedDir, parentClassLoader);
     }
@@ -277,10 +280,10 @@ public class PluginInstantiator implements Closeable {
   /**
    * A RemovalListener for closing plugin ClassLoader.
    */
-  private static final class ClassLoaderRemovalListener implements RemovalListener<ArtifactDescriptor, ClassLoader> {
+  private static final class ClassLoaderRemovalListener implements RemovalListener<Plugin, ClassLoader> {
 
     @Override
-    public void onRemoval(RemovalNotification<ArtifactDescriptor, ClassLoader> notification) {
+    public void onRemoval(RemovalNotification<Plugin, ClassLoader> notification) {
       ClassLoader cl = notification.getValue();
       if (cl instanceof Closeable) {
         Closeables.closeQuietly((Closeable) cl);

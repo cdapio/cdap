@@ -20,6 +20,9 @@ import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.common.app.RunIds;
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
@@ -39,17 +42,19 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Table;
+import com.google.common.io.Files;
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.gson.Gson;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -64,15 +69,15 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   private static final EnumSet<ProgramController.State> COMPLETED_STATES = EnumSet.of(ProgramController.State.COMPLETED,
                                                                                       ProgramController.State.KILLED,
                                                                                       ProgramController.State.ERROR);
-  private static final Gson GSON = new Gson();
-
+  private final CConfiguration cConf;
   private final ReadWriteLock runtimeInfosLock;
   private final Table<ProgramType, RunId, RuntimeInfo> runtimeInfos;
   private final ProgramRunnerFactory programRunnerFactory;
   private final ArtifactRepository artifactRepository;
 
-  protected AbstractProgramRuntimeService(ProgramRunnerFactory programRunnerFactory,
+  protected AbstractProgramRuntimeService(CConfiguration cConf, ProgramRunnerFactory programRunnerFactory,
                                           ArtifactRepository artifactRepository) {
+    this.cConf = cConf;
     this.runtimeInfosLock = new ReentrantReadWriteLock();
     this.runtimeInfos = HashBasedTable.create();
     this.programRunnerFactory = programRunnerFactory;
@@ -84,38 +89,53 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     ProgramRunner runner = programRunnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getType().name()));
     Preconditions.checkNotNull(runner, "Fail to get ProgramRunner for type " + program.getType());
     ProgramOptions optionsWithRunId = addRunId(options, RunIds.generate());
-    ProgramOptions optionsWithPlugins = addPluginLocations(optionsWithRunId,
-                                                           Id.Namespace.from(program.getNamespaceId()),
-                                                           program.getApplicationSpecification());
+    ProgramOptions optionsWithPlugins = createPluginSnapshot(optionsWithRunId, program.getId(),
+                                                             program.getApplicationSpecification());
     final RuntimeInfo runtimeInfo = createRuntimeInfo(runner.run(program, optionsWithPlugins), program);
     programStarted(runtimeInfo);
     return runtimeInfo;
   }
 
   /**
+   * Creates a local temporary directory for this program run.
+   */
+  private File createTempDirectory(Id.Program programId) {
+    File tempDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
+                            cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+    File dir = new File(tempDir, String.format("%s.%s.%s.%s.%s",
+                                               programId.getType().name().toLowerCase(),
+                                               programId.getNamespaceId(), programId.getApplicationId(),
+                                               programId.getId(), UUID.randomUUID().toString()));
+    dir.mkdirs();
+    return dir;
+  }
+
+  /**
    * Return the copy of the {@link ProgramOptions} including locations of plugin artifacts in it.
    * @param options the {@link ProgramOptions} in which the locations of plugin artifacts needs to be included
-   * @param namespace namespace of the Program
+   * @param programId Id of the Program
    * @param appSpec program's Application Specification
    * @return the copy of the program options with locations of plugin artifacts included in them
    */
-  private ProgramOptions addPluginLocations(ProgramOptions options, Id.Namespace namespace,
-                                            @Nullable ApplicationSpecification appSpec) {
+  private ProgramOptions createPluginSnapshot(ProgramOptions options, Id.Program programId,
+                                              @Nullable ApplicationSpecification appSpec) {
     // appSpec is null in an unit test
     if (appSpec == null) {
       return options;
     }
 
-    Id.Artifact appArtifactId = Id.Artifact.from(namespace, appSpec.getArtifactId());
+    // TODO: Remove the directory at the end!
+    File tempDir = createTempDirectory(programId);
+    Id.Artifact appArtifactId = Id.Artifact.from(programId.getNamespace(), appSpec.getArtifactId());
     ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
     builder.putAll(options.getArguments().asMap());
-    Map<String, String> artifactLocations = Maps.newHashMap();
     for (Map.Entry<String, Plugin> pluginEntry : appSpec.getPlugins().entrySet()) {
       Plugin plugin = pluginEntry.getValue();
-      Map.Entry<ArtifactDescriptor, PluginClass> artifactEntry;
       try {
-        artifactEntry = artifactRepository.getPlugin(
+        Map.Entry<ArtifactDescriptor, PluginClass> artifactEntry = artifactRepository.getPlugin(
           appArtifactId, plugin.getPluginClass().getType(), plugin.getPluginClass().getName(), plugin.getArtifactId());
+        File destFile = new File(tempDir, String.format("%s.jar", plugin.getArtifactId().toString()));
+        Files.copy(Locations.newInputSupplier(artifactEntry.getKey().getLocation()), destFile);
       } catch (IOException e) {
         throw Throwables.propagate(e);
       } catch (PluginNotExistsException e) {
@@ -123,9 +143,9 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
                                                          plugin.getPluginClass().getType(),
                                                          plugin.getPluginClass().getName()), e);
       }
-      artifactLocations.put(plugin.getArtifactId().toString(), artifactEntry.getKey().getLocation().getName());
     }
-    builder.put(ProgramOptionConstants.PLUGIN_FILENAMES, GSON.toJson(artifactLocations));
+    LOG.info("Local files are here : {}", tempDir.getAbsolutePath());
+    builder.put(ProgramOptionConstants.PLUGIN_FILENAMES, tempDir.getAbsolutePath());
     return new SimpleProgramOptions(options.getName(), new BasicArguments(builder.build()),
                                     options.getUserArguments(), options.isDebug());
   }

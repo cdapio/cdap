@@ -41,11 +41,16 @@ import com.google.inject.Inject;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.internal.RunIds;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.File;
 
 /**
  * A {@link ProgramRunner} that runs a {@link Worker}.
  */
 public class WorkerProgramRunner implements ProgramRunner {
+  private static final Logger LOG = LoggerFactory.getLogger(WorkerProgramRunner.class);
   private static final Gson GSON = new Gson();
 
   private final CConfiguration cConf;
@@ -109,7 +114,7 @@ public class WorkerProgramRunner implements ProgramRunner {
       newWorkerSpec, program, runId, instanceId, instanceCount,
       options, cConf, metricsCollectionService, datasetFramework,
       txClient, discoveryServiceClient, streamWriterFactory,
-      createPluginInstantiator(program.getClassLoader()));
+      createPluginInstantiator(options, program.getClassLoader()));
     WorkerDriver worker = new WorkerDriver(program, newWorkerSpec, context);
 
     ProgramController controller = new WorkerControllerServiceAdapter(worker, program.getId(), runId,
@@ -118,8 +123,11 @@ public class WorkerProgramRunner implements ProgramRunner {
     return controller;
   }
 
-  private PluginInstantiator createPluginInstantiator(ClassLoader classLoader) {
-    return new PluginInstantiator(cConf, classLoader);
+  private PluginInstantiator createPluginInstantiator(ProgramOptions options, ClassLoader classLoader) {
+    LOG.info("In WorkerProgramRunner: PluginFile Path = {}",
+             options.getArguments().getOption(ProgramOptionConstants.PLUGIN_FILENAMES));
+    return new PluginInstantiator(
+      cConf, classLoader, new File(options.getArguments().getOption(ProgramOptionConstants.PLUGIN_FILENAMES)));
   }
 
   private static final class WorkerControllerServiceAdapter extends ProgramControllerServiceAdapter {

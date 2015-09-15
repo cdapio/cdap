@@ -17,17 +17,14 @@
 package co.cask.cdap.internal.app.runtime.batch;
 
 import co.cask.cdap.api.plugin.Plugin;
-import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.lang.FilterClassLoader;
 import co.cask.cdap.common.lang.ProgramClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
-import co.cask.cdap.internal.app.runtime.adapter.ArtifactDescriptor;
 import co.cask.cdap.internal.app.runtime.adapter.PluginClassLoader;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerLauncher;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Function;
 import com.google.common.base.Predicates;
@@ -95,12 +92,9 @@ public class MapReduceClassLoader extends CombineClassLoader {
    * Constructs a ClassLoader that load classes from the programClassLoader, then from the plugin lib ClassLoader,
    * followed by plugin Export-Package ClassLoader and with the system ClassLoader last.
    */
-  public MapReduceClassLoader(ClassLoader programClassLoader,
-                              Id.Namespace namespace,
-                              Map<String, Plugin> plugins,
-                              Map<String, String> artifactFileNames,
+  public MapReduceClassLoader(ClassLoader programClassLoader, Map<String, Plugin> plugins,
                               PluginInstantiator pluginInstantiator) {
-    this(new Parameters(programClassLoader, namespace, plugins, artifactFileNames, pluginInstantiator));
+    this(new Parameters(programClassLoader, plugins, pluginInstantiator));
   }
 
   private MapReduceClassLoader(Parameters parameters) {
@@ -112,8 +106,7 @@ public class MapReduceClassLoader extends CombineClassLoader {
     return parameters.getProgramClassLoader();
   }
 
-  @Nullable
-  public PluginInstantiator getArtifactPluginInstantiator() {
+  public PluginInstantiator getPluginInstantiator() {
     return parameters.getPluginInstantiator();
   }
 
@@ -160,30 +153,24 @@ public class MapReduceClassLoader extends CombineClassLoader {
     }
 
     Parameters(MapReduceContextConfig contextConfig, ClassLoader programClassLoader) {
-      this(programClassLoader, Id.Namespace.from(contextConfig.getNamespace()),
-           contextConfig.getPlugins(), contextConfig.getArtifactFileNames(),
-           createPluginInstantiator(contextConfig, programClassLoader));
+      this(programClassLoader, contextConfig.getPlugins(),
+           createPluginInstantiator(contextConfig, programClassLoader,
+                                    new File(contextConfig.getPluginBasePath())));
     }
 
     /**
      * Creates from the given ProgramClassLoader with plugin classloading support.
      */
-    Parameters(ClassLoader programClassLoader,
-               Id.Namespace namespace,
-               Map<String, Plugin> plugins,
-               Map<String, String> artifactFileNames,
-               PluginInstantiator pluginInstantiator) {
+    Parameters(ClassLoader programClassLoader, Map<String, Plugin> plugins, PluginInstantiator pluginInstantiator) {
       this.programClassLoader = programClassLoader;
       this.pluginInstantiator = pluginInstantiator;
-      this.filteredPluginClassLoaders = createFilteredPluginClassLoaders(namespace, plugins, artifactFileNames,
-                                                                         pluginInstantiator);
+      this.filteredPluginClassLoaders = createFilteredPluginClassLoaders(plugins, pluginInstantiator);
     }
 
     public ClassLoader getProgramClassLoader() {
       return programClassLoader;
     }
 
-    @Nullable
     public PluginInstantiator getPluginInstantiator() {
       return pluginInstantiator;
     }
@@ -225,8 +212,8 @@ public class MapReduceClassLoader extends CombineClassLoader {
      */
     @Nullable
     private static PluginInstantiator createPluginInstantiator(MapReduceContextConfig contextConfig,
-                                                                       ClassLoader programClassLoader) {
-      return new PluginInstantiator(contextConfig.getConf(), programClassLoader);
+                                                               ClassLoader programClassLoader, File basePath) {
+      return new PluginInstantiator(contextConfig.getConf(), programClassLoader, basePath);
     }
 
     /**
@@ -234,9 +221,7 @@ public class MapReduceClassLoader extends CombineClassLoader {
      *
      * Plugin Lib ClassLoader, Plugin Export-Package ClassLoader, ...
      */
-    private static List<ClassLoader> createFilteredPluginClassLoaders(Id.Namespace namespace,
-                                                                      Map<String, Plugin> plugins,
-                                                                      Map<String, String> artifactFileNames,
+    private static List<ClassLoader> createFilteredPluginClassLoaders(Map<String, Plugin> plugins,
                                                                       PluginInstantiator pluginInstantiator) {
       if (plugins.isEmpty()) {
         return ImmutableList.of();
@@ -246,10 +231,7 @@ public class MapReduceClassLoader extends CombineClassLoader {
         Multimap<Plugin, String> artifactPluginClasses = getArtifactPluginClasses(plugins);
         List<ClassLoader> pluginClassLoaders = Lists.newArrayList();
         for (Plugin plugin : plugins.values()) {
-          File pluginFile = new File(artifactFileNames.get(plugin.getArtifactId().toString()));
-          Id.Artifact artifact = Id.Artifact.from(namespace, plugin.getArtifactId());
-          ArtifactDescriptor artifactDescriptor = new ArtifactDescriptor(artifact, Locations.toLocation(pluginFile));
-          ClassLoader pluginClassLoader = pluginInstantiator.getArtifactClassLoader(artifactDescriptor);
+          ClassLoader pluginClassLoader = pluginInstantiator.getArtifactClassLoader(plugin);
           if (pluginClassLoader instanceof PluginClassLoader) {
             Collection<String> allowedClasses = artifactPluginClasses.get(plugin);
             if (!allowedClasses.isEmpty()) {

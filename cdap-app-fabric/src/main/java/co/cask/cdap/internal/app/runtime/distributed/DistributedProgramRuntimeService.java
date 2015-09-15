@@ -124,7 +124,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
                                    Configuration hConf, CConfiguration cConf,
                                    TransactionExecutorFactory txExecutorFactory,
                                    ArtifactRepository artifactRepository) {
-    super(programRunnerFactory, artifactRepository);
+    super(cConf, programRunnerFactory, artifactRepository);
     this.twillRunner = twillRunner;
     this.store = store;
     this.queueAdmin = queueAdmin;

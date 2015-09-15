@@ -212,7 +212,7 @@ public class ArtifactRepositoryTest {
     try (PluginInstantiator instantiator = new PluginInstantiator(cConf, appClassLoader)) {
       for (Map.Entry<ArtifactDescriptor, List<PluginClass>> entry : plugins.entrySet()) {
         for (PluginClass pluginClass : entry.getValue()) {
-          Callable<String> plugin = instantiator.newInstance(entry.getKey(), pluginClass,
+          Callable<String> plugin = instantiator.newInstance(entry.getKey().getLocation(), pluginClass,
                                                              PluginProperties.builder()
                                                               .add("class.name", TEST_EMPTY_CLASS)
                                                               .add("timeout", "10")
@@ -265,7 +265,7 @@ public class ArtifactRepositoryTest {
 
     // Load the Plugin class from the classLoader.
     PluginInstantiator instantiator = new PluginInstantiator(cConf, appClassLoader);
-    ClassLoader pluginClassLoader = instantiator.getArtifactClassLoader(plugin.getKey());
+    ClassLoader pluginClassLoader = instantiator.getArtifactClassLoader(plugin.getKey().getLocation());
     Class<?> pluginClass = pluginClassLoader.loadClass(TestPlugin2.class.getName());
 
     // Use a custom plugin selector to select with smallest version
@@ -282,7 +282,7 @@ public class ArtifactRepositoryTest {
     // Load the Plugin class again from the current plugin selected
     // The plugin class should be different (from different ClassLoader)
     // The empty class should be the same (from the plugin lib ClassLoader)
-    pluginClassLoader = instantiator.getArtifactClassLoader(plugin.getKey());
+    pluginClassLoader = instantiator.getArtifactClassLoader(plugin.getKey().getLocation());
     Assert.assertNotSame(pluginClass, pluginClassLoader.loadClass(TestPlugin2.class.getName()));
 
     // From the pluginClassLoader, loading export classes from the template jar should be allowed

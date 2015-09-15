@@ -19,6 +19,7 @@ package co.cask.cdap.app.runtime;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.common.app.RunIds;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
@@ -69,7 +70,8 @@ public class AbstractProgramRuntimeServiceTest {
       }
     };
 
-    ProgramRuntimeService runtimeService = new AbstractProgramRuntimeService(runnerFactory, null) {
+    ProgramRuntimeService runtimeService = new AbstractProgramRuntimeService(CConfiguration.create(),
+                                                                             runnerFactory, null) {
       @Override
       public ProgramLiveInfo getLiveInfo(Id.Program programId) {
         return new ProgramLiveInfo(programId, "runtime") { };
