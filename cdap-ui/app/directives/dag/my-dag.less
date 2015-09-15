@@ -112,7 +112,7 @@ my-dag {
         line-height: 40px;
       }
       .fa.fa-close {
-        font-size: 11px;
+        font-size: 13px;
         position: absolute;
         right: 15px;
         .opacity(0);
@@ -131,17 +131,15 @@ my-dag {
       }
 
       .error-node-notification {
+        color: white;
         position: absolute;
-        top: 3px;
-        right: 5px;
-
+        top: -8px;
+        left: 4px;
+        .badge-warning {
+          background-color: #ffcc00;
+        }
         .badge-danger {
-          background-color: @brand-danger;
-
-          > i {
-            margin-left: 0;
-            color: white;
-          }
+          background-color: #e33d3d;
         }
       }
     }
@@ -164,6 +162,7 @@ my-dag {
         color: white;
       }
     }
+
     #dag-container {
       height: 100%;
       width: inherit;
@@ -172,7 +171,7 @@ my-dag {
     ._jsPlumb_endpoint circle {
       fill: white;
       r: 2px;
-      stroke-width: 6px;
+      stroke-width: 8px;
     }
     ._sourceAnchor circle {
       stroke: #48c038;
@@ -190,6 +189,7 @@ my-dag {
 
   div._jsPlumb_overlay {
     div.label-container {
+      cursor: pointer;
       height: 14px;
       width: 14px;
       text-align: center;
@@ -201,10 +201,15 @@ my-dag {
       vertical-align: middle;
       .border-radius(1px);
       .box-shadow(0 0 0 3px fade(black, 20%));
-      cursor: pointer;
+      &:hover, &:focus {
+        background-color: #4f5464;
+        color: white;
+      }
       i.icon-SchemaEdge {
         font-size: 9px;
       }
+    }
+    &.selected div.label-container {
     }
   }
 
@@ -217,13 +222,13 @@ my-dag {
 }
 
 .popover {
-
   min-width: 250px;
   max-width: 400px;
 
   .popover-title {
     background-color: white;
     border-bottom: 0;
+    padding: 11px 10px;
     h4 span {
       font-weight: 500;
     }
@@ -234,21 +239,28 @@ my-dag {
   }
 
   .popover-content {
-    padding: 5px;
+    padding: 0 10px 10px;
 
     .schema-popover {
-      max-height: 350px;
+      max-height: 400px;
       overflow-y: auto;
       overflow-x: hidden;
 
       .well { margin-bottom: 0; }
 
-      table.table-bordered {
+      table.table-curved {
+        background-color: transparent;
+        border-left: 1px solid @table-border-color;
         margin-top: 0;
         margin-bottom: 0;
-
+        th, td {
+          border-left: 0;
+        }
         th {
-          font-size: 14px;
+          border-bottom: 1px solid @table-border-color;
+          color: #5F6674;
+          font-size: 13px;
+          font-weight: 500;
         }
         td {
           font-size: 13px;

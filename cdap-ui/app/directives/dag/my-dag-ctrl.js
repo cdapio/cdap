@@ -19,6 +19,7 @@ angular.module(PKG.name + '.commons')
     this.plugins = $scope.config || [];
     this.isDisabled = $scope.isDisabled;
     MyAppDAGService.setIsDisabled(this.isDisabled);
+
     var popovers = [];
     var popoverScopes = [];
 
@@ -257,6 +258,7 @@ angular.module(PKG.name + '.commons')
 
       jsPlumb.setContainer('dag-container');
       this.instance = jsPlumb.getInstance();
+      // Overrides JSPlumb's prefixed endpoint classes. This variable will be changing in the next version of JSPlumb
       this.instance.endpointAnchorClassPrefix = '';
 
       angular.element($window).on('resize', function() {
