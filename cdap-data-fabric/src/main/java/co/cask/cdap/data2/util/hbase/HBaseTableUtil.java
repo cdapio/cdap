@@ -157,7 +157,7 @@ public abstract class HBaseTableUtil {
     setDefaultConfiguration(tableDescriptor, admin.getConfiguration());
 
     try {
-      LOG.info("Creating table '{}'", tableId);
+      LOG.debug("Attempting to create table '{}' if it does not exist", tableId);
       // HBaseAdmin.createTable can handle null splitKeys.
       admin.createTable(tableDescriptor, splitKeys);
       LOG.info("Table created '{}'", tableId);
@@ -165,7 +165,7 @@ public abstract class HBaseTableUtil {
     } catch (TableExistsException e) {
       // table may exist because someone else is creating it at the same
       // time. But it may not be available yet, and opening it might fail.
-      LOG.info("Failed to create table '{}'. {}.", tableId, e.getMessage(), e);
+      LOG.debug("Table '{}' already exists.", tableId, e);
     }
 
     // Wait for table to materialize
