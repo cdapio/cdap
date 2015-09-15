@@ -523,8 +523,8 @@ In order to configure **CDAP Explore Service for secure Hadoop:**
       <value>*</value>
     </property>
 
-- To execute Hive queries on a secure cluster, the cluster must be running the MapReduce ``JobHistoryServer``. Consult your
-  distribution documentation on the proper configuration of this service.
+- To execute Hive queries on a secure cluster, the cluster must be running the MapReduce ``JobHistoryServer`` 
+  service. Consult your distribution documentation on the proper configuration of this service.
 - To execute Hive queries on a secure cluster using the CDAP Explore Service, the Hive MetaStore service 
   must be configured for Kerberos authentication. Consult your distribution documentation on the proper 
   configuration of the Hive MetaStore service.
