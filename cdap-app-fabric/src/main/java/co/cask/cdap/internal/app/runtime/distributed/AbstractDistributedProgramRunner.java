@@ -24,11 +24,15 @@ import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.twill.AbortOnTimeoutEventHandler;
 import co.cask.cdap.common.twill.HadoopClassExcluder;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data.security.HBaseTokenUtils;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
+import co.cask.cdap.internal.app.runtime.BasicArguments;
+import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import com.google.common.base.Charsets;
@@ -37,6 +41,7 @@ import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
 import com.google.common.io.Resources;
@@ -69,6 +74,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nullable;
+
 
 /**
  * Defines the base framework for starting {@link Program} in the cluster.
@@ -141,8 +147,8 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
   }
 
   @Override
-  public final ProgramController run(final Program program, final ProgramOptions options) {
-    final String schedulerQueueName = options.getArguments().getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE);
+  public final ProgramController run(final Program program, final ProgramOptions oldOptions) {
+    final String schedulerQueueName = oldOptions.getArguments().getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE);
     final File tempDir = DirUtils.createTempDir(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                                                          cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile());
     try {
@@ -152,6 +158,8 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
       }
 
       Map<String, LocalizeResource> localizeResources = new HashMap<>();
+      final ProgramOptions options = addArtifactPluginFiles(oldOptions, localizeResources,
+                                                            DirUtils.createTempDir(tempDir));
 
       // Copy config files and program jar to local temp, and ask Twill to localize it to container.
       // What Twill does is to save those files in HDFS and keep using them during the lifetime of application.
@@ -210,8 +218,22 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
     }
   }
 
+  private ProgramOptions addArtifactPluginFiles(ProgramOptions options, Map<String, LocalizeResource> localizeResources,
+                                                File tempDir) throws IOException {
+    File localDir = new File(options.getArguments().getOption(ProgramOptionConstants.PLUGIN_DIR));
+    File archiveFile = new File(tempDir, Constants.Plugin.DIRECTORY);
+    BundleJarUtil.packDir(localDir, archiveFile, tempDir);
+    localizeResources.put(Constants.Plugin.DIRECTORY, new LocalizeResource(archiveFile, true));
+    LOG.debug("Localizing Resource {} here {}", localDir, archiveFile);
+
+    Map<String, String> systemArgs = Maps.newHashMap(options.getArguments().asMap());
+    systemArgs.put(ProgramOptionConstants.PLUGIN_DIR, Constants.Plugin.DIRECTORY);
+    return new SimpleProgramOptions(options.getName(), new BasicArguments(systemArgs),
+                                    options.getUserArguments(), options.isDebug());
+  }
+
   /**
-   * Returns a {@link URI} for the logback.xml file to be localized to container and avaiable in the container
+   * Returns a {@link URI} for the logback.xml file to be localized to container and available in the container
    * classpath.
    */
   @Nullable

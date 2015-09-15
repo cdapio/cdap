@@ -17,16 +17,20 @@
 package co.cask.cdap.internal.app.runtime.adapter;
 
 import co.cask.cdap.api.annotation.Name;
+import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
+import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.plugin.PluginPropertyField;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
+import co.cask.cdap.internal.app.runtime.artifact.Artifacts;
 import co.cask.cdap.internal.app.runtime.artifact.InvalidPluginConfigException;
 import co.cask.cdap.internal.lang.FieldVisitor;
 import co.cask.cdap.internal.lang.Fields;
@@ -38,8 +42,10 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
 import com.google.common.io.Closeables;
+import com.google.common.io.Files;
 import com.google.common.primitives.Primitives;
 import com.google.common.reflect.TypeToken;
+import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,16 +69,18 @@ public class PluginInstantiator implements Closeable {
 
   private static final Logger LOG = LoggerFactory.getLogger(PluginInstantiator.class);
 
-  private final LoadingCache<ArtifactDescriptor, ClassLoader> classLoaders;
+  private final LoadingCache<ArtifactId, ClassLoader> classLoaders;
   private final InstantiatorFactory instantiatorFactory;
   private final File tmpDir;
+  private final File pluginDir;
   private final ClassLoader parentClassLoader;
 
-  public PluginInstantiator(CConfiguration cConf, ClassLoader parentClassLoader) {
+  public PluginInstantiator(CConfiguration cConf, ClassLoader parentClassLoader, File pluginDir) {
     this.instantiatorFactory = new InstantiatorFactory(false);
-
     File tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
       cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+
+    this.pluginDir = pluginDir;
     this.tmpDir = DirUtils.createTempDir(tmpDir);
     this.classLoaders = CacheBuilder.newBuilder()
                                     .removalListener(new ClassLoaderRemovalListener())
@@ -81,16 +89,28 @@ public class PluginInstantiator implements Closeable {
   }
 
   /**
+   * Adds a artifact Jar present at the given {@link Location} to allow Plugin Instantiator to load the class
+   *
+   * @param artifactLocation Location of the Artifact JAR
+   * @param destArtifact {@link ArtifactId} of the plugin
+   * @throws IOException if failed to copy the artifact JAR
+   */
+  public void addArtifact(Location artifactLocation, ArtifactId destArtifact) throws IOException {
+    File destFile = new File(pluginDir, Artifacts.getFileName(destArtifact));
+    Files.copy(Locations.newInputSupplier(artifactLocation), destFile);
+  }
+
+  /**
    * Returns a {@link ClassLoader} for the given artifact.
    *
-   * @param artifactDescriptor descriptor for the artifact
+   * @param artifactId {@link ArtifactId}
    * @throws IOException if failed to expand the artifact jar to create the plugin ClassLoader
    *
    * @see PluginClassLoader
    */
-  public ClassLoader getArtifactClassLoader(ArtifactDescriptor artifactDescriptor) throws IOException {
+  public ClassLoader getArtifactClassLoader(ArtifactId artifactId) throws IOException {
     try {
-      return classLoaders.get(artifactDescriptor);
+      return classLoaders.get(artifactId);
     } catch (ExecutionException e) {
       Throwables.propagateIfInstanceOf(e.getCause(), IOException.class);
       throw Throwables.propagate(e.getCause());
@@ -98,38 +118,32 @@ public class PluginInstantiator implements Closeable {
   }
 
   /**
-   * Loads and returns the {@link Class} of the given plugin class.
+   * Loads and returns the {@link Class} of the given plugin.
    *
-   * @param artifactDescriptor descriptor for the artifact the plugin is from.
-   *                           It is used for creating the ClassLoader for the plugin.
-   * @param pluginClass information about the plugin class
+   * @param plugin {@link Plugin}
    * @param <T> Type of the plugin
    * @return the plugin Class
    * @throws IOException if failed to expand the plugin jar to create the plugin ClassLoader
    * @throws ClassNotFoundException if failed to load the given plugin class
    */
   @SuppressWarnings("unchecked")
-  public <T> Class<T> loadClass(ArtifactDescriptor artifactDescriptor,
-                                PluginClass pluginClass) throws IOException, ClassNotFoundException {
-    return (Class<T>) getArtifactClassLoader(artifactDescriptor).loadClass(pluginClass.getClassName());
+  public <T> Class<T> loadClass(Plugin plugin) throws IOException, ClassNotFoundException {
+    return (Class<T>) getArtifactClassLoader(plugin.getArtifactId()).loadClass(plugin.getPluginClass().getClassName());
   }
 
   /**
    * Creates a new instance of the given plugin class.
    *
-   * @param artifactDescriptor descriptor for the artifact the plugin is from.
-   *                           It is used for creating the ClassLoader for the plugin.
-   * @param pluginClass information about the plugin class. The plugin instance will be instantiated based on this.
-   * @param properties properties to populate into the {@link PluginConfig} of the plugin instance
+   * @param plugin {@link Plugin}
    * @param <T> Type of the plugin
    * @return a new plugin instance
    * @throws IOException if failed to expand the plugin jar to create the plugin ClassLoader
    * @throws ClassNotFoundException if failed to load the given plugin class
    */
   @SuppressWarnings("unchecked")
-  public <T> T newInstance(ArtifactDescriptor artifactDescriptor, PluginClass pluginClass,
-                           PluginProperties properties) throws IOException, ClassNotFoundException {
-    ClassLoader classLoader = getArtifactClassLoader(artifactDescriptor);
+  public <T> T newInstance(Plugin plugin) throws IOException, ClassNotFoundException {
+    ClassLoader classLoader = getArtifactClassLoader(plugin.getArtifactId());
+    PluginClass pluginClass = plugin.getPluginClass();
     TypeToken<?> pluginType = TypeToken.of(classLoader.loadClass(pluginClass.getClassName()));
 
     try {
@@ -144,7 +158,7 @@ public class PluginInstantiator implements Closeable {
       TypeToken<?> configFieldType = pluginType.resolveType(field.getGenericType());
       Object config = instantiatorFactory.get(configFieldType).create();
       Reflections.visit(config, configFieldType.getType(),
-                        new ConfigFieldSetter(pluginClass, artifactDescriptor, properties));
+                        new ConfigFieldSetter(pluginClass, plugin.getArtifactId(), plugin.getProperties()));
 
       // Create the plugin instance
       return newInstance(pluginType, field, configFieldType, config);
@@ -206,13 +220,13 @@ public class PluginInstantiator implements Closeable {
   /**
    * A CacheLoader for creating plugin ClassLoader.
    */
-  private final class ClassLoaderCacheLoader extends CacheLoader<ArtifactDescriptor, ClassLoader> {
+  private final class ClassLoaderCacheLoader extends CacheLoader<ArtifactId, ClassLoader> {
 
     @Override
-    public ClassLoader load(ArtifactDescriptor key) throws Exception {
+    public ClassLoader load(ArtifactId artifactId) throws Exception {
       File unpackedDir = DirUtils.createTempDir(tmpDir);
-      BundleJarUtil.unpackProgramJar(key.getLocation(), unpackedDir);
-
+      File artifact = new File(pluginDir, Artifacts.getFileName(artifactId));
+      BundleJarUtil.unpackProgramJar(Locations.toLocation(artifact), unpackedDir);
       return new PluginClassLoader(unpackedDir, parentClassLoader);
     }
   }
@@ -220,10 +234,10 @@ public class PluginInstantiator implements Closeable {
   /**
    * A RemovalListener for closing plugin ClassLoader.
    */
-  private static final class ClassLoaderRemovalListener implements RemovalListener<ArtifactDescriptor, ClassLoader> {
+  private static final class ClassLoaderRemovalListener implements RemovalListener<ArtifactId, ClassLoader> {
 
     @Override
-    public void onRemoval(RemovalNotification<ArtifactDescriptor, ClassLoader> notification) {
+    public void onRemoval(RemovalNotification<ArtifactId, ClassLoader> notification) {
       ClassLoader cl = notification.getValue();
       if (cl instanceof Closeable) {
         Closeables.closeQuietly((Closeable) cl);
@@ -237,12 +251,12 @@ public class PluginInstantiator implements Closeable {
   private static final class ConfigFieldSetter extends FieldVisitor {
     private final PluginClass pluginClass;
     private final PluginProperties properties;
-    private final ArtifactDescriptor artifactDescriptor;
+    private final ArtifactId artifactId;
 
-    public ConfigFieldSetter(PluginClass pluginClass, ArtifactDescriptor artifactDescriptor,
+    public ConfigFieldSetter(PluginClass pluginClass, ArtifactId artifactId,
                              PluginProperties properties) {
       this.pluginClass = pluginClass;
-      this.artifactDescriptor = artifactDescriptor;
+      this.artifactId = artifactId;
       this.properties = properties;
     }
 
@@ -262,7 +276,7 @@ public class PluginInstantiator implements Closeable {
       PluginPropertyField pluginPropertyField = pluginClass.getProperties().get(name);
       if (pluginPropertyField.isRequired() && !properties.getProperties().containsKey(name)) {
         throw new IllegalArgumentException("Missing required plugin property " + name
-                                             + " for " + pluginClass.getName() + " in artifact " + artifactDescriptor);
+                                             + " for " + pluginClass.getName() + " in artifact " + artifactId);
       }
       String value = properties.getProperties().get(name);
       if (pluginPropertyField.isRequired() || value != null) {

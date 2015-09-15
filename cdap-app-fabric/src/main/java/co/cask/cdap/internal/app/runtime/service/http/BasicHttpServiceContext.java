@@ -34,10 +34,10 @@ import com.google.common.collect.Maps;
 import com.google.common.io.Closeables;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.filesystem.LocationFactory;
 
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import javax.annotation.Nullable;
 
 /**
  * Default implementation of HttpServiceContext which simply stores and retrieves the
@@ -59,21 +59,21 @@ public class BasicHttpServiceContext extends AbstractContext implements Transact
    * @param runId runId of the component.
    * @param instanceId instanceId of the component.
    * @param instanceCount total number of instances of the component.
-   * @param runtimeArgs runtimeArgs for the component.
+   * @param runtimeArgs runtime arguments for the component.
    * @param metricsCollectionService metricsCollectionService to use for emitting metrics.
    * @param dsFramework dsFramework to use for getting datasets.
    * @param discoveryServiceClient discoveryServiceClient used to do service discovery.
    * @param txClient txClient to do transaction operations.
+   * @param pluginInstantiator {@link PluginInstantiator}
    */
   public BasicHttpServiceContext(HttpServiceHandlerSpecification spec,
                                  Program program, RunId runId, int instanceId, AtomicInteger instanceCount,
                                  Arguments runtimeArgs, MetricsCollectionService metricsCollectionService,
                                  DatasetFramework dsFramework, DiscoveryServiceClient discoveryServiceClient,
-                                 TransactionSystemClient txClient, LocationFactory locationFactory,
-                                 PluginInstantiator pluginInstantiator) {
+                                 TransactionSystemClient txClient, @Nullable PluginInstantiator pluginInstantiator) {
     super(program, runId, runtimeArgs, spec.getDatasets(),
           getMetricCollector(metricsCollectionService, program, spec.getName(), runId.getId(), instanceId),
-          dsFramework, discoveryServiceClient, locationFactory, pluginInstantiator);
+          dsFramework, discoveryServiceClient, pluginInstantiator);
     this.spec = spec;
     this.instanceId = instanceId;
     this.instanceCount = instanceCount;

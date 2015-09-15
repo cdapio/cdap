@@ -608,7 +608,6 @@ public class MapReduceProgramRunnerTest {
     ProgramRunner runner = runnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getType().name()));
     BasicArguments systemArgs = new BasicArguments(ImmutableMap.of(ProgramOptionConstants.RUN_ID,
                                                                    RunIds.generate().getId()));
-
     return runner.run(program, new SimpleProgramOptions(program.getName(), systemArgs, userArgs));
   }
 

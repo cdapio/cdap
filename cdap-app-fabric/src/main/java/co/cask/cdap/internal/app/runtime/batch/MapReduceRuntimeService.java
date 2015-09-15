@@ -29,6 +29,7 @@ import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
+import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.stream.StreamEventDecoder;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -36,6 +37,7 @@ import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.lang.WeakReferenceDelegatorClassLoader;
+import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.twill.HadoopClassExcluder;
 import co.cask.cdap.common.utils.DirUtils;
@@ -207,11 +209,21 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       Location tempLocation = createTempLocationDirectory();
       this.cleanupTask = createCleanupTask(tempDir, tempLocation);
 
+      // For local mode, everything is in the configuration classloader already, hence no need to create new jar
+      if (!MapReduceTaskContextProvider.isLocal(mapredConf)) {
+        // After calling beforeSubmit, we know what plugins are needed for the program, hence construct the proper
+        // ClassLoader from here and use it for setting up the job
+        Location artifactArchive = createArchive(new File(Constants.Plugin.DIRECTORY),
+                                                 context.getPlugins(), tempDir, tempLocation);
+        if (artifactArchive != null) {
+          job.addCacheArchive(artifactArchive.toURI());
+        }
+      }
+
       // Alter the configuration ClassLoader to a MapReduceClassLoader that supports plugin
       // It is mainly for standalone mode to have the same ClassLoader as in distributed mode
-      // It can only be constructed here because we need to have all adapter plugins information
+      // It can only be constructed here because we need to have all plugins information
       classLoader = new MapReduceClassLoader(context.getProgram().getClassLoader(),
-                                             mapredConf,
                                              context.getPlugins(),
                                              context.getPluginInstantiator());
       mapredConf.setClassLoader(new WeakReferenceDelegatorClassLoader(classLoader));
@@ -265,7 +277,6 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       Transaction tx = txClient.startLong();
       try {
         // We remember tx, so that we can re-use it in mapreduce tasks
-        // Make a copy of the conf and rewrite the template plugin directory to be the plugin archive name
         CConfiguration cConfCopy = cConf;
         contextConfig.set(context, cConfCopy, tx, programJar.toURI());
 
@@ -417,10 +428,11 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     Id.Program programId = context.getProgram().getId();
     File tempDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                             cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
-    File dir = new File(tempDir, String.format("%s.%s.%s.%s.%s",
-                                               programId.getType().name().toLowerCase(),
-                                               programId.getNamespaceId(), programId.getApplicationId(),
-                                               programId.getId(), context.getRunId().getId()));
+    File runtimeServiceDir = new File(tempDir, "runner");
+    File dir = new File(runtimeServiceDir, String.format("%s.%s.%s.%s.%s",
+                                                         programId.getType().name().toLowerCase(),
+                                                         programId.getNamespaceId(), programId.getApplicationId(),
+                                                         programId.getId(), context.getRunId().getId()));
     dir.mkdirs();
     return dir;
   }
@@ -914,6 +926,18 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     ContainerLauncherGenerator.generateLauncherJar(applicationClassPath, MapReduceClassLoader.class.getName(),
       Locations.newOutputSupplier(launcherJar));
     return launcherJar;
+  }
+
+  @Nullable
+  private Location createArchive(File localDir, Map<String, Plugin> plugins, File tempDir, Location targetDir)
+    throws IOException {
+    if (plugins == null || plugins.isEmpty()) {
+      return null;
+    }
+
+    File targetFile = new File(tempDir, Constants.Plugin.DIRECTORY);
+    BundleJarUtil.packDir(localDir, targetFile, tempDir);
+    return Locations.toLocation(targetFile);
   }
 
   private Runnable createCleanupTask(final Object...resources) {
