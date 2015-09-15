@@ -19,390 +19,127 @@
 @import "../../styles/themes/cdap/mixins.less";
 
 body {
-  [my-navbar] {
-    padding-top: 10px;
-    padding-bottom: 15px;
-
+  [my-navbar-hydrator] {
+    padding-right: 0;
+    margin: 0;
+    width: 100%;
+    div.navbar-header {
+      float: left;
+      position: relative;
+    }
     a.navbar-brand {
+      height: 60px;
+      padding: 0 15px;
+      &:focus {
+        outline: none;
+      }
       > strong {
-        display: inline-block;
         visibility: hidden;
-        width: 84px;
       }
     }
-
-    div.navbar-collapse {
-
-      &.in {
-        @media (max-width: @screen-md-max) {
-          margin-top: 15px;
-          max-height: 800px;
-          overflow-y: visible;
-
-          ul.navbar-nav {
-            display: block;
-            visibility: visible;
-          }
-
-          div.error-button {
-            float: left;
-            min-width: 140px;
-            text-align: center;
-            visibility: visible;
-          }
-        }
-        @media (max-width: @screen-xs-max) {
-          div.error-button {
-            float: none;
-            div.popover { max-width: 100%; }
-          }
-        }
-      }
-      // Namespace dropdown
-      > ul.navbar-nav:first-child {
-        @media (min-width: @screen-sm-min) {
-          float: left;
-        }
-        @media (max-width: @screen-sm-max) {
-          max-width: 140px;
-          li.dropdown {
-            .navbar-collapse-menus();
-            &.open {
-              ul.dropdown-menu {
-                max-height: 200px;
-                overflow: auto;
-              }
-            }
-            &.one {
-              a.dropdown-toggle {
-                cursor: default;
-                .caret { display: none; }
-              }
-            }
-          }
-        }
-        // Hide Namespace navbar dropdown when breadcrumbs are displayed
-        @media (min-width: @screen-md-min) {
-          display: none;
-        }
-      }
-
-      > ul.navbar-right {
-
-        // Settings dropdown
-        @media (min-width: @screen-sm-min) {
-          float: left;
-          padding-left: 20px;
-        }
-        @media (min-width: @screen-lg-min) {
-          padding-left: 0;
-          span.caret {
-            display: none;
-          }
-        }
-        li.dropdown {
-          @media (max-width: @screen-xs-max) {
-            padding-top: 0;
-          }
-          @media (min-width: @screen-sm-min) {
-            padding: 11px 5px 0;
-          }
-          @media (max-width: @screen-md-max) {
-            .navbar-collapse-menus();
-          }
-          @media (min-width: @screen-lg-min) {
-            padding: 0;
-            height: 51px;
-            width: 40px;
-            .border-radius(4px 4px 0 0);
-            &.open {
-              height: 51px;
-              a.dropdown-toggle {
-                font-size: 14px;
-                .border-radius(4px);
-              }
-            }
-
-            ul.dropdown-menu {
-              border: 0;
-              margin: 0;
-              padding: 0;
-              top: 50px !important;
-              li { position: relative; }
-              a {
-                font-size: 14px;
-                margin: 7px;
-                padding: 10px;
-                max-width: 95%;
-                text-overflow: ellipsis;
-                overflow: hidden;
-                &:hover, &:focus {
-                  outline: none;
-                  .border-radius(4px);
-                }
-              }
-            }
-          }
-
-          &.open {
-            a.dropdown-toggle {
-              @media (min-width: @screen-lg-min) {
-                .border-radius(4px 4px 0 0);
-                font-size: 14px;
-              }
-            }
-          }
-
-          a.dropdown-toggle {
-            height: auto;
-            .fa-cog:before { font-size: 17px; }
-            @media (max-width: @screen-md-max) {
-              padding-top: 0;
-              padding-left: 15px;
-              span.fa-cog { display: none; }
-              &:before {
-                content: 'Settings';
-                padding-right: 5px;
-              }
-            }
-            @media (min-width: @screen-lg-min) {
-              display: inline-block;
-              line-height: 51px;
-              padding: 0;
-              text-align: center;
-              width: 100%;
-            }
-          }
-
-          ul.dropdown-menu {
-            @media (min-width: @screen-sm-min) {
-              .border-radius(4px 0 4px 4px);
-              li.nav-subsection { border: 0; }
-            }
-            @media (max-width: @screen-md-max) {
-              min-width: 140px;
-              &.am-flip-x {
-                .transition(none);
-                -webkit-animation-duration: 0s;
-                animation-duration: 0s;
-              }
-              > li > a {
-                padding-left: 10px;
-                padding-top: 5px;
-                padding-bottom: 5px;
-              }
-              li.nav-subsection { padding-left: 10px; }
-            }
-            @media (min-width: @screen-lg-min) {
-              > li > a { padding-left: 14px; }
-              li.nav-subsection { margin: 10px 0 0 10px; }
-            }
-          }
-        }
-      }
-
-      ul.navbar-nav {
-        @media (max-width: @screen-md-max) {
-          display: none;
-          visibility: hidden;
-        }
-      }
-
-      // Main nav
-      nav {
-        @media (min-width: @screen-sm-min) {
-          position: absolute;
-          top: 18px;
-          left: 50%;
-          margin-left: -148px;
-          > ul.navbar-nav {
-            .border-radius(25px);
-            display: block;
-            float: left;
-            margin: 0;
-            visibility: visible;
-            > li { float: left; }
-            li {
-              width: 140px;
-              overflow: hidden;
-              text-align: center;
-              &.active > a { cursor: default; }
-              > a {
-                .border-radius(25px);
-                font-size: 15px;
-                letter-spacing: 0.5px;
-                margin: 1px;
-                padding: 10px;
-                text-transform: capitalize;
-              }
-            }
-          }
-        }
-        @media (max-width: @screen-md-max) {
-          ul.navbar-nav {
-            > .active > a { background-color: transparent; }
-          }
-        }
-        @media (min-width: @screen-md-min) { margin-left: -180px; }
-      }
-
-      @media (max-width: @screen-md-max) {
-        border-top: 0;
+    a.cdap-link {
+      position: absolute;
+      width: 60px;
+      height: 20px;
+      top: -1px;
+      span {
         display: block;
-        max-height: 0;
-        visibility: visible;
-
-        div.error-button { visibility: hidden; }
+        height: inherit;
       }
     }
 
-    ul.navbar-right .dropdown-menu.bottom-right {
-      left: auto !important;
-    }
-
-    .navbar-collapse.in {
-      @media (max-width: 767px) {
-        span.fa {
-          min-width: 2em;
-          text-align: center;
+    nav {
+      float: left;
+      ul.navbar-nav {
+        float: none;
+        margin: 0;
+        li {
+          float: left;
+          a {
+            height: 58px;
+            line-height: 60px;
+            padding: 0 10px;
+            margin: 0 15px;
+            span {
+              font-size: 14px;
+              font-weight: 500;
+            }
+            &:hover, &:focus {
+              cursor: pointer;
+            }
+          }
         }
       }
     }
 
-    #navbar-search,
-    #navbar-namespace {
-      visibility: hidden;
+    div.hydrator-search {
+      float: left;
+      @media (max-width: @screen-xs-max) {
+        display: none;
+      }
+      div.input-group {
+        width: 275px;
+      }
+      input.form-control {
+        height: 58px;
+        &:focus {
+          outline: none;
+        }
+      }
+    }
+
+    // TODO: Remove?
+    my-error {
+      display: none;
     }
   }
+
   &.theme-cdap {
-    [my-navbar] {
-      // Mobile nav menu
-      button.navbar-toggle {
-        @media (max-width: @screen-md-max) {
-          &:hover, &:focus {
-            background-color: lighten(@cdap-header, 10%);
-          }
-        }
-      }
-
+    [my-navbar-hydrator] {
       a.navbar-brand {
-        background: url('@{img-path}/cdap.png') 15px center / 100px auto no-repeat;
+        background: url('@{img-path}/hydrator.png') center center / 160px 34px no-repeat;
+      }
+      a.cdap-link {
+        background-color: @cdap-orange;
+        .border-radius(0 0 10px 10px);
+        span {
+          background: url('@{img-path}/cdap_typeonly.png') center center / 40px 11px no-repeat;
+        }
       }
 
-      div.navbar-collapse {
-        // Namespace dropdown
-        > ul.navbar-nav:first-child {
-          @media (max-width: @screen-sm-max) {
-            li.dropdown {
-              a.dropdown-toggle {
-                background-color: transparent;
-                color: #9d9d9d;
-              }
-              &.one {
-                &.open {
-                  a.droptown-toggle span:first-child { color: @cdap-darkness; }
-                }
-              }
-            }
-          }
-        }
-        // Main nav
-        nav {
-          @media (min-width: @screen-sm-min) {
-            > ul.navbar-nav {
-              background-color: @cdap-darkness;
-              li {
-                &.active > a {
-                  color: @cdap-orange;
-                  background-color: @gray-lighter;
-                }
-                > a {
-                  color: lightgray;
-                  &:hover, &:focus { color: @cdap-orange; }
-                }
-              }
-            }
-          }
-          @media (max-width: @screen-md-max) {
-            ul.navbar-nav {
-              > .active > a { color: @cdap-orange; }
-            }
-          }
-        }
-        // Settings dropdown
-        > ul.navbar-right {
-          margin-right: 0;
-          li.dropdown {
-            &.open {
-              span.fa-cog { color: @cdap-darkness; }
-            }
-            @media (max-width: @screen-md-max) {
-              a.dropdown-toggle {
-                color: #9d9d9d;
-              }
-              ul.dropdown-menu {
-                li.nav-subsection { color: #9d9d9d; }
-              }
-            }
-            @media (min-width: @screen-lg-min) {
+      nav {
+        ul.navbar-nav {
+          li a {
+            color: fade(white, 45%);
+            &.active, &:active, &:hover, &:focus {
               background-color: transparent;
-              .transition(background-color 0.2s ease-in);
-              &.open {
-                background-color: @brand-primary;
-                a.dropdown-toggle {
-                  background-color: @cdap-white;
-                  color: @cdap-header;
-                }
-              }
-              a.dropdown-toggle { color: white; }
-              ul.dropdown-menu {
-                background-color: @brand-primary;
-                li:not(:last-child) { border-bottom: 1px solid rgba(0,0,0,0.1); }
-                a {
-                  color: white;
-                  &:hover, &:focus {
-                    background-color: white;
-                    color: @cdap-darkness;
-
-                    span { color: @cdap-darkness; }
-                  }
-                }
-              }
+              border-bottom: 4px solid #397cf1;
+              color: white;
             }
           }
-          ul.dropdown-menu {
-            li.nav-subsection { color: lightgray; }
-            a:disabled { color: lightgray; }
+        }
+      }
+
+      div.hydrator-search {
+
+        input.form-control {
+          background-color: #1c1c1c;
+          border: 0;
+          color: white;
+          .box-shadow(none);
+          .placeholder-color();
+          &:focus {
+            border: 0;
+            .box-shadow(none);
           }
+        }
+        span.input-group-addon {
+          background-color: #1c1c1c;
+          border: 0;
+          color: white;
+          .border-radius(0);
         }
       }
     }
-  }
-}
-
-body.state-overview,
-body.state-apps, {
-  #navbar-search {
-    visibility: visible;
-  }
-}
-
-
-body.state-overview,
-body.state-operations-apps,
-body.state-dashboard,
-body.state-apps,
-body.state-programs,
-body.state-data,
-body.state-datasets,
-body.state-explore,
-body.state-workflows,
-body.state-flows,
-body.state-mapreduce,
-body.state-services,
-body.state-adapters,
-body.state-streams {
-  #navbar-namespace {
-    visibility: visible;
   }
 }
