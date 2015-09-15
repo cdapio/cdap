@@ -607,7 +607,7 @@ When all the packages and dependencies have been installed, and the configuratio
 parameters set, you can start the services on each of the CDAP boxes by running the
 command::
 
-  $ for i in /etc/init.d/cdap* ; do sudo service $i restart ; done
+  $ for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i restart ; done
 
 When all the services have completed starting, the CDAP UI should then be
 accessible through a browser at port ``9999``. 
