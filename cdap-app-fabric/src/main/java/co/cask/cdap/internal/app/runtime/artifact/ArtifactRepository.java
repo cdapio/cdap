@@ -357,8 +357,8 @@ public class ArtifactRepository {
       parentClassLoader =
         artifactClassLoaderFactory.createClassLoader(Locations.toLocation(artifactFile));
     } else {
+      validateParentSet(artifactId, parentArtifacts);
       parentClassLoader = createParentClassLoader(artifactId, parentArtifacts);
-      validateParentSet(parentArtifacts);
     }
 
     try {
@@ -419,7 +419,7 @@ public class ArtifactRepository {
           ArtifactConfig.read(artifactId, configFile, jarFile) :
           ArtifactConfig.builder(artifactId, jarFile).build();
 
-        validateParentSet(artifactConfig.getParents());
+        validateParentSet(artifactId, artifactConfig.getParents());
         validatePluginSet(artifactConfig.getPlugins());
         systemArtifacts.add(artifactConfig);
       } catch (InvalidArtifactException e) {
@@ -550,7 +550,7 @@ public class ArtifactRepository {
    * @throws InvalidArtifactException if there is more than one version range for an artifact
    */
   @VisibleForTesting
-  static void validateParentSet(Set<ArtifactRange> parents) throws InvalidArtifactException {
+  static void validateParentSet(Id.Artifact artifactId, Set<ArtifactRange> parents) throws InvalidArtifactException {
     boolean isInvalid = false;
     StringBuilder errMsg = new StringBuilder("Invalid parents field.");
 
@@ -567,6 +567,10 @@ public class ArtifactRepository {
         errMsg.append("' can be present.");
         dupes.add(parentName);
         isInvalid = true;
+      }
+      if (artifactId.getName().equals(parentName) && artifactId.getNamespace().equals(parent.getNamespace())) {
+        throw new InvalidArtifactException(String.format(
+          "Invalid parent '%s' for artifact '%s'. An artifact cannot extend itself.", parent, artifactId));
       }
     }
 

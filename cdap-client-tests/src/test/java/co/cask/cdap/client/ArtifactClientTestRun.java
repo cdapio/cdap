@@ -146,6 +146,18 @@ public class ArtifactClientTestRun extends ClientTestBase {
   }
 
   @Test
+  public void testAddSelfExtendingThrowsBadRequest() throws Exception {
+    try {
+      artifactClient.add(Id.Namespace.DEFAULT, "abc", DUMMY_SUPPLIER, "1.0.0", Sets.newHashSet(
+        new ArtifactRange(Id.Namespace.DEFAULT, "abc", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0"))
+      ));
+      Assert.fail();
+    } catch (BadRequestException e) {
+      // expected
+    }
+  }
+
+  @Test
   public void testArtifacts() throws Exception {
     // add 2 versions of an artifact with an application
     Id.Artifact myapp1Id = Id.Artifact.from(Id.Namespace.DEFAULT, "myapp", "1.0.0");
