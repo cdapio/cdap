@@ -16,30 +16,36 @@
 
 
 angular.module(PKG.name + '.feature.adapters')
-  .controller('NodeConfigController', function($scope, IMPLICIT_SCHEMA, MyAppDAGService, $filter, $q, $rootScope, myAdapterApi, $state, $timeout, GLOBALS) {
-    $scope.plugin = $scope.BottomPanelController.tab.plugin;
-    $scope.isValidPlugin = Object.keys($scope.plugin).length;
+  .controller('NodeConfigController', function($scope, IMPLICIT_SCHEMA, MyAppDAGService, $filter, $q, $rootScope, myAdapterApi, $state, $timeout, GLOBALS, MyNodeConfigService) {
+
     $scope.type = MyAppDAGService.metadata.template.type;
 
-    if (!$scope.plugin) {
-      return;
-    }
-    $scope.$watch(function() {
-      return $scope.BottomPanelController.tab.plugin;
-    }, function() {
-      if (!Object.keys($scope.BottomPanelController.tab.plugin).length) {
-        return;
+    $scope.data = {};
+    $scope.data.isModelTouched = false;
+
+    MyNodeConfigService.registerPluginCallback(onPluginChange);
+
+    function onPluginChange(plugin) {
+      var defer = $q.defer();
+      if (!$scope.data.isModelTouched) {
+        $scope.plugin = plugin;
+        $scope.isValidPlugin = false;
+        // falsify the ng-if in the template for one tick so that the template gets reloaded
+        // there by reloading the controller.
+        $timeout(function() {
+          $scope.isValidPlugin = Object.keys($scope.plugin).length;
+          $scope.isSource = false;
+          $scope.isTransform = false;
+          $scope.isSink = false;
+          configurePluginInfo();
+        });
+        defer.resolve(true);
+      } else {
+        console.info('You have unsaved changes do you want to save?');
+        defer.resolve(false);
       }
-      $scope.plugin = $scope.BottomPanelController.tab.plugin;
-      $scope.isValidPlugin = false;
-      $timeout(function() {
-        $scope.isValidPlugin = Object.keys($scope.plugin).length;
-        $scope.isSource = false;
-        $scope.isTransform = false;
-        $scope.isSink = false;
-        configurePluginInfo();
-      });
-    });
+      return defer.promise;
+    }
 
     function configurePluginInfo() {
       var pluginId = $scope.plugin.id;
