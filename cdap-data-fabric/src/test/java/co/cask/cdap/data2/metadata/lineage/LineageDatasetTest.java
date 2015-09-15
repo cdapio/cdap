@@ -71,7 +71,6 @@ public class LineageDatasetTest {
     Assert.assertEquals(expected, relations.iterator().next());
 
     // Assert metadata
-    System.out.println(lineageDataset.getRunMetadata(run));
     Assert.assertEquals(metadataRecords, lineageDataset.getRunMetadata(run));
   }
 
