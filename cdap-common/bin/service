@@ -99,7 +99,7 @@ _start_java() {
   check_and_set_classpath_for_dev_environment "${CDAP_HOME}"
   # Setup classpaths.
   set_classpath "${COMPONENT_HOME}" "${CDAP_CONF}"
-  set_hive_classpath
+  set_hive_classpath || exit 1
   # Setup Java
   set_java || exit 1
   # Add proper HBase compatibility to CLASSPATH
