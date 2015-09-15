@@ -17,22 +17,34 @@
 angular.module(PKG.name + '.feature.adapters')
   .factory('AdapterDetail', function(myWorkFlowApi, myMapreduceApi, myWorkersApi, GLOBALS) {
 
-    var publicObj = {};
+    var publicObj = {
+      initialize: initialize
+    };
 
-    function initialize(app, $state, $scope) {
+    function initialize(app, $state) {
       publicObj.programType = app.artifact.name === GLOBALS.etlBatch ? 'WORKFLOWS' : 'WORKERS';
       publicObj.params = {
         namespace: $state.params.namespace,
-        appId: app.name,
-        scope: $scope
+        appId: app.name
       };
 
       publicObj.logsParams = {
         namespace: $state.params.namespace,
         appId: app.name,
-        max: 50,
-        scope: $scope
+        max: 50
       };
+
+      var config;
+      try {
+        config = JSON.parse(app.configuration);
+      } catch (e) {
+        console.log('ERROR cannot parse configuration');
+      }
+
+      publicObj.source = config.source.name;
+      publicObj.transforms = config.transforms.map(function (n) { return n.name; });
+      publicObj.sinks = config.sinks.map(function (n) { return n.name; });
+
 
       if (publicObj.programType === 'WORKFLOWS') {
         publicObj.api = myWorkFlowApi;
@@ -52,10 +64,6 @@ angular.module(PKG.name + '.feature.adapters')
       }
     }
 
-
-    return {
-      initialize: initialize,
-      properties: publicObj
-    };
+    return publicObj;
 
   });

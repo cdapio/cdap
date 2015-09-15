@@ -15,19 +15,13 @@
  */
 
 angular.module(PKG.name + '.feature.adapters')
-  .controller('AdpaterDetailController', function($scope, rAdapterDetail, GLOBALS, MyAppDAGService, CanvasFactory, $state, myWorkFlowApi, myWorkersApi, myMapreduceApi, $timeout, MyDataSource, MyMetricsQueryHelper, $filter, myAppsApi, AdapterDetail) {
+  .controller('AdpaterDetailController', function($scope, rAdapterDetail, GLOBALS, MyAppDAGService, CanvasFactory, $state, myWorkFlowApi, myWorkersApi, myAppsApi, AdapterDetail) {
     $scope.GLOBALS = GLOBALS;
     $scope.template = rAdapterDetail.template;
     $scope.description = rAdapterDetail.description;
-    $scope.isScheduled = false;
-
-    var source = [],
-        transforms = [],
-        sinks = [];
-
     $scope.app = rAdapterDetail;
 
-    AdapterDetail.initialize(rAdapterDetail, $state, $scope);
+    AdapterDetail.initialize(rAdapterDetail, $state);
 
     $scope.tabs = [
       {
@@ -56,7 +50,11 @@ angular.module(PKG.name + '.feature.adapters')
       }
     ];
 
-    $scope.programType = rAdapterDetail.artifact.name === GLOBALS.etlBatch ? 'WORKFLOWS' : 'WORKERS';
+    $scope.activeTab = $scope.tabs[0];
+    $scope.selectTab = function(tab) {
+      $scope.activeTab = tab;
+    };
+
 
     var params = {
       namespace: $state.params.namespace,
@@ -64,25 +62,10 @@ angular.module(PKG.name + '.feature.adapters')
       scope: $scope
     };
 
-    var api;
-    var logsApi;
-    var logsParams = {
-      namespace: $state.params.namespace,
-      appId: rAdapterDetail.name,
-      max: 50,
-      scope: $scope
-    };
-
-    $scope.logs = [];
-
-    if ($scope.programType === 'WORKFLOWS') {
-      api = myWorkFlowApi;
-
+    if (AdapterDetail.programType === 'WORKFLOWS') {
       angular.forEach(rAdapterDetail.programs, function (program) {
         if (program.type === 'Workflow') {
           params.workflowId = program.id;
-        } else if (program.type === 'Mapreduce') {
-          logsParams.mapreduceId = program.id;
         }
       });
 
@@ -106,12 +89,10 @@ angular.module(PKG.name + '.feature.adapters')
         });
 
     } else {
-      api = myWorkersApi;
 
       angular.forEach(rAdapterDetail.programs, function (program) {
         if (program.type === 'Workers') {
           params.workerId = program.id;
-          logsParams.workerId = program.id;
         }
       });
 
@@ -192,114 +173,11 @@ angular.module(PKG.name + '.feature.adapters')
     };
 
 
-
-    $scope.runs = [];
-
-    api.runs(params)
-      .$promise
-      .then(function (res) {
-        $scope.runs = res;
-
-        if ($scope.runs.length === 0) { return; }
-
-        if ($scope.programType === 'WORKFLOWS') {
-
-          api.getStatistics(params)
-            .$promise
-            .then(function (stats) {
-              $scope.stats = {
-                numRuns: stats.runs,
-                avgRunTime: stats.avgRunTime,
-                latestRun: $scope.runs[0]
-              };
-            });
-
-
-          logsApi = myMapreduceApi;
-
-          $scope.loadingNext = true;
-          logsApi.runs(logsParams)
-            .$promise
-            .then(function (runs) {
-              if (runs.length === 0) { return; }
-
-              logsParams.runId = runs[0].runid;
-
-              logsApi.prevLogs(logsParams)
-                .$promise
-                .then(function (logs) {
-                  $scope.logs = logs;
-                  $scope.loadingNext = false;
-                });
-            });
-        } else {
-          logsApi = myWorkersApi;
-
-          $scope.loadingNext = true;
-
-          logsParams.runId = $scope.runs[0].runid;
-
-          logsApi.prevLogs(logsParams)
-            .$promise
-            .then(function (logs) {
-              $scope.logs = logs;
-              $scope.loadingNext = false;
-            });
-        }
-      });
-
-
-    $scope.loadNextLogs = function () {
-      if ($scope.loadingNext) {
-        return;
-      }
-
-      $scope.loadingNext = true;
-      logsParams.fromOffset = $scope.logs[$scope.logs.length-1].offset;
-
-      myMapreduceApi.nextLogs(logsParams)
-        .$promise
-        .then(function (res) {
-          $scope.logs = _.uniq($scope.logs.concat(res));
-          $scope.loadingNext = false;
-        });
-    };
-
-    $scope.loadPrevLogs = function () {
-      if ($scope.loadingPrev) {
-        return;
-      }
-
-      $scope.loadingPrev = true;
-      logsParams.fromOffset = $scope.logs[0].offset;
-
-      myMapreduceApi.prevLogs(logsParams)
-        .$promise
-        .then(function (res) {
-          $scope.logs = _.uniq(res.concat($scope.logs));
-          $scope.loadingPrev = false;
-
-          $timeout(function() {
-            document.getElementById(logsParams.fromOffset).scrollIntoView();
-          });
-        });
-    };
-
-
-    $scope.activeTab = $scope.tabs[0];
-
-    $scope.selectTab = function(tab) {
-      $scope.activeTab = tab;
-    };
     $scope.nodes = [];
 
     function initializeDAG() {
       try{
         rAdapterDetail.config = JSON.parse(rAdapterDetail.configuration);
-
-        source = rAdapterDetail.config.source.name;
-        transforms = rAdapterDetail.config.transforms.map(function (n) { return n.name; });
-        sinks = rAdapterDetail.config.sinks.map(function (n) { return n.name; });
       } catch(e) {
         console.log('ERROR in configuration from backend: ', e);
       }
@@ -346,72 +224,5 @@ angular.module(PKG.name + '.feature.adapters')
         return stream;
       }));
 
-
-    // METRICS
-    var dataSrc = new MyDataSource($scope);
-    var filter = $filter('filter');
-
-    var metricParams = {
-      namespace: $state.params.namespace,
-      app: $state.params.adapterId
-    };
-
-    metricParams = MyMetricsQueryHelper.tagsToParams(metricParams);
-
-    var metricBasePath = '/metrics/search?target=metric&' + metricParams;
-
-    var stagesArray = [source].concat(transforms, sinks);
-    stagesArray = stagesArray.map(function (n, i) { return n + '.' + (i+1); });
-
-
-    dataSrc.poll({
-      method: 'POST',
-      _cdapPath: metricBasePath
-    }, function (res) {
-      if (res.length > 0) {
-        var metricQuery = [];
-
-        angular.forEach(stagesArray, function (node) {
-          metricQuery = metricQuery.concat(filter(res, node));
-        });
-
-        if (metricQuery.length === 0) { return; }
-
-        dataSrc.request({
-          method: 'POST',
-          _cdapPath: '/metrics/query?' + metricParams + '&metric=' + metricQuery.join('&metric=')
-        }).then(function (metrics) {
-          var metricObj = {};
-
-          angular.forEach(metrics.series, function (metric) {
-            var split = metric.metricName.split('.');
-            var key = split[2] + '.' + split[3];
-
-            if (!metricObj[key]) {
-              metricObj[key] = {
-                nodeType: split[1],
-                nodeName: split[2],
-                stage: +split[3]
-              };
-            }
-
-            if (split[5] === 'in') {
-              metricObj[key].recordsIn = metric.data[0].value;
-            } else if (split[5] === 'out') {
-              metricObj[key].recordsOut = metric.data[0].value;
-            }
-
-          });
-
-          var metricsArr = [];
-          angular.forEach(metricObj, function (val) {
-            metricsArr.push(val);
-          });
-
-          $scope.metrics = metricsArr;
-        });
-      }
-
-    });
 
   });

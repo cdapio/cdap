@@ -1,32 +1,34 @@
-<div class="table-responsive">
-  <table class="table table-bordered">
-    <thead>
-      <tr>
-        <th>Node Name</th>
-        <th>Stage</th>
-        <th>Node Type</th>
-        <th>Metric</th>
-      </tr>
-    </thead>
+<div ng-controller="AdaptersDetailMetricsController">
+  <div class="table-responsive">
+    <table class="table table-bordered">
+      <thead>
+        <tr>
+          <th>Node Name</th>
+          <th>Stage</th>
+          <th>Node Type</th>
+          <th>Metric</th>
+        </tr>
+      </thead>
 
-    <tbody>
-      <tr ng-repeat="metric in metrics | orderBy:'stage'">
-        <td>{{ metric.nodeName }}</td>
-        <td>{{ metric.stage }}</td>
-        <td>{{ metric.nodeType }}</td>
-        <td class="metric-cell">
-          <table class="table metric-table">
-            <tr ng-if="metric.nodeType !== 'sink'">
-              <td>Records In</td>
-              <td>{{ metric.recordsIn }}</td>
-            </tr>
-            <tr>
-              <td>Records Out</td>
-              <td>{{ metric.recordsOut }}</td>
-            </tr>
-          </table>
-        </td>
-      </tr>
-    </tbody>
-  </table>
+      <tbody>
+        <tr ng-repeat="metric in metrics | orderBy:'stage'">
+          <td>{{ metric.nodeName }}</td>
+          <td>{{ metric.stage }}</td>
+          <td>{{ metric.nodeType }}</td>
+          <td class="metric-cell">
+            <table class="table metric-table">
+              <tr ng-if="metric.nodeType !== 'sink'">
+                <td>Records In</td>
+                <td>{{ metric.recordsIn }}</td>
+              </tr>
+              <tr>
+                <td>Records Out</td>
+                <td>{{ metric.recordsOut }}</td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 </div>

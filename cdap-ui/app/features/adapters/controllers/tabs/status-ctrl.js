@@ -15,15 +15,24 @@
  */
 
 angular.module(PKG.name + '.feature.adapters')
-  .controller('ScheduleController', function($scope, rAdapterDetail) {
-    this.schedules = [];
-    var schedule = {};
-    if (angular.isObject(rAdapterDetail.schedule)) {
-      schedule = rAdapterDetail.schedule.schedule;
-      schedule.status = 'SCHEDULED';
-      schedule.scheduleType = 'TIME';
-      schedule.isOpen = true;
-      schedule.lastrun = 'UNAVAILABLE';
-      this.schedules.push(schedule);
+  .controller('AdaptersDetailStatusController', function($scope, AdapterDetail) {
+    var params = {};
+    angular.copy(AdapterDetail.params, params);
+    params.scope = $scope;
+
+
+    if (AdapterDetail.programType === 'WORKFLOWS') {
+      AdapterDetail.api.getStatistics(params)
+        .$promise
+        .then(function (stats) {
+          $scope.stats = {
+            numRuns: stats.runs,
+            avgRunTime: stats.avgRunTime
+          };
+
+          return AdapterDetail.api.runs(params).$promise;
+        }).then(function (runs) {
+          $scope.stats.latestRun = runs[0];
+        });
     }
   });
