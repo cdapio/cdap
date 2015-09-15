@@ -119,6 +119,51 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   }
 
   @Test
+  public void testInvalidAppWithDuplicateStreams() throws Exception {
+    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "invalid-app", "1.0.0-SNAPSHOT");
+    addAppArtifact(artifactId, AppWithDuplicateStreams.class);
+
+    Id.Artifact pluginArtifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "test-plugin", "1.0.0-SNAPSHOT");
+    addPluginArtifact(pluginArtifactId, artifactId, ToStringPlugin.class);
+
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "InvalidApp");
+
+    try {
+      AppRequest<AppWithDuplicateStreams.ConfigClass> createRequest = new AppRequest<>(
+        new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()),
+        new AppWithDuplicateStreams.ConfigClass(true, false, false));
+      deployApplication(appId, createRequest);
+      // throw an exception if we succeed with application deployment
+      Preconditions.checkState(false);
+    } catch (IllegalStateException e) {
+      // expected
+    }
+
+    try {
+      AppRequest<AppWithDuplicateStreams.ConfigClass> createRequest = new AppRequest<>(
+        new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()),
+        new AppWithDuplicateStreams.ConfigClass(false, true, false));
+      deployApplication(appId, createRequest);
+      // throw an exception if we succeed with application deployment
+      Preconditions.checkState(false);
+    } catch (IllegalStateException e) {
+      // expected
+    }
+
+    try {
+      AppRequest<AppWithDuplicateStreams.ConfigClass> createRequest = new AppRequest<>(
+        new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()),
+        new AppWithDuplicateStreams.ConfigClass(false, false, true));
+      deployApplication(appId, createRequest);
+      // throw an exception if we succeed with application deployment
+      Preconditions.checkState(false);
+    } catch (IllegalStateException e) {
+      // expected
+    }
+  }
+
+
+  @Test
   public void testFlowRuntimeArguments() throws Exception {
     ApplicationManager applicationManager = deployApplication(FilterApp.class);
     Map<String, String> args = Maps.newHashMap();
