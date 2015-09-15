@@ -358,7 +358,11 @@ public class BusinessMetadataDataset extends AbstractDataset {
   List<BusinessMetadataRecord> executeSearchOnColumns(String column, String searchValue,
                                                       MetadataSearchTargetType type) {
     List<BusinessMetadataRecord> results = new LinkedList<>();
-    Scanner scanner = indexedTable.readByIndex(Bytes.toBytes(column), Bytes.toBytes(searchValue));
+
+    byte[] startKey = Bytes.toBytes(searchValue);
+    byte[] stopKey = Bytes.stopKeyForPrefix(startKey);
+
+    Scanner scanner = indexedTable.scanByIndex(Bytes.toBytes(column), startKey, stopKey);
     try {
       Row next;
       while ((next = scanner.next()) != null) {
