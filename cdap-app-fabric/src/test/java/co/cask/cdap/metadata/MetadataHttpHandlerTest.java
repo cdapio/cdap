@@ -253,8 +253,9 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     Assert.assertEquals(2, properties.size());
 
     //Delete the App after stopping the flow
-    org.apache.http.HttpResponse response = doDelete(getVersionedAPIPath("apps/WordCountApp/", Constants.Gateway.API_VERSION_3_TOKEN,
-                                            TEST_NAMESPACE1));
+    org.apache.http.HttpResponse response =
+      doDelete(getVersionedAPIPath("apps/WordCountApp/", Constants.Gateway.API_VERSION_3_TOKEN,
+                                   TEST_NAMESPACE1));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     response = doDelete(getVersionedAPIPath("apps/WordCountApp/", Constants.Gateway.API_VERSION_3_TOKEN,
                                             TEST_NAMESPACE1));
