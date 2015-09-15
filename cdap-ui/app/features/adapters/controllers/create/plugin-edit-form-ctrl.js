@@ -219,7 +219,8 @@ angular.module(PKG.name + '.feature.adapters')
 
     this.save = function () {
       if (validateSchema()) {
-        $scope.plugin = angular.copy($scope.pluginCopy);
+        $scope.plugin.properties = angular.copy($scope.pluginCopy.properties);
+        $scope.plugin.outputSchema = angular.copy($scope.pluginCopy.outputSchema);
         $scope.data['isModelTouched'] = false;
       }
     };
