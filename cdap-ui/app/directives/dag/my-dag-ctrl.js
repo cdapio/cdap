@@ -19,7 +19,6 @@ angular.module(PKG.name + '.commons')
     this.plugins = $scope.config || [];
     this.isDisabled = $scope.isDisabled;
     MyAppDAGService.setIsDisabled(this.isDisabled);
-    this.selected = false;
     var popovers = [];
     var popoverScopes = [];
 
@@ -48,11 +47,11 @@ angular.module(PKG.name + '.commons')
     // Need to move this to the controller that is using this directive.
     this.onPluginClick = function(plugin) {
       closeAllPopovers();
-      if(this.selected === true) {
-        this.selected = false;
-      } else {
-        this.selected = true;
-      }
+      angular.forEach(this.plugins, function(plug) {
+        plug.selected = false;
+      });
+
+      plugin.selected = true;
       if (plugin.error) {
         delete plugin.error;
       }

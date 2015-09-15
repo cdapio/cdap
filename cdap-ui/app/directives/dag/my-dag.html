@@ -20,7 +20,7 @@
            data-type="{{plugin.type}}"
            id="{{plugin.id}}"
            ng-click="MyDAGController.onPluginClick(plugin)"
-           ng-class="{'selected': MyDAGController.selected}">
+           ng-class="{'selected': plugin.selected}">
       <div class="node">
           <div class="fa fa-close" ng-if="!MyDAGController.isDisabled" ng-click="MyDAGController.removePlugin($index, plugin.id)"></div>
           <div class="icon fa {{plugin.icon}}"></div>
