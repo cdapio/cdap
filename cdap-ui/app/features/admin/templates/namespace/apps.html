@@ -26,24 +26,15 @@
           <ul class="dropdown-menu dropdown-menu-right" role="menu">
             <li>
               <my-file-select dropdown="true"
+                              data-button-icon="__"
                               data-button-label="Custom App"
                               on-file-select="onFileSelected($files)">
               </my-file-select>
             </li>
             <li>
-              <a ui-sref="adapters.create({namespace: $stateParams.nsadmin, type: GLOBALS.etlBatch})" class="clearfix">
-                <span class="pull-left">ETL Batch App</span>
-                <i class="icon-ETLBatch pull-right"></i>
+              <a ui-sref="adapters.create" class="clearfix">
+                <span class="pull-left">{{GLOBALS.addHydratorAppLabel}}</span>
               </a>
-            </li>
-            <li>
-              <a ui-sref="adapters.create({namespace: $stateParams.nsadmin, type: GLOBALS.etlRealtime})" class="clearfix">
-                <span class="pull-left">ETL Realtime App</span>
-                <i class="icon-ETLRealtime pull-right"></i>
-              </a>
-            </li>
-            <li>
-              <a ui-sref="adapters.drafts({namespace: $stateParams.nsadmin})"> Drafts </a>
             </li>
           </ul>
         </div>
@@ -121,23 +112,14 @@
         <li>
           <my-file-select dropdown="true"
                           data-button-label="Custom App"
+                          data-button-icon="__"
                           on-file-select="onFileSelected($files)">
           </my-file-select>
         </li>
         <li>
-          <a ui-sref="adapters.create({namespace: $stateParams.nsadmin, type: GLOBALS.etlBatch})" class="clearfix">
-            <span class="pull-left">ETL Batch App</span>
-            <i class="icon-ETLBatch pull-right"></i>
+          <a ui-sref="adapters.create" class="clearfix">
+            <span class="pull-left">{{GLOBALS.addHydratorAppLabel}}</span>
           </a>
-        </li>
-        <li>
-          <a ui-sref="adapters.create({namespace: $stateParams.nsadmin, type: GLOBALS.etlRealtime})" class="clearfix">
-            <span class="pull-left">ETL Realtime App</span>
-            <i class="icon-ETLRealtime pull-right"></i>
-          </a>
-        </li>
-        <li>
-          <a ui-sref="adapters.drafts({namespace: $stateParams.nsadmin})"> Drafts </a>
         </li>
       </ul>
     </div>

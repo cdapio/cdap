@@ -90,7 +90,7 @@
                <span>All Apps</span>
             </a>
             <a ui-sref="adapters.list" class="btn btn-default">
-              <span class="icon-ETLBatch"></span>
+              <span class="icon-hydrator"></span>
                <span>Pipelines</span>
             </a>
             <div class="btn-group dropdown-right" dropdown>
@@ -100,14 +100,14 @@
               <ul class="dropdown-menu dropdown-menu-right" role="menu">
                 <li>
                   <my-file-select dropdown="true"
+                                  data-button-icon="__"
                                   data-button-label="Custom App"
                                   on-file-select="AppsSectionCtrl.onFileSelected($files)">
                   </my-file-select>
                 </li>
                 <li>
                   <a ui-sref="adapters.create" class="clearfix">
-                    <span class="pull-left">Hydrator App</span>
-                    <i class="icon-ETLBatch pull-right"></i>
+                    <span class="pull-left">{{AppsSectionCtrl.GLOBALS.addHydratorAppLabel}}</span>
                   </a>
                 </li>
               </ul>
@@ -160,13 +160,13 @@
           <li>
             <my-file-select dropdown="true"
                             data-button-label="Custom App"
+                            data-button-icon="__"
                             on-file-select="AppsSectionCtrl.onFileSelected($files)">
             </my-file-select>
           </li>
           <li>
             <a ui-sref="adapters.create" class="clearfix">
-              <span class="pull-left">Hydrator App</span>
-              <i class="icon-ETLBatch pull-right"></i>
+              <span class="pull-left">{{AppsSectionCtrl.GLOBALS.addHydratorAppLabel}}</span>
             </a>
           </li>
         </ul>
