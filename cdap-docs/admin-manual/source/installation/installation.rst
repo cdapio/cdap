@@ -455,7 +455,7 @@ Secure Hadoop
 .............
 When running CDAP on top of a secure Hadoop cluster (using Kerberos
 authentication), the CDAP processes will need to obtain Kerberos credentials in order to
-authenticate with Hadoop, HBase, ZooKeeper, and optionally Hive.  In this case, the setting for
+authenticate with Hadoop, HBase, ZooKeeper, and (optionally) Hive.  In this case, the setting for
 ``hdfs.user`` in ``cdap-site.xml`` will be ignored and the CDAP processes will be identified by the
 default authenticated Kerberos principal.
 
@@ -510,8 +510,8 @@ In order to configure **CDAP Explore Service for secure Hadoop:**
 
 .. highlight:: xml
 
-- To allow CDAP to act as a Hive client, it must be given proxyuser permissions and allowed from all hosts. For example,
-  to the configuration file ``core-site.xml``, set these properties, where ``cdap`` is a system group which the ``cdap``
+- To allow CDAP to act as a Hive client, it must be given ``proxyuser`` permissions and allowed from all hosts. For example,
+  to the configuration file ``core-site.xml``, set these properties, where ``cdap`` is a system group to which the ``cdap``
   user is a member::
 
     <property>
@@ -523,10 +523,11 @@ In order to configure **CDAP Explore Service for secure Hadoop:**
       <value>*</value>
     </property>
 
-- To execute Hive queries on a secure cluster, the cluster must be running the MapReduce JobHistoryServer. Consult your
+- To execute Hive queries on a secure cluster, the cluster must be running the MapReduce ``JobHistoryServer``. Consult your
   distribution documentation on the proper configuration of this service.
-- To execute Hive queries on a secure cluster using CDAP Explore Service, the Hive MetaStore service must be configured for
-  Kerberos authentication. Consult your distribution documentation on the proper configuration of this service.
+- To execute Hive queries on a secure cluster using the CDAP Explore Service, the Hive MetaStore service 
+  must be configured for Kerberos authentication. Consult your distribution documentation on the proper 
+  configuration of the Hive MetaStore service.
 
 With all these properties set, the CDAP Explore Service will run on secure Hadoop clusters.
 
