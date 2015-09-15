@@ -121,7 +121,7 @@ Glossary
       data serialization system that provides rich data structures and a compact, fast, binary data format.
 
    Namespace
-      A namespace is a physical grouping of application, data and its metadata in CDAP.
+      A namespace is a logical grouping of application, data and its metadata in CDAP.
       Conceptually, namespaces can be thought of as a partitioning of a CDAP instance. Any
       application or data (referred to here as an “entity”) can exist independently in
       multiple namespaces at the same time. The data and metadata of an entity is stored
