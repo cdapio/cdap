@@ -13,35 +13,36 @@
   License for the specific language governing permissions and limitations under
   the License.
 -->
-<div ng-if="$state.current.name === 'adapters.create'">
-  <br/>
-  <br/>
-  <br/>
+<div ng-if="$state.current.name === 'adapters.create'" class="hydrator-start">
   <div class="row">
-    <div class="col-xs-4">
-      <div class="well well-md">
-        <h4>Create a Batch Pipeline</h4>
-        <a class="btn btn-default"
-            ui-sref="adapters.create.studio({type: 'cdap-etl-batch'})">
-            Create
-        </a>
-      </div>
-    </div>
-    <div class="col-xs-4">
-      <div class="well well-md">
-        <h4>Create a Realtime Pipeline</h4>
-        <a class="btn btn-default"
-            ui-sref="adapters.create.studio({type: 'cdap-etl-realtime'})">
-          Create
-        </a>
-      </div>
-    </div>
-    <div class="col-xs-4">
-      <div class="well well-md">
-        <h4 href="">Import a Pipeline</h4>
-        <a class="btn btn-default"
-            ng-click="AdapterCreateController.openFileBrowser()"
-            href="">Import</a>
+    <div class="col-lg-6 col-lg-offset-3">
+      <div class="row">
+        <div class="col-sm-4">
+          <div class="well well-md start-well text-center">
+            <h4 href="">Import a<br />Pipeline</h4>
+            <a class="btn btn-default"
+                ng-click="AdapterCreateController.openFileBrowser()"
+                href="">Import</a>
+          </div>
+        </div>
+        <div class="col-sm-4">
+          <div class="well well-md start-well text-center">
+            <h4>Create a<br/>Batch Pipeline</h4>
+            <a class="btn btn-default"
+                ui-sref="adapters.create.studio({type: 'cdap-etl-batch'})">
+                Create
+            </a>
+          </div>
+        </div>
+        <div class="col-sm-4">
+          <div class="well well-md start-well text-center">
+            <h4>Create a<br />Realtime Pipeline</h4>
+            <a class="btn btn-default"
+                ui-sref="adapters.create.studio({type: 'cdap-etl-realtime'})">
+              Create
+            </a>
+          </div>
+        </div>
       </div>
     </div>
   </div>
