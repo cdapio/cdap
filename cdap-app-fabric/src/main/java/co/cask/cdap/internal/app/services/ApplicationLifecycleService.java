@@ -622,7 +622,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                                             ProgramTerminator programTerminator,
                                             ArtifactDetail artifactDetail) throws Exception {
 
-    Id.Artifact artifactId = Id.Artifact.from(namespace, artifactDetail.getDescriptor().getArtifactId());
+    Id.Artifact artifactId = artifactDetail.getDescriptor().getArtifact();
     Set<ApplicationClass> appClasses = artifactDetail.getMeta().getClasses().getApps();
     if (appClasses.isEmpty()) {
       throw new InvalidArtifactException(String.format("No application classes found in artifact '%s'.", artifactId));

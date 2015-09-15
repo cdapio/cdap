@@ -15,6 +15,8 @@
  */
 package co.cask.cdap.internal.app.runtime.distributed;
 
+import co.cask.cdap.api.app.ApplicationSpecification;
+import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.app.runtime.Arguments;
@@ -29,8 +31,10 @@ import co.cask.cdap.common.twill.HadoopClassExcluder;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data.security.HBaseTokenUtils;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
+import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
+import co.cask.cdap.proto.Id;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
@@ -40,6 +44,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
 import com.google.common.io.Resources;
+import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.apache.hadoop.conf.Configuration;
@@ -53,6 +58,7 @@ import org.apache.twill.api.TwillPreparer;
 import org.apache.twill.api.TwillRunner;
 import org.apache.twill.api.logging.PrinterLogHandler;
 import org.apache.twill.common.Threads;
+import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.yarn.YarnSecureStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,6 +68,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.Writer;
+import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.URL;
 import java.util.Arrays;
@@ -69,6 +76,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nullable;
+
 
 /**
  * Defines the base framework for starting {@link Program} in the cluster.
@@ -80,8 +88,10 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
     .registerTypeAdapter(Arguments.class, new ArgumentsCodec())
     .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec())
     .create();
+  private static final Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
   private final TwillRunner twillRunner;
+  private final LocationFactory locationFactory;
   protected final Configuration hConf;
   protected final CConfiguration cConf;
   protected final EventHandler eventHandler;
@@ -129,8 +139,10 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
     public abstract TwillController launch(TwillApplication twillApplication, Iterable<String> extraClassPaths);
   }
 
-  protected AbstractDistributedProgramRunner(TwillRunner twillRunner, Configuration hConf, CConfiguration cConf) {
+  protected AbstractDistributedProgramRunner(TwillRunner twillRunner, Configuration hConf, CConfiguration cConf,
+                                             LocationFactory locationFactory) {
     this.twillRunner = twillRunner;
+    this.locationFactory = locationFactory;
     this.hConf = hConf;
     this.cConf = cConf;
     this.eventHandler = createEventHandler(cConf);
@@ -152,6 +164,11 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
       }
 
       Map<String, LocalizeResource> localizeResources = new HashMap<>();
+      Map<String, String> artifactFileNames = GSON.fromJson(
+        options.getArguments().getOption(ProgramOptionConstants.PLUGIN_FILENAMES), STRING_MAP_TYPE);
+
+      addArtifactPluginFiles(program.getApplicationSpecification(), artifactFileNames,
+                             program.getId().getNamespace(), localizeResources);
 
       // Copy config files and program jar to local temp, and ask Twill to localize it to container.
       // What Twill does is to save those files in HDFS and keep using them during the lifetime of application.
@@ -210,8 +227,31 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
     }
   }
 
+
+  private Map<String, LocalizeResource> addArtifactPluginFiles(ApplicationSpecification appSpec,
+                                                               Map<String, String> artifactFileNames,
+                                                               Id.Namespace namespace,
+                                                               Map<String, LocalizeResource> localizeResources) {
+    if (appSpec.getPlugins().isEmpty()) {
+      return localizeResources;
+    }
+
+    Map<String, Plugin> plugins = appSpec.getPlugins();
+    String localizePrefix = String.format("%s/namespaces", cConf.get(Constants.CFG_LOCAL_DATA_DIR));
+    String sourcePrefix = "/namespaces";
+    for (Plugin plugin : plugins.values()) {
+      String ns = Id.Artifact.from(namespace, plugin.getArtifactId()).getNamespace().getId();
+      String suffix = String.format("%s/artifacts/%s/%s", ns, plugin.getArtifactId().getName(),
+                                    artifactFileNames.get(plugin.getArtifactId().toString()));
+      String localizedName = String.format("%s/%s", localizePrefix, suffix);
+      String sourcePath = String.format("%s/%s", sourcePrefix, suffix);
+      localizeResources.put(localizedName, new LocalizeResource(locationFactory.create(sourcePath).toURI(), false));
+    }
+    return localizeResources;
+  }
+
   /**
-   * Returns a {@link URI} for the logback.xml file to be localized to container and avaiable in the container
+   * Returns a {@link URI} for the logback.xml file to be localized to container and available in the container
    * classpath.
    */
   @Nullable

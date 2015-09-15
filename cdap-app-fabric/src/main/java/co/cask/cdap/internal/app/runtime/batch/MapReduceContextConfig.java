@@ -54,6 +54,7 @@ public final class MapReduceContextConfig {
 
   private static final Logger LOG = LoggerFactory.getLogger(MapReduceContextConfig.class);
   private static final Gson GSON = new Gson();
+  private static final Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
   private static final String HCONF_ATTR_RUN_ID = "hconf.program.run.id";
   private static final String HCONF_ATTR_LOGICAL_START_TIME = "hconf.program.logical.start.time";
@@ -66,6 +67,8 @@ public final class MapReduceContextConfig {
   private static final String HCONF_ATTR_INPUT_SPLIT_CLASS = "hconf.program.input.split.class";
   private static final String HCONF_ATTR_INPUT_SPLITS = "hconf.program.input.splits";
   private static final String HCONF_ATTR_NEW_TX = "hconf.program.newtx.tx";
+  private static final String HCONF_ATTR_NAMESPACE = "hconf.program.namespace.name";
+  private static final String HCONF_ATTR_ARTIFACT_FILENAMES = "hconf.program.artifact.filenames";
 
   private final Configuration hConf;
 
@@ -77,7 +80,9 @@ public final class MapReduceContextConfig {
     return hConf;
   }
 
-  public void set(BasicMapReduceContext context, CConfiguration conf, Transaction tx, URI programJarURI) {
+  public void set(BasicMapReduceContext context, CConfiguration conf, Transaction tx, URI programJarURI,
+                  Map<String, String> artifactFileNames) {
+    setNamespace(context.getNamespaceId());
     setRunId(context.getRunId().getId());
     setLogicalStartTime(context.getLogicalStartTime());
     setProgramNameInWorkflow(context.getProgramNameInWorkflow());
@@ -88,6 +93,7 @@ public final class MapReduceContextConfig {
     setConf(conf);
     setTx(tx);
     setInputSelection(context.getInputDataSelection());
+    setArtifactFileNames(artifactFileNames);
   }
 
   private void setArguments(Map<String, String> arguments) {
@@ -99,6 +105,10 @@ public final class MapReduceContextConfig {
                                                   new TypeToken<Map<String, String>>() {
                                                   }.getType());
     return new BasicArguments(arguments);
+  }
+
+  private void setNamespace(String namespace) {
+    hConf.set(HCONF_ATTR_NAMESPACE, namespace);
   }
 
   private void setRunId(String runId) {
@@ -131,6 +141,10 @@ public final class MapReduceContextConfig {
     if (workflowToken != null) {
       hConf.set(HCONF_ATTR_WORKFLOW_TOKEN, GSON.toJson(workflowToken));
     }
+  }
+
+  public String getNamespace() {
+    return hConf.get(HCONF_ATTR_NAMESPACE);
   }
 
   @Nullable
@@ -186,6 +200,14 @@ public final class MapReduceContextConfig {
     }
     hConf.set(HCONF_ATTR_INPUT_SPLIT_CLASS, splitClass.getName());
     hConf.set(HCONF_ATTR_INPUT_SPLITS, GSON.toJson(splits));
+  }
+
+  private void setArtifactFileNames(Map<String, String> artifactFileNames) {
+    hConf.set(HCONF_ATTR_ARTIFACT_FILENAMES, GSON.toJson(artifactFileNames));
+  }
+
+  public Map<String, String> getArtifactFileNames() {
+    return GSON.fromJson(hConf.get(HCONF_ATTR_ARTIFACT_FILENAMES), STRING_MAP_TYPE);
   }
 
   public List<Split> getInputSelection() {

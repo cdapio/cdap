@@ -80,7 +80,8 @@ public class DefaultPluginConfigurer extends DefaultDatasetConfigurer implements
     }
 
     try {
-      T instance = pluginInstantiator.newInstance(pluginEntry.getKey(), pluginEntry.getValue(), properties);
+      T instance = pluginInstantiator.newInstance(pluginEntry.getKey().getLocation(),
+                                                  pluginEntry.getValue(), properties);
       registerPlugin(pluginId, pluginEntry.getKey(), pluginEntry.getValue(), properties);
       return instance;
     } catch (IOException e) {
@@ -110,7 +111,7 @@ public class DefaultPluginConfigurer extends DefaultDatasetConfigurer implements
     }
 
     try {
-      Class<T> cls = pluginInstantiator.loadClass(pluginEntry.getKey(), pluginEntry.getValue());
+      Class<T> cls = pluginInstantiator.loadClass(pluginEntry.getKey().getLocation(), pluginEntry.getValue());
       registerPlugin(pluginId, pluginEntry.getKey(), pluginEntry.getValue(), properties);
       return cls;
     } catch (IOException e) {
@@ -142,7 +143,8 @@ public class DefaultPluginConfigurer extends DefaultDatasetConfigurer implements
       // Just verify if all required properties are provided.
       // No type checking is done for now.
       for (PluginPropertyField field : pluginEntry.getValue().getProperties().values()) {
-        Preconditions.checkArgument(!field.isRequired() || properties.getProperties().containsKey(field.getName()),
+        Preconditions.checkArgument(!field.isRequired() ||
+                                      (properties != null && properties.getProperties().containsKey(field.getName())),
                                     "Required property '%s' missing for plugin of type %s, name %s.",
                                     field.getName(), pluginType, pluginName);
       }
@@ -155,7 +157,6 @@ public class DefaultPluginConfigurer extends DefaultDatasetConfigurer implements
    */
   private void registerPlugin(String pluginId, ArtifactDescriptor artifactDescriptor, PluginClass pluginClass,
                               PluginProperties properties) {
-    plugins.put(pluginId, new Plugin(artifactDescriptor.getArtifactId(), artifactDescriptor.getLocation().toURI(),
-                                     pluginClass, properties));
+    plugins.put(pluginId, new Plugin(artifactDescriptor.getArtifact().toArtifactId(), pluginClass, properties));
   }
 }

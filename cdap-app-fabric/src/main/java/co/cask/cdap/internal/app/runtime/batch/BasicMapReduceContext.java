@@ -33,7 +33,7 @@ import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.app.program.Program;
-import co.cask.cdap.app.runtime.Arguments;
+import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
@@ -46,7 +46,6 @@ import com.google.common.collect.Maps;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.filesystem.LocationFactory;
 
 import java.util.HashMap;
 import java.util.List;
@@ -78,7 +77,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
 
   public BasicMapReduceContext(Program program,
                                RunId runId,
-                               Arguments runtimeArguments,
+                               ProgramOptions programOptions,
                                Set<String> datasets,
                                MapReduceSpecification spec,
                                long logicalStartTime,
@@ -87,11 +86,10 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
                                DiscoveryServiceClient discoveryServiceClient,
                                MetricsCollectionService metricsCollectionService,
                                DatasetFramework dsFramework,
-                               LocationFactory locationFactory,
                                @Nullable PluginInstantiator pluginInstantiator) {
-    super(program, runId, runtimeArguments, datasets,
+    super(program, runId, programOptions, datasets,
           getMetricsCollector(program, runId.getId(), metricsCollectionService),
-          dsFramework, discoveryServiceClient, locationFactory, pluginInstantiator);
+          dsFramework, discoveryServiceClient, pluginInstantiator);
     this.logicalStartTime = logicalStartTime;
     this.programNameInWorkflow = programNameInWorkflow;
     this.workflowToken = workflowToken;

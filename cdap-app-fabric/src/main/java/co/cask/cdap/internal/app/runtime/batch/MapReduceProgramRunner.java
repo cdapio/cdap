@@ -67,9 +67,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
+import java.lang.reflect.Type;
 import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
@@ -79,6 +81,7 @@ import javax.annotation.Nullable;
 public class MapReduceProgramRunner implements ProgramRunner {
   private static final Logger LOG = LoggerFactory.getLogger(MapReduceProgramRunner.class);
   private static final Gson GSON = new Gson();
+  private static final Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
   private final StreamAdmin streamAdmin;
   private final CConfiguration cConf;
@@ -171,11 +174,10 @@ public class MapReduceProgramRunner implements ProgramRunner {
       closeables.add(pluginInstantiator);
 
       final DynamicMapReduceContext context =
-        new DynamicMapReduceContext(program, runId, options.getUserArguments(), spec,
+        new DynamicMapReduceContext(program, runId, options, spec,
                                     logicalStartTime, programNameInWorkflow, workflowToken, discoveryServiceClient,
-                                    metricsCollectionService, txSystemClient, datasetFramework, locationFactory,
+                                    metricsCollectionService, txSystemClient, datasetFramework,
                                     pluginInstantiator);
-
 
       Reflections.visit(mapReduce, mapReduce.getClass(),
                         new PropertyFieldSetter(context.getSpecification().getProperties()),
@@ -185,9 +187,12 @@ public class MapReduceProgramRunner implements ProgramRunner {
       // note: this sets logging context on the thread level
       LoggingContextAccessor.setLoggingContext(context.getLoggingContext());
 
+      Map<String, String> artifactFileNames = GSON.fromJson(
+        options.getArguments().getOption(ProgramOptionConstants.PLUGIN_FILENAMES), STRING_MAP_TYPE);
       final Service mapReduceRuntimeService = new MapReduceRuntimeService(cConf, hConf, mapReduce, spec, context,
                                                                           program.getJarLocation(), locationFactory,
-                                                                          streamAdmin, txSystemClient, usageRegistry);
+                                                                          streamAdmin, txSystemClient, usageRegistry,
+                                                                          artifactFileNames);
       mapReduceRuntimeService.addListener(
         createRuntimeServiceListener(program, runId, closeables, arguments, options.getUserArguments()),
         Threads.SAME_THREAD_EXECUTOR);

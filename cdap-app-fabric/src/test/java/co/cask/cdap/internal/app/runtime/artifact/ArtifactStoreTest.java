@@ -182,7 +182,7 @@ public class ArtifactStoreTest {
     // shouldn't see it in the list
     List<ArtifactDetail> artifactList = artifactStore.getArtifacts(parentId.getNamespace());
     Assert.assertEquals(1, artifactList.size());
-    Assert.assertEquals(parentId.getName(), artifactList.get(0).getDescriptor().getArtifactId().getName());
+    Assert.assertEquals(parentId.getName(), artifactList.get(0).getDescriptor().getArtifact().getName());
     // shouldn't see any more plugins for parent
     Assert.assertTrue(artifactStore.getPluginClasses(parentId).isEmpty());
 
@@ -850,10 +850,10 @@ public class ArtifactStoreTest {
 
   private void assertEqual(Id.Artifact expectedId, ArtifactMeta expectedMeta,
                            String expectedContents, ArtifactDetail actual) throws IOException {
-    Assert.assertEquals(expectedId.getName(), actual.getDescriptor().getArtifactId().getName());
-    Assert.assertEquals(expectedId.getVersion(), actual.getDescriptor().getArtifactId().getVersion());
+    Assert.assertEquals(expectedId.getName(), actual.getDescriptor().getArtifact().getName());
+    Assert.assertEquals(expectedId.getVersion(), actual.getDescriptor().getArtifact().getVersion());
     Assert.assertEquals(expectedId.getNamespace().equals(Id.Namespace.SYSTEM),
-                        actual.getDescriptor().getArtifactId().getScope().equals(ArtifactScope.SYSTEM));
+                        actual.getDescriptor().getArtifact().toArtifactId().getScope().equals(ArtifactScope.SYSTEM));
     Assert.assertEquals(expectedMeta, actual.getMeta());
     Assert.assertEquals(expectedContents, CharStreams.toString(
       new InputStreamReader(actual.getDescriptor().getLocation().getInputStream(), Charsets.UTF_8)));

@@ -19,17 +19,22 @@ package co.cask.cdap.internal.app.runtime.batch;
 import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.Programs;
+import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.lang.Delegators;
+import co.cask.cdap.internal.app.runtime.BasicArguments;
+import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.batch.distributed.DistributedMapReduceTaskContextBuilder;
 import co.cask.cdap.internal.app.runtime.batch.inmemory.InMemoryMapReduceTaskContextBuilder;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Maps;
+import com.google.gson.Gson;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.mapreduce.MRConfig;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.apache.twill.filesystem.HDFSLocationFactory;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -38,6 +43,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -46,12 +52,12 @@ import javax.annotation.Nullable;
 public final class MapReduceTaskContextProvider {
 
   private static final Logger LOG = LoggerFactory.getLogger(MapReduceTaskContextProvider.class);
+  private static final Gson GSON = new Gson();
 
   private final TaskAttemptContext taskContext;
   private final MapReduceMetrics.TaskType type;
   private final MapReduceContextConfig contextConfig;
   private final LocationFactory locationFactory;
-  private final LocationFactory artifactLocationFactory;
   private BasicMapReduceTaskContext context;
   private AbstractMapReduceTaskContextBuilder contextBuilder;
 
@@ -60,9 +66,6 @@ public final class MapReduceTaskContextProvider {
     this.type = type;
     this.contextConfig = new MapReduceContextConfig(context.getConfiguration());
     this.locationFactory = new LocalLocationFactory();
-    boolean isLocal = MapReduceTaskContextProvider.isLocal(contextConfig.getConfiguration());
-    this.artifactLocationFactory = isLocal ? locationFactory : new HDFSLocationFactory(
-      contextConfig.getConfiguration());
     this.contextBuilder = null;
   }
 
@@ -74,6 +77,11 @@ public final class MapReduceTaskContextProvider {
   public synchronized <K, V> BasicMapReduceTaskContext<K, V> get() {
     if (context == null) {
       CConfiguration cConf = contextConfig.getConf();
+      Program program = createProgram(contextConfig);
+      Map<String, String> systemArguments = Maps.newHashMap();
+      systemArguments.put(ProgramOptionConstants.PLUGIN_FILENAMES, GSON.toJson(contextConfig.getArtifactFileNames()));
+      ProgramOptions programOptions = new SimpleProgramOptions(program.getName(), new BasicArguments(systemArguments),
+                                                               contextConfig.getArguments());
       context = getBuilder(cConf)
         .build(type,
                contextConfig.getRunId(),
@@ -81,14 +89,12 @@ public final class MapReduceTaskContextProvider {
                contextConfig.getLogicalStartTime(),
                contextConfig.getProgramNameInWorkflow(),
                contextConfig.getWorkflowToken(),
-               contextConfig.getArguments(),
+               programOptions,
                contextConfig.getTx(),
-               createProgram(contextConfig),
-               artifactLocationFactory,
+               program,
                contextConfig.getInputDataSet(),
                contextConfig.getOutputDataSet(),
-               getArtifactPluginInstantiator(contextConfig.getConfiguration())
-        );
+               getPluginInstantiator(contextConfig.getConfiguration()));
     }
     return context;
   }
@@ -147,7 +153,7 @@ public final class MapReduceTaskContextProvider {
   }
 
   @Nullable
-  private PluginInstantiator getArtifactPluginInstantiator(Configuration hConf) {
+  private PluginInstantiator getPluginInstantiator(Configuration hConf) {
     ClassLoader classLoader = Delegators.getDelegate(hConf.getClassLoader(), MapReduceClassLoader.class);
     if (!(classLoader instanceof MapReduceClassLoader)) {
       throw new IllegalArgumentException("ClassLoader is not an MapReduceClassLoader");

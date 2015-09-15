@@ -44,6 +44,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunner;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,8 +64,9 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
   private static final Logger LOG = LoggerFactory.getLogger(DistributedWorkflowProgramRunner.class);
 
   @Inject
-  public DistributedWorkflowProgramRunner(TwillRunner twillRunner, Configuration hConf, CConfiguration cConf) {
-    super(twillRunner, createConfiguration(hConf), cConf);
+  public DistributedWorkflowProgramRunner(TwillRunner twillRunner, Configuration hConf, CConfiguration cConf,
+                                          LocationFactory locationFactory) {
+    super(twillRunner, createConfiguration(hConf), cConf, locationFactory);
   }
 
   @Override

@@ -23,7 +23,7 @@ import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.app.program.Program;
-import co.cask.cdap.app.runtime.Arguments;
+import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
@@ -34,7 +34,6 @@ import com.google.common.collect.Maps;
 import com.google.common.io.Closeables;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.filesystem.LocationFactory;
 
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -59,7 +58,7 @@ public class BasicHttpServiceContext extends AbstractContext implements Transact
    * @param runId runId of the component.
    * @param instanceId instanceId of the component.
    * @param instanceCount total number of instances of the component.
-   * @param runtimeArgs runtimeArgs for the component.
+   * @param programOptions program options for the component.
    * @param metricsCollectionService metricsCollectionService to use for emitting metrics.
    * @param dsFramework dsFramework to use for getting datasets.
    * @param discoveryServiceClient discoveryServiceClient used to do service discovery.
@@ -67,13 +66,12 @@ public class BasicHttpServiceContext extends AbstractContext implements Transact
    */
   public BasicHttpServiceContext(HttpServiceHandlerSpecification spec,
                                  Program program, RunId runId, int instanceId, AtomicInteger instanceCount,
-                                 Arguments runtimeArgs, MetricsCollectionService metricsCollectionService,
+                                 ProgramOptions programOptions, MetricsCollectionService metricsCollectionService,
                                  DatasetFramework dsFramework, DiscoveryServiceClient discoveryServiceClient,
-                                 TransactionSystemClient txClient, LocationFactory locationFactory,
-                                 PluginInstantiator pluginInstantiator) {
-    super(program, runId, runtimeArgs, spec.getDatasets(),
+                                 TransactionSystemClient txClient, PluginInstantiator pluginInstantiator) {
+    super(program, runId, programOptions, spec.getDatasets(),
           getMetricCollector(metricsCollectionService, program, spec.getName(), runId.getId(), instanceId),
-          dsFramework, discoveryServiceClient, locationFactory, pluginInstantiator);
+          dsFramework, discoveryServiceClient, pluginInstantiator);
     this.spec = spec;
     this.instanceId = instanceId;
     this.instanceCount = instanceCount;

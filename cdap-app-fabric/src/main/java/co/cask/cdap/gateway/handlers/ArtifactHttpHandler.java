@@ -190,7 +190,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
       ArtifactDetail detail = artifactRepository.getArtifact(artifactId);
       ArtifactDescriptor descriptor = detail.getDescriptor();
       // info hides some fields that are available in detail, such as the location of the artifact
-      ArtifactInfo info = new ArtifactInfo(descriptor.getArtifactId(), detail.getMeta().getClasses());
+      ArtifactInfo info = new ArtifactInfo(descriptor.getArtifact().toArtifactId(), detail.getMeta().getClasses());
       responder.sendJson(HttpResponseStatus.OK, info, ArtifactInfo.class, GSON);
     } catch (ArtifactNotFoundException e) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, "Artifact " + artifactId + " not found.");
@@ -247,7 +247,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
       // flatten the map
       for (Map.Entry<ArtifactDescriptor, List<PluginClass>> pluginsEntry : plugins.entrySet()) {
         ArtifactDescriptor pluginArtifact = pluginsEntry.getKey();
-        ArtifactSummary pluginArtifactSummary = ArtifactSummary.from(pluginArtifact.getArtifactId());
+        ArtifactSummary pluginArtifactSummary = ArtifactSummary.from(pluginArtifact.getArtifact());
 
         for (PluginClass pluginClass : pluginsEntry.getValue()) {
           pluginSummaries.add(new PluginSummary(
@@ -286,7 +286,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
       // flatten the map
       for (Map.Entry<ArtifactDescriptor, PluginClass> pluginsEntry : plugins.entrySet()) {
         ArtifactDescriptor pluginArtifact = pluginsEntry.getKey();
-        ArtifactSummary pluginArtifactSummary = ArtifactSummary.from(pluginArtifact.getArtifactId());
+        ArtifactSummary pluginArtifactSummary = ArtifactSummary.from(pluginArtifact.getArtifact());
 
         PluginClass pluginClass = pluginsEntry.getValue();
         pluginInfos.add(new PluginInfo(

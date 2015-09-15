@@ -29,6 +29,7 @@ import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
+import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.stream.StreamEventDecoder;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -67,6 +68,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
+import com.google.common.io.Files;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.inject.ProvisionException;
@@ -100,12 +102,14 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
+import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.regex.Pattern;
 import javax.annotation.Nonnull;
@@ -144,6 +148,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   private final StreamAdmin streamAdmin;
   private final TransactionSystemClient txClient;
   private final UsageRegistry usageRegistry;
+  private final Map<String, String> artifactFileNames;
 
   private Job job;
   private Transaction transaction;
@@ -159,7 +164,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
                           DynamicMapReduceContext context,
                           Location programJarLocation, LocationFactory locationFactory,
                           StreamAdmin streamAdmin, TransactionSystemClient txClient,
-                          UsageRegistry usageRegistry) {
+                          UsageRegistry usageRegistry, Map<String, String> artifactFileNames) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.mapReduce = mapReduce;
@@ -170,6 +175,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     this.txClient = txClient;
     this.context = context;
     this.usageRegistry = usageRegistry;
+    this.artifactFileNames = artifactFileNames;
   }
 
   @Override
@@ -207,12 +213,24 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       Location tempLocation = createTempLocationDirectory();
       this.cleanupTask = createCleanupTask(tempDir, tempLocation);
 
+      // For local mode, everything is in the configuration classloader already, hence no need to create new jar
+      Location artifactArchive = null;
+      if (!MapReduceTaskContextProvider.isLocal(mapredConf)) {
+        // After calling beforeSubmit, we know what plugins are needed for the program, hence construct the proper
+        // ClassLoader from here and use it for setting up the job
+        artifactArchive = createArchive(context.getPlugins(), context.getNamespaceId(), tempDir, tempLocation);
+        if (artifactArchive != null) {
+          job.addCacheArchive(artifactArchive.toURI());
+        }
+      }
+
       // Alter the configuration ClassLoader to a MapReduceClassLoader that supports plugin
       // It is mainly for standalone mode to have the same ClassLoader as in distributed mode
-      // It can only be constructed here because we need to have all adapter plugins information
+      // It can only be constructed here because we need to have all plugins information
       classLoader = new MapReduceClassLoader(context.getProgram().getClassLoader(),
-                                             mapredConf,
+                                             Id.Namespace.from(context.getNamespaceId()),
                                              context.getPlugins(),
+                                             artifactFileNames,
                                              context.getPluginInstantiator());
       mapredConf.setClassLoader(new WeakReferenceDelegatorClassLoader(classLoader));
       ClassLoaders.setContextClassLoader(mapredConf.getClassLoader());
@@ -265,9 +283,11 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       Transaction tx = txClient.startLong();
       try {
         // We remember tx, so that we can re-use it in mapreduce tasks
-        // Make a copy of the conf and rewrite the template plugin directory to be the plugin archive name
         CConfiguration cConfCopy = cConf;
-        contextConfig.set(context, cConfCopy, tx, programJar.toURI());
+        if (artifactArchive != null) {
+          cConfCopy.set(Constants.AppFabric.MRTASK_PLUGIN_DIR, artifactArchive.getName());
+        }
+        contextConfig.set(context, cConfCopy, tx, programJar.toURI(), artifactFileNames);
 
         LOG.info("Submitting MapReduce Job: {}", context);
         // submits job and returns immediately. Shouldn't need to set context ClassLoader.
@@ -914,6 +934,57 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     ContainerLauncherGenerator.generateLauncherJar(applicationClassPath, MapReduceClassLoader.class.getName(),
       Locations.newOutputSupplier(launcherJar));
     return launcherJar;
+  }
+
+  @Nullable
+  private Location createArchive(@Nullable Map<String, Plugin> plugins, String ns, File tempDir, Location targetDir)
+    throws IOException {
+
+    if (plugins == null || plugins.isEmpty()) {
+      return null;
+    }
+
+    File jarFile = File.createTempFile("artifact", ".jar", tempDir);
+    Set<String> fileNames = new HashSet<>();
+    Set<String> artifactNames = new HashSet<>();
+    Set<String> namespaces = new HashSet<>();
+    String entryPrefix = "data/namespaces/";
+    try (JarOutputStream output = new JarOutputStream(new FileOutputStream(jarFile))) {
+      // Create top level dir
+      output.putNextEntry(new JarEntry(entryPrefix));
+
+      for (Map.Entry<String, Plugin> entry : plugins.entrySet()) {
+        Plugin plugin = entry.getValue();
+        String namespace = Id.Artifact.from(Id.Namespace.from(ns), plugin.getArtifactId()).getNamespace().getId();
+        String artifactName = plugin.getArtifactId().getName();
+        String fileName = artifactFileNames.get(plugin.getArtifactId().toString());
+
+        if (fileNames.contains(fileName)) {
+          continue;
+        }
+
+        if (!namespaces.contains(namespace)) {
+          output.putNextEntry(new JarEntry(String.format("%s/%s/", entryPrefix, namespace)));
+          namespaces.add(namespace);
+        }
+
+        if (!artifactNames.contains(artifactName)) {
+          output.putNextEntry(new JarEntry(String.format("%s/%s/artifacts/%s/", entryPrefix, namespace, artifactName)));
+          artifactNames.add(artifactName);
+        }
+
+        File pluginDir = new File(entryPrefix);
+        String artifactFile = String.format("%s/artifacts/%s/%s", namespace, artifactName, fileName);
+        File artifact = new File(pluginDir, artifactFile);
+        output.putNextEntry(new JarEntry(artifact.getPath()));
+        fileNames.add(fileName);
+        Files.copy(artifact, output);
+      }
+    }
+
+    Location location = targetDir.append("artifacts.jar");
+    Files.copy(jarFile, Locations.newOutputSupplier(location));
+    return location;
   }
 
   private Runnable createCleanupTask(final Object...resources) {

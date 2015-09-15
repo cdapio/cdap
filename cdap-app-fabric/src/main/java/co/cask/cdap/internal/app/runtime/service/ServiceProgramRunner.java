@@ -40,7 +40,6 @@ import com.google.inject.Inject;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.ServiceAnnouncer;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.filesystem.LocationFactory;
 
 import javax.annotation.Nullable;
 
@@ -56,13 +55,12 @@ public class ServiceProgramRunner implements ProgramRunner {
   private final TransactionSystemClient txClient;
   private final ServiceAnnouncer serviceAnnouncer;
   private final DataFabricFacadeFactory dataFabricFacadeFactory;
-  private final LocationFactory locationFactory;
 
   @Inject
   public ServiceProgramRunner(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
                               DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient,
                               TransactionSystemClient txClient, ServiceAnnouncer serviceAnnouncer,
-                              DataFabricFacadeFactory dataFabricFacadeFactory, LocationFactory locationFactory) {
+                              DataFabricFacadeFactory dataFabricFacadeFactory) {
     this.cConf = cConf;
     this.metricsCollectionService = metricsCollectionService;
     this.datasetFramework = datasetFramework;
@@ -70,7 +68,6 @@ public class ServiceProgramRunner implements ProgramRunner {
     this.txClient = txClient;
     this.serviceAnnouncer = serviceAnnouncer;
     this.dataFabricFacadeFactory = dataFabricFacadeFactory;
-    this.locationFactory = locationFactory;
   }
 
   @Override
@@ -103,10 +100,10 @@ public class ServiceProgramRunner implements ProgramRunner {
       ((ProgramContextAware) datasetFramework).initContext(new Id.Run(programId, runId.getId()));
     }
 
-    ServiceHttpServer component = new ServiceHttpServer(host, program, spec, runId, options.getUserArguments(),
+    ServiceHttpServer component = new ServiceHttpServer(host, program, spec, runId, options,
                                       instanceId, instanceCount, serviceAnnouncer,
                                       metricsCollectionService, datasetFramework, dataFabricFacadeFactory,
-                                      txClient, discoveryServiceClient, locationFactory,
+                                      txClient, discoveryServiceClient,
                                       createArtifactPluginInstantiator(program.getClassLoader()));
 
     ProgramController controller = new ServiceProgramControllerAdapter(component, program.getId(), runId,

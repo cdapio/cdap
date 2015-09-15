@@ -24,7 +24,7 @@ import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.app.program.Program;
-import co.cask.cdap.app.runtime.Arguments;
+import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.utils.ImmutablePair;
@@ -38,7 +38,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.filesystem.LocationFactory;
 
 import java.util.Map;
 import java.util.Set;
@@ -63,13 +62,13 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
   BasicFlowletContext(Program program, final String flowletId,
                       int instanceId, RunId runId,
                       int instanceCount, Set<String> datasets,
-                      Arguments runtimeArguments, FlowletSpecification flowletSpec,
+                      ProgramOptions programOptions, FlowletSpecification flowletSpec,
                       MetricsCollectionService metricsCollectionService,
                       DiscoveryServiceClient discoveryServiceClient,
-                      DatasetFramework dsFramework, LocationFactory locationFactory) {
-    super(program, runId, runtimeArguments, datasets,
+                      DatasetFramework dsFramework) {
+    super(program, runId, programOptions, datasets,
           getMetricCollector(metricsCollectionService, program, flowletId, runId.getId(), instanceId),
-          dsFramework, discoveryServiceClient, locationFactory);
+          dsFramework, discoveryServiceClient);
     this.namespaceId = program.getNamespaceId();
     this.flowId = program.getName();
     this.flowletId = flowletId;

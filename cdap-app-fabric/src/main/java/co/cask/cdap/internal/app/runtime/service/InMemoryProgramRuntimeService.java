@@ -26,6 +26,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.InMemoryProgramLiveInfo;
 import co.cask.cdap.proto.NotRunningProgramLiveInfo;
@@ -62,8 +63,9 @@ public final class InMemoryProgramRuntimeService extends AbstractProgramRuntimeS
   private final CConfiguration cConf;
 
   @Inject
-  public InMemoryProgramRuntimeService(ProgramRunnerFactory programRunnerFactory, CConfiguration cConf) {
-    super(programRunnerFactory);
+  public InMemoryProgramRuntimeService(ProgramRunnerFactory programRunnerFactory, CConfiguration cConf,
+                                       ArtifactRepository artifactRepository) {
+    super(programRunnerFactory, artifactRepository);
     this.cConf = cConf;
   }
 

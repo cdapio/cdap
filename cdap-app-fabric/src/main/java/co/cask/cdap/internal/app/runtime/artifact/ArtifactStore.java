@@ -230,7 +230,7 @@ public class ArtifactStore {
             ArtifactData data = gson.fromJson(Bytes.toString(columnEntry.getValue()), ArtifactData.class);
             Id.Artifact artifactId = Id.Artifact.from(artifactKey.namespace, artifactKey.name, version);
             artifacts.add(new ArtifactDetail(new ArtifactDescriptor(
-              artifactId.toArtifactId(), locationFactory.create(data.locationURI)), data.meta));
+              artifactId, locationFactory.create(data.locationURI)), data.meta));
           }
         }
         return Collections.unmodifiableList(artifacts);
@@ -293,7 +293,7 @@ public class ArtifactStore {
       throw new ArtifactNotFoundException(artifactId);
     }
     return new ArtifactDetail(
-      new ArtifactDescriptor(artifactId.toArtifactId(), locationFactory.create(data.locationURI)),
+      new ArtifactDescriptor(artifactId, locationFactory.create(data.locationURI)),
       data.meta);
   }
 
@@ -323,7 +323,7 @@ public class ArtifactStore {
               AppData appData = gson.fromJson(Bytes.toString(column.getValue()), AppData.class);
 
               ArtifactDescriptor artifactDescriptor = new ArtifactDescriptor(
-                artifactColumn.artifactId.toArtifactId(), locationFactory.create(appData.artifactLocationURI));
+                artifactColumn.artifactId, locationFactory.create(appData.artifactLocationURI));
               List<ApplicationClass> existingAppClasses = result.get(artifactDescriptor);
               if (existingAppClasses == null) {
                 existingAppClasses = new ArrayList<>();
@@ -364,7 +364,7 @@ public class ArtifactStore {
               AppData appData = gson.fromJson(Bytes.toString(column.getValue()), AppData.class);
 
               ArtifactDescriptor artifactDescriptor = new ArtifactDescriptor(
-                artifactColumn.artifactId.toArtifactId(), locationFactory.create(appData.artifactLocationURI));
+                artifactColumn.artifactId, locationFactory.create(appData.artifactLocationURI));
               result.put(artifactDescriptor, appData.appClass);
             }
           }
@@ -462,7 +462,7 @@ public class ArtifactStore {
               // filter out plugins that don't extend this version of the parent artifact
               if (pluginData.usableBy.versionIsInRange(parentArtifactId.getVersion())) {
                 ArtifactDescriptor artifactInfo = new ArtifactDescriptor(
-                  artifactColumn.artifactId.toArtifactId(), locationFactory.create(pluginData.artifactLocationURI));
+                  artifactColumn.artifactId, locationFactory.create(pluginData.artifactLocationURI));
                 result.put(artifactInfo, pluginData.pluginClass);
               }
             }
@@ -562,7 +562,7 @@ public class ArtifactStore {
       destination.delete();
       throw new IOException(e);
     }
-    return new ArtifactDetail(new ArtifactDescriptor(artifactId.toArtifactId(), destination), artifactMeta);
+    return new ArtifactDetail(new ArtifactDescriptor(artifactId, destination), artifactMeta);
   }
 
   /**
@@ -725,7 +725,7 @@ public class ArtifactStore {
       ArtifactData data = gson.fromJson(Bytes.toString(columnVal.getValue()), ArtifactData.class);
       Id.Artifact artifactId = Id.Artifact.from(artifactKey.namespace, artifactKey.name, version);
       artifactDetails.add(new ArtifactDetail(
-        new ArtifactDescriptor(artifactId.toArtifactId(), locationFactory.create(data.locationURI)),
+        new ArtifactDescriptor(artifactId, locationFactory.create(data.locationURI)),
         data.meta));
     }
   }
@@ -742,7 +742,7 @@ public class ArtifactStore {
       // filter out plugins that don't extend this version of the parent artifact
       if (pluginData.usableBy.versionIsInRange(parentArtifactId.getVersion())) {
         ArtifactDescriptor artifactDescriptor = new ArtifactDescriptor(
-          artifactColumn.artifactId.toArtifactId(), locationFactory.create(pluginData.artifactLocationURI));
+          artifactColumn.artifactId, locationFactory.create(pluginData.artifactLocationURI));
 
         if (!map.containsKey(artifactDescriptor)) {
           map.put(artifactDescriptor, Lists.<PluginClass>newArrayList());

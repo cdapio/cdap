@@ -175,15 +175,15 @@ public class ArtifactRepositoryTest {
       pluginNames.add(pluginClass.getName());
     }
     Assert.assertEquals(Sets.newHashSet("manual1", "manual2", "TestPlugin", "TestPlugin2"), pluginNames);
-    Assert.assertEquals(systemAppArtifactId.getName(), appArtifactDetail.getDescriptor().getArtifactId().getName());
+    Assert.assertEquals(systemAppArtifactId.getName(), appArtifactDetail.getDescriptor().getArtifact().getName());
     Assert.assertEquals(systemAppArtifactId.getVersion(),
-                        appArtifactDetail.getDescriptor().getArtifactId().getVersion());
+                        appArtifactDetail.getDescriptor().getArtifact().getVersion());
 
     // check plugin artifact added correctly
     ArtifactDetail pluginArtifactDetail = artifactRepository.getArtifact(pluginArtifactId);
-    Assert.assertEquals(pluginArtifactId.getName(), pluginArtifactDetail.getDescriptor().getArtifactId().getName());
+    Assert.assertEquals(pluginArtifactId.getName(), pluginArtifactDetail.getDescriptor().getArtifact().getName());
     Assert.assertEquals(pluginArtifactId.getVersion(),
-                        pluginArtifactDetail.getDescriptor().getArtifactId().getVersion());
+                        pluginArtifactDetail.getDescriptor().getArtifact().getVersion());
     // check manually added plugins are there
     Assert.assertTrue(pluginArtifactDetail.getMeta().getClasses().getPlugins().containsAll(manuallyAddedPlugins));
   }
@@ -257,7 +257,7 @@ public class ArtifactRepositoryTest {
     Map.Entry<ArtifactDescriptor, PluginClass> plugin =
       artifactRepository.findPlugin(APP_ARTIFACT_ID, "plugin", "TestPlugin2", new PluginSelector());
     Assert.assertNotNull(plugin);
-    Assert.assertEquals(new ArtifactVersion("1.0"), plugin.getKey().getArtifactId().getVersion());
+    Assert.assertEquals(new ArtifactVersion("1.0"), plugin.getKey().getArtifact().getVersion());
     Assert.assertEquals("TestPlugin2", plugin.getValue().getName());
 
     // Create another plugin jar with later version and update the repository
@@ -268,7 +268,7 @@ public class ArtifactRepositoryTest {
     // Should select the latest version
     plugin = artifactRepository.findPlugin(APP_ARTIFACT_ID, "plugin", "TestPlugin2", new PluginSelector());
     Assert.assertNotNull(plugin);
-    Assert.assertEquals(new ArtifactVersion("2.0"), plugin.getKey().getArtifactId().getVersion());
+    Assert.assertEquals(new ArtifactVersion("2.0"), plugin.getKey().getArtifact().getVersion());
     Assert.assertEquals("TestPlugin2", plugin.getValue().getName());
 
     // Load the Plugin class from the classLoader.
@@ -284,7 +284,7 @@ public class ArtifactRepositoryTest {
       }
     });
     Assert.assertNotNull(plugin);
-    Assert.assertEquals(new ArtifactVersion("1.0"), plugin.getKey().getArtifactId().getVersion());
+    Assert.assertEquals(new ArtifactVersion("1.0"), plugin.getKey().getArtifact().getVersion());
     Assert.assertEquals("TestPlugin2", plugin.getValue().getName());
 
     // Load the Plugin class again from the current plugin selected

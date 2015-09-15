@@ -33,7 +33,6 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
-import co.cask.cdap.internal.app.runtime.adapter.ArtifactDescriptor;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.proto.Id;
@@ -104,7 +103,7 @@ public class ArtifactInspector {
     ArtifactClasses.Builder builder = inspectApplications(artifactId, ArtifactClasses.builder(), artifactFile);
 
     try (PluginInstantiator pluginInstantiator = new PluginInstantiator(cConf, parentClassLoader)) {
-      inspectPlugins(builder, artifactId, artifactFile, pluginInstantiator);
+      inspectPlugins(builder, artifactFile, pluginInstantiator);
     }
 
     return builder.build();
@@ -175,8 +174,8 @@ public class ArtifactInspector {
   /**
    * Inspects the plugin file and extracts plugin classes information.
    */
-  private ArtifactClasses.Builder inspectPlugins(ArtifactClasses.Builder builder, Id.Artifact artifactId,
-                                                 File artifactFile, PluginInstantiator pluginInstantiator)
+  private ArtifactClasses.Builder inspectPlugins(ArtifactClasses.Builder builder, File artifactFile,
+                                                 PluginInstantiator pluginInstantiator)
     throws IOException, InvalidArtifactException {
 
     // See if there are export packages. Plugins should be in those packages
@@ -186,11 +185,8 @@ public class ArtifactInspector {
     }
 
     // Load the plugin class and inspect the config field.
-    ArtifactDescriptor artifactDescriptor = new ArtifactDescriptor(artifactId.toArtifactId(),
-                                                                   Locations.toLocation(artifactFile));
-
     try {
-      ClassLoader pluginClassLoader = pluginInstantiator.getArtifactClassLoader(artifactDescriptor);
+      ClassLoader pluginClassLoader = pluginInstantiator.getArtifactClassLoader(Locations.toLocation(artifactFile));
       for (Class<?> cls : getPluginClasses(exportPackages, pluginClassLoader)) {
         Plugin pluginAnnotation = cls.getAnnotation(Plugin.class);
         if (pluginAnnotation == null) {

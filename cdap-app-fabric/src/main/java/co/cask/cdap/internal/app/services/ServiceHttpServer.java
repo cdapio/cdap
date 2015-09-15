@@ -22,7 +22,7 @@ import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.app.program.Program;
-import co.cask.cdap.app.runtime.Arguments;
+import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.CombineClassLoader;
@@ -59,7 +59,6 @@ import org.apache.twill.api.RunId;
 import org.apache.twill.api.ServiceAnnouncer;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -91,7 +90,7 @@ public class ServiceHttpServer extends AbstractIdleService {
   private final Program program;
   private final ServiceSpecification spec;
   private final RunId runId;
-  private final Arguments runtimeArgs;
+  private final ProgramOptions programOptions;
   private final int instanceId;
   private final AtomicInteger instanceCount;
   private final ServiceAnnouncer serviceAnnouncer;
@@ -101,24 +100,23 @@ public class ServiceHttpServer extends AbstractIdleService {
   private final TransactionSystemClient txClient;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final BasicHttpServiceContextFactory contextFactory;
-  private final LocationFactory locationFactory;
   private final PluginInstantiator pluginInstantiator;
 
   private NettyHttpService service;
   private Cancellable cancelDiscovery;
   private Timer timer;
 
-  public ServiceHttpServer(String host, Program program, ServiceSpecification spec, RunId runId, Arguments runtimeArgs,
-                           int instanceId, int instanceCount, ServiceAnnouncer serviceAnnouncer,
+  public ServiceHttpServer(String host, Program program, ServiceSpecification spec, RunId runId,
+                           ProgramOptions programOptions, int instanceId, int instanceCount,
+                           ServiceAnnouncer serviceAnnouncer,
                            MetricsCollectionService metricsCollectionService, DatasetFramework datasetFramework,
                            DataFabricFacadeFactory dataFabricFacadeFactory, TransactionSystemClient txClient,
-                           DiscoveryServiceClient discoveryServiceClient, LocationFactory locationFactory,
-                           PluginInstantiator pluginInstantiator) {
+                           DiscoveryServiceClient discoveryServiceClient, PluginInstantiator pluginInstantiator) {
     this.host = host;
     this.program = program;
     this.spec = spec;
     this.runId = runId;
-    this.runtimeArgs = runtimeArgs;
+    this.programOptions = programOptions;
     this.instanceId = instanceId;
     this.instanceCount = new AtomicInteger(instanceCount);
     this.serviceAnnouncer = serviceAnnouncer;
@@ -127,7 +125,6 @@ public class ServiceHttpServer extends AbstractIdleService {
     this.dataFabricFacadeFactory = dataFabricFacadeFactory;
     this.txClient = txClient;
     this.discoveryServiceClient = discoveryServiceClient;
-    this.locationFactory = locationFactory;
     this.pluginInstantiator = pluginInstantiator;
 
     this.contextFactory = createHttpServiceContextFactory();
@@ -169,9 +166,9 @@ public class ServiceHttpServer extends AbstractIdleService {
     return new BasicHttpServiceContextFactory() {
       @Override
       public BasicHttpServiceContext create(HttpServiceHandlerSpecification spec) {
-        return new BasicHttpServiceContext(spec, program, runId, instanceId, instanceCount, runtimeArgs,
+        return new BasicHttpServiceContext(spec, program, runId, instanceId, instanceCount, programOptions,
                                            metricsCollectionService, datasetFramework,
-                                           discoveryServiceClient, txClient, locationFactory, pluginInstantiator);
+                                           discoveryServiceClient, txClient, pluginInstantiator);
       }
     };
   }

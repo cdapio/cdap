@@ -25,9 +25,8 @@ import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.workflow.WorkflowToken;
-import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.app.program.Program;
-import co.cask.cdap.app.runtime.Arguments;
+import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.data2.dataset2.DatasetCacheKey;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DynamicDatasetContext;
@@ -42,7 +41,6 @@ import com.google.common.cache.RemovalNotification;
 import com.google.common.collect.Maps;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,7 +69,7 @@ public class DynamicMapReduceContext extends BasicMapReduceContext implements Da
 
   public DynamicMapReduceContext(Program program,
                                  RunId runId,
-                                 Arguments runtimeArguments,
+                                 ProgramOptions programOptions,
                                  MapReduceSpecification spec,
                                  long logicalStartTime, @Nullable String programNameInWorkflow,
                                  @Nullable WorkflowToken workflowToken,
@@ -79,11 +77,10 @@ public class DynamicMapReduceContext extends BasicMapReduceContext implements Da
                                  MetricsCollectionService metricsCollectionService,
                                  TransactionSystemClient txClient,
                                  DatasetFramework dsFramework,
-                                 LocationFactory locationFactory,
                                  @Nullable PluginInstantiator pluginInstantiator) {
-    super(program, runId, runtimeArguments, Collections.<String>emptySet(), spec,
+    super(program, runId, programOptions, Collections.<String>emptySet(), spec,
           logicalStartTime, programNameInWorkflow, workflowToken, discoveryServiceClient, metricsCollectionService,
-          dsFramework, locationFactory, pluginInstantiator);
+          dsFramework, pluginInstantiator);
     this.datasetsCache = CacheBuilder.newBuilder()
       .removalListener(new RemovalListener<Long, Map<DatasetCacheKey, Dataset>>() {
         @Override
@@ -111,7 +108,8 @@ public class DynamicMapReduceContext extends BasicMapReduceContext implements Da
     this.dynamicDatasetContext = new DynamicDatasetContext(getProgram().getId().getNamespace(),
                                                            txContext, getProgramMetrics(), dsFramework,
                                                            program.getClassLoader(),
-                                                           runtimeArguments.asMap(), null, getOwners()) {
+                                                           programOptions.getUserArguments().asMap(), null,
+                                                           getOwners()) {
       @Nullable
       @Override
       protected LoadingCache<Long, Map<DatasetCacheKey, Dataset>> getDatasetsCache() {

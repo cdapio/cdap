@@ -171,7 +171,7 @@ public class ArtifactRepository {
     List<ApplicationClassInfo> infos = Lists.newArrayList();
     for (Map.Entry<ArtifactDescriptor, ApplicationClass> entry :
       artifactStore.getApplicationClasses(namespace, className).entrySet()) {
-      ArtifactSummary artifactSummary = ArtifactSummary.from(entry.getKey().getArtifactId());
+      ArtifactSummary artifactSummary = ArtifactSummary.from(entry.getKey().getArtifact());
       ApplicationClass appClass = entry.getValue();
       infos.add(new ApplicationClassInfo(artifactSummary, appClass.getClassName(), appClass.getConfigSchema()));
     }
@@ -225,12 +225,34 @@ public class ArtifactRepository {
 
   /**
    * Returns a {@link Map.Entry} representing the plugin information for the plugin being requested.
+   * @param artifactId the id of the artifact to get plugins for
+   * @param pluginType plugin type name
+   * @param pluginName plugin name
+   * @param pluginArtifactId {@link ArtifactId} plugin's artifact id
+   * @return the entry found
+   * @throws IOException if there was an exception reading plugin metadata from the artifact store
+   * @throws PluginNotExistsException if no plugins of the given type and name are available to the given artifact
+   */
+  public Map.Entry<ArtifactDescriptor, PluginClass> getPlugin(Id.Artifact artifactId, String pluginType,
+                                                              String pluginName, ArtifactId pluginArtifactId)
+    throws IOException, PluginNotExistsException {
+    SortedMap<ArtifactDescriptor, PluginClass> classSortedMap = getPlugins(artifactId, pluginType, pluginName);
+    for (Map.Entry<ArtifactDescriptor, PluginClass> classEntry : classSortedMap.entrySet()) {
+      if (classEntry.getKey().getArtifact().toArtifactId().equals(pluginArtifactId)) {
+        return classEntry;
+      }
+    }
+    throw new PluginNotExistsException(artifactId.getNamespace(), pluginType, pluginName);
+  }
+
+  /**
+   * Returns a {@link Map.Entry} representing the plugin information for the plugin being requested.
    *
    * @param artifactId the id of the artifact to get plugins for
    * @param pluginType plugin type name
    * @param pluginName plugin name
    * @param selector for selecting which plugin to use
-   * @return the entry found or {@code null} if none was found
+   * @return the entry found
    * @throws IOException if there was an exception reading plugin metadata from the artifact store
    * @throws PluginNotExistsException if no plugins of the given type and name are available to the given artifact
    */
@@ -241,7 +263,7 @@ public class ArtifactRepository {
       artifactId, pluginType, pluginName);
     SortedMap<ArtifactId, PluginClass> artifactIds = Maps.newTreeMap();
     for (Map.Entry<ArtifactDescriptor, PluginClass> pluginClassEntry : pluginClasses.entrySet()) {
-      artifactIds.put(pluginClassEntry.getKey().getArtifactId(), pluginClassEntry.getValue());
+      artifactIds.put(pluginClassEntry.getKey().getArtifact().toArtifactId(), pluginClassEntry.getValue());
     }
     Map.Entry<ArtifactId, PluginClass> chosenArtifact = selector.select(artifactIds);
     if (chosenArtifact == null) {
@@ -249,7 +271,7 @@ public class ArtifactRepository {
     }
 
     for (Map.Entry<ArtifactDescriptor, PluginClass> pluginClassEntry : pluginClasses.entrySet()) {
-      if (pluginClassEntry.getKey().getArtifactId().compareTo(chosenArtifact.getKey()) == 0) {
+      if (pluginClassEntry.getKey().getArtifact().toArtifactId().compareTo(chosenArtifact.getKey()) == 0) {
         return pluginClassEntry;
       }
     }
@@ -452,7 +474,7 @@ public class ArtifactRepository {
   // convert details to summaries (to hide location and other unnecessary information)
   private List<ArtifactSummary> convertAndAdd(List<ArtifactSummary> summaries, Iterable<ArtifactDetail> details) {
     for (ArtifactDetail detail : details) {
-      summaries.add(ArtifactSummary.from(detail.getDescriptor().getArtifactId()));
+      summaries.add(ArtifactSummary.from(detail.getDescriptor().getArtifact()));
     }
     return summaries;
   }
@@ -494,9 +516,9 @@ public class ArtifactRepository {
         isInvalid = true;
         errMsg
           .append(" Parent '")
-          .append(parent.getDescriptor().getArtifactId().getName())
+          .append(parent.getDescriptor().getArtifact().getName())
           .append("-")
-          .append(parent.getDescriptor().getArtifactId().getVersion().getVersion())
+          .append(parent.getDescriptor().getArtifact().getVersion().getVersion())
           .append("' has parents.");
       }
     }
@@ -513,7 +535,7 @@ public class ArtifactRepository {
   private void addAppSummaries(List<ApplicationClassSummary> summaries, Id.Namespace namespace) {
     for (Map.Entry<ArtifactDescriptor, List<ApplicationClass>> classInfo :
       artifactStore.getApplicationClasses(namespace).entrySet()) {
-      ArtifactSummary artifactSummary = ArtifactSummary.from(classInfo.getKey().getArtifactId());
+      ArtifactSummary artifactSummary = ArtifactSummary.from(classInfo.getKey().getArtifact());
 
       for (ApplicationClass appClass : classInfo.getValue()) {
         summaries.add(new ApplicationClassSummary(artifactSummary, appClass.getClassName()));

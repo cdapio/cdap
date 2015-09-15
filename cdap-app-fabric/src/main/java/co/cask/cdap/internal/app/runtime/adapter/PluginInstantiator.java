@@ -24,6 +24,7 @@ import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.plugin.PluginPropertyField;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
@@ -40,6 +41,7 @@ import com.google.common.cache.RemovalNotification;
 import com.google.common.io.Closeables;
 import com.google.common.primitives.Primitives;
 import com.google.common.reflect.TypeToken;
+import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,17 +65,26 @@ public class PluginInstantiator implements Closeable {
 
   private static final Logger LOG = LoggerFactory.getLogger(PluginInstantiator.class);
 
+  private final LoadingCache<Location, ClassLoader> locationClassLoaders;
   private final LoadingCache<ArtifactDescriptor, ClassLoader> classLoaders;
   private final InstantiatorFactory instantiatorFactory;
   private final File tmpDir;
+  private final File pluginDir;
   private final ClassLoader parentClassLoader;
 
   public PluginInstantiator(CConfiguration cConf, ClassLoader parentClassLoader) {
     this.instantiatorFactory = new InstantiatorFactory(false);
-
     File tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
       cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+    File prefix = cConf.get(Constants.AppFabric.MRTASK_PLUGIN_DIR) != null ?
+      new File(cConf.get(Constants.AppFabric.MRTASK_PLUGIN_DIR), cConf.get(Constants.CFG_LOCAL_DATA_DIR)) :
+      new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR));
+
+    this.pluginDir = new File(prefix, "namespaces");
     this.tmpDir = DirUtils.createTempDir(tmpDir);
+    this.locationClassLoaders = CacheBuilder.newBuilder()
+                                            .removalListener(new LocationClassLoaderRemovalListener())
+                                            .build(new LocationClassLoaderCacheLoader());
     this.classLoaders = CacheBuilder.newBuilder()
                                     .removalListener(new ClassLoaderRemovalListener())
                                     .build(new ClassLoaderCacheLoader());
@@ -98,6 +109,23 @@ public class PluginInstantiator implements Closeable {
   }
 
   /**
+   * Returns a {@link ClassLoader} for the given artifact identified by the given Location.
+   *
+   * @param location Location of the artifact
+   * @throws IOException if failed to expand the artifact jar to create the plugin ClassLoader
+   *
+   * @see PluginClassLoader
+   */
+  public ClassLoader getArtifactClassLoader(Location location) throws IOException {
+    try {
+      return locationClassLoaders.get(location);
+    } catch (ExecutionException e) {
+      Throwables.propagateIfInstanceOf(e.getCause(), IOException.class);
+      throw Throwables.propagate(e.getCause());
+    }
+  }
+
+  /**
    * Loads and returns the {@link Class} of the given plugin class.
    *
    * @param artifactDescriptor descriptor for the artifact the plugin is from.
@@ -112,6 +140,12 @@ public class PluginInstantiator implements Closeable {
   public <T> Class<T> loadClass(ArtifactDescriptor artifactDescriptor,
                                 PluginClass pluginClass) throws IOException, ClassNotFoundException {
     return (Class<T>) getArtifactClassLoader(artifactDescriptor).loadClass(pluginClass.getClassName());
+  }
+
+  @SuppressWarnings("unchecked")
+  public <T> Class<T> loadClass(Location location,
+                                PluginClass pluginClass) throws IOException, ClassNotFoundException {
+    return (Class<T>) getArtifactClassLoader(location).loadClass(pluginClass.getClassName());
   }
 
   /**
@@ -129,7 +163,27 @@ public class PluginInstantiator implements Closeable {
   @SuppressWarnings("unchecked")
   public <T> T newInstance(ArtifactDescriptor artifactDescriptor, PluginClass pluginClass,
                            PluginProperties properties) throws IOException, ClassNotFoundException {
-    ClassLoader classLoader = getArtifactClassLoader(artifactDescriptor);
+    return newInstance(getArtifactClassLoader(artifactDescriptor), pluginClass, properties);
+  }
+
+  /**
+   * Creates a new instance of the given plugin class by identifying the class loader using the given location
+   * @param location location of the plugin artifact jar
+   * @param pluginClass information about the plugin class. The plugin instnace will be instantiated based on this.
+   * @param properties properties to populate into the {@link PluginConfig} of the plugin instnace
+   * @param <T> Type of the plugin
+   * @return a new plugin instance
+   * @throws IOException if failed to expand the plugin jar to create the plugin ClassLoader
+   * @throws ClassNotFoundException if failed to load the given plugin class
+   */
+  @SuppressWarnings("unchecked")
+  public <T> T newInstance(Location location, PluginClass pluginClass,
+                           PluginProperties properties) throws IOException, ClassNotFoundException {
+    return newInstance(getArtifactClassLoader(location), pluginClass, properties);
+  }
+
+  private <T> T newInstance(ClassLoader classLoader, PluginClass pluginClass, PluginProperties properties)
+    throws ClassNotFoundException {
     TypeToken<?> pluginType = TypeToken.of(classLoader.loadClass(pluginClass.getClassName()));
 
     try {
@@ -144,7 +198,7 @@ public class PluginInstantiator implements Closeable {
       TypeToken<?> configFieldType = pluginType.resolveType(field.getGenericType());
       Object config = instantiatorFactory.get(configFieldType).create();
       Reflections.visit(config, configFieldType.getType(),
-                        new ConfigFieldSetter(pluginClass, artifactDescriptor, properties));
+                        new ConfigFieldSetter(pluginClass, properties));
 
       // Create the plugin instance
       return newInstance(pluginType, field, configFieldType, config);
@@ -192,6 +246,7 @@ public class PluginInstantiator implements Closeable {
   public void close() throws IOException {
     // Cleanup the ClassLoader cache and the temporary directoy for the expanded plugin jar.
     classLoaders.invalidateAll();
+    locationClassLoaders.invalidateAll();
     if (parentClassLoader instanceof Closeable) {
       Closeables.closeQuietly((Closeable) parentClassLoader);
     }
@@ -211,8 +266,10 @@ public class PluginInstantiator implements Closeable {
     @Override
     public ClassLoader load(ArtifactDescriptor key) throws Exception {
       File unpackedDir = DirUtils.createTempDir(tmpDir);
-      BundleJarUtil.unpackProgramJar(key.getLocation(), unpackedDir);
-
+      String artifactFile = String.format("%s/artifacts/%s/%s", key.getArtifact().getNamespace().getId(),
+                                          key.getArtifact().getName(), key.getLocation().getName());
+      File artifact = new File(pluginDir, artifactFile);
+      BundleJarUtil.unpackProgramJar(Locations.toLocation(artifact), unpackedDir);
       return new PluginClassLoader(unpackedDir, parentClassLoader);
     }
   }
@@ -231,6 +288,31 @@ public class PluginInstantiator implements Closeable {
     }
   }
 
+  private final class LocationClassLoaderCacheLoader extends CacheLoader<Location, ClassLoader> {
+
+    @Override
+    public ClassLoader load(Location location) throws Exception {
+      File unpackedDir = DirUtils.createTempDir(tmpDir);
+      BundleJarUtil.unpackProgramJar(location, unpackedDir);
+      return new PluginClassLoader(unpackedDir, parentClassLoader);
+    }
+  }
+
+  /**
+   * A RemovalListener for closing plugin ClassLoader.
+   */
+  private static final class LocationClassLoaderRemovalListener implements RemovalListener<Location, ClassLoader> {
+
+    @Override
+    public void onRemoval(RemovalNotification<Location, ClassLoader> notification) {
+      ClassLoader cl = notification.getValue();
+      if (cl instanceof Closeable) {
+        Closeables.closeQuietly((Closeable) cl);
+      }
+    }
+  }
+
+
   /**
    * A {@link FieldVisitor} for setting values into {@link PluginConfig} object based on {@link PluginProperties}.
    */
@@ -238,6 +320,10 @@ public class PluginInstantiator implements Closeable {
     private final PluginClass pluginClass;
     private final PluginProperties properties;
     private final ArtifactDescriptor artifactDescriptor;
+
+    public ConfigFieldSetter(PluginClass pluginClass, PluginProperties properties) {
+      this(pluginClass, null, properties);
+    }
 
     public ConfigFieldSetter(PluginClass pluginClass, ArtifactDescriptor artifactDescriptor,
                              PluginProperties properties) {

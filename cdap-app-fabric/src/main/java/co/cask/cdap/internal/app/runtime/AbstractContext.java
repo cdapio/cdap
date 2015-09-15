@@ -28,9 +28,10 @@ import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.app.program.Program;
-import co.cask.cdap.app.runtime.Arguments;
+import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.services.AbstractServiceDiscoverer;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.data.dataset.DatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
@@ -42,15 +43,17 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
+import java.io.File;
 import java.io.IOException;
-import java.net.URI;
+import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -60,49 +63,47 @@ import javax.annotation.Nullable;
  * Base class for program runtime context
  */
 public abstract class AbstractContext extends AbstractServiceDiscoverer
-                                      implements DatasetContext, RuntimeContext, PluginContext {
+  implements DatasetContext, RuntimeContext, PluginContext {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractContext.class);
+  private static final Gson GSON = new Gson();
+  private static final Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
   private final Program program;
   private final RunId runId;
   private final List<Id> owners;
   private final Map<String, String> runtimeArguments;
   private final Map<String, Dataset> datasets;
+  private final Map<String, String> artifactLocations;
 
   private final MetricsContext programMetrics;
 
   private final DatasetInstantiator dsInstantiator;
   private final DiscoveryServiceClient discoveryServiceClient;
-  private final LocationFactory locationFactory;
 
   private final PluginInstantiator pluginInstantiator;
 
   /**
    * Constructs a context without application template adapter support.
    */
-  protected AbstractContext(Program program, RunId runId, Arguments arguments,
+  protected AbstractContext(Program program, RunId runId, ProgramOptions programOptions,
                             Set<String> datasets, MetricsContext metricsContext,
-                            DatasetFramework dsFramework, DiscoveryServiceClient discoveryServiceClient,
-                            LocationFactory locationFactory) {
-    this(program, runId, arguments, datasets, metricsContext, dsFramework, discoveryServiceClient,
-         locationFactory, null);
+                            DatasetFramework dsFramework, DiscoveryServiceClient discoveryServiceClient) {
+    this(program, runId, programOptions, datasets, metricsContext, dsFramework, discoveryServiceClient, null);
   }
 
   /**
    * Constructs a context. To have application template adapter support,
    * both the {@code adapterSpec} and {@code pluginInstantiator} must not be null.
    */
-  protected AbstractContext(Program program, RunId runId, Arguments arguments,
+  protected AbstractContext(Program program, RunId runId, ProgramOptions programOptions,
                             Set<String> datasets, MetricsContext metricsContext,
                             DatasetFramework dsFramework, DiscoveryServiceClient discoveryServiceClient,
-                            LocationFactory locationFactory,
                             @Nullable PluginInstantiator pluginInstantiator) {
     super(program.getId());
     this.program = program;
     this.runId = runId;
-    this.runtimeArguments = ImmutableMap.copyOf(arguments.asMap());
+    this.runtimeArguments = ImmutableMap.copyOf(programOptions.getUserArguments().asMap());
     this.discoveryServiceClient = discoveryServiceClient;
-    this.locationFactory = locationFactory;
     this.owners = createOwners(program.getId());
 
     this.programMetrics = metricsContext;
@@ -114,6 +115,8 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     // todo: initialized datasets should be managed by DatasetContext (ie. DatasetInstantiator): refactor further
     this.datasets = Datasets.createDatasets(dsInstantiator, datasets, runtimeArguments);
     this.pluginInstantiator = pluginInstantiator;
+    this.artifactLocations = GSON.fromJson(
+      programOptions.getArguments().getOption(ProgramOptionConstants.PLUGIN_FILENAMES), STRING_MAP_TYPE);
   }
 
   private List<Id> createOwners(Id.Program programId) {
@@ -256,10 +259,10 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     }
     Plugin plugin = getPlugin(pluginId);
     try {
-      URI locationURI = plugin.getLocationURI();
-      ArtifactDescriptor artifactDescriptor = new ArtifactDescriptor(plugin.getArtifactId(),
-                                                                     locationFactory.create(locationURI));
-      return pluginInstantiator.loadClass(artifactDescriptor, plugin.getPluginClass());
+      String fileName = artifactLocations.get(plugin.getArtifactId().toString());
+      Id.Artifact artifactId = Id.Artifact.from(program.getId().getNamespace(), plugin.getArtifactId());
+      ArtifactDescriptor descriptor = new ArtifactDescriptor(artifactId, Locations.toLocation(new File(fileName)));
+      return pluginInstantiator.loadClass(descriptor, plugin.getPluginClass());
     } catch (ClassNotFoundException e) {
       // Shouldn't happen, unless there is bug in file localization
       throw new IllegalArgumentException("Plugin class not found", e);
@@ -276,11 +279,10 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     }
     Plugin plugin = getPlugin(pluginId);
     try {
-      URI locationURI = plugin.getLocationURI();
-      ArtifactDescriptor artifactDescriptor = new ArtifactDescriptor(plugin.getArtifactId(),
-                                                                     locationFactory.create(locationURI));
-      return pluginInstantiator.newInstance(artifactDescriptor, plugin.getPluginClass(),
-                                            plugin.getProperties());
+      String fileName = artifactLocations.get(plugin.getArtifactId().toString());
+      Id.Artifact artifactId = Id.Artifact.from(program.getId().getNamespace(), plugin.getArtifactId());
+      ArtifactDescriptor descriptor = new ArtifactDescriptor(artifactId, Locations.toLocation(new File(fileName)));
+      return pluginInstantiator.newInstance(descriptor, plugin.getPluginClass(), plugin.getProperties());
     } catch (ClassNotFoundException e) {
       // Shouldn't happen, unless there is bug in file localization
       throw new IllegalArgumentException("Plugin class not found", e);
