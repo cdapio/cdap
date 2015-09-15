@@ -511,7 +511,7 @@ In order to configure **CDAP Explore Service for secure Hadoop:**
 .. highlight:: xml
 
 - To allow CDAP to act as a Hive client, it must be given ``proxyuser`` permissions and allowed from all hosts. 
-  For example, to the configuration file ``core-site.xml``, set these properties, where ``cdap`` is a system 
+  For example: set the following properties in the configuration file ``core-site.xml``, where ``cdap`` is a system 
   group to which the ``cdap`` user is a member::
 
     <property>
