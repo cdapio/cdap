@@ -30,5 +30,6 @@ angular.module(PKG.name + '.services')
         'sink': 'realtimesink',
         'transform': 'transform'
       }
-    }
+    },
+    addHydratorAppLabel: 'Hydrator Pipeline'
   });

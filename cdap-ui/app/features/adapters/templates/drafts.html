@@ -14,8 +14,6 @@
   the License.
 -->
 
-<my-breadcrumbs></my-breadcrumbs>
-
 <div class="row">
   <div class="col-xs-6">
     <h2 class="pull-left"> All Drafts </h2>
@@ -27,15 +25,8 @@
       </button>
       <ul class="dropdown-menu dropdown-menu-right" role="menu">
         <li>
-          <a ui-sref="adapters.create({type: GLOBALS.etlBatch})" class="clearfix">
-            <span class="pull-left">ETLBatch App</span>
-            <i class="icon-ETLBatch pull-right"></i>
-          </a>
-        </li>
-        <li>
-          <a ui-sref="adapters.create({type: GLOBALS.etlRealtime})" class="clearfix">
-            <span class="pull-left">ETLRealtime App</span>
-            <i class="icon-ETLRealtime pull-right"></i>
+          <a ui-sref="adapters.create" class="clearfix">
+            <span class="pull-left">{{GLOBALS.addHydratorAppLabel}}</span>
           </a>
         </li>
       </ul>
