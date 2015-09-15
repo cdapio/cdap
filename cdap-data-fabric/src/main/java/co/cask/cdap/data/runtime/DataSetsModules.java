@@ -119,6 +119,10 @@ public class DataSetsModules extends RuntimeModule {
         install(new FactoryModuleBuilder()
                   .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
                   .build(DatasetDefinitionRegistryFactory.class));
+
+        bind(BusinessMetadataStore.class).to(DistributedBusinessMetadataStore.class);
+        expose(BusinessMetadataStore.class);
+
         bind(DatasetFramework.class)
           .annotatedWith(Names.named(BASIC_DATASET_FRAMEWORK))
           .to(RemoteDatasetFramework.class);
@@ -130,13 +134,10 @@ public class DataSetsModules extends RuntimeModule {
         expose(DatasetFramework.class);
         if (publishRequired) {
           bind(MetadataChangePublisher.class).to(KafkaMetadataChangePublisher.class);
-          bind(BusinessMetadataStore.class).to(DistributedBusinessMetadataStore.class);
         } else {
           bind(MetadataChangePublisher.class).to(NoOpMetadataChangePublisher.class);
-          bind(BusinessMetadataStore.class).to(InMemoryBusinessMetadataStore.class);
         }
         expose(MetadataChangePublisher.class);
-        expose(BusinessMetadataStore.class);
       }
     };
   }

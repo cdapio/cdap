@@ -25,6 +25,8 @@ import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
+import co.cask.cdap.data2.metadata.service.BusinessMetadataStore;
+import co.cask.cdap.data2.metadata.service.InMemoryBusinessMetadataStore;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionSystemClient;
 import co.cask.tephra.TransactionSystemTest;
@@ -33,8 +35,10 @@ import co.cask.tephra.distributed.TransactionService;
 import co.cask.tephra.persist.TransactionSnapshot;
 import co.cask.tephra.persist.TransactionStateStorage;
 import co.cask.tephra.snapshot.SnapshotCodecProvider;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.twill.internal.zookeeper.InMemoryZKServer;
@@ -102,7 +106,12 @@ public class TransactionServiceClientTest extends TransactionSystemTest {
       new DiscoveryRuntimeModule().getDistributedModules(),
       new TransactionMetricsModule(),
       new DataFabricModules().getDistributedModules(),
-      new DataSetsModules().getDistributedModules(false));
+      Modules.override(new DataSetsModules().getDistributedModules(false)).with(new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(BusinessMetadataStore.class).to(InMemoryBusinessMetadataStore.class);
+        }
+      }));
 
     zkClient = injector.getInstance(ZKClientService.class);
     zkClient.startAndWait();
