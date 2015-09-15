@@ -13,13 +13,45 @@
   License for the specific language governing permissions and limitations under
   the License.
 -->
-
-<div class="canvas-wrapper">
-  <div ui-view="toppanel"></div>
-  <div ui-view="leftpanel"></div>
-  <div class="right-wrapper">
-    <div ui-view="canvas"></div>
-    <div ui-view="bottompanel"></div>
+<div ng-if="$state.current.name === 'adapters.create'">
+  <br/>
+  <br/>
+  <br/>
+  <div class="row">
+    <div class="col-xs-4">
+      <div class="well well-md">
+        <h4>Create a Batch Pipeline</h4>
+        <a class="btn btn-default"
+            ui-sref="adapters.create.studio({type: 'cdap-etl-batch'})">
+            Create
+        </a>
+      </div>
+    </div>
+    <div class="col-xs-4">
+      <div class="well well-md">
+        <h4>Create a Realtime Pipeline</h4>
+        <a class="btn btn-default"
+            ui-sref="adapters.create.studio({type: 'cdap-etl-realtime'})">
+          Create
+        </a>
+      </div>
+    </div>
+    <div class="col-xs-4">
+      <div class="well well-md">
+        <h4 href="">Import a Pipeline</h4>
+        <a class="btn btn-default"
+            ng-click="AdapterCreateController.openFileBrowser()"
+            href="">Import</a>
+      </div>
+    </div>
   </div>
+  <my-file-select class="sr-only"
+                  id="adapter-import-config-link"
+                  data-button-icon="fa-upload"
+                  on-file-select="AdapterCreateController.importFile($files)"
+                  data-button-label="Import">
+  </my-file-select>
 </div>
-
+<div ng-if="$state.current.name !== 'adapters.create'">
+  <ui-view/>
+</div>
