@@ -15,6 +15,7 @@
  */
 
 @import "../../styles/variables.less";
+@import "../../../bower_components/bootstrap/less/mixins.less";
 @import "../../styles/themes/cdap/mixins.less";
 
 my-dag {
@@ -41,49 +42,88 @@ my-dag {
     }
 
     .box {
-      background-color: white;
       position: absolute;
       text-align: center;
       cursor: move;
       left: 100px;
       top: 250px;
       padding: 0;
-      overflow: hidden;
-      line-height: 40px;
-      height: 46px;
-      width: 56px;
-      .border-radius(6px);
+      height: 66px;
+      width: 77px;
+      &.selected {
+        &.realtimesource, &.batchsource {
+          .node {
+            background-color: #48c038;
+          }
+        }
+        &.transform {
+          .node {
+            background-color: #4586f3;
+          }
+        }
+        &.realtimesink, &.batchsink {
+          .node {
+            background-color: #8367df;
+          }
+        }
+        .icon.fa, .fa.fa-close {
+          color: white;
+        }
+      }
+      .node {
+        background-color: white;
+        margin: 0 auto;
+        height: 46px;
+        width: 56px;
+        .border-radius(6px);
+        .box-shadow(0 10px 18px -9px fade(black, 50%));
+        &:hover, &:focus {
+          .fa.fa-close {
+            .opacity(1);
+          }
+        }
+      }
+      &.realtimesource, &.batchsource {
+        color: #48c038;
+        .node {
+          border: 3px solid #48c038;
+          left: 10vw;
+        }
+      }
+      &.transform {
+        color: #4586f3;
+        .node {
+          border: 3px solid #4586f3;
+          left: 30vw;
+        }
+      }
+      &.realtimesink, &.batchsink {
+        color: #8367df;
+        .node {
+          border: 3px solid #8367df;
+          left: 50vw;
+        }
+      }
+
       .icon.fa, .fa.fa-close {
         cursor: pointer;
       }
+      .icon.fa {
+        line-height: 40px;
+      }
       .fa.fa-close {
         font-size: 11px;
+        position: absolute;
+        right: 15px;
+        .opacity(0);
+        .transition(opacity 0.2s ease);
       }
       .plugin-name {
         font-size: 13px;
-        overflow: hidden;
+        font-weight: 500;
         text-overflow: ellipsis;
-        margin-bottom: 10px;
-        position: relative;
-        top: 20px;
-      }
-
-      &.realtimesource, &.batchsource {
-        border: 3px solid #48c038;
-        color:#48c038;
-        left: 10vw;
-      }
-
-      &.transform {
-        border: 3px solid #4586f3;
-        color: #4586f3;
-        left: 30vw;
-      }
-
-      &.realtimesink, &.batchsink {
-        border: 3px solid #ff791f;
-        color: #ff791f;
-        left: 50vw;
+        margin-top: 5px;
+        overflow-y: hidden;
       }
 
       .label-as-badge {
@@ -128,21 +168,42 @@ my-dag {
       height: 100%;
       width: inherit;
     }
+
+    ._jsPlumb_endpoint circle {
+      fill: white;
+      r: 2px;
+      stroke-width: 6px;
+    }
+    ._sourceAnchor circle {
+      stroke: #48c038;
+    }
+    ._transformAnchor circle {
+      stroke: #4586f3;
+    }
+    ._sinkAnchor circle {
+      stroke: #8367df;
+    }
+    ._jsPlumb_connector path:last-child {
+      stroke-width: 0;
+    }
   }
 
   div._jsPlumb_overlay {
     div.label-container {
-      background-color: @cdap-orange;
-      border-radius: 50%;
-      height: 20px;
-      width: 20px;
-      line-height: 20px;
+      height: 14px;
+      width: 14px;
+      text-align: center;
+      border-radius: 1px;
+      background-color: white;
+      line-height: 14px;
+      font-size: 10px;
+      color: #4f5464;
+      vertical-align: middle;
+      .border-radius(1px);
+      .box-shadow(0 0 0 3px fade(black, 20%));
       cursor: pointer;
-
       i.icon-SchemaEdge {
-        font-size: 10px;
-        color: white;
-        vertical-align: middle;
+        font-size: 9px;
       }
     }
   }
@@ -161,7 +222,13 @@ my-dag {
   max-width: 400px;
 
   .popover-title {
-    i.fa.fa-times-circle-o {
+    background-color: white;
+    border-bottom: 0;
+    h4 span {
+      font-weight: 500;
+    }
+    i.fa.fa-times {
+      color: #b4b4b6;
       cursor: pointer;
     }
   }

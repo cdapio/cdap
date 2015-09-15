@@ -19,7 +19,7 @@ angular.module(PKG.name + '.commons')
     this.plugins = $scope.config || [];
     this.isDisabled = $scope.isDisabled;
     MyAppDAGService.setIsDisabled(this.isDisabled);
-
+    this.selected = false;
     var popovers = [];
     var popoverScopes = [];
 
@@ -48,7 +48,11 @@ angular.module(PKG.name + '.commons')
     // Need to move this to the controller that is using this directive.
     this.onPluginClick = function(plugin) {
       closeAllPopovers();
-
+      if(this.selected === true) {
+        this.selected = false;
+      } else {
+        this.selected = true;
+      }
       if (plugin.error) {
         delete plugin.error;
       }
@@ -104,8 +108,8 @@ angular.module(PKG.name + '.commons')
     };
 
     function drawNode(id, type) {
-      var sourceSettings = MyDAGFactory.getSettings().source,
-          sinkSettings = MyDAGFactory.getSettings().sink;
+      var sourceSettings = angular.copy(MyDAGFactory.getSettings().source),
+          sinkSettings = angular.copy(MyDAGFactory.getSettings().sink);
       var artifactType = GLOBALS.pluginTypes[MyAppDAGService.metadata.template.type];
       switch(type) {
         case artifactType.source:
@@ -115,6 +119,8 @@ angular.module(PKG.name + '.commons')
           this.instance.addEndpoint(id, sinkSettings, {uuid: id});
           break;
         case artifactType.transform:
+          sourceSettings.anchor = [ 0.5, 1, 0, 0, 26, -43, 'transformAnchor'];
+          sinkSettings.anchor = [ 0.5, 1, 0, 0, -26, -43, 'transformAnchor'];
           // Need to id each end point so that it can be used later to make connections.
           this.instance.addEndpoint(id, sourceSettings, {uuid: 'Left' + id});
           this.instance.addEndpoint(id, sinkSettings, {uuid: 'Right' + id});
@@ -252,6 +258,7 @@ angular.module(PKG.name + '.commons')
 
       jsPlumb.setContainer('dag-container');
       this.instance = jsPlumb.getInstance();
+      this.instance.endpointAnchorClassPrefix = '';
 
       angular.element($window).on('resize', function() {
         this.instance.repaintEverything();
