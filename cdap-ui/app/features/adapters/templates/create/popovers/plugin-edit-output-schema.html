@@ -25,14 +25,14 @@
   <h4>Output Schema</h4>
   <fieldset class="clearfix" ng-disabled="isDisabled">
     <my-schema-editor
-      ng-model="plugin.outputSchema"
-      data-disabled="plugin.implicitSchema"
-      plugin-properties="plugin.properties"
+      ng-model="pluginCopy.outputSchema"
+      data-disabled="pluginCopy.implicitSchema"
+      plugin-properties="pluginCopy.properties"
       config="PluginEditController.schemaProperties">
     </my-schema-editor>
   </fieldset>
 
-  <div ng-if="!plugin.outputSchema && isDisabled && plugin.properties.format !== 'clf' && plugin.properties.format !== 'syslog'">
+  <div ng-if="!pluginCopy.outputSchema && isDisabled && pluginCopy.properties.format !== 'clf' && plugin.properties.format !== 'syslog'">
     <div class="well well-lg">
       <h4>There is no output schema</h4>
     </div>
