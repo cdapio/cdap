@@ -113,9 +113,17 @@ public class ArtifactRepositoryTest {
 
   @Test(expected = InvalidArtifactException.class)
   public void testMultipleParentVersions() throws InvalidArtifactException {
-    ArtifactRepository.validateParentSet(ImmutableSet.of(
+    Id.Artifact child = Id.Artifact.from(Id.Namespace.SYSTEM, "abc", "1.0.0");
+    ArtifactRepository.validateParentSet(child, ImmutableSet.of(
       new ArtifactRange(Id.Namespace.SYSTEM, "r1", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")),
       new ArtifactRange(Id.Namespace.SYSTEM, "r1", new ArtifactVersion("3.0.0"), new ArtifactVersion("4.0.0"))));
+  }
+
+  @Test(expected = InvalidArtifactException.class)
+  public void testSelfExtendingArtifact() throws InvalidArtifactException {
+    Id.Artifact child = Id.Artifact.from(Id.Namespace.SYSTEM, "abc", "1.0.0");
+    ArtifactRepository.validateParentSet(child, ImmutableSet.of(
+      new ArtifactRange(Id.Namespace.SYSTEM, "abc", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0"))));
   }
 
   @Test(expected = InvalidArtifactException.class)
