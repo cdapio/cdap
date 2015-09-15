@@ -20,19 +20,18 @@ angular.module(PKG.name + '.feature.adapters')
     angular.copy(AdapterDetail.params, params);
     params.scope = $scope;
 
-
     if (AdapterDetail.programType === 'WORKFLOWS') {
       AdapterDetail.api.getStatistics(params)
         .$promise
         .then(function (stats) {
           $scope.stats = {
-            numRuns: stats.runs,
             avgRunTime: stats.avgRunTime
           };
 
           return AdapterDetail.api.runs(params).$promise;
         }).then(function (runs) {
           $scope.stats.latestRun = runs[0];
+          $scope.stats.numRuns = runs.length;
         });
     }
   });
