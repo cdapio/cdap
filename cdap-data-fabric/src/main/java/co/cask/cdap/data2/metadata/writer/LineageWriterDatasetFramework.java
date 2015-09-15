@@ -128,7 +128,7 @@ public class LineageWriterDatasetFramework implements DatasetFramework, ProgramC
   @Override
   public void deleteInstance(Id.DatasetInstance datasetInstanceId)
     throws DatasetManagementException, IOException, ServiceUnavailableException {
-    // Remove metadata for the dataset
+    // Remove metadata for the dataset (TODO: https://issues.cask.co/browse/CDAP-3670)
     businessMds.removeMetadata(datasetInstanceId);
     delegate.deleteInstance(datasetInstanceId);
   }
@@ -140,7 +140,7 @@ public class LineageWriterDatasetFramework implements DatasetFramework, ProgramC
     for (DatasetSpecificationSummary dataset : datasets) {
       String dsName = dataset.getName();
       Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(namespaceId, dsName);
-      // Remove metadata for the dataset
+      // Remove metadata for the dataset (TODO: https://issues.cask.co/browse/CDAP-3670)
       businessMds.removeMetadata(datasetInstanceId);
     }
     delegate.deleteAllInstances(namespaceId);
