@@ -16,25 +16,16 @@
 
 <div class="my-js-dag" ng-class="{'disabled': MyDAGController.isDisabled }">
   <div id="dag-container">
-    <div ng-repeat="plugin in MyDAGController.plugins"
-          class="box {{plugin.type}}"
-          ng-style="plugin.style"
-          data-type="{{plugin.type}}"
-          id="{{plugin.id}}"
-          ng-click="MyDAGController.onPluginClick(plugin)">
-      <div class="icon fa {{plugin.icon}}"></div>
-      <div class="plugin-name">{{plugin.pluginTemplate || plugin.name}}</div>
-      <div class="fa fa-close" ng-if="!MyDAGController.isDisabled" ng-click="MyDAGController.removePlugin($index, plugin.id)"></div>
-
-      <div class="error-node-notification"
-            ng-if="plugin.error"
-            tooltip="{{plugin.error}}"
-            tooltip-append-to-body="true"
-            tooltip-class="tooltip-error">
-        <span class="badge badge-danger">
-          <i class="fa fa-exclamation"></i>
-        </span>
+    <div ng-repeat="plugin in MyDAGController.plugins" class="box {{plugin.type}}" ng-style="plugin.style"
+           data-type="{{plugin.type}}"
+           id="{{plugin.id}}"
+           ng-click="MyDAGController.onPluginClick(plugin)"
+           ng-class="{'selected': MyDAGController.selected}">
+      <div class="node">
+          <div class="fa fa-close" ng-if="!MyDAGController.isDisabled" ng-click="MyDAGController.removePlugin($index, plugin.id)"></div>
+          <div class="icon fa {{plugin.icon}}"></div>
       </div>
+      <div class="plugin-name">{{plugin.pluginTemplate || plugin.name}}</div>
     </div>
   </div>
 
