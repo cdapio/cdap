@@ -2,20 +2,14 @@ angular.module(PKG.name + '.feature.adapters')
   .service('MyNodeConfigService', function() {
     this.pluginChangeListeners = [];
     this.setPlugin = function(plugin) {
-      this.notifyListeners(plugin);
+      this.plugin = plugin;
+      this.notifyListeners();
     };
 
-    this.notifyListeners = function (plugin) {
-
+    this.notifyListeners = function () {
       this.pluginChangeListeners.forEach(function(callback) {
-        callback(plugin);
-      });
-      // $q.all(promises)
-      //   .then(function(values) {
-      //     if (values.indexOf(false) === -1) {
-      //       this.plugin = plugin;
-      //     }
-      //   }.bind(this));
+        callback(this.plugin);
+      }.bind(this));
     };
 
     this.registerPluginCallback = function(callback) {
