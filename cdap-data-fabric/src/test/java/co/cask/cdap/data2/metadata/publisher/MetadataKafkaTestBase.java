@@ -55,6 +55,7 @@ import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -82,12 +83,17 @@ public class MetadataKafkaTestBase {
 
   @BeforeClass
   public static void setup() throws IOException {
+    int kafkaPort = Networks.getRandomPort();
+    Preconditions.checkState(kafkaPort > 0, "Failed to get random port.");
     int zkServerPort = Networks.getRandomPort();
     zkServer = InMemoryZKServer.builder().setDataDir(TMP_FOLDER.newFolder()).setPort(zkServerPort).build();
     zkServer.startAndWait();
-    kafkaServer = new EmbeddedKafkaServer(generateKafkaConfig());
+    kafkaServer = new EmbeddedKafkaServer(generateKafkaConfig(kafkaPort));
     kafkaServer.startAndWait();
     cConf = CConfiguration.create();
+    cConf.set(Constants.Metadata.UPDATES_PUBLISH_ENABLED, "true");
+    cConf.set(Constants.Metadata.UPDATES_KAFKA_BROKER_LIST,
+              InetAddress.getLoopbackAddress().getHostAddress() + ":" + kafkaPort);
     cConf.unset(KafkaConstants.ConfigKeys.ZOOKEEPER_NAMESPACE_CONFIG);
     cConf.set(Constants.Zookeeper.QUORUM, zkServer.getConnectionStr());
     injector = Guice.createInjector(
@@ -154,10 +160,7 @@ public class MetadataKafkaTestBase {
     return actual;
   }
 
-  private static Properties generateKafkaConfig() throws IOException {
-    int port = Networks.getRandomPort();
-    Preconditions.checkState(port > 0, "Failed to get random port.");
-
+  private static Properties generateKafkaConfig(int port) throws IOException {
     Properties prop = new Properties();
     prop.setProperty("broker.id", "1");
     prop.setProperty("port", Integer.toString(port));
