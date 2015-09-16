@@ -185,6 +185,7 @@ angular.module(PKG.name + '.feature.adapters')
       }
       $scope.config = {
         name: $state.params.adapterId,
+        artifact: rAdapterDetail.artifact,
         template: rAdapterDetail.artifact.name,
         description: rAdapterDetail.description,
         config: {
