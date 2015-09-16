@@ -38,6 +38,8 @@ import org.apache.avro.mapreduce.AvroKeyOutputFormat;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.Job;
 
+import java.util.HashMap;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 
@@ -63,6 +65,8 @@ public class SnapshotFileBatchAvroSink extends SnapshotFileBatchSink<AvroKey<Gen
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     super.configurePipeline(pipelineConfigurer);
     String basePath = config.basePath == null ? config.name : config.basePath;
+    // parse it to make sure its valid
+    new Schema.Parser().parse(config.schema);
     pipelineConfigurer.createDataset(config.name, FileSet.class.getName(), FileSetProperties.builder()
       .setBasePath(basePath)
       .setInputFormat(AvroKeyInputFormat.class)
@@ -71,18 +75,16 @@ public class SnapshotFileBatchAvroSink extends SnapshotFileBatchSink<AvroKey<Gen
       .setSerDe("org.apache.hadoop.hive.serde2.avro.AvroSerDe")
       .setExploreInputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat")
       .setExploreOutputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat")
-      .setTableProperty("avro.schema.literal", (config.schema))
+      .setTableProperty("avro.schema.literal", config.schema)
       .build());
   }
 
   @Override
-  public void prepareRun(BatchSinkContext context) {
-    super.prepareRun(context);
-    Schema avroSchema = new Schema.Parser().parse(config.schema);
-    Job job = context.getHadoopJob();
-    AvroJob.setOutputKeySchema(job, avroSchema);
+  protected Map<String, String> getAdditionalFileSetArguments() {
+    Map<String, String> args = new HashMap<>();
+    args.put(FileSetProperties.OUTPUT_PROPERTIES_PREFIX + "avro.schema.output.key", config.schema);
+    return args;
   }
-
 
   @Override
   public void initialize(BatchRuntimeContext context) throws Exception {

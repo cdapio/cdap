@@ -26,6 +26,7 @@ import org.apache.twill.filesystem.Location;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -49,7 +50,7 @@ public abstract class SnapshotFileBatchSink<KEY_OUT, VAL_OUT> extends FileBatchS
 
   @Override
   public void prepareRun(BatchSinkContext context) {
-    sinkArgs = new HashMap<>();
+    sinkArgs = getAdditionalFileSetArguments();
     SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd-hh-mm");
     FileSetArguments.setOutputPath(sinkArgs, format.format(context.getLogicalStartTime()));
     context.addOutput(config.name, sinkArgs);
@@ -72,6 +73,14 @@ public abstract class SnapshotFileBatchSink<KEY_OUT, VAL_OUT> extends FileBatchS
       //necessary because onRunFinish doesn't throw exceptions
       throw new RuntimeException(e);
     }
+  }
+
+  /**
+   * This base class will set the output path argument. Any additional arguments should be returned by this method.
+   */
+  protected Map<String, String> getAdditionalFileSetArguments() {
+    //no-op
+    return Collections.emptyMap();
   }
 
   /**

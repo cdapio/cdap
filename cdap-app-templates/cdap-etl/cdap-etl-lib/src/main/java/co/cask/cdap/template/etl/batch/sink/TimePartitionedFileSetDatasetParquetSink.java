@@ -53,7 +53,6 @@ public class TimePartitionedFileSetDatasetParquetSink extends
     "Object.";
   private StructuredToAvroTransformer recordTransformer;
   private final TPFSParquetSinkConfig config;
-  private String hiveSchema;
 
   public TimePartitionedFileSetDatasetParquetSink(TPFSParquetSinkConfig config) {
     super(config);
@@ -65,6 +64,9 @@ public class TimePartitionedFileSetDatasetParquetSink extends
     super.configurePipeline(pipelineConfigurer);
     String tpfsName = tpfsSinkConfig.name;
     String basePath = tpfsSinkConfig.basePath == null ? tpfsName : tpfsSinkConfig.basePath;
+    // parse to make sure it's valid
+    new org.apache.avro.Schema.Parser().parse(config.schema.toLowerCase());
+    String hiveSchema;
     try {
       hiveSchema = SchemaConverter.toHiveSchema(Schema.parseJson(config.schema.toLowerCase()));
     } catch (UnsupportedTypeException | IOException e) {
@@ -83,8 +85,7 @@ public class TimePartitionedFileSetDatasetParquetSink extends
   @Override
   protected Map<String, String> getAdditionalTPFSArguments() {
     Map<String, String> args = new HashMap<>();
-    org.apache.avro.Schema avroSchema = new org.apache.avro.Schema.Parser().parse(config.schema.toLowerCase());
-    args.put(FileSetProperties.OUTPUT_PROPERTIES_PREFIX + "parquet.avro.schema", avroSchema.toString());
+    args.put(FileSetProperties.OUTPUT_PROPERTIES_PREFIX + "parquet.avro.schema", config.schema.toLowerCase());
     return args;
   }
 
