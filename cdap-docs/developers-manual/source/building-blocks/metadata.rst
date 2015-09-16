@@ -8,8 +8,6 @@
 Metadata
 ========
 
-.. include:: ../../../_common/_includes/include-v320-beta-metadata.rst
-
 Overview
 ========
 Metadata |---| consisting of **properties** (a list of key-value pairs) or **tags** (a

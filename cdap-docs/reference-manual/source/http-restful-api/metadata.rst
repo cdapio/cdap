@@ -12,8 +12,6 @@ Metadata HTTP RESTful API
 
 .. highlight:: console
 
-.. include:: ../../../_common/_includes/include-v320-beta-metadata.rst
-
 Use the CDAP Metadata HTTP RESTful API to set, retrieve, and delete the metadata annotations
 of applications, datasets, streams, and other entities in CDAP.
 
