@@ -432,9 +432,9 @@ where:
    * - ``<element-id>``
      - Name of the ``dataset`` or ``stream``
    * - ``<start-ts>``
-     - Starting time-stamp of lineage, in seconds
+     - Starting time-stamp of lineage, in milliseconds
    * - ``<end-ts>``
-     - Ending time-stamp of lineage, in seconds
+     - Ending time-stamp of lineage, in milliseconds
    * - ``<max-levels>``
      - Maximum number of levels
      

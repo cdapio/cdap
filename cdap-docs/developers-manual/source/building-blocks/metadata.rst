@@ -13,7 +13,7 @@ Metadata
 Overview
 ========
 Metadata |---| consisting of **properties** (a list of key-value pairs) or **tags** (a
-list of keys) |---| can be set for both datasets, streams, and applications.
+list of keys) |---| can be used to annotate datasets, streams, programs, and applications.
 
 Using the CDAP :ref:`Metadata HTTP RESTful API <http-restful-api-metadata>`, you can set,
 retrieve, and delete the metadata annotations of applications, datasets, streams, and
@@ -41,7 +41,7 @@ Lineage
 |---| for a specified time range |---| all data access of the entity, and details of where
 that access originated from.
 
-For example: with a stream, writing to a stream may take place from a workflow, which
+For example: with a stream, writing to a stream may take place from a worker, which
 obtained the data from a combination of a dataset and a stream. The data in those entities
 comes from possibly other entities. The number of levels of the lineage that are
 calculated is set when a request is made to view the lineage of a particular entity.
