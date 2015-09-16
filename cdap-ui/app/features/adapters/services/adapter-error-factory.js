@@ -192,7 +192,7 @@ angular.module(PKG.name + '.feature.adapters')
       });
 
       if (!sinkHasSameSource) {
-        addCanvasError('Multiple sinks has to branch from the same node', errors);
+        addCanvasError('Multiple sinks have to branch from the same node', errors);
         return;
       }
 
