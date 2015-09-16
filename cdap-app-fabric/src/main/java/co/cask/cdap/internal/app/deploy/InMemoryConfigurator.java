@@ -175,7 +175,11 @@ public final class InMemoryConfigurator implements Configurator {
         appConfig = (Config) configToken.getRawType().newInstance();
       } else {
         try {
-          appConfig = GSON.fromJson(configString, configToken.getType());
+          if (Config.class == configToken.getRawType()) {
+            appConfig = new Config();
+          } else {
+            appConfig = GSON.fromJson(configString, configToken.getType());
+          }
         } catch (JsonSyntaxException e) {
           throw new IllegalArgumentException("Invalid JSON configuration was provided. Please check the syntax.", e);
         }
