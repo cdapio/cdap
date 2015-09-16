@@ -393,9 +393,9 @@ public abstract class MetadataTestBase extends AppFabricTestBase {
     return makeGetRequest(path);
   }
 
-  protected Set<MetadataRecord> fetchAccesses(Id.Run run) throws IOException {
+  protected Set<MetadataRecord> fetchRunMetadata(Id.Run run) throws IOException {
     Id.Program program = run.getProgram();
-    String path = getVersionedAPIPath(String.format("apps/%s/%s/%s/runs/%s/metadata/accesses",
+    String path = getVersionedAPIPath(String.format("apps/%s/%s/%s/runs/%s/metadata",
                                                     program.getApplicationId(), program.getType().getCategoryName(),
                                                     program.getId(), run.getId()),
                                       program.getNamespaceId());
