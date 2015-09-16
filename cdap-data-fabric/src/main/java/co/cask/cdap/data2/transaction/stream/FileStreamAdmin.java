@@ -28,6 +28,7 @@ import co.cask.cdap.data.stream.StreamFileOffset;
 import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
+import co.cask.cdap.data2.metadata.service.BusinessMetadataStore;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.explore.client.ExploreFacade;
@@ -84,6 +85,7 @@ public class FileStreamAdmin implements StreamAdmin {
   private final StreamMetaStore streamMetaStore;
   private final ExploreTableNaming tableNaming;
   private ExploreFacade exploreFacade;
+  private final BusinessMetadataStore businessMds;
 
   @Inject
   public FileStreamAdmin(NamespacedLocationFactory namespacedLocationFactory,
@@ -94,7 +96,8 @@ public class FileStreamAdmin implements StreamAdmin {
                          UsageRegistry usageRegistry,
                          LineageWriter lineageWriter,
                          StreamMetaStore streamMetaStore,
-                         ExploreTableNaming tableNaming) {
+                         ExploreTableNaming tableNaming,
+                         BusinessMetadataStore businessMds) {
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.cConf = cConf;
     this.notificationFeedManager = notificationFeedManager;
@@ -105,6 +108,7 @@ public class FileStreamAdmin implements StreamAdmin {
     this.lineageWriter = lineageWriter;
     this.streamMetaStore = streamMetaStore;
     this.tableNaming = tableNaming;
+    this.businessMds = businessMds;
   }
 
   @SuppressWarnings("unused")
@@ -406,6 +410,9 @@ public class FileStreamAdmin implements StreamAdmin {
           if (!configLocation.delete()) {
             LOG.debug("Could not delete stream config location " + streamLocation.toURI().getPath());
           }
+
+          // Remove metadata for the stream
+          businessMds.removeMetadata(streamId);
 
           // Move the stream directory to the deleted directory
           // The target directory has a timestamp appended to the stream name

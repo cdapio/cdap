@@ -17,6 +17,8 @@
 package co.cask.cdap.metadata;
 
 import co.cask.cdap.AppWithDataset;
+import co.cask.cdap.WordCountApp;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.metadata.MetadataRecord;
@@ -51,6 +53,11 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
   @Before
   public void before() throws Exception {
     Assert.assertEquals(200, deploy(AppWithDataset.class).getStatusLine().getStatusCode());
+  }
+
+  @After
+  public void after() throws Exception {
+    deleteApp(application, 200);
   }
 
   @Test
@@ -232,9 +239,31 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     Assert.assertEquals(400, fetchLineage(datasetInstance, 100, 200, -10).getResponseCode());
   }
 
-  @After
-  public void after() throws Exception {
-    deleteApp(application, 200);
+  @Test
+  public void testDeleteApplication() throws Exception {
+    deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+    Id.Program program = Id.Program.from(TEST_NAMESPACE1, "WordCountApp", ProgramType.FLOW, "WordCountFlow");
+
+    // Set some properties metadata
+    Map<String, String> flowProperties = ImmutableMap.of("sKey", "sValue", "sK", "sV");
+    addProperties(program, flowProperties);
+
+    // Get properties
+    Map<String, String> properties = getProperties(program);
+    Assert.assertEquals(2, properties.size());
+
+    //Delete the App after stopping the flow
+    org.apache.http.HttpResponse response =
+      doDelete(getVersionedAPIPath("apps/WordCountApp/", Constants.Gateway.API_VERSION_3_TOKEN,
+                                   TEST_NAMESPACE1));
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    response = doDelete(getVersionedAPIPath("apps/WordCountApp/", Constants.Gateway.API_VERSION_3_TOKEN,
+                                            TEST_NAMESPACE1));
+    Assert.assertEquals(404, response.getStatusLine().getStatusCode());
+
+    // Check metadata, should be empty
+    properties = getProperties(program);
+    Assert.assertEquals(0, properties.size());
   }
 
   private void removeAllMetadata() throws IOException {
