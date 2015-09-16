@@ -56,7 +56,7 @@ public class InMemoryBusinessMetadataStore implements BusinessMetadataStore {
     Map<String, String> metadataForEntity = metadata.get(entityId);
     for (Map.Entry<String, String> entry : properties.entrySet()) {
       // Get existing ones
-      if(metadataForEntity.containsKey(entry.getKey())) {
+      if (metadataForEntity.containsKey(entry.getKey())) {
         continue;
       }
 
@@ -187,7 +187,7 @@ public class InMemoryBusinessMetadataStore implements BusinessMetadataStore {
     Map<String, String> all = metadata.get(entityId);
     String tags = all.get(TAGS_KEY);
     if (tags != null) {
-      Set<String> tagsAsSet= new HashSet<>((Arrays.asList(tags.split(","))));
+      Set<String> tagsAsSet = new HashSet<>((Arrays.asList(tags.split(","))));
       for (String tagToRemove : tagsToRemove) {
         tagsAsSet.remove(tagToRemove);
       }
