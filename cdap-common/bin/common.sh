@@ -91,7 +91,7 @@ cdap_kinit() {
     return 1
   fi
   return 0
-)
+}
 
 # Attempts to find JAVA in few ways.
 set_java () {
