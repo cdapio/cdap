@@ -50,7 +50,7 @@ angular.module(PKG.name + '.feature.adapters')
         .open({
           templateUrl: '/assets/features/adapters/templates/create/popovers/metadata-detail.html',
           size: 'lg',
-          windowClass: 'adapter-modal',
+          windowClass: 'cdap-modal',
           keyboard: true,
           controller: ['$scope', 'metadata', function($scope, metadata) {
             $scope.modelCopy = angular.copy(this.metadata);

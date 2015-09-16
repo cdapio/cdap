@@ -71,6 +71,115 @@ body.theme-cdap.state-adapters {
 body.theme-cdap.state-adapters-detail,
 body.theme-cdap.state-adapters-create {
 
+  .modal-header {
+    background-color: @body-bg;
+    border-bottom: 1px solid @modal-table-border-color;
+    color: @cdap-header;
+    height: 60px;
+    padding: 0;
+    .border-radius(4px 4px 0 0);
+    h3, p {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    h3 {
+      color: @cdap-header;
+      font-weight: 500;
+      line-height: 1.3;
+      padding-top: 5px;
+      // Adapter config modal
+      &:only-child {
+        line-height: 60px;
+        padding-top: 0;
+      }
+    }
+    p {
+      color: @cdap-lightgray;
+      margin: 0;
+      max-width: 740px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .modal-btns {
+      margin-right: -15px;
+      text-align: right;
+      &.hideNonInfoButtons {
+        .non-info {
+          display: none;
+        }
+        .close-button {
+          border: 0;
+        }
+      }
+      > div {
+        background-color: transparent;
+        border-left: 1px solid @modal-table-border-color;
+        text-align: center;
+        width: 60px;
+
+        &.active-info {
+          background-color: @cdap-header;
+          .btn {
+            color: white;
+          }
+        }
+
+        .transition(all 0.2s ease);
+        @media (max-width: @screen-xs-min) {
+          width: 20%;
+        }
+        &:last-child {
+          .btn {
+            border: 0;
+            .border-radius(0);
+          }
+          &:hover, &:focus {
+            .border-radius(0 4px 0 0);
+          }
+        }
+        &:only-child {
+          margin-right: -1px;
+          @media (max-width: @screen-xs-max) {
+            width: 100%;
+          }
+        }
+        &:hover, &:focus {
+          background-color: @cdap-header;
+          .btn {
+            color: white;
+          }
+        }
+      }
+      &.btn-group {
+        display: block;
+        > div {
+
+          @media (max-width: @screen-xs-max) {
+            width: 20%;
+          }
+
+          display: inline-block;
+          margin-right: -4px;
+          &:last-child {
+            margin-right: 0;
+          }
+        }
+      }
+    }
+    .btn {
+      background-color: transparent;
+      color: @cdap-header;
+      display: block;
+      font-size: 18px;
+      line-height: 60px;
+      padding: 0;
+      width: 100%;
+    }
+  }
+
+
+
   .ui-select-container.ui-select-bootstrap {
     .ui-select-toggle {
       overflow-x: auto;
@@ -403,6 +512,21 @@ body.state-adapters-list {
       }
       th {
         font-weight: 500;
+      }
+
+      td > span.status-bubble {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        margin-right: 5px;
+        .border-radius(25px);
+        &.status-green { background-color: @brand-success; }
+        &.status-red { background-color: @brand-danger; }
+        &.status-grey { background-color: @cdap-gray; }
+      }
+
+      .delete-draft {
+        cursor: pointer;
       }
     }
   }

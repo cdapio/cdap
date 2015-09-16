@@ -24,34 +24,36 @@
     <li>
       <i class="fa fa-circle text-success"></i>
       <span>Running</span>
-      <span>&mdash;</span>
+      <span>
+        {{ ListController.statusCount.running }}
+      </span>
     </li>
     <li>
       <i class="fa fa-circle text-success"></i>
       <span>Scheduled</span>
-      <span>&mdash;</span>
+      <span>
+        {{ ListController.statusCount.scheduled }}
+      </span>
+    </li>
+    <li>
+      <i class="fa fa-circle text-danger"></i>
+      <span>Suspended</span>
+      <span>
+        {{ ListController.statusCount.suspended }}
+      </span>
     </li>
     <li>
       <i class="fa fa-circle text-muted"></i>
       <span>Drafts</span>
-      <span ng-bind="ListController.drafts.length"></span>
-    </li>
-    <li>
-      <i class="fa fa-circle text-danger"></i>
-      <span>Stopped</span>
-      <span>&mdash;</span>
-    </li>
-    <li>
-      <i class="fa fa-circle text-warning"></i>
-      <span>Suspended</span>
-      <span>&mdash;</span>
+      <span>
+        {{ ListController.statusCount.draft }}
+      </span>
     </li>
   </ul>
   <a ui-sref="adapters.create" class="btn btn-primary add-pipeline">
     <span class="fa fa-plus"></span>
   </a>
 </div>
-
 
 <div class="my-pipelines">
   <div ng-if="ListController.adaptersList.length > 0">
@@ -62,15 +64,26 @@
           <tr ng-class="{'sort-enabled': ListController.adaptersList.length>0}">
             <th data-predicate="name">Pipeline Name</th>
             <th data-predicate="artifact.name">Type</th>
-            <th>Status</th>
-            <th>Total Runs</th>
-            <th>Last Start Time</th>
+            <th data-predicate="">Status</th>
+            <th data-predicate="_stats.numRuns">Total Runs</th>
+            <th data-predicate="_stats.lastStartTime"
+                  data-predicate-default>Last Start Time</th>
+            <th data-predicate="_latest.end">Last Finished Run</th>
           </tr>
         </thead>
         <tbody>
-          <tr ng-repeat="adapter in ListController.filtered = (ListController.adaptersList | filter: ListController.searchText ) | myPaginate:ListController.currentPage | orderBy:sortable.predicate:sortable.reverse">
+          <tr ng-repeat="adapter in ListController.filtered = (ListController.adaptersList | filter: ListController.searchText ) | orderBy:sortable.predicate:sortable.reverse | myPaginate:ListController.currentPage">
             <td>
-              <a ui-sref="adapters.detail({ adapterId: adapter.name })">{{adapter.name}}</a>
+              <a ui-sref="adapters.detail({ adapterId: adapter.name })" ng-if="!adapter.isDraft">
+                {{adapter.name}}
+              </a>
+              <a ui-sref="adapters.create.studio({ name: adapter.name })" ng-if="adapter.isDraft">
+                {{adapter.name}}
+              </a>
+
+              <span class="fa fa-trash text-danger delete-draft"
+                  ng-if="adapter.isDraft"
+                  ng-click="ListController.deleteDraft(adapter.name)"></span>
             </td>
             <td>
               <span ng-if="adapter.artifact.name === ListController.GLOBALS.etlBatch">
@@ -82,11 +95,26 @@
                 <span>ETL Realtime</span>
               </span>
             </td>
-            <td></td>
+            <td>
+              <span class="status-bubble"
+                ng-class="{'status-green': ListController.statusMap[adapter.name] === 'Running' ||
+                ListController.statusMap[adapter.name] === 'Scheduled',
+                'status-red': ListController.statusMap[adapter.name] !== 'Running' && ListController.statusMap[adapter.name] !== 'Scheduled',
+                'status-grey': ListController.statusMap[adapter.name] === 'Draft' }"></span>
+              <span>{{ ListController.statusMap[adapter.name] }}</span>
+            </td>
             <td>{{ adapter._stats.numRuns }}</td>
             <td>
               <span ng-if="adapter._stats.lastStartTime === 'N/A'">{{ adapter._stats.lastStartTime }}</span>
-              <span ng-if="adapter._stats.lastStartTime !== 'N/A'">{{ adapter._stats.lastStartTime * 1000 | amDateFormat: 'MM/DD/YY h:mm:ss a' }}</span>
+              <span ng-if="adapter._stats.lastStartTime !== 'N/A'">{{ adapter._stats.lastStartTime * 1000 | amDateFormat: 'MM/DD/YY h:mm:ss A' }}</span>
+            </td>
+            <td>
+              <span ng-if="adapter._latest">
+                {{ adapter._latest.status | lowercase }} at {{ adapter._latest.end * 1000 | amDateFormat: 'MM/DD/YY h:mm:ss A'}}
+              </span>
+              <span ng-if="!adapter._latest">
+                N/A
+              </span>
             </td>
           </tr>
         </tbody>
