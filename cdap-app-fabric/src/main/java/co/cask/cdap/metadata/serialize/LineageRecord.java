@@ -37,13 +37,6 @@ import javax.annotation.Nullable;
  * Class to serialize {@link co.cask.cdap.data2.metadata.lineage.Lineage}.
  */
 public class LineageRecord {
-  private static final Function<RunId, String> RUN_ID_STRING_FUNCTION =
-    new Function<RunId, String>() {
-      @Override
-      public String apply(RunId input) {
-        return input.getId();
-      }
-    };
   private static final Function<Id.NamespacedId, String> ID_STRING_FUNCTION =
     new Function<Id.NamespacedId, String>() {
       @Nullable
@@ -67,6 +60,18 @@ public class LineageRecord {
     this.data = new HashMap<>();
 
     addRelations(lineageRelations);
+  }
+
+  public long getStart() {
+    return start;
+  }
+
+  public long getEnd() {
+    return end;
+  }
+
+  public Set<RelationRecord> getRelations() {
+    return ImmutableSet.copyOf(relations);
   }
 
   private void addRelations(Set<Relation> lineageRelations) {

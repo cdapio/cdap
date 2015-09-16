@@ -20,6 +20,7 @@ import co.cask.cdap.AllProgramsApp;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Tasks;
+import co.cask.cdap.common.utils.TimeMathParser;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.metadata.lineage.Relation;
 import co.cask.cdap.metadata.serialize.LineageRecord;
@@ -105,12 +106,12 @@ public class LineageTest extends MetadataTestBase {
       Assert.assertEquals(200, addTags(stream, streamTags).getResponseCode());
       Assert.assertEquals(streamTags, getTags(stream));
 
-      long startTime = System.currentTimeMillis();
+      long startTime = TimeMathParser.nowInSeconds();
       RunId flowRunId = runAndWait(flow);
       // Wait for few seconds so that the stop time secs is more than start time secs.
       TimeUnit.SECONDS.sleep(2);
       waitForStop(flow, true);
-      long stopTime = System.currentTimeMillis();
+      long stopTime = TimeMathParser.nowInSeconds();
 
       // Fetch dataset lineage
       HttpResponse httpResponse = fetchLineage(dataset, startTime, stopTime, 10);
@@ -118,24 +119,42 @@ public class LineageTest extends MetadataTestBase {
       LineageRecord lineage = GSON.fromJson(httpResponse.getResponseBodyAsString(), LineageRecord.class);
 
       LineageRecord expected =
-        new LineageRecord(startTime, stopTime,
-                         ImmutableSet.of(
-                           new Relation(dataset, flow, AccessType.UNKNOWN,
-                                        flowRunId,
-                                        ImmutableSet.of(Id.Flow.Flowlet.from(flow, AllProgramsApp.A.NAME))),
-                           new Relation(stream, flow, AccessType.READ,
-                                        flowRunId,
-                                        ImmutableSet.of(Id.Flow.Flowlet.from(flow, AllProgramsApp.A.NAME)))
-                         ));
+        new LineageRecord(
+          TimeUnit.SECONDS.toMillis(startTime),
+          TimeUnit.SECONDS.toMillis(stopTime),
+          ImmutableSet.of(
+            new Relation(dataset, flow, AccessType.UNKNOWN,
+                         flowRunId,
+                         ImmutableSet.of(Id.Flow.Flowlet.from(flow, AllProgramsApp.A.NAME))),
+            new Relation(stream, flow, AccessType.READ,
+                         flowRunId,
+                         ImmutableSet.of(Id.Flow.Flowlet.from(flow, AllProgramsApp.A.NAME)))
+          ));
       Assert.assertEquals(expected, lineage);
+
+      // Fetch stream lineage
+      httpResponse = fetchLineage(stream, startTime, stopTime, 10);
+      Assert.assertEquals(expected, lineage);
+
+      // Fetch dataset lineage with time strings
+      httpResponse = fetchLineage(dataset, "now-1h", "now+1h", 10);
+      Assert.assertEquals(200, httpResponse.getResponseCode());
+      lineage = GSON.fromJson(httpResponse.getResponseBodyAsString(), LineageRecord.class);
+      Assert.assertEquals(expected.getRelations(), lineage.getRelations());
 
       // Fetch stream lineage
       httpResponse = fetchLineage(stream, startTime, stopTime, 10);
       Assert.assertEquals(200, httpResponse.getResponseCode());
       lineage = GSON.fromJson(httpResponse.getResponseBodyAsString(), LineageRecord.class);
-
       // same as dataset's lineage
       Assert.assertEquals(expected, lineage);
+
+      // Fetch stream lineage with time strings
+      httpResponse = fetchLineage(stream, "now-1h", "now+1h", 10);
+      Assert.assertEquals(200, httpResponse.getResponseCode());
+      lineage = GSON.fromJson(httpResponse.getResponseBodyAsString(), LineageRecord.class);
+      // same as dataset's lineage
+      Assert.assertEquals(expected.getRelations(), lineage.getRelations());
 
       // Assert metadata
       // Id.Flow needs conversion to Id.Program JIRA - CDAP-3658
@@ -154,8 +173,12 @@ public class LineageTest extends MetadataTestBase {
       Assert.assertEquals(200, httpResponse.getResponseCode());
       lineage = GSON.fromJson(httpResponse.getResponseBodyAsString(), LineageRecord.class);
 
-      Assert.assertEquals(new LineageRecord(laterStartTime, laterEndTime, ImmutableSet.<Relation>of()),
-                          lineage);
+      Assert.assertEquals(
+        new LineageRecord(
+          TimeUnit.SECONDS.toMillis(laterStartTime),
+          TimeUnit.SECONDS.toMillis(laterEndTime),
+          ImmutableSet.<Relation>of()),
+        lineage);
 
       // Assert with a time range before the flow run should return no results
       long earlierStartTime = startTime - 5000;
@@ -165,8 +188,18 @@ public class LineageTest extends MetadataTestBase {
       Assert.assertEquals(200, httpResponse.getResponseCode());
       lineage = GSON.fromJson(httpResponse.getResponseBodyAsString(), LineageRecord.class);
 
-      Assert.assertEquals(new LineageRecord(earlierStartTime, earlierEndTime, ImmutableSet.<Relation>of()),
-                          lineage);
+      Assert.assertEquals(
+        new LineageRecord(
+          TimeUnit.SECONDS.toMillis(earlierStartTime),
+          TimeUnit.SECONDS.toMillis(earlierEndTime),
+          ImmutableSet.<Relation>of()),
+        lineage);
+
+      // Test bad time ranges
+      httpResponse = fetchLineage(dataset, "sometime", "sometime", 10);
+      Assert.assertEquals(400, httpResponse.getResponseCode());
+      httpResponse = fetchLineage(dataset, "now+1h", "now-1h", 10);
+      Assert.assertEquals(400, httpResponse.getResponseCode());
     } finally {
       try {
         deleteNamespace(namespace);
@@ -226,39 +259,41 @@ public class LineageTest extends MetadataTestBase {
       waitForStop(worker, false);
       waitForStop(service, true);
 
-      long now = System.currentTimeMillis();
-      long oneHourMillis = TimeUnit.HOURS.toMillis(1);
+      long now = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+      long oneHour = TimeUnit.HOURS.toSeconds(1);
 
       // Fetch dataset lineage
-      HttpResponse httpResponse = fetchLineage(dataset, now - oneHourMillis, now + oneHourMillis, 10);
+      HttpResponse httpResponse = fetchLineage(dataset, now - oneHour, now + oneHour, 10);
       Assert.assertEquals(200, httpResponse.getResponseCode());
       LineageRecord lineage = GSON.fromJson(httpResponse.getResponseBodyAsString(), LineageRecord.class);
 
       // dataset is accessed by all programs
       LineageRecord expected =
-        new LineageRecord(now - oneHourMillis, now + oneHourMillis,
-                          ImmutableSet.of(
-                            // Dataset access
-                            new Relation(dataset, flow, AccessType.UNKNOWN, flowRunId,
-                                         ImmutableSet.of(Id.Flow.Flowlet.from(flow, AllProgramsApp.A.NAME))),
-                            new Relation(dataset, mapreduce, AccessType.UNKNOWN, mrRunId),
-                            new Relation(dataset, spark, AccessType.UNKNOWN, sparkRunId),
-                            new Relation(dataset, mapreduce, AccessType.UNKNOWN, workflowMrRunId),
-                            new Relation(dataset, service, AccessType.UNKNOWN, serviceRunId),
-                            new Relation(dataset, worker, AccessType.UNKNOWN, workerRunId),
+        new LineageRecord(
+          TimeUnit.SECONDS.toMillis(now - oneHour),
+          TimeUnit.SECONDS.toMillis(now + oneHour),
+          ImmutableSet.of(
+            // Dataset access
+            new Relation(dataset, flow, AccessType.UNKNOWN, flowRunId,
+                         ImmutableSet.of(Id.Flow.Flowlet.from(flow, AllProgramsApp.A.NAME))),
+            new Relation(dataset, mapreduce, AccessType.UNKNOWN, mrRunId),
+            new Relation(dataset, spark, AccessType.UNKNOWN, sparkRunId),
+            new Relation(dataset, mapreduce, AccessType.UNKNOWN, workflowMrRunId),
+            new Relation(dataset, service, AccessType.UNKNOWN, serviceRunId),
+            new Relation(dataset, worker, AccessType.UNKNOWN, workerRunId),
 
-                            // Stream access
-                            new Relation(stream, flow, AccessType.READ, flowRunId,
-                                         ImmutableSet.of(Id.Flow.Flowlet.from(flow, AllProgramsApp.A.NAME))),
-                            new Relation(stream, mapreduce, AccessType.READ, mrRunId),
-                            new Relation(stream, spark, AccessType.READ, sparkRunId),
-                            new Relation(stream, mapreduce, AccessType.READ, workflowMrRunId),
-                            new Relation(stream, worker, AccessType.WRITE, workerRunId)
-                          ));
+            // Stream access
+            new Relation(stream, flow, AccessType.READ, flowRunId,
+                         ImmutableSet.of(Id.Flow.Flowlet.from(flow, AllProgramsApp.A.NAME))),
+            new Relation(stream, mapreduce, AccessType.READ, mrRunId),
+            new Relation(stream, spark, AccessType.READ, sparkRunId),
+            new Relation(stream, mapreduce, AccessType.READ, workflowMrRunId),
+            new Relation(stream, worker, AccessType.WRITE, workerRunId)
+          ));
       Assert.assertEquals(expected, lineage);
 
       // Fetch stream lineage
-      httpResponse = fetchLineage(stream, now - oneHourMillis, now + oneHourMillis, 10);
+      httpResponse = fetchLineage(stream, now - oneHour, now + oneHour, 10);
       Assert.assertEquals(200, httpResponse.getResponseCode());
       lineage = GSON.fromJson(httpResponse.getResponseBodyAsString(), LineageRecord.class);
 
