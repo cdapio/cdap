@@ -614,14 +614,18 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     // Start the workflow
     startProgram(programId);
 
+    Id.Program mr1ProgramId = Id.Program.from(TEST_NAMESPACE2, workflowAppWithScopedParameters, ProgramType.MAPREDUCE,
+                                              "OneMR");
+    waitState(mr1ProgramId, "RUNNING");
+    List<RunRecord> oneMRHistoryRuns = getProgramRuns(mr1ProgramId, "running");
+    stopProgram(mr1ProgramId, oneMRHistoryRuns.get(0).getPid(), 400, "MapReduce program run started by Workflow" +
+      " cannot be stopped. Please stop the Workflow.");
+
     verifyProgramRuns(programId, "completed");
 
     List<RunRecord> workflowHistoryRuns = getProgramRuns(programId, "completed");
 
-    Id.Program mr1ProgramId = Id.Program.from(TEST_NAMESPACE2, workflowAppWithScopedParameters, ProgramType.MAPREDUCE,
-                                              "OneMR");
-
-    List<RunRecord> oneMRHistoryRuns = getProgramRuns(mr1ProgramId, "completed");
+    oneMRHistoryRuns = getProgramRuns(mr1ProgramId, "completed");
 
     Id.Program mr2ProgramId = Id.Program.from(TEST_NAMESPACE2, workflowAppWithScopedParameters, ProgramType.MAPREDUCE,
                                               "AnotherMR");
@@ -930,9 +934,9 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
 
     // Stop both Workflow runs.
     String runId = historyRuns.get(0).getPid();
-    stopProgram(programId, 200, runId);
+    stopProgram(programId, runId, 200);
     runId = historyRuns.get(1).getPid();
-    stopProgram(programId, 200, runId);
+    stopProgram(programId, runId, 200);
 
     // Verify both runs should be marked "KILLED".
     verifyProgramRuns(programId, "killed", 1);
