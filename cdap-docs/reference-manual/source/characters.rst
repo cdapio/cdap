@@ -16,7 +16,7 @@ Alphanumeric Characters
 -----------------------
 **Metadata tags** are restricted to the alphanumeric character set:
 
-- Alphanumeric characters (``a-z A-Z 0-9``) [tags]
+- Alphanumeric characters (``a-z A-Z 0-9``)
 
 
 Alphanumeric Extended Character Set
