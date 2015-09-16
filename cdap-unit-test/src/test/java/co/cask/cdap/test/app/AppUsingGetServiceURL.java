@@ -29,6 +29,7 @@ import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.api.worker.AbstractWorker;
 import co.cask.cdap.api.worker.WorkerContext;
+import co.cask.cdap.common.utils.Tasks;
 import com.google.common.base.Charsets;
 import com.google.common.io.ByteStreams;
 import org.slf4j.Logger;
@@ -38,7 +39,10 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -55,7 +59,6 @@ public class AppUsingGetServiceURL extends AbstractApplication {
   public static final String FORWARDING = "ForwardingService";
   public static final String ANSWER = "MagicalString";
   public static final String DATASET_NAME = "SharedDataSet";
-  public static final String DATASET_WHICH_KEY = "WhichKey";
   public static final String DATASET_KEY = "Key";
   public static final String WORKER_INSTANCES_DATASET = "WorkerInstancesDataset";
 
@@ -75,6 +78,7 @@ public class AppUsingGetServiceURL extends AbstractApplication {
    */
   public static final class ForwardingHandler extends AbstractHttpServiceHandler {
 
+    @SuppressWarnings("unused")
     @UseDataSet(DATASET_NAME)
     private KeyValueTable table;
 
@@ -97,7 +101,7 @@ public class AppUsingGetServiceURL extends AbstractApplication {
           responder.sendError(500, "Failed to retrieve a response from the service");
         }
       } finally {
-          conn.disconnect();
+        conn.disconnect();
       }
     }
 
@@ -135,7 +139,6 @@ public class AppUsingGetServiceURL extends AbstractApplication {
     @Override
     protected void configure() {
       setName(LIFECYCLE_WORKER);
-      useDatasets(WORKER_INSTANCES_DATASET);
       setInstances(3);
     }
 
@@ -181,14 +184,24 @@ public class AppUsingGetServiceURL extends AbstractApplication {
     @Override
     protected void configure() {
       setName(PINGING_WORKER);
-      useDatasets(DATASET_NAME);
       setInstances(5);
     }
 
     @Override
     public void run() {
+      try {
+        waitForGetServiceUrl();
+      } catch (InterruptedException e) {
+        LOG.warn("{} interrupted while discovering {}", PINGING_WORKER, CENTRAL_SERVICE, e);
+        Thread.currentThread().interrupt();
+      } catch (ExecutionException e) {
+        LOG.error("{} got exception while pinging {}", PINGING_WORKER, CENTRAL_SERVICE, e);
+      } catch (TimeoutException e) {
+        LOG.error("{} Timed out while waiting for a successful ping to {}", PINGING_WORKER, CENTRAL_SERVICE);
+      }
       URL baseURL = getContext().getServiceURL(CENTRAL_SERVICE);
       if (baseURL == null) {
+        LOG.warn("Error getting {} URL in {}. Worker quitting.", CENTRAL_SERVICE, PINGING_WORKER);
         return;
       }
 
@@ -196,7 +209,19 @@ public class AppUsingGetServiceURL extends AbstractApplication {
       try {
         url = new URL(baseURL, "ping");
       } catch (MalformedURLException e) {
+        LOG.warn("Exception while creating ping URL for {} from {}", CENTRAL_SERVICE, PINGING_WORKER);
         return;
+      }
+
+      try {
+        waitForSuccessfulPing(url);
+      } catch (InterruptedException e) {
+        LOG.warn("{} interrupted while pinging {}", PINGING_WORKER, CENTRAL_SERVICE, e);
+        Thread.currentThread().interrupt();
+      } catch (ExecutionException e) {
+        LOG.error("{} got exception while pinging {}", PINGING_WORKER, CENTRAL_SERVICE, e);
+      } catch (TimeoutException e) {
+        LOG.error("{} Timed out while waiting for a successful ping to {}", PINGING_WORKER, CENTRAL_SERVICE);
       }
 
       try {
@@ -212,6 +237,30 @@ public class AppUsingGetServiceURL extends AbstractApplication {
       } catch (IOException e) {
         LOG.error("Got exception {}", e);
       }
+    }
+
+    private void waitForGetServiceUrl() throws InterruptedException, ExecutionException, TimeoutException {
+      Tasks.waitFor(true, new Callable<Boolean>() {
+        @Override
+        public Boolean call() throws Exception {
+          return getContext().getServiceURL(CENTRAL_SERVICE) != null;
+        }
+      }, 10, TimeUnit.SECONDS, 50, TimeUnit.MILLISECONDS);
+    }
+
+    private void waitForSuccessfulPing(final URL serviceUrl) throws InterruptedException, ExecutionException,
+      TimeoutException {
+      Tasks.waitFor(HttpURLConnection.HTTP_OK, new Callable<Integer>() {
+        @Override
+        public Integer call() throws Exception {
+          HttpURLConnection conn = (HttpURLConnection) serviceUrl.openConnection();
+          try {
+            return conn.getResponseCode();
+          } finally {
+            conn.disconnect();
+          }
+        }
+      }, 10, TimeUnit.SECONDS, 50, TimeUnit.MILLISECONDS);
     }
   }
 
