@@ -127,11 +127,11 @@ public class LineageStore {
    * @return a set of {@link MetadataRecord}s (associated with both program and data it accesses)
    * for a given program run.
    */
-  public Set<MetadataRecord> getAccesses(final Id.Run run) {
+  public Set<MetadataRecord> getRunMetadata(final Id.Run run) {
     return execute(new TransactionExecutor.Function<LineageDataset, Set<MetadataRecord>>() {
       @Override
       public Set<MetadataRecord> apply(LineageDataset input) throws Exception {
-        return input.getAccesses(run);
+        return input.getRunMetadata(run);
       }
     });
   }

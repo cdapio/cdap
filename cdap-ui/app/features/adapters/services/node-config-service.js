@@ -13,23 +13,23 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+ 
+angular.module(PKG.name + '.feature.adapters')
+  .service('MyNodeConfigService', function() {
+    this.pluginChangeListeners = [];
+    this.setPlugin = function(plugin) {
+      this.plugin = plugin;
+      this.notifyListeners();
+    };
 
-angular.module(PKG.name + '.services')
-  .constant('GLOBALS', {
-    // Should be under property called 'artifactTypes' to be consistent. GLOBALS.etlBatch doesn't make much sense.
-    etlBatch: 'cdap-etl-batch',
-    etlRealtime: 'cdap-etl-realtime',
-    pluginTypes: {
-      'cdap-etl-batch': {
-        'source': 'batchsource',
-        'sink': 'batchsink',
-        'transform': 'transform'
-      },
-      'cdap-etl-realtime': {
-        'source': 'realtimesource',
-        'sink': 'realtimesink',
-        'transform': 'transform'
-      }
-    },
-    addHydratorAppLabel: 'Hydrator Pipeline'
+    this.notifyListeners = function () {
+      this.pluginChangeListeners.forEach(function(callback) {
+        callback(this.plugin);
+      }.bind(this));
+    };
+
+    this.registerPluginCallback = function(callback) {
+      this.pluginChangeListeners.push(callback);
+    };
+
   });

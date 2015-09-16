@@ -27,6 +27,8 @@ import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
+import co.cask.cdap.data2.metadata.service.BusinessMetadataStore;
+import co.cask.cdap.data2.metadata.service.DefaultBusinessMetadataStore;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.codec.NamespacedIdCodec;
 import co.cask.cdap.proto.metadata.MetadataChangeRecord;
@@ -34,8 +36,10 @@ import co.cask.tephra.runtime.TransactionInMemoryModule;
 import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.util.Modules;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.internal.kafka.EmbeddedKafkaServer;
 import org.apache.twill.internal.utils.Networks;
@@ -93,7 +97,13 @@ public class MetadataKafkaTestBase {
       new KafkaClientModule(),
       new TransactionInMemoryModule(),
       new SystemDatasetRuntimeModule().getInMemoryModules(),
-      new DataSetsModules().getInMemoryModules(true),
+      Modules.override(new DataSetsModules().getInMemoryModules(true)).with(new AbstractModule() {
+        @Override
+        protected void configure() {
+          // Need the distributed metadata store.
+          bind(BusinessMetadataStore.class).to(DefaultBusinessMetadataStore.class);
+        }
+      }),
       new NamespaceClientRuntimeModule().getInMemoryModules()
     );
     zkClient = injector.getInstance(ZKClientService.class);

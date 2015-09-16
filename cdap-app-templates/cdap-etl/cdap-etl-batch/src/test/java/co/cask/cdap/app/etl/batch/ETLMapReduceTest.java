@@ -138,14 +138,11 @@ public class ETLMapReduceTest extends BaseETLBatchTest {
         Properties.Table.PROPERTY_SCHEMA, schema.toString()));
 
     String validationScript = "function isValid(input) {  " +
-      "input = JSON.parse(input); var resultMap = new java.util.HashMap(); " +
-      "var errCode = '0'; var errMsg = '';" +
+      "var errCode = 0; var errMsg = 'none'; var isValid = true;" +
       "if (!coreValidator.maxLength(input.user, 6)) " +
-      "{ errCode = '10'; errMsg = 'user name greater than 6 characters'; resultMap.put('isValid', 'false'); } " +
-      "else { resultMap.put('isValid', 'true');}; " +
-      "resultMap.put('errorCode', errCode); " +
-      "resultMap.put('errorMsg', errMsg); " +
-      "return resultMap;};";
+      "{ errCode = 10; errMsg = 'user name greater than 6 characters'; isValid = false; }; " +
+      "return {'isValid': isValid, 'errorCode': errCode, 'errorMsg': errMsg}; " +
+      "};";
     ETLStage transform = new ETLStage("Validator",
                                       ImmutableMap.<String, String>of("validators", "core",
                                                                       "validationScript", validationScript),

@@ -15,14 +15,19 @@
  */
 
 angular.module(PKG.name + '.feature.adapters')
-  .controller('BottomPanelController', function ($scope, MySidebarService, MyAppDAGService) {
+  .controller('BottomPanelController', function ($scope, MySidebarService, MyAppDAGService, MyNodeConfigService, $timeout) {
 
     MyAppDAGService.registerEditPropertiesCallback(editProperties.bind(this));
-    this.tab = {};
-    this.tab.plugin = {};
+
     function editProperties(plugin) {
-      this.tab.plugin = plugin;
       $scope.selectTab($scope.tabs[2]);
+      // Giving 100ms to load the template and then set the plugin
+      // For this service to work the controller has to register a callback
+      // with the service. The callback will not be called if plugin assignment happens
+      // before controller initialization. Hence the 100ms delay.
+      $timeout(function() {
+        MyNodeConfigService.setPlugin(plugin);
+      }, 100);
     }
 
     $scope.isExpanded = false;

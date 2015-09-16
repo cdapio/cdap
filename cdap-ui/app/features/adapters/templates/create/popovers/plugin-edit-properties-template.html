@@ -37,10 +37,10 @@
                        class="my-widget-container"
                        data-info="{{plugin.myconfig.widget}}"
                        ng-class="{'select-wrapper': PluginEditController.groups[group].fields[field].widget === 'select'}"
-                       data-model="plugin.properties[field]"
+                       data-model="pluginCopy.properties[field]"
                        data-myconfig="PluginEditController.groups[group].fields[field]"
-                       data-properties="plugin.properties"
-                       widget-disabled="plugin.pluginTemplate && plugin.lock[field]"
+                       data-properties="pluginCopy.properties"
+                       widget-disabled="pluginCopy.pluginTemplate && pluginCopy.lock[field]"
                        widget-container>
                   </div>
                 </div>

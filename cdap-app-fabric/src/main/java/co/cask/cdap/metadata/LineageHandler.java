@@ -97,7 +97,7 @@ public class LineageHandler extends AbstractHttpHandler {
   }
 
   @GET
-  @Path("/namespaces/{namespace-id}/apps/{app-id}/{program-type}/{program-id}/runs/{run-id}/metadata/accesses")
+  @Path("/namespaces/{namespace-id}/apps/{app-id}/{program-type}/{program-id}/runs/{run-id}/metadata")
   public void getAccessesForRun(HttpRequest request, HttpResponder responder,
                                 @PathParam("namespace-id") String namespaceId,
                                 @PathParam("app-id") String appId,
@@ -107,7 +107,7 @@ public class LineageHandler extends AbstractHttpHandler {
     Id.Run run = new Id.Run(
       Id.Program.from(namespaceId, appId, ProgramType.valueOfCategoryName(programType), programId),
       runId);
-    responder.sendJson(HttpResponseStatus.OK, lineageStore.getAccesses(run), SET_METADATA_RECORD_TYPE, GSON);
+    responder.sendJson(HttpResponseStatus.OK, lineageStore.getRunMetadata(run), SET_METADATA_RECORD_TYPE, GSON);
   }
 
   private void checkArguments(long start, long end, int levels) throws BadRequestException {

@@ -80,22 +80,22 @@
                 <button
                   class="btn btn-sm btn-default pull-right"
                   ng-click="PluginEditController.schemaClear()"
-                  ng-if="(!plugin.implicitSchema && !isDisabled)"
-                  ng-disabled="plugin.implicitSchema || plugin.properties.format === 'clf' || plugin.properties.format === 'syslog'">
+                  ng-if="(!pluginCopy.implicitSchema && !isDisabled)"
+                  ng-disabled="pluginCopy.implicitSchema || pluginCopy.properties.format === 'clf' || pluginCopy.properties.format === 'syslog'">
                   Clear
                 </button>
               </h4>
 
               <fieldset ng-disabled="isDisabled">
                 <my-schema-editor
-                  ng-model="plugin.outputSchema"
-                  data-disabled="plugin.implicitSchema"
-                  plugin-properties="plugin.properties"
+                  ng-model="pluginCopy.outputSchema"
+                  data-disabled="pluginCopy.implicitSchema"
+                  plugin-properties="pluginCopy.properties"
                   config="PluginEditController.schemaProperties">
                 </my-schema-editor>
               </fieldset>
 
-              <div ng-if="!plugin.outputSchema && isDisabled">
+              <div ng-if="!pluginCopy.outputSchema && isDisabled">
                 <div class="well well-lg">
                   <h4>There is no output schema</h4>
                 </div>

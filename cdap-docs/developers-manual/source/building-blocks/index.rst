@@ -48,7 +48,7 @@ write data through the data abstraction layer in CDAP.
 - :doc:`Workers <workers>`
 - :doc:`Workflows <workflows>`
 
-A :doc:`Namespace <namespaces>` is a physical grouping of application and data in CDAP.
+A :doc:`Namespace <namespaces>` is a logical grouping of application and data in CDAP.
 Conceptually, namespaces can be thought of as a partitioning of a CDAP instance.
 All applications and data live in an explicit CDAP namespace.
 

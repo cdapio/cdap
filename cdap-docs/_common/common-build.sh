@@ -295,6 +295,7 @@ function set_version() {
   OIFS="${IFS}"
   local current_directory=$(pwd)
   cd ${PROJECT_PATH}
+  source ${PROJECT_PATH}/${CDAP_DOCS}/vars
   PROJECT_VERSION=$(grep "<version>" pom.xml)
   PROJECT_VERSION=${PROJECT_VERSION#*<version>}
   PROJECT_VERSION=${PROJECT_VERSION%%</version>*}
@@ -303,12 +304,17 @@ function set_version() {
   local full_branch=$(git rev-parse --abbrev-ref HEAD)
   IFS=/ read -a branch <<< "${full_branch}"
   GIT_BRANCH="${branch[1]}"
-  GIT_BRANCH_PARENT="develop"
+  if [ "x${GIT_BRANCH_PARENT}" == "x" ]; then
+    GIT_BRANCH_PARENT="develop"
+  fi
   # Determine branch and branch type: one of develop, master, release, develop-feature, release-feature
   # If unable to determine type, uses develop-feature
   if [ "${full_branch}" == "develop" -o  "${full_branch}" == "master" ]; then
     GIT_BRANCH="${full_branch}"
     GIT_BRANCH_TYPE=${GIT_BRANCH}
+  elif [ "${full_branch:0:4}" == "docs" ]; then
+    GIT_BRANCH="${full_branch}"
+    GIT_BRANCH_TYPE="release-feature"
   elif [ "${GIT_BRANCH:0:7}" == "release" ]; then
     GIT_BRANCH_TYPE="release"
   else
@@ -316,7 +322,7 @@ function set_version() {
     # This is not easy to determine. This can fail very easily.
     local git_branch_listing=$(git show-branch | grep '*' | grep -v "$(git rev-parse --abbrev-ref HEAD)" | head -n1)
     if [ "x${git_branch_listing}" == "x" ]; then 
-      echo_red_bold "Unable to determine parent branch as git_branch_listing empty; perhaps in a new branch with no commits"
+      echo_red_bold "Unable to determine parent branch as git_branch_listing empty"
       echo_red_bold "Using default GIT_BRANCH_PARENT: ${GIT_BRANCH_PARENT}"
     else
       GIT_BRANCH_PARENT=$(echo ${git_branch_listing} | sed 's/.*\[\(.*\)\].*/\1/' | sed 's/[\^~].*//')

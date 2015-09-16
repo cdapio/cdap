@@ -43,8 +43,6 @@ public class ValidatorTransformTest {
         "      var isValid = true; " +
         "      var errMsg = \"\";" +
         "      var errCode = 0;" +
-        "      var resultMap = new java.util.HashMap();" +
-        "      input = JSON.parse(input);" +
         "      if (!coreValidator.isDate(input.date)) { " +
         "         isValid = false; errMsg = input.date + \"is invalid date\"; errCode = 5;" +
         "      } else if (!coreValidator.isUrl(input.url)) { " +
@@ -52,10 +50,7 @@ public class ValidatorTransformTest {
         "      } else if (!coreValidator.isInRange(input.content_length, 0, 1024 * 1024)) {" +
         "         isValid = false; errMsg = \"content length >1MB\"; errCode = 10;" +
         "      }" +
-        "      resultMap.put(\"isValid\", isValid.toString()); " +
-        "      resultMap.put(\"errorCode\", errCode.toString()); " +
-        "      resultMap.put(\"errorMsg\", errMsg); " +
-        "      return resultMap;" +
+        "      return {'isValid': isValid, 'errorCode': errCode, 'errorMsg': errMsg}; " +
         "   };";
 
     config.validators = "apache";
