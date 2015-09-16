@@ -8,13 +8,13 @@ Sinks: Batch: S3Parquet
 
 .. rubric:: Description
 
-A batch sink for a to write to Amazon S3 in Parquet format. 
+A batch sink for writing to Amazon S3 in Parquet format. 
 
 .. rubric:: Use Case
 
 This sink is used whenever you want to write data to S3 in Parquet format. 
 Users might want to run a periodic processing job and write to S3 as a backup store. 
-The output of the run will be stored in a directory with the suffix yyyy-mm-dd-hh from the base
+The output of the run will be stored in a directory with the suffix ``yyyy-mm-dd-hh`` from the base
 path provided.
  
 .. highlight:: xml
@@ -55,4 +55,4 @@ path provided.
 
 This example will write to an S3 output located at ``s3n://path/to/logs``. It will write data in Parquet format
 using the given schema. Every time the pipeline runs, a new output directory from the base path (``s3n://path/to/logs``)
-will be created which will have the directory name corresponding to the start time in 'yyyy-mm-dd-hh' format.
+will be created which will have the directory name corresponding to the start time in ``yyyy-mm-dd-hh`` format.
