@@ -21,9 +21,12 @@ import org.apache.hive.service.cli.SessionHandle;
 
 import java.util.Map;
 
+/**
+ * OperationInfo that represents a read-write operation.
+ */
 final class ReadWriteOperationInfo extends OperationInfo {
-  public ReadWriteOperationInfo(SessionHandle sessionHandle, OperationHandle operationHandle,
-                                Map<String, String> sessionConf, String statement, String namespace) {
+  ReadWriteOperationInfo(SessionHandle sessionHandle, OperationHandle operationHandle,
+                         Map<String, String> sessionConf, String statement, String namespace) {
     super(sessionHandle, operationHandle, sessionConf, statement, System.currentTimeMillis(), namespace, false);
   }
 }

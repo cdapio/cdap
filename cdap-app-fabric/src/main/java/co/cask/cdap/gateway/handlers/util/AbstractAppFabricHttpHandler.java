@@ -18,19 +18,14 @@ package co.cask.cdap.gateway.handlers.util;
 
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.api.artifact.ArtifactId;
-import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
-import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;
-import co.cask.cdap.proto.ApplicationRecord;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
@@ -110,9 +105,6 @@ public abstract class AbstractAppFabricHttpHandler extends AbstractHttpHandler {
     public static final AppFabricServiceStatus INTERNAL_ERROR =
       new AppFabricServiceStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Internal server error");
 
-    public static final AppFabricServiceStatus ADAPTER_CONFLICT =
-      new AppFabricServiceStatus(HttpResponseStatus.FORBIDDEN, "An ApplicationTemplate exists with conflicting name.");
-
     private final HttpResponseStatus code;
     private final String message;
 
@@ -173,27 +165,6 @@ public abstract class AbstractAppFabricHttpHandler extends AbstractHttpHandler {
     } finally {
       Closeables.closeQuietly(reader);
     }
-  }
-
-  protected final void getAppRecords(HttpResponder responder, Store store,
-                                     String namespaceId,
-                                     @Nullable String artifactName,
-                                     @Nullable String artifactVersion) throws NamespaceNotFoundException {
-    Id.Namespace namespace = Id.Namespace.from(namespaceId);
-    if (store.getNamespace(namespace) == null) {
-      throw new NamespaceNotFoundException(namespace);
-    }
-
-    List<ApplicationRecord> appRecords = new ArrayList<>();
-    for (ApplicationSpecification appSpec : store.getApplications(namespace, artifactName, artifactVersion)) {
-      // possible if this particular app was deploy prior to v3.2 and upgrade failed for some reason.
-      ArtifactId artifactId = appSpec.getArtifactId();
-      ArtifactSummary artifactSummary = artifactId == null ?
-        new ArtifactSummary(appSpec.getName(), null) : ArtifactSummary.from(artifactId);
-      appRecords.add(new ApplicationRecord(artifactSummary, appSpec.getName(), appSpec.getDescription()));
-    }
-
-    responder.sendJson(HttpResponseStatus.OK, appRecords);
   }
 
   protected final void programList(HttpResponder responder, String namespaceId, ProgramType type, Store store) {

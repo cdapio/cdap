@@ -15,7 +15,6 @@
  */
 package co.cask.cdap.internal.app.runtime.distributed;
 
-import co.cask.cdap.api.templates.plugins.PluginInfo;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.app.runtime.Arguments;
@@ -30,10 +29,8 @@ import co.cask.cdap.common.twill.HadoopClassExcluder;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data.security.HBaseTokenUtils;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
-import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
-import co.cask.cdap.templates.AdapterDefinition;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
@@ -70,7 +67,6 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nullable;
 
@@ -155,8 +151,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
         LOG.info("Setting scheduler queue to {}", schedulerQueueName);
       }
 
-      Map<String, LocalizeResource> localizeResources = addAdapterPluginFiles(options,
-                                                                              new HashMap<String, LocalizeResource>());
+      Map<String, LocalizeResource> localizeResources = new HashMap<>();
 
       // Copy config files and program jar to local temp, and ask Twill to localize it to container.
       // What Twill does is to save those files in HDFS and keep using them during the lifetime of application.
@@ -213,52 +208,6 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
       deleteDirectory(tempDir);
       throw Throwables.propagate(e);
     }
-  }
-
-  /**
-   * Gets plugin files that needs to be localized for the adapter. If the given run is not an adapter, no
-   * modification will be done to the map.
-   */
-  private Map<String, LocalizeResource> addAdapterPluginFiles(ProgramOptions options,
-                                                              Map<String, LocalizeResource> localizeResources) {
-    Arguments arguments = options.getArguments();
-    if (!arguments.hasOption(ProgramOptionConstants.ADAPTER_SPEC)) {
-      return localizeResources;
-    }
-
-    // Decode the adapter spec from program system argument
-    AdapterDefinition adapterSpec = GSON.fromJson(arguments.getOption(ProgramOptionConstants.ADAPTER_SPEC),
-                                                     AdapterDefinition.class);
-
-    // Get all unique PluginInfo from the adapter spec
-    Set<PluginInfo> plugins = adapterSpec.getPluginInfos();
-
-    // If there is no plugin used by the adapter, nothing need to be localized
-    if (plugins.isEmpty()) {
-      return localizeResources;
-    }
-
-    File templateDir = new File(cConf.get(Constants.AppFabric.APP_TEMPLATE_DIR));
-    File templatePluginDir = new File(cConf.get(Constants.AppFabric.APP_TEMPLATE_PLUGIN_DIR),
-                                      adapterSpec.getTemplate());
-
-    String localizePrefix = templateDir.getName() + "/" +
-                            templateDir.toURI().relativize(templatePluginDir.toURI()).getPath();
-
-    // Localize all required plugin jars and maintain the template plugin directory structure
-    // The AbstractProgramTwillRunnable will set the APP_TEMPLATE_DIR correspondingly.
-    for (PluginInfo plugin : plugins) {
-      String localizedName = String.format("%s/%s", localizePrefix, plugin.getFileName());
-      localizeResources.put(localizedName, new LocalizeResource(new File(templatePluginDir, plugin.getFileName())));
-    }
-
-    // Localize all files under template plugin "lib" directory
-    for (File libJar : DirUtils.listFiles(new File(templatePluginDir, "lib"), "jar")) {
-      String localizedName = String.format("%s/lib/%s", localizePrefix, libJar.getName());
-      localizeResources.put(localizedName, new LocalizeResource(libJar));
-    }
-
-    return localizeResources;
   }
 
   /**

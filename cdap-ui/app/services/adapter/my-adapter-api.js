@@ -15,12 +15,15 @@
  */
 
 angular.module(PKG.name + '.services')
-  .factory('myAdapterApi', function($resource, myHelpers) {
+  .factory('myAdapterApi', function($resource, myHelpers, GLOBALS) {
     var templatePath = '/templates',
-        adapterPath = '/namespaces/:namespace/adapters/:adapter',
-        sourcePath = '/templates/:adapterType/extensions/source',
-        sinkPath = '/templates/:adapterType/extensions/sink',
-        transformPath = '/templates/:adapterType/extensions/transform';
+        adapterPath = '/namespaces/:namespace/apps/:adapter',
+
+        listPath = '/namespaces/:namespace/apps?artifactName=' + GLOBALS.etlBatch + ',' + GLOBALS.etlRealtime,
+
+        pluginFetchBase = '/namespaces/:namespace/artifacts/:adapterType/versions/:version/extensions/:extensionType',
+        pluginsFetchPath = pluginFetchBase + '?scope=system',
+        pluginDetailFetch = pluginFetchBase + '/plugins/:pluginName?scope=system';
 
     return $resource(
       '',
@@ -28,16 +31,17 @@ angular.module(PKG.name + '.services')
 
       },
       {
-        save: myHelpers.getConfig('PUT', 'REQUEST', adapterPath),
+        save: myHelpers.getConfig('PUT', 'REQUEST', adapterPath, false, {contentType: 'application/json'}),
         fetchTemplates: myHelpers.getConfig('GET', 'REQUEST', templatePath, true),
-        fetchSources: myHelpers.getConfig('GET', 'REQUEST', sourcePath, true),
-        fetchSinks: myHelpers.getConfig('GET', 'REQUEST', sinkPath, true),
-        fetchTransforms: myHelpers.getConfig('GET', 'REQUEST', transformPath, true),
-        fetchSourceProperties: myHelpers.getConfig('GET', 'REQUEST', sourcePath + '/plugins/:source', true),
-        fetchSinkProperties: myHelpers.getConfig('GET', 'REQUEST', sinkPath + '/plugins/:sink', true),
-        fetchTransformProperties: myHelpers.getConfig('GET', 'REQUEST', transformPath + '/plugins/:transform', true),
+        fetchSources: myHelpers.getConfig('GET', 'REQUEST', pluginsFetchPath, true),
+        fetchSinks: myHelpers.getConfig('GET', 'REQUEST', pluginsFetchPath, true),
+        fetchTransforms: myHelpers.getConfig('GET', 'REQUEST', pluginsFetchPath, true),
+        fetchSourceProperties: myHelpers.getConfig('GET', 'REQUEST', pluginDetailFetch, true),
+        fetchSinkProperties: myHelpers.getConfig('GET', 'REQUEST', pluginDetailFetch, true),
+        fetchTransformProperties: myHelpers.getConfig('GET', 'REQUEST', pluginDetailFetch, true),
 
-        list: myHelpers.getConfig('GET', 'REQUEST', '/namespaces/:namespace/adapters', true),
+        // FIXME: This needs to be replaced with fetching etl-batch & etl-realtime separately.
+        list: myHelpers.getConfig('GET', 'REQUEST', listPath, true),
         pollStatus: myHelpers.getConfig('GET', 'POLL', adapterPath + '/status'),
         stopPollStatus: myHelpers.getConfig('GET', 'POLL-STOP', adapterPath + '/status'),
         delete: myHelpers.getConfig('DELETE', 'REQUEST', adapterPath),

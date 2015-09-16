@@ -36,7 +36,7 @@ of the application are tied together by the class ``SparkKMeansApp``:
 
 .. literalinclude:: /../../../cdap-examples/SparkKMeans/src/main/java/co/cask/cdap/examples/sparkkmeans/SparkKMeansApp.java
    :language: java
-   :lines: 49-82
+   :lines: 51-82
 
 The ``points`` and ``centers`` ObjectStore Data Storage
 -------------------------------------------------------
@@ -106,7 +106,7 @@ There are three ways to start the Spark program:
    
 #. Send a query via an HTTP request using the ``curl`` command::
 
-    curl -w'\n' -v  -d '{args="3"}' \
+    $ curl -w'\n' -v  -d '{args="3"}' \
       http://localhost:10000/v3/namespaces/default/apps/SparkKMeans/spark/SparkKMeansProgram/start
 
 #. Use the Command Line Interface::
@@ -120,7 +120,7 @@ To query the *centers* ObjectStore using the ``CentersService``, you can:
 
 - Send a query via an HTTP request using the ``curl`` command. For example::
 
-    curl -w'\n' -v http://localhost:10000/v3/namespaces/default/apps/SparkKMeans/services/CentersService/methods/centers/1
+    $ curl -w'\n' -v http://localhost:10000/v3/namespaces/default/apps/SparkKMeans/services/CentersService/methods/centers/1
 
 - You can use the Command Line Interface::
 

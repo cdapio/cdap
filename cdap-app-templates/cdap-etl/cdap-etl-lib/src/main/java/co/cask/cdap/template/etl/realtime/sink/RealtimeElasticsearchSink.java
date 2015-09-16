@@ -20,7 +20,7 @@ import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
-import co.cask.cdap.api.templates.plugins.PluginConfig;
+import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.etl.common.StructuredRecordStringConverter;
 import co.cask.cdap.template.etl.api.realtime.DataWriter;
 import co.cask.cdap.template.etl.api.realtime.RealtimeContext;
@@ -52,7 +52,7 @@ import javax.annotation.Nullable;
  * https://www.elastic.co/guide/en/elasticsearch/guide/current/_index_settings.html.
  * </p>
  */
-@Plugin(type = "sink")
+@Plugin(type = "realtimesink")
 @Name("Elasticsearch")
 @Description("CDAP Elasticsearch Realtime Sink takes the structured record from the input source and converts it " +
   "to a JSON string, then indexes it in Elasticsearch using the index, type, and id specified by the user. " +

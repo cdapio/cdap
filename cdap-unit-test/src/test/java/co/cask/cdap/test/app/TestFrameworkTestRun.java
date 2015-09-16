@@ -576,7 +576,13 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
     serviceManager.stop();
 
-    pingingWorker.stop();
+    // Program manager is not notified when worker stops on its own, hence suppressing the exception.
+    // JIRA - CDAP-3656
+    try {
+      pingingWorker.stop();
+    } catch (Throwable e) {
+      LOG.error("Got exception while stopping pinging worker", e);
+    }
     pingingWorker.waitForStatus(false);
 
     centralServiceManager.stop();

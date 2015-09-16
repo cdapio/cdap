@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data2.transaction.stream;
 
+import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.StreamProperties;
 
@@ -79,17 +80,19 @@ public interface StreamAdmin {
   /**
    * Creates stream if doesn't exist. If stream exists does nothing.
    * @param streamId Id of the stream to create
+   * @return The {@link StreamConfig} associated with the new stream
    * @throws Exception if creation fails
    */
-  void create(Id.Stream streamId) throws Exception;
+  StreamConfig create(Id.Stream streamId) throws Exception;
 
   /**
    * Creates stream if doesn't exist. If stream exists, does nothing.
    * @param streamId Id of the stream to create
    * @param props additional properties
+   * @return The {@link StreamConfig} associated with the new stream
    * @throws Exception if creation fails
    */
-  void create(Id.Stream streamId, @Nullable Properties props) throws Exception;
+  StreamConfig create(Id.Stream streamId, @Nullable Properties props) throws Exception;
 
   /**
    * Wipes out stream data.
@@ -112,4 +115,13 @@ public interface StreamAdmin {
    * @param streamId the stream being used
    */
   void register(Iterable<? extends Id> owners, Id.Stream streamId);
+
+  /**
+   * Record access of stream by a program run for lineage computation.
+   *
+   * @param run program run
+   * @param streamId stream being accessed
+   * @param accessType type of access
+   */
+  void addAccess(Id.Run run, Id.Stream streamId, AccessType accessType);
 }

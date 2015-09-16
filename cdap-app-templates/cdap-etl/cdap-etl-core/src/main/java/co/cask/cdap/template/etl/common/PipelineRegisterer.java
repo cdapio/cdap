@@ -16,8 +16,9 @@
 
 package co.cask.cdap.template.etl.common;
 
-import co.cask.cdap.api.artifact.PluginConfigurer;
-import co.cask.cdap.api.templates.plugins.PluginProperties;
+import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.plugin.PluginConfigurer;
+import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.template.etl.api.PipelineConfigurable;
 import co.cask.cdap.template.etl.api.PipelineConfigurer;
 import co.cask.cdap.template.etl.api.Transform;
@@ -40,53 +41,71 @@ import java.util.List;
  * Registers plugins needed by an ETL pipeline.
  */
 public class PipelineRegisterer {
-  private final PluginConfigurer configurer;
 
-  public PipelineRegisterer(PluginConfigurer configurer) {
+  private final PluginConfigurer configurer;
+  private final String sourcePluginType;
+  private final String sinkPluginType;
+
+
+  public PipelineRegisterer(PluginConfigurer configurer, String programType) {
     this.configurer = configurer;
+    this.sourcePluginType = programType + "source";
+    this.sinkPluginType = programType + "sink";
   }
 
   /**
    * Registers the plugins that will be used in the pipeline
    *
    * @param config the config containing pipeline information
+   * @param errorDatasetType error dataset type class
+   * @param errorDatasetProperties properties of the error dataset
+   * @param sinkWithErrorDataset boolean flag to indicate if the sinks uses error dataset
    * @return the ids of each plugin used in the pipeline
    */
-  public Pipeline registerPlugins(ETLConfig config) {
+  public Pipeline registerPlugins(ETLConfig config, Class errorDatasetType, DatasetProperties errorDatasetProperties,
+                                  boolean sinkWithErrorDataset) {
     ETLStage sourceConfig = config.getSource();
-    ETLStage sinkConfig = config.getSink();
     List<ETLStage> transformConfigs = config.getTransforms();
-    String sourcePluginId = PluginID.from(Constants.Source.PLUGINTYPE, sourceConfig.getName(), 1).getID();
-    // 2 + since we start at 1, and there is always a source.  For example, if there are 0 transforms, sink is stage 2.
-    String sinkPluginId =
-      PluginID.from(Constants.Sink.PLUGINTYPE, sinkConfig.getName(), 2 + transformConfigs.size()).getID();
+    List<ETLStage> sinkConfigs = config.getSinks();
+    // temporary for backwards compatibility
+    if (sinkConfigs == null) {
+      ETLStage sink = config.getSink();
+      if (sink == null) {
+        throw new IllegalArgumentException("At least one sink must be specified.");
+      }
+      sinkConfigs = Lists.newArrayList(sink);
+    }
+    if (sourceConfig == null) {
+      throw new IllegalArgumentException("A source must be specified.");
+    }
+    if (sinkConfigs.isEmpty()) {
+      throw new IllegalArgumentException("At least one sink must be specified.");
+    }
 
-    // Instantiate Source, Transforms, Sink stages.
-    // Use the plugin name as the plugin id for source and sink stages since there can be only one source and one sink.
-    PipelineConfigurable source = configurer.usePlugin(Constants.Source.PLUGINTYPE, sourceConfig.getName(),
+    // plugin num starts at 1 and increments for each stage in the pipeline
+    int pluginNum = 1;
+    String sourcePluginId = PluginID.from("source", sourceConfig.getName(), pluginNum).getID();
+    pluginNum++;
+
+    // instantiate source
+    PipelineConfigurable source = configurer.usePlugin(sourcePluginType, sourceConfig.getName(),
                                                        sourcePluginId, getPluginProperties(sourceConfig));
     if (source == null) {
       throw new IllegalArgumentException(String.format("No Plugin of type '%s' named '%s' was found.",
                                                        Constants.Source.PLUGINTYPE, sourceConfig.getName()));
     }
+    // configure source, allowing it to add datasets, streams, etc
+    PipelineConfigurer sourceConfigurer = new DefaultPipelineConfigurer(configurer, sourcePluginId);
+    source.configurePipeline(sourceConfigurer);
 
-    PipelineConfigurable sink = configurer.usePlugin(Constants.Sink.PLUGINTYPE, sinkConfig.getName(),
-                                                     sinkPluginId, getPluginProperties(sinkConfig));
-    if (sink == null) {
-      throw new IllegalArgumentException(String.format("No Plugin of type '%s' named '%s' was found.",
-                                                       Constants.Sink.PLUGINTYPE, sinkConfig.getName()));
-    }
-
-    // Store transform id list to be serialized and passed to the driver program
-    List<String> transformIds = Lists.newArrayListWithCapacity(transformConfigs.size());
-    List<Transformation> transforms = Lists.newArrayListWithCapacity(transformConfigs.size());
-    for (int i = 0; i < transformConfigs.size(); i++) {
-      ETLStage transformConfig = transformConfigs.get(i);
+    // transform id list will eventually be serialized and passed to the driver program
+    List<TransformInfo> transformInfos = new ArrayList<>(transformConfigs.size());
+    List<Transformation> transforms = new ArrayList<>(transformConfigs.size());
+    for (ETLStage transformConfig : transformConfigs) {
 
       // Generate a transformId based on transform name and the array index (since there could
       // multiple transforms - ex, N filter transforms in the same pipeline)
-      // stage number starts from 1, plus source is always #1, so add 2 for stage number.
-      String transformId = PluginID.from(Constants.Transform.PLUGINTYPE, transformConfig.getName(), 2 + i).getID();
+      String transformId = PluginID.from(Constants.Transform.PLUGINTYPE, transformConfig.getName(), pluginNum).getID();
       PluginProperties transformProperties = getPluginProperties(transformConfig);
       Transform transformObj = configurer.usePlugin(Constants.Transform.PLUGINTYPE, transformConfig.getName(),
                                                     transformId, transformProperties);
@@ -94,24 +113,55 @@ public class PipelineRegisterer {
         throw new IllegalArgumentException(String.format("No Plugin of type '%s' named '%s' was found",
                                                          Constants.Transform.PLUGINTYPE, transformConfig.getName()));
       }
+      // if the transformation is configured to write filtered records to error dataset, we create that dataset.
+      if (transformConfig.getErrorDatasetName() != null) {
+        configurer.createDataset(transformConfig.getErrorDatasetName(), errorDatasetType, errorDatasetProperties);
+      }
+
       PipelineConfigurer transformConfigurer = new DefaultPipelineConfigurer(configurer, transformId);
       transformObj.configurePipeline(transformConfigurer);
-      transformIds.add(transformId);
+      transformInfos.add(new TransformInfo(transformId, transformConfig.getErrorDatasetName()));
       transforms.add(transformObj);
+
+      pluginNum++;
+    }
+
+    List<SinkInfo> sinksInfo = new ArrayList<>();
+    List<PipelineConfigurable> sinks = new ArrayList<>();
+    for (ETLStage sinkConfig : sinkConfigs) {
+      String sinkPluginId = PluginID.from(Constants.Sink.PLUGINTYPE, sinkConfig.getName(), pluginNum).getID();
+
+      // create error dataset for sink - if the sink supports it and error dataset is configured for it.
+      if (sinkWithErrorDataset && sinkConfig.getErrorDatasetName() != null) {
+        configurer.createDataset(sinkConfig.getErrorDatasetName(), errorDatasetType, errorDatasetProperties);
+      }
+
+      sinksInfo.add(new SinkInfo(sinkPluginId, sinkConfig.getErrorDatasetName()));
+
+      // try to instantiate the sink
+      PipelineConfigurable sink = configurer.usePlugin(sinkPluginType, sinkConfig.getName(),
+        sinkPluginId, getPluginProperties(sinkConfig));
+      if (sink == null) {
+        throw new IllegalArgumentException(String.format("No Plugin of type '%s' named '%s' was found. " +
+            "Please check that an artifact containing the plugin exists, and that it extends the etl application.",
+          Constants.Sink.PLUGINTYPE, sinkConfig.getName()));
+      }
+      // run configure pipeline on sink to let it add datasets, etc.
+      PipelineConfigurer sinkConfigurer = new DefaultPipelineConfigurer(configurer, sinkPluginId);
+      sink.configurePipeline(sinkConfigurer);
+      sinks.add(sink);
+
+      pluginNum++;
     }
 
     // Validate Source -> Transform -> Sink hookup
     try {
-      validateStages(source, sink, transforms);
-      PipelineConfigurer sourceConfigurer = new DefaultPipelineConfigurer(configurer, sourcePluginId);
-      PipelineConfigurer sinkConfigurer = new DefaultPipelineConfigurer(configurer, sinkPluginId);
-      source.configurePipeline(sourceConfigurer);
-      sink.configurePipeline(sinkConfigurer);
+      validateStages(source, sinks, transforms);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
 
-    return new Pipeline(sourcePluginId, sinkPluginId, transformIds);
+    return new Pipeline(sourcePluginId, sinksInfo, transformInfos);
   }
 
   private PluginProperties getPluginProperties(ETLStage config) {
@@ -122,7 +172,7 @@ public class PipelineRegisterer {
     return builder.build();
   }
 
-  public static void validateStages(PipelineConfigurable source, PipelineConfigurable sink,
+  public static void validateStages(PipelineConfigurable source, List<PipelineConfigurable> sinks,
                                     List<Transformation> transforms) throws Exception {
     ArrayList<Type> unresTypeList = Lists.newArrayListWithCapacity(transforms.size() + 2);
     Type inType = Transformation.class.getTypeParameters()[0];
@@ -130,9 +180,7 @@ public class PipelineRegisterer {
 
     // Load the classes using the class names provided
     Class<?> sourceClass = source.getClass();
-    Class<?> sinkClass = sink.getClass();
     TypeToken sourceToken = TypeToken.of(sourceClass);
-    TypeToken sinkToken = TypeToken.of(sinkClass);
 
     // Extract the source's output type
     if (RealtimeSource.class.isAssignableFrom(sourceClass)) {
@@ -151,15 +199,23 @@ public class PipelineRegisterer {
     }
 
     // Extract the sink's input type
-    if (RealtimeSink.class.isAssignableFrom(sinkClass)) {
-      Type type = RealtimeSink.class.getTypeParameters()[0];
-      unresTypeList.add(sinkToken.resolveType(type).getType());
-    } else {
-      unresTypeList.add(sinkToken.resolveType(inType).getType());
+    for (PipelineConfigurable sink : sinks) {
+      Class<?> sinkClass = sink.getClass();
+      TypeToken sinkToken = TypeToken.of(sinkClass);
+      // some inefficiency if there are multiple sinks since the source and transform types will be re-validated
+      // each time. this only happens when the app is created though, and logic is easier to follow if its
+      // always one stage followed by another, rather than having a fork at the very end.
+      List<Type> pipelineTypes = Lists.newArrayList(unresTypeList);
+      if (RealtimeSink.class.isAssignableFrom(sinkClass)) {
+        Type type = RealtimeSink.class.getTypeParameters()[0];
+        pipelineTypes.add(sinkToken.resolveType(type).getType());
+      } else {
+        pipelineTypes.add(sinkToken.resolveType(inType).getType());
+      }
+      // Invoke validation method with list of unresolved types
+      validateTypes(pipelineTypes);
     }
 
-    // Invoke validation method with list of unresolved types
-    validateTypes(unresTypeList);
   }
 
   /**
@@ -170,7 +226,7 @@ public class PipelineRegisterer {
    *     which is true in the case above.
    */
   @VisibleForTesting
-  static void validateTypes(ArrayList<Type> unresTypeList) {
+  static void validateTypes(List<Type> unresTypeList) {
     Preconditions.checkArgument(unresTypeList.size() % 2 == 0, "ETL Stages validation expects even number of types");
     List<Type> resTypeList = Lists.newArrayListWithCapacity(unresTypeList.size());
 
@@ -218,8 +274,8 @@ public class PipelineRegisterer {
       Type secondType = resTypeList.get(i + 1);
       // Check if secondType can accept firstType
       Preconditions.checkArgument(TypeToken.of(secondType).isAssignableFrom(firstType),
-        "Types between stages didn't match. Mismatch between {} -> {}",
-        firstType, secondType);
+                                  "Types between stages didn't match. Mismatch between {} -> {}",
+                                  firstType, secondType);
     }
   }
 }

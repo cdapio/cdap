@@ -17,7 +17,6 @@
 package co.cask.cdap.internal.app.runtime.schedule;
 
 import co.cask.cdap.app.store.Store;
-import co.cask.cdap.common.conf.CConfiguration;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,9 +29,8 @@ public final class LocalSchedulerService extends AbstractSchedulerService {
   private static final Logger LOG = LoggerFactory.getLogger(LocalSchedulerService.class);
 
   @Inject
-  public LocalSchedulerService(TimeScheduler timeScheduler, StreamSizeScheduler streamSizeScheduler,
-                               CConfiguration cConf, Store store) {
-    super(timeScheduler, streamSizeScheduler, cConf, store);
+  public LocalSchedulerService(TimeScheduler timeScheduler, StreamSizeScheduler streamSizeScheduler, Store store) {
+    super(timeScheduler, streamSizeScheduler, store);
   }
 
   @Override

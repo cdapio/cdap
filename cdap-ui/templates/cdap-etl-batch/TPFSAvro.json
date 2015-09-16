@@ -1,0 +1,46 @@
+{
+  "id": "TPFSAvro",
+  "groups" : {
+    "position": [ "group1" ],
+    "group1": {
+       "display" : "Time Partitioned Fileset - AVRO",
+       "position" : [ "name", "basePath",  "filePathFormat", "timeZone", "duration", "delay"],
+       "fields" : {
+          "name" : {
+             "widget": "dataset-selector",
+             "label": "Dataset Name"
+          },
+
+          "basePath" : {
+             "widget": "textbox",
+             "label": "Dataset Base Path"
+          },
+
+          "filePathFormat": {
+            "widget": "textbox",
+            "label": "Partition Directory Format"
+          },
+
+          "timeZone": {
+            "widget": "textbox",
+            "label": "Time Zone"
+          },
+
+         "duration" : {
+           "widget": "textbox",
+           "label" : "Duration"
+         },
+
+         "delay" : {
+           "widget": "textbox",
+           "label" : "Delay"
+         }
+       }
+    }
+  },
+  "schema" : {
+     "widget": "schema",
+     "schema-types" : [ "boolean", "int", "long", "float", "double", "bytes", "string", "map<string, string>" ],
+     "schema-default-type" : "string"
+  }
+}

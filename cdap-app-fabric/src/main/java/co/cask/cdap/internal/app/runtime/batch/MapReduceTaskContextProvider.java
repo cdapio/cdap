@@ -55,7 +55,7 @@ public final class MapReduceTaskContextProvider {
   private BasicMapReduceTaskContext context;
   private AbstractMapReduceTaskContextBuilder contextBuilder;
 
-  public MapReduceTaskContextProvider(TaskAttemptContext context, MapReduceMetrics.TaskType type) {
+  public MapReduceTaskContextProvider(TaskAttemptContext context, @Nullable MapReduceMetrics.TaskType type) {
     this.taskContext = context;
     this.type = type;
     this.contextConfig = new MapReduceContextConfig(context.getConfiguration());
@@ -71,7 +71,7 @@ public final class MapReduceTaskContextProvider {
    * inside cannot load program classes. It is used for the cases where only the application specification is needed,
    * but no need to load any class from it.
    */
-  public synchronized BasicMapReduceTaskContext get() {
+  public synchronized <K, V> BasicMapReduceTaskContext<K, V> get() {
     if (context == null) {
       CConfiguration cConf = contextConfig.getConf();
       context = getBuilder(cConf)
@@ -87,8 +87,6 @@ public final class MapReduceTaskContextProvider {
                artifactLocationFactory,
                contextConfig.getInputDataSet(),
                contextConfig.getOutputDataSet(),
-               contextConfig.getAdapterSpec(),
-               getPluginInstantiator(contextConfig.getConfiguration()),
                getArtifactPluginInstantiator(contextConfig.getConfiguration())
         );
     }
@@ -146,19 +144,6 @@ public final class MapReduceTaskContextProvider {
       LOG.error("Failed to create program from {}", contextConfig.getProgramJarURI(), e);
       throw Throwables.propagate(e);
     }
-  }
-
-  @Nullable
-  private PluginInstantiator getPluginInstantiator(Configuration hConf) {
-    if (contextConfig.getAdapterSpec() == null) {
-      return null;
-    }
-
-    ClassLoader classLoader = Delegators.getDelegate(hConf.getClassLoader(), MapReduceClassLoader.class);
-    if (!(classLoader instanceof MapReduceClassLoader)) {
-      throw new IllegalArgumentException("ClassLoader is not an MapReduceClassLoader");
-    }
-    return ((MapReduceClassLoader) classLoader).getPluginInstantiator();
   }
 
   @Nullable

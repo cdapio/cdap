@@ -36,9 +36,11 @@ import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.templates.AdapterDefinition;
 import com.google.common.base.Predicate;
+import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.slf4j.Logger;
@@ -57,15 +59,13 @@ import static com.google.common.base.Predicates.and;
  */
 public class AppMetadataStore extends MetadataStoreDataset {
   private static final Logger LOG = LoggerFactory.getLogger(AppMetadataStore.class);
-
   private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
-
-  public static final String TYPE_APP_META = "appMeta";
-  public static final String TYPE_STREAM = "stream";
-  public static final String TYPE_RUN_RECORD_STARTED = "runRecordStarted";
-  public static final String TYPE_RUN_RECORD_SUSPENDED = "runRecordSuspended";
-  public static final String TYPE_RUN_RECORD_COMPLETED = "runRecordCompleted";
-  public static final String TYPE_PROGRAM_ARGS = "programArgs";
+  private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+  private static final String TYPE_APP_META = "appMeta";
+  private static final String TYPE_STREAM = "stream";
+  private static final String TYPE_RUN_RECORD_STARTED = "runRecordStarted";
+  private static final String TYPE_RUN_RECORD_SUSPENDED = "runRecordSuspended";
+  private static final String TYPE_RUN_RECORD_COMPLETED = "runRecordCompleted";
   private static final String TYPE_NAMESPACE = "namespace";
   private static final String TYPE_ADAPTER = "adapter";
   private static final String WORKFLOW_TOKEN_PROPERTY_KEY = "workflowToken";
@@ -99,7 +99,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
     //       specs - see forwarding specs), we want to wrap spec with DefaultApplicationSpecification
     spec = DefaultApplicationSpecification.from(spec);
     write(new MDSKey.Builder().add(TYPE_APP_META, namespaceId, appId).build(),
-          new ApplicationMeta(appId, spec, archiveLocation));
+      new ApplicationMeta(appId, spec, archiveLocation));
   }
 
   public void deleteApplication(String namespaceId, String appId) {
@@ -129,7 +129,8 @@ public class AppMetadataStore extends MetadataStoreDataset {
     write(key, updated);
   }
 
-  public void recordProgramStart(Id.Program program, String pid, long startTs, String adapter, String twillRunId) {
+  public void recordProgramStart(Id.Program program, String pid, long startTs, String twillRunId,
+                                 Map<String, String> runtimeArgs) {
     MDSKey key = new MDSKey.Builder()
       .add(TYPE_RUN_RECORD_STARTED)
       .add(program.getNamespaceId())
@@ -139,7 +140,10 @@ public class AppMetadataStore extends MetadataStoreDataset {
       .add(pid)
       .build();
 
-    write(key, new RunRecordMeta(pid, startTs, null, ProgramRunStatus.RUNNING, adapter, null, twillRunId));
+
+    write(key, new RunRecordMeta(pid, startTs, null, ProgramRunStatus.RUNNING,
+      ImmutableMap.of("runtimeArgs",
+        GSON.toJson(runtimeArgs, MAP_STRING_STRING_TYPE)), twillRunId));
   }
 
   public void recordProgramSuspend(Id.Program program, String pid) {
@@ -226,7 +230,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
   }
 
   public List<RunRecordMeta> getRuns(ProgramRunStatus status, Predicate<RunRecordMeta> filter) {
-    return getRuns(null, status, Long.MIN_VALUE, Long.MAX_VALUE, Integer.MAX_VALUE, null, filter);
+    return getRuns(null, status, Long.MIN_VALUE, Long.MAX_VALUE, Integer.MAX_VALUE, filter);
   }
 
   private MDSKey.Builder getProgramKeyBuilder(String searchType, @Nullable Id.Program program) {
@@ -241,26 +245,26 @@ public class AppMetadataStore extends MetadataStoreDataset {
   }
 
   public List<RunRecordMeta> getRuns(@Nullable Id.Program program, ProgramRunStatus status,
-                                     long startTime, long endTime, int limit, String adapter,
+                                     long startTime, long endTime, int limit,
                                      @Nullable Predicate<RunRecordMeta> filter) {
     if (status.equals(ProgramRunStatus.ALL)) {
       List<RunRecordMeta> resultRecords = Lists.newArrayList();
-      resultRecords.addAll(getSuspendedRuns(program, startTime, endTime, limit, adapter, filter));
-      resultRecords.addAll(getActiveRuns(program, startTime, endTime, limit, adapter, filter));
-      resultRecords.addAll(getHistoricalRuns(program, status, startTime, endTime, limit, adapter, filter));
+      resultRecords.addAll(getSuspendedRuns(program, startTime, endTime, limit, filter));
+      resultRecords.addAll(getActiveRuns(program, startTime, endTime, limit, filter));
+      resultRecords.addAll(getHistoricalRuns(program, status, startTime, endTime, limit, filter));
       return resultRecords;
     } else if (status.equals(ProgramRunStatus.RUNNING)) {
-      return getActiveRuns(program, startTime, endTime, limit, adapter, filter);
+      return getActiveRuns(program, startTime, endTime, limit, filter);
     } else if (status.equals(ProgramRunStatus.SUSPENDED)) {
-      return getSuspendedRuns(program, startTime, endTime, limit, adapter, filter);
+      return getSuspendedRuns(program, startTime, endTime, limit, filter);
     } else {
-      return getHistoricalRuns(program, status, startTime, endTime, limit, adapter, filter);
+      return getHistoricalRuns(program, status, startTime, endTime, limit, filter);
     }
   }
 
   public List<RunRecordMeta> getRuns(@Nullable Id.Program program, ProgramRunStatus status,
-                                     long startTime, long endTime, int limit, String adapter) {
-    return getRuns(program, status, startTime, endTime, limit, adapter, null);
+                                     long startTime, long endTime, int limit) {
+    return getRuns(program, status, startTime, endTime, limit, null);
   }
 
   // TODO: getRun is duplicated in cdap-watchdog AppMetadataStore class.
@@ -336,28 +340,24 @@ public class AppMetadataStore extends MetadataStoreDataset {
   }
 
   private List<RunRecordMeta> getSuspendedRuns(Id.Program program, long startTime, long endTime, int limit,
-                                               final String adapter, @Nullable Predicate<RunRecordMeta> filter) {
-    return getNonCompleteRuns(program, TYPE_RUN_RECORD_SUSPENDED, startTime, endTime, limit, adapter, filter);
+                                               @Nullable Predicate<RunRecordMeta> filter) {
+    return getNonCompleteRuns(program, TYPE_RUN_RECORD_SUSPENDED, startTime, endTime, limit, filter);
   }
 
   private List<RunRecordMeta> getActiveRuns(Id.Program program, final long startTime, final long endTime, int limit,
-                                            final String adapter, @Nullable Predicate<RunRecordMeta> filter) {
-    return getNonCompleteRuns(program, TYPE_RUN_RECORD_STARTED, startTime, endTime, limit, adapter, filter);
+                                            @Nullable Predicate<RunRecordMeta> filter) {
+    return getNonCompleteRuns(program, TYPE_RUN_RECORD_STARTED, startTime, endTime, limit, filter);
     }
 
   private List<RunRecordMeta> getNonCompleteRuns(Id.Program program, String recordType,
                                                  final long startTime, final long endTime, int limit,
-                                                 final String adapter, Predicate<RunRecordMeta> filter) {
+                                                 Predicate<RunRecordMeta> filter) {
     MDSKey activeKey = getProgramKeyBuilder(recordType, program).build();
 
     return list(activeKey, null, RunRecordMeta.class, limit, andPredicate(new Predicate<RunRecordMeta>() {
                   @Override
                   public boolean apply(RunRecordMeta input) {
                     boolean normalCheck = input.getStartTs() >= startTime && input.getStartTs() < endTime;
-                    // Check if RunRecord matches with passed in adapter name
-                    if (normalCheck && adapter != null) {
-                      normalCheck = adapter.equals(input.getAdapterName());
-                    }
                     return normalCheck;
                   }
                 }, filter));
@@ -365,43 +365,34 @@ public class AppMetadataStore extends MetadataStoreDataset {
 
   private List<RunRecordMeta> getHistoricalRuns(Id.Program program, ProgramRunStatus status,
                                                 final long startTime, final long endTime, int limit,
-                                                final String adapter, @Nullable Predicate<RunRecordMeta> filter) {
+                                                @Nullable Predicate<RunRecordMeta> filter) {
     MDSKey historyKey = getProgramKeyBuilder(TYPE_RUN_RECORD_COMPLETED, program).build();
 
     MDSKey start = new MDSKey.Builder(historyKey).add(getInvertedTsScanKeyPart(endTime)).build();
     MDSKey stop = new MDSKey.Builder(historyKey).add(getInvertedTsScanKeyPart(startTime)).build();
     if (status.equals(ProgramRunStatus.ALL)) {
       //return all records (successful and failed)
-      return list(start, stop, RunRecordMeta.class, limit, andPredicate(new Predicate<RunRecordMeta>() {
-        @Override
-        public boolean apply(@Nullable RunRecordMeta record) {
-          // Check if RunRecord matches with passed in adapter name
-          return (adapter == null) || (record != null && adapter.equals(record.getAdapterName()));
-        }
-      }, filter));
+      return list(start, stop, RunRecordMeta.class, limit,
+                  filter == null ? Predicates.<RunRecordMeta>alwaysTrue() : filter);
     }
 
     if (status.equals(ProgramRunStatus.COMPLETED)) {
       return list(start, stop, RunRecordMeta.class, limit,
-                  andPredicate(getPredicate(ProgramController.State.COMPLETED, adapter), filter));
+                  andPredicate(getPredicate(ProgramController.State.COMPLETED), filter));
     }
     if (status.equals(ProgramRunStatus.KILLED)) {
       return list(start, stop, RunRecordMeta.class, limit,
-                  andPredicate(getPredicate(ProgramController.State.KILLED, adapter), filter));
+                  andPredicate(getPredicate(ProgramController.State.KILLED), filter));
     }
     return list(start, stop, RunRecordMeta.class, limit,
-                andPredicate(getPredicate(ProgramController.State.ERROR, adapter), filter));
+                andPredicate(getPredicate(ProgramController.State.ERROR), filter));
   }
 
-  private Predicate<RunRecordMeta> getPredicate(final ProgramController.State state, final String adapter) {
+  private Predicate<RunRecordMeta> getPredicate(final ProgramController.State state) {
     return new Predicate<RunRecordMeta>() {
       @Override
       public boolean apply(RunRecordMeta record) {
         boolean normalCheck = record.getStatus().equals(state.getRunStatus());
-        // Check if RunRecord matches with passed in adapter name
-        if (normalCheck && adapter != null) {
-          normalCheck = adapter.equals(record.getAdapterName());
-        }
         return normalCheck;
       }
     };
@@ -449,43 +440,6 @@ public class AppMetadataStore extends MetadataStoreDataset {
     deleteAll(new MDSKey.Builder().add(TYPE_STREAM, namespaceId, name).build());
   }
 
-  public void writeProgramArgs(Id.Program program, Map<String, String> args) {
-    write(new MDSKey.Builder()
-            .add(TYPE_PROGRAM_ARGS)
-            .add(program.getNamespaceId())
-            .add(program.getApplicationId())
-            .add(program.getType().name())
-            .add(program.getId())
-            .build(), new ProgramArgs(args));
-  }
-
-  public ProgramArgs getProgramArgs(Id.Program program) {
-    return getFirst(new MDSKey.Builder()
-                      .add(TYPE_PROGRAM_ARGS)
-                      .add(program.getNamespaceId())
-                      .add(program.getApplicationId())
-                      .add(program.getType().name())
-                      .add(program.getId())
-                      .build(), ProgramArgs.class);
-  }
-
-  public void deleteProgramArgs(Id.Program program) {
-    deleteAll(new MDSKey.Builder().add(TYPE_PROGRAM_ARGS)
-                .add(program.getNamespaceId())
-                .add(program.getApplicationId())
-                .add(program.getType().name())
-                .add(program.getId())
-                .build());
-  }
-
-  public void deleteProgramArgs(String namespaceId, String appId) {
-    deleteAll(new MDSKey.Builder().add(TYPE_PROGRAM_ARGS, namespaceId, appId).build());
-  }
-
-  public void deleteProgramArgs(String namespaceId) {
-    deleteAll(new MDSKey.Builder().add(TYPE_PROGRAM_ARGS, namespaceId).build());
-  }
-
   public void deleteProgramHistory(String namespaceId, String appId) {
     deleteAll(new MDSKey.Builder().add(TYPE_RUN_RECORD_STARTED, namespaceId, appId).build());
     deleteAll(new MDSKey.Builder().add(TYPE_RUN_RECORD_COMPLETED, namespaceId, appId).build());
@@ -514,6 +468,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
     return list(getNamespaceKey(null), NamespaceMeta.class);
   }
 
+  @Deprecated
   public void writeAdapter(Id.Namespace id, AdapterDefinition adapterSpec,
                            AdapterStatus adapterStatus) {
     write(new MDSKey.Builder().add(TYPE_ADAPTER, id.getId(), adapterSpec.getName()).build(),
@@ -521,33 +476,19 @@ public class AppMetadataStore extends MetadataStoreDataset {
   }
 
   @Nullable
+  @Deprecated
   public AdapterDefinition getAdapter(Id.Namespace id, String name) {
     AdapterMeta adapterMeta = getAdapterMeta(id, name);
     return adapterMeta == null ?  null : adapterMeta.getSpec();
   }
 
-  @Nullable
-  public AdapterStatus getAdapterStatus(Id.Namespace id, String name) {
-    AdapterMeta adapterMeta = getAdapterMeta(id, name);
-    return adapterMeta == null ?  null : adapterMeta.getStatus();
-  }
-
-  @Nullable
-  public AdapterStatus setAdapterStatus(Id.Namespace id, String name, AdapterStatus status) {
-    AdapterMeta adapterMeta = getAdapterMeta(id, name);
-    if (adapterMeta == null) {
-      return null;
-    }
-    AdapterStatus previousStatus = adapterMeta.getStatus();
-    writeAdapter(id, adapterMeta.getSpec(), status);
-    return previousStatus;
-  }
-
   @SuppressWarnings("unchecked")
+  @Deprecated
   private AdapterMeta getAdapterMeta(Id.Namespace id, String name) {
     return getFirst(new MDSKey.Builder().add(TYPE_ADAPTER, id.getId(), name).build(), AdapterMeta.class);
   }
 
+  @Deprecated
   public List<AdapterDefinition> getAllAdapters(Id.Namespace id) {
     List<AdapterDefinition> adapterSpecs = Lists.newArrayList();
     List<AdapterMeta> adapterMetas = list(new MDSKey.Builder().add(TYPE_ADAPTER, id.getId()).build(),
@@ -558,10 +499,12 @@ public class AppMetadataStore extends MetadataStoreDataset {
     return adapterSpecs;
   }
 
+  @Deprecated
   public void deleteAdapter(Id.Namespace id, String name) {
     deleteAll(new MDSKey.Builder().add(TYPE_ADAPTER, id.getId(), name).build());
   }
 
+  @Deprecated
   public void deleteAllAdapters(Id.Namespace id) {
     deleteAll(new MDSKey.Builder().add(TYPE_ADAPTER, id.getId()).build());
   }
@@ -576,7 +519,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
 
   public void recordWorkflowProgramStart(Id.Program program, String programRunId, String workflow,
                                          String workflowRunId, String workflowNodeId, long startTimeInSeconds,
-                                         String adapter, String twillRunId) {
+                                         String twillRunId) {
     // Get the run record of the Workflow which started this program
     MDSKey key = getWorkflowRunRecordKey(Id.Workflow.from(program.getApplication(), workflow), workflowRunId);
 
@@ -595,7 +538,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
     properties.put(workflowNodeId, programRunId);
 
     write(key, new RunRecordMeta(record.getPid(), record.getStartTs(), null, ProgramRunStatus.RUNNING,
-                                 record.getAdapterName(), properties, record.getTwillRunId()));
+                                 properties, record.getTwillRunId()));
 
     // Record the program start
     key = new MDSKey.Builder()
@@ -607,7 +550,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
       .add(programRunId)
       .build();
 
-    write(key, new RunRecordMeta(programRunId, startTimeInSeconds, null, ProgramRunStatus.RUNNING, adapter,
+    write(key, new RunRecordMeta(programRunId, startTimeInSeconds, null, ProgramRunStatus.RUNNING,
                                  ImmutableMap.of("workflowrunid", workflowRunId), twillRunId));
   }
 

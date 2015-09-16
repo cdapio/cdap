@@ -45,10 +45,10 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.config.PreferencesStore;
+import co.cask.cdap.data2.metadata.service.BusinessMetadataStore;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
-import co.cask.cdap.gateway.handlers.AppLifecycleHttpHandler;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
@@ -58,6 +58,8 @@ import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.WriteConflictException;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
+import co.cask.cdap.proto.ApplicationDetail;
+import co.cask.cdap.proto.ApplicationRecord;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
@@ -65,7 +67,9 @@ import co.cask.cdap.proto.ProgramTypes;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 import com.google.common.base.Predicate;
+import com.google.common.base.Predicates;
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -83,6 +87,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -92,9 +98,7 @@ import java.util.jar.Manifest;
 import javax.annotation.Nullable;
 
 /**
- * Service that manage lifecycle of Applications
- * TODO: Currently this only handles the deployment and deletion of the application.
- * The code from {@link AppLifecycleHttpHandler} should be moved here and the calls should be delegated to this class.
+ * Service that manage lifecycle of Applications.
  */
 public class ApplicationLifecycleService extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(ApplicationLifecycleService.class);
@@ -126,6 +130,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   private final MetricStore metricStore;
   private final ArtifactRepository artifactRepository;
   private final ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms> managerFactory;
+  private final BusinessMetadataStore businessMds;
 
   @Inject
   public ApplicationLifecycleService(ProgramRuntimeService runtimeService, Store store, CConfiguration configuration,
@@ -134,7 +139,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                                      StreamConsumerFactory streamConsumerFactory, UsageRegistry usageRegistry,
                                      PreferencesStore preferencesStore, MetricStore metricStore,
                                      ArtifactRepository artifactRepository,
-                                     ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms> managerFactory) {
+                                     ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms> managerFactory,
+                                     BusinessMetadataStore businessMds) {
     this.runtimeService = runtimeService;
     this.store = store;
     this.configuration = configuration;
@@ -147,6 +153,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     this.metricStore = metricStore;
     this.artifactRepository = artifactRepository;
     this.managerFactory = managerFactory;
+    this.businessMds = businessMds;
   }
 
   @Override
@@ -157,6 +164,60 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   @Override
   protected void shutDown() throws Exception {
     LOG.info("Shutting down ApplicationLifecycleService");
+  }
+
+  /**
+   * Get all applications in the specified namespace, filtered to only include applications with an artifact name
+   * in the set of specified names and an artifact version equal to the specified version. If the specified set
+   * is empty, no filtering is performed on artifact name. If the specified version is null, no filtering is done
+   * on artifact version.
+   *
+   * @param namespace the namespace to get apps from
+   * @param artifactNames the set of valid artifact names. If empty, all artifact names are valid
+   * @param artifactVersion the artifact version to match. If null, all artifact versions are valid
+   * @return list of all applications in the namespace that match the specified artifact names and version
+   */
+  public List<ApplicationRecord> getApps(Id.Namespace namespace,
+                                         Set<String> artifactNames,
+                                         @Nullable String artifactVersion) {
+    return getApps(namespace, getAppPredicate(artifactNames, artifactVersion));
+  }
+
+  /**
+   * Get all applications in the specified namespace that satisfy the specified predicate.
+   *
+   * @param namespace the namespace to get apps from
+   * @param predicate the predicate that must be satisfied in order to be returned
+   * @return list of all applications in the namespace that satisfy the specified predicate
+   */
+  public List<ApplicationRecord> getApps(Id.Namespace namespace, Predicate<ApplicationRecord> predicate) {
+    List<ApplicationRecord> appRecords = new ArrayList<>();
+    for (ApplicationSpecification appSpec : store.getAllApplications(namespace)) {
+      // possible if this particular app was deploy prior to v3.2 and upgrade failed for some reason.
+      ArtifactId artifactId = appSpec.getArtifactId();
+      ArtifactSummary artifactSummary = artifactId == null ?
+        new ArtifactSummary(appSpec.getName(), null) : ArtifactSummary.from(artifactId);
+      ApplicationRecord record = new ApplicationRecord(artifactSummary, appSpec.getName(), appSpec.getDescription());
+      if (predicate.apply(record)) {
+        appRecords.add(record);
+      }
+    }
+    return appRecords;
+  }
+
+  /**
+   * Get detail about the specified application
+   *
+   * @param appId the id of the application to get
+   * @return detail about the specified application
+   * @throws ApplicationNotFoundException if the specified application does not exist
+   */
+  public ApplicationDetail getAppDetail(Id.Application appId) throws ApplicationNotFoundException {
+    ApplicationSpecification appSpec = store.getApplication(appId);
+    if (appSpec == null) {
+      throw new ApplicationNotFoundException(appId);
+    }
+    return ApplicationDetail.fromSpec(appSpec);
   }
 
   /**
@@ -632,12 +693,100 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     }
     deleteProgramLocations(appId);
 
+    ApplicationSpecification appSpec = store.getApplication(appId);
+    deleteAppBusinessMetadata(appId, appSpec);
+
     store.removeApplication(appId);
 
     try {
       usageRegistry.unregister(appId);
     } catch (Exception e) {
       LOG.warn("Failed to unregister usage of app: {}", appId, e);
+    }
+  }
+
+  /**
+   * Delete the business metadata for the application and the programs.
+   */
+  private void deleteAppBusinessMetadata(Id.Application appId, ApplicationSpecification appSpec) {
+    // Remove metadata for the Application itself.
+    businessMds.removeMetadata(appId);
+
+    // Remove business metadata for the programs of the Application
+    // TODO: Need to remove this we support prefix search of metadata type.
+    // See https://issues.cask.co/browse/CDAP-3669
+    Map<ProgramType, Set<String>> programTypeToNames = new HashMap<>();
+    if (appSpec.getFlows() != null) {
+      programTypeToNames.put(ProgramType.FLOW, appSpec.getFlows().keySet());
+    }
+    if (appSpec.getMapReduce() != null) {
+      programTypeToNames.put(ProgramType.MAPREDUCE, appSpec.getMapReduce().keySet());
+    }
+    if (appSpec.getWorkflows() != null) {
+      programTypeToNames.put(ProgramType.WORKFLOW, appSpec.getWorkflows().keySet());
+    }
+    if (appSpec.getServices() != null) {
+      programTypeToNames.put(ProgramType.SERVICE, appSpec.getServices().keySet());
+    }
+    if (appSpec.getSpark() != null) {
+      programTypeToNames.put(ProgramType.SPARK, appSpec.getSpark().keySet());
+    }
+    if (appSpec.getWorkers() != null) {
+      programTypeToNames.put(ProgramType.WORKER, appSpec.getWorkers().keySet());
+    }
+
+    for (Map.Entry<ProgramType, Set<String>> entry : programTypeToNames.entrySet()) {
+      Set<String> programNames = entry.getValue();
+      for (String programName : programNames) {
+        Id.Program programId = Id.Program.from(appId.getNamespaceId(), appId.getId(), entry.getKey(), programName);
+        businessMds.removeMetadata(programId);
+      }
+    }
+  }
+
+  // get filter for app specs by artifact name and version. if they are null, it means don't filter.
+  private Predicate<ApplicationRecord> getAppPredicate(Set<String> artifactNames,
+                                                       @Nullable String artifactVersion) {
+    if (artifactNames.isEmpty() && artifactVersion == null) {
+      return Predicates.alwaysTrue();
+    } else if (artifactNames.isEmpty()) {
+      return new ArtifactVersionPredicate(artifactVersion);
+    } else if (artifactVersion == null) {
+      return new ArtifactNamesPredicate(artifactNames);
+    } else {
+      return Predicates.and(new ArtifactNamesPredicate(artifactNames), new ArtifactVersionPredicate(artifactVersion));
+    }
+  }
+
+  /**
+   * Returns true if the application artifact is in a whitelist of names
+   */
+  private static class ArtifactNamesPredicate implements Predicate<ApplicationRecord> {
+    private final Set<String> names;
+
+    public ArtifactNamesPredicate(Set<String> names) {
+      this.names = names;
+    }
+
+    @Override
+    public boolean apply(ApplicationRecord input) {
+      return names.contains(input.getArtifact().getName());
+    }
+  }
+
+  /**
+   * Returns true if the application artifact is a specific version
+   */
+  private static class ArtifactVersionPredicate implements Predicate<ApplicationRecord> {
+    private final String version;
+
+    public ArtifactVersionPredicate(String version) {
+      this.version = version;
+    }
+
+    @Override
+    public boolean apply(ApplicationRecord input) {
+      return version.equals(input.getArtifact().getVersion());
     }
   }
 }

@@ -1,5 +1,9 @@
 {
-    "template": "ETLRealtime",
+    "artifact": {
+        "name": "cdap-etl-realtime",
+        "scope": "SYSTEM",
+        "version": "3.2.0-SNAPSHOT"
+    },
     "description": "Realtime ETL from Kafka with in-flight transformation into HBase Table.",
     "config": {
         "source": {
@@ -13,7 +17,7 @@
                 "kafka.partitions": 2
             }
         },
-        "sink": {
+        "sinks": [{
             "name": "Table",
             "properties": {
                 "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"name\",\"type\":\"string\"},{\"name\":\"address\",\"type\":\"string\"},{\"name\":\"city\",\"type\":\"string\"},{\"name\":\"state\",\"type\":\"string\"},{\"name\":\"country\",\"type\":\"string\"},{\"name\":\"zipcode\",\"type\":\"int\"}]}",
@@ -21,7 +25,7 @@
                 "name": "logs",
                 "schema.row.field": "name"
             }
-        },
+        }],
         "transforms": [
             {
                 "name": "Script",

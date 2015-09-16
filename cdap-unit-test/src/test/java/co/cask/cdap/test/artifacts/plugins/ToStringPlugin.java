@@ -18,7 +18,7 @@ package co.cask.cdap.test.artifacts.plugins;
 
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
-import co.cask.cdap.api.templates.plugins.PluginConfig;
+import co.cask.cdap.api.plugin.PluginConfig;
 
 import javax.annotation.Nullable;
 

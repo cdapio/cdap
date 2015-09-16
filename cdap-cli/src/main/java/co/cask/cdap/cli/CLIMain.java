@@ -30,7 +30,6 @@ import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.client.exception.DisconnectedException;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.proto.Id;
 import co.cask.common.cli.CLI;
 import co.cask.common.cli.Command;
 import co.cask.common.cli.CommandSet;
@@ -204,18 +203,6 @@ public class CLIMain {
 
   public FilePathResolver getFilePathResolver() {
     return filePathResolver;
-  }
-
-  private String limit(String string, int maxLength) {
-    if (string.length() <= maxLength) {
-      return string;
-    }
-
-    if (string.length() >= 4) {
-      return string.substring(0, string.length() - 3) + "...";
-    } else {
-      return string;
-    }
   }
 
   private void updateCLIPrompt(CLIConnectionConfig config) {

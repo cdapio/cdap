@@ -30,12 +30,14 @@ import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.stream.StreamAdminModules;
+import co.cask.cdap.data.stream.StreamViewHttpHandler;
 import co.cask.cdap.data.stream.service.StreamFetchHandler;
 import co.cask.cdap.data.stream.service.StreamHandler;
 import co.cask.cdap.data.stream.service.StreamHttpService;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data.stream.service.StreamService;
 import co.cask.cdap.data.stream.service.StreamServiceRuntimeModule;
+import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -362,6 +364,7 @@ public class BaseHiveExploreServiceTest {
       new MetricsClientRuntimeModule().getInMemoryModules(),
       new ExploreRuntimeModule().getInMemoryModules(),
       new ExploreClientModule(),
+      new ViewAdminModules().getInMemoryModules(),
       new StreamServiceRuntimeModule().getInMemoryModules(),
       new StreamAdminModules().getInMemoryModules(),
       new NotificationServiceRuntimeModule().getInMemoryModules(),
@@ -375,6 +378,7 @@ public class BaseHiveExploreServiceTest {
             Multibinder.newSetBinder(binder(), HttpHandler.class, Names.named(Constants.Stream.STREAM_HANDLER));
           handlerBinder.addBinding().to(StreamHandler.class);
           handlerBinder.addBinding().to(StreamFetchHandler.class);
+          handlerBinder.addBinding().to(StreamViewHttpHandler.class);
           CommonHandlers.add(handlerBinder);
           bind(Store.class).to(DefaultStore.class);
           bind(StreamHttpService.class).in(Scopes.SINGLETON);

@@ -21,10 +21,11 @@ import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.dataset.lib.KeyValue;
-import co.cask.cdap.api.templates.plugins.PluginConfig;
-import co.cask.cdap.api.templates.plugins.PluginProperties;
+import co.cask.cdap.api.plugin.PluginConfig;
+import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.template.etl.api.Emitter;
 import co.cask.cdap.template.etl.api.PipelineConfigurer;
+import co.cask.cdap.template.etl.api.batch.BatchRuntimeContext;
 import co.cask.cdap.template.etl.api.batch.BatchSource;
 import co.cask.cdap.template.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.template.etl.common.DBConfig;
@@ -44,7 +45,7 @@ import java.sql.Driver;
 /**
  * Batch source to read from a Database table
  */
-@Plugin(type = "source")
+@Plugin(type = "batchsource")
 @Name("Database")
 @Description("Reads from a database using a configurable SQL query." +
   " Outputs one record for each row returned by the query.")
@@ -109,7 +110,7 @@ public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredReco
   }
 
   @Override
-  public void initialize(BatchSourceContext context) throws Exception {
+  public void initialize(BatchRuntimeContext context) throws Exception {
     super.initialize(context);
     driverClass = context.loadPluginClass(getJDBCPluginId());
   }

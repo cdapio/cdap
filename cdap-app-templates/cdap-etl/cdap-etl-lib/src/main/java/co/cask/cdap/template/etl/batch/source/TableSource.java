@@ -26,10 +26,10 @@ import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.template.etl.api.Emitter;
 import co.cask.cdap.template.etl.api.PipelineConfigurer;
-import co.cask.cdap.template.etl.api.batch.BatchSourceContext;
+import co.cask.cdap.template.etl.api.batch.BatchRuntimeContext;
 import co.cask.cdap.template.etl.common.Properties;
 import co.cask.cdap.template.etl.common.RowRecordTransformer;
-import co.cask.cdap.template.etl.common.TableConfig;
+import co.cask.cdap.template.etl.common.TableSourceConfig;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
@@ -39,15 +39,15 @@ import java.util.Map;
 /**
  * CDAP Table Dataset Batch Source.
  */
-@Plugin(type = "source")
+@Plugin(type = "batchsource")
 @Name("Table")
 @Description("Reads the entire contents of a CDAP Table. Outputs one record for each row in the Table.")
 public class TableSource extends BatchReadableSource<byte[], Row, StructuredRecord> {
   private RowRecordTransformer rowRecordTransformer;
 
-  private final TableConfig tableConfig;
+  private final TableSourceConfig tableConfig;
 
-  public TableSource(TableConfig tableConfig) {
+  public TableSource(TableSourceConfig tableConfig) {
     this.tableConfig = tableConfig;
   }
 
@@ -66,7 +66,7 @@ public class TableSource extends BatchReadableSource<byte[], Row, StructuredReco
   }
 
   @Override
-  public void initialize(BatchSourceContext context) throws Exception {
+  public void initialize(BatchRuntimeContext context) throws Exception {
     super.initialize(context);
     Schema schema = Schema.parseJson(tableConfig.getSchemaStr());
     rowRecordTransformer = new RowRecordTransformer(schema, tableConfig.getRowField());

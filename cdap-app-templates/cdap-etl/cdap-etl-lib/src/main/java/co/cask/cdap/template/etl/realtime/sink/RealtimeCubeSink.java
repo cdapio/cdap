@@ -53,7 +53,7 @@ import java.util.Map;
  * {@link co.cask.cdap.api.dataset.lib.cube.CubeFact}, the
  * mapping configuration is required, following {@link StructuredRecordToCubeFact} documentation.
  */
-@Plugin(type = "sink")
+@Plugin(type = "realtimesink")
 @Name("Cube")
 @Description("CDAP Cube Dataset Realtime Sink")
 public class RealtimeCubeSink extends RealtimeSink<StructuredRecord> {

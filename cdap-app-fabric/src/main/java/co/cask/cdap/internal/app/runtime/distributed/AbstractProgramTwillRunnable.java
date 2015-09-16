@@ -101,6 +101,8 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.security.Permission;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -174,6 +176,8 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
 
   @Override
   public void initialize(TwillContext context) {
+    System.setSecurityManager(new RunnableSecurityManager(System.getSecurityManager()));
+
     runlatch = new CountDownLatch(1);
     name = context.getSpecification().getName();
     Map<String, String> configs = context.getSpecification().getConfigs();
@@ -189,9 +193,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
 
       UserGroupInformation.setConfiguration(hConf);
 
-      cConf = CConfiguration.create();
-      cConf.clear();
-      cConf.addResource(new File(configs.get("cConf")).toURI().toURL());
+      cConf = CConfiguration.create(new File(configs.get("cConf")));
 
       // Alter the template directory to only the name part in the container directory.
       // It works in pair with the ProgramRunner.
@@ -471,6 +473,67 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
     public Program create(String path) throws IOException {
       Location location = locationFactory.create(path);
       return Programs.createWithUnpack(location, Files.createTempDir());
+    }
+  }
+
+  /**
+   * A {@link SecurityManager} used by the runnable container. Currently it specifically disabling
+   * Spark classes to call {@link System#exit(int)}, {@link Runtime#halt(int)}
+   * and {@link System#setSecurityManager(SecurityManager)}.
+   * This is to workaround modification done in HDP Spark (CDAP-3014).
+   *
+   * In general, we can use the security manager to restrict what system actions can be performed by program as well.
+   */
+  private static final class RunnableSecurityManager extends SecurityManager {
+
+    private final SecurityManager delegate;
+
+    private RunnableSecurityManager(@Nullable SecurityManager delegate) {
+      this.delegate = delegate;
+    }
+
+    @Override
+    public void checkPermission(Permission perm) {
+      if ("setSecurityManager".equals(perm.getName()) && isFromSpark()) {
+        throw new SecurityException("Set SecurityManager not allowed from Spark class: "
+                                      + Arrays.toString(getClassContext()));
+      }
+      if (delegate != null) {
+        delegate.checkPermission(perm);
+      }
+    }
+
+    @Override
+    public void checkPermission(Permission perm, Object context) {
+      if ("setSecurityManager".equals(perm.getName()) && isFromSpark()) {
+        throw new SecurityException("Set SecurityManager not allowed from Spark class: "
+                                      + Arrays.toString(getClassContext()));
+      }
+      if (delegate != null) {
+        delegate.checkPermission(perm, context);
+      }
+    }
+
+    @Override
+    public void checkExit(int status) {
+      if (isFromSpark()) {
+        throw new SecurityException("Exit not allowed from Spark class: " + Arrays.toString(getClassContext()));
+      }
+      if (delegate != null) {
+        delegate.checkExit(status);
+      }
+    }
+
+    /**
+     * Returns true if the current class context has spark class.
+     */
+    private boolean isFromSpark() {
+      for (Class c : getClassContext()) {
+        if (c.getName().startsWith("org.apache.spark.")) {
+          return true;
+        }
+      }
+      return false;
     }
   }
 }

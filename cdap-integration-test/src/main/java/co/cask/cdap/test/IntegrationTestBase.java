@@ -29,8 +29,6 @@ import co.cask.cdap.client.StreamClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.client.util.RESTClient;
-import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.common.UnauthorizedException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -40,8 +38,6 @@ import co.cask.cdap.proto.ConfigEntry;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.ProgramRecord;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.StreamDetail;
 import co.cask.cdap.security.authentication.client.AccessToken;
 import co.cask.cdap.security.authentication.client.AuthenticationClient;
@@ -53,7 +49,6 @@ import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import org.apache.twill.filesystem.LocalLocationFactory;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -66,18 +61,16 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import javax.annotation.Nullable;
-import javax.ws.rs.ServiceUnavailableException;
 
 /**
- *
+ * Abstract class for writing Integration tests for CDAP. Provides utility methods to use in Integration tests.
+ * Users should extend this class in their test classes.
  */
-public class IntegrationTestBase {
+public abstract class IntegrationTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(IntegrationTestBase.class);
   private static final long SERVICE_CHECK_TIMEOUT = TimeUnit.MINUTES.toSeconds(10);
 
@@ -93,33 +86,37 @@ public class IntegrationTestBase {
     assertIsClear();
   }
 
-  protected void checkSystemServices() throws ServiceUnavailableException {
-    Callable<Boolean> monitorCallable = new Callable<Boolean>() {
+  protected void checkSystemServices() throws TimeoutException {
+    Callable<Boolean> cdapAvailable = new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {
         // first wait for all system services to be 'OK'
         if (!getMonitorClient().allSystemServicesOk()) {
           return false;
         }
-        // check that the dataset service is up
-        getNamespaceClient().list();
-        return true;
+        // Check that the dataset service is up, and also that the default namespace exists
+        // Using list and checking that the only namespace to exist is default, as opposed to using get()
+        // so we don't have to unnecessarily add a try-catch for NamespaceNotFoundException, since that exception is
+        // not handled in checkServicesWithRetry.
+        List<NamespaceMeta> namespaces = getNamespaceClient().list();
+        return namespaces.size() == 1 && NamespaceMeta.DEFAULT.equals(namespaces.get(0));
       }
     };
 
     try {
-      checkServicesWithRetry(monitorCallable, "CDAP Services are not available");
+      checkServicesWithRetry(cdapAvailable, "CDAP Services are not available");
     } catch (Throwable e) {
-      if (e.getCause() instanceof UnauthorizedException) {
+      Throwable rootCause = Throwables.getRootCause(e);
+      if (rootCause instanceof UnauthorizedException) {
         // security is enabled, we need to get access token before checking system services
         try {
           accessToken = fetchAccessToken();
-          checkServicesWithRetry(monitorCallable, "CDAP Services are not available");
-        } catch (Exception ex) {
+        } catch (IOException ex) {
           throw Throwables.propagate(ex);
         }
+        checkServicesWithRetry(cdapAvailable, "CDAP Services are not available");
       } else {
-        throw Throwables.propagate(e);
+        throw Throwables.propagate(rootCause);
       }
     }
     LOG.info("CDAP Services are up and running!");
@@ -127,10 +124,12 @@ public class IntegrationTestBase {
 
   /**
    * Uses BasicAuthenticationClient to fetch {@link AccessToken} - this implementation can be overridden if desired.
+   *
    * @return {@link AccessToken}
    * @throws IOException
+   * @throws TimeoutException if a timeout occurs while getting an access token
    */
-  protected AccessToken fetchAccessToken() throws IOException {
+  protected AccessToken fetchAccessToken() throws IOException, TimeoutException {
     Properties properties = new Properties();
     properties.setProperty("security.auth.client.username", System.getProperty("cdap.username"));
     properties.setProperty("security.auth.client.password", System.getProperty("cdap.password"));
@@ -151,7 +150,7 @@ public class IntegrationTestBase {
 
 
   private void checkServicesWithRetry(Callable<Boolean> callable,
-                                      String exceptionMessage) throws ServiceUnavailableException {
+                                      String exceptionMessage) throws TimeoutException {
     int numSecs = 0;
     do {
       try {
@@ -160,16 +159,20 @@ public class IntegrationTestBase {
           return;
         }
         TimeUnit.SECONDS.sleep(1);
+      } catch (InterruptedException | IOException e) {
+        // We want to suppress and retry on InterruptedException or IOException
       } catch (Throwable e) {
-        if (!(e.getCause() instanceof InterruptedException || e.getCause() instanceof IOException)) {
-          // we want to throw UnauthorizedException while suppress and retry on Interrupted or IOException
-          throw Throwables.propagate(e);
+        // Also suppress and retry if the root cause is InterruptedException or IOException
+        Throwable rootCause = Throwables.getRootCause(e);
+        if (!(rootCause instanceof InterruptedException || rootCause instanceof IOException)) {
+          // Throw if root cause is any other exception e.g. UnauthorizedException
+          throw Throwables.propagate(rootCause);
         }
       }
     } while (numSecs <= SERVICE_CHECK_TIMEOUT);
 
     // when we have passed the timeout and the check for services is not successful
-      throw new ServiceUnavailableException(exceptionMessage);
+    throw new TimeoutException(exceptionMessage);
   }
 
   private void assertUnrecoverableResetEnabled() throws IOException, UnauthorizedException {
@@ -252,6 +255,7 @@ public class IntegrationTestBase {
     return new NamespaceClient(getClientConfig(), getRestClient());
   }
 
+  @SuppressWarnings("unused")
   protected MetricsClient getMetricsClient() {
     return new MetricsClient(getClientConfig(), getRestClient());
   }
@@ -264,6 +268,7 @@ public class IntegrationTestBase {
     return new ApplicationClient(getClientConfig(), getRestClient());
   }
 
+  @SuppressWarnings("unused")
   protected ProgramClient getProgramClient() {
     return new ProgramClient(getClientConfig(), getRestClient());
   }
@@ -290,7 +295,7 @@ public class IntegrationTestBase {
   }
 
   protected ApplicationManager deployApplication(Class<? extends Application> applicationClz) throws IOException {
-    return deployApplication(Id.Namespace.DEFAULT, applicationClz, new File[0]);
+    return deployApplication(Id.Namespace.DEFAULT, applicationClz);
   }
 
   private boolean isUserDataset(DatasetSpecificationSummary specification) {
@@ -302,33 +307,24 @@ public class IntegrationTestBase {
     DatasetClient datasetClient = getDatasetClient();
     List<DatasetSpecificationSummary> datasets = datasetClient.list(namespace);
 
-    Iterable<DatasetSpecificationSummary> filteredDatasts = Iterables.filter(
+    Iterable<DatasetSpecificationSummary> userDatasets = Iterables.filter(
       datasets, new Predicate<DatasetSpecificationSummary>() {
         @Override
-        public boolean apply(@Nullable DatasetSpecificationSummary input) {
-          if (input == null) {
-            return true;
-          }
-
+        public boolean apply(DatasetSpecificationSummary input) {
           return isUserDataset(input);
         }
     });
 
-    Iterable<String> filteredDatasetsNames = Iterables.transform(
-      filteredDatasts, new Function<DatasetSpecificationSummary, String>() {
-        @Nullable
+    Iterable<String> userDatasetNames = Iterables.transform(
+      userDatasets, new Function<DatasetSpecificationSummary, String>() {
         @Override
-        public String apply(@Nullable DatasetSpecificationSummary input) {
-          if (input == null) {
-            throw new IllegalStateException();
-          }
-
+        public String apply(DatasetSpecificationSummary input) {
           return input.getName();
         }
     });
 
     Assert.assertFalse("Must have no user datasets, but found the following user datasets: "
-                         + Joiner.on(", ").join(filteredDatasetsNames), filteredDatasts.iterator().hasNext());
+                         + Joiner.on(", ").join(userDatasetNames), userDatasets.iterator().hasNext());
   }
 
   private void assertNoApps(Id.Namespace namespace) throws Exception {
@@ -351,62 +347,5 @@ public class IntegrationTestBase {
     }
     Assert.assertTrue("Must have no streams, but found the following streams: "
                         + Joiner.on(", ").join(streamNames), streamNames.isEmpty());
-  }
-
-  private void verifyProgramNames(List<String> expected, List<ProgramRecord> actual) {
-    Assert.assertEquals(expected.size(), actual.size());
-    for (ProgramRecord actualProgramRecord : actual) {
-      Assert.assertTrue(expected.contains(actualProgramRecord.getName()));
-    }
-  }
-
-  private void verifyProgramNames(List<String> expected, Map<ProgramType, List<ProgramRecord>> actual) {
-    verifyProgramNames(expected, convert(actual));
-  }
-
-  private List<ProgramRecord> convert(Map<ProgramType, List<ProgramRecord>> map) {
-    List<ProgramRecord> result = Lists.newArrayList();
-    for (List<ProgramRecord> subList : map.values()) {
-      result.addAll(subList);
-    }
-    return result;
-  }
-
-  private void assertFlowletInstances(ProgramClient programClient, Id.Flow.Flowlet flowletId, int numInstances)
-    throws IOException, NotFoundException, UnauthorizedException {
-
-    // TODO: replace with programClient.waitForFlowletInstances()
-    int actualInstances;
-    int numTries = 0;
-    int maxTries = 5;
-    do {
-      actualInstances = programClient.getFlowletInstances(flowletId);
-      numTries++;
-    } while (actualInstances != numInstances && numTries <= maxTries);
-    Assert.assertEquals(numInstances, actualInstances);
-  }
-
-  private void assertProgramRunning(ProgramClient programClient, Id.Program programId)
-    throws IOException, ProgramNotFoundException, UnauthorizedException, InterruptedException {
-
-    assertProgramStatus(programClient, programId, "RUNNING");
-  }
-
-  private void assertProgramStopped(ProgramClient programClient, Id.Program programId)
-    throws IOException, ProgramNotFoundException, UnauthorizedException, InterruptedException {
-
-    assertProgramStatus(programClient, programId, "STOPPED");
-  }
-
-  private void assertProgramStatus(ProgramClient programClient, Id.Program programId, String programStatus)
-    throws IOException, ProgramNotFoundException, UnauthorizedException, InterruptedException {
-
-    try {
-      programClient.waitForStatus(programId, programStatus, 30, TimeUnit.SECONDS);
-    } catch (TimeoutException e) {
-      // NO-OP
-    }
-
-    Assert.assertEquals(programStatus, programClient.getStatus(programId));
   }
 }

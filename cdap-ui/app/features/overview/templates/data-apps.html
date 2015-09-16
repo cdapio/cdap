@@ -1,18 +1,18 @@
 <!--
   Copyright © 2015 Cask Data, Inc.
- 
+
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
   the License at
- 
+
   http://www.apache.org/licenses/LICENSE-2.0
- 
+
   Unless required by applicable law or agreed to in writing, software
   distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
   WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
   License for the specific language governing permissions and limitations under
   the License.
---> 
+-->
 
 <div class="row" ng-controller="AppsSectionCtrl as AppsSectionCtrl">
   <div class="col-xs-12 col-md-6">
@@ -89,7 +89,10 @@
               <span class="fa fa-list-ul"></span>
                <span>All Apps</span>
             </a>
-
+            <a ui-sref="adapters.list" class="btn btn-default">
+              <span class="icon-hydrator"></span>
+               <span>Pipelines</span>
+            </a>
             <div class="btn-group dropdown-right" dropdown>
               <button type="button" class="btn btn-default dropdown-toggle white-dropdown" dropdown-toggle>
                 Add App <span class="caret"></span>
@@ -97,24 +100,15 @@
               <ul class="dropdown-menu dropdown-menu-right" role="menu">
                 <li>
                   <my-file-select dropdown="true"
+                                  data-button-icon="__"
                                   data-button-label="Custom App"
                                   on-file-select="AppsSectionCtrl.onFileSelected($files)">
                   </my-file-select>
                 </li>
                 <li>
-                  <a ui-sref="adapters.create({type: 'ETLBatch'})" class="clearfix">
-                    <span class="pull-left">ETL Batch App</span>
-                    <i class="icon-ETLBatch pull-right"></i>
+                  <a ui-sref="adapters.create" class="clearfix">
+                    <span class="pull-left">{{AppsSectionCtrl.GLOBALS.addHydratorAppLabel}}</span>
                   </a>
-                </li>
-                <li>
-                  <a ui-sref="adapters.create({type: 'ETLRealtime'})" class="clearfix">
-                    <span class="pull-left">ETL Realtime App</span>
-                    <i class="icon-ETLRealtime pull-right"></i>
-                  </a>
-                </li>
-                <li>
-                  <a ui-sref="adapters.drafts"> Drafts </a>
                 </li>
               </ul>
             </div>
@@ -124,8 +118,8 @@
 
       <ul class="list-group">
         <li class="list-group-item" ng-repeat="app in AppsSectionCtrl.apps | orderBy:AppsSectionCtrl.MyOrderings.appOrdering | limitTo:5">
-          <a ui-sref="apps.detail.overview.status({appId: app.id})"
-              ng-if="app.type !== 'adapter'"
+          <a ui-sref="apps.detail.overview.programs({appId: app.id})"
+              ng-if="AppsSectionCtrl.myAdapterFactory.isCustomApp(app.artifact.name)"
               ng-click="AppsSectionCtrl.MyOrderings.appClicked(app.id)">
             <p ng-bind="app.name"> </p>
             <div class="title-type-image">
@@ -133,13 +127,19 @@
               <span> App </span>
             </div>
           </a>
-          <a ui-sref="adapters.detail.runs({adapterId: app.name})"
-              ng-if="app.type === 'adapter'"
+          <a ui-sref="apps.detail.overview.status({appId: app.id})"
+              ng-if="AppsSectionCtrl.myAdapterFactory.isETLApp(app.artifact.name)"
               ng-click="AppsSectionCtrl.MyOrderings.appClicked(app.id)">
             <p ng-bind="app.name"> </p>
             <div class="title-type-image">
-              <span class="icon-{{app.template}}"></span>
-              <span> {{app.template}} </span>
+              <span ng-if="AppsSectionCtrl.GLOBALS.etlBatch === app.artifact.name">
+                <span class="icon-ETLBatch"></span>
+                <span>ETL Batch</span>
+              </span>
+              <span ng-if="AppsSectionCtrl.GLOBALS.etlRealtime === app.artifact.name">
+                <span class="icon-ETLRealtime"></span>
+                <span>ETL Realtime</span>
+              </span>
             </div>
           </a>
         </li>
@@ -160,23 +160,14 @@
           <li>
             <my-file-select dropdown="true"
                             data-button-label="Custom App"
+                            data-button-icon="__"
                             on-file-select="AppsSectionCtrl.onFileSelected($files)">
             </my-file-select>
           </li>
           <li>
-            <a ui-sref="adapters.create({type: 'ETLBatch'})" class="clearfix">
-              <span class="pull-left">ETL Batch App</span>
-              <i class="icon-ETLBatch pull-right"></i>
+            <a ui-sref="adapters.create" class="clearfix">
+              <span class="pull-left">{{AppsSectionCtrl.GLOBALS.addHydratorAppLabel}}</span>
             </a>
-          </li>
-          <li>
-            <a ui-sref="adapters.create({type: 'ETLRealtime'})" class="clearfix">
-              <span class="pull-left">ETL Realtime App</span>
-              <i class="icon-ETLRealtime pull-right"></i>
-            </a>
-          </li>
-          <li>
-            <a ui-sref="adapters.drafts"> Drafts </a>
           </li>
         </ul>
       </div>

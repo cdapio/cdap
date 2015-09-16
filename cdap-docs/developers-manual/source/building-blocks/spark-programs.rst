@@ -64,6 +64,26 @@ implementation for this method that does nothing::
     // Do nothing by default
   }
 
+Spark and Resources
+----------------------
+
+When a Spark program is configured, the resource requirements for both the Spark driver
+processes and the Spark executor processes can be set, both in terms of the amount of
+memory (in megabytes) and the number of virtual cores assigned.
+
+For example, in the :ref:`Spark Page Rank <examples-spark-page-rank>` example, in the configuration of
+the ``PageRankSpark``, the amount of memory is specified:
+
+.. literalinclude:: /../../../cdap-examples/SparkPageRank/src/main/java/co/cask/cdap/examples/sparkpagerank/SparkPageRankApp.java
+   :language: java
+   :lines: 107-116
+
+If both the memory and the number of cores needs to be set, this can be done using::
+
+    setExecutorResources(new Resources(1024, 2));
+    
+In this case, 1024 MB and two cores is assigned to each executor process.
+
 CDAP SparkContext
 -----------------
 CDAP provides its own ``SparkContext`` which is needed to access **datasets**.

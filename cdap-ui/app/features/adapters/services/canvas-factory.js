@@ -8,21 +8,22 @@
  * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * distributed under the License is distribut
+ ed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
  */
 
 angular.module(PKG.name + '.feature.adapters')
-  .factory('CanvasFactory', function(myHelpers, $q, $alert) {
-    function getNodes(config) {
+  .factory('CanvasFactory', function(myHelpers, $q, $alert, GLOBALS) {
+    function getNodes(config, type) {
       var nodes = [];
       var i =0;
       nodes.push({
         id: config.source.name + '-source-' + (++i),
         name: config.source.name,
-        type: 'source',
+        type: GLOBALS.pluginTypes[type].source,
         properties: config.source.properties
       });
       config.transforms.forEach(function(transform) {
@@ -30,55 +31,65 @@ angular.module(PKG.name + '.feature.adapters')
           id: transform.name + '-transform-' + (++i),
           name: transform.name,
           type: 'transform',
-          properties: transform.properties
+          properties: transform.properties,
+          errorDatasetName: transform.errorDatasetName,
+          validationFields: transform.validationFields
         });
       });
-      nodes.push({
-        id: config.sink.name + '-sink-' + (++i),
-        name: config.sink.name,
-        type: 'sink',
-        properties: config.sink.properties
+      config.sinks.forEach(function(sink) {
+        nodes.push({
+          id: sink.name + '-sink-' + (++i),
+          name: sink.name,
+          type: GLOBALS.pluginTypes[type].sink,
+          properties: sink.properties
+        });
       });
       return nodes;
     }
 
-    function extractMetadataFromDraft(config, data) {
+    function extractMetadataFromDraft(data) {
       var returnConfig = {};
-      // Too many ORs. Should be removed when all drafts eventually are
-      // resaved in the new format. This is temporary
-      returnConfig.name =
-        myHelpers.objectQuery(config, 'metadata', 'name') || myHelpers.objectQuery(data, 'name');
-
-      returnConfig.description =
-      myHelpers.objectQuery(config, 'metadata', 'description') || myHelpers.objectQuery(data, 'description');
-
-      var template =
-      myHelpers.objectQuery(config, 'metadata', 'type') || myHelpers.objectQuery(data, 'template');
+      returnConfig.name = myHelpers.objectQuery(data, 'name');
+      returnConfig.description = myHelpers.objectQuery(data, 'description');
+      var template = myHelpers.objectQuery(data, 'artifact', 'name');
 
       returnConfig.template = {
         type: template
       };
-      if (template === 'ETLBatch') {
+      if (template === GLOBALS.etlBatch) {
         returnConfig.template.schedule = {};
-        returnConfig.template.schedule.cron =
-        myHelpers.objectQuery(config, 'schedule', 'cron') || myHelpers.objectQuery(config, 'schedule');
-      } else if (template === 'ETLRealtime') {
-        returnConfig.template.instance =
-        myHelpers.objectQuery(config, 'instance') || myHelpers.objectQuery(config, 'metadata', 'template', 'instance');
+        returnConfig.template.schedule.cron = myHelpers.objectQuery(data.config, 'schedule') || '* * * * *';
+      } else if (template === GLOBALS.etlRealtime) {
+        returnConfig.template.instance = myHelpers.objectQuery(data.config, 'instance') || 1;
       }
-
       return returnConfig;
     }
 
-    function getConnectionsBasedOnNodes(nodes) {
+    function getConnectionsBasedOnNodes(nodes, type) {
       var j;
       var connections = [];
+      var lastTransform;
+
       for (j=0; j<nodes.length-1; j++) {
-        connections.push({
-          source: nodes[j].id,
-          target: nodes[j+1].id
-        });
+        var nextNode = nodes[j+1];
+        if (!lastTransform && nextNode.type === GLOBALS.pluginTypes[type].sink) {
+          lastTransform = nodes[j];
+        }
+
+        if (nextNode.type === GLOBALS.pluginTypes[type].sink) {
+          connections.push({
+            source: lastTransform.id,
+            target: nextNode.id
+          });
+        } else {
+          connections.push({
+            source: nodes[j].id,
+            target: nextNode.id
+          });
+        }
+
       }
+
       return connections;
     }
 
@@ -105,7 +116,7 @@ angular.module(PKG.name + '.feature.adapters')
       var content = JSON.stringify(detailedConfig, null, 4);
       var blob = new Blob([content], { type: 'application/json'});
       defer.resolve({
-        name:  detailedConfig.name + '-' + detailedConfig.template,
+        name:  detailedConfig.name + '-' + detailedConfig.artifact.name,
         url: URL.createObjectURL(blob)
       });
       return defer.promise;
@@ -122,16 +133,16 @@ angular.module(PKG.name + '.feature.adapters')
         };
       }
 
-      if (result.template !== type) {
+      if (result.artifact.name !== type) {
         return {
-          message: 'Template imported is for ' + result.template + '. Please switch to ' + result.template + ' creation to import.',
+          message: 'Template imported is for ' + result.artifact.name + '. Please switch to ' + result.artifact.name + ' creation to import.',
           error: true
         };
       }
       // We need to perform more validations on the uploaded json.
       if (
           !result.config.source ||
-          !result.config.sink ||
+          !result.config.sinks ||
           !result.config.transforms
         ) {
         return {

@@ -19,17 +19,17 @@ package co.cask.cdap.internal;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.workflow.WorkflowToken;
+import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
-import co.cask.cdap.gateway.handlers.AdapterHttpHandler;
 import co.cask.cdap.gateway.handlers.AppLifecycleHttpHandler;
 import co.cask.cdap.gateway.handlers.NamespaceHttpHandler;
 import co.cask.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
 import co.cask.cdap.gateway.handlers.WorkflowHttpHandler;
 import co.cask.cdap.internal.app.BufferFileInputStream;
+import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
 import co.cask.cdap.internal.test.AppJarHelper;
-import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -46,7 +46,6 @@ import co.cask.cdap.proto.codec.WorkflowTokenNodeDetailCodec;
 import co.cask.http.BodyConsumer;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
@@ -90,7 +89,6 @@ public class AppFabricClient {
   private final WorkflowHttpHandler workflowHttpHandler;
   private final NamespaceHttpHandler namespaceHttpHandler;
   private final NamespaceAdmin namespaceAdmin;
-  private final AdapterHttpHandler adapterHttpHandler;
 
   @Inject
   public AppFabricClient(LocationFactory locationFactory,
@@ -98,15 +96,13 @@ public class AppFabricClient {
                          ProgramLifecycleHttpHandler programLifecycleHttpHandler,
                          NamespaceHttpHandler namespaceHttpHandler,
                          NamespaceAdmin namespaceAdmin,
-                         WorkflowHttpHandler workflowHttpHandler,
-                         AdapterHttpHandler adapterHttpHandler) {
+                         WorkflowHttpHandler workflowHttpHandler) {
     this.locationFactory = locationFactory;
     this.appLifecycleHttpHandler = appLifecycleHttpHandler;
     this.programLifecycleHttpHandler = programLifecycleHttpHandler;
     this.namespaceHttpHandler = namespaceHttpHandler;
     this.namespaceAdmin = namespaceAdmin;
     this.workflowHttpHandler = workflowHttpHandler;
-    this.adapterHttpHandler = adapterHttpHandler;
   }
 
   private String getNamespacePath(String namespaceId) {
@@ -163,7 +159,8 @@ public class AppFabricClient {
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Stop " + type + " failed");
   }
 
-  public String getStatus(String namespaceId, String appId, String flowId, ProgramType type) {
+  public String getStatus(String namespaceId, String appId, String flowId, ProgramType type)
+    throws BadRequestException, SchedulerException, NotFoundException {
     MockResponder responder = new MockResponder();
     String uri = String.format("%s/apps/%s/%s/%s/status", getNamespacePath(namespaceId), appId, type, flowId);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
@@ -225,7 +222,7 @@ public class AppFabricClient {
     json.addProperty("instances", instances);
     request.setContent(ChannelBuffers.wrappedBuffer(json.toString().getBytes()));
     programLifecycleHttpHandler.setFlowletInstances(request, responder, namespaceId,
-      applicationId, flowId, flowletName);
+                                                    applicationId, flowId, flowletName);
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Set flowlet instances failed");
   }
 
@@ -322,19 +319,20 @@ public class AppFabricClient {
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Resume workflow schedules failed");
   }
 
-  public String scheduleStatus(String namespaceId, String appId, String schedId, int expectedResponseCode) {
+  public String scheduleStatus(String namespaceId, String appId, String schedId, int expectedResponseCode)
+    throws BadRequestException, SchedulerException {
     MockResponder responder = new MockResponder();
     String uri = String.format("%s/apps/%s/schedules/%s/status", getNamespacePath(namespaceId), appId, schedId);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
-    programLifecycleHttpHandler.getStatus(request, responder, namespaceId, appId, "schedules", schedId);
+    try {
+      programLifecycleHttpHandler.getStatus(request, responder, namespaceId, appId, "schedules", schedId);
+    } catch (NotFoundException e) {
+      return "NOT_FOUND";
+    }
     verifyResponse(HttpResponseStatus.valueOf(expectedResponseCode), responder.getStatus(),
                    "Get schedules status failed");
-    if (HttpResponseStatus.NOT_FOUND.getCode() == expectedResponseCode) {
-      return "NOT_FOUND";
-    } else {
       Map<String, String> json = responder.decodeResponseContent(MAP_TYPE);
       return json.get("status");
-    }
   }
 
   private void verifyResponse(HttpResponseStatus expected, HttpResponseStatus actual, String errorMsg) {
@@ -403,96 +401,5 @@ public class AppFabricClient {
     bodyConsumer.chunk(ChannelBuffers.wrappedBuffer(Bytes.toBytes(GSON.toJson(appRequest))), mockResponder);
     bodyConsumer.finished(mockResponder);
     verifyResponse(HttpResponseStatus.OK, mockResponder.getStatus(), "Failed to deploy app");
-  }
-
-  public void deployTemplate(Id.Namespace namespace, Id.ApplicationTemplate templateId) {
-    DefaultHttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.PUT,
-      String.format("%s/templates/%s", getNamespacePath(namespace.getId()), templateId.getId()));
-    MockResponder responder = new MockResponder();
-
-    try {
-      adapterHttpHandler.deployTemplate(request, responder, namespace.getId(), templateId.getId());
-      verifyResponse(HttpResponseStatus.valueOf(200), responder.getStatus(), "Failed to deploy template.");
-    } catch (Exception e) {
-      LOG.error("Error deploying template", e);
-    }
-  }
-
-  public void createAdapter(Id.Adapter id, AdapterConfig config) {
-    DefaultHttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.PUT,
-      String.format("%s/adapters/%s", getNamespacePath(id.getNamespaceId()), id.getId()));
-    request.setContent(ChannelBuffers.wrappedBuffer(GSON.toJson(config).getBytes(Charsets.UTF_8)));
-    MockResponder responder = new MockResponder();
-
-    try {
-      adapterHttpHandler.createAdapter(request, responder, id.getNamespaceId(), id.getId());
-      verifyResponse(HttpResponseStatus.valueOf(200), responder.getStatus(), "Failed to create adapter.");
-    } catch (Exception e) {
-      LOG.error("Error creating adapter", e);
-    }
-  }
-
-  public void startAdapter(Id.Adapter id) {
-    DefaultHttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST,
-      String.format("%s/adapters/%s/start", getNamespacePath(id.getNamespaceId()), id.getId()));
-    MockResponder responder = new MockResponder();
-
-    try {
-      adapterHttpHandler.startStopAdapter(request, responder, id.getNamespaceId(), id.getId(), "start");
-      verifyResponse(HttpResponseStatus.valueOf(200), responder.getStatus(), "Failed to start adapter.");
-    } catch (Exception e) {
-      LOG.error("Error starting adapter", e);
-    }
-  }
-
-  public void stopAdapter(Id.Adapter id) {
-    DefaultHttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST,
-      String.format("%s/adapters/%s/stop", getNamespacePath(id.getNamespaceId()), id.getId()));
-    MockResponder responder = new MockResponder();
-
-    try {
-      adapterHttpHandler.startStopAdapter(request, responder, id.getNamespaceId(), id.getId(), "stop");
-      verifyResponse(HttpResponseStatus.valueOf(200), responder.getStatus(), "Failed to stop adapter.");
-    } catch (Exception e) {
-      LOG.error("Error stopping adapter", e);
-    }
-  }
-
-  public List<RunRecord> getAdapterRuns(Id.Adapter id) {
-    DefaultHttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET,
-      String.format("%s/adapters/%s/runs", getNamespacePath(id.getNamespaceId()), id.getId()));
-    MockResponder responder = new MockResponder();
-
-    try {
-      adapterHttpHandler.getAdapterRuns(request, responder, id.getNamespaceId(), id.getId(), null, null, null, 100);
-      verifyResponse(HttpResponseStatus.valueOf(200), responder.getStatus(), "Failed to get runs for adapter.");
-      return responder.decodeResponseContent(RUN_RECORDS_TYPE);
-    } catch (Exception e) {
-      LOG.error("Error getting adapter runs", e);
-      throw Throwables.propagate(e);
-    }
-  }
-
-  public RunRecord getAdapterRun(Id.Adapter adapterId, String runId) {
-    DefaultHttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET,
-      String.format("%s/adapters/%s/runs/%s", getNamespacePath(adapterId.getNamespaceId()), adapterId.getId(), runId));
-    MockResponder responder = new MockResponder();
-
-    try {
-      adapterHttpHandler.getAdapterRun(request, responder, adapterId.getNamespaceId(), adapterId.getId(), runId);
-      verifyResponse(HttpResponseStatus.valueOf(200), responder.getStatus(), "Failed to get run for adapter.");
-      return responder.decodeResponseContent(RunRecord.class);
-    } catch (Exception e) {
-      LOG.error("Error getting adapter run", e);
-      throw Throwables.propagate(e);
-    }
-  }
-
-  public void deleteAdapter(Id.Adapter adapterId) throws Exception {
-    String url = String.format("%s/adapters/%s", getNamespacePath(adapterId.getNamespaceId()), adapterId.getId());
-    DefaultHttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.DELETE, url);
-    MockResponder responder = new MockResponder();
-    adapterHttpHandler.deleteAdapter(request, responder, adapterId.getNamespaceId(), adapterId.getId());
-    verifyResponse(HttpResponseStatus.valueOf(200), responder.getStatus(), "Failed to delete adapter.");
   }
 }

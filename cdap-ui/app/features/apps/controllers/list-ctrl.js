@@ -15,11 +15,14 @@
  */
 
 angular.module(PKG.name + '.feature.apps')
-  .controller('AppListController', function CdapAppList($timeout, $scope, MyDataSource, myAppUploader, $alert, $state, MyOrderings, myAdapterApi) {
+  .controller('AppListController', function CdapAppList($timeout, $scope, MyDataSource, myAppUploader, $alert, $state, MyOrderings, myAdapterApi, GLOBALS, myAdapterFactory) {
     this.MyOrderings = MyOrderings;
     this.apps = [];
     this.currentPage = 1;
     this.searchText = '';
+    this.GLOBALS = GLOBALS;
+    this.myAdapterFactory = myAdapterFactory;
+
     var data = new MyDataSource($scope);
 
     data.request({
@@ -29,21 +32,5 @@ angular.module(PKG.name + '.feature.apps')
         this.apps = this.apps.concat(apps);
       }.bind(this));
     this.onFileSelected = myAppUploader.upload;
-
-    var params = {
-      namespace: $state.params.namespace,
-      scope: $scope
-    };
-    myAdapterApi.list(params)
-      .$promise
-      .then(function(res) {
-        if (!res.length) {
-          return;
-        }
-        res.forEach(function(adapter) {
-          adapter.type = 'adapter';
-        });
-        this.apps = this.apps.concat(res);
-      }.bind(this));
 
   });

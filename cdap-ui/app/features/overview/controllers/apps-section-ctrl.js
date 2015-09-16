@@ -15,10 +15,12 @@
  */
 
 angular.module(PKG.name + '.feature.overview')
-  .controller('AppsSectionCtrl', function(myAppUploader, myStreamApi, myDatasetApi, MyDataSource, MyOrderings, $scope, $state, myAdapterApi) {
+  .controller('AppsSectionCtrl', function(myAppUploader, myStreamApi, myDatasetApi, MyDataSource, MyOrderings, $scope, $state, myAdapterApi, GLOBALS, myAdapterFactory) {
     var dataSrc = new MyDataSource($scope);
     this.MyOrderings = MyOrderings;
     this.apps = [];
+    this.GLOBALS = GLOBALS;
+    this.myAdapterFactory = myAdapterFactory;
 
     this.dataList = [];
     dataSrc.request({
@@ -32,18 +34,6 @@ angular.module(PKG.name + '.feature.overview')
       namespace: $state.params.namespace,
       scope: $scope
     };
-
-    myAdapterApi.list(params)
-      .$promise
-      .then(function(res) {
-        if (!res.length) {
-          return;
-        }
-        res.forEach(function(adapter) {
-          adapter.type = 'adapter';
-        });
-        this.apps = this.apps.concat(res);
-      }.bind(this));
 
     myDatasetApi.list(params)
       .$promise

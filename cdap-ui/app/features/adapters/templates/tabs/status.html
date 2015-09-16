@@ -1,0 +1,40 @@
+<!--
+  Copyright © 2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+<div ng-controller="AdaptersDetailStatusController">
+  <div class="text-center status-view">
+    <div ng-class="{ 'col-xs-4': programType === 'WORKFLOWS', 'col-xs-6': programType !== 'WORKFLOWS' }">
+      <h4>Total Runs</h4>
+      <h2 class="status-value">{{ stats.numRuns }}</h2>
+    </div>
+
+    <div class="col-xs-4" ng-if="programType === 'WORKFLOWS'">
+      <h4>Average Run Time</h4>
+      <h2 class="status-value">
+        <span ng-if="stats.avgRunTime === 'N/A'">{{ stats.avgRunTime }}</span>
+        <span ng-if="stats.avgRunTime !== 'N/A'">{{ stats.avgRunTime * 1000 | amDurationFormat }}</span>
+      </h2>
+    </div>
+
+    <div ng-class="{ 'col-xs-4': programType === 'WORKFLOWS', 'col-xs-6': programType !== 'WORKFLOWS' }">
+      <h4>Last Run Time</h4>
+      <h2 class="status-value">
+        <span ng-if="stats.lastRunTime === 'N/A'">{{ stats.lastRunTime }}</span>
+        <span ng-if="stats.lastRunTime !== 'N/A'">{{ stats.lastRunTime | amDurationFormat }}</span>
+      </h2>
+    </div>
+  </div>
+</div>

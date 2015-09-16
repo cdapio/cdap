@@ -55,6 +55,7 @@ import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamPropertyListener;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.metadata.writer.ProgramContextAware;
 import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.queue.ConsumerGroupConfig;
 import co.cask.cdap.data2.queue.DequeueStrategy;
@@ -200,6 +201,14 @@ public final class FlowletProgramRunner implements ProgramRunner {
                                    program.getClassLoader());
       Preconditions.checkArgument(Flowlet.class.isAssignableFrom(clz), "%s is not a Flowlet.", clz);
 
+      // Setup dataset framework context, if required
+      Id.Program programId = program.getId();
+      Id.Flow.Flowlet flowletId = Id.Flow.Flowlet.from(programId.getApplication(), programId.getId(), flowletName);
+      Id.Run run = new Id.Run(programId, runId.getId());
+      if (dsFramework instanceof ProgramContextAware) {
+        ((ProgramContextAware) dsFramework).initContext(run, flowletId);
+      }
+
       Class<? extends Flowlet> flowletClass = (Class<? extends Flowlet>) clz;
 
       // Creates flowlet context
@@ -213,6 +222,9 @@ public final class FlowletProgramRunner implements ProgramRunner {
       // Creates tx related objects
       DataFabricFacade dataFabricFacade =
         dataFabricFacadeFactory.create(program, flowletContext.getDatasetInstantiator());
+      if (dataFabricFacade instanceof ProgramContextAware) {
+        ((ProgramContextAware) dataFabricFacade).initContext(run, flowletId);
+      }
 
       // Creates QueueSpecification
       Table<Node, String, Set<QueueSpecification>> queueSpecs =

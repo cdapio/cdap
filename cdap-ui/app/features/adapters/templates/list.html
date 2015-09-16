@@ -1,18 +1,18 @@
 <!--
   Copyright © 2015 Cask Data, Inc.
- 
+
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
   the License at
- 
+
   http://www.apache.org/licenses/LICENSE-2.0
- 
+
   Unless required by applicable law or agreed to in writing, software
   distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
   WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
   License for the specific language governing permissions and limitations under
   the License.
---> 
+-->
 
 <div class="row">
   <div class="col-xs-8 col-md-8 text-left">
@@ -33,13 +33,28 @@
     <thead>
       <tr ng-class="{'sort-enabled': ListController.adaptersList.length>0}">
         <th data-predicate="name">Name</th>
-        <th data-predicate="template">Type</th>
+        <th data-predicate="artifact.name">Type</th>
+        <th data-predicate="artifact.version">Version</th>
+        <th data-predicate="description">Description</th>
       </tr>
     </thead>
     <tbody>
       <tr ng-repeat="adapter in ListController.filtered = (ListController.adaptersList | filter: ListController.searchText ) | myPaginate:ListController.currentPage | orderBy:sortable.predicate:sortable.reverse">
-        <td>{{adapter.name}}</td>
-        <td>{{adapter.template}}</td>
+        <td>
+          <a ui-sref="adapters.detail({ adapterId: adapter.name })">{{adapter.name}}</a>
+        </td>
+        <td>
+          <span ng-if="adapter.artifact.name === ListController.GLOBALS.etlBatch">
+            <span class="icon-ETLBatch"></span>
+            <span>ETL Batch</span>
+          </span>
+          <span ng-if="adapter.artifact.name === ListController.GLOBALS.etlRealtime">
+            <span class="icon-ETLRealtime"></span>
+            <span>ETL Realtime</span>
+          </span>
+        </td>
+        <td>{{adapter.artifact.version}}</td>
+        <td>{{adapter.description}}</td>
       </tr>
     </tbody>
   </table>

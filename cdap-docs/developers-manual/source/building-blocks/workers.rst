@@ -53,6 +53,27 @@ a :ref:`RESTful API <http-restful-api-lifecycle>`::
     }
   }
 
+Workers and Resources
+=====================
+
+The size of the YARN container and the number of virtual cores allocated to a worker can
+be specified using a ``setResources`` method in the worker ``initialize`` method::
+
+    @Override
+    public void initialize(WorkerContext context) {
+      super.initialize(context);
+      ...
+      setResources(new Resources(1024, 2));
+      ...
+    }
+
+In this example, each worker container will be initialized with 1024 MB of memory and 2
+virtual cores.
+
+
+Workers and Datasets
+====================
+
 Workers can access and use datasets via a ``DatasetContext`` inside the ``run`` method of a ``TxRunnable``.
 A ``TxRunnable`` can be executed using the ``execute`` method of a ``WorkerContext``. Note that ``WorkerContext``
 is thread-safe and that each thread will receive its own instance of the ``Dataset`` being accessed. Though it is
@@ -87,6 +108,7 @@ application in the same namespace. ``WorkerContext`` can be used to discover the
     // To discover a service in another application in the same namespace, use:
     url = getContext().getServiceURL("anotherAppName", "anotherServiceId");
   }
+
 
 Writing to Streams 
 ==================
@@ -127,4 +149,3 @@ With a ``StreamBatchWriter``, the ``close`` method` needs to be called after all
       // Handle exception
     }
   }
-

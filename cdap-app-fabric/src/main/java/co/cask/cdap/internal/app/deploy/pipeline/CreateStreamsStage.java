@@ -18,7 +18,6 @@ package co.cask.cdap.internal.app.deploy.pipeline;
 
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
-import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.pipeline.AbstractStage;
 import co.cask.cdap.proto.Id;
 import com.google.common.reflect.TypeToken;
@@ -30,10 +29,9 @@ import com.google.common.reflect.TypeToken;
 public class CreateStreamsStage extends AbstractStage<ApplicationDeployable> {
   private final StreamCreator streamCreator;
 
-  public CreateStreamsStage(Id.Namespace namespace, StreamAdmin streamAdmin, ExploreFacade exploreFacade,
-                            boolean enableExplore) {
+  public CreateStreamsStage(Id.Namespace namespace, StreamAdmin streamAdmin) {
     super(TypeToken.of(ApplicationDeployable.class));
-    this.streamCreator = new StreamCreator(namespace, streamAdmin, exploreFacade, enableExplore);
+    this.streamCreator = new StreamCreator(namespace, streamAdmin);
   }
 
   /**

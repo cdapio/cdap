@@ -22,8 +22,8 @@ package co.cask.cdap.cli;
 public enum CommandCategory {
   GENERAL("General"),
   NAMESPACE("Namespace"),
+  ARTIFACT("Artifact"),
   APPLICATION_LIFECYCLE("Application Lifecycle"),
-  ADAPTER_LIFECYCLE("Adapter Lifecycle"),
   DATASET("Dataset"),
   EXPLORE("Explore"),
   METRICS("Metrics"),

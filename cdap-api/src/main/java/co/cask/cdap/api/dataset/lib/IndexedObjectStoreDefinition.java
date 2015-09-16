@@ -78,7 +78,7 @@ public class IndexedObjectStoreDefinition
     Table index = tableDef.getDataset(datasetContext, tableSpec, arguments, classLoader);
     ObjectStore<?> objectStore = objectStoreDef.getDataset(datasetContext, objectStoreSpec, arguments, classLoader);
 
-    return new IndexedObjectStore(spec.getName(), objectStore, index);
+    return new IndexedObjectStore<>(spec.getName(), objectStore, index);
   }
 
 }

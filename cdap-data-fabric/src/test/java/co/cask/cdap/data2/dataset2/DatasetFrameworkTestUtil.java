@@ -22,8 +22,8 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.CConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
@@ -35,13 +35,12 @@ import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.inmemory.InMemoryTxSystemClient;
 import co.cask.tephra.inmemory.MinimalTxSystemClient;
+import co.cask.tephra.runtime.TransactionModules;
 import com.google.common.base.Preconditions;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.PrivateModule;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.junit.rules.ExternalResource;
 import org.junit.rules.TemporaryFolder;
 
@@ -73,15 +72,12 @@ public final class DatasetFrameworkTestUtil extends ExternalResource {
     File localDataDir = tmpFolder.newFolder();
     cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, localDataDir.getAbsolutePath());
-    Configuration txConf = HBaseConfiguration.create();
-    CConfigurationUtil.copyTxProperties(cConf, txConf);
-    txManager = new TransactionManager(txConf);
-    txManager.startAndWait();
 
     injector = Guice.createInjector(
       new ConfigModule(cConf),
       new LocationRuntimeModule().getInMemoryModules(),
       new SystemDatasetRuntimeModule().getInMemoryModules(),
+      new TransactionModules().getInMemoryModules(),
       new PrivateModule() {
         @Override
         protected void configure() {
@@ -93,6 +89,9 @@ public final class DatasetFrameworkTestUtil extends ExternalResource {
         }
       }
     );
+
+    txManager = injector.getInstance(TransactionManager.class);
+    txManager.startAndWait();
 
     framework = injector.getInstance(DatasetFramework.class);
   }
@@ -111,35 +110,37 @@ public final class DatasetFrameworkTestUtil extends ExternalResource {
     return framework;
   }
 
-  public void addModule(Id.DatasetModule moduleId, DatasetModule module) throws DatasetManagementException {
+  public void addModule(Id.DatasetModule moduleId, DatasetModule module) throws DatasetManagementException,
+    ServiceUnavailableException {
     framework.addModule(moduleId, module);
   }
 
-  public void deleteModule(Id.DatasetModule moduleId) throws DatasetManagementException {
+  public void deleteModule(Id.DatasetModule moduleId) throws DatasetManagementException, ServiceUnavailableException {
     framework.deleteModule(moduleId);
   }
 
   public void createInstance(String type, Id.DatasetInstance datasetInstanceId, DatasetProperties properties)
-    throws IOException, DatasetManagementException {
+    throws IOException, DatasetManagementException, ServiceUnavailableException {
     framework.addInstance(type, datasetInstanceId, properties);
   }
 
   public void deleteInstance(Id.DatasetInstance datasetInstanceId)
-    throws IOException, DatasetManagementException {
+    throws IOException, DatasetManagementException, ServiceUnavailableException {
     framework.deleteInstance(datasetInstanceId);
   }
 
   public <T extends Dataset> T getInstance(Id.DatasetInstance datasetInstanceId)
-    throws DatasetManagementException, IOException {
+    throws DatasetManagementException, IOException, ServiceUnavailableException {
     return getInstance(datasetInstanceId, DatasetDefinition.NO_ARGUMENTS);
   }
 
   public <T extends Dataset> T getInstance(Id.DatasetInstance datasetInstanceId, Map<String, String> arguments)
-    throws DatasetManagementException, IOException {
+    throws DatasetManagementException, IOException, ServiceUnavailableException {
     return framework.getDataset(datasetInstanceId, arguments, null);
   }
 
-  public DatasetSpecification getSpec(Id.DatasetInstance datasetInstanceId) throws DatasetManagementException {
+  public DatasetSpecification getSpec(Id.DatasetInstance datasetInstanceId) throws DatasetManagementException,
+    ServiceUnavailableException {
     return framework.getDatasetSpec(datasetInstanceId);
   }
 

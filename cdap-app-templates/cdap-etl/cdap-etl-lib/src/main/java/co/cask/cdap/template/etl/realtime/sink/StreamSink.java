@@ -22,8 +22,8 @@ import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.stream.Stream;
+import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.api.stream.StreamEventData;
-import co.cask.cdap.api.templates.plugins.PluginConfig;
 import co.cask.cdap.template.etl.api.PipelineConfigurer;
 import co.cask.cdap.template.etl.api.realtime.DataWriter;
 import co.cask.cdap.template.etl.api.realtime.RealtimeSink;
@@ -41,7 +41,7 @@ import javax.annotation.Nullable;
 /**
  * Real-time sink for Streams
  */
-@Plugin(type = "sink")
+@Plugin(type = "realtimesink")
 @Name("Stream")
 @Description("Real-time sink that outputs to the specified CDAP Stream")
 public class StreamSink extends RealtimeSink<StructuredRecord> {

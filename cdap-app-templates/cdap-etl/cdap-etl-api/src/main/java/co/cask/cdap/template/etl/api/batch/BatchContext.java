@@ -18,7 +18,6 @@ package co.cask.cdap.template.etl.api.batch;
 
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.api.templates.AdapterContext;
 import co.cask.cdap.template.etl.api.TransformContext;
 
 import java.util.Map;
@@ -27,7 +26,7 @@ import java.util.Map;
  * Context passed to Batch Source and Sink.
  */
 @Beta
-public interface BatchContext extends DatasetContext, TransformContext, AdapterContext {
+public interface BatchContext extends DatasetContext, TransformContext {
 
   /**
    * Returns the logical start time of the Batch Job.  Logical start time is the time when this Batch

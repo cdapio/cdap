@@ -203,111 +203,6 @@ public abstract class Id {
   }
 
   /**
-   * Uniquely identifies an Adapter Type.
-   */
-  public static final class AdapterType extends NamespacedId {
-    private final Namespace namespace;
-    private final String adapterTypeId;
-
-    public AdapterType(final Namespace namespace, final String adapterTypeId) {
-      Preconditions.checkNotNull(namespace, "namespace cannot be null.");
-      Preconditions.checkNotNull(adapterTypeId, "adapterTypeId cannot be null.");
-      this.namespace = namespace;
-      this.adapterTypeId = adapterTypeId;
-    }
-
-    @Override
-    public Namespace getNamespace() {
-      return namespace;
-    }
-
-    public String getNamespaceId() {
-      return namespace.getId();
-    }
-
-    @Override
-    public String getId() {
-      return adapterTypeId;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-
-      AdapterType that = (AdapterType) o;
-      return namespace.equals(that.namespace) && adapterTypeId.equals(that.adapterTypeId);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hashCode(namespace, adapterTypeId);
-    }
-
-    public static AdapterType from(Namespace id, String adapterTypeId) {
-      return new AdapterType(id, adapterTypeId);
-    }
-
-    public static AdapterType from(String namespaceId, String adapterTypeId) {
-      return new AdapterType(Namespace.from(namespaceId), adapterTypeId);
-    }
-
-    @Override
-    public Id getParent() {
-      return namespace;
-    }
-  }
-
-  /**
-   * Uniquely identifies an Application Template.
-   */
-  public static final class ApplicationTemplate extends Id {
-    private final String template;
-
-    public ApplicationTemplate(final String template) {
-      Preconditions.checkNotNull(template, "template cannot be null.");
-      this.template = template;
-    }
-
-    @Nullable
-    @Override
-    protected Id getParent() {
-      return null;
-    }
-
-    @Override
-    public String getId() {
-      return template;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-
-      Application that = (Application) o;
-      return template.equals(that.applicationId);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hashCode(template);
-    }
-
-    public static ApplicationTemplate from(String template) {
-      return new ApplicationTemplate(template);
-    }
-  }
-
-  /**
    * Uniquely identifies an Application.
    */
   public static final class Application extends NamespacedId {
@@ -362,10 +257,6 @@ public abstract class Id {
       return new Application(Namespace.from(namespaceId), applicationId);
     }
 
-    public static Application from(Adapter adapter, String adapterSpecType) {
-      return new Application(adapter.getNamespace(), adapterSpecType);
-    }
-
     @Override
     public Id getParent() {
       return namespace;
@@ -383,80 +274,6 @@ public abstract class Id {
 
     public static Application fromStrings(String[] strings) {
       return fromStrings(strings, strings.length - 1);
-    }
-  }
-
-  /**
-   * Uniquely identifies an Adapter.
-   */
-  public static final class Adapter extends NamespacedId {
-    private final Namespace namespace;
-    private final String adapterId;
-
-    public Adapter(final Namespace namespace, final String adapterId) {
-      Preconditions.checkNotNull(namespace, "namespace cannot be null.");
-      Preconditions.checkNotNull(adapterId, "adapterId cannot be null.");
-      this.namespace = namespace;
-      this.adapterId = adapterId;
-    }
-
-    @Override
-    public Namespace getNamespace() {
-      return namespace;
-    }
-
-    public String getNamespaceId() {
-      return namespace.getId();
-    }
-
-    @Override
-    public String getId() {
-      return adapterId;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-
-      Adapter that = (Adapter) o;
-      return namespace.equals(that.namespace) && adapterId.equals(that.adapterId);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hashCode(namespace, adapterId);
-    }
-
-    public static Adapter from(Namespace id, String adapterId) {
-      return new Adapter(id, adapterId);
-    }
-
-    public static Adapter from(String namespaceId, String adapterId) {
-      return new Adapter(Namespace.from(namespaceId), adapterId);
-    }
-
-    public static Adapter fromStrings(String[] strings, int position) {
-      Preconditions.checkArgument(position == 1);
-      String[] tokens = strings[position].split(":");
-      Preconditions.checkArgument(tokens.length == 2);
-
-      String[] nextTokens = strings[position - 1].split(":");
-      Preconditions.checkArgument(nextTokens.length == 2);
-      return from(Namespace.from(nextTokens[1]), tokens[1]);
-    }
-
-    public static Adapter fromStrings(String[] strings) {
-      return fromStrings(strings, strings.length - 1);
-    }
-
-    @Override
-    public Id getParent() {
-      return namespace;
     }
   }
 
@@ -547,12 +364,12 @@ public abstract class Id {
       if (this == o) {
         return true;
       }
-      if (o == null || getClass() != o.getClass()) {
+      if (o == null || !Program.class.isAssignableFrom(o.getClass())) {
         return false;
       }
 
       Program program = (Program) o;
-      return application.equals(program.application) && id.equals(program.id);
+      return application.equals(program.application) && type.equals(program.type) && id.equals(program.id);
     }
 
     @Override
@@ -731,6 +548,24 @@ public abstract class Id {
         return flow;
       }
 
+      @Override
+      public boolean equals(Object o) {
+        if (this == o) {
+          return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+          return false;
+        }
+        Flowlet flowlet = (Flowlet) o;
+        return Objects.equal(flow, flowlet.flow) &&
+          Objects.equal(id, flowlet.id);
+      }
+
+      @Override
+      public int hashCode() {
+        return Objects.hashCode(flow, id);
+      }
+
       /**
        * Uniquely identifies a Flowlet Queue.
        */
@@ -805,6 +640,24 @@ public abstract class Id {
       return Objects.toStringHelper(this)
         .add("application", application)
         .add("id", id).toString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      Schedule that = (Schedule) o;
+      return Objects.equal(application, that.application) &&
+        Objects.equal(id, that.id);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hashCode(application, id);
     }
 
     public static Schedule from(Application application, String id) {
@@ -1069,6 +922,80 @@ public abstract class Id {
 
       return this.namespace.equals(that.namespace) &&
         this.streamName.equals(that.streamName);
+    }
+
+    /**
+     * Uniquely identifies a stream view.
+     */
+    public static final class View extends NamespacedId {
+      private final Stream stream;
+      private final String id;
+
+      public View(Stream stream, String id) {
+        Preconditions.checkNotNull(id, "ID cannot be null.");
+        Preconditions.checkArgument(isValidId(id), "ID can only contain alphanumeric, " +
+          "'-' and '_' characters: %s", id);
+        this.stream = stream;
+        this.id = id;
+      }
+
+      @Override
+      public Namespace getNamespace() {
+        return stream.getNamespace();
+      }
+
+      @Nullable
+      @Override
+      protected Id getParent() {
+        return stream;
+      }
+
+      public String getNamespaceId() {
+        return stream.getNamespace().getId();
+      }
+
+      public Id.Stream getStream() {
+        return stream;
+      }
+
+      public String getStreamId() {
+        return stream.getId();
+      }
+
+      @Override
+      public String getId() {
+        return id;
+      }
+
+      public static View from(Id.Stream streamId, String id) {
+        return new View(streamId, id);
+      }
+
+      public static View from(Namespace namespace, String streamId, String id) {
+        return new View(Id.Stream.from(namespace, streamId), id);
+      }
+
+      public static View from(String namespace, String streamId, String id) {
+        return new View(Id.Stream.from(namespace, streamId), id);
+      }
+
+      @Override
+      public boolean equals(Object o) {
+        if (this == o) {
+          return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+          return false;
+        }
+        View view = (View) o;
+        return java.util.Objects.equals(stream, view.stream) &&
+          java.util.Objects.equals(id, view.id);
+      }
+
+      @Override
+      public int hashCode() {
+        return java.util.Objects.hash(stream, id);
+      }
     }
   }
 
@@ -1361,6 +1288,37 @@ public abstract class Id {
     public static Artifact from(Id.Namespace namespace, ArtifactId id) {
       return new Artifact(ArtifactScope.SYSTEM.equals(id.getScope()) ? Namespace.SYSTEM : namespace,
                           id.getName(), id.getVersion());
+    }
+
+    /**
+     * Parses a string expected to be of the form {name}-{version}.jar into an {@link co.cask.cdap.proto.Id.Artifact},
+     * where name is a valid id and version is of the form expected by {@link ArtifactVersion}.
+     *
+     * @param namespace the namespace to use
+     * @param fileName the string to parse
+     * @return string parsed into an {@link co.cask.cdap.proto.Id.Artifact}
+     * @throws IllegalArgumentException if the string is not in the expected format
+     */
+    public static Artifact parse(Id.Namespace namespace, String fileName) {
+      if (!fileName.endsWith(".jar")) {
+        throw new IllegalArgumentException(String.format("Artifact name '%s' does not end in .jar", fileName));
+      }
+
+      // strip '.jar' from the filename
+      fileName = fileName.substring(0, fileName.length() - ".jar".length());
+
+      // true means try and match version as the end of the string
+      ArtifactVersion artifactVersion = new ArtifactVersion(fileName, true);
+      String rawVersion = artifactVersion.getVersion();
+      // this happens if it could not parse the version
+      if (rawVersion == null) {
+        throw new IllegalArgumentException(
+          String.format("Artifact name '%s' is not of the form {name}-{version}.jar", fileName));
+      }
+
+      // filename should be {name}-{version}.  Strip -{version} from it to get artifact name
+      String artifactName = fileName.substring(0, fileName.length() - rawVersion.length() - 1);
+      return Id.Artifact.from(namespace, artifactName, rawVersion);
     }
 
     public static boolean isValidName(String name) {

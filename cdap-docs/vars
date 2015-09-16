@@ -1,4 +1,3 @@
-BUILD_TEMP="build-temp"
 COMMON="_common"
 COMMON_HTACCESS="$COMMON/htaccess"
 COMMON_IMAGES="$COMMON/_images"
@@ -8,4 +7,16 @@ COMMON_HIGHLEVEL_PY="$COMMON/highlevel_conf.py"
 COMMON_PLACEHOLDER="$COMMON/_source/placeholder_index._rst"
 HTACCESS="htaccess"
 
+DOCS="docs"
+GITHUB="Github"
+GITHUB_ONLY="Github-only"
+WEB="Web"
+WEB_ONLY="Web-only"
+WITH="with"
+WITHOUT="without"
+WITH_JAVADOCS="$WITHOUT"
+
 MANUALS="introduction developers-manual application-templates admin-manual integrations examples-manual reference-manual"
+
+# This needs to be explicitly set as Git has trouble identifying it.
+GIT_BRANCH_PARENT="release/3.2"

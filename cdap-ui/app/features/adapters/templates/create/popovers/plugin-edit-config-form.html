@@ -1,39 +1,40 @@
 <!--
   Copyright © 2015 Cask Data, Inc.
- 
+
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
   the License at
- 
+
   http://www.apache.org/licenses/LICENSE-2.0
- 
+
   Unless required by applicable law or agreed to in writing, software
   distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
   WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
   License for the specific language governing permissions and limitations under
   the License.
---> 
+-->
 
 
   <div class="row" ng-if="isSource">
-    <div class="col-lg-8">
+    <div class="col-lg-6">
       <div class="modal-content-scroll" ng-class="{'padding-offset-right': isSource, 'padding-offset-left': isTransform}">
         <div ng-include="'/assets/features/adapters/templates/create/popovers/plugin-edit-properties-template.html'"></div>
       </div>
     </div>
 
-    <div class="col-lg-4">
+    <div class="col-lg-6">
       <div ng-include="'/assets/features/adapters/templates/create/popovers/plugin-edit-output-schema.html'"></div>
     </div>
 
   </div>
 
-  <div ng-if="isTransform" class="row">
-    <div class="col-lg-3">
+
+  <div ng-if="isTransform && plugin.name !== 'Validator'" class="row">
+    <div class="col-lg-4">
       <div ng-include="'/assets/features/adapters/templates/create/popovers/plugin-edit-input-schema.html'"></div>
     </div>
 
-    <div class="col-lg-5">
+    <div class="col-lg-4">
       <div class="modal-content-scroll" ng-class="{'padding-offset-right': isSource, 'padding-offset-left': isTransform}">
         <div ng-include="'/assets/features/adapters/templates/create/popovers/plugin-edit-properties-template.html'"></div>
       </div>
@@ -41,15 +42,21 @@
 
     <div class="col-lg-4">
       <div ng-include="'/assets/features/adapters/templates/create/popovers/plugin-edit-output-schema.html'"></div>
+    </div>
+  </div>
+
+  <div ng-if="isTransform && plugin.name === 'Validator'" class="row">
+    <div class="col-lg-12">
+      <div ng-include="'/assets/features/adapters/templates/create/popovers/plugin-edit-validator-transform.html'"></div>
     </div>
   </div>
 
 
   <div class="row" ng-if="isSink">
-    <div class="col-lg-3">
+    <div class="col-lg-6">
       <div ng-include="'/assets/features/adapters/templates/create/popovers/plugin-edit-input-schema.html'"></div>
     </div>
-    <div class="col-lg-9">
+    <div class="col-lg-6">
       <div class="modal-content-scroll">
 
         <div class="row">
@@ -73,22 +80,22 @@
                 <button
                   class="btn btn-sm btn-default pull-right"
                   ng-click="PluginEditController.schemaClear()"
-                  ng-if="(!plugin.implicitSchema && !isDisabled)"
-                  ng-disabled="plugin.implicitSchema || plugin.properties.format === 'clf' || plugin.properties.format === 'syslog'">
+                  ng-if="(!pluginCopy.implicitSchema && !isDisabled)"
+                  ng-disabled="pluginCopy.implicitSchema || pluginCopy.properties.format === 'clf' || pluginCopy.properties.format === 'syslog'">
                   Clear
                 </button>
               </h4>
 
               <fieldset ng-disabled="isDisabled">
                 <my-schema-editor
-                  ng-model="plugin.outputSchema"
-                  data-disabled="plugin.implicitSchema"
-                  plugin-properties="plugin.properties"
+                  ng-model="pluginCopy.outputSchema"
+                  data-disabled="pluginCopy.implicitSchema"
+                  plugin-properties="pluginCopy.properties"
                   config="PluginEditController.schemaProperties">
                 </my-schema-editor>
               </fieldset>
 
-              <div ng-if="!plugin.outputSchema && isDisabled">
+              <div ng-if="!pluginCopy.outputSchema && isDisabled">
                 <div class="well well-lg">
                   <h4>There is no output schema</h4>
                 </div>

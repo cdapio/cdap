@@ -87,10 +87,6 @@ public class ArtifactSummary {
 
   @Override
   public String toString() {
-    return "ArtifactSummary{" +
-      "name='" + name + '\'' +
-      ", version='" + version + '\'' +
-      ", scope=" + scope +
-      '}';
+    return String.valueOf(scope) + ":" + name + "-" + version;
   }
 }

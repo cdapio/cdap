@@ -16,16 +16,14 @@
 
 package co.cask.cdap.gateway.handlers;
 
-import co.cask.cdap.api.ProgramSpecification;
-import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.artifact.ArtifactScope;
-import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
-import co.cask.cdap.app.store.Store;
+import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.ArtifactAlreadyExistsException;
 import co.cask.cdap.common.ArtifactNotFoundException;
+import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.CannotBeDeletedException;
 import co.cask.cdap.common.InvalidArtifactException;
 import co.cask.cdap.common.NamespaceNotFoundException;
@@ -33,6 +31,7 @@ import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.http.AbstractBodyConsumer;
+import co.cask.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.utils.DirUtils;
@@ -43,25 +42,20 @@ import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.WriteConflictException;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
-import co.cask.cdap.internal.app.services.AdapterService;
 import co.cask.cdap.internal.app.services.ApplicationLifecycleService;
-import co.cask.cdap.internal.dataset.DatasetCreationSpec;
-import co.cask.cdap.proto.ApplicationDetail;
-import co.cask.cdap.proto.DatasetDetail;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.ProgramRecord;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.StreamDetail;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.http.BodyConsumer;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
+import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.Lists;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -78,7 +72,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -96,7 +91,9 @@ import javax.ws.rs.core.MediaType;
 @Singleton
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
 public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory())
+    .create();
   private static final Logger LOG = LoggerFactory.getLogger(AppLifecycleHttpHandler.class);
 
   /**
@@ -104,33 +101,24 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    */
   private final ProgramRuntimeService runtimeService;
 
-  /**
-   * Store manages non-runtime lifecycle.
-   */
-  private final Store store;
-
   private final CConfiguration configuration;
   private final Scheduler scheduler;
   private final NamespaceAdmin namespaceAdmin;
   private final NamespacedLocationFactory namespacedLocationFactory;
   private final ApplicationLifecycleService applicationLifecycleService;
-  private final AdapterService adapterService;
   private final File tmpDir;
 
   @Inject
   public AppLifecycleHttpHandler(CConfiguration configuration,
-                                 Scheduler scheduler, ProgramRuntimeService runtimeService, Store store,
+                                 Scheduler scheduler, ProgramRuntimeService runtimeService,
                                  NamespaceAdmin namespaceAdmin, NamespacedLocationFactory namespacedLocationFactory,
-                                 ApplicationLifecycleService applicationLifecycleService,
-                                 AdapterService adapterService) {
+                                 ApplicationLifecycleService applicationLifecycleService) {
     this.configuration = configuration;
     this.namespaceAdmin = namespaceAdmin;
     this.scheduler = scheduler;
     this.runtimeService = runtimeService;
     this.namespacedLocationFactory = namespacedLocationFactory;
-    this.store = store;
     this.applicationLifecycleService = applicationLifecycleService;
-    this.adapterService = adapterService;
     this.tmpDir = new File(new File(configuration.get(Constants.CFG_LOCAL_DATA_DIR)),
                            configuration.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
   }
@@ -145,9 +133,10 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                              @PathParam("app-id") final String appId,
                              @HeaderParam(ARCHIVE_NAME_HEADER) final String archiveName,
                              @HeaderParam(APP_CONFIG_HEADER) String configString,
-                             @HeaderParam(HttpHeaders.Names.CONTENT_TYPE) String contentType) {
+                             @HeaderParam(HttpHeaders.Names.CONTENT_TYPE) String contentType)
+    throws BadRequestException, NamespaceNotFoundException {
 
-    Id.Namespace namespace = Id.Namespace.from(namespaceId);
+    Id.Application applicationId = validateApplicationId(namespaceId, appId);
 
     // yes this is weird... here for backwards compatibility. If content type is json, use the preferred method
     // of creating an app from an artifact. Otherwise use the old method where the body is the jar contents.
@@ -155,9 +144,10 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
     try {
       if (createFromArtifact) {
-        return deployAppFromArtifact(namespace, appId);
+        return deployAppFromArtifact(applicationId);
       } else {
-        return deployApplication(responder, namespaceId, appId, archiveName, configString);
+        return deployApplication(responder, applicationId.getNamespace(),
+                                 applicationId.getId(), archiveName, configString);
       }
     } catch (Exception ex) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed: {}" + ex.getMessage());
@@ -173,10 +163,14 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public BodyConsumer deploy(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") final String namespaceId,
                              @HeaderParam(ARCHIVE_NAME_HEADER) final String archiveName,
-                             @HeaderParam(APP_CONFIG_HEADER) String configString) {
+                             @HeaderParam(APP_CONFIG_HEADER) String configString)
+    throws BadRequestException, NamespaceNotFoundException {
+
+    Id.Namespace namespace = validateNamespace(namespaceId);
+
     // null means use name provided by app spec
     try {
-      return deployApplication(responder, namespaceId, null, archiveName, configString);
+      return deployApplication(responder, namespace, null, archiveName, configString);
     } catch (Exception ex) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed: " + ex.getMessage());
       return null;
@@ -191,8 +185,18 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void getAllApps(HttpRequest request, HttpResponder responder,
                          @PathParam("namespace-id") String namespaceId,
                          @QueryParam("artifactName") String artifactName,
-                         @QueryParam("artifactVersion") String artifactVersion) throws NamespaceNotFoundException {
-    getAppRecords(responder, store, namespaceId, artifactName, artifactVersion);
+                         @QueryParam("artifactVersion") String artifactVersion)
+    throws NamespaceNotFoundException, BadRequestException {
+
+    Id.Namespace namespace = validateNamespace(namespaceId);
+
+    Set<String> names = new HashSet<>();
+    if (!Strings.isNullOrEmpty(artifactName)) {
+      for (String name : Splitter.on(',').split(artifactName)) {
+        names.add(name);
+      }
+    }
+    responder.sendJson(HttpResponseStatus.OK, applicationLifecycleService.getApps(namespace, names, artifactVersion));
   }
 
   /**
@@ -202,8 +206,11 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}")
   public void getAppInfo(HttpRequest request, HttpResponder responder,
                          @PathParam("namespace-id") String namespaceId,
-                         @PathParam("app-id") final String appId) {
-    getAppDetails(responder, namespaceId, appId);
+                         @PathParam("app-id") final String appId)
+    throws NamespaceNotFoundException, BadRequestException, ApplicationNotFoundException {
+
+    Id.Application applicationId = validateApplicationId(namespaceId, appId);
+    responder.sendJson(HttpResponseStatus.OK, applicationLifecycleService.getAppDetail(applicationId));
   }
 
   /**
@@ -213,24 +220,21 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}")
   public void deleteApp(HttpRequest request, HttpResponder responder,
                         @PathParam("namespace-id") String namespaceId,
-                        @PathParam("app-id") final String appId) throws Exception {
+                        @PathParam("app-id") final String appId)
+    throws BadRequestException, NamespaceNotFoundException {
 
-    Id.Application id = Id.Application.from(namespaceId, appId);
+    Id.Application id = validateApplicationId(namespaceId, appId);
     // Deletion of a particular application is not allowed if that application is used by an adapter
     AppFabricServiceStatus appStatus;
-    if (!adapterService.canDeleteApp(id)) {
-      appStatus = AbstractAppFabricHttpHandler.AppFabricServiceStatus.ADAPTER_CONFLICT;
-    } else {
-      try {
-        applicationLifecycleService.removeApplication(id);
-        appStatus = AppFabricServiceStatus.OK;
-      } catch (NotFoundException nfe) {
-        appStatus = AppFabricServiceStatus.PROGRAM_NOT_FOUND;
-      } catch (CannotBeDeletedException cbde) {
-        appStatus = AppFabricServiceStatus.PROGRAM_STILL_RUNNING;
-      } catch (Exception e) {
-        appStatus = AppFabricServiceStatus.INTERNAL_ERROR;
-      }
+    try {
+      applicationLifecycleService.removeApplication(id);
+      appStatus = AppFabricServiceStatus.OK;
+    } catch (NotFoundException nfe) {
+      appStatus = AppFabricServiceStatus.PROGRAM_NOT_FOUND;
+    } catch (CannotBeDeletedException cbde) {
+      appStatus = AppFabricServiceStatus.PROGRAM_STILL_RUNNING;
+    } catch (Exception e) {
+      appStatus = AppFabricServiceStatus.INTERNAL_ERROR;
     }
     LOG.trace("Delete call for Application {} at AppFabricHttpHandler", appId);
     responder.sendString(appStatus.getCode(), appStatus.getMessage());
@@ -242,9 +246,10 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @DELETE
   @Path("/apps")
   public void deleteAllApps(HttpRequest request, HttpResponder responder,
-                            @PathParam("namespace-id") String namespaceId) throws Exception {
+                            @PathParam("namespace-id") String namespaceId)
+    throws BadRequestException, NamespaceNotFoundException {
 
-    Id.Namespace id = Id.Namespace.from(namespaceId);
+    Id.Namespace id = validateNamespace(namespaceId);
     AppFabricServiceStatus status;
     try {
       applicationLifecycleService.removeAll(id);
@@ -267,17 +272,10 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}/update")
   public void updateApp(HttpRequest request, HttpResponder responder,
                         @PathParam("namespace-id") final String namespaceId,
-                        @PathParam("app-id") final String appName) throws NamespaceNotFoundException {
-    Id.Namespace namespace = Id.Namespace.from(namespaceId);
-    ensureNamespaceExists(namespace);
+                        @PathParam("app-id") final String appName)
+    throws NamespaceNotFoundException, BadRequestException {
 
-    Id.Application appId;
-    try {
-      appId = Id.Application.from(namespace, appName);
-    } catch (IllegalArgumentException e) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid app id: " + e.getMessage());
-      return;
-    }
+    Id.Application appId = validateApplicationId(namespaceId, appName);
 
     AppRequest appRequest;
     try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()), Charsets.UTF_8)) {
@@ -309,7 +307,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   // since it wont be big. But the deploy app API has one path with different behavior based on content type
   // the other behavior requires a BodyConsumer and only have one method per path is allowed,
   // so we have to use a BodyConsumer
-  private BodyConsumer deployAppFromArtifact(final Id.Namespace namespace, final String appId) throws IOException {
+  private BodyConsumer deployAppFromArtifact(final Id.Application appId) throws IOException {
 
     // createTempFile() needs a prefix of at least 3 characters
     return new AbstractBodyConsumer(File.createTempFile("apprequest-" + appId, ".json", tmpDir)) {
@@ -321,13 +319,14 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           AppRequest<?> appRequest = GSON.fromJson(fileReader, AppRequest.class);
           ArtifactSummary artifactSummary = appRequest.getArtifact();
           Id.Namespace artifactNamespace =
-            ArtifactScope.SYSTEM.equals(artifactSummary.getScope()) ? Id.Namespace.SYSTEM : namespace;
+            ArtifactScope.SYSTEM.equals(artifactSummary.getScope()) ? Id.Namespace.SYSTEM : appId.getNamespace();
           Id.Artifact artifactId =
             Id.Artifact.from(artifactNamespace, artifactSummary.getName(), artifactSummary.getVersion());
 
           // if we don't null check, it gets serialized to "null"
           String configString = appRequest.getConfig() == null ? null : GSON.toJson(appRequest.getConfig());
-          applicationLifecycleService.deployApp(namespace, appId, artifactId, configString, createProgramTerminator());
+          applicationLifecycleService.deployApp(appId.getNamespace(), appId.getId(),
+                                                artifactId, configString, createProgramTerminator());
           responder.sendString(HttpResponseStatus.OK, "Deploy Complete");
         } catch (ArtifactNotFoundException e) {
           responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
@@ -346,24 +345,15 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   private BodyConsumer deployApplication(final HttpResponder responder,
-                                         final String namespaceId,
+                                         final Id.Namespace namespace,
                                          final String appId,
                                          final String archiveName,
                                          final String configString) throws IOException {
-    final Id.Namespace namespace = Id.Namespace.from(namespaceId);
-    try {
-      ensureNamespaceExists(namespace);
-    } catch (NamespaceNotFoundException e) {
-      LOG.warn("Namespace '{}' not found.", namespaceId);
-      responder.sendString(HttpResponseStatus.NOT_FOUND,
-                           String.format("Deploy failed - namespace '%s' not found.", namespaceId));
-      return null;
-    }
 
     Location namespaceHomeLocation = namespacedLocationFactory.get(namespace);
     if (!namespaceHomeLocation.exists()) {
       String msg = String.format("Home directory %s for namespace %s not found",
-                                 namespaceHomeLocation.toURI().getPath(), namespaceId);
+                                 namespaceHomeLocation.toURI().getPath(), namespace.getId());
       LOG.error(msg);
       responder.sendString(HttpResponseStatus.NOT_FOUND, msg);
       return null;
@@ -379,8 +369,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     // but the caller catches all exceptions and responds with a 500
     final Id.Artifact artifactId;
     try {
-      artifactId = ArtifactRepository.parse(namespace, archiveName);
-    } catch (InvalidArtifactException e) {
+      artifactId = Id.Artifact.parse(namespace, archiveName);
+    } catch (IllegalArgumentException e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
       return null;
     }
@@ -389,7 +379,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     String namespacesDir = configuration.get(Constants.Namespace.NAMESPACES_DIR);
     File localDataDir = new File(configuration.get(Constants.CFG_LOCAL_DATA_DIR));
     File namespaceBase = new File(localDataDir, namespacesDir);
-    File tempDir = new File(new File(namespaceBase, namespaceId),
+    File tempDir = new File(new File(namespaceBase, namespace.getId()),
                             configuration.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
     if (!DirUtils.mkdirs(tempDir)) {
       throw new IOException("Could not create temporary directory at: " + tempDir);
@@ -466,71 +456,14 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     controller.stop().get();
   }
 
-  private void getAppDetails(HttpResponder responder, String namespace, String name) {
+  private Id.Namespace validateNamespace(String namespaceId) throws BadRequestException, NamespaceNotFoundException {
+    Id.Namespace namespace;
     try {
-      ApplicationSpecification appSpec = store.getApplication(new Id.Application(Id.Namespace.from(namespace), name));
-      if (appSpec == null) {
-        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-        return;
-      }
-      ApplicationDetail appDetail = makeAppDetail(appSpec);
-      responder.sendJson(HttpResponseStatus.OK, appDetail);
-    } catch (SecurityException e) {
-      LOG.debug("Security Exception while retrieving app details: ", e);
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception : ", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  private static ApplicationDetail makeAppDetail(ApplicationSpecification spec) {
-    List<ProgramRecord> programs = Lists.newArrayList();
-    for (ProgramSpecification programSpec : spec.getFlows().values()) {
-      programs.add(new ProgramRecord(ProgramType.FLOW, spec.getName(),
-                                     programSpec.getName(), programSpec.getDescription()));
-    }
-    for (ProgramSpecification programSpec : spec.getMapReduce().values()) {
-      programs.add(new ProgramRecord(ProgramType.MAPREDUCE, spec.getName(),
-                                     programSpec.getName(), programSpec.getDescription()));
-    }
-    for (ProgramSpecification programSpec : spec.getServices().values()) {
-      programs.add(new ProgramRecord(ProgramType.SERVICE, spec.getName(),
-                                     programSpec.getName(), programSpec.getDescription()));
-    }
-    for (ProgramSpecification programSpec : spec.getSpark().values()) {
-      programs.add(new ProgramRecord(ProgramType.SPARK, spec.getName(),
-                                     programSpec.getName(), programSpec.getDescription()));
-    }
-    for (ProgramSpecification programSpec : spec.getWorkers().values()) {
-      programs.add(new ProgramRecord(ProgramType.WORKER, spec.getName(),
-                                     programSpec.getName(), programSpec.getDescription()));
-    }
-    for (ProgramSpecification programSpec : spec.getWorkflows().values()) {
-      programs.add(new ProgramRecord(ProgramType.WORKFLOW, spec.getName(),
-                                     programSpec.getName(), programSpec.getDescription()));
+      namespace = Id.Namespace.from(namespaceId);
+    } catch (IllegalArgumentException e) {
+      throw new BadRequestException(String.format("Invalid namespace '%s': %s", namespaceId, e.getMessage()));
     }
 
-    List<StreamDetail> streams = Lists.newArrayList();
-    for (StreamSpecification streamSpec : spec.getStreams().values()) {
-      streams.add(new StreamDetail(streamSpec.getName()));
-    }
-
-    List<DatasetDetail> datasets = Lists.newArrayList();
-    for (DatasetCreationSpec datasetSpec : spec.getDatasets().values()) {
-      datasets.add(new DatasetDetail(datasetSpec.getInstanceName(), datasetSpec.getTypeName()));
-    }
-
-    // this is only required if there are old apps lying around that failed to get upgrading during
-    // the upgrade to v3.2 for some reason. In those cases artifact id will be null until they re-deploy the app.
-    // in the meantime, we don't want this api call to null pointer exception.
-    ArtifactSummary summary = spec.getArtifactId() == null ?
-      new ArtifactSummary(spec.getName(), null) : ArtifactSummary.from(spec.getArtifactId());
-    return new ApplicationDetail(spec.getName(), spec.getDescription(), spec.getConfiguration(),
-      streams, datasets, programs, summary);
-  }
-
-  private void ensureNamespaceExists(Id.Namespace namespace) throws NamespaceNotFoundException {
     try {
       namespaceAdmin.get(namespace);
     } catch (NamespaceNotFoundException e) {
@@ -540,6 +473,18 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       // In AppFabricServer, NamespaceAdmin is bound to DefaultNamespaceAdmin, which interacts directly with the MDS.
       // Hence, this exception will never be thrown
       throw Throwables.propagate(e);
+    }
+    return namespace;
+  }
+
+  private Id.Application validateApplicationId(String namespaceId, String appId)
+    throws BadRequestException, NamespaceNotFoundException {
+
+    Id.Namespace namespace = validateNamespace(namespaceId);
+    try {
+      return Id.Application.from(namespace, appId);
+    } catch (IllegalArgumentException e) {
+      throw new BadRequestException(String.format("Invalid app name '%s': %s", appId, e.getMessage()));
     }
   }
 }

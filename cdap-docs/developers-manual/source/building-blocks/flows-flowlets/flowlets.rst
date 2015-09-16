@@ -16,11 +16,13 @@ flowlet’s outputs. Flowlets specify an ``initialize()`` method, which is
 executed at the startup of each instance of a flowlet before it receives
 any data.
 
+.. _flowlets_RoundingFlowlet:
+
 The example below shows a flowlet that reads *Double* values, rounds
 them, and emits the results. It has a simple configuration method and
 doesn't do anything for initialization or destruction::
 
-  class RoundingFlowlet extends AbstractFlowlet {
+  public class RoundingFlowlet extends AbstractFlowlet {
 
     @Override
     public void configure(FlowletConfigurer configurer) {

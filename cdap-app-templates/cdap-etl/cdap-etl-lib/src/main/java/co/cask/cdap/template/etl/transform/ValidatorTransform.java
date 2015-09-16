@@ -21,8 +21,8 @@ import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.metrics.Metrics;
-import co.cask.cdap.api.templates.plugins.PluginConfig;
-import co.cask.cdap.api.templates.plugins.PluginProperties;
+import co.cask.cdap.api.plugin.PluginConfig;
+import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.template.etl.api.Emitter;
 import co.cask.cdap.template.etl.api.InvalidEntry;
 import co.cask.cdap.template.etl.api.PipelineConfigurer;
@@ -35,7 +35,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import org.apache.commons.validator.GenericValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,16 +57,14 @@ public class ValidatorTransform extends Transform<StructuredRecord, StructuredRe
 
   private static final String SCRIPT_DESCRIPTION = "Javascript that must implement a function 'isValid' that " +
     "takes a JSON object representation of the input record, " +
-    "and returns as a result a Map<String, String>, " +
-    "Example response : " +
+    "and returns a result JSON." +
+    "Example response: " +
     "   {isValid : false, errorCode : 10, errorMsg : \"unidentified record\"} " +
     "Validation script example: " +
     "   function isValid(input) { " +
     "      var isValid = true; " +
     "      var errMsg = \"\";" +
     "      var errCode = 0;" +
-    "      var resultMap = new java.util.HashMap();" +
-    "      input = JSON.parse(input);" +
     "      if (!coreValidator.isDate(input.date)) { " +
     "         isValid = false; errMsg = input.date + \"is invalid date\"; errCode = 5;" +
     "      } else if (!coreValidator.isUrl(input.url)) { " +
@@ -75,10 +72,7 @@ public class ValidatorTransform extends Transform<StructuredRecord, StructuredRe
     "      } else if (!coreValidator.isInRange(input.content_length, 0, 1024 * 1024)) {" +
     "         isValid = false; errMsg = \"content length >1MB\"; errCode = 10;" +
     "      }" +
-    "      resultMap.put(\"isValid\", isValid.toString()); " +
-    "      resultMap.put(\"errorCode\", errCode); " +
-    "      resultMap.put(\"errorMsg\", errMsg); " +
-    "      return resultMap;" +
+    "      return {'isValid': isValid, 'errorCode': errCode, 'errorMsg': errMsg}; " +
     "   };" +
     "The isValid function in this javascript example uses core validation functions";
 
@@ -86,10 +80,13 @@ public class ValidatorTransform extends Transform<StructuredRecord, StructuredRe
     .registerTypeAdapter(StructuredRecord.class, new StructuredRecordSerializer())
     .create();
   private static final Logger LOG = LoggerFactory.getLogger(ValidatorTransform.class);
+  private static final String VARIABLE_NAME = "dont_name_your_variable_this";
+  private static final String FUNCTION_NAME = "dont_name_your_function_this";
 
   private final ValidatorConfig config;
   private Metrics metrics;
   private Invocable invocable;
+  private ScriptEngine engine;
 
   // for unit tests, otherwise config is injected by plugin framework.
   public ValidatorTransform(ValidatorConfig config) {
@@ -108,11 +105,7 @@ public class ValidatorTransform extends Transform<StructuredRecord, StructuredRe
   public void initialize(TransformContext context) throws Exception {
     List<Validator> validators = new ArrayList<>();
     for (String pluginId : config.validators.split("\\s*,\\s*")) {
-      try {
-        validators.add((Validator) context.newPluginInstance(pluginId));
-      } catch (UnsupportedOperationException e) {
-        validators.add((Validator) context.newInstance(pluginId));
-      }
+      validators.add((Validator) context.newPluginInstance(pluginId));
     }
     try {
       setUpInitialScript(context, validators);
@@ -124,14 +117,22 @@ public class ValidatorTransform extends Transform<StructuredRecord, StructuredRe
   @VisibleForTesting
   void setUpInitialScript(TransformContext context, List<Validator> validators) throws ScriptException {
     ScriptEngineManager manager = new ScriptEngineManager();
-    ScriptEngine engine = manager.getEngineByName("JavaScript");
+    engine = manager.getEngineByName("JavaScript");
     String scriptStr = config.validationScript;
     Preconditions.checkArgument(!Strings.isNullOrEmpty(scriptStr), "Filter script must be specified.");
 
     for (Validator validator : validators) {
       engine.put(validator.getValidatorName(), validator.getValidator());
     }
-    engine.eval(scriptStr);
+
+    // this is pretty ugly, but doing this so that we can pass the 'input' json into the isValid function.
+    // that is, we want people to implement
+    // function isValid(input) { ... }
+    // rather than function isValid() { ... } with the input record assigned to the global variable
+    // and have them access the global variable in the function
+    String script = String.format("function %s() { return isValid(%s); }\n%s",
+                                  FUNCTION_NAME, VARIABLE_NAME, scriptStr);
+    engine.eval(script);
     invocable = (Invocable) engine;
     metrics = context.getMetrics();
   }
@@ -139,41 +140,36 @@ public class ValidatorTransform extends Transform<StructuredRecord, StructuredRe
   @Override
   public void transform(StructuredRecord input, Emitter<StructuredRecord> emitter) throws Exception {
     try {
-      Object result = invocable.invokeFunction("isValid", GSON.toJson(input));
-      if (!(result instanceof Map)) {
-        LOG.error("isValid function did not return a Map. Please check your script for correctness");
-        return;
-      }
-      Map<String, String> resultMap = (Map<String, String>) result;
-      Preconditions.checkState(resultMap.containsKey("isValid"),
+      engine.eval(String.format("var %s = %s;", VARIABLE_NAME, GSON.toJson(input)));
+      Map result = (Map) invocable.invokeFunction(FUNCTION_NAME);
+
+      Preconditions.checkState(result.containsKey("isValid"),
                                "Result map returned by isValid function did not contain an entry for 'isValid'");
 
-      Preconditions.checkState(resultMap.get("isValid").equalsIgnoreCase("true")
-                                 || resultMap.get("isValid").equalsIgnoreCase("false"),
-                               "'isValid' entry in Result map should be 'true' or 'false'" +
-                                 "please check your script for correctness");
 
-      if (Boolean.parseBoolean(resultMap.get("isValid"))) {
+      if ((Boolean) result.get("isValid")) {
         emitter.emit(input);
       } else {
-        emitter.emitError(getErrorObject(resultMap, input));
+        emitter.emitError(getErrorObject(result, input));
         metrics.count("filtered", 1);
-        LOG.trace("Error code : {} , Error Message {}", resultMap.get("errorCode"), resultMap.get("errorMsg"));
+        LOG.trace("Error code : {} , Error Message {}", result.get("errorCode"), result.get("errorMsg"));
       }
     } catch (Exception e) {
       throw new IllegalArgumentException("Invalid filter condition.", e);
     }
   }
 
-  private InvalidEntry<StructuredRecord> getErrorObject(Map<String, String> result, StructuredRecord input) {
+  private InvalidEntry<StructuredRecord> getErrorObject(Map result, StructuredRecord input) {
     Preconditions.checkState(result.containsKey("errorCode"));
-    Preconditions.checkState(result.containsKey("errorMsg"));
-    Preconditions.checkState(GenericValidator.isInt(result.get("errorCode")),
-                             "errorCode entry in resultMap is not a valid integer. " +
-                               "please check your script to make sure error-code is an integer");
 
-    int errorCode = Integer.parseInt(result.get("errorCode"));
-    return new InvalidEntry<StructuredRecord>(errorCode, result.get("errorMsg"), input);
+    Object errorCode = result.get("errorCode");
+    Preconditions.checkState(errorCode instanceof Double,
+                             "errorCode entry in resultMap is not a valid number. " +
+                               "please check your script to make sure error-code is a number");
+    Double errorCodeNum = (Double) errorCode;
+    Preconditions.checkState((errorCodeNum >= Integer.MIN_VALUE && errorCodeNum <= Integer.MAX_VALUE),
+                             "errorCode must be a valid Integer");
+    return new InvalidEntry<StructuredRecord>(errorCodeNum.intValue(), (String) result.get("errorMsg"), input);
   }
 
   /**

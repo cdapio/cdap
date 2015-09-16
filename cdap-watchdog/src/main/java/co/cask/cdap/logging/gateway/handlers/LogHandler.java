@@ -75,11 +75,10 @@ public class LogHandler extends AbstractHttpHandler {
                       @QueryParam("start") @DefaultValue("-1") long fromTimeSecsParam,
                       @QueryParam("stop") @DefaultValue("-1") long toTimeSecsParam,
                       @QueryParam("escape") @DefaultValue("true") boolean escape,
-                      @QueryParam("filter") @DefaultValue("") String filterStr,
-                      @QueryParam("adapterid") String adapterId) {
+                      @QueryParam("filter") @DefaultValue("") String filterStr) {
     LoggingContext loggingContext =
       LoggingContextHelper.getLoggingContext(namespaceId, appId, programId,
-                                             ProgramType.valueOfCategoryName(programType), adapterId);
+                                             ProgramType.valueOfCategoryName(programType));
     doGetLogs(responder, loggingContext, fromTimeSecsParam, toTimeSecsParam, escape, filterStr, null);
   }
 
@@ -91,12 +90,11 @@ public class LogHandler extends AbstractHttpHandler {
                            @QueryParam("start") @DefaultValue("-1") long fromTimeSecsParam,
                            @QueryParam("stop") @DefaultValue("-1") long toTimeSecsParam,
                            @QueryParam("escape") @DefaultValue("true") boolean escape,
-                           @QueryParam("filter") @DefaultValue("") String filterStr,
-                           @QueryParam("adapterid") String adapterId) {
+                           @QueryParam("filter") @DefaultValue("") String filterStr) {
     LoggingContext loggingContext =
       LoggingContextHelper.getLoggingContextWithRunId(namespaceId, appId, programId,
                                                       ProgramType.valueOfCategoryName(programType),
-                                                      runId, adapterId);
+                                                      runId);
     RunRecordMeta runRecord = programStore.getRun(
       Id.Program.from(namespaceId, appId, ProgramType.valueOfCategoryName(programType), programId), runId);
     doGetLogs(responder, loggingContext, fromTimeSecsParam, toTimeSecsParam, escape, filterStr, runRecord);
@@ -137,12 +135,10 @@ public class LogHandler extends AbstractHttpHandler {
                    @PathParam("program-id") String programId, @QueryParam("max") @DefaultValue("50") int maxEvents,
                    @QueryParam("fromOffset") @DefaultValue("") String fromOffsetStr,
                    @QueryParam("escape") @DefaultValue("true") boolean escape,
-                   @QueryParam("filter") @DefaultValue("") String filterStr,
-                   @QueryParam("adapterid") String adapterId) {
+                   @QueryParam("filter") @DefaultValue("") String filterStr) {
     LoggingContext loggingContext =
       LoggingContextHelper.getLoggingContext(namespaceId, appId,
-                                             programId, ProgramType.valueOfCategoryName(programType),
-                                             adapterId);
+                                             programId, ProgramType.valueOfCategoryName(programType));
     doNext(responder, loggingContext, maxEvents, fromOffsetStr, escape, filterStr, null);
   }
 
@@ -154,12 +150,11 @@ public class LogHandler extends AbstractHttpHandler {
                         @QueryParam("max") @DefaultValue("50") int maxEvents,
                         @QueryParam("fromOffset") @DefaultValue("") String fromOffsetStr,
                         @QueryParam("escape") @DefaultValue("true") boolean escape,
-                        @QueryParam("filter") @DefaultValue("") String filterStr,
-                        @QueryParam("adapterid") String adapterId) {
+                        @QueryParam("filter") @DefaultValue("") String filterStr) {
     LoggingContext loggingContext =
       LoggingContextHelper.getLoggingContextWithRunId(namespaceId, appId, programId,
                                                       ProgramType.valueOfCategoryName(programType),
-                                                      runId, adapterId);
+                                                      runId);
     RunRecordMeta runRecord = programStore.getRun(
       Id.Program.from(namespaceId, appId, ProgramType.valueOfCategoryName(programType), programId), runId);
     doNext(responder, loggingContext, maxEvents, fromOffsetStr, escape, filterStr, runRecord);
@@ -220,11 +215,10 @@ public class LogHandler extends AbstractHttpHandler {
                    @PathParam("program-id") String programId, @QueryParam("max") @DefaultValue("50") int maxEvents,
                    @QueryParam("fromOffset") @DefaultValue("") String fromOffsetStr,
                    @QueryParam("escape") @DefaultValue("true") boolean escape,
-                   @QueryParam("filter") @DefaultValue("") String filterStr,
-                   @QueryParam("adapterid") String adapterId) {
+                   @QueryParam("filter") @DefaultValue("") String filterStr) {
     LoggingContext loggingContext =
       LoggingContextHelper.getLoggingContext(namespaceId, appId, programId,
-                                             ProgramType.valueOfCategoryName(programType), adapterId);
+                                             ProgramType.valueOfCategoryName(programType));
     doPrev(responder, loggingContext, maxEvents, fromOffsetStr, escape, filterStr, null);
   }
 
@@ -236,12 +230,11 @@ public class LogHandler extends AbstractHttpHandler {
                         @QueryParam("max") @DefaultValue("50") int maxEvents,
                         @QueryParam("fromOffset") @DefaultValue("") String fromOffsetStr,
                         @QueryParam("escape") @DefaultValue("true") boolean escape,
-                        @QueryParam("filter") @DefaultValue("") String filterStr,
-                        @QueryParam("adapterid") String adapterId) {
+                        @QueryParam("filter") @DefaultValue("") String filterStr) {
     LoggingContext loggingContext =
       LoggingContextHelper.getLoggingContextWithRunId(namespaceId, appId, programId,
                                                       ProgramType.valueOfCategoryName(programType),
-                                                      runId, adapterId);
+                                                      runId);
     RunRecordMeta runRecord = programStore.getRun(
       Id.Program.from(namespaceId, appId, ProgramType.valueOfCategoryName(programType), programId), runId);
     doPrev(responder, loggingContext, maxEvents, fromOffsetStr, escape, filterStr, runRecord);

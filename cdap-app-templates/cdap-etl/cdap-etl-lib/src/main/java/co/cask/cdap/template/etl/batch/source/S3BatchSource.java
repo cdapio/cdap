@@ -19,7 +19,7 @@ package co.cask.cdap.template.etl.batch.source;
 import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
-import co.cask.cdap.api.templates.plugins.PluginConfig;
+import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.template.etl.api.batch.BatchSource;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
@@ -29,7 +29,7 @@ import javax.annotation.Nullable;
 /**
  * A {@link BatchSource} that reads from Amazon S3.
  */
-@Plugin(type = "source")
+@Plugin(type = "batchsource")
 @Name("S3")
 @Description("Batch source for Amazon S3")
 public class S3BatchSource extends FileBatchSource {

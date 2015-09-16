@@ -17,10 +17,9 @@
 package co.cask.cdap.data2.registry;
 
 import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
-import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.tx.Transactional;
@@ -89,8 +88,6 @@ public class UsageRegistry {
           // TODO: CDAP-2251: remove redundancy
           if (user instanceof Id.Program) {
             register((Id.Program) user, streamId);
-          } else if (user instanceof Id.Adapter) {
-            register((Id.Adapter) user, streamId);
           }
         }
         return null;
@@ -122,8 +119,6 @@ public class UsageRegistry {
           // TODO: CDAP-2251: remove redundancy
           if (user instanceof Id.Program) {
             register((Id.Program) user, datasetId);
-          } else if (user instanceof Id.Adapter) {
-            register((Id.Adapter) user, datasetId);
           }
         }
         return null;
@@ -158,22 +153,6 @@ public class UsageRegistry {
   }
 
   /**
-   * Registers usage of a dataset by an adapter.
-   *
-   * @param adapterId adapter
-   * @param datasetInstanceId dataset
-   */
-  public void register(final Id.Adapter adapterId, final Id.DatasetInstance datasetInstanceId) {
-    txnl.executeUnchecked(new TransactionExecutor.Function<UsageDatasetIterable, Void>() {
-      @Override
-      public Void apply(UsageDatasetIterable input) throws Exception {
-        input.getUsageDataset().register(adapterId, datasetInstanceId);
-        return null;
-      }
-    });
-  }
-
-  /**
    * Registers usage of a stream by a program.
    *
    * @param programId program
@@ -190,22 +169,6 @@ public class UsageRegistry {
   }
 
   /**
-   * Registers usage of a stream by an adapter.
-   *
-   * @param adapterId adapter
-   * @param streamId stream
-   */
-  public void register(final Id.Adapter adapterId, final Id.Stream streamId) {
-    txnl.executeUnchecked(new TransactionExecutor.Function<UsageDatasetIterable, Void>() {
-      @Override
-      public Void apply(UsageDatasetIterable input) throws Exception {
-        input.getUsageDataset().register(adapterId, streamId);
-        return null;
-      }
-    });
-  }
-
-  /**
    * Unregisters all usage information of an application.
    *
    * @param applicationId application
@@ -215,21 +178,6 @@ public class UsageRegistry {
       @Override
       public Void apply(UsageDatasetIterable input) throws Exception {
         input.getUsageDataset().unregister(applicationId);
-        return null;
-      }
-    });
-  }
-
-  /**
-   * Unregisters all usage information of an adapter.
-   *
-   * @param adapterId application
-   */
-  public void unregister(final Id.Adapter adapterId) {
-    txnl.executeUnchecked(new TransactionExecutor.Function<UsageDatasetIterable, Void>() {
-      @Override
-      public Void apply(UsageDatasetIterable input) throws Exception {
-        input.getUsageDataset().unregister(adapterId);
         return null;
       }
     });
@@ -271,38 +219,11 @@ public class UsageRegistry {
     });
   }
 
-  public Set<Id.DatasetInstance> getDatasets(final Id.Adapter id) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<UsageDatasetIterable, Set<Id.DatasetInstance>>() {
-      @Override
-      public Set<Id.DatasetInstance> apply(UsageDatasetIterable input) throws Exception {
-        return input.getUsageDataset().getDatasets(id);
-      }
-    });
-  }
-
-  public Set<Id.Stream> getStreams(final Id.Adapter id) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<UsageDatasetIterable, Set<Id.Stream>>() {
-      @Override
-      public Set<Id.Stream> apply(UsageDatasetIterable input) throws Exception {
-        return input.getUsageDataset().getStreams(id);
-      }
-    });
-  }
-
   public Set<Id.Program> getPrograms(final Id.Stream id) {
     return txnl.executeUnchecked(new TransactionExecutor.Function<UsageDatasetIterable, Set<Id.Program>>() {
       @Override
       public Set<Id.Program> apply(UsageDatasetIterable input) throws Exception {
         return input.getUsageDataset().getPrograms(id);
-      }
-    });
-  }
-
-  public Set<Id.Adapter> getAdapters(final Id.Stream id) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<UsageDatasetIterable, Set<Id.Adapter>>() {
-      @Override
-      public Set<Id.Adapter> apply(UsageDatasetIterable input) throws Exception {
-        return input.getUsageDataset().getAdapters(id);
       }
     });
   }
@@ -314,41 +235,6 @@ public class UsageRegistry {
         return input.getUsageDataset().getPrograms(id);
       }
     });
-  }
-
-  public Set<Id.Adapter> getAdapters(final Id.DatasetInstance id) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<UsageDatasetIterable, Set<Id.Adapter>>() {
-      @Override
-      public Set<Id.Adapter> apply(UsageDatasetIterable input) throws Exception {
-        return input.getUsageDataset().getAdapters(id);
-      }
-    });
-  }
-
-  /**
-   * Upgrades the UsageRegistry. In its current implementation it changed the type of usage.registry table in
-   * dataset.instances table from table to UsageDataset.
-   *
-   * @param datasetInstanceManager {@link DatasetInstanceManager} for the dataset instance meta data
-   */
-  public void upgrade(DatasetInstanceManager datasetInstanceManager) {
-    DatasetSpecification oldDatasetSpecification = datasetInstanceManager.get(USAGE_INSTANCE_ID);
-    // the usage.registry table will only be created if something runs on a cluster and creates a usage record.
-    // on a fresh cluster the dataset will not be present and in this case no upgrade is required.
-    if (oldDatasetSpecification != null) {
-      if (!oldDatasetSpecification.getType().equals(UsageDataset.class.getSimpleName())) {
-        LOG.info("Upgrading {} dataset from Table to UsageDataset type", USAGE_INSTANCE_ID);
-        DatasetSpecification newDatasetSpecification = DatasetSpecification.builder(oldDatasetSpecification.getName(),
-                                                                                    UsageDataset.class.getSimpleName())
-          .properties(oldDatasetSpecification.getProperties())
-          .datasets(oldDatasetSpecification.getSpecifications().values())
-          .build();
-        datasetInstanceManager.delete(USAGE_INSTANCE_ID);
-        datasetInstanceManager.add(Id.Namespace.SYSTEM, newDatasetSpecification);
-      } else {
-        LOG.info("{} dataset is of type UsageDataset. No upgrade required.", USAGE_INSTANCE_ID);
-      }
-    }
   }
 
   /**
@@ -376,7 +262,8 @@ public class UsageRegistry {
    *
    * @param datasetFramework framework to add types and datasets to
    */
-  public static void setupDatasets(DatasetFramework datasetFramework) throws IOException, DatasetManagementException {
+  public static void setupDatasets(DatasetFramework datasetFramework) throws IOException, DatasetManagementException,
+    ServiceUnavailableException {
     datasetFramework.addInstance(Table.class.getName(), USAGE_INSTANCE_ID, DatasetProperties.EMPTY);
   }
 

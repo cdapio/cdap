@@ -19,9 +19,8 @@ package co.cask.cdap.api.mapreduce;
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.ServiceDiscoverer;
 import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.artifact.PluginContext;
 import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.api.templates.AdapterContext;
+import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowToken;
 
@@ -36,10 +35,12 @@ import javax.annotation.Nullable;
  */
 @Beta
 public interface MapReduceTaskContext<KEYOUT, VALUEOUT> extends RuntimeContext, DatasetContext,
-  ServiceDiscoverer, AdapterContext, PluginContext {
+  ServiceDiscoverer, PluginContext {
 
   /**
-   * Write key and value to the named output Dataset.
+   * Write key and value to the named output Dataset. This method must only be used if the MapReduce writes to
+   * more than one output. If there is a single output, {@link #write(Object, Object)} must be used, or else
+   * data may not be written correctly.
    *
    * @param namedOutput the name of the output Dataset
    * @param key         the key
@@ -48,7 +49,8 @@ public interface MapReduceTaskContext<KEYOUT, VALUEOUT> extends RuntimeContext, 
   <K, V> void write(String namedOutput, K key, V value) throws IOException, InterruptedException;
 
   /**
-   * Write key and value to the hadoop context.
+   * Write key and value to the hadoop context. This method must only be used in the MapReduce writes to a single
+   * output. If there is more than one outputs, {@link #write(String, Object, Object)} must be used.
    *
    * @param key         the key
    * @param value       the value

@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .controller('MyDAGController', function MyDAGController(jsPlumb, $scope, $timeout, MyAppDAGService, myHelpers, MyDAGFactory, $window, $popover, $rootScope, EventPipe) {
+  .controller('MyDAGController', function MyDAGController(jsPlumb, $scope, $timeout, MyAppDAGService, myHelpers, MyDAGFactory, $window, $popover, $rootScope, EventPipe, GLOBALS) {
     this.plugins = $scope.config || [];
     this.isDisabled = $scope.isDisabled;
     MyAppDAGService.setIsDisabled(this.isDisabled);
@@ -48,7 +48,11 @@ angular.module(PKG.name + '.commons')
     // Need to move this to the controller that is using this directive.
     this.onPluginClick = function(plugin) {
       closeAllPopovers();
+      angular.forEach(this.plugins, function(plug) {
+        plug.selected = false;
+      });
 
+      plugin.selected = true;
       if (plugin.error) {
         delete plugin.error;
       }
@@ -77,7 +81,7 @@ angular.module(PKG.name + '.commons')
     };
 
     this.drawGraph = function() {
-      var graph = MyDAGFactory.getGraph(this.plugins);
+      var graph = MyDAGFactory.getGraph(this.plugins, MyAppDAGService.metadata.template.type);
       var nodes = graph.nodes()
         .map(function(node) {
           return graph.node(node);
@@ -85,13 +89,13 @@ angular.module(PKG.name + '.commons')
       var margins, marginLeft;
       margins = $scope.getGraphMargins(this.plugins);
       marginLeft = margins.left;
-
+      this.instance.endpointAnchorClassPrefix = '';
       this.plugins.forEach(function(plugin) {
         plugin.icon = MyDAGFactory.getIcon(plugin.name);
         if (this.isDisabled) {
-          plugin.style = plugin.style || MyDAGFactory.generateStyles(plugin.id, nodes, 0, marginLeft);
+          plugin.style = plugin.style || MyDAGFactory.generateStyles(plugin.id, nodes, marginLeft, 0);
         } else {
-          plugin.style = plugin.style || MyDAGFactory.generateStyles(plugin.id, nodes, 200, marginLeft);
+          plugin.style = plugin.style || MyDAGFactory.generateStyles(plugin.id, nodes, marginLeft, 200);
         }
         drawNode.call(this, plugin.id, plugin.type);
       }.bind(this));
@@ -104,17 +108,19 @@ angular.module(PKG.name + '.commons')
     };
 
     function drawNode(id, type) {
-      var sourceSettings = MyDAGFactory.getSettings().source,
-          sinkSettings = MyDAGFactory.getSettings().sink;
-
+      var sourceSettings = angular.copy(MyDAGFactory.getSettings().source),
+          sinkSettings = angular.copy(MyDAGFactory.getSettings().sink);
+      var artifactType = GLOBALS.pluginTypes[MyAppDAGService.metadata.template.type];
       switch(type) {
-        case 'source':
+        case artifactType.source:
           this.instance.addEndpoint(id, sourceSettings, {uuid: id});
           break;
-        case 'sink':
+        case artifactType.sink:
           this.instance.addEndpoint(id, sinkSettings, {uuid: id});
           break;
-        case 'transform':
+        case artifactType.transform:
+          sourceSettings.anchor = [ 0.5, 1, 0, 0, 26, -43, 'transformAnchor'];
+          sinkSettings.anchor = [ 0.5, 1, 0, 0, -26, -43, 'transformAnchor'];
           // Need to id each end point so that it can be used later to make connections.
           this.instance.addEndpoint(id, sourceSettings, {uuid: 'Left' + id});
           this.instance.addEndpoint(id, sinkSettings, {uuid: 'Right' + id});
@@ -252,6 +258,8 @@ angular.module(PKG.name + '.commons')
 
       jsPlumb.setContainer('dag-container');
       this.instance = jsPlumb.getInstance();
+      // Overrides JSPlumb's prefixed endpoint classes. This variable will be changing in the next version of JSPlumb
+      this.instance.endpointAnchorClassPrefix = '';
 
       angular.element($window).on('resize', function() {
         this.instance.repaintEverything();
@@ -261,7 +269,9 @@ angular.module(PKG.name + '.commons')
 
       // Need to move this to the controller that is using this directive.
       this.instance.bind('connection', function (con) {
-        createPopover(con.connection);
+        if (!this.isDisabled) {
+          createPopover(con.connection);
+        }
 
         // Whenever there is a change in the connection just copy the entire array
         // We never know if a connection was altered or removed. We don't want to 'Sync'
@@ -281,8 +291,9 @@ angular.module(PKG.name + '.commons')
         this.instance = jsPlumb.getInstance();
         this.instance.importDefaults(MyDAGFactory.getSettings().default);
         this.instance.bind('connection', function (con) {
-
-          createPopover(con.connection);
+          if (!this.isDisabled) {
+            createPopover(con.connection);
+          }
 
           MyAppDAGService.setConnections(this.instance.getConnections());
         }.bind(this));

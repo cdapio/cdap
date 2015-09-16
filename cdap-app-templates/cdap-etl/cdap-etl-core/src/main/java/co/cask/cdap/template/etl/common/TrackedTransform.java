@@ -29,10 +29,10 @@ import co.cask.cdap.template.etl.api.Transformation;
  * @param <OUT> Type of output object
  */
 public class TrackedTransform<IN, OUT> implements Transformation<IN, OUT>, Destroyable {
-  private final Transformation transform;
+  private final Transformation<IN, OUT> transform;
   private final Metrics metrics;
 
-  public TrackedTransform(Transformation transform, Metrics metrics) {
+  public TrackedTransform(Transformation<IN, OUT> transform, Metrics metrics) {
     this.transform = transform;
     this.metrics = metrics;
   }

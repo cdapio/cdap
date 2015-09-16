@@ -16,27 +16,49 @@
 
 package co.cask.cdap.template.etl.batch;
 
-import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.template.etl.api.batch.BatchSinkContext;
 
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
 /**
- * MapReduce Sink Context.
+ * MapReduce Sink Context. Delegates operations to MapReduceContext and also keeps track of which outputs
+ * were written to.
  */
 public class MapReduceSinkContext extends MapReduceBatchContext implements BatchSinkContext {
+  private final Set<String> outputNames;
 
-  public MapReduceSinkContext(MapReduceContext context, Metrics metrics, String prefixId) {
-    super(context, metrics, prefixId);
+  public MapReduceSinkContext(MapReduceContext context, Metrics metrics, String sinkId) {
+    super(context, metrics, sinkId);
+    this.outputNames = new HashSet<>();
   }
 
   @Override
-  public void setOutput(String datasetName) {
-    mrContext.setOutput(datasetName);
+  public void addOutput(String datasetName) {
+    mrContext.addOutput(datasetName);
+    outputNames.add(datasetName);
   }
 
   @Override
-  public void setOutput(String datasetName, Dataset dataset) {
-    mrContext.setOutput(datasetName, dataset);
+  public void addOutput(String datasetName, Map<String, String> arguments) {
+    mrContext.addOutput(datasetName, arguments);
+    outputNames.add(datasetName);
+  }
+
+  @Override
+  public void addOutput(String outputName, OutputFormatProvider outputFormatProvider) {
+    mrContext.addOutput(outputName, outputFormatProvider);
+    outputNames.add(outputName);
+  }
+
+  /**
+   * @return set of outputs that were added
+   */
+  public Set<String> getOutputNames() {
+    return outputNames;
   }
 }

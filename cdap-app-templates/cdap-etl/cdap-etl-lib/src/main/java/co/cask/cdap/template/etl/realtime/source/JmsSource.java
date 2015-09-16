@@ -20,8 +20,8 @@ import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.templates.plugins.PluginConfig;
-import co.cask.cdap.api.templates.plugins.PluginProperties;
+import co.cask.cdap.api.plugin.PluginConfig;
+import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.template.etl.api.Emitter;
 import co.cask.cdap.template.etl.api.PipelineConfigurer;
 import co.cask.cdap.template.etl.api.realtime.RealtimeContext;
@@ -57,7 +57,7 @@ import javax.naming.Context;
  * JMS Consumer and send the message as String to the CDAP ETL Template flow via {@link Emitter}
  * </p>
  */
-@Plugin(type = "source")
+@Plugin(type = "realtimesource")
 @Name("JMS")
 @Description("JMS Real-time Source: Emits a record with a field 'message' of type String.")
 public class JmsSource extends RealtimeSource<StructuredRecord> {

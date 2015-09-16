@@ -47,7 +47,7 @@ public class WordCount extends AbstractApplication<WordCount.WordCountConfig> {
       this.stream = "wordStream";
       this.wordStatsTable = "wordStats";
       this.wordCountTable = "wordCounts";
-      this.uniqueCountTable = "unqiueCount";
+      this.uniqueCountTable = "uniqueCount";
       this.wordAssocTable = "wordAssocs";
     }
 

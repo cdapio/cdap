@@ -23,12 +23,12 @@ import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
+import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.service.AbstractService;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceContext;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
-import co.cask.cdap.api.templates.plugins.PluginProperties;
 import co.cask.cdap.api.worker.AbstractWorker;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.LongWritable;
@@ -76,14 +76,14 @@ public class AppWithPlugin extends AbstractApplication {
     @Override
     public void initialize(HttpServiceContext context) throws Exception {
       super.initialize(context);
-      object = getContext().newInstance("sid");
+      object = getContext().newPluginInstance("sid");
     }
 
     @Path("/dummy")
     @GET
     public void handle(HttpServiceRequest request, HttpServiceResponder responder) {
       Assert.assertEquals(TEST, object.toString());
-      Assert.assertTrue(getContext().getPluginProps("sid").getProperties().containsKey(KEY));
+      Assert.assertTrue(getContext().getPluginProperties("sid").getProperties().containsKey(KEY));
       responder.sendStatus(200);
     }
   }
@@ -120,9 +120,9 @@ public class AppWithPlugin extends AbstractApplication {
 
     @Override
     public void initialize(MapReduceContext mapReduceContext) throws Exception {
-      obj = mapReduceContext.newInstance("mrid");
+      obj = mapReduceContext.newPluginInstance("mrid");
       Assert.assertEquals(TEST, obj.toString());
-      Assert.assertTrue(mapReduceContext.getPluginProps("mrid").getProperties().containsKey(KEY));
+      Assert.assertTrue(mapReduceContext.getPluginProperties("mrid").getProperties().containsKey(KEY));
     }
 
     @Override
@@ -136,9 +136,9 @@ public class AppWithPlugin extends AbstractApplication {
     @Override
     public void run() {
       try {
-        Object object = getContext().newInstance("plug");
+        Object object = getContext().newPluginInstance("plug");
         Assert.assertEquals(TEST, object.toString());
-        Assert.assertTrue(getContext().getPluginProps("plug").getProperties().containsKey(KEY));
+        Assert.assertTrue(getContext().getPluginProperties("plug").getProperties().containsKey(KEY));
         getContext().write("input", "data");
       } catch (InstantiationException e) {
         Assert.fail();

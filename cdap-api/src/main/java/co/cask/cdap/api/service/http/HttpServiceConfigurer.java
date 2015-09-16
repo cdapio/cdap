@@ -17,7 +17,7 @@
 package co.cask.cdap.api.service.http;
 
 import co.cask.cdap.api.DatasetConfigurer;
-import co.cask.cdap.api.artifact.PluginConfigurer;
+import co.cask.cdap.api.plugin.PluginConfigurer;
 
 import java.util.Map;
 

@@ -1,67 +1,115 @@
 <!--
   Copyright © 2015 Cask Data, Inc.
- 
+
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
   the License at
- 
+
   http://www.apache.org/licenses/LICENSE-2.0
- 
+
   Unless required by applicable law or agreed to in writing, software
   distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
   WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
   License for the specific language governing permissions and limitations under
   the License.
---> 
+-->
 
-<my-breadcrumbs></my-breadcrumbs>
-
-<div class="row" program-heading>
-
-  <div class="col-sm-6">
-    <h2 class="programTitle">
-      <span>
-        <!-- There is a display: block on the first span -->
-        <span tooltip="{{ $state.params.adapterId }}"
-              tooltip-placement="right"
-              tooltip-enable="$state.params.adapterId.length > 50"
-              tooltip-append-to-body="true"
-              ng-bind="$state.params.adapterId | myEllipsis: 50"></span>
-      </span>
-    </h2>
-    <div class="type-block">
-      <span class="icon-ETLRealtime" ng-if="template === 'ETLRealtime'"></span>
-      <span class="icon-ETLBatch" ng-if="template === 'ETLBatch'"></span>
-      <small> Type: {{template}} </small>
+<!-- TOP PANEL -->
+<div class="side-panel top text-center clearfix">
+  <div class="adapter-metadata pull-left">
+    <div class="clearfix">
+      <div class="name-type pull-left">
+        <h1 tooltip="{{ app.name }}"
+            tooltip-placement="right"
+            tooltip-enable="app.name.length > 38"
+            tooltip-append-to-body="true">
+          {{ app.name }}
+        </h1>
+        <a class="pipeline-type">
+          <span class="icon-ETLBatch" ng-if="app.artifact.name === GLOBALS.etlBatch"></span>
+          <span class="icon-ETLRealtime" ng-if="app.artifact.name === GLOBALS.etlRealtime"></span>
+          <span>{{ app.artifact.name }}</span>
+        </a>
+      </div>
     </div>
-    <p>{{description}}</p>
-  </div>
-  <div class="col-sm-6 text-right">
+    <p class="text-left"
+       tooltip="{{ app.description }}"
+       tooltip-placement="right"
+       tooltip-enable="app.description.length > 158"
+       tooltip-append-to-body="true">
+      {{ app.description | myEllipsis: 158 }}
+    </p>
 
-    <my-start-stop-button
-      type="adapters"
-      is-stoppable="true">
-    </my-start-stop-button>
-    <!-- END OF BUTTON GROUP -->
+  </div>
+
+
+
+  <!-- Right Buttons Actions -->
+  <div class="btn-group pull-right clearfix">
+    <div class="btn btn-status">
+      <span ng-class="{'status-green': appStatus === 'RUNNING' || appStatus === 'SCHEDULED', 'status-red': appStatus !== 'RUNNING' && appStatus !== 'SCHEDULED' }"> </span>
+      {{ appStatus }}
+    </div>
+
+    <!-- IF ETL REALTIME -->
+    <div class="btn"
+      ng-click="do('Start')"
+      ng-if="app.artifact.name === GLOBALS.etlRealtime && appStatus !== 'RUNNING'">
+      Start
+    </div>
+    <div class="btn"
+      ng-click="do('Stop')"
+      ng-if="app.artifact.name === GLOBALS.etlRealtime && appStatus === 'RUNNING'">
+      Stop
+    </div>
+
+
+    <!-- IF ETL BATCH -->
+    <div class="btn"
+      ng-click="do('Start')"
+      ng-if="app.artifact.name === GLOBALS.etlBatch && appStatus !== 'SCHEDULED'">
+      Start
+    </div>
+    <div class="btn"
+      ng-click="do('Stop')"
+      ng-if="app.artifact.name === GLOBALS.etlBatch && appStatus === 'SCHEDULED'">
+      Stop
+    </div>
+    <div class="btn"
+      ng-click="do('Run Once')"
+      ng-if="app.artifact.name === GLOBALS.etlBatch">
+      Run Once
+    </div>
+
+    <div ui-sref="adapters.create.studio({data: config, type: config.artifact.name})" class="btn">
+      Clone
+    </div>
+
+    <div class="btn"
+      ng-click="do('Delete')">
+      Delete
+    </div>
 
   </div>
 </div>
 
-<div class="cdap-subnav-end"></div>
-<ul class="nav nav-tabs slanted-tabs" role="tablist">
-  <li role="presentation" ui-sref-active="active">
-    <a ui-sref="adapters.detail.runs" role="tab">Runs</a>
-  </li>
-  <li role="presentation" ui-sref-active="active">
-    <a ui-sref="adapters.detail.history" role="tab">History</a>
-  </li>
-  <li role="presentation" ui-sref-active="active">
-    <a ui-sref="adapters.detail.datasets" role="tab">Datasets</a>
-  </li>
-  <li role="presentation" ui-sref-active="active" ng-if="isScheduled">
-    <a ui-sref="adapters.detail.schedule" role="tab">Schedules</a>
-  </li>
-</ul>
+<!-- DAG DIAGRAM -->
+<my-dag data-is-disabled="true" data-config="nodes"></my-dag>
 
-<br />
-<ui-view role="tabpanel"/>
+<!-- CONSOLE BOTTOM PANNEL -->
+<div class="console">
+  <div class="console-tabs clearfix">
+    <ul class="nav nav-tabs pull-left" role="tablist">
+      <li ng-repeat="tab in tabs"
+          ng-click="selectTab(tab)"
+          ng-class="{'active': tab.title == activeTab.title}"
+          role="presentation"
+          data-toggle="tab">
+          {{ tab.title }}
+      </li>
+    </ul>
+  </div>
+  <div class="console-type">
+    <div ng-include="activeTab.template" ng-if="tabs.length > 0"></div>
+  </div>
+</div>

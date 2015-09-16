@@ -1,18 +1,18 @@
 <!--
   Copyright © 2015 Cask Data, Inc.
- 
+
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
   the License at
- 
+
   http://www.apache.org/licenses/LICENSE-2.0
- 
+
   Unless required by applicable law or agreed to in writing, software
   distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
   WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
   License for the specific language governing permissions and limitations under
   the License.
---> 
+-->
 
 <my-breadcrumbs></my-breadcrumbs>
 
@@ -35,23 +35,14 @@
         <li role="presentation">
           <my-file-select dropdown="true"
                           data-button-label="Custom App"
+                          data-button-icon="__"
                           on-file-select="ListController.onFileSelected($files)">
           </my-file-select>
         </li>
         <li>
-          <a ui-sref="adapters.create({type: 'ETLBatch'})"  class="clearfix">
-            <span class="pull-left">ETL Batch App</span>
-            <i class="icon-ETLBatch pull-right"></i>
+          <a ui-sref="adapters.create"  class="clearfix">
+            <span class="pull-left">{{ListController.GLOBALS.addHydratorAppLabel}}</span>
           </a>
-        </li>
-        <li>
-          <a ui-sref="adapters.create({type: 'ETLRealtime'})" class="clearfix">
-            <span class="pull-left"> ETL Realtime App</span>
-            <i class="icon-ETLRealtime pull-right"></i>
-          </a>
-        </li>
-        <li>
-          <a ui-sref="adapters.drafts"> Drafts </a>
         </li>
       </ul>
     </div>
@@ -90,8 +81,8 @@
     <tbody>
       <tr ng-repeat="app in ListController.filtered = (ListController.apps | filter: ListController.searchText ) | myPaginate:ListController.currentPage | orderBy:sortable.predicate:sortable.reverse">
         <td >
-          <a ui-sref="apps.detail.overview.status({ appId: app.name })"
-              ng-if="app.type !== 'adapter'"
+          <a ui-sref="apps.detail.overview.programs({ appId: app.name })"
+              ng-if="ListController.myAdapterFactory.isCustomApp(app.artifact.name)"
               ng-click="MyOrderings.appClicked(app.name)">
             <strong tooltip="{{app.name}}"
                     tooltip-enable="app.name.length > 35"
@@ -99,9 +90,9 @@
               {{ ::app.name | myEllipsis:35 }}
             </strong>
           </a>
-          <a ui-sref="adapters.detail.runs({adapterId: app.name})"
-              ng-if="app.type === 'adapter'"
-              ng-click="MyOrderings.appClicked(app.id)">
+          <a ui-sref="apps.detail.overview.status({ appId: app.name })"
+              ng-if="ListController.myAdapterFactory.isETLApp(app.artifact.name)"
+              ng-click="MyOrderings.appClicked(app.name)">
             <strong tooltip="{{app.name}}"
                     tooltip-enable="app.name.length > 35"
                     tooltip-append-to-body="true">
@@ -109,13 +100,21 @@
             </strong>
           </a>
         </td>
-        <td ng-if="app.type !== 'adapter'">
-          <span class="icon-fist"></span>
-          <span>App</span>
-        </td>
-        <td ng-if="app.type === 'adapter'">
-          <span class="icon-{{app.template}}"></span>
-          <span>{{ ::app.template }}</span>
+        <td>
+          <span ng-if="ListController.myAdapterFactory.isCustomApp(app.artifact.name)">
+            <span class="icon-fist"></span>
+            <span>App</span>
+          </span>
+          <span ng-if="ListController.myAdapterFactory.isETLApp(app.artifact.name)">
+            <span ng-if="app.artifact.name === ListController.GLOBALS.etlRealtime">
+              <span class="icon-ETLRealtime"></span>
+              <span> ETL Realtime</span>
+            </span>
+            <span ng-if="app.artifact.name === ListController.GLOBALS.etlBatch">
+              <span class="icon-ETLBatch"></span>
+              <span>ETL Batch</span>
+            </span>
+          </span>
         </td>
         <td>{{ ::app.version }}</td>
         <td>

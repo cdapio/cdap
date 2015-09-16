@@ -255,11 +255,11 @@ public class CLIMainTest {
   public void testSchedule() throws Exception {
     String scheduleId = FakeApp.NAME + "." + FakeApp.SCHEDULE_NAME;
     String workflowId = FakeApp.NAME + "." + FakeWorkflow.NAME;
-    testCommandOutputContains(cli, "get schedule status " + scheduleId, "SCHEDULED");
-    testCommandOutputContains(cli, "suspend schedule " + scheduleId, "Successfully suspended");
     testCommandOutputContains(cli, "get schedule status " + scheduleId, "SUSPENDED");
     testCommandOutputContains(cli, "resume schedule " + scheduleId, "Successfully resumed");
     testCommandOutputContains(cli, "get schedule status " + scheduleId, "SCHEDULED");
+    testCommandOutputContains(cli, "suspend schedule " + scheduleId, "Successfully suspended");
+    testCommandOutputContains(cli, "get schedule status " + scheduleId, "SUSPENDED");
     testCommandOutputContains(cli, "get workflow schedules " + workflowId, FakeApp.SCHEDULE_NAME);
   }
 

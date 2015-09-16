@@ -26,6 +26,12 @@ If it doesn't exist, it will be created.
 
 **basePath:** Base path for the TimePartitionedFileSet. Defaults to the name of the dataset.
 
+**filePathFormat:** Format for the time partition, as used by SimpleDateFormat.
+Defaults to formatting partitions as 2015-01-01/20-42.142017372000.
+
+**timeZone:** The string ID for the TimeZone to format the date in. Defaults to using UTC.
+This setting is only used if filePathFormat is not null.
+
 .. rubric:: Example
 
 ::
@@ -34,6 +40,8 @@ If it doesn't exist, it will be created.
     "name": "TPFSAvro",
     "properties": {
       "name": "users",
+      "filePathFormat": "yyyy-MM-dd/HH-mm",
+      "timeZone": "America/Los_Angeles",
       "schema": "{
         \"type\":\"record\",
         \"name\":\"user\",
@@ -49,6 +57,6 @@ If it doesn't exist, it will be created.
 This example will write to a TimePartitionedFileSet named 'users'. It will write data in Avro format
 using the given schema. Every time the pipeline runs, a new partition in the TimePartitionedFileSet
 will be created based on the logical start time of the run. All data for the run will be written to
-that partition. For example, if the pipeline was scheduled to run at 10:00am on January 1, 2015,
-a new partition will be created with year 2015, month 1, day 1, hour 10, and minute 0.
-
+that partition. For example, if the pipeline was scheduled to run at 10:00am on January 1, 2015 in
+Los Angeles, a new partition will be created with year 2015, month 1, day 1, hour 10, and minute 0,
+and the output directory for that partition would end with 2015-01-01/10-00.

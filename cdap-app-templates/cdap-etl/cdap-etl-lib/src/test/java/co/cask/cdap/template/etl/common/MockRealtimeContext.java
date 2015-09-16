@@ -17,13 +17,11 @@
 package co.cask.cdap.template.etl.common;
 
 import co.cask.cdap.api.metrics.Metrics;
-import co.cask.cdap.api.templates.AdapterSpecification;
-import co.cask.cdap.api.templates.plugins.PluginProperties;
+import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.template.etl.api.realtime.RealtimeContext;
 import com.google.common.collect.Maps;
 
 import java.util.Map;
-import javax.annotation.Nullable;
 
 /**
  * Mock RealtimeContext for tests.
@@ -59,12 +57,6 @@ public class MockRealtimeContext implements RealtimeContext {
     return 1;
   }
 
-  @Nullable
-  @Override
-  public AdapterSpecification getAdapterSpecification() {
-    return null;
-  }
-
   @Override
   public PluginProperties getPluginProperties(String pluginId) {
     return null;
@@ -77,11 +69,6 @@ public class MockRealtimeContext implements RealtimeContext {
 
   @Override
   public <T> T newPluginInstance(String pluginId) throws InstantiationException {
-    return null;
-  }
-
-  @Override
-  public <T> T newInstance(String pluginId) throws InstantiationException {
     return null;
   }
 }

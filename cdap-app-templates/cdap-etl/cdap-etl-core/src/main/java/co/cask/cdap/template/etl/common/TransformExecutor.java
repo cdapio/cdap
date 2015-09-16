@@ -18,12 +18,15 @@ package co.cask.cdap.template.etl.common;
 
 import co.cask.cdap.template.etl.api.Destroyable;
 import co.cask.cdap.template.etl.api.Transformation;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Executes Transforms one iteration at a time, tracking how many records were input into and output from
@@ -34,54 +37,73 @@ import java.util.List;
  */
 public class TransformExecutor<IN, OUT> implements Destroyable {
 
+
   private static final Logger LOG = LoggerFactory.getLogger(TransformExecutor.class);
 
-  private final List<Transformation> transforms;
+  private final List<TransformDetail> transforms;
   private final List<DefaultEmitter> emitters;
 
-  public TransformExecutor(List<Transformation> transforms, List<StageMetrics> transformMetrics) {
-    int numTransforms = transforms.size();
-    Preconditions.checkArgument(numTransforms == transformMetrics.size());
-    this.transforms = Lists.newArrayListWithCapacity(numTransforms);
+
+  public TransformExecutor(List<TransformDetail> transformDetailList) {
+    int numTransforms = transformDetailList.size();
+    this.transforms = new ArrayList<>(numTransforms);
     this.emitters = Lists.newArrayListWithCapacity(numTransforms);
-    for (int i = 0; i < numTransforms; i++) {
-      StageMetrics stageMetrics = transformMetrics.get(i);
-      this.transforms.add(new TrackedTransform(transforms.get(i), stageMetrics));
-      this.emitters.add(new DefaultEmitter(stageMetrics));
+
+    for (TransformDetail transformDetail : transformDetailList) {
+      this.transforms.add(new TransformDetail(transformDetail,
+                                              new TrackedTransform(transformDetail.getTransformation(),
+                                                                   transformDetail.getMetrics())));
+      this.emitters.add(new DefaultEmitter(transformDetail.getMetrics()));
     }
   }
 
-  public Iterable<OUT> runOneIteration(IN input) throws Exception {
+  public TransformResponse<OUT> runOneIteration(IN input) throws Exception {
+
+    Map<String, Collection<OUT>> errorRecordsMap = new HashMap<>(transforms.size());
+
     if (transforms.isEmpty()) {
-      return Lists.newArrayList((OUT) input);
+      return new TransformResponse<>(Lists.newArrayList((OUT) input).iterator(), errorRecordsMap);
     }
 
-    Transformation transform = transforms.get(0);
+    TransformDetail transformDetail = transforms.get(0);
     DefaultEmitter currentEmitter = emitters.get(0);
     currentEmitter.reset();
+    Transformation transform = transformDetail.getTransformation();
     transform.transform(input, currentEmitter);
 
-    DefaultEmitter previousEmitter = currentEmitter;
+    if (!currentEmitter.getErrors().isEmpty()) {
+      errorRecordsMap.put(transformDetail.getTransformId(), currentEmitter.getErrors());
+    }
 
+    DefaultEmitter previousEmitter = currentEmitter;
     for (int i = 1; i < transforms.size(); i++) {
-      transform = transforms.get(i);
+      transformDetail = transforms.get(i);
+      transform = transformDetail.getTransformation();
       currentEmitter = emitters.get(i);
-      currentEmitter.reset();
       for (Object transformedVal : previousEmitter) {
         transform.transform(transformedVal, currentEmitter);
       }
-      previousEmitter.reset();
+      if (!currentEmitter.getErrors().isEmpty()) {
+        errorRecordsMap.put(transformDetail.getTransformId(), currentEmitter.getErrors());
+      }
       previousEmitter = currentEmitter;
     }
 
-    return previousEmitter;
+    return new TransformResponse<>(previousEmitter.iterator(), errorRecordsMap);
+  }
+
+  public void resetEmitters() {
+    for (DefaultEmitter<OUT> emitter : emitters) {
+      emitter.reset();
+    }
   }
 
   @Override
   public void destroy() {
-    for (Transformation transform : transforms) {
-      if (transform instanceof Destroyable) {
-        Destroyables.destroyQuietly((Destroyable) transform);
+    for (TransformDetail transformDetail : transforms) {
+      Transformation transformation = transformDetail.getTransformation();
+      if (transformation instanceof Destroyable) {
+        Destroyables.destroyQuietly((Destroyable) transformation);
       }
     }
   }

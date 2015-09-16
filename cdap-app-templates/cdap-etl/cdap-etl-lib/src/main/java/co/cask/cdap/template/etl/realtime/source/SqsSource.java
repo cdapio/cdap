@@ -21,7 +21,7 @@ import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.templates.plugins.PluginConfig;
+import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.template.etl.api.Emitter;
 import co.cask.cdap.template.etl.api.realtime.RealtimeContext;
 import co.cask.cdap.template.etl.api.realtime.RealtimeSource;
@@ -43,7 +43,7 @@ import javax.jms.TextMessage;
  * Realtime source that reads from Amazon SQS.
  * TODO: CDAP-2978: Extend JMS source so this class can be deleted.
  */
-@Plugin(type = "source")
+@Plugin(type = "realtimesource")
 @Name("AmazonSQS")
 @Description("Amazon Simple Queue Service Real-time Source: Emits a record with a field 'body' of type String.")
 public class SqsSource extends RealtimeSource<StructuredRecord> {

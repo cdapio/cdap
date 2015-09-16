@@ -1,0 +1,36 @@
+{
+  "id": "TPFSParquet",
+  "groups" : {
+    "position": [ "group1" ],
+    "group1": {
+       "display" : "Time Partitioned Fileset - Parquet",
+       "position" : [ "name", "basePath", "filePathFormat", "timeZone" ],
+       "fields" : {
+          "name" : {
+             "widget": "dataset-selector",
+             "label": "Dataset Name"
+          },
+
+          "basePath" : {
+             "widget": "textbox",
+             "label": "Dataset Base Path"
+          },
+
+          "filePathFormat": {
+            "widget": "textbox",
+            "label": "Partition Directory Format"
+          },
+
+          "timeZone": {
+            "widget": "textbox",
+            "label": "Time Zone"
+          }
+       }
+    }
+  },
+  "schema" : {
+     "widget": "schema",
+     "schema-types" : [ "boolean", "int", "long", "float", "double", "string", "map<string, string>" ],
+     "schema-default-type" : "string"
+  }
+}

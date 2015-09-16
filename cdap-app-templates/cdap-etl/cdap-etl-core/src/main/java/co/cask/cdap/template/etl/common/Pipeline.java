@@ -23,12 +23,12 @@ import java.util.List;
  */
 public class Pipeline {
   private final String source;
-  private final String sink;
-  private final List<String> transforms;
+  private final List<SinkInfo> sinks;
+  private final List<TransformInfo> transforms;
 
-  public Pipeline(String source, String sink, List<String> transforms) {
+  public Pipeline(String source, List<SinkInfo> sinks, List<TransformInfo> transforms) {
     this.source = source;
-    this.sink = sink;
+    this.sinks = sinks;
     this.transforms = transforms;
   }
 
@@ -36,11 +36,11 @@ public class Pipeline {
     return source;
   }
 
-  public String getSink() {
-    return sink;
+  public List<SinkInfo> getSinks() {
+    return sinks;
   }
 
-  public List<String> getTransforms() {
+  public List<TransformInfo> getTransforms() {
     return transforms;
   }
 }

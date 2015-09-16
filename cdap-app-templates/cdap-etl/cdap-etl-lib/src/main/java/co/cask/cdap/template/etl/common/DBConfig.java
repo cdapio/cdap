@@ -17,7 +17,7 @@
 package co.cask.cdap.template.etl.common;
 
 import co.cask.cdap.api.annotation.Description;
-import co.cask.cdap.api.templates.plugins.PluginConfig;
+import co.cask.cdap.api.plugin.PluginConfig;
 
 import javax.annotation.Nullable;
 

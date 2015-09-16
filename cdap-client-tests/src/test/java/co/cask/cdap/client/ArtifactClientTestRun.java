@@ -21,8 +21,8 @@ import co.cask.cdap.api.artifact.ArtifactClasses;
 import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.templates.plugins.PluginClass;
-import co.cask.cdap.api.templates.plugins.PluginPropertyField;
+import co.cask.cdap.api.plugin.PluginClass;
+import co.cask.cdap.api.plugin.PluginPropertyField;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.client.artifact.MyApp;
 import co.cask.cdap.client.artifact.plugin.Plugin1;
@@ -146,6 +146,18 @@ public class ArtifactClientTestRun extends ClientTestBase {
   }
 
   @Test
+  public void testAddSelfExtendingThrowsBadRequest() throws Exception {
+    try {
+      artifactClient.add(Id.Namespace.DEFAULT, "abc", DUMMY_SUPPLIER, "1.0.0", Sets.newHashSet(
+        new ArtifactRange(Id.Namespace.DEFAULT, "abc", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0"))
+      ));
+      Assert.fail();
+    } catch (BadRequestException e) {
+      // expected
+    }
+  }
+
+  @Test
   public void testArtifacts() throws Exception {
     // add 2 versions of an artifact with an application
     Id.Artifact myapp1Id = Id.Artifact.from(Id.Namespace.DEFAULT, "myapp", "1.0.0");
@@ -197,6 +209,13 @@ public class ArtifactClientTestRun extends ClientTestBase {
     // list all artifacts named 'myapp-plugins'
     Assert.assertEquals(Sets.newHashSet(pluginArtifactSummary),
                         Sets.newHashSet(artifactClient.listVersions(Id.Namespace.DEFAULT, pluginId.getName())));
+    // artifacts should be in user scope
+    try {
+      artifactClient.listVersions(Id.Namespace.DEFAULT, pluginId.getName(), ArtifactScope.SYSTEM);
+      Assert.fail();
+    } catch (ArtifactNotFoundException e) {
+      // expected
+    }
 
     // get info about specific artifacts
     Schema myAppConfigSchema = new ReflectionSchemaGenerator().generate(MyApp.Conf.class);

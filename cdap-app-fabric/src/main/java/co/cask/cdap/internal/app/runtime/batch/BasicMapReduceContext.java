@@ -17,7 +17,6 @@
 package co.cask.cdap.internal.app.runtime.batch;
 
 import co.cask.cdap.api.Resources;
-import co.cask.cdap.api.artifact.Plugin;
 import co.cask.cdap.api.data.batch.BatchReadable;
 import co.cask.cdap.api.data.batch.BatchWritable;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
@@ -30,12 +29,11 @@ import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
+import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.workflow.WorkflowToken;
-import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
@@ -43,18 +41,13 @@ import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetOutputFormat;
 import co.cask.cdap.logging.context.MapReduceLoggingContext;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.templates.AdapterDefinition;
-import co.cask.tephra.TransactionAware;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocationFactory;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -74,6 +67,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   private final Metrics userMetrics;
   private final Map<String, Plugin> plugins;
   private final Map<String, Dataset> outputDatasets;
+  private final Map<String, OutputFormatProvider> outputFormatProviders;
 
   private String inputDatasetName;
   private List<Split> inputDataSelection;
@@ -83,8 +77,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   private Resources reducerResources;
 
   public BasicMapReduceContext(Program program,
-                               MapReduceMetrics.TaskType type,
-                               RunId runId, String taskId,
+                               RunId runId,
                                Arguments runtimeArguments,
                                Set<String> datasets,
                                MapReduceSpecification spec,
@@ -95,13 +88,10 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
                                MetricsCollectionService metricsCollectionService,
                                DatasetFramework dsFramework,
                                LocationFactory locationFactory,
-                               @Nullable AdapterDefinition adapterSpec,
-                               @Nullable PluginInstantiator pluginInstantiator,
-                               @Nullable PluginInstantiator artifactPluginInstantiator) {
+                               @Nullable PluginInstantiator pluginInstantiator) {
     super(program, runId, runtimeArguments, datasets,
-          getMetricCollector(program, runId.getId(), taskId, metricsCollectionService, type, adapterSpec),
-          dsFramework, discoveryServiceClient, locationFactory, adapterSpec, pluginInstantiator,
-          artifactPluginInstantiator);
+          getMetricsCollector(program, runId.getId(), metricsCollectionService),
+          dsFramework, discoveryServiceClient, locationFactory, pluginInstantiator);
     this.logicalStartTime = logicalStartTime;
     this.programNameInWorkflow = programNameInWorkflow;
     this.workflowToken = workflowToken;
@@ -111,25 +101,29 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
     } else {
       this.userMetrics = null;
     }
-    this.loggingContext = createLoggingContext(program.getId(), runId, adapterSpec);
+    this.loggingContext = createLoggingContext(program.getId(), runId);
     this.spec = spec;
     this.mapperResources = spec.getMapperResources();
     this.reducerResources = spec.getReducerResources();
     // initialize input/output to what the spec says. These can be overwritten at runtime.
     this.inputDatasetName = spec.getInputDataSet();
+
+    // We need to keep track of the output format providers, so that the MR job can use them.
+    // We still need to keep track of outputDatasets, so MapReduceRuntimeService#onFinish can call their
+    // DatasetOutputCommitter#onSuccess.
     this.outputDatasets = new HashMap<>();
-    if (spec.getOutputDataSet() != null) {
-      this.outputDatasets.put(spec.getOutputDataSet(), null);
+    this.outputFormatProviders = new HashMap<>();
+    String outputDataSetName = spec.getOutputDataSet();
+    if (outputDataSetName != null) {
+      setOutput(outputDataSetName);
     }
 
     this.plugins = Maps.newHashMap(program.getApplicationSpecification().getPlugins());
   }
 
-  private LoggingContext createLoggingContext(Id.Program programId, RunId runId,
-                                              @Nullable AdapterDefinition adapterSpec) {
-    String adapterName = adapterSpec == null ? null : adapterSpec.getName();
+  private LoggingContext createLoggingContext(Id.Program programId, RunId runId) {
     return new MapReduceLoggingContext(programId.getNamespaceId(), programId.getApplicationId(),
-                                       programId.getId(), runId.getId(), adapterName);
+                                       programId.getId(), runId.getId());
   }
 
   @Override
@@ -207,7 +201,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
 
   @Override
   public void setOutput(String datasetName) {
-    this.outputDatasets.clear();
+    clearOutputs();
     addOutput(datasetName);
   }
 
@@ -215,7 +209,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   //      and not just the name
   @Override
   public void setOutput(String datasetName, Dataset dataset) {
-    this.outputDatasets.clear();
+    clearOutputs();
     addOutput(datasetName, dataset);
   }
 
@@ -233,11 +227,21 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
     addOutput(datasetName, getDataset(datasetName, arguments));
   }
 
+  @Override
+  public void addOutput(String outputName, OutputFormatProvider outputFormatProvider) {
+    this.outputFormatProviders.put(outputName, outputFormatProvider);
+  }
+
   private void addOutput(String datasetName, Dataset dataset) {
     if (!(dataset instanceof OutputFormatProvider)) {
       throw new IllegalArgumentException("Output dataset must be an OutputFormatProvider.");
     }
     this.outputDatasets.put(datasetName, dataset);
+  }
+
+  private void clearOutputs() {
+    this.outputDatasets.clear();
+    this.outputFormatProviders.clear();
   }
 
   /**
@@ -293,6 +297,10 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
       outputFormatProviders.put(datasetName, outputFormatProvider);
     }
 
+    for (Map.Entry<String, OutputFormatProvider> entry : this.outputFormatProviders.entrySet()) {
+      outputFormatProviders.put(entry.getKey(), entry.getValue());
+    }
+
     return outputFormatProviders;
   }
 
@@ -329,24 +337,14 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   }
 
   @Nullable
-  private static MetricsContext getMetricCollector(Program program, String runId, String taskId,
-                                                   @Nullable MetricsCollectionService service,
-                                                   @Nullable MapReduceMetrics.TaskType type,
-                                                   @Nullable AdapterDefinition adapterSpec) {
+  private static MetricsContext getMetricsCollector(Program program, String runId,
+                                                    @Nullable MetricsCollectionService service) {
     if (service == null) {
       return null;
     }
 
     Map<String, String> tags = Maps.newHashMap();
     tags.putAll(getMetricsContext(program, runId));
-    if (type != null) {
-      tags.put(Constants.Metrics.Tag.MR_TASK_TYPE, type.getId());
-      tags.put(Constants.Metrics.Tag.INSTANCE_ID, taskId);
-    }
-
-    if (adapterSpec != null) {
-      tags.put(Constants.Metrics.Tag.ADAPTER, adapterSpec.getName());
-    }
 
     return service.getContext(tags);
   }

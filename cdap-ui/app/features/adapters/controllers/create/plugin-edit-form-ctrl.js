@@ -15,8 +15,9 @@
  */
 
 angular.module(PKG.name + '.feature.adapters')
-  .controller('PluginEditController', function($scope, PluginConfigFactory, myHelpers, EventPipe, $timeout, MyAppDAGService, $sce, $rootScope) {
-    var pluginCopy;
+  .controller('PluginEditController', function($scope, PluginConfigFactory, myHelpers, EventPipe, $timeout, MyAppDAGService, $sce, $rootScope, GLOBALS) {
+    $scope.pluginCopy = {};
+    var saveWatch;
 
     var propertiesFromBackend = Object.keys($scope.plugin._backendProperties);
     // Make a local copy that is a mix of properties from backend + config from nodejs
@@ -34,9 +35,9 @@ angular.module(PKG.name + '.feature.adapters')
     this.configfetched = false;
     this.properties = [];
     this.noconfig = null;
-    if (MyAppDAGService.metadata.template.type === 'ETLBatch') {
+    if (MyAppDAGService.metadata.template.type === GLOBALS.etlBatch) {
       this.infoPluginType = 'batch';
-    } else if (MyAppDAGService.metadata.template.type === 'ETLRealtime') {
+    } else if (MyAppDAGService.metadata.template.type === GLOBALS.etlRealtime) {
       this.infoPluginType = 'real-time';
     }
 
@@ -122,20 +123,29 @@ angular.module(PKG.name + '.feature.adapters')
               $scope.plugin.outputSchema = JSON.stringify(obj);
               $scope.plugin.implicitSchema = true;
             }
+            $scope.pluginCopy = angular.copy($scope.plugin);
+            // Mark the configfetched to show that configurations have been received.
+            this.configfetched = true;
+            this.config = res;
+            this.noconfig = false;
 
-            // TODO: Hacky. Need to fix this for am-fade-top animation for modals.
-            $timeout(function() {
-              pluginCopy = angular.copy($scope.plugin);
-              // Mark the configfetched to show that configurations have been received.
-              this.configfetched = true;
-              this.config = res;
-              this.noconfig = false;
-            }.bind(this), 1000);
+            saveWatch = $scope.$watch('pluginCopy', function() {
+              var strProp1 = JSON.stringify($scope.pluginCopy.properties);
+              var strProp2 = JSON.stringify($scope.plugin.properties);
+              var copyOutputSchema = JSON.stringify($scope.pluginCopy.outputSchema);
+              var originalOutputSchema = JSON.stringify($scope.plugin.outputSchema);
+              if ( (strProp1 !== strProp2) || (copyOutputSchema !== originalOutputSchema) ) {
+                $scope.data['isModelTouched'] = true;
+              } else {
+                $scope.data['isModelTouched'] = false;
+              }
+            }, true);
+
           }.bind(this),
           function error() {
             // TODO: Hacky. Need to fix this for am-fade-top animation for modals.
             $timeout(function() {
-              pluginCopy = angular.copy($scope.plugin);
+              $scope.pluginCopy = angular.copy($scope.plugin);
               // Didn't receive a configuration from the backend. Fallback to all textboxes.
               this.noconfig = true;
               this.configfetched = true;
@@ -198,7 +208,8 @@ angular.module(PKG.name + '.feature.adapters')
     }
 
     this.reset = function () {
-      $scope.plugin.properties = angular.copy(pluginCopy.properties);
+      $scope.pluginCopy = angular.copy($scope.plugin);
+      $scope.data['isModelTouched'] = false;
       EventPipe.emit('plugin.reset');
     };
 
@@ -208,7 +219,9 @@ angular.module(PKG.name + '.feature.adapters')
 
     this.save = function () {
       if (validateSchema()) {
-        $scope.$close('save');
+        $scope.plugin.properties = angular.copy($scope.pluginCopy.properties);
+        $scope.plugin.outputSchema = angular.copy($scope.pluginCopy.outputSchema);
+        $scope.data['isModelTouched'] = false;
       }
     };
 
@@ -216,7 +229,7 @@ angular.module(PKG.name + '.feature.adapters')
       $scope.errors = [];
       var schema;
       try {
-        schema = JSON.parse($scope.plugin.outputSchema);
+        schema = JSON.parse($scope.pluginCopy.outputSchema);
         schema = schema.fields;
       } catch (e) {
         schema = null;

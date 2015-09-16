@@ -20,27 +20,17 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.internal.test.AppJarHelper;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.twill.filesystem.LocalLocationFactory;
-import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
 import org.junit.rules.ExternalResource;
 import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.URL;
 import java.net.UnknownHostException;
-import java.nio.file.Files;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
@@ -53,12 +43,10 @@ public class StandaloneTester extends ExternalResource {
   private static final Logger LOG = LoggerFactory.getLogger(StandaloneTester.class);
 
   private final TemporaryFolder tmpFolder = new TemporaryFolder();
-  private final List<Class<?>> adapterClasses;
   private CConfiguration cConf;
   private StandaloneMain standaloneMain;
 
-  public StandaloneTester(Class<?>...adapterClasses) {
-    this.adapterClasses = Arrays.asList(adapterClasses);
+  public StandaloneTester() {
   }
 
   @Override
@@ -76,14 +64,6 @@ public class StandaloneTester extends ExternalResource {
     cConf.setBoolean(StandaloneMain.DISABLE_UI, true);
 
     this.cConf = cConf;
-
-    if (!adapterClasses.isEmpty()) {
-      LocationFactory lf = new LocalLocationFactory(tmpFolder.newFolder());
-      File adapterDir = new File(cConf.get(Constants.AppFabric.APP_TEMPLATE_DIR));
-      for (Class<?> cls : adapterClasses) {
-        setupAdapter(adapterDir, lf, cls);
-      }
-    }
 
     // Start standalone
     standaloneMain = StandaloneMain.create(cConf, new Configuration());
@@ -146,13 +126,5 @@ public class StandaloneTester extends ExternalResource {
         }
       }
     }, 30, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
-  }
-
-  private void setupAdapter(File adapterDir, LocationFactory locationFactory, Class<?> clz) throws IOException {
-    Location adapterJar = AppJarHelper.createDeploymentJar(locationFactory, clz);
-    File destination =  new File(String.format("%s/%s", adapterDir.getAbsolutePath(), adapterJar.getName()));
-    try (InputStream input = adapterJar.getInputStream()) {
-      Files.copy(input, destination.toPath());
-    }
   }
 }

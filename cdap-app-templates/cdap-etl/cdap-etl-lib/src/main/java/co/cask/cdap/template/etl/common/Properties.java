@@ -88,6 +88,8 @@ public final class Properties {
     public static final String BASE_PATH = "basePath";
     public static final String DURATION = "duration";
     public static final String DELAY = "delay";
+    public static final String FILE_PATH_FORMAT = "filePathFormat";
+    public static final String OUTPUT_TIME_ZONE = "timeZone";
   }
 
   /**
@@ -148,6 +150,16 @@ public final class Properties {
     public static final String DROP = "drop";
     public static final String RENAME = "rename";
     public static final String CONVERT = "convert";
+  }
+
+  /**
+   * Properties for SnapshotFileSets
+   */
+  public static class SnapshotFileSet {
+    public static final String NAME = "name";
+    public static final String BASE_PATH = "basePath";
+    public static final String SCHEMA = "schema";
+    public static final String PATH_EXTENSION = "pathExtension";
   }
 
   /**

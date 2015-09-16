@@ -17,10 +17,12 @@
 package co.cask.cdap.template.etl.batch.sink;
 
 import co.cask.cdap.api.data.format.StructuredRecord;
-import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
+import co.cask.cdap.template.etl.api.PipelineConfigurer;
 import co.cask.cdap.template.etl.api.batch.BatchSink;
 import co.cask.cdap.template.etl.api.batch.BatchSinkContext;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -37,6 +39,15 @@ public abstract class TimePartitionedFileSetSink<KEY_OUT, VAL_OUT>
     "are written to. If it doesn't exist, it will be created.";
   protected static final String BASE_PATH_DESC = "The base path for the time partitioned fileset. Defaults to the " +
     "name of the dataset.";
+  protected static final String PATH_FORMAT_DESC = "The format for the path; for example: " +
+    "'yyyy-MM-dd/HH-mm' will create a file path ending in the format of 2015-01-01/20-42. " +
+    "The string provided will be provided to SimpleDataFormat. " +
+    "If left blank, then the partitions will be of the form 2015-01-01/20-42.142017372000. " +
+    "Note that each partition must have a unique file path or a runtime exception will be thrown.";
+  protected static final String TIME_ZONE_DESC = "The time zone to format the partition. " +
+    "This option is only used if pathFormat is set. If blank or an invalid TimeZone ID, defaults to UTC. " +
+    "Note that the time zone provided must be recognized by TimeZone.getTimeZone(String); " +
+    "for example: \"America/Los_Angeles\"";
 
   protected final TPFSSinkConfig tpfsSinkConfig;
 
@@ -45,10 +56,28 @@ public abstract class TimePartitionedFileSetSink<KEY_OUT, VAL_OUT>
   }
 
   @Override
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(tpfsSinkConfig.filePathFormat)
+                                  || Strings.isNullOrEmpty(tpfsSinkConfig.timeZone),
+                                "Set the filePathFormat to set the timezone");
+  }
+
+  @Override
   public void prepareRun(BatchSinkContext context) {
-    Map<String, String> sinkArgs = new HashMap<>();
+    Map<String, String> sinkArgs = getAdditionalTPFSArguments();
     TimePartitionedFileSetArguments.setOutputPartitionTime(sinkArgs, context.getLogicalStartTime());
-    TimePartitionedFileSet sink = context.getDataset(tpfsSinkConfig.name, sinkArgs);
-    context.setOutput(tpfsSinkConfig.name, sink);
+    if (!Strings.isNullOrEmpty(tpfsSinkConfig.filePathFormat)) {
+      TimePartitionedFileSetArguments.setOutputPathFormat(sinkArgs, tpfsSinkConfig.filePathFormat,
+                                                          tpfsSinkConfig.timeZone);
+    }
+    context.addOutput(tpfsSinkConfig.name, sinkArgs);
+  }
+
+  /**
+   * @return any additional properties that need to be set for the sink. For example, avro sink requires
+   *         setting some schema output key.
+   */
+  protected Map<String, String> getAdditionalTPFSArguments() {
+    return new HashMap<>();
   }
 }

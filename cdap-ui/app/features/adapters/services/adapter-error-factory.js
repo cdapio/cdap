@@ -15,11 +15,11 @@
  */
 
 angular.module(PKG.name + '.feature.adapters')
-  .factory('AdapterErrorFactory', function () {
+  .factory('AdapterErrorFactory', function (GLOBALS) {
 
     function isModelValid (nodes, connections, metadata, config) {
       var validationRules = [
-        hasExactlyOneSourceAndSink,
+        hasExactlyOneSource,
         hasNameAndTemplateType,
         checkForRequiredField,
         checkForUnconnectedNodes
@@ -45,17 +45,13 @@ angular.module(PKG.name + '.feature.adapters')
       }
     }
 
-    function hasExactlyOneSourceAndSink(nodes, connections, metadata, config, errors) {
-      var source = [], sink = [];
+    function hasExactlyOneSource(nodes, connections, metadata, config, errors) {
+      var source = [];
+      var artifactType = GLOBALS.pluginTypes[metadata.template.type];
 
       angular.forEach(nodes, function (value, key) {
-        switch (value.type) {
-          case 'sink':
-            sink.push(key);
-            break;
-          case 'source':
-            source.push(key);
-            break;
+        if (value.type === artifactType.source) {
+          source.push(key);
         }
       });
 
@@ -68,19 +64,6 @@ angular.module(PKG.name + '.feature.adapters')
           });
 
           addCanvasError('Application should only have 1 source', errors);
-
-        }
-      }
-
-      if (sink.length !== 1) {
-        if (sink.length < 1) {
-          errors.sink = 'Application is missing a sink';
-        } else if (sink.length > 1) {
-          angular.forEach(sink, function (node) {
-            errors[node] = 'Application should only have 1 sink';
-          });
-
-          addCanvasError('Application should only have 1 sink', errors);
 
         }
       }
@@ -110,9 +93,13 @@ angular.module(PKG.name + '.feature.adapters')
       if(config.source.name && !isValidPlugin(config.source)) {
         errors[config.source.id] = 'Source is missing required fields';
       }
-      if (config.sink.name && !isValidPlugin(config.sink)) {
-        errors[config.sink.id] = 'Sink is missing required fields';
-      }
+
+      config.sinks.forEach(function(sink) {
+        if (sink.name && !isValidPlugin(sink)) {
+          errors[sink.id] = 'Sink is missing required fields';
+        }
+      });
+
       config.transforms.forEach(function(transform) {
         if (transform.name && !isValidPlugin(transform)) {
           errors[transform.id] = 'Transform is missing required fields';
@@ -145,21 +132,21 @@ angular.module(PKG.name + '.feature.adapters')
       2. If it does start with source && end with sink, check that all connections were traversed
     */
     function checkForUnconnectedNodes(nodes, connections, metadata, config, errors) {
-
+      var artifactType = GLOBALS.pluginTypes[metadata.template.type];
       var nodesCopy = angular.copy(nodes);
 
-      // at this point in the checking, I can assume that there is only 1 source and 1 sink
+      // at this point in the checking, I can assume that there is only 1 source
       var source,
-          sink,
+          sinks = [],
           transforms = [];
 
       angular.forEach(nodes, function (value, key) {
         switch (value.type) {
-          case 'source':
+          case artifactType.source:
             source = key;
             break;
-          case 'sink':
-            sink = key;
+          case artifactType.sink:
+            sinks.push(key);
             break;
           case 'transform':
             transforms.push(key);
@@ -167,9 +154,11 @@ angular.module(PKG.name + '.feature.adapters')
         }
       });
 
-      if (!source || !sink) {
+      if (!source || !sinks.length) {
         return;
       }
+
+      var sinksConnections = [];
 
       var connectionHash = {};
       var branch = false;
@@ -178,15 +167,34 @@ angular.module(PKG.name + '.feature.adapters')
         nodesCopy[conn.source].visited = true;
         nodesCopy[conn.target].visited = true;
 
-        if (!connectionHash[conn.source]) {
-          connectionHash[conn.source] = {
-            target: conn.target,
-            visited: false
-          };
+        if (!connectionHash[conn.source] || sinks.indexOf(conn.target) !== -1) {
+          if (sinks.indexOf(conn.target) !== -1) {
+            sinksConnections.push(conn.source);
+          } else {
+            connectionHash[conn.source] = {
+              target: conn.target,
+              visited: false
+            };
+          }
         } else {
           branch = true;
         }
       });
+
+      var sinkSourceNode;
+      var sinkHasSameSource = true;
+      angular.forEach(sinksConnections, function (node) {
+        if (!sinkSourceNode) {
+          sinkSourceNode = node;
+        } else if (sinkSourceNode !== node) {
+          sinkHasSameSource = false;
+        }
+      });
+
+      if (!sinkHasSameSource) {
+        addCanvasError('Multiple sinks have to branch from the same node', errors);
+        return;
+      }
 
       if (branch) {
         addCanvasError('Branching in this application is not supported', errors);
@@ -208,7 +216,7 @@ angular.module(PKG.name + '.feature.adapters')
       }
 
       var currNode = source;
-      while (currNode !== sink) {
+      while (currNode !== sinkSourceNode) {
         if (connectionHash[currNode]) {
           if (connectionHash[currNode].visited) {
             addCanvasError('There is circular connection in this application', errors);

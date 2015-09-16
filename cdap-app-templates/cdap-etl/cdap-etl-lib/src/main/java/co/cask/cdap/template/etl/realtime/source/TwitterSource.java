@@ -21,7 +21,7 @@ import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.templates.plugins.PluginConfig;
+import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.template.etl.api.Emitter;
 import co.cask.cdap.template.etl.api.realtime.RealtimeContext;
 import co.cask.cdap.template.etl.api.realtime.RealtimeSource;
@@ -46,7 +46,7 @@ import javax.annotation.Nullable;
  * Users should pass in the following runtime arguments with appropriate OAuth credentials
  * ConsumerKey, ConsumerSecret, AccessToken, AccessTokenSecret.
  */
-@Plugin(type = "source")
+@Plugin(type = "realtimesource")
 @Name("Twitter")
 @Description("Samples tweets in real-time. Output records contain the fields " +
   "id (long), message (string), lang (nullable string), time (nullable long), favCount (int), " +

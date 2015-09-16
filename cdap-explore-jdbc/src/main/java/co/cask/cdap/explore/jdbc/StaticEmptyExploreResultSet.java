@@ -53,7 +53,7 @@ public class StaticEmptyExploreResultSet extends BaseExploreResultSet {
     if (isClosed()) {
       throw new SQLException("Resultset is closed");
     }
-    ImmutableList.Builder builder = ImmutableList.builder();
+    ImmutableList.Builder<ColumnDesc> builder = ImmutableList.builder();
     for (int i = 0; i < schema.size(); i++) {
       ImmutablePair<String, String> pair = schema.get(i);
       builder.add(new ColumnDesc(pair.getFirst(), pair.getSecond(), i + 1, ""));

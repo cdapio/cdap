@@ -1,52 +1,48 @@
 <!--
   Copyright © 2015 Cask Data, Inc.
- 
+
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
   the License at
- 
+
   http://www.apache.org/licenses/LICENSE-2.0
- 
+
   Unless required by applicable law or agreed to in writing, software
   distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
   WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
   License for the specific language governing permissions and limitations under
   the License.
---> 
+-->
 
 <div class="my-js-dag" ng-class="{'disabled': MyDAGController.isDisabled }">
   <div id="dag-container">
-    <div ng-repeat="plugin in MyDAGController.plugins"
-          class="box {{plugin.type}}"
-          ng-style="plugin.style"
-          data-type="{{plugin.type}}"
-          id="{{plugin.id}}"
-          ng-dblclick="MyDAGController.onPluginClick(plugin)">
-      <div class="icon fa {{plugin.icon}}"></div>
-      <div class="plugin-name">{{plugin.pluginTemplate || plugin.name}}</div>
-      <div class="fa fa-close" ng-if="!MyDAGController.isDisabled" ng-click="MyDAGController.removePlugin($index, plugin.id)"></div>
 
-      <div class="error-node-notification"
-            ng-if="plugin.error"
-            tooltip="{{plugin.error}}"
-            tooltip-append-to-body="true"
-            tooltip-class="tooltip-error"
-            >
-        <span class="badge badge-danger">
-          <i class="fa fa-exclamation"></i>
-        </span>
+    <!--
+      The condition on ng-click is to prevent user from being able to click
+      if the DAG is disabled. It will prevent the highlighting of nodes on select
+    -->
+    <div ng-repeat="plugin in MyDAGController.plugins" class="box {{plugin.type}}" ng-style="plugin.style"
+           data-type="{{plugin.type}}"
+           id="{{plugin.id}}"
+           ng-click="MyDAGController.isDisabled || MyDAGController.onPluginClick(plugin)"
+           ng-class="{'selected': plugin.selected}">
+      <div class="node">
+        <div class="error-node-notification"
+             ng-if="plugin.error"
+             tooltip="{{plugin.error}}"
+             tooltip-append-to-body="true"
+             tooltip-class="tooltip-error">
+          <span class="badge badge-danger">
+            <i class="fa fa-exclamation"></i>
+          </span>
+        </div>
+        <div class="fa fa-close"
+             ng-if="!MyDAGController.isDisabled"
+             ng-click="MyDAGController.removePlugin($index, plugin.id)"></div>
+        <div class="icon fa {{plugin.icon}}"></div>
       </div>
+      <div class="plugin-name" ng-bind="plugin.pluginTemplate || plugin.name"></div>
     </div>
-  </div>
 
-  <div class="error-container well" ng-if="MyDAGController.canvasError.length > 0">
-    <div class="text-right">
-      <span class="fa fa-times error-close-icon" ng-click="MyDAGController.closeCanvasError()"></span>
-    </div>
-    <ul>
-      <li ng-repeat="error in MyDAGController.canvasError">
-        <span>{{ error }}</span>
-      </li>
-    </ul>
   </div>
 </div>

@@ -27,7 +27,7 @@ import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.etl.common.RecordPutTransformer;
 import co.cask.cdap.template.etl.api.Emitter;
 import co.cask.cdap.template.etl.api.PipelineConfigurer;
-import co.cask.cdap.template.etl.api.batch.BatchSinkContext;
+import co.cask.cdap.template.etl.api.batch.BatchRuntimeContext;
 import co.cask.cdap.template.etl.common.Properties;
 import co.cask.cdap.template.etl.common.TableSinkConfig;
 import com.google.common.base.Preconditions;
@@ -39,7 +39,7 @@ import java.util.Map;
 /**
  * CDAP Table Dataset Batch Sink.
  */
-@Plugin(type = "sink")
+@Plugin(type = "batchsink")
 @Name("Table")
 @Description("Writes records to a Table with one record field mapping to the Table rowkey," +
   " and all other record fields mapping to Table columns.")
@@ -60,12 +60,12 @@ public class TableSink extends BatchWritableSink<StructuredRecord, byte[], Put> 
   }
 
   @Override
-  public void initialize(BatchSinkContext context) throws Exception {
+  public void initialize(BatchRuntimeContext context) throws Exception {
     super.initialize(context);
     Schema outputSchema = null;
     // If a schema string is present in the properties, use that to construct the outputSchema and pass it to the
     // recordPutTransformer
-    String schemaString = context.getPluginProperties().getProperties().get(Properties.Table.PROPERTY_SCHEMA);
+    String schemaString = tableSinkConfig.getSchemaStr();
     if (schemaString != null) {
       outputSchema = Schema.parseJson(schemaString);
     }

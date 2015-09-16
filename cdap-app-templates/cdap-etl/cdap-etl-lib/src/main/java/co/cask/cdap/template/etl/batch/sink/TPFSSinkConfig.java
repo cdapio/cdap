@@ -17,7 +17,7 @@
 package co.cask.cdap.template.etl.batch.sink;
 
 import co.cask.cdap.api.annotation.Description;
-import co.cask.cdap.api.templates.plugins.PluginConfig;
+import co.cask.cdap.api.plugin.PluginConfig;
 
 import javax.annotation.Nullable;
 
@@ -33,8 +33,19 @@ public abstract class TPFSSinkConfig extends PluginConfig {
   @Nullable
   protected String basePath;
 
-  public TPFSSinkConfig(String name, @Nullable String basePath) {
+  @Description(TimePartitionedFileSetSink.PATH_FORMAT_DESC)
+  @Nullable
+  protected String filePathFormat;
+
+  @Description(TimePartitionedFileSetSink.TIME_ZONE_DESC)
+  @Nullable
+  protected String timeZone;
+
+  public TPFSSinkConfig(String name, @Nullable String basePath,
+                        @Nullable String filePathFormat, @Nullable String timeZone) {
     this.name = name;
     this.basePath = basePath;
+    this.filePathFormat = filePathFormat;
+    this.timeZone = timeZone;
   }
 }

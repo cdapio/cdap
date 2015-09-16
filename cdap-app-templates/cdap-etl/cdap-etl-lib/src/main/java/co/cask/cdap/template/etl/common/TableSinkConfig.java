@@ -18,7 +18,7 @@ package co.cask.cdap.template.etl.common;
 
 import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.annotation.Name;
-import co.cask.cdap.api.templates.plugins.PluginConfig;
+import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.template.etl.batch.sink.TableSink;
 import co.cask.cdap.template.etl.realtime.sink.RealtimeTableSink;
 
@@ -27,18 +27,45 @@ import javax.annotation.Nullable;
 /**
  * {@link PluginConfig} for {@link TableSink} and {@link RealtimeTableSink}
  */
-public class TableSinkConfig extends TableConfig {
+public class TableSinkConfig extends PluginConfig {
+  @Name(Properties.Table.NAME)
+  @Description("Name of the table. If the table does not already exist, one will be created.")
+  private String name;
+
+  @Name(Properties.Table.PROPERTY_SCHEMA)
+  @Description("Optional schema of the table as a JSON Object. If the table does not already exist, one will be " +
+    "created with this schema, which will allow the table to be explored through Hive.")
+  @Nullable
+  private String schemaStr;
 
   @Name(Properties.Table.CASE_SENSITIVE_ROW_FIELD)
   @Description("Whether the schema.row.field is case sensitive, defaults to true.")
   @Nullable
   private Boolean rowFieldCaseSensitive;
 
+  @Name(Properties.Table.PROPERTY_SCHEMA_ROW_FIELD)
+  @Description("The name of the record field that should be used as the row key when writing to the table.")
+  private String rowField;
+
   public TableSinkConfig() {
     this.rowFieldCaseSensitive = true;
   }
 
+  @Nullable
   public Boolean isRowFieldCaseInsensitive() {
     return rowFieldCaseSensitive;
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  @Nullable
+  public String getSchemaStr() {
+    return schemaStr;
+  }
+
+  public String getRowField() {
+    return rowField;
   }
 }

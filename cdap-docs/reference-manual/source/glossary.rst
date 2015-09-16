@@ -121,7 +121,7 @@ Glossary
       data serialization system that provides rich data structures and a compact, fast, binary data format.
 
    Namespace
-      A namespace is a physical grouping of application, data and its metadata in CDAP.
+      A namespace is a logical grouping of application, data and its metadata in CDAP.
       Conceptually, namespaces can be thought of as a partitioning of a CDAP instance. Any
       application or data (referred to here as an “entity”) can exist independently in
       multiple namespaces at the same time. The data and metadata of an entity is stored
@@ -154,7 +154,15 @@ Glossary
       enable exploration, you must set several properties when creating the stream or
       dataset, and the files in a dataset must meet certain requirements.
 
-   .. ETL and Application Templates
+   Producer
+      A producer is an entity that emits events, such as a :term:`stream` or a
+      :term:`flowlet`. Flowlets can at the same time be both :term:`consumers <consumer>`
+      and producers.
+
+   Consumer
+      A consumer is an entity that is a recipient of events, typically a :term:`flowlet`.
+      A consumer flowlet is the recipient of a queue. The difference between the total of
+      a :term:`producer's <producer>` events and the consumed events is the pending events.
 
    Structured Record
       The data format used to exchange events between most of the pre-built CDAP ETL :term:`plugins <plugin>`.

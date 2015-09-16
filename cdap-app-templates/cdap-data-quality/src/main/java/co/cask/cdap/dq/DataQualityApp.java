@@ -27,9 +27,9 @@ import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceConfigurer;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
+import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.api.stream.GenericStreamEventData;
-import co.cask.cdap.api.templates.plugins.PluginProperties;
 import co.cask.cdap.dq.functions.BasicAggregationFunction;
 import co.cask.cdap.dq.functions.CombinableAggregationFunction;
 import co.cask.cdap.dq.rowkey.AggregationsRowKey;
@@ -155,16 +155,16 @@ public class DataQualityApp extends AbstractApplication<DataQualityApp.DataQuali
     public void configure() {
       super.configure();
       final MapReduceConfigurer mrConfigurer = getConfigurer();
-      BatchSource batchSource = usePlugin("source", source.getName(), PLUGIN_ID,
+      BatchSource batchSource = usePlugin("batchsource", source.getName(), PLUGIN_ID,
                                           PluginProperties.builder().addAll(source.getProperties()).build());
       Preconditions.checkNotNull(batchSource, "Could not find plugin %s of type 'source'", source.getName());
       // We use pluginId as the prefixId
       batchSource.configurePipeline(new MapReducePipelineConfigurer(mrConfigurer, PLUGIN_ID));
       setName("FieldAggregator");
-      setOutputDataset(datasetName);
       setProperties(ImmutableMap.<String, String>builder()
                       .put("fieldAggregations", GSON.toJson(fieldAggregations))
                       .put("sourceId", source.getId())
+                      .put("datasetName", datasetName)
                       .build());
     }
 
@@ -173,10 +173,11 @@ public class DataQualityApp extends AbstractApplication<DataQualityApp.DataQuali
       Job job = context.getHadoopJob();
       job.setMapperClass(AggregationMapper.class);
       job.setReducerClass(AggregationReducer.class);
-      BatchSource batchSource = context.newInstance(PLUGIN_ID);
+      BatchSource batchSource = context.newPluginInstance(PLUGIN_ID);
       // TODO: Figure out metrics to be passed in
       BatchSourceContext sourceContext = new MapReduceSourceContext(context, null, PLUGIN_ID);
       batchSource.prepareRun(sourceContext);
+      context.addOutput(context.getSpecification().getProperty("datasetName"));
     }
   }
 

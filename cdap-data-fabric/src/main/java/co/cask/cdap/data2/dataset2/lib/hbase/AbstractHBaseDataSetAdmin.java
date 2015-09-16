@@ -46,6 +46,11 @@ import java.util.Set;
  */
 public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
 
+  /**
+   * This will only be set by the upgrade tool to force upgrade of all HBase coprocessors after an HBase upgrade.
+   */
+  public static final String SYSTEM_PROPERTY_FORCE_HBASE_UPGRADE = "cdap.force.hbase.upgrade";
+
   private static final Logger LOG = LoggerFactory.getLogger(AbstractHBaseDataSetAdmin.class);
 
   // Property key in the coprocessor for storing version of the coprocessor.
@@ -73,7 +78,7 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
 
   @Override
   public void upgrade() throws IOException {
-    upgradeTable(tableId);
+    upgradeTable(Boolean.valueOf(System.getProperty(SYSTEM_PROPERTY_FORCE_HBASE_UPGRADE)));
   }
 
   @Override
@@ -99,24 +104,27 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
   }
 
   /**
-   * Performs upgrade on a given HBase table.
+   * Performs upgrade on a given HBase table. It will be upgraded if either its spec has
+   * changed since the HBase table was created or upgraded, or if the CDAP version recorded
+   * in the HTable descriptor
    *
-   * @param tableId {@link TableId} for the HBase table that upgrade will be performed on.
+   * @param force forces upgrade regardless of whether the table needs upgrade.
    * @throws IOException If upgrade failed.
    */
-  protected void upgradeTable(TableId tableId) throws IOException {
+  public void upgradeTable(boolean force) throws IOException {
+
     HTableDescriptor tableDescriptor = tableUtil.getHTableDescriptor(getAdmin(), tableId);
 
     // Upgrade any table properties if necessary
-    boolean needUpgrade = upgradeTable(tableDescriptor);
+    boolean needUpgrade = upgradeTable(tableDescriptor) || force;
 
     // Get the cdap version from the table
     ProjectInfo.Version version = getVersion(tableDescriptor);
 
     if (!needUpgrade && version.compareTo(ProjectInfo.getVersion()) >= 0) {
-      // If the table has greater than or same version, no need to upgrade.
-      LOG.info("Table '{}' was upgraded with same or newer version '{}'. Current version is '{}'",
-               tableId, version, ProjectInfo.getVersion());
+      // If neither the table spec nor the cdap version have changed, no need to upgrade
+      LOG.info("Table '{}' has not changed and its version '{}' is same or greater " +
+                 "than current CDAP version '{}'", tableId, version, ProjectInfo.getVersion());
       return;
     }
 
@@ -129,7 +137,6 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
 
     // Check if coprocessor upgrade is needed
     Map<String, HBaseTableUtil.CoprocessorInfo> coprocessorInfo = HBaseTableUtil.getCoprocessorInfo(tableDescriptor);
-
     // For all required coprocessors, check if they've need to be upgraded.
     for (Class<? extends Coprocessor> coprocessor : coprocessorJar.getCoprocessors()) {
       HBaseTableUtil.CoprocessorInfo info = coprocessorInfo.get(coprocessor.getName());
@@ -160,7 +167,7 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
       tableUtil.disableTable(getAdmin(), tableId);
       enableTable = true;
     } catch (TableNotEnabledException e) {
-      LOG.debug("Table '{}' not enabled when try to disable it.", tableId);
+      LOG.debug("Table '{}' was not enabled before upgrade and will not be enabled after upgrade.", tableId);
     }
 
     tableUtil.modifyTable(getAdmin(), newDescriptor.build());

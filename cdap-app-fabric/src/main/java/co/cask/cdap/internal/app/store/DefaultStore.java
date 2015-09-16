@@ -18,7 +18,6 @@ package co.cask.cdap.internal.app.store;
 
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetDefinition;
@@ -40,6 +39,7 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.archive.ArchiveBundler;
 import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.ProgramNotFoundException;
+import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
@@ -61,17 +61,17 @@ import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
-import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
-import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
+import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -79,6 +79,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -94,15 +95,16 @@ import javax.annotation.Nullable;
  */
 public class DefaultStore implements Store {
 
-  public static final String APP_META_TABLE = "app.meta";
   // mds is specific for metadata, we do not want to add workflow stats related information to the mds,
   // as it is not specifically metadata
   public static final String WORKFLOW_STATS_TABLE = "workflow.stats";
   private static final Logger LOG = LoggerFactory.getLogger(DefaultStore.class);
   private static final Id.DatasetInstance APP_META_INSTANCE_ID =
-    Id.DatasetInstance.from(Id.Namespace.SYSTEM, APP_META_TABLE);
+    Id.DatasetInstance.from(Id.Namespace.SYSTEM, Constants.AppMetaStore.TABLE);
   private static final Id.DatasetInstance WORKFLOW_STATS_INSTANCE_ID =
     Id.DatasetInstance.from(Id.Namespace.SYSTEM, WORKFLOW_STATS_TABLE);
+  private static final Gson GSON = new Gson();
+  private static final Type RUNTIME_ARGS_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
   private final LocationFactory locationFactory;
   private final NamespacedLocationFactory namespacedLocationFactory;
@@ -156,11 +158,10 @@ public class DefaultStore implements Store {
    *
    * @param framework framework to add types and datasets to
    */
-  public static void setupDatasets(DatasetFramework framework) throws IOException, DatasetManagementException {
-    framework.addInstance(Table.class.getName(), Id.DatasetInstance.from(Id.Namespace.SYSTEM, APP_META_TABLE),
-                          DatasetProperties.EMPTY);
-    framework.addInstance(Table.class.getName(), Id.DatasetInstance.from(Id.Namespace.SYSTEM, WORKFLOW_STATS_TABLE),
-                          DatasetProperties.EMPTY);
+  public static void setupDatasets(DatasetFramework framework)
+    throws IOException, DatasetManagementException, ServiceUnavailableException {
+    framework.addInstance(Table.class.getName(), APP_META_INSTANCE_ID, DatasetProperties.EMPTY);
+    framework.addInstance(Table.class.getName(), WORKFLOW_STATS_INSTANCE_ID, DatasetProperties.EMPTY);
   }
 
   @Nullable
@@ -208,7 +209,12 @@ public class DefaultStore implements Store {
           long nowSecs = TimeUnit.MILLISECONDS.toSeconds(now);
           switch (updateStatus) {
             case RUNNING:
-              mds.apps.recordProgramStart(id, pid, nowSecs, target.getAdapterName(), target.getTwillRunId());
+              Map<String, String> args = GSON.fromJson(target.getProperties().get("runtimeArgs"),
+                                                       RUNTIME_ARGS_TYPE);
+              if (args == null) {
+                args = ImmutableMap.of();
+              }
+              mds.apps.recordProgramStart(id, pid, nowSecs, target.getTwillRunId(), args);
               break;
             case SUSPENDED:
               mds.apps.recordProgramSuspend(id, pid);
@@ -228,12 +234,12 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void setStart(final Id.Program id, final String pid, final long startTime, final String adapter,
-                       final String twillRunId) {
+  public void setStart(final Id.Program id, final String pid, final long startTime,
+                       final String twillRunId, final Map<String, String> runtimeArgs) {
     txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
       public Void apply(AppMds mds) throws Exception {
-        mds.apps.recordProgramStart(id, pid, startTime, adapter, twillRunId);
+        mds.apps.recordProgramStart(id, pid, startTime, twillRunId, runtimeArgs);
         return null;
       }
     });
@@ -241,7 +247,7 @@ public class DefaultStore implements Store {
 
   @Override
   public void setStart(Id.Program id, String pid, long startTime) {
-    setStart(id, pid, startTime, null, null);
+    setStart(id, pid, startTime, null, ImmutableMap.<String, String>of());
   }
 
   @Override
@@ -279,7 +285,7 @@ public class DefaultStore implements Store {
 
     final List<WorkflowDataset.ProgramRun> programRunsList = new ArrayList<>();
     for (Map.Entry<String, String> entry : run.getProperties().entrySet()) {
-      if (!"workflowToken".equals(entry.getKey())) {
+      if (!("workflowToken".equals(entry.getKey()) || "runtimeArgs".equals(entry.getKey()))) {
         WorkflowActionNode workflowNode = (WorkflowActionNode) nodeIdMap.get(entry.getKey());
         ProgramType programType = ProgramType.valueOfSchedulableType(workflowNode.getProgram().getProgramType());
         Id.Program innerProgram = Id.Program.from(app.getNamespaceId(), app.getId(), programType, entry.getKey());
@@ -359,18 +365,13 @@ public class DefaultStore implements Store {
 
   @Override
   public List<RunRecordMeta> getRuns(final Id.Program id, final ProgramRunStatus status,
-                                     final long startTime, final long endTime, final int limit, final String adapter) {
+                                     final long startTime, final long endTime, final int limit) {
     return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, List<RunRecordMeta>>() {
       @Override
       public List<RunRecordMeta> apply(AppMds mds) throws Exception {
-        return mds.apps.getRuns(id, status, startTime, endTime, limit, adapter);
+        return mds.apps.getRuns(id, status, startTime, endTime, limit);
       }
     });
-  }
-
-  @Override
-  public List<RunRecordMeta> getRuns(Id.Program id, ProgramRunStatus status, long startTime, long endTime, int limit) {
-    return getRuns(id, status, startTime, endTime, limit, null);
   }
 
   @Override
@@ -614,7 +615,6 @@ public class DefaultStore implements Store {
       @Override
       public Void apply(AppMds mds) throws Exception {
         mds.apps.deleteApplication(id.getNamespaceId(), id.getId());
-        mds.apps.deleteProgramArgs(id.getNamespaceId(), id.getId());
         mds.apps.deleteProgramHistory(id.getNamespaceId(), id.getId());
         return null;
       }
@@ -629,7 +629,6 @@ public class DefaultStore implements Store {
       @Override
       public Void apply(AppMds mds) throws Exception {
         mds.apps.deleteApplications(id.getId());
-        mds.apps.deleteProgramArgs(id.getId());
         mds.apps.deleteProgramHistory(id.getId());
         return null;
       }
@@ -644,7 +643,6 @@ public class DefaultStore implements Store {
       @Override
       public Void apply(AppMds mds) throws Exception {
         mds.apps.deleteApplications(id.getId());
-        mds.apps.deleteProgramArgs(id.getId());
         mds.apps.deleteAllStreams(id.getId());
         mds.apps.deleteProgramHistory(id.getId());
         return null;
@@ -653,26 +651,21 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void storeRunArguments(final Id.Program id, final Map<String, String> arguments) {
-    LOG.trace("Updated program args in mds: id: {}, app: {}, prog: {}, args: {}",
-              id.getId(), id.getApplicationId(), id.getId(), Joiner.on(",").withKeyValueSeparator("=").join(arguments));
-
-    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
-      @Override
-      public Void apply(AppMds mds) throws Exception {
-        mds.apps.writeProgramArgs(id, arguments);
-        return null;
-      }
-    });
-  }
-
-  @Override
-  public Map<String, String> getRunArguments(final Id.Program id) {
+  public Map<String, String> getRuntimeArguments(final Id.Run runId) {
     return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Map<String, String>>() {
       @Override
       public Map<String, String> apply(AppMds mds) throws Exception {
-        ProgramArgs programArgs = mds.apps.getProgramArgs(id);
-        return programArgs == null ? Maps.<String, String>newHashMap() : programArgs.getArgs();
+        RunRecordMeta runRecord = mds.apps.getRun(runId.getProgram(), runId.getId());
+        if (runRecord != null) {
+          Map<String, String> properties = runRecord.getProperties();
+          Map<String, String> runtimeArgs = GSON.fromJson(properties.get("runtimeArgs"), RUNTIME_ARGS_TYPE);
+          if (runtimeArgs != null) {
+            return runtimeArgs;
+          }
+          LOG.debug("Runtime arguments for program {}, run {} not found. Returning empty.",
+                    runId.getProgram(), runId.getId());
+        }
+        return ImmutableMap.of();
       }
     });
   }
@@ -704,15 +697,6 @@ public class DefaultStore implements Store {
     });
   }
 
-  @Override
-  public Collection<ApplicationSpecification> getApplications(final Id.Namespace namespace,
-                                                              @Nullable final String artifactName,
-                                                              @Nullable final String artifactVersion) {
-    Collection<ApplicationSpecification> allApps = getAllApplications(namespace);
-    Predicate<ApplicationSpecification> filterPredicate = getAppPredicate(artifactName, artifactVersion);
-    return filterPredicate == null ? allApps : Collections2.filter(allApps, filterPredicate);
-  }
-
   @Nullable
   @Override
   public Location getApplicationArchiveLocation(final Id.Application id) {
@@ -723,67 +707,6 @@ public class DefaultStore implements Store {
         return meta == null ? null : locationFactory.create(URI.create(meta.getArchiveLocation()));
       }
     });
-  }
-
-  @Override
-  public void changeFlowletSteamConnection(final Id.Program flow, final String flowletId,
-                                           final String oldValue, final String newValue) {
-
-    Preconditions.checkArgument(flow != null, "flow cannot be null");
-    Preconditions.checkArgument(flowletId != null, "flowletId cannot be null");
-    Preconditions.checkArgument(oldValue != null, "oldValue cannot be null");
-    Preconditions.checkArgument(newValue != null, "newValue cannot be null");
-
-    LOG.trace("Changing flowlet stream connection: namespace: {}, application: {}, flow: {}, flowlet: {}," +
-                " old coonnected stream: {}, new connected stream: {}",
-              flow.getNamespaceId(), flow.getApplicationId(), flow.getId(), flowletId, oldValue, newValue);
-
-    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
-      @Override
-      public Void apply(AppMds mds) throws Exception {
-        ApplicationSpecification appSpec = getAppSpecOrFail(mds, flow);
-
-        FlowSpecification flowSpec = getFlowSpecOrFail(flow, appSpec);
-
-        boolean adjusted = false;
-        List<FlowletConnection> conns = Lists.newArrayList();
-        for (FlowletConnection con : flowSpec.getConnections()) {
-          if (FlowletConnection.Type.STREAM == con.getSourceType() &&
-            flowletId.equals(con.getTargetName()) &&
-            oldValue.equals(con.getSourceName())) {
-
-            conns.add(new FlowletConnection(con.getSourceType(), newValue, con.getTargetName()));
-            adjusted = true;
-          } else {
-            conns.add(con);
-          }
-        }
-
-        if (!adjusted) {
-          throw new IllegalArgumentException(
-            String.format("Cannot change stream connection to %s, the connection to be changed is not found," +
-                            " namespace: %s, application: %s, flow: %s, flowlet: %s, source stream: %s",
-                          newValue, flow.getNamespaceId(), flow.getApplicationId(), flow.getId(), flowletId, oldValue));
-        }
-
-        FlowletDefinition flowletDef = getFlowletDefinitionOrFail(flowSpec, flowletId, flow);
-        FlowletDefinition newFlowletDef = new FlowletDefinition(flowletDef, oldValue, newValue);
-        ApplicationSpecification newAppSpec = replaceInAppSpec(appSpec, flow, flowSpec, newFlowletDef, conns);
-
-        replaceAppSpecInProgramJar(flow, newAppSpec);
-
-        Id.Application app = flow.getApplication();
-        mds.apps.updateAppSpec(app.getNamespaceId(), app.getId(), newAppSpec);
-        return null;
-      }
-    });
-
-
-    LOG.trace("Changed flowlet stream connection: namespace: {}, application: {}, flow: {}, flowlet: {}," +
-                " old coonnected stream: {}, new connected stream: {}",
-              flow.getNamespaceId(), flow.getApplicationId(), flow.getId(), flowletId, oldValue, newValue);
-
-    // todo: change stream "used by" flow mapping in metadata?
   }
 
   @Override
@@ -860,10 +783,7 @@ public class DefaultStore implements Store {
       @Override
       public Boolean apply(AppMds mds) throws Exception {
         ApplicationSpecification appSpec = getApplicationSpec(mds, id.getApplication());
-        if (appSpec == null) {
-          return false;
-        }
-        return programExists(id, appSpec);
+        return appSpec != null && programExists(id, appSpec);
       }
     });
   }
@@ -974,28 +894,6 @@ public class DefaultStore implements Store {
     });
   }
 
-  @Nullable
-  @Override
-  public AdapterStatus getAdapterStatus(final Id.Namespace id, final String name) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, AdapterStatus>() {
-      @Override
-      public AdapterStatus apply(AppMds mds) throws Exception {
-        return mds.apps.getAdapterStatus(id, name);
-      }
-    });
-  }
-
-  @Nullable
-  @Override
-  public AdapterStatus setAdapterStatus(final Id.Namespace id, final String name, final AdapterStatus status) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, AdapterStatus>() {
-      @Override
-      public AdapterStatus apply(AppMds mds) throws Exception {
-        return mds.apps.setAdapterStatus(id, name, status);
-      }
-    });
-  }
-
   @Override
   public Collection<AdapterDefinition> getAllAdapters(final Id.Namespace id) {
     return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Collection<AdapterDefinition>>() {
@@ -1031,12 +929,12 @@ public class DefaultStore implements Store {
   @Override
   public void setWorkflowProgramStart(final Id.Program programId, final String programRunId, final String workflow,
                                       final String workflowRunId, final String workflowNodeId,
-                                      final long startTimeInSeconds, final String adapter, final String twillRunId) {
+                                      final long startTimeInSeconds, final String twillRunId) {
     txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
       public Void apply(AppMds mds) throws Exception {
         mds.apps.recordWorkflowProgramStart(programId, programRunId, workflow, workflowRunId, workflowNodeId,
-                                            startTimeInSeconds, adapter, twillRunId);
+                                            startTimeInSeconds, twillRunId);
         return null;
       }
     });
@@ -1333,36 +1231,6 @@ public class DefaultStore implements Store {
     @Override
     public Iterator<WorkflowDataset> iterator() {
       return Iterators.singletonIterator(workflowDataset);
-    }
-  }
-
-  // get filter for app specs by artifact name and version. if they are null, it means don't filter.
-  private Predicate<ApplicationSpecification> getAppPredicate(@Nullable final String artifactName,
-                                                              @Nullable final String artifactVersion) {
-    if (artifactName == null && artifactVersion == null) {
-      return null;
-    } else if (artifactName == null) {
-      return new Predicate<ApplicationSpecification>() {
-        @Override
-        public boolean apply(ApplicationSpecification input) {
-          return artifactVersion.equals(input.getArtifactId().getVersion().getVersion());
-        }
-      };
-    } else if (artifactVersion == null) {
-      return new Predicate<ApplicationSpecification>() {
-        @Override
-        public boolean apply(ApplicationSpecification input) {
-          return artifactName.equals(input.getArtifactId().getName());
-        }
-      };
-    } else {
-      return new Predicate<ApplicationSpecification>() {
-        @Override
-        public boolean apply(ApplicationSpecification input) {
-          ArtifactId artifact = input.getArtifactId();
-          return artifactVersion.equals(artifact.getVersion().getVersion()) && artifactName.equals(artifact.getName());
-        }
-      };
     }
   }
 }

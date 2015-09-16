@@ -19,7 +19,6 @@ package co.cask.cdap.api.mapreduce;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.ServiceDiscoverer;
-import co.cask.cdap.api.artifact.PluginContext;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.batch.BatchReadable;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
@@ -27,8 +26,7 @@ import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.schedule.Schedule;
-import co.cask.cdap.api.templates.AdapterContext;
+import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowToken;
 
@@ -39,8 +37,7 @@ import javax.annotation.Nullable;
 /**
  * MapReduce job execution context.
  */
-public interface MapReduceContext extends RuntimeContext, DatasetContext, ServiceDiscoverer, AdapterContext,
-  PluginContext {
+public interface MapReduceContext extends RuntimeContext, DatasetContext, ServiceDiscoverer, PluginContext {
 
   /**
    * @return The specification used to configure this {@link MapReduce} job instance.
@@ -132,7 +129,7 @@ public interface MapReduceContext extends RuntimeContext, DatasetContext, Servic
   void addOutput(String datasetName);
 
   /**
-   * Overrides the output configuration of this MapReduce job to also allow writing to the specified dataset.
+   * Updates the output configuration of this MapReduce job to also allow writing to the specified dataset.
    * Currently, the dataset specified in must be an {@link OutputFormatProvider}.
    * You may want to use this method instead of {@link #addOutput(String)} if your output dataset uses runtime
    * arguments set in your own program logic.
@@ -142,6 +139,15 @@ public interface MapReduceContext extends RuntimeContext, DatasetContext, Servic
    * @throws IllegalArgumentException if the specified dataset is not an OutputFormatProvider.
    */
   void addOutput(String datasetName, Map<String, String> arguments);
+
+  /**
+   * Updates the output configuration of this MapReduce job to also allow writing using the given OutputFormatProvider.
+   *
+   * @param outputName the name of the output
+   * @param outputFormatProvider the outputFormatProvider which specifies an OutputFormat and configuration to be used
+   *                             when writing to this output
+   */
+  void addOutput(String outputName, OutputFormatProvider outputFormatProvider);
 
   /**
    * Overrides the resources, such as memory and virtual cores, to use for each mapper of this MapReduce job.

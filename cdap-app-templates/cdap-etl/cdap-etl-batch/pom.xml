@@ -27,11 +27,11 @@
   </parent>
 
   <artifactId>cdap-etl-batch</artifactId>
-  <name>CDAP ETL App Template Batch</name>
+  <name>CDAP ETL Batch Application</name>
   <packaging>jar</packaging>
 
   <properties>
-    <app.main.class>co.cask.cdap.template.etl.batch.ETLBatchTemplate</app.main.class>
+    <app.main.class>co.cask.cdap.app.etl.batch.ETLBatchApplication</app.main.class>
   </properties>
 
   <dependencies>
@@ -52,6 +52,11 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-etl-common</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-mapreduce-client-core</artifactId>
       <scope>provided</scope>
@@ -60,6 +65,12 @@
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-common</artifactId>
       <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.avro</groupId>
+      <artifactId>avro-mapred</artifactId>
+      <classifier>hadoop2</classifier>
+      <version>${etl.avro.version}</version>
     </dependency>
     <dependency>
       <!-- change to hadoop-aws when hadoop dependency is updated to 2.6 -->
@@ -76,6 +87,15 @@
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>javax.mail</groupId>
+      <artifactId>mail</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>dumbster</groupId>
+      <artifactId>dumbster</artifactId>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 
@@ -97,7 +117,7 @@
               <Embed-Dependency>*;inline=false;scope=compile</Embed-Dependency>
               <Embed-Transitive>true</Embed-Transitive>
               <Embed-Directory>lib</Embed-Directory>
-              <Export-Package>co.cask.cdap.template.etl.api.*</Export-Package>
+              <Export-Package>co.cask.cdap.template.etl.api.*;org.apache.avro.*</Export-Package>
             </instructions>
           </configuration>
           <executions>

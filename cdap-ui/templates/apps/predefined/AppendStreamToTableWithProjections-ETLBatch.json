@@ -1,5 +1,9 @@
 {
-    "template": "ETLBatch",
+    "artifact": {
+        "name": "cdap-etl-batch",
+        "scope": "SYSTEM",
+        "version": "3.2.0-SNAPSHOT"
+    },
     "description": "Periodically appends data from stream to Table.",
     "config": {
         "source": {
@@ -11,7 +15,7 @@
                 "format": "csv"
             }
         },
-        "sink": {
+        "sinks": [{
             "name": "Table",
             "properties": {
                 "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"fname\",\"type\":\"string\"},{\"name\":\"lname\",\"type\":\"string\"},{\"name\":\"address\",\"type\":\"string\"},{\"name\":\"city\",\"type\":\"string\"},{\"name\":\"state\",\"type\":\"string\"},{\"name\":\"country\",\"type\":\"string\"},{\"name\":\"zipcode\",\"type\":\"int\"}]}",
@@ -19,7 +23,7 @@
                 "name": "contacts_hbase",
                 "schema.row.field": "fname"
             }
-        },
+        }],
         "transforms": [],
         "schedule": "* * * * *"
     },
@@ -71,7 +75,7 @@
                         "required": false
                     }
                 },
-                "type": "source"
+                "type": "batchsource"
             },
             "Table-sink-2": {
                 "id": "Table-sink-2",
@@ -111,7 +115,7 @@
                         "required": true
                     }
                 },
-                "type": "sink"
+                "type": "batchsink"
             }
         },
         "connections": [

@@ -21,8 +21,6 @@ package co.cask.cdap.template.etl.common;
  */
 public final class Constants {
 
-  public static final String ADAPTER_NAME = "name";
-  public static final String CONFIG_KEY = "config";
   public static final String ID_SEPARATOR = ":";
 
   private Constants() {
@@ -45,7 +43,7 @@ public final class Constants {
    * Constants related to Sink.
    */
   public static final class Sink {
-    public static final String PLUGINID = "sinkId";
+    public static final String PLUGINIDS = "sinkIds";
     public static final String PLUGINTYPE = "sink";
 
     private Sink() {
@@ -74,5 +72,15 @@ public final class Constants {
     private Realtime() {
       throw new AssertionError("Suppress default constructor for noninstantiability");
     }
+  }
+
+  /**
+   * Constants related to error dataset used in transform
+   */
+  public static final class ErrorDataset {
+    public static final String ERRCODE = "errCode";
+    public static final String ERRMSG = "errMsg";
+    public static final String TIMESTAMP = "errTimestamp";
+    public static final String INVALIDENTRY = "invalidRecord";
   }
 }

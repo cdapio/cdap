@@ -79,3 +79,81 @@ body.state-workflows {
     }
   }
 }
+
+my-pageslide {
+
+  div.left-column {
+    width: 5%;
+    float: left;
+    height: 100%;
+    background-color: @cdap-darkness;
+    padding-top: 5px;
+    cursor: pointer;
+
+    &.hidden {
+      width: 100%;
+    }
+
+
+    h3.vertical {
+      transform: rotate(90deg);
+      color: white;
+      white-space: nowrap;
+
+      .token-title {
+        margin-left: 5px;
+      }
+    }
+
+  }
+
+  div.right-column {
+    width: 95%;
+    float: right;
+
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    top: 0;
+    overflow-y: auto;
+
+    div.sidepanel {
+
+      .well {
+        border-radius: 0;
+      }
+
+      .sidepanel-heading {
+        .box-shadow( 0px 0px 5px 1px rgba(0,0,0,0.45));
+
+        h3 {
+          margin-top: 0;
+          margin-bottom: 0;
+          padding: 10px 15px;
+        }
+      }
+
+      .sidepanel-tabs {
+        padding: 0 10px;
+      }
+
+      div.btn-group.btn-group-justified {
+        margin-top: 10px;
+        a.btn {
+          border-radius: 0;
+        }
+      }
+
+      table.table {
+        margin-top: 0;
+        thead th {
+          font-size: 13px;
+        }
+
+        tr td {
+          font-size: 11px;
+        }
+      }
+    }
+  }
+}
