@@ -18,20 +18,16 @@ angular.module(PKG.name + '.feature.adapters')
   .controller('LeftPanelController', function($q, myAdapterApi, MyAppDAGService, MyDAGFactory, myAdapterTemplatesApi, CanvasFactory, $alert, mySettings, $state, MySidebarService, $scope, rVersion, $stateParams, GLOBALS) {
     this.pluginTypes = [
       {
-        name: 'source',
-        icon: 'icon-ETLsources'
+        name: 'source'
       },
       {
-        name: 'transform',
-        icon: 'icon-ETLtransforms'
+        name: 'transform'
       },
       {
-        name: 'sink',
-        icon: 'icon-ETLsinks'
+        name: 'sink'
       },
       {
-        name: 'templates',
-        icon: 'icon-ETLtemplates'
+        name: 'templates'
       }
     ];
 
@@ -79,8 +75,7 @@ angular.module(PKG.name + '.feature.adapters')
                 var plugins = res.map(function(plugin) {
                   return {
                     name: plugin.name,
-                    description: plugin.description,
-                    icon: 'icon-ETLtemplates'
+                    description: plugin.description
                   };
                 });
                 templatedefer.resolve(plugins);
