@@ -20,6 +20,7 @@ angular.module(PKG.name + '.feature.adapters')
     function isModelValid (nodes, connections, metadata, config) {
       var validationRules = [
         hasExactlyOneSource,
+        hasAtleastOneSink,
         hasNameAndTemplateType,
         checkForRequiredField,
         checkForUnconnectedNodes
@@ -45,6 +46,20 @@ angular.module(PKG.name + '.feature.adapters')
       }
     }
 
+    function hasAtleastOneSink(nodes, connections, metadata, config, errors) {
+      var sink = [];
+      var artifactType = GLOBALS.pluginTypes[metadata.template.type];
+
+      angular.forEach(nodes, function (value, key) {
+        if (value.type === artifactType.sink) {
+          sink.push(key);
+        }
+      });
+      if (sink.length === 0) {
+        addCanvasError('Application should have atleast 1 sink', errors);
+      }
+    }
+
     function hasExactlyOneSource(nodes, connections, metadata, config, errors) {
       var source = [];
       var artifactType = GLOBALS.pluginTypes[metadata.template.type];
@@ -55,19 +70,9 @@ angular.module(PKG.name + '.feature.adapters')
         }
       });
 
-      if (source.length !== 1) {
-        if (source.length < 1) {
-          errors.source = 'Application is missing a source';
-        } else if (source.length > 1) {
-          angular.forEach(source, function (node) {
-            errors[node] = 'Application should only have 1 source';
-          });
-
-          addCanvasError('Application should only have 1 source', errors);
-
-        }
+      if (source.length === 0) {
+        addCanvasError('Application can have at most 1 source', errors);
       }
-
     }
 
     function hasNameAndTemplateType(nodes, connections, metadata, config, errors) {
@@ -75,6 +80,7 @@ angular.module(PKG.name + '.feature.adapters')
       if (typeof name !== 'string' || !name.length) {
         errors.name = 'Application needs to have a name';
         metadata.error = 'Enter application name';
+        addCanvasError('Application needs to have a name', errors);
         return;
       }
 
@@ -83,6 +89,7 @@ angular.module(PKG.name + '.feature.adapters')
       if (!pattern.test(name)) {
         errors.name = 'Application name can only have alphabets, numbers, and \'_\'';
         metadata.error = 'Application name can only have alphabets, numbers, and \'_\'';
+        addCanvasError('Application name can only have alphabets, numbers, and \'_\'', errors);
       }
 
       // Should probably add template type check here. Waiting for design.

@@ -15,9 +15,14 @@
  */
 
 angular.module(PKG.name + '.feature.adapters')
-  .controller('BottomPanelController', function ($scope, MySidebarService, MyAppDAGService, MyNodeConfigService, $timeout) {
+  .controller('BottomPanelController', function ($scope, MySidebarService, MyAppDAGService, MyNodeConfigService, $timeout, MyConsoleTabService) {
 
     MyAppDAGService.registerEditPropertiesCallback(editProperties.bind(this));
+    MyConsoleTabService.registerOnMessageUpdates(showConsoleTab.bind(this));
+
+    function showConsoleTab() {
+      $scope.selectTab($scope.tabs[0]);
+    }
 
     function editProperties(plugin) {
       $scope.selectTab($scope.tabs[2]);

@@ -47,7 +47,7 @@
 
 */
 angular.module(PKG.name + '.services')
-  .service('MyAppDAGService', function(myAdapterApi, $q, $bootstrapModal, $state, $filter, mySettings, AdapterErrorFactory, IMPLICIT_SCHEMA, myHelpers, PluginConfigFactory, ModalConfirm, EventPipe, CanvasFactory, $rootScope, GLOBALS) {
+  .service('MyAppDAGService', function(myAdapterApi, $q, $bootstrapModal, $state, $filter, mySettings, AdapterErrorFactory, IMPLICIT_SCHEMA, myHelpers, PluginConfigFactory, ModalConfirm, EventPipe, CanvasFactory, $rootScope, GLOBALS, MyConsoleTabService) {
 
     var countSink = 0,
         countSource = 0,
@@ -624,6 +624,13 @@ angular.module(PKG.name + '.services')
                }.bind(this));
             }.bind(this),
             function error(err) {
+              this.isConfigTouched = true;
+              angular.forEach(err, function(value) {
+                MyConsoleTabService.addMessage({
+                  type: 'error',
+                  content: value
+                });
+              });
               defer.reject({
                 messages: err
               });
@@ -631,6 +638,15 @@ angular.module(PKG.name + '.services')
             }
           );
       } else {
+        if (errors.canvas) {
+          this.isConfigTouched = true;
+          errors.canvas.forEach(function(canvasError) {
+            MyConsoleTabService.addMessage({
+              type: 'error',
+              content: canvasError
+            });
+          });
+        }
         this.notifyError(errors);
         defer.reject(errors);
       }
