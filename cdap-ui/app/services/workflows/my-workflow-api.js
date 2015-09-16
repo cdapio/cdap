@@ -54,10 +54,13 @@ angular.module(PKG.name + '.services')
       schedules: myHelpers.getConfig('GET', 'REQUEST', basepath + '/schedules', true),
       schedulesPreviousRunTime: myHelpers.getConfig('GET', 'REQUEST', basepath + '/previousruntime', true),
       pollScheduleStatus: myHelpers.getConfig('GET', 'POLL', schedulepath + '/status', false, { interval: 2000 }),
+      getScheduleStatus: myHelpers.getConfig('GET', 'POLL', schedulepath + '/status'),
       scheduleSuspend: myHelpers.getConfig('POST', 'REQUEST', schedulepath + '/suspend'),
       scheduleResume: myHelpers.getConfig('POST', 'REQUEST', schedulepath + '/resume'),
       getCurrent: myHelpers.getConfig('GET', 'REQUEST', basepath + '/:runid/current', true),
       getUserNodeToken: myHelpers.getConfig('GET', 'REQUEST', basepath + '/runs/:runId/nodes/:nodeId/token?scope=user'),
-      getSystemNodeToken: myHelpers.getConfig('GET', 'REQUEST', basepath + '/runs/:runId/nodes/:nodeId/token?scope=system')
+      getSystemNodeToken: myHelpers.getConfig('GET', 'REQUEST', basepath + '/runs/:runId/nodes/:nodeId/token?scope=system'),
+      getStatistics: myHelpers.getConfig('GET', 'REQUEST', basepath + '/statistics'),
+      doAction: myHelpers.getConfig('POST', 'REQUEST', basepath + '/:action')
     });
   });

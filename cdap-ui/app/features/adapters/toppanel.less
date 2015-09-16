@@ -18,7 +18,7 @@
 @import "../../../bower_components/bootstrap/less/mixins.less";
 @import '../../styles/themes/cdap/mixins.less';
 
-body.theme-cdap.state-adapters-create {
+body.theme-cdap.state-adapters {
   div.side-panel.top {
     background-color: white;
     position: fixed;
@@ -42,6 +42,25 @@ body.theme-cdap.state-adapters-create {
       }
       &.active, &:active {
         .box-shadow(none);
+      }
+
+      &.btn-status {
+        width: 200px;
+        cursor: default;
+
+        &:hover, &:hover {
+          border-left: 1px solid #eee;
+        }
+
+        span {
+          display: inline-block;
+          width: 10px;
+          height: 10px;
+          margin-right: 5px;
+          .border-radius(25px);
+          &.status-green { background-color: @brand-success; }
+          &.status-red { background-color: @brand-danger; }
+        }
       }
       @media (max-width: @screen-xs-max) {
         display: none;

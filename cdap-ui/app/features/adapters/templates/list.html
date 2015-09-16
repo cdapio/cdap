@@ -40,7 +40,9 @@
     </thead>
     <tbody>
       <tr ng-repeat="adapter in ListController.filtered = (ListController.adaptersList | filter: ListController.searchText ) | myPaginate:ListController.currentPage | orderBy:sortable.predicate:sortable.reverse">
-        <td>{{adapter.name}}</td>
+        <td>
+          <a ui-sref="adapters.detail({ adapterId: adapter.name })">{{adapter.name}}</a>
+        </td>
         <td>
           <span ng-if="adapter.artifact.name === ListController.GLOBALS.etlBatch">
             <span class="icon-ETLBatch"></span>
