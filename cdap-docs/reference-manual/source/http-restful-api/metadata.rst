@@ -20,16 +20,18 @@ of applications, datasets, streams, and other elements in CDAP.
 Metadata consists of **properties** (a list of key-value pairs) or **tags** (a list of keys).
 Metadata and their use are described in the :ref:`Developers' Manual: Metadata <metadata>`.
 
-The HTTP RESTful API is divided into three sections:
+The HTTP RESTful API is divided into four sections:
 
 - :ref:`metadata properties <http-restful-api-metadata-properties>`;
 - :ref:`metadata tags <http-restful-api-metadata-tags>`; and
-- :ref:`searching properties and viewing lineage <http-restful-api-metadata-searching-viewing>`
+- :ref:`searching properties <http-restful-api-metadata-searching>`
+- :ref:`viewing lineage <http-restful-api-metadata-lineage>`
 
 In this API, ``<base-url>`` is as described under :ref:`Conventions
-<http-restful-api-conventions>`. Metadata keys and tags must conform to the CDAP
-:ref:`supported characters <supported-characters>`, and are limited to 50 characters in
-length. Metadata values are limited to 10K bytes in length.
+<http-restful-api-conventions>`. 
+Metadata keys, values, and tags must conform to the CDAP :ref:`supported characters 
+<supported-characters>`, and are limited to 50 characters in length. The entire metadata
+object associated with a single entity is limited to 10K bytes in size.
 
 
 .. _http-restful-api-metadata-properties:
@@ -355,13 +357,10 @@ or, for a particular user metadata tag of a program of a specific application::
      - The entity (element or program) for which tags are being deleted was not found
 
 
-.. _http-restful-api-metadata-searching-viewing:
-
-Searching and Viewing
-=====================
+.. _http-restful-api-metadata-searching:
 
 Searching for Metadata
-----------------------
+======================
 To find which applications, datasets, or streams have a particular user metadata property or
 user metadata tag, submit an HTTP GET request::
 
@@ -410,8 +409,10 @@ Search for properties by specifying one of:
 - a complete or partial value, such as ``prod*``
 
 
+.. _http-restful-api-metadata-lineage:
+
 Viewing Lineages
-----------------
+================
 To view the lineage of a dataset or stream, submit an HTTP GET request::
 
   GET /v3/namespaces/<namespace>/<element-type>/<element-id>/lineage?start=<start-ts>&end=<end-ts>&maxLevels=<max-levels>

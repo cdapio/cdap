@@ -10,20 +10,20 @@
 Supported Characters
 ====================
 
-The Cask Data Application Platform (CDAP) has naming conventions for different components of CDAP.
+The Cask Data Application Platform (CDAP) has naming conventions for different entities of CDAP.
 
-Streams and Metadata
+Names
 --------------------
 
-Stream names, metadata property keys and tags can have these characters:
+Stream names, metadata property keys and values, and metadata tags can have these characters:
 
 - Alphanumeric characters (``a-z A-Z 0-9``)
 - Hyphens (``-``)
 - Underscores (``_``)
 
 
-Datasets
---------
+Dataset Names
+-------------
 
 Dataset names can have these characters:
 
