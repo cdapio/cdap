@@ -72,11 +72,6 @@ done
 # Load user-modifiable configuration
 test -f "${CDAP_CONF}"/cdap-env.sh && source "${CDAP_CONF}"/cdap-env.sh
 
-die() {
-  echo "ERROR: ${*}"
-  exit 1
-}
-
 logecho() {
   echo ${*} | tee -a ${loglog}
 }
@@ -205,7 +200,7 @@ run() {
   check_and_set_classpath_for_dev_environment "${CDAP_HOME}"
   # Setup classpaths.
   set_classpath "${COMPONENT_HOME}" "${CDAP_CONF}"
-  set_hive_classpath
+  set_hive_classpath || exit 1
   # Setup Java
   set_java || exit 1
   # Add proper HBase compatibility to CLASSPATH
