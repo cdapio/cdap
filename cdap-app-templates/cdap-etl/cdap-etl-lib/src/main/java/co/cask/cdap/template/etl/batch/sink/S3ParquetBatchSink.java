@@ -67,7 +67,7 @@ public class S3ParquetBatchSink extends S3BatchSink<Void, GenericRecord> {
     org.apache.avro.Schema avroSchema = new org.apache.avro.Schema.Parser().parse(config.schema.toLowerCase());
     Job job = context.getHadoopJob();
     AvroParquetOutputFormat.setSchema(job, avroSchema);
-    context.addOutput(config.name, new S3ParquetOutputFormatProvider(config));
+    context.addOutput(config.basePath, new S3ParquetOutputFormatProvider(config));
   }
 
   @Override
@@ -85,9 +85,9 @@ public class S3ParquetBatchSink extends S3BatchSink<Void, GenericRecord> {
     @Description(SCHEMA_DESC)
     private String schema;
 
-    public S3ParquetSinkConfig(String name, String basePath, String schema,
+    public S3ParquetSinkConfig(String basePath, String schema,
                                String accessID, String accessKey) {
-      super(name, basePath, accessID, accessKey);
+      super(basePath, accessID, accessKey);
       this.schema = schema;
     }
   }

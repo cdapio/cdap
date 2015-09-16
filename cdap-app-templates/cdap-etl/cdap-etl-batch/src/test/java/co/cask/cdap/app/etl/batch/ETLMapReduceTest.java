@@ -308,8 +308,7 @@ public class ETLMapReduceTest extends BaseETLBatchTest {
                                  ImmutableMap.of(Properties.S3BatchSink.SCHEMA, eventSchema.toString(),
                                                  Properties.S3.ACCESS_KEY, "key",
                                                  Properties.S3.ACCESS_ID, "ID",
-                                                 Properties.S3.PATH, s3Path,
-                                                 Properties.S3BatchSink.NAME, "name"));
+                                                 Properties.S3.PATH, s3Path));
 
     ETLStage transform = new ETLStage("Projection", ImmutableMap.<String, String>of());
 
