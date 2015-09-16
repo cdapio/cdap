@@ -22,6 +22,7 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerHelper;
 import co.cask.cdap.proto.ProgramType;
@@ -31,9 +32,12 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunner;
+import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -52,7 +56,7 @@ public final class DistributedMapReduceProgramRunner extends AbstractDistributed
   @Override
   protected ProgramController launch(Program program, ProgramOptions options,
                                      Map<String, LocalizeResource> localizeResources,
-                                     ApplicationLauncher launcher) {
+                                     final ApplicationLauncher launcher) {
     // Extract and verify parameters
     ApplicationSpecification appSpec = program.getApplicationSpecification();
     Preconditions.checkNotNull(appSpec, "Missing application specification.");
@@ -66,10 +70,43 @@ public final class DistributedMapReduceProgramRunner extends AbstractDistributed
 
     List<String> extraClassPaths = MapReduceContainerHelper.localizeFramework(hConf, localizeResources);
 
+    // TODO(CDAP-3119): Hack for TWILL-144. Need to remove
+    File launcherFile = null;
+    if (MapReduceContainerHelper.getFrameworkURI(hConf) != null) {
+      File tempDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
+                              cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+      tempDir.mkdirs();
+      try {
+        launcherFile = File.createTempFile("launcher", ".jar", tempDir);
+        MapReduceContainerHelper.saveLauncher(hConf, launcherFile, extraClassPaths);
+        localizeResources.put("launcher.jar", new LocalizeResource(launcherFile));
+      } catch (Exception e) {
+        LOG.warn("Failed to create twill container launcher.jar for TWILL-144 hack. " +
+                   "Still proceed, but the run will likely fail", e);
+      }
+    }
+    // End Hack for TWILL-144
+
     LOG.info("Launching MapReduce program: " + program.getName() + ":" + spec.getName());
     TwillController controller = launcher.launch(
       new MapReduceTwillApplication(program, spec, localizeResources, eventHandler),
       extraClassPaths);
+
+    // TODO(CDAP-3119): Hack for TWILL-144. Need to remove
+    final File cleanupFile = launcherFile;
+    Runnable cleanupTask = new Runnable() {
+      @Override
+      public void run() {
+        if (cleanupFile != null) {
+          cleanupFile.delete();
+        }
+      }
+    };
+    // Cleanup when the app is running. Also add a safe guide to do cleanup on terminate in case there is race
+    // such that the app terminated before onRunning was called
+    controller.onRunning(cleanupTask, Threads.SAME_THREAD_EXECUTOR);
+    controller.onTerminated(cleanupTask, Threads.SAME_THREAD_EXECUTOR);
+    // End Hack for TWILL-144
 
     RunId runId = RunIds.fromString(options.getArguments().getOption(ProgramOptionConstants.RUN_ID));
     return new MapReduceTwillProgramController(program.getId(), controller, runId).startListen();

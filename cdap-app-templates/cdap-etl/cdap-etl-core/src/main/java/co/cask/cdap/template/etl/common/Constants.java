@@ -80,6 +80,7 @@ public final class Constants {
   public static final class ErrorDataset {
     public static final String ERRCODE = "errCode";
     public static final String ERRMSG = "errMsg";
+    public static final String TIMESTAMP = "errTimestamp";
     public static final String INVALIDENTRY = "invalidRecord";
   }
 }

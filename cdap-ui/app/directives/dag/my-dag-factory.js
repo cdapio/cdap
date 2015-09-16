@@ -23,7 +23,7 @@ angular.module(PKG.name + '.commons')
     var connectorStyle = {
       strokeStyle: '#666e82',
       fillStyle: '#666e82',
-      radius: 7,
+      radius: 5,
       lineWidth: 2
     };
 
@@ -31,9 +31,9 @@ angular.module(PKG.name + '.commons')
       endpoint:'Dot',
       maxConnections: 1,
       paintStyle: {
-        strokeStyle: 'white',
+        strokeStyle: '#666e82',
         fillStyle: '#666e82',
-        radius: 7,
+        radius: 5,
         lineWidth: 3
       },
       connectorOverlays: [
@@ -46,16 +46,16 @@ angular.module(PKG.name + '.commons')
           id: 'label'
         }]
       ],
-      anchors: [ 'Perimeter', {shape: 'Circle'}]
+      anchors: [ 'Static']
     };
     var sourceSettings = angular.extend({
       isSource: true,
-      anchor: 'Right',
-      connectorStyle: connectorStyle
+      connectorStyle: connectorStyle,
+      anchor: [ 0.5, 1, 0, 0, 26, -43, 'sourceAnchor']
     }, commonSettings);
     var sinkSettings = angular.extend({
       isTarget: true,
-      anchor: 'Left',
+      anchor: [ 0.5, 1, 0, 0, -26, -43, 'sinkAnchor'],
       connectorStyle: connectorStyle
     }, commonSettings);
 

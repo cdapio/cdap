@@ -46,64 +46,69 @@ angular.module(PKG.name + '.feature.adapters')
         })
 
         .state('adapters.create', {
-          url: '/create?name&type',
-          params: {
-            data: null
-          },
-          resolve: {
-            rConfig: function($stateParams, mySettings, $q) {
-              var defer = $q.defer();
-              if ($stateParams.name) {
-                mySettings.get('adapterDrafts')
-                  .then(function(res) {
-                    var draft = res[$stateParams.name];
-                    if (angular.isObject(draft)) {
-                      draft.name = $stateParams.name;
-                      defer.resolve(draft);
-                    } else {
-                      defer.resolve(false);
-                    }
-                  });
-              } else if ($stateParams.data){
-                defer.resolve($stateParams.data);
-              } else {
-                defer.resolve(false);
-              }
-              return defer.promise;
-            },
-            rVersion: function($state, MyDataSource) {
-              var dataSource = new MyDataSource();
-              return dataSource.request({
-                _cdapPath: '/version'
-              });
-            }
-          },
-          // controller: 'AdapterCreateController as AdapterCreateController',
-          views: {
-            '': {
-              templateUrl: '/assets/features/adapters/templates/create.html',
-              controller: 'AdapterCreateController as AdapterCreateController'
-            },
-            'canvas@adapters.create': {
-              templateUrl: '/assets/features/adapters/templates/create/canvas.html'
-            },
-            'leftpanel@adapters.create': {
-              templateUrl: '/assets/features/adapters/templates/create/leftpanel.html',
-              controller: 'LeftPanelController as LeftPanelController'
-            },
-            'toppanel@adapters.create': {
-              templateUrl: '/assets/features/adapters/templates/create/toppanel.html',
-              controller: 'TopPanelController as TopPanelController'
-            },
-            'bottompanel@adapters.create': {
-              templateUrl: '/assets/features/adapters/templates/create/bottompanel.html',
-              controller: 'BottomPanelController as BottomPanelController'
-            }
-          },
+          url: '/create',
+          templateUrl: '/assets/features/adapters/templates/create.html',
+          controller: 'AdapterCreateController',
+          controllerAs: 'AdapterCreateController', 
           ncyBreadcrumb: {
             skip: true
           }
         })
+          .state('adapters.create.studio', {
+            url: '/studio?name&type',
+            params: {
+              data: null
+            },
+            resolve: {
+              rConfig: function($stateParams, mySettings, $q) {
+                var defer = $q.defer();
+                if ($stateParams.name) {
+                  mySettings.get('adapterDrafts')
+                    .then(function(res) {
+                      var draft = res[$stateParams.name];
+                      if (angular.isObject(draft)) {
+                        draft.name = $stateParams.name;
+                        defer.resolve(draft);
+                      } else {
+                        defer.resolve(false);
+                      }
+                    });
+                } else if ($stateParams.data){
+                  defer.resolve($stateParams.data);
+                } else {
+                  defer.resolve(false);
+                }
+                return defer.promise;
+              },
+              rVersion: function($state, MyDataSource) {
+                var dataSource = new MyDataSource();
+                return dataSource.request({
+                  _cdapPath: '/version'
+                });
+              }
+            },
+            views: {
+              '': {
+                templateUrl: '/assets/features/adapters/templates/create/studio.html',
+                controller: 'AdapterCreateStudioController as AdapterCreateStudioController'
+              },
+              'canvas@adapters.create.studio': {
+                templateUrl: '/assets/features/adapters/templates/create/canvas.html'
+              },
+              'leftpanel@adapters.create.studio': {
+                templateUrl: '/assets/features/adapters/templates/create/leftpanel.html',
+                controller: 'LeftPanelController as LeftPanelController'
+              },
+              'toppanel@adapters.create.studio': {
+                templateUrl: '/assets/features/adapters/templates/create/toppanel.html',
+                controller: 'TopPanelController as TopPanelController'
+              },
+              'bottompanel@adapters.create.studio': {
+                templateUrl: '/assets/features/adapters/templates/create/bottompanel.html',
+                controller: 'BottomPanelController as BottomPanelController'
+              }
+            },
+          })
 
         .state('adapters.detail', {
           url: '/:adapterId',

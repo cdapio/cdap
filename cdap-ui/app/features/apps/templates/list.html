@@ -35,23 +35,14 @@
         <li role="presentation">
           <my-file-select dropdown="true"
                           data-button-label="Custom App"
+                          data-button-icon="__"
                           on-file-select="ListController.onFileSelected($files)">
           </my-file-select>
         </li>
         <li>
-          <a ui-sref="adapters.create({type: ListController.GLOBALS.etlBatch})"  class="clearfix">
-            <span class="pull-left">ETL Batch App</span>
-            <i class="icon-ETLBatch pull-right"></i>
+          <a ui-sref="adapters.create"  class="clearfix">
+            <span class="pull-left">{{ListController.GLOBALS.addHydratorAppLabel}}</span>
           </a>
-        </li>
-        <li>
-          <a ui-sref="adapters.create({type: ListController.GLOBALS.etlRealtime})" class="clearfix">
-            <span class="pull-left"> ETL Realtime App</span>
-            <i class="icon-ETLRealtime pull-right"></i>
-          </a>
-        </li>
-        <li>
-          <a ui-sref="adapters.drafts"> Drafts </a>
         </li>
       </ul>
     </div>

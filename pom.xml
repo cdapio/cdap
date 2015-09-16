@@ -61,11 +61,6 @@
       <id>sonatype</id>
       <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
     </repository>
-    <repository>
-      <!-- TODO: Remove when release (CDAP-3498) -->
-      <id>apache-snapshot</id>
-      <url>https://repository.apache.org/content/groups/snapshots</url>
-    </repository>
   </repositories>
 
 
@@ -136,8 +131,7 @@
     <slf4j.version>1.7.5</slf4j.version>
     <tephra.version>0.6.2</tephra.version>
     <thrift.version>0.9.0</thrift.version>
-    <!-- TODO: Remove snapshot when twill released (CDAP-3498) -->
-    <twill.version>0.7.0-incubating-SNAPSHOT</twill.version>
+    <twill.version>0.6.0-incubating</twill.version>
     <unboundid.version>2.3.6</unboundid.version>
     <zookeeper.version>3.4.5</zookeeper.version>
     <spark.version>1.3.1</spark.version>

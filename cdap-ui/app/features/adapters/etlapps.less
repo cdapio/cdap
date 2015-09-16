@@ -595,7 +595,46 @@ body.theme-cdap.state-adapters-detail {
   }
 }
 body.theme-cdap.state-adapters-create {
-
+  background-color: #e2e3e5;
+  // Adjust margins for the grid background
+  margin-bottom: 52px;
+  main.container {
+    background-color: transparent;
+    background-image: none;
+    margin-top: 60px;
+    > div {
+      margin-bottom: 0;
+    }
+  }
+  .hydrator-start {
+    margin-top: 160px;
+  }
+  .start-well {
+    background-color: white;
+    font-weight: 500;
+    margin-right: auto;
+    margin-left: auto;
+    height: 180px;
+    width: 180px;
+    .border-radius(6px);
+    h4, a {
+      font-weight: 500;
+    }
+    h4 {
+      color: @btn-default-color;
+      margin-bottom: 55px;
+    }
+    a.btn {
+      width: 140px;
+      padding-top: 10px;
+      padding-bottom: 10px;
+      .border-radius(6px);
+      &:hover, &:focus {
+        background-color: @btn-default-color;
+        color: white;
+      }
+    }
+  }
   .canvas-wrapper {
     position: relative;
     margin-top: 60px;
@@ -608,17 +647,6 @@ body.theme-cdap.state-adapters-create {
   my-dag {
     width: 100%;
     height: 60vh;
-  }
-
-  // Adjust margins for the grid background
-  margin-bottom: 52px;
-  main.container {
-    background-color: transparent;
-    background-image: linear-gradient(@body-bg, @body-bg);
-    margin-top: 60px;
-    > div {
-      margin-bottom: 0;
-    }
   }
 
   [create-adapter-container] {
