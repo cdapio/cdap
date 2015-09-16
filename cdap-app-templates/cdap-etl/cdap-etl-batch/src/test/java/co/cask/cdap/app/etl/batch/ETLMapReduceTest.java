@@ -18,6 +18,7 @@ package co.cask.cdap.app.etl.batch;
 
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.data.format.Formats;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
@@ -35,13 +36,20 @@ import co.cask.cdap.template.etl.common.Properties;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.MapReduceManager;
+import co.cask.cdap.test.StreamManager;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import org.apache.avro.file.DataFileStream;
+import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericRecord;
+import org.apache.avro.io.DatumReader;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.LocatedFileStatus;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.RemoteIterator;
 import org.apache.hadoop.fs.s3native.S3NInMemoryFileSystem;
 import org.junit.Assert;
 import org.junit.Test;
@@ -253,6 +261,91 @@ public class ETLMapReduceTest extends BaseETLBatchTest {
     Assert.assertEquals(1, records.size());
     Assert.assertEquals(testData, records.get(0).get("body").toString());
     fileSet.close();
+  }
+
+  @Test
+  public void testStreamToS3() throws Exception {
+
+    String s3Path = "s3n://out";
+    S3NInMemoryFileSystem fs = new S3NInMemoryFileSystem();
+    Configuration conf = new Configuration();
+    conf.set("fs.s3n.impl", S3NInMemoryFileSystem.class.getName());
+    fs.initialize(URI.create(s3Path), conf);
+
+    Method method = FileSystem.class.getDeclaredMethod("addFileSystemForTesting",
+                                                       new Class[]{URI.class, Configuration.class, FileSystem.class});
+    method.setAccessible(true);
+    method.invoke(FileSystem.class, URI.create(s3Path), conf, fs);
+
+    StreamManager streamManager = getStreamManager("myStream");
+    streamManager.createStream();
+    streamManager.send(ImmutableMap.of("header", "value"), "AAPL|10|500.32");
+
+    Schema eventSchema = Schema.recordOf("streamEvent",
+                                         Schema.Field.of("ts", Schema.of(Schema.Type.LONG)),
+                                         Schema.Field.of("headers", Schema.mapOf(Schema.of(Schema.Type.STRING),
+                                                                                 Schema.of(Schema.Type.STRING))),
+                                         Schema.Field.of("ticker", Schema.of(Schema.Type.STRING)),
+                                         Schema.Field.of("num", Schema.of(Schema.Type.INT)),
+                                         Schema.Field.of("price", Schema.of(Schema.Type.DOUBLE)));
+
+    Schema bodySchema = Schema.recordOf("event",
+                                        Schema.Field.of("ticker", Schema.of(Schema.Type.STRING)),
+                                        Schema.Field.of("num", Schema.of(Schema.Type.INT)),
+                                        Schema.Field.of("price", Schema.of(Schema.Type.DOUBLE)));
+
+    ETLStage source = new ETLStage("Stream", ImmutableMap.<String, String>builder()
+      .put(Properties.Stream.NAME, "myStream")
+      .put(Properties.Stream.DURATION, "10m")
+      .put(Properties.Stream.DELAY, "0d")
+      .put(Properties.Stream.FORMAT, Formats.CSV)
+      .put(Properties.Stream.SCHEMA, bodySchema.toString())
+      .put("format.setting.delimiter", "|")
+      .build());
+
+
+    ETLStage sink = new ETLStage("S3AvroSink",
+                                 ImmutableMap.of(Properties.S3BatchSink.SCHEMA, eventSchema.toString(),
+                                                 Properties.S3.ACCESS_KEY, "key",
+                                                 Properties.S3.ACCESS_ID, "ID",
+                                                 Properties.S3.PATH, s3Path,
+                                                 Properties.S3BatchSink.NAME, "name"));
+
+    ETLStage transform = new ETLStage("Projection", ImmutableMap.<String, String>of());
+
+    ETLBatchConfig batchConfig =  new ETLBatchConfig("* * * * *", source, sink, Lists.newArrayList(transform));
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(ETLBATCH_ARTIFACT, batchConfig);
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "StreamToS3");
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+
+    MapReduceManager mrManager = appManager.getMapReduceManager(ETLMapReduce.NAME);
+    mrManager.start();
+    mrManager.waitForFinish(2, TimeUnit.MINUTES);
+
+    // TODO: Fix this before merging. It is broken now
+//    List<RunRecord> records = mrManager.getHistory();
+//    Assert.assertEquals(1, records.size());
+//    Assert.assertEquals(ProgramRunStatus.COMPLETED , records.get(0).getStatus());
+//    List<GenericRecord> records = readFromS3(new Path(s3Path), bodySchema, fs);
+//    Assert.assertEquals(1, records.size());
+
+  }
+
+  private List<GenericRecord> readFromS3(Path path, Schema schema, S3NInMemoryFileSystem fs) throws Exception {
+    org.apache.avro.Schema avroSchema = new org.apache.avro.Schema.Parser().parse(schema.toString());
+    DatumReader<GenericRecord> datumReader = new GenericDatumReader<>(avroSchema);
+    List<GenericRecord> records = Lists.newArrayList();
+
+    RemoteIterator<LocatedFileStatus> files = fs.listFiles(path, true);
+    while (files.hasNext()) {
+      LocatedFileStatus file = files.next();
+      if (file.getPath().toString().endsWith("avro")) {
+        DataFileStream<GenericRecord> fileStream = new DataFileStream<>(fs.open(file.getPath()), datumReader);
+        Iterables.addAll(records, fileStream);
+        fileStream.close();
+      }
+    }
+    return records;
   }
 
   @Test

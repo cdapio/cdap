@@ -30,6 +30,8 @@ import co.cask.cdap.template.etl.batch.sink.BatchCubeSink;
 import co.cask.cdap.template.etl.batch.sink.BatchElasticsearchSink;
 import co.cask.cdap.template.etl.batch.sink.DBSink;
 import co.cask.cdap.template.etl.batch.sink.KVTableSink;
+import co.cask.cdap.template.etl.batch.sink.S3AvroBatchSink;
+import co.cask.cdap.template.etl.batch.sink.S3ParquetBatchSink;
 import co.cask.cdap.template.etl.batch.sink.SnapshotFileBatchAvroSink;
 import co.cask.cdap.template.etl.batch.sink.SnapshotFileBatchParquetSink;
 import co.cask.cdap.template.etl.batch.sink.TableSink;
@@ -56,7 +58,6 @@ import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.io.DatumReader;
 import org.apache.avro.mapred.AvroKey;
-import org.apache.avro.mapreduce.AvroKeyInputFormat;
 import org.apache.avro.mapreduce.AvroKeyOutputFormat;
 import org.apache.hadoop.fs.Path;
 import org.apache.twill.filesystem.Location;
@@ -97,7 +98,8 @@ public class BaseETLBatchTest extends TestBase {
                       TimePartitionedFileSetDatasetAvroSink.class, AvroKeyOutputFormat.class, AvroKey.class,
                       TimePartitionedFileSetDatasetParquetSink.class, AvroParquetOutputFormat.class,
                       BatchElasticsearchSink.class,
-                      SnapshotFileBatchAvroSink.class, SnapshotFileBatchParquetSink.class);
+                      SnapshotFileBatchAvroSink.class, SnapshotFileBatchParquetSink.class,
+                      S3AvroBatchSink.class, S3ParquetBatchSink.class);
     // add artifact for transforms
     addPluginArtifact(Id.Artifact.from(Id.Namespace.DEFAULT, "transforms", "1.0.0"), APP_ARTIFACT_ID,
       ProjectionTransform.class, ScriptFilterTransform.class, ValidatorTransform.class, CoreValidator.class,

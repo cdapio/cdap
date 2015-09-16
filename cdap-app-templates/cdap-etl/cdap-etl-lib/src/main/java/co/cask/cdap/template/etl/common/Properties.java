@@ -163,6 +163,14 @@ public final class Properties {
   }
 
   /**
+   * Configuration for S3BatchSink
+   */
+  public static class S3BatchSink {
+    public static final String NAME = "name";
+    public static final String SCHEMA = "schema";
+  }
+
+  /**
    * Common properties for BatchWritable source and sinks
    */
   public static class BatchReadableWritable {
