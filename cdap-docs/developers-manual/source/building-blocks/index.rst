@@ -24,6 +24,7 @@ Building Blocks
     Spark Programs <spark-programs>
     Workers <workers>
     Workflows <workflows>
+    Metadata <metadata>
     Namespaces <namespaces>
     Transaction System <transaction-system>
 
@@ -47,6 +48,11 @@ write data through the data abstraction layer in CDAP.
 - :doc:`Spark Programs <spark-programs>`
 - :doc:`Workers <workers>`
 - :doc:`Workflows <workflows>`
+
+:doc:`Metadata <metadata>` |---| consisting of **properties** (a list of key-value pairs)
+or **tags** (a list of keys) |---| can be set for both data and applications. These can be
+retrieved and searched, and the metadata is used to track and view the lineage of datasets
+and streams.
 
 A :doc:`Namespace <namespaces>` is a logical grouping of application and data in CDAP.
 Conceptually, namespaces can be thought of as a partitioning of a CDAP instance.

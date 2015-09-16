@@ -118,7 +118,7 @@ public class LineageHandler extends AbstractHttpHandler {
       throw new BadRequestException(String.format("Invalid end time (%d), should be >= 0.", end));
     }
     if (start > end) {
-      throw new BadRequestException(String.format("start time (%d) should be lesser than end time (%d).", start, end));
+      throw new BadRequestException(String.format("Start time (%d) should be less than end time (%d).", start, end));
     }
     if (levels < 1) {
       throw new BadRequestException(String.format("Invalid levels (%d), should be greater than 0.", levels));

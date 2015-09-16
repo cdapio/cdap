@@ -12,6 +12,8 @@ Metadata HTTP RESTful API
 
 .. highlight:: console
 
+.. include:: ../../../_common/_includes/include-v320-beta-metadata.rst
+
 Use the CDAP Metadata HTTP RESTful API to set, retrieve, and delete the metadata annotations
 of applications, datasets, streams, and other elements in CDAP.
 
@@ -22,7 +24,7 @@ The HTTP RESTful API is divided into three sections:
 
 - :ref:`metadata properties <http-restful-api-metadata-properties>`;
 - :ref:`metadata tags <http-restful-api-metadata-tags>`; and
-- :ref:`searching and viewing properties and lineage <http-restful-api-metadata-searching-viewing>`
+- :ref:`searching properties and viewing lineage <http-restful-api-metadata-searching-viewing>`
 
 In this API, ``<base-url>`` is as described under :ref:`Conventions
 <http-restful-api-conventions>`. Metadata keys and tags must conform to the CDAP
@@ -358,10 +360,10 @@ or, for a particular user metadata tag of a program of a specific application::
 Searching and Viewing
 =====================
 
-Searching for Properties and Tags
----------------------------------
-To find which applications, datasets, or streams have a particular metadata property or
-metadata tag, submit an HTTP GET request::
+Searching for Metadata
+----------------------
+To find which applications, datasets, or streams have a particular user metadata property or
+user metadata tag, submit an HTTP GET request::
 
   GET /v3/namespaces/<namespace>/metadata/search?query=<term>&target=<element-type>
 
@@ -435,7 +437,11 @@ where:
    * - ``<max-levels>``
      - Maximum number of levels
      
-The lineage will be returned as a JSON string in the body of the response. Here is an example, pretty-printed::
+The lineage will be returned as a JSON string in the body of the response. The number of
+levels of the request (``<max-levels>``) determines how far back the provenance of the
+data in the lineage chain is calculated, as described in the :ref:`Developers' Manual <metadata-lineage>`.
+
+Here is an example, pretty-printed::
 
   {
     "start": "1441310434000",
