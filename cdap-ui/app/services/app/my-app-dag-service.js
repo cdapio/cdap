@@ -291,7 +291,7 @@ angular.module(PKG.name + '.services')
       var config = {
         id: conf.id,
         name: conf.name,
-        label: conf.label || conf.name,
+        label: conf.label || conf.pluginTemplate || conf.name,
         icon: conf.icon,
         style: conf.style || '',
         description: conf.description,

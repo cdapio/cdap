@@ -37,7 +37,7 @@
              ng-click="MyDAGController.removePlugin($index, plugin.id)"></div>
         <div class="icon fa {{plugin.icon}}"></div>
       </div>
-      <div class="plugin-name" ng-bind="plugin.pluginTemplate || MyDAGController.MyAppDAGService.nodes[plugin.id].label"></div>
+      <div class="plugin-name" ng-bind="MyDAGController.MyAppDAGService.nodes[plugin.id].label"></div>
     </div>
 
   </div>
