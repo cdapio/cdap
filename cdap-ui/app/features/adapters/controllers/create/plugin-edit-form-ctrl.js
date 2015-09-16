@@ -45,7 +45,7 @@ angular.module(PKG.name + '.feature.adapters')
 
     this.infoPluginName = $scope.plugin.name.toLowerCase();
     var docsUrl = 'http://docs.cask.co/cdap/';
-    var etlPath = '/en/included-apps-manual/etl/templates/';
+    var etlPath = '/en/included-applications/etl/templates/';
     var hideNav = '.html?hidenav';
     if (this.infoPluginCategory === 'transforms') {
       this.infoPluginCategory = 'transformations';
