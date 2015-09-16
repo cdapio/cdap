@@ -83,8 +83,11 @@
               </span>
             </td>
             <td></td>
-            <td></td>
-            <td></td>
+            <td>{{ adapter._stats.numRuns }}</td>
+            <td>
+              <span ng-if="adapter._stats.lastStartTime === 'N/A'">{{ adapter._stats.lastStartTime }}</span>
+              <span ng-if="adapter._stats.lastStartTime !== 'N/A'">{{ adapter._stats.lastStartTime * 1000 | amDateFormat: 'MM/DD/YY h:mm:ss a' }}</span>
+            </td>
           </tr>
         </tbody>
       </table>

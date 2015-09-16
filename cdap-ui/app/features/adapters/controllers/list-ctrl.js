@@ -16,74 +16,119 @@
 
 var alertpromise;
 angular.module(PKG.name + '.feature.adapters')
-  .controller('AdaptersListController', function(myAdapterApi, $stateParams, GLOBALS, mySettings, $state, $alert, $timeout, myAlert, myHelpers) {
-    this.adaptersList = [];
-    this.drafts  = [];
-    this.currentPage = 1;
-    this.searchText = '';
+  .controller('AdaptersListController', function($scope, myAdapterApi, $stateParams, GLOBALS, mySettings, $state, $alert, $timeout, myAlert, myHelpers, myWorkFlowApi) {
 
-    this.GLOBALS = GLOBALS;
+    var vm = this;
+
+    vm.adaptersList = [];
+    vm.drafts  = [];
+    vm.currentPage = 1;
+    vm.searchText = '';
+
+    vm.GLOBALS = GLOBALS;
+
 
     myAdapterApi.list({
       namespace: $stateParams.namespace
     })
       .$promise
       .then(function success(res) {
-        this.adaptersList = res;
-        console.log(this.adaptersList);
-      }.bind(this));
+        vm.adaptersList = res;
 
-      mySettings.get('adapterDrafts')
-        .then(function(res) {
-          if (res && Object.keys(res).length) {
-            angular.forEach(res, function(value, key) {
-              this.drafts.push({
-                isdraft: true,
-                name: key,
-                template: myHelpers.objectQuery(value, 'artifact', 'name'),
-                status: '-',
-                description: myHelpers.objectQuery(value, 'description')
-              });
-            });
-          }
+        angular.forEach(vm.adaptersList, function (app) {
+          app._stats = {};
+
+          fetchRunsInfo(app);
+
         });
 
-      this.deleteDraft = function(draftName) {
-        mySettings.get('adapterDrafts')
-          .then(function(res) {
-            if (res[draftName]) {
-              delete res[draftName];
-            }
-            return mySettings.set('adapterDrafts', res);
-          })
-          .then(
-            function success() {
-              var alertObj = {
-                type: 'success',
-                content: 'Adapter draft ' + draftName + ' delete successfully'
-              }, e;
-              if (!alertpromise) {
-                alertpromise = $alert(alertObj);
-                e = this.$on('alert.hide', function() {
-                  alertpromise = null;
-                  e(); // un-register from listening to the hide event of a closed alert.
-                });
-              }
-              $state.reload();
-            },
-            function error() {
-              var alertObj = {
-                type: 'danger',
-                content: 'Adapter draft ' + draftName + ' delete failed'
-              }, e;
-              if (!alertpromise) {
-                alertpromise = $alert(alertObj);
-                e = this.$on('alert.hide', function() {
-                  alertpromise = null;
-                  e();
-                });
-              }
-              $state.reload();
-            });
+
+      });
+
+
+    function fetchRunsInfo(app) {
+      var params = {
+        namespace: $state.params.namespace,
+        appId: app.id,
+        scope: $scope
       };
+
+      var api;
+
+      if (app.artifact.name === GLOBALS.etlBatch) {
+        api = myWorkFlowApi;
+        params.workflowId = 'ETLWorkflow';
+      }
+      // else {
+      //   api = myWorkersApi;
+      //   params.workerId = 'ETLWorker';
+      // }
+
+      api.runs(params)
+        .$promise
+        .then(function (runs) {
+          app._stats.numRuns = runs.length;
+          console.log('runs', runs);
+          app._stats.lastStartTime = runs.length > 0 ? runs[0].start : 'N/A';
+        });
+
+    }
+
+
+
+      // DRAFTS
+
+    mySettings.get('adapterDrafts')
+      .then(function(res) {
+        if (res && Object.keys(res).length) {
+          angular.forEach(res, function(value, key) {
+            this.drafts.push({
+              isdraft: true,
+              name: key,
+              template: myHelpers.objectQuery(value, 'artifact', 'name'),
+              status: '-',
+              description: myHelpers.objectQuery(value, 'description')
+            });
+          });
+        }
+      });
+
+    vm.deleteDraft = function(draftName) {
+      mySettings.get('adapterDrafts')
+        .then(function(res) {
+          if (res[draftName]) {
+            delete res[draftName];
+          }
+          return mySettings.set('adapterDrafts', res);
+        })
+        .then(
+          function success() {
+            var alertObj = {
+              type: 'success',
+              content: 'Adapter draft ' + draftName + ' delete successfully'
+            }, e;
+            if (!alertpromise) {
+              alertpromise = $alert(alertObj);
+              e = this.$on('alert.hide', function() {
+                alertpromise = null;
+                e(); // un-register from listening to the hide event of a closed alert.
+              });
+            }
+            $state.reload();
+          },
+          function error() {
+            var alertObj = {
+              type: 'danger',
+              content: 'Adapter draft ' + draftName + ' delete failed'
+            }, e;
+            if (!alertpromise) {
+              alertpromise = $alert(alertObj);
+              e = this.$on('alert.hide', function() {
+                alertpromise = null;
+                e();
+              });
+            }
+            $state.reload();
+          });
+    };
   });
