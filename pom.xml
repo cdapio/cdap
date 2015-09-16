@@ -1999,6 +1999,7 @@
                       --before-remove "${project.parent.basedir}/cdap-distributions/src/rpm/scripts/prerm"
                       --after-remove "${project.parent.basedir}/cdap-distributions/src/rpm/scripts/postrm"
                       --iteration "${release.iteration}"
+                      --depends libxml2
                       ${package.depends}
                       ${package.dirs}
                     </commandlineArgs>
@@ -2050,6 +2051,7 @@
                       --before-remove "${project.parent.basedir}/cdap-distributions/src/debian/scripts/prerm"
                       --after-remove "${project.parent.basedir}/cdap-distributions/src/debian/scripts/postrm"
                       --iteration "${release.iteration}"
+                      --depends libxml2-utils
                       ${package.depends}
                       ${package.dirs}
                     </commandlineArgs>

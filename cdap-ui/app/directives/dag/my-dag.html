@@ -17,10 +17,14 @@
 <div class="my-js-dag" ng-class="{'disabled': MyDAGController.isDisabled }">
   <div id="dag-container">
 
+    <!--
+      The condition on ng-click is to prevent user from being able to click
+      if the DAG is disabled. It will prevent the highlighting of nodes on select
+    -->
     <div ng-repeat="plugin in MyDAGController.plugins" class="box {{plugin.type}}" ng-style="plugin.style"
            data-type="{{plugin.type}}"
            id="{{plugin.id}}"
-           ng-click="MyDAGController.onPluginClick(plugin)"
+           ng-click="MyDAGController.isDisabled || MyDAGController.onPluginClick(plugin)"
            ng-class="{'selected': plugin.selected}">
       <div class="node">
         <div class="error-node-notification"

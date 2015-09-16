@@ -89,7 +89,7 @@ angular.module(PKG.name + '.commons')
       var margins, marginLeft;
       margins = $scope.getGraphMargins(this.plugins);
       marginLeft = margins.left;
-
+      this.instance.endpointAnchorClassPrefix = '';
       this.plugins.forEach(function(plugin) {
         plugin.icon = MyDAGFactory.getIcon(plugin.name);
         if (this.isDisabled) {
