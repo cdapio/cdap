@@ -29,6 +29,10 @@ default['cdap']['security']['manage_realmfile'] = false
 # realmfile username/passwords
 default['cdap']['security']['realmfile']['cdap'] = 'cdap'
 
+# router
+default['cdap']['cdap_site']['router.ssl.keystore.password'] = 'defaultpassword'
+default['cdap']['cdap_site']['router.ssl.keystore.path'] = '/opt/cdap/gateway/conf/keystore.jks'
+
 # web ui
 default['cdap']['cdap_site']['dashboard.ssl.key'] = "/etc/cdap/#{node['cdap']['conf_dir']}/webapp.key"
 default['cdap']['cdap_site']['dashboard.ssl.cert'] = "/etc/cdap/#{node['cdap']['conf_dir']}/webapp.crt"
