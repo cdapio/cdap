@@ -123,10 +123,11 @@ extensions = [
 
 _intersphinx_mapping = "../../%%s/%s/html/objects.inv" % target
 
+# The Inter-Sphinx mapping keys must be alpha-numeric only
 intersphinx_mapping = {
   'introduction': ('../../introduction/',         os.path.abspath(_intersphinx_mapping % 'introduction')),
   'developers':   ('../../developers-manual/',    os.path.abspath(_intersphinx_mapping % 'developers-manual')),
-  'apptemplates': ('../../application-templates', os.path.abspath(_intersphinx_mapping % 'application-templates')),
+  'includedapps': ('../../included-applications', os.path.abspath(_intersphinx_mapping % 'included-applications')),
   'admin':        ('../../admin-manual/',         os.path.abspath(_intersphinx_mapping % 'admin-manual')),
   'integrations': ('../../integrations/',         os.path.abspath(_intersphinx_mapping % 'integrations')),
   'examples':     ('../../examples-manual',       os.path.abspath(_intersphinx_mapping % 'examples-manual')),
@@ -327,7 +328,7 @@ html_theme = 'cdap'
 manuals_list = [
     ["introduction",          "Introduction to CDAP",            "",],
     ["developers-manual",    u"Developers’ Manual",              "",],
-    ["application-templates", "Application Templates",           "",],
+    ["included-applications", "Included Applications",           "",],
     ["admin-manual",          "Administration Manual",           "",],
     ["integrations",          "Integrations",                    "",],
     ["examples-manual",       "Examples, Guides, and Tutorials", "",],

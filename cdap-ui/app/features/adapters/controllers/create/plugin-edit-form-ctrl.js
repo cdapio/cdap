@@ -44,28 +44,31 @@ angular.module(PKG.name + '.feature.adapters')
     this.infoPluginCategory = $scope.plugin.type + 's';
 
     this.infoPluginName = $scope.plugin.name.toLowerCase();
+    var docsUrl = 'http://docs.cask.co/cdap/';
+    var etlPath = '/en/included-applications/etl/templates/';
+    var hideNav = '.html?hidenav';
     if (this.infoPluginCategory === 'transforms') {
       this.infoPluginCategory = 'transformations';
       this.infoUrl = [
-        'http://docs.cask.co/cdap/',
+        docsUrl,
         $rootScope.cdapVersion,
-        '/en/application-templates/etl/templates/',
+        etlPath,
         this.infoPluginCategory,
         '/',
         this.infoPluginName,
-        '.html?hidenav'
+        hideNav
       ].join('');
     } else {
       this.infoUrl = [
-        'http://docs.cask.co/cdap/',
+        docsUrl,
         $rootScope.cdapVersion ,
-        '/en/application-templates/etl/templates/',
+        etlPath,
         this.infoPluginCategory,
         '/',
         this.infoPluginType,
         '/',
         this.infoPluginName,
-        '.html?hidenav'
+        hideNav
       ].join('');
     }
 

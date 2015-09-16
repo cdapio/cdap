@@ -60,7 +60,7 @@ These sections describe:
 
 
 .. |etl-templates| replace:: **ETL Templates:**
-.. _etl-templates: etl/templates/index.html
+.. _etl-templates: etl/plugins/index.html
 
 - |etl-templates|_ Details on Application Templates and exploring Application templates using RESTful APIs.
 
