@@ -13,14 +13,16 @@ Metadata HTTP RESTful API
 .. highlight:: console
 
 Use the CDAP Metadata HTTP RESTful API to set, retrieve, and delete the metadata annotations
-of applications and datasets in CDAP.
+of applications, datasets, streams, and other elements in CDAP.
 
-Metadata consists of properties (a list of key-value pairs) and tags (a list of keys).
+Metadata consists of **properties** (a list of key-value pairs) or **tags** (a list of keys).
 Metadata and their use are described in the :ref:`Developers' Manual: Metadata <metadata>`.
 
-The HTTP RESTful API is divided into two sections,
-:ref:`metadata properties <http-restful-api-metadata-properties>` and
-:ref:`metadata tags <http-restful-api-metadata-tags>`.
+The HTTP RESTful API is divided into three sections:
+
+- :ref:`metadata properties <http-restful-api-metadata-properties>`;
+- :ref:`metadata tags <http-restful-api-metadata-tags>`; and
+- :ref:`searching and viewing properties and lineage <http-restful-api-metadata-searching-viewing>`
 
 In this API, ``<base-url>`` is as described under :ref:`Conventions
 <http-restful-api-conventions>`. Metadata keys and tags must conform to the CDAP
@@ -43,7 +45,7 @@ or, for a particular program of a specific application::
 
   POST /v3/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/metadata/properties
 
-with the metadata properties, as a JSON string map of string-string pairs, passed in the
+with the metadata properties as a JSON string map of string-string pairs, passed in the
 request body::
 
   {
@@ -142,7 +144,7 @@ in the response body (pretty-printed)::
 
 Deleting Properties
 -------------------
-To delete all user metadata properties for an application, dataset, or stream, submit an
+To delete **all** user metadata properties for an application, dataset, or stream, submit an
 HTTP DELETE request::
 
   DELETE /v3/namespaces/<namespace>/<element-type>/<element-id>/metadata/properties
@@ -151,12 +153,12 @@ or, for all user metadata properties of a particular program of a specific appli
 
   DELETE /v3/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/metadata/properties
 
-To delete a specific user metadata property for an application, dataset, or stream, submit
+To delete **a specific property** for an application, dataset, or stream, submit
 an HTTP DELETE request with the property key::
 
   DELETE /v3/namespaces/<namespace>/<element-type>/<element-id>/metadata/properties/<key>
   
-or, for a particular user metadata property of a program of a specific application::
+or, for a particular property of a program of a specific application::
 
   DELETE /v3/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/metadata/properties/<key>
 

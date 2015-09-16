@@ -47,8 +47,7 @@ data isolation. This is an inital step towards introducing `multi-tenancy
 - :doc:`Lifecycle: <lifecycle>` deploying and managing applications, and managing the lifecycle of flows,
   MapReduce programs, Spark programs, workflows, and custom services
 - :doc:`Configuration: <configuration>` retrieving the CDAP and HBase configurations
-- :doc:`Metadata: <metadata>` setting, retrieving, and deleting the business and system metadata annotations
-  of applications and datasets
+- :doc:`Metadata: <metadata>` setting, retrieving, and deleting user metadata annotations
 - :doc:`Preferences: <preferences>` setting, retrieving, and deleting preferences
 - :doc:`Application Templates and Adapters: <apptemplates>` obtaining available application templates and
   plugins, and creating, deleting, and managing the lifecycle of adapters
