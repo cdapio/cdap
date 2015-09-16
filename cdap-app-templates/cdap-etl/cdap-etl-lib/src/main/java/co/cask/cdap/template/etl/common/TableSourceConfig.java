@@ -40,7 +40,8 @@ public class TableSourceConfig extends PluginConfig {
   private String schemaStr;
 
   @Name(Properties.Table.PROPERTY_SCHEMA_ROW_FIELD)
-  @Description("The name of the record field that should be used as the row key when writing to the table.")
+  @Description("Optional field name indicating that the field value should come from the row key instead of a " +
+    "row column. The field name specified must be present in the schema, and must not be nullable.")
   @Nullable
   private String rowField;
 
