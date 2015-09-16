@@ -81,13 +81,13 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
   @Override
   public void storeJob(JobDetail newJob, boolean replaceExisting) throws ObjectAlreadyExistsException {
     super.storeJob(newJob, replaceExisting);
-    executePersist(newJob, null);
+    executePersist(newJob, null, null);
   }
 
   @Override
   public void storeTrigger(OperableTrigger newTrigger, boolean replaceExisting) throws JobPersistenceException {
     super.storeTrigger(newTrigger, replaceExisting);
-    executePersist(null, newTrigger);
+    executePersist(null, newTrigger, super.getTriggerState(newTrigger.getKey()));
   }
 
 
@@ -104,7 +104,7 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
     super.storeJob(newJob, true);
     super.storeTrigger(newTrigger, true);
 
-    executePersist(newJob, newTrigger);
+    executePersist(newJob, newTrigger, super.getTriggerState(newTrigger.getKey()));
   }
 
   @Override
@@ -170,16 +170,18 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
     }
   }
 
-  private void executePersist(final TriggerKey triggerKey, final Trigger.TriggerState state) {
+  private void executePersist(final TriggerKey triggerKey, final Trigger.TriggerState newTriggerState) {
     try {
       factory.createExecutor(ImmutableList.of((TransactionAware) table))
                             .execute(new TransactionExecutor.Subroutine() {
                               @Override
                               public void apply() throws Exception {
                                 if (triggerKey != null) {
-                                  TriggerStatus trigger = readTrigger(triggerKey);
-                                  if (trigger != null) {
-                                    persistTrigger(table, trigger.trigger, state);
+                                  TriggerStatus storedTriggerStatus = readTrigger(triggerKey);
+                                  if (storedTriggerStatus != null) {
+                                    // its okay to persist the same trigger back again since during pause/resume
+                                    // operation the trigger does not change.
+                                    persistTrigger(table, storedTriggerStatus.trigger, newTriggerState);
                                   }
                                 }
                               }
@@ -189,7 +191,8 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
     }
   }
 
-  private void executePersist(final JobDetail newJob, final OperableTrigger newTrigger) {
+  private void executePersist(final JobDetail newJob, final OperableTrigger newTrigger,
+                              final Trigger.TriggerState triggerState) {
     try {
       factory.createExecutor(ImmutableList.of((TransactionAware) table))
         .execute(new TransactionExecutor.Subroutine() {
@@ -200,7 +203,7 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
               LOG.debug("Schedule: stored job with key {}", newJob.getKey());
             }
             if (newTrigger != null) {
-              persistTrigger(table, newTrigger, Trigger.TriggerState.NORMAL);
+              persistTrigger(table, newTrigger, triggerState);
               LOG.debug("Schedule: stored trigger with key {}", newTrigger.getKey());
             }
           }
@@ -212,7 +215,7 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
   }
 
   // Persist the job information to dataset
-  private void persistJob(Table table, JobDetail job) throws Exception {
+  private void persistJob(Table table, JobDetail job) {
     byte[][] cols = new byte[1][];
     byte[][] values = new byte[1][];
 
@@ -221,20 +224,20 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
     table.put(JOB_KEY, cols, values);
   }
 
-  private void removeTrigger(Table table, TriggerKey key) throws Exception {
+  private void removeTrigger(Table table, TriggerKey key) {
     byte[][] col = new byte[1][];
     col[0] = Bytes.toBytes(key.getName());
     table.delete(TRIGGER_KEY, col);
   }
 
 
-  private void removeJob(Table table, JobKey key) throws Exception {
+  private void removeJob(Table table, JobKey key) {
     byte[][] col = new byte[1][];
     col[0] = Bytes.toBytes(key.getName());
     table.delete(JOB_KEY, col);
   }
 
-  private TriggerStatus readTrigger(TriggerKey key) throws Exception {
+  private TriggerStatus readTrigger(TriggerKey key) {
     byte[][] col = new byte[1][];
     col[0] = Bytes.toBytes(key.getName());
     Row result = table.get(TRIGGER_KEY, col);
@@ -251,7 +254,7 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
 
   // Persist the trigger information to dataset
   private void persistTrigger(Table table, OperableTrigger trigger,
-                              Trigger.TriggerState state) throws Exception {
+                              Trigger.TriggerState state) {
 
     byte[][] cols = new byte[1][];
     byte[][] values = new byte[1][];
@@ -265,7 +268,7 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
   private void readSchedulesFromPersistentStore() throws Exception {
 
     final List<JobDetail> jobs = Lists.newArrayList();
-    final List<OperableTrigger> triggers = Lists.newArrayList();
+    final List<TriggerStatus> triggers = Lists.newArrayList();
 
     factory.createExecutor(ImmutableList.of((TransactionAware) table))
       .execute(new TransactionExecutor.Subroutine() {
@@ -286,8 +289,9 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
           if (!result.isEmpty()) {
             for (byte[] bytes : result.getColumns().values()) {
               TriggerStatus trigger = (TriggerStatus) SerializationUtils.deserialize(bytes);
-              if (trigger.state.equals(Trigger.TriggerState.NORMAL)) {
-                triggers.add(trigger.trigger);
+              if (trigger.state.equals(Trigger.TriggerState.NORMAL) ||
+                trigger.state.equals(Trigger.TriggerState.PAUSED)) {
+                triggers.add(trigger);
                 LOG.debug("Schedule: trigger with key {} added", trigger.trigger.getKey());
               } else {
                 LOG.debug("Schedule: trigger with key {} and state {} skipped", trigger.trigger.getKey(),
@@ -304,8 +308,15 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
       super.storeJob(job, true);
     }
 
-    for (OperableTrigger trigger : triggers) {
-      super.storeTrigger(trigger, true);
+    for (TriggerStatus trigger : triggers) {
+      super.storeTrigger(trigger.trigger, true);
+      // if the trigger was paused then pause it back. This is needed because the state of the trigger is not a
+      // property associated with the trigger.
+      // Its fine to do it this way and we will not run into issues where a triggers get fired before its paused
+      // because the scheduler is actually not started at this point.
+      if (trigger.state == Trigger.TriggerState.PAUSED) {
+        super.pauseTrigger(trigger.trigger.getKey());
+      }
     }
   }
 
@@ -313,8 +324,8 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
    * Trigger and state.
    */
   private static class TriggerStatus implements Serializable {
-    private OperableTrigger trigger;
-    private Trigger.TriggerState state;
+    private final OperableTrigger trigger;
+    private final Trigger.TriggerState state;
 
     private TriggerStatus(OperableTrigger trigger, Trigger.TriggerState state) {
       this.trigger = trigger;
