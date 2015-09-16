@@ -16,6 +16,7 @@
 
 package co.cask.cdap.notifications.service.inmemory;
 
+import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.service.AbstractNotificationService;
@@ -64,6 +65,10 @@ public class InMemoryNotificationService extends AbstractNotificationService {
   public <N> ListenableFuture<N> publish(final Id.NotificationFeed feed, final N notification,
                                          final Type notificationType)
     throws NotificationException {
+    if (executorService == null) {
+      // Publish is attempted before the notification service starts
+      throw new ServiceUnavailableException("NotificationService");
+    }
     return executorService.submit(new Callable<N>() {
       @Override
       public N call() throws Exception {

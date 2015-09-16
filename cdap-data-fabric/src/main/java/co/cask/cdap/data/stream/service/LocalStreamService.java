@@ -18,6 +18,7 @@ package co.cask.cdap.data.stream.service;
 
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.metrics.MetricStore;
+import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.stream.notification.StreamSizeNotification;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
@@ -200,6 +201,9 @@ public class LocalStreamService extends AbstractStreamService {
       try {
         notificationService.publish(streamFeed, new StreamSizeNotification(System.currentTimeMillis(), absoluteSize))
           .get();
+      } catch (ServiceUnavailableException e) {
+        // No need to propagate the exception. Attempt to publish was made when the NotificationService was not up.
+        // Next run iteration should have the problem fixed.
       } catch (NotificationFeedException e) {
         LOG.warn("Error with notification feed {}", streamFeed, e);
       } catch (Throwable t) {
