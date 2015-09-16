@@ -32,14 +32,13 @@ import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactClassLoaderFactory;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import co.cask.cdap.internal.app.runtime.artifact.Artifacts;
 import co.cask.cdap.internal.app.runtime.artifact.CloseableClassLoader;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
-import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.io.CharStreams;
-import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
@@ -168,11 +167,13 @@ public final class InMemoryConfigurator implements Configurator {
         new DefaultAppConfigurer(artifactId, app, configString, artifactRepository, pluginInstantiator);
 
       Config appConfig;
+      Type configType = Artifacts.getConfigType(app.getClass());
       if (Strings.isNullOrEmpty(configString)) {
-        appConfig = new Config();
+        //noinspection unchecked
+        appConfig = ((Class<? extends Config>) configType).newInstance();
       } else {
         try {
-          appConfig = GSON.fromJson(configString, getConfigType(app.getClass()));
+          appConfig = GSON.fromJson(configString, Artifacts.getConfigType(app.getClass()));
         } catch (JsonSyntaxException e) {
           throw new IllegalArgumentException("Invalid JSON configuration was provided. Please check the syntax.", e);
         }
@@ -188,17 +189,5 @@ public final class InMemoryConfigurator implements Configurator {
     // We write the Application specification to output file in JSON format.
     // TODO: The SchemaGenerator should be injected
     return ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator()).toJson(specification);
-  }
-
-  private Type getConfigType(Class<? extends Application> appClass) {
-    TypeToken<?> configType = TypeToken.of(appClass).resolveType(Application.class.getTypeParameters()[0]);
-    if (Reflections.isResolved(configType.getType())) {
-      return configType.getType();
-    }
-
-    // It has to be Config
-    Preconditions.checkArgument(Config.class == configType.getRawType(), "Application config type not supported. " +
-      "Type must extend Config and cannot be parameterized.");
-    return Config.class;
   }
 }
