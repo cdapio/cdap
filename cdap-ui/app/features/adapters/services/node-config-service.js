@@ -18,6 +18,7 @@ angular.module(PKG.name + '.feature.adapters')
   .service('MyNodeConfigService', function() {
     this.pluginChangeListeners = [];
     this.pluginResetListeners = [];
+    this.pluginRemoveListeners = [];
 
     this.resetPlugin = function(plugin) {
       this.plugin = plugin;
@@ -47,6 +48,21 @@ angular.module(PKG.name + '.feature.adapters')
 
     this.registerPluginSetCallback = function(callback) {
       this.pluginChangeListeners.push(callback);
+    };
+
+    this.removePlugin = function(nodeId) {
+      this.plugin = null;
+      this.notifyPluginRemoveListeners(nodeId);
+    };
+
+    this.registerRemovePluginCallback = function(callback) {
+      this.pluginRemoveListeners.push(callback);
+    };
+
+    this.notifyPluginRemoveListeners = function(nodeId) {
+      this.pluginRemoveListeners.forEach(function(callback) {
+        callback(nodeId);
+      });
     };
 
   });

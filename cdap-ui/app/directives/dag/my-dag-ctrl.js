@@ -52,6 +52,7 @@ angular.module(PKG.name + '.commons')
       this.plugins.splice(index, 1);
       MyAppDAGService.removeNode(nodeId);
       MyAppDAGService.setConnections(this.instance.getConnections());
+      MyNodeConfigService.removePlugin(nodeId);
     };
 
     // Need to move this to the controller that is using this directive.
