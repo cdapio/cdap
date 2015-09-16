@@ -34,6 +34,7 @@ import co.cask.cdap.internal.app.runtime.artifact.ArtifactClassLoaderFactory;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.CloseableClassLoader;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
+import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -50,6 +51,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.jar.Manifest;
 import javax.annotation.Nullable;
 
@@ -77,7 +79,6 @@ public final class InMemoryConfigurator implements Configurator {
   // these field provided if going through artifact code path, but not through template code path
   // this is temporary until we can remove templates. (CDAP-2662).
   private String appClassName;
-  private String version;
   private Id.Artifact artifactId;
 
   public InMemoryConfigurator(CConfiguration cConf, Id.Artifact artifactId, String appClassName,
@@ -85,7 +86,6 @@ public final class InMemoryConfigurator implements Configurator {
     this(cConf, artifact, configString);
     this.artifactId = artifactId;
     this.appClassName = appClassName;
-    this.version = artifactId.getVersion().getVersion();
     this.artifactRepository = artifactRepository;
   }
 
@@ -125,7 +125,7 @@ public final class InMemoryConfigurator implements Configurator {
         }
 
         Application app = (Application) appMain;
-        ConfigResponse response = createResponse(app, version);
+        ConfigResponse response = createResponse(app);
         result.set(response);
       }
 
@@ -147,16 +147,15 @@ public final class InMemoryConfigurator implements Configurator {
     appClassName = manifest.getMainAttributes().getValue(ManifestFields.MAIN_CLASS);
     Preconditions.checkArgument(appClassName != null && !appClassName.isEmpty(),
       "Main class attribute cannot be empty");
-    version = manifest.getMainAttributes().getValue(ManifestFields.BUNDLE_VERSION);
   }
 
-  private ConfigResponse createResponse(Application app, String bundleVersion)
+  private ConfigResponse createResponse(Application app)
     throws InstantiationException, IllegalAccessException, IOException {
-    String specJson = getSpecJson(app, bundleVersion, configString);
+    String specJson = getSpecJson(app, configString);
     return new DefaultConfigResponse(0, CharStreams.newReaderSupplier(specJson));
   }
 
-  private String getSpecJson(Application app, final String bundleVersion, final String configString)
+  private String getSpecJson(Application app, final String configString)
     throws IllegalAccessException, InstantiationException, IOException {
 
     File tempDir = DirUtils.createTempDir(baseUnpackDir);
@@ -169,17 +168,11 @@ public final class InMemoryConfigurator implements Configurator {
         new DefaultAppConfigurer(artifactId, app, configString, artifactRepository, pluginInstantiator);
 
       Config appConfig;
-      TypeToken typeToken = TypeToken.of(app.getClass());
-      TypeToken<?> configToken = typeToken.resolveType(Application.class.getTypeParameters()[0]);
       if (Strings.isNullOrEmpty(configString)) {
-        appConfig = (Config) configToken.getRawType().newInstance();
+        appConfig = new Config();
       } else {
         try {
-          if (Config.class == configToken.getRawType()) {
-            appConfig = new Config();
-          } else {
-            appConfig = GSON.fromJson(configString, configToken.getType());
-          }
+          appConfig = GSON.fromJson(configString, getConfigType(app.getClass()));
         } catch (JsonSyntaxException e) {
           throw new IllegalArgumentException("Invalid JSON configuration was provided. Please check the syntax.", e);
         }
@@ -197,4 +190,15 @@ public final class InMemoryConfigurator implements Configurator {
     return ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator()).toJson(specification);
   }
 
+  private Type getConfigType(Class<? extends Application> appClass) {
+    TypeToken<?> configType = TypeToken.of(appClass).resolveType(Application.class.getTypeParameters()[0]);
+    if (Reflections.isResolved(configType.getType())) {
+      return configType.getType();
+    }
+
+    // It has to be Config
+    Preconditions.checkArgument(Config.class == configType.getRawType(), "Application config type not supported. " +
+      "Type must extend Config and cannot be parameterized.");
+    return Config.class;
+  }
 }

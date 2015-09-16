@@ -288,6 +288,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
   }
 
   private static class ExtraConfig extends Config {
+    @SuppressWarnings("unused")
     private final int x = 5;
   }
 }
