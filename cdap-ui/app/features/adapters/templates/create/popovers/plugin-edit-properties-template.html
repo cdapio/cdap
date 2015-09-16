@@ -17,6 +17,10 @@
 <form plugin-property-edit-view>
   <fieldset ng-disabled="isDisabled">
       <h4>Configuration</h4>
+      <div class="form-group">
+        <label class="control-label">Label</label>
+        <input type="text" class="form-control" ng-model="pluginCopy.label"/>
+      </div>
       <div ng-repeat="group in PluginEditController.config.groups.position">
         <div class="widget-group-container">
           <div ng-repeat="field in PluginEditController.groups[group].position">

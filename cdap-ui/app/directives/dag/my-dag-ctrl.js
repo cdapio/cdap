@@ -17,6 +17,7 @@
 angular.module(PKG.name + '.commons')
   .controller('MyDAGController', function MyDAGController(jsPlumb, $scope, $timeout, MyAppDAGService, myHelpers, MyDAGFactory, $window, $popover, $rootScope, EventPipe, GLOBALS) {
     this.plugins = $scope.config || [];
+    this.MyAppDAGService = MyAppDAGService;
     this.isDisabled = $scope.isDisabled;
     MyAppDAGService.setIsDisabled(this.isDisabled);
 
@@ -27,7 +28,6 @@ angular.module(PKG.name + '.commons')
 
     this.addPlugin = function addPlugin(config, type) {
       closeAllPopovers();
-
       this.plugins.push(angular.extend({
         icon: MyDAGFactory.getIcon(config.name)
       }, config));

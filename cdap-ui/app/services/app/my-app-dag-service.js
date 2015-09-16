@@ -291,6 +291,7 @@ angular.module(PKG.name + '.services')
       var config = {
         id: conf.id,
         name: conf.name,
+        label: conf.label || conf.name,
         icon: conf.icon,
         style: conf.style || '',
         description: conf.description,
@@ -476,7 +477,8 @@ angular.module(PKG.name + '.services')
           // Should be removed while saving it to backend.
           id: plugin.id,
           name: plugin.name,
-          properties: plugin.properties || {},
+          label: plugin.label,
+          properties: plugin.properties,
           _backendProperties: plugin._backendProperties
         };
 
