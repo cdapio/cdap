@@ -61,8 +61,8 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
-*
-*/
+ *
+ */
 @Category(SlowTests.class)
 public class SchedulerTest {
 
@@ -75,6 +75,7 @@ public class SchedulerTest {
   private static TransactionManager txService;
   private static DatasetOpExecutor dsOpsService;
   private static DatasetService dsService;
+  private static final String DUMMY_SCHEDULER_NAME = "dummyScheduler";
 
   @BeforeClass
   public static void beforeClass() throws Exception {
@@ -106,8 +107,7 @@ public class SchedulerTest {
     txService.stopAndWait();
   }
 
-  public static void schedulerSetup(boolean enablePersistence, String schedulerName)
-    throws SchedulerException, UnsupportedTypeException {
+  public static void schedulerSetup(boolean enablePersistence) throws SchedulerException {
     JobStore js;
     if (enablePersistence) {
       CConfiguration conf = injector.getInstance(CConfiguration.class);
@@ -118,9 +118,9 @@ public class SchedulerTest {
 
     SimpleThreadPool threadPool = new SimpleThreadPool(10, Thread.NORM_PRIORITY);
     threadPool.initialize();
-    DirectSchedulerFactory.getInstance().createScheduler(schedulerName, "1", threadPool, js);
+    DirectSchedulerFactory.getInstance().createScheduler(DUMMY_SCHEDULER_NAME, "1", threadPool, js);
 
-    scheduler = DirectSchedulerFactory.getInstance().getScheduler(schedulerName);
+    scheduler = DirectSchedulerFactory.getInstance().getScheduler(DUMMY_SCHEDULER_NAME);
     scheduler.start();
   }
 
@@ -130,111 +130,114 @@ public class SchedulerTest {
 
   @Test
   public void testJobProperties() throws SchedulerException, UnsupportedTypeException, InterruptedException {
-    String schedulerName = "testPropertiesScheduler";
-    schedulerSetup(true, schedulerName);
-    JobDetail job = JobBuilder.newJob(LogPrintingJob.class)
-      .withIdentity("developer:application1:mapreduce1")
-      .build();
+    schedulerSetup(true);
+    JobDetail jobDetail = getJobDetail();
 
-    Trigger trigger  = TriggerBuilder.newTrigger()
+    Trigger trigger = TriggerBuilder.newTrigger()
       .withIdentity("g2")
       .usingJobData(LogPrintingJob.KEY, LogPrintingJob.VALUE)
       .startNow()
       .withSchedule(CronScheduleBuilder.cronSchedule("0/1 * * * * ?"))
       .build();
 
-    JobKey key =  job.getKey();
     //Schedule job
-    scheduler.scheduleJob(job, trigger);
+    scheduler.scheduleJob(jobDetail, trigger);
     //Make sure that the job gets triggered more than once.
     TimeUnit.SECONDS.sleep(3);
-    scheduler.deleteJob(key);
+    scheduler.deleteJob(jobDetail.getKey());
+    schedulerTearDown();
   }
 
   @Test
   public void testSchedulerWithoutPersistence() throws SchedulerException, UnsupportedTypeException {
-    String schedulerName = "NonPersistentScheduler";
-    //start scheduler without enabling persistence.
-    schedulerSetup(false, schedulerName);
-    JobDetail job = JobBuilder.newJob(LogPrintingJob.class)
-                              .withIdentity("developer:application1:mapreduce1")
-                              .build();
+    JobKey jobKey = scheduleJobWithTrigger(false);
 
-    Trigger trigger  = TriggerBuilder.newTrigger()
-                                     .withIdentity("g1")
-                                     .startNow()
-                                     .withSchedule(CronScheduleBuilder.cronSchedule("0 0/5 * * * ?"))
-                                     .build();
-
-    JobKey key =  job.getKey();
-
-    //Schedule job
-    scheduler.scheduleJob(job, trigger);
-
-    //Get the job stored.
-    JobDetail jobStored = scheduler.getJobDetail(job.getKey());
-    List<? extends Trigger> triggers = scheduler.getTriggersOfJob(job.getKey());
-
-    Assert.assertEquals(jobStored.getKey().getName(), key.getName());
-    Assert.assertEquals(1, triggers.size());
+    verifyJobAndTriggers(jobKey, 1, Trigger.TriggerState.NORMAL);
 
     //Shutdown scheduler.
     schedulerTearDown();
-
     //restart scheduler.
-    schedulerSetup(false, schedulerName);
+    schedulerSetup(false);
 
-   //read the job
-    jobStored = scheduler.getJobDetail(job.getKey());
+    //read the job
+    JobDetail jobStored = scheduler.getJobDetail(jobKey);
     // The job with old job key should not exist since it is not persisted.
     Assert.assertNull(jobStored);
     schedulerTearDown();
   }
 
   @Test
-  public void testSchedulerWithPersistence() throws SchedulerException,
-                                                    UnsupportedTypeException {
-    String schedulerName = "persistentScheduler";
-    //start scheduler enabling persistence.
-    schedulerSetup(true, schedulerName);
-    JobDetail job = JobBuilder.newJob(LogPrintingJob.class)
-      .withIdentity("developer:application1:mapreduce2")
-      .build();
+  public void testSchedulerWithPersistenceAcrossRestarts() throws SchedulerException, UnsupportedTypeException {
+    JobKey jobKey = scheduleJobWithTrigger(true);
 
-    Trigger trigger  = TriggerBuilder.newTrigger()
+    verifyJobAndTriggers(jobKey, 1, Trigger.TriggerState.NORMAL);
+
+    //Shutdown scheduler.
+    schedulerTearDown();
+    //restart scheduler.
+    schedulerSetup(true);
+
+    // The job with old job key should exist since it is persisted.
+    verifyJobAndTriggers(jobKey, 1, Trigger.TriggerState.NORMAL);
+    schedulerTearDown();
+  }
+
+  @Test
+  public void testPausedTriggersAcrossRestarts() throws SchedulerException, UnsupportedTypeException {
+    JobKey jobKey = scheduleJobWithTrigger(true);
+
+    List<? extends Trigger> triggers = scheduler.getTriggersOfJob(jobKey);
+
+    // pause triggers for the job
+    for (Trigger trigger : triggers) {
+      scheduler.pauseTrigger(trigger.getKey());
+    }
+
+    //Shutdown scheduler.
+    schedulerTearDown();
+    //restart scheduler.
+    schedulerSetup(true);
+
+    verifyJobAndTriggers(jobKey, 1, Trigger.TriggerState.PAUSED);
+    schedulerTearDown();
+  }
+
+  private void verifyJobAndTriggers(JobKey jobKey, int expectedTriggersSize,
+                                    Trigger.TriggerState expectedTriggerState) throws SchedulerException {
+    JobDetail jobStored = scheduler.getJobDetail(jobKey);
+    List<? extends Trigger> triggers = scheduler.getTriggersOfJob(jobKey);
+    Assert.assertEquals(jobStored.getKey().getName(), jobKey.getName());
+    Assert.assertEquals(expectedTriggersSize, triggers.size());
+    verifyTriggerState(triggers, expectedTriggerState);
+  }
+
+  private void verifyTriggerState(List<? extends Trigger> triggers,
+                                  Trigger.TriggerState expectedTriggerState) throws SchedulerException {
+    for (Trigger trigger : triggers) {
+      Assert.assertEquals(expectedTriggerState, scheduler.getTriggerState(trigger.getKey()));
+    }
+  }
+
+  private JobKey scheduleJobWithTrigger(boolean enablePersistence) throws UnsupportedTypeException, SchedulerException {
+    //start scheduler with given persistence setting
+    schedulerSetup(enablePersistence);
+    JobDetail jobDetail = getJobDetail();
+
+    Trigger trigger = TriggerBuilder.newTrigger()
       .withIdentity("p1")
       .startNow()
       .withSchedule(CronScheduleBuilder.cronSchedule("0 0/5 * * * ?"))
       .build();
 
-    JobKey key =  job.getKey();
-
     //Schedule job
-    scheduler.scheduleJob(job, trigger);
+    scheduler.scheduleJob(jobDetail, trigger);
+    return jobDetail.getKey();
+  }
 
-    //Get the job stored.
-    JobDetail jobStored = scheduler.getJobDetail(job.getKey());
-    List<? extends Trigger> triggers = scheduler.getTriggersOfJob(job.getKey());
-
-    Assert.assertEquals(jobStored.getKey().getName(), key.getName());
-    Assert.assertEquals(1, triggers.size());
-
-    //Shutdown scheduler.
-    schedulerTearDown();
-
-    //restart scheduler.
-    schedulerSetup(true, schedulerName);
-
-    //read the job
-    jobStored = scheduler.getJobDetail(job.getKey());
-    // The job with old job key should exist since it is persisted in Dataset
-    Assert.assertNotNull(jobStored);
-    Assert.assertEquals(jobStored.getKey().getName(), key.getName());
-
-    triggers = scheduler.getTriggersOfJob(job.getKey());
-    Assert.assertEquals(1, triggers.size());
-
-    schedulerTearDown();
+  private JobDetail getJobDetail() {
+    return JobBuilder.newJob(LogPrintingJob.class)
+      .withIdentity("developer:application1:mapreduce1")
+      .build();
   }
 
   @AfterClass
