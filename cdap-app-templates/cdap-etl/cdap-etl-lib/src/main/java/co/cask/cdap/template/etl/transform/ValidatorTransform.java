@@ -95,9 +95,20 @@ public class ValidatorTransform extends Transform<StructuredRecord, StructuredRe
 
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) throws IllegalArgumentException {
+    super.configurePipeline(pipelineConfigurer);
+    List<Validator> validators = new ArrayList<>();
     for (String validatorName : config.validators.split("\\s*,\\s*")) {
-      pipelineConfigurer.usePluginClass("validator", validatorName, validatorName,
-                                        PluginProperties.builder().build());
+      Validator validator =
+        pipelineConfigurer.usePlugin("validator", validatorName, validatorName, PluginProperties.builder().build());
+      if (validator == null) {
+        throw new IllegalArgumentException("No validator plugin named " + validatorName + " could be found.");
+      }
+      validators.add(validator);
+    }
+    try {
+      setUpInitialScript(validators);
+    } catch (ScriptException e) {
+      throw new IllegalArgumentException("Invalid validation script: " + e.getMessage(), e);
     }
   }
 
@@ -107,15 +118,12 @@ public class ValidatorTransform extends Transform<StructuredRecord, StructuredRe
     for (String pluginId : config.validators.split("\\s*,\\s*")) {
       validators.add((Validator) context.newPluginInstance(pluginId));
     }
-    try {
-      setUpInitialScript(context, validators);
-    }  catch (ScriptException e) {
-      throw new IllegalArgumentException("Invalid script.", e);
-    }
+    setUpInitialScript(validators);
+    metrics = context.getMetrics();
   }
 
   @VisibleForTesting
-  void setUpInitialScript(TransformContext context, List<Validator> validators) throws ScriptException {
+  void setUpInitialScript(List<Validator> validators) throws ScriptException {
     ScriptEngineManager manager = new ScriptEngineManager();
     engine = manager.getEngineByName("JavaScript");
     String scriptStr = config.validationScript;
@@ -131,10 +139,9 @@ public class ValidatorTransform extends Transform<StructuredRecord, StructuredRe
     // rather than function isValid() { ... } with the input record assigned to the global variable
     // and have them access the global variable in the function
     String script = String.format("function %s() { return isValid(%s); }\n%s",
-                                  FUNCTION_NAME, VARIABLE_NAME, scriptStr);
+                                  FUNCTION_NAME, VARIABLE_NAME, config.validationScript);
     engine.eval(script);
     invocable = (Invocable) engine;
-    metrics = context.getMetrics();
   }
 
   @Override
@@ -169,7 +176,7 @@ public class ValidatorTransform extends Transform<StructuredRecord, StructuredRe
     Double errorCodeNum = (Double) errorCode;
     Preconditions.checkState((errorCodeNum >= Integer.MIN_VALUE && errorCodeNum <= Integer.MAX_VALUE),
                              "errorCode must be a valid Integer");
-    return new InvalidEntry<StructuredRecord>(errorCodeNum.intValue(), (String) result.get("errorMsg"), input);
+    return new InvalidEntry<>(errorCodeNum.intValue(), (String) result.get("errorMsg"), input);
   }
 
   /**
@@ -181,5 +188,4 @@ public class ValidatorTransform extends Transform<StructuredRecord, StructuredRe
     @Description(SCRIPT_DESCRIPTION)
     String validationScript;
   }
-
 }
