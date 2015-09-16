@@ -81,7 +81,7 @@ angular.module(PKG.name + '.commons')
     };
 
     this.drawGraph = function() {
-      var graph = MyDAGFactory.getGraph(this.plugins);
+      var graph = MyDAGFactory.getGraph(this.plugins, MyAppDAGService.metadata.template.type);
       var nodes = graph.nodes()
         .map(function(node) {
           return graph.node(node);
@@ -93,9 +93,9 @@ angular.module(PKG.name + '.commons')
       this.plugins.forEach(function(plugin) {
         plugin.icon = MyDAGFactory.getIcon(plugin.name);
         if (this.isDisabled) {
-          plugin.style = plugin.style || MyDAGFactory.generateStyles(plugin.id, nodes, 0, marginLeft);
+          plugin.style = plugin.style || MyDAGFactory.generateStyles(plugin.id, nodes, marginLeft, 0);
         } else {
-          plugin.style = plugin.style || MyDAGFactory.generateStyles(plugin.id, nodes, 200, marginLeft);
+          plugin.style = plugin.style || MyDAGFactory.generateStyles(plugin.id, nodes, marginLeft, 200);
         }
         drawNode.call(this, plugin.id, plugin.type);
       }.bind(this));

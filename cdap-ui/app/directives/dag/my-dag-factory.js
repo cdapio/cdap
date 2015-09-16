@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .factory('MyDAGFactory', function() {
+  .factory('MyDAGFactory', function(CanvasFactory) {
     var defaultSettings = {
       Connector : [ 'Flowchart', {gap: 7} ],
       ConnectionsDetachable: true
@@ -29,7 +29,7 @@ angular.module(PKG.name + '.commons')
 
     var commonSettings = {
       endpoint:'Dot',
-      maxConnections: 1,
+      maxConnections: -1, // -1 means unlimited connections
       paintStyle: {
         strokeStyle: '#666e82',
         fillStyle: '#666e82',
@@ -94,10 +94,11 @@ angular.module(PKG.name + '.commons')
       var nodeStylesFromDagre = nodes.filter(function(node) {
         return node.label === name;
       });
+
       if (nodeStylesFromDagre.length) {
         styles = {
-          'top': (nodeStylesFromDagre[0].x + xmargin) + 'px',
-          'left': (nodeStylesFromDagre[0].y + ymargin) + 'px'
+          'top': (nodeStylesFromDagre[0].y + ymargin) + 'px',
+          'left': (nodeStylesFromDagre[0].x + xmargin) + 'px'
         };
       }
       return styles;
@@ -106,7 +107,7 @@ angular.module(PKG.name + '.commons')
     // Using Dagre here to generate x and y co-ordinates for each node.
     // When we fork and branch and have complex connections this will be useful for us.
     // Right now this returns a pretty simple straight linear graph.
-     function getGraph(plugins) {
+     function getGraph(plugins, type) {
       var graph = new dagre.graphlib.Graph();
       graph.setGraph({
         nodesep: 90,
@@ -115,9 +116,17 @@ angular.module(PKG.name + '.commons')
         marginx: 30,
         marginy: 30
       });
+
+      graph.setDefaultEdgeLabel(function() { return {}; });
       plugins.forEach(function(plugin) {
         graph.setNode(plugin.id, {label: plugin.id, width: 100, height: 100});
       });
+
+      var connections = CanvasFactory.getConnectionsBasedOnNodes(plugins, type);
+      connections.forEach(function (connection) {
+        graph.setEdge(connection.source, connection.target);
+      });
+
       dagre.layout(graph);
       return graph;
     }

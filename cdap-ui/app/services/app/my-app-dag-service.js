@@ -187,10 +187,11 @@ angular.module(PKG.name + '.services')
       var finalConnections = [];
       var parallelConnections = [];
       var source = connections.filter(function(conn) {
-        if (this.nodes[conn.source].type === 'source') {
+        if (this.nodes[conn.source].type === GLOBALS.pluginTypes[this.metadata.template.type].source) {
           return conn;
         }
       }.bind(this));
+
       if (source.length) {
         addConnectionsInOrder(source[0], finalConnections, originalConnections);
         if (finalConnections.length < originalConnections.length) {
@@ -282,6 +283,7 @@ angular.module(PKG.name + '.services')
       });
       localConnections = orderConnections.call(this, angular.copy(localConnections), angular.copy(localConnections));
       this.connections = localConnections;
+
     };
 
     this.addNodes = function(conf, type, inCreationMode) {
@@ -685,7 +687,7 @@ angular.module(PKG.name + '.services')
       if (ui && ui.connections) {
         this.connections = ui.connections;
       } else {
-        this.connections = CanvasFactory.getConnectionsBasedOnNodes(nodes);
+        this.connections = CanvasFactory.getConnectionsBasedOnNodes(nodes, this.metadata.template.type);
       }
       this.notifyError({});
       this.notifyResetListners();
