@@ -19,8 +19,10 @@ package co.cask.cdap.internal.app.runtime.spark;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.common.Scope;
+import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetArguments;
+import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.ObjectStore;
 import co.cask.cdap.api.dataset.lib.PartitionDetail;
@@ -63,6 +65,7 @@ import co.cask.tephra.TxConstants;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
+import com.google.gson.Gson;
 import com.google.inject.Injector;
 import org.apache.hadoop.mapred.FileAlreadyExistsException;
 import org.apache.twill.common.Threads;
@@ -96,6 +99,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class SparkProgramRunnerTest {
 
   private static final TempFolder TEMP_FOLDER = new TempFolder();
+  private static final Gson GSON = new Gson();
 
   private static Injector injector;
   private static TransactionExecutorFactory txExecutorFactory;
@@ -394,6 +398,108 @@ public class SparkProgramRunnerTest {
     Assert.assertFalse(myfileset.getSuccessLocation().exists());
     Assert.assertTrue(myfileset.getFailureLocation().exists());
     myfileset.getSuccessLocation().delete();
+  }
+
+  @Test
+  public void testJavaSparkWithGetDataset() throws Exception {
+    testSparkWithGetDataset(SparkAppUsingGetDataset.class, SparkAppUsingGetDataset.JavaSparkLogParser.class);
+  }
+
+  @Test
+  public void testScalaSparkWithGetDataset() throws Exception {
+    testSparkWithGetDataset(SparkAppUsingGetDataset.class, SparkAppUsingGetDataset.ScalaSparkLogParser.class);
+  }
+
+  private void testSparkWithGetDataset(Class<?> appClass, Class<?> programClass) throws Exception {
+    ApplicationWithPrograms app =
+      AppFabricTestHelper.deployApplicationWithManager(appClass, TEMP_FOLDER_SUPPLIER);
+    FileSet fileset = datasetInstantiator.getDataset("logs");
+    Location location = fileset.getLocation("nn");
+    prepareInputFileSetWithLogData(location);
+
+    Map<String, String> inputArgs = new HashMap<>();
+    FileSetArguments.setInputPath(inputArgs, "nn");
+    Map<String, String> args = new HashMap<>();
+    args.putAll(RuntimeArguments.addScope(Scope.DATASET, "logs", inputArgs));
+    args.put("input", "logs");
+    args.put("output", "logStats");
+
+    runProgram(app, programClass, args);
+
+    KeyValueTable logStatsTable = datasetInstantiator.getDataset("logStats");
+    validateGetDatasetOutput(logStatsTable);
+  }
+
+  private void validateGetDatasetOutput(KeyValueTable logStatsTable) {
+    SparkAppUsingGetDataset.LogKey fredKey1 = new SparkAppUsingGetDataset.LogKey(
+      "10.10.10.10", "FRED", "GET http://bar.com/image.jpg HTTP/1.1", 200);
+    SparkAppUsingGetDataset.LogKey fredKey2 = new SparkAppUsingGetDataset.LogKey(
+      "10.10.10.10", "FRED", "GET http://bar.com/image.jpg HTTP/1.1", 404);
+    SparkAppUsingGetDataset.LogKey bradKey1 = new SparkAppUsingGetDataset.LogKey(
+      "20.20.20.20", "BRAD", "GET http://bar.com/image.jpg HTTP/1.1", 200);
+    SparkAppUsingGetDataset.LogKey bradKey2 = new SparkAppUsingGetDataset.LogKey(
+      "20.20.20.20", "BRAD", "GET http://bar.com/image.jpg HTTP/1.1", 404);
+    SparkAppUsingGetDataset.LogStats fredStats1 = new SparkAppUsingGetDataset.LogStats(2, 100);
+    SparkAppUsingGetDataset.LogStats fredStats2 = new SparkAppUsingGetDataset.LogStats(1, 50);
+    SparkAppUsingGetDataset.LogStats bradStats1 = new SparkAppUsingGetDataset.LogStats(1, 50);
+    SparkAppUsingGetDataset.LogStats bradStats2 = new SparkAppUsingGetDataset.LogStats(1, 50);
+
+    Map<SparkAppUsingGetDataset.LogKey, SparkAppUsingGetDataset.LogStats> expected = ImmutableMap.of(
+      fredKey1, fredStats1, fredKey2, fredStats2, bradKey1, bradStats1, bradKey2, bradStats2
+    );
+
+    CloseableIterator<KeyValue<byte[], byte[]>> scan = logStatsTable.scan(null, null);
+    try {
+      // must have 4 records
+      for (int i = 0; i < 4; i++) {
+        Assert.assertTrue(scan.hasNext());
+        KeyValue<byte[], byte[]> next = scan.next();
+        SparkAppUsingGetDataset.LogKey logKey =
+          GSON.fromJson(Bytes.toString(next.getKey()), SparkAppUsingGetDataset.LogKey.class);
+        SparkAppUsingGetDataset.LogStats logStats =
+          GSON.fromJson(Bytes.toString(next.getValue()), SparkAppUsingGetDataset.LogStats.class);
+        Assert.assertEquals(expected.get(logKey), logStats);
+      }
+      // no more records
+      Assert.assertFalse(scan.hasNext());
+    } finally {
+      scan.close();
+    }
+  }
+
+  private void prepareInputFileSetWithLogData(Location location) throws IOException {
+    try (OutputStreamWriter out = new OutputStreamWriter(location.getOutputStream())) {
+      out.write("10.10.10.10 - FRED [18/Jan/2013:17:56:07 +1100] \"GET http://bar.com/image.jpg " +
+                  "HTTP/1.1\" 200 50 \"http://foo.com/\" \"Mozilla/4.0 (compatible; MSIE 7.0; " +
+                  "Windows NT 5.1; GTB7.4; .NET CLR 2.0.50727; .NET CLR 3.0.04506.30; .NET CLR 3.0.04506.648; " +
+                  ".NET CLR 3.5.21022; .NET CLR 3.0.4506.2152; .NET CLR 1.0.3705; .NET CLR 1.1.4322; .NET CLR " +
+                  "3.5.30729; Release=ARP)\" \"UD-1\" - \"image/jpeg\" \"whatever\" 0.350 \"-\" - \"\" 265 923 934 " +
+                  "\"\" 62.24.11.25 images.com 1358492167 - Whatup\n");
+      out.write("20.20.20.20 - BRAD [18/Jan/2013:17:56:07 +1100] \"GET http://bar.com/image.jpg " +
+                  "HTTP/1.1\" 200 50 \"http://foo.com/\" \"Mozilla/4.0 (compatible; MSIE 7.0; " +
+                  "Windows NT 5.1; GTB7.4; .NET CLR 2.0.50727; .NET CLR 3.0.04506.30; .NET CLR 3.0.04506.648; " +
+                  ".NET CLR 3.5.21022; .NET CLR 3.0.4506.2152; .NET CLR 1.0.3705; .NET CLR 1.1.4322; .NET CLR " +
+                  "3.5.30729; Release=ARP)\" \"UD-1\" - \"image/jpeg\" \"whatever\" 0.350 \"-\" - \"\" 265 923 934 " +
+                  "\"\" 62.24.11.25 images.com 1358492167 - Whatup\n");
+      out.write("10.10.10.10 - FRED [18/Jan/2013:17:56:07 +1100] \"GET http://bar.com/image.jpg " +
+                  "HTTP/1.1\" 404 50 \"http://foo.com/\" \"Mozilla/4.0 (compatible; MSIE 7.0; " +
+                  "Windows NT 5.1; GTB7.4; .NET CLR 2.0.50727; .NET CLR 3.0.04506.30; .NET CLR 3.0.04506.648; " +
+                  ".NET CLR 3.5.21022; .NET CLR 3.0.4506.2152; .NET CLR 1.0.3705; .NET CLR 1.1.4322; .NET CLR " +
+                  "3.5.30729; Release=ARP)\" \"UD-1\" - \"image/jpeg\" \"whatever\" 0.350 \"-\" - \"\" 265 923 934 " +
+                  "\"\" 62.24.11.25 images.com 1358492167 - Whatup\n");
+      out.write("10.10.10.10 - FRED [18/Jan/2013:17:56:07 +1100] \"GET http://bar.com/image.jpg " +
+                  "HTTP/1.1\" 200 50 \"http://foo.com/\" \"Mozilla/4.0 (compatible; MSIE 7.0; " +
+                  "Windows NT 5.1; GTB7.4; .NET CLR 2.0.50727; .NET CLR 3.0.04506.30; .NET CLR 3.0.04506.648; " +
+                  ".NET CLR 3.5.21022; .NET CLR 3.0.4506.2152; .NET CLR 1.0.3705; .NET CLR 1.1.4322; .NET CLR " +
+                  "3.5.30729; Release=ARP)\" \"UD-1\" - \"image/jpeg\" \"whatever\" 0.350 \"-\" - \"\" 265 923 934 " +
+                  "\"\" 62.24.11.25 images.com 1358492167 - Whatup\n");
+      out.write("20.20.20.20 - BRAD [18/Jan/2013:17:56:07 +1100] \"GET http://bar.com/image.jpg " +
+                  "HTTP/1.1\" 404 50 \"http://foo.com/\" \"Mozilla/4.0 (compatible; MSIE 7.0; " +
+                  "Windows NT 5.1; GTB7.4; .NET CLR 2.0.50727; .NET CLR 3.0.04506.30; .NET CLR 3.0.04506.648; " +
+                  ".NET CLR 3.5.21022; .NET CLR 3.0.4506.2152; .NET CLR 1.0.3705; .NET CLR 1.1.4322; .NET CLR " +
+                  "3.5.30729; Release=ARP)\" \"UD-1\" - \"image/jpeg\" \"whatever\" 0.350 \"-\" - \"\" 265 923 934 " +
+                  "\"\" 62.24.11.25 images.com 1358492167 - Whatup\n");
+    }
   }
 
   private void validateFileOutput(Location location) throws Exception {
