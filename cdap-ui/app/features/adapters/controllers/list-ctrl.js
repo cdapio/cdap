@@ -199,7 +199,7 @@ angular.module(PKG.name + '.feature.adapters')
           function success() {
             var alertObj = {
               type: 'success',
-              content: 'Adapter draft ' + draftName + ' delete successfully'
+              content: 'Adapter draft ' + draftName + ' deleted successfully'
             }, e;
             if (!alertpromise) {
               alertpromise = $alert(alertObj);
