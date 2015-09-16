@@ -57,7 +57,7 @@ execute 'create-router-ssl-keystore' do
 
   command "keytool -genkey -noprompt -alias ext-auth -keysize 2048 -keyalg RSA -keystore #{path} -storepass #{password} -keypass #{keypass} -dname 'CN=#{common_name}, OU=cdap, O=cdap, L=Palo Alto, ST=CA, C=US'"
   not_if { ::File.exist?(path.to_s) }
-  only_if { ssl_enabled.to_s == "true" && jks.to_s == "true" }
+  only_if { ssl_enabled.to_s == 'true' && jks.to_s == 'true' }
 end
 
 svcs = ['cdap-router']

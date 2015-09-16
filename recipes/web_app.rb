@@ -81,7 +81,7 @@ else
     certpath = node['cdap']['cdap_site']['dashboard.ssl.cert']
     command "openssl req -x509 -nodes -days 3650 -newkey rsa:2048 -keyout #{keypath} -out #{certpath} -subj '/C=US/ST=CA/L=Palo Alto/OU=cdap/O=cdap/CN=#{common_name}'"
     not_if { ::File.exist?(certpath.to_s) && ::File.exist?(keypath.to_s) }
-    only_if { ssl_enabled.to_s == "true" }
+    only_if { ssl_enabled.to_s == 'true' }
   end
 
   service 'cdap-web-app' do
