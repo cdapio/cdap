@@ -8,7 +8,7 @@ Sinks: Batch: S3Avro
 
 .. rubric:: Description
 
-A batch sink for a to write to Amazon S3 in Avro format. 
+A batch sink for writing to Amazon S3 in Avro format. 
 
 .. rubric:: Use Case
 
