@@ -28,7 +28,7 @@ import javax.annotation.Nullable;
 /**
  * {@link PluginConfig} for {@link TableSource}, {@link TableSink} and {@link RealtimeTableSink}
  */
-public class TableConfig extends PluginConfig {
+public class TableSourceConfig extends PluginConfig {
   @Name(Properties.Table.NAME)
   @Description("Name of the table. If the table does not already exist, one will be created.")
   private String name;
@@ -41,6 +41,7 @@ public class TableConfig extends PluginConfig {
 
   @Name(Properties.Table.PROPERTY_SCHEMA_ROW_FIELD)
   @Description("The name of the record field that should be used as the row key when writing to the table.")
+  @Nullable
   private String rowField;
 
   public String getName() {

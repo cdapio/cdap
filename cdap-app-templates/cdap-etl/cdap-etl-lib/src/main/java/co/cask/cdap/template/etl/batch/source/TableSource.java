@@ -29,7 +29,7 @@ import co.cask.cdap.template.etl.api.PipelineConfigurer;
 import co.cask.cdap.template.etl.api.batch.BatchRuntimeContext;
 import co.cask.cdap.template.etl.common.Properties;
 import co.cask.cdap.template.etl.common.RowRecordTransformer;
-import co.cask.cdap.template.etl.common.TableConfig;
+import co.cask.cdap.template.etl.common.TableSourceConfig;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
@@ -45,9 +45,9 @@ import java.util.Map;
 public class TableSource extends BatchReadableSource<byte[], Row, StructuredRecord> {
   private RowRecordTransformer rowRecordTransformer;
 
-  private final TableConfig tableConfig;
+  private final TableSourceConfig tableConfig;
 
-  public TableSource(TableConfig tableConfig) {
+  public TableSource(TableSourceConfig tableConfig) {
     this.tableConfig = tableConfig;
   }
 
