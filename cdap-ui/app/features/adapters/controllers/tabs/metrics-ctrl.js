@@ -17,7 +17,8 @@
 angular.module(PKG.name + '.feature.adapters')
   .controller('AdaptersDetailMetricsController', function($scope, AdapterDetail, MyDataSource, $filter, $state, MyMetricsQueryHelper) {
 
-    // METRICS
+    $scope.metrics = [];
+
     var dataSrc = new MyDataSource($scope);
     var filter = $filter('filter');
 

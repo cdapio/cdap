@@ -91,7 +91,7 @@ angular.module(PKG.name + '.feature.adapters')
     } else {
 
       angular.forEach(rAdapterDetail.programs, function (program) {
-        if (program.type === 'Workers') {
+        if (program.type === 'Worker') {
           params.workerId = program.id;
         }
       });
@@ -115,6 +115,7 @@ angular.module(PKG.name + '.feature.adapters')
       switch (action) {
         case 'Start':
           $scope.appStatus = 'Starting';
+
           if (AdapterDetail.programType === 'WORKFLOWS') {
             myWorkFlowApi.scheduleResume(scheduleParams, {})
               .$promise
@@ -122,7 +123,7 @@ angular.module(PKG.name + '.feature.adapters')
                 $scope.appStatus = 'SCHEDULED';
               });
           } else {
-            myWorkersApi.doAction(angular.extend(params, { action: 'start' }, {}))
+            myWorkersApi.doAction(angular.extend(params, { action: 'start' }), {})
               .$promise
               .then(function () {
                 $scope.appStatus = 'RUNNING';
@@ -142,7 +143,7 @@ angular.module(PKG.name + '.feature.adapters')
                 $scope.appStatus = 'SUSPENDED';
               });
           } else {
-            myWorkersApi.doAction(angular.extend(params, { action: 'stop' }, {}))
+            myWorkersApi.doAction(angular.extend(params, { action: 'stop' }), {})
               .$promise
               .then(function () {
                 $scope.appStatus = 'STOPPED';
@@ -180,6 +181,7 @@ angular.module(PKG.name + '.feature.adapters')
         rAdapterDetail.config = JSON.parse(rAdapterDetail.configuration);
       } catch(e) {
         console.log('ERROR in configuration from backend: ', e);
+        return;
       }
       $scope.config = {
         name: $state.params.adapterId,
@@ -208,7 +210,7 @@ angular.module(PKG.name + '.feature.adapters')
         MyAppDAGService.addNodes(node, node.type);
       });
 
-      MyAppDAGService.connections = CanvasFactory.getConnectionsBasedOnNodes($scope.nodes);
+      MyAppDAGService.connections = CanvasFactory.getConnectionsBasedOnNodes($scope.nodes, rAdapterDetail.artifact.name);
     }
 
     initializeDAG();

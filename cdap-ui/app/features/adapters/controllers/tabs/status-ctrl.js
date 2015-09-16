@@ -20,18 +20,22 @@ angular.module(PKG.name + '.feature.adapters')
     angular.copy(AdapterDetail.params, params);
     params.scope = $scope;
 
+    $scope.stats = {};
+
+    $scope.programType = AdapterDetail.programType;
+
+    AdapterDetail.api.runs(params)
+      .$promise
+      .then(function (runs) {
+        $scope.stats.numRuns = runs.length;
+        $scope.stats.lastRunTime = runs.length > 0 && runs[0].end ? runs[0].end - runs[0].start : 'N/A';
+      });
+
     if (AdapterDetail.programType === 'WORKFLOWS') {
       AdapterDetail.api.getStatistics(params)
         .$promise
         .then(function (stats) {
-          $scope.stats = {
-            avgRunTime: stats.avgRunTime
-          };
-
-          return AdapterDetail.api.runs(params).$promise;
-        }).then(function (runs) {
-          $scope.stats.latestRun = runs[0];
-          $scope.stats.numRuns = runs.length;
+          $scope.stats.avgRunTime = stats.avgRunTime ? stats.avgRunTime : 'N/A';
         });
     }
   });

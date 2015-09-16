@@ -1,4 +1,4 @@
-<div class="table-responsive">
+<div class="table-responsive" ng-if="datasets.length > 0">
   <table class="table table-bordered">
     <thead>
       <tr>
@@ -14,4 +14,8 @@
       </tr>
     </tbody>
   </table>
+</div>
+
+<div class="well well-lg text-center" ng-if="datasets.length === 0">
+  <h4>There is no dataset for this pipeline</h4>
 </div>

@@ -22,7 +22,7 @@ angular.module(PKG.name + '.feature.adapters')
     };
 
     function initialize(app, $state) {
-      publicObj.programType = app.artifact.name === GLOBALS.etlBatch ? 'WORKFLOWS' : 'WORKERS';
+      publicObj.programType = app.artifact.name === GLOBALS.etlBatch ? 'WORKFLOWS' : 'WORKER';
       publicObj.params = {
         namespace: $state.params.namespace,
         appId: app.name
@@ -39,6 +39,7 @@ angular.module(PKG.name + '.feature.adapters')
         config = JSON.parse(app.configuration);
       } catch (e) {
         console.log('ERROR cannot parse configuration');
+        return;
       }
 
       publicObj.source = config.source.name;
@@ -61,6 +62,13 @@ angular.module(PKG.name + '.feature.adapters')
       } else {
         publicObj.api = myWorkersApi;
         publicObj.logsApi = myWorkersApi;
+
+        angular.forEach(app.programs, function (program) {
+          if (program.type === 'Worker') {
+            publicObj.params.workerId = program.id;
+            publicObj.logsParams.workerId = program.id;
+          }
+        });
       }
     }
 

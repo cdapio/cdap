@@ -43,41 +43,47 @@
   </div>
 
 
+
   <!-- Right Buttons Actions -->
   <div class="btn-group pull-right clearfix">
-
-    <div class="btn pull-right"
-      ng-click="do('Delete')">
-      Delete
+    <div class="btn btn-status">
+      <span ng-class="{'status-green': appStatus === 'RUNNING' || appStatus === 'SCHEDULED', 'status-red': appStatus !== 'RUNNING' && appStatus !== 'SCHEDULED' }"> </span>
+      {{ appStatus }}
     </div>
-    <div class="btn pull-right"
+
+    <!-- IF ETL REALTIME -->
+    <div class="btn"
+      ng-click="do('Start')"
+      ng-if="app.artifact.name === GLOBALS.etlRealtime && appStatus !== 'RUNNING'">
+      Start
+    </div>
+    <div class="btn"
+      ng-click="do('Stop')"
+      ng-if="app.artifact.name === GLOBALS.etlRealtime && appStatus === 'RUNNING'">
+      Stop
+    </div>
+
+
+    <!-- IF ETL BATCH -->
+    <div class="btn"
+      ng-click="do('Start')"
+      ng-if="app.artifact.name === GLOBALS.etlBatch && appStatus !== 'SCHEDULED'">
+      Start
+    </div>
+    <div class="btn"
+      ng-click="do('Stop')"
+      ng-if="app.artifact.name === GLOBALS.etlBatch && appStatus === 'SCHEDULED'">
+      Stop
+    </div>
+    <div class="btn"
       ng-click="do('Run Once')"
       ng-if="app.artifact.name === GLOBALS.etlBatch">
       Run Once
     </div>
 
-    <!-- IF ETL BATCH -->
-    <div class="btn pull-right"
-      ng-click="do('Start')"
-      ng-if="app.artifact.name === GLOBALS.etlBatch && appStatus !== 'SCHEDULED'">
-      Start
-    </div>
-    <div class="btn pull-right"
-      ng-click="do('Stop')"
-      ng-if="app.artifact.name === GLOBALS.etlBatch && appStatus === 'SCHEDULED'">
-      Stop
-    </div>
-
-    <!-- IF ETL REALTIME -->
-    <div class="btn pull-right"
-      ng-click="do('Start')"
-      ng-if="app.artifact.name === GLOBALS.etlRealtime && appStatus !== 'RUNNING'">
-      Start
-    </div>
-    <div class="btn pull-right"
-      ng-click="do('Stop')"
-      ng-if="app.artifact.name === GLOBALS.etlRealtime && appStatus === 'RUNNING'">
-      Stop
+    <div class="btn"
+      ng-click="do('Delete')">
+      Delete
     </div>
 
   </div>

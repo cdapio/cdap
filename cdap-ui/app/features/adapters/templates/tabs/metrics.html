@@ -1,5 +1,5 @@
 <div ng-controller="AdaptersDetailMetricsController">
-  <div class="table-responsive">
+  <div class="table-responsive" ng-if="metrics.length > 0">
     <table class="table table-bordered">
       <thead>
         <tr>
@@ -30,5 +30,9 @@
         </tr>
       </tbody>
     </table>
+  </div>
+
+  <div class="well well-lg text-center" ng-if="metrics.length === 0">
+    <h4>No metrics for this pipeline</h4>
   </div>
 </div>
