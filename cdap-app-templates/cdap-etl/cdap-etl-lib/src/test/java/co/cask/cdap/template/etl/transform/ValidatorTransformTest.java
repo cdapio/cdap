@@ -56,7 +56,7 @@ public class ValidatorTransformTest {
     config.validators = "apache";
 
     ValidatorTransform transform = new ValidatorTransform(config);
-    transform.setUpInitialScript(ImmutableList.<Validator>of(new CoreValidator()));
+    transform.setUpInitialScript(new MockTransformContext(), ImmutableList.<Validator>of(new CoreValidator()));
     MockEmitter<StructuredRecord> emitter = new MockEmitter<>();
 
     StructuredRecord validRecord = StructuredRecord.builder(SCHEMA)

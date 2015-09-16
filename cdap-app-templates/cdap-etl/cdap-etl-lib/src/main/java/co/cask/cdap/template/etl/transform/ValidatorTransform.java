@@ -106,7 +106,7 @@ public class ValidatorTransform extends Transform<StructuredRecord, StructuredRe
       validators.add(validator);
     }
     try {
-      setUpInitialScript(validators);
+      init(validators);
     } catch (ScriptException e) {
       throw new IllegalArgumentException("Invalid validation script: " + e.getMessage(), e);
     }
@@ -118,30 +118,13 @@ public class ValidatorTransform extends Transform<StructuredRecord, StructuredRe
     for (String pluginId : config.validators.split("\\s*,\\s*")) {
       validators.add((Validator) context.newPluginInstance(pluginId));
     }
-    setUpInitialScript(validators);
-    metrics = context.getMetrics();
+    setUpInitialScript(context, validators);
   }
 
   @VisibleForTesting
-  void setUpInitialScript(List<Validator> validators) throws ScriptException {
-    ScriptEngineManager manager = new ScriptEngineManager();
-    engine = manager.getEngineByName("JavaScript");
-    String scriptStr = config.validationScript;
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(scriptStr), "Filter script must be specified.");
-
-    for (Validator validator : validators) {
-      engine.put(validator.getValidatorName(), validator.getValidator());
-    }
-
-    // this is pretty ugly, but doing this so that we can pass the 'input' json into the isValid function.
-    // that is, we want people to implement
-    // function isValid(input) { ... }
-    // rather than function isValid() { ... } with the input record assigned to the global variable
-    // and have them access the global variable in the function
-    String script = String.format("function %s() { return isValid(%s); }\n%s",
-                                  FUNCTION_NAME, VARIABLE_NAME, config.validationScript);
-    engine.eval(script);
-    invocable = (Invocable) engine;
+  void setUpInitialScript(TransformContext context, List<Validator> validators) throws ScriptException {
+    init(validators);
+    metrics = context.getMetrics();
   }
 
   @Override
@@ -177,6 +160,27 @@ public class ValidatorTransform extends Transform<StructuredRecord, StructuredRe
     Preconditions.checkState((errorCodeNum >= Integer.MIN_VALUE && errorCodeNum <= Integer.MAX_VALUE),
                              "errorCode must be a valid Integer");
     return new InvalidEntry<>(errorCodeNum.intValue(), (String) result.get("errorMsg"), input);
+  }
+
+  private void init(List<Validator> validators) throws ScriptException {
+    ScriptEngineManager manager = new ScriptEngineManager();
+    engine = manager.getEngineByName("JavaScript");
+    String scriptStr = config.validationScript;
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(scriptStr), "Filter script must be specified.");
+
+    for (Validator validator : validators) {
+      engine.put(validator.getValidatorName(), validator.getValidator());
+    }
+
+    // this is pretty ugly, but doing this so that we can pass the 'input' json into the isValid function.
+    // that is, we want people to implement
+    // function isValid(input) { ... }
+    // rather than function isValid() { ... } with the input record assigned to the global variable
+    // and have them access the global variable in the function
+    String script = String.format("function %s() { return isValid(%s); }\n%s",
+      FUNCTION_NAME, VARIABLE_NAME, config.validationScript);
+    engine.eval(script);
+    invocable = (Invocable) engine;
   }
 
   /**
