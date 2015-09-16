@@ -1573,4 +1573,11 @@
     </description>
   </property>
 
+  <property>
+    <name>metadata.max.allowed.chars</name>
+    <value>50</value>
+    <description>Maximum number of characters for metadata keys, values, and tags</description>
+  </property>
+
+
 </configuration>
