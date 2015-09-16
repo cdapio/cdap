@@ -50,7 +50,13 @@ execute 'create-security-server-ssl-keystore' do
     end
 
   password = node['cdap']['cdap_site']['security.server.ssl.keystore.password']
-  keypass = node['cdap']['cdap_site']['security.server.ssl.keystore.keypassword']
+  keypass =
+    if node['cdap']['cdap_site'].key?('security.server.ssl.keystore.keypassword')
+      node['cdap']['cdap_site']['security.server.ssl.keystore.keypassword']
+    else
+      node['cdap']['cdap_site']['security.server.ssl.keystore.password']
+    end
+
   path = node['cdap']['cdap_site']['security.server.ssl.keystore.path']
   common_name = node['cdap']['security']['ssl_common_name']
   jks =
