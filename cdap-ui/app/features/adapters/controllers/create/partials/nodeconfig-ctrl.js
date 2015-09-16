@@ -23,7 +23,7 @@ angular.module(PKG.name + '.feature.adapters')
     $scope.data = {};
     $scope.data.isModelTouched = false;
 
-    MyNodeConfigService.registerPluginCallback(onPluginChange);
+    MyNodeConfigService.registerPluginSetCallback(onPluginChange);
 
     function onPluginChange(plugin) {
       var defer = $q.defer();
@@ -37,6 +37,7 @@ angular.module(PKG.name + '.feature.adapters')
               switchPlugin(plugin);
             },
             function no() {
+              MyNodeConfigService.resetPlugin($scope.plugin);
               console.log('User chose to stay in the same plugin');
             }
           );

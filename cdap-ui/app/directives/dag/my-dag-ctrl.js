@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .controller('MyDAGController', function MyDAGController(jsPlumb, $scope, $timeout, MyAppDAGService, myHelpers, MyDAGFactory, $window, $popover, $rootScope, EventPipe, GLOBALS) {
+  .controller('MyDAGController', function MyDAGController(jsPlumb, $scope, $timeout, MyAppDAGService, myHelpers, MyDAGFactory, $window, $popover, $rootScope, EventPipe, GLOBALS, MyNodeConfigService) {
     this.plugins = $scope.config || [];
     this.MyAppDAGService = MyAppDAGService;
     this.isDisabled = $scope.isDisabled;
@@ -25,6 +25,15 @@ angular.module(PKG.name + '.commons')
     var popoverScopes = [];
 
     this.instance = null;
+
+    this.resetPluginSelection = function(plugin) {
+      angular.forEach(this.plugins, function(plug) {
+        plug.selected = false;
+        if (plug.id === plugin.id) {
+          plug.selected = true;
+        }
+      });
+    };
 
     this.addPlugin = function addPlugin(config, type) {
       closeAllPopovers();
@@ -242,8 +251,6 @@ angular.module(PKG.name + '.commons')
       });
     }
 
-    MyAppDAGService.registerCallBack(this.addPlugin.bind(this));
-
     $scope.$on('$destroy', function() {
       closeAllPopovers();
       angular.forEach(popoverScopes, function (s) {
@@ -308,8 +315,11 @@ angular.module(PKG.name + '.commons')
         $timeout(this.drawGraph.bind(this));
     }
 
-    MyAppDAGService.registerResetCallBack(resetComponent.bind(this));
     if (this.plugins.length) {
       resetComponent.call(this);
     }
+
+    MyNodeConfigService.registerPluginResetCallback(this.resetPluginSelection.bind(this));
+    MyAppDAGService.registerCallBack(this.addPlugin.bind(this));
+    MyAppDAGService.registerResetCallBack(resetComponent.bind(this));
   });
