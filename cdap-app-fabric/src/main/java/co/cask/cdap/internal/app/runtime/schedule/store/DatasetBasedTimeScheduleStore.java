@@ -101,10 +101,8 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
   @Override
   public void storeJobAndTrigger(JobDetail newJob, OperableTrigger newTrigger)
                                  throws JobPersistenceException {
-    super.storeJob(newJob, true);
-    super.storeTrigger(newTrigger, true);
-
-    persistJobAndTrigger(newJob, newTrigger);
+    storeJob(newJob, true);
+    storeTrigger(newTrigger, true);
   }
 
   @Override
