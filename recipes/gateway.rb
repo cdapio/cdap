@@ -40,7 +40,12 @@ execute 'create-router-ssl-keystore' do
     end
 
   password = node['cdap']['cdap_site']['router.ssl.keystore.password']
-  keypass = node['cdap']['cdap_site']['router.ssl.keystore.keypassword']
+  keypass =
+    if node['cdap']['cdap_site'].key?('router.ssl.keystore.keypassword')
+      node['cdap']['cdap_site']['router.ssl.keystore.keypassword']
+    else
+      node['cdap']['cdap_site']['router.ssl.keystore.password']
+    end
   path = node['cdap']['cdap_site']['router.ssl.keystore.path']
   common_name = node['cdap']['security']['ssl_common_name']
   jks =
