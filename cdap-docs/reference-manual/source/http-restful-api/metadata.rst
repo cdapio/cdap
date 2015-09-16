@@ -15,17 +15,18 @@ Metadata HTTP RESTful API
 .. include:: ../../../_common/_includes/include-v320-beta-metadata.rst
 
 Use the CDAP Metadata HTTP RESTful API to set, retrieve, and delete the metadata annotations
-of applications, datasets, streams, and other elements in CDAP.
+of applications, datasets, streams, and other entities in CDAP.
 
 Metadata consists of **properties** (a list of key-value pairs) or **tags** (a list of keys).
 Metadata and their use are described in the :ref:`Developers' Manual: Metadata <metadata>`.
 
-The HTTP RESTful API is divided into four sections:
+The HTTP RESTful API is divided into these sections:
 
-- :ref:`metadata properties <http-restful-api-metadata-properties>`;
-- :ref:`metadata tags <http-restful-api-metadata-tags>`; and
+- :ref:`metadata properties <http-restful-api-metadata-properties>`
+- :ref:`metadata tags <http-restful-api-metadata-tags>`
 - :ref:`searching properties <http-restful-api-metadata-searching>`
 - :ref:`viewing lineage <http-restful-api-metadata-lineage>`
+- :ref:`update notifications <http-restful-api-metadata-notifications>`
 
 In this API, ``<base-url>`` is as described under :ref:`Conventions
 <http-restful-api-conventions>`. 
@@ -43,7 +44,7 @@ Annotating Properties
 ---------------------
 To annotate user metadata properties for an application, dataset, or stream, submit an HTTP POST request::
 
-  POST /v3/namespaces/<namespace>/<element-type>/<element-id>/metadata/properties
+  POST /v3/namespaces/<namespace>/<entity-type>/<entity-id>/metadata/properties
   
 or, for a particular program of a specific application::
 
@@ -69,10 +70,10 @@ updated. Existing keys not in the properties map will not be deleted.
      - Description
    * - ``<namespace>``
      - Namespace ID
-   * - ``<element-type>``
+   * - ``<entity-type>``
      - One of ``apps``, ``datasets``, or ``streams``
-   * - ``<element-id>``
-     - Name of the element
+   * - ``<entity-id>``
+     - Name of the entity
    * - ``<app-id>``
      - Name of the application
    * - ``<program-type>``
@@ -91,14 +92,14 @@ updated. Existing keys not in the properties map will not be deleted.
    * - ``200 OK``
      - The properties were set
    * - ``404 NOT FOUND``
-     - The entity (element or program) for which properties are being set was not found
+     - The entity or program for which properties are being set was not found
      
 
 Retrieving Properties
 ---------------------
 To retrieve user metadata properties for an application, dataset, or stream, submit an HTTP GET request::
 
-  GET /v3/namespaces/<namespace>/<element-type>/<element-id>/metadata/properties
+  GET /v3/namespaces/<namespace>/<entity-type>/<entity-id>/metadata/properties
   
 or, for a particular program of a specific application::
 
@@ -121,10 +122,10 @@ in the response body (pretty-printed)::
      - Description
    * - ``<namespace>``
      - Namespace ID
-   * - ``<element-type>``
+   * - ``<entity-type>``
      - One of ``apps``, ``datasets``, or ``streams``
-   * - ``<element-id>``
-     - Name of the element
+   * - ``<entity-id>``
+     - Name of the entity
    * - ``<app-id>``
      - Name of the application
    * - ``<program-type>``
@@ -143,7 +144,7 @@ in the response body (pretty-printed)::
    * - ``200 OK``
      - The properties requested were returned as a JSON string in the body of the response
    * - ``404 NOT FOUND``
-     - The entity (element or program) for which properties are being retrieved was not found
+     - The entity or program for which properties are being retrieved was not found
 
 
 Deleting Properties
@@ -151,7 +152,7 @@ Deleting Properties
 To delete **all** user metadata properties for an application, dataset, or stream, submit an
 HTTP DELETE request::
 
-  DELETE /v3/namespaces/<namespace>/<element-type>/<element-id>/metadata/properties
+  DELETE /v3/namespaces/<namespace>/<entity-type>/<entity-id>/metadata/properties
   
 or, for all user metadata properties of a particular program of a specific application::
 
@@ -160,7 +161,7 @@ or, for all user metadata properties of a particular program of a specific appli
 To delete **a specific property** for an application, dataset, or stream, submit
 an HTTP DELETE request with the property key::
 
-  DELETE /v3/namespaces/<namespace>/<element-type>/<element-id>/metadata/properties/<key>
+  DELETE /v3/namespaces/<namespace>/<entity-type>/<entity-id>/metadata/properties/<key>
   
 or, for a particular property of a program of a specific application::
 
@@ -174,10 +175,10 @@ or, for a particular property of a program of a specific application::
      - Description
    * - ``<namespace>``
      - Namespace ID
-   * - ``<element-type>``
+   * - ``<entity-type>``
      - One of ``apps``, ``datasets``, or ``streams``
-   * - ``<element-id>``
-     - Name of the element
+   * - ``<entity-id>``
+     - Name of the entity
    * - ``<app-id>``
      - Name of the application
    * - ``<program-type>``
@@ -199,7 +200,7 @@ or, for a particular property of a program of a specific application::
      - The method was successfully called, and the properties were deleted, or in the case of a
        specific key, were either deleted or the key was not present
    * - ``404 NOT FOUND``
-     - The entity (element or program) for which properties are being deleted was not found
+     - The entity or program for which properties are being deleted was not found
 
 
 .. _http-restful-api-metadata-tags:
@@ -211,7 +212,7 @@ Adding Tags
 -----------
 To add user metadata tags for an application, dataset, or stream, submit an HTTP POST request::
 
-  POST /v3/namespaces/<namespace>/<element-type>/<element-id>/metadata/tags
+  POST /v3/namespaces/<namespace>/<entity-type>/<entity-id>/metadata/tags
   
 or, for a particular program of a specific application::
 
@@ -229,10 +230,10 @@ with the metadata tags, as a list of strings, passed in the JSON request body::
      - Description
    * - ``<namespace>``
      - Namespace ID
-   * - ``<element-type>``
+   * - ``<entity-type>``
      - One of ``apps``, ``datasets``, or ``streams``
-   * - ``<element-id>``
-     - Name of the element
+   * - ``<entity-id>``
+     - Name of the entity
    * - ``<app-id>``
      - Name of the application
    * - ``<program-type>``
@@ -251,14 +252,14 @@ with the metadata tags, as a list of strings, passed in the JSON request body::
    * - ``200 OK``
      - The tags were set
    * - ``404 NOT FOUND``
-     - The entity (element or program) for which tags are being set was not found
+     - The entity or program for which tags are being set was not found
 
 
 Retrieving Tags
 ---------------
 To retrieve user metadata tags for an application, dataset, or stream, submit an HTTP GET request::
 
-  GET /v3/namespaces/<namespace>/<element-type>/<element-id>/metadata/tags
+  GET /v3/namespaces/<namespace>/<entity-type>/<entity-id>/metadata/tags
   
 or, for a particular program of a specific application::
 
@@ -276,10 +277,10 @@ with the metadata tags returned as a JSON string in the return body::
      - Description
    * - ``<namespace>``
      - Namespace ID
-   * - ``<element-type>``
+   * - ``<entity-type>``
      - One of ``apps``, ``datasets``, or ``streams``
-   * - ``<element-id>``
-     - Name of the element
+   * - ``<entity-id>``
+     - Name of the entity
    * - ``<app-id>``
      - Name of the application
    * - ``<program-type>``
@@ -298,7 +299,7 @@ with the metadata tags returned as a JSON string in the return body::
    * - ``200 OK``
      - The properties requested were returned as a JSON string in the body of the response
    * - ``404 NOT FOUND``
-     - The entity (element or program) for which properties are being retreived was not found
+     - The entity or program for which properties are being retreived was not found
      
      
 Removing Tags
@@ -306,7 +307,7 @@ Removing Tags
 To delete all user metadata tags for an application, dataset, or stream, submit an
 HTTP DELETE request::
 
-  DELETE /v3/namespaces/<namespace>/<element-type>/<element-id>/metadata/tags
+  DELETE /v3/namespaces/<namespace>/<entity-type>/<entity-id>/metadata/tags
   
 or, for all user metadata tags of a particular program of a specific application::
 
@@ -315,7 +316,7 @@ or, for all user metadata tags of a particular program of a specific application
 To delete a specific user metadata tag for an application, dataset, or stream, submit
 an HTTP DELETE request with the tag::
 
-  DELETE /v3/namespaces/<namespace>/<element-type>/<element-id>/metadata/properties/<tag>
+  DELETE /v3/namespaces/<namespace>/<entity-type>/<entity-id>/metadata/properties/<tag>
   
 or, for a particular user metadata tag of a program of a specific application::
 
@@ -329,10 +330,10 @@ or, for a particular user metadata tag of a program of a specific application::
      - Description
    * - ``<namespace>``
      - Namespace ID
-   * - ``<element-type>``
+   * - ``<entity-type>``
      - One of ``apps``, ``datasets``, or ``streams``
-   * - ``<element-id>``
-     - Name of the element
+   * - ``<entity-id>``
+     - Name of the entity
    * - ``<app-id>``
      - Name of the application
    * - ``<program-type>``
@@ -354,7 +355,7 @@ or, for a particular user metadata tag of a program of a specific application::
      - The method was successfully called, and the tags were deleted, or in the case of a
        specific tag, was either deleted or the tag was not present
    * - ``404 NOT FOUND``
-     - The entity (element or program) for which tags are being deleted was not found
+     - The entity or program for which tags are being deleted was not found
 
 
 .. _http-restful-api-metadata-searching:
@@ -364,7 +365,7 @@ Searching for Metadata
 To find which applications, datasets, or streams have a particular user metadata property or
 user metadata tag, submit an HTTP GET request::
 
-  GET /v3/namespaces/<namespace>/metadata/search?query=<term>&target=<element-type>
+  GET /v3/namespaces/<namespace>/metadata/search?query=<term>&target=<entity-type>
 
 Entities with the specified terms are returned as list of entity IDs::
 
@@ -378,7 +379,7 @@ Entities with the specified terms are returned as list of entity IDs::
      - Description
    * - ``<namespace>``
      - Namespace ID
-   * - ``<element-type>``
+   * - ``<entity-type>``
      - One of ``app``, ``dataset``, ``program``, or ``stream``
    * - ``<term>``
      - Query term, as described below
@@ -392,7 +393,7 @@ Entities with the specified terms are returned as list of entity IDs::
    * - Status Codes
      - Description
    * - ``200 OK``
-     - Entities IDs of entities with the metadata properties specified were returned as a
+     - Entity IDs of entities with the metadata properties specified were returned as a
        list of strings in the body of the response
    * - ``404 NOT FOUND``
      - No entities matching the specified query were found
@@ -415,7 +416,7 @@ Viewing Lineages
 ================
 To view the lineage of a dataset or stream, submit an HTTP GET request::
 
-  GET /v3/namespaces/<namespace>/<element-type>/<element-id>/lineage?start=<start-ts>&end=<end-ts>&maxLevels=<max-levels>
+  GET /v3/namespaces/<namespace>/<entity-type>/<entity-id>/lineage?start=<start-ts>&end=<end-ts>&maxLevels=<max-levels>
 
 where:
 
@@ -427,9 +428,9 @@ where:
      - Description
    * - ``<namespace>``
      - Namespace ID
-   * - ``<element-type>``
+   * - ``<entity-type>``
      - One of ``dataset`` or ``stream``
-   * - ``<element-id>``
+   * - ``<entity-id>``
      - Name of the ``dataset`` or ``stream``
    * - ``<start-ts>``
      - Starting time-stamp of lineage, in milliseconds
@@ -527,3 +528,80 @@ Here is an example, pretty-printed::
        list of strings in the body of the response
    * - ``404 NOT FOUND``
      - No entities matching the specified query were found
+
+
+.. _http-restful-api-metadata-notifications:
+
+Update Notifications
+====================
+CDAP has the capability of publishing notifications to an external Apache Kafka instance
+upon metadata updates.
+
+This capability is controlled by these properties set in the ``cdap-site.xml``, as described in the
+:ref:`Administration Manual <appendix-cdap-site.xml>`:
+
+- ``metadata.updates.publish.enabled``: Determines if publishing of updates is enabled; defaults to ``false``;
+- ``metadata.kafka.broker.list``: The Kafka broker list to publish to; and
+- ``metadata.updates.kafka.topic``: The Kafka topic to publish to; defaults to ``metadata-updates``.
+
+If ``metadata.updates.publish.enabled`` is *true*, then the other two properties **must** be defined.
+
+When enabled, upon every property or tag update, CDAP will publish a notification message
+to the configured Kafka instance. The contents of the message are a JSON representation of
+the `MetadataChangeRecord 
+<https://github.com/caskdata/cdap/blob/develop/cdap-proto/src/main/java/co/cask/cdap/proto/metadata/MetadataChangeRecord.java>`__ 
+class.
+
+Here is an example JSON message, pretty-printed::
+
+  {
+      "previous": {
+          "targetId": {
+              "type": "application",
+              "id": {
+                  "namespace": {
+                      "id": "default"
+                  },
+                  "applicationId": "PurchaseHistory"
+              }
+          },
+          "scope": "USER",
+          "properties": {
+              "key": "val"
+          },
+          "tags": []
+      },
+      "changes": {
+          "additions": {
+              "targetId": {
+                  "type": "application",
+                  "id": {
+                      "namespace": {
+                          "id": "default"
+                      },
+                      "applicationId": "PurchaseHistory"
+                  }
+              },
+              "scope": "USER",
+              "properties": {},
+              "tags": [
+                  "tag"
+              ]
+          },
+          "deletions": {
+              "targetId": {
+                  "type": "application",
+                  "id": {
+                      "namespace": {
+                          "id": "default"
+                      },
+                      "applicationId": "PurchaseHistory"
+                  }
+              },
+              "scope": "USER",
+              "properties": {},
+              "tags": []
+          }
+      },
+      "updateTime": 1442383148031
+  }
