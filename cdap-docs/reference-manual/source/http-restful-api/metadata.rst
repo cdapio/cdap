@@ -26,11 +26,16 @@ The HTTP RESTful API is divided into these sections:
 - :ref:`viewing lineage <http-restful-api-metadata-lineage>`
 - :ref:`update notifications <http-restful-api-metadata-notifications>`
 
+Metadata keys, values, and tags must conform to the CDAP :ref:`supported characters
+<supported-characters>`, and are limited to 50 characters in length. Note that tags cannot
+include hyphens or underscores (``- _``) while property keys and values can. The entire
+metadata object associated with a single entity is limited to 10K bytes in size.
+
+There is one reserved word for property keys and values: *tag*, either as ``tag`` or
+``TAG``. Tags have no reserved words.
+
 In this API, ``<base-url>`` is as described under :ref:`Conventions
 <http-restful-api-conventions>`. 
-Metadata keys, values, and tags must conform to the CDAP :ref:`supported characters 
-<supported-characters>`, and are limited to 50 characters in length. The entire metadata
-object associated with a single entity is limited to 10K bytes in size.
 
 
 .. _http-restful-api-metadata-properties:
@@ -42,11 +47,11 @@ Annotating Properties
 ---------------------
 To annotate user metadata properties for an application, dataset, or stream, submit an HTTP POST request::
 
-  POST /v3/namespaces/<namespace>/<entity-type>/<entity-id>/metadata/properties
+  POST <base-url>/namespaces/<namespace>/<entity-type>/<entity-id>/metadata/properties
   
 or, for a particular program of a specific application::
 
-  POST /v3/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/metadata/properties
+  POST <base-url>/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/metadata/properties
 
 with the metadata properties as a JSON string map of string-string pairs, passed in the
 request body::
@@ -97,11 +102,11 @@ Retrieving Properties
 ---------------------
 To retrieve user metadata properties for an application, dataset, or stream, submit an HTTP GET request::
 
-  GET /v3/namespaces/<namespace>/<entity-type>/<entity-id>/metadata/properties
+  GET <base-url>/namespaces/<namespace>/<entity-type>/<entity-id>/metadata/properties
   
 or, for a particular program of a specific application::
 
-  GET /v3/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/metadata/properties
+  GET <base-url>/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/metadata/properties
 
 with the metadata properties returned as a JSON string map of string-string pairs, passed
 in the response body (pretty-printed)::
@@ -150,20 +155,20 @@ Deleting Properties
 To delete **all** user metadata properties for an application, dataset, or stream, submit an
 HTTP DELETE request::
 
-  DELETE /v3/namespaces/<namespace>/<entity-type>/<entity-id>/metadata/properties
+  DELETE <base-url>/namespaces/<namespace>/<entity-type>/<entity-id>/metadata/properties
   
 or, for all user metadata properties of a particular program of a specific application::
 
-  DELETE /v3/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/metadata/properties
+  DELETE <base-url>/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/metadata/properties
 
 To delete **a specific property** for an application, dataset, or stream, submit
 an HTTP DELETE request with the property key::
 
-  DELETE /v3/namespaces/<namespace>/<entity-type>/<entity-id>/metadata/properties/<key>
+  DELETE <base-url>/namespaces/<namespace>/<entity-type>/<entity-id>/metadata/properties/<key>
   
 or, for a particular property of a program of a specific application::
 
-  DELETE /v3/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/metadata/properties/<key>
+  DELETE <base-url>/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/metadata/properties/<key>
 
 .. list-table::
    :widths: 20 80
@@ -210,11 +215,11 @@ Adding Tags
 -----------
 To add user metadata tags for an application, dataset, or stream, submit an HTTP POST request::
 
-  POST /v3/namespaces/<namespace>/<entity-type>/<entity-id>/metadata/tags
+  POST <base-url>/namespaces/<namespace>/<entity-type>/<entity-id>/metadata/tags
   
 or, for a particular program of a specific application::
 
-  POST /v3/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/metadata/tags
+  POST <base-url>/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/metadata/tags
 
 with the metadata tags, as a list of strings, passed in the JSON request body::
 
@@ -257,11 +262,11 @@ Retrieving Tags
 ---------------
 To retrieve user metadata tags for an application, dataset, or stream, submit an HTTP GET request::
 
-  GET /v3/namespaces/<namespace>/<entity-type>/<entity-id>/metadata/tags
+  GET <base-url>/namespaces/<namespace>/<entity-type>/<entity-id>/metadata/tags
   
 or, for a particular program of a specific application::
 
-  GET /v3/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/metadata/tags
+  GET <base-url>/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/metadata/tags
 
 with the metadata tags returned as a JSON string in the return body::
 
@@ -305,20 +310,20 @@ Removing Tags
 To delete all user metadata tags for an application, dataset, or stream, submit an
 HTTP DELETE request::
 
-  DELETE /v3/namespaces/<namespace>/<entity-type>/<entity-id>/metadata/tags
+  DELETE <base-url>/namespaces/<namespace>/<entity-type>/<entity-id>/metadata/tags
   
 or, for all user metadata tags of a particular program of a specific application::
 
-  DELETE /v3/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/metadata/tags
+  DELETE <base-url>/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/metadata/tags
 
 To delete a specific user metadata tag for an application, dataset, or stream, submit
 an HTTP DELETE request with the tag::
 
-  DELETE /v3/namespaces/<namespace>/<entity-type>/<entity-id>/metadata/properties/<tag>
+  DELETE <base-url>/namespaces/<namespace>/<entity-type>/<entity-id>/metadata/properties/<tag>
   
 or, for a particular user metadata tag of a program of a specific application::
 
-  DELETE /v3/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/metadata/properties/<tag>
+  DELETE <base-url>/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/metadata/properties/<tag>
 
 .. list-table::
    :widths: 20 80
@@ -363,7 +368,7 @@ Searching for Metadata
 To find which applications, datasets, or streams have a particular user metadata property or
 user metadata tag, submit an HTTP GET request::
 
-  GET /v3/namespaces/<namespace>/metadata/search?query=<term>&target=<entity-type>
+  GET <base-url>/namespaces/<namespace>/metadata/search?query=<term>&target=<entity-type>
 
 Entities with the specified terms are returned as list of entity IDs::
 
@@ -399,13 +404,58 @@ Entities with the specified terms are returned as list of entity IDs::
 .. rubric:: Query Terms
 
 CDAP supports prefix-based search of metadata properties and tags. Search for specific tags by using
-either a complete or partial tag name (with the remainder specified by an asterisk ``*``). 
+either a complete or partial name (with the remainder specified by an implicit asterisk ``*``). 
 
-Search for properties by specifying one of:
+Search for properties and tags by specifying one of:
 
 - a complete property key-value pair, separated by a colon, such as ``type:production``
-- a complete key with a partial value, such as ``type:prod*`` or ``type:*``
-- a complete or partial value, such as ``prod*``
+
+- a complete property key with a partial value, such as ``type:prod`` or ``type:``; an asterisk ``*`` is implicitly added
+
+- a complete or partial value, such as ``prod``; this will return both properties and tags
+
+Searches are case-sensitive; searching for ``type:`` will return different results than `TYPE:``.
+
+.. rubric:: Example
+
+A query such as::
+
+  GET <base-url>/namespaces/default/metadata/search?query=value1
+
+could return results (pretty-printed) such as::
+
+  [
+    {
+      "id": {
+        "namespace": {
+          "id": "default"
+        },
+        "streamName": "purchaseStream"
+      },
+      "type": "STREAM"
+    },
+    {
+      "id": {
+        "namespace": {
+          "id": "default"
+        },
+        "applicationId": "PurchaseHistory"
+      },
+      "type": "APP"
+    },
+    {
+      "id": {
+        "namespace": {
+          "id": "default"
+        },
+        "instanceId": "purchases"
+      },
+      "type": "DATASET"
+    }
+  ]
+
+
+
 
 
 .. _http-restful-api-metadata-lineage:
@@ -414,7 +464,7 @@ Viewing Lineages
 ================
 To view the lineage of a dataset or stream, submit an HTTP GET request::
 
-  GET /v3/namespaces/<namespace>/<entity-type>/<entity-id>/lineage?start=<start-ts>&end=<end-ts>&maxLevels=<max-levels>
+  GET <base-url>/namespaces/<namespace>/<entity-type>/<entity-id>/lineage?start=<start-ts>&end=<end-ts>&maxLevels=<max-levels>
 
 where:
 
