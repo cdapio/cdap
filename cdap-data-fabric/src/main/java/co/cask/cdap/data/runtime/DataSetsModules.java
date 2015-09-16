@@ -100,7 +100,7 @@ public class DataSetsModules extends RuntimeModule {
 
   @Override
   public Module getDistributedModules() {
-    return getDistributedModules(true);
+    return getDistributedModules(false);
   }
 
   public Module getDistributedModules(final boolean publishRequired) {
