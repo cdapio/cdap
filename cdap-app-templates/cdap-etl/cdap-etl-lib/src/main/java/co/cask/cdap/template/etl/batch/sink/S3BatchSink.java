@@ -38,8 +38,6 @@ import javax.annotation.Nullable;
  */
 public abstract class S3BatchSink<KEY_OUT, VAL_OUT> extends BatchSink<StructuredRecord, KEY_OUT, VAL_OUT> {
 
-  public static final String NAME_DESC = "Name of the Fileset Dataset to which the records " +
-    "are written to. If it doesn't exist, it will be created.";
   public static final String PATH_DESC = "The path where the data will be recorded. " +
     "Defaults to the name of the dataset";
   private static final String ACCESS_ID_DESCRIPTION = "Access ID of the Amazon S3 instance to connect to.";
@@ -54,6 +52,7 @@ public abstract class S3BatchSink<KEY_OUT, VAL_OUT> extends BatchSink<Structured
 
   @Override
   public void prepareRun(BatchSinkContext context) {
+    //TODO: Have this as a config.
     SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd-hh-mm");
 
     Job job = context.getHadoopJob();
@@ -87,13 +86,8 @@ public abstract class S3BatchSink<KEY_OUT, VAL_OUT> extends BatchSink<Structured
     @Description(ACCESS_KEY_DESCRIPTION)
     protected String accessKey;
 
-    @Name(Properties.S3BatchSink.NAME)
-    @Description(NAME_DESC)
-    protected String name;
-
-    public S3BatchSinkConfig(String name, String basePath,
+    public S3BatchSinkConfig(String basePath,
                               String accessID, String accessKey) {
-      this.name = name;
       this.basePath = basePath;
       this.accessID = accessID;
       this.accessKey = accessKey;

@@ -39,7 +39,7 @@ import java.util.Map;
  * {@link S3ParquetBatchSink} that stores data in parquet format to S3.
  */
 @Plugin(type = "batchsink")
-@Name("S3ParquetSink")
+@Name("S3Parquet")
 @Description("Sink for a S3 that writes data in Parquet format.")
 public class S3ParquetBatchSink extends S3BatchSink<Void, GenericRecord> {
 

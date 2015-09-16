@@ -304,7 +304,7 @@ public class ETLMapReduceTest extends BaseETLBatchTest {
       .build());
 
 
-    ETLStage sink = new ETLStage("S3AvroSink",
+    ETLStage sink = new ETLStage("S3Avro",
                                  ImmutableMap.of(Properties.S3BatchSink.SCHEMA, eventSchema.toString(),
                                                  Properties.S3.ACCESS_KEY, "key",
                                                  Properties.S3.ACCESS_ID, "ID",

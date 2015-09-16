@@ -27,7 +27,7 @@ import java.util.Map;
  * {@link S3AvroBatchSink} that stores data in avro format to S3.
  */
 @Plugin(type = "batchsink")
-@Name("S3AvroSink")
+@Name("S3Avro")
 @Description("Sink for a S3 that writes data in Avro format.")
 public class S3AvroBatchSink extends S3BatchSink<AvroKey<GenericRecord>, NullWritable> {
 
