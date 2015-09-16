@@ -65,15 +65,31 @@ angular.module(PKG.name + '.feature.adapters')
       return returnConfig;
     }
 
-    function getConnectionsBasedOnNodes(nodes) {
+    function getConnectionsBasedOnNodes(nodes, type) {
       var j;
       var connections = [];
+      var lastTransform;
+
       for (j=0; j<nodes.length-1; j++) {
-        connections.push({
-          source: nodes[j].id,
-          target: nodes[j+1].id
-        });
+        var nextNode = nodes[j+1];
+        if (!lastTransform && nextNode.type === GLOBALS.pluginTypes[type].sink) {
+          lastTransform = nodes[j];
+        }
+
+        if (nextNode.type === GLOBALS.pluginTypes[type].sink) {
+          connections.push({
+            source: lastTransform.id,
+            target: nextNode.id
+          });
+        } else {
+          connections.push({
+            source: nodes[j].id,
+            target: nextNode.id
+          });
+        }
+
       }
+
       return connections;
     }
 

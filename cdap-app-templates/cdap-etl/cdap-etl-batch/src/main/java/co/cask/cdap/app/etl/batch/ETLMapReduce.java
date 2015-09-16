@@ -98,7 +98,8 @@ public class ETLMapReduce extends AbstractMapReduce {
   static final Schema ERROR_SCHEMA = Schema.recordOf(
     "error",
     Schema.Field.of(Constants.ErrorDataset.ERRCODE, Schema.of(Schema.Type.INT)),
-    Schema.Field.of(Constants.ErrorDataset.ERRMSG, Schema.of(Schema.Type.STRING)),
+    Schema.Field.of(Constants.ErrorDataset.ERRMSG, Schema.unionOf(Schema.of(Schema.Type.STRING),
+                                                                  Schema.of(Schema.Type.NULL))),
     Schema.Field.of(Constants.ErrorDataset.INVALIDENTRY, Schema.of(Schema.Type.STRING)));
 
   private static final org.apache.avro.Schema AVRO_ERROR_SCHEMA =

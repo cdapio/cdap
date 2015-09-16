@@ -26,15 +26,14 @@ valid.
 Example: ``"validators": "core"``
 
 **validationScript:** Javascript that implements the function ``isValid``, taking a JSON object
-representation of the input record, and returning a ``Map<String, String>`` representing the result.
-The map should have these fields::
+representation of the input record, and returning a JSON representing the result.
+The returned JSON will include these fields; errorCode and errorMsg can be ignored for valid records::
 
   {
-    "isValid" : "true [or] false",
-    "errorCode" : "number",
+    "isValid" : true [or] false,
+    "errorCode" : number [should be an valid integer],
     "errorMsg" : "Message indicating the error and why the record failed validation"
   }
-
 
 .. rubric:: Example
 
@@ -45,18 +44,12 @@ The map should have these fields::
         "properties": {
           "validators": "core",
           "validationScript": "function isValid(input) {
-                                  input = JSON.parse(input);
-                                  var resultMap = new java.util.HashMap();
-                                  resultMap.put('errorCode', '0');
-                                  resultMap.put('errorMsg', '');
-                                  resultMap.put('isValid', 'true');
                                   if (!coreValidator.maxLength(input.body, 10))
                                     {
-                                      resultMap.put('isValid', 'false');
-                                      resultMap.put('errorCode', 10);
-                                      resultMap.put('errorMsg', input.body);
+                                      return {'isValid': false, 'errorCode': 10,
+                                              'errorMsg': 'body length greater than 10'};
                                     }
-                                  return resultMap;
+                                  return {'isValid' : true};
                                 };"
         }
       }

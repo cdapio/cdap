@@ -120,7 +120,7 @@ public class LineageServiceTest {
       oneLevelLineage.getRelations());
 
     // Assert metadata
-    Assert.assertEquals(toSet(run1data1, run1data2), lineageStore.getAccesses(run1));
+    Assert.assertEquals(toSet(run1data1, run1data2), lineageStore.getRunMetadata(run1));
   }
 
   @Test

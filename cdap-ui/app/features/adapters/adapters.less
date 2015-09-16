@@ -18,7 +18,7 @@
 @import "../../../bower_components/bootstrap/less/mixins.less";
 @import "../../styles/themes/cdap/mixins.less";
 body.theme-cdap {
-  &.state-adapters-drafts {
+  &.state-adapters-drafts, .state-adapters.create {
     [apps-drafts-list] {
       [class*="col-"] {
         padding-left: 5px;
@@ -27,6 +27,14 @@ body.theme-cdap {
       .drafts-list-container {
         margin-left: 10px;
         margin-right: 10px;
+      }
+    }
+    main.container {
+      background-color: transparent;
+      background-image: linear-gradient(@body-bg, @body-bg);
+      margin-top: 60px;
+      > div {
+        margin-bottom: 0;
       }
     }
   }

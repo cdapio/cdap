@@ -30,17 +30,21 @@ create_pid_dir() {
   mkdir -p "${PID_DIR}"
 }
 
+die() {
+  echo "ERROR: ${*}"
+  exit 1
+}
+
 # usage: get_conf "explore.enabled" "${CDAP_CONF}"/cdap-site.xml false
 get_conf() {
   local __pn=${1} __fn=${2} __default=${3} __result=
   # Check for xmllint
   [[ $(which xmllint 2>/dev/null) ]] || {
     case ${PLATFORM} in
-      RHEL) echo "Cannot locate xmllint, is libxml2 installed?" ;;
-      UBUNTU) echo "Cannot locate xmllint, is libxml2-utils installed?" ;;
-      *) echo "Cannot locate xmllint, are XML tools installed?" ;;
+      RHEL) die "Cannot locate xmllint, is libxml2 installed?" ;;
+      UBUNTU) die "Cannot locate xmllint, is libxml2-utils installed?" ;;
+      *) die "Cannot locate xmllint, are XML tools installed?" ;;
     esac
-    return 1
   }
   # Get property from file, return last result, if multiple are returned
   __property="cat //configuration/property[name='${__pn}']/value[text()]"
@@ -65,6 +69,32 @@ rotate_log () {
     done
     mv -f "${log}" "${log}.${num}"
   fi
+}
+
+# CDAP kinit using properties from cdap-site.xml
+cdap_kinit() {
+  local __principal=$(get_conf "cdap.master.kerberos.principal" "${CDAP_CONF}"/cdap-site.xml)
+  local __keytab=$(get_conf "cdap.master.kerberos.keytab" "${CDAP_CONF}"/cdap-site.xml)
+  if [ -z "${__principal}" -o -z "${__keytab}" ]; then
+    echo "ERROR: Both cdap.master.kerberos.principal and cdap.master.kerberos.keytab must be configured for Kerberos-enabled clusters!"
+    return 1
+  fi
+  if [ ! -r "${__keytab}" ]; then
+    echo "ERROR: Cannot read keytab: ${__keytab}"
+    return 1
+  fi
+  if [[ $(which kinit 2>/dev/null) ]]; then
+    # Replace _HOST in principal w/ FQDN, like Hadoop does
+    kinit -kt "${__keytab}" "${__principal/_HOST/`hostname -f`}"
+    if [[ ! $? ]]; then
+      echo "ERROR: Failed executing 'kinit -kt \"${__keytab}\" \"${__principal/_HOST/`hostname -f`}\"'"
+      return 1
+    fi
+  else
+    echo "ERROR: Cannot locate kinit! Please, ensure the appropriate Kerberos utilities are installed"
+    return 1
+  fi
+  return 0
 }
 
 # Attempts to find JAVA in few ways.
@@ -188,27 +218,7 @@ set_hive_classpath() {
     if [ -z "${HIVE_HOME}" -o -z "${HIVE_CONF_DIR}" -o -z "${HADOOP_CONF_DIR}" ]; then
       __secure=$(get_conf "kerberos.auth.enabled" "${CDAP_CONF}"/cdap-site.xml false)
       if [[ "${__secure}" == "true" ]]; then
-        __principal=$(get_conf "cdap.master.kerberos.principal" "${CDAP_CONF}"/cdap-site.xml)
-        __keytab=$(get_conf "cdap.master.kerberos.keytab" "${CDAP_CONF}"/cdap-site.xml)
-        if [ -z "${__principal}" -o -z "${__keytab}" ]; then
-          echo "ERROR: Both cdap.master.kerberos.principal and cdap.master.kerberos.keytab must be configured for Kerberos-enabled clusters!"
-          return 1
-        fi
-        if [ ! -r "${__keytab}" ]; then
-          echo "ERROR: Cannot read keytab: ${__keytab}"
-          return 1
-        fi
-        if [[ $(which kinit 2>/dev/null) ]]; then
-          # Replace _HOST in principal w/ FQDN, like Hadoop does
-          kinit -kt "${__keytab}" "${__principal/_HOST/`hostname -f`}"
-          if [[ ! $? ]]; then
-            echo "ERROR: Failed executing 'kinit -kt \"${__keytab}\" \"${__principal/_HOST/`hostname -f`}\"'"
-            return 1
-          fi
-        else
-          echo "ERROR: Cannot locate kinit! Please, ensure the appropriate Kerberos utilities are installed"
-          return 1
-        fi
+        cdap_kinit || return 1
       fi
 
       if [[ $(which hive 2>/dev/null) ]]; then

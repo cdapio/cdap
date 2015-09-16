@@ -38,7 +38,7 @@ angular.module(PKG.name + '.feature.apps')
         try{
           res.config = JSON.parse(res.configuration);
         } catch(e) {
-          console.log('ERRPR in configuration from backend: ', e);
+          console.log('ERROR in configuration from backend: ', e);
         }
         this.config = {
           name: $state.params.appId,
@@ -66,7 +66,7 @@ angular.module(PKG.name + '.feature.apps')
           MyAppDAGService.addNodes(node, node.type);
         });
 
-        MyAppDAGService.connections = CanvasFactory.getConnectionsBasedOnNodes(this.nodes);
+        MyAppDAGService.connections = CanvasFactory.getConnectionsBasedOnNodes(this.nodes, res.artifact.name);
 
 
       }.bind(this));

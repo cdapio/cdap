@@ -62,10 +62,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.ContentSummary;
-import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.FsStatus;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.hbase.HConstants;
@@ -487,7 +484,6 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
           sendMetrics(runContext, 1, memory, vcores);
         }
       }
-      reportClusterStorage();
       boolean reported = false;
       // if we have HA resourcemanager, need to cycle through possible webapps in case one is down.
       for (URL url : rmUrls) {
@@ -533,50 +529,19 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
         }
         return false;
       } catch (Exception e) {
-        LOG.error("Exception getting cluster memory from ", e);
+        LOG.warn("Exception getting cluster memory from ", e);
         return false;
       } finally {
         if (reader != null) {
           try {
             reader.close();
           } catch (IOException e) {
-            LOG.error("Exception closing reader", e);
+            LOG.warn("Exception closing reader", e);
           }
         }
         if (conn != null) {
           conn.disconnect();
         }
-      }
-    }
-
-    private void reportClusterStorage() {
-      try {
-        ContentSummary summary = hdfs.getContentSummary(namedspacedPath);
-        long totalUsed = summary.getSpaceConsumed();
-        long totalFiles = summary.getFileCount();
-        long totalDirectories = summary.getDirectoryCount();
-
-        // cdap hbase tables
-        for (FileStatus fileStatus : hdfs.listStatus(hbasePath, namespacedFilter)) {
-          summary = hdfs.getContentSummary(fileStatus.getPath());
-          totalUsed += summary.getSpaceConsumed();
-          totalFiles += summary.getFileCount();
-          totalDirectories += summary.getDirectoryCount();
-        }
-
-        FsStatus hdfsStatus = hdfs.getStatus();
-        long storageCapacity = hdfsStatus.getCapacity();
-        long storageAvailable = hdfsStatus.getRemaining();
-
-        MetricsContext collector = getCollector();
-        LOG.trace("total cluster storage = " + storageCapacity + " total used = " + totalUsed);
-        collector.gauge("resources.total.storage", (storageCapacity / 1024 / 1024));
-        collector.gauge("resources.available.storage", (storageAvailable / 1024 / 1024));
-        collector.gauge("resources.used.storage", (totalUsed / 1024 / 1024));
-        collector.gauge("resources.used.files", totalFiles);
-        collector.gauge("resources.used.directories", totalDirectories);
-      } catch (IOException e) {
-        LOG.warn("Exception getting hdfs metrics", e);
       }
     }
 

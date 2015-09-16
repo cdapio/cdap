@@ -44,6 +44,8 @@ import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
+import co.cask.cdap.data2.metadata.service.BusinessMetadataStore;
+import co.cask.cdap.data2.metadata.service.NoOpBusinessMetadataStore;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
 import co.cask.cdap.data2.metadata.writer.NoOpLineageWriter;
 import co.cask.cdap.data2.registry.UsageRegistry;
@@ -206,6 +208,8 @@ public class UpgradeTool {
           bind(DatasetFramework.class).to(InMemoryDatasetFramework.class).in(Scopes.SINGLETON);
           // Upgrade tool does not need to record lineage for now.
           bind(LineageWriter.class).to(NoOpLineageWriter.class);
+          // No need to do anything with Metadata store for now.
+          bind(BusinessMetadataStore.class).to(NoOpBusinessMetadataStore.class);
         }
 
         @Provides

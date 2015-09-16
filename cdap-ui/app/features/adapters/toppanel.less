@@ -18,10 +18,9 @@
 @import "../../../bower_components/bootstrap/less/mixins.less";
 @import '../../styles/themes/cdap/mixins.less';
 
-body.theme-cdap.state-adapters-create {
+body.theme-cdap.state-adapters {
   div.side-panel.top {
     background-color: white;
-    border-bottom: 1px solid #474753;
     position: fixed;
     top: 60px;
     right: 0;
@@ -31,9 +30,9 @@ body.theme-cdap.state-adapters-create {
     .box-shadow(0 7px 7px fade(black, 10%), 0 19px 59px fade(black, 25%););
 
     div.btn {
-      .cask-btn(@border: 0, @border-radius: 0, @color: #74685a, @padding: 0);
+      .cask-btn(@border: 0, @border-radius: 0, @color: #666, @padding: 0);
       border-right: 1px solid transparent;
-      border-left: 1px solid @table-border-color;
+      border-left: 1px solid #eee;
       font-weight: 500;
       height: 59px;
       line-height: 59px;
@@ -43,6 +42,25 @@ body.theme-cdap.state-adapters-create {
       }
       &.active, &:active {
         .box-shadow(none);
+      }
+
+      &.btn-status {
+        width: 200px;
+        cursor: default;
+
+        &:hover, &:hover {
+          border-left: 1px solid #eee;
+        }
+
+        span {
+          display: inline-block;
+          width: 10px;
+          height: 10px;
+          margin-right: 5px;
+          .border-radius(25px);
+          &.status-green { background-color: @brand-success; }
+          &.status-red { background-color: @brand-danger; }
+        }
       }
       @media (max-width: @screen-xs-max) {
         display: none;
@@ -54,6 +72,11 @@ body.theme-cdap.state-adapters-create {
       padding: 5px 15px 0;
       @media (max-width: @screen-sm-max) {
         max-width: 400px;
+      }
+      &:hover, &:focus {
+        a.fa-pencil {
+          opacity: 1;
+        }
       }
       h1 {
         display: inline-block;
@@ -77,7 +100,9 @@ body.theme-cdap.state-adapters-create {
         &.fa-pencil {
           color: @cdap-lightgray;
           cursor: pointer;
+          opacity: 0;
           margin-top: 3px;
+          .transition(opacity 0.2s ease);
         }
       }
       p {
