@@ -81,13 +81,13 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
   @Override
   public void storeJob(JobDetail newJob, boolean replaceExisting) throws ObjectAlreadyExistsException {
     super.storeJob(newJob, replaceExisting);
-    executePersist(newJob, null, null);
+    persistJobAndTrigger(newJob, null);
   }
 
   @Override
   public void storeTrigger(OperableTrigger newTrigger, boolean replaceExisting) throws JobPersistenceException {
     super.storeTrigger(newTrigger, replaceExisting);
-    executePersist(null, newTrigger, super.getTriggerState(newTrigger.getKey()));
+    persistJobAndTrigger(null, newTrigger);
   }
 
 
@@ -104,19 +104,19 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
     super.storeJob(newJob, true);
     super.storeTrigger(newTrigger, true);
 
-    executePersist(newJob, newTrigger, super.getTriggerState(newTrigger.getKey()));
+    persistJobAndTrigger(newJob, newTrigger);
   }
 
   @Override
   public void pauseTrigger(TriggerKey triggerKey) {
     super.pauseTrigger(triggerKey);
-    executePersist(triggerKey, Trigger.TriggerState.PAUSED);
+    persistChangeOfState(triggerKey, Trigger.TriggerState.PAUSED);
   }
 
   @Override
   public void resumeTrigger(TriggerKey triggerKey) {
     super.resumeTrigger(triggerKey);
-    executePersist(triggerKey, Trigger.TriggerState.NORMAL);
+    persistChangeOfState(triggerKey, Trigger.TriggerState.NORMAL);
   }
 
   @Override
@@ -170,30 +170,32 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
     }
   }
 
-  private void executePersist(final TriggerKey triggerKey, final Trigger.TriggerState newTriggerState) {
+  private void persistChangeOfState(final TriggerKey triggerKey, final Trigger.TriggerState newTriggerState) {
     try {
+      Preconditions.checkNotNull(triggerKey);
       factory.createExecutor(ImmutableList.of((TransactionAware) table))
-                            .execute(new TransactionExecutor.Subroutine() {
-                              @Override
-                              public void apply() throws Exception {
-                                if (triggerKey != null) {
-                                  TriggerStatus storedTriggerStatus = readTrigger(triggerKey);
-                                  if (storedTriggerStatus != null) {
-                                    // its okay to persist the same trigger back again since during pause/resume
-                                    // operation the trigger does not change.
-                                    persistTrigger(table, storedTriggerStatus.trigger, newTriggerState);
-                                  }
-                                }
-                              }
-                            });
+        .execute(new TransactionExecutor.Subroutine() {
+          @Override
+          public void apply() throws Exception {
+            TriggerStatus storedTriggerStatus = readTrigger(triggerKey);
+            if (storedTriggerStatus != null) {
+              // its okay to persist the same trigger back again since during pause/resume
+              // operation the trigger does not change. We persist it here with just the new trigger state
+              persistTrigger(table, storedTriggerStatus.trigger, newTriggerState);
+            } else {
+              LOG.warn("Trigger key {} was not found in {} while trying to persist its state to {}.",
+                        triggerKey, ScheduleStoreTableUtil.SCHEDULE_STORE_DATASET_NAME, newTriggerState);
+            }
+          }
+        });
     } catch (Throwable th) {
       throw Throwables.propagate(th);
     }
   }
 
-  private void executePersist(final JobDetail newJob, final OperableTrigger newTrigger,
-                              final Trigger.TriggerState triggerState) {
+  private void persistJobAndTrigger(final JobDetail newJob, final OperableTrigger newTrigger) {
     try {
+      final Trigger.TriggerState triggerState = super.getTriggerState(newTrigger.getKey());
       factory.createExecutor(ImmutableList.of((TransactionAware) table))
         .execute(new TransactionExecutor.Subroutine() {
           @Override
@@ -208,7 +210,6 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
             }
           }
         });
-
     } catch (Throwable th) {
       throw Throwables.propagate(th);
     }

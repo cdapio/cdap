@@ -61,7 +61,8 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
- *
+ * Tests {@link DatasetBasedTimeScheduleStore} across scheduler restarts to verify we retain scheduler information
+ * across restarts.
  */
 @Category(SlowTests.class)
 public class DatasetBasedTimeScheduleStoreTest {
