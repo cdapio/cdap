@@ -24,6 +24,7 @@ import co.cask.cdap.api.spark.JavaSparkProgram;
 import co.cask.cdap.api.spark.SparkContext;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.AbstractWorkflowAction;
+import co.cask.cdap.api.workflow.WorkflowActionConfigurer;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.api.workflow.WorkflowToken;
@@ -155,11 +156,10 @@ public class WorkflowApp extends AbstractApplication {
     }
 
     @Override
-    public WorkflowActionSpecification configure() {
-      return WorkflowActionSpecification.Builder.with()
-        .setName(name)
-        .setDescription(name)
-        .build();
+    public void configure(WorkflowActionConfigurer configurer) {
+      super.configure(configurer);
+      setName(name);
+      setDescription(name);
     }
 
     @Override

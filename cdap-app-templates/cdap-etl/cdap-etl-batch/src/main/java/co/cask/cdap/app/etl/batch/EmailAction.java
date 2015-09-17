@@ -17,6 +17,7 @@
 package co.cask.cdap.app.etl.batch;
 
 import co.cask.cdap.api.workflow.AbstractWorkflowAction;
+import co.cask.cdap.api.workflow.WorkflowActionConfigurer;
 import co.cask.cdap.api.workflow.WorkflowActionNode;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.api.workflow.WorkflowContext;
@@ -103,7 +104,8 @@ public class EmailAction extends AbstractWorkflowAction {
   }
 
   @Override
-  public WorkflowActionSpecification configure() {
+  public void configure(WorkflowActionConfigurer configurer) {
+    super.configure(configurer);
     Preconditions.checkArgument(!Strings.isNullOrEmpty(properties.get(RECIPIENT_EMAIL_ADDRESS)),
                                 String.format("You must set the \'%s\' property to send an email.",
                                               RECIPIENT_EMAIL_ADDRESS));
@@ -123,8 +125,9 @@ public class EmailAction extends AbstractWorkflowAction {
     if (Strings.isNullOrEmpty(properties.get(PORT))) {
       properties.put(PORT, Integer.toString(DEFAULT_PORT));
     }
-    return WorkflowActionSpecification.Builder.with().setName(NAME).setDescription("")
-      .withOptions(properties).build();
+    setName(NAME);
+    setDescription("");
+    setProperties(properties);
   }
 
   @Override
