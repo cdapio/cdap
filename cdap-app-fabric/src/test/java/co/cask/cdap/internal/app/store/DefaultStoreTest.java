@@ -62,9 +62,12 @@ import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.templates.AdapterDefinition;
+import com.google.common.base.Function;
 import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.inject.Injector;
@@ -945,5 +948,73 @@ public class DefaultStoreTest {
     public int hashCode() {
       return Objects.hashCode(x, y, z);
     }
+  }
+
+  @Test
+  public void testRunningInRange() throws Exception {
+    Id.Run run1 = new Id.Run(Id.Program.from("d", "a1", ProgramType.FLOW, "f1"), RunIds.generate(20000).getId());
+    Id.Run run2 = new Id.Run(Id.Program.from("d", "a2", ProgramType.MAPREDUCE, "f2"), RunIds.generate(10000).getId());
+    Id.Run run3 = new Id.Run(Id.Program.from("d", "a3", ProgramType.WORKER, "f3"), RunIds.generate(40000).getId());
+    Id.Run run4 = new Id.Run(Id.Program.from("d", "a4", ProgramType.SERVICE, "f4"), RunIds.generate(70000).getId());
+    Id.Run run5 = new Id.Run(Id.Program.from("d", "a5", ProgramType.SPARK, "f5"), RunIds.generate(30000).getId());
+    Id.Run run6 = new Id.Run(Id.Program.from("d", "a6", ProgramType.WORKFLOW, "f6"), RunIds.generate(60000).getId());
+
+    writeStartRecord(run1);
+    writeStartRecord(run2);
+    writeStartRecord(run3);
+    writeStartRecord(run4);
+    writeStartRecord(run5);
+    writeStartRecord(run6);
+
+    Assert.assertEquals(runsToTime(run1, run2), runIdsToTime(store.getRunningInRange(1, 30)));
+    Assert.assertEquals(runsToTime(run1, run2, run5, run3), runIdsToTime(store.getRunningInRange(30, 50)));
+    Assert.assertEquals(runsToTime(run1, run2, run3, run4, run5, run5, run6),
+                        runIdsToTime(store.getRunningInRange(1, 71)));
+    Assert.assertEquals(runsToTime(run1, run2, run3, run4, run5, run5, run6),
+                        runIdsToTime(store.getRunningInRange(50, 71)));
+    Assert.assertEquals(ImmutableSet.of(), runIdsToTime(store.getRunningInRange(1, 10)));
+
+    writeStopRecord(run1, 45000);
+    writeStopRecord(run3, 55000);
+    writeSusspendedRecord(run5);
+
+    Assert.assertEquals(runsToTime(run2, run3, run4, run5, run5, run6),
+                        runIdsToTime(store.getRunningInRange(50, 71)));
+  }
+  
+  private void writeStartRecord(Id.Run run) {
+    store.setStart(run.getProgram(), run.getId(), RunIds.getTime(RunIds.fromString(run.getId()), TimeUnit.SECONDS));
+    Assert.assertNotNull(store.getRun(run.getProgram(), run.getId()));
+  }
+
+  private void writeStopRecord(Id.Run run, long stopTimeInMillis) {
+    store.setStop(run.getProgram(), run.getId(), TimeUnit.MILLISECONDS.toSeconds(stopTimeInMillis),
+                  ProgramRunStatus.COMPLETED);
+    Assert.assertNotNull(store.getRun(run.getProgram(), run.getId()));
+  }
+
+  private void writeSusspendedRecord(Id.Run run) {
+    store.setSuspend(run.getProgram(), run.getId());
+    Assert.assertNotNull(store.getRun(run.getProgram(), run.getId()));
+  }
+
+  private Set<Long> runsToTime(Id.Run... runIds) {
+    Iterable<Long> transformedRunIds = Iterables.transform(ImmutableSet.copyOf(runIds), new Function<Id.Run, Long>() {
+      @Override
+      public Long apply(Id.Run input) {
+        return RunIds.getTime(RunIds.fromString(input.getId()), TimeUnit.MILLISECONDS);
+      }
+    });
+    return ImmutableSet.copyOf(transformedRunIds);
+  }
+
+  private Set<Long> runIdsToTime(Set<RunId> runIds) {
+    Iterable<Long> transformedRunIds = Iterables.transform(runIds, new Function<RunId, Long>() {
+      @Override
+      public Long apply(RunId input) {
+        return RunIds.getTime(input, TimeUnit.MILLISECONDS);
+      }
+    });
+    return ImmutableSet.copyOf(transformedRunIds);
   }
 }

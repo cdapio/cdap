@@ -27,6 +27,7 @@ import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -45,14 +46,14 @@ public class LineageStore {
   private final Id.DatasetInstance lineageDatasetId;
 
   @Inject
-  LineageStore(TransactionExecutorFactory executorFactory,
-               @Named(DataSetsModules.BASIC_DATASET_FRAMEWORK) DatasetFramework datasetFramework) {
+  public LineageStore(TransactionExecutorFactory executorFactory,
+                      @Named(DataSetsModules.BASIC_DATASET_FRAMEWORK) DatasetFramework datasetFramework) {
     this(executorFactory, datasetFramework, LINEAGE_DATASET_ID);
   }
 
   @VisibleForTesting
-  LineageStore(TransactionExecutorFactory executorFactory, DatasetFramework datasetFramework,
-               Id.DatasetInstance lineageDatasetId) {
+  public LineageStore(TransactionExecutorFactory executorFactory, DatasetFramework datasetFramework,
+                      Id.DatasetInstance lineageDatasetId) {
     this.executorFactory = executorFactory;
     this.datasetFramework = datasetFramework;
     this.lineageDatasetId = lineageDatasetId;
@@ -142,13 +143,15 @@ public class LineageStore {
    * @param datasetInstance dataset for which to fetch access information
    * @param start start time period
    * @param end end time period
+   * @param filter filter to be applied on result set
    * @return program-dataset access information
    */
-  public Set<Relation> getRelations(final Id.DatasetInstance datasetInstance, final long start, final long end) {
+  public Set<Relation> getRelations(final Id.DatasetInstance datasetInstance, final long start, final long end,
+                                    final Predicate<Relation> filter) {
     return execute(new TransactionExecutor.Function<LineageDataset, Set<Relation>>() {
       @Override
       public Set<Relation> apply(LineageDataset input) throws Exception {
-        return input.getRelations(datasetInstance, start, end);
+        return input.getRelations(datasetInstance, start, end, filter);
       }
     });
   }
@@ -159,13 +162,15 @@ public class LineageStore {
    * @param stream stream for which to fetch access information
    * @param start start time period
    * @param end end time period
+   * @param filter filter to be applied on result set
    * @return program-stream access information
    */
-  public Set<Relation> getRelations(final Id.Stream stream, final long start, final long end) {
+  public Set<Relation> getRelations(final Id.Stream stream, final long start, final long end,
+                                    final Predicate<Relation> filter) {
     return execute(new TransactionExecutor.Function<LineageDataset, Set<Relation>>() {
       @Override
       public Set<Relation> apply(LineageDataset input) throws Exception {
-        return input.getRelations(stream, start, end);
+        return input.getRelations(stream, start, end, filter);
       }
     });
   }
@@ -176,13 +181,15 @@ public class LineageStore {
    * @param program program for which to fetch access information
    * @param start start time period
    * @param end end time period
+   * @param filter filter to be applied on result set
    * @return program-dataset access information
    */
-  public Set<Relation> getRelations(final Id.Program program, final long start, final long end) {
+  public Set<Relation> getRelations(final Id.Program program, final long start, final long end,
+                                    final Predicate<Relation> filter) {
     return execute(new TransactionExecutor.Function<LineageDataset, Set<Relation>>() {
       @Override
       public Set<Relation> apply(LineageDataset input) throws Exception {
-        return input.getRelations(program, start, end);
+        return input.getRelations(program, start, end, filter);
       }
     });
   }
