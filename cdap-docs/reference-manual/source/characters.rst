@@ -11,12 +11,28 @@ Supported Characters
 ====================
 
 The Cask Data Application Platform (CDAP) has different naming conventions for different entities in CDAP.
+We distinguish these different character sets, and note which entities use them:
+
+
+Alphanumeric Character Set
+--------------------------
+This is the basic character set that all entities support:
+
+- Alphanumeric characters (``a-z A-Z 0-9``)
 
 
 Alphanumeric Extended Character Set
 -----------------------------------
-**Stream names**, **metadata property keys, values,** and **tags** can use
-an alphanumeric extended character set:
+**Namespace IDs** can use an *alphanumeric extended character set:*
+
+- Alphanumeric characters (``a-z A-Z 0-9``)
+- Underscores (``_``)
+
+
+Alphanumeric Extra Extended Character Set
+-----------------------------------
+Except as noted on this page, **all other CDAP entities** (such as streams, flows, apps,
+plugins) support an *alphanumeric extra extended character set:*
 
 - Alphanumeric characters (``a-z A-Z 0-9``)
 - Hyphens (``-``)
@@ -25,18 +41,19 @@ an alphanumeric extended character set:
 
 Dataset Character Set
 ---------------------
-**Dataset names** can use the alphanumeric extended character set, plus periods:
+**Dataset names** can use the alphanumeric extra extended character set, plus periods:
 
 - Alphanumeric characters (``a-z A-Z 0-9``)
 - Hyphens (``-``)
-- Underscores (``_``)
 - Periods (``.``)
+- Underscores (``_``)
 
 
 Hive Limitation and Conversion
 ------------------------------
 `Hive 0.12 <https://cwiki.apache.org/confluence/display/Hive/LanguageManual+DDL#LanguageManualDDL-CreateTable>`__
-only supports alphanumeric characters (``a-z A-Z 0-9``) and underscores (``_``). 
+only supports the *alphanumeric extended character set:* alphanumeric characters (``a-z
+A-Z 0-9``) and underscores (``_``). 
 
 As a consequence, any hyphens in stream names and any hyphens or periods in dataset names
 will be converted to underscores while creating Hive tables. 
