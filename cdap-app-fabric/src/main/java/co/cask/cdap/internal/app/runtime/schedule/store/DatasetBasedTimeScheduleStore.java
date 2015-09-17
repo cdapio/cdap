@@ -182,7 +182,7 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
               persistTrigger(table, storedTriggerStatus.trigger, newTriggerState);
             } else {
               LOG.warn("Trigger key {} was not found in {} while trying to persist its state to {}.",
-                        triggerKey, ScheduleStoreTableUtil.SCHEDULE_STORE_DATASET_NAME, newTriggerState);
+                       triggerKey, ScheduleStoreTableUtil.SCHEDULE_STORE_DATASET_NAME, newTriggerState);
             }
           }
         });
@@ -193,7 +193,11 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
 
   private void persistJobAndTrigger(final JobDetail newJob, final OperableTrigger newTrigger) {
     try {
-      final Trigger.TriggerState triggerState = super.getTriggerState(newTrigger.getKey());
+      Trigger.TriggerState triggerState = Trigger.TriggerState.NONE;
+      if (newTrigger != null) {
+        triggerState = super.getTriggerState(newTrigger.getKey());
+      }
+      final Trigger.TriggerState finalTriggerState = triggerState;
       factory.createExecutor(ImmutableList.of((TransactionAware) table))
         .execute(new TransactionExecutor.Subroutine() {
           @Override
@@ -203,7 +207,7 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
               LOG.debug("Schedule: stored job with key {}", newJob.getKey());
             }
             if (newTrigger != null) {
-              persistTrigger(table, newTrigger, triggerState);
+              persistTrigger(table, newTrigger, finalTriggerState);
               LOG.debug("Schedule: stored trigger with key {}", newTrigger.getKey());
             }
           }
