@@ -150,11 +150,11 @@ public class BundleJarUtil {
    * is included in the archive.
    *
    * @param input input directory (or file) whose contents needs to be archived
-   * @param destArchiveFile file to which the archive needs to be written to
+   * @param destArchive location to which the archive needs to be written to
    * @param tempDir temporary directory to help with archive generation
    * @throws IOException if there is failure in the archive creation
    */
-  public static void packDir(File input, File destArchiveFile, File tempDir) throws IOException {
+  public static void packDir(File input, Location destArchive, File tempDir) throws IOException {
     File jarFile = File.createTempFile("temp", ".jar", tempDir);
     try (JarOutputStream output = new JarOutputStream(new FileOutputStream(jarFile))) {
       List<File> files = new ArrayList<>();
@@ -171,7 +171,7 @@ public class BundleJarUtil {
         Files.copy(file, output);
       }
     }
-    Files.copy(jarFile, destArchiveFile);
+    Files.copy(jarFile, Locations.newOutputSupplier(destArchive));
   }
 
   /**

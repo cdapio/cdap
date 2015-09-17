@@ -213,8 +213,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       if (!MapReduceTaskContextProvider.isLocal(mapredConf)) {
         // After calling beforeSubmit, we know what plugins are needed for the program, hence construct the proper
         // ClassLoader from here and use it for setting up the job
-        Location artifactArchive = createArchive(new File(Constants.Plugin.DIRECTORY),
-                                                 context.getPlugins(), tempDir, tempLocation);
+        Location artifactArchive = createArchive(new File(Constants.Plugin.DIRECTORY), context.getPlugins(),
+                                                 tempDir, tempLocation);
         if (artifactArchive != null) {
           job.addCacheArchive(artifactArchive.toURI());
         }
@@ -935,9 +935,10 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       return null;
     }
 
-    File targetFile = new File(tempDir, Constants.Plugin.DIRECTORY);
-    BundleJarUtil.packDir(localDir, targetFile, tempDir);
-    return Locations.toLocation(targetFile);
+    Location targetLocation = targetDir.append(Constants.Plugin.DIRECTORY);
+    BundleJarUtil.packDir(localDir, targetLocation, tempDir);
+    LOG.debug("Copying Plugin Archive to Location {}", targetLocation);
+    return targetLocation;
   }
 
   private Runnable createCleanupTask(final Object...resources) {

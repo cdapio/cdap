@@ -222,7 +222,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
                                                 File tempDir) throws IOException {
     File localDir = new File(options.getArguments().getOption(ProgramOptionConstants.PLUGIN_DIR));
     File archiveFile = new File(tempDir, Constants.Plugin.DIRECTORY);
-    BundleJarUtil.packDir(localDir, archiveFile, tempDir);
+    BundleJarUtil.packDir(localDir, Locations.toLocation(archiveFile), tempDir);
     localizeResources.put(Constants.Plugin.DIRECTORY, new LocalizeResource(archiveFile, true));
     LOG.debug("Localizing Resource {} here {}", localDir, archiveFile);
 
