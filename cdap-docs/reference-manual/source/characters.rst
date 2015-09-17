@@ -30,8 +30,8 @@ Alphanumeric Extended Character Set
 
 
 Alphanumeric Extra Extended Character Set
------------------------------------
-Except as noted on this page, **all other CDAP entities** (such as streams, flows, apps,
+-----------------------------------------
+Except as noted on this page, **all other CDAP entities** (such as streams, datasets, flows, apps,
 plugins) support an *alphanumeric extra extended character set:*
 
 - Alphanumeric characters (``a-z A-Z 0-9``)
@@ -39,14 +39,17 @@ plugins) support an *alphanumeric extra extended character set:*
 - Underscores (``_``)
 
 
-Dataset Character Set
----------------------
-**Dataset names** can use the alphanumeric extra extended character set, plus periods:
+Dataset Character Set (Deprecated)
+----------------------------------
+In earlier versions of CDAP, **Dataset names** used the alphanumeric extra extended character set, plus periods:
 
 - Alphanumeric characters (``a-z A-Z 0-9``)
 - Hyphens (``-``)
 - Periods (``.``)
 - Underscores (``_``)
+
+We recommend that instead you use the *Alphanumeric Extra Extended Character Set*, as support for this may
+be removed in the future.
 
 
 Hive Limitation and Conversion
