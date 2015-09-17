@@ -45,9 +45,6 @@ import java.util.jar.Manifest;
  *                  ^
  *                  |
  *       CombineCL of (Program Filter CL, Template Filter CL (Export-Package classes only))
- *                  ^
- *                  |
- *           Plugin Lib CL (Common library for plugin)
  * }</pre>
  *
  * <p/>
@@ -57,14 +54,6 @@ import java.util.jar.Manifest;
 public class PluginClassLoader extends DirectoryClassLoader {
 
   private final Set<String> exportPackages;
-
-  /**
-   * Creates the parent ClassLoader for the plugin ClassLoader. See javadoc of this class for details.
-   */
-  static ClassLoader createParent(File pluginLibDir, ClassLoader templateClassLoader) {
-    // Includes all jars in the plugins/template/lib directory
-    return new DirectoryClassLoader(pluginLibDir, createParent(templateClassLoader));
-  }
 
   static ClassLoader createParent(ClassLoader templateClassLoader) {
     // Find the ProgramClassLoader from the template ClassLoader

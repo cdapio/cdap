@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.runtime.artifact;
 import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.artifact.ArtifactVersion;
+import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.plugin.PluginPropertyField;
@@ -200,6 +201,7 @@ public class ArtifactRepositoryTest {
 
   @Test
   public void testPlugin() throws Exception {
+    File pluginDir = DirUtils.createTempDir(tmpDir);
     // Create the plugin jar. There should be two plugins there (TestPlugin and TestPlugin2).
     Manifest manifest = createManifest(ManifestFields.EXPORT_PACKAGE, TestPlugin.class.getPackage().getName());
     File jarFile = createPluginJar(TestPlugin.class, new File(tmpDir, "myPlugin-1.0.jar"), manifest);
@@ -216,16 +218,17 @@ public class ArtifactRepositoryTest {
     Assert.assertEquals(1, plugins.size());
     Assert.assertEquals(2, plugins.get(plugins.firstKey()).size());
 
+    ArtifactDescriptor descriptor = plugins.firstKey();
+    Files.copy(Locations.newInputSupplier(descriptor.getLocation()),
+               new File(pluginDir, Artifacts.getFileName(descriptor.getArtifactId())));
     // Instantiate the plugins and execute them
-    try (PluginInstantiator instantiator = new PluginInstantiator(cConf, appClassLoader)) {
+    try (PluginInstantiator instantiator = new PluginInstantiator(cConf, appClassLoader, pluginDir)) {
       for (Map.Entry<ArtifactDescriptor, List<PluginClass>> entry : plugins.entrySet()) {
         for (PluginClass pluginClass : entry.getValue()) {
-          Callable<String> plugin = instantiator.newInstance(entry.getKey(), pluginClass,
-                                                             PluginProperties.builder()
-                                                              .add("class.name", TEST_EMPTY_CLASS)
-                                                              .add("timeout", "10")
-                                                              .build()
-          );
+          Plugin pluginInfo = new Plugin(entry.getKey().getArtifactId(), pluginClass,
+                                         PluginProperties.builder().add("class.name", TEST_EMPTY_CLASS)
+                                           .add("timeout", "10").build());
+          Callable<String> plugin = instantiator.newInstance(pluginInfo);
           Assert.assertEquals(TEST_EMPTY_CLASS, plugin.call());
         }
       }
@@ -241,6 +244,8 @@ public class ArtifactRepositoryTest {
     } catch (PluginNotExistsException e) {
       // expected
     }
+
+    File pluginDir = DirUtils.createTempDir(tmpDir);
 
     // Create a plugin jar. It contains two plugins, TestPlugin and TestPlugin2 inside.
     Id.Artifact artifact1Id = Id.Artifact.from(Id.Namespace.DEFAULT, "myPlugin", "1.0");
@@ -259,6 +264,8 @@ public class ArtifactRepositoryTest {
     Assert.assertNotNull(plugin);
     Assert.assertEquals(new ArtifactVersion("1.0"), plugin.getKey().getArtifactId().getVersion());
     Assert.assertEquals("TestPlugin2", plugin.getValue().getName());
+    Files.copy(Locations.newInputSupplier(plugin.getKey().getLocation()),
+               new File(pluginDir, Artifacts.getFileName(plugin.getKey().getArtifactId())));
 
     // Create another plugin jar with later version and update the repository
     Id.Artifact artifact2Id = Id.Artifact.from(Id.Namespace.DEFAULT, "myPlugin", "2.0");
@@ -270,38 +277,41 @@ public class ArtifactRepositoryTest {
     Assert.assertNotNull(plugin);
     Assert.assertEquals(new ArtifactVersion("2.0"), plugin.getKey().getArtifactId().getVersion());
     Assert.assertEquals("TestPlugin2", plugin.getValue().getName());
+    Files.copy(Locations.newInputSupplier(plugin.getKey().getLocation()),
+               new File(pluginDir, Artifacts.getFileName(plugin.getKey().getArtifactId())));
 
     // Load the Plugin class from the classLoader.
-    PluginInstantiator instantiator = new PluginInstantiator(cConf, appClassLoader);
-    ClassLoader pluginClassLoader = instantiator.getArtifactClassLoader(plugin.getKey());
-    Class<?> pluginClass = pluginClassLoader.loadClass(TestPlugin2.class.getName());
+    try (PluginInstantiator instantiator = new PluginInstantiator(cConf, appClassLoader, pluginDir)) {
+      ClassLoader pluginClassLoader = instantiator.getArtifactClassLoader(plugin.getKey().getArtifactId());
+      Class<?> pluginClass = pluginClassLoader.loadClass(TestPlugin2.class.getName());
 
-    // Use a custom plugin selector to select with smallest version
-    plugin = artifactRepository.findPlugin(APP_ARTIFACT_ID, "plugin", "TestPlugin2", new PluginSelector() {
-      @Override
-      public Map.Entry<ArtifactId, PluginClass> select(SortedMap<ArtifactId, PluginClass> plugins) {
-        return plugins.entrySet().iterator().next();
-      }
-    });
-    Assert.assertNotNull(plugin);
-    Assert.assertEquals(new ArtifactVersion("1.0"), plugin.getKey().getArtifactId().getVersion());
-    Assert.assertEquals("TestPlugin2", plugin.getValue().getName());
+      // Use a custom plugin selector to select with smallest version
+      plugin = artifactRepository.findPlugin(APP_ARTIFACT_ID, "plugin", "TestPlugin2", new PluginSelector() {
+        @Override
+        public Map.Entry<ArtifactId, PluginClass> select(SortedMap<ArtifactId, PluginClass> plugins) {
+          return plugins.entrySet().iterator().next();
+        }
+      });
+      Assert.assertNotNull(plugin);
+      Assert.assertEquals(new ArtifactVersion("1.0"), plugin.getKey().getArtifactId().getVersion());
+      Assert.assertEquals("TestPlugin2", plugin.getValue().getName());
 
-    // Load the Plugin class again from the current plugin selected
-    // The plugin class should be different (from different ClassLoader)
-    // The empty class should be the same (from the plugin lib ClassLoader)
-    pluginClassLoader = instantiator.getArtifactClassLoader(plugin.getKey());
-    Assert.assertNotSame(pluginClass, pluginClassLoader.loadClass(TestPlugin2.class.getName()));
+      // Load the Plugin class again from the current plugin selected
+      // The plugin class should be different (from different ClassLoader)
+      // The empty class should be the same (from the plugin lib ClassLoader)
+      pluginClassLoader = instantiator.getArtifactClassLoader(plugin.getKey().getArtifactId());
+      Assert.assertNotSame(pluginClass, pluginClassLoader.loadClass(TestPlugin2.class.getName()));
 
-    // From the pluginClassLoader, loading export classes from the template jar should be allowed
-    Class<?> cls = pluginClassLoader.loadClass(PluginTestRunnable.class.getName());
-    // The class should be loaded from the parent artifact's classloader
-    Assert.assertSame(appClassLoader.loadClass(PluginTestRunnable.class.getName()), cls);
+      // From the pluginClassLoader, loading export classes from the template jar should be allowed
+      Class<?> cls = pluginClassLoader.loadClass(PluginTestRunnable.class.getName());
+      // The class should be loaded from the parent artifact's classloader
+      Assert.assertSame(appClassLoader.loadClass(PluginTestRunnable.class.getName()), cls);
 
-    // From the plugin classloader, all cdap api classes is loadable as well.
-    cls = pluginClassLoader.loadClass(Application.class.getName());
-    // The Application class should be the same as the one in the system classloader
-    Assert.assertSame(Application.class, cls);
+      // From the plugin classloader, all cdap api classes is loadable as well.
+      cls = pluginClassLoader.loadClass(Application.class.getName());
+      // The Application class should be the same as the one in the system classloader
+      Assert.assertSame(Application.class, cls);
+    }
   }
 
   @Test(expected = InvalidArtifactException.class)

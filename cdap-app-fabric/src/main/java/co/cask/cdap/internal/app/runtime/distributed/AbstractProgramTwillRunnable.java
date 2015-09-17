@@ -195,12 +195,6 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
 
       cConf = CConfiguration.create(new File(configs.get("cConf")));
 
-      // Alter the template directory to only the name part in the container directory.
-      // It works in pair with the ProgramRunner.
-      // See AbstractDistributedProgramRunner
-      File templateDir = new File(cConf.get(Constants.AppFabric.APP_TEMPLATE_DIR));
-      cConf.set(Constants.AppFabric.APP_TEMPLATE_DIR, templateDir.getName());
-
       injector = Guice.createInjector(createModule(context));
 
       zkClientService = injector.getInstance(ZKClientService.class);
