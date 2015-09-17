@@ -24,6 +24,9 @@ DEFAULT_RST="cdap-default-table.rst"
 CHECK_INCLUDES=${TRUE}
 
 function download_includes() {
+  echo_red_bold "Check guarded files for changes"
+  test_an_include f03add3234d3f30b7994506baf1de085 "${DEFAULT_XML}"
+
   echo "Building rst file from cdap-default.xml..."
   local includes_dir=${1}
   python "${DEFAULT_TOOL}" -g -t "${includes_dir}/${DEFAULT_RST}"
