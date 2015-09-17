@@ -20,20 +20,32 @@ angular.module(PKG.name + '.feature.adapters')
     this.metadata = MyAppDAGService.metadata;
     var metadataCopy = angular.copy(MyAppDAGService.metadata);
     this.initialCron = this.metadata.template.schedule.cron;
-    this.isBasic = true;
 
-    this.cronConfig = {
-      options: {
-        allowMonth: false,
-        allowYear: false,
-        allowWeek: false
+
+
+    function checkCron(cron) {
+      var pattern = /^[0-9\*\s]*$/g;
+      var parse = cron.split('');
+      for (var i = 0; i < parse.length; i++) {
+        if (!parse[i].match(pattern)) {
+          return false;
+        }
       }
-    };
+      return true;
+    }
+
+    this.isBasic = checkCron(this.initialCron);
 
     this.changeScheduler = function (type) {
       if (type === 'BASIC') {
         this.initialCron = this.metadata.template.schedule.cron;
-        this.isBasic = true;
+        var check = true;
+        if (!checkCron(this.initialCron)) {
+          check = confirm('You have advanced configuration that is not available in basic mode. Are you sure you want to go to basic scheduler?');
+        }
+        if (check) {
+          this.isBasic = true;
+        }
       } else {
         this.isBasic = false;
       }
