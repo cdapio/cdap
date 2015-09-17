@@ -18,8 +18,8 @@ Glossary
       abstraction layer in CDAP.
 
    Artifact
-      A JAR file containing Java classes and resources required to create an run an
-      Application. Multiple applications can be created using the same artifact.
+      A JAR file containing Java classes and resources required to create and run an
+      :term:`Application`. Multiple applications can be created from the same artifact.
 
    Stream
       The primary means of bringing data from external systems into CDAP in real time; an
@@ -175,7 +175,7 @@ Glossary
       Refers to the *Extract*, *Transform* and *Load* of data. 
     
    ETL Application
-      A type of Application created from one of the two ETL system artifacts shipped with CDAP:
+      A type of Application created from one of the two ETL system :term:`artifacts <artifact>` shipped with CDAP:
       ``cdap-etl-batch`` and ``cdap-etl-realtime``. An ETL Application defines a source to read
       from, zero or more transformations to perform on data read from the source, and one or more
       sinks to write the transformed data to.

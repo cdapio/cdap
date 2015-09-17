@@ -46,7 +46,7 @@ as appropriate. A Windows-version of the application ``curl`` is included in the
 
 Downloading the Artifact
 ========================
-An artifact is a jar file that contains Application code.
+An artifact is a JAR file that contains Application code.
 You can either download the application zip archive that we have built for you, or
 you can pull the source code from GitHub. If you download the zip file, then the artifact
 is already built and packaged:
@@ -117,7 +117,7 @@ or by using ``curl``:
     -d '{ "artifact":{ "name": "cdap-wise", "version": "0.4.0", "scope": "user" } }'
     Deploy Complete
     
-**Learn More:** *You can also deploy artifacts and apps in one step by dragging and dropping their jars on*
+**Learn More:** *You can also deploy artifacts and apps in one step by dragging and dropping their JARs on*
 :ref:`the CDAP UI <cdap-ui>`.
 
 Starting Real-time Processing
