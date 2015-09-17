@@ -23,6 +23,7 @@ import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.codec.NamespacedIdCodec;
 import co.cask.cdap.proto.metadata.MetadataRecord;
+import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
@@ -52,6 +53,8 @@ public abstract class MetadataTestBase extends AppFabricTestBase {
     .registerTypeAdapter(Id.NamespacedId.class, new NamespacedIdCodec())
     .create();
   private static final Type SET_STRING_TYPE = new TypeToken<Set<String>>() { }.getType();
+  private static final Type SET_METADATA_SEARCH_RESULT_TYPE =
+    new TypeToken<Set<MetadataSearchResultRecord>>() { }.getType();
   private static final Type SET_METADATA_RECORD_TYPE = new TypeToken<Set<MetadataRecord>>() { }.getType();
   private static String metadataServiceUrl;
 
@@ -287,6 +290,19 @@ public abstract class MetadataTestBase extends AppFabricTestBase {
       return makePostRequest(path);
     }
     return makePostRequest(path, GSON.toJson(tags));
+  }
+
+  protected Set<MetadataSearchResultRecord> searchMetadata(String namespaceId,
+                                                           String query, String target) throws IOException {
+    String path;
+    if (target == null) {
+      path = getVersionedAPIPath(String.format("metadata/search?query=%s", query), namespaceId);
+    } else {
+      path = getVersionedAPIPath(String.format("metadata/search?query=%s&target=%s", query, target), namespaceId);
+    }
+    HttpResponse response = makeGetRequest(path);
+    Assert.assertEquals(200, response.getResponseCode());
+    return GSON.fromJson(response.getResponseBodyAsString(), SET_METADATA_SEARCH_RESULT_TYPE);
   }
 
   protected Set<String> getTags(Id.Application app) throws IOException {
