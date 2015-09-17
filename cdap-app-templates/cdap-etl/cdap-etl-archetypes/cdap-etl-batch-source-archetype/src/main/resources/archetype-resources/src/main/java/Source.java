@@ -21,14 +21,14 @@ import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.plugin.PluginConfig;
-import co.cask.cdap.template.etl.api.Emitter;
-import co.cask.cdap.template.etl.api.batch.BatchSource;
-import co.cask.cdap.template.etl.api.batch.BatchSourceContext;
+import co.cask.cdap.etl.api.Emitter;
+import co.cask.cdap.etl.api.batch.BatchSource;
+import co.cask.cdap.etl.api.batch.BatchSourceContext;
 
 /**
  * Batch Source to poll data from external sources.
  */
-@Plugin(type = "source")
+@Plugin(type = "batchsource")
 @Name("Source")
 @Description("Batch Source")
 public class Source extends BatchSource<byte[], byte[], StructuredRecord> {
