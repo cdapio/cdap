@@ -24,6 +24,7 @@ Building Blocks
     Spark Programs <spark-programs>
     Workers <workers>
     Workflows <workflows>
+    Artifacts <artifacts>
     Namespaces <namespaces>
     Transaction System <transaction-system>
 
@@ -47,6 +48,9 @@ write data through the data abstraction layer in CDAP.
 - :doc:`Spark Programs <spark-programs>`
 - :doc:`Workers <workers>`
 - :doc:`Workflows <workflows>`
+
+An :doc:`Artifact <artifacts>` is a jar file that packages the Java Application class, as well
+as any other classes and libraries needed to create and run an Application. 
 
 A :doc:`Namespace <namespaces>` is a logical grouping of application and data in CDAP.
 Conceptually, namespaces can be thought of as a partitioning of a CDAP instance.
