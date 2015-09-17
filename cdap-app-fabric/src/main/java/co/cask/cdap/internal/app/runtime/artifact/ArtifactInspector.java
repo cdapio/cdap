@@ -83,7 +83,7 @@ public class ArtifactInspector {
   ArtifactInspector(CConfiguration cConf, ArtifactClassLoaderFactory artifactClassLoaderFactory) {
     this.cConf = cConf;
     this.artifactClassLoaderFactory = artifactClassLoaderFactory;
-    this.schemaGenerator = new ReflectionSchemaGenerator();
+    this.schemaGenerator = new ReflectionSchemaGenerator(false);
   }
 
   /**
