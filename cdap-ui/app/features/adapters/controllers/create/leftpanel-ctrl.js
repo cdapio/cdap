@@ -111,7 +111,9 @@ angular.module(PKG.name + '.feature.adapters')
               return;
             }
 
-            this.plugins.items = this.plugins.items.concat(objectToArray(templates[group.name]));
+            this.plugins.items = this.plugins.items.concat(
+              objectToArray(templates[GLOBALS.pluginTypes[templateType][group.name]])
+            );
           }.bind(this),
           function error() {
             console.log('ERROR: fetching plugin templates');
