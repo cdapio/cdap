@@ -40,11 +40,11 @@ To set preferences for the CDAP instance, namespace, application, or program, su
    * - ``<namespace>``
      - Namespace ID
    * - ``<app-id>``
-     - Application ID
+     - Name of  application
    * - ``<program-type>``
      - One of ``flows``, ``mapreduce``, ``spark``, ``workflows``, ``services`` or ``workers``
    * - ``<program-id>``
-     - Program ID
+     - Name of program
 
 Properties, as a map of string-string pairs, are passed in the JSON request body.
 
@@ -104,11 +104,11 @@ To retrieve the resolved preferences (collapsing preferences from higher levels 
    * - ``<namespace>``
      - Namespace ID
    * - ``<app-id>``
-     - Application ID
+     - Name of application
    * - ``<program-type>``
      - One of ``flows``, ``mapreduce``, ``spark``, ``workflows``, ``services`` or ``workers``
    * - ``<program-id>``
-     - Program ID
+     - Name of  program
 
 .. rubric:: HTTP Responses
 
@@ -144,11 +144,11 @@ To delete preferences, issue an HTTP DELETE. Preferences can be deleted only at 
    * - ``<namespace>``
      - Namespace ID
    * - ``<app-id>``
-     - Application ID
+     - Name of application
    * - ``<program-type>``
      - One of ``flows``, ``mapreduce``, ``spark``, ``workflows``, ``services`` or ``workers``
    * - ``<program-id>``
-     - Program ID
+     - Name of program
 
 .. rubric:: HTTP Responses
 
@@ -159,6 +159,6 @@ To delete preferences, issue an HTTP DELETE. Preferences can be deleted only at 
    * - Status Codes
      - Description
    * - ``200 OK``
-     - The event successfully called the method, and the preferences were retrieved
+     - The event successfully called the method, and the preferences were deleted
    * - ``404 NOT FOUND``
-     - The entity for which preferences are being set was not found
+     - The entity for which preferences are being deleted was not found
