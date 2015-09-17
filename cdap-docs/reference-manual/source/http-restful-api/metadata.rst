@@ -454,10 +454,6 @@ could return results (pretty-printed) such as::
     }
   ]
 
-
-
-
-
 .. _http-restful-api-metadata-lineage:
 
 Viewing Lineages
