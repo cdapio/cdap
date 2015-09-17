@@ -604,20 +604,20 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
     // Assert the LifecycleWorker dataset writes
     // 3 workers should have started with 3 total instances. 2 more should later start with 5 total instances.
-    assertWorkerDatasetWrites(applicationManager, Bytes.toBytes("init"),
+    assertWorkerDatasetWrites(Bytes.toBytes("init"),
                               Bytes.stopKeyForPrefix(Bytes.toBytes("init.2")), 3, 3);
-    assertWorkerDatasetWrites(applicationManager, Bytes.toBytes("init.3"),
+    assertWorkerDatasetWrites(Bytes.toBytes("init.3"),
                               Bytes.stopKeyForPrefix(Bytes.toBytes("init")), 2, 5);
 
     // Test that the worker had 5 instances when stopped, and each knew that there were 5 instances
     byte[] startRow = Bytes.toBytes("stop");
-    assertWorkerDatasetWrites(applicationManager, startRow, Bytes.stopKeyForPrefix(startRow), 5, 5);
+    assertWorkerDatasetWrites(startRow, Bytes.stopKeyForPrefix(startRow), 5, 5);
   }
 
-  private void assertWorkerDatasetWrites(ApplicationManager applicationManager, byte[] startRow, byte[] endRow,
+  private void assertWorkerDatasetWrites(byte[] startRow, byte[] endRow,
                                          int expectedCount, int expectedTotalCount) throws Exception {
-    DataSetManager<KeyValueTable> datasetManager = applicationManager.getDataSet(
-      AppUsingGetServiceURL.WORKER_INSTANCES_DATASET);
+    DataSetManager<KeyValueTable> datasetManager =
+      getDataset(testSpace, AppUsingGetServiceURL.WORKER_INSTANCES_DATASET);
     KeyValueTable instancesTable = datasetManager.get();
     CloseableIterator<KeyValue<byte[], byte[]>> instancesIterator = instancesTable.scan(startRow, endRow);
     try {
@@ -871,6 +871,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Type resultType = new TypeToken<Map<String, Long>>() { }.getType();
     Map<String, Long> result = new Gson().fromJson(
       callServiceGet(serviceManager.getServiceURL(), "wordfreq/" + streamName + ":testing"), resultType);
+    Assert.assertNotNull(result);
     Assert.assertEquals(100L, result.get(streamName + ":testing").longValue());
 
     // check the metrics
@@ -1142,9 +1143,9 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     HttpURLConnection connection = (HttpURLConnection) new URL(serviceURL.toString() + path).openConnection();
     connection.setDoOutput(true);
     connection.setRequestMethod("PUT");
-    OutputStreamWriter out = new OutputStreamWriter(connection.getOutputStream());
-    out.write(body);
-    out.close();
+    try (OutputStreamWriter out = new OutputStreamWriter(connection.getOutputStream())) {
+      out.write(body);
+    }
     try (
       BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), Charsets.UTF_8))
     ) {

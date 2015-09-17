@@ -25,7 +25,6 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
-import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -39,6 +38,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.writer.ProgramContextAware;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.internal.app.runtime.AbstractProgramRunnerWithPlugin;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
@@ -76,7 +76,7 @@ import javax.annotation.Nullable;
 /**
  * Runs {@link MapReduce} programs.
  */
-public class MapReduceProgramRunner implements ProgramRunner {
+public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
   private static final Logger LOG = LoggerFactory.getLogger(MapReduceProgramRunner.class);
   private static final Gson GSON = new Gson();
 
@@ -100,6 +100,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
                                 MetricsCollectionService metricsCollectionService,
                                 DiscoveryServiceClient discoveryServiceClient, Store store,
                                 UsageRegistry usageRegistry) {
+    super(cConf);
     this.cConf = cConf;
     this.hConf = hConf;
     this.locationFactory = locationFactory;
@@ -167,15 +168,16 @@ public class MapReduceProgramRunner implements ProgramRunner {
     // List of all Closeable resources that needs to be cleanup
     List<Closeable> closeables = new ArrayList<>();
     try {
-      PluginInstantiator pluginInstantiator = createArtifactPluginInstantiator(program.getClassLoader());
-      closeables.add(pluginInstantiator);
+      PluginInstantiator pluginInstantiator = createPluginInstantiator(options, program.getClassLoader());
+      if (pluginInstantiator != null) {
+        closeables.add(pluginInstantiator);
+      }
 
       final DynamicMapReduceContext context =
         new DynamicMapReduceContext(program, runId, options.getUserArguments(), spec,
                                     logicalStartTime, programNameInWorkflow, workflowToken, discoveryServiceClient,
-                                    metricsCollectionService, txSystemClient, datasetFramework, locationFactory,
+                                    metricsCollectionService, txSystemClient, datasetFramework,
                                     pluginInstantiator);
-
 
       Reflections.visit(mapReduce, mapReduce.getClass(),
                         new PropertyFieldSetter(context.getSpecification().getProperties()),
@@ -275,10 +277,6 @@ public class MapReduceProgramRunner implements ProgramRunner {
                       ProgramController.State.ERROR.getRunStatus());
       }
     };
-  }
-
-  private PluginInstantiator createArtifactPluginInstantiator(ClassLoader programClassLoader) {
-    return new PluginInstantiator(cConf, programClassLoader);
   }
 
   private void closeAllQuietly(Iterable<Closeable> closeables) {

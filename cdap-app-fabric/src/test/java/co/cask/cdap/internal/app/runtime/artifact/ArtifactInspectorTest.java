@@ -59,10 +59,9 @@ public class ArtifactInspectorTest {
   public static void setup() throws Exception {
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TMP_FOLDER.newFolder().getAbsolutePath());
-    cConf.set(Constants.AppFabric.APP_TEMPLATE_DIR, TMP_FOLDER.newFolder().getAbsolutePath());
 
     classLoaderFactory = new ArtifactClassLoaderFactory(TMP_FOLDER.newFolder());
-    artifactInspector = new ArtifactInspector(cConf, classLoaderFactory);
+    artifactInspector = new ArtifactInspector(cConf, classLoaderFactory, TMP_FOLDER.newFolder());
   }
 
   @Test
@@ -80,7 +79,7 @@ public class ArtifactInspectorTest {
 
       // check app classes
       Set<ApplicationClass> expectedApps = ImmutableSet.of(new ApplicationClass(
-        InspectionApp.class.getName(), "", new ReflectionSchemaGenerator().generate(InspectionApp.AConfig.class)));
+        InspectionApp.class.getName(), "", new ReflectionSchemaGenerator(false).generate(InspectionApp.AConfig.class)));
       Assert.assertEquals(expectedApps, classes.getApps());
 
       // check plugin classes

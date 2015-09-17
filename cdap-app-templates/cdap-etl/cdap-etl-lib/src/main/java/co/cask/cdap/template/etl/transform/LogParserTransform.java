@@ -24,6 +24,7 @@ import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.template.etl.api.Emitter;
+import co.cask.cdap.template.etl.api.PipelineConfigurer;
 import co.cask.cdap.template.etl.api.Transform;
 import co.cask.cdap.template.etl.api.TransformContext;
 import net.sf.uadetector.ReadableUserAgent;
@@ -95,7 +96,8 @@ public class LogParserTransform extends Transform<StructuredRecord, StructuredRe
   }
 
   @Override
-  public void initialize(TransformContext context) throws Exception {
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) throws IllegalArgumentException {
+    super.configurePipeline(pipelineConfigurer);
     if (!S3_LOG.equals(config.logFormat) && !CLF_LOG.equals(config.logFormat) &&
         !CLOUDFRONT_LOG.equals(config.logFormat)) {
       LOG.error("Log format not currently supported.");

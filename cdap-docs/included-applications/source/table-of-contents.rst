@@ -11,7 +11,7 @@ CDAP Application Templates Table of Contents
 
     Introduction <index>
     ETL Overview <etl/index>
-    ETL Templates and Plugins <etl/templates/index>
+    ETL Templates and Plugins <etl/plugins/index>
     Creating an ETL Adapter <etl/creating>
     Adapter Lifecycle Management <etl/operations>
     Creating Custom ETL Plugins <etl/custom>

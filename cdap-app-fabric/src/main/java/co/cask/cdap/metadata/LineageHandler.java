@@ -19,7 +19,6 @@ package co.cask.cdap.metadata;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.metadata.lineage.Lineage;
-import co.cask.cdap.data2.metadata.lineage.LineageService;
 import co.cask.cdap.data2.metadata.lineage.LineageStore;
 import co.cask.cdap.metadata.serialize.LineageRecord;
 import co.cask.cdap.proto.Id;
@@ -53,12 +52,12 @@ public class LineageHandler extends AbstractHttpHandler {
     .create();
   private static final Type SET_METADATA_RECORD_TYPE = new TypeToken<Set<MetadataRecord>>() { }.getType();
 
-  private final LineageService lineageService;
+  private final LineageGenerator lineageGenerator;
   private final LineageStore lineageStore;
 
   @Inject
-  LineageHandler(LineageService lineageService, LineageStore lineageStore) {
-    this.lineageService = lineageService;
+  LineageHandler(LineageGenerator lineageGenerator, LineageStore lineageStore) {
+    this.lineageGenerator = lineageGenerator;
     this.lineageStore = lineageStore;
   }
 
@@ -74,7 +73,7 @@ public class LineageHandler extends AbstractHttpHandler {
     checkArguments(start, end, levels);
 
     Id.DatasetInstance datasetInstance = Id.DatasetInstance.from(namespaceId, datasetId);
-    Lineage lineage = lineageService.computeLineage(datasetInstance, start, end, levels);
+    Lineage lineage = lineageGenerator.computeLineage(datasetInstance, start, end, levels);
     responder.sendJson(HttpResponseStatus.OK, new LineageRecord(start, end, lineage.getRelations()),
                        LineageRecord.class, GSON);
   }
@@ -91,7 +90,7 @@ public class LineageHandler extends AbstractHttpHandler {
     checkArguments(start, end, levels);
 
     Id.Stream streamId = Id.Stream.from(namespaceId, stream);
-    Lineage lineage = lineageService.computeLineage(streamId, start, end, levels);
+    Lineage lineage = lineageGenerator.computeLineage(streamId, start, end, levels);
     responder.sendJson(HttpResponseStatus.OK, new LineageRecord(start, end, lineage.getRelations()),
                        LineageRecord.class, GSON);
   }

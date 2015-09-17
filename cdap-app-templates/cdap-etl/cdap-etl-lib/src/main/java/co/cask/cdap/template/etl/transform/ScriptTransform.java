@@ -23,6 +23,7 @@ import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.template.etl.api.Emitter;
+import co.cask.cdap.template.etl.api.PipelineConfigurer;
 import co.cask.cdap.template.etl.api.Transform;
 import co.cask.cdap.template.etl.api.TransformContext;
 import co.cask.cdap.template.etl.common.StructuredRecordSerializer;
@@ -85,28 +86,15 @@ public class ScriptTransform extends Transform<StructuredRecord, StructuredRecor
   }
 
   @Override
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) throws IllegalArgumentException {
+    super.configurePipeline(pipelineConfigurer);
+    // try evaluating the script to fail application creation if the script is invalid
+    init();
+  }
+
+  @Override
   public void initialize(TransformContext context) {
-    ScriptEngineManager manager = new ScriptEngineManager();
-    engine = manager.getEngineByName("JavaScript");
-    try {
-      // this is pretty ugly, but doing this so that we can pass the 'input' json into the transform function.
-      // that is, we want people to implement
-      // function transform(input) { ... }
-      // rather than function transform() { ... } and have them access a global variable in the function
-      String script = String.format("function %s() { return transform(%s); }\n%s",
-                                    FUNCTION_NAME, VARIABLE_NAME, config.script);
-      engine.eval(script);
-    } catch (ScriptException e) {
-      throw new IllegalArgumentException("Invalid script.", e);
-    }
-    invocable = (Invocable) engine;
-    if (config.schema != null) {
-      try {
-        schema = Schema.parseJson(config.schema);
-      } catch (IOException e) {
-        throw new IllegalArgumentException("Unable to parse schema: " + e.getMessage(), e);
-      }
-    }
+    init();
   }
 
   @Override
@@ -222,5 +210,29 @@ public class ScriptTransform extends Transform<StructuredRecord, StructuredRecor
     }
 
     throw new RuntimeException("Unable decode union with schema " + schemas);
+  }
+
+  private void init() {
+    ScriptEngineManager manager = new ScriptEngineManager();
+    engine = manager.getEngineByName("JavaScript");
+    try {
+      // this is pretty ugly, but doing this so that we can pass the 'input' json into the transform function.
+      // that is, we want people to implement
+      // function transform(input) { ... }
+      // rather than function transform() { ... } and have them access a global variable in the function
+      String script = String.format("function %s() { return transform(%s); }\n%s",
+        FUNCTION_NAME, VARIABLE_NAME, config.script);
+      engine.eval(script);
+    } catch (ScriptException e) {
+      throw new IllegalArgumentException("Invalid script: " + e.getMessage(), e);
+    }
+    invocable = (Invocable) engine;
+    if (config.schema != null) {
+      try {
+        schema = Schema.parseJson(config.schema);
+      } catch (IOException e) {
+        throw new IllegalArgumentException("Unable to parse schema: " + e.getMessage(), e);
+      }
+    }
   }
 }

@@ -18,7 +18,6 @@ package co.cask.cdap.api.plugin;
 
 import co.cask.cdap.api.artifact.ArtifactId;
 
-import java.net.URI;
 import java.util.Objects;
 
 /**
@@ -26,41 +25,31 @@ import java.util.Objects;
  */
 public final class Plugin {
   private final ArtifactId artifactId;
-  private final URI locationURI;
   private final PluginClass pluginClass;
   private final PluginProperties properties;
 
-  public Plugin(ArtifactId artifactId, URI locationURI,
-                PluginClass pluginClass, PluginProperties properties) {
+  public Plugin(ArtifactId artifactId, PluginClass pluginClass, PluginProperties properties) {
     this.artifactId = artifactId;
-    this.locationURI = locationURI;
     this.pluginClass = pluginClass;
     this.properties = properties;
   }
 
   /**
-   * @return the artifact id
+   * @return artifact id
    */
   public ArtifactId getArtifactId() {
     return artifactId;
   }
 
   /**
-   * @retun location of plugin artifact
-   */
-  public URI getLocationURI() {
-    return locationURI;
-  }
-
-  /**
-   * Returns the plugin class information.
+   * @return {@link PluginClass}
    */
   public PluginClass getPluginClass() {
     return pluginClass;
   }
 
   /**
-   * Returns the set of properties available for the plugin when the adapter was created.
+   * Returns the set of properties available when the plugin was created.
    */
   public PluginProperties getProperties() {
     return properties;
@@ -77,21 +66,19 @@ public final class Plugin {
 
     Plugin that = (Plugin) o;
     return Objects.equals(artifactId, that.artifactId)
-      && Objects.equals(locationURI, that.locationURI)
       && Objects.equals(pluginClass, that.pluginClass)
       && Objects.equals(properties, that.properties);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(artifactId, locationURI, pluginClass, properties);
+    return Objects.hash(artifactId, pluginClass, properties);
   }
 
   @Override
   public String toString() {
-    return "AdapterPlugin{" +
+    return "Plugin{" +
       "artifactId=" + artifactId +
-      ",locationURI=" + locationURI +
       ",pluginClass=" + pluginClass +
       ",properties=" + properties +
       '}';

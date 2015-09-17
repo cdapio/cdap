@@ -23,6 +23,7 @@ import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.template.etl.api.Emitter;
+import co.cask.cdap.template.etl.api.PipelineConfigurer;
 import co.cask.cdap.template.etl.api.Transform;
 import co.cask.cdap.template.etl.api.TransformContext;
 import co.cask.cdap.template.etl.common.StructuredRecordSerializer;
@@ -65,24 +66,16 @@ public class ScriptFilterTransform extends Transform<StructuredRecord, Structure
   }
 
   @Override
-  public void initialize(TransformContext context) {
-    ScriptEngineManager manager = new ScriptEngineManager();
-    engine = manager.getEngineByName("JavaScript");
-    String scriptStr = scriptFilterConfig.script;
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(scriptStr), "Filter script must be specified.");
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) throws IllegalArgumentException {
+    super.configurePipeline(pipelineConfigurer);
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(scriptFilterConfig.script), "Filter script must be specified.");
+    // try evaluating the script to fail application creation if the script is invalid
+    init();
+  }
 
-    // this is pretty ugly, but doing this so that we can pass the 'input' json into the shouldFilter function.
-    // that is, we want people to implement
-    // function shouldFilter(input) { ... }
-    // rather than function shouldFilter() { ... } and have them access a global variable in the function
-    try {
-      String script = String.format("function %s() { return shouldFilter(%s); }\n%s",
-                                    FUNCTION_NAME, VARIABLE_NAME, scriptStr);
-      engine.eval(script);
-    } catch (ScriptException e) {
-      throw new IllegalArgumentException("Invalid script.", e);
-    }
-    invocable = (Invocable) engine;
+  @Override
+  public void initialize(TransformContext context) {
+    init();
     metrics = context.getMetrics();
   }
 
@@ -99,6 +92,24 @@ public class ScriptFilterTransform extends Transform<StructuredRecord, Structure
     } catch (Exception e) {
       throw new IllegalArgumentException("Invalid filter condition.", e);
     }
+  }
+
+  private void init() {
+    ScriptEngineManager manager = new ScriptEngineManager();
+    engine = manager.getEngineByName("JavaScript");
+
+    // this is pretty ugly, but doing this so that we can pass the 'input' json into the shouldFilter function.
+    // that is, we want people to implement
+    // function shouldFilter(input) { ... }
+    // rather than function shouldFilter() { ... } and have them access a global variable in the function
+    try {
+      String script = String.format("function %s() { return shouldFilter(%s); }\n%s",
+        FUNCTION_NAME, VARIABLE_NAME, scriptFilterConfig.script);
+      engine.eval(script);
+    } catch (ScriptException e) {
+      throw new IllegalArgumentException("Invalid script: " + e.getMessage(), e);
+    }
+    invocable = (Invocable) engine;
   }
 
   /**

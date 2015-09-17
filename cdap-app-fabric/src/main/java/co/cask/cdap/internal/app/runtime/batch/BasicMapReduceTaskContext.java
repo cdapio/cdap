@@ -40,7 +40,6 @@ import com.google.common.collect.Maps;
 import org.apache.hadoop.mapreduce.TaskInputOutputContext;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -81,12 +80,10 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
                                    DiscoveryServiceClient discoveryServiceClient,
                                    MetricsCollectionService metricsCollectionService,
                                    DatasetFramework dsFramework,
-                                   LocationFactory locationFactory,
-                                   @Nullable PluginInstantiator pluginInstantiator) {
+                                   PluginInstantiator pluginInstantiator) {
     super(program, runId, runtimeArguments, datasets,
           getMetricCollector(program, runId.getId(), taskId, metricsCollectionService, type),
-          dsFramework, discoveryServiceClient, locationFactory,
-          pluginInstantiator);
+          dsFramework, discoveryServiceClient, pluginInstantiator);
     this.logicalStartTime = logicalStartTime;
     this.workflowToken = workflowToken;
     this.metricsCollectionService = metricsCollectionService;

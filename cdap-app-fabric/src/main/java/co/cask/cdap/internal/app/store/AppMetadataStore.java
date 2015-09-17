@@ -35,6 +35,7 @@ import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.templates.AdapterDefinition;
+import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableMap;
@@ -43,12 +44,15 @@ import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.apache.twill.api.RunId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Type;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
@@ -99,7 +103,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
     //       specs - see forwarding specs), we want to wrap spec with DefaultApplicationSpecification
     spec = DefaultApplicationSpecification.from(spec);
     write(new MDSKey.Builder().add(TYPE_APP_META, namespaceId, appId).build(),
-      new ApplicationMeta(appId, spec, archiveLocation));
+          new ApplicationMeta(appId, spec, archiveLocation));
   }
 
   public void deleteApplication(String namespaceId, String appId) {
@@ -597,5 +601,36 @@ public class AppMetadataStore extends MetadataStoreDataset {
       .add(workflowId.getId())
       .add(workflowRunId)
       .build();
+  }
+
+  /**
+   * @return programs that were running between given start and end time
+   */
+  public Set<RunId> getRunningInRange(long startTimeInSecs, long endTimeInSecs) {
+    Set<RunId> runIds = new HashSet<>();
+    Iterables.addAll(runIds, getRunningInRangeForStatus(TYPE_RUN_RECORD_COMPLETED, startTimeInSecs, endTimeInSecs));
+    Iterables.addAll(runIds, getRunningInRangeForStatus(TYPE_RUN_RECORD_SUSPENDED, startTimeInSecs, endTimeInSecs));
+    Iterables.addAll(runIds, getRunningInRangeForStatus(TYPE_RUN_RECORD_STARTED, startTimeInSecs, endTimeInSecs));
+    return runIds;
+  }
+
+  private Iterable<RunId> getRunningInRangeForStatus(String statusKey, final long startTimeInSecs,
+                                                     final long endTimeInSecs) {
+    MDSKey key = new MDSKey.Builder().add(statusKey).build();
+    return Iterables.transform(
+      list(key, null, RunRecordMeta.class, Integer.MAX_VALUE, new Predicate<RunRecordMeta>() {
+        @Override
+        public boolean apply(RunRecordMeta runRecordMeta) {
+          return runRecordMeta.getStartTs() < endTimeInSecs &&
+            (runRecordMeta.getStopTs() == null || runRecordMeta.getStopTs() >= startTimeInSecs);
+        }
+      }),
+      new Function<RunRecordMeta, RunId>() {
+        @Override
+        public RunId apply(RunRecordMeta runRecordMeta) {
+          return RunIds.fromString(runRecordMeta.getPid());
+        }
+      }
+    );
   }
 }
