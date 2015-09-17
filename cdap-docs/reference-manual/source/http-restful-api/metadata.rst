@@ -31,8 +31,8 @@ Metadata keys, values, and tags must conform to the CDAP :ref:`supported charact
 include hyphens or underscores (``- _``) while property keys and values can. The entire
 metadata object associated with a single entity is limited to 10K bytes in size.
 
-There is one reserved word for property keys and values: *tag*, either as ``tag`` or
-``TAG``. Tags have no reserved words.
+There is one reserved word for property keys and values: *tags*, either as ``tags`` or
+``TAGS``. Tags themselves have no reserved words.
 
 In this API, ``<base-url>`` is as described under :ref:`Conventions
 <http-restful-api-conventions>`. 

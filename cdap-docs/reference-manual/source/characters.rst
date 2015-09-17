@@ -12,17 +12,11 @@ Supported Characters
 
 The Cask Data Application Platform (CDAP) has different naming conventions for different entities in CDAP.
 
-Alphanumeric Characters
------------------------
-**Metadata tags** are restricted to the alphanumeric character set:
-
-- Alphanumeric characters (``a-z A-Z 0-9``)
-
 
 Alphanumeric Extended Character Set
 -----------------------------------
-**Stream names**, **metadata property keys** and **metadata property values** can use
-the alphanumeric extended character set:
+**Stream names**, **metadata property keys, values,** and **tags** can use
+an alphanumeric extended character set:
 
 - Alphanumeric characters (``a-z A-Z 0-9``)
 - Hyphens (``-``)
