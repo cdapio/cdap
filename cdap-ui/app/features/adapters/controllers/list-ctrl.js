@@ -36,7 +36,7 @@ angular.module(PKG.name + '.feature.adapters')
     var realtime = [],
         batch = [];
 
-    vm.statusMap = {};
+    var statusMap = {};
 
 
     myAdapterApi.list({
@@ -114,7 +114,7 @@ angular.module(PKG.name + '.feature.adapters')
       .then(function (res) {
         angular.forEach(res, function (app) {
           if (app.status === 'RUNNING') {
-            vm.statusMap[app.appId] = 'Running';
+            statusMap[app.appId] = 'Running';
             vm.statusCount.running++;
           } else {
 
@@ -127,10 +127,10 @@ angular.module(PKG.name + '.feature.adapters')
               .$promise
               .then(function (schedule) {
                 if (schedule.status === 'SCHEDULED') {
-                  vm.statusMap[app.appId] = 'Scheduled';
+                  statusMap[app.appId] = 'Scheduled';
                   vm.statusCount.scheduled++;
                 } else {
-                  vm.statusMap[app.appId] = 'Suspended';
+                  statusMap[app.appId] = 'Suspended';
                   vm.statusCount.suspended++;
                 }
                 updateStatusAppObject();
@@ -151,10 +151,10 @@ angular.module(PKG.name + '.feature.adapters')
       .then(function (res) {
         angular.forEach(res, function (app) {
           if (app.status === 'RUNNING') {
-            vm.statusMap[app.appId] = 'Running';
+            statusMap[app.appId] = 'Running';
             vm.statusCount.running++;
           } else {
-            vm.statusMap[app.appId] = 'Suspended';
+            statusMap[app.appId] = 'Suspended';
             vm.statusCount.suspended++;
           }
         });
@@ -166,7 +166,7 @@ angular.module(PKG.name + '.feature.adapters')
 
     function updateStatusAppObject() {
       angular.forEach(vm.adaptersList, function (app) {
-        app._status = app._status || vm.statusMap[app.id];
+        app._status = app._status || statusMap[app.id];
       });
     }
 
