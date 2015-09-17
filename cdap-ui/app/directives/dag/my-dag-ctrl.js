@@ -32,7 +32,8 @@ angular.module(PKG.name + '.commons')
         if (plug.id === plugin.id) {
           plug.selected = true;
         }
-      });
+        this.highlightRequiredFields(plug);
+      }.bind(this));
     };
 
     this.addPlugin = function addPlugin(config, type) {
@@ -94,9 +95,6 @@ angular.module(PKG.name + '.commons')
       });
 
       plugin.selected = true;
-      if (plugin.error) {
-        delete plugin.error;
-      }
       MyAppDAGService.editPluginProperties($scope, plugin.id, plugin.type);
     };
 

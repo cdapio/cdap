@@ -129,7 +129,6 @@ angular.module(PKG.name + '.feature.adapters')
         keys = Object.keys(plugin._backendProperties);
         for (i =0; i<keys.length; i++) {
           if (plugin._backendProperties[keys[i]] && plugin._backendProperties[keys[i]].required) {
-            console.info(plugin.name, keys[i], plugin._backendProperties[keys[i]]);
             plugin.requiredFieldCount += 1;
             plugin.valid = false;
           }

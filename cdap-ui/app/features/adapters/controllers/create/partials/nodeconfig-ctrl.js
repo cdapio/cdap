@@ -27,7 +27,7 @@ angular.module(PKG.name + '.feature.adapters')
     MyNodeConfigService.registerRemovePluginCallback($scope.$id, onPluginRemoved);
 
     function onPluginRemoved(nodeId) {
-      if ($scope.plugin.id === nodeId){
+      if ($scope.plugin && $scope.plugin.id === nodeId){
         $scope.isValidPlugin = false;
         $scope.data.isModelTouched = false;
       }
@@ -177,22 +177,6 @@ angular.module(PKG.name + '.feature.adapters')
             $scope.plugin.outputSchema = angular.copy(JSON.stringify(input)) || null;
           }
 
-          if ($scope.plugin._backendProperties.schema) {
-            $scope.$watch('plugin.outputSchema', function () {
-              if (!$scope.plugin.outputSchema) {
-                if ($scope.plugin.properties && $scope.plugin.properties.schema) {
-                  $scope.plugin.properties.schema = null;
-                }
-                return;
-              }
-
-              if (!$scope.plugin.properties) {
-                $scope.plugin.properties = {};
-              }
-              $scope.plugin.properties.schema = $scope.plugin.outputSchema;
-            });
-          }
-
           if ($scope.plugin.type === artifactTypeExtension.source) {
             $scope.isSource = true;
           }
@@ -248,7 +232,6 @@ angular.module(PKG.name + '.feature.adapters')
     $scope.$on('$destroy', function() {
       MyNodeConfigService.unRegisterPluginSetCallback($scope.$id);
       MyNodeConfigService.unRegisterRemovePluginCallback($scope.$id);
-      console.info('destroyed');
     });
 
   });
