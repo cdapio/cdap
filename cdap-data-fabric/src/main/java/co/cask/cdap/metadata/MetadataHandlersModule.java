@@ -28,9 +28,9 @@ import com.google.inject.name.Names;
 import java.util.Set;
 
 /**
- * Guice module for metadata service.
+ * Guice module for metadata handlers.
  */
-public class MetadataServiceModule extends PrivateModule {
+public class MetadataHandlersModule extends PrivateModule {
 
   @Override
   protected void configure() {

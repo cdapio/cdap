@@ -111,7 +111,8 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
 
     ImmutableSet<HttpHandler> handlers = ImmutableSet.<HttpHandler>of(
       new DatasetAdminOpHTTPHandler(framework, cConf, locationFactory, datasetInstantiatorFactory));
-    opExecutorService = new DatasetOpExecutorService(cConf, discoveryService, metricsCollectionService, handlers);
+    opExecutorService = new DatasetOpExecutorService(cConf, discoveryService, metricsCollectionService,
+                                                     handlers, ImmutableSet.<HttpHandler>of());
 
     opExecutorService.startAndWait();
 

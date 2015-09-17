@@ -30,6 +30,7 @@ import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.client.MockExploreClient;
+import co.cask.cdap.metadata.MetadataHandlersModule;
 import co.cask.tephra.TransactionManager;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -53,6 +54,7 @@ public class MDSViewStoreTest extends ViewStoreTestBase {
   public static void init() throws Exception {
     Injector injector = Guice.createInjector(
       new ConfigModule(CConfiguration.create(), new Configuration()),
+      new MetadataHandlersModule(),
       new DataSetServiceModules().getInMemoryModules(),
       new DataSetsModules().getStandaloneModules(),
       new DataFabricModules().getInMemoryModules(),

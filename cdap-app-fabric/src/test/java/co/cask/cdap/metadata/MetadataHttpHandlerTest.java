@@ -19,6 +19,7 @@ package co.cask.cdap.metadata;
 import co.cask.cdap.AppWithDataset;
 import co.cask.cdap.WordCountApp;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.metadata.MetadataRecord;
@@ -241,8 +242,8 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
 
   @Test
   public void testDeleteApplication() throws Exception {
-    deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
-    Id.Program program = Id.Program.from(TEST_NAMESPACE1, "WordCountApp", ProgramType.FLOW, "WordCountFlow");
+    deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, AppFabricTestBase.TEST_NAMESPACE1);
+    Id.Program program = Id.Program.from(AppFabricTestBase.TEST_NAMESPACE1, "WordCountApp", ProgramType.FLOW, "WordCountFlow");
 
     // Set some properties metadata
     Map<String, String> flowProperties = ImmutableMap.of("sKey", "sValue", "sK", "sV");
@@ -254,11 +255,11 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
 
     //Delete the App after stopping the flow
     org.apache.http.HttpResponse response =
-      doDelete(getVersionedAPIPath("apps/WordCountApp/", Constants.Gateway.API_VERSION_3_TOKEN,
-                                   TEST_NAMESPACE1));
+      AppFabricTestBase.doDelete(getVersionedAPIPath("apps/WordCountApp/", Constants.Gateway.API_VERSION_3_TOKEN,
+                                                     AppFabricTestBase.TEST_NAMESPACE1));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    response = doDelete(getVersionedAPIPath("apps/WordCountApp/", Constants.Gateway.API_VERSION_3_TOKEN,
-                                            TEST_NAMESPACE1));
+    response = AppFabricTestBase.doDelete(getVersionedAPIPath("apps/WordCountApp/", Constants.Gateway.API_VERSION_3_TOKEN,
+                                                              AppFabricTestBase.TEST_NAMESPACE1));
     Assert.assertEquals(404, response.getStatusLine().getStatusCode());
 
     // Check metadata, should be empty

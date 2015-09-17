@@ -58,7 +58,7 @@ public abstract class MetadataTestBase extends AppFabricTestBase {
   @BeforeClass
   public static void setup() throws MalformedURLException {
     DiscoveryServiceClient discoveryClient = getInjector().getInstance(DiscoveryServiceClient.class);
-    ServiceDiscovered metadataHttpDiscovered = discoveryClient.discover(Constants.Service.METADATA_SERVICE);
+    ServiceDiscovered metadataHttpDiscovered = discoveryClient.discover(Constants.Service.DATASET_EXECUTOR);
     EndpointStrategy endpointStrategy = new RandomEndpointStrategy(metadataHttpDiscovered);
     Discoverable discoverable = endpointStrategy.pick(1, TimeUnit.SECONDS);
     Assert.assertNotNull(discoverable);

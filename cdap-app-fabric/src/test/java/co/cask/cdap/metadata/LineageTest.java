@@ -16,7 +16,6 @@
 
 package co.cask.cdap.metadata;
 
-import co.cask.cdap.AllProgramsApp;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Tasks;
