@@ -19,7 +19,6 @@ package co.cask.cdap.data2.datafabric.dataset;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.dataset.table.OrderedTable;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.CConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
@@ -169,7 +168,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
   // DatasetMetaTable util to add modules to system namespace. However, we should definitely impose these restrictions
   // in RemoteDatasetFramework.
   @Test
-  public void testSystemNamespace() throws DatasetManagementException, ServiceUnavailableException {
+  public void testSystemNamespace() throws DatasetManagementException {
     DatasetFramework framework = getFramework();
     // Adding module to system namespace should fail
     try {
@@ -196,7 +195,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
   }
 
   @After
-  public void after() throws DatasetManagementException, ServiceUnavailableException {
+  public void after() throws DatasetManagementException {
     Services.chainStop(service, opExecutorService, txManager);
     framework.deleteNamespace(NAMESPACE_ID);
     framework.deleteNamespace(Id.Namespace.SYSTEM);

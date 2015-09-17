@@ -29,9 +29,9 @@ import co.cask.cdap.app.stream.StreamWriterFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.writer.ProgramContextAware;
+import co.cask.cdap.internal.app.runtime.AbstractProgramRunnerWithPlugin;
 import co.cask.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.tephra.TransactionSystemClient;
@@ -40,15 +40,12 @@ import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.RunIds;
-
-import javax.annotation.Nullable;
 
 /**
  * A {@link ProgramRunner} that runs a {@link Worker}.
  */
-public class WorkerProgramRunner implements ProgramRunner {
+public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
   private static final Gson GSON = new Gson();
 
   private final CConfiguration cConf;
@@ -57,20 +54,18 @@ public class WorkerProgramRunner implements ProgramRunner {
   private final DiscoveryServiceClient discoveryServiceClient;
   private final TransactionSystemClient txClient;
   private final StreamWriterFactory streamWriterFactory;
-  private final LocationFactory locationFactory;
 
   @Inject
   public WorkerProgramRunner(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
                              DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient,
-                             TransactionSystemClient txClient, StreamWriterFactory streamWriterFactory,
-                             LocationFactory locationFactory) {
+                             TransactionSystemClient txClient, StreamWriterFactory streamWriterFactory) {
+    super(cConf);
     this.cConf = cConf;
     this.metricsCollectionService = metricsCollectionService;
     this.datasetFramework = datasetFramework;
     this.discoveryServiceClient = discoveryServiceClient;
     this.txClient = txClient;
     this.streamWriterFactory = streamWriterFactory;
-    this.locationFactory = locationFactory;
   }
 
   @Override
@@ -113,21 +108,15 @@ public class WorkerProgramRunner implements ProgramRunner {
 
     BasicWorkerContext context = new BasicWorkerContext(
       newWorkerSpec, program, runId, instanceId, instanceCount,
-      options.getUserArguments(), cConf,
-      metricsCollectionService, datasetFramework,
-      txClient, discoveryServiceClient, streamWriterFactory, locationFactory,
-      createArtifactPluginInstantiator(program.getClassLoader()));
+      options.getUserArguments(), cConf, metricsCollectionService, datasetFramework,
+      txClient, discoveryServiceClient, streamWriterFactory,
+      createPluginInstantiator(options, program.getClassLoader()));
     WorkerDriver worker = new WorkerDriver(program, newWorkerSpec, context);
 
     ProgramController controller = new WorkerControllerServiceAdapter(worker, program.getId(), runId,
                                                                       workerSpec.getName() + "-" + instanceId);
     worker.start();
     return controller;
-  }
-
-  @Nullable
-  private PluginInstantiator createArtifactPluginInstantiator(ClassLoader classLoader) {
-    return new PluginInstantiator(cConf, classLoader);
   }
 
   private static final class WorkerControllerServiceAdapter extends ProgramControllerServiceAdapter {

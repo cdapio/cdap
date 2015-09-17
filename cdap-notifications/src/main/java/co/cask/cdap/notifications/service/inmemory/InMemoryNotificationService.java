@@ -64,6 +64,9 @@ public class InMemoryNotificationService extends AbstractNotificationService {
   public <N> ListenableFuture<N> publish(final Id.NotificationFeed feed, final N notification,
                                          final Type notificationType)
     throws NotificationException {
+    if (executorService == null) {
+      throw new IllegalStateException("Publish attempted before Notification service is started.");
+    }
     return executorService.submit(new Callable<N>() {
       @Override
       public N call() throws Exception {

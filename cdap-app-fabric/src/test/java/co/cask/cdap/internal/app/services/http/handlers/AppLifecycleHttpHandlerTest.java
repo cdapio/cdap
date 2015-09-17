@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.services.http.handlers;
 
 import co.cask.cdap.AppWithDataset;
 import co.cask.cdap.AppWithDatasetDuplicate;
+import co.cask.cdap.AppWithNoServices;
 import co.cask.cdap.BloatedWordCountApp;
 import co.cask.cdap.ConfigTestApp;
 import co.cask.cdap.WordCountApp;
@@ -66,6 +67,13 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     HttpResponse response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     response = doDelete(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+  }
+
+  @Test
+  public void testDeployWithExtraConfig() throws Exception {
+    ExtraConfig extraConfig = new ExtraConfig();
+    HttpResponse response = deploy(AppWithNoServices.class, "ExtraConfigApp", extraConfig);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
   }
 
@@ -277,5 +285,10 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     List<ArtifactSummary> summaries = readResponse(response, new TypeToken<List<ArtifactSummary>>() { }.getType());
     Assert.assertFalse(summaries.isEmpty());
+  }
+
+  private static class ExtraConfig extends Config {
+    @SuppressWarnings("unused")
+    private final int x = 5;
   }
 }

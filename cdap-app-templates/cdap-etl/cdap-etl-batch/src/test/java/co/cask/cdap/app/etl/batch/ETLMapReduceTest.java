@@ -58,6 +58,24 @@ import java.util.concurrent.TimeUnit;
 public class ETLMapReduceTest extends BaseETLBatchTest {
 
   @Test
+  public void testInvalidTransformConfigFailsToDeploy() {
+    ETLStage source = new ETLStage("KVTable", ImmutableMap.of(Properties.BatchReadableWritable.NAME, "table1"));
+    ETLStage sink = new ETLStage("KVTable", ImmutableMap.of(Properties.BatchReadableWritable.NAME, "table2"));
+    ETLStage transform = new ETLStage("Script", ImmutableMap.of("script", "return x;"));
+    List<ETLStage> transformList = Lists.newArrayList(transform);
+    ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *", source, sink, transformList);
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(ETLBATCH_ARTIFACT, etlConfig);
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "KVToKV");
+    try {
+      deployApplication(appId, appRequest);
+      Assert.fail();
+    } catch (Exception e) {
+      // expected
+    }
+  }
+
+  @Test
   public void testKVToKV() throws Exception {
     // kv table to kv table pipeline
     ETLStage source = new ETLStage("KVTable", ImmutableMap.of(Properties.BatchReadableWritable.NAME, "table1"));
@@ -144,8 +162,8 @@ public class ETLMapReduceTest extends BaseETLBatchTest {
       "return {'isValid': isValid, 'errorCode': errCode, 'errorMsg': errMsg}; " +
       "};";
     ETLStage transform = new ETLStage("Validator",
-                                      ImmutableMap.<String, String>of("validators", "core",
-                                                                      "validationScript", validationScript),
+                                      ImmutableMap.of("validators", "core",
+                                                      "validationScript", validationScript),
                                       "keyErrors");
     List<ETLStage> transformList = new ArrayList<>();
     transformList.add(transform);

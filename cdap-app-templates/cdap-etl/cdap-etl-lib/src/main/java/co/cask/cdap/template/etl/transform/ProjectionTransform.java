@@ -25,6 +25,7 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.template.etl.api.Emitter;
+import co.cask.cdap.template.etl.api.PipelineConfigurer;
 import co.cask.cdap.template.etl.api.Transform;
 import co.cask.cdap.template.etl.api.TransformContext;
 import co.cask.cdap.template.etl.common.KeyValueListParser;
@@ -101,7 +102,48 @@ public class ProjectionTransform extends Transform<StructuredRecord, StructuredR
   private Map<Schema, Schema> schemaCache = Maps.newHashMap();
 
   @Override
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) throws IllegalArgumentException {
+    super.configurePipeline(pipelineConfigurer);
+    // call init so any invalid config is caught here to fail application creation
+    init();
+  }
+
+  @Override
   public void initialize(TransformContext context) {
+    init();
+  }
+
+  @Override
+  public void transform(StructuredRecord valueIn, Emitter<StructuredRecord> emitter) {
+    Schema inputSchema = valueIn.getSchema();
+    Schema outputSchema = getOutputSchema(inputSchema);
+    StructuredRecord.Builder builder = StructuredRecord.builder(outputSchema);
+    for (Schema.Field inputField : inputSchema.getFields()) {
+      String inputFieldName = inputField.getName();
+      if (fieldsToDrop.contains(inputFieldName)) {
+        continue;
+      }
+
+      // get the corresponding output field name
+      String outputFieldName = fieldsToRename.get(inputFieldName);
+      if (outputFieldName == null) {
+        outputFieldName = inputFieldName;
+      }
+
+      Schema.Field outputField = outputSchema.getField(outputFieldName);
+      Object inputVal = valueIn.get(inputFieldName);
+
+      // if we need to convert the value, convert it. otherwise just pass the value through
+      if (fieldsToConvert.containsKey(inputFieldName)) {
+        convertAndSet(builder, outputFieldName, inputVal, inputField.getSchema(), outputField.getSchema());
+      } else {
+        builder.set(outputFieldName, inputVal);
+      }
+    }
+    emitter.emit(builder.build());
+  }
+
+  private void init() {
     if (!Strings.isNullOrEmpty(projectionTransformConfig.drop)) {
       for (String dropField : Splitter.on(fieldDelimiter).split(projectionTransformConfig.drop)) {
         fieldsToDrop.add(dropField);
@@ -139,36 +181,6 @@ public class ProjectionTransform extends Transform<StructuredRecord, StructuredR
         fieldsToConvert.put(name, type);
       }
     }
-  }
-
-  @Override
-  public void transform(StructuredRecord valueIn, Emitter<StructuredRecord> emitter) {
-    Schema inputSchema = valueIn.getSchema();
-    Schema outputSchema = getOutputSchema(inputSchema);
-    StructuredRecord.Builder builder = StructuredRecord.builder(outputSchema);
-    for (Schema.Field inputField : inputSchema.getFields()) {
-      String inputFieldName = inputField.getName();
-      if (fieldsToDrop.contains(inputFieldName)) {
-        continue;
-      }
-
-      // get the corresponding output field name
-      String outputFieldName = fieldsToRename.get(inputFieldName);
-      if (outputFieldName == null) {
-        outputFieldName = inputFieldName;
-      }
-
-      Schema.Field outputField = outputSchema.getField(outputFieldName);
-      Object inputVal = valueIn.get(inputFieldName);
-
-      // if we need to convert the value, convert it. otherwise just pass the value through
-      if (fieldsToConvert.containsKey(inputFieldName)) {
-        convertAndSet(builder, outputFieldName, inputVal, inputField.getSchema(), outputField.getSchema());
-      } else {
-        builder.set(outputFieldName, inputVal);
-      }
-    }
-    emitter.emit(builder.build());
   }
 
   private void convertAndSet(StructuredRecord.Builder builder, String fieldName, Object val,

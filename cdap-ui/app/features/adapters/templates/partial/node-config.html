@@ -15,5 +15,10 @@
 -->
 
 <div ng-controller="NodeConfigController">
-  <div ng-if="isValidPlugin" ng-include="'/assets/features/adapters/templates/create/popovers/plugin-edit-form.html'"></div>
+  <div ng-if="isValidPlugin"
+        ng-include="'/assets/features/adapters/templates/create/popovers/plugin-edit-form.html'">
+  </div>
+  <div ng-if="!isValidPlugin">
+    <h3>Please select a plugin to edit configuration.</h3>
+  </div>
 </div>

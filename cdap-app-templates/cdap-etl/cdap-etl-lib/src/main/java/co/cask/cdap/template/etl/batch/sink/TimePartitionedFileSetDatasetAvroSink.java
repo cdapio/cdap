@@ -63,6 +63,8 @@ public class TimePartitionedFileSetDatasetAvroSink extends
     super.configurePipeline(pipelineConfigurer);
     String tpfsName = tpfsSinkConfig.name;
     String basePath = tpfsSinkConfig.basePath == null ? tpfsName : tpfsSinkConfig.basePath;
+    // parse it to make sure its valid
+    new Schema.Parser().parse(config.schema);
     pipelineConfigurer.createDataset(tpfsName, TimePartitionedFileSet.class.getName(), FileSetProperties.builder()
       .setBasePath(basePath)
       .setInputFormat(AvroKeyInputFormat.class)
@@ -71,15 +73,14 @@ public class TimePartitionedFileSetDatasetAvroSink extends
       .setSerDe("org.apache.hadoop.hive.serde2.avro.AvroSerDe")
       .setExploreInputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat")
       .setExploreOutputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat")
-      .setTableProperty("avro.schema.literal", (config.schema))
+      .setTableProperty("avro.schema.literal", config.schema)
       .build());
   }
 
   @Override
   protected Map<String, String> getAdditionalTPFSArguments() {
     Map<String, String> args = new HashMap<>();
-    Schema avroSchema = new Schema.Parser().parse(config.schema);
-    args.put(FileSetProperties.OUTPUT_PROPERTIES_PREFIX + "avro.schema.output.key", avroSchema.toString());
+    args.put(FileSetProperties.OUTPUT_PROPERTIES_PREFIX + "avro.schema.output.key", config.schema);
     return args;
   }
 

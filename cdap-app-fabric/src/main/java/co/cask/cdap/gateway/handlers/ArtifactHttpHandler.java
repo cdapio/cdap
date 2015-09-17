@@ -413,9 +413,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
         }
 
         private String getBundleVersion(File file) throws BadRequestException, IOException {
-          try {
-            JarFile jarFile = new JarFile(file);
-
+          try (JarFile jarFile = new JarFile(file)) {
             Manifest manifest = jarFile.getManifest();
             if (manifest == null) {
               throw new BadRequestException(

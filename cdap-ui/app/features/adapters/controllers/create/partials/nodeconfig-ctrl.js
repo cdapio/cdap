@@ -23,10 +23,21 @@ angular.module(PKG.name + '.feature.adapters')
     $scope.data = {};
     $scope.data.isModelTouched = false;
 
-    MyNodeConfigService.registerPluginCallback(onPluginChange);
+    MyNodeConfigService.registerPluginSetCallback(onPluginChange);
+    MyNodeConfigService.registerRemovePluginCallback(onPluginRemoved);
+
+    function onPluginRemoved(nodeId) {
+      if ($scope.plugin.id === nodeId){
+        $scope.isValidPlugin = false;
+        $scope.data.isModelTouched = false;
+      }
+    }
 
     function onPluginChange(plugin) {
       var defer = $q.defer();
+      if ($scope.plugin && plugin.id === $scope.plugin.id) {
+        return;
+      }
       if (!$scope.data.isModelTouched) {
         switchPlugin(plugin);
         defer.resolve(true);
@@ -37,6 +48,7 @@ angular.module(PKG.name + '.feature.adapters')
               switchPlugin(plugin);
             },
             function no() {
+              MyNodeConfigService.resetPlugin($scope.plugin);
               console.log('User chose to stay in the same plugin');
             }
           );

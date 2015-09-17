@@ -137,7 +137,12 @@ angular.module(PKG.name + '.feature.adapters')
               var strProp2 = JSON.stringify($scope.plugin.properties);
               var copyOutputSchema = JSON.stringify($scope.pluginCopy.outputSchema);
               var originalOutputSchema = JSON.stringify($scope.plugin.outputSchema);
-              if ( (strProp1 !== strProp2) || (copyOutputSchema !== originalOutputSchema) ) {
+              var copyLabel = $scope.pluginCopy.label;
+              var originLabel = $scope.plugin.label;
+              if ( (strProp1 !== strProp2) ||
+                   (copyOutputSchema !== originalOutputSchema) ||
+                   (copyLabel !== originLabel)
+                 ) {
                 $scope.data['isModelTouched'] = true;
               } else {
                 $scope.data['isModelTouched'] = false;
@@ -224,6 +229,7 @@ angular.module(PKG.name + '.feature.adapters')
       if (validateSchema()) {
         $scope.plugin.properties = angular.copy($scope.pluginCopy.properties);
         $scope.plugin.outputSchema = angular.copy($scope.pluginCopy.outputSchema);
+        $scope.plugin.label = $scope.pluginCopy.label;
         $scope.data['isModelTouched'] = false;
       }
     };

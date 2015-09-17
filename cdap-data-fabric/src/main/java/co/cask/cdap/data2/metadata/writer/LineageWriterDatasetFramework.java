@@ -21,7 +21,6 @@ import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetModule;
-import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -67,75 +66,69 @@ public class LineageWriterDatasetFramework implements DatasetFramework, ProgramC
   }
 
   @Override
-  public void addModule(Id.DatasetModule moduleId, DatasetModule module)
-    throws DatasetManagementException, ServiceUnavailableException {
+  public void addModule(Id.DatasetModule moduleId, DatasetModule module) throws DatasetManagementException {
     delegate.addModule(moduleId, module);
   }
 
   @Override
-  public void deleteModule(Id.DatasetModule moduleId) throws DatasetManagementException, ServiceUnavailableException {
+  public void deleteModule(Id.DatasetModule moduleId) throws DatasetManagementException {
     delegate.deleteModule(moduleId);
   }
 
   @Override
-  public void deleteAllModules(Id.Namespace namespaceId)
-    throws DatasetManagementException, ServiceUnavailableException {
+  public void deleteAllModules(Id.Namespace namespaceId) throws DatasetManagementException {
     delegate.deleteAllModules(namespaceId);
   }
 
   @Override
   public void addInstance(String datasetTypeName, Id.DatasetInstance datasetInstanceId, DatasetProperties props)
-    throws DatasetManagementException, IOException, ServiceUnavailableException {
+    throws DatasetManagementException, IOException {
     delegate.addInstance(datasetTypeName, datasetInstanceId, props);
   }
 
   @Override
   public void updateInstance(Id.DatasetInstance datasetInstanceId, DatasetProperties props)
-    throws DatasetManagementException, IOException, ServiceUnavailableException {
+    throws DatasetManagementException, IOException {
     delegate.updateInstance(datasetInstanceId, props);
   }
 
   @Override
   public Collection<DatasetSpecificationSummary> getInstances(Id.Namespace namespaceId)
-    throws DatasetManagementException, ServiceUnavailableException {
+    throws DatasetManagementException {
     return delegate.getInstances(namespaceId);
   }
 
   @Override
   @Nullable
-  public DatasetSpecification getDatasetSpec(Id.DatasetInstance datasetInstanceId)
-    throws DatasetManagementException, ServiceUnavailableException {
+  public DatasetSpecification getDatasetSpec(Id.DatasetInstance datasetInstanceId) throws DatasetManagementException {
     return delegate.getDatasetSpec(datasetInstanceId);
   }
 
   @Override
-  public boolean hasInstance(Id.DatasetInstance datasetInstanceId)
-    throws DatasetManagementException, ServiceUnavailableException {
+  public boolean hasInstance(Id.DatasetInstance datasetInstanceId) throws DatasetManagementException {
     return delegate.hasInstance(datasetInstanceId);
   }
 
   @Override
-  public boolean hasSystemType(String typeName) throws DatasetManagementException, ServiceUnavailableException {
+  public boolean hasSystemType(String typeName) throws DatasetManagementException {
     return delegate.hasSystemType(typeName);
   }
 
   @Override
   @VisibleForTesting
-  public boolean hasType(Id.DatasetType datasetTypeId) throws DatasetManagementException, ServiceUnavailableException {
+  public boolean hasType(Id.DatasetType datasetTypeId) throws DatasetManagementException {
     return delegate.hasType(datasetTypeId);
   }
 
   @Override
-  public void deleteInstance(Id.DatasetInstance datasetInstanceId)
-    throws DatasetManagementException, IOException, ServiceUnavailableException {
+  public void deleteInstance(Id.DatasetInstance datasetInstanceId) throws DatasetManagementException, IOException {
     // Remove metadata for the dataset (TODO: https://issues.cask.co/browse/CDAP-3670)
     businessMds.removeMetadata(datasetInstanceId);
     delegate.deleteInstance(datasetInstanceId);
   }
 
   @Override
-  public void deleteAllInstances(Id.Namespace namespaceId)
-    throws DatasetManagementException, IOException, ServiceUnavailableException {
+  public void deleteAllInstances(Id.Namespace namespaceId) throws DatasetManagementException, IOException {
     Collection<DatasetSpecificationSummary> datasets = this.getInstances(namespaceId);
     for (DatasetSpecificationSummary dataset : datasets) {
       String dsName = dataset.getName();
@@ -149,7 +142,7 @@ public class LineageWriterDatasetFramework implements DatasetFramework, ProgramC
   @Override
   @Nullable
   public <T extends DatasetAdmin> T getAdmin(Id.DatasetInstance datasetInstanceId, @Nullable ClassLoader classLoader)
-    throws DatasetManagementException, IOException, ServiceUnavailableException {
+    throws DatasetManagementException, IOException {
     return delegate.getAdmin(datasetInstanceId, classLoader);
   }
 
@@ -157,7 +150,7 @@ public class LineageWriterDatasetFramework implements DatasetFramework, ProgramC
   @Nullable
   public <T extends DatasetAdmin> T getAdmin(Id.DatasetInstance datasetInstanceId, @Nullable ClassLoader classLoader,
                                              DatasetClassLoaderProvider classLoaderProvider)
-    throws DatasetManagementException, IOException, ServiceUnavailableException {
+    throws DatasetManagementException, IOException {
     return delegate.getAdmin(datasetInstanceId, classLoader, classLoaderProvider);
   }
 
@@ -166,7 +159,7 @@ public class LineageWriterDatasetFramework implements DatasetFramework, ProgramC
   public <T extends Dataset> T getDataset(Id.DatasetInstance datasetInstanceId,
                                           @Nullable Map<String, String> arguments, @Nullable ClassLoader classLoader,
                                           @Nullable Iterable<? extends Id> owners)
-    throws DatasetManagementException, IOException, ServiceUnavailableException {
+    throws DatasetManagementException, IOException {
     T dataset = delegate.getDataset(datasetInstanceId, arguments, classLoader, owners);
     writeLineage(datasetInstanceId, dataset);
     return dataset;
@@ -176,7 +169,7 @@ public class LineageWriterDatasetFramework implements DatasetFramework, ProgramC
   @Nullable
   public <T extends Dataset> T getDataset(Id.DatasetInstance datasetInstanceId,
                                           @Nullable Map<String, String> arguments, @Nullable ClassLoader classLoader)
-    throws DatasetManagementException, IOException, ServiceUnavailableException {
+    throws DatasetManagementException, IOException {
     T dataset = delegate.getDataset(datasetInstanceId, arguments, classLoader);
     writeLineage(datasetInstanceId, dataset);
     return dataset;
@@ -188,21 +181,19 @@ public class LineageWriterDatasetFramework implements DatasetFramework, ProgramC
                                           @Nullable Map<String, String> arguments, @Nullable ClassLoader classLoader,
                                           DatasetClassLoaderProvider classLoaderProvider,
                                           @Nullable Iterable<? extends Id> owners)
-    throws DatasetManagementException, IOException, ServiceUnavailableException {
+    throws DatasetManagementException, IOException {
     T dataset = delegate.getDataset(datasetInstanceId, arguments, classLoader, classLoaderProvider, owners);
     writeLineage(datasetInstanceId, dataset);
     return dataset;
   }
 
   @Override
-  public void createNamespace(Id.Namespace namespaceId)
-    throws DatasetManagementException, ServiceUnavailableException {
+  public void createNamespace(Id.Namespace namespaceId) throws DatasetManagementException {
     delegate.createNamespace(namespaceId);
   }
 
   @Override
-  public void deleteNamespace(Id.Namespace namespaceId)
-    throws DatasetManagementException, ServiceUnavailableException {
+  public void deleteNamespace(Id.Namespace namespaceId) throws DatasetManagementException {
     delegate.deleteNamespace(namespaceId);
   }
 

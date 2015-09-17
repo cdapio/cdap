@@ -90,8 +90,6 @@ public final class Constants {
     public static final String EXEC_THREADS = "app.exec.threads";
     public static final String BOSS_THREADS = "app.boss.threads";
     public static final String WORKER_THREADS = "app.worker.threads";
-    public static final String APP_TEMPLATE_DIR = "app.template.dir";
-    public static final String APP_TEMPLATE_PLUGIN_DIR = "app.template.plugin.dir";
     public static final String APP_SCHEDULER_QUEUE = "apps.scheduler.queue";
     public static final String MAPREDUCE_JOB_CLIENT_CONNECT_MAX_RETRIES = "mapreduce.jobclient.connect.max.retries";
     public static final String MAPREDUCE_INCLUDE_CUSTOM_CLASSES = "mapreduce.include.custom.format.classes";
@@ -157,6 +155,13 @@ public final class Constants {
    */
   public static final class AppMetaStore {
     public static final String TABLE = "app.meta";
+  }
+
+  /**
+   * Plugin Artifacts constants.
+   */
+  public static final class Plugin {
+    public static final String DIRECTORY = "artifacts.jar";
   }
 
   /**
@@ -883,5 +888,6 @@ public final class Constants {
     public static final String HANDLERS_NAME = "metadata.handlers";
     public static final String UPDATES_KAFKA_TOPIC = "metadata.updates.kafka.topic";
     public static final String UPDATES_PUBLISH_ENABLED = "metadata.updates.publish.enabled";
+    public static final String UPDATES_KAFKA_BROKER_LIST = "metadata.updates.kafka.broker.list";
   }
 }

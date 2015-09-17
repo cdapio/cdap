@@ -13,23 +13,56 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
- 
+
 angular.module(PKG.name + '.feature.adapters')
   .service('MyNodeConfigService', function() {
     this.pluginChangeListeners = [];
-    this.setPlugin = function(plugin) {
+    this.pluginResetListeners = [];
+    this.pluginRemoveListeners = [];
+
+    this.resetPlugin = function(plugin) {
       this.plugin = plugin;
-      this.notifyListeners();
+      this.notifyPluginResetListeners();
     };
 
-    this.notifyListeners = function () {
+    this.notifyPluginResetListeners = function() {
+      this.pluginResetListeners.forEach(function(callback) {
+        callback(this.plugin);
+      }.bind(this));
+    };
+
+    this.registerPluginResetCallback = function(callback) {
+      this.pluginResetListeners.push(callback);
+    };
+
+    this.setPlugin = function(plugin) {
+      this.plugin = plugin;
+      this.notifyPluginSetListeners();
+    };
+
+    this.notifyPluginSetListeners = function () {
       this.pluginChangeListeners.forEach(function(callback) {
         callback(this.plugin);
       }.bind(this));
     };
 
-    this.registerPluginCallback = function(callback) {
+    this.registerPluginSetCallback = function(callback) {
       this.pluginChangeListeners.push(callback);
+    };
+
+    this.removePlugin = function(nodeId) {
+      this.plugin = null;
+      this.notifyPluginRemoveListeners(nodeId);
+    };
+
+    this.registerRemovePluginCallback = function(callback) {
+      this.pluginRemoveListeners.push(callback);
+    };
+
+    this.notifyPluginRemoveListeners = function(nodeId) {
+      this.pluginRemoveListeners.forEach(function(callback) {
+        callback(nodeId);
+      });
     };
 
   });
