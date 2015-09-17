@@ -46,8 +46,8 @@ import javax.annotation.Nullable;
  * Dataset that manages Business Metadata using an {@link IndexedTable}.
  */
 public class BusinessMetadataDataset extends AbstractDataset {
-  private static final String TAGS_KEY = "tags";
-  private static final String TAGS_SEPARATOR = ",";
+  public static final String TAGS_KEY = "tags";
+  public static final String TAGS_SEPARATOR = ",";
 
   // column keys
   static final String KEYVALUE_COLUMN = "kv";

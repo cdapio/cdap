@@ -169,6 +169,34 @@ public abstract class MetadataTestBase extends AppFabricTestBase {
     return GSON.fromJson(response.getResponseBodyAsString(), MAP_STRING_STRING_TYPE);
   }
 
+  protected void getPropertiesFromInvalidEntity(Id.Application app) throws IOException {
+    String path = getVersionedAPIPath(String.format("apps/%s/metadata/properties", app.getId()), app.getNamespaceId());
+    HttpResponse response = makeGetRequest(path);
+    Assert.assertEquals(404, response.getResponseCode());
+  }
+
+  protected void getPropertiesFromInvalidEntity(Id.Program program) throws IOException {
+    String path = getVersionedAPIPath(String.format("apps/%s/%s/%s/metadata/properties", program.getApplicationId(),
+                                                    program.getType().getCategoryName(), program.getId()),
+                                      program.getNamespaceId());
+    HttpResponse response = makeGetRequest(path);
+    Assert.assertEquals(404, response.getResponseCode());
+  }
+
+  protected void getPropertiesFromInvalidEntity(Id.DatasetInstance dataset) throws IOException {
+    String path = getVersionedAPIPath(String.format("datasets/%s/metadata/properties",
+                                                    dataset.getId()), dataset.getNamespaceId());
+    HttpResponse response = makeGetRequest(path);
+    Assert.assertEquals(404, response.getResponseCode());
+  }
+
+  protected void getPropertiesFromInvalidEntity(Id.Stream stream) throws IOException {
+    String path = getVersionedAPIPath(String.format("streams/%s/metadata/properties",
+                                                    stream.getId()), stream.getNamespaceId());
+    HttpResponse response = makeGetRequest(path);
+    Assert.assertEquals(404, response.getResponseCode());
+  }
+
   protected void removeMetadata(Id.Application app) throws IOException {
     String path = getVersionedAPIPath(String.format("apps/%s/metadata", app.getId()), app.getNamespaceId());
     HttpResponse response = makeDeleteRequest(path);

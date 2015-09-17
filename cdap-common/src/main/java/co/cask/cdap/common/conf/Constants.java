@@ -889,5 +889,6 @@ public final class Constants {
     public static final String UPDATES_KAFKA_TOPIC = "metadata.updates.kafka.topic";
     public static final String UPDATES_PUBLISH_ENABLED = "metadata.updates.publish.enabled";
     public static final String UPDATES_KAFKA_BROKER_LIST = "metadata.updates.kafka.broker.list";
+    public static final String MAX_CHARS_ALLOWED = "metadata.max.allowed.chars";
   }
 }

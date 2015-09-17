@@ -546,8 +546,14 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   public void searchMetadata(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") String namespaceId,
                              @QueryParam("query") String searchQuery,
-                             @QueryParam("target") MetadataSearchTargetType target) throws Exception {
-    Set<MetadataSearchResultRecord> results = metadataAdmin.searchMetadata(searchQuery, target);
+                             @QueryParam("target") String target) throws Exception {
+    MetadataSearchTargetType metadataSearchTargetType;
+    if (target != null) {
+      metadataSearchTargetType = MetadataSearchTargetType.valueOf(target.toUpperCase());
+    } else {
+      metadataSearchTargetType = null;
+    }
+    Set<MetadataSearchResultRecord> results = metadataAdmin.searchMetadata(searchQuery, metadataSearchTargetType);
 
     responder.sendJson(HttpResponseStatus.OK, results);
   }
