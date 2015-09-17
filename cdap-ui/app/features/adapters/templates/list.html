@@ -64,7 +64,7 @@
           <tr ng-class="{'sort-enabled': ListController.adaptersList.length>0}">
             <th data-predicate="name">Pipeline Name</th>
             <th data-predicate="artifact.name">Type</th>
-            <th data-predicate="">Status</th>
+            <th data-predicate="_status">Status</th>
             <th data-predicate="_stats.numRuns">Total Runs</th>
             <th data-predicate="_stats.lastStartTime"
                   data-predicate-default>Last Start Time</th>
@@ -81,10 +81,6 @@
               <a ui-sref="adapters.create.studio({ name: adapter.name })" ng-if="adapter.isDraft">
                 {{adapter.name}}
               </a>
-
-              <span class="fa fa-trash text-danger delete-draft"
-                  ng-if="adapter.isDraft"
-                  ng-click="ListController.deleteDraft(adapter.name)"></span>
             </td>
             <td>
               <span ng-if="adapter.artifact.name === ListController.GLOBALS.etlBatch">
@@ -98,15 +94,18 @@
             </td>
             <td>
               <span class="status-bubble"
-                ng-class="{'status-green': ListController.statusMap[adapter.name] === 'Running' ||
-                ListController.statusMap[adapter.name] === 'Scheduled',
-                'status-red': ListController.statusMap[adapter.name] !== 'Running' && ListController.statusMap[adapter.name] !== 'Scheduled',
-                'status-grey': ListController.statusMap[adapter.name] === 'Draft' }"></span>
-              <span>{{ ListController.statusMap[adapter.name] }}</span>
+                ng-class="{'status-green': adapter._status === 'Running' ||
+                adapter._status === 'Scheduled',
+                'status-red': adapter._status !== 'Running' && adapter._status !== 'Scheduled',
+                'status-grey': adapter._status === 'Draft' }"></span>
+              <span>{{ adapter._status }}</span>
             </td>
-            <td>{{ adapter._stats.numRuns }}</td>
             <td>
-              <span ng-if="adapter._stats.lastStartTime === 'N/A'">{{ adapter._stats.lastStartTime }}</span>
+              <span ng-if="adapter._stats.numRuns !== 'N/A'">{{ adapter._stats.numRuns }}</span>
+              <span ng-if="adapter._stats.numRuns === 'N/A'">-</span>
+            </td>
+            <td>
+              <span ng-if="adapter._stats.lastStartTime === 'N/A'">-</span>
               <span ng-if="adapter._stats.lastStartTime !== 'N/A'">{{ adapter._stats.lastStartTime * 1000 | amDateFormat: 'MM/DD/YY h:mm:ss A' }}</span>
             </td>
             <td>
@@ -114,12 +113,23 @@
                 {{ adapter._latest.status | lowercase }} at {{ adapter._latest.end * 1000 | amDateFormat: 'MM/DD/YY h:mm:ss A'}}
               </span>
               <span ng-if="!adapter._latest">
-                N/A
+                -
               </span>
             </td>
 
             <td>
-              <span class="fa fa-trash"></span>
+              <span class="fa fa-trash text-danger delete-draft"
+                ng-if="adapter.isDraft"
+                ng-click="caskConfirm()"
+                cask-confirmable="ListController.deleteDraft(adapter.name)"
+                data-confirmable-content="Are you sure you want to delete this draft?"
+              ></span>
+              <span class="fa fa-trash text-danger delete-draft"
+                ng-if="!adapter.isDraft"
+                ng-click="caskConfirm()"
+                cask-confirmable="ListController.deleteApp(adapter.name)"
+                data-confirmable-content="Are you sure you want to delete this pipeline?"
+              ></span>
             </td>
           </tr>
         </tbody>

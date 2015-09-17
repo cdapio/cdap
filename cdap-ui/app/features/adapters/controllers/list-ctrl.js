@@ -16,7 +16,7 @@
 
 var alertpromise;
 angular.module(PKG.name + '.feature.adapters')
-  .controller('AdaptersListController', function($scope, myAdapterApi, $stateParams, GLOBALS, mySettings, $state, $alert, $timeout, myAlert, myHelpers, myWorkFlowApi, myWorkersApi, MyDataSource) {
+  .controller('AdaptersListController', function($scope, myAdapterApi, $stateParams, GLOBALS, mySettings, $state, $alert, $timeout, myHelpers, myWorkFlowApi, myWorkersApi, MyDataSource, myAppsApi) {
 
     var dataSrc = new MyDataSource($scope);
 
@@ -104,7 +104,6 @@ angular.module(PKG.name + '.feature.adapters')
         });
     }
 
-
     function fetchStatus() {
       // fetching ETL Batch statuses
       dataSrc.request({
@@ -134,9 +133,12 @@ angular.module(PKG.name + '.feature.adapters')
                   vm.statusMap[app.appId] = 'Suspended';
                   vm.statusCount.suspended++;
                 }
+                updateStatusAppObject();
               });
           }
         });
+
+        updateStatusAppObject();
       }); // end of ETL Batch
 
 
@@ -156,8 +158,16 @@ angular.module(PKG.name + '.feature.adapters')
             vm.statusCount.suspended++;
           }
         });
+
+        updateStatusAppObject();
       });
 
+    }
+
+    function updateStatusAppObject() {
+      angular.forEach(vm.adaptersList, function (app) {
+        app._status = app._status || vm.statusMap[app.id];
+      });
     }
 
     function fetchDrafts() {
@@ -171,18 +181,17 @@ angular.module(PKG.name + '.feature.adapters')
               vm.adaptersList.push({
                 isDraft: true,
                 name: key,
+                id: key,
                 artifact: value.artifact,
-                status: '-',
                 description: myHelpers.objectQuery(value, 'description'),
+                _status: 'Draft',
                 _stats: {
                   numRuns: 'N/A',
                   lastStartTime: 'N/A'
                 }
               });
 
-              vm.statusMap[key] = 'Draft';
             });
-
           }
         });
     }
@@ -225,4 +234,43 @@ angular.module(PKG.name + '.feature.adapters')
             $state.reload();
           });
     };
+
+
+    vm.deleteApp = function (appId) {
+      var deleteParams = {
+        namespace: $state.params.namespace,
+        appId: appId,
+        scope: $scope
+      };
+      myAppsApi.delete(deleteParams)
+        .$promise
+        .then(function success () {
+          var alertObj = {
+            type: 'success',
+            content: 'Pipeline ' + appId + ' deleted successfully'
+          }, e;
+          if (!alertpromise) {
+            alertpromise = $alert(alertObj);
+            e = $scope.$on('alert.hide', function() {
+              alertpromise = null;
+              e(); // un-register from listening to the hide event of a closed alert.
+            });
+          }
+          $state.reload();
+        }, function error () {
+          var alertObj = {
+            type: 'danger',
+            content: 'Pipeline ' + appId + ' delete failed'
+          }, e;
+          if (!alertpromise) {
+            alertpromise = $alert(alertObj);
+            e = $scope.$on('alert.hide', function() {
+              alertpromise = null;
+              e();
+            });
+          }
+          $state.reload();
+        });
+    };
+
   });
