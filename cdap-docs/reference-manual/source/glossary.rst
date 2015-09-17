@@ -108,7 +108,7 @@ Glossary
       
    CDAP UI
       The CDAP UI is a web-based application used to deploy CDAP applications, create 
-      :term:`ETL adapters <ETL Adapter>`, and query and manage the Cask Data Application 
+      :term:`ETL applications <ETL Application>`, and query and manage the Cask Data Application 
       Platform instance.
 
    CDAP Console
@@ -177,7 +177,7 @@ Glossary
    ETL Application
       A type of Application created from one of the two ETL system :term:`artifacts <artifact>` shipped with CDAP:
       ``cdap-etl-batch`` and ``cdap-etl-realtime``. An ETL Application defines a source to read
-      from, zero or more transformations to perform on data read from the source, and one or more
+      from, zero or more transformations to perform on the data read from the source, and one or more
       sinks to write the transformed data to.
   
    ETL Plugin
