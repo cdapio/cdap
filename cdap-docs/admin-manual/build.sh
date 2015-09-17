@@ -25,7 +25,7 @@ CHECK_INCLUDES=${TRUE}
 
 function download_includes() {
   echo_red_bold "Check guarded files for changes"
-  test_an_include f03add3234d3f30b7994506baf1de085 "${DEFAULT_XML}"
+  test_an_include 5337fe50a780b2e0118f2891ec2a475e "${DEFAULT_XML}"
 
   echo "Building rst file from cdap-default.xml..."
   local includes_dir=${1}
