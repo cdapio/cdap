@@ -1361,8 +1361,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         if (runRecord != null && runRecord.getProperties().containsKey("workflowrunid")
           && runRecord.getStatus().equals(ProgramRunStatus.RUNNING)) {
           String workflowRunId = runRecord.getProperties().get("workflowrunid");
-          throw new BadRequestException(String.format("Cannot stop the program '%s' started by the Workflow run '%s'. " +
-                                                        "Please stop the Workflow.", programRunId, workflowRunId));
+          throw new BadRequestException(String.format("Cannot stop the program '%s' started by the Workflow " +
+                                                        "run '%s'. Please stop the Workflow.", programRunId,
+                                                      workflowRunId));
         }
         throw new NotFoundException(programRunId);
       }
