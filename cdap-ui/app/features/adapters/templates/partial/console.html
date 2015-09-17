@@ -15,21 +15,25 @@
 -->
 
 <div ng-controller="ConsoleTabController as ConsoleTabController">
-  <div class="bottompanel-header clearfix">
-    <div class="pull-right">
-      <div class="btn btn-default"
-           ng-disabled="ConsoleTabController.messages.length === 0"
-           ng-click="ConsoleTabController.clearMessages()">
-        Clear
+
+  <div class="bottompanel-body">
+    <div class="console-wrapper">
+      <div class="pull-right">
+        <div class="btn btn-default"
+             ng-disabled="ConsoleTabController.messages.length === 0"
+             ng-click="ConsoleTabController.clearMessages()">
+          Clear
+        </div>
+      </div>
+      <div ng-repeat="message in ConsoleTabController.messages track by $index">
+        <pre ng-class="{'text-danger': message.type === 'error', 'text-info': message.type === 'info', 'text-success': message.type === 'success'}">{{message.content}}</pre>
+      </div>
+
+      <div ng-if="ConsoleTabController.messages.length === 0">
+        <pre>No messages as of now.</pre>
       </div>
     </div>
+
   </div>
 
-  <div ng-repeat="message in ConsoleTabController.messages track by $index">
-    <div ng-class="{'text-danger': message.type === 'error', 'text-info': message.type === 'info', 'text-success': message.type === 'success'}">{{message.content}}</div>
-  </div>
-
-  <div ng-if="ConsoleTabController.messages.length === 0">
-    <h3>No messages as of now.</h3>
-  </div>
 </div>
