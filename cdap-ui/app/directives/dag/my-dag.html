@@ -32,7 +32,7 @@
              tooltip="{{plugin.error.message}}"
              tooltip-append-to-body="true"
              tooltip-class="tooltip-error">
-          <span class="badge badge-danger">
+          <span class="badge" ng-class="{'badge-danger': plugin.warning !== true, 'badge-warning': plugin.warning === true}">
             <span>{{plugin.requiredFieldCount}}</span>
           </span>
         </div>

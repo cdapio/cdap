@@ -123,13 +123,19 @@ angular.module(PKG.name + '.feature.adapters')
     function isValidPlugin(plugin) {
       var i;
       var keys = Object.keys(plugin.properties);
-      if (!keys.length) {
-        plugin.valid = false;
-        plugin.requiredFieldCount = Object.keys(plugin._backendProperties).length;
-        return plugin.valid;
-      }
       plugin.valid = true;
       plugin.requiredFieldCount = 0;
+      if (!keys.length) {
+        keys = Object.keys(plugin._backendProperties);
+        for (i =0; i<keys.length; i++) {
+          if (plugin._backendProperties[keys[i]] && plugin._backendProperties[keys[i]].required) {
+            console.info(plugin.name, keys[i], plugin._backendProperties[keys[i]]);
+            plugin.requiredFieldCount += 1;
+            plugin.valid = false;
+          }
+        }
+        return plugin.valid;
+      }
       for (i=0; i< keys.length; i++) {
         var property = plugin.properties[keys[i]];
         if (plugin._backendProperties[keys[i]] && plugin._backendProperties[keys[i]].required && (!property || property === '')) {
@@ -258,6 +264,7 @@ angular.module(PKG.name + '.feature.adapters')
 
     return {
       isModelValid: isModelValid,
+      isValidPlugin: isValidPlugin,
       hasNameAndTemplateType: hasNameAndTemplateType
     };
 

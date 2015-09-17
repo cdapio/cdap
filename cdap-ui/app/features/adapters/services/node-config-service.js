@@ -19,6 +19,7 @@ angular.module(PKG.name + '.feature.adapters')
     this.pluginChangeListeners = [];
     this.pluginResetListeners = [];
     this.pluginRemoveListeners = [];
+    this.pluginSaveListeners = [];
 
     this.resetPlugin = function(plugin) {
       this.plugin = plugin;
@@ -63,6 +64,16 @@ angular.module(PKG.name + '.feature.adapters')
       this.pluginRemoveListeners.forEach(function(callback) {
         callback(nodeId);
       });
+    };
+
+    this.notifyPluginSaveListeners = function(nodeId) {
+      this.pluginSaveListeners.forEach(function(callback) {
+        callback(nodeId);
+      });
+    };
+
+    this.registerPluginSaveCallback = function(callback) {
+      this.pluginSaveListeners.push(callback);
     };
 
   });

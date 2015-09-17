@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.adapters')
-  .controller('PluginEditController', function($scope, PluginConfigFactory, myHelpers, EventPipe, $timeout, MyAppDAGService, $sce, $rootScope, GLOBALS) {
+  .controller('PluginEditController', function($scope, PluginConfigFactory, myHelpers, EventPipe, $timeout, MyAppDAGService, $sce, $rootScope, GLOBALS, MyNodeConfigService) {
     $scope.pluginCopy = {};
     var saveWatch;
 
@@ -231,6 +231,7 @@ angular.module(PKG.name + '.feature.adapters')
         $scope.plugin.outputSchema = angular.copy($scope.pluginCopy.outputSchema);
         $scope.plugin.label = $scope.pluginCopy.label;
         $scope.data['isModelTouched'] = false;
+        MyNodeConfigService.notifyPluginSaveListeners($scope.plugin.id);
       }
     };
 

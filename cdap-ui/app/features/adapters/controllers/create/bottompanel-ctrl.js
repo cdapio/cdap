@@ -19,8 +19,17 @@ angular.module(PKG.name + '.feature.adapters')
 
     MyAppDAGService.registerEditPropertiesCallback(editProperties.bind(this));
     MyConsoleTabService.registerOnMessageUpdates(showConsoleTab.bind(this));
+    MyAppDAGService.errorCallback(showConsoleTab.bind(this));
 
-    function showConsoleTab() {
+    function showConsoleTab(errors) {
+      if (errors.canvas && errors.canvas.length) {
+        errors.canvas.forEach(function(err) {
+          MyConsoleTabService.addMessage({
+            type: 'error',
+            content: err
+          });
+        });
+      }
       $scope.selectTab($scope.tabs[0]);
     }
 
