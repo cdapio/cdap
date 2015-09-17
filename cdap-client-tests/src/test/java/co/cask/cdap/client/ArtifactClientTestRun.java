@@ -218,7 +218,7 @@ public class ArtifactClientTestRun extends ClientTestBase {
     }
 
     // get info about specific artifacts
-    Schema myAppConfigSchema = new ReflectionSchemaGenerator().generate(MyApp.Conf.class);
+    Schema myAppConfigSchema = new ReflectionSchemaGenerator(false).generate(MyApp.Conf.class);
     ArtifactClasses myAppClasses = ArtifactClasses.builder()
       .addApp(new ApplicationClass(MyApp.class.getName(), "", myAppConfigSchema))
       .build();

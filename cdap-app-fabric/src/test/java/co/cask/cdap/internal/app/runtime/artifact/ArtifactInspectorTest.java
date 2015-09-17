@@ -79,7 +79,7 @@ public class ArtifactInspectorTest {
 
       // check app classes
       Set<ApplicationClass> expectedApps = ImmutableSet.of(new ApplicationClass(
-        InspectionApp.class.getName(), "", new ReflectionSchemaGenerator().generate(InspectionApp.AConfig.class)));
+        InspectionApp.class.getName(), "", new ReflectionSchemaGenerator(false).generate(InspectionApp.AConfig.class)));
       Assert.assertEquals(expectedApps, classes.getApps());
 
       // check plugin classes
