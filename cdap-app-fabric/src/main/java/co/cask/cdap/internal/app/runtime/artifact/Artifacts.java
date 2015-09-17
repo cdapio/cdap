@@ -49,7 +49,8 @@ public final class Artifacts {
     }
 
     // It has to be Config
-    Preconditions.checkArgument(Config.class == configType.getRawType(), "Application config type not supported. " +
+    Preconditions.checkArgument(Config.class == configType.getRawType(),
+      "Application config type " + configType + " not supported. " +
       "Type must extend Config and cannot be parameterized.");
     return Config.class;
   }

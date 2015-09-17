@@ -173,7 +173,7 @@ public final class InMemoryConfigurator implements Configurator {
         appConfig = ((Class<? extends Config>) configType).newInstance();
       } else {
         try {
-          appConfig = GSON.fromJson(configString, Artifacts.getConfigType(app.getClass()));
+          appConfig = GSON.fromJson(configString, configType);
         } catch (JsonSyntaxException e) {
           throw new IllegalArgumentException("Invalid JSON configuration was provided. Please check the syntax.", e);
         }
