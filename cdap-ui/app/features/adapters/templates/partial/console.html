@@ -26,8 +26,7 @@
   </div>
 
   <div ng-repeat="message in ConsoleTabController.messages track by $index">
-    <div ng-class="{'text-danger': message.type === 'error', 'text-info': message.type === 'info', 'text-success': message.type === 'success'}"
-         ng-bind-html="message.content"></div>
+    <div ng-class="{'text-danger': message.type === 'error', 'text-info': message.type === 'info', 'text-success': message.type === 'success'}">{{message.content}}</div>
   </div>
 
   <div ng-if="ConsoleTabController.messages.length === 0">

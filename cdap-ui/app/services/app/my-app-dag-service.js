@@ -653,8 +653,11 @@ angular.module(PKG.name + '.services')
               defer.reject({
                 messages: err
               });
+              this.notifyError({
+                canvas: [err.data]
+              });
               EventPipe.emit('hideLoadingIcon.immediate');
-            }
+            }.bind(this)
           );
       } else {
         this.notifyError(errors);

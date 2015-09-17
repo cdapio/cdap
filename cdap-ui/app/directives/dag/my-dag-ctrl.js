@@ -59,16 +59,20 @@ angular.module(PKG.name + '.commons')
 
       AdapterErrorFactory.isValidPlugin(plugin);
 
-      if (!plugin.valid) {
-        this.plugins.forEach(function(p) {
-          if (p.id === plugin.id) {
+      this.plugins.forEach(function(p) {
+        if (p.id === plugin.id) {
+          if (plugin.valid) {
+            p.requiredFieldCount = 0;
+            p.error = false;
+            p.warning = false;
+          } else {
             p.requiredFieldCount = plugin.requiredFieldCount;
             p.error = {};
             p.error.message = 'Missing required fields';
             p.warning = true;
           }
-        });
-      }
+        }
+      });
     };
 
     this.removePlugin = function(index, nodeId) {
