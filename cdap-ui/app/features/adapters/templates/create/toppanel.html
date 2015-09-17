@@ -16,48 +16,48 @@
 
 <div class="side-panel top text-center clearfix">
   <div class="adapter-metadata pull-left"
+       ng-class="{'expanded': TopPanelController.metadataExpanded}"
        tooltip="{{ TopPanelController.metadata.error }}"
        tooltip-placement="right"
        tooltip-toggle="TopPanelController.metadata.error"
        tooltip-append-to-body="true"
        tooltip-class="tooltip-error">
-    <div class="clearfix">
-      <div class="name-type pull-left"
-           ng-click="TopPanelController.showMetadataModal()">
-        <h1 tooltip="{{ TopPanelController.metadata.name }}"
-            tooltip-placement="right"
-            tooltip-enable="TopPanelController.metadata.name.length > 38"
-            tooltip-append-to-body="true">
-          <a ng-if="TopPanelController.metadata.name.length > 0">
-            {{TopPanelController.metadata['name'] | myEllipsis: 38}}
-          </a>
-          <a ng-if="TopPanelController.metadata['name'].length === 0">
-            Pipeline Name
-          </a>
-        </h1>
-        <a class="pipeline-type">
-          <span class="icon-ETLBatch" ng-if="TopPanelController.metadata.template.type === TopPanelController.GLOBALS.etlBatch"></span>
-          <span class="icon-ETLRealtime" ng-if="TopPanelController.metadata.template.type === TopPanelController.GLOBALS.etlRealtime"></span>
-          <span>Type: {{ TopPanelController.metadata.template.type }}</span>
-        </a>
+    <div ng-click="TopPanelController.openMetadata()">
+      <div class="name-type clearfix">
+
+        <div class="input-group pull-left">
+          <input type="text"
+                 ng-model="TopPanelController.pipelineName"
+                 my-maxlength="64"
+                 placeholder="[Pipeline Name]"
+                 tooltip="{{ TopPanelController.metadata.name }}"
+                 tooltip-placement="right"
+                 tooltip-enable="TopPanelController.metadata.name.length > 27"
+                 tooltip-append-to-body="true" />
+          <span class="fa fa-pencil input-group-addon"></span>
+        </div>
+
+        <span ng-if="TopPanelController.metadata.template.type === TopPanelController.GLOBALS.etlBatch"
+              class="icon-ETLBatch"> Type: Batch </span>
+        <span ng-if="TopPanelController.metadata.template.type === TopPanelController.GLOBALS.etlRealtime"
+              class="icon-ETLRealtime"> Type: Realtime </span>
       </div>
-      <a class="fa fa-pencil pull-right"
-         ng-click="TopPanelController.showMetadataModal()"></a>
+
+      <textarea type="text"
+                class="pull-left"
+                ng-model="TopPanelController.pipelineDescription"
+                my-maxlength="144"
+                placeholder="Enter a description for your pipeline."
+                tooltip="{{ TopPanelController.metadata.description }}"
+                tooltip-placement="right"
+                tooltip-enable="TopPanelController.metadata.description.length > 144"
+                tooltip-append-to-body="true"></textarea>
     </div>
-    <p class="text-left"
-       ng-if="TopPanelController.metadata['description'].length > 0"
-       tooltip="{{ TopPanelController.metadata.description }}"
-       tooltip-placement="right"
-       tooltip-enable="TopPanelController.metadata.description.length > 158"
-       tooltip-append-to-body="true"
-       ng-click="TopPanelController.showMetadataModal()">
-      {{TopPanelController.metadata['description'] | myEllipsis: 158}}
-    </p>
-    <p class="text-left"
-       ng-if="TopPanelController.metadata['description'].length === 0"
-       ng-click="TopPanelController.showMetadataModal()">
-       Enter a description for your pipeline.
-    </p>
+
+    <div class="btn-group pull-right">
+      <a class="btn btn-default" ng-click="TopPanelController.metadataExpanded = false">Cancel</a>
+      <a class="btn btn-success" ng-click="TopPanelController.saveMetadata()">Save</a>
+    </div>
   </div>
   <div class="btn-group pull-right clearfix">
     <div class="btn pull-left"

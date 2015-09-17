@@ -37,17 +37,21 @@ body.theme-cdap.state-adapters {
       height: 59px;
       line-height: 59px;
       width: 80px;
+      .transition(all 0.2s ease);
       &:hover, &:focus {
         border-left: 1px solid @table-border-color;
       }
       &.active, &:active {
         .box-shadow(none);
       }
+      @media (max-width: @screen-sm-max) {
+        font-size: 11px;
+        width: 62px;
+      }
 
       &.btn-status {
         width: 200px;
         cursor: default;
-
         &:hover, &:hover {
           border-left: 1px solid #eee;
         }
@@ -68,51 +72,146 @@ body.theme-cdap.state-adapters {
     }
 
     .adapter-metadata {
+      background-color: transparent;
+      height: 60px;
       width: 600px;
       padding: 5px 15px 0;
-      @media (max-width: @screen-sm-max) {
+      position: relative;
+      z-index: 1021;
+      .box-shadow(none);
+      .transition(all 0.2s ease);
+      @media (max-width: @screen-md-max) {
         max-width: 400px;
       }
+      @media (min-width: @screen-lg-min) {
+        width: 600px;
+      }
       &:hover, &:focus {
-        a.fa-pencil {
-          opacity: 1;
+        cursor: pointer;
+        span.fa-pencil {
+          .opacity(1);
         }
       }
-      h1 {
-        display: inline-block;
-        font-size: 20px;
-        font-weight: 500;
-        margin-top: 0;
-        margin-right: 10px;
-        margin-bottom: 5px;
-        a {
-          color: #202028;
-          cursor: pointer;
+      &.expanded {
+        background-color: white;
+        height: 205px;
+        @box-shadow: 0 7px 7px fade(black, 10%), 0 19px 59px fade(black, 20%);
+        .box-shadow(@box-shadow);
+        @media (max-width: @screen-sm-max) {
+          height: 235px;
         }
-        + a {
+        input, textarea {
+          border: 1px solid @table-border-color;
+          font-size: 12px;
+          padding: 10px 12px;
+          white-space: initial;
+          text-overflow: initial;
+          overflow: initial;
+          .border-radius(6px);
+        }
+
+        div.input-group {
+          width: 50%;
+          text-align: left;
+          + span {
+            line-height: 40px;
+            float: right;
+          }
+        }
+
+        input {
+          height: 40px;
+          width: 82%;
+        }
+        textarea {
+          margin-top: 10px;
+          min-height: 100px;
+          resize: none;
+          width: 100%;
+        }
+        div.btn-group {
+          margin: 10px 0;
+          .btn {
+            display: inline-block;
+            width: 62px;
+            height: 32px;
+            .border-radius(4px);
+            .opacity(1);
+            &:first-child {
+              background-color: @body-bg;
+              &:hover, &:focus {
+                background-color: darken(@body-bg, 10%)
+              }
+            }
+            &:last-child {
+              margin-left: 5px;
+            }
+          }
+        }
+        span.fa-pencil {
+          .opacity(1);
+        }
+      }
+      div.input-group {
+        + span {
+          float: left;
           color: #397cf1;
           font-size: 16px;
+          line-height: 25px;
         }
+      }
+      input, textarea {
+        background-color: transparent;
+        cursor: pointer;
+        line-height: 1.1;
+        padding: 0;
+        border: 0;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        overflow: hidden;
+        .border-radius(0);
+        &:focus {
+          outline: 0;
+        }
+      }
+      input {
+        display: inline-block;
+        font-size: 20px;
+        margin: 0;
+        max-width: 350px;
+        .placeholder-color(@color: #202028);
+      }
+      .input-group-addon {
+        background-color: transparent;
+        border: 0;
+      }
+      textarea {
+        min-height: 0;
+        margin-top: 5px;
+        font-size: 14px;
+        font-weight: 400;
+        resize: none;
+        width: 100%;
+        margin-bottom: 0;
+        .placeholder-color(@color: #666);
       }
       a {
         font-weight: 500;
         text-decoration: none;
-        &.fa-pencil {
-          color: @cdap-lightgray;
-          cursor: pointer;
-          opacity: 0;
-          margin-top: 3px;
-          .transition(opacity 0.2s ease);
+        &.btn {
+          width: 0;
+          height: 0;
+          .opacity(0);
+          .transition(all 0.5s ease);
         }
       }
-      p {
-        color: #666;
+      span.fa-pencil {
+        color: @cdap-lightgray;
         cursor: pointer;
-        font-size: 14px;
-        font-weight: 400;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        margin-right: 5px;
+        padding-top: 0;
+        .opacity(0);
+        .transition(opacity 0.2s ease);
       }
     }
   }
