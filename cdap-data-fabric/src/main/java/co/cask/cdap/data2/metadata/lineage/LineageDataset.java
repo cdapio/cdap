@@ -333,12 +333,16 @@ public class LineageDataset extends AbstractDataset {
     return builder.build().getKey();
   }
 
-  private byte[] getDatasetScanStartKey(Id.DatasetInstance datasetInstance, long start) {
-    return getDatasetScanKey(datasetInstance, start + 1);
+  private byte[] getDatasetScanStartKey(Id.DatasetInstance datasetInstance, long end) {
+    // time is inverted, hence we need to have end time in start key.
+    // Since end time is exclusive, add 1 to make it inclusive.
+    return getDatasetScanKey(datasetInstance, end + 1);
   }
 
-  private byte[] getDatasetScanEndKey(Id.DatasetInstance datasetInstance, long end) {
-    return getDatasetScanKey(datasetInstance, end - 1);
+  private byte[] getDatasetScanEndKey(Id.DatasetInstance datasetInstance, long start) {
+    // time is inverted, hence we need to have start time in end key.
+    // Since start time is inclusive, subtract 1 to make it exclusive.
+    return getDatasetScanKey(datasetInstance, start - 1);
   }
 
   private byte[] getStreamScanKey(Id.Stream stream, long time) {
@@ -350,12 +354,16 @@ public class LineageDataset extends AbstractDataset {
     return builder.build().getKey();
   }
 
-  private byte[] getStreamScanStartKey(Id.Stream stream, long start) {
-    return getStreamScanKey(stream, start + 1);
+  private byte[] getStreamScanStartKey(Id.Stream stream, long end) {
+    // time is inverted, hence we need to have end time in start key.
+    // Since end time is exclusive, add 1 to make it inclusive.
+    return getStreamScanKey(stream, end + 1);
   }
 
-  private byte[] getStreamScanEndKey(Id.Stream stream, long end) {
-    return getStreamScanKey(stream, end - 1);
+  private byte[] getStreamScanEndKey(Id.Stream stream, long start) {
+    // time is inverted, hence we need to have start time in end key.
+    // Since start time is inclusive, subtract 1 to make it exclusive.
+    return getStreamScanKey(stream, start - 1);
   }
 
   private byte[] getProgramScanKey(Id.Program program, long time) {
@@ -367,12 +375,16 @@ public class LineageDataset extends AbstractDataset {
     return builder.build().getKey();
   }
 
-  private byte[] getProgramScanStartKey(Id.Program program, long start) {
-    return getProgramScanKey(program, start + 1);
+  private byte[] getProgramScanStartKey(Id.Program program, long end) {
+    // time is inverted, hence we need to have end time in start key.
+    // Since end time is exclusive, add 1 to make it inclusive.
+    return getProgramScanKey(program, end + 1);
   }
 
-  private byte[] getProgramScanEndKey(Id.Program program, long end) {
-    return getProgramScanKey(program, end - 1);
+  private byte[] getProgramScanEndKey(Id.Program program, long start) {
+    // time is inverted, hence we need to have start time in end key.
+    // Since start time is inclusive, subtract 1 to make it exclusive.
+    return getProgramScanKey(program, start - 1);
   }
 
   private byte[] getRunScanStartKey(Id.Run run) {
