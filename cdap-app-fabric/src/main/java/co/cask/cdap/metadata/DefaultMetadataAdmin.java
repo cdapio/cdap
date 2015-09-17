@@ -157,7 +157,7 @@ public class DefaultMetadataAdmin implements MetadataAdmin {
     Set<MetadataSearchResultRecord> searchResultRecords = new LinkedHashSet<>();
     for (BusinessMetadataRecord bmr : results) {
       MetadataSearchTargetType finalType = type;
-      if (finalType == null) {
+      if (finalType == null || finalType == MetadataSearchTargetType.ALL) {
         Id.NamespacedId namespacedId = bmr.getTargetId();
         String targetType = getTargetType(namespacedId);
         finalType = getMetadataSearchTarget(targetType);

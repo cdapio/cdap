@@ -23,6 +23,8 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
+import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
+import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 import co.cask.common.http.HttpResponse;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -85,6 +87,30 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     Assert.assertEquals(datasetProperties, properties);
     properties = getProperties(mystream);
     Assert.assertEquals(streamProperties, properties);
+
+    // test search for stream
+    Set<MetadataSearchResultRecord> searchProperties = searchMetadata(Id.Namespace.DEFAULT.getId(),
+                                                                      "stKey:stValue", "STREAM");
+    Set<MetadataSearchResultRecord> expected = ImmutableSet.of(
+      new MetadataSearchResultRecord(mystream, MetadataSearchTargetType.STREAM)
+    );
+    Assert.assertEquals(expected, searchProperties);
+
+    // test prefix search for service
+    searchProperties = searchMetadata(Id.Namespace.DEFAULT.getId(), "sKey:s", "ALL");
+    expected = ImmutableSet.of(
+      new MetadataSearchResultRecord(pingService, MetadataSearchTargetType.PROGRAM)
+    );
+    Assert.assertEquals(expected, searchProperties);
+
+    // search without any target param
+    searchProperties = searchMetadata(Id.Namespace.DEFAULT.getId(), "sKey:s", null);
+    Assert.assertEquals(expected, searchProperties);
+
+    // search non-existent property should return empty set
+    searchProperties = searchMetadata(Id.Namespace.DEFAULT.getId(), "NullKey:s", null);
+    Assert.assertEquals(ImmutableSet.of(), searchProperties);
+
     // test removal
     removeProperties(application);
     Assert.assertTrue(getProperties(application).isEmpty());
@@ -141,6 +167,28 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     tags = getTags(mystream);
     Assert.assertTrue(tags.containsAll(streamTags));
     Assert.assertTrue(streamTags.containsAll(tags));
+    // test search for stream
+    Set<MetadataSearchResultRecord> searchTags = searchMetadata(Id.Namespace.DEFAULT.getId(), "stT", "STREAM");
+    Set<MetadataSearchResultRecord> expected = ImmutableSet.of(
+      new MetadataSearchResultRecord(mystream, MetadataSearchTargetType.STREAM)
+    );
+    Assert.assertEquals(expected, searchTags);
+    // test prefix search, should match stream and service programs
+    searchTags = searchMetadata(Id.Namespace.DEFAULT.getId(), "s", "ALL");
+    expected = ImmutableSet.of(
+      new MetadataSearchResultRecord(mystream, MetadataSearchTargetType.STREAM),
+      new MetadataSearchResultRecord(pingService, MetadataSearchTargetType.PROGRAM)
+    );
+    Assert.assertEquals(expected, searchTags);
+
+    // search without any target param
+    searchTags = searchMetadata(Id.Namespace.DEFAULT.getId(), "s", null);
+    Assert.assertEquals(expected, searchTags);
+
+    // search non-existent tags should return empty set
+    searchTags = searchMetadata(Id.Namespace.DEFAULT.getId(), "NullKey", null);
+    Assert.assertEquals(ImmutableSet.of(), searchTags);
+
     // test removal
     removeTags(application, "aTag");
     Assert.assertEquals(ImmutableSet.of("aT"), getTags(application));
