@@ -19,7 +19,7 @@ package co.cask.cdap.internal.app.runtime;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
+import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 
 import java.io.File;
 import javax.annotation.Nullable;

@@ -29,10 +29,10 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
-import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactClassLoaderFactory;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.CloseableClassLoader;
+import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Preconditions;
@@ -77,7 +77,6 @@ public final class InMemoryConfigurator implements Configurator {
   // these field provided if going through artifact code path, but not through template code path
   // this is temporary until we can remove templates. (CDAP-2662).
   private String appClassName;
-  private String version;
   private Id.Artifact artifactId;
 
   public InMemoryConfigurator(CConfiguration cConf, Id.Artifact artifactId, String appClassName,
@@ -85,7 +84,6 @@ public final class InMemoryConfigurator implements Configurator {
     this(cConf, artifact, configString);
     this.artifactId = artifactId;
     this.appClassName = appClassName;
-    this.version = artifactId.getVersion().getVersion();
     this.artifactRepository = artifactRepository;
   }
 
@@ -125,7 +123,7 @@ public final class InMemoryConfigurator implements Configurator {
         }
 
         Application app = (Application) appMain;
-        ConfigResponse response = createResponse(app, version);
+        ConfigResponse response = createResponse(app);
         result.set(response);
       }
 
@@ -147,16 +145,15 @@ public final class InMemoryConfigurator implements Configurator {
     appClassName = manifest.getMainAttributes().getValue(ManifestFields.MAIN_CLASS);
     Preconditions.checkArgument(appClassName != null && !appClassName.isEmpty(),
       "Main class attribute cannot be empty");
-    version = manifest.getMainAttributes().getValue(ManifestFields.BUNDLE_VERSION);
   }
 
-  private ConfigResponse createResponse(Application app, String bundleVersion)
+  private ConfigResponse createResponse(Application app)
     throws InstantiationException, IllegalAccessException, IOException {
-    String specJson = getSpecJson(app, bundleVersion, configString);
+    String specJson = getSpecJson(app, configString);
     return new DefaultConfigResponse(0, CharStreams.newReaderSupplier(specJson));
   }
 
-  private String getSpecJson(Application app, final String bundleVersion, final String configString)
+  private String getSpecJson(Application app, final String configString)
     throws IllegalAccessException, InstantiationException, IOException {
 
     File tempDir = DirUtils.createTempDir(baseUnpackDir);
