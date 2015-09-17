@@ -120,10 +120,10 @@ public class LineageTest extends MetadataTestBase {
         new LineageRecord(now - oneHourMillis, now + oneHourMillis,
                          ImmutableSet.of(
                            new Relation(dataset, flow, AccessType.UNKNOWN,
-                                        ImmutableSet.of(flowRunId),
+                                        flowRunId,
                                         ImmutableSet.of(Id.Flow.Flowlet.from(flow, AllProgramsApp.A.NAME))),
                            new Relation(stream, flow, AccessType.READ,
-                                        ImmutableSet.of(flowRunId),
+                                        flowRunId,
                                         ImmutableSet.of(Id.Flow.Flowlet.from(flow, AllProgramsApp.A.NAME)))
                          ));
       Assert.assertEquals(expected, lineage);
@@ -216,21 +216,21 @@ public class LineageTest extends MetadataTestBase {
         new LineageRecord(now - oneHourMillis, now + oneHourMillis,
                           ImmutableSet.of(
                             // Dataset access
-                            new Relation(dataset, flow, AccessType.UNKNOWN, ImmutableSet.of(flowRunId),
+                            new Relation(dataset, flow, AccessType.UNKNOWN, flowRunId,
                                          ImmutableSet.of(Id.Flow.Flowlet.from(flow, AllProgramsApp.A.NAME))),
-                            new Relation(dataset, mapreduce, AccessType.UNKNOWN, ImmutableSet.of(mrRunId)),
-                            new Relation(dataset, spark, AccessType.UNKNOWN, ImmutableSet.of(sparkRunId)),
-                            new Relation(dataset, mapreduce, AccessType.UNKNOWN, ImmutableSet.of(workflowMrRunId)),
-                            new Relation(dataset, service, AccessType.UNKNOWN, ImmutableSet.of(serviceRunId)),
-                            new Relation(dataset, worker, AccessType.UNKNOWN, ImmutableSet.of(workerRunId)),
+                            new Relation(dataset, mapreduce, AccessType.UNKNOWN, mrRunId),
+                            new Relation(dataset, spark, AccessType.UNKNOWN, sparkRunId),
+                            new Relation(dataset, mapreduce, AccessType.UNKNOWN, workflowMrRunId),
+                            new Relation(dataset, service, AccessType.UNKNOWN, serviceRunId),
+                            new Relation(dataset, worker, AccessType.UNKNOWN, workerRunId),
 
                             // Stream access
-                            new Relation(stream, flow, AccessType.READ, ImmutableSet.of(flowRunId),
+                            new Relation(stream, flow, AccessType.READ, flowRunId,
                                          ImmutableSet.of(Id.Flow.Flowlet.from(flow, AllProgramsApp.A.NAME))),
-                            new Relation(stream, mapreduce, AccessType.READ, ImmutableSet.of(mrRunId)),
-                            new Relation(stream, spark, AccessType.READ, ImmutableSet.of(sparkRunId)),
-                            new Relation(stream, mapreduce, AccessType.READ, ImmutableSet.of(workflowMrRunId)),
-                            new Relation(stream, worker, AccessType.WRITE, ImmutableSet.of(workerRunId))
+                            new Relation(stream, mapreduce, AccessType.READ, mrRunId),
+                            new Relation(stream, spark, AccessType.READ, sparkRunId),
+                            new Relation(stream, mapreduce, AccessType.READ, workflowMrRunId),
+                            new Relation(stream, worker, AccessType.WRITE, workerRunId)
                           ));
       Assert.assertEquals(expected, lineage);
 

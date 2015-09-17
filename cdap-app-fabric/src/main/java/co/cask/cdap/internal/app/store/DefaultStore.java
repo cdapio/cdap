@@ -73,6 +73,7 @@ import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
+import org.apache.twill.api.RunId;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
@@ -87,6 +88,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
@@ -1232,5 +1234,14 @@ public class DefaultStore implements Store {
     public Iterator<WorkflowDataset> iterator() {
       return Iterators.singletonIterator(workflowDataset);
     }
+  }
+
+  public Set<RunId> getRunningInRange(final long startTimeInSecs, final long endTimeInSecs) {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Set<RunId>>() {
+      @Override
+      public Set<RunId> apply(AppMds input) throws Exception {
+        return input.apps.getRunningInRange(startTimeInSecs, endTimeInSecs);
+      }
+    });
   }
 }

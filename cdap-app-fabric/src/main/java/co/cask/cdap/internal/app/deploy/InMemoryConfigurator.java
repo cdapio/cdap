@@ -27,6 +27,7 @@ import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
+import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactClassLoaderFactory;
@@ -69,6 +70,7 @@ public final class InMemoryConfigurator implements Configurator {
   private final CConfiguration cConf;
   private final String configString;
   private final ArtifactClassLoaderFactory artifactClassLoaderFactory;
+  private final File baseUnpackDir;
 
   private ArtifactRepository artifactRepository;
 
@@ -93,9 +95,9 @@ public final class InMemoryConfigurator implements Configurator {
     this.artifact = artifact;
     this.configString = configString;
     this.cConf = cConf;
-    this.artifactClassLoaderFactory = new ArtifactClassLoaderFactory(
-      new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
-               cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile());
+    this.baseUnpackDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
+                                  cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+    this.artifactClassLoaderFactory = new ArtifactClassLoaderFactory(baseUnpackDir);
   }
 
   /**
@@ -157,9 +159,11 @@ public final class InMemoryConfigurator implements Configurator {
   private String getSpecJson(Application app, final String bundleVersion, final String configString)
     throws IllegalAccessException, InstantiationException, IOException {
 
+    File tempDir = DirUtils.createTempDir(baseUnpackDir);
     // Now, we call configure, which returns application specification.
     DefaultAppConfigurer configurer;
-    try (PluginInstantiator pluginInstantiator = new PluginInstantiator(cConf, app.getClass().getClassLoader())) {
+    try (PluginInstantiator pluginInstantiator = new PluginInstantiator(
+      cConf, app.getClass().getClassLoader(), tempDir)) {
       configurer = artifactId == null ?
         new DefaultAppConfigurer(app, configString) :
         new DefaultAppConfigurer(artifactId, app, configString, artifactRepository, pluginInstantiator);
@@ -178,6 +182,8 @@ public final class InMemoryConfigurator implements Configurator {
       }
 
       app.configure(configurer, new DefaultApplicationContext(appConfig));
+    } finally {
+      DirUtils.deleteDirectoryContents(tempDir);
     }
     ApplicationSpecification specification = configurer.createSpecification();
 

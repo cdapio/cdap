@@ -35,12 +35,14 @@ import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.WorkflowStatistics;
 import co.cask.cdap.templates.AdapterDefinition;
 import com.google.common.base.Predicate;
+import org.apache.twill.api.RunId;
 import org.apache.twill.filesystem.Location;
 
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -482,4 +484,9 @@ public interface Store {
    */
   Collection<WorkflowDataset.WorkflowRunRecord> retrieveSpacedRecords(Id.Workflow workflow, String runId,
                                                                        int limit, long timeInterval);
+
+  /**
+   * @return programs that were running between given start and end time.
+   */
+  Set<RunId> getRunningInRange(final long startTimeInSecs, final long endTimeInSecs);
 }

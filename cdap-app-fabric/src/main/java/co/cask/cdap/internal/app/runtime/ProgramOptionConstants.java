@@ -58,4 +58,6 @@ public final class ProgramOptionConstants {
   public static final String RUN_BASE_COUNT_TIME = "runBaseCountTime";
 
   public static final String RESOURCES = "resources";
+
+  public static final String PLUGIN_DIR = "pluginDir";
 }

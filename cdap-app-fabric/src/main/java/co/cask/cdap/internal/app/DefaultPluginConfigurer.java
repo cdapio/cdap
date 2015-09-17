@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app;
 
+import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginConfigurer;
@@ -73,18 +74,20 @@ public class DefaultPluginConfigurer extends DefaultDatasetConfigurer implements
   @Override
   public <T> T usePlugin(String pluginType, String pluginName, String pluginId, PluginProperties properties,
                          PluginSelector selector) {
-    Map.Entry<ArtifactDescriptor, PluginClass> pluginEntry = findPlugin(pluginType, pluginName, pluginId, properties,
-                                                                        selector);
-    if (pluginEntry == null) {
+    Plugin plugin = null;
+    try {
+      plugin = findPlugin(pluginType, pluginName, pluginId, properties, selector);
+    } catch (PluginNotExistsException e) {
+      // Plugin not found, hence return null
       return null;
     }
 
     try {
-      T instance = pluginInstantiator.newInstance(pluginEntry.getKey(), pluginEntry.getValue(), properties);
-      registerPlugin(pluginId, pluginEntry.getKey(), pluginEntry.getValue(), properties);
+      T instance = pluginInstantiator.newInstance(plugin);
+      plugins.put(pluginId, plugin);
       return instance;
     } catch (IOException e) {
-      // If the plugin jar is deleted without notifying the adapter service.
+      // If the plugin jar is deleted without notifying the artifact service.
       return null;
     } catch (ClassNotFoundException e) {
       // Shouldn't happen
@@ -103,18 +106,20 @@ public class DefaultPluginConfigurer extends DefaultDatasetConfigurer implements
   @Override
   public <T> Class<T> usePluginClass(String pluginType, String pluginName, String pluginId, PluginProperties properties,
                                      PluginSelector selector) {
-    Map.Entry<ArtifactDescriptor, PluginClass> pluginEntry = findPlugin(pluginType, pluginName, pluginId, properties,
-                                                                        selector);
-    if (pluginEntry == null) {
+    Plugin plugin;
+    try {
+      plugin = findPlugin(pluginType, pluginName, pluginId, properties, selector);
+    } catch (PluginNotExistsException e) {
+      // Plugin not found, hence return null
       return null;
     }
 
     try {
-      Class<T> cls = pluginInstantiator.loadClass(pluginEntry.getKey(), pluginEntry.getValue());
-      registerPlugin(pluginId, pluginEntry.getKey(), pluginEntry.getValue(), properties);
+      Class<T> cls = pluginInstantiator.loadClass(plugin);
+      plugins.put(pluginId, plugin);
       return cls;
     } catch (IOException e) {
-      // If the plugin jar is deleted without notifying the adapter service.
+      // If the plugin jar is deleted without notifying the artifact service.
       return null;
     } catch (ClassNotFoundException e) {
       // Shouldn't happen
@@ -122,8 +127,9 @@ public class DefaultPluginConfigurer extends DefaultDatasetConfigurer implements
     }
   }
 
-  private Map.Entry<ArtifactDescriptor, PluginClass> findPlugin(String pluginType, String pluginName, String pluginId,
-                                                                PluginProperties properties, PluginSelector selector) {
+  private Plugin findPlugin(String pluginType, String pluginName, String pluginId,
+                            PluginProperties properties, PluginSelector selector)
+    throws PluginNotExistsException {
     Preconditions.checkArgument(!plugins.containsKey(pluginId),
                                 "Plugin of type %s, name %s was already added.", pluginType, pluginName);
     Preconditions.checkArgument(properties != null, "Plugin properties cannot be null");
@@ -133,29 +139,23 @@ public class DefaultPluginConfigurer extends DefaultDatasetConfigurer implements
       pluginEntry = artifactRepository.findPlugin(artifactId, pluginType, pluginName, selector);
     } catch (IOException e) {
       throw Throwables.propagate(e);
-    } catch (PluginNotExistsException e) {
-      throw new IllegalArgumentException(String.format("Plugin of type %s, name %s could not be found",
-                                                       pluginType, pluginName), e);
     }
 
-    if (pluginEntry != null) {
-      // Just verify if all required properties are provided.
-      // No type checking is done for now.
-      for (PluginPropertyField field : pluginEntry.getValue().getProperties().values()) {
-        Preconditions.checkArgument(!field.isRequired() || properties.getProperties().containsKey(field.getName()),
-                                    "Required property '%s' missing for plugin of type %s, name %s.",
-                                    field.getName(), pluginType, pluginName);
-      }
+    // Just verify if all required properties are provided.
+    // No type checking is done for now.
+    for (PluginPropertyField field : pluginEntry.getValue().getProperties().values()) {
+      Preconditions.checkArgument(!field.isRequired() ||
+                                    (properties != null && properties.getProperties().containsKey(field.getName())),
+                                  "Required property '%s' missing for plugin of type %s, name %s.",
+                                  field.getName(), pluginType, pluginName);
     }
-    return pluginEntry;
-  }
 
-  /**
-   * Register the given plugin in this configurer.
-   */
-  private void registerPlugin(String pluginId, ArtifactDescriptor artifactDescriptor, PluginClass pluginClass,
-                              PluginProperties properties) {
-    plugins.put(pluginId, new Plugin(artifactDescriptor.getArtifactId(), artifactDescriptor.getLocation().toURI(),
-                                     pluginClass, properties));
+    ArtifactId artifactId = pluginEntry.getKey().getArtifactId();
+    try {
+      pluginInstantiator.addArtifact(pluginEntry.getKey().getLocation(), artifactId);
+    } catch (IOException e) {
+      Throwables.propagate(e);
+    }
+    return new Plugin(artifactId, pluginEntry.getValue(), properties);
   }
 }

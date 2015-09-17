@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * This class uses Java Reflection to inspect fields in any Java class to generate RECORD schema.
@@ -49,6 +50,16 @@ import javax.annotation.Nonnull;
  */
 public final class ReflectionSchemaGenerator extends AbstractSchemaGenerator {
 
+  private final boolean isNullableByDefault;
+
+  public ReflectionSchemaGenerator(boolean isNullableByDefault) {
+    this.isNullableByDefault = isNullableByDefault;
+  }
+
+  public ReflectionSchemaGenerator() {
+    this(true);
+  }
+
   @Override
   protected Schema generateRecord(TypeToken<?> typeToken, Set<String> knowRecords, boolean acceptRecursion)
     throws UnsupportedTypeException {
@@ -66,8 +77,13 @@ public final class ReflectionSchemaGenerator extends AbstractSchemaGenerator {
       Schema fieldSchema = doGenerate(fieldType.getValue(), records, acceptRecursion);
 
       if (!fieldType.getValue().getRawType().isPrimitive()) {
-        // For non-primitive, allows "null" value, unless the class is annotated with Nonnull
-        if (!typeToken.getRawType().isAnnotationPresent(Nonnull.class)) {
+        boolean isNotNull = typeToken.getRawType().isAnnotationPresent(Nonnull.class);
+        boolean isNull = typeToken.getRawType().isAnnotationPresent(Nullable.class);
+
+        // For non-primitive, allows "null" value
+        // i) if it is nullable by default and notnull annotation is not present
+        // ii) if it is not nullable by default and nullable annotation is present
+        if ((isNullableByDefault && !isNotNull) || (!isNullableByDefault && isNull)) {
           fieldSchema = Schema.unionOf(fieldSchema, Schema.of(Schema.Type.NULL));
         }
       }

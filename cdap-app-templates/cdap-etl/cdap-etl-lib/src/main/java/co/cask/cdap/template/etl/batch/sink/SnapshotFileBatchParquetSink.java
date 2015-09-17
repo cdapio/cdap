@@ -28,16 +28,16 @@ import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.template.etl.api.Emitter;
 import co.cask.cdap.template.etl.api.PipelineConfigurer;
 import co.cask.cdap.template.etl.api.batch.BatchRuntimeContext;
-import co.cask.cdap.template.etl.api.batch.BatchSinkContext;
 import co.cask.cdap.template.etl.common.Properties;
 import co.cask.cdap.template.etl.common.SchemaConverter;
 import co.cask.cdap.template.etl.common.StructuredToAvroTransformer;
 import org.apache.avro.generic.GenericRecord;
-import org.apache.hadoop.mapreduce.Job;
 import parquet.avro.AvroParquetInputFormat;
 import parquet.avro.AvroParquetOutputFormat;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 
@@ -54,7 +54,6 @@ public class SnapshotFileBatchParquetSink extends SnapshotFileBatchSink<Void, Ge
   private final SnapshotParquetSinkConfig config;
 
   private StructuredToAvroTransformer recordTransformer;
-  private String hiveSchema;
 
   public SnapshotFileBatchParquetSink(SnapshotParquetSinkConfig config) {
     super(config);
@@ -65,6 +64,9 @@ public class SnapshotFileBatchParquetSink extends SnapshotFileBatchSink<Void, Ge
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     super.configurePipeline(pipelineConfigurer);
     String basePath = config.basePath == null ? config.name : config.basePath;
+    // parse to make sure it's valid
+    new org.apache.avro.Schema.Parser().parse(config.schema.toLowerCase());
+    String hiveSchema;
     try {
       hiveSchema = SchemaConverter.toHiveSchema(Schema.parseJson(config.schema.toLowerCase()));
     } catch (UnsupportedTypeException | IOException e) {
@@ -81,14 +83,6 @@ public class SnapshotFileBatchParquetSink extends SnapshotFileBatchSink<Void, Ge
   }
 
   @Override
-  public void prepareRun(BatchSinkContext context) {
-    super.prepareRun(context);
-    org.apache.avro.Schema avroSchema = new org.apache.avro.Schema.Parser().parse(config.schema.toLowerCase());
-    Job job = context.getHadoopJob();
-    AvroParquetOutputFormat.setSchema(job, avroSchema);
-  }
-
-  @Override
   public void initialize(BatchRuntimeContext context) throws Exception {
     super.initialize(context);
     recordTransformer = new StructuredToAvroTransformer(config.schema);
@@ -98,6 +92,13 @@ public class SnapshotFileBatchParquetSink extends SnapshotFileBatchSink<Void, Ge
   public void transform(StructuredRecord input,
                         Emitter<KeyValue<Void, GenericRecord>> emitter) throws Exception {
     emitter.emit(new KeyValue<Void, GenericRecord>(null, recordTransformer.transform(input)));
+  }
+
+  @Override
+  protected Map<String, String> getAdditionalFileSetArguments() {
+    Map<String, String> args = new HashMap<>();
+    args.put(FileSetProperties.OUTPUT_PROPERTIES_PREFIX + "parquet.avro.schema", config.schema.toLowerCase());
+    return args;
   }
 
   /**
