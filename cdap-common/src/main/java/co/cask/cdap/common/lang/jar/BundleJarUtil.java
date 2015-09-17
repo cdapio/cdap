@@ -22,6 +22,8 @@ import com.google.common.io.ByteStreams;
 import com.google.common.io.Closeables;
 import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.twill.filesystem.Location;
 
 import java.io.BufferedInputStream;
@@ -31,8 +33,9 @@ import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -158,16 +161,48 @@ public class BundleJarUtil {
     File jarFile = File.createTempFile("temp", ".jar", tempDir);
     try (JarOutputStream output = new JarOutputStream(new FileOutputStream(jarFile))) {
       List<File> files = new ArrayList<>();
+
       if (input.isDirectory()) {
-        if (input.listFiles() != null) {
-          files.addAll(Arrays.asList(input.listFiles()));
+        Collection<File> dirs = FileUtils.listFilesAndDirs(input, new IOFileFilter() {
+          @Override
+          public boolean accept(File file) {
+            return false;
+          }
+
+          @Override
+          public boolean accept(File file, String s) {
+            return false;
+          }
+        }, new IOFileFilter() {
+          @Override
+          public boolean accept(File file) {
+            return true;
+          }
+
+          @Override
+          public boolean accept(File file, String s) {
+            return true;
+          }
+        });
+
+        for (File dir : dirs) {
+          if (dir.equals(input)) {
+            continue;
+          }
+
+          Path relativePath = input.toPath().relativize(dir.toPath());
+          File newDir = new File(relativePath.toString(), "");
+          output.putNextEntry(new JarEntry(newDir.toString()));
         }
+
+        files.addAll(FileUtils.listFiles(input, null, true));
       } else {
         files.add(input);
       }
 
       for (File file : files) {
-        output.putNextEntry(new JarEntry(file.getName()));
+        Path relativePath = input.toPath().relativize(file.toPath());
+        output.putNextEntry(new JarEntry(relativePath.toString()));
         Files.copy(file, output);
       }
     }

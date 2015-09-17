@@ -17,6 +17,8 @@
 package co.cask.cdap.common.lang.jar;
 
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.utils.DirUtils;
+import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -65,5 +67,18 @@ public class BundleJarUtilTest {
     for (File file : files) {
       BundleJarUtil.getEntry(Locations.toLocation(destArchive), file.getName()).getInput().close();
     }
+  }
+
+  @Test
+  public void testRecursiveDirs() throws IOException {
+    File inputDir = tmpFolder.newFolder();
+    File oneDir = DirUtils.createTempDir(inputDir);
+    File.createTempFile("abcd", "txt", oneDir);
+    File twoDir = DirUtils.createTempDir(oneDir);
+    File.createTempFile("abcd", "txt", twoDir);
+
+    File destArchive = new File(tmpFolder.newFolder(), "myBundle.jar");
+    BundleJarUtil.packDir(inputDir, Locations.toLocation(destArchive), tmpFolder.newFolder());
+    Assert.assertNotNull(new String("ad"));
   }
 }
