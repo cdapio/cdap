@@ -16,38 +16,38 @@
 
 <div class="side-panel top clearfix">
   <h1 class="pull-left">My Pipelines</h1>
-  <div ng-if="ListController.adaptersList.length > 0" class="pull-left text-center">
-    <span>Total</span>
-    <span ng-bind="ListController.adaptersList.length"></span>
-  </div>
   <ul ng-if="ListController.adaptersList.length > 0" class="list-unstyled list-inline pull-left">
     <li>
+      <span>{{ ListController.adaptersList.length }}</span>
+      <span>Total</span>
+    </li>
+    <li>
       <i class="fa fa-circle text-success"></i>
-      <span>Running</span>
       <span>
         {{ ListController.statusCount.running }}
       </span>
+      <span>Running</span>
     </li>
     <li>
       <i class="fa fa-circle text-success"></i>
-      <span>Scheduled</span>
       <span>
         {{ ListController.statusCount.scheduled }}
       </span>
+      <span>Scheduled</span>
     </li>
     <li>
       <i class="fa fa-circle text-danger"></i>
-      <span>Suspended</span>
       <span>
         {{ ListController.statusCount.suspended }}
       </span>
+      <span>Suspended</span>
     </li>
     <li>
       <i class="fa fa-circle text-muted"></i>
-      <span>Drafts</span>
       <span>
         {{ ListController.statusCount.draft }}
       </span>
+      <span>Drafts</span>
     </li>
   </ul>
   <a ui-sref="adapters.create" class="btn btn-primary add-pipeline">
@@ -69,6 +69,7 @@
             <th data-predicate="_stats.lastStartTime"
                   data-predicate-default>Last Start Time</th>
             <th data-predicate="_latest.end">Last Finished Run</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
@@ -115,6 +116,10 @@
               <span ng-if="!adapter._latest">
                 N/A
               </span>
+            </td>
+
+            <td>
+              <span class="fa fa-trash"></span>
             </td>
           </tr>
         </tbody>
