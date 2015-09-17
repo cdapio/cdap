@@ -882,6 +882,7 @@ public final class Constants {
    * Constants for metadata service
    */
   public static final class Metadata {
+    public static final String SERVICE_DESCRIPTION = "Service to perform metadata operations.";
     public static final String SERVICE_BIND_ADDRESS = "metadata.service.bind.address";
     public static final String SERVICE_WORKER_THREADS = "metadata.service.worker.threads";
     public static final String SERVICE_EXEC_THREADS = "metadata.service.exec.threads";

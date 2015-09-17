@@ -148,7 +148,7 @@ public abstract class AbstractDistributedMasterServiceManager implements MasterS
   public boolean isServiceAvailable() {
     String url = null;
     try {
-      Iterable<Discoverable> discoverables = this.discoveryServiceClient.discover(serviceName);
+      Iterable<Discoverable> discoverables = this.discoveryServiceClient.discover(getDiscoverableName());
       for (Discoverable discoverable : discoverables) {
         //Ping the discovered service to check its status.
         url = String.format("http://%s:%d/ping", discoverable.getSocketAddress().getHostName(),
@@ -164,6 +164,10 @@ public abstract class AbstractDistributedMasterServiceManager implements MasterS
       LOG.warn("Unable to ping {} at {} : Reason : {}", serviceName, url, e.getMessage());
       return false;
     }
+  }
+
+  protected String getDiscoverableName() {
+    return serviceName;
   }
 
   protected final HttpResponseStatus checkGetStatus(String url) throws Exception {
