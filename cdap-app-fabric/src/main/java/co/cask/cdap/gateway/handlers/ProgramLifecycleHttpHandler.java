@@ -1355,14 +1355,16 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       } else if (!store.programExists(identifier)) {
         throw new ProgramNotFoundException(identifier);
       } else if (runId != null) {
+        Id.Run programRunId = new Id.Run(identifier, runId);
         // Check if the program is running and is started by the Workflow
         RunRecordMeta runRecord = store.getRun(identifier, runId);
         if (runRecord != null && runRecord.getProperties().containsKey("workflowrunid")
           && runRecord.getStatus().equals(ProgramRunStatus.RUNNING)) {
-          throw new BadRequestException("MapReduce program run started by Workflow cannot be stopped. " +
-                                          "Please stop the Workflow.");
+          String workflowRunId = runRecord.getProperties().get("workflowrunid");
+          throw new BadRequestException(String.format("Cannot stop the program '%s' started by the Workflow run '%s'. " +
+                                                        "Please stop the Workflow.", programRunId, workflowRunId));
         }
-        throw new NotFoundException(new Id.Run(identifier, runId));
+        throw new NotFoundException(programRunId);
       }
       throw new BadRequestException(String.format("Program '%s' is not running.", identifier));
     }

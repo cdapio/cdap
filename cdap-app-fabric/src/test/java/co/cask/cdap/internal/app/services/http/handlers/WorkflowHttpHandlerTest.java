@@ -613,17 +613,23 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
 
     // Start the workflow
     startProgram(programId);
+    waitState(programId, "RUNNING");
+    List<RunRecord> workflowHistoryRuns = getProgramRuns(programId, "running");
+    String workflowRunId = workflowHistoryRuns.get(0).getPid();
 
     Id.Program mr1ProgramId = Id.Program.from(TEST_NAMESPACE2, workflowAppWithScopedParameters, ProgramType.MAPREDUCE,
                                               "OneMR");
     waitState(mr1ProgramId, "RUNNING");
     List<RunRecord> oneMRHistoryRuns = getProgramRuns(mr1ProgramId, "running");
-    stopProgram(mr1ProgramId, oneMRHistoryRuns.get(0).getPid(), 400, "MapReduce program run started by Workflow" +
-      " cannot be stopped. Please stop the Workflow.");
+
+    String expectedMessage = String.format("Cannot stop the program '%s' started by the Workflow run '%s'. " +
+                                             "Please stop the Workflow.",
+                                           new Id.Run(mr1ProgramId, oneMRHistoryRuns.get(0).getPid()), workflowRunId);
+    stopProgram(mr1ProgramId, oneMRHistoryRuns.get(0).getPid(), 400, expectedMessage);
 
     verifyProgramRuns(programId, "completed");
 
-    List<RunRecord> workflowHistoryRuns = getProgramRuns(programId, "completed");
+    workflowHistoryRuns = getProgramRuns(programId, "completed");
 
     oneMRHistoryRuns = getProgramRuns(mr1ProgramId, "completed");
 
