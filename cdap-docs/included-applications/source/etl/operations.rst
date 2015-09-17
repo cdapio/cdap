@@ -2,7 +2,7 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2015 Cask Data, Inc.
 
-.. _apptemplates-etl-operations:
+.. _included-apps-etl-operations:
 
 ============================
 Adapter Lifecycle Management 

@@ -2,7 +2,7 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2015 Cask Data, Inc.
 
-.. _apptemplates-etl-creating:
+.. _included-apps-etl-creating:
 
 =======================
 Creating an ETL Adapter
@@ -19,7 +19,7 @@ along with their properties.  (In the CDAP UI, the interface prompts you for the
 information.)
 
 
-.. _apptemplates-etl-configuration-file-format:
+.. _included-apps-etl-configuration-file-format:
 
 Configuration File Format
 =========================

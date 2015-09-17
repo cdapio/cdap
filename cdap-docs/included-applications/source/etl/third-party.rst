@@ -5,7 +5,7 @@
 .. _apptemplates-third-party:
 
 ======================
-Using Third-party Jars 
+Using Third-party JARs 
 ======================
 
 .. highlight:: json  
@@ -14,8 +14,8 @@ Using Third-party Jars
 JDBC Driver) as a plugin, you will need to create a JSON file to describe the JAR.
 
 For information on the format of the JSON, please refer to the section on the
-:ref:`Configuration File Format <apptemplates-etl-configuration-file-format>` on the page
-on :ref:`Creating an ETL Adapter <apptemplates-etl-creating>`.
+:ref:`Configuration File Format <included-apps-etl-configuration-file-format>` on the page
+on :ref:`Creating an ETL Adapter <included-apps-etl-creating>`.
 
 Copy the JAR and the JSON file to the :ref:`Plugin directory
 <advanced-custom-app-template-installation-directory>` and then update the Template by

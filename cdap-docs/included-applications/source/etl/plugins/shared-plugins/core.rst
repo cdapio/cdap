@@ -2,11 +2,11 @@
     :author: Cask Data, Inc.
     :copyright: Copyright • 2015 Cask Data, Inc.
 
-.. _apptemplates-etl-validators-corevalidator:
+.. _included-apps-etl-shared-plugins-corevalidator:
 
-=========================
-Validators: CoreValidator
-=========================
+=============================
+Shared Plugins: CoreValidator
+=============================
 
 .. rubric:: Description
 
@@ -14,7 +14,7 @@ A system-supplied validator that offers a set of functions that can be called fr
 
 It is included in a transform by adding its name (``core``) to the ``validators`` field of
 the transform configuration and its functions are referenced by using its Javascript name
-(``coreValidator``). See :ref:`an example <apptemplates-etl-transformations-validator>`.
+(``coreValidator``). See :ref:`an example <included-apps-etl-transformations-validator>`.
 
 .. rubric:: Use Case
 

@@ -4,7 +4,7 @@
 
 .. :hide-toc: true
 
-.. _apptemplates-etl-templates:
+.. _included-apps-etl-templates:
 
 ========================
 ETL Template and Plugins 
@@ -27,8 +27,8 @@ plugins listed below are available for creating ETL adapters.
    
     Sources <sources/index>
     Transformations <transformations/index>
-    Validators <validators/index.rst>
     Sinks <sinks/index>
+    Shared Plugins <shared-plugins/index.rst>
     
 .. rubric:: Exploring Application Template Details
 
