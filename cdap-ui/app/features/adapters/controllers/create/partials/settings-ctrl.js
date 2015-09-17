@@ -19,10 +19,33 @@ angular.module(PKG.name + '.feature.adapters')
     this.GLOBALS = GLOBALS;
     this.metadata = MyAppDAGService.metadata;
     var metadataCopy = angular.copy(MyAppDAGService.metadata);
+    this.initialCron = this.metadata.template.schedule.cron;
+    this.isBasic = true;
+
+    this.cronConfig = {
+      options: {
+        allowMonth: false,
+        allowYear: false,
+        allowWeek: false
+      }
+    };
+
+    this.changeScheduler = function (type) {
+      if (type === 'BASIC') {
+        this.initialCron = this.metadata.template.schedule.cron;
+        this.isBasic = true;
+      } else {
+        this.isBasic = false;
+      }
+    };
+
     // Will be used once we figure out how to reset a bottom panel tab content.
     this.reset = function() {
       this.metadata.template.schedule.cron = metadataCopy.template.schedule.cron;
+      this.initialCron = metadataCopy.template.schedule.cron;
       this.metadata.template.instance = metadataCopy.template.instance;
       EventPipe.emit('plugin.reset');
     };
+
+
   });
