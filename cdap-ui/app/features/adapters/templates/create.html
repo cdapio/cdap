@@ -56,17 +56,22 @@
   </div>
 
   <div class="row" ng-if="AdapterCreateController.preconfigured">
-
-    <div class="col-lg-8 col-lg-offset-2">
-      <div class="col-sm-3"
-        ng-repeat="template in AdapterCreateController.templates"
-        ng-click="AdapterCreateController.selectTemplate(template)"
-      >
-        <div class="well well-md start-well template-link">
-          <h4 class="template-name">{{ template.name }}</h4>
-          <p>{{ template.description }}</p>
-        </div>
+    <div class="col-lg-8 col-lg-offset-2 return-link">
+      <span ng-click="AdapterCreateController.preconfigured = false">&#60;&#60; Return to Menu</span>
+    </div>
+    <div class="col-lg-8 col-lg-offset-2 templates-container">
+      <div class="col-sm-12 heading">
+        <h3>Select a pre-configured pipeline</h3>
       </div>
+      <div class="col-sm-3"
+          ng-repeat="template in AdapterCreateController.templates"
+          ng-click="AdapterCreateController.selectTemplate(template)"
+        >
+          <div class="well well-md start-well template-link">
+            <h4 class="template-name">{{ template.name }}</h4>
+            <p>{{ template.description }}</p>
+          </div>
+        </div>
     </div>
 
   </div>
