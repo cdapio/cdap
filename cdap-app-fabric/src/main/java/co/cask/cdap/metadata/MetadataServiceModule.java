@@ -16,10 +16,8 @@
 
 package co.cask.cdap.metadata;
 
-import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.handlers.CommonHandlers;
-import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.http.HttpHandler;
 import com.google.inject.Key;
 import com.google.inject.PrivateModule;
@@ -43,7 +41,6 @@ public class MetadataServiceModule extends PrivateModule {
     handlerBinder.addBinding().to(MetadataHttpHandler.class);
     handlerBinder.addBinding().to(LineageHandler.class);
     expose(Key.get(new TypeLiteral<Set<HttpHandler>>() { }, Names.named(Constants.Metadata.HANDLERS_NAME)));
-    bind(Store.class).to(DefaultStore.class);
     bind(MetadataAdmin.class).to(DefaultMetadataAdmin.class);
     expose(MetadataAdmin.class);
   }
