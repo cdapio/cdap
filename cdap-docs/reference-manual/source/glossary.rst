@@ -19,7 +19,7 @@ Glossary
 
    Artifact
       A JAR file containing Java classes and resources required to create and run an
-      Application. Multiple applications can be created from the same artifact.
+      :term:`Application`. Multiple applications can be created from the same artifact.
 
    Stream
       The primary means of bringing data from external systems into CDAP in real time; an
