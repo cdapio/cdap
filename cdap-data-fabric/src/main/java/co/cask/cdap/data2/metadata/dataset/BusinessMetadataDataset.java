@@ -360,10 +360,16 @@ public class BusinessMetadataDataset extends AbstractDataset {
                                                       MetadataSearchTargetType type) {
     List<BusinessMetadataRecord> results = new LinkedList<>();
 
-    byte[] startKey = Bytes.toBytes(searchValue.toLowerCase());
-    byte[] stopKey = Bytes.stopKeyForPrefix(startKey);
-
-    Scanner scanner = indexedTable.scanByIndex(Bytes.toBytes(column), startKey, stopKey);
+    Scanner scanner;
+    String lowerCaseSearchValue = searchValue.toLowerCase();
+    if (lowerCaseSearchValue.endsWith("*")) {
+      byte[] startKey = Bytes.toBytes(lowerCaseSearchValue.substring(0, lowerCaseSearchValue.lastIndexOf("*")));
+      byte[] stopKey = Bytes.stopKeyForPrefix(startKey);
+      scanner = indexedTable.scanByIndex(Bytes.toBytes(column), startKey, stopKey);
+    } else {
+      byte[] value = Bytes.toBytes(lowerCaseSearchValue);
+      scanner = indexedTable.readByIndex(Bytes.toBytes(column), value);
+    }
     try {
       Row next;
       while ((next = scanner.next()) != null) {
