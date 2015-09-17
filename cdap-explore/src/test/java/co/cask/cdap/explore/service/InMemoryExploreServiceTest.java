@@ -28,6 +28,7 @@ import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.stream.StreamAdminModules;
+import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.explore.guice.ExploreClientModule;
@@ -93,6 +94,7 @@ public class InMemoryExploreServiceTest {
         new MetricsClientRuntimeModule().getInMemoryModules(),
         new ExploreRuntimeModule().getInMemoryModules(),
         new ExploreClientModule(),
+        new ViewAdminModules().getInMemoryModules(),
         new StreamAdminModules().getInMemoryModules(),
         new NamespaceClientRuntimeModule().getInMemoryModules(),
         new AbstractModule() {

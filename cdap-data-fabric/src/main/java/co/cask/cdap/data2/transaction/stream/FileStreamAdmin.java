@@ -27,6 +27,7 @@ import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamFileOffset;
 import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
+import co.cask.cdap.data.view.ViewAdmin;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.metadata.service.BusinessMetadataStore;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
@@ -38,6 +39,7 @@ import co.cask.cdap.notifications.feeds.NotificationFeedException;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.StreamProperties;
+import co.cask.cdap.proto.ViewSpecification;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
@@ -56,6 +58,7 @@ import org.slf4j.LoggerFactory;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -84,6 +87,7 @@ public class FileStreamAdmin implements StreamAdmin {
   private final LineageWriter lineageWriter;
   private final StreamMetaStore streamMetaStore;
   private final ExploreTableNaming tableNaming;
+  private final ViewAdmin viewAdmin;
   private ExploreFacade exploreFacade;
   private final BusinessMetadataStore businessMds;
 
@@ -97,7 +101,8 @@ public class FileStreamAdmin implements StreamAdmin {
                          LineageWriter lineageWriter,
                          StreamMetaStore streamMetaStore,
                          ExploreTableNaming tableNaming,
-                         BusinessMetadataStore businessMds) {
+                         BusinessMetadataStore businessMds,
+                         ViewAdmin viewAdmin) {
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.cConf = cConf;
     this.notificationFeedManager = notificationFeedManager;
@@ -109,6 +114,7 @@ public class FileStreamAdmin implements StreamAdmin {
     this.streamMetaStore = streamMetaStore;
     this.tableNaming = tableNaming;
     this.businessMds = businessMds;
+    this.viewAdmin = viewAdmin;
   }
 
   @SuppressWarnings("unused")
@@ -353,6 +359,43 @@ public class FileStreamAdmin implements StreamAdmin {
   }
 
   @Override
+  public boolean createOrUpdateView(final Id.Stream.View viewId, final ViewSpecification spec) throws Exception {
+    return streamCoordinatorClient.exclusiveAction(
+      viewId.getStream(), new Callable<Boolean>() {
+        @Override
+        public Boolean call() throws Exception {
+          Preconditions.checkArgument(exists(viewId.getStream()), "Stream '%s' does not exist.", viewId.getStreamId());
+          return viewAdmin.createOrUpdate(viewId, spec);
+        }
+      });
+  }
+
+  @Override
+  public void deleteView(final Id.Stream.View viewId) throws Exception {
+    streamCoordinatorClient.exclusiveAction(
+      viewId.getStream(), new Callable<Void>() {
+        @Override
+        public Void call() throws Exception {
+          Preconditions.checkArgument(exists(viewId.getStream()), "Stream '%s' does not exist.", viewId.getStreamId());
+          viewAdmin.delete(viewId);
+          return null;
+        }
+      });
+  }
+
+  @Override
+  public List<Id.Stream.View> listViews(final Id.Stream streamId) throws Exception {
+    Preconditions.checkArgument(exists(streamId), "Stream '%s' does not exist.", streamId);
+    return viewAdmin.list(streamId);
+  }
+
+  @Override
+  public ViewSpecification getView(final Id.Stream.View viewId) throws Exception {
+    Preconditions.checkArgument(exists(viewId.getStream()), "Stream '%s' does not exist.", viewId.getStreamId());
+    return viewAdmin.get(viewId);
+  }
+
+  @Override
   public void register(Iterable<? extends Id> owners, Id.Stream streamId) {
     usageRegistry.registerAll(owners, streamId);
   }
@@ -413,6 +456,12 @@ public class FileStreamAdmin implements StreamAdmin {
 
           // Remove metadata for the stream
           businessMds.removeMetadata(streamId);
+
+          // Drop the associated views
+          List<Id.Stream.View> views = viewAdmin.list(streamId);
+          for (Id.Stream.View view : views) {
+            viewAdmin.delete(view);
+          }
 
           // Move the stream directory to the deleted directory
           // The target directory has a timestamp appended to the stream name
