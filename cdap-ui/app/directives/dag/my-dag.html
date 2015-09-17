@@ -29,11 +29,11 @@
       <div class="node">
         <div class="error-node-notification"
              ng-if="plugin.error"
-             tooltip="{{plugin.error}}"
+             tooltip="{{plugin.error.message}}"
              tooltip-append-to-body="true"
              tooltip-class="tooltip-error">
           <span class="badge badge-danger">
-            <i class="fa fa-exclamation"></i>
+            <span>{{plugin.requiredFieldCount}}</span>
           </span>
         </div>
         <div class="fa fa-close"

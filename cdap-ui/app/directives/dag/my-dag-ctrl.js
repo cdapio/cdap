@@ -78,6 +78,7 @@ angular.module(PKG.name + '.commons')
       angular.forEach(this.plugins, function (plugin) {
         if (errObj[plugin.id]) {
           plugin.error = errObj[plugin.id];
+          plugin.requiredFieldCount = plugin.error.requiredFieldCount;
         } else if (plugin.error) {
           delete plugin.error;
         }

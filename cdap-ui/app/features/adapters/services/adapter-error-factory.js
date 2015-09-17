@@ -98,18 +98,24 @@ angular.module(PKG.name + '.feature.adapters')
     function checkForRequiredField(nodes, connections, metadata, config, errors) {
 
       if(config.source.name && !isValidPlugin(config.source)) {
-        errors[config.source.id] = 'Source is missing required fields';
+        errors[config.source.id] = {};
+        errors[config.source.id].message = 'Source is missing required fields';
+        errors[config.source.id].requiredFieldCount = config.source.requiredFieldCount;
       }
 
       config.sinks.forEach(function(sink) {
         if (sink.name && !isValidPlugin(sink)) {
-          errors[sink.id] = 'Sink is missing required fields';
+          errors[sink.id] = {};
+          errors[sink.id].message = 'Sink is missing required fields';
+          errors[sink.id].requiredFieldCount = sink.requiredFieldCount;
         }
       });
 
       config.transforms.forEach(function(transform) {
         if (transform.name && !isValidPlugin(transform)) {
-          errors[transform.id] = 'Transform is missing required fields';
+          errors[transform.id] ={};
+          errors[transform.id].message = 'Transform is missing required fields';
+          errors[transform.id].requiredFieldCount = transform.requiredFieldCount;
         }
       });
 
@@ -119,14 +125,16 @@ angular.module(PKG.name + '.feature.adapters')
       var keys = Object.keys(plugin.properties);
       if (!keys.length) {
         plugin.valid = false;
+        plugin.requiredFieldCount = Object.keys(plugin._backendProperties).length;
         return plugin.valid;
       }
       plugin.valid = true;
+      plugin.requiredFieldCount = 0;
       for (i=0; i< keys.length; i++) {
         var property = plugin.properties[keys[i]];
         if (plugin._backendProperties[keys[i]] && plugin._backendProperties[keys[i]].required && (!property || property === '')) {
           plugin.valid = false;
-          break;
+          plugin.requiredFieldCount += 1;
         }
       }
       return plugin.valid;
