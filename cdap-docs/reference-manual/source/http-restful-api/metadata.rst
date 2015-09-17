@@ -590,7 +590,7 @@ This capability is controlled by these properties set in the ``cdap-site.xml``, 
 
 - ``metadata.updates.publish.enabled``: Determines if publishing of updates is enabled; defaults to ``false``;
 - ``metadata.kafka.broker.list``: The Kafka broker list to publish to; and
-- ``metadata.updates.kafka.topic``: The Kafka topic to publish to; defaults to ``metadata-updates``.
+- ``metadata.updates.kafka.topic``: The Kafka topic to publish to; defaults to ``cdap-metadata-updates``.
 
 If ``metadata.updates.publish.enabled`` is *true*, then the other two properties **must** be defined.
 
