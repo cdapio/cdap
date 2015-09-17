@@ -20,7 +20,7 @@ CDAP HTTP RESTful API v3
     Lifecycle <lifecycle>
     Configuration <configuration>
     Preferences <preferences>
-    Application Templates and Adapters <apptemplates>
+    Artifact <artifact>
     Stream <stream>
     Dataset <dataset>
     Query <query>
@@ -47,8 +47,8 @@ data isolation. This is an inital step towards introducing `multi-tenancy
   MapReduce programs, Spark programs, workflows, and custom services
 - :doc:`Configuration: <configuration>` retrieving the CDAP and HBase configurations
 - :doc:`Preferences: <preferences>` setting, retrieving, and deleting preferences
-- :doc:`Application Templates and Adapters: <apptemplates>` obtaining available application templates and
-  plugins, and creating, deleting, and managing the lifecycle of adapters
+- :doc:`Artifact: <artifact>` deploying artifacts and retrieving detail about plugins available to artifacts
+  and classes contained in artifacts
 - :doc:`Stream: <stream>` sending data events to a stream or to inspect the contents of a stream
 - :doc:`Dataset: <dataset>` interacting with datasets, dataset modules, and dataset types
 - :doc:`Query: <query>` sending ad-hoc queries to CDAP datasets

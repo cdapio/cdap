@@ -12,7 +12,7 @@ Creating an ETL Adapter
 
 Introduction
 ============
-Adapters can be created using the :ref:`RESTful API <http-restful-api-apptemplates-adapters-creating>`,
+Adapters can be created using the :ref:`RESTful API <http-restful-api-lifecycle-create-app>`,
 the :ref:`CDAP CLI <cli>`, or the :ref:`CDAP UI <cdap-ui>`. In order to create an adapter,
 an adapter configuration is required that specifies the source, transformations and sink
 along with their properties.  (In the CDAP UI, the interface prompts you for the required
@@ -63,7 +63,7 @@ be specified and can use the timestamp of a Stream event for that.
 
 To create an instance of this adapter, called *streamAdapter*:
 
-- Using the :ref:`RESTful API <http-restful-api-apptemplates-adapters-creating>`::
+- Using the :ref:`RESTful API <http-restful-api-lifecycle-create-app>`::
 
     PUT /v3/namespaces/default/adapters/streamAdapter -d @config.json 
 

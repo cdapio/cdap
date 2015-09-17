@@ -33,4 +33,4 @@ plugins listed below are available for creating ETL adapters.
 .. rubric:: Exploring Application Template Details
 
 Details on the available application templates can be obtained using the
-:ref:`Application Template and Adapters HTTP RESTful API <http-restful-api-apptemplates>`.
+:ref:`Application Template and Adapters HTTP RESTful API <http-restful-api-artifact>`.

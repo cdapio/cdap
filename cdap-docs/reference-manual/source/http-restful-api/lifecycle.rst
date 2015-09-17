@@ -14,8 +14,72 @@ flows, MapReduce programs, workflows, workers, and custom services.
 
 .. highlight:: console
 
-Deploy an Application
+.. _http-restful-api-lifecycle-create-app:
+
+Create an Application
 ---------------------
+To create an application, submit an HTTP PUT request::
+
+  PUT <base-url>/namespaces/<namespace>/apps/<app-name>
+
+The request body is a JSON Object specifying the artifact to use to create the application
+and optional application configuration. For example:
+ 
+.. container:: highlight
+
+  .. parsed-literal::
+    |$| PUT <base-url>/namespaces/default/apps/purchaseWordCount -H "Content-Type: application/json" -d
+    {
+      "artifact": {
+        "name": "WordCount",
+        "version": "|release|",
+        "scope": "user"
+      },
+      "config": {
+        "stream": "purchaseStream"
+      }
+    } 
+
+will create an application named ``purchaseWordCount`` from the example ``WordCount`` artifact. The application
+will receive the config specified, which will configure the application to create a Stream named
+``purchaseStream`` instead of the default stream name. 
+
+Note that the ``Content-Type`` header must be set to ``application/json``. If not, the API will
+revert to a deprecated API which expects the request body to contain the contents
+of a JAR file. 
+
+Update an Application
+---------------------
+To update an application, submit an HTTP POST request::
+
+  POST <base-url>/namespaces/<namespace>/apps/<app-name>/update
+
+The request body is a JSON Object specifying the updated artifact version and the updated application
+config. For example, a request body of:
+
+.. container:: highlight
+
+  .. parsed-literal::
+    |$| POST <base-url>/namespaces/default/apps/purchaseWordCount -d 
+    {
+      "artifact": {
+        "name": "WordCount",
+        "version": "|release|",
+        "scope": "user"
+      },
+      "config": {
+        "stream": "logStream";
+      }
+    }
+
+will update the ``purchaseWordCount`` application to use version |release| of the ``WordCount`` artifact,
+and update the name of the stream to ``logStream``. If no artifact is given, the current artifact will be
+used. Only changes to artifact version are supported; changes to the artifact name are not allowed. If no
+config is given, the current config will be used. If the config key is present, the current config will be
+overwritten by the request config.
+
+Deploy an Artifact and Application
+----------------------------------
 To deploy an application from your local file system into the namespace *<namespace>*,
 submit an HTTP POST request::
 
@@ -25,7 +89,9 @@ with the name of the JAR file as a header::
 
   X-Archive-Name: <JAR filename>
 
-(An optional header can supply a configuration object as a serialized JSON string:)
+This will add the JAR file as an artifact, then create an application from that artifact.
+The archive name must be in the form [artifact-name]-[artifact-version].jar.
+An optional header can supply a configuration object as a serialized JSON string:
 
 ::
 

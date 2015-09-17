@@ -12,7 +12,3 @@ Introduction
 ------------
 These lifecycle operations can be performed with ETL adapters once they are created.
 
-
-.. include:: ../../../reference-manual/source/http-restful-api/apptemplates.rst 
-   :start-after: .. _http-restful-api-apptemplates-adapters-listing:
-
