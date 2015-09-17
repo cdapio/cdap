@@ -13,19 +13,27 @@
   License for the specific language governing permissions and limitations under
   the License.
 -->
-<div ng-if="$state.current.name === 'adapters.create'" class="hydrator-start">
-  <div class="row">
-    <div class="col-lg-6 col-lg-offset-3">
+<div ng-if="$state.current.name === 'adapters.create'" ng-class="{ 'hydrator-start': !AdapterCreateController.preconfigured, 'hydrator-preconfigured': AdapterCreateController.preconfigured }">
+  <div class="row" ng-if="!AdapterCreateController.preconfigured">
+    <div class="col-lg-8 col-lg-offset-2">
       <div class="row">
-        <div class="col-sm-4">
+        <div class="col-sm-3">
           <div class="well well-md start-well text-center">
-            <h4 href="">Import a<br />Pipeline</h4>
+            <h4 class="select-preconfigure">Select<br/>a pre-configured<br/>pipeline</h4>
+            <a class="btn btn-default"
+                ng-click="AdapterCreateController.preconfigured = true"
+                href="">Select</a>
+          </div>
+        </div>
+        <div class="col-sm-3">
+          <div class="well well-md start-well text-center">
+            <h4>Import a<br />Pipeline</h4>
             <a class="btn btn-default"
                 ng-click="AdapterCreateController.openFileBrowser()"
                 href="">Import</a>
           </div>
         </div>
-        <div class="col-sm-4">
+        <div class="col-sm-3">
           <div class="well well-md start-well text-center">
             <h4>Create a<br/>Batch Pipeline</h4>
             <a class="btn btn-default"
@@ -34,7 +42,7 @@
             </a>
           </div>
         </div>
-        <div class="col-sm-4">
+        <div class="col-sm-3">
           <div class="well well-md start-well text-center">
             <h4>Create a<br />Realtime Pipeline</h4>
             <a class="btn btn-default"
@@ -45,6 +53,22 @@
         </div>
       </div>
     </div>
+  </div>
+
+  <div class="row" ng-if="AdapterCreateController.preconfigured">
+
+    <div class="col-lg-8 col-lg-offset-2">
+      <div class="col-sm-3"
+        ng-repeat="template in AdapterCreateController.templates"
+        ng-click="AdapterCreateController.selectTemplate(template)"
+      >
+        <div class="well well-md start-well template-link">
+          <h4 class="template-name">{{ template.name }}</h4>
+          <p>{{ template.description }}</p>
+        </div>
+      </div>
+    </div>
+
   </div>
   <my-file-select class="sr-only"
                   id="adapter-import-config-link"

@@ -308,6 +308,23 @@ body.theme-cdap.state-adapters-create {
   .hydrator-start {
     margin-top: 160px;
   }
+  .hydrator-preconfigured {
+    margin-top: 35px;
+  }
+
+  div.template-link {
+    cursor: pointer;
+
+    p { color: lighten(@btn-default-color, 15%); }
+
+    &:hover {
+      text-decoration: none;
+      background-color: @btn-default-color;
+
+      h4, p { color: white; }
+    }
+  }
+
   .start-well {
     background-color: white;
     font-weight: 500;
@@ -322,7 +339,20 @@ body.theme-cdap.state-adapters-create {
     h4 {
       color: @btn-default-color;
       margin-bottom: 55px;
+
+      &.select-preconfigure {
+        margin-bottom: 38px;
+      }
+
+      &.template-name {
+        margin-bottom: 10px;
+      }
     }
+
+    p {
+      font-size: 12px;
+    }
+
     a.btn {
       width: 140px;
       padding-top: 10px;
