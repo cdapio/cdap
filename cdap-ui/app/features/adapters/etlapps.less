@@ -71,7 +71,7 @@ body.theme-cdap.state-adapters {
 body.theme-cdap.state-adapters-detail,
 body.theme-cdap.state-adapters-create {
 
-  .modal-header {
+  .modal .modal-header {
     background-color: @body-bg;
     border-bottom: 1px solid @modal-table-border-color;
     color: @cdap-header;
@@ -115,6 +115,8 @@ body.theme-cdap.state-adapters-create {
       > div {
         background-color: transparent;
         border-left: 1px solid @modal-table-border-color;
+        display: inline-block;
+        margin-right: -4px;
         text-align: center;
         width: 60px;
 
@@ -144,37 +146,39 @@ body.theme-cdap.state-adapters-create {
             width: 100%;
           }
         }
-        &:hover, &:focus {
-          background-color: @cdap-header;
-          .btn {
-            color: white;
-          }
-        }
       }
       &.btn-group {
         display: block;
         > div {
-
           @media (max-width: @screen-xs-max) {
             width: 20%;
           }
-
-          display: inline-block;
-          margin-right: -4px;
           &:last-child {
             margin-right: 0;
+          }
+          a.btn {
+            background-color: transparent;
+            color: @cdap-header;
+            display: block;
+            font-size: 18px;
+            line-height: 60px;
+            padding: 0;
+            width: 100%;
+          }
+          &:hover, &:focus {
+            background-color: @cdap-header;
+            > a.btn {
+              color: white;
+            }
           }
         }
       }
     }
-    .btn {
-      background-color: transparent;
-      color: @cdap-header;
-      display: block;
-      font-size: 18px;
-      line-height: 60px;
-      padding: 0;
-      width: 100%;
+    > div {
+      @media (max-width: @screen-sm-max) {
+        max-width: 50%;
+        width: 50%;
+      }
     }
   }
 
