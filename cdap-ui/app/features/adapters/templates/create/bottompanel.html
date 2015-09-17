@@ -18,7 +18,7 @@
   <div class="console-tabs clearfix">
     <ul class="nav nav-tabs pull-left" role="tablist">
       <li ng-repeat="tab in tabs"
-          ng-click="selectTab(tab)"
+          ng-click="selectTab(tab, true)"
           ng-class="{'active': tab.title == activeTab.title}"
           role="presentation"
           data-toggle="tab">
@@ -27,6 +27,9 @@
     </ul>
   </div>
   <div class="console-type" ng-class="{'is-collapsed': isCollapsed}">
-    <div ng-include="activeTab.template" ng-if="tabs.length > 0"></div>
+    <div ng-repeat="tab in tabs"
+          ng-include="tab.template"
+          ng-show="activeTab.title === tab.title">
+      </div>
   </div>
 </div>

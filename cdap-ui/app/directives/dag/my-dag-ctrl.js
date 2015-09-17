@@ -289,6 +289,8 @@ angular.module(PKG.name + '.commons')
     }
 
     $scope.$on('$destroy', function() {
+      MyNodeConfigService.unRegisterPluginResetCallback($scope.$id);
+      MyNodeConfigService.unRegisterPluginSaveCallback($scope.$id);
       closeAllPopovers();
       angular.forEach(popoverScopes, function (s) {
         s.$destroy();
@@ -356,8 +358,8 @@ angular.module(PKG.name + '.commons')
       resetComponent.call(this);
     }
 
-    MyNodeConfigService.registerPluginResetCallback(this.resetPluginSelection.bind(this));
-    MyNodeConfigService.registerPluginSaveCallback(this.highlightRequiredFields.bind(this));
+    MyNodeConfigService.registerPluginResetCallback($scope.$id, this.resetPluginSelection.bind(this));
+    MyNodeConfigService.registerPluginSaveCallback($scope.$id, this.highlightRequiredFields.bind(this));
     MyAppDAGService.registerCallBack(this.addPlugin.bind(this));
     MyAppDAGService.registerResetCallBack(resetComponent.bind(this));
   });
