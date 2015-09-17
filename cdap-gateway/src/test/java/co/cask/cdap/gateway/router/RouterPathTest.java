@@ -364,7 +364,7 @@ public class RouterPathTest {
     for (HttpMethod method : ImmutableList.of(HttpMethod.GET, HttpMethod.POST, HttpMethod.DELETE)) {
       HttpRequest httpRequest = new DefaultHttpRequest(VERSION, method, path);
       String result = pathLookup.getRoutingService(FALLBACKSERVICE, path, httpRequest);
-      Assert.assertEquals(Constants.Service.METADATA_SERVICE,  result);
+      Assert.assertEquals(Constants.Service.DATASET_EXECUTOR,  result);
     }
   }
 }

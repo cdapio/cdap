@@ -38,8 +38,7 @@ import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
-import co.cask.cdap.metadata.MetadataService;
-import co.cask.cdap.metadata.MetadataServiceModule;
+import co.cask.cdap.metadata.MetadataHandlersModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.proto.Id;
 import com.google.common.annotations.VisibleForTesting;
@@ -103,13 +102,13 @@ public class DatasetOpExecutorServerTwillRunnable extends AbstractMasterTwillRun
       new LoggingModules().getDistributedModules(),
       new ExploreClientModule(),
       new NamespaceClientRuntimeModule().getDistributedModules(),
-      new MetadataServiceModule(),
       new AbstractModule() {
         @Override
         protected void configure() {
           bind(Store.class).to(DefaultStore.class);
         }
-      });
+      },
+      new MetadataHandlersModule());
   }
 
   @Override
@@ -118,6 +117,5 @@ public class DatasetOpExecutorServerTwillRunnable extends AbstractMasterTwillRun
     services.add(injector.getInstance(KafkaClientService.class));
     services.add(injector.getInstance(MetricsCollectionService.class));
     services.add(injector.getInstance(DatasetOpExecutorService.class));
-    services.add(injector.getInstance(MetadataService.class));
   }
 }

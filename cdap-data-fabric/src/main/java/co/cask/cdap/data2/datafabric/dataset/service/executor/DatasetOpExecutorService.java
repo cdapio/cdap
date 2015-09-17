@@ -29,6 +29,7 @@ import co.cask.http.HttpHandler;
 import co.cask.http.NettyHttpService;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -55,7 +56,8 @@ public class DatasetOpExecutorService extends AbstractIdleService {
   @Inject
   public DatasetOpExecutorService(CConfiguration cConf, DiscoveryService discoveryService,
                                   MetricsCollectionService metricsCollectionService,
-                                  @Named(Constants.Service.DATASET_EXECUTOR) Set<HttpHandler> handlers) {
+                                  @Named(Constants.Service.DATASET_EXECUTOR) Set<HttpHandler> handlers,
+                                  @Named(Constants.Metadata.HANDLERS_NAME) Set<HttpHandler> metadataHandlers) {
 
     this.discoveryService = discoveryService;
 
@@ -63,7 +65,7 @@ public class DatasetOpExecutorService extends AbstractIdleService {
     int execThreads = cConf.getInt(Constants.Dataset.Executor.EXEC_THREADS, 10);
 
     this.httpService = new CommonNettyHttpServiceBuilder(cConf)
-      .addHttpHandlers(handlers)
+      .addHttpHandlers(Iterables.concat(handlers, metadataHandlers))
       .setHost(cConf.get(Constants.Dataset.Executor.ADDRESS))
       .setHandlerHooks(ImmutableList.of(
         new MetricsReporterHook(metricsCollectionService, Constants.Service.DATASET_EXECUTOR)))

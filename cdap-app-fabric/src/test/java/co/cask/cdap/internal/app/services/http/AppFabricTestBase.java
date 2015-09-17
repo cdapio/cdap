@@ -34,7 +34,6 @@ import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.internal.guice.AppFabricTestModule;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.internal.test.PluginJarHelper;
-import co.cask.cdap.metadata.MetadataService;
 import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -144,7 +143,6 @@ public abstract class AppFabricTestBase {
   private static StreamService streamService;
   private static StreamAdmin streamAdmin;
   private static ServiceStore serviceStore;
-  private static MetadataService metadataService;
   private static LocationFactory locationFactory;
 
   @ClassRule
@@ -184,8 +182,6 @@ public abstract class AppFabricTestBase {
     serviceStore = injector.getInstance(ServiceStore.class);
     serviceStore.startAndWait();
     streamAdmin = injector.getInstance(StreamAdmin.class);
-    metadataService = injector.getInstance(MetadataService.class);
-    metadataService.startAndWait();
     locationFactory = getInjector().getInstance(LocationFactory.class);
     createNamespaces();
   }
@@ -201,7 +197,6 @@ public abstract class AppFabricTestBase {
     dsOpService.stopAndWait();
     txManager.stopAndWait();
     serviceStore.stopAndWait();
-    metadataService.stopAndWait();
   }
 
   protected static Injector getInjector() {

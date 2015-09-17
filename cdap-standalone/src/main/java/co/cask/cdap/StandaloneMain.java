@@ -48,8 +48,6 @@ import co.cask.cdap.gateway.router.RouterModules;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
-import co.cask.cdap.metadata.MetadataService;
-import co.cask.cdap.metadata.MetadataServiceModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.metrics.query.MetricsQueryService;
@@ -93,7 +91,6 @@ public class StandaloneMain {
   private final MetricsCollectionService metricsCollectionService;
   private final LogAppenderInitializer logAppenderInitializer;
   private final InMemoryTransactionService txService;
-  private final MetadataService metadataService;
   private final boolean securityEnabled;
   private final boolean sslEnabled;
   private final CConfiguration configuration;
@@ -138,7 +135,6 @@ public class StandaloneMain {
     }
 
     exploreClient = injector.getInstance(ExploreClient.class);
-    metadataService = injector.getInstance(MetadataService.class);
 
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
@@ -193,7 +189,6 @@ public class StandaloneMain {
     if (exploreExecutorService != null) {
       exploreExecutorService.startAndWait();
     }
-    metadataService.startAndWait();
 
     String protocol = sslEnabled ? "https" : "http";
     int dashboardPort = sslEnabled ?
@@ -235,7 +230,6 @@ public class StandaloneMain {
         externalAuthenticationServer.stopAndWait();
       }
       logAppenderInitializer.close();
-      metadataService.stopAndWait();
 
     } catch (Throwable e) {
       LOG.error("Exception during shutdown", e);
@@ -345,8 +339,7 @@ public class StandaloneMain {
       new NotificationFeedServiceRuntimeModule().getStandaloneModules(),
       new NotificationServiceRuntimeModule().getStandaloneModules(),
       new StreamAdminModules().getStandaloneModules(),
-      new NamespaceClientRuntimeModule().getStandaloneModules(),
-      new MetadataServiceModule()
+      new NamespaceClientRuntimeModule().getStandaloneModules()
     );
   }
 }

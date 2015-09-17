@@ -90,7 +90,7 @@ public final class RouterPathLookup extends AbstractHttpHandler {
       matches(uriParts, "v3", "namespaces", null, "datasets", null, "lineage") ||
       matches(uriParts, "v3", "namespaces", null, "streams", null, "lineage") ||
       matches(uriParts, "v3", "namespaces", null, "apps", null, null, null, "runs", null, "metadata")) {
-      return Constants.Service.METADATA_SERVICE;
+      return Constants.Service.DATASET_EXECUTOR;
     } else if ((matches(uriParts, "v3", "namespaces", null, "streams", null, "adapters")
       || matches(uriParts, "v3", "namespaces", null, "streams", null, "programs")
       || matches(uriParts, "v3", "namespaces", null, "data", "datasets", null, "adapters")

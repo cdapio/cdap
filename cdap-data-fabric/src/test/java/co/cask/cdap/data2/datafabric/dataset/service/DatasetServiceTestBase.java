@@ -161,7 +161,8 @@ public abstract class DatasetServiceTestBase {
 
     ImmutableSet<HttpHandler> handlers = ImmutableSet.<HttpHandler>of(
       new DatasetAdminOpHTTPHandler(dsFramework, cConf, locationFactory, datasetInstantiatorFactory));
-    opExecutorService = new DatasetOpExecutorService(cConf, discoveryService, metricsCollectionService, handlers);
+    opExecutorService = new DatasetOpExecutorService(cConf, discoveryService, metricsCollectionService, handlers,
+                                                     ImmutableSet.<HttpHandler>of());
 
     opExecutorService.startAndWait();
 
