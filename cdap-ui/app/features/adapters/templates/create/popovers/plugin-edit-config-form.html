@@ -14,97 +14,80 @@
   the License.
 -->
 
+<div class="row one-divider" ng-if="isSource">
+  <div class="col-lg-6">
+    <div ng-include="'/assets/features/adapters/templates/create/popovers/plugin-edit-properties-template.html'"></div>
+  </div>
 
-  <div class="row" ng-if="isSource">
-    <div class="col-lg-6">
-      <div class="modal-content-scroll" ng-class="{'padding-offset-right': isSource, 'padding-offset-left': isTransform}">
+  <div class="col-lg-6">
+    <div ng-include="'/assets/features/adapters/templates/create/popovers/plugin-edit-output-schema.html'"></div>
+  </div>
+</div>
+
+<div class="row two-divider" ng-if="isTransform && plugin.name !== 'Validator'">
+  <div class="col-lg-4">
+    <div ng-include="'/assets/features/adapters/templates/create/popovers/plugin-edit-input-schema.html'"></div>
+  </div>
+
+  <div class="col-lg-4">
+    <div ng-include="'/assets/features/adapters/templates/create/popovers/plugin-edit-properties-template.html'"></div>
+  </div>
+
+  <div class="col-lg-4">
+    <div ng-include="'/assets/features/adapters/templates/create/popovers/plugin-edit-output-schema.html'"></div>
+  </div>
+</div>
+
+<div class="row" ng-if="isTransform && plugin.name === 'Validator'">
+  <div class="col-lg-12">
+    <div ng-include="'/assets/features/adapters/templates/create/popovers/plugin-edit-validator-transform.html'"></div>
+  </div>
+</div>
+
+<div class="row one-divider" ng-if="isSink">
+  <div class="col-lg-6">
+    <div ng-include="'/assets/features/adapters/templates/create/popovers/plugin-edit-input-schema.html'"></div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="row">
+      <div class="col-xs-12">
         <div ng-include="'/assets/features/adapters/templates/create/popovers/plugin-edit-properties-template.html'"></div>
       </div>
-    </div>
 
-    <div class="col-lg-6">
-      <div ng-include="'/assets/features/adapters/templates/create/popovers/plugin-edit-output-schema.html'"></div>
-    </div>
-
-  </div>
-
-
-  <div ng-if="isTransform && plugin.name !== 'Validator'" class="row">
-    <div class="col-lg-4">
-      <div ng-include="'/assets/features/adapters/templates/create/popovers/plugin-edit-input-schema.html'"></div>
-    </div>
-
-    <div class="col-lg-4">
-      <div class="modal-content-scroll" ng-class="{'padding-offset-right': isSource, 'padding-offset-left': isTransform}">
-        <div ng-include="'/assets/features/adapters/templates/create/popovers/plugin-edit-properties-template.html'"></div>
-      </div>
-    </div>
-
-    <div class="col-lg-4">
-      <div ng-include="'/assets/features/adapters/templates/create/popovers/plugin-edit-output-schema.html'"></div>
-    </div>
-  </div>
-
-  <div ng-if="isTransform && plugin.name === 'Validator'" class="row">
-    <div class="col-lg-12">
-      <div ng-include="'/assets/features/adapters/templates/create/popovers/plugin-edit-validator-transform.html'"></div>
-    </div>
-  </div>
-
-
-  <div class="row" ng-if="isSink">
-    <div class="col-lg-6">
-      <div ng-include="'/assets/features/adapters/templates/create/popovers/plugin-edit-input-schema.html'"></div>
-    </div>
-    <div class="col-lg-6">
-      <div class="modal-content-scroll">
-
-        <div class="row">
-          <div class="col-xs-12">
-            <div class="padding-offset-left">
-              <div ng-include="'/assets/features/adapters/templates/create/popovers/plugin-edit-properties-template.html'"></div>
-            </div>
-          </div>
-
-          <div class="col-xs-12">
-            <div class="padding-offset-right padding-offset-left">
-
-              <div class="schema-error">
-                <ul>
-                  <li class="text-danger" ng-repeat="error in errors">{{ error }}</li>
-                </ul>
-              </div>
-
-              <h4 class="sink-schema">
-                <span>Schema</span>
-                <button
-                  class="btn btn-sm btn-default pull-right"
-                  ng-click="PluginEditController.schemaClear()"
-                  ng-if="(!pluginCopy.implicitSchema && !isDisabled)"
-                  ng-disabled="pluginCopy.implicitSchema || pluginCopy.properties.format === 'clf' || pluginCopy.properties.format === 'syslog'">
-                  Clear
-                </button>
-              </h4>
-
-              <fieldset ng-disabled="isDisabled">
-                <my-schema-editor
-                  ng-model="pluginCopy.outputSchema"
-                  data-disabled="pluginCopy.implicitSchema"
-                  plugin-properties="pluginCopy.properties"
-                  config="PluginEditController.schemaProperties">
-                </my-schema-editor>
-              </fieldset>
-
-              <div ng-if="!pluginCopy.outputSchema && isDisabled">
-                <div class="well well-lg">
-                  <h4>There is no output schema</h4>
-                </div>
-              </div>
-
-            </div>
-          </div>
+      <div class="col-xs-12">
+        <div class="schema-error">
+          <ul>
+            <li class="text-danger" ng-repeat="error in errors">{{ error }}</li>
+          </ul>
         </div>
 
+        <h4 class="sink-schema">
+          <span>Schema</span>
+          <button
+            class="btn btn-sm btn-default pull-right"
+            ng-click="PluginEditController.schemaClear()"
+            ng-if="(!pluginCopy.implicitSchema && !isDisabled)"
+            ng-disabled="pluginCopy.implicitSchema || pluginCopy.properties.format === 'clf' || pluginCopy.properties.format === 'syslog'">
+            Clear
+          </button>
+        </h4>
+
+        <fieldset ng-disabled="isDisabled">
+          <my-schema-editor
+            ng-model="pluginCopy.outputSchema"
+            data-disabled="pluginCopy.implicitSchema"
+            plugin-properties="pluginCopy.properties"
+            config="PluginEditController.schemaProperties">
+          </my-schema-editor>
+        </fieldset>
+
+        <div ng-if="!pluginCopy.outputSchema && isDisabled">
+          <div class="well well-lg">
+            <h4>There is no output schema</h4>
+          </div>
+        </div>
       </div>
     </div>
   </div>
+</div>
