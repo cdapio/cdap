@@ -67,7 +67,8 @@ public class CreateAppCommand extends AbstractAuthCommand {
     if (configPath != null) {
       File configFile = resolver.resolvePathToFile(configPath);
       try (FileReader reader = new FileReader(configFile)) {
-        config = GSON.fromJson(reader, JsonObject.class);
+        ConfigFile configContents = GSON.fromJson(reader, ConfigFile.class);
+        config = configContents.config;
       }
     }
 
@@ -84,7 +85,15 @@ public class CreateAppCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Creates %s from an artifact with optional configuration.", Fragment.of(
-      Article.A, ElementType.APP.getName()));
+    return String.format("Creates %s from an artifact with optional configuration. If configuration is needed, it " +
+      "must be given as a file whose contents are a JSON Object containing the application config. " +
+      "For example, the file contents could contain: '{ \"config\": { \"stream\": \"purchases\" } }'. In this case, " +
+      "the application would recieve '{ \"stream\": \"purchases\" }' as its config object.",
+      Fragment.of(Article.A, ElementType.APP.getName()));
+  }
+
+  // simple class for deserializing contents of config file.
+  private static final class ConfigFile {
+    private JsonObject config;
   }
 }
