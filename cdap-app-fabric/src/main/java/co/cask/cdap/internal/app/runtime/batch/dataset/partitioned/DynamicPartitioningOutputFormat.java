@@ -21,14 +21,14 @@ import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
 import co.cask.cdap.api.dataset.lib.Partitioning;
-import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.data2.dataset2.lib.partitioned.PartitionedFileSetDataset;
 import co.cask.cdap.internal.app.runtime.batch.BasicMapReduceTaskContext;
-import co.cask.cdap.internal.app.runtime.batch.MapReduceTaskContextProvider;
+import co.cask.cdap.internal.app.runtime.batch.MapReduceClassLoader;
 import co.cask.cdap.internal.app.runtime.batch.dataset.MultipleOutputs;
 import com.google.common.reflect.TypeToken;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.InvalidJobConfException;
 import org.apache.hadoop.mapreduce.Job;
@@ -43,15 +43,20 @@ import org.apache.hadoop.mapreduce.task.TaskAttemptContextImpl;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
  * This class extends the FileOutputFormat and allows writing dynamically to multiple partitions of a PartitionedFileSet
  * Dataset.
  *
+ * This class is used in {@link PartitionedFileSetDataset} and is referred to this class by name because data-fabric
+ * doesn't depends on app-fabric, while this class needs access to app-fabric class {@link BasicMapReduceTaskContext}.
+ *
  * @param <K> Type of key
  * @param <V> Type of value
  */
+@SuppressWarnings("unused")
 public class DynamicPartitioningOutputFormat<K, V> extends FileOutputFormat<K, V> {
 
   private FileOutputFormat<K, V> fileOutputFormat;
@@ -66,20 +71,22 @@ public class DynamicPartitioningOutputFormat<K, V> extends FileOutputFormat<K, V
   public RecordWriter<K, V> getRecordWriter(final TaskAttemptContext job) throws IOException {
     final String outputName = FileOutputFormat.getOutputName(job);
 
-    Class<? extends DynamicPartitioner> partitionerClass = job.getConfiguration()
+    Configuration configuration = job.getConfiguration();
+    Class<? extends DynamicPartitioner> partitionerClass = configuration
       .getClass(PartitionedFileSetArguments.DYNAMIC_PARTITIONER_CLASS_NAME, null, DynamicPartitioner.class);
 
     @SuppressWarnings("unchecked")
     final DynamicPartitioner<K, V> dynamicPartitioner =
       new InstantiatorFactory(false).get(TypeToken.of(partitionerClass)).create();
 
-    MapReduceMetrics.TaskType taskType = MapReduceMetrics.TaskType.from(job.getTaskAttemptID().getTaskType());
-    final BasicMapReduceTaskContext<K, V> mrTaskContext = new MapReduceTaskContextProvider(job, taskType).get();
-    String outputDatasetName = job.getConfiguration().get(Constants.Dataset.Partitioned.HCONF_ATTR_OUTPUT_DATASET);
-    PartitionedFileSet outputDataset = mrTaskContext.getDataset(outputDatasetName);
+    MapReduceClassLoader classLoader = MapReduceClassLoader.getFromConfiguration(configuration);
+    final BasicMapReduceTaskContext<K, V> taskContext = classLoader.getTaskContextProvider().get(job);
+
+    String outputDatasetName = configuration.get(Constants.Dataset.Partitioned.HCONF_ATTR_OUTPUT_DATASET);
+    PartitionedFileSet outputDataset = taskContext.getDataset(outputDatasetName);
     final Partitioning partitioning = outputDataset.getPartitioning();
 
-    dynamicPartitioner.initialize(mrTaskContext);
+    dynamicPartitioner.initialize(taskContext);
 
     return new RecordWriter<K, V>() {
 
@@ -103,19 +110,15 @@ public class DynamicPartitioningOutputFormat<K, V> extends FileOutputFormat<K, V
       @Override
       public void close(TaskAttemptContext context) throws IOException, InterruptedException {
         try {
-          ArrayList<RecordWriter<?, ?>> recordWriters = new ArrayList<>();
+          List<RecordWriter<?, ?>> recordWriters = new ArrayList<>();
           recordWriters.addAll(this.recordWriters.values());
           MultipleOutputs.closeRecordWriters(recordWriters, context);
 
-          mrTaskContext.flushOperations();
+          taskContext.flushOperations();
         } catch (Exception e) {
           throw new IOException(e);
         } finally {
-          try {
-            dynamicPartitioner.destroy();
-          } finally {
-            mrTaskContext.close();
-          }
+          dynamicPartitioner.destroy();
         }
       }
     };

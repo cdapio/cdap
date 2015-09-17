@@ -17,9 +17,8 @@
 package co.cask.cdap.internal.app.runtime.batch.dataset;
 
 import co.cask.cdap.api.data.batch.BatchWritable;
-import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.internal.app.runtime.batch.BasicMapReduceTaskContext;
-import co.cask.cdap.internal.app.runtime.batch.MapReduceTaskContextProvider;
+import co.cask.cdap.internal.app.runtime.batch.MapReduceClassLoader;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.OutputCommitter;
@@ -38,20 +37,12 @@ public final class DataSetOutputFormat<KEY, VALUE> extends OutputFormat<KEY, VAL
   public static final String HCONF_ATTR_OUTPUT_DATASET = "output.dataset.name";
 
   @Override
-  public RecordWriter<KEY, VALUE> getRecordWriter(final TaskAttemptContext context)
-    throws IOException, InterruptedException {
+  public RecordWriter<KEY, VALUE> getRecordWriter(TaskAttemptContext context) throws IOException, InterruptedException {
     Configuration conf = context.getConfiguration();
-    // we don't currently allow datasets as the format between map and reduce stages, but this can still be the output
-    // of a map-only job, so we need to determine the taskType
-    MapReduceMetrics.TaskType taskType = MapReduceMetrics.TaskType.from(context.getTaskAttemptID().getTaskType());
-    MapReduceTaskContextProvider contextProvider = new MapReduceTaskContextProvider(context, taskType);
-    BasicMapReduceTaskContext mrContext = contextProvider.get();
-    mrContext.getMetricsCollectionService().startAndWait();
-    @SuppressWarnings("unchecked")
-    BatchWritable<KEY, VALUE> dataset = mrContext.getDataset(getOutputDataSet(conf));
-
-    // the record writer now owns the context and will close it
-    return new DataSetRecordWriter<>(dataset, contextProvider);
+    MapReduceClassLoader classLoader = MapReduceClassLoader.getFromConfiguration(conf);
+    BasicMapReduceTaskContext taskContext = classLoader.getTaskContextProvider().get(context);
+    BatchWritable<KEY, VALUE> dataset = taskContext.getDataset(getOutputDataSet(conf));
+    return new DataSetRecordWriter<>(dataset, taskContext);
   }
 
   private String getOutputDataSet(Configuration conf) {

@@ -66,7 +66,20 @@ public class MapReduceContainerLauncher {
     Thread.currentThread().setContextClassLoader(baseClassLoader);
 
     // Creates the MapReduceClassLoader.
-    ClassLoader classLoader = (ClassLoader) baseClassLoader.loadClass(classLoaderName).newInstance();
+    final ClassLoader classLoader = (ClassLoader) baseClassLoader.loadClass(classLoaderName).newInstance();
+    Runtime.getRuntime().addShutdownHook(new Thread() {
+      @Override
+      public void run() {
+        if (classLoader instanceof AutoCloseable) {
+          try {
+            ((AutoCloseable) classLoader).close();
+          } catch (Exception e) {
+            System.err.println("Failed to close ClassLoader " + classLoader);
+            e.printStackTrace();
+          }
+        }
+      }
+    });
 
     Thread.currentThread().setContextClassLoader(classLoader);
 
@@ -76,6 +89,7 @@ public class MapReduceContainerLauncher {
 
     System.out.println("Launch main class " + mainClass + ".main(" + Arrays.toString(args) + ")");
     mainMethod.invoke(null, new Object[]{args});
+    System.out.println("Main method returned " + mainClass);
   }
 
   /**

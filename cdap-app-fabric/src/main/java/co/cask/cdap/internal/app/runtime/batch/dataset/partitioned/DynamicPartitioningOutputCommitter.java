@@ -21,7 +21,9 @@ import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.Partitioning;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.runtime.batch.BasicMapReduceTaskContext;
-import co.cask.cdap.internal.app.runtime.batch.MapReduceTaskContextProvider;
+import co.cask.cdap.internal.app.runtime.batch.MapReduceClassLoader;
+import com.google.common.base.Throwables;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.LocatedFileStatus;
@@ -68,10 +70,12 @@ public class DynamicPartitioningOutputCommitter extends FileOutputCommitter {
 
   @Override
   public void commitJob(JobContext context) throws IOException {
-    BasicMapReduceTaskContext mrTaskContext = new MapReduceTaskContextProvider(taskContext, null).get();
-    String outputDatasetName =
-      context.getConfiguration().get(Constants.Dataset.Partitioned.HCONF_ATTR_OUTPUT_DATASET);
-    PartitionedFileSet outputDataset = mrTaskContext.getDataset(outputDatasetName);
+    Configuration configuration = context.getConfiguration();
+    MapReduceClassLoader classLoader = MapReduceClassLoader.getFromConfiguration(configuration);
+    BasicMapReduceTaskContext taskContext = classLoader.getTaskContextProvider().get(this.taskContext);
+
+    String outputDatasetName = configuration.get(Constants.Dataset.Partitioned.HCONF_ATTR_OUTPUT_DATASET);
+    PartitionedFileSet outputDataset = taskContext.getDataset(outputDatasetName);
     Partitioning partitioning = outputDataset.getPartitioning();
 
     Set<PartitionKey> partitionsToAdd = new HashSet<>();
@@ -79,7 +83,7 @@ public class DynamicPartitioningOutputCommitter extends FileOutputCommitter {
     // Go over all files in the temporary directory and keep track of partitions to add for them
     FileStatus[] allCommittedTaskPaths = getAllCommittedTaskPaths(context);
     for (FileStatus committedTaskPath : allCommittedTaskPaths) {
-      FileSystem fs = committedTaskPath.getPath().getFileSystem(context.getConfiguration());
+      FileSystem fs = committedTaskPath.getPath().getFileSystem(configuration);
       RemoteIterator<LocatedFileStatus> fileIter = fs.listFiles(committedTaskPath.getPath(), true);
       while (fileIter.hasNext()) {
         Path path = fileIter.next().getPath();
@@ -112,7 +116,7 @@ public class DynamicPartitioningOutputCommitter extends FileOutputCommitter {
     // We need to copy to the parent of the FileOutputFormat's outputDir, since we added a _temporary_jobId suffix to
     // the original outputDir.
     Path finalOutput = FileOutputFormat.getOutputPath(context);
-    FileSystem fs = finalOutput.getFileSystem(context.getConfiguration());
+    FileSystem fs = finalOutput.getFileSystem(configuration);
     for (FileStatus stat : getAllCommittedTaskPaths(context)) {
       mergePaths(fs, stat, finalOutput);
     }
@@ -124,18 +128,17 @@ public class DynamicPartitioningOutputCommitter extends FileOutputCommitter {
 
     // close the TaskContext, which flushes dataset operations
     try {
-      mrTaskContext.flushOperations();
+      taskContext.flushOperations();
     } catch (Exception e) {
+      Throwables.propagateIfPossible(e, IOException.class);
       throw new IOException(e);
-    } finally {
-      mrTaskContext.close();
     }
 
     // delete the job-specific _temporary folder and create a _done file in the o/p folder
     cleanupJob(context);
 
     // mark all the final output paths with a _SUCCESS file, if configured to do so (default = true)
-    if (context.getConfiguration().getBoolean(SUCCESSFUL_JOB_OUTPUT_DIR_MARKER, true)) {
+    if (configuration.getBoolean(SUCCESSFUL_JOB_OUTPUT_DIR_MARKER, true)) {
       for (String relativePath : relativePaths) {
         Path pathToMark = new Path(finalOutput, relativePath);
         Path markerPath = new Path(pathToMark, SUCCEEDED_FILE_NAME);
