@@ -21,8 +21,6 @@ angular.module(PKG.name + '.feature.adapters')
     var metadataCopy = angular.copy(MyAppDAGService.metadata);
     this.initialCron = this.metadata.template.schedule.cron;
 
-
-
     function checkCron(cron) {
       var pattern = /^[0-9\*\s]*$/g;
       var parse = cron.split('');
@@ -58,6 +56,5 @@ angular.module(PKG.name + '.feature.adapters')
       this.metadata.template.instance = metadataCopy.template.instance;
       EventPipe.emit('plugin.reset');
     };
-
 
   });
