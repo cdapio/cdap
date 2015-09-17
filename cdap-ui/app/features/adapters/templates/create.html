@@ -15,53 +15,58 @@
 -->
 <div ng-if="$state.current.name === 'adapters.create'" ng-class="{ 'hydrator-start': !AdapterCreateController.preconfigured, 'hydrator-preconfigured': AdapterCreateController.preconfigured }">
   <div class="row" ng-if="!AdapterCreateController.preconfigured">
-    <div class="col-lg-8 col-lg-offset-2">
+    <div class="col-lg-8 col-lg-offset-2 tiles-container">
+      <div class="row">
+        <div class="col-sm-12 heading text-center">
+          <h3>Welcome!</h3>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-sm-12 info text-center">
+          <h4>Hydrator makes it easy to prepare data so you<br/>can get down to business faster. Let's get started!</h4>
+        </div>
+      </div>
+
       <div class="row">
         <div class="col-sm-3">
-          <div class="well well-md start-well text-center">
-            <h4 class="select-preconfigure">Select<br/>a pre-configured<br/>pipeline</h4>
-            <a class="btn btn-default"
-                ng-click="AdapterCreateController.preconfigured = true"
-                href="">Select</a>
+          <div class="well well-md start-well text-center"
+            ng-click="AdapterCreateController.preconfigured = true">
+            <h4 class="select-preconfigure">Select a<br/>pre-configured<br/>pipeline</h4>
           </div>
         </div>
         <div class="col-sm-3">
-          <div class="well well-md start-well text-center">
+          <div class="well well-md start-well text-center"
+            ng-click="AdapterCreateController.openFileBrowser()">
             <h4>Import a<br />Pipeline</h4>
-            <a class="btn btn-default"
-                ng-click="AdapterCreateController.openFileBrowser()"
-                href="">Import</a>
           </div>
         </div>
         <div class="col-sm-3">
-          <div class="well well-md start-well text-center">
-            <h4>Create a<br/>Batch Pipeline</h4>
-            <a class="btn btn-default"
-                ui-sref="adapters.create.studio({type: 'cdap-etl-batch'})">
-                Create
-            </a>
-          </div>
+          <a ui-sref="adapters.create.studio({type: 'cdap-etl-batch'})">
+            <div class="well well-md start-well text-center">
+              <h4>Create a<br/>Batch Pipeline</h4>
+            </div>
+          </a>
         </div>
         <div class="col-sm-3">
-          <div class="well well-md start-well text-center">
-            <h4>Create a<br />Realtime Pipeline</h4>
-            <a class="btn btn-default"
-                ui-sref="adapters.create.studio({type: 'cdap-etl-realtime'})">
-              Create
-            </a>
-          </div>
+          <a ui-sref="adapters.create.studio({type: 'cdap-etl-realtime'})">
+            <div class="well well-md start-well text-center">
+              <h4>Create a<br />Realtime Pipeline</h4>
+            </div>
+          </a>
+
         </div>
       </div>
     </div>
   </div>
 
   <div class="row" ng-if="AdapterCreateController.preconfigured">
-    <div class="col-lg-8 col-lg-offset-2 return-link">
-      <span ng-click="AdapterCreateController.preconfigured = false">&#60;&#60; Return to Menu</span>
-    </div>
-    <div class="col-lg-8 col-lg-offset-2 templates-container">
-      <div class="col-sm-12 heading">
-        <h3>Select a pre-configured pipeline</h3>
+    <div class="col-lg-8 col-lg-offset-2 tiles-container">
+      <div class="col-sm-12 heading preconfigured text-center">
+        <h3>
+          <button class="btn btn-default pull-left"
+            ng-click="AdapterCreateController.preconfigured = false">Back</button>
+          <span>Select a pre-configured pipeline</span>
+        </h3>
       </div>
       <div class="col-sm-3"
           ng-repeat="template in AdapterCreateController.templates"

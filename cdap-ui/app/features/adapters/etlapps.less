@@ -304,12 +304,47 @@ body.theme-cdap.state-adapters-create {
       margin-bottom: 0;
     }
   }
+
+  .tiles-container {
+    background-color: white;
+    border-radius: 5px;
+
+    a:hover {
+      text-decoration: none;
+    }
+
+    .heading {
+      margin-top: 5px;
+      margin-bottom: 10px;
+      h3 {
+        font-weight: 500;
+        margin-bottom: 0;
+        font-size: 21px;
+        letter-spacing: 0.5px;
+      }
+
+      &.preconfigured {
+        margin-bottom: 50px;
+      }
+    }
+
+    .info {
+      margin-bottom: 35px;
+
+      h4 {
+        font-weight: 400;
+        font-size: 14px;
+        letter-spacing: 0.3px;
+      }
+    }
+  }
+
   // Studio start screen
   .hydrator-start {
-    margin-top: 160px;
+    margin-top: 140px;
   }
   .hydrator-preconfigured {
-    margin-top: 35px;
+    margin-top: 70px;
 
     .return-link {
       margin-bottom: 10px;
@@ -320,15 +355,6 @@ body.theme-cdap.state-adapters-create {
       }
     }
 
-    .templates-container {
-      background-color: white;
-
-      .heading {
-        margin-bottom: 10px;
-
-        h3 { font-weight: 500; }
-      }
-    }
   }
 
   div.template-link {
@@ -337,8 +363,11 @@ body.theme-cdap.state-adapters-create {
     p { color: lighten(@btn-default-color, 15%); }
 
     &:hover {
+      background-color: lighten(@btn-default-color, 15%);
+      -webkit-box-shadow: inset 0px 0px 20px 0px rgba(0,0,0,0.25);
+      -moz-box-shadow: inset 0px 0px 20px 0px rgba(0,0,0,0.25);
+      box-shadow: inset 0px 0px 20px 0px rgba(0,0,0,0.25);
       text-decoration: none;
-      background-color: @btn-default-color;
 
       h4, p { color: white; }
     }
@@ -351,17 +380,17 @@ body.theme-cdap.state-adapters-create {
     margin-left: auto;
     height: 180px;
     width: 180px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+
     .border-radius(6px);
     h4, a {
       font-weight: 500;
     }
     h4 {
       color: @btn-default-color;
-      margin-bottom: 55px;
-
-      &.select-preconfigure {
-        margin-bottom: 38px;
-      }
 
       &.template-name {
         margin-bottom: 10px;
@@ -372,16 +401,15 @@ body.theme-cdap.state-adapters-create {
       font-size: 12px;
     }
 
-    a.btn {
-      width: 140px;
-      padding-top: 10px;
-      padding-bottom: 10px;
-      .border-radius(6px);
-      &:hover, &:focus {
-        background-color: @btn-default-color;
-        color: white;
-      }
+    &:hover {
+      background-color: lighten(@btn-default-color, 15%);
+      -webkit-box-shadow: inset 0px 0px 20px 0px rgba(0,0,0,0.25);
+      -moz-box-shadow: inset 0px 0px 20px 0px rgba(0,0,0,0.25);
+      box-shadow: inset 0px 0px 20px 0px rgba(0,0,0,0.25);
+
+      h4 { color: white; }
     }
+
   }
   .canvas-wrapper {
     position: relative;
