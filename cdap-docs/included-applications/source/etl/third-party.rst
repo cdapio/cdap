@@ -18,9 +18,9 @@ For information on the format of the JSON, please refer to the section on the
 on :ref:`Creating an ETL Adapter <apptemplates-etl-creating>`.
 
 Copy the JAR and the JSON file to the :ref:`Plugin directory
-<advanced-custom-app-template-installation-directory>` and then update the Template by
-using the :ref:`HTTP RESTful API Application Template Update
-<http-restful-api-apptemplates-update>` endpoint.
+<advanced-custom-app-template-installation-directory>` and then reload system artifacts by
+using the :ref:`HTTP RESTful API Load System Artifacts
+<http-restful-api-artifact-system-load>` endpoint.
 
 A sample JDBC Driver Plugin configuration::
 
