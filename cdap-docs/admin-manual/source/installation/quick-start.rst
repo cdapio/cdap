@@ -45,14 +45,14 @@ If your cluster is not setup with these defaults, you'll need to
 :ref:`edit your CDAP configuration <quick-start-configuration>` once you have downloaded and installed
 the packages, and prior to starting services.
 
-- For a *Secure Hadoop* installation, see the discussion in :ref:`the installation guide
-  <install-secure-hadoop>`.
+- For a *Secure Hadoop* installation, see the discussion in :ref:`the configuration guide
+  <configuration-secure-hadoop>`.
   
 - The ``ulimit`` for the cluster should already be configured correctly for HBase; if not, 
-  details are covered in :ref:`the installation guide <install-ulimit>`.
+  details are covered in :ref:`the configuration guide <configuration-ulimit>`.
   
 - The CDAP user should be able to write temp files; if not, see the instructions in 
-  :ref:`the installation guide <install-tmp-files>`.
+  :ref:`the configuration guide <configuration-tmp-files>`.
 
 - **Note:** ZooKeeper's ``maxClientCnxns`` must be raised from its default.  We suggest setting it to zero
   (unlimited connections). As each YARN container launched by CDAP makes a connection to ZooKeeper, 
@@ -64,31 +64,29 @@ Configuring Package Managers
 
 .. include:: installation.rst 
    :start-after: .. _install-rpm-using-yum:
-   :end-before:  .. _install-configuration:
-
 
 .. _quick-start-configuration:
 
 .. "Configuration title"
 
-.. include:: installation.rst 
-   :start-after: .. _install-configuration:
-   :end-before:  .. _install-alternatives:
+.. include:: configuration.rst 
+   :start-after: .. _configuration-central:
+   :end-before:  .. _configuration-alternatives:
 
 .. "To configure your particular installation"
 
-.. include:: installation.rst 
-   :start-after: .. _install-configuration-options:
-   :end-before:  .. _install-configuring-explore-service:
+.. include:: configuration.rst 
+   :start-after: .. _configuration-options:
+   :end-before:  .. _configuration-explore-service:
 
 .. "Starting Services title"
 
-.. include:: installation.rst 
-   :start-after: .. _install-starting-services:
-   :end-before:  .. _install-highly-available:
+.. include:: configuration.rst 
+   :start-after: .. _configuration-starting-services:
+   :end-before:  .. _configuration-highly-available:
 
 .. "Verification"
 
-.. include:: installation.rst 
-   :start-after: .. _install-verification:
-   :end-before:  .. _install-upgrade:
+.. include:: configuration.rst 
+   :start-after: .. _configuration-verification:
+   :end-before:  .. _configuration-upgrade:

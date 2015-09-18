@@ -15,3 +15,6 @@ See the :ref:`Logging <http-restful-api-logging>`, :ref:`Metrics <http-restful-a
 and :ref:`Monitoring <http-restful-api-monitor>` HTTP APIs, and the
 :ref:`Java Client <reference:java-client-api>` for more information.
 
+CDAP can be monitored using external systems such as `Nagios <https://www.nagios.org/>`__; a Nagios-style plugin 
+`is available <https://github.com/caskdata/cdap-monitoring-tools/blob/develop/nagios/README.rst>`__
+for checking the status of CDAP applications, programs, and the CDAP instance itself.

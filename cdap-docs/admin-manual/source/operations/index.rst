@@ -15,6 +15,7 @@ Operations
    
     Logging <logging>
     Metrics <metrics>
+    Monitoring <monitoring>
     Preferences and Runtime Arguments <preferences>
     Scaling Instances <scaling-instances>
     Resource Guarantees in YARN <resource-guarantees>
@@ -34,6 +35,14 @@ Operations
 
 - |metrics|_ CDAP collects **metrics about the application’s behavior and performance**.
   
+
+.. |monitoring| replace:: **Monitoring:**
+.. _monitoring: monitoring.html
+
+- |monitoring|_ CDAP collects **logs and metrics** for all of its internal services. 
+  This section provides links to the relevant APIs for accessing these logs and metrics,
+  and to support for external monitoring tools.
+
 
 .. |preferences| replace:: **Preferences and Runtime Arguments:**
 .. _preferences: preferences.html

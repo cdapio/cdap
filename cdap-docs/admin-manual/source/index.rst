@@ -15,8 +15,8 @@ CDAP Administration Manual
 .. |installation| replace:: **Installation:**
 .. _installation: installation/index.html
 
-|installation|_ Covers **putting CDAP into production, with installation, configuration, security setup, and
-monitoring.** Appendices cover the XML files used to configure the CDAP installation and security configurations.
+|installation|_ Covers **putting CDAP into production, with installation, configuration, and security setup.**
+Appendices cover the XML files used to configure the CDAP installation and security configurations.
 
 .. |quickstart| replace:: **Quick Start:**
 .. _quickstart: installation/quick-start.html
@@ -25,24 +25,24 @@ monitoring.** Appendices cover the XML files used to configure the CDAP installa
   configuring CDAP.** Many people may find this sufficient; if your case isn't covered, the
   :ref:`install` guide has additional details.
 
-.. |installation-configuration| replace:: **Installation and Configuration:**
-.. _installation-configuration: installation/installation.html
+.. |installation-install| replace:: **Installation:**
+.. _installation-install: installation/installation.html
 
-- |installation-configuration|_ Covers **installing and configuring CDAP:** the system, network, and software
-  requirements; packaging options; and the instructions for installation and verification of the
-  CDAP components so they work with your existing Hadoop cluster.
+- |installation-install|_ Covers **installing CDAP:** the system, network, and software
+  requirements; packaging options; and the instructions for installation of the
+  CDAP components so they will work with your existing Hadoop cluster.
+
+.. |configuration| replace:: **Configuration:**
+.. _configuration: installation/configuration.html
+
+- |configuration|_ Covers **configuring CDAP:** once CDAP :ref:`is installed <install>`,
+  covers the instructions for configuring and verification of the CDAP components.
 
 .. |security| replace:: **Security:**
 .. _security: installation/security.html
 
 - |security|_ CDAP supports **securing clusters using perimeter security.** This section
   describes enabling security, configuring authentication and testing security.
-
-.. |monitoring| replace:: **Monitoring:**
-.. _monitoring: installation/monitoring.html
-
-- |monitoring|_ CDAP collects **logs and metrics** for all of its internal services. 
-  This section provides links to the relevant APIs for accessing these logs and metrics.
 
 .. |appendices| replace:: **Appendices:**
 
@@ -56,7 +56,7 @@ monitoring.** Appendices cover the XML files used to configure the CDAP installa
 .. |operations| replace:: **Operations:**
 .. _operations: installation/index.html
 
-|operations|_ Covers **logging, metrics, preferences, scaling instances, resource guarantees, 
+|operations|_ Covers **logging, metrics, monitoring, preferences, scaling instances, resource guarantees, 
 transaction service maintenance, troubleshooting, and introduces the CDAP UI.** 
 
 .. |logging| replace:: **Logging:**
@@ -69,6 +69,13 @@ transaction service maintenance, troubleshooting, and introduces the CDAP UI.**
 
 - |metrics|_ CDAP collects **metrics about the application’s behavior and performance**.
   
+.. |monitoring| replace:: **Monitoring:**
+.. _monitoring: installation/monitoring.html
+
+- |monitoring|_ CDAP collects **logs and metrics** for all of its internal services. 
+  This section provides links to the relevant APIs for accessing these logs and metrics,  
+  and to support for external monitoring tools.
+
 .. |preferences| replace:: **Preferences and Runtime Arguments:**
 .. _preferences: operations/preferences.html
 
