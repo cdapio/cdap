@@ -34,8 +34,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.dataset.DatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
-import co.cask.cdap.internal.app.runtime.adapter.ArtifactDescriptor;
-import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
+import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -44,13 +43,11 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -60,7 +57,7 @@ import javax.annotation.Nullable;
  * Base class for program runtime context
  */
 public abstract class AbstractContext extends AbstractServiceDiscoverer
-                                      implements DatasetContext, RuntimeContext, PluginContext {
+  implements DatasetContext, RuntimeContext, PluginContext {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractContext.class);
 
   private final Program program;
@@ -73,7 +70,6 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
 
   private final DatasetInstantiator dsInstantiator;
   private final DiscoveryServiceClient discoveryServiceClient;
-  private final LocationFactory locationFactory;
 
   private final PluginInstantiator pluginInstantiator;
 
@@ -82,10 +78,8 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
    */
   protected AbstractContext(Program program, RunId runId, Arguments arguments,
                             Set<String> datasets, MetricsContext metricsContext,
-                            DatasetFramework dsFramework, DiscoveryServiceClient discoveryServiceClient,
-                            LocationFactory locationFactory) {
-    this(program, runId, arguments, datasets, metricsContext, dsFramework, discoveryServiceClient,
-         locationFactory, null);
+                            DatasetFramework dsFramework, DiscoveryServiceClient discoveryServiceClient) {
+    this(program, runId, arguments, datasets, metricsContext, dsFramework, discoveryServiceClient, null);
   }
 
   /**
@@ -95,14 +89,12 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   protected AbstractContext(Program program, RunId runId, Arguments arguments,
                             Set<String> datasets, MetricsContext metricsContext,
                             DatasetFramework dsFramework, DiscoveryServiceClient discoveryServiceClient,
-                            LocationFactory locationFactory,
                             @Nullable PluginInstantiator pluginInstantiator) {
     super(program.getId());
     this.program = program;
     this.runId = runId;
     this.runtimeArguments = ImmutableMap.copyOf(arguments.asMap());
     this.discoveryServiceClient = discoveryServiceClient;
-    this.locationFactory = locationFactory;
     this.owners = createOwners(program.getId());
 
     this.programMetrics = metricsContext;
@@ -256,10 +248,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     }
     Plugin plugin = getPlugin(pluginId);
     try {
-      URI locationURI = plugin.getLocationURI();
-      ArtifactDescriptor artifactDescriptor = new ArtifactDescriptor(plugin.getArtifactId(),
-                                                                     locationFactory.create(locationURI));
-      return pluginInstantiator.loadClass(artifactDescriptor, plugin.getPluginClass());
+      return pluginInstantiator.loadClass(plugin);
     } catch (ClassNotFoundException e) {
       // Shouldn't happen, unless there is bug in file localization
       throw new IllegalArgumentException("Plugin class not found", e);
@@ -276,11 +265,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     }
     Plugin plugin = getPlugin(pluginId);
     try {
-      URI locationURI = plugin.getLocationURI();
-      ArtifactDescriptor artifactDescriptor = new ArtifactDescriptor(plugin.getArtifactId(),
-                                                                     locationFactory.create(locationURI));
-      return pluginInstantiator.newInstance(artifactDescriptor, plugin.getPluginClass(),
-                                            plugin.getProperties());
+      return pluginInstantiator.newInstance(plugin);
     } catch (ClassNotFoundException e) {
       // Shouldn't happen, unless there is bug in file localization
       throw new IllegalArgumentException("Plugin class not found", e);
@@ -297,7 +282,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
 
     Plugin plugin = getPlugins().get(pluginId);
     Preconditions.checkArgument(plugin != null, "Plugin with id %s does not exist in program %s of application %s.",
-                                pluginId, program.getId(), program.getApplicationId());
+      pluginId, program.getId(), program.getApplicationId());
     return plugin;
   }
 }

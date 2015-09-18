@@ -63,10 +63,13 @@ angular.module(PKG.name + '.commons')
 
               if ($scope.datasetType === 'stream') {
                 schema = JSON.stringify(res.format.schema);
+                var format = res.format.name;
+
+                EventPipe.emit('dataset.selected', schema, format);
               } else if ($scope.datasetType === 'dataset') {
                 schema = res.spec.properties.schema;
+                EventPipe.emit('dataset.selected', schema);
               }
-              EventPipe.emit('dataset.selected', schema);
             });
         });
 

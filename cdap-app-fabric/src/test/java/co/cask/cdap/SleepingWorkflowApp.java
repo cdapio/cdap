@@ -44,9 +44,9 @@ public class SleepingWorkflowApp extends AbstractApplication {
 
     @Override
     public void configure() {
-        setName("SleepWorkflow");
-        setDescription("FunWorkflow description");
-        addAction(new CustomAction("verify"));
+      setName("SleepWorkflow");
+      setDescription("FunWorkflow description");
+      addAction(new CustomAction("verify"));
     }
   }
 

@@ -25,7 +25,6 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
-import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data.stream.service.StreamService;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
@@ -85,7 +84,6 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Type;
@@ -160,11 +158,7 @@ public abstract class AppFabricTestBase {
     conf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder("data").getAbsolutePath());
     conf.set(Constants.AppFabric.OUTPUT_DIR, System.getProperty("java.io.tmpdir"));
     conf.set(Constants.AppFabric.TEMP_DIR, System.getProperty("java.io.tmpdir"));
-    conf.set(Constants.AppFabric.APP_TEMPLATE_DIR, tmpFolder.newFolder("templates").getAbsolutePath());
     conf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
-
-    DirUtils.mkdirs(new File(conf.get(Constants.AppFabric.APP_TEMPLATE_DIR)));
-    DirUtils.mkdirs(new File(conf.get(Constants.AppFabric.APP_TEMPLATE_PLUGIN_DIR)));
 
     injector = Guice.createInjector(new AppFabricTestModule(conf));
 
@@ -605,10 +599,15 @@ public abstract class AppFabricTestBase {
    * Tries to stop the given program and expect the call completed with the status.
    */
   protected void stopProgram(Id.Program program, int expectedStatusCode) throws Exception {
-    stopProgram(program, expectedStatusCode, null);
+    stopProgram(program, null, expectedStatusCode);
   }
 
-  protected void stopProgram(Id.Program program, int expectedStatusCode, String runId) throws Exception {
+  protected void stopProgram(Id.Program program, String runId, int expectedStatusCode) throws Exception {
+    stopProgram(program, runId, expectedStatusCode, null);
+  }
+
+  protected void stopProgram(Id.Program program, String runId, int expectedStatusCode, String expectedMessage)
+    throws Exception {
     String path;
     if (runId == null) {
       path = String.format("apps/%s/%s/%s/stop", program.getApplicationId(), program.getType().getCategoryName(),
@@ -619,6 +618,9 @@ public abstract class AppFabricTestBase {
     }
     HttpResponse response = doPost(getVersionedAPIPath(path, program.getNamespaceId()));
     Assert.assertEquals(expectedStatusCode, response.getStatusLine().getStatusCode());
+    if (expectedMessage != null) {
+      Assert.assertEquals(expectedMessage, EntityUtils.toString(response.getEntity()));
+    }
   }
 
   /**

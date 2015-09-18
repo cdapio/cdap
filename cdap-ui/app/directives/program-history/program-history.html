@@ -1,18 +1,18 @@
 <!--
   Copyright © 2015 Cask Data, Inc.
- 
+
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
   the License at
- 
+
   http://www.apache.org/licenses/LICENSE-2.0
- 
+
   Unless required by applicable law or agreed to in writing, software
   distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
   WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
   License for the specific language governing permissions and limitations under
   the License.
---> 
+-->
 
 <div ng-if="runs.length > 0">
   <!-- Switch to ng-if when we refactor to use controller as syntax -->
@@ -34,12 +34,12 @@
       <tbody>
         <tr ng-repeat="run in runs | myPaginate:currentPage | orderBy:sortable.predicate:sortable.reverse ">
           <td>
-            <a ui-sref="flows.detail.runs.run({runid: run.runid})" ng-if="type === 'FLOWS'">{{run.runid}}</a>
-            <a ui-sref="mapreduce.detail.runs.run({runid: run.runid})" ng-if="type === 'MAPREDUCE'">{{run.runid}}</a>
-            <a ui-sref="workflows.detail.runs.run({runid: run.runid})" ng-if="type === 'WORKFLOWS'">{{run.runid}}</a>
-            <a ui-sref="spark.detail.runs.run({runid: run.runid})" ng-if="type === 'SPARK'">{{run.runid}}</a>
-            <a ui-sref="worker.detail.runs.run({runid: run.runid})" ng-if="type === 'WORKER'">{{run.runid}}</a>
-            <a ui-sref="services.detail.runs.run({runid: run.runid})" ng-if="type === 'SERVICES'">{{run.runid}}</a>
+            <a ui-sref="flows.detail.run({appId: appId, programId: programId, runid: run.runid})" ng-if="type === 'FLOWS'">{{run.runid}}</a>
+            <a ui-sref="mapreduce.detail.run({appId: appId, programId: programId, runid: run.runid})" ng-if="type === 'MAPREDUCE'">{{run.runid}}</a>
+            <a ui-sref="workflows.detail.run({appId: appId, programId: programId, runid: run.runid})" ng-if="type === 'WORKFLOWS'">{{run.runid}}</a>
+            <a ui-sref="spark.detail.run({appId: appId, programId: programId, runid: run.runid})" ng-if="type === 'SPARK'">{{run.runid}}</a>
+            <a ui-sref="worker.detail.run({appId: appId, programId: programId, runid: run.runid})" ng-if="type === 'WORKER'">{{run.runid}}</a>
+            <a ui-sref="services.detail.run({appId: appId, programId: programId, runid: run.runid})" ng-if="type === 'SERVICES'">{{run.runid}}</a>
 
             <span ng-if="type === 'ADAPTERS'">{{run.runid}}</span>
           </td>

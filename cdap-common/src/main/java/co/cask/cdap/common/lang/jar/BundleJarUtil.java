@@ -17,6 +17,7 @@
 package co.cask.cdap.common.lang.jar;
 
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.utils.DirUtils;
 import com.google.common.base.Preconditions;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Closeables;
@@ -26,13 +27,17 @@ import org.apache.twill.filesystem.Location;
 
 import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarInputStream;
+import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -138,6 +143,35 @@ public class BundleJarUtil {
         throw new IOException("Entry not found for " + entryName);
       }
     };
+  }
+
+  /**
+   * Creates an Archive including all the files present in the given input. If the given input is a file, then it alone
+   * is included in the archive. Doesn't support recursive dirs.
+   *
+   * @param input input directory (or file) whose contents needs to be archived
+   * @param destArchive location to which the archive needs to be written to
+   * @param tempDir temporary directory to help with archive generation
+   * @throws IOException if there is failure in the archive creation
+   */
+  public static void packDirFiles(File input, Location destArchive, File tempDir) throws IOException {
+    File jarFile = File.createTempFile("temp", ".jar", tempDir);
+    try (JarOutputStream output = new JarOutputStream(new FileOutputStream(jarFile))) {
+      List<File> files = new ArrayList<>();
+      if (input.isDirectory()) {
+        files.addAll(DirUtils.listFiles(input));
+      } else {
+        files.add(input);
+      }
+
+      for (File file : files) {
+        if (file.isFile()) {
+          output.putNextEntry(new JarEntry(file.getName()));
+          Files.copy(file, output);
+        }
+      }
+    }
+    Files.copy(jarFile, Locations.newOutputSupplier(destArchive));
   }
 
   /**

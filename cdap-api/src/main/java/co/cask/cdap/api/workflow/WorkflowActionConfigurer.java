@@ -47,7 +47,7 @@ public interface WorkflowActionConfigurer {
   void setProperties(Map<String, String> properties);
 
   /**
-   * Adds the names of {@link Dataset}s used by the flowlet.
+   * Adds the names of {@link Dataset}s used by this workflow action.
    *
    * @param datasets dataset names
    */

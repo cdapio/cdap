@@ -31,16 +31,19 @@ import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.common.cli.Arguments;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 
 import java.io.File;
 import java.io.FileReader;
 import java.io.PrintStream;
+import java.lang.reflect.Type;
 
 /**
  * Deploys an application from an existing artifact.
  */
 public class CreateAppCommand extends AbstractAuthCommand {
+  private static final Type configType = new TypeToken<AppRequest<JsonObject>>() { }.getType();
   private static final Gson GSON = new Gson();
   private final ApplicationClient applicationClient;
   private final FilePathResolver resolver;
@@ -67,7 +70,8 @@ public class CreateAppCommand extends AbstractAuthCommand {
     if (configPath != null) {
       File configFile = resolver.resolvePathToFile(configPath);
       try (FileReader reader = new FileReader(configFile)) {
-        config = GSON.fromJson(reader, JsonObject.class);
+        AppRequest<JsonObject> appRequest = GSON.fromJson(reader, configType);
+        config = appRequest.getConfig();
       }
     }
 
@@ -84,7 +88,10 @@ public class CreateAppCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Creates %s from an artifact with optional configuration.", Fragment.of(
-      Article.A, ElementType.APP.getName()));
+    return String.format("Creates %s from an artifact with optional configuration. If configuration is needed, it " +
+      "must be given as a file whose contents are a JSON Object containing the application config. " +
+      "For example, the file contents could contain: '{ \"config\": { \"stream\": \"purchases\" } }'. In this case, " +
+      "the application would recieve '{ \"stream\": \"purchases\" }' as its config object.",
+      Fragment.of(Article.A, ElementType.APP.getName()));
   }
 }

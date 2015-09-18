@@ -16,23 +16,27 @@
 
 package co.cask.cdap.internal.app.runtime.batch;
 
-import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.batch.SimpleSplit;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.runtime.Arguments;
+import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetInputFormat;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetOutputFormat;
 import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import co.cask.tephra.Transaction;
+import com.google.common.base.Charsets;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import org.apache.twill.api.RunId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,10 +77,18 @@ public final class MapReduceContextConfig {
     this.hConf = hConf;
   }
 
-  public Configuration getConfiguration() {
+  public Configuration getHConf() {
     return hConf;
   }
 
+  /**
+   * Updates the {@link Configuration} of this class with the given paramters.
+   *
+   * @param context the context for the MapReduce program
+   * @param conf the CDAP configuration
+   * @param tx the long transaction created for the MapReduce program
+   * @param programJarURI The URI of the program JAR
+   */
   public void set(BasicMapReduceContext context, CConfiguration conf, Transaction tx, URI programJarURI) {
     setRunId(context.getRunId().getId());
     setLogicalStartTime(context.getLogicalStartTime());
@@ -94,6 +106,9 @@ public final class MapReduceContextConfig {
     hConf.set(HCONF_ATTR_ARGS, GSON.toJson(arguments));
   }
 
+  /**
+   * Returns the runtime arguments for the MapReduce program
+   */
   public Arguments getArguments() {
     Map<String, String> arguments = GSON.fromJson(hConf.get(HCONF_ATTR_ARGS),
                                                   new TypeToken<Map<String, String>>() {
@@ -105,16 +120,25 @@ public final class MapReduceContextConfig {
     hConf.set(HCONF_ATTR_RUN_ID, runId);
   }
 
-  public String getRunId() {
-    return hConf.get(HCONF_ATTR_RUN_ID);
+  /**
+   * Returns the {@link RunId} for the MapReduce program.
+   */
+  public RunId getRunId() {
+    return RunIds.fromString(hConf.get(HCONF_ATTR_RUN_ID));
   }
 
   private void setLogicalStartTime(long startTime) {
     hConf.setLong(HCONF_ATTR_LOGICAL_START_TIME, startTime);
   }
 
+  /**
+   * Returns the logical start time for the MapReduce program.
+   */
   public long getLogicalStartTime() {
-    return hConf.getLong(HCONF_ATTR_LOGICAL_START_TIME, System.currentTimeMillis());
+    long startTime = hConf.getLong(HCONF_ATTR_LOGICAL_START_TIME, -1L);
+    // It shouldn't happen
+    Preconditions.checkArgument(startTime >= 0, "Logical start time is not present.");
+    return startTime;
   }
 
   private void setProgramNameInWorkflow(@Nullable String programNameInWorkflow) {
@@ -123,6 +147,10 @@ public final class MapReduceContextConfig {
     }
   }
 
+  /**
+   * Returns the MapReduce program name when it is running inside Workflow or {@code null} if not.
+   */
+  @Nullable
   public String getProgramNameInWorkflow() {
     return hConf.get(HCONF_ATTR_PROGRAM_NAME_IN_WORKFLOW);
   }
@@ -133,6 +161,9 @@ public final class MapReduceContextConfig {
     }
   }
 
+  /**
+   * Returns the {@link WorkflowToken} if it is running inside Workflow or {@code null} if not.
+   */
   @Nullable
   public WorkflowToken getWorkflowToken() {
     String tokenJson = hConf.get(HCONF_ATTR_WORKFLOW_TOKEN);
@@ -148,10 +179,13 @@ public final class MapReduceContextConfig {
     hConf.set(HCONF_ATTR_PLUGINS, GSON.toJson(plugins));
   }
 
+  /**
+   * Returns the plugins being used in the MapReduce program.
+   */
   public Map<String, Plugin> getPlugins() {
     String spec = hConf.get(HCONF_ATTR_PLUGINS);
     if (spec == null) {
-      return null;
+      return ImmutableMap.of();
     }
     return GSON.fromJson(spec, new TypeToken<Map<String, Plugin>>() { }.getType());
   }
@@ -160,14 +194,25 @@ public final class MapReduceContextConfig {
     hConf.set(HCONF_ATTR_PROGRAM_JAR_URI, programJarURI.toASCIIString());
   }
 
+  /**
+   * Returns the URI of where the program JAR is.
+   */
   public URI getProgramJarURI() {
     return URI.create(hConf.get(HCONF_ATTR_PROGRAM_JAR_URI));
   }
 
+  /**
+   * Returns the file name of the program JAR.
+   */
   public String getProgramJarName() {
     return new Path(getProgramJarURI()).getName();
   }
 
+  /**
+   * Returns the name of the Dataset that is used as input for the MapReduce program or {@code null} if
+   * Dataset is not used for input.
+   */
+  @Nullable
   public String getInputDataSet() {
     return hConf.get(DataSetInputFormat.HCONF_ATTR_INPUT_DATASET);
   }
@@ -188,6 +233,9 @@ public final class MapReduceContextConfig {
     hConf.set(HCONF_ATTR_INPUT_SPLITS, GSON.toJson(splits));
   }
 
+  /**
+   * Returns the list of {@link Split} objects for the MapReduce program.
+   */
   public List<Split> getInputSelection() {
     String splitClassName = hConf.get(HCONF_ATTR_INPUT_SPLIT_CLASS);
     String splitsJson = hConf.get(HCONF_ATTR_INPUT_SPLITS);
@@ -232,6 +280,11 @@ public final class MapReduceContextConfig {
     }
   }
 
+  /**
+   * Returns the name of the Dataset that is used as output for the MapReduce program or {@code null} if
+   * Dataset is not used for output.
+   */
+  @Nullable
   public String getOutputDataSet() {
     return hConf.get(DataSetOutputFormat.HCONF_ATTR_OUTPUT_DATASET);
   }
@@ -247,14 +300,22 @@ public final class MapReduceContextConfig {
     hConf.set(HCONF_ATTR_CCONF, stringWriter.toString());
   }
 
-  public CConfiguration getConf() {
-    return CConfiguration.create(new ByteArrayInputStream(Bytes.toBytes(hConf.get(HCONF_ATTR_CCONF))));
+  /**
+   * Returns the {@link CConfiguration} stored inside the job {@link Configuration}.
+   */
+  public CConfiguration getCConf() {
+    String conf = hConf.get(HCONF_ATTR_CCONF);
+    Preconditions.checkArgument(conf != null, "No CConfiguration available");
+    return CConfiguration.create(new ByteArrayInputStream(conf.getBytes(Charsets.UTF_8)));
   }
 
   private void setTx(Transaction tx) {
     hConf.set(HCONF_ATTR_NEW_TX, GSON.toJson(tx));
   }
 
+  /**
+   * Returns the {@link Transaction} information stored inside the job {@link Configuration}.
+   */
   public Transaction getTx() {
     return GSON.fromJson(hConf.get(HCONF_ATTR_NEW_TX), Transaction.class);
   }

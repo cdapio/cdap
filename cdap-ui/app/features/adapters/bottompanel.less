@@ -18,7 +18,19 @@
 @import "../../../bower_components/bootstrap/less/mixins.less";
 @import '../../styles/themes/cdap/mixins.less';
 
-body.theme-cdap.state-adapters-create {
+body.theme-cdap.state-adapters {
+
+  &.state-adapters-detail {
+    div.console {
+      min-height: 60vh;
+
+      div.console-type {
+        height: inherit;
+        min-height: inherit;
+      }
+
+    }
+  }
   div.console {
     background-color: white;
     min-height: 40vh;
@@ -223,6 +235,69 @@ body.theme-cdap.state-adapters-create {
         &:after {
           right: 33%;
         }
+      }
+    }
+
+    .status-view {
+      margin-top: 15px;
+
+      h4 {
+        color: black;
+        font-weight: 500;
+        font-size: 15px;
+      }
+
+      h2.status-value {
+        color: @brand-primary;
+        font-weight: 500;
+        font-size: 24px;
+      }
+    }
+
+    .table.table-bordered {
+
+      td.metric-cell {
+        padding: 0;
+      }
+
+      .table.metric-table {
+        tr {
+          &:first-child > td {
+            border-top: 0;
+          }
+
+          &:last-child > td {
+            border-bottom: 0;
+          }
+        }
+
+        td {
+          &:first-child {
+            border-left: 0;
+          }
+          &:last-child {
+            border-right: 0;
+          }
+        }
+      }
+    }
+    .console-wrapper {
+      padding: 10px 0;
+      div.btn {
+        margin: 0 0 5px 20px;
+      }
+    }
+    pre {
+      background-color: transparent;
+      border: 0;
+      display: inline;
+      padding: 0;
+      word-break: normal;
+      white-space: pre-wrap;
+      &:after {
+        display: block;
+        content: '';
+        margin-bottom: 10px;
       }
     }
   }

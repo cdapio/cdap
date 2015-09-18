@@ -25,7 +25,6 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
-import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -39,10 +38,11 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.writer.ProgramContextAware;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.internal.app.runtime.AbstractProgramRunnerWithPlugin;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
+import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.proto.Id;
@@ -56,6 +56,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
+import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.api.RunId;
@@ -76,10 +77,11 @@ import javax.annotation.Nullable;
 /**
  * Runs {@link MapReduce} programs.
  */
-public class MapReduceProgramRunner implements ProgramRunner {
+public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
   private static final Logger LOG = LoggerFactory.getLogger(MapReduceProgramRunner.class);
   private static final Gson GSON = new Gson();
 
+  private final Injector injector;
   private final StreamAdmin streamAdmin;
   private final CConfiguration cConf;
   private final Configuration hConf;
@@ -92,7 +94,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
   private final UsageRegistry usageRegistry;
 
   @Inject
-  public MapReduceProgramRunner(CConfiguration cConf, Configuration hConf,
+  public MapReduceProgramRunner(Injector injector, CConfiguration cConf, Configuration hConf,
                                 LocationFactory locationFactory,
                                 StreamAdmin streamAdmin,
                                 DatasetFramework datasetFramework,
@@ -100,6 +102,8 @@ public class MapReduceProgramRunner implements ProgramRunner {
                                 MetricsCollectionService metricsCollectionService,
                                 DiscoveryServiceClient discoveryServiceClient, Store store,
                                 UsageRegistry usageRegistry) {
+    super(cConf);
+    this.injector = injector;
     this.cConf = cConf;
     this.hConf = hConf;
     this.locationFactory = locationFactory;
@@ -167,15 +171,16 @@ public class MapReduceProgramRunner implements ProgramRunner {
     // List of all Closeable resources that needs to be cleanup
     List<Closeable> closeables = new ArrayList<>();
     try {
-      PluginInstantiator pluginInstantiator = createArtifactPluginInstantiator(program.getClassLoader());
-      closeables.add(pluginInstantiator);
+      PluginInstantiator pluginInstantiator = createPluginInstantiator(options, program.getClassLoader());
+      if (pluginInstantiator != null) {
+        closeables.add(pluginInstantiator);
+      }
 
       final DynamicMapReduceContext context =
         new DynamicMapReduceContext(program, runId, options.getUserArguments(), spec,
                                     logicalStartTime, programNameInWorkflow, workflowToken, discoveryServiceClient,
-                                    metricsCollectionService, txSystemClient, datasetFramework, locationFactory,
+                                    metricsCollectionService, txSystemClient, datasetFramework,
                                     pluginInstantiator);
-
 
       Reflections.visit(mapReduce, mapReduce.getClass(),
                         new PropertyFieldSetter(context.getSpecification().getProperties()),
@@ -185,9 +190,10 @@ public class MapReduceProgramRunner implements ProgramRunner {
       // note: this sets logging context on the thread level
       LoggingContextAccessor.setLoggingContext(context.getLoggingContext());
 
-      final Service mapReduceRuntimeService = new MapReduceRuntimeService(cConf, hConf, mapReduce, spec, context,
-                                                                          program.getJarLocation(), locationFactory,
-                                                                          streamAdmin, txSystemClient, usageRegistry);
+      final Service mapReduceRuntimeService = new MapReduceRuntimeService(injector, cConf, hConf, mapReduce, spec,
+                                                                          context, program.getJarLocation(),
+                                                                          locationFactory, streamAdmin,
+                                                                          txSystemClient, usageRegistry);
       mapReduceRuntimeService.addListener(
         createRuntimeServiceListener(program, runId, closeables, arguments, options.getUserArguments()),
         Threads.SAME_THREAD_EXECUTOR);
@@ -275,10 +281,6 @@ public class MapReduceProgramRunner implements ProgramRunner {
                       ProgramController.State.ERROR.getRunStatus());
       }
     };
-  }
-
-  private PluginInstantiator createArtifactPluginInstantiator(ClassLoader programClassLoader) {
-    return new PluginInstantiator(cConf, programClassLoader);
   }
 
   private void closeAllQuietly(Iterable<Closeable> closeables) {

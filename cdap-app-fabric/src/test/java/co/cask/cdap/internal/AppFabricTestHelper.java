@@ -125,7 +125,7 @@ public class AppFabricTestHelper {
     deployedJar.delete(true);
   }
 
-  private static void ensureNamespaceExists(Id.Namespace namespace) throws Exception {
+  public static void ensureNamespaceExists(Id.Namespace namespace) throws Exception {
     NamespaceAdmin namespaceAdmin = getInjector().getInstance(NamespaceAdmin.class);
     if (!namespaceAdmin.exists(namespace)) {
       namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespace).build());

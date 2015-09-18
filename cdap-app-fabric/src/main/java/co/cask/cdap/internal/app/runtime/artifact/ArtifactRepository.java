@@ -31,7 +31,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.common.utils.ImmutablePair;
-import co.cask.cdap.internal.app.runtime.adapter.ArtifactDescriptor;
+import co.cask.cdap.internal.app.runtime.plugin.PluginNotExistsException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ApplicationClassInfo;
 import co.cask.cdap.proto.artifact.ApplicationClassSummary;
@@ -76,7 +76,7 @@ public class ArtifactRepository {
     File baseUnpackDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
       cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
     this.artifactClassLoaderFactory = new ArtifactClassLoaderFactory(baseUnpackDir);
-    this.artifactInspector = new ArtifactInspector(cConf, artifactClassLoaderFactory);
+    this.artifactInspector = new ArtifactInspector(cConf, artifactClassLoaderFactory, baseUnpackDir);
     this.systemArtifactDir = new File(cConf.get(Constants.AppFabric.SYSTEM_ARTIFACTS_DIR));
   }
 
@@ -230,7 +230,7 @@ public class ArtifactRepository {
    * @param pluginType plugin type name
    * @param pluginName plugin name
    * @param selector for selecting which plugin to use
-   * @return the entry found or {@code null} if none was found
+   * @return the entry found
    * @throws IOException if there was an exception reading plugin metadata from the artifact store
    * @throws PluginNotExistsException if no plugins of the given type and name are available to the given artifact
    */

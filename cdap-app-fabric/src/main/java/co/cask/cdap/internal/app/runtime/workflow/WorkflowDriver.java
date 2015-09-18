@@ -16,14 +16,17 @@
 package co.cask.cdap.internal.app.runtime.workflow;
 
 import co.cask.cdap.api.Predicate;
+import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.spark.SparkSpecification;
+import co.cask.cdap.api.workflow.AbstractWorkflowAction;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.WorkflowAction;
+import co.cask.cdap.api.workflow.WorkflowActionConfigurer;
 import co.cask.cdap.api.workflow.WorkflowActionNode;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.api.workflow.WorkflowConditionNode;
@@ -47,10 +50,12 @@ import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
+import co.cask.cdap.internal.app.workflow.DefaultWorkflowActionConfigurer;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.internal.workflow.DefaultWorkflowActionSpecification;
 import co.cask.cdap.internal.workflow.ProgramWorkflowAction;
@@ -73,7 +78,6 @@ import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -124,13 +128,12 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private final Store store;
   private final Id.Workflow workflowId;
   private final CConfiguration cConf;
-  private final LocationFactory locationFactory;
 
   WorkflowDriver(Program program, ProgramOptions options, InetAddress hostname,
                  WorkflowSpecification workflowSpec, ProgramRunnerFactory programRunnerFactory,
                  MetricsCollectionService metricsCollectionService, DatasetFramework datasetFramework,
                  DiscoveryServiceClient discoveryServiceClient, TransactionSystemClient txClient,
-                 LocationFactory locationFactory, Store store, CConfiguration cConf) {
+                 Store store, CConfiguration cConf) {
     this.program = program;
     this.hostname = hostname;
     this.runtimeArgs = createRuntimeArgs(options.getUserArguments());
@@ -151,7 +154,6 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     this.datasetFramework = datasetFramework;
     this.discoveryServiceClient = discoveryServiceClient;
     this.txClient = txClient;
-    this.locationFactory = locationFactory;
     this.store = store;
     this.workflowId = Id.Workflow.from(program.getId().getApplication(), workflowSpec.getName());
     this.cConf = cConf;
@@ -222,12 +224,12 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     httpService.stopAndWait();
   }
 
-  private void executeAction(ApplicationSpecification appSpec, WorkflowActionNode node,
+  private void executeAction(WorkflowActionNode node,
                              InstantiatorFactory instantiator, final ClassLoader classLoader,
                              WorkflowToken token) throws Exception {
 
     final SchedulableProgramType programType = node.getProgram().getProgramType();
-    final WorkflowActionSpecification actionSpec = getActionSpecification(appSpec, node, programType);
+    final WorkflowActionSpecification actionSpec = getActionSpecification(node, programType);
 
     status.put(node.getNodeId(), node);
 
@@ -274,22 +276,15 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     store.updateWorkflowToken(workflowId, runId.getId(), token);
   }
 
-  private WorkflowActionSpecification getActionSpecification(ApplicationSpecification appSpec, WorkflowActionNode node,
+  private WorkflowActionSpecification getActionSpecification(WorkflowActionNode node,
                                                              SchedulableProgramType programType) {
     WorkflowActionSpecification actionSpec;
     ScheduleProgramInfo actionInfo = node.getProgram();
     switch (programType) {
       case MAPREDUCE:
-        MapReduceSpecification mapReduceSpec = appSpec.getMapReduce().get(actionInfo.getProgramName());
-        String mapReduce = mapReduceSpec.getName();
-        actionSpec = new DefaultWorkflowActionSpecification(new ProgramWorkflowAction(
-          mapReduce, mapReduce, SchedulableProgramType.MAPREDUCE));
-        break;
       case SPARK:
-        SparkSpecification sparkSpec = appSpec.getSpark().get(actionInfo.getProgramName());
-        String spark = sparkSpec.getName();
-        actionSpec = new DefaultWorkflowActionSpecification(new ProgramWorkflowAction(
-          spark, spark, SchedulableProgramType.SPARK));
+        actionSpec = DefaultWorkflowActionConfigurer.configureAction(
+          new ProgramWorkflowAction(actionInfo.getProgramName(), programType));
         break;
       case CUSTOM_ACTION:
         actionSpec = node.getActionSpecification();
@@ -406,7 +401,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     ((BasicWorkflowToken) token).setCurrentNode(node.getNodeId());
     switch (nodeType) {
       case ACTION:
-        executeAction(appSpec, (WorkflowActionNode) node, instantiator, classLoader, token);
+        executeAction((WorkflowActionNode) node, instantiator, classLoader, token);
         break;
       case FORK:
         executeFork(appSpec, (WorkflowForkNode) node, instantiator, classLoader, token);
@@ -427,9 +422,10 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     Predicate<WorkflowContext> predicate = instantiator.get(
       TypeToken.of((Class<? extends Predicate<WorkflowContext>>) clz)).create();
 
-    WorkflowContext context = new BasicWorkflowContext(workflowSpec, null, logicalStartTime, null, runtimeArgs, token,
+    WorkflowContext context = new BasicWorkflowContext(workflowSpec, null, logicalStartTime, null,
+                                                       new BasicArguments(runtimeArgs), token,
                                                        program, runId, metricsCollectionService,
-                                                       datasetFramework, discoveryServiceClient, locationFactory);
+                                                       datasetFramework, discoveryServiceClient);
     Iterator<WorkflowNode> iterator;
     if (predicate.apply(context)) {
       // execute the if branch
@@ -494,8 +490,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                                                      WorkflowToken token, String nodeId) {
     return new BasicWorkflowContext(workflowSpec, actionSpec, logicalStartTime,
                                     workflowProgramRunnerFactory.getProgramWorkflowRunner(actionSpec, token, nodeId),
-                                    runtimeArgs, token, program, runId, metricsCollectionService,
-                                    datasetFramework, discoveryServiceClient, locationFactory);
+                                    new BasicArguments(runtimeArgs), token, program, runId, metricsCollectionService,
+                                    datasetFramework, discoveryServiceClient);
   }
 
   /**
@@ -544,11 +540,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   }
 
   private Map<String, String> createRuntimeArgs(Arguments args) {
-    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
-    for (Map.Entry<String, String> entry : args) {
-      builder.put(entry);
-    }
-    return builder.build();
+    return ImmutableMap.<String, String>builder().putAll(args.asMap()).build();
   }
 
   private Supplier<List<WorkflowActionNode>> createStatusSupplier() {

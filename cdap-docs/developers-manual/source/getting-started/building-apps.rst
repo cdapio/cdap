@@ -61,8 +61,8 @@ Accessing CLI, curl and the SDK bin
 
 .. _cdap-building-running-example:
 
-Building an Example Application
--------------------------------
+Building an Example Application Artifact
+----------------------------------------
 
 From the example's project root, build an example with the
 `Apache Maven <http://maven.apache.org>`__ command::
@@ -86,16 +86,10 @@ CDAP is running.
 Deploying an Application
 ------------------------
 
-Once CDAP is started, you can deploy an example JAR by any of these methods:
+Once CDAP is started, you can deploy an application using an example JAR by any of these methods:
 
-.. - Dragging and dropping the application JAR file:
-
-  .. parsed-literal::
-    examples/|example|/target/|example|-|release|.jar
- 
-..  onto the CDAP UI running at `http://localhost:9999/ <http://localhost:9999/>`__; or
-
-- Use the *Add App* button found on the |management|_ page of the CDAP UI to browse and upload the Jar:
+- Use the *Add App* button found on the |management|_ page of the CDAP UI to browse and upload an
+  artifact and create an app:
 
   .. parsed-literal::
     examples/|example|/target/|example|-|release|.jar
@@ -105,9 +99,11 @@ Once CDAP is started, you can deploy an example JAR by any of these methods:
   .. container:: highlight
 
     .. parsed-literal::
-      |$| cdap-cli.sh deploy app examples/|example|/target/|example|-|release|.jar
-    
-      Successfully deployed application
+      |$| cdap-cli.sh load artifact examples/|example|/target/|example|-|release|.jar
+      Successfully added artifact with name '|example|'
+
+      |$| cdap-cli.sh create app <app name> |example| |release| user
+      Successfully created application
 
   The CLI can be accessed under Windows using the ``bin\cdap-cli.bat`` script.
   
@@ -117,9 +113,12 @@ Once CDAP is started, you can deploy an example JAR by any of these methods:
   .. container:: highlight
   
     .. parsed-literal::
-      |$| curl -w'\\n' -H "X-Archive-Name: |example|-|release|.jar" localhost:10000/v3/namespaces/default/apps \\
+      |$| curl -w'\\n' localhost:10000/v3/namespaces/default/artifacts/|example| \\
         --data-binary @examples/|example|/target/|example|-|release|.jar
+      Artifact added successfully
 
+      |$| curl -w'\\n' -X PUT -H "Content-Type: application/json" localhost:10000/v3/namespaces/default/apps/<app name> \\
+        -d '{ "artifact": { "name": "|example|", "version": "|release|", "scope": "user" }, "config": {} }'
       Deploy Complete
 
 
@@ -191,3 +190,7 @@ the CDAP UI, or by using the :ref:`HTTP Restful API <restful-api>`, the
 
 Streams can be either truncated or deleted, using similar methods.
 
+The artifact used to create the application will also remain, as multiple
+applications can be created from the same artifact. Artifacts can be deleted using the
+:ref:`Http Restful API <restful-api>`, the
+:ref:`Java Client API <java-client-api>`, or the :ref:`Command Line Interface API <cli>`.

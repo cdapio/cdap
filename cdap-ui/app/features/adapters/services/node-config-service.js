@@ -13,23 +13,83 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
- 
+
 angular.module(PKG.name + '.feature.adapters')
   .service('MyNodeConfigService', function() {
-    this.pluginChangeListeners = [];
-    this.setPlugin = function(plugin) {
+    this.pluginChangeListeners = {};
+    this.pluginResetListeners = {};
+    this.pluginRemoveListeners = {};
+    this.pluginSaveListeners = {};
+
+    this.resetPlugin = function(plugin) {
       this.plugin = plugin;
-      this.notifyListeners();
+      this.notifyPluginResetListeners();
     };
 
-    this.notifyListeners = function () {
-      this.pluginChangeListeners.forEach(function(callback) {
+    this.notifyPluginResetListeners = function() {
+      angular.forEach(this.pluginResetListeners, function(callback) {
         callback(this.plugin);
       }.bind(this));
     };
 
-    this.registerPluginCallback = function(callback) {
-      this.pluginChangeListeners.push(callback);
+    this.registerPluginResetCallback = function(id, callback) {
+      this.pluginResetListeners[id] = callback;
+    };
+
+    this.unRegisterPluginResetCallback = function(id) {
+      delete this.pluginResetListeners[id];
+    };
+
+    this.setPlugin = function(plugin) {
+      this.plugin = plugin;
+      this.notifyPluginSetListeners();
+    };
+
+    this.notifyPluginSetListeners = function () {
+      angular.forEach(this.pluginChangeListeners, function(callback) {
+        callback(this.plugin);
+      }.bind(this));
+    };
+
+    this.registerPluginSetCallback = function(id, callback) {
+      this.pluginChangeListeners[id] = callback;
+    };
+
+    this.unRegisterPluginSetCallback = function(id) {
+      delete this.pluginChangeListeners[id];
+    };
+
+    this.removePlugin = function(nodeId) {
+      this.plugin = null;
+      this.notifyPluginRemoveListeners(nodeId);
+    };
+
+    this.registerRemovePluginCallback = function(id, callback) {
+      this.pluginRemoveListeners[id] = callback;
+    };
+
+    this.notifyPluginRemoveListeners = function(nodeId) {
+      angular.forEach(this.pluginRemoveListeners, function(callback) {
+        callback(nodeId);
+      });
+    };
+
+    this.unRegisterRemovePluginCallback = function(id) {
+      delete this.pluginRemoveListeners[id];
+    };
+
+    this.notifyPluginSaveListeners = function(nodeId) {
+      angular.forEach(this.pluginSaveListeners, function(callback) {
+        callback(nodeId);
+      });
+    };
+
+    this.registerPluginSaveCallback = function(id, callback) {
+      this.pluginSaveListeners[id] = callback;
+    };
+
+    this.unRegisterPluginSaveCallback = function(id) {
+      delete this.pluginSaveListeners[id];
     };
 
   });

@@ -31,8 +31,8 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
-import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.batch.dataset.MultipleOutputs;
+import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.logging.context.MapReduceLoggingContext;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionAware;
@@ -40,7 +40,6 @@ import com.google.common.collect.Maps;
 import org.apache.hadoop.mapreduce.TaskInputOutputContext;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -64,7 +63,6 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
   private final long logicalStartTime;
   private final WorkflowToken workflowToken;
   private final Metrics userMetrics;
-  private final MetricsCollectionService metricsCollectionService;
   private final Map<String, Plugin> plugins;
 
   private MultipleOutputs multipleOutputs;
@@ -81,15 +79,12 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
                                    DiscoveryServiceClient discoveryServiceClient,
                                    MetricsCollectionService metricsCollectionService,
                                    DatasetFramework dsFramework,
-                                   LocationFactory locationFactory,
-                                   @Nullable PluginInstantiator pluginInstantiator) {
+                                   PluginInstantiator pluginInstantiator) {
     super(program, runId, runtimeArguments, datasets,
           getMetricCollector(program, runId.getId(), taskId, metricsCollectionService, type),
-          dsFramework, discoveryServiceClient, locationFactory,
-          pluginInstantiator);
+          dsFramework, discoveryServiceClient, pluginInstantiator);
     this.logicalStartTime = logicalStartTime;
     this.workflowToken = workflowToken;
-    this.metricsCollectionService = metricsCollectionService;
 
     if (metricsCollectionService != null) {
       this.userMetrics = new ProgramUserMetrics(getProgramMetrics());
@@ -191,10 +186,6 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
   @Override
   public Metrics getMetrics() {
     return userMetrics;
-  }
-
-  public MetricsCollectionService getMetricsCollectionService() {
-    return metricsCollectionService;
   }
 
   public LoggingContext getLoggingContext() {

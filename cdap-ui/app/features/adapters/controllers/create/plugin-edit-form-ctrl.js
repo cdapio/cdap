@@ -15,9 +15,8 @@
  */
 
 angular.module(PKG.name + '.feature.adapters')
-  .controller('PluginEditController', function($scope, PluginConfigFactory, myHelpers, EventPipe, $timeout, MyAppDAGService, $sce, $rootScope, GLOBALS) {
+  .controller('PluginEditController', function($scope, PluginConfigFactory, myHelpers, EventPipe, $timeout, MyAppDAGService, GLOBALS, MyNodeConfigService) {
     $scope.pluginCopy = {};
-    var saveWatch;
 
     var propertiesFromBackend = Object.keys($scope.plugin._backendProperties);
     // Make a local copy that is a mix of properties from backend + config from nodejs
@@ -35,43 +34,6 @@ angular.module(PKG.name + '.feature.adapters')
     this.configfetched = false;
     this.properties = [];
     this.noconfig = null;
-    if (MyAppDAGService.metadata.template.type === GLOBALS.etlBatch) {
-      this.infoPluginType = 'batch';
-    } else if (MyAppDAGService.metadata.template.type === GLOBALS.etlRealtime) {
-      this.infoPluginType = 'real-time';
-    }
-
-    this.infoPluginCategory = $scope.plugin.type + 's';
-
-    this.infoPluginName = $scope.plugin.name.toLowerCase();
-    if (this.infoPluginCategory === 'transforms') {
-      this.infoPluginCategory = 'transformations';
-      this.infoUrl = [
-        'http://docs.cask.co/cdap/',
-        $rootScope.cdapVersion,
-        '/en/application-templates/etl/templates/',
-        this.infoPluginCategory,
-        '/',
-        this.infoPluginName,
-        '.html?hidenav'
-      ].join('');
-    } else {
-      this.infoUrl = [
-        'http://docs.cask.co/cdap/',
-        $rootScope.cdapVersion ,
-        '/en/application-templates/etl/templates/',
-        this.infoPluginCategory,
-        '/',
-        this.infoPluginType,
-        '/',
-        this.infoPluginName,
-        '.html?hidenav'
-      ].join('');
-    }
-
-    this.trustSrc = function(src) {
-      return $sce.trustAsResourceUrl(src);
-    };
 
     this.noproperty = Object.keys(
       $scope.plugin._backendProperties || {}
@@ -129,16 +91,54 @@ angular.module(PKG.name + '.feature.adapters')
             this.config = res;
             this.noconfig = false;
 
-            saveWatch = $scope.$watch('pluginCopy', function() {
-              var strProp1 = JSON.stringify($scope.pluginCopy.properties);
-              var strProp2 = JSON.stringify($scope.plugin.properties);
-              var copyOutputSchema = JSON.stringify($scope.pluginCopy.outputSchema);
-              var originalOutputSchema = JSON.stringify($scope.plugin.outputSchema);
-              if ( (strProp1 !== strProp2) || (copyOutputSchema !== originalOutputSchema) ) {
+            if ($scope.plugin._backendProperties.schema) {
+              $scope.$watch('pluginCopy.outputSchema', function () {
+                if (!$scope.pluginCopy.outputSchema) {
+                  if ($scope.pluginCopy.properties && $scope.plugin.properties.schema) {
+                    $scope.pluginCopy.properties.schema = null;
+                  }
+                  return;
+                }
+
+                if (!$scope.pluginCopy.properties) {
+                  $scope.pluginCopy.properties = {};
+                }
+                if ($scope.pluginCopy.properties.schema !== $scope.pluginCopy.outputSchema) {
+                  $scope.pluginCopy.properties.schema = $scope.pluginCopy.outputSchema;
+                }
+              });
+            }
+
+            $scope.$watch('pluginCopy.label', function() {
+              var copyLabel = $scope.pluginCopy.label;
+              var originalLabel = $scope.plugin.label;
+              if (copyLabel !== originalLabel) {
                 $scope.data['isModelTouched'] = true;
-              } else {
-                $scope.data['isModelTouched'] = false;
               }
+            });
+
+            $scope.$watch('pluginCopy.errorDatasetName', function() {
+              var copyErrorDataset = $scope.pluginCopy.errorDatasetName;
+              var originalErrorDataset = $scope.plugin.errorDatasetName;
+              if (copyErrorDataset !== originalErrorDataset) {
+                $scope.data['isModelTouched'] = true;
+              }
+            });
+
+            $scope.$watch('pluginCopy.validationFields', function() {
+              var copyValidationFields = JSON.stringify($scope.pluginCopy.validationFields);
+              var originalValidationFields = JSON.stringify($scope.plugin.validationFields);
+              if (copyValidationFields !== originalValidationFields) {
+                $scope.data['isModelTouched'] = true;
+              }
+            });
+
+            $scope.$watch('pluginCopy.properties', function() {
+                var strProp1 = JSON.stringify($scope.pluginCopy.properties);
+                var strProp2 = JSON.stringify($scope.plugin.properties);
+                if (strProp1 !== strProp2) {
+                  $scope.data['isModelTouched'] = true;
+                }
             }, true);
 
           }.bind(this),
@@ -146,6 +146,13 @@ angular.module(PKG.name + '.feature.adapters')
             // TODO: Hacky. Need to fix this for am-fade-top animation for modals.
             $timeout(function() {
               $scope.pluginCopy = angular.copy($scope.plugin);
+              $scope.$watch('pluginCopy.properties', function() {
+                  var strProp1 = JSON.stringify($scope.pluginCopy.properties);
+                  var strProp2 = JSON.stringify($scope.plugin.properties);
+                  if (strProp1 !== strProp2) {
+                    $scope.data['isModelTouched'] = true;
+                  }
+              }, true);
               // Didn't receive a configuration from the backend. Fallback to all textboxes.
               this.noconfig = true;
               this.configfetched = true;
@@ -208,7 +215,11 @@ angular.module(PKG.name + '.feature.adapters')
     }
 
     this.reset = function () {
-      $scope.pluginCopy = angular.copy($scope.plugin);
+      $scope.pluginCopy.properties = angular.copy($scope.plugin.properties);
+      $scope.pluginCopy.outputSchema = angular.copy($scope.plugin.outputSchema);
+      $scope.pluginCopy.inputSchema = angular.copy($scope.plugin.inputSchema);
+      $scope.pluginCopy.errorDatasetName = angular.copy($scope.plugin.errorDatasetName);
+      EventPipe.emit('resetValidatorValidationFields', $scope.plugin.validationFields);
       $scope.data['isModelTouched'] = false;
       EventPipe.emit('plugin.reset');
     };
@@ -218,10 +229,14 @@ angular.module(PKG.name + '.feature.adapters')
     };
 
     this.save = function () {
-      if (validateSchema()) {
+      if (validateSchema() || $scope.plugin.name === 'Validator') {
         $scope.plugin.properties = angular.copy($scope.pluginCopy.properties);
         $scope.plugin.outputSchema = angular.copy($scope.pluginCopy.outputSchema);
+        $scope.plugin.errorDatasetName = angular.copy($scope.pluginCopy.errorDatasetName);
+        $scope.plugin.validationFields = angular.copy($scope.pluginCopy.validationFields);
+        $scope.plugin.label = $scope.pluginCopy.label;
         $scope.data['isModelTouched'] = false;
+        MyNodeConfigService.notifyPluginSaveListeners($scope.plugin.id);
       }
     };
 

@@ -73,7 +73,7 @@ import javax.ws.rs.HttpMethod;
  * Tests for {@link ArtifactHttpHandler}
  */
 public class ArtifactHttpHandlerTest extends AppFabricTestBase {
-  private static final ReflectionSchemaGenerator schemaGenerator = new ReflectionSchemaGenerator();
+  private static final ReflectionSchemaGenerator schemaGenerator = new ReflectionSchemaGenerator(false);
   private static final Type ARTIFACTS_TYPE = new TypeToken<Set<ArtifactSummary>>() { }.getType();
   private static final Type PLUGIN_SUMMARIES_TYPE = new TypeToken<Set<PluginSummary>>() { }.getType();
   private static final Type PLUGIN_INFOS_TYPE = new TypeToken<Set<PluginInfo>>() { }.getType();

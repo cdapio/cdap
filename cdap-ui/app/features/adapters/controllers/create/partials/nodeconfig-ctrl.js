@@ -23,10 +23,22 @@ angular.module(PKG.name + '.feature.adapters')
     $scope.data = {};
     $scope.data.isModelTouched = false;
 
-    MyNodeConfigService.registerPluginCallback(onPluginChange);
+    MyNodeConfigService.registerPluginSetCallback($scope.$id, onPluginChange);
+    MyNodeConfigService.registerRemovePluginCallback($scope.$id, onPluginRemoved);
+
+    function onPluginRemoved(nodeId) {
+      if ($scope.plugin && $scope.plugin.id === nodeId){
+        $scope.isValidPlugin = false;
+        $scope.data.isModelTouched = false;
+      }
+    }
 
     function onPluginChange(plugin) {
       var defer = $q.defer();
+      $scope.type = MyAppDAGService.metadata.template.type;
+      if (plugin && $scope.plugin && plugin.id === $scope.plugin.id) {
+        return;
+      }
       if (!$scope.data.isModelTouched) {
         switchPlugin(plugin);
         defer.resolve(true);
@@ -37,6 +49,7 @@ angular.module(PKG.name + '.feature.adapters')
               switchPlugin(plugin);
             },
             function no() {
+              MyNodeConfigService.resetPlugin($scope.plugin);
               console.log('User chose to stay in the same plugin');
             }
           );
@@ -48,7 +61,7 @@ angular.module(PKG.name + '.feature.adapters')
     function confirmPluginSwitch() {
       var defer = $q.defer();
 
-      var confirmInstance = $bootstrapModal.open({
+      $bootstrapModal.open({
         keyboard: false,
         templateUrl: '/assets/features/adapters/templates/partial/confirm.html',
         windowClass: 'modal-confirm',
@@ -61,8 +74,7 @@ angular.module(PKG.name + '.feature.adapters')
             $scope.$close('keep open');
           };
         }]
-      });
-      confirmInstance.result.then(function (closing) {
+      }).result.then(function (closing) {
         if (closing === 'close') {
           defer.resolve(true);
         } else {
@@ -77,13 +89,15 @@ angular.module(PKG.name + '.feature.adapters')
       $scope.isValidPlugin = false;
       // falsify the ng-if in the template for one tick so that the template gets reloaded
       // there by reloading the controller.
-      $timeout(function() {
-        $scope.isValidPlugin = Object.keys($scope.plugin).length;
-        $scope.isSource = false;
-        $scope.isTransform = false;
-        $scope.isSink = false;
-        configurePluginInfo();
-      });
+      $timeout(setPluginInfo);
+    }
+
+    function setPluginInfo() {
+      $scope.isValidPlugin = Object.keys($scope.plugin).length;
+      $scope.isSource = false;
+      $scope.isTransform = false;
+      $scope.isSink = false;
+      configurePluginInfo();
     }
 
     function configurePluginInfo() {
@@ -164,22 +178,6 @@ angular.module(PKG.name + '.feature.adapters')
             $scope.plugin.outputSchema = angular.copy(JSON.stringify(input)) || null;
           }
 
-          if ($scope.plugin._backendProperties.schema) {
-            $scope.$watch('plugin.outputSchema', function () {
-              if (!$scope.plugin.outputSchema) {
-                if ($scope.plugin.properties && $scope.plugin.properties.schema) {
-                  $scope.plugin.properties.schema = null;
-                }
-                return;
-              }
-
-              if (!$scope.plugin.properties) {
-                $scope.plugin.properties = {};
-              }
-              $scope.plugin.properties.schema = $scope.plugin.outputSchema;
-            });
-          }
-
           if ($scope.plugin.type === artifactTypeExtension.source) {
             $scope.isSource = true;
           }
@@ -231,5 +229,10 @@ angular.module(PKG.name + '.feature.adapters')
           return defer.promise;
         });
     }
+
+    $scope.$on('$destroy', function() {
+      MyNodeConfigService.unRegisterPluginSetCallback($scope.$id);
+      MyNodeConfigService.unRegisterRemovePluginCallback($scope.$id);
+    });
 
   });

@@ -35,7 +35,7 @@ import co.cask.cdap.internal.app.runtime.DataFabricFacade;
 import co.cask.cdap.internal.app.runtime.DataFabricFacadeFactory;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
-import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
+import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.service.http.BasicHttpServiceContext;
 import co.cask.cdap.internal.app.runtime.service.http.DelegatorContext;
 import co.cask.cdap.internal.app.runtime.service.http.HttpHandlerFactory;
@@ -59,7 +59,6 @@ import org.apache.twill.api.RunId;
 import org.apache.twill.api.ServiceAnnouncer;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -74,6 +73,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import javax.annotation.Nullable;
 
 /**
  * A guava Service which runs a {@link NettyHttpService} with a list of {@link HttpServiceHandler}s.
@@ -101,7 +101,6 @@ public class ServiceHttpServer extends AbstractIdleService {
   private final TransactionSystemClient txClient;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final BasicHttpServiceContextFactory contextFactory;
-  private final LocationFactory locationFactory;
   private final PluginInstantiator pluginInstantiator;
 
   private NettyHttpService service;
@@ -112,8 +111,8 @@ public class ServiceHttpServer extends AbstractIdleService {
                            int instanceId, int instanceCount, ServiceAnnouncer serviceAnnouncer,
                            MetricsCollectionService metricsCollectionService, DatasetFramework datasetFramework,
                            DataFabricFacadeFactory dataFabricFacadeFactory, TransactionSystemClient txClient,
-                           DiscoveryServiceClient discoveryServiceClient, LocationFactory locationFactory,
-                           PluginInstantiator pluginInstantiator) {
+                           DiscoveryServiceClient discoveryServiceClient,
+                           @Nullable PluginInstantiator pluginInstantiator) {
     this.host = host;
     this.program = program;
     this.spec = spec;
@@ -127,7 +126,6 @@ public class ServiceHttpServer extends AbstractIdleService {
     this.dataFabricFacadeFactory = dataFabricFacadeFactory;
     this.txClient = txClient;
     this.discoveryServiceClient = discoveryServiceClient;
-    this.locationFactory = locationFactory;
     this.pluginInstantiator = pluginInstantiator;
 
     this.contextFactory = createHttpServiceContextFactory();
@@ -169,9 +167,9 @@ public class ServiceHttpServer extends AbstractIdleService {
     return new BasicHttpServiceContextFactory() {
       @Override
       public BasicHttpServiceContext create(HttpServiceHandlerSpecification spec) {
-        return new BasicHttpServiceContext(spec, program, runId, instanceId, instanceCount, runtimeArgs,
-                                           metricsCollectionService, datasetFramework,
-                                           discoveryServiceClient, txClient, locationFactory, pluginInstantiator);
+        return new BasicHttpServiceContext(spec, program, runId, instanceId, instanceCount,
+                                           runtimeArgs, metricsCollectionService,
+                                           datasetFramework, discoveryServiceClient, txClient, pluginInstantiator);
       }
     };
   }

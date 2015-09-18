@@ -20,10 +20,16 @@ angular.module(PKG.name + '.commons')
       restrict: 'EA',
       scope: {
         model: '=runs',
-        type: '@'
+        type: '@',
+        appId: '=',
+        programId: '='
       },
       templateUrl: 'program-history/program-history.html',
-      controller: function ($scope) {
+      controller: function ($scope, $state) {
+
+        $scope.appId = $scope.appId || $state.params.appId;
+        $scope.programId = $scope.programId || $state.params.programId;
+
         $scope.currentPage = 1;
         $scope.$watch('model', function (newVal) {
             if (!angular.isArray(newVal)) {
