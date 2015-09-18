@@ -67,9 +67,12 @@ To create this application, called *streamETLApp*:
 
     PUT /v3/namespaces/default/apps/streamETLApp -d @config.json 
 
-- Using :ref:`CDAP CLI <cli>`::
+- Using :ref:`CDAP CLI <cli>`:
 
-    $ create app streamETLApp <path-to-config.json>
+  .. container:: highlight
+
+    .. parsed-literal::
+      |$| create app streamETLApp cdap-etl-batch |version| system <path-to-config.json>
 
 where ``config.json`` is the file that contains the application configuration.
 
@@ -118,7 +121,9 @@ stream after performing a projection transformation::
 An ETL Real-Time Application expects an instance property that will create *N* instances
 of the worker that run concurrently. In Standalone CDAP mode, this is implemented as
 multiple threads; in Distributed CDAP mode, it will create different YARN containers. The
-number of worker instances of a real-time application cannot be changed during runtime.
+number of worker instances of a real-time application should not (in general) be changed
+during runtime. If the number of instances needs to be changed, the worker must be
+stopped, then the application configuration must be updated to the new number of instances.
 
 The ``instances`` property value needs to be greater than 0. Note that the ``instance``
 property replaces the ``schedule`` property of an ETL Batch Application.
