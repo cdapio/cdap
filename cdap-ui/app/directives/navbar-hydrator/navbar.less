@@ -72,22 +72,6 @@ body {
       }
     }
 
-    div.hydrator-search {
-      float: left;
-      @media (max-width: @screen-xs-max) {
-        display: none;
-      }
-      div.input-group {
-        width: 275px;
-      }
-      input.form-control {
-        height: 58px;
-        &:focus {
-          outline: none;
-        }
-      }
-    }
-
     // TODO: Remove?
     my-error {
       display: none;
@@ -117,27 +101,6 @@ body {
               color: white;
             }
           }
-        }
-      }
-
-      div.hydrator-search {
-
-        input.form-control {
-          background-color: #1c1c1c;
-          border: 0;
-          color: white;
-          .box-shadow(none);
-          .placeholder-color();
-          &:focus {
-            border: 0;
-            .box-shadow(none);
-          }
-        }
-        span.input-group-addon {
-          background-color: #1c1c1c;
-          border: 0;
-          color: white;
-          .border-radius(0);
         }
       }
     }

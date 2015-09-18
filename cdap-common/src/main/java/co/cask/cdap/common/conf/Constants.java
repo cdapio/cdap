@@ -882,6 +882,7 @@ public final class Constants {
    * Constants for metadata service
    */
   public static final class Metadata {
+    public static final String SERVICE_DESCRIPTION = "Service to perform metadata operations.";
     public static final String SERVICE_BIND_ADDRESS = "metadata.service.bind.address";
     public static final String SERVICE_WORKER_THREADS = "metadata.service.worker.threads";
     public static final String SERVICE_EXEC_THREADS = "metadata.service.exec.threads";
@@ -889,5 +890,6 @@ public final class Constants {
     public static final String UPDATES_KAFKA_TOPIC = "metadata.updates.kafka.topic";
     public static final String UPDATES_PUBLISH_ENABLED = "metadata.updates.publish.enabled";
     public static final String UPDATES_KAFKA_BROKER_LIST = "metadata.updates.kafka.broker.list";
+    public static final String MAX_CHARS_ALLOWED = "metadata.max.allowed.chars";
   }
 }

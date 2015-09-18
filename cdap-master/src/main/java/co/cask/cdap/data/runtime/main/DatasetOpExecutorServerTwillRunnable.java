@@ -33,6 +33,7 @@ import co.cask.cdap.common.twill.AbstractMasterTwillRunnable;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
+import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.internal.app.store.DefaultStore;
@@ -41,6 +42,7 @@ import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metadata.MetadataService;
 import co.cask.cdap.metadata.MetadataServiceModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
+import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.proto.Id;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.Service;
@@ -104,6 +106,8 @@ public class DatasetOpExecutorServerTwillRunnable extends AbstractMasterTwillRun
       new ExploreClientModule(),
       new NamespaceClientRuntimeModule().getDistributedModules(),
       new MetadataServiceModule(),
+      new StreamAdminModules().getDistributedModules(),
+      new NotificationFeedClientModule(),
       new AbstractModule() {
         @Override
         protected void configure() {

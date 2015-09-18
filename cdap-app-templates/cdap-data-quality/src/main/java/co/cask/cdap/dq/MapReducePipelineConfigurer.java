@@ -23,7 +23,7 @@ import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.mapreduce.MapReduceConfigurer;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.plugin.PluginSelector;
-import co.cask.cdap.template.etl.api.PipelineConfigurer;
+import co.cask.cdap.etl.api.PipelineConfigurer;
 
 import javax.annotation.Nullable;
 

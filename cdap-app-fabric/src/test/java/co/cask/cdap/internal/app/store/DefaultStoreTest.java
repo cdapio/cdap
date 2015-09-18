@@ -67,6 +67,7 @@ import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
@@ -85,6 +86,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -951,7 +954,7 @@ public class DefaultStoreTest {
   }
 
   @Test
-  public void testRunningInRange() throws Exception {
+  public void testRunningInRangeSimple() throws Exception {
     Id.Run run1 = new Id.Run(Id.Program.from("d", "a1", ProgramType.FLOW, "f1"), RunIds.generate(20000).getId());
     Id.Run run2 = new Id.Run(Id.Program.from("d", "a2", ProgramType.MAPREDUCE, "f2"), RunIds.generate(10000).getId());
     Id.Run run3 = new Id.Run(Id.Program.from("d", "a3", ProgramType.WORKER, "f3"), RunIds.generate(40000).getId());
@@ -968,18 +971,93 @@ public class DefaultStoreTest {
 
     Assert.assertEquals(runsToTime(run1, run2), runIdsToTime(store.getRunningInRange(1, 30)));
     Assert.assertEquals(runsToTime(run1, run2, run5, run3), runIdsToTime(store.getRunningInRange(30, 50)));
-    Assert.assertEquals(runsToTime(run1, run2, run3, run4, run5, run5, run6),
+    Assert.assertEquals(runsToTime(run1, run2, run3, run4, run5, run6),
                         runIdsToTime(store.getRunningInRange(1, 71)));
-    Assert.assertEquals(runsToTime(run1, run2, run3, run4, run5, run5, run6),
+    Assert.assertEquals(runsToTime(run1, run2, run3, run4, run5, run6),
                         runIdsToTime(store.getRunningInRange(50, 71)));
     Assert.assertEquals(ImmutableSet.of(), runIdsToTime(store.getRunningInRange(1, 10)));
 
     writeStopRecord(run1, 45000);
     writeStopRecord(run3, 55000);
-    writeSusspendedRecord(run5);
+    writeSuspendedRecord(run5);
 
-    Assert.assertEquals(runsToTime(run2, run3, run4, run5, run5, run6),
+    Assert.assertEquals(runsToTime(run2, run3, run4, run5, run6),
                         runIdsToTime(store.getRunningInRange(50, 71)));
+  }
+
+  @SuppressWarnings("PointlessArithmeticExpression")
+  @Test
+  public void testRunningInRangeMulti() throws Exception {
+    // Add some run records
+    TreeSet<Long> allPrograms = new TreeSet<>();
+    TreeSet<Long> stoppedPrograms = new TreeSet<>();
+    TreeSet<Long> suspendedPrograms = new TreeSet<>();
+    TreeSet<Long> runningPrograms = new TreeSet<>();
+    for (int i = 0; i < 99; ++i) {
+      Id.Application application = Id.Application.from("default", "app" + i);
+      Id.Program program = Id.Program.from(application, ProgramType.values()[i % ProgramType.values().length],
+                                           "program" + i);
+      long startTime = (i + 1) * 10000;
+      RunId runId = RunIds.generate(startTime);
+      allPrograms.add(startTime);
+      Id.Run run = new Id.Run(program, runId.getId());
+      writeStartRecord(run);
+
+      // For every 3rd program starting from 0th, write stop record
+      if ((i % 3) == 0) {
+        writeStopRecord(run, startTime + 10);
+        stoppedPrograms.add(startTime);
+      }
+
+      // For every 3rd program starting from 1st, write suspended record
+      if ((i % 3) == 1) {
+        writeSuspendedRecord(run);
+        suspendedPrograms.add(startTime);
+      }
+
+      // The rest are running programs
+      if ((i % 3) == 2) {
+        runningPrograms.add(startTime);
+      }
+    }
+
+    // In all below assertions, TreeSet and metadataStore both have start time inclusive and end time exclusive.
+    // querying full range should give all programs
+    Assert.assertEquals(allPrograms, runIdsToTime(store.getRunningInRange(0, Long.MAX_VALUE)));
+    Assert.assertEquals(allPrograms, runIdsToTime(store.getRunningInRange(1 * 10, 100 * 10)));
+
+    // querying a range before start time of first program should give empty results
+    Assert.assertEquals(ImmutableSet.of(), runIdsToTime(store.getRunningInRange(1, 1 * 10)));
+
+    // querying a range after the stop time of the last program should return only running and suspended programs
+    Assert.assertEquals(ImmutableSortedSet.copyOf(Iterables.concat(suspendedPrograms, runningPrograms)),
+                        runIdsToTime(store.getRunningInRange(100 * 10, Long.MAX_VALUE)));
+
+    // querying a range completely within the start time of the first program and stop time of the last program
+    // should give all running and suspended programs started after given start time,
+    // and all stopped programs between given start and stop time.
+    Assert.assertEquals(ImmutableSortedSet.copyOf(
+                          Iterables.concat(stoppedPrograms.subSet(30 * 10000L, 60 * 10000L),
+                                           suspendedPrograms.subSet(1 * 10000L, 60 * 10000L),
+                                           runningPrograms.subSet(1 * 10000L, 60 * 10000L))),
+                        runIdsToTime(store.getRunningInRange(30 * 10, 60 * 10)));
+
+    // querying a range after start time of first program to after the stop time of the last program
+    // should give all running and suspended programs after start time of first program
+    // and all stopped programs after the given start time
+    Assert.assertEquals(ImmutableSortedSet.copyOf(
+                          Iterables.concat(stoppedPrograms.subSet(30 * 10000L, 150 * 10000L),
+                                           suspendedPrograms.subSet(1 * 10000L, 150 * 10000L),
+                                           runningPrograms.subSet(1 * 10000L, 150 * 10000L))),
+                        runIdsToTime(store.getRunningInRange(30 * 10, 150 * 10)));
+
+    // querying a range before start time of first program to before the stop time of the last program
+    // should give all running, suspended, and stopped programs from the first program to the given stop time
+    Assert.assertEquals(ImmutableSortedSet.copyOf(
+                          Iterables.concat(stoppedPrograms.subSet(1000L, 45 * 10000L),
+                                           suspendedPrograms.subSet(1000L, 45 * 10000L),
+                                           runningPrograms.subSet(1000L, 45 * 10000L))),
+                        runIdsToTime(store.getRunningInRange(1, 45 * 10)));
   }
   
   private void writeStartRecord(Id.Run run) {
@@ -993,7 +1071,7 @@ public class DefaultStoreTest {
     Assert.assertNotNull(store.getRun(run.getProgram(), run.getId()));
   }
 
-  private void writeSusspendedRecord(Id.Run run) {
+  private void writeSuspendedRecord(Id.Run run) {
     store.setSuspend(run.getProgram(), run.getId());
     Assert.assertNotNull(store.getRun(run.getProgram(), run.getId()));
   }
@@ -1005,16 +1083,16 @@ public class DefaultStoreTest {
         return RunIds.getTime(RunIds.fromString(input.getId()), TimeUnit.MILLISECONDS);
       }
     });
-    return ImmutableSet.copyOf(transformedRunIds);
+    return ImmutableSortedSet.copyOf(transformedRunIds);
   }
 
-  private Set<Long> runIdsToTime(Set<RunId> runIds) {
+  private SortedSet<Long> runIdsToTime(Set<RunId> runIds) {
     Iterable<Long> transformedRunIds = Iterables.transform(runIds, new Function<RunId, Long>() {
       @Override
       public Long apply(RunId input) {
         return RunIds.getTime(input, TimeUnit.MILLISECONDS);
       }
     });
-    return ImmutableSet.copyOf(transformedRunIds);
+    return ImmutableSortedSet.copyOf(transformedRunIds);
   }
 }
