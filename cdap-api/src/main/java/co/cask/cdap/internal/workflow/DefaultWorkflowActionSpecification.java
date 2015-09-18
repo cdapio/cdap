@@ -15,11 +15,7 @@
  */
 package co.cask.cdap.internal.workflow;
 
-import co.cask.cdap.api.workflow.WorkflowAction;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
-import co.cask.cdap.internal.lang.Reflections;
-import co.cask.cdap.internal.specification.DataSetFieldExtractor;
-import co.cask.cdap.internal.specification.PropertyFieldExtractor;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -41,25 +37,6 @@ public class DefaultWorkflowActionSpecification implements WorkflowActionSpecifi
   public DefaultWorkflowActionSpecification(String name, String description,
                                             Map<String, String> properties, Set<String> datasets) {
     this(null, name, description, properties, datasets);
-  }
-
-  public DefaultWorkflowActionSpecification(WorkflowAction action) {
-    WorkflowActionSpecification spec = action.configure();
-
-    Map<String, String> properties = new HashMap<>(spec.getProperties());
-    Set<String> datasets = new HashSet<>();
-    Reflections.visit(action, action.getClass(),
-                      new DataSetFieldExtractor(datasets),
-                      new PropertyFieldExtractor(properties));
-
-    // Add datasets that are specified in overriding configure with useDataset method
-    datasets.addAll(spec.getDatasets());
-
-    this.className = action.getClass().getName();
-    this.name = spec.getName();
-    this.description = spec.getDescription();
-    this.properties = Collections.unmodifiableMap(new HashMap<>(properties));
-    this.datasets = Collections.unmodifiableSet(new HashSet<>(datasets));
   }
 
   public DefaultWorkflowActionSpecification(String className, String name, String description,

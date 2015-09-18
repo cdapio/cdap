@@ -16,14 +16,17 @@
 package co.cask.cdap.internal.app.runtime.workflow;
 
 import co.cask.cdap.api.Predicate;
+import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.spark.SparkSpecification;
+import co.cask.cdap.api.workflow.AbstractWorkflowAction;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.WorkflowAction;
+import co.cask.cdap.api.workflow.WorkflowActionConfigurer;
 import co.cask.cdap.api.workflow.WorkflowActionNode;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.api.workflow.WorkflowConditionNode;
@@ -52,6 +55,7 @@ import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
+import co.cask.cdap.internal.app.workflow.DefaultWorkflowActionConfigurer;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.internal.workflow.DefaultWorkflowActionSpecification;
 import co.cask.cdap.internal.workflow.ProgramWorkflowAction;
@@ -220,12 +224,12 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     httpService.stopAndWait();
   }
 
-  private void executeAction(ApplicationSpecification appSpec, WorkflowActionNode node,
+  private void executeAction(WorkflowActionNode node,
                              InstantiatorFactory instantiator, final ClassLoader classLoader,
                              WorkflowToken token) throws Exception {
 
     final SchedulableProgramType programType = node.getProgram().getProgramType();
-    final WorkflowActionSpecification actionSpec = getActionSpecification(appSpec, node, programType);
+    final WorkflowActionSpecification actionSpec = getActionSpecification(node, programType);
 
     status.put(node.getNodeId(), node);
 
@@ -272,22 +276,15 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     store.updateWorkflowToken(workflowId, runId.getId(), token);
   }
 
-  private WorkflowActionSpecification getActionSpecification(ApplicationSpecification appSpec, WorkflowActionNode node,
+  private WorkflowActionSpecification getActionSpecification(WorkflowActionNode node,
                                                              SchedulableProgramType programType) {
     WorkflowActionSpecification actionSpec;
     ScheduleProgramInfo actionInfo = node.getProgram();
     switch (programType) {
       case MAPREDUCE:
-        MapReduceSpecification mapReduceSpec = appSpec.getMapReduce().get(actionInfo.getProgramName());
-        String mapReduce = mapReduceSpec.getName();
-        actionSpec = new DefaultWorkflowActionSpecification(new ProgramWorkflowAction(
-          mapReduce, mapReduce, SchedulableProgramType.MAPREDUCE));
-        break;
       case SPARK:
-        SparkSpecification sparkSpec = appSpec.getSpark().get(actionInfo.getProgramName());
-        String spark = sparkSpec.getName();
-        actionSpec = new DefaultWorkflowActionSpecification(new ProgramWorkflowAction(
-          spark, spark, SchedulableProgramType.SPARK));
+        actionSpec = DefaultWorkflowActionConfigurer.configureAction(
+          new ProgramWorkflowAction(actionInfo.getProgramName(), programType));
         break;
       case CUSTOM_ACTION:
         actionSpec = node.getActionSpecification();
@@ -404,7 +401,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     ((BasicWorkflowToken) token).setCurrentNode(node.getNodeId());
     switch (nodeType) {
       case ACTION:
-        executeAction(appSpec, (WorkflowActionNode) node, instantiator, classLoader, token);
+        executeAction((WorkflowActionNode) node, instantiator, classLoader, token);
         break;
       case FORK:
         executeFork(appSpec, (WorkflowForkNode) node, instantiator, classLoader, token);

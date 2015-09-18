@@ -56,9 +56,7 @@ final class WorkflowNodeCreator {
     Preconditions.checkArgument(action != null, "WorkflowAction is null.");
     WorkflowActionSpecification spec;
     if (action instanceof AbstractWorkflowAction) {
-      DefaultWorkflowActionConfigurer configurer = new DefaultWorkflowActionConfigurer(action);
-      ((AbstractWorkflowAction) action).configure(configurer);
-      spec = configurer.createSpecification();
+      spec = DefaultWorkflowActionConfigurer.configureAction((AbstractWorkflowAction) action);
     } else {
       spec = action.configure();
     }
