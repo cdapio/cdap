@@ -111,6 +111,14 @@ public class ETLWorker extends AbstractWorker {
   public void configure() {
     setName(NAME);
     setDescription("Worker Driver for Realtime ETL Adapters");
+    int instances = config.getInstances() != null ? config.getInstances() : 1;
+    if (instances < 1) {
+      throw new IllegalArgumentException("instances must be greater than 0.");
+    }
+    setInstances(instances);
+    if (config.getResources() != null) {
+      setResources(config.getResources());
+    }
 
     PipelineRegisterer registerer = new PipelineRegisterer(getConfigurer(), "realtime");
     // using table dataset type for error dataset
