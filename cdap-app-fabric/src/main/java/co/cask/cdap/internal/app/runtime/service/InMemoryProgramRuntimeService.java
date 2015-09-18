@@ -70,7 +70,7 @@ public final class InMemoryProgramRuntimeService extends AbstractProgramRuntimeS
   }
 
   @Override
-  public synchronized RuntimeInfo run(Program program, ProgramOptions options) {
+  public RuntimeInfo run(Program program, ProgramOptions options) {
     try {
       File tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR), cConf.get(Constants.AppFabric.TEMP_DIR));
       final File destinationUnpackedJarDir = new File(tmpDir, String.format("%s.%s",
