@@ -34,11 +34,251 @@ An *Artifact* is a snapshot artifact if the version suffix begins with SNAPSHOT.
 begins with SNAPSHOT. '1.2.3' is not a snapshot version because there is no suffix. '1.2.3-hadoop2'
 is also not a snapshot version because the suffix does not begin with SNAPSHOT.
 
-.. rubric:: Adding an Artifact
+Artifacts are managed using the :ref:`RESTful Artifact APIs <http-restful-api-artifact>`.
+
+.. rubric:: Deploying an Artifact
+
+An artifact is deployed through the RESTful API. If it contains an Application class, the artifact
+can then be used to create applications. Once an artifact is deployed, it cannot be changed, with
+the exception of snapshot versions of artifacts. Snapshot artifacts can be deployed multiple times,
+with each deployment overwriting the previous artifact. If a program is using a snapshot artifact,
+changes made to the artifact are picked up when the program is started. Once a program has started,
+it is unaffected by changes made to the artifact.
 
 .. rubric:: Plugin Artifacts
 
+Sometimes an application class exposes an interface that it expects other artifacts to implement.
+For example, CDAP ships with a ``cdap-etl-batch`` artifact that can be used to create ETL applications.
+The artifact exposes a ``batchsource`` interface that it expects others to implement.
+The cdap-etl-lib artifact contains several plugins that implement that interface. There is one source
+for databases, another for hdfs files, etc. To make plugins in one artifact available to
+another artifact, the plugin artifact must specify its parent artifacts. All of those parent artifacts
+will then be able to use those plugins. 
+
 .. rubric:: Deleting an Artifact
 
+Though artifacts cannot be modified once deployed, they can be deleted. Artifact deletion is an advanced
+feature and is only meant to be used if there was some error deploying the artifact. When an artifact is
+deleted, any application that is configured to use the artifact will be unable to start their programs.
+If a program is already running, it will be unaffected. If that running program is stopped, it will not
+be able to start again until the artifact is replaced, or the application is updated to use another
+artifact.
+
 .. rubric:: System Artifacts
+
+Normally an artifact is added to a specific namespace. Users in one namespace cannot see or use
+artifacts in another namespace. Sometimes there is a need to provide an artifact that can be used
+across namespaces. One example of this are the etl artifacts shipped with CDAP. In such scenarios,
+a system artifact can be used. System artifacts cannot be added through the RESTful API, but must be
+added by placing the artifact in a special directory. For distributed CDAP, this directory is defined
+by the ``app.artifact.dir`` setting in cdap-site.xml. It defaults to ``/opt/cdap/master/artifacts``.
+For CDAP standalone, the directory is set to the ``artifacts`` directory.
+
+Any artifact in the directory will be added to CDAP when it starts up. In addition, a RESTful API
+call can be made to scan the directory for any new artifacts that may have been added since CDAP
+started. If a system artifact contains plugins that extend another system artifact, a matching
+JSON config file must be provided to specify which artifacts it extends. In addition, if a system
+artifact is a 3rd party jar, the plugins in the artifact can be explicitly listed in that same config
+file. For example, suppose you want to add ``mysql-connector-java-5.1.3.jar`` as a system artifact. The
+artifact is the mysql jdbc driver, and is a 3rd party jar that we want to use as a jdbc plugin for
+the ``cdap-etl-batch`` artifact. You would place the JAR file in the artifacts directory along with a
+matching config file named ``mysql-connector-java-5.1.3.json``. The config file would contain::
+
+  {
+    "parents": [ "cdap-etl-batch[3.2.0,4.0.0)" ],
+    "plugins": [
+      {
+        "name": "mysql",
+        "type": "jdbc",
+        "description": "MYSQL JDBC external plugin",
+        "className": "com.mysql.jdbc.Driver"
+      }
+    ]
+  }
+
+This config file specifies that the artifact can be used by versions 3.2.0 (inclusive) to 4.0.0 (exclusive)
+of the cdap-etl-batch artifact. It also specifies that there is one plugin of type ``jdbc`` and name
+``mysql`` with class ``com.mysql.jdbc.Driver``. Once added, this system artifact would be usable by
+applications in all namespaces.
+
+.. rubric:: Example Use Case: Configurable Applications
+
+We will now walk through an example use case in order to illustrate how artifacts are used.
+In this example, we decide to implement an application class that reads from a stream and writes
+to a table using a flow. The stream it reads from and the table it writes to will be configurable.
+Our development team writes code that looks like::
+
+  public class MyApp extends AbstractApplication<MyApp.MyConfig> {
+  
+    public static class MyConfig extends Config {
+      private String stream;
+      private String table;
+  
+      private MyConfig() {
+        this.stream = "A";
+        this.table = "X";
+      }
+    }
+  
+    public void configure() {
+      MyConfig config = getContext().getConfig();
+      addStream(new Stream(config.stream));
+      createDataset(config.table, Table.class);
+      addFlow(new MyFlow(config.stream, config.table, config.flowConfig));
+    }
+  }
+  
+  public class MyFlow implements Flow {
+    private String stream;
+    private String table;
+  
+    MyFlow(String stream, String table) {
+      this.stream = stream;
+      this.table = table;
+    }
+  
+    @Override
+    public void configure() {
+      setName("MyFlow");
+      setDescription("Reads from a stream and writes to a table");
+      addFlowlet("reader", new Reader(table));
+      connectStream(stream, "reader");
+    }
+  }
+ 
+  public class Reader extends AbstractFlowlet {
+    @Property
+    private String tableName;
+    private Table table;
+   
+    Reader(String tableName) {
+      this.tableName = tableName;
+    }  
+
+    @Override
+    public void configure(FlowletConfigurer configurer) {
+      useDatasets(tableName);
+    }
+ 
+    @Override
+    public void initialize(FlowletContext context) throws Exception {
+      table = context.getDataset(tableName);
+    }
+ 
+    @ProcessInput
+    public void process(StreamEvent event) {
+      Put put = new Put(Bytes.toBytes(event.getHeaders().get(config.rowkey)));
+      put.add("timestamp", event.getTimestamp());
+      put.add("body", Bytes.toBytes(event.getBody()));
+      table.put(put);
+    }
+  }
+
+Our build system creates a jar named ``myapp-1.0.0.jar`` that contains the MyApp class.
+The jar is deployed via the RESTful API::
+
+  curl localhost:10000/v3/namespaces/default/artifacts/myapp --data-binary @myapp-1.0.0.jar
+
+CDAP determines the version is 1.0.0 by examining the Manifest file contained in the jar.
+Information about the artifact and the application class in the artifact are now visible
+through RESTful API calls::
+
+  curl localhost:10000/v3/namespaces/default/artifacts?scope=user
+  [ 
+    { "name": "myapp", "scope":"USER",  "version": "1.0.0" }
+  ]
+
+  curl localhost:10000/v3/namespaces/default/artifacts/myapp/versions/1.0.0
+  {
+    "classes": {
+      "apps": [
+        {
+          "className": "com.company.example.MyApp",
+          "configSchema": {
+            "fields": [
+              { "name": "stream", "type": [ "string", "null" ] },
+              { "name": "table", "type": [ "string", "null" ] }
+            ],
+            "name": "com.company.example.MyApp$MyConfig",
+            "type": "record"
+          },
+          "description": ""
+        }
+      ],
+      "plugins": []
+    },
+    "name": "myapp",
+    "scope": "USER",
+    "version": "1.0.0"
+  }
+
+With this information, a separate deployment team is able to see that the artifact contains
+an application class, and it contains a config that takes in a value for ``stream`` and ``table``.
+From this information, we decide to create an application named ``purchaseDump`` that reads
+from the ``purchases`` stream and writes to the ``events`` table::
+
+  curl -X PUT localhost:10000/v3/namespaces/default/apps/purchaseDump -H 'Content-Type: application/json' -d '
+  { 
+    "artifact": {
+      "name": "myapp",
+      "version": "1.0.0",
+      "scope": "user"
+    },
+    "config": {
+      "stream": "purchases",
+      "table": "events"
+    }
+  }' 
+
+We can then manage the lifecycle of the flow using the application lifecycle RESTful APIs.
+After it has been running for a while, a bug is found in the code. The development team provides
+a fix, and ``myapp-1.0.1.jar`` is released. The artifact is deployed::
+
+  curl localhost:10000/v3/namespaces/default/artifacts/myapp --data-binary @myapp-1.0.1.jar
+
+A call can be made to find all applications that use the old artifact::
+
+  curl localhost:10000/v3/namespaces/default/apps?artifactName=myapp&artifactVersion=1.0.0
+  [
+    {
+      "name": "purchaseDump",
+      "artifact": {
+        "name": "myapp",
+        "version": "1.0.0",
+        "scope": "user"
+      },
+      ...
+    }
+  ]
+
+The flow for the ``purchaseDump`` application is stopped, then the application is updated::
+
+  curl localhost:10000/v3/namespaces/default/apps/purchaseDump/update -d '
+  {
+    "artifact": {
+      "name": "myapp",
+      "version": "1.0.1",
+      "scope": "user"
+    },
+    "config": {
+      "stream": "purchases",
+      "table": "events"
+    }
+  }'
+
+The flow is started again, which picks up the new code. We quickly realize version 1.0.1 has a serious
+bug and decide to roll back to the previous version. The flow is stopped and another update call is made::
+
+  curl localhost:10000/v3/namespaces/default/apps/purchaseDump/update -d '
+  {
+    "artifact": {
+      "name": "myapp",
+      "version": "1.0.0",
+      "scope": "user"
+    },
+    "config": {
+      "stream": "purchases",
+      "table": "events"
+    }
+  }'
 

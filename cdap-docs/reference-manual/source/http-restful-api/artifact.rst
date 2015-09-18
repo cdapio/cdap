@@ -181,11 +181,11 @@ artifact (pretty-printed and reformatted to fit):
             "className": "co.cask.cdap.examples.wordcount.WordCount",
             "configSchema": {
               "fields": [
-                { "name": "stream", "type": [ "string, "null" ] },
-                { "name": "uniqueCountTable", "type": [ "string, "null" ] },
-                { "name": "wordAssocTable", "type": [ "string, "null" ] },
-                { "name": "wordCountTable", "type": [ "string, "null" ] },
-                { "name": "wordStatsTable", "type": [ "string, "null" ] }
+                { "name": "stream", "type": [ "string", "null" ] },
+                { "name": "uniqueCountTable", "type": [ "string", "null" ] },
+                { "name": "wordAssocTable", "type": [ "string", "null" ] },
+                { "name": "wordCountTable", "type": [ "string", "null" ] },
+                { "name": "wordStatsTable", "type": [ "string", "null" ] }
               ],
               "name": "co.cask.cdap.examples.wordcount.WordCount$WordCountConfig",
               "type": "record"
