@@ -105,7 +105,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     }
 
     final RuntimeInfo runtimeInfo = createRuntimeInfo(runner.run(program, optionsWithPlugins), program);
-    programStarted(runtimeInfo, cleanUpTask);
+    monitorProgram(runtimeInfo, cleanUpTask);
     return runtimeInfo;
   }
 
@@ -239,18 +239,12 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
 
   @Override
   public Map<RunId, RuntimeInfo> list(final Id.Program program) {
-    Lock lock = runtimeInfosLock.readLock();
-    lock.lock();
-    try {
-      return Maps.filterValues(list(program.getType()), new Predicate<RuntimeInfo>() {
-        @Override
-        public boolean apply(RuntimeInfo info) {
-          return info.getProgramId().equals(program);
-        }
-      });
-    } finally {
-      lock.unlock();
-    }
+    return Maps.filterValues(list(program.getType()), new Predicate<RuntimeInfo>() {
+      @Override
+      public boolean apply(RuntimeInfo info) {
+        return info.getProgramId().equals(program);
+      }
+    });
   }
 
   @Override
@@ -287,14 +281,20 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     lock.lock();
     try {
       if (!runtimeInfos.contains(type, runId)) {
-        runtimeInfos.put(type, runId, programStarted(runtimeInfo, createCleanupTask()));
+        monitorProgram(runtimeInfo, createCleanupTask());
       }
     } finally {
       lock.unlock();
     }
   }
 
-  private RuntimeInfo programStarted(final RuntimeInfo runtimeInfo, final Runnable cleanUpTask) {
+  /**
+   * Starts monitoring a running program.
+   *
+   * @param runtimeInfo information about the running program
+   * @param cleanUpTask task to run when program finished
+   */
+  private void monitorProgram(final RuntimeInfo runtimeInfo, final Runnable cleanUpTask) {
     final ProgramController controller = runtimeInfo.getController();
     controller.addListener(new AbstractListener() {
 
@@ -320,8 +320,6 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
         remove(runtimeInfo, cleanUpTask);
       }
     }, Threads.SAME_THREAD_EXECUTOR);
-
-    return runtimeInfo;
   }
 
   private void add(RuntimeInfo runtimeInfo) {
