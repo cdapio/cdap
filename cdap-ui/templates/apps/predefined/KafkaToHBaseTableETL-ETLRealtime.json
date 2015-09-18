@@ -21,7 +21,6 @@
             "name": "Table",
             "properties": {
                 "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"name\",\"type\":\"string\"},{\"name\":\"address\",\"type\":\"string\"},{\"name\":\"city\",\"type\":\"string\"},{\"name\":\"state\",\"type\":\"string\"},{\"name\":\"country\",\"type\":\"string\"},{\"name\":\"zipcode\",\"type\":\"int\"}]}",
-                "case.sensitive.row.field": "yes",
                 "name": "logs",
                 "schema.row.field": "name"
             }

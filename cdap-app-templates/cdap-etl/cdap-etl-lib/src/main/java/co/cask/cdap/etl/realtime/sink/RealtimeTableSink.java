@@ -73,8 +73,7 @@ public class RealtimeTableSink extends RealtimeSink<StructuredRecord> {
     if (schemaString != null) {
       outputSchema = Schema.parseJson(schemaString);
     }
-    recordPutTransformer = new RecordPutTransformer(tableSinkConfig.getRowField(), outputSchema,
-                                                    tableSinkConfig.isRowFieldCaseInsensitive());
+    recordPutTransformer = new RecordPutTransformer(tableSinkConfig.getRowField(), outputSchema);
   }
 
   @Override
