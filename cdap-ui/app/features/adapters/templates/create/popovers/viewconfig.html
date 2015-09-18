@@ -14,20 +14,12 @@
   the License.
 -->
 
-<div class="modal-header">
-  <div class="col-xs-10">
-    <h3 class="modal-title"> Export Pipeline Configuration </h3>
-  </div>
-  <div class="col-xs-2">
-    <div class="modal-btns">
-      <div class="pull-right">
-        <a class="btn" ng-click="$close()">
-          <span class="fa fa-remove"></span>
-          <span class="sr-only"> Close </span>
-        </a>
-      </div>
-    </div>
-  </div>
+<div class="modal-header clearfix">
+  <h3 class="pull-left">Export Pipeline Configuration</h3>
+  <a class="btn pull-right" ng-click="$close()">
+    <span class="fa fa-remove"></span>
+    <span class="sr-only"> Close </span>
+  </a>
 </div>
 <div class="modal-body config-modal">
   <fieldset disabled="true" class="view-plugin-json">

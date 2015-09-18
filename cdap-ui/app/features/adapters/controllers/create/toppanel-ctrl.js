@@ -111,7 +111,7 @@ angular.module(PKG.name + '.feature.adapters')
           $bootstrapModal.open({
             templateUrl: '/assets/features/adapters/templates/create/popovers/viewconfig.html',
             size: 'lg',
-            windowClass: 'adapter-modal',
+            windowClass: 'cdap-modal',
             keyboard: true,
             controller: ['$scope', 'config', 'CanvasFactory', 'MyAppDAGService', function($scope, config, CanvasFactory, MyAppDAGService) {
               $scope.config = JSON.stringify(config);
