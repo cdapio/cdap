@@ -2,7 +2,7 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2015 Cask Data, Inc.
 
-.. _advanced-custom-app-template:
+.. _included-apps-custom-etl-plugins:
 
 ===========================
 Creating Custom ETL Plugins
@@ -12,7 +12,7 @@ Overview
 ========
 This section is intended for developers writing custom ETL plugins.
 Users of these should refer to the :ref:`Application Templates
-<apptemplates-index>`.
+<included-apps-index>`.
 
 
 Creating Custom ETL Plugins
@@ -25,7 +25,7 @@ To make a custom plugin available to one of the application templates (and thus 
 to any adapter created from one of the templates), the plugin should be packaged as a bundle jar
 and then placed in the appropriate directory. 
 
-.. _advanced-custom-app-template-installation-directory:
+.. _included-apps-custom-etl-plugins-installation-directory:
 
 Installation Directory
 ----------------------

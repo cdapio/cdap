@@ -2,7 +2,7 @@
     :author: Cask Data, Inc.
     :copyright: Copyright • 2015 Cask Data, Inc.
 
-.. _included-apps-etl-shared-plugins-corevalidator:
+.. _included-apps-etl-plugins-shared-core-validator:
 
 =============================
 Shared Plugins: CoreValidator

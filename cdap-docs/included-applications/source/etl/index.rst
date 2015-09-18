@@ -125,7 +125,7 @@ The sources, transformations and sinks are generically called plugins. Plugins p
 way to extend the functionality of existing templates. An adapter can be created with
 existing plugins or, if the user wishes, they can write their own source, transform, and
 sink plugins to add their own. You can write your own validator using functions supplied in
-either the :ref:`CoreValidator <included-apps-etl-validators-corevalidator>` or implement your own.
+either the :ref:`CoreValidator <included-apps-etl-plugins-shared-core-validator>` or implement your own.
 
 
 Template and Plugin Details

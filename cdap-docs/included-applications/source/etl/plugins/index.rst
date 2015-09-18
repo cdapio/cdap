@@ -4,33 +4,37 @@
 
 .. :hide-toc: true
 
-.. _included-apps-etl-templates:
+.. _included-apps-etl-plugins:
 
-========================
-ETL Template and Plugins 
-========================
+===========
+ETL Plugins 
+===========
 
 .. rubric:: Introduction
 
-Details of templates and the required properties for sources, transformations, and sinks
+Details of the required properties for sources, transformations (transforms), and sinks
 can be explored using RESTful APIs.
 
-If you are creating a custom plugin to add to either the existing templates or your own
-template, its name needs to not collide with existing names.
+If you are creating a custom plugin to extend the existing system artifacts, its name
+needs to not collide with existing names.
 
-Shipped with CDAP as part of the *ETL Batch* and *ETL Realtime* application templates, the
-plugins listed below are available for creating ETL adapters.
+Shipped with CDAP as part of the *cdap-etl-lib-artifact*, the plugins listed below are
+available for creating ETL applications.
 
 
 .. toctree::
    :maxdepth: 3
    
-    Sources <sources/index>
-    Transformations <transformations/index>
-    Sinks <sinks/index>
-    Shared Plugins <shared-plugins/index.rst>
-    
-.. rubric:: Exploring Application Template Details
+    Batch Sources <batchsources/index>
+    Real-time Sources <realtimesources/index>
+    Transformations <transforms/index>
+    Batch Sinks <batchsinks/index>
+    Real-time Sinks <realtimesinks/index>
+    Shared Plugins <shared-plugins/index>
+    Third-Party Jars <third-party>
 
-Details on the available application templates can be obtained using the
-:ref:`Application Template and Adapters HTTP RESTful API <http-restful-api-apptemplates>`.
+  
+.. rubric:: Exploring Plugin Details
+
+Details on the available plugins can be obtained using the
+:ref:`Artifacts HTTP RESTful API <http-restful-api-artifacts>`.

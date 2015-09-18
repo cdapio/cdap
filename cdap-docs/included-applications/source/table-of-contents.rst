@@ -12,8 +12,7 @@ CDAP Included Applications Table of Contents
     Introduction <index>
     ETL Overview <etl/index>
     ETL Plugins <etl/plugins/index>
+    Using Third-Party JARs <etl/plugins/third-party>
     Creating an ETL Application <etl/creating>
-    ETL Application Lifecycle <etl/operations>
     Creating Custom ETL Plugins <etl/custom>
-    Using Third-party JARs <etl/third-party>
     
