@@ -383,15 +383,16 @@ public class DefaultBusinessMetadataStore implements BusinessMetadataStore {
    * Search to the underlying Business Metadata Dataset.
    */
   @Override
-  public Iterable<BusinessMetadataRecord> searchMetadata(final String searchQuery) {
-    return searchMetadataOnType(searchQuery, MetadataSearchTargetType.ALL);
+  public Iterable<BusinessMetadataRecord> searchMetadata(final String namespaceId, final String searchQuery) {
+    return searchMetadataOnType(namespaceId, searchQuery, MetadataSearchTargetType.ALL);
   }
 
   /**
    * Search to the underlying Business Metadata Dataset for a target type.
    */
   @Override
-  public Iterable<BusinessMetadataRecord> searchMetadataOnType(final String searchQuery,
+  public Iterable<BusinessMetadataRecord> searchMetadataOnType(final String namespaceId,
+                                                               final String searchQuery,
                                                                final MetadataSearchTargetType type) {
     return execute(new TransactionExecutor.Function<BusinessMetadataDataset, Iterable<BusinessMetadataRecord>>() {
       @Override
@@ -400,10 +401,10 @@ public class DefaultBusinessMetadataStore implements BusinessMetadataStore {
         // Check for existence of separator char to make sure we did search in the right indexed column.
         if (searchQuery.contains(BusinessMetadataDataset.KEYVALUE_SEPARATOR)) {
           // key=value search
-          return input.findBusinessMetadataOnKeyValue(searchQuery, type);
+          return input.findBusinessMetadataOnKeyValue(namespaceId, searchQuery, type);
         }
         // value search
-        return input.findBusinessMetadataOnValue(searchQuery, type);
+        return input.findBusinessMetadataOnValue(namespaceId, searchQuery, type);
       }
     });
   }

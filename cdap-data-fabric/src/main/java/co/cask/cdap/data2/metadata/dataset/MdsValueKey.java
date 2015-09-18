@@ -87,9 +87,19 @@ public class MdsValueKey {
   public static Id.NamespacedId getNamespaceIdFromKey(String type, MDSKey key) {
     MDSKey.Splitter keySplitter = key.split();
 
-    // The rowkey is [rowPrefix][targetType][targetId][metadata-type][key], so skip the first string.
+    // The rowkey is [rowPrefix][targetType][targetId][metadata-type][key], so skip the first two.
     keySplitter.skipBytes();
     keySplitter.skipString();
     return KeyHelper.getNamespaceIdFromKey(keySplitter, type);
+  }
+
+  public static String getNamespaceId(MDSKey key) {
+    MDSKey.Splitter keySplitter = key.split();
+
+    // The rowkey is [rowPrefix][targetType][targetId][metadata-type][key], so skip the first two.
+    keySplitter.skipBytes();
+    keySplitter.skipString();
+    // We are getting the first part of [targetId] which always be the namespace id.
+    return keySplitter.getString();
   }
 }
