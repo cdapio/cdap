@@ -49,6 +49,11 @@ angular.module(PKG.name + '.commons')
           if ($scope.config['property-watch']) {
             watchProperty = $scope.config['property-watch'];
 
+            // changing the format when it is stream
+            EventPipe.on('dataset.selected', function (schema, format) {
+              $scope.pluginProperties[watchProperty] = format;
+            });
+
             $scope.$watch(function () {
               return $scope.pluginProperties[watchProperty];
             }, changeFormat);

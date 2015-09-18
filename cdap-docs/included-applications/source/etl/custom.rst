@@ -344,7 +344,7 @@ Methods
 Below is an example of a ``DuplicateTransform`` that emits copies of the incoming record
 based on the value in the record. In addition, a user metric indicating the number of
 copies in each transform is emitted. The user metrics can be queried by using the CDAP 
-:ref:`RESTful API<http-restful-api-apptemplates-adapter-metrics>`::
+:ref:`RESTful Metrics API<http-restful-api-metrics>`::
 
 
   @Plugin(type = "transform")

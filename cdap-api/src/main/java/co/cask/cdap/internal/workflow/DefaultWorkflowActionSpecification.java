@@ -38,30 +38,33 @@ public class DefaultWorkflowActionSpecification implements WorkflowActionSpecifi
   private final Map<String, String> properties;
   private final Set<String> datasets;
 
+  /**
+   * This constructor does not set the class name, which will cause null pointer exceptions
+   * when serializing the action spec. But we have to keep this for backward-compatibility,
+   * because {@link co.cask.cdap.api.workflow.WorkflowActionSpecification.Builder} uses it,
+   * and it cannot enforce that the class name be set. Therefore, we must fix the specs
+   * produced by this constructor using the second constructor. This can go away as soon
+   * as we remove the deprecated builder-style configure method from WorkflowAction.
+   */
+  @Deprecated
   public DefaultWorkflowActionSpecification(String name, String description,
                                             Map<String, String> properties, Set<String> datasets) {
     this(null, name, description, properties, datasets);
   }
 
-  public DefaultWorkflowActionSpecification(WorkflowAction action) {
-    WorkflowActionSpecification spec = action.configure();
-
-    Map<String, String> properties = new HashMap<>(spec.getProperties());
-    Set<String> datasets = new HashSet<>();
-    Reflections.visit(action, action.getClass(),
-                      new DataSetFieldExtractor(datasets),
-                      new PropertyFieldExtractor(properties));
-
-    // Add datasets that are specified in overriding configure with useDataset method
-    datasets.addAll(spec.getDatasets());
-
-    this.className = action.getClass().getName();
-    this.name = spec.getName();
-    this.description = spec.getDescription();
-    this.properties = Collections.unmodifiableMap(new HashMap<>(properties));
-    this.datasets = Collections.unmodifiableSet(new HashSet<>(datasets));
+  /**
+   * Fix a spec created with the first constructor, in builder-style workflow action configuration,
+   * by adding the class name of the acton. This can go away as soon
+   * as we remove the deprecated builder-style configure method from WorkflowAction.
+   */
+  @Deprecated
+  public DefaultWorkflowActionSpecification(WorkflowActionSpecification spec, WorkflowAction action) {
+    this(action.getClass().getName(), spec.getName(), spec.getDescription(), spec.getProperties(), spec.getDatasets());
   }
 
+  /**
+   * Constructor be used by WorkflowActionConfigurer during workflow action configuration.
+   */
   public DefaultWorkflowActionSpecification(String className, String name, String description,
                                             Map<String, String> properties, Set<String> datasets) {
     this.className = className;

@@ -34,12 +34,7 @@
   <div class="bottompanel-header clearfix" ng-init="showinfo = false">
     <div class="pull-left">
       <h3>{{plugin.name}} Properties</h3>
-      <p>
-        <span tooltip="{{plugin.description}}"
-              tooltip-append-to-body="true">
-          {{plugin.description}}
-        </span>
-      </p>
+      <p>{{plugin.description}}</p>
     </div>
     <div class="btn-group pull-right">
       <div ng-if="!isDisabled" class="non-info">
@@ -68,7 +63,9 @@
         </div>
 
         <div ng-if="PluginEditController.noproperty === 0">
-          <div ng-include="'/assets/features/adapters/templates/create/popovers/plugin-edit-noproperty-form.html'"></div>
+          <div class="well well-lg">
+            <p>No Properties for this Plugin.</p>
+          </div>
         </div>
       </div>
 
@@ -79,10 +76,6 @@
         </h3>
       </div>
 
-    </div>
-
-    <div ng-show="showinfo" class="embed-responsive embed-responsive-4by3">
-      <iframe class="ember-responsive-item" src="{{PluginEditController.trustSrc(PluginEditController.infoUrl)}}"></iframe>
     </div>
 
   </div>

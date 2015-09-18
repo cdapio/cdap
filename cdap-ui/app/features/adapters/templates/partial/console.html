@@ -14,6 +14,26 @@
   the License.
 -->
 
-<div class="text-center">
-  <p>Console tab</p>
+<div ng-controller="ConsoleTabController as ConsoleTabController">
+
+  <div class="bottompanel-body">
+    <div class="console-wrapper">
+      <div class="pull-right">
+        <div class="btn btn-default"
+             ng-disabled="ConsoleTabController.messages.length === 0"
+             ng-click="ConsoleTabController.clearMessages()">
+          Clear
+        </div>
+      </div>
+      <div ng-repeat="message in ConsoleTabController.messages track by $index">
+        <pre ng-class="{'text-danger': message.type === 'error', 'text-info': message.type === 'info', 'text-success': message.type === 'success'}">{{message.content}}</pre>
+      </div>
+
+      <div ng-if="ConsoleTabController.messages.length === 0">
+        <pre>No messages as of now.</pre>
+      </div>
+    </div>
+
+  </div>
+
 </div>

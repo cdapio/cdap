@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .controller('MyDAGController', function MyDAGController(jsPlumb, $scope, $timeout, MyAppDAGService, myHelpers, MyDAGFactory, $window, $popover, $rootScope, EventPipe, GLOBALS, MyNodeConfigService) {
+  .controller('MyDAGController', function MyDAGController(jsPlumb, $scope, $timeout, MyAppDAGService, myHelpers, MyDAGFactory, $window, $popover, $rootScope, EventPipe, GLOBALS, MyNodeConfigService, AdapterErrorFactory) {
     this.plugins = $scope.config || [];
     this.MyAppDAGService = MyAppDAGService;
     this.isDisabled = $scope.isDisabled;
@@ -32,16 +32,48 @@ angular.module(PKG.name + '.commons')
         if (plug.id === plugin.id) {
           plug.selected = true;
         }
-      });
+        this.highlightRequiredFields(plug);
+      }.bind(this));
     };
 
     this.addPlugin = function addPlugin(config, type) {
       closeAllPopovers();
+      var plugin;
       this.plugins.push(angular.extend({
         icon: MyDAGFactory.getIcon(config.name)
       }, config));
+
+      plugin = this.plugins[this.plugins.length-1];
+      this.highlightRequiredFields(plugin);
       $timeout(drawNode.bind(this, config.id, type));
       $timeout(this.instance.repaintEverything);
+    };
+
+    this.highlightRequiredFields = function(plugin) {
+      if (!angular.isObject(plugin)) {
+        angular.forEach(MyAppDAGService.nodes, function(plug, pluginId) {
+          if (plugin === pluginId) {
+            plugin = plug;
+          }
+        });
+      }
+
+      AdapterErrorFactory.isValidPlugin(plugin);
+
+      this.plugins.forEach(function(p) {
+        if (p.id === plugin.id) {
+          if (plugin.valid) {
+            p.requiredFieldCount = 0;
+            p.error = false;
+            p.warning = false;
+          } else {
+            p.requiredFieldCount = plugin.requiredFieldCount;
+            p.error = {};
+            p.error.message = 'Missing required fields';
+            p.warning = true;
+          }
+        }
+      });
     };
 
     this.removePlugin = function(index, nodeId) {
@@ -63,9 +95,6 @@ angular.module(PKG.name + '.commons')
       });
 
       plugin.selected = true;
-      if (plugin.error) {
-        delete plugin.error;
-      }
       MyAppDAGService.editPluginProperties($scope, plugin.id, plugin.type);
     };
 
@@ -78,8 +107,17 @@ angular.module(PKG.name + '.commons')
       angular.forEach(this.plugins, function (plugin) {
         if (errObj[plugin.id]) {
           plugin.error = errObj[plugin.id];
+          plugin.warning = false;
         } else if (plugin.error) {
-          delete plugin.error;
+          // The nodes could just lie there on the canvas without connected.
+          // In such cases there might still be some required fields not set in those nodes.
+          // we would still want to show them as a warning.
+          AdapterErrorFactory.isValidPlugin(plugin);
+          if (plugin.valid) {
+            delete plugin.error;
+          } else {
+            plugin.warning = false;
+          }
         }
       });
     }
@@ -253,6 +291,8 @@ angular.module(PKG.name + '.commons')
     }
 
     $scope.$on('$destroy', function() {
+      MyNodeConfigService.unRegisterPluginResetCallback($scope.$id);
+      MyNodeConfigService.unRegisterPluginSaveCallback($scope.$id);
       closeAllPopovers();
       angular.forEach(popoverScopes, function (s) {
         s.$destroy();
@@ -312,6 +352,9 @@ angular.module(PKG.name + '.commons')
         this.plugins = [];
         angular.forEach(MyAppDAGService.nodes, function(node) {
           this.plugins.push(node);
+          if (node._backendProperties) {
+            this.highlightRequiredFields(this.plugins[this.plugins.length -1]);
+          }
         }.bind(this));
         $timeout(this.drawGraph.bind(this));
     }
@@ -320,7 +363,8 @@ angular.module(PKG.name + '.commons')
       resetComponent.call(this);
     }
 
-    MyNodeConfigService.registerPluginResetCallback(this.resetPluginSelection.bind(this));
+    MyNodeConfigService.registerPluginResetCallback($scope.$id, this.resetPluginSelection.bind(this));
+    MyNodeConfigService.registerPluginSaveCallback($scope.$id, this.highlightRequiredFields.bind(this));
     MyAppDAGService.registerCallBack(this.addPlugin.bind(this));
     MyAppDAGService.registerResetCallBack(resetComponent.bind(this));
   });

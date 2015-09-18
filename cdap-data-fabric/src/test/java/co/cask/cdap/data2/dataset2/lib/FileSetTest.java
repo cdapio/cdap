@@ -20,7 +20,6 @@ import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetArguments;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
-import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
@@ -128,7 +127,7 @@ public class FileSetTest {
   }
 
   @Test
-  public void testAbsolutePath() throws IOException, DatasetManagementException, ServiceUnavailableException {
+  public void testAbsolutePath() throws IOException, DatasetManagementException {
     String absolutePath = tmpFolder.newFolder() + "/absolute/path";
     dsFrameworkUtil.createInstance("fileSet", testFileSetInstance3, FileSetProperties.builder()
       .setBasePath(absolutePath).build());
@@ -151,7 +150,7 @@ public class FileSetTest {
   }
 
   @Test(expected = DataSetException.class)
-  public void testAbsolutePathInsideCDAP() throws IOException, DatasetManagementException, ServiceUnavailableException {
+  public void testAbsolutePathInsideCDAP() throws IOException, DatasetManagementException {
     String absolutePath = dsFrameworkUtil.getConfiguration().get(Constants.CFG_LOCAL_DATA_DIR).concat("/hello");
     dsFrameworkUtil.createInstance("fileSet",
                                    Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "badFileSet"),
@@ -159,8 +158,7 @@ public class FileSetTest {
   }
 
   @Test(expected = DataSetException.class)
-  public void testAbsolutePathInsideCDAPDouble() throws IOException, DatasetManagementException,
-    ServiceUnavailableException {
+  public void testAbsolutePathInsideCDAPDouble() throws IOException, DatasetManagementException {
     // test that it rejects also paths that have // in them
     String absolutePath = dsFrameworkUtil.getConfiguration()
       .get(Constants.CFG_LOCAL_DATA_DIR).replace("/", "//").concat("/hello");
@@ -170,15 +168,14 @@ public class FileSetTest {
   }
 
   @Test
-  public void testAbsolutePathLooksLikeCDAP() throws IOException, DatasetManagementException,
-    ServiceUnavailableException {
+  public void testAbsolutePathLooksLikeCDAP() throws IOException, DatasetManagementException {
     String absolutePath = dsFrameworkUtil.getConfiguration().get(Constants.CFG_LOCAL_DATA_DIR).concat("-hello");
     dsFrameworkUtil.createInstance("fileSet", testFileSetInstance4,
                                    FileSetProperties.builder().setBasePath(absolutePath).build());
   }
 
   @Test
-  public void testExternalAbsolutePath() throws IOException, DatasetManagementException, ServiceUnavailableException {
+  public void testExternalAbsolutePath() throws IOException, DatasetManagementException {
     // create an external dir and create a file in it
     String absolutePath = tmpFolder.newFolder() + "/absolute/path";
     File absoluteFile = new File(absolutePath);
@@ -219,8 +216,7 @@ public class FileSetTest {
   }
 
   @Test(expected = IOException.class)
-  public void testExternalNonExistentPath() throws IOException, DatasetManagementException,
-    ServiceUnavailableException {
+  public void testExternalNonExistentPath() throws IOException, DatasetManagementException {
     // create an external dir and create a file in it
     String absolutePath = tmpFolder.newFolder() + "/not/there";
     // attempt to create an external dataset - should fail

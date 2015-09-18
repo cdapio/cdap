@@ -17,6 +17,7 @@
 package co.cask.cdap.explore.executor;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.ExploreService;
 import co.cask.cdap.explore.service.HandleNotFoundException;
 import co.cask.cdap.proto.ColumnDesc;
@@ -34,6 +35,7 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
@@ -52,13 +54,14 @@ public class QueryExecutorHttpHandler extends AbstractQueryExecutorHttpHandler {
   private final ExploreService exploreService;
 
   @Inject
-  public QueryExecutorHttpHandler(ExploreService exploreService) {
+  QueryExecutorHttpHandler(ExploreService exploreService) {
     this.exploreService = exploreService;
   }
 
   @DELETE
   @Path("data/explore/queries/{id}")
-  public void closeQuery(HttpRequest request, HttpResponder responder, @PathParam("id") String id) {
+  public void closeQuery(HttpRequest request, HttpResponder responder,
+                         @PathParam("id") String id) throws ExploreException {
     try {
       QueryHandle handle = QueryHandle.fromId(id);
       if (!handle.equals(QueryHandle.NO_OP)) {
@@ -70,15 +73,13 @@ public class QueryExecutorHttpHandler extends AbstractQueryExecutorHttpHandler {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (HandleNotFoundException e) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
   @GET
   @Path("data/explore/queries/{id}/status")
-  public void getQueryStatus(HttpRequest request, HttpResponder responder, @PathParam("id") String id) {
+  public void getQueryStatus(HttpRequest request, HttpResponder responder,
+                             @PathParam("id") String id) throws ExploreException {
     try {
       QueryHandle handle = QueryHandle.fromId(id);
       QueryStatus status;
@@ -97,15 +98,13 @@ public class QueryExecutorHttpHandler extends AbstractQueryExecutorHttpHandler {
                            String.format("[SQLState %s] %s", e.getSQLState(), e.getMessage()));
     } catch (HandleNotFoundException e) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
   @GET
   @Path("data/explore/queries/{id}/schema")
-  public void getQueryResultsSchema(HttpRequest request, HttpResponder responder, @PathParam("id") String id) {
+  public void getQueryResultsSchema(HttpRequest request, HttpResponder responder,
+                                    @PathParam("id") String id) throws ExploreException {
     try {
       QueryHandle handle = QueryHandle.fromId(id);
       List<ColumnDesc> schema;
@@ -124,15 +123,13 @@ public class QueryExecutorHttpHandler extends AbstractQueryExecutorHttpHandler {
                            String.format("[SQLState %s] %s", e.getSQLState(), e.getMessage()));
     } catch (HandleNotFoundException e) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
   @POST
   @Path("data/explore/queries/{id}/next")
-  public void getQueryNextResults(HttpRequest request, HttpResponder responder, @PathParam("id") String id) {
+  public void getQueryNextResults(HttpRequest request, HttpResponder responder,
+                                  @PathParam("id") String id) throws IOException, ExploreException {
     // NOTE: this call is a POST because it is not idempotent: cursor of results is moved
     try {
       QueryHandle handle = QueryHandle.fromId(id);
@@ -154,15 +151,13 @@ public class QueryExecutorHttpHandler extends AbstractQueryExecutorHttpHandler {
                            String.format("[SQLState %s] %s", e.getSQLState(), e.getMessage()));
     } catch (HandleNotFoundException e) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
   @POST
   @Path("data/explore/queries/{id}/preview")
-  public void getQueryResultPreview(HttpRequest request, HttpResponder responder, @PathParam("id") String id) {
+  public void getQueryResultPreview(HttpRequest request, HttpResponder responder,
+                                    @PathParam("id") String id) throws ExploreException {
     // NOTE: this call is a POST because it is not idempotent: cursor of results is moved
     try {
       QueryHandle handle = QueryHandle.fromId(id);
@@ -186,15 +181,13 @@ public class QueryExecutorHttpHandler extends AbstractQueryExecutorHttpHandler {
         return;
       }
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
   @POST
   @Path("data/explore/queries/{id}/download")
-  public void downloadQueryResults(HttpRequest request, HttpResponder responder, @PathParam("id") final String id) {
+  public void downloadQueryResults(HttpRequest request, HttpResponder responder,
+                                   @PathParam("id") final String id) throws ExploreException, IOException {
     // NOTE: this call is a POST because it is not idempotent: cursor of results is moved
     boolean responseStarted = false;
     try {
@@ -248,11 +241,6 @@ public class QueryExecutorHttpHandler extends AbstractQueryExecutorHttpHandler {
         } else {
           responder.sendStatus(HttpResponseStatus.NOT_FOUND);
         }
-      }
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      if (!responseStarted) {
-        responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
       }
     }
   }

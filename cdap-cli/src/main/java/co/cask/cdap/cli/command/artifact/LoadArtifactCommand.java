@@ -69,12 +69,12 @@ public class LoadArtifactCommand extends AbstractAuthCommand {
                          artifactId.getVersion().getVersion());
     } else {
       File configFile = resolver.resolvePathToFile(configPath);
-      ArtifactConfig artifactConfig = ArtifactConfig.read(artifactId, artifactFile, configFile);
+      ArtifactConfig artifactConfig = ArtifactConfig.read(artifactId, configFile, artifactFile);
       artifactClient.add(artifactId.getNamespace(), artifactId.getName(), Files.newInputStreamSupplier(artifactFile),
         artifactId.getVersion().getVersion(), artifactConfig.getParents(), artifactConfig.getPlugins());
     }
 
-    output.printf("Successfully added artifact with name '%s'\n", artifactId);
+    output.printf("Successfully added artifact with name '%s'\n", artifactId.getName());
   }
 
   @Override

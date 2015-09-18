@@ -203,7 +203,7 @@ public class LocalStreamService extends AbstractStreamService {
       } catch (NotificationFeedException e) {
         LOG.warn("Error with notification feed {}", streamFeed, e);
       } catch (Throwable t) {
-        LOG.warn("Could not publish notification on feed {}", streamFeed.getFeedId(), t);
+        LOG.debug("Could not publish notification on feed {}", streamFeed.getFeedId(), t);
       }
     }
   }

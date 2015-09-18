@@ -27,6 +27,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.app.runtime.artifact.app.InspectionApp;
+import co.cask.cdap.internal.app.runtime.artifact.app.InvalidConfigApp;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.Id;
@@ -64,6 +65,19 @@ public class ArtifactInspectorTest {
     artifactInspector = new ArtifactInspector(cConf, classLoaderFactory, TMP_FOLDER.newFolder());
   }
 
+  @Test(expected = InvalidArtifactException.class)
+  public void testInvalidConfigApp() throws Exception {
+    Manifest manifest = new Manifest();
+    File appFile =
+      createJar(InvalidConfigApp.class, new File(TMP_FOLDER.newFolder(), "InvalidConfigApp-1.0.0.jar"), manifest);
+
+    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "InvalidConfigApp", "1.0.0");
+    Location artifactLocation = Locations.toLocation(appFile);
+    try (CloseableClassLoader artifactClassLoader = classLoaderFactory.createClassLoader(artifactLocation)) {
+      artifactInspector.inspectArtifact(artifactId, appFile, artifactClassLoader);
+    }
+  }
+
   @Test
   public void inspectAppsAndPlugins() throws Exception {
     Manifest manifest = new Manifest();
@@ -90,17 +104,6 @@ public class ArtifactInspectorTest {
           "y", new PluginPropertyField("y", "", "double", true),
           "isSomething", new PluginPropertyField("isSomething", "", "boolean", true)));
       Assert.assertEquals(ImmutableSet.of(expectedPlugin), classes.getPlugins());
-    }
-  }
-
-  @Test(expected = InvalidArtifactException.class)
-  public void badAppMainClassThrowsException() throws Exception {
-    File appFile = createJar(InspectionApp.AppPlugin.class,
-      new File(TMP_FOLDER.newFolder(), "InspectionApp-1.0.0.jar"), new Manifest());
-    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "InspectionApp", "1.0.0");
-    Location artifactLocation = Locations.toLocation(appFile);
-    try (CloseableClassLoader artifactClassLoader = classLoaderFactory.createClassLoader(artifactLocation)) {
-      artifactInspector.inspectArtifact(artifactId, appFile, artifactClassLoader);
     }
   }
 
