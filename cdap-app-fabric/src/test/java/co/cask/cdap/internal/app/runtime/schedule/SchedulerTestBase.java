@@ -37,6 +37,8 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
@@ -45,6 +47,8 @@ import java.util.concurrent.TimeUnit;
  * Base class for scheduler tests
  */
 public abstract class SchedulerTestBase {
+
+  private static final Logger LOG = LoggerFactory.getLogger(SchedulerTestBase.class);
 
   protected static final CConfiguration CCONF = CConfiguration.create();
 
@@ -165,11 +169,13 @@ public abstract class SchedulerTestBase {
    * Waits for the given program ran for the given number of times.
    */
   private void waitForRuns(final Store store, final Id.Program programId,
-                           int expectedRuns, long timeoutSeconds) throws Exception {
+                           final int expectedRuns, long timeoutSeconds) throws Exception {
     Tasks.waitFor(expectedRuns, new Callable<Integer>() {
       @Override
       public Integer call() throws Exception {
-        return store.getRuns(programId, ProgramRunStatus.COMPLETED, 0, Long.MAX_VALUE, 100).size();
+        int runs = store.getRuns(programId, ProgramRunStatus.COMPLETED, 0, Long.MAX_VALUE, 100).size();
+        LOG.info("Expecting {} runs of {}, got {} so far.", expectedRuns, programId, runs);
+        return runs;
       }
     }, timeoutSeconds, TimeUnit.SECONDS, 50, TimeUnit.MILLISECONDS);
   }
