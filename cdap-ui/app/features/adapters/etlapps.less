@@ -318,10 +318,75 @@ body.theme-cdap.state-adapters-create {
       margin-bottom: 0;
     }
   }
+
+  .tiles-container {
+    background-color: white;
+    border-radius: 5px;
+
+    a:hover {
+      text-decoration: none;
+    }
+
+    .heading {
+      margin-top: 5px;
+      margin-bottom: 10px;
+      h3 {
+        font-weight: 500;
+        margin-bottom: 0;
+        font-size: 21px;
+        letter-spacing: 0.5px;
+      }
+
+      &.preconfigured {
+        margin-bottom: 50px;
+      }
+    }
+
+    .info {
+      margin-bottom: 35px;
+
+      h4 {
+        font-weight: 400;
+        font-size: 14px;
+        letter-spacing: 0.3px;
+      }
+    }
+  }
+
   // Studio start screen
   .hydrator-start {
-    margin-top: 160px;
+    margin-top: 140px;
   }
+  .hydrator-preconfigured {
+    margin-top: 70px;
+
+    .return-link {
+      margin-bottom: 10px;
+
+      span {
+        font-size: 18px;
+        cursor: pointer;
+      }
+    }
+
+  }
+
+  div.template-link {
+    cursor: pointer;
+
+    p { color: lighten(@btn-default-color, 15%); }
+
+    &:hover {
+      background-color: lighten(@btn-default-color, 15%);
+      -webkit-box-shadow: inset 0px 0px 20px 0px rgba(0,0,0,0.25);
+      -moz-box-shadow: inset 0px 0px 20px 0px rgba(0,0,0,0.25);
+      box-shadow: inset 0px 0px 20px 0px rgba(0,0,0,0.25);
+      text-decoration: none;
+
+      h4, p { color: white; }
+    }
+  }
+
   .start-well {
     background-color: white;
     font-weight: 500;
@@ -329,24 +394,36 @@ body.theme-cdap.state-adapters-create {
     margin-left: auto;
     height: 180px;
     width: 180px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+
     .border-radius(6px);
     h4, a {
       font-weight: 500;
     }
     h4 {
       color: @btn-default-color;
-      margin-bottom: 55px;
-    }
-    a.btn {
-      width: 140px;
-      padding-top: 10px;
-      padding-bottom: 10px;
-      .border-radius(6px);
-      &:hover, &:focus {
-        background-color: @btn-default-color;
-        color: white;
+
+      &.template-name {
+        margin-bottom: 10px;
       }
     }
+
+    p {
+      font-size: 12px;
+    }
+
+    &:hover {
+      background-color: lighten(@btn-default-color, 15%);
+      -webkit-box-shadow: inset 0px 0px 20px 0px rgba(0,0,0,0.25);
+      -moz-box-shadow: inset 0px 0px 20px 0px rgba(0,0,0,0.25);
+      box-shadow: inset 0px 0px 20px 0px rgba(0,0,0,0.25);
+
+      h4 { color: white; }
+    }
+
   }
   .canvas-wrapper {
     position: relative;
