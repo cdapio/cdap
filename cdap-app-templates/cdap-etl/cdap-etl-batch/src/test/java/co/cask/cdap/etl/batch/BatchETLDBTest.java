@@ -308,7 +308,7 @@ public class BatchETLDBTest extends BaseETLBatchTest {
     mrManager.start();
     mrManager.waitForFinish(5, TimeUnit.MINUTES);
     List<RunRecord> runRecords = mrManager.getHistory();
-    Assert.assertNotEquals(ProgramRunStatus.FAILED, runRecords.get(0).getStatus());
+    Assert.assertEquals(ProgramRunStatus.COMPLETED, runRecords.get(0).getStatus());
 
     // No records should be written
     DataSetManager<Table> outputManager = getDataset("outputTable1");
@@ -359,7 +359,7 @@ public class BatchETLDBTest extends BaseETLBatchTest {
     mrManager.start();
     mrManager.waitForFinish(5, TimeUnit.MINUTES);
     List<RunRecord> runRecords = mrManager.getHistory();
-    Assert.assertNotEquals(ProgramRunStatus.FAILED, runRecords.get(0).getStatus());
+    Assert.assertEquals(ProgramRunStatus.COMPLETED, runRecords.get(0).getStatus());
   }
 
   private void createInputData() throws Exception {

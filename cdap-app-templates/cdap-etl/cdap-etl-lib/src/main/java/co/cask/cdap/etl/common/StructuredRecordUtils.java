@@ -18,9 +18,9 @@ package co.cask.cdap.etl.common;
 
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -42,13 +42,13 @@ public class StructuredRecordUtils {
     }
 
     Schema oldSchema = input.getSchema();
-    Map<String, String> fieldNameMap = Maps.newHashMap();
-    List<Schema.Field> newFields = Lists.newArrayList();
+    Map<String, String> fieldNameMap = new HashMap<>();
+    List<Schema.Field> newFields = new ArrayList<>();
     for (Schema.Field field : oldSchema.getFields()) {
-      String newName = nameChange(field.getName(), fieldCase);
+      String newName = changeName(field.getName(), fieldCase);
       if (fieldNameMap.containsValue(newName)) {
         // field name used already. indication of field names conflict. can't do anything.
-        throw new Exception(String.format(
+        throw new IllegalStateException(String.format(
           "Duplicate field/column name %s found when trying to confirm to the chosen case option %s. " +
             "Check Database Table schema.", field.getName(), fieldCase));
       }
@@ -65,7 +65,7 @@ public class StructuredRecordUtils {
   private StructuredRecordUtils() {
   }
 
-  private static String nameChange(String oldName, FieldCase fieldCase) {
+  private static String changeName(String oldName, FieldCase fieldCase) {
     switch (fieldCase) {
       case LOWER:
         return oldName.toLowerCase();

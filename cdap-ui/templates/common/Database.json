@@ -3,72 +3,72 @@
   "groups" : {
     "position": [ "group1", "group2", "group3" ],
     "group1": {
-       "display" : "General",
-       "position" : [ "user", "password", "tableName" ],
-       "fields" : {
-          "user" : {
-             "widget": "textbox",
-             "label": "Username"
-          },
+      "display" : "General",
+      "position" : [ "user", "password", "tableName" ],
+      "fields" : {
+        "user" : {
+          "widget": "textbox",
+          "label": "Username"
+        },
 
-          "password" : {
-             "widget": "password",
-             "label": "Password"
-          },
+        "password" : {
+          "widget": "password",
+          "label": "Password"
+        },
 
-          "tableName" : {
-             "widget": "textbox",
-             "label" : "Table Name"
-          }
-       }
+        "tableName" : {
+          "widget": "textbox",
+          "label" : "Table Name"
+        }
+      }
     },
     "group2": {
-       "display" : "JDBC Information",
-       "position" : [ "jdbcPluginName", "jdbcPluginType", "driverClass", "connectionString"],
-       "fields" : {
-          "jdbcPluginName" : {
-             "widget": "textbox",
-             "label": "Plugin Name"
-          },
+      "display" : "JDBC Information",
+      "position" : [ "jdbcPluginName", "jdbcPluginType", "driverClass", "connectionString" ],
+      "fields" : {
+        "jdbcPluginName" : {
+          "widget": "textbox",
+          "label": "Plugin Name"
+        },
 
-          "jdbcPluginType" : {
-             "widget": "textbox",
-             "label": "Plugin Type"
-          },
+        "jdbcPluginType" : {
+          "widget": "textbox",
+          "label": "Plugin Type"
+        },
 
-          "driverClass" : {
-             "widget": "textbox",
-             "label": "Driver class"
-          },
+        "driverClass" : {
+          "widget": "textbox",
+          "label": "Driver class"
+        },
 
-          "connectionString" : {
-             "widget": "textbox",
-             "label" : "Connection String"
-          }
-       }
+        "connectionString" : {
+          "widget": "textbox",
+          "label" : "Connection String"
+        }
+      }
     },
     "group3": {
-       "display" : "Table Properties",
-       "position" : [ "importQuery", "countQuery", "columnNameCase"],
-       "fields" : {
-          "importQuery" : {
-             "widget": "textbox",
-             "label": "Import SQL"
-          },
+      "display" : "Table Properties",
+      "position" : [ "importQuery", "countQuery", "columnNameCase" ],
+      "fields" : {
+        "importQuery" : {
+          "widget": "textbox",
+          "label": "Import SQL"
+        },
 
-          "countQuery" : {
-             "widget": "textbox",
-             "label": "Count SQL"
-          },
-	  "columnNameCase" : {
-	     "widget": "select",
-	     "label" : "Column Case",
-	     "properties" : {
-		"values" : ["UPPER", "lower", "No change"],
-		"default" : "No change"
-	     }
-	  }
-       }
+        "countQuery" : {
+          "widget": "textbox",
+          "label": "Count SQL"
+        },
+        "columnNameCase" : {
+          "widget": "select",
+          "label" : "Column Case",
+          "properties" : {
+            "values" : [ "UPPER", "lower", "No change" ],
+            "default" : "No change"
+          }
+        }
+      }
     }
   }
 }
