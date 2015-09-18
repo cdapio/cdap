@@ -16,8 +16,10 @@
 
 package co.cask.cdap.internal.app.workflow;
 
+import co.cask.cdap.api.workflow.AbstractWorkflowAction;
 import co.cask.cdap.api.workflow.WorkflowAction;
 import co.cask.cdap.api.workflow.WorkflowActionConfigurer;
+import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.internal.specification.DataSetFieldExtractor;
 import co.cask.cdap.internal.specification.PropertyFieldExtractor;
@@ -44,7 +46,7 @@ public class DefaultWorkflowActionConfigurer implements WorkflowActionConfigurer
   private Map<String, String> properties;
   private Set<String> datasets;
 
-  public DefaultWorkflowActionConfigurer(WorkflowAction workflowAction) {
+  private DefaultWorkflowActionConfigurer(WorkflowAction workflowAction) {
     this.name = workflowAction.getClass().getSimpleName();
     this.description = "";
     this.className = workflowAction.getClass().getName();
@@ -53,7 +55,8 @@ public class DefaultWorkflowActionConfigurer implements WorkflowActionConfigurer
     this.properties = new HashMap<>();
     this.datasets = new HashSet<>();
 
-    Reflections.visit(workflowAction, workflowAction.getClass(), new PropertyFieldExtractor(propertyFields),
+    Reflections.visit(workflowAction, workflowAction.getClass(),
+                      new PropertyFieldExtractor(propertyFields),
                       new DataSetFieldExtractor(datasetFields));
   }
 
@@ -83,11 +86,17 @@ public class DefaultWorkflowActionConfigurer implements WorkflowActionConfigurer
     }
   }
 
-  public DefaultWorkflowActionSpecification createSpecification() {
+  private DefaultWorkflowActionSpecification createSpecification() {
     Map<String, String> properties = new HashMap<>(this.properties);
     properties.putAll(propertyFields);
     Set<String> datasets = new HashSet<>(this.datasets);
     datasets.addAll(datasetFields);
     return new DefaultWorkflowActionSpecification(className, name, description, properties, datasets);
+  }
+
+  public static WorkflowActionSpecification configureAction(AbstractWorkflowAction action) {
+    DefaultWorkflowActionConfigurer configurer = new DefaultWorkflowActionConfigurer(action);
+    action.configure(configurer);
+    return configurer.createSpecification();
   }
 }

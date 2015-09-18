@@ -17,48 +17,41 @@ package co.cask.cdap.internal.workflow;
 
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
-import co.cask.cdap.api.workflow.WorkflowAction;
-import co.cask.cdap.api.workflow.WorkflowActionSpecification;
+import co.cask.cdap.api.workflow.AbstractWorkflowAction;
+import co.cask.cdap.api.workflow.WorkflowActionConfigurer;
 import co.cask.cdap.api.workflow.WorkflowContext;
+import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.Callable;
 
 /**
  * Action to be executed in Workflow for Programs.
  * {@link ProgramWorkflowAction#run} does a call on {@link Callable} of {@link RuntimeContext}.
  */
-public final class ProgramWorkflowAction implements WorkflowAction {
+public final class ProgramWorkflowAction extends AbstractWorkflowAction {
 
   private static final Logger LOG = LoggerFactory.getLogger(ProgramWorkflowAction.class);
   private static final String PROGRAM_NAME = "ProgramName";
   public static final String PROGRAM_TYPE = "ProgramType";
 
-  private final String name;
   private String programName;
   private Runnable programRunner;
   private SchedulableProgramType programType;
 
-  public ProgramWorkflowAction(String name, String programName, SchedulableProgramType programType) {
-    this.name = name;
+  public ProgramWorkflowAction(String programName, SchedulableProgramType programType) {
     this.programName = programName;
     this.programType = programType;
   }
 
   @Override
-  public WorkflowActionSpecification configure() {
-    Map<String, String> options = new HashMap<>();
-    options.put(PROGRAM_TYPE, programType.name());
-    options.put(PROGRAM_NAME, programName);
-
-    return WorkflowActionSpecification.Builder.with()
-      .setName(name)
-      .setDescription("Workflow action for " + programName)
-      .withOptions(options)
-      .build();
+  public void configure(WorkflowActionConfigurer configurer) {
+    super.configure(configurer);
+    setName(programName);
+    setDescription("Workflow action for " + programType.name() + " " + programName);
+    setProperties(ImmutableMap.of(PROGRAM_TYPE, programType.name(),
+                                  PROGRAM_NAME, programName));
   }
 
   @Override
@@ -90,10 +83,5 @@ public final class ProgramWorkflowAction implements WorkflowAction {
       LOG.info("Failed to execute {} Program {} in workflow", programType, programName, e);
       throw e;
     }
-  }
-
-  @Override
-  public void destroy() {
-    // No-op
   }
 }
