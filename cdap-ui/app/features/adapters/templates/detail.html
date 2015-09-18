@@ -56,6 +56,11 @@
       {{ appStatus }}
     </div>
 
+    <div class="btn btn-cdap"
+      ui-sref="apps.detail.overview.status({ appId: app.name })">
+      View in CDAP
+    </div
+
     <!-- IF ETL REALTIME -->
     <div class="btn"
       ng-click="do('Start')"
