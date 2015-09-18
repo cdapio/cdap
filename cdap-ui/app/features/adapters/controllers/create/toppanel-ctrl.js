@@ -15,7 +15,8 @@
  */
 
 angular.module(PKG.name + '.feature.adapters')
-  .controller('TopPanelController', function(EventPipe, CanvasFactory, MyAppDAGService, $scope, $timeout, $alert, $bootstrapModal, $state, $stateParams, GLOBALS) {
+
+  .controller('TopPanelController', function(EventPipe, CanvasFactory, MyAppDAGService, $scope, $timeout, $bootstrapModal, ModalConfirm, $alert, $state, $stateParams, GLOBALS, AdapterErrorFactory) {
 
     this.metadata = MyAppDAGService['metadata'];
     function resetMetadata() {
@@ -152,6 +153,10 @@ angular.module(PKG.name + '.feature.adapters')
                 console.info('Failed saving as draft');
               }
             );
+          break;
+        case 'Validate':
+          this.validatePipeline();
+          break;
       }
     };
 
@@ -166,4 +171,10 @@ angular.module(PKG.name + '.feature.adapters')
         );
     };
 
+    this.validatePipeline = function() {
+      var errors = AdapterErrorFactory.isModelValid(MyAppDAGService.nodes, MyAppDAGService.connections, MyAppDAGService.metadata, MyAppDAGService.getConfig());
+      if (angular.isObject(errors)) {
+        MyAppDAGService.notifyError(errors);
+      }
+    };
   });

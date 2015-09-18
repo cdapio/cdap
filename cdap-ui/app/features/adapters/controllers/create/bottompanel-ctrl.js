@@ -68,7 +68,7 @@ angular.module(PKG.name + '.feature.adapters')
       },
       {
         title: 'Reference',
-        template: '/assets/features/adapters/templates/partial/reference.html'
+        template: '/assets/features/adapters/templates/partial/reference-tab.html'
       }
     ];
 

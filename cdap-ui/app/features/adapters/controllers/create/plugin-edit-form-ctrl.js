@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.adapters')
-  .controller('PluginEditController', function($scope, PluginConfigFactory, myHelpers, EventPipe, $timeout, MyAppDAGService, $sce, $rootScope, GLOBALS, MyNodeConfigService) {
+  .controller('PluginEditController', function($scope, PluginConfigFactory, myHelpers, EventPipe, $timeout, MyAppDAGService, GLOBALS, MyNodeConfigService) {
     $scope.pluginCopy = {};
 
     var propertiesFromBackend = Object.keys($scope.plugin._backendProperties);
@@ -34,46 +34,6 @@ angular.module(PKG.name + '.feature.adapters')
     this.configfetched = false;
     this.properties = [];
     this.noconfig = null;
-    if (MyAppDAGService.metadata.template.type === GLOBALS.etlBatch) {
-      this.infoPluginType = 'batch';
-    } else if (MyAppDAGService.metadata.template.type === GLOBALS.etlRealtime) {
-      this.infoPluginType = 'real-time';
-    }
-
-    this.infoPluginCategory = $scope.plugin.type + 's';
-
-    this.infoPluginName = $scope.plugin.name.toLowerCase();
-    var docsUrl = 'http://docs.cask.co/cdap/';
-    var etlPath = '/en/included-applications/etl/plugins/';
-    var hideNav = '.html?hidenav';
-    if (this.infoPluginCategory === 'transforms') {
-      this.infoPluginCategory = 'transformations';
-      this.infoUrl = [
-        docsUrl,
-        $rootScope.cdapVersion,
-        etlPath,
-        this.infoPluginCategory,
-        '/',
-        this.infoPluginName,
-        hideNav
-      ].join('');
-    } else {
-      this.infoUrl = [
-        docsUrl,
-        $rootScope.cdapVersion ,
-        etlPath,
-        this.infoPluginCategory,
-        '/',
-        this.infoPluginType,
-        '/',
-        this.infoPluginName,
-        hideNav
-      ].join('');
-    }
-
-    this.trustSrc = function(src) {
-      return $sce.trustAsResourceUrl(src);
-    };
 
     this.noproperty = Object.keys(
       $scope.plugin._backendProperties || {}
