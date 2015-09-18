@@ -116,6 +116,7 @@ public interface MetadataAdmin {
   /**
    * Execute search for metadata for particular type of CDAP object.
    *
+   * @param namespaceId The namespace id to be filter the search by.
    * @param searchQuery The query need to be executed for the search.
    * @param type The particular type of CDAP object that the metadata need to be searched. If null all possible types
    *             will be searched.
@@ -123,6 +124,6 @@ public interface MetadataAdmin {
    * @return a {@link Set} records for metadata search.
    * @throws NotFoundException if there is not record found for particular query text.
    */
-  Set<MetadataSearchResultRecord> searchMetadata(String searchQuery, @Nullable MetadataSearchTargetType type)
-    throws NotFoundException;
+  Set<MetadataSearchResultRecord> searchMetadata(String namespaceId, String searchQuery,
+                                                 @Nullable MetadataSearchTargetType type) throws NotFoundException;
 }

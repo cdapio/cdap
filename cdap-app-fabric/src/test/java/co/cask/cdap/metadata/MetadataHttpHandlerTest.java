@@ -116,6 +116,10 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
 
     // search non-existent property should return empty set
     searchProperties = searchMetadata(Id.Namespace.DEFAULT.getId(), "NullKey:s*", null);
+    Assert.assertEquals(ImmutableSet.<MetadataSearchResultRecord>of(), searchProperties);
+
+    // search invalid ns should return empty set
+    searchProperties = searchMetadata("invalidnamespace", "sKey:s*", null);
     Assert.assertEquals(ImmutableSet.of(), searchProperties);
 
     // test removal
@@ -194,7 +198,7 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
 
     // search non-existent tags should return empty set
     searchTags = searchMetadata(Id.Namespace.DEFAULT.getId(), "NullKey", null);
-    Assert.assertEquals(ImmutableSet.of(), searchTags);
+    Assert.assertEquals(ImmutableSet.<MetadataSearchResultRecord>of(), searchTags);
 
     // test removal
     removeTags(application, "aTag");

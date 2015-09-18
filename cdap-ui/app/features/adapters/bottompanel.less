@@ -74,25 +74,41 @@ body.theme-cdap.state-adapters {
     background-color: white;
     border-top: 1px solid @table-border-color;
     width: 100%;
-    .transition(all 0.2s ease);
-    &.is-collapsed {
-      border-top: 1px solid @body-bg;
-      height: 0;
-      padding: 0;
-    }
     h4 {
-      color: #9D9D9D;
+      color: #999;
       font-size: 14px;
       font-weight: 500;
+      margin-top: 0;
+    }
+    fieldset {
+      width: 100%;
+      .widget-group-container {
+        a.btn {
+          padding-right: 6px;
+          padding-left: 6px;
+        }
+        &.well .form-group {
+          margin-bottom: 10px;
+        }
+        div.select-wrapper:after {
+          right: 10px;
+        }
+      }
+      .panel-body {
+        min-height: 50px;
+      }
+    }
+    .input-schema {
+      @media (max-width: @screen-md-max) {
+        margin-bottom: 15px;
+      }
+    }
+    .schema-error ul:only-child {
+      margin-bottom: 0;
     }
     .table {
       background-color: transparent;
       margin: 0;
-      tbody {
-        tr:last-child td {
-          border-bottom: 0;
-        }
-      }
       th, td {
         max-width: 0;
         overflow: hidden;
@@ -118,9 +134,6 @@ body.theme-cdap.state-adapters {
         vertical-align: middle;
         &.name {
           width: 35%;
-          @media (min-width: @screen-lg-min) {
-            border-left: 0;
-          }
         }
         &.type {
           width: 30%;
@@ -130,14 +143,9 @@ body.theme-cdap.state-adapters {
         }
         &.trash {
           width: 15%;
-
           a {
             padding-left: 0;
             padding-right: 0;
-          }
-
-          @media (min-width: @screen-lg-min) {
-            border-right: 0;
           }
           .btn:active {
             .box-shadow(none);
@@ -180,19 +188,14 @@ body.theme-cdap.state-adapters {
         max-width: 80%;
       }
       h3 {
-        color: #202028;
+        color: @gray-dark;
+        font-size: 16px;
         font-weight: 500;
         margin: 0 0 5px;
       }
       p {
         color: #9d9d9d;
         margin-bottom: 0;
-        span {
-          display: block;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
       }
       .btn-group {
         > div {
@@ -201,7 +204,38 @@ body.theme-cdap.state-adapters {
       }
     }
     .bottompanel-body {
-      padding: 0 10px;
+      padding: 20px 10px;
+      overflow: hidden;
+      position: relative;
+
+    }
+    @media (min-width: @screen-lg-min) {
+      [class*="divider"]:before, [class*="divider"]:after {
+        background-image: url('@{img-path}/divider.png');
+        content: '';
+        display: block;
+        position: absolute;
+        top: -20px;
+        bottom: 0;
+        height: 200%;
+        width: 1px;
+      }
+      .one-divider {
+        &:before {
+          left: 50%;
+        }
+        &:after {
+          display: none;
+        }
+      }
+      .two-divider {
+        &:before {
+          left: 33%;
+        }
+        &:after {
+          right: 33%;
+        }
+      }
     }
 
     .status-view {
@@ -266,5 +300,9 @@ body.theme-cdap.state-adapters {
         margin-bottom: 10px;
       }
     }
+  }
+  footer {
+    // Creates a bottom border for the bottom panel, needed here in order to accommodate the single scroll
+    border-top: 1px solid @table-border-color;
   }
 }

@@ -24,7 +24,8 @@ import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.codec.NamespacedIdCodec;
+import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
@@ -32,6 +33,8 @@ import com.google.common.base.Predicates;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -46,6 +49,10 @@ import javax.annotation.Nullable;
  * Dataset that manages Business Metadata using an {@link IndexedTable}.
  */
 public class BusinessMetadataDataset extends AbstractDataset {
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(Id.NamespacedId.class, new NamespacedIdCodec())
+    .create();
+
   public static final String TAGS_KEY = "tags";
   public static final String TAGS_SEPARATOR = ",";
 
@@ -53,17 +60,18 @@ public class BusinessMetadataDataset extends AbstractDataset {
   static final String KEYVALUE_COLUMN = "kv";
   static final String VALUE_COLUMN = "v";
   static final String CASE_INSENSITIVE_VALUE_COLUMN = "civ";
+  static final String HISTORY_COLUMN = "h";
 
   /**
    * Identifies the type of metadata - property or tag
    */
-  private static enum MetadataType {
+  enum MetadataType {
     PROPERTY("p"),
     TAG("t");
 
     private final String serializedForm;
 
-    private MetadataType(String serializedForm) {
+    MetadataType(String serializedForm) {
       this.serializedForm = serializedForm;
     }
 
@@ -90,11 +98,9 @@ public class BusinessMetadataDataset extends AbstractDataset {
    */
   private void setBusinessMetadata(BusinessMetadataRecord metadataRecord, MetadataType metadataType) {
     Id.NamespacedId targetId = metadataRecord.getTargetId();
-    String key = metadataRecord.getKey();
-    MDSKey mdsKey = getMDSKey(targetId, metadataType, key);
 
     // Put to the default column.
-    write(mdsKey, metadataRecord);
+    write(targetId, metadataType, metadataRecord);
   }
 
   /**
@@ -147,7 +153,7 @@ public class BusinessMetadataDataset extends AbstractDataset {
    */
   @Nullable
   private BusinessMetadataRecord getBusinessMetadata(Id.NamespacedId targetId, MetadataType metadataType, String key) {
-    MDSKey mdsKey = getMDSKey(targetId, metadataType, key);
+    MDSKey mdsKey = MdsValueKey.getMDSKey(targetId, metadataType, key);
     Row row = indexedTable.get(mdsKey.getKey());
     if (row.isEmpty()) {
       return null;
@@ -182,8 +188,8 @@ public class BusinessMetadataDataset extends AbstractDataset {
    * @return a Map representing the metadata for the specified {@link Id.NamespacedId}
    */
   private Map<String, String> getBusinessMetadata(Id.NamespacedId targetId, MetadataType metadataType) {
-    String targetType = getTargetType(targetId);
-    MDSKey mdsKey = getMDSKey(targetId, metadataType, null);
+    String targetType = KeyHelper.getTargetType(targetId);
+    MDSKey mdsKey = MdsValueKey.getMDSKey(targetId, metadataType, null);
     byte[] startKey = mdsKey.getKey();
     byte[] stopKey = Bytes.stopKeyForPrefix(startKey);
 
@@ -192,7 +198,7 @@ public class BusinessMetadataDataset extends AbstractDataset {
     try {
       Row next;
       while ((next = scan.next()) != null) {
-        String key = getMetadataKey(targetType, next.getRow());
+        String key = MdsValueKey.getMetadataKey(targetType, next.getRow());
         byte[] value = next.get(VALUE_COLUMN);
         if (key == null || value == null) {
           continue;
@@ -264,8 +270,8 @@ public class BusinessMetadataDataset extends AbstractDataset {
    * @param filter the {@link Predicate} that should be satisfied to remove a key
    */
   private void removeMetadata(Id.NamespacedId targetId, MetadataType metadataType, Predicate<String> filter) {
-    String targetType = getTargetType(targetId);
-    MDSKey mdsKey = getMDSKey(targetId, metadataType, null);
+    String targetType = KeyHelper.getTargetType(targetId);
+    MDSKey mdsKey = MdsValueKey.getMDSKey(targetId, metadataType, null);
     byte[] prefix = mdsKey.getKey();
     byte[] stopKey = Bytes.stopKeyForPrefix(prefix);
 
@@ -278,13 +284,15 @@ public class BusinessMetadataDataset extends AbstractDataset {
         if (keyValue == null && value == null) {
           continue;
         }
-        if (filter.apply(getMetadataKey(targetType, next.getRow()))) {
+        if (filter.apply(MdsValueKey.getMetadataKey(targetType, next.getRow()))) {
           indexedTable.delete(new Delete(next.getRow()));
         }
       }
     } finally {
       scan.close();
     }
+
+    writeHistory(targetId);
   }
 
   /**
@@ -336,38 +344,65 @@ public class BusinessMetadataDataset extends AbstractDataset {
   /**
    * Find the instance of {@link BusinessMetadataRecord} based on key.
    *
+   * @param namespaceId The namespace id to filter
    * @param value The metadata value to be found
    * @param type The target type of objects to search from
    * @return The {@link Iterable} of {@link BusinessMetadataRecord} that fit the value
    */
-  public List<BusinessMetadataRecord> findBusinessMetadataOnValue(String value, MetadataSearchTargetType type) {
-    return executeSearchOnColumns(BusinessMetadataDataset.CASE_INSENSITIVE_VALUE_COLUMN, value, type);
+  public List<BusinessMetadataRecord> findBusinessMetadataOnValue(String namespaceId, String value,
+                                                                  MetadataSearchTargetType type) {
+    return executeSearchOnColumns(namespaceId, BusinessMetadataDataset.CASE_INSENSITIVE_VALUE_COLUMN, value, type);
   }
 
   /**
    * Find the instance of {@link BusinessMetadataRecord} for key:value pair
    *
+   * @param namespaceId The namespace id to filter
    * @param keyValue The metadata value to be found.
    * @param type The target type of objects to search from.
    * @return The {@link Iterable} of {@link BusinessMetadataRecord} that fit the key value pair.
    */
-  public List<BusinessMetadataRecord> findBusinessMetadataOnKeyValue(String keyValue, MetadataSearchTargetType type) {
-    return executeSearchOnColumns(BusinessMetadataDataset.KEYVALUE_COLUMN, keyValue, type);
+  public List<BusinessMetadataRecord> findBusinessMetadataOnKeyValue(String namespaceId, String keyValue,
+                                                                     MetadataSearchTargetType type) {
+    return executeSearchOnColumns(namespaceId, BusinessMetadataDataset.KEYVALUE_COLUMN, keyValue, type);
+  }
+
+  /**
+   * Returns the snapshot of the metadata for targetId on or before the given time.
+   * @param targetId target id
+   * @param timeMillis time in milliseconds
+   * @return the snapshot of the metadata for targetId on or before the given time
+   */
+  public MetadataRecord getSnapshotBeforeTime(Id.NamespacedId targetId, long timeMillis) {
+    byte[] scanStartKey = MdsHistoryKey.getMdsScanStartKey(targetId, timeMillis).getKey();
+    byte[] scanEndKey = MdsHistoryKey.getMdsScanEndKey(targetId).getKey();
+    // TODO: add limit to scan, we need only one row
+    Scanner scanner = indexedTable.scan(scanStartKey, scanEndKey);
+    try {
+      Row next = scanner.next();
+      if (next != null) {
+        return GSON.fromJson(next.getString(HISTORY_COLUMN), MetadataRecord.class);
+      } else {
+        return new MetadataRecord(targetId);
+      }
+    } finally {
+      scanner.close();
+    }
   }
 
   // Helper method to execute IndexedTable search on target index column.
-  List<BusinessMetadataRecord> executeSearchOnColumns(String column, String searchValue,
+  List<BusinessMetadataRecord> executeSearchOnColumns(String namespaceId, String column, String searchValue,
                                                       MetadataSearchTargetType type) {
     List<BusinessMetadataRecord> results = new LinkedList<>();
 
     Scanner scanner;
-    String lowerCaseSearchValue = searchValue.toLowerCase();
-    if (lowerCaseSearchValue.endsWith("*")) {
-      byte[] startKey = Bytes.toBytes(lowerCaseSearchValue.substring(0, lowerCaseSearchValue.lastIndexOf("*")));
+    String namespacedSearchValue = namespaceId + KEYVALUE_SEPARATOR + searchValue.toLowerCase();
+    if (namespacedSearchValue.endsWith("*")) {
+      byte[] startKey = Bytes.toBytes(namespacedSearchValue.substring(0, namespacedSearchValue.lastIndexOf("*")));
       byte[] stopKey = Bytes.stopKeyForPrefix(startKey);
       scanner = indexedTable.scanByIndex(Bytes.toBytes(column), startKey, stopKey);
     } else {
-      byte[] value = Bytes.toBytes(lowerCaseSearchValue);
+      byte[] value = Bytes.toBytes(namespacedSearchValue);
       scanner = indexedTable.readByIndex(Bytes.toBytes(column), value);
     }
     try {
@@ -379,15 +414,15 @@ public class BusinessMetadataDataset extends AbstractDataset {
         }
 
         final byte[] rowKey = next.getRow();
-        String targetType = getTargetType(rowKey);
+        String targetType = MdsValueKey.getTargetType(rowKey);
 
         // Filter on target type if not ALL
         if ((type != MetadataSearchTargetType.ALL) && (!targetType.equals(type.getInternalName()))) {
           continue;
         }
 
-        Id.NamespacedId targetId = getNamespaceIdFromKey(targetType, new MDSKey(rowKey));
-        String key = getMetadataKey(targetType, rowKey);
+        Id.NamespacedId targetId = MdsValueKey.getNamespaceIdFromKey(targetType, new MDSKey(rowKey));
+        String key = MdsValueKey.getMetadataKey(targetType, rowKey);
         String value = Bytes.toString(next.get(Bytes.toBytes(BusinessMetadataDataset.VALUE_COLUMN)));
         BusinessMetadataRecord record = new BusinessMetadataRecord(targetId, key, value);
         results.add(record);
@@ -399,138 +434,39 @@ public class BusinessMetadataDataset extends AbstractDataset {
     return results;
   }
 
-  private void addNamespaceIdToKey(MDSKey.Builder builder, Id.NamespacedId namespacedId) {
-    String type = getTargetType(namespacedId);
-    if (type.equals(Id.Program.class.getSimpleName())) {
-      Id.Program program = (Id.Program) namespacedId;
-      String namespaceId = program.getNamespaceId();
-      String appId = program.getApplicationId();
-      String programType = program.getType().name();
-      String programId = program.getId();
-      builder.add(namespaceId);
-      builder.add(appId);
-      builder.add(programType);
-      builder.add(programId);
-    } else if (type.equals(Id.Application.class.getSimpleName())) {
-      Id.Application application = (Id.Application) namespacedId;
-      String namespaceId = application.getNamespaceId();
-      String instanceId = application.getId();
-      builder.add(namespaceId);
-      builder.add(instanceId);
-    } else if (type.equals(Id.DatasetInstance.class.getSimpleName())) {
-      Id.DatasetInstance datasetInstance = (Id.DatasetInstance) namespacedId;
-      String namespaceId = datasetInstance.getNamespaceId();
-      String instanceId = datasetInstance.getId();
-      builder.add(namespaceId);
-      builder.add(instanceId);
-    } else if (type.equals(Id.Stream.class.getSimpleName())) {
-      Id.Stream stream = (Id.Stream) namespacedId;
-      String namespaceId = stream.getNamespaceId();
-      String instanceId = stream.getId();
-      builder.add(namespaceId);
-      builder.add(instanceId);
-    } else {
-      throw new IllegalArgumentException("Illegal Type " + type + " of metadata source.");
-    }
-  }
+  private void write(Id.NamespacedId targetId, MetadataType metadataType, BusinessMetadataRecord record) {
+    String key = record.getKey();
+    MDSKey mdsKey = MdsValueKey.getMDSKey(targetId, metadataType, key);
+    Put put = new Put(mdsKey.getKey());
 
-  private Id.NamespacedId getNamespaceIdFromKey(String type, MDSKey key) {
-    MDSKey.Splitter keySplitter = key.split();
+    // Now add the index columns. To support case insensitive we will store it as lower case for index columns.
+    String lowerCaseKey = record.getKey().toLowerCase();
+    String lowerCaseValue = record.getValue().toLowerCase();
 
-    // The rowkey is [targetType][targetId][metadata-type][key], so skip the first string.
-    keySplitter.skipString();
-    if (type.equals(Id.Program.class.getSimpleName())) {
-      String namespaceId = keySplitter.getString();
-      String appId = keySplitter.getString();
-      String programType = keySplitter.getString();
-      String programId = keySplitter.getString();
-      return Id.Program.from(namespaceId, appId, ProgramType.valueOf(programType), programId);
-    } else if (type.equals(Id.Application.class.getSimpleName())) {
-      String namespaceId = keySplitter.getString();
-      String appId = keySplitter.getString();
-      return Id.Application.from(namespaceId, appId);
-    } else if (type.equals(Id.DatasetInstance.class.getSimpleName())) {
-      String namespaceId = keySplitter.getString();
-      String instanceId  = keySplitter.getString();
-      return Id.DatasetInstance.from(namespaceId, instanceId);
-    } else if (type.equals(Id.Stream.class.getSimpleName())) {
-      String namespaceId = keySplitter.getString();
-      String instanceId  = keySplitter.getString();
-      return Id.Stream.from(namespaceId, instanceId);
-    }
-    throw new IllegalArgumentException("Illegal Type " + type + " of metadata source.");
-  }
+    String nameSpacedKVIndexValue =
+      MdsValueKey.getNamespaceId(mdsKey) + KEYVALUE_SEPARATOR + lowerCaseKey + KEYVALUE_SEPARATOR + lowerCaseValue;
+    put.add(Bytes.toBytes(KEYVALUE_COLUMN), Bytes.toBytes(nameSpacedKVIndexValue));
 
-  private void write(MDSKey id, BusinessMetadataRecord record) {
-    Put put = new Put(id.getKey());
-
-     // Now add the index columns. To support case insensitive we will store it as lower case for index columns.
-    put.add(Bytes.toBytes(KEYVALUE_COLUMN),
-            Bytes.toBytes(record.getKey().toLowerCase() + KEYVALUE_SEPARATOR + record.getValue().toLowerCase()));
-    put.add(Bytes.toBytes(CASE_INSENSITIVE_VALUE_COLUMN), Bytes.toBytes(record.getValue().toLowerCase()));
+    String nameSpacedVIndexValue = MdsValueKey.getNamespaceId(mdsKey) + KEYVALUE_SEPARATOR + lowerCaseValue;
+    put.add(Bytes.toBytes(CASE_INSENSITIVE_VALUE_COLUMN), Bytes.toBytes(nameSpacedVIndexValue));
 
     // Add to value column
     put.add(Bytes.toBytes(VALUE_COLUMN), Bytes.toBytes(record.getValue()));
 
     indexedTable.put(put);
+
+    writeHistory(targetId);
   }
 
-  // Helper method to generate key.
-  private MDSKey getMDSKey(Id.NamespacedId targetId, MetadataType type, @Nullable String key) {
-    String targetType = getTargetType(targetId);
-    MDSKey.Builder builder = new MDSKey.Builder();
-    builder.add(targetType);
-    addNamespaceIdToKey(builder, targetId);
-    builder.add(type.toString());
-    if (key != null) {
-      builder.add(key);
-    }
-
-    return builder.build();
-  }
-
-  private String getTargetType(Id.NamespacedId namespacedId) {
-    if (namespacedId instanceof Id.Program) {
-      return Id.Program.class.getSimpleName();
-    }
-    return namespacedId.getClass().getSimpleName();
-  }
-
-  private String getMetadataKey(String type, byte[] rowKey) {
-    MDSKey.Splitter keySplitter = new MDSKey(rowKey).split();
-    // The rowkey is [targetType][targetId][metadata-type][key], so skip the first few strings.
-
-    // Skip targetType
-    keySplitter.skipString();
-
-    // Skip targetId
-    if (type.equals(Id.Program.class.getSimpleName())) {
-      keySplitter.skipString();
-      keySplitter.skipString();
-      keySplitter.skipString();
-      keySplitter.skipString();
-    } else if (type.equals(Id.Application.class.getSimpleName())) {
-      keySplitter.skipString();
-      keySplitter.skipString();
-    } else if (type.equals(Id.DatasetInstance.class.getSimpleName())) {
-      keySplitter.skipString();
-      keySplitter.skipString();
-    } else if (type.equals(Id.Stream.class.getSimpleName())) {
-      keySplitter.skipString();
-      keySplitter.skipString();
-    } else {
-      throw new IllegalArgumentException("Illegal Type " + type + " of metadata source.");
-    }
-
-    // Skip metadata-type
-    keySplitter.skipString();
-
-    return keySplitter.getString();
-  }
-
-  private String getTargetType(byte[] rowKey) {
-    MDSKey.Splitter keySplitter = new MDSKey(rowKey).split();
-    // The rowkey is [targetType][targetId][metadata-type][key]
-    return keySplitter.getString();
+  /**
+   * Snapshots the metadata for the given targetId at the given time.
+   * @param targetId target id for which metadata needs snapshotting
+   */
+  private void writeHistory(Id.NamespacedId targetId) {
+    Map<String, String> properties = getProperties(targetId);
+    Set<String> tags = getTags(targetId);
+    MetadataRecord metadataRecord = new MetadataRecord(targetId, properties, tags);
+    byte[] row = MdsHistoryKey.getMdsKey(targetId, System.currentTimeMillis()).getKey();
+    indexedTable.put(row, Bytes.toBytes(HISTORY_COLUMN), Bytes.toBytes(GSON.toJson(metadataRecord)));
   }
 }
