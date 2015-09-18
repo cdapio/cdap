@@ -158,8 +158,8 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
       }
 
       Map<String, LocalizeResource> localizeResources = new HashMap<>();
-      final ProgramOptions options = addArtifactPluginFiles(oldOptions, localizeResources,
-                                                            DirUtils.createTempDir(tempDir));
+      final ProgramOptions options = program.getApplicationSpecification().getPlugins().isEmpty() ?
+        oldOptions : addArtifactPluginFiles(oldOptions, localizeResources, DirUtils.createTempDir(tempDir));
 
       // Copy config files and program jar to local temp, and ask Twill to localize it to container.
       // What Twill does is to save those files in HDFS and keep using them during the lifetime of application.

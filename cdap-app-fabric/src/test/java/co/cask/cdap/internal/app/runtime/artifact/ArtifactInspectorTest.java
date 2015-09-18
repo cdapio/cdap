@@ -27,6 +27,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.app.runtime.artifact.app.InspectionApp;
+import co.cask.cdap.internal.app.runtime.artifact.app.InvalidConfigApp;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.Id;
@@ -62,6 +63,19 @@ public class ArtifactInspectorTest {
 
     classLoaderFactory = new ArtifactClassLoaderFactory(TMP_FOLDER.newFolder());
     artifactInspector = new ArtifactInspector(cConf, classLoaderFactory, TMP_FOLDER.newFolder());
+  }
+
+  @Test(expected = InvalidArtifactException.class)
+  public void testInvalidConfigApp() throws Exception {
+    Manifest manifest = new Manifest();
+    File appFile =
+      createJar(InvalidConfigApp.class, new File(TMP_FOLDER.newFolder(), "InvalidConfigApp-1.0.0.jar"), manifest);
+
+    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "InvalidConfigApp", "1.0.0");
+    Location artifactLocation = Locations.toLocation(appFile);
+    try (CloseableClassLoader artifactClassLoader = classLoaderFactory.createClassLoader(artifactLocation)) {
+      artifactInspector.inspectArtifact(artifactId, appFile, artifactClassLoader);
+    }
   }
 
   @Test

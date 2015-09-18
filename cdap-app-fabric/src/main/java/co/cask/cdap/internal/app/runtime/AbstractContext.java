@@ -34,7 +34,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.dataset.DatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
-import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
+import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -282,7 +282,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
 
     Plugin plugin = getPlugins().get(pluginId);
     Preconditions.checkArgument(plugin != null, "Plugin with id %s does not exist in program %s of application %s.",
-                                pluginId, program.getId(), program.getApplicationId());
+      pluginId, program.getId(), program.getApplicationId());
     return plugin;
   }
 }

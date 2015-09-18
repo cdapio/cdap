@@ -524,7 +524,8 @@ public class CLIMainTest {
                          FakeWorkflow.FakeAction.ANOTHER_FAKE_NAME, FakeWorkflow.FakeAction.TOKEN_KEY), fakeNodeValue);
 
     // stop workflow
-    testCommandOutputContains(cli, "stop workflow " + workflow, "400: Program not running");
+    testCommandOutputContains(cli, "stop workflow " + workflow,
+                              String.format("400: Program '%s' is not running", fakeWorkflowId));
   }
 
   private static File createAppJarFile(Class<?> cls) throws IOException {

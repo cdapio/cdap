@@ -17,7 +17,6 @@
 package co.cask.cdap.data2.dataset2.tx;
 
 import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.tephra.DefaultTransactionExecutor;
 import co.cask.tephra.TransactionAware;
@@ -48,8 +47,7 @@ public abstract class TransactionalDatasetRegistry<CONTEXT_TYPE extends TxContex
   }
 
   public <RETURN_TYPE> RETURN_TYPE execute(final TxCallable<CONTEXT_TYPE, RETURN_TYPE> tx)
-    throws TransactionFailureException, IOException, DatasetManagementException, InterruptedException,
-    ServiceUnavailableException {
+    throws TransactionFailureException, IOException, DatasetManagementException, InterruptedException {
 
     final CONTEXT_TYPE context = createContext();
     Map<String, ? extends Dataset> datasets = context.getDatasets();
@@ -85,6 +83,5 @@ public abstract class TransactionalDatasetRegistry<CONTEXT_TYPE extends TxContex
     }
   }
 
-  protected abstract CONTEXT_TYPE createContext() throws IOException, DatasetManagementException,
-    ServiceUnavailableException;
+  protected abstract CONTEXT_TYPE createContext() throws IOException, DatasetManagementException;
 }

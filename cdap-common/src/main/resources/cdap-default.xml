@@ -189,7 +189,7 @@
     <name>app.artifact.dir</name>
     <value>/opt/cdap/master/artifacts</value>
     <description>
-      Directory where all archives for application templates are stored
+      Directory where all system artifacts and their corresponding config files are stored
     </description>
   </property>
 
@@ -232,23 +232,6 @@
     <description>
       Temp directory
     </description>
-  </property>
-
-  <property>
-    <name>app.template.dir</name>
-    <value>/opt/cdap/master/templates</value>
-    <description>
-      Directory where all archives for application templates are stored
-    </description>
-  </property>
-
-  <property>
-    <name>app.template.plugin.dir</name>
-    <value>${app.template.dir}/plugins</value>
-    <description>
-      Directory where application template plugins are stored
-    </description>
-    <final>true</final>
   </property>
 
   <property>
@@ -832,6 +815,14 @@
 
   <!-- Metadata Configuration -->
 
+  <property>
+    <name>metadata.max.allowed.chars</name>
+    <value>50</value>
+    <description>
+      Maximum number of characters for metadata keys, values, and tags
+    </description>
+  </property>
+  
   <property>
     <name>metadata.service.bind.address</name>
     <value>0.0.0.0</value>

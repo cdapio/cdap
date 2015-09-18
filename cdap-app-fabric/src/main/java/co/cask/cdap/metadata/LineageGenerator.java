@@ -104,7 +104,7 @@ public class LineageGenerator {
       LOG.trace("Got {} rundIds in time range ({}, {})", runningInRange.size(), startMillis, endMillis);
     }
 
-    ScanRange scanRange = getScanRange(runningInRange);
+    ScanRangeWithFilter scanRange = getScanRange(runningInRange);
     LOG.trace("Using scan start = {}, scan end = {}", scanRange.getStart(), scanRange.getEnd());
 
     Set<Relation> relations = new HashSet<>();
@@ -171,9 +171,9 @@ public class LineageGenerator {
    * @return scan range
    */
   @VisibleForTesting
-  static ScanRange getScanRange(final Set<RunId> runIds) {
+  static ScanRangeWithFilter getScanRange(final Set<RunId> runIds) {
     if (runIds.isEmpty()) {
-      return new ScanRange(0, 0, Predicates.<Relation>alwaysFalse());
+      return new ScanRangeWithFilter(0, 0, Predicates.<Relation>alwaysFalse());
     }
 
     // Pick the earliest start time and latest start time for lineage range
@@ -190,7 +190,7 @@ public class LineageGenerator {
     }
 
     // scan end key is exclusive, so need to add 1 to  to include the last runid
-    return new ScanRange(earliest, latest + 1, new Predicate<Relation>() {
+    return new ScanRangeWithFilter(earliest, latest + 1, new Predicate<Relation>() {
       @Override
       public boolean apply(Relation input) {
         return runIds.contains(input.getRun());
@@ -199,12 +199,12 @@ public class LineageGenerator {
   }
 
   @VisibleForTesting
-  static class ScanRange {
+  static class ScanRangeWithFilter {
     private final long start;
     private final long end;
     private final Predicate<Relation> filter;
 
-    public ScanRange(long start, long end, Predicate<Relation> filter) {
+    public ScanRangeWithFilter(long start, long end, Predicate<Relation> filter) {
       this.start = start;
       this.end = end;
       this.filter = filter;

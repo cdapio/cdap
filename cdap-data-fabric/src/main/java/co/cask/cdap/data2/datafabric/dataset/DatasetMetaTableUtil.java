@@ -18,7 +18,6 @@ package co.cask.cdap.data2.datafabric.dataset;
 
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
-import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.DatasetInstanceMDS;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.DatasetTypeMDS;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -48,14 +47,13 @@ public class DatasetMetaTableUtil {
     this.framework = framework;
   }
 
-  public DatasetTypeMDS getTypeMetaTable() throws DatasetManagementException, IOException, ServiceUnavailableException {
+  public DatasetTypeMDS getTypeMetaTable() throws DatasetManagementException, IOException {
     return (DatasetTypeMDS) DatasetsUtil.getOrCreateDataset(framework, META_TABLE_INSTANCE_ID,
                                                             DatasetTypeMDS.class.getName(),
                                                             DatasetProperties.EMPTY, null, null);
   }
 
-  public DatasetInstanceMDS getInstanceMetaTable() throws DatasetManagementException, IOException,
-    ServiceUnavailableException {
+  public DatasetInstanceMDS getInstanceMetaTable() throws DatasetManagementException, IOException {
     return (DatasetInstanceMDS) DatasetsUtil.getOrCreateDataset(framework, INSTANCE_TABLE_INSTANCE_ID,
                                                                 DatasetInstanceMDS.class.getName(),
                                                                 DatasetProperties.EMPTY, null, null);
@@ -66,8 +64,7 @@ public class DatasetMetaTableUtil {
    *
    * @param datasetFramework framework to add types and datasets to
    */
-  public static void setupDatasets(DatasetFramework datasetFramework) throws IOException, DatasetManagementException,
-    ServiceUnavailableException {
+  public static void setupDatasets(DatasetFramework datasetFramework) throws IOException, DatasetManagementException {
     for (Map.Entry<String, ? extends DatasetModule> entry : getModules().entrySet()) {
       // meta tables should be in the system namespace
       Id.DatasetModule moduleId = Id.DatasetModule.from(Id.Namespace.SYSTEM, entry.getKey());
