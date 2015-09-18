@@ -66,6 +66,7 @@ import java.io.File;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
 import javax.ws.rs.core.MediaType;
 
@@ -170,7 +171,8 @@ public class AppFabricClient {
     return json.get("status");
   }
 
-  public void setWorkerInstances(String namespaceId, String appId, String workerId, int instances) {
+  public void setWorkerInstances(String namespaceId, String appId, String workerId, int instances)
+    throws ExecutionException, InterruptedException {
     MockResponder responder = new MockResponder();
     String uri = String.format("%s/apps/%s/worker/%s/instances", getNamespacePath(namespaceId), appId, workerId);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.PUT, uri);
@@ -190,7 +192,8 @@ public class AppFabricClient {
     return responder.decodeResponseContent(Instances.class);
   }
 
-  public void setServiceInstances(String namespaceId, String applicationId, String serviceName, int instances) {
+  public void setServiceInstances(String namespaceId, String applicationId, String serviceName,
+                                  int instances) throws ExecutionException, InterruptedException {
     MockResponder responder = new MockResponder();
     String uri = String.format("%s/apps/%s/services/%s/instances",
                                getNamespacePath(namespaceId), applicationId, serviceName);
@@ -212,8 +215,8 @@ public class AppFabricClient {
     return responder.decodeResponseContent(ServiceInstances.class);
   }
 
-  public void setFlowletInstances(String namespaceId, String applicationId,
-                                  String flowId, String flowletName, int instances) {
+  public void setFlowletInstances(String namespaceId, String applicationId, String flowId,
+                                  String flowletName, int instances) throws ExecutionException, InterruptedException {
     MockResponder responder = new MockResponder();
     String uri = String.format("%s/apps/%s/flows/%s/flowlets/%s/instances/%s",
                                getNamespacePath(namespaceId), applicationId, flowId, flowletName, instances);

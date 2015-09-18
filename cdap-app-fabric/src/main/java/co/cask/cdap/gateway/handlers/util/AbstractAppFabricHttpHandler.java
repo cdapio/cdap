@@ -167,7 +167,8 @@ public abstract class AbstractAppFabricHttpHandler extends AbstractHttpHandler {
     }
   }
 
-  protected final void programList(HttpResponder responder, String namespaceId, ProgramType type, Store store) {
+  protected final void programList(HttpResponder responder, String namespaceId, ProgramType type,
+                                   Store store) throws Exception {
     try {
       Id.Namespace namespace = Id.Namespace.from(namespaceId);
       List<ProgramRecord> programRecords = listPrograms(namespace, type, store);
@@ -179,9 +180,6 @@ public abstract class AbstractAppFabricHttpHandler extends AbstractHttpHandler {
       }
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception: ", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -272,9 +270,6 @@ public abstract class AbstractAppFabricHttpHandler extends AbstractHttpHandler {
       responder.sendJson(HttpResponseStatus.OK, runtimeService.getLiveInfo(programId));
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 

@@ -84,7 +84,7 @@ public class NamespacedExploreMetadataHttpHandler extends AbstractExploreMetadat
   @POST
   @Path("jdbc/tables")
   public void getJDBCTables(HttpRequest request, HttpResponder responder,
-                            @PathParam("namespace-id") final String namespaceId) {
+                            @PathParam("namespace-id") final String namespaceId) throws ExploreException, IOException {
     handleResponseEndpointExecution(request, responder, new EndpointCoreExecution<QueryHandle>() {
       @Override
       public QueryHandle execute(HttpRequest request, HttpResponder responder)
@@ -100,7 +100,7 @@ public class NamespacedExploreMetadataHttpHandler extends AbstractExploreMetadat
   @POST
   @Path("jdbc/columns")
   public void getJDBCColumns(HttpRequest request, HttpResponder responder,
-                             @PathParam("namespace-id") final String namespaceId) {
+                             @PathParam("namespace-id") final String namespaceId) throws ExploreException, IOException {
     handleResponseEndpointExecution(request, responder, new EndpointCoreExecution<QueryHandle>() {
       @Override
       public QueryHandle execute(HttpRequest request, HttpResponder responder)
@@ -116,7 +116,7 @@ public class NamespacedExploreMetadataHttpHandler extends AbstractExploreMetadat
   @POST
   @Path("jdbc/schemas")
   public void getJDBCSchemas(HttpRequest request, HttpResponder responder,
-                             @PathParam("namespace-id") final String namespaceId) {
+                             @PathParam("namespace-id") final String namespaceId) throws ExploreException, IOException {
     handleResponseEndpointExecution(request, responder, new EndpointCoreExecution<QueryHandle>() {
       @Override
       public QueryHandle execute(HttpRequest request, HttpResponder responder)
@@ -131,7 +131,8 @@ public class NamespacedExploreMetadataHttpHandler extends AbstractExploreMetadat
   @POST
   @Path("jdbc/functions")
   public void getJDBCFunctions(HttpRequest request, HttpResponder responder,
-                               @PathParam("namespace-id") final String namespaceId) {
+                               @PathParam("namespace-id") final String namespaceId)
+    throws ExploreException, IOException {
     handleResponseEndpointExecution(request, responder, new EndpointCoreExecution<QueryHandle>() {
       @Override
       public QueryHandle execute(HttpRequest request, HttpResponder responder)
