@@ -16,7 +16,7 @@ An *Artifact* is a JAR file that contains Java classes and resources required to
 The artifact name must consist of only alphanumeric, '-', and '_' characters. For example,
 'my-application' is a valid artifact name, but 'my:application' is not.
 
-The artifact version is of the format '[major].[minor].[fix](-|.)[suffix]'. Minor, fix, and suffix
+The artifact version is of the format '[major].[minor].[fix](-\|.)[suffix]'. Minor, fix, and suffix
 portions of the version are optional, though it is suggested that you have them conform to
 standard versioning schemes. The major, minor, and fix portions of the version must be numeric.
 The suffix can be any of the acceptable characters. For example, '3.2.0-SNAPSHOT' is a valid artifact version,
