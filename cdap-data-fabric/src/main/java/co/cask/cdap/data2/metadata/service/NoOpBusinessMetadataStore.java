@@ -84,12 +84,13 @@ public class NoOpBusinessMetadataStore implements BusinessMetadataStore {
   }
 
   @Override
-  public Iterable<BusinessMetadataRecord> searchMetadata(String searchQuery) {
+  public Iterable<BusinessMetadataRecord> searchMetadata(String namespaceId, String searchQuery) {
     return null;
   }
 
   @Override
-  public Iterable<BusinessMetadataRecord> searchMetadataOnType(String searchQuery, MetadataSearchTargetType type) {
+  public Iterable<BusinessMetadataRecord> searchMetadataOnType(String namespaceId, String searchQuery,
+                                                               MetadataSearchTargetType type) {
     return null;
   }
 }

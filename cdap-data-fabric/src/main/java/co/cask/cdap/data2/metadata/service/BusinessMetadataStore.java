@@ -90,10 +90,11 @@ public interface BusinessMetadataStore {
   /**
    * Search to the underlying Business Metadata Dataset.
    */
-  Iterable<BusinessMetadataRecord> searchMetadata(String searchQuery);
+  Iterable<BusinessMetadataRecord> searchMetadata(String namespaceId, String searchQuery);
 
   /**
    * Search to the underlying Business Metadata Dataset for a target type.
    */
-  Iterable<BusinessMetadataRecord> searchMetadataOnType(String searchQuery, MetadataSearchTargetType type);
+  Iterable<BusinessMetadataRecord> searchMetadataOnType(String namespaceId, String searchQuery,
+                                                        MetadataSearchTargetType type);
 }
