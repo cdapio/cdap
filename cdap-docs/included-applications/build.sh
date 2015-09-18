@@ -18,4 +18,13 @@
 
 source ../_common/common-build.sh
 
+CHECK_INCLUDES=${TRUE}
+
+function download_includes() {
+  echo_red_bold "Checking guarded files for changes"
+
+#   ETL Plugins  
+  test_an_include 4fc697d071e894cfce67dbf62c9709d0 ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/validator/CoreValidator.java
+}
+
 run_command ${1}
