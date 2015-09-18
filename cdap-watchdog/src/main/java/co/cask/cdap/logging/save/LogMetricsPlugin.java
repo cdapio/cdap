@@ -72,8 +72,9 @@ public class LogMetricsPlugin extends AbstractKafkaLogProcessor {
 
     partitionCheckpoints.clear();
     try {
-      for (Integer partition : partitions) {
-        partitionCheckpoints.put(partition, checkpointManager.getCheckpoint(partition));
+      Map<Integer, Checkpoint> partitionMap = checkpointManager.getCheckpoint(partitions);
+      for (Map.Entry<Integer, Checkpoint> partition : partitionMap.entrySet()) {
+        partitionCheckpoints.put(partition.getKey(), partition.getValue());
       }
     } catch (Exception e) {
       LOG.error("Caught exception while reading checkpoint", e);
@@ -81,7 +82,7 @@ public class LogMetricsPlugin extends AbstractKafkaLogProcessor {
     }
 
     checkPointWriter = new CheckPointWriter(checkpointManager, partitionCheckpoints);
-    scheduledExecutor.scheduleWithFixedDelay(checkPointWriter, 100, 10000, TimeUnit.MILLISECONDS);
+    scheduledExecutor.scheduleWithFixedDelay(checkPointWriter, 100, 500, TimeUnit.MILLISECONDS);
   }
 
   @Override

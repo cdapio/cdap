@@ -49,6 +49,7 @@ import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.test.SlowTests;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.runtime.TransactionModules;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -232,7 +233,7 @@ public class LogSaverPluginTest extends KafkaTestBase {
       if (processor instanceof  KafkaLogWriterPlugin) {
         KafkaLogWriterPlugin plugin = (KafkaLogWriterPlugin) processor;
         CheckpointManager manager = plugin.getCheckPointManager();
-        manager.saveCheckpoint(0, new Checkpoint(10, -1));
+        manager.saveCheckpoint(ImmutableMap.of(0, new Checkpoint(10, -1)));
         Set<Integer> partitions = Sets.newHashSet(0, 1);
         plugin.init(partitions);
       }
