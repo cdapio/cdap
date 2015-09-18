@@ -16,19 +16,27 @@
 
 package co.cask.cdap.internal.app.runtime.batch;
 
+import co.cask.cdap.api.mapreduce.MapReduceSpecification;
+import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.Programs;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.lang.Delegators;
-import co.cask.cdap.internal.app.runtime.batch.distributed.DistributedMapReduceTaskContextBuilder;
-import co.cask.cdap.internal.app.runtime.batch.inmemory.InMemoryMapReduceTaskContextBuilder;
-import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.internal.app.runtime.workflow.WorkflowMapReduceProgram;
+import co.cask.tephra.TransactionAware;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.google.common.collect.Sets;
+import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.mapreduce.MRConfig;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.apache.hadoop.mapreduce.TaskAttemptID;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -37,78 +45,21 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import javax.annotation.Nullable;
+import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Provides access to MapReduceTaskContext for mapreduce job tasks.
  */
-public final class MapReduceTaskContextProvider {
+public abstract class MapReduceTaskContextProvider extends AbstractIdleService {
 
   private static final Logger LOG = LoggerFactory.getLogger(MapReduceTaskContextProvider.class);
-
-  private final TaskAttemptContext taskContext;
-  private final MapReduceMetrics.TaskType type;
-  private final MapReduceContextConfig contextConfig;
-  private final LocationFactory locationFactory;
-  private BasicMapReduceTaskContext context;
-  private AbstractMapReduceTaskContextBuilder contextBuilder;
-
-  public MapReduceTaskContextProvider(TaskAttemptContext context, @Nullable MapReduceMetrics.TaskType type) {
-    this.taskContext = context;
-    this.type = type;
-    this.contextConfig = new MapReduceContextConfig(context.getConfiguration());
-    this.locationFactory = new LocalLocationFactory();
-    this.contextBuilder = null;
-  }
-
-  /**
-   * Creates an instance of {@link BasicMapReduceContext} that the {@link co.cask.cdap.app.program.Program} contained
-   * inside cannot load program classes. It is used for the cases where only the application specification is needed,
-   * but no need to load any class from it.
-   */
-  public synchronized <K, V> BasicMapReduceTaskContext<K, V> get() {
-    if (context == null) {
-      CConfiguration cConf = contextConfig.getConf();
-      context = getBuilder(cConf)
-        .build(type,
-               contextConfig.getRunId(),
-               taskContext.getTaskAttemptID().getTaskID().toString(),
-               contextConfig.getLogicalStartTime(),
-               contextConfig.getProgramNameInWorkflow(),
-               contextConfig.getWorkflowToken(),
-               contextConfig.getArguments(),
-               contextConfig.getTx(),
-               createProgram(contextConfig),
-               contextConfig.getInputDataSet(),
-               contextConfig.getOutputDataSet(),
-               getPluginInstantiator(contextConfig.getConfiguration()));
-    }
-    return context;
-  }
-
-  // TODO: CDAP-3160 : Refactor to remove the need for the stop method below. Provider/Builder classes should not have
-  // methods like stop(), finish() or close().
-  public synchronized void stop() {
-    if (contextBuilder != null) {
-      contextBuilder.finish();
-    }
-  }
-
-  private synchronized AbstractMapReduceTaskContextBuilder getBuilder(CConfiguration conf) {
-    if (contextBuilder != null) {
-      return contextBuilder;
-    }
-
-    if (isLocal(taskContext.getConfiguration())) {
-      contextBuilder = new InMemoryMapReduceTaskContextBuilder(conf);
-    } else {
-      // mrFramework = "yarn" or "classic"
-      // if the jobContext is not a TaskAttemptContext, mrFramework should not be yarn.
-      contextBuilder = new DistributedMapReduceTaskContextBuilder(
-        conf, HBaseConfiguration.create(taskContext.getConfiguration()));
-    }
-    return contextBuilder;
-  }
+  private final Injector injector;
+  // Maintain a cache of taskId to MapReduceTaskContext
+  // Each task should have it's own instance of MapReduceTaskContext so that different dataset instance will
+  // be created for different task, which is needed in local mode since job runs with multiple threads
+  private final LoadingCache<ContextCacheKey, BasicMapReduceTaskContext> taskContexts;
 
   /**
    * Helper method to tell if the MR is running in local mode or not. This method doesn't really belongs to this
@@ -119,9 +70,60 @@ public final class MapReduceTaskContextProvider {
     return MRConfig.LOCAL_FRAMEWORK_NAME.equals(mrFramework);
   }
 
-  private Program createProgram(MapReduceContextConfig contextConfig) {
+  /**
+   * Creates an instance with the given {@link Injector} that will be used for getting service instances.
+   */
+  protected MapReduceTaskContextProvider(Injector injector) {
+    this.injector = injector;
+    this.taskContexts = CacheBuilder.newBuilder().build(createCacheLoader(injector));
+  }
+
+  protected Injector getInjector() {
+    return injector;
+  }
+
+  @Override
+  protected final void startUp() throws Exception {
+    doStart();
+  }
+
+  @Override
+  protected final void shutDown() throws Exception {
+    // Close all the contexts to release resources
+    for (BasicMapReduceTaskContext context : taskContexts.asMap().values()) {
+      try {
+        context.close();
+      } catch (Exception e) {
+        LOG.warn("Exception when closing context {}", context, e);
+      }
+    }
+    doStop();
+  }
+
+  protected abstract void doStart() throws Exception;
+
+  protected abstract void doStop() throws Exception;
+
+  /**
+   * Returns the {@link BasicMapReduceTaskContext} for the given task.
+   */
+  public final <K, V> BasicMapReduceTaskContext<K, V> get(TaskAttemptContext taskAttemptContext) {
+    ContextCacheKey key = new ContextCacheKey(taskAttemptContext);
+
+    @SuppressWarnings("unchecked")
+    BasicMapReduceTaskContext<K, V> context = (BasicMapReduceTaskContext<K, V>) taskContexts.getUnchecked(key);
+    return context;
+  }
+
+  /**
+   * Creates a {@link Program} instance based on the information from the {@link MapReduceContextConfig}, using
+   * the given program ClassLoader.
+   */
+  private Program createProgram(MapReduceContextConfig contextConfig, ClassLoader programClassLoader) {
     Location programLocation;
-    if (isLocal(contextConfig.getConfiguration())) {
+    LocationFactory locationFactory = new LocalLocationFactory();
+
+    if (isLocal(contextConfig.getHConf())) {
       // Just create a local location factory. It's for temp usage only as the program location is always absolute.
       programLocation = locationFactory.create(contextConfig.getProgramJarURI());
     } else {
@@ -129,34 +131,126 @@ public final class MapReduceTaskContextProvider {
       programLocation = locationFactory.create(new File(contextConfig.getProgramJarName()).getAbsoluteFile().toURI());
     }
     try {
-      // Use the configuration ClassLoader as the Program ClassLoader
-      // In local mode, it is set by the MapReduceRuntimeService
-      // In distributed mode, it is set by the MR framework to the ApplicationClassLoader
-      return Programs.create(programLocation, contextConfig.getConfiguration().getClassLoader());
+      Program program = Programs.create(programLocation, programClassLoader);
+      String mapReduceName = contextConfig.getProgramNameInWorkflow();
+
+      // See if it was launched from Workflow; if it was, change the Program.
+      if (mapReduceName != null) {
+        MapReduceSpecification mapReduceSpec = program.getApplicationSpecification().getMapReduce().get(mapReduceName);
+        Preconditions.checkArgument(mapReduceSpec != null, "Cannot find MapReduceSpecification for %s in %s.",
+                                    mapReduceName, program.getId());
+        program = new WorkflowMapReduceProgram(program, mapReduceSpec);
+      }
+      return program;
     } catch (IOException e) {
-      LOG.error("Failed to create program from {}", contextConfig.getProgramJarURI(), e);
       throw Throwables.propagate(e);
     }
   }
 
-  private PluginInstantiator getPluginInstantiator(Configuration hConf) {
-    ClassLoader classLoader = Delegators.getDelegate(hConf.getClassLoader(), MapReduceClassLoader.class);
-    if (!(classLoader instanceof MapReduceClassLoader)) {
-      throw new IllegalArgumentException("ClassLoader is not an MapReduceClassLoader");
+  /**
+   * TODO: This code will be gone (CDAP-961).
+   *
+   * Collect set of datasets that are usable in the job.
+   * We should get it from the MapReduce spec, not the application spec. However, this bug exists for a long time
+   * (in the old AbstractMapReduceTaskContextBuilder), hence not going to fix it due to CDAP-961.
+   *
+   * @return set of dataset names used by the program.
+   */
+  private Set<String> getDatasets(Program program, MapReduceContextConfig contextConfig) {
+    final Set<String> datasets = Sets.newHashSet(program.getApplicationSpecification().getDatasets().keySet());
+    String dataset = contextConfig.getInputDataSet();
+    if (dataset != null) {
+      datasets.add(dataset);
     }
-    return ((MapReduceClassLoader) classLoader).getPluginInstantiator();
+    dataset = contextConfig.getOutputDataSet();
+    if (dataset != null) {
+      datasets.add(dataset);
+    }
+    return datasets;
   }
 
   /**
-   * Returns the {@link ClassLoader} for the MapReduce program. The ClassLoader for MapReduce job is always
-   * an {@link MapReduceClassLoader}, which set by {@link MapReduceRuntimeService} in local mode and created by MR
-   * framework in distributed mode.
+   * Creates a {@link CacheLoader} for the task context cache.
    */
-  static ClassLoader getProgramClassLoader(Configuration hConf) {
-    ClassLoader classLoader = Delegators.getDelegate(hConf.getClassLoader(), MapReduceClassLoader.class);
-    if (!(classLoader instanceof MapReduceClassLoader)) {
-      throw new IllegalArgumentException("ClassLoader is not an MapReduceClassLoader");
+  private CacheLoader<ContextCacheKey, BasicMapReduceTaskContext> createCacheLoader(final Injector injector) {
+    final DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
+    final DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
+    // Multiple instances of BasicMapReduceTaskContext can shares the same program.
+    final AtomicReference<Program> programRef = new AtomicReference<>();
+
+    return new CacheLoader<ContextCacheKey, BasicMapReduceTaskContext>() {
+      @Override
+      public BasicMapReduceTaskContext load(ContextCacheKey key) throws Exception {
+        MapReduceContextConfig contextConfig = new MapReduceContextConfig(key.getConfiguration());
+        MapReduceClassLoader classLoader = MapReduceClassLoader.getFromConfiguration(key.getConfiguration());
+
+        Program program = programRef.get();
+        if (program == null) {
+          // Creation of program is relatively cheap, so just create and do compare and set.
+          programRef.compareAndSet(null, createProgram(contextConfig, classLoader));
+          program = programRef.get();
+        }
+        MapReduceSpecification spec = program.getApplicationSpecification().getMapReduce().get(program.getName());
+        MapReduceMetrics.TaskType taskType = MapReduceMetrics.TaskType.from(key.getTaskAttemptID().getTaskType());
+
+        // if this is not for a mapper or a reducer, we don't need the metrics collection service
+        MetricsCollectionService metricsCollectionService =
+          (taskType == null) ? null : injector.getInstance(MetricsCollectionService.class);
+
+        BasicMapReduceTaskContext context = new BasicMapReduceTaskContext(
+          program, taskType, contextConfig.getRunId(), key.getTaskAttemptID().getTaskID().toString(),
+          contextConfig.getArguments(), getDatasets(program, contextConfig), spec, contextConfig.getLogicalStartTime(),
+          contextConfig.getWorkflowToken(), discoveryServiceClient, metricsCollectionService, datasetFramework,
+          classLoader.getPluginInstantiator()
+        );
+
+        // propagating tx to all txAware guys
+        // NOTE: tx will be committed by client code
+        for (TransactionAware txAware : context.getDatasetInstantiator().getTransactionAware()) {
+          txAware.startTx(contextConfig.getTx());
+        }
+        return context;
+      }
+    };
+  }
+
+  /**
+   * Private class to represent the caching key for the {@link BasicMapReduceTaskContext} instances.
+   */
+  private static final class ContextCacheKey {
+
+    private final TaskAttemptID taskAttemptID;
+    private final Configuration configuration;
+
+    private ContextCacheKey(TaskAttemptContext context) {
+      this.taskAttemptID = context.getTaskAttemptID();
+      this.configuration = context.getConfiguration();
     }
-    return ((MapReduceClassLoader) classLoader).getProgramClassLoader();
+
+    public TaskAttemptID getTaskAttemptID() {
+      return taskAttemptID;
+    }
+
+    public Configuration getConfiguration() {
+      return configuration;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      // Only compares with the task ID
+      ContextCacheKey that = (ContextCacheKey) o;
+      return Objects.equals(taskAttemptID, that.taskAttemptID);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(taskAttemptID);
+    }
   }
 }
