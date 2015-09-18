@@ -221,7 +221,7 @@ public class ExploreServiceUtils {
       } else if (hiveVersion.startsWith("1.1.")) {
         return HiveSupport.HIVE_1_1;
       }  else if (hiveVersion.startsWith(("1.2"))) {
-        return HiveSupport.HIVE_14;
+        return HiveSupport.HIVE_1_2;
       }
     } catch (Exception e) {
       throw Throwables.propagate(e);
