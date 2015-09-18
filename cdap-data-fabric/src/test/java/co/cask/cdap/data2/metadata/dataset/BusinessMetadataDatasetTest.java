@@ -164,11 +164,14 @@ public class BusinessMetadataDatasetTest {
     dataset.setProperty(flow1, "key2", "value2");
 
     // Search for it based on value
-    List<BusinessMetadataRecord> results = dataset.findBusinessMetadataOnValue("value1",
-                                                                               MetadataSearchTargetType.PROGRAM);
+    List<BusinessMetadataRecord> results =
+      dataset.findBusinessMetadataOnValue("value1", MetadataSearchTargetType.PROGRAM);
 
     // Assert check
     Assert.assertEquals(1, results.size());
+
+    // Case insensitive
+    results = dataset.findBusinessMetadataOnValue("ValUe1", MetadataSearchTargetType.PROGRAM);
 
     BusinessMetadataRecord result = results.get(0);
     Assert.assertEquals(record, result);
@@ -177,8 +180,8 @@ public class BusinessMetadataDatasetTest {
     dataset.setProperty(flow1, "key3", "value1");
 
     // Search for it based on value
-    List<BusinessMetadataRecord> results2 = dataset.findBusinessMetadataOnValue("value1",
-                                                                                MetadataSearchTargetType.PROGRAM);
+    List<BusinessMetadataRecord> results2 =
+      dataset.findBusinessMetadataOnValue("value1", MetadataSearchTargetType.PROGRAM);
 
     // Assert check
     Assert.assertEquals(2, results2.size());
