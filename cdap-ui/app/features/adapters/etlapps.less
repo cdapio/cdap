@@ -71,6 +71,10 @@ body.theme-cdap.state-adapters {
 body.theme-cdap.state-adapters-detail,
 body.theme-cdap.state-adapters-create {
 
+
+
+
+
   .ui-select-container.ui-select-bootstrap {
     .ui-select-toggle {
       overflow-x: auto;
@@ -160,439 +164,8 @@ body.theme-cdap.state-adapters-create {
       }
     }
   }
-
-  // Styles specific to the adapter modals
-  .adapter-modal {
-    &.in {
-      overflow-y: hidden;
-    }
-    .modal-dialog {
-      @media (min-width: @screen-md-min) {
-        width: 75%;
-      }
-      @media (min-width: @screen-lg-min) {
-        margin-top: 115px;
-      }
-
-      .modal-header {
-        background-color: @body-bg;
-        border-bottom: 1px solid @modal-table-border-color;
-        color: @cdap-header;
-        height: 60px;
-        padding: 0;
-        .border-radius(4px 4px 0 0);
-        h3, p {
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-        }
-        h3 {
-          color: @cdap-header;
-          font-weight: 500;
-          line-height: 1.3;
-          padding-top: 5px;
-          // Adapter config modal
-          &:only-child {
-            line-height: 60px;
-            padding-top: 0;
-          }
-        }
-        p {
-          color: @cdap-lightgray;
-          margin: 0;
-          max-width: 740px;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-        .modal-btns {
-          margin-right: -15px;
-          text-align: right;
-          &.hideNonInfoButtons {
-            .non-info {
-              display: none;
-            }
-            .close-button {
-              border: 0;
-            }
-          }
-          > div {
-            background-color: transparent;
-            border-left: 1px solid @modal-table-border-color;
-            text-align: center;
-            width: 60px;
-
-            &.active-info {
-              background-color: @cdap-header;
-              .btn {
-                color: white;
-              }
-            }
-
-            .transition(all 0.2s ease);
-            @media (max-width: @screen-xs-min) {
-              width: 20%;
-            }
-            &:last-child {
-              .btn {
-                border: 0;
-                .border-radius(0);
-              }
-              &:hover, &:focus {
-                .border-radius(0 4px 0 0);
-              }
-            }
-            &:only-child {
-              margin-right: -1px;
-              @media (max-width: @screen-xs-max) {
-                width: 100%;
-              }
-            }
-            &:hover, &:focus {
-              background-color: @cdap-header;
-              .btn {
-                color: white;
-              }
-            }
-          }
-          &.btn-group {
-            display: block;
-            > div {
-
-              @media (max-width: @screen-xs-max) {
-                width: 20%;
-              }
-
-              display: inline-block;
-              margin-right: -4px;
-              &:last-child {
-                margin-right: 0;
-              }
-            }
-          }
-        }
-        .btn {
-          background-color: transparent;
-          color: @cdap-header;
-          display: block;
-          font-size: 18px;
-          line-height: 60px;
-          padding: 0;
-          width: 100%;
-        }
-      }
-      // Modal body helper class to enable section scrolling on larger devices
-      .plugin-modal {
-        overflow-y: hidden;
-      }
-      .metadata-modal {
-        textarea {
-          resize: vertical;
-        }
-      }
-      &.config-modal {
-        fieldset.view-plugin-json {
-          margin: 0;
-        }
-        a {
-          cursor: pointer;
-          background-color: transparent;
-          color: @btn-default-color;
-          &:hover, &:focus {
-            text-decoration: none;
-          }
-        }
-      }
-      @media (max-width: @screen-md-max) {
-        height: 65vh;
-      }
-      .modal-body {
-        background-color: white;
-        overflow-x: hidden;
-        padding: 0 10px;
-        width: 100%;
-        overflow-y: scroll;
-        .border-radius(0 0 4px 4px);
-
-        // Specificity kicks in from other modal styles.
-        h3 {
-          color: @cdap-header;
-        }
-
-        &.settings-modal, &.metadata-modal {
-          height: auto;
-        }
-        @media (max-width: @screen-md-max) {
-          height: 65vh;
-        }
-        @media (min-width: @screen-lg-min) {
-          height: 70vh;
-
-          .padding-offset-right {
-            padding-right: 1px;
-          }
-          .padding-offset-left {
-            padding-left: 1px;
-          }
-        }
-        // Edit Metadata & Adapter Config modals
-        > fieldset, .form-horizontal {
-          margin-top: 20px;
-        }
-        > fieldset {
-          textarea.form-control {
-            height: 60vh;
-          }
-        }
-
-        .download {
-          margin-top: 5px;
-          margin-bottom: 10px;
-        }
-        .modal-content-scroll {
-          padding-top: 20px;
-
-          @media (min-width: @screen-lg-min) {
-            height: 70vh;
-            overflow: scroll;
-          }
-        }
-        .input-schema {
-          background-color: @body-bg;
-          .table {
-            margin-bottom: 0;
-            td {
-              @media (min-width: @screen-lg-min) {
-                width: 50%;
-              }
-            }
-          }
-          @media (max-width: @screen-md-max) {
-            margin-top: 20px;
-            padding-top: 0;
-            border: 1px solid @modal-table-border-color;
-            .border-radius(4px);
-            .schema-inner, .empty-container {
-              padding: 10px;
-            }
-          }
-          @media (min-width: @screen-lg-min) {
-            margin-right: -15px;
-            margin-left: -15px;
-            @shadow: inset -18px 0px 17px -16px rgba(0, 0, 0, 0.34);
-            .box-shadow(@shadow);
-            .empty-container {
-              padding-right: 10px;
-              padding-left: 15px;
-            }
-            .schema-inner h4, .table th, td.name {
-              padding-left: 15px;
-            }
-            .table {
-              td.type {
-                border-right: 0;
-                width: 40%;
-              }
-              td.name {
-                width: 40%;
-              }
-              td.nullable {
-                width: 20%;
-              }
-            }
-          }
-        }
-        .output-schema {
-          @media (min-width: @screen-lg-min) {
-            border-left: 3px solid @modal-table-border-color;
-            margin-right: -10px;
-            margin-left: -15px;
-            > h4 {
-              padding-left: 10px;
-              padding-right: 10px;
-              line-height: 30px;
-              margin-bottom: 15px;
-
-              span, button {
-                vertical-align: middle;
-              }
-            }
-            .table {
-              margin-bottom: 0;
-            }
-            .schema-inner {
-              padding-right: 15px;
-              padding-left: 10px;
-            }
-          }
-        }
-      }
-      .modal-content {
-        background-color: transparent;
-        border: 0;
-        color: @cdap-header;
-        .box-shadow(none);
-
-        h4, strong {
-          color: @cdap-header;
-        }
-        h4 {
-          font-weight: 400;
-          margin-top: 0;
-          &.sink-schema {
-            margin-bottom: 15px;
-          }
-        }
-        .well {
-          background-color: @body-bg;
-          border: 1px solid @modal-table-border-color;
-          padding: 10px;
-          .box-shadow(4px);
-          p {
-            margin-bottom: 0;
-          }
-        }
-        .select-wrapper {
-          background-color: white;
-          display: inline-block;
-          position: relative;
-          width: 100%;
-          &:after {
-            color: @cdap-header;
-            content:"\f0d7";
-            font-family:'FontAwesome';
-            position: absolute;
-            top: 25%;
-            right: 5px;
-            z-index: 5;
-          }
-          select.form-control {
-            background-color: transparent;
-            padding-right: 20px;
-            position: relative;
-            z-index: 10;
-            .appearance();
-          }
-        }
-      }
-      .table {
-        background-color: transparent;
-        margin-top: 0;
-        th, td {
-          max-width: 0;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-        }
-        th {
-          border: 0;
-          padding: 0;
-          @media (min-width: @screen-lg-min) {
-            padding-left: 10px;
-          }
-          label {
-            margin-bottom: 0;
-            vertical-align: top;
-          }
-        }
-        td {
-          border: 1px solid @modal-table-border-color;
-          border-collapse: collapse;
-          height: 39px;
-          padding: 0 5px;
-          vertical-align: middle;
-          &.name {
-            width: 35%;
-            @media (min-width: @screen-lg-min) {
-              border-left: 0;
-            }
-          }
-          &.type {
-            width: 30%;
-          }
-          &.nullable {
-            width: 20%;
-          }
-          &.trash {
-            width: 15%;
-
-            a {
-              padding-left: 0;
-              padding-right: 0;
-            }
-
-            @media (min-width: @screen-lg-min) {
-              border-right: 0;
-            }
-            .btn:active {
-              .box-shadow(none);
-            }
-          }
-        }
-        .control-label {
-          font-size: 13px;
-        }
-        .form-control {
-          border: 0;
-          padding: 0;
-        }
-
-        input {
-          &[type="text"] {
-            padding-left: 5px;
-          }
-          &[type="checkbox"] {
-            margin: 0;
-          }
-        }
-        .fa-trash {
-          color: @brand-danger;
-          font-size: 15px;
-        }
-      }
-      .control-label {
-        font-weight: 400;
-      }
-      .form-control {
-        border: 1px solid @modal-table-border-color;
-        height: 40px;
-        padding: 10px 12px;
-      }
-      select {
-        background-color: white;
-        color: @cdap-header;
-      }
-
-      .schema-container {
-        border: 0;
-        height: 100%;
-        color: @cdap-header;
-        .border-radius(@border-radius-base);
-        .btn.btn-info {
-          margin-top: 10px;
-        }
-        .nullable {
-          line-height: 30px;
-        }
-        .well {
-          background-color: @body-bg;
-        }
-      }
-      .modal-sink .schema-container {
-        @media (min-width: @screen-lg-min) {
-          .table {
-            td.name {
-              border-left: 1px solid @modal-table-border-color;
-            }
-            td.trash {
-              border-right: 1px solid @modal-table-border-color;
-            }
-          }
-        }
-      }
-    }
-  }
-
 }
+
 body.theme-cdap.state-adapters-detail {
   my-dag {
     width: 100%;
@@ -606,7 +179,120 @@ body.theme-cdap.state-adapters-detail {
     right: 10px;
   }
 }
+
 body.theme-cdap.state-adapters-create {
+  .modal .modal-header {
+    background-color: @body-bg;
+    border-bottom: 1px solid @modal-table-border-color;
+    color: @cdap-header;
+    height: 60px;
+    padding: 0;
+    .border-radius(4px 4px 0 0);
+    h3, p {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    h3 {
+      color: @cdap-header;
+      font-weight: 500;
+      line-height: 1.3;
+      padding-top: 5px;
+      // Adapter config modal
+      &:only-child {
+        line-height: 60px;
+        padding-top: 0;
+      }
+    }
+    p {
+      color: @cdap-lightgray;
+      margin: 0;
+      max-width: 740px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .modal-btns {
+      margin-right: -15px;
+      text-align: right;
+      &.hideNonInfoButtons {
+        .non-info {
+          display: none;
+        }
+        .close-button {
+          border: 0;
+        }
+      }
+      > div {
+        background-color: transparent;
+        border-left: 1px solid @modal-table-border-color;
+        display: inline-block;
+        margin-right: -4px;
+        text-align: center;
+        width: 60px;
+
+        &.active-info {
+          background-color: @cdap-header;
+          .btn {
+            color: white;
+          }
+        }
+
+        .transition(all 0.2s ease);
+        @media (max-width: @screen-xs-min) {
+          width: 20%;
+        }
+        &:last-child {
+          .btn {
+            border: 0;
+            .border-radius(0);
+          }
+          &:hover, &:focus {
+            .border-radius(0 4px 0 0);
+          }
+        }
+        &:only-child {
+          margin-right: -1px;
+          @media (max-width: @screen-xs-max) {
+            width: 100%;
+          }
+        }
+      }
+      &.btn-group {
+        display: block;
+        > div {
+          @media (max-width: @screen-xs-max) {
+            width: 20%;
+          }
+          &:last-child {
+            margin-right: 0;
+          }
+          a.btn {
+            background-color: transparent;
+            color: @cdap-header;
+            display: block;
+            font-size: 18px;
+            line-height: 60px;
+            padding: 0;
+            width: 100%;
+          }
+          &:hover, &:focus {
+            background-color: @cdap-header;
+            > a.btn {
+              color: white;
+            }
+          }
+        }
+      }
+    }
+    > div {
+      @media (max-width: @screen-sm-max) {
+        max-width: 50%;
+        width: 50%;
+      }
+    }
+  }
+
+
   background-color: #e2e3e5;
   // Adjust margins for the grid background
   margin-bottom: 52px;
@@ -618,6 +304,7 @@ body.theme-cdap.state-adapters-create {
       margin-bottom: 0;
     }
   }
+  // Studio start screen
   .hydrator-start {
     margin-top: 160px;
   }
@@ -659,29 +346,6 @@ body.theme-cdap.state-adapters-create {
   my-dag {
     width: 100%;
     height: 60vh;
-  }
-
-  [create-adapter-container] {
-    white-space: nowrap;
-    h2 {
-      margin: 0;
-    }
-
-    .btn.btn-default {
-      width: 100%;
-    }
-
-    &.row {
-      margin-bottom: 5px;
-    }
-  }
-
-  .adapter-name-label {
-    white-space: nowrap;
-    overflow-x: auto;
-    overflow-y: hidden;
-    text-overflow: ellipsis;
-    &.panel-title { line-height: 30px; }
   }
 
   .tab-pane .panel-default {
@@ -777,77 +441,100 @@ body.theme-cdap.state-adapters-create {
 
 }
 
-body.theme-cdap.state-adapters-drafts {
-
-  .tooltip.top {
-    word-wrap: break-word;
+body.state-adapters-list {
+  main.container {
+    width: 100%;
+    padding-right: 0;
+    padding-left: 0;
   }
-  .label.etlappcontainer {
-    position: relative;
-    left: 5px;
-    float: right;
-    font-size: 13px;
-    background-color: @cdap-bluegray;
-
-    &.green {
-      background-color: @brand-success;
-      top: 0;
-      right: 0;
-      &:after { border-bottom: 5px solid @brand-success; }
+  .side-panel.top {
+    background-color: white;
+    font-weight: 500;
+    position: fixed;
+    top: 60px;
+    right: 0;
+    left: 0;
+    z-index: 1028;
+    height: 60px;
+    .box-shadow(0 7px 7px fade(black, 10%), 0 19px 59px fade(black, 25%););
+    h1 {
+      border-right: 1px solid @table-border-color;
+      display: inline-block;
+      font-size: 20px;
+      line-height: 60px;
+      margin: 0;
+      padding: 0 15px;
     }
-
-    &:after {
-      border-left: 5px solid transparent;
-      border-right: 5px solid transparent;
-      content: '';
-      border-bottom: 5px solid @cdap-header;
-      transform: rotate(-61deg);
-      top: 18px;
-      right: 0px;
-      position: absolute;
-    }
-  }
-
-  [apps-drafts-list] {
-    [etl-add-app] {
-      cursor: pointer;
-      .well.well-lg {
-        border: 2px dashed;
-        margin-bottom: 0;
-        height: 163px;
-        h1 { margin-bottom: 13px; }
-      }
-    }
-    .well.well-md {
-      .box-shadow(none);
-      background-image: none;
-      margin-bottom: 10px;
-      padding: 10px;
-
-      .action-panel {
-        button { border: 0; }
-      }
-      a.content-panel {
-        min-height: 107px;
+    > div {
+      padding: 7px 15px;
+      span {
         display: block;
-        text-decoration: none;
-        color: black;
-        h4 {
-          margin: 10px 0 0 0;
-          .icon-ETLBatch, .icon-ETLRealtime { color: @cdap-orange; }
-          span {
-            vertical-align: top;
+        &:first-child {
+          font-size: 15px;
+        }
+        &:last-child {
+          font-size: 18px;
+        }
+      }
+    }
+    ul {
+      line-height: 60px;
+      margin: 0;
+      li {
+        padding: 0 15px;
+        i {
+          font-size: 22px;
+          margin-right: 10px;
+          vertical-align: sub;
+        }
+        span {
+          font-size: 15px;
+          &:first-child {
+            padding-right: 5px;
           }
         }
       }
-      p { margin: 0; }
     }
-    .running { color: @brand-success; }
-    .stopped { color: @cdap-darkness; }
-    .killed { color: @brand-danger; }
-    .description {
-      color: @cdap-darkness;
-      word-wrap: break-word;
+    a.btn-primary {
+      position: absolute;
+      right: 40px;
+      top: 35px;
+      padding: 12px 16px;
+      .border-radius(50%);
+      span.fa {
+        font-size: 24px;
+        vertical-align: middle;
+      }
+    }
+  }
+  .my-pipelines {
+    margin-top: 8px;
+    table.table {
+      background-color: white;
+
+      th, td {
+        color: #333;
+        padding-right: 15px;
+        padding-left: 15px;
+      }
+      th {
+        font-weight: 500;
+      }
+
+      td > span.status-bubble {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        margin-right: 5px;
+        .border-radius(25px);
+        &.status-green { background-color: @brand-success; }
+        &.status-red { background-color: @brand-danger; }
+        &.status-grey { background-color: @cdap-gray; }
+      }
+
+      .delete-draft {
+        cursor: pointer;
+      }
     }
   }
 }
