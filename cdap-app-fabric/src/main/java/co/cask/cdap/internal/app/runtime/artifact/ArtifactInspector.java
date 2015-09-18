@@ -148,8 +148,9 @@ public class ArtifactInspector {
 
         Object appMain = artifactClassLoader.loadClass(mainClassName).newInstance();
         if (!(appMain instanceof Application)) {
-          throw new InvalidArtifactException(String.format("Application main class %s does not implement Application",
-            appMain.getClass().getName()));
+          // we don't want to error here, just don't record an application class.
+          // possible for 3rd party plugin artifacts to have the main class set
+          return builder;
         }
 
         Application app = (Application) appMain;
