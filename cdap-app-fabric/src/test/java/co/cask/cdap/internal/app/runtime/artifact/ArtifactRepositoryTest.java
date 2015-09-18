@@ -141,10 +141,10 @@ public class ArtifactRepositoryTest {
       createManifest(ManifestFields.EXPORT_PACKAGE, PluginTestRunnable.class.getPackage().getName()));
 
     // write plugins jar
-    Id.Artifact pluginArtifactId = Id.Artifact.from(Id.Namespace.SYSTEM, "myPlugin", "1.0.0");
+    Id.Artifact pluginArtifactId = Id.Artifact.from(Id.Namespace.SYSTEM, "APlugin", "1.0.0");
 
     Manifest manifest = createManifest(ManifestFields.EXPORT_PACKAGE, TestPlugin.class.getPackage().getName());
-    createPluginJar(TestPlugin.class, new File(systemArtifactsDir, "myPlugin-1.0.0.jar"), manifest);
+    createPluginJar(TestPlugin.class, new File(systemArtifactsDir, "APlugin-1.0.0.jar"), manifest);
 
     // write plugins config file
     Map<String, PluginPropertyField> emptyMap = Collections.emptyMap();
@@ -152,7 +152,7 @@ public class ArtifactRepositoryTest {
       new PluginClass("typeA", "manual1", "desc", "co.cask.classname", null, emptyMap),
       new PluginClass("typeB", "manual2", "desc", "co.cask.otherclassname", null, emptyMap)
     );
-    File pluginConfigFile = new File(systemArtifactsDir, "myPlugin-1.0.0.json");
+    File pluginConfigFile = new File(systemArtifactsDir, "APlugin-1.0.0.json");
     ArtifactConfig pluginConfig = ArtifactConfig.builder(pluginArtifactId, pluginConfigFile)
       .addParents(new ArtifactRange(
         Id.Namespace.SYSTEM, "PluginTest", new ArtifactVersion("0.9.0"), new ArtifactVersion("2.0.0")))

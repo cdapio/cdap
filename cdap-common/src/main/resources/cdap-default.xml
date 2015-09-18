@@ -187,7 +187,8 @@
 
   <property>
     <name>app.artifact.dir</name>
-    <value>/opt/cdap/master/artifacts</value>
+    <!--value>/opt/cdap/master/artifacts</value-->
+    <value>artifacts</value>
     <description>
       Directory where all system artifacts and their corresponding config files are stored
     </description>
