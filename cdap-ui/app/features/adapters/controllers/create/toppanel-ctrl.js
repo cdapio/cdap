@@ -15,14 +15,14 @@
  */
 
 angular.module(PKG.name + '.feature.adapters')
-  .controller('TopPanelController', function(EventPipe, CanvasFactory, MyAppDAGService, $scope, $timeout, $bootstrapModal, ModalConfirm, $alert, $state, $stateParams, GLOBALS) {
+  .controller('TopPanelController', function(EventPipe, CanvasFactory, MyAppDAGService, $scope, $timeout, $alert, $bootstrapModal, $state, $stateParams, GLOBALS) {
 
     this.metadata = MyAppDAGService['metadata'];
     function resetMetadata() {
       this.metadata = MyAppDAGService['metadata'];
     }
     this.GLOBALS = GLOBALS;
-
+    this.metadataExpanded = false;
     MyAppDAGService.registerResetCallBack(resetMetadata.bind(this));
 
     if ($stateParams.name) {
@@ -38,53 +38,26 @@ angular.module(PKG.name + '.feature.adapters')
         });
       }
     }
+    this.saveMetadata = function() {
+      this.metadata['name'] = this.pipelineName;
+      this.metadata['description'] = this.pipelineDescription;
+      this.metadataExpanded = false;
+    };
 
-    this.showMetadataModal = function() {
+    this.openMetadata = function () {
+      if (this.metadataExpanded) { return; }
       EventPipe.emit('popovers.close');
+      var name = this.metadata.name;
+      var description = this.metadata.description;
+      this.metadataExpanded = true;
+      this.pipelineName = name;
+      this.pipelineDescription = description;
+    };
 
-      if (this.metadata.error) {
-        delete this.metadata.error;
-      }
-      MyAppDAGService.isConfigTouched = true;
-      $bootstrapModal
-        .open({
-          templateUrl: '/assets/features/adapters/templates/create/popovers/metadata-detail.html',
-          size: 'lg',
-          windowClass: 'cdap-modal',
-          keyboard: true,
-          controller: ['$scope', 'metadata', function($scope, metadata) {
-            $scope.modelCopy = angular.copy(this.metadata);
-            $scope.metadata = metadata;
-            $scope.reset = function () {
-              metadata['name'] = $scope.modelCopy.name;
-              metadata['description'] = $scope.modelCopy.description;
-            }.bind(this);
-
-            function closeFn() {
-              $scope.reset();
-              $scope.$close('cancel');
-            }
-
-            ModalConfirm.confirmModalAdapter(
-              $scope,
-              $scope.metadata,
-              $scope.modelCopy,
-              closeFn
-            );
-
-
-          }.bind(this)],
-          resolve: {
-            metadata: function() {
-              return this['metadata'];
-            }.bind(this)
-          }
-        })
-        .result
-        .finally(function() {
-          MyAppDAGService.metadata.name = this.metadata.name;
-          MyAppDAGService.metadata.description = this.metadata.description;
-        }.bind(this));
+    this.resetMetadata = function() {
+      this.pipelineName = this.metadata.name;
+      this.pipelineDescription = this.metadata.description;
+      this.metadataExpanded = false;
     };
 
     this.canvasOperations = [
