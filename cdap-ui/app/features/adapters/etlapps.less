@@ -429,10 +429,13 @@ body.theme-cdap.state-adapters-create {
   .canvas-wrapper {
     position: relative;
     margin-top: 60px;
+    display: table;
+    width: 100%;
   }
   .right-wrapper {
-    height: 100vh;
-    overflow-y: scroll;
+    display: table-cell;
+    height: 100%;
+    vertical-align: top;
   }
   my-dag {
     width: 100%;
