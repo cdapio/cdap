@@ -40,7 +40,7 @@ public class TimeMathParser {
   private static final Pattern TIMESTAMP_PATTERN = Pattern.compile("^(\\d+)$");
 
   private static long convertToMilliseconds(String op, long num, String unitStr) {
-    long milliseconds = 0;
+    long milliseconds;
     if ("ms".equals(unitStr)) {
       milliseconds = num;
     } else if ("s".equals(unitStr)) {
