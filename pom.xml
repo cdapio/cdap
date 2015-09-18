@@ -2216,7 +2216,7 @@
             </group>
             <group>
               <title>Application Template Packages</title>
-              <packages>co.cask.cdap.template.*</packages>
+              <packages>co.cask.cdap.app.*</packages>
             </group>
           </groups>
         </configuration>

@@ -35,7 +35,7 @@ public class BusinessMetadataDefinition extends AbstractDatasetDefinition<Busine
 
   public static final String METADATA_INDEX_TABLE_NAME = "metadata_index";
   public static final String INDEXED_COLS = BusinessMetadataDataset.KEYVALUE_COLUMN + "," +
-    BusinessMetadataDataset.VALUE_COLUMN;
+    BusinessMetadataDataset.CASE_INSENSITIVE_VALUE_COLUMN;
 
   private final DatasetDefinition<? extends IndexedTable, ?> indexedTableDef;
 

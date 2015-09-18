@@ -18,7 +18,6 @@ package co.cask.cdap.data2.registry;
 
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
@@ -262,8 +261,7 @@ public class UsageRegistry {
    *
    * @param datasetFramework framework to add types and datasets to
    */
-  public static void setupDatasets(DatasetFramework datasetFramework) throws IOException, DatasetManagementException,
-    ServiceUnavailableException {
+  public static void setupDatasets(DatasetFramework datasetFramework) throws IOException, DatasetManagementException {
     datasetFramework.addInstance(Table.class.getName(), USAGE_INSTANCE_ID, DatasetProperties.EMPTY);
   }
 

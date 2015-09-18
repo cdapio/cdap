@@ -16,7 +16,6 @@
 package co.cask.cdap.data2.metadata.service;
 
 import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -76,7 +75,7 @@ public class DefaultBusinessMetadataStore implements BusinessMetadataStore {
                                             BusinessMetadataDataset.class.getName(),
                                             DatasetProperties.EMPTY, null, null);
           return new BusinessMdsIterable(dataset);
-        } catch (DatasetManagementException | IOException | ServiceUnavailableException e) {
+        } catch (DatasetManagementException | IOException e) {
           throw Throwables.propagate(e);
         }
       }

@@ -23,6 +23,8 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
+import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
+import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 import co.cask.common.http.HttpResponse;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -85,6 +87,30 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     Assert.assertEquals(datasetProperties, properties);
     properties = getProperties(mystream);
     Assert.assertEquals(streamProperties, properties);
+
+    // test search for stream
+    Set<MetadataSearchResultRecord> searchProperties = searchMetadata(Id.Namespace.DEFAULT.getId(),
+                                                                      "stKey:stValue", "STREAM");
+    Set<MetadataSearchResultRecord> expected = ImmutableSet.of(
+      new MetadataSearchResultRecord(mystream, MetadataSearchTargetType.STREAM)
+    );
+    Assert.assertEquals(expected, searchProperties);
+
+    // test prefix search for service
+    searchProperties = searchMetadata(Id.Namespace.DEFAULT.getId(), "sKey:s", "ALL");
+    expected = ImmutableSet.of(
+      new MetadataSearchResultRecord(pingService, MetadataSearchTargetType.PROGRAM)
+    );
+    Assert.assertEquals(expected, searchProperties);
+
+    // search without any target param
+    searchProperties = searchMetadata(Id.Namespace.DEFAULT.getId(), "sKey:s", null);
+    Assert.assertEquals(expected, searchProperties);
+
+    // search non-existent property should return empty set
+    searchProperties = searchMetadata(Id.Namespace.DEFAULT.getId(), "NullKey:s", null);
+    Assert.assertEquals(ImmutableSet.of(), searchProperties);
+
     // test removal
     removeProperties(application);
     Assert.assertTrue(getProperties(application).isEmpty());
@@ -141,6 +167,28 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     tags = getTags(mystream);
     Assert.assertTrue(tags.containsAll(streamTags));
     Assert.assertTrue(streamTags.containsAll(tags));
+    // test search for stream
+    Set<MetadataSearchResultRecord> searchTags = searchMetadata(Id.Namespace.DEFAULT.getId(), "stT", "STREAM");
+    Set<MetadataSearchResultRecord> expected = ImmutableSet.of(
+      new MetadataSearchResultRecord(mystream, MetadataSearchTargetType.STREAM)
+    );
+    Assert.assertEquals(expected, searchTags);
+    // test prefix search, should match stream and service programs
+    searchTags = searchMetadata(Id.Namespace.DEFAULT.getId(), "s", "ALL");
+    expected = ImmutableSet.of(
+      new MetadataSearchResultRecord(mystream, MetadataSearchTargetType.STREAM),
+      new MetadataSearchResultRecord(pingService, MetadataSearchTargetType.PROGRAM)
+    );
+    Assert.assertEquals(expected, searchTags);
+
+    // search without any target param
+    searchTags = searchMetadata(Id.Namespace.DEFAULT.getId(), "s", null);
+    Assert.assertEquals(expected, searchTags);
+
+    // search non-existent tags should return empty set
+    searchTags = searchMetadata(Id.Namespace.DEFAULT.getId(), "NullKey", null);
+    Assert.assertEquals(ImmutableSet.of(), searchTags);
+
     // test removal
     removeTags(application, "aTag");
     Assert.assertEquals(ImmutableSet.of("aT"), getTags(application));
@@ -261,9 +309,61 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
                                             TEST_NAMESPACE1));
     Assert.assertEquals(404, response.getStatusLine().getStatusCode());
 
-    // Check metadata, should be empty
-    properties = getProperties(program);
-    Assert.assertEquals(0, properties.size());
+    // Now try to get from invalid entity should throw 404.
+    getPropertiesFromInvalidEntity(program);
+  }
+
+  @Test
+  public void testInvalidEntities() throws IOException {
+    Id.Program nonExistingProgram = Id.Program.from(application, ProgramType.SERVICE, "NonExistingService");
+    Id.DatasetInstance nonExistingDataset = Id.DatasetInstance.from(Id.Namespace.DEFAULT, "NonExistingDataset");
+    Id.Stream nonExistingStream = Id.Stream.from(Id.Namespace.DEFAULT, "NonExistingStream");
+    Id.Application nonExistingApp = Id.Application.from(Id.Namespace.DEFAULT, "NonExistingStream");
+
+    Map<String, String> properties = ImmutableMap.of("aKey", "aValue", "aK", "aV");
+    Assert.assertEquals(404, addProperties(nonExistingApp, properties).getResponseCode());
+    Assert.assertEquals(404, addProperties(nonExistingProgram, properties).getResponseCode());
+    Assert.assertEquals(404, addProperties(nonExistingDataset, properties).getResponseCode());
+    Assert.assertEquals(404, addProperties(nonExistingStream, properties).getResponseCode());
+  }
+
+  @Test
+  public void testInvalidProperties() throws IOException {
+    // Test length
+    StringBuilder builder = new StringBuilder(100);
+    for (int i = 0; i < 100; i++) {
+      builder.append("a");
+    }
+    Map<String, String> properties = ImmutableMap.of("aKey", builder.toString());
+    Assert.assertEquals(400, addProperties(application, properties).getResponseCode());
+    properties = ImmutableMap.of(builder.toString(), "aValue");
+    Assert.assertEquals(400, addProperties(application, properties).getResponseCode());
+
+    // Try to add tag as property
+    properties = ImmutableMap.of("tags", "aValue");
+    Assert.assertEquals(400, addProperties(application, properties).getResponseCode());
+
+    // Invalid chars
+    properties = ImmutableMap.of("aKey$", "aValue");
+    Assert.assertEquals(400, addProperties(application, properties).getResponseCode());
+
+    properties = ImmutableMap.of("aKey", "aValue$");
+    Assert.assertEquals(400, addProperties(application, properties).getResponseCode());
+  }
+
+  @Test
+  public void testInvalidTags() throws IOException {
+    // Invalid chars
+    Set<String> tags = ImmutableSet.of("aTag$");
+    Assert.assertEquals(400, addTags(application, tags).getResponseCode());
+
+    // Test length
+    StringBuilder builder = new StringBuilder(100);
+    for (int i = 0; i < 100; i++) {
+      builder.append("a");
+    }
+    tags = ImmutableSet.of(builder.toString());
+    Assert.assertEquals(400, addTags(application, tags).getResponseCode());
   }
 
   private void removeAllMetadata() throws IOException {

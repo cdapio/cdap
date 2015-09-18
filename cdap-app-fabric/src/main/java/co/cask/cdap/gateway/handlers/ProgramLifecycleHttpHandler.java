@@ -1354,11 +1354,20 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         throw new ApplicationNotFoundException(identifier.getApplication());
       } else if (!store.programExists(identifier)) {
         throw new ProgramNotFoundException(identifier);
-      } else if (runId == null) {
-        throw new BadRequestException("Program not running");
-      } else {
-        throw new NotFoundException(new Id.Run(identifier, runId));
+      } else if (runId != null) {
+        Id.Run programRunId = new Id.Run(identifier, runId);
+        // Check if the program is running and is started by the Workflow
+        RunRecordMeta runRecord = store.getRun(identifier, runId);
+        if (runRecord != null && runRecord.getProperties().containsKey("workflowrunid")
+          && runRecord.getStatus().equals(ProgramRunStatus.RUNNING)) {
+          String workflowRunId = runRecord.getProperties().get("workflowrunid");
+          throw new BadRequestException(String.format("Cannot stop the program '%s' started by the Workflow " +
+                                                        "run '%s'. Please stop the Workflow.", programRunId,
+                                                      workflowRunId));
+        }
+        throw new NotFoundException(programRunId);
       }
+      throw new BadRequestException(String.format("Program '%s' is not running.", identifier));
     }
 
     try {

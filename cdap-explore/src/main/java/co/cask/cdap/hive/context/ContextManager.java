@@ -18,7 +18,6 @@ package co.cask.cdap.hive.context;
 
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -145,8 +144,7 @@ public class ContextManager {
       return streamAdmin.getConfig(streamId);
     }
 
-    public DatasetSpecification getDatasetSpec(Id.DatasetInstance datasetId) throws DatasetManagementException,
-      ServiceUnavailableException {
+    public DatasetSpecification getDatasetSpec(Id.DatasetInstance datasetId) throws DatasetManagementException {
       return datasetFramework.getDatasetSpec(datasetId);
     }
 
