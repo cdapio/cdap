@@ -36,13 +36,13 @@ import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.app.plugins.test.TestPlugin;
 import co.cask.cdap.internal.app.plugins.test.TestPlugin2;
-import co.cask.cdap.internal.app.runtime.adapter.ArtifactDescriptor;
-import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.artifact.app.PluginTestApp;
 import co.cask.cdap.internal.app.runtime.artifact.app.PluginTestRunnable;
 import co.cask.cdap.internal.app.runtime.artifact.plugin.EmptyClass;
 import co.cask.cdap.internal.app.runtime.artifact.plugin.Plugin1;
 import co.cask.cdap.internal.app.runtime.artifact.plugin.Plugin2;
+import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
+import co.cask.cdap.internal.app.runtime.plugin.PluginNotExistsException;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.internal.test.PluginJarHelper;
 import co.cask.cdap.proto.Id;
@@ -220,7 +220,7 @@ public class ArtifactRepositoryTest {
 
     ArtifactDescriptor descriptor = plugins.firstKey();
     Files.copy(Locations.newInputSupplier(descriptor.getLocation()),
-               new File(pluginDir, Artifacts.getFileName(descriptor.getArtifactId())));
+      new File(pluginDir, Artifacts.getFileName(descriptor.getArtifactId())));
     // Instantiate the plugins and execute them
     try (PluginInstantiator instantiator = new PluginInstantiator(cConf, appClassLoader, pluginDir)) {
       for (Map.Entry<ArtifactDescriptor, List<PluginClass>> entry : plugins.entrySet()) {

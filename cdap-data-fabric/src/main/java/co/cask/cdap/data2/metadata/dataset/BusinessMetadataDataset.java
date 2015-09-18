@@ -46,12 +46,13 @@ import javax.annotation.Nullable;
  * Dataset that manages Business Metadata using an {@link IndexedTable}.
  */
 public class BusinessMetadataDataset extends AbstractDataset {
-  private static final String TAGS_KEY = "tags";
-  private static final String TAGS_SEPARATOR = ",";
+  public static final String TAGS_KEY = "tags";
+  public static final String TAGS_SEPARATOR = ",";
 
   // column keys
   static final String KEYVALUE_COLUMN = "kv";
   static final String VALUE_COLUMN = "v";
+  static final String CASE_INSENSITIVE_VALUE_COLUMN = "civ";
 
   /**
    * Identifies the type of metadata - property or tag
@@ -340,7 +341,7 @@ public class BusinessMetadataDataset extends AbstractDataset {
    * @return The {@link Iterable} of {@link BusinessMetadataRecord} that fit the value
    */
   public List<BusinessMetadataRecord> findBusinessMetadataOnValue(String value, MetadataSearchTargetType type) {
-    return executeSearchOnColumns(BusinessMetadataDataset.VALUE_COLUMN, value, type);
+    return executeSearchOnColumns(BusinessMetadataDataset.CASE_INSENSITIVE_VALUE_COLUMN, value, type);
   }
 
   /**
@@ -359,10 +360,16 @@ public class BusinessMetadataDataset extends AbstractDataset {
                                                       MetadataSearchTargetType type) {
     List<BusinessMetadataRecord> results = new LinkedList<>();
 
-    byte[] startKey = Bytes.toBytes(searchValue);
-    byte[] stopKey = Bytes.stopKeyForPrefix(startKey);
-
-    Scanner scanner = indexedTable.scanByIndex(Bytes.toBytes(column), startKey, stopKey);
+    Scanner scanner;
+    String lowerCaseSearchValue = searchValue.toLowerCase();
+    if (lowerCaseSearchValue.endsWith("*")) {
+      byte[] startKey = Bytes.toBytes(lowerCaseSearchValue.substring(0, lowerCaseSearchValue.lastIndexOf("*")));
+      byte[] stopKey = Bytes.stopKeyForPrefix(startKey);
+      scanner = indexedTable.scanByIndex(Bytes.toBytes(column), startKey, stopKey);
+    } else {
+      byte[] value = Bytes.toBytes(lowerCaseSearchValue);
+      scanner = indexedTable.readByIndex(Bytes.toBytes(column), value);
+    }
     try {
       Row next;
       while ((next = scanner.next()) != null) {
@@ -457,8 +464,12 @@ public class BusinessMetadataDataset extends AbstractDataset {
   private void write(MDSKey id, BusinessMetadataRecord record) {
     Put put = new Put(id.getKey());
 
-     // Now add the index columns.
-    put.add(Bytes.toBytes(KEYVALUE_COLUMN), Bytes.toBytes(record.getKey() + KEYVALUE_SEPARATOR + record.getValue()));
+     // Now add the index columns. To support case insensitive we will store it as lower case for index columns.
+    put.add(Bytes.toBytes(KEYVALUE_COLUMN),
+            Bytes.toBytes(record.getKey().toLowerCase() + KEYVALUE_SEPARATOR + record.getValue().toLowerCase()));
+    put.add(Bytes.toBytes(CASE_INSENSITIVE_VALUE_COLUMN), Bytes.toBytes(record.getValue().toLowerCase()));
+
+    // Add to value column
     put.add(Bytes.toBytes(VALUE_COLUMN), Bytes.toBytes(record.getValue()));
 
     indexedTable.put(put);

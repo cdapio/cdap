@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.artifact;
 
+import co.cask.cdap.api.Config;
 import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
@@ -34,7 +35,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
-import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
+import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Function;
@@ -147,27 +148,33 @@ public class ArtifactInspector {
 
         Object appMain = artifactClassLoader.loadClass(mainClassName).newInstance();
         if (!(appMain instanceof Application)) {
-          throw new InvalidArtifactException(String.format("Application main class %s does not implement Application",
-            appMain.getClass().getName()));
+          // we don't want to error here, just don't record an application class.
+          // possible for 3rd party plugin artifacts to have the main class set
+          return builder;
         }
 
         Application app = (Application) appMain;
 
-        TypeToken typeToken = TypeToken.of(app.getClass());
-        TypeToken<?> resultToken = typeToken.resolveType(Application.class.getTypeParameters()[0]);
-        Schema configSchema = null;
+        java.lang.reflect.Type configType;
         // if the user parameterized their application, like 'xyz extends Application<T>',
         // we can deserialize the config into that object. Otherwise it'll just be a Config
-        if (resultToken.getType() instanceof Class) {
-          configSchema = schemaGenerator.generate(resultToken.getType());
+        try {
+          configType = Artifacts.getConfigType(app.getClass());
+        } catch (Exception e) {
+          throw new InvalidArtifactException(String.format(
+            "Could not resolve config type for Application class %s in artifact %s. " +
+              "The type must extend Config and cannot be parameterized.", mainClassName, artifactId));
         }
+
+        Schema configSchema = configType == Config.class ? null : schemaGenerator.generate(configType);
         builder.addApp(new ApplicationClass(mainClassName, "", configSchema));
       } catch (ClassNotFoundException e) {
         throw new InvalidArtifactException(String.format(
           "Could not find Application main class %s in artifact %s.", mainClassName, artifactId));
       } catch (UnsupportedTypeException e) {
         throw new InvalidArtifactException(String.format(
-          "Config for Application %s in artifact %s has an unsupported schema.", mainClassName, artifactId));
+          "Config for Application %s in artifact %s has an unsupported schema. " +
+            "The type must extend Config and cannot be parameterized.", mainClassName, artifactId));
       } catch (InstantiationException | IllegalAccessException e) {
         throw new InvalidArtifactException(String.format(
           "Could not instantiate Application class %s in artifact %s.", mainClassName, artifactId), e);

@@ -29,6 +29,7 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
@@ -54,7 +55,8 @@ public class NamespacedQueryExecutorHttpHandler extends AbstractQueryExecutorHtt
 
   @POST
   @Path("data/explore/queries")
-  public void query(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId) {
+  public void query(HttpRequest request, HttpResponder responder,
+                    @PathParam("namespace-id") String namespaceId) throws IOException, ExploreException {
     try {
       Map<String, String> args = decodeArguments(request);
       String query = args.get("query");
@@ -67,9 +69,6 @@ public class NamespacedQueryExecutorHttpHandler extends AbstractQueryExecutorHtt
       LOG.debug("Got exception:", e);
       responder.sendString(HttpResponseStatus.BAD_REQUEST, String.format("[SQLState %s] %s",
                                                                          e.getSQLState(), e.getMessage()));
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -79,17 +78,13 @@ public class NamespacedQueryExecutorHttpHandler extends AbstractQueryExecutorHtt
                                   @PathParam("namespace-id") String namespaceId,
                                   @QueryParam("offset") @DefaultValue("9223372036854775807") long offset,
                                   @QueryParam("cursor") @DefaultValue("next") String cursor,
-                                  @QueryParam("limit") @DefaultValue("50") int limit) {
-    try {
-      boolean isForward = "next".equals(cursor);
+                                  @QueryParam("limit") @DefaultValue("50") int limit)
+    throws ExploreException, SQLException {
+    boolean isForward = "next".equals(cursor);
 
-      List<QueryInfo> queries = exploreService.getQueries(Id.Namespace.from(namespaceId));
-      // return the queries by after filtering (> offset) and limiting number of queries
-      responder.sendJson(HttpResponseStatus.OK, filterQueries(queries, offset, isForward, limit));
-    } catch (Exception e) {
-      LOG.error("Got exception:", e);
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error");
-    }
+    List<QueryInfo> queries = exploreService.getQueries(Id.Namespace.from(namespaceId));
+    // return the queries by after filtering (> offset) and limiting number of queries
+    responder.sendJson(HttpResponseStatus.OK, filterQueries(queries, offset, isForward, limit));
   }
 
   @GET

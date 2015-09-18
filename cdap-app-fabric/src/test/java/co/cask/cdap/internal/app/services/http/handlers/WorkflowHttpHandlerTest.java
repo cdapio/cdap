@@ -613,15 +613,25 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
 
     // Start the workflow
     startProgram(programId);
-
-    verifyProgramRuns(programId, "completed");
-
-    List<RunRecord> workflowHistoryRuns = getProgramRuns(programId, "completed");
+    waitState(programId, "RUNNING");
+    List<RunRecord> workflowHistoryRuns = getProgramRuns(programId, "running");
+    String workflowRunId = workflowHistoryRuns.get(0).getPid();
 
     Id.Program mr1ProgramId = Id.Program.from(TEST_NAMESPACE2, workflowAppWithScopedParameters, ProgramType.MAPREDUCE,
                                               "OneMR");
+    waitState(mr1ProgramId, "RUNNING");
+    List<RunRecord> oneMRHistoryRuns = getProgramRuns(mr1ProgramId, "running");
 
-    List<RunRecord> oneMRHistoryRuns = getProgramRuns(mr1ProgramId, "completed");
+    String expectedMessage = String.format("Cannot stop the program '%s' started by the Workflow run '%s'. " +
+                                             "Please stop the Workflow.",
+                                           new Id.Run(mr1ProgramId, oneMRHistoryRuns.get(0).getPid()), workflowRunId);
+    stopProgram(mr1ProgramId, oneMRHistoryRuns.get(0).getPid(), 400, expectedMessage);
+
+    verifyProgramRuns(programId, "completed");
+
+    workflowHistoryRuns = getProgramRuns(programId, "completed");
+
+    oneMRHistoryRuns = getProgramRuns(mr1ProgramId, "completed");
 
     Id.Program mr2ProgramId = Id.Program.from(TEST_NAMESPACE2, workflowAppWithScopedParameters, ProgramType.MAPREDUCE,
                                               "AnotherMR");
@@ -930,9 +940,9 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
 
     // Stop both Workflow runs.
     String runId = historyRuns.get(0).getPid();
-    stopProgram(programId, 200, runId);
+    stopProgram(programId, runId, 200);
     runId = historyRuns.get(1).getPid();
-    stopProgram(programId, 200, runId);
+    stopProgram(programId, runId, 200);
 
     // Verify both runs should be marked "KILLED".
     verifyProgramRuns(programId, "killed", 1);

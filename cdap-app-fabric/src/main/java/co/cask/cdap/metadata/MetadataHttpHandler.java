@@ -61,6 +61,8 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
   private static final Type LIST_STRING_TYPE = new TypeToken<List<String>>() { }.getType();
   private static final Type SET_METADATA_RECORD_TYPE = new TypeToken<Set<MetadataRecord>>() { }.getType();
+  private static final Type SET_METADATA_SEARCH_RESULT_TYPE =
+    new TypeToken<Set<MetadataSearchResultRecord>>() { }.getType();
   private final MetadataAdmin metadataAdmin;
 
   @Inject
@@ -546,9 +548,15 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   public void searchMetadata(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") String namespaceId,
                              @QueryParam("query") String searchQuery,
-                             @QueryParam("target") MetadataSearchTargetType target) throws Exception {
-    Set<MetadataSearchResultRecord> results = metadataAdmin.searchMetadata(searchQuery, target);
+                             @QueryParam("target") String target) throws Exception {
+    MetadataSearchTargetType metadataSearchTargetType;
+    if (target != null) {
+      metadataSearchTargetType = MetadataSearchTargetType.valueOf(target.toUpperCase());
+    } else {
+      metadataSearchTargetType = null;
+    }
+    Set<MetadataSearchResultRecord> results = metadataAdmin.searchMetadata(searchQuery, metadataSearchTargetType);
 
-    responder.sendJson(HttpResponseStatus.OK, results);
+    responder.sendJson(HttpResponseStatus.OK, results, SET_METADATA_SEARCH_RESULT_TYPE, GSON);
   }
 }
