@@ -126,9 +126,15 @@ Deployed Applications
 To list all of the deployed applications in the namespace *<namespace>*, issue an HTTP
 GET request::
 
-  GET <base-url>/namespaces/<namespace>/apps
+  GET <base-url>/namespaces/<namespace>/apps[?artifactName=<artifact-names>[&artifactVersion=<artifact-version>]]
 
-This will return a JSON String map that lists each application with its name and description.
+This will return a JSON String map that lists each application with its name, description, and artifact.
+The list can optionally be filtered by one or more artifact names. It can also be filtered by artifact version.
+For example::
+
+  GET <base-url>/namespaces/<namespace>/apps?artifactName=cdap-etl-batch,cdap-etl-realtime
+
+will return all applications that use either the cdap-etl-batch or cdap-etl-realtime artifacts.
 
 
 Details of a Deployed Application
@@ -140,7 +146,7 @@ For detailed information on an application that has been deployed in the namespa
   GET <base-url>/namespaces/<namespace>/apps/<app-id>
 
 The information will be returned in the body of the response. It includes the name and description
-of the application, the streams and datasets it uses, and all of its programs.
+of the application, the artifact it uses, the streams and datasets it uses, and all of its programs.
 
 .. list-table::
    :widths: 20 80
@@ -188,6 +194,7 @@ as configured by the application Specification,
 and not necessarily the same as the name of the JAR file that was used to deploy the application.
 This does not delete the streams and datasets associated with the application
 because they belong to the namespace, not the application.
+This also does not delete the artifact used to create the application.
 
 
 Start, Stop, Status, and Runtime Arguments
