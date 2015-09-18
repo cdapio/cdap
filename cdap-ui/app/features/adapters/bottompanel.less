@@ -204,6 +204,54 @@ body.theme-cdap.state-adapters {
       padding: 0 10px;
     }
 
+    .pipeline-schedule {
+      padding: 0 15px;
+
+      h3 {
+        margin-top: 0;
+      }
+
+      .schedule-type {
+        margin-bottom: 20px;
+      }
+
+      .nav.nav-tabs.slanted-tabs {
+        margin-bottom: 15px;
+
+        > li {
+          height: 25px;
+          background-color: #c7c7c6;
+          padding: 5px 10px;
+          border-top: 1px solid #c7c7c6;
+          border-collapse: collapse;
+          margin-right: 15px;
+
+          &.active {
+            background-color: white;
+
+            &::after {
+              content: '';
+              height: 100%;
+              width: 10px;
+              border-right: 1px solid #c7c7c6;
+              border-top: 1px solid white;
+              border-bottom: 1px solid white;
+              border-collapse: collapse;
+              .skew(15deg, 0);
+              position: absolute;
+              top: -1px;
+              right: 5px;
+              background-color: transparent;
+            }
+          }
+
+
+        }
+
+
+      }
+    }
+
     .status-view {
       margin-top: 15px;
 

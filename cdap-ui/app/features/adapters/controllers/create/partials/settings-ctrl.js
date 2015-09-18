@@ -15,11 +15,14 @@
  */
 
 angular.module(PKG.name + '.feature.adapters')
-  .controller('AdapterSettingsController', function(MyAppDAGService, GLOBALS, EventPipe) {
+  .controller('AdapterSettingsController', function(MyAppDAGService, GLOBALS, EventPipe, $timeout, myHelpers) {
     this.GLOBALS = GLOBALS;
     this.metadata = MyAppDAGService.metadata;
-    var metadataCopy = angular.copy(MyAppDAGService.metadata);
-    this.initialCron = this.metadata.template.schedule.cron;
+    this.initialCron = MyAppDAGService.metadata.template.schedule.cron || '* * * * *';
+
+    this.cron = myHelpers.objectQuery(MyAppDAGService, 'metadata', 'template', 'schedule', 'cron') || '';
+    this.instance = myHelpers.objectQuery(MyAppDAGService, 'metadata', 'template', 'instance');
+
 
     function checkCron(cron) {
       var pattern = /^[0-9\*\s]*$/g;
@@ -36,7 +39,7 @@ angular.module(PKG.name + '.feature.adapters')
 
     this.changeScheduler = function (type) {
       if (type === 'BASIC') {
-        this.initialCron = this.metadata.template.schedule.cron;
+        this.initialCron = this.cron;
         var check = true;
         if (!checkCron(this.initialCron)) {
           check = confirm('You have advanced configuration that is not available in basic mode. Are you sure you want to go to basic scheduler?');
@@ -49,11 +52,23 @@ angular.module(PKG.name + '.feature.adapters')
       }
     };
 
+    this.save = function () {
+      MyAppDAGService.metadata.template.schedule.cron = this.cron;
+      MyAppDAGService.metadata.template.instance = this.instance;
+    };
+
     // Will be used once we figure out how to reset a bottom panel tab content.
     this.reset = function() {
-      this.metadata.template.schedule.cron = metadataCopy.template.schedule.cron;
-      this.initialCron = metadataCopy.template.schedule.cron;
-      this.metadata.template.instance = metadataCopy.template.instance;
+      $timeout(function () {
+        this.initialCron = myHelpers.objectQuery(MyAppDAGService, 'metadata', 'template', 'schedule', 'cron') || '* * * * *';
+        console.log('cron', this.cron, this.initialCron);
+      }.bind(this));
+
+
+
+      // this.cron = this.initialCron;
+      this.instance = myHelpers.objectQuery(MyAppDAGService, 'metadata', 'template', 'instance');
+
       EventPipe.emit('plugin.reset');
     };
 

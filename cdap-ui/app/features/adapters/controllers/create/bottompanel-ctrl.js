@@ -72,7 +72,7 @@ angular.module(PKG.name + '.feature.adapters')
       }
     ];
 
-    $scope.activeTab = $scope.tabs[0];
+    $scope.activeTab = $scope.tabs[1];
 
     $scope.selectTab = function(tab) {
       $scope.activeTab = tab;
