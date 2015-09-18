@@ -37,4 +37,4 @@ available for creating ETL applications.
 .. rubric:: Exploring Plugin Details
 
 Details on the available plugins can be obtained using the
-:ref:`Artifacts HTTP RESTful API <http-restful-api-artifacts>`.
+:ref:`Artifacts HTTP RESTful API <http-restful-api-artifact>`.

@@ -2,7 +2,7 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2015 Cask Data, Inc.
 
-.. _included-apps-third-party:
+.. _included-apps-third-party-jars:
 
 ======================
 Using Third-Party JARs 

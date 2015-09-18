@@ -441,7 +441,7 @@ of failures.
     }
   }
 
-.. _included-apps-custom-etl-plugins-plugin-packaging
+.. _included-apps-custom-etl-plugins-plugin-packaging:
 
 Plugin Packaging
 ================

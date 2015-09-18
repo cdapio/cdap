@@ -225,4 +225,4 @@ creating the source::
 
 **Prebuilt JARs:** In a case where you'd like to use prebuilt third-party JARs (such as a
 JDBC driver) as a plugin, please refer to the section on :ref:`Using Third-Party Jars
-<apptemplates-third-party>`. 
+<included-apps-third-party-jars>`. 
