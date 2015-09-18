@@ -277,7 +277,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   }
 
   protected void updateRuntimeInfo(ProgramType type, RunId runId, RuntimeInfo runtimeInfo) {
-    Lock lock = runtimeInfosLock.writeLock();
+    Lock lock = runtimeInfosLock.readLock();
     lock.lock();
     try {
       if (!runtimeInfos.contains(type, runId)) {
