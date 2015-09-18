@@ -45,6 +45,7 @@ angular.module(PKG.name + '.feature.adapters')
     };
 
     this.openMetadata = function () {
+      this.metadata = MyAppDAGService['metadata'];
       if (this.metadataExpanded) { return; }
       EventPipe.emit('popovers.close');
       var name = this.metadata.name;
@@ -55,8 +56,8 @@ angular.module(PKG.name + '.feature.adapters')
     };
 
     this.resetMetadata = function() {
-      this.pipelineName = this.metadata.name;
-      this.pipelineDescription = this.metadata.description;
+      this.metadata.name = this.pipelineName;
+      this.metadata.description = this.pipelineDescription;
       this.metadataExpanded = false;
     };
 

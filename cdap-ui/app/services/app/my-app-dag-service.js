@@ -352,7 +352,7 @@ angular.module(PKG.name + '.services')
         defer.resolve(this.nodes[config.id]);
         MyNodeConfigService.notifyPluginSaveListeners(config.id);
       }
-      
+
       if (inCreationMode) {
         /*
           The reason to use a promise here is to fetch the backend properties for each plugin
