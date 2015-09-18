@@ -924,7 +924,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   private Location createLauncherJar(String applicationClassPath, Location targetDir) throws IOException {
     Location launcherJar = targetDir.append("launcher.jar");
     ContainerLauncherGenerator.generateLauncherJar(applicationClassPath, MapReduceClassLoader.class.getName(),
-      Locations.newOutputSupplier(launcherJar));
+                                                   Locations.newOutputSupplier(launcherJar));
     return launcherJar;
   }
 
@@ -936,7 +936,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     }
 
     Location targetLocation = targetDir.append(Constants.Plugin.DIRECTORY);
-    BundleJarUtil.packDir(localDir, targetLocation, tempDir);
+    BundleJarUtil.packDirFiles(localDir, targetLocation, tempDir);
     LOG.debug("Copying Plugin Archive to Location {}", targetLocation);
     return targetLocation;
   }

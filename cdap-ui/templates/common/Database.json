@@ -49,7 +49,7 @@
     },
     "group3": {
        "display" : "Table Properties",
-       "position" : [ "importQuery", "countQuery"],
+       "position" : [ "importQuery", "countQuery", "columnNameCase"],
        "fields" : {
           "importQuery" : {
              "widget": "textbox",
@@ -59,7 +59,15 @@
           "countQuery" : {
              "widget": "textbox",
              "label": "Count SQL"
-          }
+          },
+	  "columnNameCase" : {
+	     "widget": "select",
+	     "label" : "Column Case",
+	     "properties" : {
+		"values" : ["UPPER", "lower", "No change"],
+		"default" : "No change"
+	     }
+	  }
        }
     }
   }

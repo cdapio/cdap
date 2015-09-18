@@ -69,8 +69,7 @@ public class TableSink extends BatchWritableSink<StructuredRecord, byte[], Put> 
     if (schemaString != null) {
       outputSchema = Schema.parseJson(schemaString);
     }
-    recordPutTransformer = new RecordPutTransformer(tableSinkConfig.getRowField(), outputSchema,
-                                                    tableSinkConfig.isRowFieldCaseInsensitive());
+    recordPutTransformer = new RecordPutTransformer(tableSinkConfig.getRowField(), outputSchema);
   }
 
   @Override

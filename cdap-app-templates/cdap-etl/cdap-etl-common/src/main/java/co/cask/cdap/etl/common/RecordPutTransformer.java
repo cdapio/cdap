@@ -22,8 +22,6 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.table.Put;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Predicate;
-import com.google.common.collect.Iterables;
 
 import java.nio.ByteBuffer;
 import javax.annotation.Nullable;
@@ -32,28 +30,16 @@ import javax.annotation.Nullable;
  * Transforms records into Puts.
  */
 public class RecordPutTransformer {
-  public static final String CASE_SENSITIVE_ROW_FIELD = "case.sensitive.row.field";
-  // Not final for an optimization - When rowField is case-insensitive, we may have to look for it in the schema
-  // provided to the toPut method. When there isn't an exact match but a case-insensitive match, we have to loop over
-  // all fields in the schema to find the case-insensitive match. Making this non-final allows us to do this look up
-  // once and cache the value.
-  private String rowField;
-  private final boolean rowFieldCaseSensitive;
+  private final String rowField;
   private final Schema outputSchema;
 
   @VisibleForTesting
   RecordPutTransformer(String rowField) {
-    this(rowField, null, true);
+    this(rowField, null);
   }
 
-  @VisibleForTesting
-  RecordPutTransformer(String rowField, Schema outputSchema) {
-    this(rowField, outputSchema, true);
-  }
-
-  public RecordPutTransformer(String rowField, Schema outputSchema, boolean rowFieldCaseSensitive) {
+  public RecordPutTransformer(String rowField, Schema outputSchema) {
     this.rowField = rowField;
-    this.rowFieldCaseSensitive = rowFieldCaseSensitive;
     this.outputSchema = outputSchema;
   }
 
@@ -168,23 +154,6 @@ public class RecordPutTransformer {
 
   @Nullable
   private Schema.Field getKeyField(Schema recordSchema) {
-    Schema.Field field = recordSchema.getField(rowField);
-    if (field == null && !rowFieldCaseSensitive) {
-      Iterable<Schema.Field> filtered = Iterables.filter(recordSchema.getFields(), new Predicate<Schema.Field>() {
-        @Override
-        public boolean apply(Schema.Field input) {
-          return input.getName().equalsIgnoreCase(rowField);
-        }
-      });
-      if (!Iterables.isEmpty(filtered)) {
-        Preconditions.checkArgument(Iterables.size(filtered) == 1,
-                                    "Cannot have multiple fields in the schema that match %s in a case-insensitive " +
-                                      "manner when the property %s is false. Found %s.",
-                                    rowField, CASE_SENSITIVE_ROW_FIELD, Iterables.toString(filtered));
-        field = filtered.iterator().next();
-        rowField = field.getName();
-      }
-    }
-    return field;
+    return recordSchema.getField(rowField);
   }
 }

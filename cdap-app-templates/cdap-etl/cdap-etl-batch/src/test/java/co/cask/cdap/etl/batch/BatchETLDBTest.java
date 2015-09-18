@@ -26,6 +26,8 @@ import co.cask.cdap.etl.batch.config.ETLBatchConfig;
 import co.cask.cdap.etl.common.ETLStage;
 import co.cask.cdap.etl.common.Properties;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
@@ -66,7 +68,7 @@ import javax.sql.rowset.serial.SerialBlob;
 /**
  * Test for ETL using databases
  */
-public class BatchETLDBAdapterTest extends BaseETLBatchTest {
+public class BatchETLDBTest extends BaseETLBatchTest {
   private static final long currentTs = System.currentTimeMillis();
   private static final String clobData = "this is a long string with line separators \n that can be used as \n a clob";
   private static HSQLDBServer hsqlDBServer;
@@ -180,7 +182,7 @@ public class BatchETLDBAdapterTest extends BaseETLBatchTest {
   @Test
   @Category(SlowTests.class)
   @SuppressWarnings("ConstantConditions")
-  public void testDBSourceWithCaseInsensitiveRowKey() throws Exception {
+  public void testDBSource() throws Exception {
     String importQuery = "SELECT ID, NAME, SCORE, GRADUATED, TINY, SMALL, BIG, FLOAT_COL, REAL_COL, NUMERIC_COL, " +
       "DECIMAL_COL, BIT_COL, DATE_COL, TIME_COL, TIMESTAMP_COL, BINARY_COL, BLOB_COL, CLOB_COL FROM my_table " +
       "WHERE ID < 3";
@@ -196,9 +198,7 @@ public class BatchETLDBAdapterTest extends BaseETLBatchTest {
     ETLStage sink = new ETLStage("Table", ImmutableMap.of(
       "name", "outputTable",
       Properties.Table.PROPERTY_SCHEMA, schema.toString(),
-      Properties.Table.PROPERTY_SCHEMA_ROW_FIELD, "id",
-      // Test case-insensitive row key matching
-      Properties.Table.CASE_SENSITIVE_ROW_FIELD, "false"));
+      Properties.Table.PROPERTY_SCHEMA_ROW_FIELD, "ID"));
 
     ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *", source, sink, Lists.<ETLStage>newArrayList());
 
@@ -275,7 +275,12 @@ public class BatchETLDBAdapterTest extends BaseETLBatchTest {
 
   @Test
   @Category(SlowTests.class)
-  public void testDBSourceWithCaseSensitiveRowKey() throws Exception {
+  public void testDBSourceWithLowerCaseColNames() throws Exception {
+    // all lower case since we are going to set db column name case to be lower
+    Schema schema = Schema.recordOf("student",
+                                    Schema.Field.of("id", Schema.of(Schema.Type.INT)),
+                                    Schema.Field.of("name", Schema.of(Schema.Type.STRING)));
+
     String importQuery = "SELECT ID, NAME FROM my_table WHERE ID < 3";
     String countQuery = "SELECT COUNT(ID) from my_table WHERE id < 3";
     ETLStage source = new ETLStage("Database", ImmutableMap.<String, String>builder()
@@ -283,12 +288,14 @@ public class BatchETLDBAdapterTest extends BaseETLBatchTest {
       .put(Properties.DB.IMPORT_QUERY, importQuery)
       .put(Properties.DB.COUNT_QUERY, countQuery)
       .put(Properties.DB.JDBC_PLUGIN_NAME, "hypersql")
+      .put(Properties.DB.COLUMN_NAME_CASE, "lower")
       .build()
     );
 
     ETLStage sink = new ETLStage("Table", ImmutableMap.of(
       "name", "outputTable1",
       Properties.Table.PROPERTY_SCHEMA, schema.toString(),
+      // smaller case since we have set the db data's column case to be lower
       Properties.Table.PROPERTY_SCHEMA_ROW_FIELD, "id"));
 
     ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *", source, sink, Lists.<ETLStage>newArrayList());
@@ -300,12 +307,24 @@ public class BatchETLDBAdapterTest extends BaseETLBatchTest {
     MapReduceManager mrManager = appManager.getMapReduceManager(ETLMapReduce.NAME);
     mrManager.start();
     mrManager.waitForFinish(5, TimeUnit.MINUTES);
+    List<RunRecord> runRecords = mrManager.getHistory();
+    Assert.assertNotEquals(ProgramRunStatus.FAILED, runRecords.get(0).getStatus());
 
     // No records should be written
     DataSetManager<Table> outputManager = getDataset("outputTable1");
     Table outputTable = outputManager.get();
-    Scanner scan = outputTable.scan(null, null);
-    Assert.assertNull(scan.next());
+    Scanner scanner = outputTable.scan(null, null);
+    Row row1 = scanner.next();
+    Row row2 = scanner.next();
+    Assert.assertNotNull(row1);
+    Assert.assertNotNull(row2);
+    Assert.assertNull(scanner.next());
+    scanner.close();
+    // Verify data
+    Assert.assertEquals("user1", row1.getString("name"));
+    Assert.assertEquals("user2", row2.getString("name"));
+    Assert.assertEquals(1, Bytes.toInt(row1.getRow()));
+    Assert.assertEquals(2, Bytes.toInt(row2.getRow()));
   }
 
   // Test is ignored - Currently DBOutputFormat does a statement.executeBatch which seems to fail in HSQLDB.
@@ -339,6 +358,8 @@ public class BatchETLDBAdapterTest extends BaseETLBatchTest {
     MapReduceManager mrManager = appManager.getMapReduceManager(ETLMapReduce.NAME);
     mrManager.start();
     mrManager.waitForFinish(5, TimeUnit.MINUTES);
+    List<RunRecord> runRecords = mrManager.getHistory();
+    Assert.assertNotEquals(ProgramRunStatus.FAILED, runRecords.get(0).getStatus());
   }
 
   private void createInputData() throws Exception {
