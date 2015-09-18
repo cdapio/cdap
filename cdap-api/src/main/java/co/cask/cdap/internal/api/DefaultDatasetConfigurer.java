@@ -23,7 +23,6 @@ import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
-import com.google.common.base.Preconditions;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -69,10 +68,10 @@ public class DefaultDatasetConfigurer implements DatasetConfigurer {
   public void addDatasetModules(Map<String, String> datasetModules) {
     for (Map.Entry<String, String> newEntry : datasetModules.entrySet()) {
       if (datasetModules.containsKey(newEntry.getKey())) {
-        Preconditions.checkArgument(datasetModules.get(newEntry.getKey()).equals(newEntry.getValue()),
-                                    String.format(
-                                      "DatasetModule %s has been already added with different class %s",
-                                      newEntry.getKey(), datasetModules.get(newEntry.getKey())));
+        checkArgument(datasetModules.get(newEntry.getKey()).equals(newEntry.getValue()),
+                      String.format(
+                        "DatasetModule %s has been already added with different class %s",
+                        newEntry.getKey(), datasetModules.get(newEntry.getKey())));
       }
     }
     this.datasetModules.putAll(datasetModules);
