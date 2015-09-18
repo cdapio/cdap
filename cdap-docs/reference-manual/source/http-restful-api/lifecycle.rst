@@ -22,8 +22,8 @@ To create an application, submit an HTTP PUT request::
 
   PUT <base-url>/namespaces/<namespace>/apps/<app-name>
 
-The request body is a JSON Object specifying the artifact to use to create the application
-and optional application configuration. For example:
+The request body is a JSON object specifying the artifact to use to create the application,
+and an optional application configuration. For example:
  
 .. container:: highlight
 
@@ -41,8 +41,8 @@ and optional application configuration. For example:
     } 
 
 will create an application named ``purchaseWordCount`` from the example ``WordCount`` artifact. The application
-will receive the config specified, which will configure the application to create a Stream named
-``purchaseStream`` instead of the default stream name. 
+will receive the specified config, which will configure the application to create a stream named
+``purchaseStream`` instead of using the default stream name. 
 
 Note that the ``Content-Type`` header must be set to ``application/json``. If not, the API will
 revert to a deprecated API which expects the request body to contain the contents
@@ -54,7 +54,7 @@ To update an application, submit an HTTP POST request::
 
   POST <base-url>/namespaces/<namespace>/apps/<app-name>/update
 
-The request body is a JSON Object specifying the updated artifact version and the updated application
+The request body is a JSON object specifying the updated artifact version and the updated application
 config. For example, a request body of:
 
 .. container:: highlight
@@ -76,7 +76,7 @@ will update the ``purchaseWordCount`` application to use version |release| of th
 and update the name of the stream to ``logStream``. If no artifact is given, the current artifact will be
 used. Only changes to artifact version are supported; changes to the artifact name are not allowed. If no
 config is given, the current config will be used. If the config key is present, the current config will be
-overwritten by the request config.
+overwritten by the config specified in the request.
 
 Deploy an Artifact and Application
 ----------------------------------
@@ -89,8 +89,8 @@ with the name of the JAR file as a header::
 
   X-Archive-Name: <JAR filename>
 
-This will add the JAR file as an artifact, then create an application from that artifact.
-The archive name must be in the form [artifact-name]-[artifact-version].jar.
+This will add the JAR file as an artifact and then create an application from that artifact.
+The archive name must be in the form ``<artifact-name>-<artifact-version>.jar``.
 An optional header can supply a configuration object as a serialized JSON string:
 
 ::
