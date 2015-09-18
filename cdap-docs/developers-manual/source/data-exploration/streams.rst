@@ -21,6 +21,8 @@ on a stream, enabling more powerful queries.
 
 Let's take a closer look at attaching format and schema on streams.
 
+.. _stream-exploration-stream-format:
+
 Stream Format
 -------------
 
@@ -73,6 +75,8 @@ Data exploration using Impala has additional limitations:
 On top of these general limitations, each format has its own restrictions on the types
 of schemas they support. For example, the CSV format does not support maps or records as
 data types.
+
+.. _stream-exploration-stream-schema:
 
 Schema Syntax
 -------------
