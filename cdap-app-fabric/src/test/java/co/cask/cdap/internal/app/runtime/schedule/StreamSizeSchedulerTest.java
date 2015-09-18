@@ -26,6 +26,8 @@ import co.cask.cdap.test.XSlowTests;
 import com.google.common.collect.ImmutableMap;
 import org.junit.BeforeClass;
 import org.junit.experimental.categories.Category;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.TimeUnit;
 
@@ -34,6 +36,8 @@ import java.util.concurrent.TimeUnit;
  */
 @Category(XSlowTests.class)
 public class StreamSizeSchedulerTest extends SchedulerTestBase {
+
+  private static final Logger LOG = LoggerFactory.getLogger(StreamSizeSchedulerTest.class);
 
   private static NotificationService notificationService;
 
@@ -53,15 +57,19 @@ public class StreamSizeSchedulerTest extends SchedulerTestBase {
     return new StreamMetricsPublisher() {
 
       long totalSize;
+      long publishTime = 1000000;
 
       @Override
       public void increment(long size) throws Exception {
+        totalSize += size;
+        // making sure every notification is 1 second later than the previous.
+        publishTime += 1000;
         metricStore.add(new MetricValues(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, streamId.getNamespaceId(),
                                                         Constants.Metrics.Tag.STREAM, streamId.getId()),
-                                        "collect.bytes", TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+                                        "collect.bytes", TimeUnit.MILLISECONDS.toSeconds(publishTime),
                                         size, MetricType.COUNTER));
-        totalSize += size;
-        notificationService.publish(feed, new StreamSizeNotification(System.currentTimeMillis(), totalSize));
+        LOG.info("Publishing notification for {} at time {} with total stream size {}.", feed, publishTime, totalSize);
+        notificationService.publish(feed, new StreamSizeNotification(publishTime, totalSize));
       }
     };
   }
