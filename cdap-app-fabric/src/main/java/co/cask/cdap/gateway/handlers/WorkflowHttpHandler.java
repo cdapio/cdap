@@ -36,7 +36,7 @@ import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
-import co.cask.cdap.internal.app.services.AdapterService;
+import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.services.PropertiesResolver;
 import co.cask.cdap.proto.Id;
@@ -59,9 +59,8 @@ import com.google.inject.Singleton;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
@@ -79,7 +78,6 @@ import javax.ws.rs.QueryParam;
 @Singleton
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
 public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
-  private static final Logger LOG = LoggerFactory.getLogger(ProgramLifecycleHttpHandler.class);
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(ScheduleSpecification.class, new ScheduleSpecificationCodec())
     .registerTypeAdapter(WorkflowTokenDetail.class, new WorkflowTokenDetailCodec())
@@ -94,9 +92,9 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
                              QueueAdmin queueAdmin, Scheduler scheduler, PreferencesStore preferencesStore,
                              NamespacedLocationFactory namespacedLocationFactory, MRJobInfoFetcher mrJobInfoFetcher,
                              ProgramLifecycleService lifecycleService, PropertiesResolver resolver,
-                             AdapterService adapterService, MetricStore metricStore) {
+                             MetricStore metricStore) {
     super(store, configuration, runtimeService, lifecycleService, queueAdmin, scheduler,
-          preferencesStore, namespacedLocationFactory, mrJobInfoFetcher, resolver, adapterService, metricStore);
+          preferencesStore, namespacedLocationFactory, mrJobInfoFetcher, resolver, metricStore);
     this.workflowClient = workflowClient;
   }
 
@@ -150,7 +148,7 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
   public void getWorkflowStatusOld(HttpRequest request, HttpResponder responder,
                                   @PathParam("namespace-id") String namespaceId,
                                   @PathParam("app-id") String appId, @PathParam("workflow-name") String workflowName,
-                                  @PathParam("run-id") String runId) {
+                                  @PathParam("run-id") String runId) throws IOException {
     getWorkflowStatus(request, responder, namespaceId, appId, workflowName, runId);
   }
 
@@ -159,7 +157,7 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
   public void getWorkflowStatus(HttpRequest request, final HttpResponder responder,
                                 @PathParam("namespace-id") String namespaceId,
                                 @PathParam("app-id") String appId, @PathParam("workflow-name") String workflowName,
-                                @PathParam("run-id") String runId) {
+                                @PathParam("run-id") String runId) throws IOException {
     try {
       workflowClient.getWorkflowStatus(namespaceId, appId, workflowName, runId,
                                        new WorkflowClient.Callback() {
@@ -185,9 +183,6 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
                                        });
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Caught exception", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -198,7 +193,8 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
   @Path("/apps/{app-id}/workflows/{workflow-id}/previousruntime")
   public void getPreviousScheduledRunTime(HttpRequest request, HttpResponder responder,
                                   @PathParam("namespace-id") String namespaceId,
-                                  @PathParam("app-id") String appId, @PathParam("workflow-id") String workflowId) {
+                                  @PathParam("app-id") String appId,
+                                  @PathParam("workflow-id") String workflowId) throws SchedulerException {
     getScheduledRuntime(responder, namespaceId, appId, workflowId, true);
   }
 
@@ -209,12 +205,13 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
   @Path("/apps/{app-id}/workflows/{workflow-id}/nextruntime")
   public void getNextScheduledRunTime(HttpRequest request, HttpResponder responder,
                                   @PathParam("namespace-id") String namespaceId,
-                                  @PathParam("app-id") String appId, @PathParam("workflow-id") String workflowId) {
+                                  @PathParam("app-id") String appId,
+                                  @PathParam("workflow-id") String workflowId) throws SchedulerException {
     getScheduledRuntime(responder, namespaceId, appId, workflowId, false);
   }
 
   private void getScheduledRuntime(HttpResponder responder, String namespaceId, String appId, String workflowId,
-                                   boolean previousRuntimeRequested) {
+                                   boolean previousRuntimeRequested) throws SchedulerException {
     try {
       Id.Program id = Id.Program.from(namespaceId, appId, ProgramType.WORKFLOW, workflowId);
       List<ScheduledRuntime> runtimes;
@@ -226,9 +223,6 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
       responder.sendJson(HttpResponseStatus.OK, runtimes);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 

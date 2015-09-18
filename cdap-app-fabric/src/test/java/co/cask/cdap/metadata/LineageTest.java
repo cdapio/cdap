@@ -105,19 +105,20 @@ public class LineageTest extends MetadataTestBase {
       Assert.assertEquals(200, addTags(stream, streamTags).getResponseCode());
       Assert.assertEquals(streamTags, getTags(stream));
 
+      long startTime = System.currentTimeMillis();
       RunId flowRunId = runAndWait(flow);
+      // Wait for few seconds so that the stop time secs is more than start time secs.
+      TimeUnit.SECONDS.sleep(2);
       waitForStop(flow, true);
-
-      long now = System.currentTimeMillis();
-      long oneHourMillis = TimeUnit.HOURS.toMillis(1);
+      long stopTime = System.currentTimeMillis();
 
       // Fetch dataset lineage
-      HttpResponse httpResponse = fetchLineage(dataset, now - oneHourMillis, now + oneHourMillis, 10);
+      HttpResponse httpResponse = fetchLineage(dataset, startTime, stopTime, 10);
       Assert.assertEquals(200, httpResponse.getResponseCode());
       LineageRecord lineage = GSON.fromJson(httpResponse.getResponseBodyAsString(), LineageRecord.class);
 
       LineageRecord expected =
-        new LineageRecord(now - oneHourMillis, now + oneHourMillis,
+        new LineageRecord(startTime, stopTime,
                          ImmutableSet.of(
                            new Relation(dataset, flow, AccessType.UNKNOWN,
                                         flowRunId,
@@ -129,7 +130,7 @@ public class LineageTest extends MetadataTestBase {
       Assert.assertEquals(expected, lineage);
 
       // Fetch stream lineage
-      httpResponse = fetchLineage(stream, now - oneHourMillis, now + oneHourMillis, 10);
+      httpResponse = fetchLineage(stream, startTime, stopTime, 10);
       Assert.assertEquals(200, httpResponse.getResponseCode());
       lineage = GSON.fromJson(httpResponse.getResponseBodyAsString(), LineageRecord.class);
 
@@ -144,6 +145,28 @@ public class LineageTest extends MetadataTestBase {
                                 new MetadataRecord(dataset, dataProperties, dataTags),
                                 new MetadataRecord(stream, streamProperties, streamTags)),
                           fetchRunMetadata(new Id.Run(flow, flowRunId.getId())));
+
+      // Assert with a time range after the flow run should return no results
+      long laterStartTime = stopTime + 1000;
+      long laterEndTime = stopTime + 5000;
+      // Fetch stream lineage
+      httpResponse = fetchLineage(stream, laterStartTime, laterEndTime, 10);
+      Assert.assertEquals(200, httpResponse.getResponseCode());
+      lineage = GSON.fromJson(httpResponse.getResponseBodyAsString(), LineageRecord.class);
+
+      Assert.assertEquals(new LineageRecord(laterStartTime, laterEndTime, ImmutableSet.<Relation>of()),
+                          lineage);
+
+      // Assert with a time range before the flow run should return no results
+      long earlierStartTime = startTime - 5000;
+      long earlierEndTime = startTime - 1000;
+      // Fetch stream lineage
+      httpResponse = fetchLineage(stream, earlierStartTime, earlierEndTime, 10);
+      Assert.assertEquals(200, httpResponse.getResponseCode());
+      lineage = GSON.fromJson(httpResponse.getResponseBodyAsString(), LineageRecord.class);
+
+      Assert.assertEquals(new LineageRecord(earlierStartTime, earlierEndTime, ImmutableSet.<Relation>of()),
+                          lineage);
     } finally {
       try {
         deleteNamespace(namespace);

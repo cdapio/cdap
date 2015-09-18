@@ -20,6 +20,11 @@ angular.module(PKG.name + '.feature.adapters')
     angular.copy(AdapterDetail.params, params);
     params.scope = $scope;
 
+    $scope.historyParams = {
+      appId: params.appId,
+      programId: params.workflowId || params.workerId
+    };
+
     $scope.programType = AdapterDetail.programType;
 
     AdapterDetail.api.runs(params)

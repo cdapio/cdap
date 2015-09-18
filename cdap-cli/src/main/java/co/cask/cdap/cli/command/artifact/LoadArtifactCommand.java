@@ -74,7 +74,7 @@ public class LoadArtifactCommand extends AbstractAuthCommand {
         artifactId.getVersion().getVersion(), artifactConfig.getParents(), artifactConfig.getPlugins());
     }
 
-    output.printf("Successfully added artifact with name '%s'\n", artifactId);
+    output.printf("Successfully added artifact with name '%s'\n", artifactId.getName());
   }
 
   @Override

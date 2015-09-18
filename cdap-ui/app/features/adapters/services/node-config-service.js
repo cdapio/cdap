@@ -16,9 +16,10 @@
 
 angular.module(PKG.name + '.feature.adapters')
   .service('MyNodeConfigService', function() {
-    this.pluginChangeListeners = [];
-    this.pluginResetListeners = [];
-    this.pluginRemoveListeners = [];
+    this.pluginChangeListeners = {};
+    this.pluginResetListeners = {};
+    this.pluginRemoveListeners = {};
+    this.pluginSaveListeners = {};
 
     this.resetPlugin = function(plugin) {
       this.plugin = plugin;
@@ -26,13 +27,17 @@ angular.module(PKG.name + '.feature.adapters')
     };
 
     this.notifyPluginResetListeners = function() {
-      this.pluginResetListeners.forEach(function(callback) {
+      angular.forEach(this.pluginResetListeners, function(callback) {
         callback(this.plugin);
       }.bind(this));
     };
 
-    this.registerPluginResetCallback = function(callback) {
-      this.pluginResetListeners.push(callback);
+    this.registerPluginResetCallback = function(id, callback) {
+      this.pluginResetListeners[id] = callback;
+    };
+
+    this.unRegisterPluginResetCallback = function(id) {
+      delete this.pluginResetListeners[id];
     };
 
     this.setPlugin = function(plugin) {
@@ -41,13 +46,17 @@ angular.module(PKG.name + '.feature.adapters')
     };
 
     this.notifyPluginSetListeners = function () {
-      this.pluginChangeListeners.forEach(function(callback) {
+      angular.forEach(this.pluginChangeListeners, function(callback) {
         callback(this.plugin);
       }.bind(this));
     };
 
-    this.registerPluginSetCallback = function(callback) {
-      this.pluginChangeListeners.push(callback);
+    this.registerPluginSetCallback = function(id, callback) {
+      this.pluginChangeListeners[id] = callback;
+    };
+
+    this.unRegisterPluginSetCallback = function(id) {
+      delete this.pluginChangeListeners[id];
     };
 
     this.removePlugin = function(nodeId) {
@@ -55,14 +64,32 @@ angular.module(PKG.name + '.feature.adapters')
       this.notifyPluginRemoveListeners(nodeId);
     };
 
-    this.registerRemovePluginCallback = function(callback) {
-      this.pluginRemoveListeners.push(callback);
+    this.registerRemovePluginCallback = function(id, callback) {
+      this.pluginRemoveListeners[id] = callback;
     };
 
     this.notifyPluginRemoveListeners = function(nodeId) {
-      this.pluginRemoveListeners.forEach(function(callback) {
+      angular.forEach(this.pluginRemoveListeners, function(callback) {
         callback(nodeId);
       });
+    };
+
+    this.unRegisterRemovePluginCallback = function(id) {
+      delete this.pluginRemoveListeners[id];
+    };
+
+    this.notifyPluginSaveListeners = function(nodeId) {
+      angular.forEach(this.pluginSaveListeners, function(callback) {
+        callback(nodeId);
+      });
+    };
+
+    this.registerPluginSaveCallback = function(id, callback) {
+      this.pluginSaveListeners[id] = callback;
+    };
+
+    this.unRegisterPluginSaveCallback = function(id) {
+      delete this.pluginSaveListeners[id];
     };
 
   });

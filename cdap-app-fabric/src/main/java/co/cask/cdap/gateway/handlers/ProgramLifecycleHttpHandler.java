@@ -45,7 +45,6 @@ import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
-import co.cask.cdap.internal.app.services.AdapterService;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.services.PropertiesResolver;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
@@ -89,6 +88,7 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import javax.ws.rs.DELETE;
@@ -117,7 +117,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private final PreferencesStore preferencesStore;
   private final NamespacedLocationFactory namespacedLocationFactory;
   private final PropertiesResolver propertiesResolver;
-  private final AdapterService adapterService;
   private final MetricStore metricStore;
   private final MRJobInfoFetcher mrJobInfoFetcher;
 
@@ -191,7 +190,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                      Scheduler scheduler, PreferencesStore preferencesStore,
                                      NamespacedLocationFactory namespacedLocationFactory,
                                      MRJobInfoFetcher mrJobInfoFetcher,
-                                     PropertiesResolver propertiesResolver, AdapterService adapterService,
+                                     PropertiesResolver propertiesResolver,
                                      MetricStore metricStore) {
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.store = store;
@@ -204,7 +203,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     this.preferencesStore = preferencesStore;
     this.mrJobInfoFetcher = mrJobInfoFetcher;
     this.propertiesResolver = propertiesResolver;
-    this.adapterService = adapterService;
   }
 
   /**
@@ -328,7 +326,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                             @PathParam("type") String type,
                             @PathParam("id") String id,
                             @PathParam("action") String action)
-    throws NotFoundException, BadRequestException, IOException, NotImplementedException {
+    throws NotFoundException, BadRequestException, IOException, NotImplementedException, SchedulerException {
 
     if (type.equals("schedules")) {
       suspendResumeSchedule(responder, namespaceId, appId, id, action);
@@ -355,7 +353,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   private void suspendResumeSchedule(HttpResponder responder, String namespaceId, String appId, String scheduleName,
-                                     String action) {
+                                     String action) throws SchedulerException {
     try {
 
       if (!action.equals("suspend") && !action.equals("resume")) {
@@ -407,10 +405,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (NotFoundException e) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
-    } catch (Throwable e) {
-      LOG.error("Got exception when performing action '{}' on schedule '{}' for app '{}'",
-                action, scheduleName, appId, e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -466,9 +460,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -490,18 +481,13 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
     Id.Program id = Id.Program.from(namespaceId, appId, type, programId);
 
-    try {
-      if (!store.programExists(id)) {
-        responder.sendString(HttpResponseStatus.NOT_FOUND, "Program not found");
-        return;
-      }
-      Map<String, String> runtimeArgs = preferencesStore.getProperties(id.getNamespaceId(), appId,
-                                                                       programType, programId);
-      responder.sendJson(HttpResponseStatus.OK, runtimeArgs);
-    } catch (Throwable e) {
-      LOG.error("Error getting runtime args {}", e.getMessage(), e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    if (!store.programExists(id)) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, "Program not found");
+      return;
     }
+    Map<String, String> runtimeArgs = preferencesStore.getProperties(id.getNamespaceId(), appId,
+                                                                     programType, programId);
+    responder.sendJson(HttpResponseStatus.OK, runtimeArgs);
   }
 
   /**
@@ -522,18 +508,13 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
     Id.Program id = Id.Program.from(namespaceId, appId, type, programId);
 
-    try {
-      if (!store.programExists(id)) {
-        responder.sendString(HttpResponseStatus.NOT_FOUND, "Program not found");
-        return;
-      }
-      Map<String, String> args = decodeArguments(request);
-      preferencesStore.setProperties(namespaceId, appId, programType, programId, args);
-      responder.sendStatus(HttpResponseStatus.OK);
-    } catch (Throwable e) {
-      LOG.error("Error getting runtime args {}", e.getMessage(), e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    if (!store.programExists(id)) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, "Program not found");
+      return;
     }
+    Map<String, String> args = decodeArguments(request);
+    preferencesStore.setProperties(namespaceId, appId, programType, programId, args);
+    responder.sendStatus(HttpResponseStatus.OK);
   }
 
   @GET
@@ -560,9 +541,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       }
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -665,7 +643,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @POST
   @Path("/instances")
   public void getInstances(HttpRequest request, HttpResponder responder,
-                           @PathParam("namespace-id") String namespaceId) {
+                           @PathParam("namespace-id") String namespaceId) throws IOException {
     try {
       List<BatchEndpointInstances> args = instancesFromBatchArgs(decodeArrayArguments(request, responder));
       // if args is null then the response has already been sent
@@ -696,9 +674,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (JsonSyntaxException e) {
       responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -712,7 +687,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/flows")
   public void getAllFlows(HttpRequest request, HttpResponder responder,
-                          @PathParam("namespace-id") String namespaceId) {
+                          @PathParam("namespace-id") String namespaceId) throws Exception {
     programList(responder, namespaceId, ProgramType.FLOW, store);
   }
 
@@ -722,7 +697,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/mapreduce")
   public void getAllMapReduce(HttpRequest request, HttpResponder responder,
-                              @PathParam("namespace-id") String namespaceId) {
+                              @PathParam("namespace-id") String namespaceId) throws Exception {
     programList(responder, namespaceId, ProgramType.MAPREDUCE, store);
   }
 
@@ -732,7 +707,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/spark")
   public void getAllSpark(HttpRequest request, HttpResponder responder,
-                          @PathParam("namespace-id") String namespaceId) {
+                          @PathParam("namespace-id") String namespaceId) throws Exception {
     programList(responder, namespaceId, ProgramType.SPARK, store);
   }
 
@@ -742,7 +717,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/workflows")
   public void getAllWorkflows(HttpRequest request, HttpResponder responder,
-                              @PathParam("namespace-id") String namespaceId) {
+                              @PathParam("namespace-id") String namespaceId) throws Exception {
     programList(responder, namespaceId, ProgramType.WORKFLOW, store);
   }
 
@@ -752,14 +727,14 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/services")
   public void getAllServices(HttpRequest request, HttpResponder responder,
-                             @PathParam("namespace-id") String namespaceId) {
+                             @PathParam("namespace-id") String namespaceId) throws Exception {
     programList(responder, namespaceId, ProgramType.SERVICE, store);
   }
 
   @GET
   @Path("/workers")
   public void getAllWorkers(HttpRequest request, HttpResponder responder,
-                            @PathParam("namespace-id") String namespaceId) {
+                            @PathParam("namespace-id") String namespaceId) throws Exception {
     programList(responder, namespaceId, ProgramType.WORKER, store);
   }
 
@@ -781,8 +756,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       if (respondIfElementNotFound(e, responder)) {
         return;
       }
-      LOG.error("Got exception: ", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      throw e;
     }
   }
 
@@ -794,7 +768,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void setWorkerInstances(HttpRequest request, HttpResponder responder,
                                  @PathParam("namespace-id") String namespaceId,
                                  @PathParam("app-id") String appId,
-                                 @PathParam("worker-id") String workerId) {
+                                 @PathParam("worker-id") String workerId)
+    throws ExecutionException, InterruptedException {
     int instances;
     try {
       try {
@@ -834,8 +809,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       if (respondIfElementNotFound(e, responder)) {
         return;
       }
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      throw e;
     }
   }
 
@@ -858,8 +832,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       if (respondIfElementNotFound(e, responder)) {
         return;
       }
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      throw e;
     }
   }
 
@@ -871,7 +844,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public synchronized void setFlowletInstances(HttpRequest request, HttpResponder responder,
                                                @PathParam("namespace-id") String namespaceId,
                                                @PathParam("app-id") String appId, @PathParam("flow-id") String flowId,
-                                               @PathParam("flowlet-id") String flowletId) {
+                                               @PathParam("flowlet-id") String flowletId)
+    throws ExecutionException, InterruptedException {
     int instances;
     try {
       try {
@@ -914,8 +888,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       if (respondIfElementNotFound(e, responder)) {
         return;
       }
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      throw e;
     }
   }
 
@@ -944,7 +917,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void deleteFlowQueues(HttpRequest request, HttpResponder responder,
                                @PathParam("namespace-id") String namespaceId,
                                @PathParam("app-id") String appId,
-                               @PathParam("flow-id") String flowId) {
+                               @PathParam("flow-id") String flowId) throws Exception {
     Id.Program programId = Id.Program.from(namespaceId, appId, ProgramType.FLOW, flowId);
     try {
       ProgramStatus status = getProgramStatus(programId);
@@ -959,9 +932,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       }
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -992,9 +962,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                          new ServiceInstances(instances, getInstanceCount(programId, serviceId)));
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -1006,7 +973,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void setServiceInstances(HttpRequest request, HttpResponder responder,
                                   @PathParam("namespace-id") String namespaceId,
                                   @PathParam("app-id") String appId,
-                                  @PathParam("service-id") String serviceId) {
+                                  @PathParam("service-id") String serviceId)
+    throws ExecutionException, InterruptedException {
     try {
       Id.Program programId = Id.Program.from(namespaceId, appId, ProgramType.SERVICE, serviceId);
       if (!store.programExists(programId)) {
@@ -1046,8 +1014,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       if (respondIfElementNotFound(throwable, responder)) {
         return;
       }
-      LOG.error("Got exception : ", throwable);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      throw throwable;
     }
   }
 
@@ -1354,11 +1321,20 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         throw new ApplicationNotFoundException(identifier.getApplication());
       } else if (!store.programExists(identifier)) {
         throw new ProgramNotFoundException(identifier);
-      } else if (runId == null) {
-        throw new BadRequestException("Program not running");
-      } else {
-        throw new NotFoundException(new Id.Run(identifier, runId));
+      } else if (runId != null) {
+        Id.Run programRunId = new Id.Run(identifier, runId);
+        // Check if the program is running and is started by the Workflow
+        RunRecordMeta runRecord = store.getRun(identifier, runId);
+        if (runRecord != null && runRecord.getProperties().containsKey("workflowrunid")
+          && runRecord.getStatus().equals(ProgramRunStatus.RUNNING)) {
+          String workflowRunId = runRecord.getProperties().get("workflowrunid");
+          throw new BadRequestException(String.format("Cannot stop the program '%s' started by the Workflow " +
+                                                        "run '%s'. Please stop the Workflow.", programRunId,
+                                                      workflowRunId));
+        }
+        throw new NotFoundException(programRunId);
       }
+      throw new BadRequestException(String.format("Program '%s' is not running.", identifier));
     }
 
     try {
@@ -1386,9 +1362,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       }
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 

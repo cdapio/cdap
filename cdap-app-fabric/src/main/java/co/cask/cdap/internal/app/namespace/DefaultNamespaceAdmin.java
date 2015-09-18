@@ -25,7 +25,6 @@ import co.cask.cdap.common.NamespaceCannotBeCreatedException;
 import co.cask.cdap.common.NamespaceCannotBeDeletedException;
 import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.config.DashboardStore;
@@ -147,7 +146,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
 
     try {
       dsFramework.createNamespace(Id.Namespace.from(metadata.getName()));
-    } catch (DatasetManagementException | ServiceUnavailableException e) {
+    } catch (DatasetManagementException e) {
       throw new NamespaceCannotBeCreatedException(namespace, e);
     }
 
@@ -241,7 +240,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
 
     try {
       dsFramework.deleteAllInstances(namespaceId);
-    } catch (DatasetManagementException | IOException | ServiceUnavailableException e) {
+    } catch (DatasetManagementException | IOException e) {
       LOG.warn("Error while deleting datasets in namespace {}", namespaceId, e);
       throw new NamespaceCannotBeDeletedException(namespaceId, e);
     }

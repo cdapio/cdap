@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.adapters')
-  .controller('AdapterCreateStudioController', function(MyAppDAGService, $scope, rConfig, $modalStack, EventPipe, $window, $timeout) {
+  .controller('AdapterCreateStudioController', function(MyAppDAGService, $scope, rConfig, $modalStack, EventPipe, $window, $timeout, MyConsoleTabService) {
 
     var confirmOnPageExit = function (e) {
 
@@ -49,6 +49,7 @@ angular.module(PKG.name + '.feature.adapters')
 
     $scope.$on('$destroy', function() {
       $modalStack.dismissAll();
+      MyConsoleTabService.resetMessages();
       $window.onbeforeunload = null;
       EventPipe.cancelEvent('plugin.reset');
       EventPipe.cancelEvent('schema.clear');

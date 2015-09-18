@@ -435,7 +435,7 @@ public class LineageGeneratorTest extends MetadataTestBase {
       RunIds.generate(100)
     );
 
-    LineageGenerator.ScanRange scanRange = LineageGenerator.getScanRange(runIds);
+    LineageGenerator.ScanRangeWithFilter scanRange = LineageGenerator.getScanRange(runIds);
     Assert.assertEquals(100, scanRange.getStart());
     Assert.assertEquals(701, scanRange.getEnd());
 

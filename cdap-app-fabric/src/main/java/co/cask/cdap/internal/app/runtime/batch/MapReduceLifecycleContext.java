@@ -31,7 +31,6 @@ import co.cask.cdap.api.workflow.WorkflowToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.net.URL;
 import java.util.List;
@@ -42,22 +41,16 @@ import javax.annotation.Nullable;
  * Implements both MapReduceContext and MapReduceTaskContext to support backwards compatability of Mapper/Reducer tasks
  * that implemented ProgramLifeCycle<MapReduceContext>.
  *
- * @param <KEYOUT>   Type of output key.
- * @param <VALUEOUT> Type of output value.
+ * @param <KEY>   Type of output key.
+ * @param <VALUE> Type of output value.
  */
-public class MapReduceLifecycleContext<KEYOUT, VALUEOUT> implements MapReduceTaskContext<KEYOUT, VALUEOUT>,
-  MapReduceContext, Closeable {
+public class MapReduceLifecycleContext<KEY, VALUE> implements MapReduceTaskContext<KEY, VALUE>, MapReduceContext {
 
   private static final Logger LOG = LoggerFactory.getLogger(MapReduceLifecycleContext.class);
-  private final BasicMapReduceTaskContext<KEYOUT, VALUEOUT> delegate;
+  private final BasicMapReduceTaskContext<KEY, VALUE> delegate;
 
-  public MapReduceLifecycleContext(BasicMapReduceTaskContext<KEYOUT, VALUEOUT> delegate) {
+  public MapReduceLifecycleContext(BasicMapReduceTaskContext<KEY, VALUE> delegate) {
     this.delegate = delegate;
-  }
-
-  @Override
-  public void close() throws IOException {
-    delegate.close();
   }
 
   @Override
@@ -66,7 +59,7 @@ public class MapReduceLifecycleContext<KEYOUT, VALUEOUT> implements MapReduceTas
   }
 
   @Override
-  public void write(KEYOUT key, VALUEOUT value) throws IOException, InterruptedException {
+  public void write(KEY key, VALUE value) throws IOException, InterruptedException {
     delegate.write(key, value);
   }
 

@@ -195,7 +195,7 @@
               <classifier>batch-source</classifier>
               <instructions>
                 <!-- build bundle jar for batch sources for data quality artifact -->
-                <Export-Package>co.cask.cdap.template.etl.batch.source.*;co.cask.cdap.template.etl.common;
+                <Export-Package>co.cask.cdap.etl.batch.source.*;co.cask.cdap.etl.common;
                   org.apache.avro.mapreduce;parquet.avro;org.elasticsearch.hadoop.mr.*</Export-Package>
                 <Embed-Dependency>*;inline=false;scope=compile</Embed-Dependency>
                 <Embed-Transitive>true</Embed-Transitive>
@@ -213,9 +213,9 @@
               <classifier>batch</classifier>
               <instructions>
                 <!-- build bundle jar for batch. excluding realtime-->
-                <Export-Package>co.cask.cdap.template.etl.batch.*;co.cask.cdap.template.etl.transform.*;
-                  co.cask.cdap.template.etl.validator.*;
-                  co.cask.cdap.template.etl.common;org.apache.avro.mapreduce;parquet.avro;
+                <Export-Package>co.cask.cdap.etl.batch.*;co.cask.cdap.etl.transform.*;
+                  co.cask.cdap.etl.validator.*;
+                  co.cask.cdap.etl.common;org.apache.avro.mapreduce;parquet.avro;
                   org.elasticsearch.hadoop.mr.*</Export-Package>
                 <Embed-Dependency>*;inline=false;scope=compile</Embed-Dependency>
                 <Embed-Transitive>true</Embed-Transitive>
@@ -233,8 +233,8 @@
               <classifier>realtime</classifier>
               <instructions>
                 <!-- build bundle jar for realtime. excluding batch-->
-                <Export-Package>co.cask.cdap.template.etl.realtime.*;co.cask.cdap.template.etl.transform.*;
-                  co.cask.cdap.template.etl.validator.*;co.cask.cdap.template.etl.common</Export-Package>
+                <Export-Package>co.cask.cdap.etl.realtime.*;co.cask.cdap.etl.transform.*;
+                  co.cask.cdap.etl.validator.*;co.cask.cdap.etl.common</Export-Package>
                 <Embed-Dependency>*;inline=false;scope=compile</Embed-Dependency>
                 <Embed-Transitive>true</Embed-Transitive>
                 <Embed-Directory>lib</Embed-Directory>

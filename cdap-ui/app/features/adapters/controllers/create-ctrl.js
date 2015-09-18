@@ -16,7 +16,71 @@
 
 
 angular.module(PKG.name + '.feature.adapters')
-  .controller('AdapterCreateController', function($timeout, $state, $alert) {
+  .controller('AdapterCreateController', function($timeout, $state, $alert, myAdapterTemplatesApi, GLOBALS, CanvasFactory) {
+
+    var vm = this;
+
+    vm.preconfigured = false;
+    vm.templates = [];
+
+    myAdapterTemplatesApi.list({
+      apptype: GLOBALS.etlBatch
+    })
+      .$promise
+      .then(function(res) {
+        var plugins = res.map(function(plugin) {
+          return {
+            name: plugin.name,
+            description: plugin.description,
+            type: GLOBALS.etlBatch
+          };
+        });
+
+        vm.templates = vm.templates.concat(plugins);
+      });
+
+    myAdapterTemplatesApi.list({
+      apptype: GLOBALS.etlRealtime
+    })
+      .$promise
+      .then(function(res) {
+        var plugins = res.map(function(plugin) {
+          return {
+            name: plugin.name,
+            description: plugin.description,
+            type: GLOBALS.etlRealtime
+          };
+        });
+        vm.templates = vm.templates.concat(plugins);
+      });
+
+    vm.selectTemplate = function (template) {
+      myAdapterTemplatesApi.get({
+        apptype: template.type,
+        appname: template.name
+      })
+        .$promise
+        .then(function(res) {
+          var result = CanvasFactory.parseImportedJson(
+            JSON.stringify(res),
+            template.type
+          );
+          if (result.error) {
+            $alert({
+              type: 'danger',
+              content: 'Imported pre-defined app has issues. Please check the JSON of the imported pre-defined app'
+            });
+          } else {
+            $state.go('adapters.create.studio', {
+              data: result,
+              type: result.artifact.name
+            }).then(function () {
+              vm.preconfigured = false;
+            });
+          }
+        });
+    };
+
     this.importFile = function(files) {
       var reader = new FileReader();
       reader.readAsText(files[0], 'UTF-8');

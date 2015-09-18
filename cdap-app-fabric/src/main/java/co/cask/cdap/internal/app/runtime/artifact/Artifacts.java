@@ -16,8 +16,15 @@
 
 package co.cask.cdap.internal.app.runtime.artifact;
 
+import co.cask.cdap.api.Config;
+import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.artifact.ArtifactId;
+import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.proto.Id;
+import com.google.common.base.Preconditions;
+import com.google.common.reflect.TypeToken;
+
+import java.lang.reflect.Type;
 
 /**
  * Util class that contains helper methods related to handling of {@link Id.Artifact}s.
@@ -26,6 +33,26 @@ public final class Artifacts {
 
   public static String getFileName(ArtifactId artifactId) {
     return String.format("%s-%s-%s.jar", artifactId.getScope(), artifactId.getName(), artifactId.getVersion());
+  }
+
+  /**
+   * Resolve the application's config type.
+   *
+   * @param appClass the application class to resolve the config type for
+   * @return the resolved config type
+   * @throws IllegalArgumentException if the config type is not a valid type
+   */
+  public static Type getConfigType(Class<? extends Application> appClass) {
+    TypeToken<?> configType = TypeToken.of(appClass).resolveType(Application.class.getTypeParameters()[0]);
+    if (Reflections.isResolved(configType.getType())) {
+      return configType.getType();
+    }
+
+    // It has to be Config
+    Preconditions.checkArgument(Config.class == configType.getRawType(),
+      "Application config type " + configType + " not supported. " +
+      "Type must extend Config and cannot be parameterized.");
+    return Config.class;
   }
 
   private Artifacts() {

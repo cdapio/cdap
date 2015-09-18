@@ -35,21 +35,11 @@ angular.module(PKG.name + '.feature.adapters')
           controllerAs: 'ListController'
         })
 
-        .state('adapters.drafts', {
-          url: '/drafts',
-          templateUrl: '/assets/features/adapters/templates/drafts.html',
-          controller: 'AdapterDraftsController',
-          ncyBreadcrumb: {
-            label: 'All Drafts',
-            parent: 'overview'
-          }
-        })
-
         .state('adapters.create', {
           url: '/create',
           templateUrl: '/assets/features/adapters/templates/create.html',
           controller: 'AdapterCreateController',
-          controllerAs: 'AdapterCreateController', 
+          controllerAs: 'AdapterCreateController',
           ncyBreadcrumb: {
             skip: true
           }
