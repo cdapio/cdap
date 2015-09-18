@@ -186,6 +186,13 @@ angular.module(PKG.name + '.feature.adapters')
             // TODO: Hacky. Need to fix this for am-fade-top animation for modals.
             $timeout(function() {
               $scope.pluginCopy = angular.copy($scope.plugin);
+              $scope.$watch('pluginCopy.properties', function() {
+                  var strProp1 = JSON.stringify($scope.pluginCopy.properties);
+                  var strProp2 = JSON.stringify($scope.plugin.properties);
+                  if (strProp1 !== strProp2) {
+                    $scope.data['isModelTouched'] = true;
+                  }
+              }, true);
               // Didn't receive a configuration from the backend. Fallback to all textboxes.
               this.noconfig = true;
               this.configfetched = true;
