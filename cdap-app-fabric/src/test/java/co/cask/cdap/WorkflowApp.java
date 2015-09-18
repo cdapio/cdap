@@ -33,6 +33,7 @@ import co.cask.cdap.internal.app.runtime.batch.WordCount;
 import co.cask.cdap.runtime.WorkflowTest;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -142,51 +143,7 @@ public class WorkflowApp extends AbstractApplication {
   }
   
   /**
-   *
-   */
-  public static final class LegacyAction implements WorkflowAction {
-
-    private static final Logger LOG = LoggerFactory.getLogger(CustomAction.class);
-
-    private final String name;
-    private WorkflowContext context;
-
-    @Property
-    private final boolean condition = true;
-
-    public LegacyAction(String name) {
-      this.name = name;
-    }
-
-    @Override
-    public WorkflowActionSpecification configure() {
-      return WorkflowActionSpecification.Builder.with()
-        .setName(name)
-        .setDescription(name)
-        .build();
-    }
-
-    @Override
-    public void initialize(WorkflowContext context) throws Exception {
-      this.context = context;
-      LOG.info("Legacy action initialized: " + context.getSpecification().getName());
-    }
-
-    @Override
-    public void destroy() {
-      LOG.info("Legacy action destroyed: " + context.getSpecification().getName());
-    }
-
-    @Override
-    public void run() {
-      LOG.info("Legacy action run");
-      Preconditions.checkArgument(condition && "value".equals(context.getToken().get("tokenKey")));
-      LOG.info("Legacy run completed.");
-    }
-  }
-
-  /**
-   *
+   * Action to test configurer-style action configuration, extending AbstractWorkflowAction.
    */
   public static final class CustomAction extends AbstractWorkflowAction {
 
@@ -232,4 +189,50 @@ public class WorkflowApp extends AbstractApplication {
       LOG.info("Custom run completed.");
     }
   }
+
+  /**
+   * Action to test old-style configuration, implementing WorkflowAction directly.
+   * This can go away as soon as we remove the deprecated builder-style configure method from WorkflowAction.
+   */
+  @Deprecated
+  public static final class LegacyAction implements WorkflowAction {
+
+    private static final Logger LOG = LoggerFactory.getLogger(CustomAction.class);
+
+    private final String name;
+    private WorkflowContext context;
+
+    public LegacyAction(String name) {
+      this.name = name;
+    }
+
+    @Override
+    public WorkflowActionSpecification configure() {
+      return WorkflowActionSpecification.Builder.with()
+        .setName(name)
+        .setDescription(name)
+        .withOptions(ImmutableMap.of("test-option", "this value"))
+        .build();
+    }
+
+    @Override
+    public void initialize(WorkflowContext context) throws Exception {
+      this.context = context;
+      LOG.info("Legacy action initialized: " + context.getSpecification().getName());
+    }
+
+    @Override
+    public void destroy() {
+      LOG.info("Legacy action destroyed: " + context.getSpecification().getName());
+    }
+
+    @Override
+    public void run() {
+      LOG.info("Legacy action run");
+      Preconditions.checkArgument("this value".equals(context.getSpecification().getProperty("test-option")));
+      Preconditions.checkArgument("value".equals(context.getToken().get("tokenKey").toString()));
+      LOG.info("Legacy run completed.");
+    }
+  }
+
 }
