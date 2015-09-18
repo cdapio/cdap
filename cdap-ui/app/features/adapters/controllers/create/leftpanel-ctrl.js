@@ -87,7 +87,9 @@ angular.module(PKG.name + '.feature.adapters')
             if (!angular.isObject(res)) {
               return;
             }
-
+            if (!res || !res[$state.params.namespace]) {
+              return;
+            }
             var templates = res[$state.params.namespace][MyAppDAGService.metadata.template.type];
             if (!templates) {
               return;

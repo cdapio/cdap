@@ -19,30 +19,22 @@ package co.cask.cdap.internal.app.runtime.batch.dataset;
 import co.cask.cdap.api.data.batch.BatchWritable;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.internal.app.runtime.batch.BasicMapReduceTaskContext;
-import co.cask.cdap.internal.app.runtime.batch.MapReduceTaskContextProvider;
 import com.google.common.base.Throwables;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
 final class DataSetRecordWriter<KEY, VALUE> extends RecordWriter<KEY, VALUE> {
-  private static final Logger LOG = LoggerFactory.getLogger(DataSetRecordWriter.class);
-
   private final BatchWritable<KEY, VALUE> batchWritable;
-  private final BasicMapReduceTaskContext mrContext;
-  private final MapReduceTaskContextProvider mrContextProvider;
+  private final BasicMapReduceTaskContext context;
 
-  public DataSetRecordWriter(final BatchWritable<KEY, VALUE> batchWritable,
-                             final MapReduceTaskContextProvider mrContextProvider) {
+  public DataSetRecordWriter(BatchWritable<KEY, VALUE> batchWritable, BasicMapReduceTaskContext context) {
     this.batchWritable = batchWritable;
-    this.mrContextProvider = mrContextProvider;
-    this.mrContext = mrContextProvider.get();
+    this.context = context;
 
     // hack: making sure logging context is set on the thread that accesses the runtime context
-    LoggingContextAccessor.setLoggingContext(mrContext.getLoggingContext());
+    LoggingContextAccessor.setLoggingContext(this.context.getLoggingContext());
   }
 
   @Override
@@ -55,16 +47,10 @@ final class DataSetRecordWriter<KEY, VALUE> extends RecordWriter<KEY, VALUE> {
     // transaction is not finished, but we want all operations to be dispatched (some could be buffered in memory by tx
     // agent)
     try {
-      mrContext.flushOperations();
+      this.context.flushOperations();
     } catch (Exception e) {
-      LOG.error("Failed to flush operations at the end of reducer of " + mrContext.toString());
+      Throwables.propagateIfPossible(e, IOException.class, InterruptedException.class);
       throw Throwables.propagate(e);
-    } finally {
-      try {
-        mrContext.close();
-      } finally {
-        mrContextProvider.stop();
-      }
     }
   }
 }

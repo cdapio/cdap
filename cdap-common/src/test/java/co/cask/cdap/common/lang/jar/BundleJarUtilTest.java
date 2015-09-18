@@ -61,7 +61,7 @@ public class BundleJarUtilTest {
     }
 
     File destArchive = new File(tmpFolder.newFolder(), "myBundle.jar");
-    BundleJarUtil.packDir(input, Locations.toLocation(destArchive), tmpFolder.newFolder());
+    BundleJarUtil.packDirFiles(input, Locations.toLocation(destArchive), tmpFolder.newFolder());
     for (File file : files) {
       BundleJarUtil.getEntry(Locations.toLocation(destArchive), file.getName()).getInput().close();
     }

@@ -49,6 +49,11 @@ body.theme-cdap.state-adapters {
         width: 62px;
       }
 
+      &.btn-cdap {
+        width: 120px;
+
+      }
+
       &.btn-status {
         width: 200px;
         cursor: default;
@@ -68,6 +73,36 @@ body.theme-cdap.state-adapters {
       }
       @media (max-width: @screen-xs-max) {
         display: none;
+      }
+    }
+
+    .adapter-detail-metadata {
+      width: 600px;
+      padding: 5px 15px 0;
+      @media (max-width: @screen-sm-max) {
+        max-width: 400px;
+      }
+
+      h1 {
+        display: inline-block;
+        font-size: 20px;
+        font-weight: 500;
+        margin-top: 0;
+        margin-right: 10px;
+        margin-bottom: 5px;
+      }
+      span.pipeline-type {
+        font-weight: 500;
+        text-decoration: none;
+        color: #397cf1;
+      }
+      p {
+        color: #666;
+        font-size: 14px;
+        font-weight: 400;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
     }
 

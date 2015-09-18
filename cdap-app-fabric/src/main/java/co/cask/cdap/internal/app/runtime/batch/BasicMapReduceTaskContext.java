@@ -63,7 +63,6 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
   private final long logicalStartTime;
   private final WorkflowToken workflowToken;
   private final Metrics userMetrics;
-  private final MetricsCollectionService metricsCollectionService;
   private final Map<String, Plugin> plugins;
 
   private MultipleOutputs multipleOutputs;
@@ -86,7 +85,6 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
           dsFramework, discoveryServiceClient, pluginInstantiator);
     this.logicalStartTime = logicalStartTime;
     this.workflowToken = workflowToken;
-    this.metricsCollectionService = metricsCollectionService;
 
     if (metricsCollectionService != null) {
       this.userMetrics = new ProgramUserMetrics(getProgramMetrics());
@@ -188,10 +186,6 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
   @Override
   public Metrics getMetrics() {
     return userMetrics;
-  }
-
-  public MetricsCollectionService getMetricsCollectionService() {
-    return metricsCollectionService;
   }
 
   public LoggingContext getLoggingContext() {

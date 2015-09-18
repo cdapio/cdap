@@ -44,10 +44,11 @@ as appropriate. A Windows-version of the application ``curl`` is included in the
 
 .. highlight:: console
 
-Downloading the Application
-===========================
+Downloading the Artifact
+========================
+An artifact is a JAR file that contains Application code.
 You can either download the application zip archive that we have built for you, or
-you can pull the source code from GitHub. If you download the zip file, then the application
+you can pull the source code from GitHub. If you download the zip file, then the artifact
 is already built and packaged:
 
 .. container:: highlight
@@ -58,13 +59,13 @@ is already built and packaged:
     |$| unzip cdap-wise-|cdap-apps-version|.zip
 
 If you clone the source code from GitHub, you will need to build and package the
-application with these commands::
+artifact with these commands::
 
   $ git clone https://github.com/caskdata/cdap-apps
   $ cd cdap-apps/Wise
   $ mvn package -DskipTests
 
-In both cases, the packaged application is in the ``target/`` directory with the file name:
+In both cases, the artifact is in the ``target/`` directory with the file name:
 
 .. container:: highlight
 
@@ -77,29 +78,47 @@ available in the* :ref:`Web Analytics Application documentation <examples-web-an
 
 Deploying the Application
 =========================
-You can deploy the application into your running instance of CDAP either by using the 
+You can load the artifact into your running instance of CDAP either by using the
 :ref:`CDAP Command Line Interface <reference:cli>`:
 
 .. container:: highlight
 
   .. parsed-literal::
-    |$| cdap-cli.sh deploy app cdap-wise-|cdap-apps-version|/target/cdap-wise-|cdap-apps-version|.jar
-    Successfully deployed application
+    |$| cdap-cli.sh load artifact cdap-wise-|cdap-apps-version|/target/cdap-wise-|cdap-apps-version|.jar 
+    Successfully added artifact with name 'cdap-wise'
 
 or using ``curl`` to directly make an HTTP request:
 
 .. container:: highlight
 
   .. parsed-literal::
-    |$| curl -w'\\n' -H "X-Archive-Name: cdap-wise-|cdap-apps-version|.jar" localhost:10000/v3/namespaces/default/apps \
-      --data-binary @cdap-wise-|cdap-apps-version|/target/cdap-wise-|cdap-apps-version|.jar
-    Deploy Complete
-    
+    |$| curl -w'\n' localhost:10000/v3/namespaces/default/artifacts/cdap-wise \
+    --data-binary @cdap-wise-|cdap-apps-version|/target/cdap-wise-|cdap-apps-version|.jar
+    Artifact added successfully
+
 (If you cloned the source code and built the app, you'll need to adjust the above paths to
 include the ``cdap-apps/Wise`` directory.)
 
-**Learn More:** *You can also deploy apps by dragging and dropping their jars on* :ref:`the CDAP UI <cdap-ui>`.
+Once the artifact has been added to CDAP, you can create an application using that artifact.
+You can create the application by using the CLI:
 
+.. container:: highlight
+
+  .. parsed-literal::
+    |$| cdap-cli.sh create app Wise cdap-wise |cdap-apps-version| user
+    Successfully created application
+
+or by using ``curl``:
+
+.. container:: highlight
+
+  .. parsed-literal::
+    |$| curl -w'\n' -X PUT -H "Content-Type: application/json" localhost:10000/v3/namespaces/default/apps/Wise \
+    -d '{ "artifact":{ "name": "cdap-wise", "version": "0.4.0", "scope": "user" } }'
+    Deploy Complete
+    
+**Learn More:** *You can also deploy artifacts and apps in one step by dragging and dropping their JARs on*
+:ref:`the CDAP UI <cdap-ui>`.
 
 Starting Real-time Processing
 =============================
@@ -146,7 +165,7 @@ to the stream. Use the CLI to send the events to the stream:
 .. container:: highlight
 
   .. parsed-literal::
-    |$| cdap-cli.sh load stream logEventStream cdap-wise-|cdap-apps-version|/resources/apache.accesslog
+    |$| cdap-cli.sh load stream logEventStream cdap-wise-|cdap-apps-version|/resources/apache.accesslog text/plain
     
 This will run for a number of seconds until all events are inserted.
 

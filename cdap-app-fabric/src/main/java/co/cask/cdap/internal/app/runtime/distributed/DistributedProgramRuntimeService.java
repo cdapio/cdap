@@ -63,10 +63,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.fs.PathFilter;
-import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.api.ResourceReport;
 import org.apache.twill.api.RunId;
@@ -127,7 +123,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
     this.queueAdmin = queueAdmin;
     this.streamAdmin = streamAdmin;
     this.txExecutorFactory = txExecutorFactory;
-    this.resourceReporter = new ClusterResourceReporter(metricsCollectionService, hConf, cConf);
+    this.resourceReporter = new ClusterResourceReporter(metricsCollectionService, hConf);
   }
 
   @Override
@@ -385,28 +381,11 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
    */
   private class ClusterResourceReporter extends AbstractResourceReporter {
     private static final String RM_CLUSTER_METRICS_PATH = "/ws/v1/cluster/metrics";
-    private final Path hbasePath;
-    private final Path namedspacedPath;
-    private final PathFilter namespacedFilter;
     private final List<URL> rmUrls;
-    private final String namespace;
-    private FileSystem hdfs;
 
-    public ClusterResourceReporter(MetricsCollectionService metricsCollectionService, Configuration hConf,
-                                   CConfiguration cConf) {
-      super(metricsCollectionService.getContext(
-        ImmutableMap.<String, String>of()));
-      try {
-        this.hdfs = FileSystem.get(hConf);
-      } catch (IOException e) {
-        LOG.error("unable to get hdfs, cluster storage metrics will be unavailable");
-        this.hdfs = null;
-      }
+    public ClusterResourceReporter(MetricsCollectionService metricsCollectionService, Configuration hConf) {
+      super(metricsCollectionService.getContext(ImmutableMap.<String, String>of()));
 
-      this.namespace = cConf.get(Constants.CFG_HDFS_NAMESPACE);
-      this.namedspacedPath = new Path(namespace);
-      this.hbasePath = new Path(hConf.get(HConstants.HBASE_DIR));
-      this.namespacedFilter = new NamespacedPathFilter();
       List<URL> rmUrls = Collections.emptyList();
       try {
         rmUrls = getResourceManagerURLs(hConf);
@@ -544,13 +523,6 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
         if (conn != null) {
           conn.disconnect();
         }
-      }
-    }
-
-    private class NamespacedPathFilter implements PathFilter {
-      @Override
-      public boolean accept(Path path) {
-        return path.getName().startsWith(namespace);
       }
     }
 

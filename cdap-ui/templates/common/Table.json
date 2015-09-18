@@ -4,7 +4,7 @@
     "position": [ "group1" ],
     "group1": {
        "display" : "General",
-       "position" : [ "name", "schema.row.field", "case.sensitive.row.field" ],
+       "position" : [ "name", "schema.row.field" ],
        "fields" : {
           "name" : {
              "widget": "dataset-selector",
@@ -16,16 +16,6 @@
              "widget": "textbox",
              "label" : "Row Field",
              "description" : "Specify the field from the record above that should be used as key"
-          },
-
-          "case.sensitive.row.field" : {
-            "widget": "select",
-            "label" : "Case-sensitive Row Field",
-            "properties" : {
-              "values" : [ "true", "false" ],
-              "default" : "true"
-            },
-            "description" : "Specify whether the row field specified in schema.row.field is case-sensitive"
           }
        }
     }

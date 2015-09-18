@@ -12,7 +12,7 @@ Creating an ETL Application
 
 Introduction
 ============
-Applications can be created using the :ref:`Artifact HTTP RESTful API <http-restful-api-artifact>`,
+Applications can be created using the :ref:`Lifecycle RESTful API <http-restful-api-lifecycle-create-app>`,
 the :ref:`CDAP CLI <cli>`, or the :ref:`CDAP UI <cdap-ui>`. In order to create an application,
 an application configuration is required that specifies the source, transformations and sinks
 along with their properties.  (In the CDAP UI, the interface prompts you for the required

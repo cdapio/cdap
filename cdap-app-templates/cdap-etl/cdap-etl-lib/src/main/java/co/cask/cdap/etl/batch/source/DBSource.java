@@ -32,6 +32,9 @@ import co.cask.cdap.etl.common.DBConfig;
 import co.cask.cdap.etl.common.DBRecord;
 import co.cask.cdap.etl.common.DBUtils;
 import co.cask.cdap.etl.common.ETLDBInputFormat;
+import co.cask.cdap.etl.common.FieldCase;
+import co.cask.cdap.etl.common.Properties;
+import co.cask.cdap.etl.common.StructuredRecordUtils;
 import com.google.common.base.Preconditions;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
@@ -41,6 +44,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.Driver;
+import javax.annotation.Nullable;
 
 /**
  * Batch source to read from a Database table
@@ -60,6 +64,11 @@ public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredReco
     "import from the specified table. Examples: SELECT COUNT(*) from <my_table> where <my_column> 1, " +
     "SELECT COUNT(my_column) from my_table. NOTE: Please include the same WHERE clauses in this query as the ones " +
     "used in the import query to reflect an accurate number of records to import.";
+  private static final String COLUMN_CASE_DESCRIPTION = "Sets the case of the column names returned from the query. " +
+    "Possible options are upper, lower. By default or for any other input, the column names are not modified" +
+    "and the names returned from the Database are used as is. Note, setting this property provides predictability" +
+    "of column name cases across different Databases but might result in column name conflicts if two or column " +
+    "names are the same when the case is ignored.";
 
   private final DBSourceConfig dbSourceConfig;
   private Class<? extends Driver> driverClass;
@@ -117,7 +126,8 @@ public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredReco
 
   @Override
   public void transform(KeyValue<LongWritable, DBRecord> input, Emitter<StructuredRecord> emitter) throws Exception {
-    emitter.emit(input.getValue().getRecord());
+    emitter.emit(StructuredRecordUtils.convertCase(
+      input.getValue().getRecord(), FieldCase.toFieldCase(dbSourceConfig.columnNameCase)));
   }
 
   @Override
@@ -138,5 +148,10 @@ public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredReco
 
     @Description(COUNT_QUERY_DESCRIPTION)
     String countQuery;
+
+    @Nullable
+    @Name(Properties.DB.COLUMN_NAME_CASE)
+    @Description(COLUMN_CASE_DESCRIPTION)
+    String columnNameCase;
   }
 }

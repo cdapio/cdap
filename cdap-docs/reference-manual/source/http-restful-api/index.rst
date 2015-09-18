@@ -21,7 +21,7 @@ CDAP HTTP RESTful API v3
     Configuration <configuration>
     Metadata <metadata>
     Preferences <preferences>
-    Application Templates and Adapters <apptemplates>
+    Artifact <artifact>
     Stream <stream>
     Dataset <dataset>
     Query <query>
@@ -49,8 +49,8 @@ data isolation. This is an inital step towards introducing `multi-tenancy
 - :doc:`Configuration: <configuration>` retrieving the CDAP and HBase configurations
 - :doc:`Metadata: <metadata>` setting, retrieving, and deleting user metadata annotations
 - :doc:`Preferences: <preferences>` setting, retrieving, and deleting preferences
-- :doc:`Application Templates and Adapters: <apptemplates>` obtaining available application templates and
-  plugins, and creating, deleting, and managing the lifecycle of adapters
+- :doc:`Artifact: <artifact>` deploying artifacts and retrieving details about plugins available to artifacts
+  and classes contained within artifacts
 - :doc:`Stream: <stream>` sending data events to a stream or to inspect the contents of a stream
 - :doc:`Dataset: <dataset>` interacting with datasets, dataset modules, and dataset types
 - :doc:`Query: <query>` sending ad-hoc queries to CDAP datasets

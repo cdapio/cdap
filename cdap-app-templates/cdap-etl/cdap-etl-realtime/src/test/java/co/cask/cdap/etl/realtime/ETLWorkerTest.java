@@ -21,6 +21,7 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.etl.common.ETLStage;
 import co.cask.cdap.etl.common.Properties;
@@ -57,6 +58,8 @@ import org.junit.rules.TemporaryFolder;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.sql.Connection;
+import java.sql.ResultSet;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -76,7 +79,7 @@ public class ETLWorkerTest extends ETLRealtimeBaseTest {
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
 
   @ClassRule
-  public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", false);
+  public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, true);
 
   protected static final int PARTITIONS = 1;
 
@@ -142,11 +145,21 @@ public class ETLWorkerTest extends ETLRealtimeBaseTest {
   @Test
   @SuppressWarnings("ConstantConditions")
   public void testTableSink() throws Exception {
+    Schema.Field idField = Schema.Field.of("id", Schema.nullableOf(Schema.of(Schema.Type.INT)));
+    Schema.Field nameField = Schema.Field.of("name", Schema.of(Schema.Type.STRING));
+    Schema.Field scoreField = Schema.Field.of("score", Schema.of(Schema.Type.DOUBLE));
+    Schema.Field graduatedField = Schema.Field.of("graduated", Schema.of(Schema.Type.BOOLEAN));
+    // nullable row key field to test cdap-3239
+    Schema.Field binaryNameField = Schema.Field.of("binary", Schema.nullableOf(Schema.of(Schema.Type.BYTES)));
+    Schema.Field timeField = Schema.Field.of("time", Schema.of(Schema.Type.LONG));
+    Schema schema =  Schema.recordOf("tableRecord", idField, nameField, scoreField, graduatedField,
+                                     binaryNameField, timeField);
+
     ETLStage source = new ETLStage("DataGenerator", ImmutableMap.of(DataGeneratorSource.PROPERTY_TYPE,
                                                            DataGeneratorSource.TABLE_TYPE));
-    ETLStage sink = new ETLStage("Table",
-                                 ImmutableMap.of(Properties.Table.NAME, "table1",
-                                   Properties.Table.PROPERTY_SCHEMA_ROW_FIELD, "binary"));
+    ETLStage sink = new ETLStage("Table", ImmutableMap.of(Properties.Table.NAME, "table1",
+                                                          Properties.Table.PROPERTY_SCHEMA_ROW_FIELD, "binary",
+                                                          Properties.Table.PROPERTY_SCHEMA, schema.toString()));
     ETLRealtimeConfig etlConfig = new ETLRealtimeConfig(source, sink, Lists.<ETLStage>newArrayList());
 
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "testToStream");
@@ -167,8 +180,16 @@ public class ETLWorkerTest extends ETLRealtimeBaseTest {
     Assert.assertEquals(1, (int) row.getInt("id"));
     Assert.assertEquals("Bob", row.getString("name"));
     Assert.assertEquals(3.4, row.getDouble("score"), 0.000001);
-    Assert.assertEquals(false, row.getBoolean("graduated"));
+    // binary field was the row key and thus shouldn't be present in the columns
+    Assert.assertNull(row.get("binary"));
     Assert.assertNotNull(row.getLong("time"));
+
+    Connection connection = getQueryClient();
+    ResultSet results = connection.prepareStatement("select binary,name,score from dataset_table1").executeQuery();
+    Assert.assertTrue(results.next());
+    Assert.assertArrayEquals("Bob".getBytes(Charsets.UTF_8), results.getBytes(1));
+    Assert.assertEquals("Bob", results.getString(2));
+    Assert.assertEquals(3.4, results.getDouble(3), 0.000001);
   }
 
   @Test
@@ -216,6 +237,13 @@ public class ETLWorkerTest extends ETLRealtimeBaseTest {
 
     Assert.assertEquals(1, (int) row.getInt("ID"));
     Assert.assertEquals(3, (int) row.getInt("AGE"));
+
+    Connection connection = getQueryClient();
+    ResultSet results = connection.prepareStatement("select NAME,ID,AGE from dataset_outputTable").executeQuery();
+    Assert.assertTrue(results.next());
+    Assert.assertEquals("Bob", results.getString(1));
+    Assert.assertEquals(1, results.getInt(2));
+    Assert.assertEquals(3, results.getInt(3));
   }
 
   private void waitForTableToBePopulated(final DataSetManager<Table> tableManager) throws Exception {

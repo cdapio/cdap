@@ -18,8 +18,8 @@ For information on the format of the JSON, please refer to the section on the
 :ref:`Creating a Custom ETL Plugin <included-apps-custom-etl-plugins>`.
 
 Copy the JAR and the JSON file to the :ref:`Plugin directory
-<included-apps-custom-etl-plugins-installation-directory>` and then update the system
-artifacts by using the Artifacts HTTP RESTful API :ref:`Load System Artifacts
+<included-apps-custom-etl-plugins-installation-directory>` and then reload system artifacts by
+using the :ref:`HTTP RESTful API Load System Artifacts
 <http-restful-api-artifact-system-load>` endpoint.
 
 A sample JDBC Driver Plugin configuration::
