@@ -189,6 +189,19 @@ public class BusinessMetadataDatasetTest {
     for (BusinessMetadataRecord result2 : results2) {
       Assert.assertEquals("value1", result2.getValue());
     }
+
+    // Save it
+    dataset.setProperty(stream1, "key21", "value21");
+
+    // Search for it based on value asterix
+    List<BusinessMetadataRecord> results3 = dataset.findBusinessMetadataOnValue("value2*",
+                                                                                MetadataSearchTargetType.ALL);
+
+    // Assert check
+    Assert.assertEquals(2, results3.size());
+    for (BusinessMetadataRecord result3 : results3) {
+      Assert.assertTrue(result3.getValue().startsWith("value2"));
+    }
   }
 
   @Test
