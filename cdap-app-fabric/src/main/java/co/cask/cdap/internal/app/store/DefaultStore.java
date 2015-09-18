@@ -133,7 +133,7 @@ public class DefaultStore implements Store {
           Table mdsTable = DatasetsUtil.getOrCreateDataset(dsFramework, APP_META_INSTANCE_ID, "table",
                                                            DatasetProperties.EMPTY,
                                                            DatasetDefinition.NO_ARGUMENTS, null);
-          return new AppMds(mdsTable);
+          return new AppMds(mdsTable, configuration);
         } catch (Exception e) {
           throw Throwables.propagate(e);
         }
@@ -1211,8 +1211,8 @@ public class DefaultStore implements Store {
   private static final class AppMds implements Iterable<AppMetadataStore> {
     private final AppMetadataStore apps;
 
-    private AppMds(Table mdsTable) {
-      this.apps = new AppMetadataStore(mdsTable);
+    private AppMds(Table mdsTable, CConfiguration configuration) {
+      this.apps = new AppMetadataStore(mdsTable, configuration);
     }
 
     @Override

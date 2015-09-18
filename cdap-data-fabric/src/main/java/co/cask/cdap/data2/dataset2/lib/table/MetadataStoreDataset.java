@@ -23,6 +23,7 @@ import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
+import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
@@ -170,6 +171,65 @@ public class MetadataStoreDataset extends AbstractDataset {
       }
     } catch (Exception e) {
       throw Throwables.propagate(e);
+    }
+  }
+
+  /**
+   * Run a scan on MDS.
+   *
+   * @param startId  scan start key
+   * @param stopId   scan stop key
+   * @param typeOfT  type of value
+   * @param function function to process each element returned from scan.
+   *                 If function.apply returns false then the scan is stopped.
+   *                 Also, function.apply should not return null.
+   * @param <T>      type of value
+   */
+  public <T> void scan(MDSKey startId, @Nullable MDSKey stopId, Type typeOfT, Function<KeyValue<T>, Boolean> function) {
+    byte[] startKey = startId.getKey();
+    byte[] stopKey = stopId == null ? Bytes.stopKeyForPrefix(startKey) : stopId.getKey();
+
+    Scanner scan = table.scan(startKey, stopKey);
+    try {
+      Row next;
+      while ((next = scan.next()) != null) {
+        byte[] columnValue = next.get(COLUMN);
+        if (columnValue == null) {
+          continue;
+        }
+        T value = deserialize(columnValue, typeOfT);
+
+        MDSKey key = new MDSKey(next.getRow());
+        //noinspection ConstantConditions
+        if (!function.apply(new KeyValue<>(key, value))) {
+          break;
+        }
+      }
+    } finally {
+      scan.close();
+    }
+  }
+
+  /**
+   * Output value of a scan.
+   *
+   * @param <T> Type of scan result object
+   */
+  public class KeyValue<T> {
+    private final MDSKey key;
+    private final T value;
+
+    public KeyValue(MDSKey key, T value) {
+      this.key = key;
+      this.value = value;
+    }
+
+    public MDSKey getKey() {
+      return key;
+    }
+
+    public T getValue() {
+      return value;
     }
   }
 

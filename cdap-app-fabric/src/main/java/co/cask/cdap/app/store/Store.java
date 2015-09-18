@@ -483,10 +483,10 @@ public interface Store {
    * @return Map of runId of Workflow to DetailedStatistics of the run
    */
   Collection<WorkflowDataset.WorkflowRunRecord> retrieveSpacedRecords(Id.Workflow workflow, String runId,
-                                                                       int limit, long timeInterval);
+                                                                      int limit, long timeInterval);
 
   /**
    * @return programs that were running between given start and end time.
    */
-  Set<RunId> getRunningInRange(final long startTimeInSecs, final long endTimeInSecs);
+  Set<RunId> getRunningInRange(long startTimeInSecs, long endTimeInSecs);
 }
