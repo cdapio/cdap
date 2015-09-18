@@ -219,7 +219,6 @@ angular.module(PKG.name + '.feature.adapters')
       $scope.pluginCopy.outputSchema = angular.copy($scope.plugin.outputSchema);
       $scope.pluginCopy.inputSchema = angular.copy($scope.plugin.inputSchema);
       $scope.pluginCopy.errorDatasetName = angular.copy($scope.plugin.errorDatasetName);
-      // $scope.pluginCopy.validationFields = angular.copy($scope.plugin.validationFields);
       EventPipe.emit('resetValidatorValidationFields', $scope.plugin.validationFields);
       $scope.data['isModelTouched'] = false;
       EventPipe.emit('plugin.reset');

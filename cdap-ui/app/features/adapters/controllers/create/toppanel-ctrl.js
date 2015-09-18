@@ -15,8 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.adapters')
-
-  .controller('TopPanelController', function(EventPipe, CanvasFactory, MyAppDAGService, $scope, $timeout, $bootstrapModal, ModalConfirm, $alert, $state, $stateParams, GLOBALS, AdapterErrorFactory) {
+  .controller('TopPanelController', function(EventPipe, CanvasFactory, MyAppDAGService, $scope, $timeout, $bootstrapModal, ModalConfirm, $alert, $state, $stateParams, GLOBALS, AdapterErrorFactory, MyConsoleTabService) {
 
     this.metadata = MyAppDAGService['metadata'];
     function resetMetadata() {
@@ -143,7 +142,7 @@ angular.module(PKG.name + '.feature.adapters')
             .saveAsDraft()
             .then(
               function success() {
-                $alert({
+                MyConsoleTabService.addMessage({
                   type: 'success',
                   content: MyAppDAGService.metadata.name + ' successfully saved as draft.'
                 });
@@ -175,6 +174,11 @@ angular.module(PKG.name + '.feature.adapters')
       var errors = AdapterErrorFactory.isModelValid(MyAppDAGService.nodes, MyAppDAGService.connections, MyAppDAGService.metadata, MyAppDAGService.getConfig());
       if (angular.isObject(errors)) {
         MyAppDAGService.notifyError(errors);
+      } else {
+        MyConsoleTabService.addMessage({
+          type: 'success',
+          content: MyAppDAGService.metadata.name + ' is valid .'
+        });
       }
     };
   });

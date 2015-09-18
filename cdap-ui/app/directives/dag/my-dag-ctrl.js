@@ -352,6 +352,9 @@ angular.module(PKG.name + '.commons')
         this.plugins = [];
         angular.forEach(MyAppDAGService.nodes, function(node) {
           this.plugins.push(node);
+          if (node._backendProperties) {
+            this.highlightRequiredFields(this.plugins[this.plugins.length -1]);
+          }
         }.bind(this));
         $timeout(this.drawGraph.bind(this));
     }

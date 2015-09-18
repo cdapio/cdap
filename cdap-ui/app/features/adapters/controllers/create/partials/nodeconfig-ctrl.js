@@ -35,6 +35,7 @@ angular.module(PKG.name + '.feature.adapters')
 
     function onPluginChange(plugin) {
       var defer = $q.defer();
+      $scope.type = MyAppDAGService.metadata.template.type;
       if (plugin && $scope.plugin && plugin.id === $scope.plugin.id) {
         return;
       }

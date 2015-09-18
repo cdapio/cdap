@@ -47,7 +47,7 @@
 
 */
 angular.module(PKG.name + '.services')
-  .service('MyAppDAGService', function(myAdapterApi, $q, $bootstrapModal, $state, $filter, mySettings, AdapterErrorFactory, IMPLICIT_SCHEMA, myHelpers, PluginConfigFactory, ModalConfirm, EventPipe, CanvasFactory, $rootScope, GLOBALS) {
+  .service('MyAppDAGService', function(myAdapterApi, $q, $bootstrapModal, $state, $filter, mySettings, AdapterErrorFactory, IMPLICIT_SCHEMA, myHelpers, PluginConfigFactory, ModalConfirm, EventPipe, CanvasFactory, $rootScope, GLOBALS, MyNodeConfigService) {
 
     var countSink = 0,
         countSource = 0,
@@ -342,6 +342,7 @@ angular.module(PKG.name + '.services')
               this.nodes[config.id].properties[key] = this.nodes[config.id].properties[key] || '';
             }.bind(this));
             defer.resolve(this.nodes[config.id]);
+            MyNodeConfigService.notifyPluginSaveListeners(config.id);
           }.bind(this));
 
       } else if(Object.keys(conf._backendProperties).length !== Object.keys(conf.properties).length) {
@@ -349,7 +350,9 @@ angular.module(PKG.name + '.services')
           config.properties[key] = config.properties[key] || '';
         });
         defer.resolve(this.nodes[config.id]);
+        MyNodeConfigService.notifyPluginSaveListeners(config.id);
       }
+      
       if (inCreationMode) {
         /*
           The reason to use a promise here is to fetch the backend properties for each plugin
