@@ -628,7 +628,7 @@ angular.module(PKG.name + '.services')
       var errors = AdapterErrorFactory.isModelValid(this.nodes, this.connections, this.metadata, config);
 
       if (!angular.isObject(errors)) {
-        EventPipe.emit('showLoadingIcon');
+        EventPipe.emit('showLoadingIcon', 'Publishing Pipeline to CDAP');
         var data = this.getConfigForBackend();
         myAdapterApi.save(
           {
