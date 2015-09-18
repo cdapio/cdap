@@ -39,7 +39,6 @@ angular.module(PKG.name + '.feature.adapters')
       }
     }
     this.saveMetadata = function() {
-      console.log('save');
       this.metadata['name'] = this.pipelineName;
       this.metadata['description'] = this.pipelineDescription;
       this.metadataExpanded = false;
@@ -48,10 +47,17 @@ angular.module(PKG.name + '.feature.adapters')
     this.openMetadata = function () {
       if (this.metadataExpanded) { return; }
       EventPipe.emit('popovers.close');
-
+      var name = this.metadata.name;
+      var description = this.metadata.description;
       this.metadataExpanded = true;
-      this.pipelineName = this.metadata['name'];
-      this.pipelineDescription = this.metadata['description'];
+      this.pipelineName = name;
+      this.pipelineDescription = description;
+    };
+
+    this.resetMetadata = function() {
+      this.pipelineName = this.metadata.name;
+      this.pipelineDescription = this.metadata.description;
+      this.metadataExpanded = false;
     };
 
     this.canvasOperations = [
