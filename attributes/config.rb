@@ -59,6 +59,10 @@ hdp_version =
       '2.2.4.4-16'
     when '2.2.6.0'
       '2.2.6.0-2800'
+    when '2.2.8.0'
+      '2.2.8.0-3150'
+    when '2.3.0.0'
+      '2.3.0.0-2557'
     else
       node['hadoop']['distribution_version']
     end
