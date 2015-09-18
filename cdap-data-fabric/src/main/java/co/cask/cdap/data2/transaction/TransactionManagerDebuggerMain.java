@@ -356,6 +356,7 @@ public class TransactionManagerDebuggerMain {
         System.out.println("\tExpiring at: " + formatter.format(new Date(txInfo.getExpiration())));
       }
       System.out.println("\tVisibility upper bound: " + txIdToString(txInfo.getVisibilityUpperBound()));
+      System.out.println("\tCheckpoints: " + txInfo.getCheckpointWritePointers());
     }
 
     if (snapshot.getInvalid().contains(txId)) {
