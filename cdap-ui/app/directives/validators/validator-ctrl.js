@@ -180,17 +180,16 @@ angular.module(PKG.name + '.commons')
       conditions += '\n\n';
 
       var initFn = 'function isValid(input) {\n' +
-        'var resultMap = new java.util.HashMap();\n' +
         'var valid = "true";\n' +
         'var errMsg = "";\n' +
-        'var errCode = 0;\n' +
-        'input = JSON.parse(input);\n\n';
+        'var errCode = 0;\n\n';
 
       var fn = initFn + conditions +
-        'resultMap.put("isValid", valid);\n' +
-        'resultMap.put("errorCode", errCode.toString());\n' +
-        'resultMap.put("errorMsg", errMsg);\n' +
-        'return resultMap;\n}\n';
+        'return {\n' +
+        '"isValid": valid,\n' +
+        '"errorCode": errCode,\n' +
+        '"errorMsg": errMsg\n' +
+        '};\n}\n';
 
       var validatorProperties = {
         validators: validatorsList,
