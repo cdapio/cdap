@@ -47,19 +47,19 @@ Several optional headers may also be specified:
    * - Header
      - Description
      - Example
-   * - Artifact-Version
+   * - **Artifact-Version**
      - The version of the artifact to add. If not specified, the ``Bundle-Version`` attribute
        in the JAR file's Manfiest will be used.
-     - 1.0.0
-   * - Artifact-Extends
-     - If the artifact contains plugins, which parent artifacts should have access to those plugins.
+     - ``1.0.0``
+   * - **Artifact-Extends**
+     - If the artifact contains plugins, describes which parent artifacts should have access to those plugins.
        Multiple parents can be given by separating them with a ``/`` 
-     - cdap-etl-batch[3.2.0,4.0.0)/cdap-etl-realtime[3.2.0,4.0.0)
-   * - Artifact-Plugins
-     - JSON Array of plugins contained in the artifact that are not annotated as a Plugin.
-       This should be used for 3rd party jars that need to be plugins, such as jdbc drivers. Each element
-       in the array is a JSON Object containing name, type, and className of the plugin.
-     - [ { "name": "mysql", "type": "jdbc", "className": "com.mysql.jdbc.Driver" } ]
+     - ``cdap-etl-batch[3.2.0,4.0.0)/cdap-etl-realtime[3.2.0,4.0.0)``
+   * - **Artifact-Plugins**
+     - JSON Array of plugins contained in the artifact that are not annotated as a plugin.
+       This should be used for third-party JARs that need to be plugins, such as JDBC drivers. Each element
+       in the array is a JSON object containing name, type, and className of the plugin.
+     - ``[ { "name": "mysql", "type": "jdbc", "className": "com.mysql.jdbc.Driver" } ]``
 
 .. _http-restful-api-artifact-available:
 
@@ -78,10 +78,10 @@ To retrieve a list of available artifacts, submit an HTTP GET request::
    * - ``<namespace>``
      - Namespace ID
    * - ``<scope>``
-     - Optional scope filter. If none is given, artifacts in the ``user`` and
-       ``system`` scopes are returned. Otherwise, only artifacts in the specified scope are returned
+     - Optional scope filter. If not specified, artifacts in the ``user`` and
+       ``system`` scopes are returned. Otherwise, only artifacts in the specified scope are returned.
 
-This will return a JSON Array that lists each artifact with its name, version, and scope.
+This will return a JSON array that lists each artifact with its name, version, and scope.
 Example output (pretty-printed):
 
 .. container:: highlight
@@ -123,11 +123,11 @@ To list all versions of a specific artifact, submit an HTTP GET request::
    * - ``<namespace>``
      - Namespace ID
    * - ``<artifact-name>``
-     - Name of the artifact.
+     - Name of the artifact
    * - ``<scope>``
-     - Optional scope filter. If none is given, defaults to ``user``.
+     - Optional scope filter. If not specified, defaults to ``user``.
 
-This will return a JSON Array that lists each version of the specified artifact with
+This will return a JSON array that lists each version of the specified artifact with
 its name, version, and scope. Example output for the ``cdap-etl-batch`` artifact (pretty-printed):
 
 .. container:: highlight
@@ -146,7 +146,7 @@ its name, version, and scope. Example output for the ``cdap-etl-batch`` artifact
 
 Retrieve Artifact Detail
 ------------------------
-To retrieve detail about a specific artifact version, submit an HTTP GET request::
+To retrieve detail about a specific version of an artifact, submit an HTTP GET request::
 
   GET <base-url>/namespaces/<namespace>/artifacts/<artifact-name>/versions/<artifact-version>[?scope=<scope>]
   
@@ -163,10 +163,10 @@ To retrieve detail about a specific artifact version, submit an HTTP GET request
    * - ``<artifact-version>``
      - Version of the artifact.
    * - ``<scope>``
-     - Optional scope filter. If none is given, defaults to 'user'.
+     - Optional scope filter. If not specified, defaults to 'user'.
 
-This will return a JSON Object that contains information about classes in the artifact,
-the schema of the config object supported by the Application class, and the artifact name,
+This will return a JSON object that contains information about: classes in the artifact;
+the schema of the config object supported by the ``Application`` class; and the artifact name,
 version, and scope. Example output for version |release| of the ``WordCount``
 artifact (pretty-printed and reformatted to fit):
 
@@ -218,13 +218,13 @@ an HTTP GET request::
    * - ``<namespace>``
      - Namespace ID
    * - ``<artifact-name>``
-     - Name of the artifact.
+     - Name of the artifact
    * - ``<artifact-version>``
-     - Version of the artifact.
+     - Version of the artifact
    * - ``<scope>``
-     - Optional scope filter. If none is given, defaults to 'user'.
+     - Optional scope filter. If not specified, defaults to 'user'.
   
-This will return a JSON Array that lists the extensions (plugin types) available to the artifact.
+This will return a JSON array that lists the extensions (plugin types) available to the artifact.
 Example output for version |release| of the ``cdap-etl-batch``
 artifact (pretty-printed and reformatted to fit):
 
@@ -252,18 +252,18 @@ an HTTP GET request::
    * - ``<namespace>``
      - Namespace ID
    * - ``<artifact-name>``
-     - Name of the artifact.
+     - Name of the artifact
    * - ``<artifact-version>``
-     - Version of the artifact.
+     - Version of the artifact
    * - ``<plugin-type>``
-     - Type of plugins to list.
+     - Type of plugins to list
    * - ``<scope>``
-     - Optional scope filter. If none is given, defaults to 'user'.
+     - Optional scope filter. If not specified, defaults to 'user'.
 
-This will return a JSON Array that lists the plugins of the specified type
-available to the artifact. Each element in the array is a JSON OBject containing
-the artifact the plugin came from, class name, description, name, and type of
-the plugin. Example output for plugins of type ``transform`` available to version |release|
+This will return a JSON array that lists the plugins of the specified type
+available to the artifact. Each element in the array is a JSON object containing
+the artifact that the plugin originated from, and the plugin's class name, description, 
+name, and type. Example output for plugins of type ``transform`` available to version |release|
 of the ``cdap-etl-batch`` artifact (pretty-printed and reformatted to fit):
 
 .. container:: highlight
@@ -317,18 +317,18 @@ an HTTP GET request::
    * - ``<artifact-name>``
      - Name of the artifact.
    * - ``<artifact-version>``
-     - Version of the artifact.
+     - Version of the artifact
    * - ``<plugin-type>``
-     - Type of the plugin.
+     - Type of the plugin
    * - ``<plugin-name>``
-     - Name of the plugin.
+     - Name of the plugin
    * - ``<scope>``
-     - Optional scope filter. If none is given, defaults to 'user'.
+     - Optional scope filter. If not specified, defaults to 'user'.
 
-This will return a JSON Array that lists the plugins of the specified type and name
-available to the artifact. Each element in the array is a JSON OBject containing
-the artifact the plugin came from, class name, description, name, type, and properties of
-the plugin. Example output for the ``ScriptFilter`` plugin available to version |release|
+This will return a JSON array that lists the plugins of the specified type and name
+available to the artifact. Each element in the array is a JSON object containing
+the artifact that the plugin originated from, and the plugin's class name, description, name, type, and properties.
+Example output for the ``ScriptFilter`` plugin available to version |release|
 of the ``cdap-etl-batch`` artifact (pretty-printed and reformatted to fit):
 
 .. container:: highlight
@@ -392,7 +392,7 @@ To load all system artifacts on the CDAP Master node(s), submit an HTTP POST req
   POST <base-url>/namespaces/system/artifacts
 
 This call will make the CDAP master scan the artifacts directly and add any new artifacts
-that it finds. Any snapshot artifacts will be reloaded.
+that it finds. Any snapshot artifacts will be re-loaded.
 
 .. _http-restful-api-artifact-system-delete:
 
@@ -427,11 +427,11 @@ To list application classes, submit an HTTP GET request::
    * - ``<config-path>``
      - Path to the configuration file
    * - ``<scope>``
-     - Optional scope filter. If none is given, classes from artifacts in the ``user`` and
-       ``system`` scopes are returned. Otherwise, only classes from artifacts in the specified scope are returned
+     - Optional scope filter. If not specified, classes from artifacts in the ``user`` and
+       ``system`` scopes are returned. Otherwise, only classes from artifacts in the specified scope are returned.
 
-This will return a JSON Array that lists all application classes contained in artifacts.
-Each element in the array is a JSON Object that describes the artifact the class is from,
+This will return a JSON array that lists all application classes contained in artifacts.
+Each element in the array is a JSON object that describes the artifact the class originates in
 as well as the class name. Example output for the ``ScriptFilter`` (pretty-printed and reformatted to fit):
 
 .. container:: highlight
@@ -483,12 +483,12 @@ To retrieve detail about a specific application class, submit an HTTP GET reques
    * - ``<namespace>``
      - Namespace ID
    * - ``<class-name>``
-     - Application class name.
+     - Application class name
    * - ``<scope>``
-     - Optional scope filter. If none is given, defaults to ``user``.
+     - Optional scope filter. If not specified, defaults to ``user``.
 
-This will return a JSON Array that lists each application class with that class name.
-Each element in the array is a JSON Object that contains details about the application
+This will return a JSON array that lists each application class with that class name.
+Each element in the array is a JSON object that contains details about the application
 class, including the artifact the class is from, the class name, and the schema of
 the config supported by the application class.
 Example output for the ``WordCount`` application (pretty-printed and reformatted to fit):
