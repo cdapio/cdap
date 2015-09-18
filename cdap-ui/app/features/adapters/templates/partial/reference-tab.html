@@ -14,7 +14,8 @@
   the License.
 -->
 
-<my-validators
-  input-schema="inputSchema"
-  is-disabled="isDisabled"
-  ng-model="pluginCopy"></my-validators>
+<div class="embed-responsive embed-responsive-4by3"
+      ng-if="$parent.activeTab.title === $parent.tab.title" 
+      ng-controller="ReferenceTabController as ReferenceTabController">
+  <iframe class="ember-responsive-item" src="{{ReferenceTabController.trustSrc(ReferenceTabController.infoUrl)}}"></iframe>
+</div>

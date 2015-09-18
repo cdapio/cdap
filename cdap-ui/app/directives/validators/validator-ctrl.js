@@ -34,7 +34,7 @@
  * }
  **/
 angular.module(PKG.name + '.commons')
-  .controller('MyValidatorsCtrl', function($scope, myAdapterValidatorsApi) {
+  .controller('MyValidatorsCtrl', function($scope, myAdapterValidatorsApi, EventPipe) {
     var vm = this;
 
     vm.validators = [];
@@ -196,8 +196,19 @@ angular.module(PKG.name + '.commons')
         validationScript: fn
       };
 
-      $scope.model.properties = validatorProperties;
-      $scope.model.validationFields = vm.validationFields;
+      if ($scope.model.properties !== validatorProperties) {
+        $scope.model.properties = validatorProperties;
+      }
+      if ($scope.model.validationFields !== vm.validationFields) {
+        $scope.model.validationFields = vm.validationFields;
+      }
+
     }
 
+    // Since validation fields is a reference and we overwrite the array
+    // reference all the time $watch will not be triggered hence the event communication.
+    EventPipe.on('resetValidatorValidationFields', function(validationFields) {
+      vm.validationFields = validationFields || {};
+      $scope.model.validationFields = vm.validationFields;
+    });
   });

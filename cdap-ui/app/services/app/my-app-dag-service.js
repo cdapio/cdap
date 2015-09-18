@@ -47,7 +47,7 @@
 
 */
 angular.module(PKG.name + '.services')
-  .service('MyAppDAGService', function(myAdapterApi, $q, $bootstrapModal, $state, $filter, mySettings, AdapterErrorFactory, IMPLICIT_SCHEMA, myHelpers, PluginConfigFactory, ModalConfirm, EventPipe, CanvasFactory, $rootScope, GLOBALS) {
+  .service('MyAppDAGService', function(myAdapterApi, $q, $bootstrapModal, $state, $filter, mySettings, AdapterErrorFactory, IMPLICIT_SCHEMA, myHelpers, PluginConfigFactory, ModalConfirm, EventPipe, CanvasFactory, $rootScope, GLOBALS, MyNodeConfigService) {
 
     var countSink = 0,
         countSource = 0,
@@ -287,9 +287,9 @@ angular.module(PKG.name + '.services')
     };
 
     this.addNodes = function(conf, type, inCreationMode) {
+      var defer = $q.defer();
       this.isConfigTouched = true;
-      // FIXME: Utterly irrelavant place to set style. This needs to be moved ASAP.
-      var artifactType = GLOBALS.pluginTypes[this.metadata.template.type];
+
       var config = {
         id: conf.id,
         name: conf.name,
@@ -306,6 +306,95 @@ angular.module(PKG.name + '.services')
         _backendProperties: conf._backendProperties,
         type: conf.type
       };
+
+      angular.extend(config, styleNode.call(this, type, inCreationMode));
+
+      this.nodes[config.id] = config;
+
+      PluginConfigFactory.fetch(
+        null,
+        this.metadata.template.type,
+        config.name
+      ).then(function (res) {
+        if (res.implicit) {
+          var schema = res.implicit.schema;
+          var keys = Object.keys(schema);
+
+          var formattedSchema = [];
+          angular.forEach(keys, function (key) {
+            formattedSchema.push({
+              name: key,
+              type: schema[key]
+            });
+          });
+
+          var obj = { fields: formattedSchema };
+          this.nodes[config.id].outputSchema = JSON.stringify(obj);
+        }
+      }.bind(this));
+
+      if (!conf._backendProperties) {
+        fetchBackendProperties
+          .call(this, this.nodes[config.id])
+          .then(function() {
+            this.nodes[config.id].properties = this.nodes[config.id].properties || {};
+            angular.forEach(this.nodes[config.id]._backendProperties, function(value, key) {
+              this.nodes[config.id].properties[key] = this.nodes[config.id].properties[key] || '';
+            }.bind(this));
+            defer.resolve(this.nodes[config.id]);
+            MyNodeConfigService.notifyPluginSaveListeners(config.id);
+          }.bind(this));
+
+      } else if(Object.keys(conf._backendProperties).length !== Object.keys(conf.properties).length) {
+        angular.forEach(conf._backendProperties, function(value, key) {
+          config.properties[key] = config.properties[key] || '';
+        });
+        defer.resolve(this.nodes[config.id]);
+        MyNodeConfigService.notifyPluginSaveListeners(config.id);
+      }
+
+      if (inCreationMode) {
+        /*
+          The reason to use a promise here is to fetch the backend properties for each plugin
+          before notifying listeners about the change. This helps in showing the #of required
+          fields as a warning in the nodes in DAG as soon as they are added to Canvas.
+        */
+        defer
+          .promise
+          .then(function() {
+            this.notifyListeners(config, type);
+          }.bind(this));
+      }
+      return defer.promise;
+    };
+
+    this.removeNode = function (nodeId) {
+      this.isConfigTouched = true;
+      var type = this.nodes[nodeId].type;
+      var artifactTypeExtension = GLOBALS.pluginTypes[this.metadata.template.type];
+      switch (type) {
+        case artifactTypeExtension.source:
+          countSource--;
+          break;
+        case 'transform':
+          countTransform--;
+          break;
+        case artifactTypeExtension.sink:
+          countSink--;
+          break;
+      }
+
+      delete this.nodes[nodeId];
+    };
+
+    this.setIsDisabled = function(isDisabled) {
+      this.isDisabled = isDisabled;
+    };
+
+    function styleNode(type, inCreationMode) {
+      var config = {};
+      // FIXME: Utterly irrelavant place to set style. This needs to be moved ASAP.
+      var artifactType = GLOBALS.pluginTypes[this.metadata.template.type];
       var offsetLeft = 0;
       var offsetTop = 0;
       var initial = 0;
@@ -344,73 +433,8 @@ angular.module(PKG.name + '.services')
           top: top + 'px'
         };
       }
-
-      this.nodes[config.id] = config;
-
-      PluginConfigFactory.fetch(
-        null,
-        this.metadata.template.type,
-        config.name
-      ).then(function (res) {
-        if (res.implicit) {
-          var schema = res.implicit.schema;
-          var keys = Object.keys(schema);
-
-          var formattedSchema = [];
-          angular.forEach(keys, function (key) {
-            formattedSchema.push({
-              name: key,
-              type: schema[key]
-            });
-          });
-
-          var obj = { fields: formattedSchema };
-          this.nodes[config.id].outputSchema = JSON.stringify(obj);
-        }
-      }.bind(this));
-
-      if (!conf._backendProperties) {
-        fetchBackendProperties
-          .call(this, this.nodes[config.id])
-          .then(function() {
-            this.nodes[config.id].properties = this.nodes[config.id].properties || {};
-            angular.forEach(this.nodes[config.id]._backendProperties, function(value, key) {
-              this.nodes[config.id].properties[key] = this.nodes[config.id].properties[key] || '';
-            }.bind(this));
-          }.bind(this));
-
-      } else if(Object.keys(conf._backendProperties).length !== Object.keys(conf.properties).length) {
-        angular.forEach(conf._backendProperties, function(value, key) {
-          config.properties[key] = config.properties[key] || '';
-        });
-      }
-      if (inCreationMode) {
-        this.notifyListeners(config, type);
-      }
-    };
-
-    this.removeNode = function (nodeId) {
-      this.isConfigTouched = true;
-      var type = this.nodes[nodeId].type;
-      var artifactTypeExtension = GLOBALS.pluginTypes[this.metadata.template.type];
-      switch (type) {
-        case artifactTypeExtension.source:
-          countSource--;
-          break;
-        case 'transform':
-          countTransform--;
-          break;
-        case artifactTypeExtension.sink:
-          countSink--;
-          break;
-      }
-
-      delete this.nodes[nodeId];
-    };
-
-    this.setIsDisabled = function(isDisabled) {
-      this.isDisabled = isDisabled;
-    };
+      return config;
+    }
 
     function fetchBackendProperties(plugin, scope) {
       var defer = $q.defer();
@@ -517,7 +541,12 @@ angular.module(PKG.name + '.services')
     function pruneNonBackEndProperties(config) {
       function propertiesIterator(properties, backendProperties) {
         angular.forEach(properties, function(value, key) {
-          if ((!backendProperties[key] && key !== 'errorDatasetName') || properties[key] === '' || properties[key] === null) {
+          // If its a required field don't remove it.
+          if (backendProperties[key] && backendProperties[key].required) {
+            return;
+          }
+          if ((!backendProperties[key] && key !== 'errorDatasetName') || properties[key] === '' || properties[key] === null
+          ) {
             delete properties[key];
           }
           // FIXME: Remove this once https://issues.cask.co/browse/CDAP-3614 is fixed.
@@ -627,8 +656,11 @@ angular.module(PKG.name + '.services')
               defer.reject({
                 messages: err
               });
+              this.notifyError({
+                canvas: [err.data]
+              });
               EventPipe.emit('hideLoadingIcon.immediate');
-            }
+            }.bind(this)
           );
       } else {
         this.notifyError(errors);
